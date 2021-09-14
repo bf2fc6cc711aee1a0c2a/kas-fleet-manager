@@ -1,12 +1,14 @@
 # Performance tests for Managed Service API for Dinosaur
 
-Performance tests utilize [locust](https://docs.locust.io/en/stable/api.html) and all the relevant code is available in `./test/performance` folder. Additionally, short living tokens are obtained with help of a small http server running from `test/performance/token_api/main.go`
+Performance tests utilize [locust](https://docs.locust.io/en/stable/api.html) and all the relevant code is available in `./test/performance` folder. The main logic is driven by `test/performance/locustfile.py` file and any changes to the logic should be implemented in this file (or files called by the `locustfile`) 
+
+Additionally, short-living tokens are obtained with help of a small http server running from `test/performance/api_helper/main.go`
 
 The docker containers (locust workers, master locust runner and http server) required to run the test can be instantiated using: `test/performance/docker-compose.yml`. 
 
 In order to start the performance test at least these environment variables are required:
 - `OCM_OFFLINE_TOKEN` - **long living OCM token** (used to get short-lived access tokens for auth in the http calls)
-- `PERF_TEST_ROUTE_HOST` - API route (including `https://`), e.g. `https://managed-services-api-managed-services-pawelpaszki.apps.ppaszki.9wxd.s1.devshift.org` or `https://api.stage.openshift.com` in case of staging OSD cluster (**note that there is no trailing slash**)
+- `PERF_TEST_ROUTE_HOST` - API route (including `https://`), e.g. `https://my-generic-service.9wxd.s1.devshift.org` or `https://api.stage.openshift.com` in case of staging OSD cluster (**note that there is no trailing slash**)
 
 Optional parameters (if not provided, they will default to sensible and tested values):
 
@@ -14,17 +16,18 @@ Optional parameters (if not provided, they will default to sensible and tested v
 |-------------------------------------------|---------|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | PERF_TEST_GET_ONLY                        | Boolean | PERF_TEST_GET_ONLY=TRUE                             | If set to TRUE (by default), only GET endpoints will be attached                                                                                                                                                                                                                           |
 | PERF_TEST_USERS                           | Integer | PERF_TEST_USERS=100                                 | Number of locust users per locust worker (more workers means more load can be sent)                                                                                                                                                                                                        |
-| PERF_TEST_PREPOPULATE_DB                  | Boolean | PERF_TEST_PREPOPULATE_DB=FALSE                      | When set to "TRUE", will pre-seed the database through the API (specified in PERF_TEST_ROUTE_HOST) by creating and then deleting dinosaur clusters.  **This param should be left out (by default set to "FALSE") when running against staging OSD cluster**. Must be either `TRUE` or `FALSE` |
-| PERF_TEST_PREPOPULATE_DB_DINOSAUR_PER_WORKER | Integer | PERF_TEST_PREPOPULATE_DB_DINOSAUR_PER_WORKER=500       | Number of dinosaurs to be injected into dinosaur_requests table per worker  **This param should be left out (by default set to "FALSE") when running against staging OSD cluster**                                                                                                               |
+| PERF_TEST_PREPOPULATE_DB                  | Boolean | PERF_TEST_PREPOPULATE_DB=FALSE                      | When set to "TRUE", will pre-seed the database through the API (specified in PERF_TEST_ROUTE_HOST) by creating and then deleting dinosaur clusters.  **This param should be left out (by default set to "FALSE") when running against non-development environments**. Must be either `TRUE` or `FALSE` |
+| PERF_TEST_PREPOPULATE_DB_DINOSAUR_PER_WORKER | Integer | PERF_TEST_PREPOPULATE_DB_DINOSAUR_PER_WORKER=500       | Number of dinosaurs to be injected into dinosaur_requests table per worker  **This param should be left out (by default set to "FALSE") when non-development environments**                                                                                                               |
 | PERF_TEST_WORKERS_NUMBER                  | Integer | PERF_TEST_WORKERS_NUMBER=125                        | Number of locust workers (e.g. docker containers) created during the test (more workers means more load can be sent)                                                                                                                                                                       |
 | PERF_TEST_DINOSAUR_POST_WAIT_TIME            | Integer | PERF_TEST_DINOSAUR_POST_WAIT_TIME=1                    | Wait time (in seconds) between creating dinosaurs by individual locust worker                                                                                                                                                                                                                 |
 | PERF_TEST_DINOSAURS_PER_WORKER               | Integer | PERF_TEST_DINOSAURS_PER_WORKER=5                       | Number of dinosaurs created as a part of the performance test execution (per worker). These dinosaurs will be running for the most of the duration of the test and will be removed one minute before the test completion                                                                         |
 | PERF_TEST_RUN_TIME                        | String  | PERF_TEST_RUN_TIME=120m                             | Runtime of the performance test. Must be in minutes                                                                                                                                                                                                                                        |
 | PERF_TEST_USER_SPAWN_RATE                 | Integer | PERF_TEST_USER_SPAWN_RATE=1                         | The rate per second in which locust users are spawned                                                                                                                                                                                                                                      |
-| PERF_TEST_BASE_API_URL                    | String  | PERF_TEST_BASE_API_URL=/api/dinosaurs_mgmt/v1 | Base API url (excluding 'PERF_TEST_ROUTE_HOST' param and route suffix representing the resource part of the URL (e.g. 'dinosaurs'))                                                                                                                                                           |
+| PERF_TEST_BASE_API_URL                    | String  | PERF_TEST_BASE_API_URL=/api/managed-services-api/v1 | Base API url (excluding 'PERF_TEST_ROUTE_HOST' param and route suffix representing the resource part of the URL (e.g. 'dinosaurs'))                                                                                                                                                           |
 | PERF_TEST_HIT_ENDPOINTS_HOLD_OFF          | Integer | PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=30                 | Wait time (in minutes) before hitting endpoints (doesn't apply to prepopulating DB and creating dinosaurs). Counted from the start of the test run                                                                                                                                            |
 | PERF_TEST_CLEANUP                         | Boolean | PERF_TEST_CLEANUP=TRUE                              | Determines if a cleanup (of dinosaur clusters and service accounts) will be performed during last 90 seconds of the test execution                                                                                                                                                            |
 | PERF_TEST_SINGLE_WORKER_DINOSAUR_CREATE      | Boolean | PERF_TEST_SINGLE_WORKER_DINOSAUR_CREATE=FALSE          | If set to true - only one perf test tool worker will be used to create dinosaur clusters                                                                                                                                                                                                      |
+| PERF_TEST_USE_CONFIG_FILE_DISTRIBUTION    | Boolean | PERF_TEST_USE_CONFIG_FILE_DISTRIBUTION=FALSE        | If set to true - file from test/performance/config/load.json will be used to determine the load distribution                                                                                                                                                                               |
 | ADDITIONAL_LOCUST_OPTS                    | String  | ADDITIONAL_LOCUST_OPTS=--only-summary               | Additional flags supported by locust                                                                                                                                                                                                                                                       |
 
 ## Run the performance tests
@@ -51,29 +54,25 @@ OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_ap
 PERF_TEST_RUN_TIME=30m PERF_TEST_WORKERS_NUMBER=10 OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_api_route> PERF_TEST_USERS=23 PERF_TEST_DINOSAUR_POST_WAIT_TIME=1 PERF_TEST_DINOSAURS_PER_WORKER=5 PERF_TEST_GET_ONLY=FALSE PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=20 make test/performance
 ```
 
-- Run the test for 30 minutes (PERF_TEST_RUN_TIME=30m). Don't create any dinosaur requests (by default PERF_TEST_DINOSAURS_PER_WORKER is set to **0**) and hit GET only endpoints (by default PERF_TEST_GET_ONLY is set to **TRUE**). All GET endpoints will be attacked at rate of approx 180-200 requests per second
+- Run the test for 30 minutes (PERF_TEST_RUN_TIME=30m). Use `test/performance/config/load.json` file for load distribution
 
 ```
-PERF_TEST_RUN_TIME=30m PERF_TEST_WORKERS_NUMBER=10 OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_api_route> PERF_TEST_USERS=100 make test/performance
+PERF_TEST_RUN_TIME=30m PERF_TEST_WORKERS_NUMBER=10 OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_api_route> PERF_TEST_USERS=100 PERF_TEST_USE_CONFIG_FILE_DISTRIBUTION=TRUE make test/performance
 ```
-
-## Generating dinosaur bootstrap URL and service account credentials config file
-If PERF_TEST_DINOSAURS_PER_WORKER is set to a value greater than 0, for each of dinosaur clusters created, its config will be persisted to `test/performance/token_api/config.txt`, so that it can be consumed by Running the Service team for dinosaur load test.
 
 ## Cleaning up created dinosaur clusters/ service accounts
-If any dinosaur clusters were created during the test run, `test/performance/token_api/dinosaurs.txt` will be populated with the IDs of those dinosaur clusters. Assuming that any of those dinosaur clusters become ready during test execution, `test/performance/token_api/serviceaccounts.txt` file will contain IDs of created service accounts. Those two files can be used to cleanup the resources using `test/performance/scripts/cleanup.py`. The script requires three mandatory parameters:
+If any dinosaur clusters were created during the test run, `test/performance/api_helper/dinosaurs.txt` will be populated with the IDs of those dinosaur clusters. `test/performance/scripts/cleanup.py` can be used to cleanup those dinosaurs. The script requires two mandatory parameters:
 
 * `API_HOST` - e.g. `https://api.openshift.com` for production API
 * `FILE_PATH` - absolute or relative path to the file with the resources IDs, e.g. `dinosaurs.txt`
-* `RESOURCE` - `dinosaurs` or `serviceaccounts` (must be the resource name used in the api url)
 
-It was proven that calling dinosaurs DELETE endpoint with high frequency caused App SRE alerts to fire due to too many simultaneous volume delete attempts. Hence there is a default delay of 2 seconds between each http call. To override it, provide timeout value with the following parameter:
+Increase `DELETE_DELAY`, if deleting dinosaurs at fast rate causes any issues (e.g. attempting to release OpenShift resources too quickly):
 
 * `DELETE_DELAY`, e.g. DELETE_DELAY="2.0"
 
 ### Running the cleanup example
 ```
-API_HOST=https://fleet-manager-managed-services-pawelpaszki.apps.ppaszki.qvfs.s1.devshift.org FILE_PATH=dinosaurs.txt RESOURCE=dinosaurs python3 cleanup.py
+API_HOST=https://my-generic-service.qvfs.s1.devshift.org FILE_PATH=dinosaurs.txt python3 cleanup.py
 ```
 
 ## Convert csv results to JSON format accepted by horreum
@@ -96,9 +95,6 @@ Type,Name,Request Count,Failure Count,Median Response Time,Average Response Time
 
 * Creates new JSON file `test/performance/reports/perf_test_stats.json` that can be pushed to Horreum instance
 
-## Manually push perf tests results to horreum
-TODO - update docs about horreum instance usage
-
 ## Build and push the images
 Make sure login quay.io using a robot account. The credentials are saved under rhoas/robots/ inside vault. 
 
@@ -107,9 +103,6 @@ Make sure login quay.io using a robot account. The credentials are saved under r
 
  make test/performance/image/push
 ```
-
-## Horreum db perf test results backup
-There is a backup [CronJob](backup/cronjob.yaml) scheduled to run after each of the [automated performance test runs](https://ci.int.devshift.net/view/fleet-manager/job/fleet-manager-perf-test-stage), which dumps current state of the db and pushes it to s3 bucket in `dinosaur_service_1` AWS account. Image built from [CronJob](backup/Dockerfile) is used to perform the backups.
 
 ## Troubleshooting
 Very rarely, after stopping the tests manually and starting them again error similar to one below may appear:
@@ -152,24 +145,7 @@ secondary_1  | urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPCo
 
 This will prevent from hitting the endpoints and to resolve this stop the tests manually again and restart the test
 
-# admin-api performance tests
+## Automating API performance tests
+`perf_test.sh` file in the root of this repository can be used to run the tests in automated fashion on Jenkins. It requires all of the env vars used across the scripts/ docker images to be specified, otherwise it will fail. Some of the steps could be removed from the script (if desired), e.g. pushing results to Horreum.
 
-## Prerequisites
-Locust 1.4.2 or newer is required to run admin-api tests
-
-## mandatory parameters
-
-In order to run admin-api tests, these parameters are required:
-- `ADMIN_API_SSO_AUTH_URL` - SSO cluster used for getting access token (including `https://`)
-- `ADMIN_API_SVC_ACC_IDS` - comma-separated service account ids used to communicate with the admin-api
-- `ADMIN_API_SVC_ACC_SECRETS` - comma-separated service account secrets used to communicate with the admin-api
-- `ADMIN_API_HOSTS` - comma-separated admin-api hosts (including `https://`, but excluding port number)
-
-## optional parameter
-- `ADMIN_API_RUN_TIME` - duration of the test in minutes, if not provided - the test will run for one minute
-
-## Running the tests
-
-```
-ADMIN_API_SSO_AUTH_URL=<your_sso_url> ADMIN_API_SVC_ACC_IDS=<your_svc_acc_ids> ADMIN_API_SVC_ACC_SECRETS=<your_svc_acc_secrets> ADMIN_API_HOSTS=<your_admin_api_hosts> make test/performance/admin-api
-```
+If desired, Horreum instance could be setup to upload and store performance tests results. More info can be found [here](https://horreum.hyperfoil.io/)

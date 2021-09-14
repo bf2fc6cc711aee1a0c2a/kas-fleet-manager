@@ -23,9 +23,8 @@ def get_delete_delay():
 # read env vars
 api_host = os.getenv('API_HOST')
 file_path = os.getenv('FILE_PATH')
-resource = os.getenv('RESOURCE')
-if str(api_host) == 'None' or str(file_path) == 'None' or str(resource) == 'None':
-  sys.exit('Some of required params not specified (API_HOST, FILE_PATH or RESOURCE)')
+if str(api_host) == 'None' or str(file_path) == 'None':
+  sys.exit('Some of required params not specified (API_HOST or FILE_PATH)')
 
 delete_delay = get_delete_delay()
 
@@ -39,9 +38,9 @@ headers = get_headers()
 i = 0
 while i < len(lines):
   # set utl
-  url = f'{api_host}/api/dinosaurs_mgmt/v1/{resource}/{lines[i]}?async=true'
+  url = f'{api_host}/api/dinosaurs_mgmt/v1/dinosaurs/{lines[i]}?async=true'
   r = requests.delete(url, headers=headers, verify=False)
-  print(f'[{str(i + 1)}] {resource} deletion -> id: {lines[i]} -> status code: {str(r.status_code)}')
+  print(f'[{str(i + 1)}] dinosaur deletion -> id: {lines[i]} -> status code: {str(r.status_code)}')
   if r.status_code <= 204 or r.status_code == 404: # 404 or 202 are success states
     i = i + 1
   if r.status_code == 401: # if token expired - get new one

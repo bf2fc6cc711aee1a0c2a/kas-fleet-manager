@@ -1,11 +1,11 @@
 import logging
 
 import locust, os, random, time, urllib3
-from locust import task, HttpUser, constant_pacing
+from locust import task, HttpUser
 
 from common.auth import *
 from common.tools import *
-from common.handler import *
+from common.locust_handler import *
 
 # disable ssl check on workers
 urllib3.disable_warnings()
@@ -18,6 +18,10 @@ populate_db = os.environ['PERF_TEST_PREPOPULATE_DB']
 
 # if set to 'TRUE' - db will be seeded with dinosaurs
 cleanup_resources = os.environ['PERF_TEST_CLEANUP']
+
+# if set to 'TRUE' - config file will be used to determine the load distribution
+use_distribution_config_file = os.environ['PERF_TEST_USE_CONFIG_FILE_DISTRIBUTION']
+load_distr = []
 
 # if PERF_TEST_PREPOPULATE_DB == 'TRUE' - this number determines the number of seed dinosaurs per locust worker
 seed_dinosaurs = int(os.environ['PERF_TEST_PREPOPULATE_DB_DINOSAUR_PER_WORKER'])
@@ -45,9 +49,6 @@ if str(PERF_TEST_BASE_API_URL) != 'None':
 # tracks how many dinosaurs were created already (per locust worker)
 dinosaurs_created = 0
 
-# service accounts to be created and used by dinosaur clusters
-dinosaur_assoc_svc_accs = []
-
 # If 'True' - dinosaur clusters will be created by the worker
 is_dinosaur_creation_enabled = True
 
@@ -57,19 +58,18 @@ single_worker_dinosaur_create = os.environ['PERF_TEST_SINGLE_WORKER_DINOSAUR_CRE
 # boolean flag driving cleanup stage
 resources_cleaned_up = False
 
-dinosaurs_persisted = False
-
-# used to control population of the dinosaurs.txt config file
-dinosaurs_ready = []
-
+# list of dinosaur resources' ids
 dinosaurs_list = []
-service_acc_list = []
+
+# current run time is used to determine if certain stages of the test can be started
 current_run_time = 0
 
 start_time = time.monotonic()
 
+# if the resources are to be deleted before the end of execution - it will start 90 seconds before the end of the test run
 remove_res_created_start = 90
 
+# cleanup 60 seconds before the test completion
 cleanup_stage_start = 60
 
 # only running GET requests - no need to run cleanup
@@ -79,12 +79,13 @@ if (dinosaurs_to_create == 0 and get_only == 'TRUE') or cleanup_resources != "TR
 
 class QuickstartUser(HttpUser):
   def on_start(self):
-    global is_dinosaur_creation_enabled
+    global is_dinosaur_creation_enabled, load_distr
     time.sleep(random.randint(5, 15)) # to make sure that the api server is started
     if single_worker_dinosaur_create == 'TRUE':
       is_dinosaur_creation_enabled = check_dinosaur_create_enabled()
     get_token(self)
-  wait_time = constant_pacing(0.5)
+    if use_distribution_config_file:
+      load_distr = get_load_dist(self)
   @task
   def main_task(self):
     global current_run_time
@@ -100,7 +101,7 @@ class QuickstartUser(HttpUser):
       # cleanup before the test completes
       if run_time_seconds - current_run_time < remove_res_created_start:
         cleanup(self)
-        # make sure that no dinosaur clusters or service accounts created by this test are removed
+        # make sure that no dinosaur clusters or created by this test are removed
         if run_time_seconds - current_run_time < cleanup_stage_start:
           if resources_cleaned_up == False:
             check_leftover_resources(self)
@@ -109,7 +110,7 @@ class QuickstartUser(HttpUser):
       else:
         exercise_endpoints(self, get_only)
 
-# pre-populate db with dinosaur clusters
+# pre-populate db with dinosaur clusters (create and immediately delete dinosaurs and fill up the db)
 def prepopulate_db(self):
   global populate_db
   global dinosaurs_created
@@ -128,24 +129,9 @@ def create_dinosaur_cluster(self):
   if dinosaur_id != '':
     dinosaurs_created = dinosaurs_created + 1
     dinosaurs_list.append(dinosaur_id)
+    # dinosaur ID will be persisted to a config file in the location of the api_helper
     persist_dinosaur_id(dinosaur_id)
   return dinosaur_id
-
-# create_svc_acc_for_dinosaur associated with dinosaur cluster
-def create_svc_acc_for_dinosaur(self, dinosaur_id):
-  global dinosaur_assoc_svc_accs
-  # only create service account if not created already
-  if get_svc_account_for_dinosaur(dinosaur_assoc_svc_accs, dinosaur_id) == []:
-    svc_acc_json_payload = svc_acc_json(url_base)
-    svc_acc_id = ''
-    while svc_acc_id == '':
-      service_acc_json = handle_post(self, f'{url_base}/service_accounts', svc_acc_json_payload, '/service_accounts', True)
-      if service_acc_json != '' and 'id' in service_acc_json:
-        svc_acc_id = service_acc_json['id']
-        dinosaur_assoc_svc_accs.append({'dinosaur_id': dinosaur_id, 'svc_acc_json': service_acc_json})
-        persist_service_account_id(svc_acc_id)
-      else:
-        time.sleep(random.uniform(0.5, 1)) # back off for ~1s if serviceaccount creation was unsuccessful
 
 # main test execution against API endpoints
 #
@@ -153,9 +139,8 @@ def create_svc_acc_for_dinosaur(self, dinosaur_id):
 # otherwise all public API endpoints (where applicable) will be attacked:
 # 
 # Stages of the main execution include:
-# 1. creating dinosaurs followed by creating serviceaccounts (if specified by PERF_TEST_DINOSAURS_PER_WORKER param) 
-#    - 1:1 ratio of dinosaurs and service accounts to be created
-# 2. attack GET endpoints:
+# 1. creating dinosaurs (if specified by PERF_TEST_DINOSAURS_PER_WORKER param) 
+# 2. attack endpoints:
 #    - immediately, if PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=0
 #    - x minutes after the testing was started, where x is specified by PERF_TEST_HIT_ENDPOINTS_HOLD_OFF parameter
 def exercise_endpoints(self, get_only):
@@ -164,97 +149,58 @@ def exercise_endpoints(self, get_only):
   if len(dinosaurs_list) < dinosaurs_to_create and is_dinosaur_creation_enabled == True:
     dinosaur_id = create_dinosaur_cluster(self)
     if dinosaur_id != '':
+      # stop creating dinosaurs if seeing 429 status code (limit exceeded)
       if dinosaur_id == '429':
         dinosaurs_to_create = len(dinosaurs_list)
       else:
         time.sleep(dinosaur_post_wait_time) # sleep after creating dinosaur
-        create_svc_acc_for_dinosaur(self, dinosaur_id)
   else:
-    if dinosaurs_persisted == False and is_dinosaur_creation_enabled == True:
-      wait_for_dinosaurs_ready(self)
     # only hit the endpoints, if wait_time_in_minutes has passed already
     if current_run_time / 60 >= wait_time_in_minutes:
       hit_endpoint(self, get_only)
     elif current_run_time / 60 + 1 < wait_time_in_minutes:
       time.sleep(15) # wait 15 seconds instead of hitting this if/else unnecessarily
 
-# The distribution between the endpoints will be semi-random with the following proportions
-# dinosaurs get                                       50%
-# dinosaur search                                     35%
-# dinosaur get                                        10%
-# dinosaur metrics                                     1%
-# cloud provider(s) get                             1%
-# openapi get                                       1%
-# service accounts (get, post, delete, reset pwd)   1%
-# dinosaur get metrics                      	        0.5%
+# hit the endpoints (either from the config file or using hardcoded load distribution)
 def hit_endpoint(self, get_only):
-  endpoint_selector = random.randrange(0,99)
-  if endpoint_selector < 1:
-    service_accounts(self, get_only)
-  elif endpoint_selector < 2:
-    handle_get(self, f'{url_base}/cloud_providers', '/cloud_providers')
-    handle_get(self, f'{url_base}/cloud_providers/aws/regions', '/cloud_providers/aws/regions')
-  elif endpoint_selector < 3:
-    handle_get(self, f'{url_base}/openapi', '/openapi')
-  elif endpoint_selector < 53:
-    handle_get(self, f'{url_base}/dinosaurs', '/dinosaurs')
-  elif endpoint_selector < 88:
-    handle_get(self, f'{url_base}/dinosaurs?search={get_random_search()}', '/dinosaurs?search')
+  if use_distribution_config_file:
+    handle_config_load(self)
   else:
-    dinosaur_id = ''
-    if len(dinosaurs_list) == 0:
-      org_dinosaurs = handle_get(self, f'{url_base}/dinosaurs', '/dinosaurs', True)
-      # get all dinosaurs and if the list is not empty - get random dinosaur_id
-      items = get_items_from_json_response(org_dinosaurs)
-      if len(items) > 0:
-        dinosaur_id = get_random_id(get_ids_from_list(items))
+    endpoint_selector = random.randrange(0,10)
+    if endpoint_selector < 3:
+      handle_get(self, f'{url_base}/dinosaurs', '/dinosaurs')
+    elif endpoint_selector < 6:
+      handle_get(self, f'{url_base}/dinosaurs?search={get_random_search()}', '/dinosaurs?search')
     else:
-      dinosaur_id = get_random_id(dinosaurs_list)
-    if dinosaur_id != '':
-      handle_get(self, f'{url_base}/dinosaurs/{dinosaur_id}', '/dinosaurs/[id]')
-      if (random.randrange(0,19) < 1): 
-        handle_get(self, f'{url_base}/dinosaurs/{dinosaur_id}/metrics/query', '/dinosaurs/[id]/metrics/query')
-        handle_get(self, f'{url_base}/dinosaurs/{dinosaur_id}/metrics/query_range?duration=5&interval=30', '/dinosaurs/[id]/metrics/query_range')
-
-# wait for dinosaurs to be in ready state and persist dinosaur config
-def wait_for_dinosaurs_ready(self):
-  global dinosaurs_persisted
-  global dinosaurs_ready
-  for dinosaur in dinosaurs_list:
-    if not dinosaur in dinosaurs_ready:
-      dinosaur_json = handle_get(self, f'{url_base}/dinosaurs/{dinosaur}', '/dinosaurs/[id]', True)
-      if 'status' in dinosaur_json:
-      # persist service account and dinosaur details to config files
-        if dinosaur_json['status'] == 'ready' and 'bootstrapServerHost' in dinosaur_json:
-          svc_acc_json_payload = get_svc_account_for_dinosaur(dinosaur_assoc_svc_accs, dinosaur)
-          persist_dinosaur_config(dinosaur_json['bootstrapServerHost'], svc_acc_json_payload['svc_acc_json'])
-          dinosaurs_ready.append(dinosaur)
-          if len(dinosaurs_ready) == len(dinosaurs_list):
-            dinosaurs_persisted = True
+      dinosaur_id = ''
+      if len(dinosaurs_list) == 0:
+        org_dinosaurs = handle_get(self, f'{url_base}/dinosaurs', '/dinosaurs', True)
+        # get all dinosaurs and if the list is not empty - get random dinosaur_id
+        items = get_items_from_json_response(org_dinosaurs)
+        if len(items) > 0:
+          dinosaur_id = get_random_id(get_ids_from_list(items))
       else:
-        hit_endpoint(self, True)
-        time.sleep(random.uniform(1,2)) # sleep before checking dinosaur status again if not ready
-      time.sleep(random.uniform(0.4,1)) # sleep before checking another dinosaur
+        dinosaur_id = get_random_id(dinosaurs_list)
+      if dinosaur_id != '':
+        handle_get(self, f'{url_base}/dinosaurs/{dinosaur_id}', '/dinosaurs/[id]')
+        if (random.randrange(0,5) < 1): 
+          handle_get(self, f'{url_base}/dinosaurs/{dinosaur_id}/metrics/query', '/dinosaurs/[id]/metrics/query')
+          handle_get(self, f'{url_base}/dinosaurs/{dinosaur_id}/metrics/query_range?duration=5&interval=30', '/dinosaurs/[id]/metrics/query_range')
 
-# perf tests against service account endpoints
-def service_accounts(self, get_only):
-  handle_get(self, f'{url_base}/service_accounts', '/service_accounts')
-  if get_only != 'TRUE':
-    if len(service_acc_list) > 0:
-      remove_resource(self, service_acc_list, '/service_accounts/[id]')
-      handle_get(self, f'{url_base}/service_accounts', '/service_accounts')
-    else:
-      svc_acc_json_payload = svc_acc_json(url_base)
-      svc_acc_id = handle_post(self, f'{url_base}/service_accounts', svc_acc_json_payload, '/service_accounts')
-      if svc_acc_id != '':
-        svc_acc_json_payload['clientSecret'] = generate_random_svc_acc_secret()
-        handle_post(self, f'{url_base}/service_accounts/{svc_acc_id}/reset_credentials', svc_acc_json_payload, '/service_accounts/[id]/reset_credentials')
-        service_acc_list.append(svc_acc_id)
+# use the config file to distribute the load
+# if there is a need to use HTTP methods other than GET - this function needs to be changed
+# to handle other methods (cleanup might be required when creating resources here)
+def handle_config_load(self):
+  endpoint_selector = random.randrange(0,load_distr["max_weight"])
+  for endpoint in load_distr["endpoints"]:
+    if endpoint_selector < endpoint["weight"]:
+      handle_get(self, f'{url_base}{endpoint["path"]}', endpoint["name"])
+      break
 
-# get the list of left over service accounts and dinosaur clusters and delete them
+# get the list of left over dinosaur clusters and delete them
 def check_leftover_resources(self):
   time.sleep(random.uniform(1.0, 5.0))
-  global resources_cleaned_up, service_acc_list, dinosaurs_list
+  global resources_cleaned_up, dinosaurs_list
   left_over_dinosaurs = handle_get(self, f'{url_base}/dinosaurs', '/dinosaurs', True)
   # delete all dinosaurs created by the token used in the performance test
   items = get_items_from_json_response(left_over_dinosaurs)
@@ -263,21 +209,11 @@ def check_leftover_resources(self):
     for dinosaur_id in dinosaurs_list:
       remove_resource(self, dinosaurs_list, '/dinosaurs/[id]', dinosaur_id)
 
-  time.sleep(random.uniform(1.0, 5.0))
-  left_over_svc_accs = handle_get(self, f'{url_base}/service_accounts', '/service_accounts', True)
-  # delete all dinosaurs created by the token used in the performance test
-  items = get_items_from_json_response(left_over_svc_accs)
-  if len(items) > 0:
-    for svc_acc_id in get_ids_from_list(items):
-      if created_by_perf_test(svc_acc_id, items) == True:
-        service_acc_list.append(svc_acc_id)
-        remove_resource(self, service_acc_list, '/service_accounts/[id]', svc_acc_id)
-  if (len(dinosaurs_list) == 0 and len(service_acc_list) == 0):
+  if len(dinosaurs_list) == 0:
     resources_cleaned_up = True
 
-# cleanup created dinosaur clusters and service accounts 1 minute before the test completion
+# cleanup created dinosaur clusters one minute before the test completion
 def cleanup(self):
-  remove_resource(self, service_acc_list, '/service_accounts/[id]')
   if dinosaurs_to_create > 0: # only delete dinosaurs, if some were created
     remove_resource(self, dinosaurs_list, '/dinosaurs/[id]')
 
@@ -286,10 +222,7 @@ def remove_resource(self, list, name, resource_id = ""):
   if len(list) > 0:
     if resource_id == "":
       resource_id = get_random_id(list)
-    if 'dinosaur' in name:
-      url = f'{url_base}/dinosaurs/{resource_id}?async=true'
-    elif 'service_accounts' in name:
-      url = f'{url_base}/service_accounts/{resource_id}'
+    url = f'{url_base}/dinosaurs/{resource_id}?async=true'
     status_code = 500
     retry_attempt = 0
     while status_code > 204 and status_code != 404:

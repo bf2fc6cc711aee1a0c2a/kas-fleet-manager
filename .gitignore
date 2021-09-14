@@ -67,12 +67,7 @@ Dockerfile_integration_tests
 **/__pycache__
 !test/performance/reports/.keep
 test/performance/reports/*
-test/performance/token_api/config.txt
-test/performance/token_api/dinosaurs.txt
-test/performance/token_api/service_accounts.txt
-
-# admin api reports
-test/performance/admin-api/reports/admin_api*
+test/performance/api_helper/dinosaurs.txt
 
 # local bin directory
 bin

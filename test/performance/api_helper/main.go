@@ -22,9 +22,7 @@ var (
 )
 
 const (
-	configFilename      = "/mnt/api/config.txt"
 	dinosaurIdsFilemane = "/mnt/api/dinosaurs.txt"
-	svcAccIdsFilemane   = "/mnt/api/service_accounts.txt"
 )
 
 type configStruct struct {
@@ -105,9 +103,7 @@ func runServer() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	http.HandleFunc("/ocm_token", getToken)
-	http.HandleFunc("/write_dinosaur_config", writeDinosaurConfig)
 	http.HandleFunc("/write_dinosaur_id", writeDinosaurId)
-	http.HandleFunc("/write_svc_acc_id", writeSvcAccId)
 	http.HandleFunc("/dinosaur_create_container_id", checkDinosaurCreateContainerId)
 
 	srv := &http.Server{Addr: ":8099"}
@@ -178,18 +174,6 @@ func writeToFile(w http.ResponseWriter, filename string, checkExists string, con
 	defer file.Close()
 }
 
-func writeSvcAccId(w http.ResponseWriter, r *http.Request) {
-	checkHttpMethod(w, r, "POST")
-
-	var c svcAccIdStruct
-
-	unmarshalBody(w, r, &c)
-
-	configString := fmt.Sprintf("%s\n", c.ServiceAccountId)
-
-	writeToFile(w, svcAccIdsFilemane, c.ServiceAccountId, configString)
-}
-
 func writeDinosaurId(w http.ResponseWriter, r *http.Request) {
 	checkHttpMethod(w, r, "POST")
 
@@ -200,18 +184,6 @@ func writeDinosaurId(w http.ResponseWriter, r *http.Request) {
 	configString := fmt.Sprintf("%s\n", c.DinosaurId)
 
 	writeToFile(w, dinosaurIdsFilemane, c.DinosaurId, configString)
-}
-
-func writeDinosaurConfig(w http.ResponseWriter, r *http.Request) {
-	checkHttpMethod(w, r, "POST")
-
-	var c configStruct
-
-	unmarshalBody(w, r, &c)
-
-	configString := fmt.Sprintf("---\nbootstrapURL: \"%s\"\nusername: %s\npassword: %s\n", c.BootstrapUrl, c.Username, c.Password)
-
-	writeToFile(w, configFilename, c.BootstrapUrl, configString)
 }
 
 func returnError(w http.ResponseWriter, err string, statusCode int) {

@@ -2,7 +2,7 @@ version: '3'
 
 services:
   api:
-    image: "quay.io/rhoas/fleet-manager-token-refresh:latest"
+    image: "quay.io/generic/fleet-manager-api-helper:latest"
     environment:
       - OCM_OFFLINE_TOKEN=${OCM_OFFLINE_TOKEN}
       - PERF_TEST_RUN_TIME=${PERF_TEST_RUN_TIME}
@@ -10,11 +10,11 @@ services:
     ports:
       - "8099:8099"
     volumes:
-      - ./token_api/:/mnt/api
+      - ./api_helper/:/mnt/api
     command: go run /mnt/api/main.go
 
   primary:
-    image: "quay.io/rhoas/fleet-manager-locust:latest"
+    image: "quay.io/generic/fleet-manager-locust:latest"
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PERF_TEST_PREPOPULATE_DB=${PERF_TEST_PREPOPULATE_DB}
@@ -28,6 +28,7 @@ services:
       - PERF_TEST_BASE_API_URL=${PERF_TEST_BASE_API_URL}
       - PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=${PERF_TEST_HIT_ENDPOINTS_HOLD_OFF}
       - PERF_TEST_SINGLE_WORKER_DINOSAUR_CREATE=${PERF_TEST_SINGLE_WORKER_DINOSAUR_CREATE}
+      - PERF_TEST_USE_CONFIG_FILE_DISTRIBUTION=${PERF_TEST_USE_CONFIG_FILE_DISTRIBUTION}
       - LOCUST_FILE=/mnt/locust/locustfile.py
       - LOCUST_MODE=master
       - LOCUST_MASTER_HOST=primary
@@ -38,10 +39,10 @@ services:
     working_dir: /mnt/locust
     volumes:
       - ./:/mnt/locust
-    command: -f /locustfile.py --master -H http://primary:8089
+    command: -f locustfile.py --master -H http://primary:8089
 
   secondary:
-    image: "quay.io/rhoas/fleet-manager-locust:latest"
+    image: "quay.io/generic/fleet-manager-locust:latest"
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PERF_TEST_PREPOPULATE_DB=${PERF_TEST_PREPOPULATE_DB}
@@ -55,6 +56,7 @@ services:
       - PERF_TEST_BASE_API_URL=${PERF_TEST_BASE_API_URL}
       - PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=${PERF_TEST_HIT_ENDPOINTS_HOLD_OFF}
       - PERF_TEST_SINGLE_WORKER_DINOSAUR_CREATE=${PERF_TEST_SINGLE_WORKER_DINOSAUR_CREATE}
+      - PERF_TEST_USE_CONFIG_FILE_DISTRIBUTION=${PERF_TEST_USE_CONFIG_FILE_DISTRIBUTION}
       - LOCUST_FILE=/mnt/locust/locustfile.py
       - LOCUST_MODE=worker
       - LOCUST_MASTER_HOST=primary
@@ -62,12 +64,12 @@ services:
     volumes:
       - ./:/mnt/locust
     working_dir: /mnt/locust
-    command: -f /locustfile.py --worker --master-host primary
+    command: -f locustfile.py --worker --master-host primary
     depends_on:
       - api
 
   results:
-    image: "quay.io/rhoas/fleet-manager-perf-results:latest"
+    image: "quay.io/generic/fleet-manager-perf-results:latest"
     user: "${UID}:${GID}"
     environment:
       - PYTHONDONTWRITEBYTECODE=1

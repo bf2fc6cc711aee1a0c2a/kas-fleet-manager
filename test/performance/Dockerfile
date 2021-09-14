@@ -4,4 +4,4 @@ RUN pip install pyjwt
 
 RUN pip install --upgrade pip
 
-RUN pip install --upgrade locust
+RUN pip install locust==1.4.4
