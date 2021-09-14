@@ -494,6 +494,7 @@ components:
       - password
       - principal
     ManagedPineapple_allOf_spec_oauth:
+      description: OAuth configuration for a Pineapple cluster
       properties:
         clientId:
           type: string
@@ -520,6 +521,7 @@ components:
         key:
           type: string
     ManagedPineapple_allOf_spec_endpoint:
+      description: Route configuration for a Pineapple cluster
       properties:
         host:
           type: string
@@ -528,6 +530,7 @@ components:
     ManagedPineapple_allOf_spec:
       properties:
         serviceAccounts:
+          description: Service account configuration for a Pineapple cluster
           items:
             $ref: '#/components/schemas/ManagedPineapple_allOf_spec_serviceAccounts'
           type: array
@@ -538,6 +541,7 @@ components:
         oauth:
           $ref: '#/components/schemas/ManagedPineapple_allOf_spec_oauth'
         owners:
+          description: A list of users that owns this Pineapple cluster
           items:
             type: string
           type: array

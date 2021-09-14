@@ -9,7 +9,7 @@
 
 package private
 
-// ManagedPineappleAllOfSpecEndpoint struct for ManagedPineappleAllOfSpecEndpoint
+// ManagedPineappleAllOfSpecEndpoint Route configuration for a Pineapple cluster
 type ManagedPineappleAllOfSpecEndpoint struct {
 	Host string                                `json:"host,omitempty"`
 	Tls  *ManagedPineappleAllOfSpecEndpointTls `json:"tls,omitempty"`

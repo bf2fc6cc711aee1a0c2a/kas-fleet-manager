@@ -240,6 +240,7 @@ components:
               type: object
               properties:
                 serviceAccounts:
+                  description: "Service account configuration for a Pineapple cluster"
                   type: array
                   items:
                     type: object
@@ -257,6 +258,7 @@ components:
                 capacity:
                   $ref: "#/components/schemas/ManagedPineappleCapacity"
                 oauth:
+                  description: "OAuth configuration for a Pineapple cluster"
                   type: object
                   properties:
                     clientId:
@@ -278,10 +280,12 @@ components:
                       type: string
 
                 owners:
+                  description: "A list of users that owns this Pineapple cluster"
                   type: array
                   items:
                     type: string
                 endpoint:
+                  description: "Route configuration for a Pineapple cluster"
                   type: object
                   properties:
                     host:

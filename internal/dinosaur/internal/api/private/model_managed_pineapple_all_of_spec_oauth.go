@@ -9,7 +9,7 @@
 
 package private
 
-// ManagedPineappleAllOfSpecOauth struct for ManagedPineappleAllOfSpecOauth
+// ManagedPineappleAllOfSpecOauth OAuth configuration for a Pineapple cluster
 type ManagedPineappleAllOfSpecOauth struct {
 	ClientId               string  `json:"clientId,omitempty"`
 	ClientSecret           string  `json:"clientSecret,omitempty"`
