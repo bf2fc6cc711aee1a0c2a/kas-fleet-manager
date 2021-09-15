@@ -2,7 +2,6 @@ package presenters
 
 import (
 	"fmt"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 )
@@ -30,7 +29,6 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest) public.KafkaRequest {
 		CloudProvider:       kafkaRequest.CloudProvider,
 		MultiAz:             kafkaRequest.MultiAZ,
 		Owner:               kafkaRequest.Owner,
-		AccountNumber:       kafkaRequest.AccountNumber,
 		BootstrapServerHost: setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
 		Status:              kafkaRequest.Status,
 		CreatedAt:           kafkaRequest.CreatedAt,

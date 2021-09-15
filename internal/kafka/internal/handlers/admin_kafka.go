@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -18,12 +19,14 @@ import (
 
 type adminKafkaHandler struct {
 	service        services.KafkaService
+	accountService account.AccountService
 	providerConfig *config.ProviderConfig
 }
 
-func NewAdminKafkaHandler(service services.KafkaService, providerConfig *config.ProviderConfig) *adminKafkaHandler {
+func NewAdminKafkaHandler(service services.KafkaService, accountService account.AccountService, providerConfig *config.ProviderConfig) *adminKafkaHandler {
 	return &adminKafkaHandler{
 		service:        service,
+		accountService: accountService,
 		providerConfig: providerConfig,
 	}
 }
@@ -37,7 +40,7 @@ func (h adminKafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentKafkaRequestAdminEndpoint(kafkaRequest), nil
+			return presenters.PresentKafkaRequestAdminEndpoint(kafkaRequest, h.accountService)
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -68,8 +71,11 @@ func (h adminKafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, kafkaRequest := range kafkaRequests {
-				converted := presenters.PresentKafkaRequestAdminEndpoint(kafkaRequest)
-				kafkaRequestList.Items = append(kafkaRequestList.Items, converted)
+				converted, err := presenters.PresentKafkaRequestAdminEndpoint(kafkaRequest, h.accountService)
+				if err != nil {
+					return nil, err
+				}
+				kafkaRequestList.Items = append(kafkaRequestList.Items, *converted)
 			}
 
 			return kafkaRequestList, nil
@@ -130,7 +136,7 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 					return nil, err3
 				}
 			}
-			return presenters.PresentKafkaRequestAdminEndpoint(kafkaRequest), nil
+			return presenters.PresentKafkaRequestAdminEndpoint(kafkaRequest, h.accountService)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)

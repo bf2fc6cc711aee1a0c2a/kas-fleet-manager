@@ -60,7 +60,6 @@ var migrations = []*gormigrate.Migration{
 	addKafkaInstanceTypeColumn(),
 	addKafkaCanaryServiceAccountColumns(),
 	addKafkaNamespaceColumn(),
-	addKafkaAccountNumberColumn(),
 	migrateOldKafkaNamespace(),
 	migrateOldKafkaNamespaceCreatedDuringDeployment(),
 	replaceAllowListWithQuotaManagementList(),

@@ -2,7 +2,6 @@ package account
 
 import (
 	"fmt"
-	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"time"
 )
 
@@ -22,30 +21,31 @@ func NewMockAccountService() AccountService {
 	return &mock{}
 }
 
-func (a mock) SearchOrganizations(filter string) (*v1.OrganizationList, error) {
+func (a mock) SearchOrganizations(filter string) (*OrganizationList, error) {
 	return buildMockOrganizationList(10), nil
 }
 
-func (a mock) GetOrganization(filter string) (*v1.Organization, error) {
+func (a mock) GetOrganization(filter string) (*Organization, error) {
 	orgs, _ := a.SearchOrganizations(filter)
 	return orgs.Get(0), nil
 }
 
-func buildMockOrganizationList(count int) *v1.OrganizationList {
-	var mockOrgs []*v1.OrganizationBuilder
+func buildMockOrganizationList(count int) *OrganizationList {
+	var mockOrgs []*Organization
 
 	for i := 0; i < count; i++ {
 		mockOrgs = append(mockOrgs,
-			v1.NewOrganization().
-				ID(fmt.Sprintf(mockOrgIDTemplate, i)).
-				ExternalID(fmt.Sprintf(mockExternalIDTemplate, i)).
-				EbsAccountID(fmt.Sprintf(mockEbsAccountIDTemplate, i)).
-				CreatedAt(time.Now()).
-				Name(fmt.Sprintf(mockOrgNameTemplate, i)).
-				UpdatedAt(time.Now()))
+			&Organization{
+				ID:            fmt.Sprintf(mockOrgIDTemplate, i),
+				Name:          fmt.Sprintf(mockOrgNameTemplate, i),
+				AccountNumber: fmt.Sprintf(mockEbsAccountIDTemplate, i),
+				ExternalID:    fmt.Sprintf(mockExternalIDTemplate, i),
+				CreatedAt:     time.Now(),
+				UpdatedAt:     time.Now(),
+			})
 	}
 
-	ret, _ := v1.NewOrganizationList().Items(mockOrgs...).Build()
-
-	return ret
+	return &OrganizationList{
+		items: mockOrgs,
+	}
 }

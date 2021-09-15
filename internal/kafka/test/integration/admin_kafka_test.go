@@ -88,6 +88,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID))
 				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
+				Expect(result.AccountNumber).ToNot(BeEmpty())
 				Expect(result.Namespace).ToNot(BeEmpty())
 			},
 		},
