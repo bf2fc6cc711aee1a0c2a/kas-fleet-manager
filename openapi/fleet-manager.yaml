@@ -508,6 +508,8 @@ components:
               type: string
             owner:
               type: string
+            account_number:
+              type: string
             name:
               type: string
             created_at:

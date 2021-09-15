@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/account"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
@@ -40,6 +41,7 @@ type options struct {
 	Keycloak                 coreServices.DinosaurKeycloakService
 	DataPlaneCluster         services.DataPlaneClusterService
 	DataPlaneDinosaurService services.DataPlaneDinosaurService
+	AccountService           account.AccountService
 	DB                       *db.ConnectionFactory
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
@@ -66,7 +68,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}
 
-	dinosaurHandler := handlers.NewDinosaurHandler(s.Dinosaur, s.ProviderConfig)
+	dinosaurHandler := handlers.NewDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
 	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Dinosaur, s.AccessControlListConfig)
@@ -148,7 +150,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, s.Keycloak.GetConfig().DinosaurRealm.ValidIssuerURI, "id")
 
-	adminDinosaurHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.ProviderConfig)
+	adminDinosaurHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.AccountService, s.ProviderConfig)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 	rolesMapping := map[string][]string{
 		http.MethodGet:    {auth.KasFleetManagerAdminReadRole, auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},

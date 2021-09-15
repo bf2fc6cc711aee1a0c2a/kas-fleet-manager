@@ -15,6 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/quota_management"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/account"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/authorization"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/sentry"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
@@ -48,6 +49,7 @@ func CoreConfigProviders() di.Option {
 		sentry.ConfigProviders(),
 		signalbus.ConfigProviders(),
 		authorization.ConfigProviders(),
+		account.ConfigProviders(),
 
 		di.Provide(environments.Func(ServiceProviders)),
 	)

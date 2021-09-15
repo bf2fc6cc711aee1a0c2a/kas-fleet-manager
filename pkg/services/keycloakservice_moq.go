@@ -17,52 +17,52 @@ var _ KeycloakService = &KeycloakServiceMock{}
 
 // KeycloakServiceMock is a mock implementation of KeycloakService.
 //
-//     func TestSomethingThatUsesKeycloakService(t *testing.T) {
+// 	func TestSomethingThatUsesKeycloakService(t *testing.T) {
 //
-//         // make and configure a mocked KeycloakService
-//         mockedKeycloakService := &KeycloakServiceMock{
-//             CreateServiceAccountInternalFunc: func(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
-// 	               panic("mock out the CreateServiceAccountInternal method")
-//             },
-//             DeRegisterClientInSSOFunc: func(dinosaurNamespace string) *errors.ServiceError {
-// 	               panic("mock out the DeRegisterClientInSSO method")
-//             },
-//             DeRegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) *errors.ServiceError {
-// 	               panic("mock out the DeRegisterKasFleetshardOperatorServiceAccount method")
-//             },
-//             DeleteServiceAccountInternalFunc: func(clientId string) *errors.ServiceError {
-// 	               panic("mock out the DeleteServiceAccountInternal method")
-//             },
-//             GetConfigFunc: func() *keycloak.KeycloakConfig {
-// 	               panic("mock out the GetConfig method")
-//             },
-//             GetDinosaurClientSecretFunc: func(clientId string) (string, *errors.ServiceError) {
-// 	               panic("mock out the GetDinosaurClientSecret method")
-//             },
-//             GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
-// 	               panic("mock out the GetRealmConfig method")
-//             },
-//             GetServiceAccountByIdFunc: func(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
-// 	               panic("mock out the GetServiceAccountById method")
-//             },
-//             IsDinosaurClientExistFunc: func(clientId string) *errors.ServiceError {
-// 	               panic("mock out the IsDinosaurClientExist method")
-//             },
-//             RegisterDinosaurClientInSSOFunc: func(dinosaurNamespace string, orgId string) (string, *errors.ServiceError) {
-// 	               panic("mock out the RegisterDinosaurClientInSSO method")
-//             },
-//             RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
-// 	               panic("mock out the RegisterKasFleetshardOperatorServiceAccount method")
-//             },
-//             RegisterOSDClusterClientInSSOFunc: func(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
-// 	               panic("mock out the RegisterOSDClusterClientInSSO method")
-//             },
-//         }
+// 		// make and configure a mocked KeycloakService
+// 		mockedKeycloakService := &KeycloakServiceMock{
+// 			CreateServiceAccountInternalFunc: func(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
+// 				panic("mock out the CreateServiceAccountInternal method")
+// 			},
+// 			DeRegisterClientInSSOFunc: func(dinosaurNamespace string) *errors.ServiceError {
+// 				panic("mock out the DeRegisterClientInSSO method")
+// 			},
+// 			DeRegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) *errors.ServiceError {
+// 				panic("mock out the DeRegisterKasFleetshardOperatorServiceAccount method")
+// 			},
+// 			DeleteServiceAccountInternalFunc: func(clientId string) *errors.ServiceError {
+// 				panic("mock out the DeleteServiceAccountInternal method")
+// 			},
+// 			GetConfigFunc: func() *keycloak.KeycloakConfig {
+// 				panic("mock out the GetConfig method")
+// 			},
+// 			GetDinosaurClientSecretFunc: func(clientId string) (string, *errors.ServiceError) {
+// 				panic("mock out the GetDinosaurClientSecret method")
+// 			},
+// 			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+// 				panic("mock out the GetRealmConfig method")
+// 			},
+// 			GetServiceAccountByIdFunc: func(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
+// 				panic("mock out the GetServiceAccountById method")
+// 			},
+// 			IsDinosaurClientExistFunc: func(clientId string) *errors.ServiceError {
+// 				panic("mock out the IsDinosaurClientExist method")
+// 			},
+// 			RegisterDinosaurClientInSSOFunc: func(dinosaurNamespace string, orgId string) (string, *errors.ServiceError) {
+// 				panic("mock out the RegisterDinosaurClientInSSO method")
+// 			},
+// 			RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+// 				panic("mock out the RegisterKasFleetshardOperatorServiceAccount method")
+// 			},
+// 			RegisterOSDClusterClientInSSOFunc: func(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
+// 				panic("mock out the RegisterOSDClusterClientInSSO method")
+// 			},
+// 		}
 //
-//         // use mockedKeycloakService in code that requires KeycloakService
-//         // and then make assertions.
+// 		// use mockedKeycloakService in code that requires KeycloakService
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type KeycloakServiceMock struct {
 	// CreateServiceAccountInternalFunc mocks the CreateServiceAccountInternal method.
 	CreateServiceAccountInternalFunc func(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError)

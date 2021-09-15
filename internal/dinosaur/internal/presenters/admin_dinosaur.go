@@ -1,14 +1,27 @@
 package presenters
 
 import (
+	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/account"
 )
 
-func PresentDinosaurRequestAdminEndpoint(dinosaurRequest *dbapi.DinosaurRequest) private.Dinosaur {
+func PresentDinosaurRequestAdminEndpoint(dinosaurRequest *dbapi.DinosaurRequest, accountService account.AccountService) (*private.Dinosaur, *errors.ServiceError) {
 	reference := PresentReference(dinosaurRequest.ID, dinosaurRequest)
 
-	return private.Dinosaur{
+	org, err := accountService.GetOrganization(fmt.Sprintf("external_id='%s'", dinosaurRequest.OrganisationId))
+
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "error presenting the request")
+	}
+
+	if org == nil {
+		return nil, errors.New(errors.ErrorGeneral, "unable to find an organisation for external_id '%s'", dinosaurRequest.OrganisationId)
+	}
+
+	return &private.Dinosaur{
 		Id:                     reference.Id,
 		Kind:                   reference.Kind,
 		Href:                   reference.Href,
@@ -32,13 +45,14 @@ func PresentDinosaurRequestAdminEndpoint(dinosaurRequest *dbapi.DinosaurRequest)
 		SubscriptionId:         dinosaurRequest.SubscriptionId,
 		SsoClientId:            dinosaurRequest.SsoClientID,
 		OwnerAccountId:         dinosaurRequest.OwnerAccountId,
+		AccountNumber:          org.AccountNumber,
 		QuotaType:              dinosaurRequest.QuotaType,
 		Routes:                 GetRoutesFromDinosaurRequest(dinosaurRequest),
 		RoutesCreated:          dinosaurRequest.RoutesCreated,
 		ClusterId:              dinosaurRequest.ClusterID,
 		InstanceType:           dinosaurRequest.InstanceType,
 		Namespace:              dinosaurRequest.Namespace,
-	}
+	}, nil
 }
 
 func GetRoutesFromDinosaurRequest(dinosaurRequest *dbapi.DinosaurRequest) []private.DinosaurAllOfRoutes {

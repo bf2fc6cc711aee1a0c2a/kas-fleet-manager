@@ -11,7 +11,7 @@ import (
 type Actor string
 
 const (
-	Kas       Actor = "kas"
+	Kas Actor = "kas"
 )
 
 func UseOperatorAuthorisationMiddleware(router *mux.Router, jwkValidIssuerURI string, clusterIdVar string) {

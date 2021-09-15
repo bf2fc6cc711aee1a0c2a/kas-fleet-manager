@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/account"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
@@ -18,12 +19,14 @@ import (
 
 type adminDinosaurHandler struct {
 	service        services.DinosaurService
+	accountService account.AccountService
 	providerConfig *config.ProviderConfig
 }
 
-func NewAdminDinosaurHandler(service services.DinosaurService, providerConfig *config.ProviderConfig) *adminDinosaurHandler {
+func NewAdminDinosaurHandler(service services.DinosaurService, accountService account.AccountService, providerConfig *config.ProviderConfig) *adminDinosaurHandler {
 	return &adminDinosaurHandler{
 		service:        service,
+		accountService: accountService,
 		providerConfig: providerConfig,
 	}
 }
@@ -37,7 +40,8 @@ func (h adminDinosaurHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentDinosaurRequestAdminEndpoint(dinosaurRequest), nil
+
+			return presenters.PresentDinosaurRequestAdminEndpoint(dinosaurRequest, h.accountService)
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -68,8 +72,11 @@ func (h adminDinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, dinosaurRequest := range dinosaurRequests {
-				converted := presenters.PresentDinosaurRequestAdminEndpoint(dinosaurRequest)
-				dinosaurRequestList.Items = append(dinosaurRequestList.Items, converted)
+				converted, err := presenters.PresentDinosaurRequestAdminEndpoint(dinosaurRequest, h.accountService)
+				if err != nil {
+					return nil, err
+				}
+				dinosaurRequestList.Items = append(dinosaurRequestList.Items, *converted)
 			}
 
 			return dinosaurRequestList, nil
@@ -130,7 +137,7 @@ func (h adminDinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
 					return nil, err3
 				}
 			}
-			return presenters.PresentDinosaurRequestAdminEndpoint(dinosaurRequest), nil
+			return presenters.PresentDinosaurRequestAdminEndpoint(dinosaurRequest, h.accountService)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)

@@ -3,6 +3,7 @@ package dinosaur
 import (
 	"context"
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/account"
 	"net/url"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/public"
@@ -46,7 +47,9 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	page := flags.MustGetString(FlagPage, cmd.Flags())
 	size := flags.MustGetString(FlagSize, cmd.Flags())
 	var dinosaurService services.DinosaurService
+	var accountService account.AccountService
 	env.MustResolveAll(&dinosaurService)
+	env.MustResolveAll(&accountService)
 
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
@@ -76,8 +79,11 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	}
 
 	for _, dinosaurRequest := range dinosaurList {
-		converted := presenters.PresentDinosaurRequest(dinosaurRequest)
-		dinosaurRequestList.Items = append(dinosaurRequestList.Items, converted)
+		converted, err := presenters.PresentDinosaurRequest(dinosaurRequest, accountService)
+		if err != nil {
+			glog.Fatalf("Unable to list dinosaur request: %s", err.Error())
+		}
+		dinosaurRequestList.Items = append(dinosaurRequestList.Items, *converted)
 	}
 
 	output, marshalErr := json.MarshalIndent(dinosaurRequestList, "", "    ")

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/account"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/public"
@@ -18,12 +19,14 @@ import (
 
 type dinosaurHandler struct {
 	service        services.DinosaurService
+	accountService account.AccountService
 	providerConfig *config.ProviderConfig
 }
 
-func NewDinosaurHandler(service services.DinosaurService, providerConfig *config.ProviderConfig) *dinosaurHandler {
+func NewDinosaurHandler(service services.DinosaurService, accountService account.AccountService, providerConfig *config.ProviderConfig) *dinosaurHandler {
 	return &dinosaurHandler{
 		service:        service,
+		accountService: accountService,
 		providerConfig: providerConfig,
 	}
 }
@@ -56,7 +59,7 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			return presenters.PresentDinosaurRequest(convDinosaur), nil
+			return presenters.PresentDinosaurRequest(convDinosaur, h.accountService)
 		},
 	}
 
@@ -73,7 +76,7 @@ func (h dinosaurHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentDinosaurRequest(dinosaurRequest), nil
+			return presenters.PresentDinosaurRequest(dinosaurRequest, h.accountService)
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -121,8 +124,11 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, dinosaurRequest := range dinosaurRequests {
-				converted := presenters.PresentDinosaurRequest(dinosaurRequest)
-				dinosaurRequestList.Items = append(dinosaurRequestList.Items, converted)
+				converted, err := presenters.PresentDinosaurRequest(dinosaurRequest, h.accountService)
+				if err != nil {
+					return nil, err
+				}
+				dinosaurRequestList.Items = append(dinosaurRequestList.Items, *converted)
 			}
 
 			return dinosaurRequestList, nil
@@ -154,7 +160,7 @@ func (h dinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
 					return nil, err3
 				}
 			}
-			return presenters.PresentDinosaurRequest(dinosaurRequest), nil
+			return presenters.PresentDinosaurRequest(dinosaurRequest, h.accountService)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
