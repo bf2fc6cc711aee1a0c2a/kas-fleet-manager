@@ -52,14 +52,14 @@ This lists the feature flags and their sub-configurations to enable/disable and 
     - If this is set to `ams`, quotas will be managed via OCM's accounts management service (AMS).
 
 ## Keycloak
-- **mas-sso-debug**: Enables Keycloak debug logging.
-- **mas-sso-enable-auth**: Enables Dinosaur authentication via Keycloak.
-    - `mas-sso-base-url` [Required]: The base URL of the Keycloak instance.
-    - `mas-sso-cert-file` [Optional]: File containing tls cert for the mas-sso. Useful when mas-sso uses a self-signed certificate. If the provided file does not exist, is the empty string or the provided file content is empty then no custom MAS SSO certificate is used (default `secrets/keycloak-service.crt`).
-    - `mas-sso-client-id-file` [Required]: The path to the file containing a Keycloak account client ID that has access to the Dinosaur service accounts realm (default: `'secrets/keycloak-service.clientId'`).
-    - `mas-sso-client-secret-file` [Required]: The path to the file containing a Keycloak account client secret that has access to the Dinosaur service accounts realm (default: `'secrets/keycloak-service.clientSecret'`).
-    - `mas-sso-realm` [Required]: The Keycloak realm to be used for the Dinosaur service accounts.
-- **mas-sso-insecure**: Disables Keycloak TLS verification.
+- **sso-debug**: Enables Keycloak debug logging.
+- **sso-enable-auth**: Enables Dinosaur authentication via Keycloak.
+    - `sso-base-url` [Required]: The base URL of the Keycloak instance.
+    - `sso-cert-file` [Optional]: File containing tls cert for the sso. Useful when sso uses a self-signed certificate. If the provided file does not exist, is the empty string or the provided file content is empty then no custom SSO certificate is used (default `secrets/keycloak-service.crt`).
+    - `sso-client-id-file` [Required]: The path to the file containing a Keycloak account client ID that has access to the Dinosaur service accounts realm (default: `'secrets/keycloak-service.clientId'`).
+    - `sso-client-secret-file` [Required]: The path to the file containing a Keycloak account client secret that has access to the Dinosaur service accounts realm (default: `'secrets/keycloak-service.clientSecret'`).
+    - `sso-realm` [Required]: The Keycloak realm to be used for the Dinosaur service accounts.
+- **sso-insecure**: Disables Keycloak TLS verification.
 
 ## Metrics Server
 - **enable-metrics-https**: Enables HTTPS for the metrics server.

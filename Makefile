@@ -44,8 +44,8 @@ DOCKER_CONFIG="${PWD}/.docker"
 ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
-MAS_SSO_BASE_URL ?="https://identity.api.stage.openshift.com"
-MAS_SSO_REALM ?="rhoas"
+SSO_BASE_URL ?="https://identity.api.stage.openshift.com"
+SSO_REALM ?="rhoas" # update your realm here
 VAULT_KIND ?= tmp
 
 GO := go
@@ -467,10 +467,10 @@ aws/setup:
 
 # Setup for mas sso credentials
 keycloak/setup:
-	@echo -n "$(MAS_SSO_CLIENT_ID)" > secrets/keycloak-service.clientId
-	@echo -n "$(MAS_SSO_CLIENT_SECRET)" > secrets/keycloak-service.clientSecret
-	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_ID)" > secrets/osd-idp-keycloak-service.clientId
-	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
+	@echo -n "$(SSO_CLIENT_ID)" > secrets/keycloak-service.clientId
+	@echo -n "$(SSO_CLIENT_SECRET)" > secrets/keycloak-service.clientSecret
+	@echo -n "$(OSD_IDP_SSO_CLIENT_ID)" > secrets/osd-idp-keycloak-service.clientId
+	@echo -n "$(OSD_IDP_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
 .PHONY:keycloak/setup
 
 # Setup for the dinosaur broker certificate
@@ -517,9 +517,9 @@ deploy: IMAGE_REGISTRY ?= $(internal_image_registry)
 deploy: IMAGE_REPOSITORY ?= $(image_repository)
 deploy: IMAGE_TAG ?= $(image_tag)
 deploy: OCM_URL ?= "https://api.stage.openshift.com"
-deploy: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
-deploy: MAS_SSO_REALM ?= "rhoas"
-deploy: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
+deploy: SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
+deploy: SSO_REALM ?= "rhoas"
+deploy: OSD_IDP_SSO_REALM ?= "rhoas-kafka-sre"
 deploy: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
 deploy: ALLOW_EVALUATOR_INSTANCE ?= "true"
 deploy: QUOTA_TYPE ?= "quota-management-list"
@@ -534,9 +534,9 @@ deploy: deploy/db
 		-p AWS_ACCESS_KEY="$(AWS_ACCESS_KEY)" \
 		-p AWS_ACCOUNT_ID="$(AWS_ACCOUNT_ID)" \
 		-p AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
-		-p MAS_SSO_CLIENT_ID="${MAS_SSO_CLIENT_ID}" \
-		-p MAS_SSO_CLIENT_SECRET="${MAS_SSO_CLIENT_SECRET}" \
-		-p MAS_SSO_CRT="${MAS_SSO_CRT}" \
+		-p SSO_CLIENT_ID="${SSO_CLIENT_ID}" \
+		-p SSO_CLIENT_SECRET="${SSO_CLIENT_SECRET}" \
+		-p SSO_CRT="${SSO_CRT}" \
 		-p DEX_SECRET="${DEX_SECRET}" \
 		-p DEX_PASSWORD="${DEX_PASSWORD}" \
 		-p ROUTE53_ACCESS_KEY="$(ROUTE53_ACCESS_KEY)" \
@@ -562,9 +562,9 @@ deploy: deploy/db
 		-p OCM_MOCK_MODE=$(OCM_MOCK_MODE) \
 		-p OCM_URL="$(OCM_URL)" \
 		-p JWKS_URL="$(JWKS_URL)" \
-		-p MAS_SSO_BASE_URL="$(MAS_SSO_BASE_URL)" \
-		-p MAS_SSO_REALM="$(MAS_SSO_REALM)" \
-		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
+		-p SSO_BASE_URL="$(SSO_BASE_URL)" \
+		-p SSO_REALM="$(SSO_REALM)" \
+		-p OSD_IDP_SSO_REALM="$(OSD_IDP_SSO_REALM)" \
 		-p VAULT_KIND=$(VAULT_KIND) \
 		-p SERVICE_PUBLIC_HOST_URL="$(SERVICE_PUBLIC_HOST_URL)" \
 		-p OBSERVATORIUM_AUTH_TYPE="${OBSERVATORIUM_AUTH_TYPE}" \

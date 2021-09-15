@@ -43,15 +43,15 @@ env:
   GORM_HOST: 127.0.0.1
   GORM_PORT: 5432
   GORM_NAME: serviceapitests
-  GORM_USERNAME: kas_fleet_manager
+  GORM_USERNAME: fleet_manager
   GORM_PASSWORD: foobar-bizz-buzz
   GORM_SSLMODE: disable
   GORM_DEBUG: false
-  # Dummy MAS SSO variables
-  MAS_SSO_CLIENT_ID: ${{ secrets.MAS_SSO_CLIENT_ID }}
-  MAS_SSO_CLIENT_SECRET: ${{ secrets.MAS_SSO_CLIENT_SECRET }}
-  OSD_IDP_MAS_SSO_CLIENT_ID: ${{ secrets.OSD_IDP_MAS_SSO_CLIENT_ID }}
-  OSD_IDP_MAS_SSO_CLIENT_SECRET: ${{ secrets.OSD_IDP_MAS_SSO_CLIENT_SECRET }}
+  # Dummy SSO variables
+  SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
+  SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
+  OSD_IDP_SSO_CLIENT_ID: ${{ secrets.OSD_IDP_SSO_CLIENT_ID }}
+  OSD_IDP_SSO_CLIENT_SECRET: ${{ secrets.OSD_IDP_SSO_CLIENT_SECRET }}
   # Dummy AWS credentials 
   AWS_ACCOUNT_ID: aws_accountid
   AWS_ACCESS_KEY: aws_accesskey
@@ -74,7 +74,7 @@ jobs:
         image: postgres:11
         env:
           POSTGRES_PASSWORD: foobar-bizz-buzz
-          POSTGRES_USER: kas_fleet_manager
+          POSTGRES_USER: fleet_manager
           POSTGRES_DB: serviceapitests
         ports:
           - 5432:5432

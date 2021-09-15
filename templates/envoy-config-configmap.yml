@@ -168,7 +168,7 @@ data:
                       - actions:
                         - generic_key:
                             descriptor_key: path
-                            descriptor_value: kas_fleet_manager_v1
+                            descriptor_value: fleet_manager_v1
 
                   # This is an example of how to define a rate limit for a
                   # specific path.
@@ -197,7 +197,7 @@ data:
               - name: envoy.filters.http.ratelimit
                 typed_config:
                   "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
-                  domain: development:kas_fleet_manager # This changes by environment
+                  domain: development:fleet_manager # This changes by environment
                   failure_mode_deny: false
                   timeout: 0.05s
                   rate_limit_service:
