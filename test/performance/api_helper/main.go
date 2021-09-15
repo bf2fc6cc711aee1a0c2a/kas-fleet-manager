@@ -22,7 +22,7 @@ var (
 )
 
 const (
-	dinosaurIdsFilemane = "/mnt/api/dinosaurs.txt"
+	dinosaurIdsFilename = "/mnt/api/dinosaurs.txt"
 )
 
 type configStruct struct {
@@ -183,7 +183,7 @@ func writeDinosaurId(w http.ResponseWriter, r *http.Request) {
 
 	configString := fmt.Sprintf("%s\n", c.DinosaurId)
 
-	writeToFile(w, dinosaurIdsFilemane, c.DinosaurId, configString)
+	writeToFile(w, dinosaurIdsFilename, c.DinosaurId, configString)
 }
 
 func returnError(w http.ResponseWriter, err string, statusCode int) {

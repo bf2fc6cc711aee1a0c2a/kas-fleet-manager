@@ -2,8 +2,8 @@
 REGISTRY=quay.io/generic
 IMAGE_LOCUST=fleet-manager-locust
 TAG_LOCUST=latest
-IMAGE_TOKEN_REFRESH=fleet-manager-api-helper
-TAG_TOKEN_REFRESH=latest
+IMAGE_API_HELPER=fleet-manager-api-helper
+TAG_API_HELPER=latest
 IMAGE_RESULTS=fleet-manager-perf-results
 TAG_RESULTS=latest
 
@@ -61,11 +61,11 @@ test/performance/process/csv:
 .PHONY: test/performance/image/build
 test/performance/image/build:
 	docker build -t ${REGISTRY}/${IMAGE_LOCUST}:${TAG_LOCUST} -f $(PWD)/test/performance/Dockerfile .
-	docker build -t ${REGISTRY}/${IMAGE_TOKEN_REFRESH}:${TAG_TOKEN_REFRESH} -f $(PWD)/test/performance/api_helper/Dockerfile .
+	docker build -t ${REGISTRY}/${IMAGE_API_HELPER}:${TAG_API_HELPER} -f $(PWD)/test/performance/api_helper/Dockerfile .
 	docker build -t ${REGISTRY}/${IMAGE_RESULTS}:${TAG_RESULTS} -f $(PWD)/test/performance/scripts/Dockerfile .
 
 .PHONY: test/performance/image/push
 test/performance/image/push:
 	docker push ${REGISTRY}/${IMAGE_LOCUST}:${TAG_LOCUST}
-	docker push ${REGISTRY}/${IMAGE_TOKEN_REFRESH}:${TAG_TOKEN_REFRESH}
+	docker push ${REGISTRY}/${IMAGE_API_HELPER}:${TAG_API_HELPER}
 	docker push ${REGISTRY}/${IMAGE_RESULTS}:${TAG_RESULTS}
