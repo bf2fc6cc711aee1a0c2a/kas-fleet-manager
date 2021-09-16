@@ -31,7 +31,7 @@ func stripSecretReferences(resource *dbapi.Connector, ct *dbapi.ConnectorType) *
 			return nil
 		})
 		if err != nil {
-			return errors.GeneralError("could not remove connector secrets")
+			return errors.GeneralError("could not remove connector secrets: %v", err.Error())
 		}
 		resource.ConnectorSpec = updated
 	}
@@ -44,7 +44,7 @@ func moveSecretsToVault(resource *dbapi.Connector, ct *dbapi.ConnectorType, vaul
 	if resource.Kafka.ClientSecret != "" {
 		keyId := api.NewID()
 		if err := vault.SetSecretString(keyId, resource.Kafka.ClientSecret, "/v1/connector/"+resource.ID); err != nil {
-			return errors.GeneralError("could not store kafka client secret in the vault")
+			return errors.GeneralError("could not store kafka client secret in the vault: %v", err.Error())
 		}
 		resource.Kafka.ClientSecret = ""
 		resource.Kafka.ClientSecretRef = keyId
@@ -81,7 +81,7 @@ func moveSecretsToVault(resource *dbapi.Connector, ct *dbapi.ConnectorType, vaul
 			case *errors.ServiceError:
 				return err
 			default:
-				return errors.GeneralError("could not store connectors secrets in the vault")
+				return errors.GeneralError("could not store connectors secrets in the vault: %v", err.Error())
 			}
 		}
 		resource.ConnectorSpec = updated
@@ -117,7 +117,7 @@ func getSecretRefs(resource *dbapi.Connector, ct *dbapi.ConnectorType) (result [
 			case *errors.ServiceError:
 				return result, err
 			default:
-				return result, errors.GeneralError("could not store connectors secrets in the vault")
+				return result, errors.GeneralError("could not store connectors secrets in the vault: %v", err.Error())
 			}
 		}
 	}
