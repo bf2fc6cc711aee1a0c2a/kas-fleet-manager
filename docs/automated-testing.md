@@ -227,3 +227,7 @@ client := test.NewAdminPrivateAPIClient(h)
 
 ### Testing privileged permissions
 Some endpoints will act differently depending on privileges of the entity calling them, e.g. `org_admin` can have CRUD access to resources within an organisation not owned by them, while regular users can usually only access their own resources. To find out more about various claims used by the kas-fleet-manager endpoints, go to [this document](../docs/jwt-claims.md)
+
+### Avoid setting up Kafka_SRE Identity Provider for Dataplane clusters
+
+The KafkaSRE identity provider is automatically setup for each cluster in `cluster_provisioned` state and it is reconciled every time for all the clusters in `ready` state. This step is not done if the cluster IDP has already been configured i.e the `identity_provider_id` column is set. When it is not required to set up the IDP, you just have to make sure that the dataplane cluster in under test has the `IdentityProviderID` field / `identity_provider_id` column set to a dummy value.  

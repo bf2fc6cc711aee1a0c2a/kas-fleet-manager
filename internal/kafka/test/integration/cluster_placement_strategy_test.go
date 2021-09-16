@@ -1,10 +1,11 @@
 package integration
 
 import (
+	"testing"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
@@ -71,6 +72,21 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 
 	dataplaneClusterConfig := DataplaneClusterConfig(h)
 
+	standaloneCluster := &api.Cluster{
+		ClusterID:          clusterWithKafkaID,
+		Region:             clusterCriteria.Region,
+		MultiAZ:            clusterCriteria.MultiAZ,
+		CloudProvider:      clusterCriteria.Provider,
+		ProviderType:       api.ClusterProviderStandalone,
+		IdentityProviderID: "some-identity-provider-id",
+		ClusterDNS:         clusterDns,
+		Status:             api.ClusterProvisioning,
+	}
+
+	if err := db.Save(standaloneCluster).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+	}
+
 	dataplaneClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 		config.ManualCluster{
 			ClusterId:          "test03",
@@ -82,21 +98,24 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		},
 		// this is a dummy cluster which will be auto created and should not be deleted because it has kafka in it
 		config.ManualCluster{
-			ClusterId:          clusterWithKafkaID,
+			ClusterId:          standaloneCluster.ClusterID,
 			KafkaInstanceLimit: 1,
-			Region:             clusterCriteria.Region,
-			MultiAZ:            clusterCriteria.MultiAZ,
-			CloudProvider:      clusterCriteria.Provider,
+			Region:             standaloneCluster.Region,
+			MultiAZ:            standaloneCluster.MultiAZ,
+			CloudProvider:      standaloneCluster.CloudProvider,
 			Schedulable:        true,
-			ProviderType:       api.ClusterProviderStandalone,
-			ClusterDNS:         clusterDns,
-			Status:             api.ClusterProvisioning, // standalone cluster needs to start at provisioning state.
+			ProviderType:       standaloneCluster.ProviderType,
+			ClusterDNS:         standaloneCluster.ClusterDNS,
+			Status:             standaloneCluster.Status, // standalone cluster needs to start at provisioning state.
 		},
 	})
 
 	// Ensure both clusters in the config file have been created
 	pollErr := common.WaitForClustersMatchCriteriaToBeGivenCount(test.TestServices.DBFactory, &test.TestServices.ClusterService, &clusterCriteria, 2)
+	// add identity provider id to avoid configuring the Kafka_SRE IDP
+	err := db.Exec("UPDATE clusters set identity_provider_id = 'some-identity-provider-id'").Error
 	Expect(pollErr).NotTo(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 
 	// Ensure that cluster dns is populated with given value
 	cluster, err := test.TestServices.ClusterService.FindClusterByID(clusterWithKafkaID)
@@ -127,25 +146,28 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	//*********************************************************************
 	//Test kafka instance creation and OSD cluster placement
 	//*********************************************************************
+	// add identity provider id for all of the clusters to avoid configuring the KAFKA_SRE IDP as it is not needed
+	err = db.Exec("UPDATE clusters set identity_provider_id = 'some-identity-provider-id'").Error
+	Expect(err).NotTo(HaveOccurred())
+
 	// Need to mark the clusters to be ready so that placement can actually happen
 	updateErr := test.TestServices.ClusterService.UpdateMultiClusterStatus([]string{"test01", "test02", "test03"}, api.ClusterReady)
 	Expect(updateErr).NotTo(HaveOccurred())
-	kafkas := []*dbapi.KafkaRequest{
-		{MultiAZ: true,
-			Region:        "us-east-1",
-			CloudProvider: "aws",
-			Owner:         "dummyuser1",
-			Name:          "dummy-kafka-1",
-			Status:        constants2.KafkaRequestStatusAccepted.String(),
-		},
-		{MultiAZ: true,
-			Region:        "us-east-1",
-			CloudProvider: "aws",
-			Owner:         "dummyuser2",
-			Name:          "dummy-kafka-2",
-			Status:        constants2.KafkaRequestStatusAccepted.String(),
-		},
-	}
+	kafkas := []*dbapi.KafkaRequest{{
+		MultiAZ:       true,
+		Region:        "us-east-1",
+		CloudProvider: "aws",
+		Owner:         "dummyuser1",
+		Name:          "dummy-kafka-1",
+		Status:        constants2.KafkaRequestStatusAccepted.String(),
+	}, {
+		MultiAZ:       true,
+		Region:        "us-east-1",
+		CloudProvider: "aws",
+		Owner:         "dummyuser2",
+		Name:          "dummy-kafka-2",
+		Status:        constants2.KafkaRequestStatusAccepted.String(),
+	}}
 
 	errK := test.TestServices.KafkaService.RegisterKafkaJob(kafkas[0])
 	if errK != nil {
