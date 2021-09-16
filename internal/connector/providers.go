@@ -1,6 +1,7 @@
 package connector
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/cmd/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/handlers"
@@ -21,6 +22,7 @@ func ConfigProviders(kafkaEnabled bool) di.Option {
 		di.Provide(config.NewConnectorsConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(environments2.Func(serviceProviders)),
 		di.Provide(migrations.New),
+		di.Provide(vault.NewVaultCommand),
 	)
 
 	// If we are not running in the kas-fleet-manager.. we need to inject more types into the DI container
