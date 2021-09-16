@@ -9,7 +9,7 @@ The Fleet-manager API is a critical component in any service ecosystem, it is ex
 ## Implementation details
 There are two SLIs backing these two SLOs. Both use the same metric with a different request duration value. We use the `api_inbound_request_duration_bucket` histogram metric as the base of this SLO. 
 
-Since this metric is shared with the OCM services, it needs labels for fleet-manager to filter the results to fleet-manager, `job="fleet-manager-metrics",namespace="managed-services-production"`. The implementation is also only including successsful responses, so the code label is added `,code!~"5.."`.
+Since this metric is shared with other managed services, it needs labels for the fleet-manager to filter the results to fleet-manager, `job="fleet-manager-metrics",namespace="managed-services-production"`. The implementation is also only including successsful responses, so the code label is added `,code!~"5.."`.
 
 An appropriate SLI implementation is the count of successful API HTTP requests within a certain duration divided by the count of all of API HTTP requests.
 
