@@ -234,7 +234,6 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 	if !isAllowed { //4xx over requesters' limit
 		return nil, errors.Forbidden("Max allowed number:%d of service accounts for user:%s has reached", kc.GetConfig().MaxAllowedServiceAccounts, owner)
 	}
-
 	return kc.CreateServiceAccountInternal(CompleteServiceAccountRequest{
 		Owner:          owner,
 		OwnerAccountId: ownerAccountId,
