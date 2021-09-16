@@ -51,7 +51,7 @@ type ClientRepresentation struct {
 	Name                         string
 	ClientID                     string
 	ServiceAccountsEnabled       bool
-	Secret                       string
+	Secret                       *string
 	StandardFlowEnabled          bool
 	Attributes                   map[string]string
 	AuthorizationServicesEnabled bool
@@ -85,6 +85,9 @@ func NewClient(config *KeycloakConfig, realmConfig *KeycloakRealmConfig) *kcClie
 }
 
 func (kc *kcClient) ClientConfig(client ClientRepresentation) gocloak.Client {
+	protocol := "openid-connect"
+	publicClient := false
+	directAccess := false
 	return gocloak.Client{
 		Name:                         &client.Name,
 		ClientID:                     &client.ClientID,
@@ -95,6 +98,9 @@ func (kc *kcClient) ClientConfig(client ClientRepresentation) gocloak.Client {
 		ProtocolMappers:              &client.ProtocolMappers,
 		Description:                  &client.Description,
 		RedirectURIs:                 client.RedirectURIs,
+		Protocol:                     &protocol,
+		PublicClient:                 &publicClient,
+		DirectAccessGrantsEnabled:    &directAccess,
 	}
 }
 
@@ -182,6 +188,9 @@ func (kc *kcClient) GetClientSecret(internalClientId string, accessToken string)
 	resp, err := kc.kcClient.GetClientSecret(kc.ctx, accessToken, kc.realmConfig.Realm, internalClientId)
 	if err != nil {
 		return "", err
+	}
+	if resp.Value == nil {
+		return "", errors.Errorf("failed to retrieve credentials")
 	}
 	value := *resp.Value
 	return value, err
