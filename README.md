@@ -14,21 +14,29 @@ For more information on how the service works, see [the implementation documenta
 Apart from the installed software prerequisites, here are other ones required for running fleet-manager due to its interaction with external services. All of the below are required to run fleet-manager locally.
 
 ### User Account & Organization Setup
-1. To onboard a fleet-manager to [app-interface](https://gitlab.cee.redhat.com/service/app-interface) a new role will be required for resources (e.g. Syncsets, etc) creation (see [example](https://gitlab.cee.redhat.com/service/uhc-account-manager/-/blob/master/pkg/api/roles/managed_kafka_service.go))
-2. Once the role is created, users required to have this role need to get it assigned to their OCM account: [example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/812).
-3. Very likely your organization will need to have quota for installing Add-ons specific for your fleet-manager. See an example of Add-on quotas [here](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml) (find your organization by its `external_id` beneath [ocm-resources/uhc-stage/orgs](https://gitlab.cee.redhat.com/service/ocm-resources/-/tree/master/data/uhc-stage/orgs)).
+1. Create new organization and users being members of this organization:
+* Make sure that you are logged out from any existing `access.redhat.com` sessions. Use the `register new organization` flow to create an organization
+* Create new users using user management UI. It is recommended to append or prefix usernames of your team members, e.g. `dffrench_control_plane` for `dffrench` username being a member of `Control Plane` team.
+
+2. To onboard a fleet-manager to [app-interface](https://gitlab.cee.redhat.com/service/app-interface) a new role will be required for resources (e.g. Syncsets, etc) creation (see [example](https://gitlab.cee.redhat.com/service/uhc-account-manager/-/blob/master/pkg/api/roles/managed_kafka_service.go))
+3. Once the role is created, users required to have this role need to get it assigned to their OCM account: [example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/812).
+4. Very likely your organization will need to have quota for installing Add-ons specific for your fleet-manager. See an example of Add-on quotas [here](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml) (find your organization by its `external_id` beneath [ocm-resources/uhc-stage/orgs](https://gitlab.cee.redhat.com/service/ocm-resources/-/tree/master/data/uhc-stage/orgs)).
 
 ### Vault
 For automation (fleet-manager deployments and app-interface pipelines) it is required to use [vault](https://gitlab.cee.redhat.com/service/app-interface#manage-secrets-via-app-interface-openshiftnamespace-1yml-using-vault) for secrets management
 
 ### AWS
-AWS is a default cloud provider for services (like fleet-manager), therefore it is required to have an AWS account, and an IAM role that will have all required privileges to create all resources required by a fleet manager. It is important to make sure that the AWS limits are sufficient enough to create as many resources as required by the fleet manager.
+AWS account is required for provisioning development OSD clusters.
 
 ### SSO authentication
-In order to use keycloak authentication, either new SSO instance has to be created or an existing one can be used. See [feature-flags](docs/feature-flags.md#Keycloak) for more info about the authentication.
+Depending on whether interacting with public or private endpoints, the authentication should be set up as follows:
+* sso.redhat.com for public endpoints
+* MAS-SSO for private endpoints (see this [doc](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/docs/mas-sso/service-architecture/service-architecture.md) to understand how kas-fleet-manager is using MAS-SSO for authentication)
 
-### OCM service account
-To avail of all required OCM services the fleet-manager depends on, it is required to create an OCM service account that will be used for the communication between the fleet-manager and OCM.
+See [feature-flags](docs/feature-flags.md#Keycloak) to understand flags used for authentication.
+
+### sso.redhat.com service account
+To avail of all required OCM services the fleet-manager depends on, it is required to create an sso.redhat.com service account that will be used for the communication between the fleet-manager and OCM.
 
 ### AMS SKU
 To prevent from quota assignments required for certain fleet-manager resources creation being accessible externally, fake SKUs might need to be created. The benefit of this recommended approach is that the team members of a fleet-manager can still create quota-controlled resources via OCM, while they aren't yet available publicly. An example of such fake SKU is `FakeMarketplaceKafkaCluster` in [this](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml) config file
