@@ -1,0 +1,25 @@
+{
+  "max_weight": 20,
+  "endpoints": [
+    {
+      "path": "/dinosaurs",
+      "name": "/dinosaurs",
+      "weight": 5
+    },
+    {
+      "path": "/dinosaurs/12345qwert67890yuiop",
+      "name": "/dinosaurs/[id]",
+      "weight": 10
+    },
+    {
+      "path": "/dinosaurs/12345qwert67890yuiop/metrics/query_range",
+      "name": "/dinosaurs/[id]/metrics/query_range",
+      "weight": 15
+    },
+    {
+      "path": "/dinosaurs/12345qwert67890yuiop/metrics/query",
+      "name": "/dinosaurs/[id]/metrics/query",
+      "weight": 20
+    }
+  ]
+}

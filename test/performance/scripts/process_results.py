@@ -46,7 +46,7 @@ with open(csv_file_name) as csvRaw:
     for schema_endpoint in schema_data['endpoints']:
       if result['name'] in schema_endpoint and result['type'] in schema_endpoint[result['name']]:
         for k,v in result.items():
-          if k != 'name' and k != 'type':
+          if k != 'name' and k != 'type' and v != "undefined":
             schema_endpoint[result['name']][result['type']][k] = float(v)
 
 # persist processed JSON results

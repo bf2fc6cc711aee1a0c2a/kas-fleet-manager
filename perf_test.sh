@@ -4,7 +4,7 @@ declare -x START
 declare -x STOP
 
 REPORTS_DIR="test/performance/reports/"
-FILES=( "test/performance/token_api/dinosaurs.txt" "test/performance/token_api/service_accounts.txt" "test/performance/token_api/config.txt")
+FILES=( "test/performance/api_helper/dinosaurs.txt")
 
 # check if all required env vars are provided. IF not - exit immediately
 check_params () {
@@ -32,6 +32,7 @@ check_params () {
       -z "${HORREUM_PASSWORD}" || \
       -z "${RESULTS_FILENAME}" || \
       -z "${QUAY_USER}" || \
+      -z "${PERF_TEST_USE_CONFIG_FILE_DISTRIBUTION}" || \
       -z "${QUAY_TOKEN}" ]] &>/dev/null; then
 
     echo "Required env vars not provided. Exiting...".
