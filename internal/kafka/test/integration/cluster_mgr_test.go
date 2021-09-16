@@ -2,10 +2,11 @@ package integration
 
 import (
 	"fmt"
+	"testing"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -44,11 +45,13 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	// create a cluster - this will need to be done manually until cluster creation is implemented in the cluster manager reconcile
 	clusterRegisterError := test.TestServices.ClusterService.RegisterClusterJob(&api.Cluster{
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Region:        mocks.MockCluster.Region().ID(),
-		MultiAZ:       testMultiAZ,
-		Status:        api.ClusterAccepted,
+		CloudProvider:      mocks.MockCluster.CloudProvider().ID(),
+		Region:             mocks.MockCluster.Region().ID(),
+		MultiAZ:            testMultiAZ,
+		Status:             api.ClusterAccepted,
+		IdentityProviderID: "some-identity-provider-id",
 	})
+
 	if clusterRegisterError != nil {
 		t.Fatalf("Failed to register cluster: %s", clusterRegisterError.Error())
 	}

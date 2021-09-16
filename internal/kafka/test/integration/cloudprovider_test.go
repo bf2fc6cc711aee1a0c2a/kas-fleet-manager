@@ -1,9 +1,10 @@
 package integration
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"net/http"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -19,20 +20,22 @@ const usEast1Region = "us-east-1"
 
 var dummyClusters = []*api.Cluster{
 	{
-		ClusterID:     api.NewID(),
-		MultiAZ:       true,
-		Region:        afEast1Region,
-		CloudProvider: gcp,
-		Status:        api.ClusterReady,
-		ProviderType:  api.ClusterProviderStandalone,
+		ClusterID:          api.NewID(),
+		MultiAZ:            true,
+		Region:             afEast1Region,
+		CloudProvider:      gcp,
+		Status:             api.ClusterReady,
+		ProviderType:       api.ClusterProviderStandalone,
+		IdentityProviderID: "some-identity-provider-id",
 	},
 	{
-		ClusterID:     api.NewID(),
-		MultiAZ:       true,
-		Region:        usEast1Region,
-		CloudProvider: aws,
-		Status:        api.ClusterReady,
-		ProviderType:  api.ClusterProviderOCM,
+		ClusterID:          api.NewID(),
+		MultiAZ:            true,
+		Region:             usEast1Region,
+		CloudProvider:      aws,
+		Status:             api.ClusterReady,
+		ProviderType:       api.ClusterProviderOCM,
+		IdentityProviderID: "some-identity-provider-id",
 	},
 }
 

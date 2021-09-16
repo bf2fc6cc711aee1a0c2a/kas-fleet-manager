@@ -1,9 +1,10 @@
 package integration
 
 import (
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
-	"testing"
 
 	api "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -24,9 +25,10 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 	defer teardown()
 
 	cluster, err := test.TestServices.ClusterService.Create(&api.Cluster{
-		CloudProvider: "aws",
-		Region:        "us-east-1",
-		MultiAZ:       true,
+		CloudProvider:      "aws",
+		Region:             "us-east-1",
+		MultiAZ:            true,
+		IdentityProviderID: "some-identity-provider-id",
 	})
 	Expect(err).To(HaveOccurred())
 	Expect(cluster).To(BeNil())
