@@ -1,3 +1,3 @@
 FROM python
 
-ADD ../ /app
+# ADD ../ /app
