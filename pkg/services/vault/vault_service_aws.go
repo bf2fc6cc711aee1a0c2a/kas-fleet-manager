@@ -89,7 +89,7 @@ func (k *awsVaultService) ForEachSecret(f func(name string, owningResource strin
 				return false
 			}
 		}
-		return false
+		return true
 	})
 	if err != nil {
 		return err
