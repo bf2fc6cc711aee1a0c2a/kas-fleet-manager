@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -40,6 +41,7 @@ type options struct {
 	Keycloak              coreServices.KafkaKeycloakService
 	DataPlaneCluster      services.DataPlaneClusterService
 	DataPlaneKafkaService services.DataPlaneKafkaService
+	AccountService        account.AccountService
 	DB                    *db.ConnectionFactory
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
@@ -175,7 +177,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, auth.Kas, s.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI, "id")
 
-	adminKafkaHandler := handlers.NewAdminKafkaHandler(s.Kafka, s.ProviderConfig)
+	adminKafkaHandler := handlers.NewAdminKafkaHandler(s.Kafka, s.AccountService, s.ProviderConfig)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 	rolesMapping := map[string][]string{
 		http.MethodGet:    {auth.KasFleetManagerAdminReadRole, auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},
