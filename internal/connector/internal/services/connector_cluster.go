@@ -521,7 +521,7 @@ func getSecretsFromVaultAsBase64(resource *dbapi.Connector, cts ConnectorTypesSe
 	if resource.Kafka.ClientSecretRef != "" {
 		v, err := vault.GetSecretString(resource.Kafka.ClientSecretRef)
 		if err != nil {
-			return errors.GeneralError("could not get kafka client secrets from the vault")
+			return errors.GeneralError("could not get kafka client secrets from the vault: %v", err.Error())
 		}
 		encoded := base64.StdEncoding.EncodeToString([]byte(v))
 		resource.Kafka.ClientSecret = encoded
@@ -559,7 +559,7 @@ func getSecretsFromVaultAsBase64(resource *dbapi.Connector, cts ConnectorTypesSe
 			return nil
 		})
 		if err != nil {
-			return errors.GeneralError("could not get connectors secrets from the vault")
+			return errors.GeneralError("could not get connectors secrets from the vault: %v", err.Error())
 		}
 		resource.ConnectorSpec = updated
 	}
