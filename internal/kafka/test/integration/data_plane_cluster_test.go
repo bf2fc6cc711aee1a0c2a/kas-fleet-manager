@@ -518,6 +518,12 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterFull))
 
+	var kasFleetshardConfig *config.KasFleetshardConfig
+	h.Env.MustResolve(&kasFleetshardConfig)
+
+	// enable provisioning of kas-fleetshard-operator to make sure that there are no errors when doing so
+	kasFleetshardConfig.EnableProvisionOfKasFleetshardOperator = true
+
 	// Wait until the new cluster is created in the DB
 	Eventually(func() int64 {
 		var count int64
@@ -558,6 +564,8 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 
 	Expect(err).ToNot(HaveOccurred())
 
+	// disable provisioning of kas-fleet-shard operator
+	kasFleetshardConfig.EnableProvisionOfKasFleetshardOperator = false
 	// We force status to 'ready' at DB level to ensure no cluster is recreated
 	// again when deleting the new cluster
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("status", api.ClusterReady).Error
