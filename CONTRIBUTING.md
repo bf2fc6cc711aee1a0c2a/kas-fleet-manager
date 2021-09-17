@@ -59,7 +59,7 @@ Set the following configuration in your **Launch.json** file.
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Kas Fleet Manager API",
+            "name": "Fleet Manager API",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -91,7 +91,7 @@ make openapi/generate
 See the [adding-a-new-endpoint](./docs/adding-a-new-endpoint.md) documentation.
 
 ## Adding New Serve Command Flags
-See the [Adding Flags to KAS Fleet Manager](./docs/adding-new-flags.md) documentation for more information.
+See the [Adding Flags to Fleet Manager](./docs/adding-new-flags.md) documentation for more information.
 
 ## Testing
 See the [automated testing](./docs/automated-testing.md) documentation.
