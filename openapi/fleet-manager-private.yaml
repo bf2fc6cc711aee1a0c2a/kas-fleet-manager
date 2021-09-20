@@ -27,7 +27,7 @@ paths:
       tags:
         - Agent Clusters
       parameters:
-        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/id"
       requestBody:
         description: Data plane cluster status update data
         content:
@@ -67,7 +67,7 @@ paths:
       tags:
         - Agent Clusters
       parameters:
-        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/id"
       requestBody:
         description: Pineapple clusters status update data
         content:
@@ -107,7 +107,7 @@ paths:
       tags:
         - Agent Clusters
       parameters:
-        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/id"
       responses:
         '200':
           description: The list of the ManagedPineapple CRs for the specified data plane cluster
@@ -144,7 +144,7 @@ paths:
       tags:
         - Agent Clusters
       parameters:
-        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/id"
       responses:
         '200':
           description: The ManagedPineappleAgent CR Spec
@@ -522,6 +522,15 @@ components:
         object:
           type: object
           nullable: true
+
+  parameters:
+    id:
+      name: id
+      description: The ID the data plane cluster
+      schema:
+        type: string
+      in: path
+      required: true
 
   securitySchemes:
     Bearer:

@@ -21,12 +21,14 @@ paths:
     put:
       operationId: updateAgentClusterStatus
       parameters:
-      - description: The ID of record
+      - description: The ID the data plane cluster
+        explode: false
         in: path
         name: id
         required: true
         schema:
           type: string
+        style: simple
       requestBody:
         content:
           application/json:
@@ -64,12 +66,14 @@ paths:
     put:
       operationId: updatePineappleClusterStatus
       parameters:
-      - description: The ID of record
+      - description: The ID the data plane cluster
+        explode: false
         in: path
         name: id
         required: true
         schema:
           type: string
+        style: simple
       requestBody:
         content:
           application/json:
@@ -107,12 +111,14 @@ paths:
     get:
       operationId: getPineapples
       parameters:
-      - description: The ID of record
+      - description: The ID the data plane cluster
+        explode: false
         in: path
         name: id
         required: true
         schema:
           type: string
+        style: simple
       responses:
         "200":
           content:
@@ -149,12 +155,14 @@ paths:
     get:
       operationId: getPineappleAgent
       parameters:
-      - description: The ID of record
+      - description: The ID the data plane cluster
+        explode: false
         in: path
         name: id
         required: true
         schema:
           type: string
+        style: simple
       responses:
         "200":
           content:
@@ -243,6 +251,16 @@ components:
         href: /api/dinosaurs_mgmt/v1/errors/7
         code: DINOSAURS-MGMT-7
         reason: The requested resource doesn't exist
+  parameters:
+    id:
+      description: The ID the data plane cluster
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
   schemas:
     ListReference:
       properties:

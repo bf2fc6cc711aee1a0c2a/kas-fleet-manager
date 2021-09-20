@@ -28,7 +28,7 @@ type AgentClustersApiService service
 /*
 GetPineappleAgent Get the spec of the ManagedPineappleAgent CR
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+ * @param id The ID the data plane cluster
 @return DataplaneClusterAgentConfig
 */
 func (a *AgentClustersApiService) GetPineappleAgent(ctx _context.Context, id string) (DataplaneClusterAgentConfig, *_nethttp.Response, error) {
@@ -124,7 +124,7 @@ func (a *AgentClustersApiService) GetPineappleAgent(ctx _context.Context, id str
 /*
 GetPineapples Get the list of ManagedaPineapples CR for the specified data plane cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+ * @param id The ID the data plane cluster
 @return ManagedPineappleList
 */
 func (a *AgentClustersApiService) GetPineapples(ctx _context.Context, id string) (ManagedPineappleList, *_nethttp.Response, error) {
@@ -220,7 +220,7 @@ func (a *AgentClustersApiService) GetPineapples(ctx _context.Context, id string)
 /*
 UpdateAgentClusterStatus Update the status of a data plane cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+ * @param id The ID the data plane cluster
  * @param dataPlaneClusterUpdateStatusRequest Data plane cluster status update data
 */
 func (a *AgentClustersApiService) UpdateAgentClusterStatus(ctx _context.Context, id string, dataPlaneClusterUpdateStatusRequest DataPlaneClusterUpdateStatusRequest) (*_nethttp.Response, error) {
@@ -308,7 +308,7 @@ func (a *AgentClustersApiService) UpdateAgentClusterStatus(ctx _context.Context,
 /*
 UpdatePineappleClusterStatus Update the status of Pineapple clusters on the control plane
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+ * @param id The ID the data plane cluster
  * @param requestBody Pineapple clusters status update data
 */
 func (a *AgentClustersApiService) UpdatePineappleClusterStatus(ctx _context.Context, id string, requestBody map[string]DataPlanePineappleStatus) (*_nethttp.Response, error) {
