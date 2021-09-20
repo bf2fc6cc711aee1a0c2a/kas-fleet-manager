@@ -588,7 +588,7 @@ components:
           pineappleOperator: 0.21.2
     400InvalidIdExample:
       value:
-        id: "203"
+        id: "400"
         kind: "Error"
         href: "/api/pineapples_mgmt/v1/errors/21"
         code: "PINEAPPLES-MGMT-21"
