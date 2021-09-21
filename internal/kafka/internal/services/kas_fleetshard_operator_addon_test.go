@@ -1,13 +1,14 @@
 package services
 
 import (
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -72,11 +73,13 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
-				SsoService:          tt.fields.ssoService,
-				ProviderFactory:     tt.fields.providerFactory,
-				ServerConfig:        &server.ServerConfig{},
-				KasFleetShardConfig: &config.KasFleetshardConfig{},
-				OCMConfig:           &ocm.OCMConfig{KasFleetshardAddonID: addonId},
+				SsoService:      tt.fields.ssoService,
+				ProviderFactory: tt.fields.providerFactory,
+				ServerConfig:    &server.ServerConfig{},
+				KasFleetShardConfig: &config.KasFleetshardConfig{
+					EnableProvisionOfKasFleetshardOperator: true,
+				},
+				OCMConfig: &ocm.OCMConfig{KasFleetshardAddonID: addonId},
 				KeycloakConfig: &keycloak.KeycloakConfig{
 					KafkaRealm: &keycloak.KeycloakRealmConfig{},
 				},
@@ -191,11 +194,13 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
-				SsoService:          tt.fields.ssoService,
-				ProviderFactory:     tt.fields.providerFactory,
-				ServerConfig:        &server.ServerConfig{},
-				KasFleetShardConfig: &config.KasFleetshardConfig{},
-				OCMConfig:           &ocm.OCMConfig{KasFleetshardAddonID: "kas-fleetshard"},
+				SsoService:      tt.fields.ssoService,
+				ProviderFactory: tt.fields.providerFactory,
+				ServerConfig:    &server.ServerConfig{},
+				KasFleetShardConfig: &config.KasFleetshardConfig{
+					EnableProvisionOfKasFleetshardOperator: true,
+				},
+				OCMConfig: &ocm.OCMConfig{KasFleetshardAddonID: "kas-fleetshard"},
 				KeycloakConfig: &keycloak.KeycloakConfig{
 					KafkaRealm: &keycloak.KeycloakRealmConfig{},
 				},
