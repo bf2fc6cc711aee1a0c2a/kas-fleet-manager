@@ -52,6 +52,11 @@ type kasFleetshardOperatorAddon struct {
 }
 
 func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {
+	if !o.KasFleetShardConfig.EnableProvisionOfKasFleetshardOperator {
+		glog.V(5).Infof("Provision of kas-fleetshard operator skipped for cluster %s is disabled", cluster.ClusterID)
+		return true, nil // assume already provisioned when disabled
+	}
+
 	kasFleetshardAddonID := o.OCMConfig.KasFleetshardAddonID
 	params, paramsErr := o.getAddonParams(cluster)
 	if paramsErr != nil {
@@ -76,6 +81,11 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *erro
 }
 
 func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *errors.ServiceError {
+	if !o.KasFleetShardConfig.EnableProvisionOfKasFleetshardOperator {
+		glog.V(5).Infof("Updating kas-fleetshard-operator parameters skipped since provision of kas-fleetshard operator for cluster %s is disabled", cluster.ClusterID)
+		return nil // assume reconciled when disabled, this is used for testing only
+	}
+
 	kasFleetshardAddonID := o.OCMConfig.KasFleetshardAddonID
 	params, paramsErr := o.getAddonParams(cluster)
 	if paramsErr != nil {

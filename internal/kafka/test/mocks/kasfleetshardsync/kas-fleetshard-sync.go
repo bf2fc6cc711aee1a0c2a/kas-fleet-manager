@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -24,7 +25,8 @@ import (
 var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error {
 	var clusterService services.ClusterService
 	var ocmConfig *ocm.OCMConfig
-	helper.Env.MustResolveAll(&clusterService, &ocmConfig)
+	var kasFleetshardConfig *config.KasFleetshardConfig
+	helper.Env.MustResolveAll(&clusterService, &ocmConfig, &kasFleetshardConfig)
 	clusters, err := clusterService.FindAllClusters(services.FindClusterCriteria{
 		Status: api.ClusterWaitingForKasFleetShardOperator,
 	})
@@ -33,24 +35,34 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, priv
 	}
 
 	for _, cluster := range clusters {
-		managedKafkaAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.StrimziOperatorAddonID)
-		if err != nil {
-			return err
+		shouldUpdateClusterStatus := false
+
+		if !kasFleetshardConfig.EnableProvisionOfKasFleetshardOperator {
+			shouldUpdateClusterStatus = true
+		} else {
+			kasFleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.KasFleetshardAddonID)
+			if err != nil {
+				return err
+			}
+
+			managedKafkaAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.StrimziOperatorAddonID)
+			if err != nil {
+				return err
+			}
+
+			// The KAS Fleetshard Operator and Sync containers are restarted every ~5mins due to the informer state being out of sync.
+			// Because of this, the addonInstallation state in ocm may never get updated to a 'ready' state as the install plan
+			// status gets updated everytime the container gets restarted even though the operator itself has been successfully installed.
+			// This should get better in the next release of the fleetshard operator. Until then, the cluster can be deemed ready if
+			// it's in an 'installing' state, therwise this poll may timeout.
+			if managedKafkaAddon.State() == clustersmgmtv1.AddOnInstallationStateReady &&
+				(kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateReady ||
+					kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateInstalling) {
+				shouldUpdateClusterStatus = true
+			}
 		}
 
-		kasFleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.KasFleetshardAddonID)
-		if err != nil {
-			return err
-		}
-
-		// The KAS Fleetshard Operator and Sync containers are restarted every ~5mins due to the informer state being out of sync.
-		// Because of this, the addonInstallation state in ocm may never get updated to a 'ready' state as the install plan
-		// status gets updated everytime the container gets restarted even though the operator itself has been successfully installed.
-		// This should get better in the next release of the fleetshard operator. Until then, the cluster can be deemed ready if
-		// it's in an 'installing' state, therwise this poll may timeout.
-		if managedKafkaAddon.State() == clustersmgmtv1.AddOnInstallationStateReady &&
-			(kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateReady ||
-				kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateInstalling) {
+		if shouldUpdateClusterStatus {
 			ctx := NewAuthenticatedContextForDataPlaneCluster(helper, cluster.ClusterID)
 			clusterStatusUpdateRequest := SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 			if _, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, cluster.ClusterID, *clusterStatusUpdateRequest); err != nil {
