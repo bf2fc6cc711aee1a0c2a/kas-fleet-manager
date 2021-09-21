@@ -19,7 +19,7 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			name: "When setting a non empty ordered list of strimzi versions that list is stored as is",
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
-				request.StrimziVersions = []string{"v1.0.0-0", "v2.0.0-0", "v3.0.0-0"}
+				request.PineappleOperatorVersions = []string{"v1.0.0-0", "v2.0.0-0", "v3.0.0-0"}
 				return request
 			},
 			want: []api.StrimziVersion{
@@ -33,7 +33,7 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			name: "When setting a non empty unordered list of strimzi versions that list is stored in semver ascending order",
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
-				request.StrimziVersions = []string{"v5.12.0-0", "v5.8.0-0", "v3.0.0-0"}
+				request.PineappleOperatorVersions = []string{"v5.12.0-0", "v5.8.0-0", "v3.0.0-0"}
 				return request
 			},
 			want: []api.StrimziVersion{
@@ -47,7 +47,7 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			name: "When setting an empty list of strimzi versions that list is stored as the empty list",
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
-				request.StrimziVersions = []string{}
+				request.PineappleOperatorVersions = []string{}
 				return request
 			},
 			want:    []api.StrimziVersion{},
@@ -57,7 +57,7 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			name: "When setting a nil list of strimzi versions that list is stored as the empty list",
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
-				request.StrimziVersions = nil
+				request.PineappleOperatorVersions = nil
 				return request
 			},
 			want:    []api.StrimziVersion{},
@@ -67,7 +67,7 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			name: "When setting a non empty ordered list of strimzi it is stored as is",
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
-				request.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
+				request.PineappleOperator = []private.DataPlaneClusterUpdateStatusRequestPineappleOperator{
 					{Version: "v1.0.0-0", Ready: true},
 					{Version: "v2.0.0-0", Ready: false},
 					{Version: "v3.0.0-0", Ready: true},
@@ -85,7 +85,7 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			name: "When setting a non empty unordered list of strimzi that list is stored in semver ascending order from the version attribute",
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
-				request.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
+				request.PineappleOperator = []private.DataPlaneClusterUpdateStatusRequestPineappleOperator{
 					{Version: "v5.0.0-0", Ready: true},
 					{Version: "v2.0.0-0", Ready: false},
 					{Version: "v3.0.0-0", Ready: true},
@@ -103,7 +103,7 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			name: "When setting an empty list of strimzi that list is stored as the empty list",
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
-				request.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{}
+				request.PineappleOperator = []private.DataPlaneClusterUpdateStatusRequestPineappleOperator{}
 				return request
 			},
 			want:    []api.StrimziVersion{},
@@ -113,7 +113,7 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			name: "When setting a nil list of strimzi that list is stored as the empty list",
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
-				request.Strimzi = nil
+				request.PineappleOperator = nil
 				return request
 			},
 			want:    []api.StrimziVersion{},
@@ -123,12 +123,12 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			name: "When setting both strimzi and strimziVersions then strimzi content takes precedence",
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
-				request.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
+				request.PineappleOperator = []private.DataPlaneClusterUpdateStatusRequestPineappleOperator{
 					{Version: "v5.0.0-0", Ready: true},
 					{Version: "v2.0.0-0", Ready: false},
 					{Version: "v3.0.0-0", Ready: true},
 				}
-				request.StrimziVersions = []string{"v18.0.0-0", "v15.0.0-0", "v16.0.0-0"}
+				request.PineappleOperatorVersions = []string{"v18.0.0-0", "v15.0.0-0", "v16.0.0-0"}
 				return request
 			},
 			want: []api.StrimziVersion{
@@ -151,7 +151,7 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			name: "When one of the strimzi versions does not follow the expected format an error is returned",
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
-				request.StrimziVersions = []string{"v1invalid.0.0-0", "v2.0.0-0", "v3.0.0-0"}
+				request.PineappleOperatorVersions = []string{"v1invalid.0.0-0", "v2.0.0-0", "v3.0.0-0"}
 				return request
 			},
 			want:    nil,
@@ -161,7 +161,7 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			name: "When one of the versions in strimzi does not follow the expected format an error is returned",
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
-				request.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
+				request.PineappleOperator = []private.DataPlaneClusterUpdateStatusRequestPineappleOperator{
 					{Version: "v1.0.0-0", Ready: true},
 					{Version: "v2.0.0", Ready: false},
 					{Version: "v3.0.0-0", Ready: true},
@@ -200,32 +200,17 @@ func sampleValidDataPlaneClusterUpdateStatusRequest() *private.DataPlaneClusterU
 				Status: "True",
 			},
 		},
-		Total: private.DataPlaneClusterUpdateStatusRequestTotal{
-			IngressEgressThroughputPerSec: &[]string{"test"}[0],
-			Connections:                   &[]int32{1000000}[0],
-			DataRetentionSize:             &[]string{"test"}[0],
-			Partitions:                    &[]int32{1000000}[0],
-		},
+		Total: map[string]interface{}{},
 		NodeInfo: &private.DatePlaneClusterUpdateStatusRequestNodeInfo{
 			Ceiling:                &[]int32{20}[0],
 			Floor:                  &[]int32{3}[0],
 			Current:                &[]int32{5}[0],
 			CurrentWorkLoadMinimum: &[]int32{3}[0],
 		},
-		Remaining: private.DataPlaneClusterUpdateStatusRequestTotal{
-			Connections:                   &[]int32{1000000}[0],
-			Partitions:                    &[]int32{1000000}[0],
-			IngressEgressThroughputPerSec: &[]string{"test"}[0],
-			DataRetentionSize:             &[]string{"test"}[0],
-		},
+		Remaining: map[string]interface{}{},
 		ResizeInfo: &private.DatePlaneClusterUpdateStatusRequestResizeInfo{
 			NodeDelta: &[]int32{3}[0],
-			Delta: &private.DatePlaneClusterUpdateStatusRequestResizeInfoDelta{
-				Connections:                   &[]int32{10000}[0],
-				Partitions:                    &[]int32{10000}[0],
-				IngressEgressThroughputPerSec: &[]string{"test"}[0],
-				DataRetentionSize:             &[]string{"test"}[0],
-			},
+			Delta:     &map[string]interface{}{},
 		},
 	}
 }

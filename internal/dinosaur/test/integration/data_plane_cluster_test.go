@@ -51,8 +51,8 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.Strimzi = nil
-	clusterStatusUpdateRequest.StrimziVersions = []string{
+	clusterStatusUpdateRequest.PineappleOperator = nil
+	clusterStatusUpdateRequest.PineappleOperatorVersions = []string{
 		"strimzi-cluster-operator.v.5.12.0-0",
 		"strimzi-cluster-operator.v.5.8.0-0",
 		"strimzi-cluster-operator.v.3.0.0-0",
@@ -90,7 +90,7 @@ func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest)) // We expect 400 error in this test because the cluster ID does not exist
 	Expect(err).To(HaveOccurred())
 
-	_, resp, err = privateAPIClient.AgentClustersApi.GetDinosaurAgent(ctx, testDataPlaneclusterID)
+	_, resp, err = privateAPIClient.AgentClustersApi.GetPineappleAgent(ctx, testDataPlaneclusterID)
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest)) // We expect 400 error in this test because the cluster ID does not exist
 	Expect(err).To(HaveOccurred())
 }
@@ -110,7 +110,7 @@ func TestDataPlaneCluster_UnauthorizedWhenNoAuthProvided(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 	Expect(err).To(HaveOccurred())
 
-	_, resp, err = privateAPIClient.AgentClustersApi.GetDinosaurAgent(ctx, testDataPlaneclusterID)
+	_, resp, err = privateAPIClient.AgentClustersApi.GetPineappleAgent(ctx, testDataPlaneclusterID)
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 	Expect(err).To(HaveOccurred())
 }
@@ -130,7 +130,7 @@ func TestDataPlaneCluster_NotFoundWhenNoProperAuthRole(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 	Expect(err).To(HaveOccurred())
 
-	_, resp, err = privateAPIClient.AgentClustersApi.GetDinosaurAgent(ctx, testDataPlaneclusterID)
+	_, resp, err = privateAPIClient.AgentClustersApi.GetPineappleAgent(ctx, testDataPlaneclusterID)
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 	Expect(err).To(HaveOccurred())
 }
@@ -150,7 +150,7 @@ func TestDataPlaneCluster_NotFoundWhenNotAllowedClusterID(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 	Expect(err).To(HaveOccurred())
 
-	_, resp, err = privateAPIClient.AgentClustersApi.GetDinosaurAgent(ctx, testDataPlaneclusterID)
+	_, resp, err = privateAPIClient.AgentClustersApi.GetPineappleAgent(ctx, testDataPlaneclusterID)
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 	Expect(err).To(HaveOccurred())
 }
@@ -172,7 +172,7 @@ func TestDataPlaneCluster_GetManagedDinosaurAgentCRSuccess(t *testing.T) {
 
 	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
-	config, resp, err := privateAPIClient.AgentClustersApi.GetDinosaurAgent(ctx, testDataPlaneclusterID)
+	config, resp, err := privateAPIClient.AgentClustersApi.GetPineappleAgent(ctx, testDataPlaneclusterID)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).NotTo(HaveOccurred())
 	Expect(config.Spec.Observability.Repository).ShouldNot(BeEmpty())
@@ -265,8 +265,6 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreDinosaurCapaci
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
-	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{1000000}[0]
-	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{0}[0]
 
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -362,13 +360,8 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	expectedNodesAfterScaleUp := initialComputeNodes + 3
 
-	dinosaurCapacityConfig := DinosaurConfig(h).DinosaurCapacity
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.ResizeInfo.NodeDelta = &[]int32{3}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{int32(dinosaurCapacityConfig.TotalMaxConnections) * 30}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.Partitions = &[]int32{int32(dinosaurCapacityConfig.MaxPartitions) * 30}[0]
-	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{int32(dinosaurCapacityConfig.TotalMaxConnections) - 1}[0]
-	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{int32(dinosaurCapacityConfig.MaxPartitions) - 1}[0]
 	clusterStatusUpdateRequest.NodeInfo.Ceiling = &[]int32{int32(expectedNodesAfterScaleUp)}[0]
 	clusterStatusUpdateRequest.NodeInfo.Current = &[]int32{int32(initialComputeNodes)}[0]
 	clusterStatusUpdateRequest.NodeInfo.CurrentWorkLoadMinimum = &[]int32{3}[0]
@@ -419,8 +412,6 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 
 	// We force a scale-down by setting one of the remaining fields to be
 	// higher than the scale-down threshold.
-	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{*clusterStatusUpdateRequest.ResizeInfo.Delta.Connections + 1}[0]
-	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{int32(*clusterStatusUpdateRequest.ResizeInfo.Delta.Partitions) + 1}[0]
 	clusterStatusUpdateRequest.NodeInfo.Current = &[]int32{int32(expectedNodesAfterScaleUp)}[0]
 	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -491,13 +482,8 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	// Simulate there's no capacity and we've already reached ceiling to
 	// set status as full and force the cluster mgr reconciler to create a new
 	// OSD cluster
-	dinosaurCapacityConfig := DinosaurConfig(h).DinosaurCapacity
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.ResizeInfo.NodeDelta = &[]int32{3}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{int32(dinosaurCapacityConfig.TotalMaxConnections) * 30}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.Partitions = &[]int32{int32(dinosaurCapacityConfig.MaxPartitions) * 30}[0]
-	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{0}[0]
-	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{0}[0]
 	clusterStatusUpdateRequest.NodeInfo.Ceiling = &[]int32{int32(initialComputeNodes)}[0]
 	clusterStatusUpdateRequest.NodeInfo.Current = &[]int32{int32(initialComputeNodes)}[0]
 	clusterStatusUpdateRequest.NodeInfo.CurrentWorkLoadMinimum = &[]int32{3}[0]
@@ -598,8 +584,8 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.StrimziVersions = []string{}
-	clusterStatusUpdateRequest.Strimzi = nil
+	clusterStatusUpdateRequest.PineappleOperatorVersions = []string{}
+	clusterStatusUpdateRequest.PineappleOperator = nil
 	expectedAvailableStrimziVersions := []api.StrimziVersion{}
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -641,8 +627,8 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.StrimziVersions = nil
-	clusterStatusUpdateRequest.Strimzi = nil
+	clusterStatusUpdateRequest.PineappleOperatorVersions = nil
+	clusterStatusUpdateRequest.PineappleOperator = nil
 	expectedAvailableStrimziVersions := []api.StrimziVersion{}
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -683,8 +669,8 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.Strimzi = nil
-	clusterStatusUpdateRequest.StrimziVersions = []string{}
+	clusterStatusUpdateRequest.PineappleOperator = nil
+	clusterStatusUpdateRequest.PineappleOperatorVersions = []string{}
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
 		{Version: "strimzi-cluster-operator.v.8.0.0-0", Ready: true},
 		{Version: "strimzi-cluster-operator.v.9.0.0-0", Ready: false},
@@ -739,8 +725,8 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.StrimziVersions = nil
-	clusterStatusUpdateRequest.Strimzi = nil
+	clusterStatusUpdateRequest.PineappleOperatorVersions = nil
+	clusterStatusUpdateRequest.PineappleOperator = nil
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
 		{Version: "strimzi-cluster-operator.v.8.0.0-0", Ready: true},
 		{Version: "strimzi-cluster-operator.v.9.0.0-0", Ready: false},
@@ -800,7 +786,7 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziV
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
+	clusterStatusUpdateRequest.PineappleOperator = []private.DataPlaneClusterUpdateStatusRequestPineappleOperator{
 		{Version: "strimzi-cluster-operator.v.5.0.0-0", Ready: false},
 		{Version: "strimzi-cluster-operator.v.7.0.0-0", Ready: false},
 		{Version: "strimzi-cluster-operator.v.3.0.0-0", Ready: true},
@@ -875,32 +861,17 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *private.DataPlaneClusterUpd
 				Status: "True",
 			},
 		},
-		Total: private.DataPlaneClusterUpdateStatusRequestTotal{
-			IngressEgressThroughputPerSec: &[]string{""}[0],
-			Connections:                   &[]int32{0}[0],
-			DataRetentionSize:             &[]string{""}[0],
-			Partitions:                    &[]int32{0}[0],
-		},
+		Total: map[string]interface{}{},
 		NodeInfo: &private.DatePlaneClusterUpdateStatusRequestNodeInfo{
 			Ceiling:                &[]int32{0}[0],
 			Floor:                  &[]int32{0}[0],
 			Current:                &[]int32{0}[0],
 			CurrentWorkLoadMinimum: &[]int32{0}[0],
 		},
-		Remaining: private.DataPlaneClusterUpdateStatusRequestTotal{
-			Connections:                   &[]int32{0}[0],
-			Partitions:                    &[]int32{0}[0],
-			IngressEgressThroughputPerSec: &[]string{""}[0],
-			DataRetentionSize:             &[]string{""}[0],
-		},
+		Remaining: map[string]interface{}{},
 		ResizeInfo: &private.DatePlaneClusterUpdateStatusRequestResizeInfo{
 			NodeDelta: &[]int32{3}[0],
-			Delta: &private.DatePlaneClusterUpdateStatusRequestResizeInfoDelta{
-				Connections:                   &[]int32{0}[0],
-				Partitions:                    &[]int32{0}[0],
-				IngressEgressThroughputPerSec: &[]string{""}[0],
-				DataRetentionSize:             &[]string{""}[0],
-			},
+			Delta:     &map[string]interface{}{},
 		},
 	}
 }

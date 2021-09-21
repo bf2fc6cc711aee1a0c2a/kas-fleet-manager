@@ -1037,19 +1037,18 @@ func TestDinosaurDelete_DeleteDuringCreation(t *testing.T) {
 		// only update dinosaur status if a data plane cluster is available
 		if dataplaneCluster != nil {
 			ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(helper, dataplaneCluster.ClusterID)
-			dinosaurList, _, err := privateClient.AgentClustersApi.GetDinosaurs(ctx, dataplaneCluster.ClusterID)
+			dinosaurList, _, err := privateClient.AgentClustersApi.GetPineapples(ctx, dataplaneCluster.ClusterID)
 			if err != nil {
 				return err
 			}
-			dinosaurStatusList := make(map[string]private.DataPlaneDinosaurStatus)
+			dinosaurStatusList := make(map[string]private.DataPlanePineappleStatus)
 			for _, dinosaur := range dinosaurList.Items {
-				id := dinosaur.Metadata.Annotations.Bf2OrgId
 				if dinosaur.Spec.Deleted {
-					dinosaurStatusList[id] = kasfleetshardsync.GetDeletedDinosaurStatusResponse()
+					dinosaurStatusList[dinosaur.Metadata.Annotations.MasId] = kasfleetshardsync.GetDeletedDinosaurStatusResponse()
 				}
 			}
 
-			if _, err = privateClient.AgentClustersApi.UpdateDinosaurClusterStatus(ctx, dataplaneCluster.ClusterID, dinosaurStatusList); err != nil {
+			if _, err = privateClient.AgentClustersApi.UpdatePineappleClusterStatus(ctx, dataplaneCluster.ClusterID, dinosaurStatusList); err != nil {
 				return err
 			}
 		}

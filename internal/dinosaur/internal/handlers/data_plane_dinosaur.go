@@ -26,7 +26,7 @@ func NewDataPlaneDinosaurHandler(service services.DataPlaneDinosaurService, dino
 
 func (h *dataPlaneDinosaurHandler) UpdateDinosaurStatuses(w http.ResponseWriter, r *http.Request) {
 	clusterId := mux.Vars(r)["id"]
-	var data = map[string]private.DataPlaneDinosaurStatus{}
+	var data = map[string]private.DataPlanePineappleStatus{}
 
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &data,
@@ -54,9 +54,9 @@ func (h *dataPlaneDinosaurHandler) GetAll(w http.ResponseWriter, r *http.Request
 				return nil, err
 			}
 
-			managedDinosaurList := private.ManagedDinosaurList{
+			managedDinosaurList := private.ManagedPineappleList{
 				Kind:  "ManagedDinosaurList",
-				Items: []private.ManagedDinosaur{},
+				Items: []private.ManagedPineapple{},
 			}
 
 			for _, mk := range managedDinosaurs {

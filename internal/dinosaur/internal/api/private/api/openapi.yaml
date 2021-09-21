@@ -1,8 +1,8 @@
 openapi: 3.0.0
 info:
-  description: Dinosaur Service Fleet Manager APIs that are used by internal services
+  description: Pineapple Service Fleet Manager APIs that are used by internal services
     e.g kas-fleetshard operators.
-  title: Dinosaur Service Fleet Manager
+  title: Pineapple Service Fleet Manager
   version: 1.3.0
 servers:
 - description: Main (production) server
@@ -14,28 +14,31 @@ servers:
 - description: current domain
   url: /
 tags:
-- name: Agent Clusters
+- description: Endpoints used by the agent for data plane communications
+  name: Agent Clusters
 paths:
-  /api/dinosaurs_mgmt/v1/agent-clusters/{id}/status:
+  /api/pineapples_mgmt/v1/agent-clusters/{id}/status:
     put:
       operationId: updateAgentClusterStatus
       parameters:
-      - description: The ID of record
+      - description: The ID the data plane cluster
+        explode: false
         in: path
         name: id
         required: true
         schema:
           type: string
+        style: simple
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest'
-        description: Cluster status update data
+        description: Data plane cluster status update data
         required: true
       responses:
         "200":
-          description: Cluster status is updated
+          description: Data plane cluster status is updated
         "400":
           content:
             application/json:
@@ -56,29 +59,31 @@ paths:
           description: Auth token is not valid.
       security:
       - Bearer: []
-      summary: Update the status of an agent cluster
+      summary: Update the status of a data plane cluster
       tags:
       - Agent Clusters
-  /api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs/status:
+  /api/pineapples_mgmt/v1/agent-clusters/{id}/pineapples/status:
     put:
-      operationId: updateDinosaurClusterStatus
+      operationId: updatePineappleClusterStatus
       parameters:
-      - description: The ID of record
+      - description: The ID the data plane cluster
+        explode: false
         in: path
         name: id
         required: true
         schema:
           type: string
+        style: simple
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DataPlaneDinosaurStatusUpdateRequest'
-        description: Dinosaur clusters status update data
+              $ref: '#/components/schemas/DataPlanePineappleStatusUpdateRequest'
+        description: Pineapple clusters status update data
         required: true
       responses:
         "200":
-          description: Status is updated for Dinosaur clusters
+          description: Status is updated for Pineapple clusters
         "400":
           content:
             application/json:
@@ -99,26 +104,29 @@ paths:
           description: Auth token is not valid.
       security:
       - Bearer: []
-      summary: Update the status of Dinosaur clusters on an agent cluster
+      summary: Update the status of Pineapple clusters on the control plane
       tags:
       - Agent Clusters
-  /api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs:
+  /api/pineapples_mgmt/v1/agent-clusters/{id}/pineapples:
     get:
-      operationId: getDinosaurs
+      operationId: getPineapples
       parameters:
-      - description: The ID of record
+      - description: The ID the data plane cluster
+        explode: false
         in: path
         name: id
         required: true
         schema:
           type: string
+        style: simple
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ManagedDinosaurList'
-          description: The list of the ManagedDinosaurs for the specified agent cluster
+                $ref: '#/components/schemas/ManagedPineappleList'
+          description: The list of the ManagedPineapple CRs for the specified data
+            plane cluster
         "400":
           content:
             application/json:
@@ -139,26 +147,29 @@ paths:
           description: Auth token is not valid.
       security:
       - Bearer: []
-      summary: Get the list of ManagedaDinosaurs for the specified agent cluster
+      summary: Get the list of ManagedaPineapples CR for the specified data plane
+        cluster
       tags:
       - Agent Clusters
-  /api/dinosaurs_mgmt/v1/agent-clusters/{id}:
+  /api/pineapples_mgmt/v1/agent-clusters/{id}:
     get:
-      operationId: getDinosaurAgent
+      operationId: getPineappleAgent
       parameters:
-      - description: The ID of record
+      - description: The ID the data plane cluster
+        explode: false
         in: path
         name: id
         required: true
         schema:
           type: string
+        style: simple
       responses:
         "200":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataplaneClusterAgentConfig'
-          description: The ManagedDinosaurAgent CR Spec
+          description: The ManagedPineappleAgent CR Spec
         "400":
           content:
             application/json:
@@ -179,30 +190,24 @@ paths:
           description: Auth token is not valid.
       security:
       - Bearer: []
-      summary: Get the spec of the ManagedDinosaurAgent CR spec
+      summary: Get the spec of the ManagedPineappleAgent CR
       tags:
       - Agent Clusters
 components:
   examples:
-    ManagedDinosaurExample:
+    ManagedPineappleExample:
       value:
-        kind: ManagedDinosaur
+        kind: ManagedPineapple
         metadata:
-          name: example-dinosaur
-          namespace: example-dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac
+          name: example-pineapple
+          namespace: example-pineapple-1rfpsqbvq1em2u9u0z54ymjcwac
           annotations:
-            bf2.org/id: 1rfpsqbvq1em2u9u0z54ymjcwac
-            bf2.org/placementId: ""
+            mas/id: 1rfpsqbvq1em2u9u0z54ymjcwac
+            mas/placementId: ""
         spec:
-          capacity:
-            ingressEgressThroughputPerSec: 4Mi
-            totalMaxConnections: 500
-            maxDataRetentionSize: 100Gi
-            maxPartitions: 100
-            maxDataRetentionPeriod: P14D
-            maxConnectionAttemptsPerSec: 100
+          capacity: {}
           oauth:
-            clientId: dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac
+            clientId: pineapple-1rfpsqbvq1em2u9u0z54ymjcwac
             clientSecret: example-client-secret
             tokenEndpointUri: https://example-token-endpoint-uri.com/token
             jwksEndpointUri: https://example-jwks-endpoint-uri.com/certs
@@ -211,38 +216,32 @@ components:
             tlsTrustedCertificate: ""
             customClaimCheck: ""
           endpoint:
-            bootstrapServerHost: example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.dinosaur.devshift.org
+            host: example.pineapple.com
             tls:
               cert: ""
               key: ""
           versions:
-            dinosaur: 2.7.0
-            strimzi: 0.21.2
+            pineapple: 2.7.0
+            pineappleOperator: 0.21.2
           deleted: false
-    DataPlaneDinosaurStatusRequestExample:
+    DataPlanePineappleStatusRequestExample:
       value:
         conditions:
         - type: Ready
-          reason: DinosaurInstanceReady
+          reason: PineappleInstanceReady
           message: installing
           status: "False"
           lastTransitionTime: 2018-01-01T00:00:00Z
-        capacity:
-          ingressEgressThroughputPerSec: 4Mi
-          totalMaxConnections: 500
-          maxDataRetentionSize: 100Gi
-          maxPartitions: 100
-          maxDataRetentionPeriod: P14D
-          maxConnectionAttemptsPerSec: 100
+        capacity: {}
         versions:
-          dinosaur: 2.4.1
-          strimzi: 0.21.2
+          pineapple: 2.4.1
+          pineappleOperator: 0.21.2
     "400InvalidIdExample":
       value:
-        id: "203"
+        id: "400"
         kind: Error
-        href: /api/dinosaurs_mgmt/v1/errors/21
-        code: DINOSAURS-MGMT-21
+        href: /api/pineapples_mgmt/v1/errors/21
+        code: PINEAPPLES-MGMT-21
         reason: Bad request
         operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
     "404Example":
@@ -252,6 +251,16 @@ components:
         href: /api/dinosaurs_mgmt/v1/errors/7
         code: DINOSAURS-MGMT-7
         reason: The requested resource doesn't exist
+  parameters:
+    id:
+      description: The ID the data plane cluster
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
   schemas:
     ListReference:
       properties:
@@ -268,102 +277,98 @@ components:
         kind:
           type: string
       type: object
-    ManagedDinosaurCapacity:
-      properties:
-        ingressEgressThroughputPerSec:
-          type: string
-        totalMaxConnections:
-          format: int
-          type: integer
-        maxDataRetentionSize:
-          type: string
-        maxPartitions:
-          format: int
-          type: integer
-        maxDataRetentionPeriod:
-          type: string
-        maxConnectionAttemptsPerSec:
-          format: int
-          type: integer
+    ManagedPineappleCapacity:
+      description: Capacity information of a Pineapple cluster
+      properties: {}
       type: object
-    ManagedDinosaurVersions:
+    ManagedPineappleVersions:
       properties:
-        dinosaur:
+        pineapple:
           type: string
-        strimzi:
+        pineappleOperator:
           type: string
       type: object
-    ManagedDinosaur:
+    ManagedPineapple:
       allOf:
       - $ref: '#/components/schemas/PrivateObjectReference'
-      - $ref: '#/components/schemas/ManagedDinosaur_allOf'
-    ManagedDinosaurList:
+      - $ref: '#/components/schemas/ManagedPineapple_allOf'
+    ManagedPineappleList:
       allOf:
       - $ref: '#/components/schemas/ListReference'
-      - $ref: '#/components/schemas/ManagedDinosaurList_allOf'
-      description: A list of ManagedDinosaur
+      - $ref: '#/components/schemas/ManagedPineappleList_allOf'
+      description: A list of ManagedPineapple CRs
     DatePlaneClusterUpdateStatusRequestNodeInfo:
+      description: Schema for the data plane cluster node info
       example:
-        ceiling: 1
-        current: 5
-        currentWorkLoadMinimum: 2
-        floor: 5
+        ceiling: 0
+        current: 1
+        currentWorkLoadMinimum: 5
+        floor: 6
       nullable: true
       properties:
         ceiling:
+          description: The maximum number of nodes required in order to provide the
+            Pineapple service
           nullable: true
           type: integer
         floor:
+          description: The minimum number of nodes required in order to provide the
+            Pineapple service
           nullable: true
           type: integer
         current:
+          description: The number of nodes currently known to the agent
           nullable: true
           type: integer
         currentWorkLoadMinimum:
+          description: The minimum number of nodes required to support the current
+            population of Pineapple clusters on the data plane cluster
           nullable: true
           type: integer
       type: object
     DatePlaneClusterUpdateStatusRequestResizeInfo:
       example:
-        nodeDelta: 7
-        delta:
-          partitions: 3
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-          connections: 9
-          dataRetentionSize: dataRetentionSize
+        nodeDelta: 5
+        delta: '{}'
       nullable: true
       properties:
         nodeDelta:
+          description: "The minimum number of nodes that needs to be applied to the\
+            \ data plane cluster to reach the target capacity. \n\nThe control plane\
+            \ may increase or decrease the size of the data plane cluster in multiples\
+            \ of this number as long as it does not exceed the ceiling or floor defined\
+            \ in the node info\n"
           nullable: true
           type: integer
         delta:
-          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo_delta'
+          description: "Shows how the data plane cluster capacity will be affected\
+            \ by applying the nodeDelta. \n\nThis should state a list of data plane\
+            \ resources, consumed by Pineapple clusters, and the amount that they\
+            \ would be increased or decreased by applying the nodeDelta.\n"
+          nullable: true
+          properties: {}
+          type: object
       type: object
     DataPlaneClusterUpdateStatusRequest:
       description: Schema for the request to update a data plane cluster's status
       example:
-        total:
-          partitions: 6
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-          connections: 0
-          dataRetentionSize: dataRetentionSize
-        strimzi:
+        total: '{}'
+        pineappleOperatorVersions:
+        - pineappleOperatorVersions
+        - pineappleOperatorVersions
+        pineappleOperator:
         - ready: true
           version: version
         - ready: true
           version: version
         resizeInfo:
-          nodeDelta: 7
-          delta:
-            partitions: 3
-            ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-            connections: 9
-            dataRetentionSize: dataRetentionSize
+          nodeDelta: 5
+          delta: '{}'
         nodeInfo:
-          ceiling: 1
-          current: 5
-          currentWorkLoadMinimum: 2
-          floor: 5
+          ceiling: 0
+          current: 1
+          currentWorkLoadMinimum: 5
+          floor: 6
         conditions:
         - reason: reason
           type: type
@@ -373,63 +378,71 @@ components:
           type: type
           message: message
           status: status
-        remaining:
-          partitions: 6
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-          connections: 0
-          dataRetentionSize: dataRetentionSize
-        strimziVersions:
-        - strimziVersions
-        - strimziVersions
+        remaining: '{}'
       properties:
         conditions:
-          description: The cluster data plane conditions
+          description: The data plane cluster conditions
           items:
             $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
           type: array
         total:
-          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_total'
+          description: |
+            The total capacity of the data plane cluster for Pineapple clusters.
+
+            This should state the total amount of currently used and available data plane resources that can be consumed by Pineapple clusters.
+          properties: {}
+          type: object
         remaining:
-          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_total'
+          description: |
+            The remaining capacity of the data plane cluster for Pineapple clusters.
+
+            This should state the remaining amount of available data plane resources that can be consumed by Pineapple clusters.
+          properties: {}
+          type: object
         nodeInfo:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
         resizeInfo:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
-        strimziVersions:
+        pineappleOperatorVersions:
+          description: A list of the Pineapple operator versions that can be installed
+            on the data plane cluster
           items:
             type: string
           type: array
-        strimzi:
+        pineappleOperator:
+          description: The status and version of the Pineapple operator
           items:
-            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_strimzi'
+            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_pineappleOperator'
           type: array
       type: object
-    DataPlaneDinosaurStatus:
-      description: Schema of the status object for a Dinosaur cluster
+    DataPlanePineappleStatus:
+      description: Schema of the status object for a Pineapple cluster
       example:
-        $ref: '#/components/examples/DataPlaneDinosaurStatusRequestExample'
+        $ref: '#/components/examples/DataPlanePineappleStatusRequestExample'
       properties:
         conditions:
-          description: The status conditions of a Dinosaur cluster
+          description: The status conditions of the Pineapple cluster
           items:
             $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
           type: array
         capacity:
-          $ref: '#/components/schemas/DataPlaneDinosaurStatus_capacity'
+          description: Capacity information consumed by the Pineapple cluster
+          properties: {}
+          type: object
         versions:
-          $ref: '#/components/schemas/DataPlaneDinosaurStatus_versions'
+          $ref: '#/components/schemas/DataPlanePineappleStatus_versions'
         routes:
-          description: Routes created for a Dinosaur cluster
+          description: Routes created for the Pineapple cluster
           items:
-            $ref: '#/components/schemas/DataPlaneDinosaurStatus_routes'
+            $ref: '#/components/schemas/DataPlanePineappleStatus_routes'
           nullable: true
           type: array
       type: object
-    DataPlaneDinosaurStatusUpdateRequest:
+    DataPlanePineappleStatusUpdateRequest:
       additionalProperties:
-        $ref: '#/components/schemas/DataPlaneDinosaurStatus'
-      description: Schema for the request to update the statuses of Dinosaur clusters
-        from data plane
+        $ref: '#/components/schemas/DataPlanePineappleStatus'
+      description: Schema for the request to update the statuses of Pineapple clusters
+        from data plane to the control plane
       type: object
     DataplaneClusterAgentConfig:
       description: Configuration for the data plane cluster agent
@@ -469,24 +482,24 @@ components:
         href:
           type: string
       type: object
-    ManagedDinosaur_allOf_metadata_annotations:
+    ManagedPineapple_allOf_metadata_annotations:
       properties:
-        bf2.org/id:
+        mas/id:
           type: string
-        bf2.org/placementId:
+        mas/placementId:
           type: string
       required:
-      - bf2.org/id
-      - bf2.org/placementId
-    ManagedDinosaur_allOf_metadata:
+      - mas/id
+      - mas/placementId
+    ManagedPineapple_allOf_metadata:
       properties:
         name:
           type: string
         namespace:
           type: string
         annotations:
-          $ref: '#/components/schemas/ManagedDinosaur_allOf_metadata_annotations'
-    ManagedDinosaur_allOf_spec_serviceAccounts:
+          $ref: '#/components/schemas/ManagedPineapple_allOf_metadata_annotations'
+    ManagedPineapple_allOf_spec_serviceAccounts:
       properties:
         name:
           type: string
@@ -498,7 +511,8 @@ components:
       - name
       - password
       - principal
-    ManagedDinosaur_allOf_spec_oauth:
+    ManagedPineapple_allOf_spec_oauth:
+      description: OAuth configuration for a Pineapple cluster
       properties:
         clientId:
           type: string
@@ -517,75 +531,60 @@ components:
           type: string
         customClaimCheck:
           type: string
-    ManagedDinosaur_allOf_spec_endpoint_tls:
+    ManagedPineapple_allOf_spec_endpoint_tls:
       nullable: true
       properties:
         cert:
           type: string
         key:
           type: string
-    ManagedDinosaur_allOf_spec_endpoint:
+    ManagedPineapple_allOf_spec_endpoint:
+      description: Route configuration for a Pineapple cluster
       properties:
-        bootstrapServerHost:
+        host:
           type: string
         tls:
-          $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_endpoint_tls'
-    ManagedDinosaur_allOf_spec:
+          $ref: '#/components/schemas/ManagedPineapple_allOf_spec_endpoint_tls'
+    ManagedPineapple_allOf_spec:
       properties:
         serviceAccounts:
+          description: Service account configuration for a Pineapple cluster
           items:
-            $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_serviceAccounts'
+            $ref: '#/components/schemas/ManagedPineapple_allOf_spec_serviceAccounts'
           type: array
         capacity:
-          $ref: '#/components/schemas/ManagedDinosaurCapacity'
+          description: Capacity information of a Pineapple cluster
+          properties: {}
+          type: object
         oauth:
-          $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_oauth'
+          $ref: '#/components/schemas/ManagedPineapple_allOf_spec_oauth'
         owners:
+          description: A list of users that owns this Pineapple cluster
           items:
             type: string
           type: array
         endpoint:
-          $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_endpoint'
+          $ref: '#/components/schemas/ManagedPineapple_allOf_spec_endpoint'
         versions:
-          $ref: '#/components/schemas/ManagedDinosaurVersions'
+          $ref: '#/components/schemas/ManagedPineappleVersions'
         deleted:
           type: boolean
       required:
       - deleted
-    ManagedDinosaur_allOf:
+    ManagedPineapple_allOf:
       properties:
         metadata:
-          $ref: '#/components/schemas/ManagedDinosaur_allOf_metadata'
+          $ref: '#/components/schemas/ManagedPineapple_allOf_metadata'
         spec:
-          $ref: '#/components/schemas/ManagedDinosaur_allOf_spec'
-    ManagedDinosaurList_allOf:
-      example: '{"kind":"ManagedDinosaurList","items":{"$ref":"#/components/examples/ManagedDinosaurExample"}}'
+          $ref: '#/components/schemas/ManagedPineapple_allOf_spec'
+    ManagedPineappleList_allOf:
+      example: '{"kind":"ManagedPineappleList","items":{"$ref":"#/components/examples/ManagedPineappleExample"}}'
       properties:
         items:
           items:
             allOf:
-            - $ref: '#/components/schemas/ManagedDinosaur'
+            - $ref: '#/components/schemas/ManagedPineapple'
           type: array
-    DatePlaneClusterUpdateStatusRequestResizeInfo_delta:
-      example:
-        partitions: 3
-        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-        connections: 9
-        dataRetentionSize: dataRetentionSize
-      nullable: true
-      properties:
-        ingressEgressThroughputPerSec:
-          nullable: true
-          type: string
-        connections:
-          nullable: true
-          type: integer
-        dataRetentionSize:
-          nullable: true
-          type: string
-        partitions:
-          nullable: true
-          type: integer
     DataPlaneClusterUpdateStatusRequest_conditions:
       example:
         reason: reason
@@ -601,26 +600,7 @@ components:
           type: string
         status:
           type: string
-    DataPlaneClusterUpdateStatusRequest_total:
-      example:
-        partitions: 6
-        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-        connections: 0
-        dataRetentionSize: dataRetentionSize
-      properties:
-        ingressEgressThroughputPerSec:
-          nullable: true
-          type: string
-        connections:
-          nullable: true
-          type: integer
-        dataRetentionSize:
-          nullable: true
-          type: string
-        partitions:
-          nullable: true
-          type: integer
-    DataPlaneClusterUpdateStatusRequest_strimzi:
+    DataPlaneClusterUpdateStatusRequest_pineappleOperator:
       example:
         ready: true
         version: version
@@ -632,35 +612,14 @@ components:
       required:
       - ready
       - version
-    DataPlaneDinosaurStatus_capacity:
-      description: Capacity information of the data plane cluster
+    DataPlanePineappleStatus_versions:
+      description: Version information related to the Pineapple cluster
       properties:
-        ingressEgressThroughputPerSec:
-          nullable: true
+        pineapple:
           type: string
-        totalMaxConnections:
-          nullable: true
-          type: integer
-        maxDataRetentionSize:
-          nullable: true
+        pineappleOperator:
           type: string
-        maxPartitions:
-          nullable: true
-          type: integer
-        maxDataRetentionPeriod:
-          nullable: true
-          type: string
-        maxConnectionAttemptsPerSec:
-          nullable: true
-          type: integer
-    DataPlaneDinosaurStatus_versions:
-      description: Version information related to a Dinosaur cluster
-      properties:
-        dinosaur:
-          type: string
-        strimzi:
-          type: string
-    DataPlaneDinosaurStatus_routes:
+    DataPlanePineappleStatus_routes:
       properties:
         name:
           type: string

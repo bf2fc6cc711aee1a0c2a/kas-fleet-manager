@@ -93,7 +93,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 
 	defer testServer.TearDown()
 
-	body := map[string]private.DataPlaneDinosaurStatus{
+	body := map[string]private.DataPlanePineappleStatus{
 		testServer.ClusterID: {},
 	}
 	restyResp, err := resty.R().
@@ -126,7 +126,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 
 	defer testServer.TearDown()
 
-	body := map[string]private.DataPlaneDinosaurStatus{
+	body := map[string]private.DataPlanePineappleStatus{
 		"test-cluster-id": {},
 	}
 	restyResp, err := resty.R().
@@ -161,7 +161,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 	}, nil)
 	defer testServer.TearDown()
 
-	body := map[string]private.DataPlaneDinosaurStatus{
+	body := map[string]private.DataPlanePineappleStatus{
 		"test-cluster-id": {},
 	}
 	restyResp, err := resty.R().
@@ -288,12 +288,12 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 		return
 	}
 
-	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetDinosaurs(testServer.Ctx, testServer.ClusterID)
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetPineapples(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(4)) // only count valid Managed Dinosaur CR
 
-	find := func(slice []private.ManagedDinosaur, match func(dinosaur private.ManagedDinosaur) bool) *private.ManagedDinosaur {
+	find := func(slice []private.ManagedPineapple, match func(dinosaur private.ManagedPineapple) bool) *private.ManagedPineapple {
 		for _, item := range slice {
 			if match(item) {
 				return &item
@@ -304,13 +304,13 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 
 	for _, k := range testDinosaurs {
 		if k.Status != constants2.DinosaurRequestStatusPreparing.String() {
-			if mk := find(list.Items, func(item private.ManagedDinosaur) bool { return item.Metadata.Annotations.Bf2OrgId == k.ID }); mk != nil {
+			if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.MasId == k.ID }); mk != nil {
 				Expect(mk.Metadata.Name).To(Equal(k.Name))
-				Expect(mk.Metadata.Annotations.Bf2OrgPlacementId).To(Equal(k.PlacementId))
-				Expect(mk.Metadata.Annotations.Bf2OrgId).To(Equal(k.ID))
+				Expect(mk.Metadata.Annotations.MasPlacementId).To(Equal(k.PlacementId))
+				Expect(mk.Metadata.Annotations.MasId).To(Equal(k.ID))
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
 				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.DinosaurRequestStatusDeprovision.String()))
-				Expect(mk.Spec.Versions.Dinosaur).To(Equal(k.DesiredDinosaurVersion))
+				Expect(mk.Spec.Versions.Pineapple).To(Equal(k.DesiredDinosaurVersion))
 				Expect(mk.Spec.Endpoint.Tls).To(BeNil())
 			} else {
 				t.Error("failed matching manageddinosaur id with dinosaurrequest id")
@@ -320,35 +320,35 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 	}
 
 	var readyClusters, deletedClusters []string
-	updates := map[string]private.DataPlaneDinosaurStatus{}
+	updates := map[string]private.DataPlanePineappleStatus{}
 	for _, item := range list.Items {
 		if !item.Spec.Deleted {
-			updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlaneDinosaurStatus{
+			updates[item.Metadata.Annotations.MasId] = private.DataPlanePineappleStatus{
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "True",
 					Reason: "StrimziUpdating",
 				}},
-				Versions: private.DataPlaneDinosaurStatusVersions{
-					Dinosaur: fmt.Sprintf("dinosaur-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
-					Strimzi:  fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
+				Versions: private.DataPlanePineappleStatusVersions{
+					Pineapple:         fmt.Sprintf("dinosaur-new-version-%s", item.Metadata.Annotations.MasId),
+					PineappleOperator: fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.MasId),
 				},
 			}
-			readyClusters = append(readyClusters, item.Metadata.Annotations.Bf2OrgId)
+			readyClusters = append(readyClusters, item.Metadata.Annotations.MasId)
 		} else {
-			updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlaneDinosaurStatus{
+			updates[item.Metadata.Annotations.MasId] = private.DataPlanePineappleStatus{
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "False",
 					Reason: "Deleted",
 				}},
 			}
-			deletedClusters = append(deletedClusters, item.Metadata.Annotations.Bf2OrgId)
+			deletedClusters = append(deletedClusters, item.Metadata.Annotations.MasId)
 		}
 	}
 
 	// routes will be stored the first time status are updated
-	_, err = testServer.PrivateClient.AgentClustersApi.UpdateDinosaurClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	_, err = testServer.PrivateClient.AgentClustersApi.UpdatePineappleClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
 	Expect(err).NotTo(HaveOccurred())
 
 	// wait for the CNAMEs for routes to be created
@@ -366,7 +366,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 	Expect(waitErr).To(BeNil())
 
 	// Send the requests again, this time the instances should be ready because routes are created
-	_, err = testServer.PrivateClient.AgentClustersApi.UpdateDinosaurClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	_, err = testServer.PrivateClient.AgentClustersApi.UpdatePineappleClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
 	Expect(err).NotTo(HaveOccurred())
 
 	for _, cid := range readyClusters {
@@ -382,8 +382,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 
 		// Test version related reported fields
 		Expect(c.Status).To(Equal(constants2.DinosaurRequestStatusReady.String()))
-		Expect(c.ActualDinosaurVersion).To(Equal(sentUpdate.Versions.Dinosaur))
-		Expect(c.ActualStrimziVersion).To(Equal(sentUpdate.Versions.Strimzi))
+		Expect(c.ActualDinosaurVersion).To(Equal(sentUpdate.Versions.Pineapple))
+		Expect(c.ActualStrimziVersion).To(Equal(sentUpdate.Versions.PineappleOperator))
 		Expect(c.StrimziUpgrading).To(BeTrue()) // should always be true since Condition.Reason is set to StrimziUpgrading
 
 		// TODO test when dinosaur is being upgraded when kas fleet shard operator side
@@ -401,15 +401,15 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 
 	for _, cid := range readyClusters {
 		// update the status to ready again and remove reason field to simulate the end of upgrade process as reported by kas-fleet-shard
-		_, err = testServer.PrivateClient.AgentClustersApi.UpdateDinosaurClusterStatus(testServer.Ctx, testServer.ClusterID, map[string]private.DataPlaneDinosaurStatus{
+		_, err = testServer.PrivateClient.AgentClustersApi.UpdatePineappleClusterStatus(testServer.Ctx, testServer.ClusterID, map[string]private.DataPlanePineappleStatus{
 			cid: {
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "True",
 				}},
-				Versions: private.DataPlaneDinosaurStatusVersions{
-					Dinosaur: fmt.Sprintf("dinosaur-new-version-%s", cid),
-					Strimzi:  fmt.Sprintf("strimzi-new-version-%s", cid),
+				Versions: private.DataPlanePineappleStatusVersions{
+					Pineapple:         fmt.Sprintf("dinosaur-new-version-%s", cid),
+					PineappleOperator: fmt.Sprintf("strimzi-new-version-%s", cid),
 				},
 			},
 		})
@@ -475,12 +475,12 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaursWithTlsCerts(t *testing.
 		return
 	}
 
-	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetDinosaurs(testServer.Ctx, testServer.ClusterID)
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetPineapples(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed dinosaur cr
 
-	find := func(slice []private.ManagedDinosaur, match func(dinosaur private.ManagedDinosaur) bool) *private.ManagedDinosaur {
+	find := func(slice []private.ManagedPineapple, match func(dinosaur private.ManagedPineapple) bool) *private.ManagedPineapple {
 		for _, item := range slice {
 			if match(item) {
 				return &item
@@ -488,7 +488,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaursWithTlsCerts(t *testing.
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item private.ManagedDinosaur) bool { return item.Metadata.Annotations.Bf2OrgId == testDinosaur.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.MasId == testDinosaur.ID }); mk != nil {
 		Expect(mk.Spec.Endpoint.Tls.Cert).To(Equal(cert))
 		Expect(mk.Spec.Endpoint.Tls.Key).To(Equal(key))
 	} else {
@@ -540,12 +540,12 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaursWithServiceAccounts(t *t
 		return
 	}
 
-	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetDinosaurs(testServer.Ctx, testServer.ClusterID)
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetPineapples(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed dinosaur cr
 
-	find := func(slice []private.ManagedDinosaur, match func(dinosaur private.ManagedDinosaur) bool) *private.ManagedDinosaur {
+	find := func(slice []private.ManagedPineapple, match func(dinosaur private.ManagedPineapple) bool) *private.ManagedPineapple {
 		for _, item := range slice {
 			if match(item) {
 				return &item
@@ -553,7 +553,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaursWithServiceAccounts(t *t
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item private.ManagedDinosaur) bool { return item.Metadata.Annotations.Bf2OrgId == testDinosaur.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.MasId == testDinosaur.ID }); mk != nil {
 		// check canary service account
 		Expect(mk.Spec.ServiceAccounts).To(HaveLen(1))
 		canaryServiceAccount := mk.Spec.ServiceAccounts[0]
@@ -606,12 +606,12 @@ func TestDataPlaneEndpoints_GetManagedDinosaursWithoutOAuthTLSCert(t *testing.T)
 		return
 	}
 
-	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetDinosaurs(testServer.Ctx, testServer.ClusterID)
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetPineapples(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed dinosaur cr
 
-	find := func(slice []private.ManagedDinosaur, match func(dinosaur private.ManagedDinosaur) bool) *private.ManagedDinosaur {
+	find := func(slice []private.ManagedPineapple, match func(dinosaur private.ManagedPineapple) bool) *private.ManagedPineapple {
 		for _, item := range slice {
 			if match(item) {
 				return &item
@@ -619,7 +619,7 @@ func TestDataPlaneEndpoints_GetManagedDinosaursWithoutOAuthTLSCert(t *testing.T)
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item private.ManagedDinosaur) bool { return item.Metadata.Annotations.Bf2OrgId == testDinosaur.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.MasId == testDinosaur.ID }); mk != nil {
 		Expect(mk.Spec.Oauth.TlsTrustedCertificate).To(BeNil())
 	} else {
 		t.Error("failed matching manageddinosaur id with dinosaurrequest id")
@@ -671,20 +671,20 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaursWithRoutes(t *testing.T) {
 		return
 	}
 
-	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetDinosaurs(testServer.Ctx, testServer.ClusterID)
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetPineapples(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // only count valid Managed Dinosaur CR
 
 	var readyClusters []string
-	updates := map[string]private.DataPlaneDinosaurStatus{}
+	updates := map[string]private.DataPlanePineappleStatus{}
 	for _, item := range list.Items {
-		updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlaneDinosaurStatus{
+		updates[item.Metadata.Annotations.MasId] = private.DataPlanePineappleStatus{
 			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 				Type:   "Ready",
 				Status: "True",
 			}},
-			Routes: &[]private.DataPlaneDinosaurStatusRoutes{
+			Routes: &[]private.DataPlanePineappleStatusRoutes{
 				{
 					Name:   "admin-api",
 					Prefix: "admin-api",
@@ -697,11 +697,11 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaursWithRoutes(t *testing.T) {
 				},
 			},
 		}
-		readyClusters = append(readyClusters, item.Metadata.Annotations.Bf2OrgId)
+		readyClusters = append(readyClusters, item.Metadata.Annotations.MasId)
 	}
 
 	// routes will be stored the first time status are updated
-	_, err = testServer.PrivateClient.AgentClustersApi.UpdateDinosaurClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	_, err = testServer.PrivateClient.AgentClustersApi.UpdatePineappleClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
 	Expect(err).NotTo(HaveOccurred())
 
 	// wait for the CNAMEs for routes to be created
@@ -736,7 +736,7 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaursWithRoutes(t *testing.T) {
 	Expect(waitErr).NotTo(HaveOccurred())
 
 	// Send the requests again, this time the instances should be ready because routes are created
-	_, err = testServer.PrivateClient.AgentClustersApi.UpdateDinosaurClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	_, err = testServer.PrivateClient.AgentClustersApi.UpdatePineappleClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
 	Expect(err).NotTo(HaveOccurred())
 
 	for _, cid := range readyClusters {
@@ -792,12 +792,12 @@ func TestDataPlaneEndpoints_GetManagedDinosaursWithOAuthTLSCert(t *testing.T) {
 		return
 	}
 
-	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetDinosaurs(testServer.Ctx, testServer.ClusterID)
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetPineapples(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed dinosaur cr
 
-	find := func(slice []private.ManagedDinosaur, match func(dinosaur private.ManagedDinosaur) bool) *private.ManagedDinosaur {
+	find := func(slice []private.ManagedPineapple, match func(dinosaur private.ManagedPineapple) bool) *private.ManagedPineapple {
 		for _, item := range slice {
 			if match(item) {
 				return &item
@@ -805,7 +805,7 @@ func TestDataPlaneEndpoints_GetManagedDinosaursWithOAuthTLSCert(t *testing.T) {
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item private.ManagedDinosaur) bool { return item.Metadata.Annotations.Bf2OrgId == testDinosaur.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.MasId == testDinosaur.ID }); mk != nil {
 		Expect(mk.Spec.Oauth.TlsTrustedCertificate).ToNot(BeNil())
 	} else {
 		t.Error("failed matching manageddinosaur id with dinosaurrequest id")
@@ -854,17 +854,17 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaurWithErrorStatus(t *testing.T) {
 		return
 	}
 
-	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetDinosaurs(testServer.Ctx, testServer.ClusterID)
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetPineapples(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed dinosaur cr
-	dinosaurReqID := list.Items[0].Metadata.Annotations.Bf2OrgId
+	dinosaurReqID := list.Items[0].Metadata.Annotations.MasId
 
 	errMessage := "test-err-message"
-	updateReq := map[string]private.DataPlaneDinosaurStatus{
+	updateReq := map[string]private.DataPlanePineappleStatus{
 		dinosaurReqID: kasfleetshardsync.GetErrorWithCustomMessageDinosaurStatusResponse(errMessage),
 	}
-	_, err = testServer.PrivateClient.AgentClustersApi.UpdateDinosaurClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
+	_, err = testServer.PrivateClient.AgentClustersApi.UpdatePineappleClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
 	Expect(err).NotTo(HaveOccurred())
 
 	c := &dbapi.DinosaurRequest{}

@@ -138,61 +138,28 @@ func (h *dataPlaneClusterHandler) validateResizeInfo(request *private.DataPlaneC
 		if resizeInfo.Delta == nil {
 			return errors.FieldValidationError("resizeInfo delta attribute must be set")
 		}
-		if resizeInfo.Delta.Connections == nil {
-			return errors.FieldValidationError("resizeInfo delta connections must be set")
-		}
-		if resizeInfo.Delta.DataRetentionSize == nil {
-			return errors.FieldValidationError("resizeInfo delta data retention size must be set")
-		}
-		if resizeInfo.Delta.IngressEgressThroughputPerSec == nil {
-			return errors.FieldValidationError("resizeInfo delta ingressegress throughput per second must be set")
-		}
-		if resizeInfo.Delta.Partitions == nil {
-			return errors.FieldValidationError("resieInfo delta partitions must be set")
-		}
 	}
 	return nil
 }
 
 func (h *dataPlaneClusterHandler) validateTotal(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
-	total := request.Total
-	if total.Connections == nil {
-		return errors.FieldValidationError("total connections must be set")
-	}
-	if total.DataRetentionSize == nil {
-		return errors.FieldValidationError("total data retention size must be set")
-	}
-	if total.IngressEgressThroughputPerSec == nil {
-		return errors.FieldValidationError("total ingressegress throughput per second must be set")
-	}
-	if total.Partitions == nil {
-		return errors.FieldValidationError("total partitions must be set")
+	if request.Total != nil {
+		return errors.FieldValidationError("total capacity attribute must be set")
 	}
 
 	return nil
 }
 
 func (h *dataPlaneClusterHandler) validateRemaining(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
-	remaining := request.Remaining
-
-	if remaining.Connections == nil {
-		return errors.FieldValidationError("remaining connections must be set")
-	}
-	if remaining.DataRetentionSize == nil {
-		return errors.FieldValidationError("remaining data retention size must be set")
-	}
-	if remaining.IngressEgressThroughputPerSec == nil {
-		return errors.FieldValidationError("remaining ingressegress throughput per second must be set")
-	}
-	if remaining.Partitions == nil {
-		return errors.FieldValidationError("remaining partitions must be set")
+	if request.Remaining != nil {
+		return errors.FieldValidationError("remaining capacity attribute must be set")
 	}
 
 	return nil
 }
 
 func (h *dataPlaneClusterHandler) validateStrimziVersions(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
-	for idx, strimziElem := range request.StrimziVersions {
+	for idx, strimziElem := range request.PineappleOperatorVersions {
 		if strimziElem == "" {
 			return errors.FieldValidationError(fmt.Sprintf(".status.strimziVersions[%d] cannot be empty", idx))
 		}
@@ -202,7 +169,7 @@ func (h *dataPlaneClusterHandler) validateStrimziVersions(request *private.DataP
 }
 
 func (h *dataPlaneClusterHandler) validateStrimzi(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
-	for idx, strimziElem := range request.Strimzi {
+	for idx, strimziElem := range request.PineappleOperator {
 		if strimziElem.Version == "" {
 			return errors.FieldValidationError(fmt.Sprintf(".status.strimzi[%d].version cannot be empty", idx))
 		}

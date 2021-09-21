@@ -5,7 +5,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/private"
 )
 
-func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneDinosaurStatus) []*dbapi.DataPlaneDinosaurStatus {
+func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlanePineappleStatus) []*dbapi.DataPlaneDinosaurStatus {
 	var r []*dbapi.DataPlaneDinosaurStatus
 	for k, v := range status {
 		var c []dbapi.DataPlaneDinosaurStatusCondition
@@ -31,8 +31,8 @@ func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneDinosaurS
 			DinosaurClusterId: k,
 			Conditions:        c,
 			Routes:            routes,
-			DinosaurVersion:   v.Versions.Dinosaur,
-			StrimziVersion:    v.Versions.Strimzi,
+			DinosaurVersion:   v.Versions.Pineapple,
+			StrimziVersion:    v.Versions.PineappleOperator,
 		})
 	}
 

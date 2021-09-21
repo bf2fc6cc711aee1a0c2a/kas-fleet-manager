@@ -2,11 +2,11 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 # Warning: This file should only be used if the endpoints are not yet ready to be public, or not suitable for public consumption (like the data plane endpoints).
 # In most cases, you shouldn't need to add the endpoints here.
 # Only add endpoints here when it is an explicit requirement, or if you know what you are doing.
-# There should be no duplicated endpoints or schemas in these 2 files. They should only defined in one of them.
+# There should be no duplicated endpoints or schemas in these 2 files. They should only be defined in one of them.
 info:
-  title: Dinosaur Service Fleet Manager
+  title: Pineapple Service Fleet Manager
   version: 1.3.0
-  description: Dinosaur Service Fleet Manager APIs that are used by internal services e.g kas-fleetshard operators.
+  description: Pineapple Service Fleet Manager APIs that are used by internal services e.g kas-fleetshard operators.
 servers:
   - url: https://api.openshift.com
     description: Main (production) server
@@ -18,18 +18,18 @@ servers:
     description: current domain
 tags:
   - name: Agent Clusters
-    description: ""
+    description: "Endpoints used by the agent for data plane communications"
 
 paths:
   # Endpoints for data plane communications
-  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/status':
+  '/api/pineapples_mgmt/v1/agent-clusters/{id}/status':
     put:
       tags:
         - Agent Clusters
       parameters:
-        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/id"
       requestBody:
-        description: Cluster status update data
+        description: Data plane cluster status update data
         content:
           application/json:
             schema:
@@ -37,7 +37,7 @@ paths:
         required: true
       responses:
         '200':
-          description: Cluster status is updated
+          description: Data plane cluster status is updated
         '400':
           content:
             application/json:
@@ -60,24 +60,24 @@ paths:
       security:
         - Bearer: [ ]
       operationId: updateAgentClusterStatus
-      summary: Update the status of an agent cluster
+      summary: Update the status of a data plane cluster
 
-  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs/status':
+  '/api/pineapples_mgmt/v1/agent-clusters/{id}/pineapples/status':
     put:
       tags:
         - Agent Clusters
       parameters:
-        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/id"
       requestBody:
-        description: Dinosaur clusters status update data
+        description: Pineapple clusters status update data
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DataPlaneDinosaurStatusUpdateRequest'
+              $ref: '#/components/schemas/DataPlanePineappleStatusUpdateRequest'
         required: true
       responses:
         '200':
-          description: Status is updated for Dinosaur clusters
+          description: Status is updated for Pineapple clusters
         '400':
           content:
             application/json:
@@ -99,22 +99,22 @@ paths:
           description: Auth token is not valid.
       security:
         - Bearer: [ ]
-      operationId: updateDinosaurClusterStatus
-      summary: Update the status of Dinosaur clusters on an agent cluster
+      operationId: updatePineappleClusterStatus
+      summary: Update the status of Pineapple clusters on the control plane
 
-  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs':
+  '/api/pineapples_mgmt/v1/agent-clusters/{id}/pineapples':
     get:
       tags:
         - Agent Clusters
       parameters:
-        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/id"
       responses:
         '200':
-          description: The list of the ManagedDinosaurs for the specified agent cluster
+          description: The list of the ManagedPineapple CRs for the specified data plane cluster
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ManagedDinosaurList'
+                $ref: '#/components/schemas/ManagedPineappleList'
         '400':
           content:
             application/json:
@@ -136,18 +136,18 @@ paths:
           description: Auth token is not valid.
       security:
         - Bearer: [ ]
-      operationId: getDinosaurs
-      summary: Get the list of ManagedaDinosaurs for the specified agent cluster
+      operationId: getPineapples
+      summary: Get the list of ManagedaPineapples CR for the specified data plane cluster
 
-  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}':
+  '/api/pineapples_mgmt/v1/agent-clusters/{id}':
     get:
       tags:
         - Agent Clusters
       parameters:
-        - $ref: "fleet-manager.yaml#/components/parameters/id"
+        - $ref: "#/components/parameters/id"
       responses:
         '200':
-          description: The ManagedDinosaurAgent CR Spec
+          description: The ManagedPineappleAgent CR Spec
           content:
             application/json:
               schema:
@@ -173,8 +173,8 @@ paths:
           description: Auth token is not valid.
       security:
         - Bearer: [ ]
-      operationId: getDinosaurAgent
-      summary: Get the spec of the ManagedDinosaurAgent CR spec
+      operationId: getPineappleAgent
+      summary: Get the spec of the ManagedPineappleAgent CR
 
 components:
   schemas:
@@ -196,34 +196,24 @@ components:
         kind:
           type: string
 
-    ManagedDinosaurCapacity:
+    ManagedPineappleCapacity:
+      description: "Capacity information of a Pineapple cluster"
+      type: object
+      properties: {
+            # A list of resources used up by a Pineapple cluster. For example:
+            # storage:
+            #   type: string
+          }
+
+    ManagedPineappleVersions:
       type: object
       properties:
-        ingressEgressThroughputPerSec:
+        pineapple:
           type: string
-        totalMaxConnections:
-          type: integer
-          format: int
-        maxDataRetentionSize:
-          type: string
-        maxPartitions:
-          type: integer
-          format: int
-        maxDataRetentionPeriod:
-          type: string
-        maxConnectionAttemptsPerSec:
-          type: integer
-          format: int
-
-    ManagedDinosaurVersions:
-      type: object
-      properties:
-        dinosaur:
-          type: string
-        strimzi:
+        pineappleOperator:
           type: string
 
-    ManagedDinosaur:
+    ManagedPineapple:
       allOf:
         - $ref: "#/components/schemas/PrivateObjectReference"
         - type: object
@@ -238,18 +228,19 @@ components:
                 annotations:
                   type: object
                   required:
-                    - bf2.org/placementId
-                    - bf2.org/id
+                    - mas/placementId
+                    - mas/id
                   properties:
-                    bf2.org/id:
+                    mas/id:
                       type: string
-                    bf2.org/placementId:
+                    mas/placementId:
                       type: string
 
             spec:
               type: object
               properties:
                 serviceAccounts:
+                  description: "Service account configuration for a Pineapple cluster"
                   type: array
                   items:
                     type: object
@@ -265,8 +256,9 @@ components:
                       password: 
                         type: string     
                 capacity:
-                  $ref: "#/components/schemas/ManagedDinosaurCapacity"
+                  $ref: "#/components/schemas/ManagedPineappleCapacity"
                 oauth:
+                  description: "OAuth configuration for a Pineapple cluster"
                   type: object
                   properties:
                     clientId:
@@ -288,13 +280,15 @@ components:
                       type: string
 
                 owners:
+                  description: "A list of users that owns this Pineapple cluster"
                   type: array
                   items:
                     type: string
                 endpoint:
+                  description: "Route configuration for a Pineapple cluster"
                   type: object
                   properties:
-                    bootstrapServerHost:
+                    host:
                       type: string
                     tls:
                       type: object
@@ -305,43 +299,48 @@ components:
                         key:
                           type: string
                 versions:
-                  $ref: "#/components/schemas/ManagedDinosaurVersions"
+                  $ref: "#/components/schemas/ManagedPineappleVersions"
                 deleted:
                   type: boolean
               required:
                 - deleted
 
-    ManagedDinosaurList:
+    ManagedPineappleList:
       description: >-
-        A list of ManagedDinosaur
+        A list of ManagedPineapple CRs
       allOf:
         - $ref: "#/components/schemas/ListReference"
         - type: object
           example:
-            kind: "ManagedDinosaurList"
+            kind: "ManagedPineappleList"
             items:
-              $ref: '#/components/examples/ManagedDinosaurExample'
+              $ref: '#/components/examples/ManagedPineappleExample'
           properties:
             items:
               type: array
               items:
                 allOf:
-                  - $ref: "#/components/schemas/ManagedDinosaur"
+                  - $ref: "#/components/schemas/ManagedPineapple"
 
     DatePlaneClusterUpdateStatusRequestNodeInfo:
+      description: "Schema for the data plane cluster node info"
       type: object
       nullable: true
       properties:
         ceiling:
+          description: "The maximum number of nodes required in order to provide the Pineapple service"
           type: integer
           nullable: true
         floor:
+          description: "The minimum number of nodes required in order to provide the Pineapple service"
           type: integer
           nullable: true
         current:
+          description: "The number of nodes currently known to the agent"
           type: integer
           nullable: true
         currentWorkLoadMinimum:
+          description: "The minimum number of nodes required to support the current population of Pineapple clusters on the data plane cluster"
           type: integer
           nullable: true
 
@@ -350,33 +349,31 @@ components:
       nullable: true
       properties:
         nodeDelta:
+          description: |
+            The minimum number of nodes that needs to be applied to the data plane cluster to reach the target capacity. 
+            
+            The control plane may increase or decrease the size of the data plane cluster in multiples of this number as long as it does not exceed the ceiling or floor defined in the node info
           type: integer
           nullable: true
         delta:
+          description: |
+            Shows how the data plane cluster capacity will be affected by applying the nodeDelta. 
+            
+            This should state a list of data plane resources, consumed by Pineapple clusters, and the amount that they would be increased or decreased by applying the nodeDelta.
           type: object
           nullable: true
-          properties:
-            ingressEgressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
-              nullable: true
-            connections:
-              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
-              nullable: true
-            dataRetentionSize:
-              type: string
-              nullable: true
-            partitions:
-              type: integer
-              nullable: true
+          properties: {
+            # Example:
+            # storage:
+            #   type: string
+          }
 
     DataPlaneClusterUpdateStatusRequest:
-      # TODO are there any fields that should be required?
-      # TODO are there any fields that should be nullable? (this is, a pointer in the resulting generated Go code)
       description: "Schema for the request to update a data plane cluster's status"
       type: object
       properties:
         conditions:
-          description: "The cluster data plane conditions"
+          description: "The data plane cluster conditions"
           type: array
           items:
             type: object
@@ -390,45 +387,38 @@ components:
               status:
                 type: string
         total:
+          description: |
+            The total capacity of the data plane cluster for Pineapple clusters.
+
+            This should state the total amount of currently used and available data plane resources that can be consumed by Pineapple clusters.
           type: object
-          properties:
-            ingressEgressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
-              nullable: true
-            connections:
-              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
-              nullable: true
-            dataRetentionSize:
-              type: string
-              nullable: true
-            partitions:
-              type: integer
-              nullable: true
+          properties: {
+            # Example:
+            # storage:
+            #   type: string
+          }
         remaining:
+          description: |
+            The remaining capacity of the data plane cluster for Pineapple clusters.
+
+            This should state the remaining amount of available data plane resources that can be consumed by Pineapple clusters.
           type: object
-          properties:
-            # TODO 'total', 'remaining' attributes share the same properties so should we refactor it to a common schema?
-            ingressEgressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
-              nullable: true
-            connections:
-              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
-              nullable: true
-            dataRetentionSize:
-              type: string
-              nullable: true
-            partitions:
-              type: integer
-              nullable: true
+          properties: {
+            # Example:
+            # storage:
+            #   type: string
+          }
         nodeInfo:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
         resizeInfo:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
-        strimziVersions:
+        pineappleOperatorVersions:
+          description: "A list of the Pineapple operator versions that can be installed on the data plane cluster"
           type: array
           items:
             type: string
-        strimzi:
+        pineappleOperator:
+          description: "The status and version of the Pineapple operator"
           type: array
           items:
             type: object
@@ -440,12 +430,12 @@ components:
             required:
             - ready
             - version
-    DataPlaneDinosaurStatus:
-      description: "Schema of the status object for a Dinosaur cluster"
+    DataPlanePineappleStatus:
+      description: "Schema of the status object for a Pineapple cluster"
       type: object
       properties:
         conditions:
-          description: "The status conditions of a Dinosaur cluster"
+          description: "The status conditions of the Pineapple cluster"
           type: array
           items:
             type: object
@@ -459,38 +449,24 @@ components:
               status:
                 type: string
         capacity:
-          description: "Capacity information of the data plane cluster"
+          description: "Capacity information consumed by the Pineapple cluster"
           type: object
-          properties:
-            ingressEgressThroughputPerSec:
-              type: string #example: 4Mi
-              nullable: true
-            totalMaxConnections:
-              type: integer #example: 500
-              nullable: true
-            maxDataRetentionSize:
-              type: string #example: 100Gi
-              nullable: true
-            maxPartitions:
-              type: integer #example: 100
-              nullable: true
-            maxDataRetentionPeriod:
-              type: string #example: P14D
-              nullable: true
-            maxConnectionAttemptsPerSec:
-              type: integer #example: 100
-              nullable: true
+          properties: {
+            # Example:
+            # storage:
+            #   type: string
+          }
 
         versions:
-          description: "Version information related to a Dinosaur cluster"
+          description: "Version information related to the Pineapple cluster"
           type: object
           properties:
-            dinosaur:
+            pineapple:
               type: string
-            strimzi:
+            pineappleOperator:
               type: string
         routes:
-          description: "Routes created for a Dinosaur cluster"
+          description: "Routes created for the Pineapple cluster"
           type: array
           nullable: true
           items:
@@ -503,13 +479,13 @@ components:
               router:
                 type: string
       example:
-        $ref: '#/components/examples/DataPlaneDinosaurStatusRequestExample'
+        $ref: '#/components/examples/DataPlanePineappleStatusRequestExample'
 
-    DataPlaneDinosaurStatusUpdateRequest:
-      description: "Schema for the request to update the statuses of Dinosaur clusters from data plane"
+    DataPlanePineappleStatusUpdateRequest:
+      description: "Schema for the request to update the statuses of Pineapple clusters from data plane to the control plane"
       type: object
       additionalProperties:
-        $ref: '#/components/schemas/DataPlaneDinosaurStatus'
+        $ref: '#/components/schemas/DataPlanePineappleStatus'
 
     DataplaneClusterAgentConfig:
       description: "Configuration for the data plane cluster agent"
@@ -547,6 +523,15 @@ components:
           type: object
           nullable: true
 
+  parameters:
+    id:
+      name: id
+      description: The ID the data plane cluster
+      schema:
+        type: string
+      in: path
+      required: true
+
   securitySchemes:
     Bearer:
       scheme: bearer
@@ -554,25 +539,22 @@ components:
       type: http
 
   examples:
-    ManagedDinosaurExample:
+    ManagedPineappleExample:
       value:
-        kind: "ManagedDinosaur"
+        kind: "ManagedPineapple"
         metadata:
-          name: "example-dinosaur"
-          namespace: "example-dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac"
+          name: "example-pineapple"
+          namespace: "example-pineapple-1rfpsqbvq1em2u9u0z54ymjcwac"
           annotations:
-            bf2.org/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
-            bf2.org/placementId: ""
+            mas/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
+            mas/placementId: ""
         spec:
-          capacity:
-            ingressEgressThroughputPerSec: 4Mi
-            totalMaxConnections: 500
-            maxDataRetentionSize: 100Gi
-            maxPartitions: 100
-            maxDataRetentionPeriod: P14D
-            maxConnectionAttemptsPerSec: 100
+          capacity: {
+            # For example:
+            # storage: 1Gi
+          }
           oauth:
-            clientId: "dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac"
+            clientId: "pineapple-1rfpsqbvq1em2u9u0z54ymjcwac"
             clientSecret: "example-client-secret"
             tokenEndpointUri: "https://example-token-endpoint-uri.com/token"
             jwksEndpointUri: "https://example-jwks-endpoint-uri.com/certs"
@@ -581,37 +563,34 @@ components:
             tlsTrustedCertificate: ""
             customClaimCheck: ""
           endpoint:
-            bootstrapServerHost: "example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.dinosaur.devshift.org"
+            host: "example.pineapple.com"
             tls:
               cert: ""
               key: ""
           versions:
-            dinosaur: 2.7.0
-            strimzi: 0.21.2
+            pineapple: 2.7.0
+            pineappleOperator: 0.21.2
           deleted: false
-    DataPlaneDinosaurStatusRequestExample:
+    DataPlanePineappleStatusRequestExample:
       value:
         conditions:
           - type: Ready
-            reason: DinosaurInstanceReady
+            reason: PineappleInstanceReady
             message: installing
             status: "False"
             lastTransitionTime: "2018-01-01T00:00:00Z"
-        capacity:
-          ingressEgressThroughputPerSec: 4Mi
-          totalMaxConnections: 500
-          maxDataRetentionSize: 100Gi
-          maxPartitions: 100
-          maxDataRetentionPeriod: P14D
-          maxConnectionAttemptsPerSec: 100
+        capacity: {
+          # For example:
+          # storage: 1Gi
+        }
         versions:
-          dinosaur: 2.4.1
-          strimzi: 0.21.2
+          pineapple: 2.4.1
+          pineappleOperator: 0.21.2
     400InvalidIdExample:
       value:
-        id: "203"
+        id: "400"
         kind: "Error"
-        href: "/api/dinosaurs_mgmt/v1/errors/21"
-        code: "DINOSAURS-MGMT-21"
+        href: "/api/pineapples_mgmt/v1/errors/21"
+        code: "PINEAPPLES-MGMT-21"
         reason: "Bad request"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"

@@ -51,29 +51,14 @@ func getResizeInfo(status private.DataPlaneClusterUpdateStatusRequest) dbapi.Dat
 	if status.ResizeInfo != nil {
 		resizeInfo = dbapi.DataPlaneClusterStatusResizeInfo{
 			NodeDelta: int(*status.ResizeInfo.NodeDelta),
-			Delta: dbapi.DataPlaneClusterStatusCapacity{
-				IngressEgressThroughputPerSec: *status.ResizeInfo.Delta.IngressEgressThroughputPerSec,
-				Connections:                   int(*status.ResizeInfo.Delta.Connections),
-				DataRetentionSize:             *status.ResizeInfo.Delta.DataRetentionSize,
-				Partitions:                    int(*status.ResizeInfo.Delta.Partitions),
-			},
+			Delta:     dbapi.DataPlaneClusterStatusCapacity{},
 		}
 	}
 	return resizeInfo
 }
 
 func getRemaining(status private.DataPlaneClusterUpdateStatusRequest) dbapi.DataPlaneClusterStatusCapacity {
-	remaining := dbapi.DataPlaneClusterStatusCapacity{
-		Connections: int(*status.Remaining.Connections),
-		Partitions:  int(*status.Remaining.Partitions),
-	}
-	if status.Remaining.IngressEgressThroughputPerSec != nil {
-		remaining.IngressEgressThroughputPerSec = *status.Remaining.IngressEgressThroughputPerSec
-	}
-	if status.Remaining.DataRetentionSize != nil {
-		remaining.DataRetentionSize = *status.Remaining.DataRetentionSize
-	}
-	return remaining
+	return dbapi.DataPlaneClusterStatusCapacity{}
 }
 
 // getAvailableStrimziVersions returns a list of api.StrimziVersion sorted
@@ -84,8 +69,8 @@ func getAvailableStrimziVersions(status private.DataPlaneClusterUpdateStatusRequ
 
 	// We try to get the versions from status.Strimzi and if it has not been defined
 	// we try to fallback to status.StrimziVersions.
-	if status.Strimzi != nil {
-		for _, val := range status.Strimzi {
+	if status.PineappleOperator != nil {
+		for _, val := range status.PineappleOperator {
 			strimziVersion := api.StrimziVersion{
 				Version: val.Version,
 				Ready:   val.Ready,
@@ -94,7 +79,7 @@ func getAvailableStrimziVersions(status private.DataPlaneClusterUpdateStatusRequ
 		}
 
 	} else { // fall back to StrimziVersions.
-		for _, val := range status.StrimziVersions {
+		for _, val := range status.PineappleOperatorVersions {
 			strimziVersion := api.StrimziVersion{
 				Version: val,
 				Ready:   true,
