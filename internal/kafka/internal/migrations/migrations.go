@@ -63,6 +63,7 @@ var migrations = []*gormigrate.Migration{
 	migrateOldKafkaNamespace(),
 	migrateOldKafkaNamespaceCreatedDuringDeployment(),
 	replaceAllowListWithQuotaManagementList(),
+	removeKafkaOwnerAccountId(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

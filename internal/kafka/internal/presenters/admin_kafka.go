@@ -2,6 +2,7 @@ package presenters
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -44,7 +45,6 @@ func PresentKafkaRequestAdminEndpoint(kafkaRequest *dbapi.KafkaRequest, accountS
 		OrganisationId:        kafkaRequest.OrganisationId,
 		SubscriptionId:        kafkaRequest.SubscriptionId,
 		SsoClientId:           kafkaRequest.SsoClientID,
-		OwnerAccountId:        kafkaRequest.OwnerAccountId,
 		AccountNumber:         org.AccountNumber,
 		QuotaType:             kafkaRequest.QuotaType,
 		Routes:                GetRoutesFromKafkaRequest(kafkaRequest),

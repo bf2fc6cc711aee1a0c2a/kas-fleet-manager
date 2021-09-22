@@ -815,12 +815,11 @@ func TestKeycloakService_DeleteServiceAccountInternal(t *testing.T) {
 func TestKeycloakService_CreateServiceAccountInternal(t *testing.T) {
 	tokenErr := pkgErr.New("token error")
 	request := CompleteServiceAccountRequest{
-		Owner:          "some-owner",
-		OwnerAccountId: "owner-account-id",
-		ClientId:       "some-client-id",
-		Name:           "some-name",
-		Description:    "some-description",
-		OrgId:          "some-organisation-id",
+		Owner:       "some-owner",
+		ClientId:    "some-client-id",
+		Name:        "some-name",
+		Description: "some-description",
+		OrgId:       "some-organisation-id",
 	}
 	type fields struct {
 		kcClient keycloak.KcClient

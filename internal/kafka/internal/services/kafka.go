@@ -245,12 +245,11 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 			return errors.FailedToCreateSSOClient("failed to create sso client %s:%v", kafkaRequest.SsoClientID, err)
 		}
 		serviceAccountRequest := services.CompleteServiceAccountRequest{
-			Owner:          kafkaRequest.Owner,
-			OwnerAccountId: kafkaRequest.OwnerAccountId,
-			ClientId:       fmt.Sprintf("%s-%s", CanaryServiceAccountPrefix, kafkaRequest.ID),
-			OrgId:          kafkaRequest.OrganisationId,
-			Name:           fmt.Sprintf("canary-service-account-for-kafka %s", kafkaRequest.ID),
-			Description:    fmt.Sprintf("canary service account for kafka %s", kafkaRequest.ID),
+			Owner:       kafkaRequest.Owner,
+			ClientId:    fmt.Sprintf("%s-%s", CanaryServiceAccountPrefix, kafkaRequest.ID),
+			OrgId:       kafkaRequest.OrganisationId,
+			Name:        fmt.Sprintf("canary-service-account-for-kafka %s", kafkaRequest.ID),
+			Description: fmt.Sprintf("canary service account for kafka %s", kafkaRequest.ID),
 		}
 
 		canaryServiceAccount, err := k.keycloakService.CreateServiceAccountInternal(serviceAccountRequest)

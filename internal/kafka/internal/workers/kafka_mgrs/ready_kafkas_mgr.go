@@ -98,12 +98,11 @@ func (k *ReadyKafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *dbapi.Ka
 func (k *ReadyKafkaManager) reconcileCanaryServiceAccount(kafkaRequest *dbapi.KafkaRequest) error {
 	if kafkaRequest.CanaryServiceAccountClientID == "" && kafkaRequest.CanaryServiceAccountClientSecret == "" {
 		serviceAccountRequest := coreServices.CompleteServiceAccountRequest{
-			Owner:          kafkaRequest.Owner,
-			OwnerAccountId: kafkaRequest.OwnerAccountId,
-			ClientId:       fmt.Sprintf("%s-%s", services.CanaryServiceAccountPrefix, kafkaRequest.ID),
-			OrgId:          kafkaRequest.OrganisationId,
-			Name:           fmt.Sprintf("canary-service-account-for-kafka %s", kafkaRequest.ID),
-			Description:    fmt.Sprintf("canary service account for kafka %s", kafkaRequest.ID),
+			Owner:       kafkaRequest.Owner,
+			ClientId:    fmt.Sprintf("%s-%s", services.CanaryServiceAccountPrefix, kafkaRequest.ID),
+			OrgId:       kafkaRequest.OrganisationId,
+			Name:        fmt.Sprintf("canary-service-account-for-kafka %s", kafkaRequest.ID),
+			Description: fmt.Sprintf("canary service account for kafka %s", kafkaRequest.ID),
 		}
 
 		serviceAccount, err := k.keycloakService.CreateServiceAccountInternal(serviceAccountRequest)

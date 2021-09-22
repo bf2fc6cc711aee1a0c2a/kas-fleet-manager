@@ -295,7 +295,7 @@ func (kc *kcClient) IsOwner(client *gocloak.Client, userId string) bool {
 		return false
 	}
 	attributes := *client.Attributes
-	if rhUserId, found := attributes["rh-user-id"]; found {
+	if rhUserId, found := attributes["username"]; found {
 		if rhUserId == userId {
 			return true
 		}

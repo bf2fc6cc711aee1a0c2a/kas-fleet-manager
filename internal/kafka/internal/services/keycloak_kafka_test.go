@@ -69,6 +69,9 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return true
+					},
 					GetConfigFunc: func() *keycloak.KeycloakConfig {
 						return keycloak.NewKeycloakConfig()
 					},
@@ -149,6 +152,9 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return true
 					},
 					GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
 						return secret, nil
