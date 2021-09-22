@@ -75,7 +75,7 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 		ObservabilityConfigChannel:         "resources", // Pointing to resources as the individual directories for prod and staging are no longer needed
 		ObservabilityConfigAccessToken:     "",
 		ObservabilityConfigAccessTokenFile: "secrets/observability-config-access.token",
-		ObservabilityConfigTag:             "v1.10.0-staging",
+		ObservabilityConfigTag:             "v1.11.0-staging",
 		MetricsClientIdFile:                "secrets/rhsso-metrics.clientId",
 		MetricsSecretFile:                  "secrets/rhsso-metrics.clientSecret",
 		LogsClientIdFile:                   "secrets/rhsso-logs.clientId",
