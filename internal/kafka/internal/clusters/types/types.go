@@ -49,6 +49,8 @@ type ClusterSpec struct {
 	ExternalID string `json:"external_id"`
 	// the status of the cluster
 	Status api.ClusterStatus `json:"status"`
+	// details about the status (for example, error messages for status = failed)
+	StatusDetails string `json:"status_details"`
 	// additional information related to the cluster, can vary depending on the provider
 	AdditionalInfo api.JSON `json:"additional_info"`
 }

@@ -113,6 +113,7 @@ var ordinals = map[string]int{
 	ClusterComputeNodeScalingUp.String():            50,
 	ClusterDeprovisioning.String():                  60,
 	ClusterCleanup.String():                         70,
+	ClusterFailed.String():                          80,
 }
 
 // This represents the valid statuses of a dataplane cluster
@@ -130,6 +131,7 @@ type Cluster struct {
 	MultiAZ            bool          `json:"multi_az"`
 	Region             string        `json:"region"`
 	Status             ClusterStatus `json:"status" gorm:"index"`
+	StatusDetails      string        `json:"status_details" gorm:"-"`
 	IdentityProviderID string        `json:"identity_provider_id"`
 	ClusterDNS         string        `json:"cluster_dns"`
 	// the provider type for the cluster, e.g. OCM, AWS, GCP, Standalone etc
