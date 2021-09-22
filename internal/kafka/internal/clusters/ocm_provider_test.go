@@ -113,6 +113,8 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 	internalId := "test-internal-id"
 	externalId := "test-external-id"
 
+	clusterFailedProvisioningErrorText := "cluster provisioning failed test message"
+
 	spec := &types.ClusterSpec{
 		InternalID:     internalId,
 		ExternalID:     "",
@@ -153,7 +155,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
-						sb := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateError)
+						sb := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateError).ProvisionErrorMessage(clusterFailedProvisioningErrorText)
 						return clustersmgmtv1.NewCluster().Status(sb).ExternalID(externalId).Build()
 					},
 				},
@@ -165,6 +167,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 				InternalID:     internalId,
 				ExternalID:     externalId,
 				Status:         api.ClusterFailed,
+				StatusDetails:  clusterFailedProvisioningErrorText,
 				AdditionalInfo: nil,
 			},
 			wantErr: false,
