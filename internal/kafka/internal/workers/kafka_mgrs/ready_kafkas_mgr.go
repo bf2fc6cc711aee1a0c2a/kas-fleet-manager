@@ -1,8 +1,6 @@
 package kafka_mgrs
 
 import (
-	"fmt"
-
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -69,10 +67,6 @@ func (k *ReadyKafkaManager) Reconcile() []error {
 		if err := k.reconcileSsoClientIDAndSecret(kafka); err != nil {
 			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to get ready kafkas sso client: %s", kafka.ID))
 		}
-
-		if err := k.reconcileCanaryServiceAccount(kafka); err != nil {
-			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to create ready kafka canary service account: %s", kafka.ID))
-		}
 	}
 
 	return encounteredErrors
@@ -90,31 +84,5 @@ func (k *ReadyKafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *dbapi.Ka
 			return errors.Wrapf(err, "failed to update kafka %s with cluster details", kafkaRequest.ID)
 		}
 	}
-	return nil
-}
-
-// reconcileCanaryServiceAccount migrates all existing kafkas so that they will have the canary service account created.
-// This is only meant to be a temporary code, in the future it can be replaced with the service account rotation logic
-func (k *ReadyKafkaManager) reconcileCanaryServiceAccount(kafkaRequest *dbapi.KafkaRequest) error {
-	if kafkaRequest.CanaryServiceAccountClientID == "" && kafkaRequest.CanaryServiceAccountClientSecret == "" {
-		serviceAccountRequest := coreServices.CompleteServiceAccountRequest{
-			Owner:       kafkaRequest.Owner,
-			ClientId:    fmt.Sprintf("%s-%s", services.CanaryServiceAccountPrefix, kafkaRequest.ID),
-			OrgId:       kafkaRequest.OrganisationId,
-			Name:        fmt.Sprintf("canary-service-account-for-kafka %s", kafkaRequest.ID),
-			Description: fmt.Sprintf("canary service account for kafka %s", kafkaRequest.ID),
-		}
-
-		serviceAccount, err := k.keycloakService.CreateServiceAccountInternal(serviceAccountRequest)
-		if err != nil {
-			return errors.Wrapf(err, "failed to create canary service account: %s", kafkaRequest.SsoClientID)
-		}
-		kafkaRequest.CanaryServiceAccountClientID = serviceAccount.ClientID
-		kafkaRequest.CanaryServiceAccountClientSecret = serviceAccount.ClientSecret
-		if err = k.kafkaService.Update(kafkaRequest); err != nil {
-			return errors.Wrapf(err, "failed to update kafka %s with canary service account details", kafkaRequest.ID)
-		}
-	}
-
 	return nil
 }
