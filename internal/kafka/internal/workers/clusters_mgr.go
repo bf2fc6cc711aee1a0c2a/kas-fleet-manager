@@ -35,7 +35,7 @@ import (
 
 const (
 	observabilityNamespace          = "managed-application-services-observability"
-	observabilityCatalogSourceImage = "quay.io/rhoas/observability-operator-index:v3.0.4"
+	observabilityCatalogSourceImage = "quay.io/rhoas/observability-operator-index:v3.0.5"
 	observabilityOperatorGroupName  = "observability-operator-group-name"
 	observabilityCatalogSourceName  = "observability-operator-manifests"
 	observabilitySubscriptionName   = "observability-operator"
@@ -861,7 +861,7 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 			CatalogSource:          observabilityCatalogSourceName,
 			Channel:                "alpha",
 			CatalogSourceNamespace: observabilityNamespace,
-			StartingCSV:            "observability-operator.v3.0.4",
+			StartingCSV:            "observability-operator.v3.0.5",
 			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 			Package:                observabilitySubscriptionName,
 		},
