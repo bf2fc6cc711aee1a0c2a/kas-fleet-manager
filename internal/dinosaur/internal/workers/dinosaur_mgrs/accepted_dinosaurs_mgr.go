@@ -69,7 +69,7 @@ func (k *AcceptedDinosaurManager) Reconcile() []error {
 
 	for _, dinosaur := range acceptedDinosaurs {
 		glog.V(10).Infof("accepted dinosaur id = %s", dinosaur.ID)
-		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusAccepted, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+		metrics.UpdatePineappleRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusAccepted, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		if err := k.reconcileAcceptedDinosaur(dinosaur); err != nil {
 			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile accepted dinosaur %s", dinosaur.ID))
 			continue

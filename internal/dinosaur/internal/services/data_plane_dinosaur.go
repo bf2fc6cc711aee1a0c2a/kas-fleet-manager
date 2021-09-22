@@ -123,10 +123,10 @@ func (d *dataPlaneDinosaurService) setDinosaurClusterReady(dinosaur *dbapi.Dinos
 			return serviceError.NewWithCause(err.Code, err, "failed to update status %s for dinosaur cluster %s", constants2.DinosaurRequestStatusReady, dinosaur.ID)
 		}
 		if shouldSendMetric {
-			metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusReady, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
-			metrics.UpdateDinosaurCreationDurationMetric(metrics.JobTypeDinosaurCreate, time.Since(dinosaur.CreatedAt))
-			metrics.IncreaseDinosaurSuccessOperationsCountMetric(constants2.DinosaurOperationCreate)
-			metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.DinosaurOperationCreate)
+			metrics.UpdatePineappleRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusReady, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+			metrics.UpdatePineappleCreationDurationMetric(metrics.JobTypePineappleCreate, time.Since(dinosaur.CreatedAt))
+			metrics.IncreasePineappleSuccessOperationsCountMetric(constants2.DinosaurOperationCreate)
+			metrics.IncreasePineappleTotalOperationsCountMetric(constants2.DinosaurOperationCreate)
 		}
 	}
 	return nil
@@ -214,8 +214,8 @@ func (d *dataPlaneDinosaurService) setDinosaurClusterFailed(dinosaur *dbapi.Dino
 		return serviceError.NewWithCause(err.Code, err, "failed to update dinosaur cluster to %s status for dinosaur cluster %s", constants2.DinosaurRequestStatusFailed, dinosaur.ID)
 	}
 	if shouldSendMetric {
-		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusFailed, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
-		metrics.IncreaseDinosaurTotalOperationsCountMetric(constants2.DinosaurOperationCreate)
+		metrics.UpdatePineappleRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusFailed, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+		metrics.IncreasePineappleTotalOperationsCountMetric(constants2.DinosaurOperationCreate)
 	}
 	logger.Logger.Errorf("Dinosaur status reported as failed by KAS Fleet Shard Operator: '%s'", errMessage)
 
@@ -228,7 +228,7 @@ func (d *dataPlaneDinosaurService) setDinosaurClusterDeleting(dinosaur *dbapi.Di
 		if updateErr != nil {
 			return serviceError.NewWithCause(updateErr.Code, updateErr, "failed to update status %s for dinosaur cluster %s", constants2.DinosaurRequestStatusDeleting, dinosaur.ID)
 		} else {
-			metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusDeleting, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+			metrics.UpdatePineappleRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusDeleting, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 		}
 	}
 	return nil
@@ -243,7 +243,7 @@ func (d *dataPlaneDinosaurService) reassignDinosaurCluster(dinosaur *dbapi.Dinos
 		if err := d.dinosaurService.Update(dinosaur); err != nil {
 			return err
 		}
-		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+		metrics.UpdatePineappleRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 	} else {
 		logger.Logger.Infof("dinosaur cluster %s is rejected and current status is %s", dinosaur.ID, dinosaur.Status)
 	}

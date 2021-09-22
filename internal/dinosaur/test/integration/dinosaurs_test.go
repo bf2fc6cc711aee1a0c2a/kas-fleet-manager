@@ -123,9 +123,9 @@ func TestDinosaurCreate_Success(t *testing.T) {
 	// this is set by the mockKasfFleetshardSync
 	Expect(dinosaurRequest.DesiredStrimziVersion).To(Equal("strimzi-cluster-operator.v0.23.0-0"))
 
-	common.CheckMetricExposed(h, t, metrics.DinosaurCreateRequestDuration)
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.DinosaurOperationsSuccessCount, constants2.DinosaurOperationCreate.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.DinosaurOperationsTotalCount, constants2.DinosaurOperationCreate.String()))
+	common.CheckMetricExposed(h, t, metrics.PineappleCreateRequestDuration)
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.FleetManager, metrics.PineappleOperationsSuccessCount, constants2.DinosaurOperationCreate.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.FleetManager, metrics.PineappleOperationsTotalCount, constants2.DinosaurOperationCreate.String()))
 
 	// delete test dinosaur to free up resources on an OSD cluster
 	deleteTestDinosaur(t, h, ctx, client, foundDinosaur.Id)
@@ -1089,10 +1089,10 @@ func TestDinosaurDelete_DeleteDuringCreation(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Failed to list dinosaur request: %v", err)
 	Expect(dinosaurList.Total).Should(BeZero(), " Dinosaur list response should be empty")
 
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.DinosaurOperationsSuccessCount, constants2.DinosaurOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.DinosaurOperationsTotalCount, constants2.DinosaurOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.DinosaurOperationsSuccessCount, constants2.DinosaurOperationDelete.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.DinosaurOperationsTotalCount, constants2.DinosaurOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.FleetManager, metrics.PineappleOperationsSuccessCount, constants2.DinosaurOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.FleetManager, metrics.PineappleOperationsTotalCount, constants2.DinosaurOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.FleetManager, metrics.PineappleOperationsSuccessCount, constants2.DinosaurOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.FleetManager, metrics.PineappleOperationsTotalCount, constants2.DinosaurOperationDelete.String()))
 
 	// Test deletion of a dinosaur in a 'preparing' state
 	dinosaur, resp, err = common.WaitForDinosaurCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
@@ -1111,10 +1111,10 @@ func TestDinosaurDelete_DeleteDuringCreation(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Failed to list dinosaur request: %v", err)
 	Expect(dinosaurList.Total).Should(BeZero(), " Dinosaur list response should be empty")
 
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.DinosaurOperationsSuccessCount, constants2.DinosaurOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.DinosaurOperationsTotalCount, constants2.DinosaurOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.DinosaurOperationsSuccessCount, constants2.DinosaurOperationDelete.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.DinosaurOperationsTotalCount, constants2.DinosaurOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.FleetManager, metrics.PineappleOperationsSuccessCount, constants2.DinosaurOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.FleetManager, metrics.PineappleOperationsTotalCount, constants2.DinosaurOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.FleetManager, metrics.PineappleOperationsSuccessCount, constants2.DinosaurOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.FleetManager, metrics.PineappleOperationsTotalCount, constants2.DinosaurOperationDelete.String()))
 
 	// Test deletion of a dinosaur in a 'provisioning' state
 	dinosaur, resp, err = common.WaitForDinosaurCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
@@ -1133,10 +1133,10 @@ func TestDinosaurDelete_DeleteDuringCreation(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Failed to list dinosaur request: %v", err)
 	Expect(dinosaurList.Total).Should(BeZero(), " Dinosaur list response should be empty")
 
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.DinosaurOperationsSuccessCount, constants2.DinosaurOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.DinosaurOperationsTotalCount, constants2.DinosaurOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.DinosaurOperationsSuccessCount, constants2.DinosaurOperationDelete.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.DinosaurOperationsTotalCount, constants2.DinosaurOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.FleetManager, metrics.PineappleOperationsSuccessCount, constants2.DinosaurOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.FleetManager, metrics.PineappleOperationsTotalCount, constants2.DinosaurOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.FleetManager, metrics.PineappleOperationsSuccessCount, constants2.DinosaurOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.FleetManager, metrics.PineappleOperationsTotalCount, constants2.DinosaurOperationDelete.String()))
 }
 
 // TestDinosaurDelete - tests fail dinosaur delete
@@ -1160,8 +1160,8 @@ func TestDinosaurDelete_Fail(t *testing.T) {
 	_, _, err := client.DefaultApi.DeleteDinosaurById(ctx, dinosaur.Id, true)
 	Expect(err).To(HaveOccurred())
 	// The id is invalid, so the metric is not expected to exist
-	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.KasFleetManager, metrics.DinosaurOperationsSuccessCount), false)
-	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.KasFleetManager, metrics.DinosaurOperationsTotalCount), false)
+	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.FleetManager, metrics.PineappleOperationsSuccessCount), false)
+	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.FleetManager, metrics.PineappleOperationsTotalCount), false)
 }
 
 func TestDinosaur_DeleteAdminNonOwner(t *testing.T) {

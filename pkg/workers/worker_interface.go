@@ -59,6 +59,6 @@ func (b *BaseWorker) StartWorker(w Worker) {
 
 func (b *BaseWorker) StopWorker(w Worker) {
 	b.Reconciler.Stop(w)
-	metrics.ResetMetricsForDinosaurManagers()
+	metrics.ResetMetricsForPineappleManagers()
 	metrics.SetLeaderWorkerMetric(b.WorkerType, false)
 }

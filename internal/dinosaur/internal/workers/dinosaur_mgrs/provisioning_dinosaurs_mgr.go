@@ -63,7 +63,7 @@ func (k *ProvisioningDinosaurManager) Reconcile() []error {
 	}
 	for _, dinosaur := range provisioningDinosaurs {
 		glog.V(10).Infof("provisioning dinosaur id = %s", dinosaur.ID)
-		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+		metrics.UpdatePineappleRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
 	}
 
 	return encounteredErrors

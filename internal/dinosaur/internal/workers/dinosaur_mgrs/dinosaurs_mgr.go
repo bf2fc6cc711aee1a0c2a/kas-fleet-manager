@@ -110,7 +110,7 @@ func (k *DinosaurManager) setDinosaurStatusCountMetric() []error {
 	}
 
 	for _, c := range counters {
-		metrics.UpdateDinosaurRequestsStatusCountMetric(c.Status, c.Count)
+		metrics.UpdatePineappleRequestsStatusCountMetric(c.Status, c.Count)
 	}
 
 	return nil
