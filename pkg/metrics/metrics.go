@@ -13,6 +13,7 @@ import (
 
 const (
 	// FleetManager - metrics prefix
+	// needs to be updated with service name
 	FleetManager = "_yournamehere_fleet_manager"
 
 	// ClusterCreateRequestDuration - name of cluster creation duration metric
@@ -126,7 +127,7 @@ var observatoriumRequestMetricsLabels = []string{
 	LabelPath,
 }
 
-// #### Metrics for Dataplane clusters - Start ####
+// #### Metrics for Data Plane clusters - Start ####
 // create a new histogramVec for cluster creation duration
 var requestClusterCreationDurationMetric = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
@@ -171,7 +172,7 @@ func IncreaseClusterSuccessOperationsCountMetric(operation constants2.ClusterOpe
 	clusterOperationsSuccessCountMetric.With(labels).Inc()
 }
 
-// reate a new counterVec for total cluster operation counts
+// create a new counterVec for total cluster operation counts
 var clusterOperationsTotalCountMetric = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Subsystem: FleetManager,
@@ -194,7 +195,7 @@ var clusterStatusSinceCreatedMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: FleetManager,
 		Name:      ClusterStatusSinceCreated,
-		Help:      "metrics to track the status of a dataplane cluster and how long since it's been created",
+		Help:      "metrics to track the status of a data plane cluster and how long since it's been created",
 	},
 	ClusterStatusSinceCreatedMetricsLabels,
 )
@@ -212,7 +213,7 @@ var clusterStatusCountMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: FleetManager,
 		Name:      ClusterStatusCount,
-		Help:      "metrics to record the number of Dataplane clusters in each status",
+		Help:      "metrics to record the number of data plane clusters in each status",
 	},
 	ClusterStatusCountMetricsLabels,
 )
@@ -240,7 +241,7 @@ func UpdatePineapplePerClusterCountMetric(clusterId string, clusterExternalID st
 	pineapplePerClusterCountMetric.With(labels).Set(float64(count))
 }
 
-// #### Metrics for Dataplane clusters - End ####
+// #### Metrics for Data Plane clusters - End ####
 
 // #### Metrics for Pineapples - Start ####
 // create a new histogramVec for pineapple creation duration

@@ -1114,4 +1114,4 @@ metadata:
     grafana_dashboard: "true"
   annotations:
   #TO-DO update location of dashboard definitions
-    grafana-folder: /grafana-dashboard-definitions/RHOSAK
+    grafana-folder: /grafana-dashboard-definitions/

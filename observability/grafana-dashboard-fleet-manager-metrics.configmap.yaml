@@ -973,12 +973,6 @@ data:
                   "legendFormat": "Cluster",
                   "refId": "G"
                 },
-                {
-                  "expr": "sum without (pod, instance, endpoint, job, namespace, service, worker_type) (fleet_manager_reconciler_success_count{worker_type=\"connector\"})/(( (sum without (pod, instance, endpoint, job, namespace, service, worker_type) (fleet_manager_reconciler_failure_count{worker_type=\"connector\"})) or on() vector(0)) + sum without (pod, instance, endpoint, job, namespace, service, worker_type) (fleet_manager_reconciler_success_count{worker_type=\"connector\"}))",
-                  "interval": "",
-                  "legendFormat": "Connector",
-                  "refId": "H"
-                }
               ],
               "thresholds": [],
               "timeFrom": null,
