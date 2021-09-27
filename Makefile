@@ -588,6 +588,14 @@ deploy/secrets:
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/secrets
 
+deploy/envoy:
+	@oc apply -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
+.PHONY: deploy/envoy
+
+deploy/route:
+	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
+.PHONY: deploy/route
+
 # deploy service via templates to an OpenShift cluster
 deploy/service: IMAGE_REGISTRY ?= $(internal_image_registry)
 deploy/service: IMAGE_REPOSITORY ?= $(image_repository)
@@ -625,9 +633,8 @@ deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
 deploy/service: STRIMZI_OPERATOR_ADDON_ID ?= "managed-kafka-qe"
 deploy/service: KAS_FLEETSHARD_ADDON_ID ?= "kas-fleetshard-operator-qe"
 deploy/service: VAULT_KIND ?= "tmp"
-deploy/service:
-	@oc apply -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
-	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
+deploy/service: deploy/envoy deploy/route
+	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
 	@oc process -f ./templates/service-template.yml \
 		-p ENVIRONMENT="$(ENV)" \
 		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
