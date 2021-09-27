@@ -600,6 +600,7 @@ func (c clusterService) CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, 
 	}
 
 	cluster.Status = clusterSpec.Status
+	cluster.StatusDetails = clusterSpec.StatusDetails
 	cluster.ClusterSpec = clusterSpec.AdditionalInfo
 	if clusterSpec.ExternalID != "" && cluster.ExternalID == "" {
 		cluster.ExternalID = clusterSpec.ExternalID

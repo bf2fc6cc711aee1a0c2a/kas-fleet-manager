@@ -71,9 +71,9 @@ func WaitForClusterToBeDeleted(db *db.ConnectionFactory, clusterService *service
 }
 
 // WaitForClusterStatus - Awaits for the cluster to reach the desired status
-func WaitForClusterStatus(db *db.ConnectionFactory, clusterService *services.ClusterService, clusterId string, status api.ClusterStatus) (cluster *api.Cluster, err error) {
+func WaitForClusterStatus(db *db.ConnectionFactory, clusterService *services.ClusterService, clusterId string, desiredStatus api.ClusterStatus) (cluster *api.Cluster, err error) {
 	pollingInterval := defaultPollInterval
-	if status.String() != api.ClusterReady.String() {
+	if desiredStatus.String() != api.ClusterReady.String() {
 		pollingInterval = 1 * time.Second
 	}
 	currentStatus := ""
@@ -82,9 +82,9 @@ func WaitForClusterStatus(db *db.ConnectionFactory, clusterService *services.Clu
 		DumpCluster(clusterId).
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentStatus == "" {
-				return fmt.Sprintf("Waiting for cluster '%s' to reach status '%s'", clusterId, status.String())
+				return fmt.Sprintf("Waiting for cluster '%s' to reach status '%s'", clusterId, desiredStatus.String())
 			} else {
-				return fmt.Sprintf("Waiting for cluster '%s' to reach status '%s' (current status: '%s')", clusterId, status.String(), currentStatus)
+				return fmt.Sprintf("Waiting for cluster '%s' to reach status '%s' (current status: '%s')", clusterId, desiredStatus.String(), currentStatus)
 			}
 		}).
 		OnRetry(func(attempt int, maxRetries int) (bool, error) {
@@ -96,13 +96,27 @@ func WaitForClusterStatus(db *db.ConnectionFactory, clusterService *services.Clu
 				return false, nil
 			}
 			cluster = foundCluster
+
 			currentStatus = foundCluster.Status.String()
 
-			if currentStatus == api.ClusterDeprovisioning.String() || currentStatus == api.ClusterCleanup.String() {
-				return false, errors.Errorf("Waiting for cluster '%s' to reach status '%s' but reached status '%s' instead", clusterId, status.String(), foundCluster.Status.String())
+			if desiredStatus.CompareTo(api.ClusterDeprovisioning) < 0 && foundCluster.Status.CompareTo(api.ClusterDeprovisioning) >= 0 ||
+				currentStatus == api.ClusterFailed.String() && desiredStatus.String() != api.ClusterFailed.String() {
+
+				details := "N/A"
+
+				if currentStatus == api.ClusterFailed.String() {
+					// grab the logs
+					if foundCluster, err = (*clusterService).CheckClusterStatus(foundCluster); err != nil {
+						details = fmt.Sprintf("Error getting details: %s", err.Error())
+					} else {
+						details = cluster.StatusDetails
+					}
+				}
+
+				return false, errors.Errorf("Waiting for cluster '%s' to reach status '%s' but reached status '%s' instead. Details: %s", clusterId, desiredStatus.String(), foundCluster.Status.String(), details)
 			}
 
-			return foundCluster.Status.CompareTo(status) >= 0, nil
+			return foundCluster.Status.CompareTo(desiredStatus) >= 0, nil
 		}).Build().Poll()
 
 	return cluster, err
