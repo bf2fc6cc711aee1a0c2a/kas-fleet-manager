@@ -6,9 +6,8 @@
 4. [Create the Secrets](#create-the-secrets)
 5. [(Optional) Deploy the Observatorium Token Refresher](#optional-deploy-the-observatorium-token-refresher)
 6. [Deploy KAS Fleet Manager](#deploy-kas-fleet-manager)
-7. [Update the public-host-url of the KAS Fleet Manager deployment](#update-the-public-host-url-of-the-kas-fleet-manager-deployment)
-8. [Access the Service](#access-the-service)
-9. [Removing KAS Fleet Manager from OpenShift](#removing-kas-fleet-manager-from-openshift)
+7. [Access the Service](#access-the-service)
+8. [Removing KAS Fleet Manager from OpenShift](#removing-kas-fleet-manager-from-openshift)
 
 ## Create a Namespace
 Create a namespace where KAS Fleet Manager will be deployed to
@@ -151,32 +150,6 @@ make deploy/service <OPTIONAL_PARAMETERS>
 - `CLUSTER_LOGGING_OPERATOR_ADDON_ID`: The id of the cluster logging operator addon. Defaults to `''`.
 - `STRIMZI_OPERATOR_ADDON_ID`: The id of the Strimzi operator addon. Defaults to `managed-kafka-qe`.
 - `KAS_FLEETSHARD_ADDON_ID`: The id of the kas-fleetshard operator addon. Defaults to `kas-fleetshard-operator-qe`.
-
-## Update the public-host-url of the KAS Fleet Manager deployment
-Get the KAS Fleet Manager host
-```
-oc get routes/kas-fleet-manager -o jsonpath='{.spec.host}' -n <namespace>
-```
-
-Set the `--public-host-url` parameter of the `serve` cmd in the KAS Fleet Manager deployment to `https://\<kas-fleet-manager-host>
-```
-oc edit deployment/kas-fleet-manager -n <namespace>
-
-# KAS Fleet Manager Deployment
-...
-spec:
-  ...
-  template:
-    ...
-    spec:
-      containers:
-      ...
-      command:
-        - /usr/local/bin/kas-fleet-manager
-        - serve
-        ...
-        - '--public-host-url=https://<kas-fleet-manager-host>'
-```
 
 ## Access the service
 The service can be accessed by via the host of the route created by the service deployment.
