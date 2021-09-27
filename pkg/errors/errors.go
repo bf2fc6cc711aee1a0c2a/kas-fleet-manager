@@ -297,7 +297,7 @@ type ServiceError struct {
 	Code ServiceErrorCode
 	// Reason is the context-specific reason the error was generated
 	Reason string
-	// HttopCode is the HttpCode associated with the error when the error is returned as an API response
+	// HttpCode is the HttpCode associated with the error when the error is returned as an API response
 	HttpCode int
 	// The original error that is causing the ServiceError, can be used for inspection
 	cause error

@@ -65,6 +65,8 @@ func (o *OCMProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.Cluste
 		spec.Status = api.ClusterProvisioning
 	}
 
+	spec.StatusDetails = clusterStatus.ProvisionErrorMessage()
+
 	if clusterStatus.State() == clustersmgmtv1.ClusterStateReady {
 		if spec.ExternalID == "" {
 			externalId, ok := ocmCluster.GetExternalID()
