@@ -690,6 +690,19 @@ undeploy:
 		| oc delete -f - -n $(NAMESPACE)
 .PHONY: undeploy
 
+# Deploys an Observatorium token refresher on an OpenShift cluster
+deploy/token-refresher: ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
+deploy/token-refresher: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE ?= "quay.io/rhoas/mk-token-refresher"
+deploy/token-refresher: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG ?= "latest"
+deploy/token-refresher:
+	@-oc process -f ./templates/observatorium-token-refresher.yml \
+		-p ISSUER_URL=${ISSUER_URL} \
+		-p OBSERVATORIUM_URL=${OBSERVATORIUM_URL} \
+		-p OBSERVATORIUM_TOKEN_REFRESHER_IMAGE=${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE} \
+		-P OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG=${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG} \
+		 | oc apply -f - -n $(NAMESPACE)
+.PHONY: deploy/token-refresher
+
 docs/generate/mermaid:
 	@for f in $(shell ls $(DOCS_DIR)/mermaid-diagrams-source/*.mmd); do \
 		echo Generating diagram for `basename $${f}`; \
