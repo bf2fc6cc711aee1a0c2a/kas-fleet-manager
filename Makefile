@@ -687,6 +687,7 @@ deploy/service: deploy/envoy deploy/route
 undeploy: IMAGE_REGISTRY ?= $(internal_image_registry)
 undeploy: IMAGE_REPOSITORY ?= $(image_repository)
 undeploy:
+	@-oc process -f ./templates/observatorium-token-refresher.yml | oc delete -f - -n $(NAMESPACE)
 	@-oc process -f ./templates/db-template.yml | oc delete -f - -n $(NAMESPACE)
 	@-oc process -f ./templates/secrets-template.yml | oc delete -f - -n $(NAMESPACE)
 	@-oc process -f ./templates/route-template.yml | oc delete -f - -n $(NAMESPACE)
