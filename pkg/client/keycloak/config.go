@@ -14,6 +14,7 @@ type KeycloakConfig struct {
 	Debug                       bool                 `json:"debug"`
 	InsecureSkipVerify          bool                 `json:"insecure-skip-verify"`
 	UserNameClaim               string               `json:"user_name_claim"`
+	FallBackUserNameClaim       string               `json:"fall_back_user_name_claim"`
 	TLSTrustedCertificatesKey   string               `json:"tls_trusted_certificates_key"`
 	TLSTrustedCertificatesValue string               `json:"tls_trusted_certificates_value"`
 	TLSTrustedCertificatesFile  string               `json:"tls_trusted_certificates_file"`
@@ -60,7 +61,8 @@ func NewKeycloakConfig() *KeycloakConfig {
 		TLSTrustedCertificatesFile: "secrets/keycloak-service.crt",
 		Debug:                      false,
 		InsecureSkipVerify:         false,
-		UserNameClaim:              "preferred_username",
+		UserNameClaim:              "clientId",
+		FallBackUserNameClaim:      "preferred_username",
 		TLSTrustedCertificatesKey:  "keycloak.crt",
 		EnablePlain:                true,
 		EnableOauthBearer:          false,
@@ -84,6 +86,8 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.OSDClusterIDPRealm.Realm, "osd-idp-mas-sso-realm", kc.OSDClusterIDPRealm.Realm, "Realm for OSD cluster IDP clients in the mas-sso")
 	fs.IntVar(&kc.MaxAllowedServiceAccounts, "max-allowed-service-accounts", kc.MaxAllowedServiceAccounts, "Max allowed service accounts per user")
 	fs.IntVar(&kc.MaxLimitForGetClients, "max-limit-for-sso-get-clients", kc.MaxLimitForGetClients, "Max limits for SSO get clients")
+	fs.StringVar(&kc.UserNameClaim, "user-name-claim", kc.UserNameClaim, "Human readable username token claim")
+	fs.StringVar(&kc.FallBackUserNameClaim,"fall-back-user-name-claim", kc.FallBackUserNameClaim, "Fall back username token claim")
 }
 
 func (kc *KeycloakConfig) ReadFiles() error {
