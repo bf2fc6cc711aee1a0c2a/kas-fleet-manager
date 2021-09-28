@@ -65,6 +65,8 @@ var migrations = []*gormigrate.Migration{
 	replaceAllowListWithQuotaManagementList(),
 	resetOldIngressControllerRoutes(),
 	resetCanaryServiceAccountWithTwoDashes(),
+	resetCanaryServiceAccountForTwoInstances(),
+	addKafkaFailedWorkerLease(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
