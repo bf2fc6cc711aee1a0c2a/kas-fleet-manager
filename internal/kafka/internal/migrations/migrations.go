@@ -64,6 +64,7 @@ var migrations = []*gormigrate.Migration{
 	migrateOldKafkaNamespaceCreatedDuringDeployment(),
 	replaceAllowListWithQuotaManagementList(),
 	resetOldIngressControllerRoutes(),
+	resetCanaryServiceAccountWithTwoDashes(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
