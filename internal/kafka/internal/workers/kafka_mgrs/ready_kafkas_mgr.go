@@ -2,6 +2,7 @@ package kafka_mgrs
 
 import (
 	"fmt"
+	"strings"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -97,10 +98,11 @@ func (k *ReadyKafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *dbapi.Ka
 // This is only meant to be a temporary code, in the future it can be replaced with the service account rotation logic
 func (k *ReadyKafkaManager) reconcileCanaryServiceAccount(kafkaRequest *dbapi.KafkaRequest) error {
 	if kafkaRequest.CanaryServiceAccountClientID == "" && kafkaRequest.CanaryServiceAccountClientSecret == "" {
+		clientId := strings.ToLower(fmt.Sprintf("%s-%s", services.CanaryServiceAccountPrefix, kafkaRequest.ID))
 		serviceAccountRequest := coreServices.CompleteServiceAccountRequest{
 			Owner:          kafkaRequest.Owner,
 			OwnerAccountId: kafkaRequest.OwnerAccountId,
-			ClientId:       fmt.Sprintf("%s-%s", services.CanaryServiceAccountPrefix, kafkaRequest.ID),
+			ClientId:       clientId,
 			OrgId:          kafkaRequest.OrganisationId,
 			Name:           fmt.Sprintf("canary-service-account-for-kafka %s", kafkaRequest.ID),
 			Description:    fmt.Sprintf("canary service account for kafka %s", kafkaRequest.ID),
