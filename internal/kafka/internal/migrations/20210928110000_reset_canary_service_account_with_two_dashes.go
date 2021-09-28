@@ -6,7 +6,6 @@ package migrations
 // is done here, even though the same type is defined in pkg/api
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
 )
@@ -15,30 +14,8 @@ func resetCanaryServiceAccountWithTwoDashes() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "20210928110000",
 		Migrate: func(tx *gorm.DB) error {
-			var kafkas []dbapi.KafkaRequest
-			canaryServiceAccountUpdates := map[string]interface{}{
-				"canary_service_account_client_id":     "",
-				"canary_service_account_client_secret": "",
-			}
-			err := tx.Model(&dbapi.KafkaRequest{}).
-				Select("id", "canary_service_account_client_id", "canary_service_account_client_secret").
-				Where("status = ?", "ready").
-				Where("canary_service_account_client_id like ?", "%--%").
-				Scan(&kafkas).
+			return tx.Exec("update kafka_requests set canary_service_account_client_id='', canary_service_account_client_secret = '' where status = 'ready' and canary_service_account_client_id like '%--%';").
 				Error
-
-			if err != nil {
-				return err
-			}
-
-			for _, kafka := range kafkas {
-				err = tx.Model(&kafka).Updates(canaryServiceAccountUpdates).Error
-				if err != nil {
-					return err
-				}
-			}
-
-			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
 			return nil
