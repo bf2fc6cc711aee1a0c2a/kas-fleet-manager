@@ -84,5 +84,6 @@ func ServiceProviders() di.Option {
 		di.Provide(kafka_mgrs.NewProvisioningKafkaManager, di.As(new(workers.Worker))),
 		di.Provide(kafka_mgrs.NewReadyKafkaManager, di.As(new(workers.Worker))),
 		di.Provide(kafka_mgrs.NewKafkaCNAMEManager, di.As(new(workers.Worker))),
+		di.Provide(kafka_mgrs.NewFailedKafka, di.As(new(workers.Worker))),
 	)
 }
