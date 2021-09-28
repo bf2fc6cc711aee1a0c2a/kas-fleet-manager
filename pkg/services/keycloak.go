@@ -299,7 +299,7 @@ func (kc *keycloakService) CreateServiceAccountInternal(request CompleteServiceA
 		creationTime = time.Time{}
 	}
 	serviceAcc.CreatedAt = creationTime
-	glog.V(5).Infof("service account clientId = %s created for user = %s", request.Owner, serviceAcc.ClientID)
+	glog.V(5).Infof("service account clientId = %s created for user = %s", serviceAcc.ClientID, request.Owner)
 	return serviceAcc, nil
 }
 
