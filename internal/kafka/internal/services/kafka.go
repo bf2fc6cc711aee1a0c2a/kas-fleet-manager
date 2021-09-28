@@ -244,10 +244,11 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 		if err != nil {
 			return errors.FailedToCreateSSOClient("failed to create sso client %s:%v", kafkaRequest.SsoClientID, err)
 		}
+		clientId := strings.ToLower(fmt.Sprintf("%s-%s", CanaryServiceAccountPrefix, kafkaRequest.ID))
 		serviceAccountRequest := services.CompleteServiceAccountRequest{
 			Owner:          kafkaRequest.Owner,
 			OwnerAccountId: kafkaRequest.OwnerAccountId,
-			ClientId:       fmt.Sprintf("%s-%s", CanaryServiceAccountPrefix, kafkaRequest.ID),
+			ClientId:       clientId,
 			OrgId:          kafkaRequest.OrganisationId,
 			Name:           fmt.Sprintf("canary-service-account-for-kafka %s", kafkaRequest.ID),
 			Description:    fmt.Sprintf("canary service account for kafka %s", kafkaRequest.ID),
