@@ -91,8 +91,7 @@ func (c *DatabaseConfig) ReadFiles() error {
 }
 
 func (c *DatabaseConfig) ConnectionString() string {
-	if c.SSLMode != "disable" {
-		if c.DatabaseCaCert != "" {
+	if c.SSLMode != "disable" && c.DatabaseCaCert != "" {
 			return fmt.Sprintf(
 				"host=%s port=%d user=%s password='%s' dbname=%s sslmode=%s sslrootcert=%s",
 				c.Host, c.Port, c.Username, c.Password, c.Name, c.SSLMode, c.DatabaseCaCert,
