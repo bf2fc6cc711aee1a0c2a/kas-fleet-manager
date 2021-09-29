@@ -1,13 +1,15 @@
 package integration
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -43,13 +45,23 @@ func TestAuthSucess_publicUrls(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		Get(h.RestURL("/"))
 	Expect(err).To(BeNil())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusOK))
+
+	errorsList, resp, err := client.DefaultApi.GetErrors(context.Background())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(errorsList.Items).NotTo(BeEmpty())
+	Expect(err).To(BeNil())
+
+	errorCode := "7"
+	_, notFoundErrorResp, err := client.DefaultApi.GetErrorById(context.Background(), errorCode)
+	Expect(notFoundErrorResp.StatusCode).To(Equal(http.StatusOK))
+	Expect(err).To(BeNil())
 }
 
 func TestAuthSuccess_usingSSORHToken(t *testing.T) {
