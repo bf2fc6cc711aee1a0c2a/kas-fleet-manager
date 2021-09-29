@@ -214,7 +214,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *dbapi.KafkaRequest,
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationCreate)
 	}
-	logger.Logger.Errorf("Kafka status reported as failed by KAS Fleet Shard Operator: '%s'", errMessage)
+	logger.Logger.Errorf("Kafka status for Kafka ID '%s' in ClusterID '%s' reported as failed by KAS Fleet Shard Operator: '%s'", kafka.ID, kafka.ClusterID, errMessage)
 
 	return nil
 }
