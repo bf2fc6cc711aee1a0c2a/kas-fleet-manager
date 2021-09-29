@@ -105,8 +105,7 @@ func (c *DatabaseConfig) ConnectionString() string {
 }
 
 func (c *DatabaseConfig) LogSafeConnectionString() string {
-	if c.SSLMode != "disable" {
-		if c.DatabaseCaCert != "" {
+	if c.SSLMode != "disable" && c.DatabaseCaCert != "" {
 			return fmt.Sprintf(
 				"host=%s port=%d user=%s password='<REDACTED>' dbname=%s sslmode=%s",
 				c.Host, c.Port, c.Username, c.Name, c.SSLMode,
