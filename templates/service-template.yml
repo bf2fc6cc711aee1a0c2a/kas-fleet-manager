@@ -103,7 +103,7 @@ parameters:
 
 - name: DB_SSLMODE
   displayName: DB SSLmode
-  description: Database ssl mode (disable | require | allow | prefer | verify-ca | verify-full)
+  description: Database ssl mode (disable | require | verify-ca | verify-full)
   value: "disable"
 
 - name: ENABLE_DB_DEBUG
