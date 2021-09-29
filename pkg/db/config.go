@@ -61,7 +61,7 @@ func (c *DatabaseConfig) AddFlags(fs *pflag.FlagSet) {
 func (c *DatabaseConfig) ReadFiles() error {
 	if c.SSLMode != "disable" {
 		e := shared.ReadFileValueString(c.DatabaseCaCertFile, &c.DatabaseCaCert)
-		if c.SSLMode != "prefer" && e != nil {
+		if e != nil {
 			return e
 		}
 	}
