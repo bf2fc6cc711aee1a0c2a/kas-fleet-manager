@@ -113,7 +113,7 @@ func (c *DatabaseConfig) LogSafeConnectionString() string {
 		}
 	}
 	return fmt.Sprintf(
-		"host=%s port=%d user=%s password='<REDACTED>' dbname=%s sslmode=%s sslrootcert=<REDACTED>",
+		"host=%s port=%d user=%s password='<REDACTED>' dbname=%s sslmode=%s",
 		c.Host, c.Port, c.Username, c.Name, c.SSLMode,
 	)
 }
