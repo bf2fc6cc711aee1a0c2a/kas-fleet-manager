@@ -20,14 +20,12 @@ type DatabaseConfig struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 
-	DatabaseCaCert     string `json:"db_ca_cert"`
 	DatabaseCaCertFile string `json:"db_ca_cert_file"`
-
-	HostFile     string `json:"host_file"`
-	PortFile     string `json:"port_file"`
-	NameFile     string `json:"name_file"`
-	UsernameFile string `json:"username_file"`
-	PasswordFile string `json:"password_file"`
+	HostFile           string `json:"host_file"`
+	PortFile           string `json:"port_file"`
+	NameFile           string `json:"name_file"`
+	UsernameFile       string `json:"username_file"`
+	PasswordFile       string `json:"password_file"`
 }
 
 func NewDatabaseConfig() *DatabaseConfig {
@@ -59,12 +57,6 @@ func (c *DatabaseConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *DatabaseConfig) ReadFiles() error {
-	if c.SSLMode != "disable" {
-		e := shared.ReadFileValueString(c.DatabaseCaCertFile, &c.DatabaseCaCert)
-		if e != nil {
-			return e
-		}
-	}
 
 	err := shared.ReadFileValueString(c.HostFile, &c.Host)
 	if err != nil {
@@ -91,10 +83,10 @@ func (c *DatabaseConfig) ReadFiles() error {
 }
 
 func (c *DatabaseConfig) ConnectionString() string {
-	if c.SSLMode != "disable" && c.DatabaseCaCert != "" {
+	if c.SSLMode != "disable" {
 		return fmt.Sprintf(
 			"host=%s port=%d user=%s password='%s' dbname=%s sslmode=%s sslrootcert=%s",
-			c.Host, c.Port, c.Username, c.Password, c.Name, c.SSLMode, c.DatabaseCaCert,
+			c.Host, c.Port, c.Username, c.Password, c.Name, c.SSLMode, c.DatabaseCaCertFile,
 		)
 	}
 	return fmt.Sprintf(
@@ -104,7 +96,7 @@ func (c *DatabaseConfig) ConnectionString() string {
 }
 
 func (c *DatabaseConfig) LogSafeConnectionString() string {
-	if c.SSLMode != "disable" && c.DatabaseCaCert != "" {
+	if c.SSLMode != "disable" {
 		return fmt.Sprintf(
 			"host=%s port=%d user=%s password='<REDACTED>' dbname=%s sslmode=%s sslrootcert=<REDACTED>",
 			c.Host, c.Port, c.Username, c.Name, c.SSLMode,
