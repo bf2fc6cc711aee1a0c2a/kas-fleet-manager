@@ -92,11 +92,10 @@ func (c *DatabaseConfig) ReadFiles() error {
 
 func (c *DatabaseConfig) ConnectionString() string {
 	if c.SSLMode != "disable" && c.DatabaseCaCert != "" {
-			return fmt.Sprintf(
-				"host=%s port=%d user=%s password='%s' dbname=%s sslmode=%s sslrootcert=%s",
-				c.Host, c.Port, c.Username, c.Password, c.Name, c.SSLMode, c.DatabaseCaCert,
-			)
-		}
+		return fmt.Sprintf(
+			"host=%s port=%d user=%s password='%s' dbname=%s sslmode=%s sslrootcert=%s",
+			c.Host, c.Port, c.Username, c.Password, c.Name, c.SSLMode, c.DatabaseCaCert,
+		)
 	}
 	return fmt.Sprintf(
 		"host=%s port=%d user=%s password='%s' dbname=%s sslmode=%s",
@@ -106,11 +105,10 @@ func (c *DatabaseConfig) ConnectionString() string {
 
 func (c *DatabaseConfig) LogSafeConnectionString() string {
 	if c.SSLMode != "disable" && c.DatabaseCaCert != "" {
-			return fmt.Sprintf(
-				"host=%s port=%d user=%s password='<REDACTED>' dbname=%s sslmode=%s",
-				c.Host, c.Port, c.Username, c.Name, c.SSLMode,
-			)
-		}
+		return fmt.Sprintf(
+			"host=%s port=%d user=%s password='<REDACTED>' dbname=%s sslmode=%s sslrootcert=<REDACTED>",
+			c.Host, c.Port, c.Username, c.Name, c.SSLMode,
+		)
 	}
 	return fmt.Sprintf(
 		"host=%s port=%d user=%s password='<REDACTED>' dbname=%s sslmode=%s",
