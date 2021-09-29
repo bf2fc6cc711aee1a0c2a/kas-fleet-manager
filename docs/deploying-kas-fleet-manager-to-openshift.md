@@ -103,15 +103,17 @@ make deploy/token-refresher OBSERVATORIUM_URL=<observatorium-url> <OPTIONAL_PARA
 
 ## Deploy KAS Fleet Manager
 ```
-make deploy/service <OPTIONAL_PARAMETERS>
+make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 ```
+
+**Required parameters**:
+- `IMAGE_TAG`: KAS Fleet Manager image tag.
 
 **Optional parameters**:
 - `NAMESPACE`: The namespace where the service will be deployed to. Defaults to managed-services-$USER.
 - `ENV`: Environment used for the KAS Fleet Manager deployment. Options: `development`, `integration`, `testing`, `stage` and `production`, Default: `development`.
 - `IMAGE_REGISTRY`: Registry used by the image. Defaults to the OpenShift internal registry.
 - `IMAGE_REPOSITORY`: Image repository. Defaults to '\<namespace\>/kas-fleet-manager'.
-- `IMAGE_TAG`: Tag for the image. Defaults to a timestamp captured when the command is run (i.e. 1603447837).
 - `REPLICAS`: Number of replicas of the KAS Fleet Manager deployment. Defaults to `1`.
 - `ENABLE_KAFKA_EXTERNAL_CERTIFICATE`: Enable Kafka TLS Certificate. Defaults to `false`.
 - `ENABLE_KAFKA_LIFE_SPAN`: Enables Kafka expiration. Defaults to `false`.

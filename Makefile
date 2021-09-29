@@ -599,7 +599,6 @@ deploy/route:
 # deploy service via templates to an OpenShift cluster
 deploy/service: IMAGE_REGISTRY ?= $(internal_image_registry)
 deploy/service: IMAGE_REPOSITORY ?= $(image_repository)
-deploy/service: IMAGE_TAG ?= $(image_tag)
 deploy/service: ENV ?= "development"
 deploy/service: REPLICAS ?= "1"
 deploy/service: ENABLE_KAFKA_EXTERNAL_CERTIFICATE ?= "false"
@@ -634,6 +633,7 @@ deploy/service: STRIMZI_OPERATOR_ADDON_ID ?= "managed-kafka-qe"
 deploy/service: KAS_FLEETSHARD_ADDON_ID ?= "kas-fleetshard-operator-qe"
 deploy/service: VAULT_KIND ?= "tmp"
 deploy/service: deploy/envoy deploy/route
+	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
 	@oc process -f ./templates/service-template.yml \
 		-p ENVIRONMENT="$(ENV)" \
@@ -679,9 +679,10 @@ deploy/service: deploy/envoy deploy/route
 		-p KAS_FLEETSHARD_ADDON_ID="${KAS_FLEETSHARD_ADDON_ID}" \
 		-p DEFAULT_KAFKA_VERSION="${DEFAULT_KAFKA_VERSION}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
-		-p CLUSTER_LOGGING_OPERATOR_ADDON_ID="${CLUSTER_LOGGING_OPERATOR_ADDON_ID}" \
-		| oc apply -f - -n $(NAMESPACE)
+		-p CLUSTER_LOGGING_OPERATOR_ADDON_ID="${CLUSTER_LOGGING_OPERATOR_ADDON_ID}"
 .PHONY: deploy/service
+
+
 
 # remove service deployments from an OpenShift cluster
 undeploy: IMAGE_REGISTRY ?= $(internal_image_registry)
