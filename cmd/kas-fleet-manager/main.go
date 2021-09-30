@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
@@ -31,7 +32,7 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:  "kas-fleet-manager",
-		Long: "kas-fleet-manager serves as an example service template for new microservices",
+		Long: "kas-fleet-manager is a service that exposes a Rest API to manage Kafka instances.",
 	}
 
 	err = env.AddFlags(rootCmd.PersistentFlags())
