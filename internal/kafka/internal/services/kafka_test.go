@@ -916,7 +916,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			error: errorCheck{
 				wantErr:  true,
 				code:     errors.ErrorTooManyKafkaInstancesReached,
-				httpCode: http.StatusTooManyRequests,
+				httpCode: http.StatusForbidden,
 			},
 		},
 		{
@@ -949,7 +949,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			error: errorCheck{
 				wantErr:  true,
 				code:     errors.ErrorTooManyKafkaInstancesReached,
-				httpCode: http.StatusTooManyRequests,
+				httpCode: http.StatusForbidden,
 			},
 		},
 		{
