@@ -211,7 +211,7 @@ func Errors() ServiceErrors {
 	return ServiceErrors{
 		ServiceError{ErrorForbidden, ErrorForbiddenReason, http.StatusForbidden, nil},
 		ServiceError{ErrorMaxAllowedInstanceReached, ErrorMaxAllowedInstanceReachedReason, http.StatusForbidden, nil},
-		ServiceError{ErrorTooManyKafkaInstancesReached, ErrorTooManyKafkaInstancesReachedReason, http.StatusTooManyRequests, nil},
+		ServiceError{ErrorTooManyKafkaInstancesReached, ErrorTooManyKafkaInstancesReachedReason, http.StatusForbidden, nil},
 		ServiceError{ErrorTooManyRequests, ErrorTooManyRequestsReason, http.StatusTooManyRequests, nil},
 		ServiceError{ErrorConflict, ErrorConflictReason, http.StatusConflict, nil},
 		ServiceError{ErrorNotFound, ErrorNotFoundReason, http.StatusNotFound, nil},
