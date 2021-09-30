@@ -148,6 +148,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()
 	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).Methods(http.MethodGet)
 	apiV1MetricsRouter.HandleFunc("/query", metricsHandler.GetMetricsByInstantQuery).Methods(http.MethodGet)
+	apiV1MetricsRouter.HandleFunc("/federate", metricsHandler.FederateMetrics).Methods(http.MethodGet)
 
 	v1Metadata := api.VersionMetadata{
 		ID:          "v1",
