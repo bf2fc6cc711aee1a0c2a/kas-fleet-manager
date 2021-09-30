@@ -2,11 +2,17 @@ package handlers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/getsentry/sentry-go"
+	"github.com/golang/glog"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
@@ -22,6 +28,37 @@ func NewMetricsHandler(service services.ObservatoriumService) *metricsHandler {
 	return &metricsHandler{
 		service: service,
 	}
+}
+
+func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) {
+	kafkaId := strings.TrimSpace(mux.Vars(r)["id"])
+	if kafkaId == "" {
+		http.Error(w, "missing kafka id", http.StatusInternalServerError)
+		return
+	}
+
+	kafkaMetrics := &observatorium.KafkaMetrics{}
+	params := observatorium.MetricsReqParams{
+		ResultType: observatorium.Query,
+	}
+
+	_, err := h.service.GetMetricsByKafkaId(r.Context(), kafkaMetrics, kafkaId, params)
+	if err != nil {
+		glog.Errorf("error getting metrics: %v", err)
+		sentry.CaptureException(err)
+		http.Error(w, "error getting metrics", http.StatusInternalServerError)
+		return
+	}
+
+	// Define metric collector
+	collector := metrics.NewFederatedUserMetricsCollector(kafkaMetrics)
+	registry := prometheus.NewPedanticRegistry()
+	registry.MustRegister(collector)
+
+	promHandler := promhttp.HandlerFor(registry, promhttp.HandlerOpts{
+		ErrorHandling: promhttp.HTTPErrorOnError,
+	})
+	promHandler.ServeHTTP(w, r)
 }
 
 func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Request) {
@@ -46,11 +83,11 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 				Kind: "MetricsRangeQueryList",
 				Id:   foundKafkaId,
 			}
-			metrics, err := presenters.PresentMetricsByRangeQuery(kafkaMetrics)
+			metricsResult, err := presenters.PresentMetricsByRangeQuery(kafkaMetrics)
 			if err != nil {
 				return nil, err
 			}
-			metricList.Items = metrics
+			metricList.Items = metricsResult
 
 			return metricList, nil
 		},
@@ -75,11 +112,11 @@ func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.
 				Kind: "MetricsInstantQueryList",
 				Id:   foundKafkaId,
 			}
-			metrics, err := presenters.PresentMetricsByInstantQuery(kafkaMetrics)
+			metricsResult, err := presenters.PresentMetricsByInstantQuery(kafkaMetrics)
 			if err != nil {
 				return nil, err
 			}
-			metricList.Items = metrics
+			metricList.Items = metricsResult
 
 			return metricList, nil
 		},
