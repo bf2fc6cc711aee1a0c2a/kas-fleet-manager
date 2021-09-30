@@ -418,7 +418,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	_, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
 
 	Expect(err).To(HaveOccurred(), "Error posting object:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusTooManyRequests))
+	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 }
 
 // TestKafkaPost_Validations tests the API validations performed by the kafka creation endpoint
@@ -803,7 +803,7 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	Expect(resp5Body.InstanceType).To(Equal("eval"))
 
 	// verify that the second request for the external user errored with 403 Forbidden
-	Expect(resp6.StatusCode).To(Equal(http.StatusTooManyRequests))
+	Expect(resp6.StatusCode).To(Equal(http.StatusForbidden))
 	Expect(resp6.Header.Get("Content-Type")).To(Equal("application/json"))
 
 	// verify that another external user in the same org can also create the default maximum allowed kafka instances
@@ -817,7 +817,7 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	Expect(resp7.StatusCode).To(Equal(http.StatusAccepted))
 
 	// verify that the second request for the external user errored with 403 Forbidden
-	Expect(resp8.StatusCode).To(Equal(http.StatusTooManyRequests))
+	Expect(resp8.StatusCode).To(Equal(http.StatusForbidden))
 	Expect(resp8.Header.Get("Content-Type")).To(Equal("application/json"))
 }
 
