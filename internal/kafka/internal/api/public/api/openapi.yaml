@@ -44,6 +44,8 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: Get error by Id
       summary: Returns the error by id
+      tags:
+      - errors
   /api/kafkas_mgmt/v1/errors:
     get:
       operationId: getErrors
@@ -55,6 +57,8 @@ paths:
                 $ref: '#/components/schemas/ErrorList'
           description: List of possible errors
       summary: Returns the list of possible API errors
+      tags:
+      - errors
   /api/kafkas_mgmt/v1/status:
     get:
       operationId: getServiceStatus
