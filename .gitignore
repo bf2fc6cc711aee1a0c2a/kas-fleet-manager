@@ -54,6 +54,8 @@ cmd/kas-fleet-manager/kas-fleet-manager
 /secrets/observability-config-access.token
 /secrets/image-pull.dockerconfigjson
 /secrets/osd-idp-keycloak-service.*
+/secrets/rhsso-logs.*
+/secrets/rhsso-metrics.*
 
 # cluster details (used for testing)
 /internal/kafka/test/integration/test_cluster.json
