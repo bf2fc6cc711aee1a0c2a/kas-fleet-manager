@@ -218,7 +218,7 @@ help:
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make keycloak/setup              setup mas sso clientId, clientSecret & crt"
 	@echo "make kafkacert/setup             setup the kafka certificate used for Kafka Brokers"
-	@echo "make observatorium/setup         setup observatorium secret used by CI"
+	@echo "make observatorium/setup         setup observatorium secrets used by CI"
 	@echo "make docker/login/internal       login to an openshift cluster image registry"
 	@echo "make image/build/push/internal   build and push image to an openshift cluster image registry."
 	@echo "make deploy                      deploy the service via templates to an openshift cluster"
@@ -519,6 +519,10 @@ kafkacert/setup:
 
 observatorium/setup:
 	@echo -n "$(OBSERVATORIUM_CONFIG_ACCESS_TOKEN)" > secrets/observability-config-access.token;
+	@echo -n "$(RHSSO_LOGS_CLIENT_ID)" > secrets/rhsso-logs.clientId;
+	@echo -n "$(RHSSO_LOGS_CLIENT_SECRET)" > secrets/rhsso-logs.clientSecret;
+	@echo -n "$(RHSSO_METRICS_CLIENT_ID)" > secrets/rhsso-metrics.clientId;
+	@echo -n "$(RHSSO_METRICS_CLIENT_SECRET)" > secrets/rhsso-metrics.clientSecret;
 .PHONY:observatorium/setup
 
 # OCM login
