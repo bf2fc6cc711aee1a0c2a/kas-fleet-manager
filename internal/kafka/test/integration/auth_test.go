@@ -53,13 +53,13 @@ func TestAuthSucess_publicUrls(t *testing.T) {
 	Expect(err).To(BeNil())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusOK))
 
-	errorsList, resp, err := client.DefaultApi.GetErrors(context.Background())
+	errorsList, resp, err := client.ErrorsApi.GetErrors(context.Background())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(errorsList.Items).NotTo(BeEmpty())
 	Expect(err).To(BeNil())
 
 	errorCode := "7"
-	_, notFoundErrorResp, err := client.DefaultApi.GetErrorById(context.Background(), errorCode)
+	_, notFoundErrorResp, err := client.ErrorsApi.GetErrorById(context.Background(), errorCode)
 	Expect(notFoundErrorResp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).To(BeNil())
 }
