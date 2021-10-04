@@ -541,7 +541,8 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 }
 
 func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) error {
-	if _, err := c.reconcileStrimziOperator(provisionedCluster); err != nil {
+	strimziOperatorIsReady, err := c.reconcileStrimziOperator(provisionedCluster)
+	if err != nil {
 		return err
 	}
 
@@ -556,11 +557,12 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 	}
 
 	glog.Infof("Provisioning kas-fleetshard-operator as it is enabled")
-	if _, errs := c.KasFleetshardOperatorAddon.Provision(provisionedCluster); errs != nil {
+	kasFleetshardOperatorIsReady, errs := c.KasFleetshardOperatorAddon.Provision(provisionedCluster)
+	if errs != nil {
 		return errs
 	}
 
-	if clusterLoggingOperatorIsReady || c.OCMConfig.ClusterLoggingOperatorAddonID == "" {
+	if strimziOperatorIsReady && kasFleetshardOperatorIsReady && (clusterLoggingOperatorIsReady || c.OCMConfig.ClusterLoggingOperatorAddonID == "") {
 		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForKasFleetShardOperator, provisionedCluster.ClusterID)
 		if err := c.ClusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator); err != nil {
 			return errors.Wrapf(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
