@@ -69,7 +69,7 @@ func getDefaultKubeconfig() string {
 func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	return &DataplaneClusterConfig{
 		OpenshiftVersion:                      "",
-		ComputeMachineType:                    "m5.4xlarge",
+		ComputeMachineType:                    "m5.2xlarge",
 		StrimziOperatorVersion:                "",
 		ImagePullDockerConfigContent:          "",
 		ImagePullDockerConfigFile:             "secrets/image-pull.dockerconfigjson",
