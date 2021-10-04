@@ -149,7 +149,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 			result := obs.fetchMetricsResult(rq, &f)
 			if result.Err != nil {
 				glog.Error("error from metric ", result.Err)
-				failedMetrics = append(failedMetrics, msg)
+				failedMetrics = append(failedMetrics, fmt.Sprintf("%s: %s", msg, result.Err))
 			}
 			f.callback(result)
 		}
@@ -159,7 +159,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 					result := obs.fetchMetricsResult(rq, &f)
 					if result.Err != nil {
 						glog.Error("error from metric ", result.Err)
-						failedMetrics = append(failedMetrics, msg)
+						failedMetrics = append(failedMetrics, fmt.Sprintf("%s: %s", msg, result.Err))
 					}
 					f.callback(result)
 				}
@@ -169,7 +169,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 
 	}
 	if len(failedMetrics) > 0 {
-		glog.Infof("Failed to fetch metrics data [%s]", strings.Join(failedMetrics, ","))
+		return errors.New(fmt.Sprintf("Failed to fetch metrics data [%s]", strings.Join(failedMetrics, ",")))
 	}
 	return nil
 }
