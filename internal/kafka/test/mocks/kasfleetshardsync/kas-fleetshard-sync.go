@@ -35,34 +35,23 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, priv
 	}
 
 	for _, cluster := range clusters {
-		shouldUpdateClusterStatus := false
+		managedKafkaAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.StrimziOperatorAddonID)
+		if err != nil {
+			return err
+		}
 
-		if !kasFleetshardConfig.EnableProvisionOfKasFleetshardOperator {
-			shouldUpdateClusterStatus = true
-		} else {
+		isClusterReady := managedKafkaAddon.State() == clustersmgmtv1.AddOnInstallationStateReady
+
+		if kasFleetshardConfig.EnableProvisionOfKasFleetshardOperator {
 			kasFleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.KasFleetshardAddonID)
 			if err != nil {
 				return err
 			}
 
-			managedKafkaAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.StrimziOperatorAddonID)
-			if err != nil {
-				return err
-			}
-
-			// The KAS Fleetshard Operator and Sync containers are restarted every ~5mins due to the informer state being out of sync.
-			// Because of this, the addonInstallation state in ocm may never get updated to a 'ready' state as the install plan
-			// status gets updated everytime the container gets restarted even though the operator itself has been successfully installed.
-			// This should get better in the next release of the fleetshard operator. Until then, the cluster can be deemed ready if
-			// it's in an 'installing' state, therwise this poll may timeout.
-			if managedKafkaAddon.State() == clustersmgmtv1.AddOnInstallationStateReady &&
-				(kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateReady ||
-					kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateInstalling) {
-				shouldUpdateClusterStatus = true
-			}
+			isClusterReady = isClusterReady && (kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateReady || kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateInstalling)
 		}
 
-		if shouldUpdateClusterStatus {
+		if isClusterReady {
 			ctx := NewAuthenticatedContextForDataPlaneCluster(helper, cluster.ClusterID)
 			clusterStatusUpdateRequest := SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 			if _, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, cluster.ClusterID, *clusterStatusUpdateRequest); err != nil {
