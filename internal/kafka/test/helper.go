@@ -62,7 +62,6 @@ func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 			observabilityConfiguration.EnableMock = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
 			dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
-			kasFleetshardConfig.EnableProvisionOfKasFleetshardOperator = false    // disable provisioning of kas-fleetshard operator for most of the tests to avoid creating a keycloak client
 		},
 	}))
 	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
