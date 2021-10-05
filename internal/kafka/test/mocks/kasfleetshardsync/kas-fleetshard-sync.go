@@ -40,18 +40,12 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, priv
 			return err
 		}
 
-		isClusterReady := managedKafkaAddon.State() == clustersmgmtv1.AddOnInstallationStateReady
-
-		if kasFleetshardConfig.EnableProvisionOfKasFleetshardOperator {
-			kasFleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.KasFleetshardAddonID)
-			if err != nil {
-				return err
-			}
-
-			isClusterReady = isClusterReady && (kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateReady || kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateInstalling)
+		kasFleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.KasFleetshardAddonID)
+		if err != nil {
+			return err
 		}
 
-		if isClusterReady {
+		if managedKafkaAddon.State() == clustersmgmtv1.AddOnInstallationStateReady && (kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateReady || kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateInstalling) {
 			ctx := NewAuthenticatedContextForDataPlaneCluster(helper, cluster.ClusterID)
 			clusterStatusUpdateRequest := SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 			if _, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, cluster.ClusterID, *clusterStatusUpdateRequest); err != nil {

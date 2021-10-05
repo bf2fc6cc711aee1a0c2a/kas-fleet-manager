@@ -73,13 +73,11 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
-				SsoService:      tt.fields.ssoService,
-				ProviderFactory: tt.fields.providerFactory,
-				ServerConfig:    &server.ServerConfig{},
-				KasFleetShardConfig: &config.KasFleetshardConfig{
-					EnableProvisionOfKasFleetshardOperator: true,
-				},
-				OCMConfig: &ocm.OCMConfig{KasFleetshardAddonID: addonId},
+				SsoService:          tt.fields.ssoService,
+				ProviderFactory:     tt.fields.providerFactory,
+				ServerConfig:        &server.ServerConfig{},
+				KasFleetShardConfig: &config.KasFleetshardConfig{},
+				OCMConfig:           &ocm.OCMConfig{KasFleetshardAddonID: addonId},
 				KeycloakConfig: &keycloak.KeycloakConfig{
 					KafkaRealm: &keycloak.KeycloakRealmConfig{},
 				},
@@ -194,13 +192,11 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
-				SsoService:      tt.fields.ssoService,
-				ProviderFactory: tt.fields.providerFactory,
-				ServerConfig:    &server.ServerConfig{},
-				KasFleetShardConfig: &config.KasFleetshardConfig{
-					EnableProvisionOfKasFleetshardOperator: true,
-				},
-				OCMConfig: &ocm.OCMConfig{KasFleetshardAddonID: "kas-fleetshard"},
+				SsoService:          tt.fields.ssoService,
+				ProviderFactory:     tt.fields.providerFactory,
+				ServerConfig:        &server.ServerConfig{},
+				KasFleetShardConfig: &config.KasFleetshardConfig{},
+				OCMConfig:           &ocm.OCMConfig{KasFleetshardAddonID: "kas-fleetshard"},
 				KeycloakConfig: &keycloak.KeycloakConfig{
 					KafkaRealm: &keycloak.KeycloakRealmConfig{},
 				},

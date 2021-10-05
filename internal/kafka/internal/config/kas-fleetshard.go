@@ -3,16 +3,14 @@ package config
 import "github.com/spf13/pflag"
 
 type KasFleetshardConfig struct {
-	PollInterval                           string `json:"poll_interval"`
-	ResyncInterval                         string `json:"resync_interval"`
-	EnableProvisionOfKasFleetshardOperator bool   `json:"enabled_provision_of_kas_fleetshard_operator"` // used only to disable provisioning of kas-fleet-shard-operator during testing so as to avoid creating a client in sso
+	PollInterval   string `json:"poll_interval"`
+	ResyncInterval string `json:"resync_interval"`
 }
 
 func NewKasFleetshardConfig() *KasFleetshardConfig {
 	return &KasFleetshardConfig{
-		PollInterval:                           "15s",
-		ResyncInterval:                         "60s",
-		EnableProvisionOfKasFleetshardOperator: true, // default to true as we want to always provision kas-fleet-shard with an exception of some tests
+		PollInterval:   "15s",
+		ResyncInterval: "60s",
 	}
 }
 
