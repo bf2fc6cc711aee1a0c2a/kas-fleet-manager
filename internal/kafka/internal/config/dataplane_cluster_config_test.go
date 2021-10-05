@@ -213,7 +213,7 @@ func TestDataplaneClusterConfig_MissingClusters(t *testing.T) {
 			},
 			args: args{
 				clusterList: map[string]api.Cluster{
-					"test01": api.Cluster{
+					"test01": {
 						ClusterID: "test01",
 					},
 				},
@@ -229,7 +229,7 @@ func TestDataplaneClusterConfig_MissingClusters(t *testing.T) {
 			},
 			args: args{
 				clusterList: map[string]api.Cluster{
-					"test02": api.Cluster{
+					"test02": {
 						ClusterID: "test02",
 					},
 				},
