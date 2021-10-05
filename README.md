@@ -58,6 +58,28 @@ make kafkacert/setup
 ```
 6. Setup the image pull secret
     - Image pull secret for RHOAS can be found in [Vault](https://vault.devshift.net/ui/vault/secrets/managed-services/show/quay-org-accounts/rhoas/robots/rhoas-pull), copy the content for the `config.json` key and paste it to `secrets/image-pull.dockerconfigjson` file.
+7. Setup the Observability stack secrets
+```
+make observatorium/setup
+```
+
+## Running a Local Observatorium Token Refresher 
+> NOTE: This is only required if your Observatorium instance is authenticated using sso.redhat.com.
+
+Run the following make target:
+```
+make observatorium/token-refresher/setup CLIENT_ID=<client-id> CLIENT_SECRET=<client-secret> [OPTIONAL PARAMETERS]
+```
+
+**Required Parameters**:
+- CLIENT_ID: The client id of a service account that has, at least, permissions to read metrics.
+- ClIENT_SECRET: The client secret of a service account that has, at least, permissions to read metrics.
+
+**Optional Parameters**:
+- PORT: Port for running the token refresher on. Defaults to `8085`
+- IMAGE_TAG: Image tag of the [token-refresher image](https://quay.io/repository/rhoas/mk-token-refresher?tab=tags). Defaults to `latest`
+- ISSUER_URL: URL of your auth issuer. Defaults to `https://sso.redhat.com/auth/realms/redhat-external`
+- OBSERVATORIUM_URL: URL of your Observatorium instance. Defaults to `https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/managedkafka`
 
 ## Running the Service locally
 Please make sure you have followed all of the prerequisites above first.
