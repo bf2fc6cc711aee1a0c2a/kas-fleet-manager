@@ -816,6 +816,7 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 			JwksEndpointURI:        keycloakConfig.KafkaRealm.JwksEndpointURI,
 			ValidIssuerEndpointURI: keycloakConfig.KafkaRealm.ValidIssuerURI,
 			UserNameClaim:          keycloakConfig.UserNameClaim,
+			FallBackUserNameClaim:  keycloakConfig.FallBackUserNameClaim,
 			CustomClaimCheck:       BuildCustomClaimCheck(kafkaRequest),
 		}
 

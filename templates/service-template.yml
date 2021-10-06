@@ -294,6 +294,16 @@ parameters:
   displayName: MAS SSO REALM for Kafka SSO Clients and Service Accounts
   description: MAS SSO realm for Kafka SSO Clients and Service Accounts
 
+- name: USER_NAME_CLAIM
+  displayName: Kafka Oauth spec human readable token claim attribute
+  description: Kafka Oauth spec human readable token claim attribute
+  value: "clientId"
+
+- name: FALL_BACK_USER_NAME_CLAIM
+  displayName: Kafka Oauth spec fall back human readable token claim attribute
+  description: Kafka Oauth spec fall back human readable token claim attribute
+  value: "preferred_username"
+
 - name: OSD_IDP_MAS_SSO_REALM
   displayName: MAS SSO REALM for OSD Cluster Identity Provider Clients
   description: MAS SSO realm for OSD Cluster Identity Provider Clients
@@ -790,6 +800,8 @@ objects:
             - --mas-sso-client-secret-file=/secrets/service/keycloak-service.clientSecret
             - --mas-sso-base-url=${MAS_SSO_BASE_URL}
             - --mas-sso-realm=${MAS_SSO_REALM}
+            - --user-name-claim=${USER_NAME_CLAIM}
+            - --fall-back-user-name-claim=${FALL_BACK_USER_NAME_CLAIM}
             - --max-allowed-service-accounts=${MAX_ALLOWED_SERVICE_ACCOUNTS}
             - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
             - --osd-idp-mas-sso-realm=${OSD_IDP_MAS_SSO_REALM}
