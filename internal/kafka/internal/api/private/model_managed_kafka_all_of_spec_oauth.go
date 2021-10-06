@@ -17,6 +17,7 @@ type ManagedKafkaAllOfSpecOauth struct {
 	JwksEndpointURI        string  `json:"jwksEndpointURI,omitempty"`
 	ValidIssuerEndpointURI string  `json:"validIssuerEndpointURI,omitempty"`
 	UserNameClaim          string  `json:"userNameClaim,omitempty"`
+	FallbackUserNameClaim  string  `json:"fallbackUserNameClaim,omitempty"`
 	TlsTrustedCertificate  *string `json:"tlsTrustedCertificate,omitempty"`
 	CustomClaimCheck       string  `json:"customClaimCheck,omitempty"`
 }
