@@ -33,6 +33,7 @@ func PresentManagedKafka(from *v1.ManagedKafka) private.ManagedKafka {
 				JwksEndpointURI:        from.Spec.OAuth.JwksEndpointURI,
 				ValidIssuerEndpointURI: from.Spec.OAuth.ValidIssuerEndpointURI,
 				UserNameClaim:          from.Spec.OAuth.UserNameClaim,
+				FallBackUserNameClaim:  from.Spec.OAuth.FallBackUserNameClaim,
 				TlsTrustedCertificate:  getOpenAPIManagedKafkaOAuthTLSTrustedCertificate(&from.Spec.OAuth),
 				CustomClaimCheck:       from.Spec.OAuth.CustomClaimCheck,
 			},
