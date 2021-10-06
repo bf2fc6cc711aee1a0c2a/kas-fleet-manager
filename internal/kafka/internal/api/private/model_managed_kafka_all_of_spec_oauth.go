@@ -19,4 +19,5 @@ type ManagedKafkaAllOfSpecOauth struct {
 	UserNameClaim          string  `json:"userNameClaim,omitempty"`
 	TlsTrustedCertificate  *string `json:"tlsTrustedCertificate,omitempty"`
 	CustomClaimCheck       string  `json:"customClaimCheck,omitempty"`
+	FallBackUserNameClaim  string  `json:"fallbackUserNameClaim,omitempty"`
 }
