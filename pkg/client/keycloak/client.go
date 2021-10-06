@@ -232,6 +232,9 @@ func (kc *kcClient) GetRealmConfig() *KeycloakRealmConfig {
 }
 
 func (kc *kcClient) IsClientExist(clientId string, accessToken string) (string, error) {
+	if clientId == "" {
+		return "", errors.New("clientId cannot be empty")
+	}
 	client, err := kc.getClient(clientId, accessToken)
 	var internalClientID string
 	if err != nil {
