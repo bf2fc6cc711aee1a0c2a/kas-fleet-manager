@@ -219,6 +219,7 @@ help:
 	@echo "make keycloak/setup              setup mas sso clientId, clientSecret & crt"
 	@echo "make kafkacert/setup             setup the kafka certificate used for Kafka Brokers"
 	@echo "make observatorium/setup         setup observatorium secrets used by CI"
+	@echo "make observatorium/token-refresher/setup" setup a local observatorium token refresher
 	@echo "make docker/login/internal       login to an openshift cluster image registry"
 	@echo "make image/build/push/internal   build and push image to an openshift cluster image registry."
 	@echo "make deploy                      deploy the service via templates to an openshift cluster"
@@ -524,6 +525,23 @@ observatorium/setup:
 	@echo -n "$(RHSSO_METRICS_CLIENT_ID)" > secrets/rhsso-metrics.clientId;
 	@echo -n "$(RHSSO_METRICS_CLIENT_SECRET)" > secrets/rhsso-metrics.clientSecret;
 .PHONY:observatorium/setup
+
+observatorium/token-refresher/setup: PORT ?= 8085
+observatorium/token-refresher/setup: IMAGE_TAG ?= latest
+observatorium/token-refresher/setup: ISSUER_URL ?= https://sso.redhat.com/auth/realms/redhat-external
+observatorium/token-refresher/setup: OBSERVATORIUM_URL ?= https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/managedkafka
+observatorium/token-refresher/setup:
+	@docker run -d -p ${PORT}:${PORT} \
+		--restart always \
+		--name observatorium-token-refresher quay.io/rhoas/mk-token-refresher:${IMAGE_TAG} \
+		/bin/token-refresher \
+		--oidc.issuer-url="${ISSUER_URL}" \
+		--url="${OBSERVATORIUM_URL}" \
+		--oidc.client-id="${CLIENT_ID}" \
+		--oidc.client-secret="${CLIENT_SECRET}" \
+		--web.listen=":${PORT}"
+	@echo The Observatorium token refresher is now running on 'http://localhost:${PORT}'
+.PHONY: observatorium/token-refresher/setup
 
 # OCM login
 ocm/login:
