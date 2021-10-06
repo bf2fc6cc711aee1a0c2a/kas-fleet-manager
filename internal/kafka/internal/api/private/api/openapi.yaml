@@ -207,7 +207,8 @@ components:
             tokenEndpointUri: https://example-token-endpoint-uri.com/token
             jwksEndpointUri: https://example-jwks-endpoint-uri.com/certs
             validIssuerEndpointUri: https://issuer-endpoint-uri.com
-            userNameClaim: username
+            userNameClaim: clientId
+            fallbackUserNameClaim: preferred_username
             tlsTrustedCertificate: ""
             customClaimCheck: ""
           endpoint:
@@ -511,6 +512,8 @@ components:
         validIssuerEndpointURI:
           type: string
         userNameClaim:
+          type: string
+        fallbackUserNameClaim:
           type: string
         tlsTrustedCertificate:
           nullable: true
