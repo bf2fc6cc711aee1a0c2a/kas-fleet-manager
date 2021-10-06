@@ -769,9 +769,37 @@ func Test_kafkaService_Delete(t *testing.T) {
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.ID = testID
+					kafkaRequest.CanaryServiceAccountClientID = "canary-id"
 				}),
 			},
 			wantErr: true,
+		},
+		{
+			name: "should not delete internal service account when canary serverice account id is empty",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				keycloakService: &services.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
+						return nil
+					},
+					DeleteServiceAccountInternalFunc: nil,
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							KafkaRealm: &keycloak.KeycloakRealmConfig{
+								ClientID: "test",
+							},
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.CanaryServiceAccountClientID = ""
+				}),
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {

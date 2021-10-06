@@ -459,9 +459,12 @@ func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 			if keycloakErr != nil {
 				return errors.NewWithCause(errors.ErrorGeneral, keycloakErr, "error deleting sso client")
 			}
-			keycloakErr = k.keycloakService.DeleteServiceAccountInternal(kafkaRequest.CanaryServiceAccountClientID)
-			if keycloakErr != nil {
-				return errors.NewWithCause(errors.ErrorGeneral, keycloakErr, "error deleting canary service account")
+
+			if kafkaRequest.CanaryServiceAccountClientID != "" {
+				keycloakErr = k.keycloakService.DeleteServiceAccountInternal(kafkaRequest.CanaryServiceAccountClientID)
+				if keycloakErr != nil {
+					return errors.NewWithCause(errors.ErrorGeneral, keycloakErr, "error deleting canary service account")
+				}
 			}
 		}
 
