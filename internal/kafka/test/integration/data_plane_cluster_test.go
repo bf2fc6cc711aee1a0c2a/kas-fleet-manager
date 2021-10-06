@@ -553,10 +553,6 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 		Build().Poll()
 
 	Expect(err).NotTo(HaveOccurred())
-	// Wait until new cluster is created and ClusterWaitingForKasFleetShardOperator in OCM
-	newCluster, err = common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, newCluster.ClusterID, api.ClusterWaitingForKasFleetShardOperator)
-
-	Expect(err).ToNot(HaveOccurred())
 
 	// We force status to 'ready' at DB level to ensure no cluster is recreated
 	// again when deleting the new cluster
