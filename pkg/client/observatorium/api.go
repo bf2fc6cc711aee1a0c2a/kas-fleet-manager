@@ -119,23 +119,23 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 			},
 		},
 		//Check metrics for log size
-		"kafka_log_log_size": {
-			`sum by (namespace, topic)(kafka_log_log_size{%s})`,
-			fmt.Sprintf(`strimzi_io_kind=~'Kafka',namespace=~'%s'`, namespace),
+		"kafka_topic:kafka_log_log_size:sum": {
+			`kafka_topic:kafka_log_log_size:sum{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
 		//Check metrics for all traffic in/out
-		"haproxy_server_bytes_in_total": {
-			`rate(haproxy_server_bytes_in_total{%s}[5m])`,
+		"kafka_namespace:haproxy_server_bytes_in_total:rate5m": {
+			`kafka_namespace:haproxy_server_bytes_in_total:rate5m{%s}`,
 			fmt.Sprintf(`exported_namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
-		"haproxy_server_bytes_out_total": {
-			`rate(haproxy_server_bytes_out_total{%s}[5m])`,
+		"kafka_namespace:haproxy_server_bytes_out_total:rate5m": {
+			`kafka_namespace:haproxy_server_bytes_out_total:rate5m{%s}`,
 			fmt.Sprintf(`exported_namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
