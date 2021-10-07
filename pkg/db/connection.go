@@ -9,7 +9,6 @@ import (
 	mocket "github.com/selvatico/go-mocket"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 type ConnectionFactory struct {
@@ -21,7 +20,7 @@ var gormConfig *gorm.Config = &gorm.Config{
 	PrepareStmt:       true,
 	AllowGlobalUpdate: false, // change it to true to allow updates without the WHERE clause
 	QueryFields:       true,
-	Logger:            logger.Default.LogMode(logger.Silent),
+	Logger:            customLoggerWithMetricsCollector{},
 }
 
 // NewConnectionFactory will initialize a singleton ConnectionFactory as needed and return the same instance.
