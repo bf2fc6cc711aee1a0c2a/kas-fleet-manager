@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/golang/glog"
 	_ "github.com/lib/pq"
 	mocket "github.com/selvatico/go-mocket"
@@ -18,7 +19,7 @@ type ConnectionFactory struct {
 
 var gormConfig *gorm.Config = &gorm.Config{
 	PrepareStmt:       true,
-	AllowGlobalUpdate: false, // change it to tru to allow updates without the WHERE clause
+	AllowGlobalUpdate: false, // change it to true to allow updates without the WHERE clause
 	QueryFields:       true,
 	Logger:            logger.Default.LogMode(logger.Silent),
 }
