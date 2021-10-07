@@ -59,9 +59,17 @@ const (
 	// ObservatoriumRequestDuration - metric name for observatorium request duration in seconds
 	ObservatoriumRequestDuration = "observatorium_request_duration"
 
+	// DatabaseQueryCount - metric name for the number of database query sent
+	DatabaseQueryCount = "database_query_count"
+	// DatabaseQueryDuration - metric name for database query duration in milliseconds
+	DatabaseQueryDuration = "database_query_duration"
+
 	LabelStatusCode = "code"
 	LabelMethod     = "method"
 	LabelPath       = "path"
+
+	LabelDatabaseQueryStatus = "status"
+	LabelDatabaseQueryType   = "query"
 )
 
 // JobType metric to capture
@@ -124,6 +132,11 @@ var observatoriumRequestMetricsLabels = []string{
 	LabelStatusCode,
 	LabelMethod,
 	LabelPath,
+}
+
+var DatabaseMetricsLabels = []string{
+	LabelDatabaseQueryStatus,
+	LabelDatabaseQueryType,
 }
 
 // #### Metrics for Dataplane clusters - Start ####
@@ -505,6 +518,82 @@ func UpdateObservatoriumRequestDurationMetric(code int, path, method string, ela
 
 // #### Metrics for Observatorium - End ####
 
+// #### Metrics for Database ####
+
+// register database query count metric
+//	  database_query_count - Number of Database query sent partitioned by status, and sql query type
+var databaseRequestCountMetric = prometheus.NewCounterVec(prometheus.CounterOpts{
+	Subsystem: KasFleetManager,
+	Name:      DatabaseQueryCount,
+	Help:      "number of query sent to Dataase.",
+}, DatabaseMetricsLabels)
+
+// Increase the database query count metric with the following labels:
+// 	- status: (i.e. "success" or "failure")
+// 	- queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
+func IncreaseDatabaseQueryCount(status string, queryType string) {
+	labels := prometheus.Labels{
+		LabelDatabaseQueryStatus: status,
+		LabelDatabaseQueryType:   queryType,
+	}
+	databaseRequestCountMetric.With(labels).Inc()
+}
+
+// register database query duration metric. Each metric is partitioned by status, query type
+//	 database_query_duration_sum - Total time to send requests to Database in milliseconds.
+//	 database_query_duration_count - Total number of database query measured.
+//	 database_query_duration_bucket - Number of Database queries organized in buckets.
+var databaseQueryDurationMetric = prometheus.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Subsystem: KasFleetManager,
+		Name:      DatabaseQueryDuration,
+		Help:      `Database query duration in milliseconds.`,
+		Buckets: []float64{
+			1.0,
+			30.0,
+			60.0,
+			120.0,
+			150.0,
+			180.0,
+			210.0,
+			240.0,
+			270.0,
+			300.0,
+			330.0,
+			360.0,
+			390.0,
+			420.0,
+			450.0,
+			480.0,
+			510.0,
+			540.0,
+			570.0,
+			600.0,
+			900.0,
+			1200.0,
+			1800.0,
+			2400.0,
+			3600.0,
+			4800.0,
+			7200.0,
+		},
+	},
+	DatabaseMetricsLabels,
+)
+
+// Update the observatorium request duration metric with the following labels:
+// 	- status: (i.e. "success" or "failure")
+// 	- queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
+func UpdateDatabaseQueryDurationMetric(status string, queryType string, elapsed time.Duration) {
+	labels := prometheus.Labels{
+		LabelDatabaseQueryStatus: status,
+		LabelDatabaseQueryType:   queryType,
+	}
+	databaseQueryDurationMetric.With(labels).Observe(float64(elapsed.Milliseconds()))
+}
+
+// #### Metrics for Database - End ####
+
 // register the metric(s)
 func init() {
 	// metrics for data plane clusters
@@ -532,6 +621,10 @@ func init() {
 	// metrics for observatorium
 	prometheus.MustRegister(observatoriumRequestCountMetric)
 	prometheus.MustRegister(observatoriumRequestDurationMetric)
+
+	// metrics for database
+	prometheus.MustRegister(databaseRequestCountMetric)
+	prometheus.MustRegister(databaseQueryDurationMetric)
 }
 
 // ResetMetricsForKafkaManagers will reset the metrics for the KafkaManager background reconciler
@@ -587,4 +680,7 @@ func Reset() {
 	leaderWorkerMetric.Reset()
 
 	ResetMetricsForObservatorium()
+
+	databaseRequestCountMetric.Reset()
+	databaseQueryDurationMetric.Reset()
 }
