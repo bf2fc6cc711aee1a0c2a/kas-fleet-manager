@@ -724,7 +724,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MetricsInstantQueryList'
+                $ref: '#/componen1ts/schemas/MetricsInstantQueryList'
         '401':
           description: Auth token is invalid
           content:
@@ -746,7 +746,39 @@ paths:
       parameters:
         - $ref: "#/components/parameters/id"
         - $ref: "#/components/parameters/filters"
-
+  /api/kafkas_mgmt/v1/kafkas/{id}/metrics/federate:
+    get:
+      summary: Returns all metrics in scrapeable format for a given kafka id
+      operationId: federateMetrics
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: Returned Kafka metrics in a Prometheus text format
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: '#/components/examples/401Example'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'
+      parameters:
+        - $ref: "#/components/parameters/id"
 
 components:
   schemas:
