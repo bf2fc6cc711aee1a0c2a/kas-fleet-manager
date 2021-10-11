@@ -6,6 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
@@ -33,7 +34,11 @@ func NewMetricsHandler(service services.ObservatoriumService) *metricsHandler {
 func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) {
 	kafkaId := strings.TrimSpace(mux.Vars(r)["id"])
 	if kafkaId == "" {
-		http.Error(w, "missing kafka id", http.StatusInternalServerError)
+		shared.HandleError(r, w, &errors.ServiceError{
+			Code:     errors.ErrorBadRequest,
+			Reason:   "missing path parameter: kafka id",
+			HttpCode: http.StatusBadRequest,
+		})
 		return
 	}
 
@@ -44,9 +49,17 @@ func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) 
 
 	_, err := h.service.GetMetricsByKafkaId(r.Context(), kafkaMetrics, kafkaId, params)
 	if err != nil {
-		glog.Errorf("error getting metrics: %v", err)
-		sentry.CaptureException(err)
-		http.Error(w, "error getting metrics", http.StatusInternalServerError)
+		if err.Code == errors.ErrorNotFound {
+			shared.HandleError(r, w, err)
+		} else {
+			glog.Errorf("error getting metrics: %v", err)
+			sentry.CaptureException(err)
+			shared.HandleError(r, w, &errors.ServiceError{
+				Code:     err.Code,
+				Reason:   "error getting metrics",
+				HttpCode: http.StatusInternalServerError,
+			})
+		}
 		return
 	}
 
