@@ -314,7 +314,7 @@ components:
           strimzi: 0.21.2
     "400InvalidIdExample":
       value:
-        id: "203"
+        id: "21"
         kind: Error
         href: /api/kafkas_mgmt/v1/errors/21
         code: KAFKAS-MGMT-21
@@ -322,7 +322,7 @@ components:
         operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
     "404Example":
       value:
-        id: "404"
+        id: "7"
         kind: Error
         href: /api/kafkas_mgmt/v1/errors/7
         code: KAFKAS-MGMT-7

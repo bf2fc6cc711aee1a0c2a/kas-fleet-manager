@@ -1,6 +1,9 @@
 package integration
 
 import (
+	"net/http"
+	"testing"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
@@ -8,8 +11,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
-	"net/http"
-	"testing"
 )
 
 func TestFederation_GetFederatedMetrics(t *testing.T) {
@@ -56,7 +57,7 @@ func TestFederation_GetFederatedMetrics(t *testing.T) {
 
 	Expect(kafka.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 
-	federatedMetrics, resp, err := client.DefaultApi.GetFederatedMetrics(ctx, seedKafka.Id)
+	federatedMetrics, resp, err := client.DefaultApi.FederateMetrics(ctx, seedKafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to call federation endpoint:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(federatedMetrics).NotTo(BeEmpty())
