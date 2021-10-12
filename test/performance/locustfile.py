@@ -179,14 +179,13 @@ def exercise_endpoints(self, get_only):
       time.sleep(15) # wait 15 seconds instead of hitting this if/else unnecessarily
 
 # The distribution between the endpoints will be semi-random with the following proportions
-# kafkas get                                       50%
-# kafka search                                     35%
-# kafka get                                        10%
-# kafka metrics                                     1%
+# kafkas get                                        50%
+# kafka search                                      35%
+# kafka get                                         12%
+# > kafka get metrics                      	        (5%)
 # cloud provider(s) get                             1%
 # openapi get                                       1%
 # service accounts (get, post, delete, reset pwd)   1%
-# kafka get metrics                      	        0.5%
 def hit_endpoint(self, get_only):
   endpoint_selector = random.randrange(0,99)
   if endpoint_selector < 1:
@@ -215,6 +214,7 @@ def hit_endpoint(self, get_only):
       if (random.randrange(0,19) < 1): 
         handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query', '/kafkas/[id]/metrics/query')
         handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query_range?duration=5&interval=30', '/kafkas/[id]/metrics/query_range')
+        handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/federate', '/kafkas/[id]/metrics/federate')
 
 # wait for kafkas to be in ready state and persist kafka config
 def wait_for_kafkas_ready(self):
