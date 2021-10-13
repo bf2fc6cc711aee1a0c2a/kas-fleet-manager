@@ -87,7 +87,7 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&kc.MaxAllowedServiceAccounts, "max-allowed-service-accounts", kc.MaxAllowedServiceAccounts, "Max allowed service accounts per user")
 	fs.IntVar(&kc.MaxLimitForGetClients, "max-limit-for-sso-get-clients", kc.MaxLimitForGetClients, "Max limits for SSO get clients")
 	fs.StringVar(&kc.UserNameClaim, "user-name-claim", kc.UserNameClaim, "Human readable username token claim")
-	fs.StringVar(&kc.FallBackUserNameClaim,"fall-back-user-name-claim", kc.FallBackUserNameClaim, "Fall back username token claim")
+	fs.StringVar(&kc.FallBackUserNameClaim, "fall-back-user-name-claim", kc.FallBackUserNameClaim, "Fall back username token claim")
 }
 
 func (kc *KeycloakConfig) ReadFiles() error {
