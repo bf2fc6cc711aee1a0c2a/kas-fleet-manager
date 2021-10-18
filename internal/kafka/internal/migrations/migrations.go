@@ -68,6 +68,7 @@ var migrations = []*gormigrate.Migration{
 	resetCanaryServiceAccountForTwoInstances(),
 	addKafkaFailedWorkerLease(),
 	resetCanaryServiceAccountForAffectedInstances(),
+	addClusterSupportedInstanceType(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

@@ -1383,3 +1383,156 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestClusterManager_reconcileClusterInstanceType(t *testing.T) {
+	type fields struct {
+		clusterService         services.ClusterService
+		dataplaneClusterConfig *config.DataplaneClusterConfig
+		cluster                api.Cluster
+	}
+	clusterId := "some-cluster-id"
+	supportedInstanceType := "eval"
+	testOsdConfig := config.NewDataplaneClusterConfig()
+	testOsdConfig.DataPlaneClusterScalingType = config.ManualScaling
+	testOsdConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{config.ManualCluster{Schedulable: true, KafkaInstanceLimit: 2, ClusterId: clusterId, SupportedInstanceType: supportedInstanceType}})
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "Throw an error when update in database fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *ocmErrors.ServiceError {
+						return &ocmErrors.ServiceError{}
+					},
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.NoScaling,
+				},
+				cluster: api.Cluster{
+					SupportedInstanceType: "",
+					ClusterID:             clusterId,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Update the cluster instance type in the database to standard,eval when cluster scaling type is not manual",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *ocmErrors.ServiceError {
+						if cluster.SupportedInstanceType != api.AllInstanceTypeSupport.String() {
+							return &ocmErrors.ServiceError{}
+						} // the cluster should support both instance types
+						return nil
+					},
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.NoScaling,
+				},
+				cluster: api.Cluster{
+					ClusterID:             clusterId,
+					SupportedInstanceType: "",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Do not update cluster instance type when already set and scaling type is not manual",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: nil,
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.NoScaling,
+				},
+				cluster: api.Cluster{
+					ClusterID:             clusterId,
+					SupportedInstanceType: api.EvalTypeSupport.String(),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Update the cluster instance type in the database to the one set in manual cluster configuration",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *ocmErrors.ServiceError {
+						if cluster.SupportedInstanceType != supportedInstanceType {
+							return &ocmErrors.ServiceError{}
+						} // the cluster should support both instance types
+						return nil
+					},
+				},
+				dataplaneClusterConfig: testOsdConfig,
+				cluster: api.Cluster{
+					ClusterID:             clusterId,
+					SupportedInstanceType: api.StandardTypeSupport.String(),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Do no update the cluster in the database if not found in manual configuration and already set",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: nil, // should not be called
+				},
+				dataplaneClusterConfig: testOsdConfig,
+				cluster: api.Cluster{
+					ClusterID:             "some-randome-cluster-id",
+					SupportedInstanceType: api.StandardTypeSupport.String(),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Update the cluster in the database to support both instance types if not found in manual configuration and not already set",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *ocmErrors.ServiceError {
+						if cluster.SupportedInstanceType != api.AllInstanceTypeSupport.String() {
+							return &ocmErrors.ServiceError{}
+						} // the cluster should support both instance types
+						return nil
+					},
+				},
+				dataplaneClusterConfig: testOsdConfig,
+				cluster: api.Cluster{
+					ClusterID:             "some-randome-cluster-id",
+					SupportedInstanceType: "",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Do not update in the database if instance type has not changed",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: nil, // should not be called
+				},
+				dataplaneClusterConfig: testOsdConfig,
+				cluster: api.Cluster{
+					ClusterID:             clusterId,
+					SupportedInstanceType: supportedInstanceType,
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
+					ClusterService:         tt.fields.clusterService,
+				},
+			}
+			err := c.reconcileClusterInstanceType(tt.fields.cluster)
+			gomega.Expect(err != nil).To(Equal(tt.wantErr))
+		})
+	}
+}

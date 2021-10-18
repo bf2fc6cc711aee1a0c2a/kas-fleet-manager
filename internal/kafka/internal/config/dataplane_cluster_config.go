@@ -99,24 +99,26 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 
 //manual cluster configuration
 type ManualCluster struct {
-	Name               string                  `yaml:"name"`
-	ClusterId          string                  `yaml:"cluster_id"`
-	CloudProvider      string                  `yaml:"cloud_provider"`
-	Region             string                  `yaml:"region"`
-	MultiAZ            bool                    `yaml:"multi_az"`
-	Schedulable        bool                    `yaml:"schedulable"`
-	KafkaInstanceLimit int                     `yaml:"kafka_instance_limit"`
-	Status             api.ClusterStatus       `yaml:"status"`
-	ProviderType       api.ClusterProviderType `yaml:"provider_type"`
-	ClusterDNS         string                  `yaml:"cluster_dns"`
+	Name                  string                  `yaml:"name"`
+	ClusterId             string                  `yaml:"cluster_id"`
+	CloudProvider         string                  `yaml:"cloud_provider"`
+	Region                string                  `yaml:"region"`
+	MultiAZ               bool                    `yaml:"multi_az"`
+	Schedulable           bool                    `yaml:"schedulable"`
+	KafkaInstanceLimit    int                     `yaml:"kafka_instance_limit"`
+	Status                api.ClusterStatus       `yaml:"status"`
+	ProviderType          api.ClusterProviderType `yaml:"provider_type"`
+	ClusterDNS            string                  `yaml:"cluster_dns"`
+	SupportedInstanceType string                  `yaml:"supported_instance_type"`
 }
 
 func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type t ManualCluster
 	temp := t{
-		Status:       api.ClusterProvisioning,
-		ProviderType: api.ClusterProviderOCM,
-		ClusterDNS:   "",
+		Status:                api.ClusterProvisioning,
+		ProviderType:          api.ClusterProviderOCM,
+		ClusterDNS:            "",
+		SupportedInstanceType: api.AllInstanceTypeSupport.String(), // by default support both instance type
 	}
 	err := unmarshal(&temp)
 	if err != nil {
@@ -139,6 +141,9 @@ func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		c.Status = api.ClusterProvisioning // force to cluster provisioning status as we do not want to call StandaloneProvider to create the cluster.
 	}
 
+	if c.SupportedInstanceType == "" {
+		c.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+	}
 	return nil
 }
 
@@ -173,6 +178,11 @@ func (conf *ClusterConfig) IsClusterSchedulable(clusterId string) bool {
 		return conf.clusterConfigMap[clusterId].Schedulable
 	}
 	return true
+}
+
+func (conf *ClusterConfig) GetClusterSupportedInstanceType(clusterId string) (string, bool) {
+	manualCluster, exist := conf.clusterConfigMap[clusterId]
+	return manualCluster.SupportedInstanceType, exist
 }
 
 func (conf *ClusterConfig) ExcessClusters(clusterList map[string]api.Cluster) []string {
