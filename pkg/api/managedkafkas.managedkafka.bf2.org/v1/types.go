@@ -50,7 +50,7 @@ type OAuthSpec struct {
 	UserNameClaim          string  `json:"userNameClaim"`
 	TlsTrustedCertificate  *string `json:"tlsTrustedCertificate,omitempty"`
 	CustomClaimCheck       string  `json:"customClaimCheck"`
-	FallBackUserNameClaim  string `json:"fallbackUserNameClaim"`
+	FallBackUserNameClaim  string  `json:"fallbackUserNameClaim"`
 }
 
 type TlsSpec struct {
