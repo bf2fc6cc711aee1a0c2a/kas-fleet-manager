@@ -14,7 +14,8 @@ import (
 )
 
 const TERMS_SITECODE = "OCM"
-const TERMS_EVENTCODE = "onlineService"
+const TERMS_EVENTCODE_ONLINE_SERVICE = "onlineService"
+const TERMS_EVENTCODE_REGISTER = "register"
 
 //go:generate moq -out client_moq.go . Client
 type Client interface {
@@ -192,7 +193,8 @@ func (c *client) HasAssignedQuota(organizationId string, quotaType KafkaQuotaTyp
 }
 
 func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error) {
-	request, err := v1.NewTermsReviewRequest().AccountUsername(username).SiteCode(TERMS_SITECODE).EventCode(TERMS_EVENTCODE).Build()
+	// Check for Appendix 4 Terms
+	request, err := v1.NewTermsReviewRequest().AccountUsername(username).SiteCode(TERMS_SITECODE).EventCode(TERMS_EVENTCODE_REGISTER).Build()
 	if err != nil {
 		return false, "", err
 	}
@@ -207,7 +209,35 @@ func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool
 	}
 
 	redirectUrl, _ = response.GetRedirectUrl()
-	return response.TermsRequired(), redirectUrl, nil
+
+	// This function should end with this `return` when the online services terms will be removed
+	if !response.TermsRequired() {
+		return response.TermsRequired(), redirectUrl, nil
+	}
+
+	termsRedirectUrl := redirectUrl
+
+	request, err = v1.NewTermsReviewRequest().AccountUsername(username).SiteCode(TERMS_SITECODE).EventCode(TERMS_EVENTCODE_ONLINE_SERVICE).Build()
+	if err != nil {
+		return false, "", err
+	}
+	selfTermsReview = c.connection.Authorizations().V1().TermsReview()
+	postResp, err = selfTermsReview.Post().Request(request).Send()
+	if err != nil {
+		return false, "", err
+	}
+	response, ok = postResp.GetResponse()
+	if !ok {
+		return false, "", fmt.Errorf("empty response from authorization post request")
+	}
+
+	redirectUrl, _ = response.GetRedirectUrl()
+
+	if response.TermsRequired() {
+		// none of the two terms (old or new) have been accepted. Returning the redirect URL for the new terms
+		return true, termsRedirectUrl, nil
+	}
+	return false, redirectUrl, nil
 }
 
 // GetClusterIngresses sends a GET request to ocm to retrieve the ingresses of an OSD cluster
