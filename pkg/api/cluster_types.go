@@ -14,8 +14,13 @@ import (
 
 type ClusterStatus string
 type ClusterProviderType string
+type ClusterInstanceTypeSupport string
 
 func (k ClusterStatus) String() string {
+	return string(k)
+}
+
+func (k ClusterInstanceTypeSupport) String() string {
 	return string(k)
 }
 
@@ -101,6 +106,10 @@ const (
 	ClusterProviderOCM        ClusterProviderType = "ocm"
 	ClusterProviderAwsEKS     ClusterProviderType = "aws_eks"
 	ClusterProviderStandalone ClusterProviderType = "standalone"
+
+	EvalTypeSupport        ClusterInstanceTypeSupport = "eval"
+	StandardTypeSupport    ClusterInstanceTypeSupport = "standard"
+	AllInstanceTypeSupport ClusterInstanceTypeSupport = "standard,eval"
 )
 
 // ordinals - Used to decide if a status comes after or before a given state
@@ -147,6 +156,9 @@ type Cluster struct {
 	// `SetAvailableStrimziVersions` helper method to ensure the correct order is set.
 	// Latest position in the list is considered the newest available version.
 	AvailableStrimziVersions JSON `json:"available_strimzi_versions"`
+	// SupportedInstanceType holds information on what kind of instances types can be provisioned on this cluster.
+	// A cluster can support two kinds of instance types: 'eval', 'standard' or both in this case it will be a comma separated list of instance types e.g 'standard,eval'.
+	SupportedInstanceType string `json:"supported_instance_type"`
 }
 
 type ClusterList []*Cluster
@@ -167,6 +179,10 @@ func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
 
 	if cluster.ID == "" {
 		cluster.ID = NewID()
+	}
+
+	if cluster.SupportedInstanceType == "" {
+		cluster.SupportedInstanceType = AllInstanceTypeSupport.String()
 	}
 
 	return nil

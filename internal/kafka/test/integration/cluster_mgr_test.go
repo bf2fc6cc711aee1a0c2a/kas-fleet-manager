@@ -45,11 +45,12 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	// create a cluster - this will need to be done manually until cluster creation is implemented in the cluster manager reconcile
 	clusterRegisterError := test.TestServices.ClusterService.RegisterClusterJob(&api.Cluster{
-		CloudProvider:      mocks.MockCluster.CloudProvider().ID(),
-		Region:             mocks.MockCluster.Region().ID(),
-		MultiAZ:            testMultiAZ,
-		Status:             api.ClusterAccepted,
-		IdentityProviderID: "some-identity-provider-id",
+		CloudProvider:         mocks.MockCluster.CloudProvider().ID(),
+		Region:                mocks.MockCluster.Region().ID(),
+		MultiAZ:               testMultiAZ,
+		Status:                api.ClusterAccepted,
+		IdentityProviderID:    "some-identity-provider-id",
+		SupportedInstanceType: api.AllInstanceTypeSupport.String(),
 	})
 
 	if clusterRegisterError != nil {
