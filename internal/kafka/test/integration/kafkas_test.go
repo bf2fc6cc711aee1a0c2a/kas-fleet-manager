@@ -273,6 +273,7 @@ func TestKafka_Update(t *testing.T) {
 		DesiredKafkaVersion:   "2.6.0",
 		ActualStrimziVersion:  "v.23.0",
 		DesiredStrimziVersion: "v0.23.0",
+		InstanceType:          types.STANDARD.String(),
 	}
 
 	if err := db.Create(kafka).Error; err != nil {
@@ -391,6 +392,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 			Name:           "dummy-kafka",
 			OrganisationId: orgId,
 			Status:         constants2.KafkaRequestStatusAccepted.String(),
+			InstanceType:   types.STANDARD.String(),
 		},
 		{
 			MultiAZ:        false,
@@ -400,6 +402,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 			Name:           "dummy-kafka-2",
 			OrganisationId: orgId,
 			Status:         constants2.KafkaRequestStatusAccepted.String(),
+			InstanceType:   types.STANDARD.String(),
 		},
 	}
 
@@ -663,6 +666,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			Name:           "dummy-kafka",
 			OrganisationId: orgId,
 			Status:         constants2.KafkaRequestStatusAccepted.String(),
+			InstanceType:   types.STANDARD.String(),
 		},
 		{
 			MultiAZ:        false,
@@ -672,6 +676,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			Name:           "dummy-kafka-2",
 			OrganisationId: orgId,
 			Status:         constants2.KafkaRequestStatusAccepted.String(),
+			InstanceType:   types.EVAL.String(),
 		},
 		{
 			MultiAZ:        false,
@@ -682,6 +687,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			Name:           "dummy-kafka-3",
 			OrganisationId: orgId,
 			Status:         constants2.KafkaRequestStatusPreparing.String(),
+			InstanceType:   types.EVAL.String(),
 		},
 		{
 			MultiAZ:             false,
@@ -695,6 +701,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			SsoClientSecret:     "dummy-sso-client-secret",
 			OrganisationId:      orgId,
 			Status:              constants2.KafkaRequestStatusProvisioning.String(),
+			InstanceType:        types.STANDARD.String(),
 		},
 		{
 			MultiAZ:        false,
@@ -704,6 +711,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			Name:           "this-kafka-will-remain",
 			OrganisationId: orgId,
 			Status:         constants2.KafkaRequestStatusAccepted.String(),
+			InstanceType:   types.STANDARD.String(),
 		},
 	}
 
@@ -997,6 +1005,7 @@ func TestKafka_Delete(t *testing.T) {
 		DesiredKafkaVersion:   "2.6.0",
 		ActualStrimziVersion:  "v.23.0",
 		DesiredStrimziVersion: "v0.23.0",
+		InstanceType:          types.EVAL.String(),
 	}
 
 	if err := db.Create(kafka).Error; err != nil {
@@ -1267,6 +1276,7 @@ func TestKafka_DeleteAdminNonOwner(t *testing.T) {
 		DesiredKafkaVersion:   "2.6.0",
 		ActualStrimziVersion:  "v.23.0",
 		DesiredStrimziVersion: "v0.23.0",
+		InstanceType:          types.STANDARD.String(),
 	}
 
 	if err := db.Create(kafka).Error; err != nil {

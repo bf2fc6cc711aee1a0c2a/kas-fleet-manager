@@ -5,6 +5,7 @@ import (
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -52,6 +53,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		CloudProvider: "aws",
 		Name:          "dummy-kafka",
 		Status:        constants2.KafkaRequestStatusReady.String(),
+		InstanceType:  types.STANDARD.String(),
 	}
 
 	if err := db.Save(&kafka).Error; err != nil {
@@ -169,6 +171,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		Owner:         "dummyuser1",
 		Name:          "dummy-kafka-1",
 		Status:        constants2.KafkaRequestStatusAccepted.String(),
+		InstanceType:  types.STANDARD.String(),
 	}, {
 		MultiAZ:       true,
 		Region:        "us-east-1",
@@ -176,6 +179,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		Owner:         "dummyuser2",
 		Name:          "dummy-kafka-2",
 		Status:        constants2.KafkaRequestStatusAccepted.String(),
+		InstanceType:  types.EVAL.String(),
 	}}
 
 	errK := test.TestServices.KafkaService.RegisterKafkaJob(kafkas[0])
@@ -198,4 +202,120 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	kafkaFound2, kafkaErr2 := common.WaitForKafkaClusterIDToBeAssigned(dbFactory, "dummy-kafka-2")
 	Expect(kafkaErr2).NotTo(HaveOccurred())
 	Expect(kafkaFound2.ClusterID).To(Equal("test02"))
+}
+
+func TestClusterPlacementStrategy_CheckInstanceTypePlacement(t *testing.T) {
+	// setup ocm server
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	// start servers
+	_, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, nil)
+	defer teardown()
+
+	ocmConfig := test.TestServices.OCMConfig
+
+	if ocmConfig.MockMode != ocm.MockModeEmulateServer {
+		t.SkipNow()
+	}
+
+	// load existing cluster and assign kafka to it so that it is not deleted
+
+	db := test.TestServices.DBFactory.New()
+	clusterWithKafkaID := "cluster-id-that-should-not-be-deleted"
+
+	kafka := dbapi.KafkaRequest{
+		ClusterID:     clusterWithKafkaID,
+		MultiAZ:       true,
+		Region:        "us-east-1",
+		CloudProvider: "aws",
+		Name:          "dummy-kafka",
+		Status:        constants2.KafkaRequestStatusReady.String(),
+		InstanceType:  types.STANDARD.String(),
+	}
+
+	if err := db.Save(&kafka).Error; err != nil {
+		t.Error("failed to create a dummy kafka request")
+		return
+	}
+
+	clusterCriteria := services.FindClusterCriteria{
+		Provider: "aws",
+		Region:   "us-east-1",
+		MultiAZ:  true,
+	}
+
+	//*********************************************************************
+	// pre-create clusters
+	//*********************************************************************
+	clusterDns := "apps.example.com"
+	standardInstanceCluster := "cluster-that-supports-standard-instance"
+	evalInstanceCluster := "cluster-that-supports-eval-instance"
+
+	standaloneClusters := []*api.Cluster{
+		{
+			ClusterID:             evalInstanceCluster,
+			Region:                clusterCriteria.Region,
+			MultiAZ:               clusterCriteria.MultiAZ,
+			CloudProvider:         clusterCriteria.Provider,
+			ProviderType:          api.ClusterProviderStandalone,
+			IdentityProviderID:    "some-identity-provider-id",
+			ClusterDNS:            clusterDns,
+			Status:                api.ClusterReady,
+			SupportedInstanceType: api.EvalTypeSupport.String(),
+		},
+		{
+			ClusterID:             standardInstanceCluster,
+			Region:                clusterCriteria.Region,
+			MultiAZ:               clusterCriteria.MultiAZ,
+			CloudProvider:         clusterCriteria.Provider,
+			ProviderType:          api.ClusterProviderStandalone,
+			IdentityProviderID:    "some-identity-provider-id",
+			ClusterDNS:            clusterDns,
+			Status:                api.ClusterReady,
+			SupportedInstanceType: api.StandardTypeSupport.String(),
+		},
+	}
+
+	if err := db.Create(standaloneClusters).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+	}
+
+	// Need to mark the clusters to be ready so that placement can actually happen
+	updateErr := test.TestServices.ClusterService.UpdateMultiClusterStatus([]string{standardInstanceCluster, evalInstanceCluster}, api.ClusterReady)
+	Expect(updateErr).NotTo(HaveOccurred())
+	kafkas := []*dbapi.KafkaRequest{{
+		MultiAZ:       true,
+		Region:        "us-east-1",
+		CloudProvider: "aws",
+		Owner:         "dummyuser1",
+		Name:          "dummy-kafka-1",
+		Status:        constants2.KafkaRequestStatusAccepted.String(),
+		InstanceType:  types.STANDARD.String(),
+	}, {
+		MultiAZ:       true,
+		Region:        "us-east-1",
+		CloudProvider: "aws",
+		Owner:         "dummyuser2",
+		Name:          "dummy-kafka-2",
+		Status:        constants2.KafkaRequestStatusAccepted.String(),
+		InstanceType:  types.EVAL.String(),
+	}}
+
+	if err := db.Create(kafkas).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+	}
+
+	dbFactory := test.TestServices.DBFactory
+
+	// verify that a standard instance is assigned to a data plane cluster that supports only standard instances
+	kafkaFound, kafkaErr := common.WaitForKafkaClusterIDToBeAssigned(dbFactory, "dummy-kafka-1")
+	Expect(kafkaErr).NotTo(HaveOccurred())
+	Expect(kafkaFound.ClusterID).To(Equal(standardInstanceCluster))
+
+	// verify that an eval instance is assigned to a data plane cluster that supports only eval instances
+	kafkaFound2, kafkaErr2 := common.WaitForKafkaClusterIDToBeAssigned(dbFactory, "dummy-kafka-2")
+	Expect(kafkaErr2).NotTo(HaveOccurred())
+	Expect(kafkaFound2.ClusterID).To(Equal(evalInstanceCluster))
 }

@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -248,10 +249,11 @@ func (c clusterService) ListGroupByProviderAndRegion(providers []string, regions
 }
 
 type FindClusterCriteria struct {
-	Provider string
-	Region   string
-	MultiAZ  bool
-	Status   api.ClusterStatus
+	Provider              string
+	Region                string
+	MultiAZ               bool
+	Status                api.ClusterStatus
+	SupportedInstanceType string
 }
 
 func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
@@ -264,6 +266,11 @@ func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster,
 		Region:        criteria.Region,
 		MultiAZ:       criteria.MultiAZ,
 		Status:        criteria.Status,
+	}
+
+	// filter by supported instance type
+	if criteria.SupportedInstanceType != "" {
+		dbConn = dbConn.Where("supported_instance_type like ?", fmt.Sprintf("%%%s%%", criteria.SupportedInstanceType))
 	}
 
 	// we order them by "created_at" field instead of the default "id" field.
@@ -505,7 +512,8 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 }
 
 func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *apiErrors.ServiceError) {
-	dbConn := c.connectionFactory.New()
+	dbConn := c.connectionFactory.New().
+		Model(&api.Cluster{})
 
 	var cluster []*api.Cluster
 
@@ -516,11 +524,15 @@ func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cl
 		Status:        criteria.Status,
 	}
 
+	// filter by supported instance type
+	if criteria.SupportedInstanceType != "" {
+		dbConn.Where("supported_instance_type like ?", fmt.Sprintf("%%%s%%", criteria.SupportedInstanceType))
+	}
 	// we order them by "created_at" field instead of the default "id" field.
 	// They are mostly the same as the library we use (xid) does take the generation timestamp into consideration,
 	// However, it only down to the level of seconds. This means that if a few records are created at almost the same time,
 	// the order is not guaranteed. So use the `created_at` column will provider better consistency.
-	if err := dbConn.Model(&api.Cluster{}).Where(clusterDetails).Order("created_at asc").Scan(&cluster).Error; err != nil {
+	if err := dbConn.Where(clusterDetails).Order("created_at asc").Scan(&cluster).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
