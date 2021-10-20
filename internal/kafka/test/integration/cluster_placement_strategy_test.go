@@ -73,14 +73,15 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	dataplaneClusterConfig := DataplaneClusterConfig(h)
 
 	standaloneCluster := &api.Cluster{
-		ClusterID:          clusterWithKafkaID,
-		Region:             clusterCriteria.Region,
-		MultiAZ:            clusterCriteria.MultiAZ,
-		CloudProvider:      clusterCriteria.Provider,
-		ProviderType:       api.ClusterProviderStandalone,
-		IdentityProviderID: "some-identity-provider-id",
-		ClusterDNS:         clusterDns,
-		Status:             api.ClusterProvisioning,
+		ClusterID:             clusterWithKafkaID,
+		Region:                clusterCriteria.Region,
+		MultiAZ:               clusterCriteria.MultiAZ,
+		CloudProvider:         clusterCriteria.Provider,
+		ProviderType:          api.ClusterProviderStandalone,
+		IdentityProviderID:    "some-identity-provider-id",
+		ClusterDNS:            clusterDns,
+		Status:                api.ClusterProvisioning,
+		SupportedInstanceType: api.EvalTypeSupport.String(),
 	}
 
 	if err := db.Save(standaloneCluster).Error; err != nil {
@@ -89,24 +90,26 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 
 	dataplaneClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 		config.ManualCluster{
-			ClusterId:          "test03",
-			KafkaInstanceLimit: 1,
-			Region:             clusterCriteria.Region,
-			MultiAZ:            clusterCriteria.MultiAZ,
-			CloudProvider:      clusterCriteria.Provider,
-			Schedulable:        true,
+			ClusterId:             "test03",
+			KafkaInstanceLimit:    1,
+			Region:                clusterCriteria.Region,
+			MultiAZ:               clusterCriteria.MultiAZ,
+			CloudProvider:         clusterCriteria.Provider,
+			Schedulable:           true,
+			SupportedInstanceType: api.AllInstanceTypeSupport.String(),
 		},
 		// this is a dummy cluster which will be auto created and should not be deleted because it has kafka in it
 		config.ManualCluster{
-			ClusterId:          standaloneCluster.ClusterID,
-			KafkaInstanceLimit: 1,
-			Region:             standaloneCluster.Region,
-			MultiAZ:            standaloneCluster.MultiAZ,
-			CloudProvider:      standaloneCluster.CloudProvider,
-			Schedulable:        true,
-			ProviderType:       standaloneCluster.ProviderType,
-			ClusterDNS:         standaloneCluster.ClusterDNS,
-			Status:             standaloneCluster.Status, // standalone cluster needs to start at provisioning state.
+			ClusterId:             standaloneCluster.ClusterID,
+			KafkaInstanceLimit:    1,
+			Region:                standaloneCluster.Region,
+			MultiAZ:               standaloneCluster.MultiAZ,
+			CloudProvider:         standaloneCluster.CloudProvider,
+			Schedulable:           true,
+			ProviderType:          standaloneCluster.ProviderType,
+			ClusterDNS:            standaloneCluster.ClusterDNS,
+			Status:                standaloneCluster.Status, // standalone cluster needs to start at provisioning state.
+			SupportedInstanceType: api.EvalTypeSupport.String(),
 		},
 	})
 
@@ -122,6 +125,12 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cluster.ClusterDNS).To(Equal(clusterDns))
 	Expect(cluster.ProviderType).To(Equal(api.ClusterProviderStandalone))
+	Expect(cluster.SupportedInstanceType).To(Equal(api.EvalTypeSupport.String()))
+
+	// Ensure supported instance type is populated
+	cluster, err = test.TestServices.ClusterService.FindClusterByID("test03")
+	Expect(err).NotTo(HaveOccurred())
+	Expect(cluster.SupportedInstanceType).To(Equal(api.AllInstanceTypeSupport.String()))
 
 	//*********************************************************************
 	//data plane cluster config - with new clusters

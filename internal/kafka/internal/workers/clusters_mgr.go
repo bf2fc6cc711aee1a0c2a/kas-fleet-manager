@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 
 	"strings"
 	"sync"
@@ -407,19 +408,25 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 	}
 
 	var err error
+
+	err = c.reconcileClusterInstanceType(cluster)
+	if err != nil {
+		return errors.WithMessagef(err, "failed to reconcile instance type ready cluster %s: %s", cluster.ClusterID, err.Error())
+	}
+
 	// resources update if needed
 	if err := c.reconcileClusterResources(cluster); err != nil {
-		return errors.WithMessagef(err, "failed to reconcile cluster resources %s ", cluster.ClusterID)
+		return errors.WithMessagef(err, "failed to reconcile ready cluster resources %s ", cluster.ClusterID)
 	}
 
 	err = c.reconcileClusterIdentityProvider(cluster)
 	if err != nil {
-		return errors.WithMessagef(err, "failed to reconcile ready cluster %s: %s", cluster.ClusterID, err.Error())
+		return errors.WithMessagef(err, "failed to reconcile identity provider of ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 
 	err = c.reconcileClusterDNS(cluster)
 	if err != nil {
-		return errors.WithMessagef(err, "failed to reconcile ready cluster %s: %s", cluster.ClusterID, err.Error())
+		return errors.WithMessagef(err, "failed to reconcile cluster dns of ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 
 	if c.KasFleetshardOperatorAddon != nil {
@@ -427,11 +434,44 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 			if err.IsBadRequest() {
 				glog.Infof("kas-fleetshard operator is not found on cluster %s", cluster.ClusterID)
 			} else {
-				return errors.WithMessagef(err, "failed to reconcile ready cluster %s: %s", cluster.ClusterID, err.Error())
+				return errors.WithMessagef(err, "failed to reconcile kas-fleet-shard parameters of ready cluster %s: %s", cluster.ClusterID, err.Error())
 			}
 		}
 	}
 
+	return nil
+}
+
+// reconcileClusterInstanceType checks wether a cluster has an instance type, if not set to the instance type provided in the manual cluster configuration
+// If the cluster does not exists, assume the cluster supports both instance types
+func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error {
+	logger.Logger.Infof("reconciling cluster = %s instance type", cluster.ClusterID)
+	supportedInstanceType := api.AllInstanceTypeSupport.String()
+	manualScalingEnabled := c.DataplaneClusterConfig.IsDataPlaneManualScalingEnabled()
+	if manualScalingEnabled {
+		supportedType, found := c.DataplaneClusterConfig.ClusterConfig.GetClusterSupportedInstanceType(cluster.ClusterID)
+		if !found && cluster.SupportedInstanceType != "" {
+			logger.Logger.Infof("cluster instance type already set for cluster = %s", cluster.ClusterID)
+			return nil
+		} else if found {
+			supportedInstanceType = supportedType
+		}
+	}
+
+	if cluster.SupportedInstanceType != "" && !manualScalingEnabled {
+		logger.Logger.Infof("cluster instance type already set for cluster = %s and scaling type is not manual", cluster.ClusterID)
+		return nil
+	}
+
+	if cluster.SupportedInstanceType != supportedInstanceType {
+		cluster.SupportedInstanceType = supportedInstanceType
+		err := c.ClusterService.Update(cluster)
+		if err != nil {
+			return errors.Wrapf(err, "failed to update instance type in database for cluster %s", cluster.ClusterID)
+		}
+	}
+
+	logger.Logger.Infof("supported instance type for cluster = %s successful updated", cluster.ClusterID)
 	return nil
 }
 
@@ -615,13 +655,14 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	//Create all missing clusters
 	for _, p := range c.DataplaneClusterConfig.ClusterConfig.MissingClusters(clusterIdsMap) {
 		clusterRequest := api.Cluster{
-			CloudProvider: p.CloudProvider,
-			Region:        p.Region,
-			MultiAZ:       p.MultiAZ,
-			ClusterID:     p.ClusterId,
-			Status:        p.Status,
-			ProviderType:  p.ProviderType,
-			ClusterDNS:    p.ClusterDNS,
+			CloudProvider:         p.CloudProvider,
+			Region:                p.Region,
+			MultiAZ:               p.MultiAZ,
+			ClusterID:             p.ClusterId,
+			Status:                p.Status,
+			ProviderType:          p.ProviderType,
+			ClusterDNS:            p.ClusterDNS,
+			SupportedInstanceType: p.SupportedInstanceType,
 		}
 		if err := c.ClusterService.RegisterClusterJob(&clusterRequest); err != nil {
 			return []error{errors.Wrapf(err, "Failed to register new cluster %s with config file", p.ClusterId)}
@@ -701,11 +742,12 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 		for _, v := range p.Regions {
 			if _, exist := grpResultMap[p.Name+"."+v.Name]; !exist {
 				clusterRequest := api.Cluster{
-					CloudProvider: p.Name,
-					Region:        v.Name,
-					MultiAZ:       true,
-					Status:        api.ClusterAccepted,
-					ProviderType:  api.ClusterProviderOCM,
+					CloudProvider:         p.Name,
+					Region:                v.Name,
+					MultiAZ:               true,
+					Status:                api.ClusterAccepted,
+					ProviderType:          api.ClusterProviderOCM,
+					SupportedInstanceType: api.AllInstanceTypeSupport.String(), // TODO - make sure we use the appropriate instance type.
 				}
 				if err := c.ClusterService.RegisterClusterJob(&clusterRequest); err != nil {
 					errs = append(errs, errors.Wrapf(err, "Failed to auto-create cluster request in %s, region: %s", p.Name, v.Name))
