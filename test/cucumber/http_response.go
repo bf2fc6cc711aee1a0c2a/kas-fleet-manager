@@ -133,7 +133,16 @@ func (s *TestScenario) iStoreTheSelectionFromTheResponseAs(selector string, as s
 
 	iter := query.Run(doc)
 	if next, found := iter.Next(); found {
-		s.Variables[as] = fmt.Sprintf("%s", next)
+		switch next.(type) {
+		case map[interface{}]interface{}, []interface{}:
+			bytes, err := json.Marshal(next)
+			if err != nil {
+				return err
+			}
+			s.Variables[as] = string(bytes)
+		default:
+			s.Variables[as] = fmt.Sprintf("%v", next)
+		}
 		return nil
 	}
 	return fmt.Errorf("expected JSON does not have node that matches selector: %s", selector)
