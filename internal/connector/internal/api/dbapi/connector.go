@@ -81,6 +81,7 @@ type ConnectorDeployment struct {
 	api.Meta
 	Version                int64
 	ConnectorID            string
+	OperatorID             string
 	ConnectorVersion       int64
 	ConnectorTypeChannelId int64
 	ClusterID              string
@@ -114,21 +115,36 @@ type KafkaConnectionSettings struct {
 	ClientSecretRef string `gorm:"column:client_secret"`
 }
 
-type ConnectorDeploymentAvailableUpgrades struct {
+type ConnectorDeploymentTypeUpgrade struct {
+	ConnectorID    string                    `json:"connector_id,omitempty"`
 	DeploymentID    string                    `json:"deployment_id,omitempty"`
 	ConnectorTypeId string                    `json:"connector_type_id,omitempty"`
 	Channel         string                    `json:"channel,omitempty"`
 	ShardMetadata   *ConnectorTypeUpgrade     `json:"shard_metadata,omitempty"`
-	Operator        *ConnectorOperatorUpgrade `json:"operator,omitempty"`
 }
+
 type ConnectorTypeUpgrade struct {
 	AssignedId  int64 `json:"assigned_id,omitempty"`
 	AvailableId int64 `json:"available_id,omitempty"`
 }
+
+type ConnectorDeploymentTypeUpgradeList []ConnectorDeploymentTypeUpgrade
+
+type ConnectorDeploymentOperatorUpgrade struct {
+	ConnectorID    string                    `json:"connector_id,omitempty"`
+	DeploymentID    string                    `json:"deployment_id,omitempty"`
+	ConnectorTypeId string                    `json:"connector_type_id,omitempty"`
+	Channel         string                    `json:"channel,omitempty"`
+	Operator        *ConnectorOperatorUpgrade `json:"operator,omitempty"`
+}
+
 type ConnectorOperatorUpgrade struct {
 	Assigned  ConnectorOperator `json:"assigned"`
 	Available ConnectorOperator `json:"available"`
 }
+
+type ConnectorDeploymentOperatorUpgradeList []ConnectorDeploymentOperatorUpgrade
+
 type ConnectorOperator struct {
 	// the id of the operator
 	Id string `json:"id,omitempty"`

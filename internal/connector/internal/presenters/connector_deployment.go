@@ -36,6 +36,7 @@ func PresentConnectorDeployment(from dbapi.ConnectorDeployment) (private.Connect
 		},
 		Spec: private.ConnectorDeploymentSpec{
 			ConnectorId:              from.ConnectorID,
+			OperatorId:               from.OperatorID,
 			ConnectorResourceVersion: from.ConnectorVersion,
 		},
 		Status: private.ConnectorDeploymentStatus{
