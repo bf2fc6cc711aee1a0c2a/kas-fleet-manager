@@ -834,6 +834,306 @@ paths:
       summary: Get a connector cluster's addon parameters
       tags:
       - Connector Clusters
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/upgrades/type:
+    get:
+      operationId: getConnectorUpgradesByType
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        explode: true
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        explode: true
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorAvailableTypeUpgradeList'
+          description: The connectors that have available type upgrades
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector cluster type exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Get a list of available connector type upgrades
+      tags:
+      - Connector Clusters
+    put:
+      operationId: upgradeConnectorsByType
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        explode: true
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        explode: true
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/ConnectorAvailableTypeUpgrade'
+              type: array
+        description: List of connectors to upgrade
+        required: true
+      responses:
+        "204":
+          description: Connectors are upgraded
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector cluster exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: upgrade a connector cluster
+      tags:
+      - Connector Clusters
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/upgrades/operator:
+    get:
+      operationId: getConnectorUpgradesByOperator
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        explode: true
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        explode: true
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorAvailableOperatorUpgradeList'
+          description: The connectors that have available operator upgrades
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector cluster type exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Get a list of available connector operator upgrades
+      tags:
+      - Connector Clusters
+    put:
+      operationId: upgradeConnectorsByOperator
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        explode: true
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        explode: true
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/ConnectorAvailableOperatorUpgrade'
+              type: array
+        description: List of connectors to upgrade
+        required: true
+      responses:
+        "204":
+          description: Connectors are upgraded
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector cluster exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: upgrade a connector cluster
+      tags:
+      - Connector Clusters
 components:
   examples:
     "400CreationExample":
@@ -1068,6 +1368,52 @@ components:
       required:
       - kind
       type: object
+    ConnectorAvailableTypeUpgradeList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ConnectorAvailableTypeUpgradeList_allOf'
+    ConnectorAvailableTypeUpgrade:
+      description: An available type upgrade for a connector
+      example:
+        shard_metadata:
+          available_id: 6
+          assigned_id: 0
+        connector_id: connector_id
+        channel: channel
+        connector_type_id: connector_type_id
+      properties:
+        connector_id:
+          type: string
+        connector_type_id:
+          type: string
+        channel:
+          type: string
+        shard_metadata:
+          $ref: '#/components/schemas/ConnectorAvailableTypeUpgrade_shard_metadata'
+      type: object
+    ConnectorAvailableOperatorUpgradeList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ConnectorAvailableOperatorUpgradeList_allOf'
+    ConnectorAvailableOperatorUpgrade:
+      description: An available operator upgrade for a connector
+      example:
+        connector_id: connector_id
+        channel: channel
+        operator:
+          available_id: available_id
+          assigned_id: assigned_id
+        connector_type_id: connector_type_id
+      properties:
+        connector_id:
+          type: string
+        connector_type_id:
+          type: string
+        channel:
+          type: string
+        operator:
+          $ref: '#/components/schemas/ConnectorAvailableOperatorUpgrade_operator'
+      type: object
     AddonParameterList:
       description: A list of addon parameters
       items:
@@ -1208,6 +1554,38 @@ components:
         desired_state:
           type: string
         status:
+          type: string
+    ConnectorAvailableTypeUpgradeList_allOf:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ConnectorAvailableTypeUpgrade'
+          type: array
+    ConnectorAvailableTypeUpgrade_shard_metadata:
+      example:
+        available_id: 6
+        assigned_id: 0
+      properties:
+        assigned_id:
+          format: int64
+          type: integer
+        available_id:
+          format: int64
+          type: integer
+    ConnectorAvailableOperatorUpgradeList_allOf:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ConnectorAvailableOperatorUpgrade'
+          type: array
+    ConnectorAvailableOperatorUpgrade_operator:
+      example:
+        available_id: available_id
+        assigned_id: assigned_id
+      properties:
+        assigned_id:
+          type: string
+        available_id:
           type: string
     ConnectorCluster_allOf_metadata:
       properties:
