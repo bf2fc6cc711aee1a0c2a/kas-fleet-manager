@@ -43,14 +43,31 @@ type TestServer struct {
 
 type claimsFunc func(account *v1.Account, clusterId string, h *coreTest.Helper) jwt.MapClaims
 
+var clusterId = api.NewID()
+
 func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer {
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, startupHook)
+	db := test.TestServices.DBFactory.New()
+	// create a dummy cluster that will be used throughout the test
+	cluster := &api.Cluster{
+		Meta: api.Meta{
+			ID: clusterId,
+		},
+		ClusterID:             clusterId,
+		MultiAZ:               true,
+		Region:                "baremetal",
+		CloudProvider:         "baremetal",
+		Status:                api.ClusterReady,
+		IdentityProviderID:    "some-id",
+		ClusterDNS:            "some-cluster.dns.org",
+		ProviderType:          api.ClusterProviderStandalone,
+		SupportedInstanceType: api.AllInstanceTypeSupport.String(),
+	}
 
-	clusterId, getClusterErr := common.GetOSDClusterID(h, t, nil)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	if err := db.Create(cluster).Error; err != nil {
+		t.Fatalf("failed to create dummy cluster")
 	}
 
 	account := h.NewAllowedServiceAccount()
