@@ -15,6 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
@@ -212,6 +213,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			SsoClientSecret:       ssoSecret,
 			DesiredKafkaVersion:   "2.7.0",
 			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:          types.STANDARD.String(),
 		},
 		{
 			ClusterID:             testServer.ClusterID,
@@ -224,6 +226,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			SsoClientSecret:       ssoSecret,
 			DesiredKafkaVersion:   "2.6.0",
 			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:          types.STANDARD.String(),
 		},
 		{
 			ClusterID:             testServer.ClusterID,
@@ -236,6 +239,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			SsoClientSecret:       ssoSecret,
 			DesiredKafkaVersion:   "2.7.1",
 			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:          types.EVAL.String(),
 		},
 		{
 			ClusterID:             testServer.ClusterID,
@@ -248,6 +252,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			SsoClientSecret:       ssoSecret,
 			DesiredKafkaVersion:   "2.7.2",
 			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:          types.STANDARD.String(),
 		},
 		{
 			ClusterID:             testServer.ClusterID,
@@ -260,6 +265,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			SsoClientSecret:       ssoSecret,
 			DesiredKafkaVersion:   "2.7.2",
 			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:          types.STANDARD.String(),
 		},
 	}
 
@@ -280,6 +286,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		Namespace:           "mk",
 		Status:              constants2.KafkaRequestStatusFailed.String(),
 		DesiredKafkaVersion: "2.7.2",
+		InstanceType:        types.EVAL.String(),
 	}
 
 	if err := db.Save(additionalKafka).Error; err != nil {
@@ -464,6 +471,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		CanaryServiceAccountClientSecret: canaryServiceAccountClientSecret,
 		PlacementId:                      "some-placement-id",
 		DesiredKafkaVersion:              "2.7.0",
+		InstanceType:                     types.EVAL.String(),
 	}
 
 	db := test.TestServices.DBFactory.New()
@@ -529,6 +537,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 		CanaryServiceAccountClientSecret: canaryServiceAccountClientSecret,
 		PlacementId:                      "some-placement-id",
 		DesiredKafkaVersion:              "2.7.0",
+		InstanceType:                     types.STANDARD.String(),
 	}
 
 	db := test.TestServices.DBFactory.New()
@@ -593,6 +602,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		SsoClientSecret:     ssoSecret,
 		PlacementId:         "some-placement-id",
 		DesiredKafkaVersion: "2.7.0",
+		InstanceType:        types.STANDARD.String(),
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -659,6 +669,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
 			DesiredKafkaVersion: "2.6.0",
+			InstanceType:        types.EVAL.String(),
 		},
 	}
 
@@ -777,6 +788,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		SsoClientSecret:     ssoSecret,
 		PlacementId:         "some-placement-id",
 		DesiredKafkaVersion: "2.7.0",
+		InstanceType:        types.STANDARD.String(),
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -843,6 +855,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
 		DesiredKafkaVersion: "2.7.0",
+		InstanceType:        types.STANDARD.String(),
 	}
 
 	// create dummy kafkas
@@ -902,6 +915,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 		DesiredKafkaVersion: "2.7.0",
 		FailedReason:        "test failed reason",
 		RoutesCreated:       true,
+		InstanceType:        types.STANDARD.String(),
 	}
 
 	// create dummy kafkas

@@ -31,10 +31,11 @@ type FirstReadyCluster struct {
 
 func (f *FirstReadyCluster) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 	criteria := FindClusterCriteria{
-		Provider: kafka.CloudProvider,
-		Region:   kafka.Region,
-		MultiAZ:  kafka.MultiAZ,
-		Status:   api.ClusterReady,
+		Provider:              kafka.CloudProvider,
+		Region:                kafka.Region,
+		MultiAZ:               kafka.MultiAZ,
+		Status:                api.ClusterReady,
+		SupportedInstanceType: kafka.InstanceType,
 	}
 
 	cluster, err := f.ClusterService.FindCluster(criteria)
@@ -54,10 +55,11 @@ type FirstSchedulableWithinLimit struct {
 
 func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 	criteria := FindClusterCriteria{
-		Provider: kafka.CloudProvider,
-		Region:   kafka.Region,
-		MultiAZ:  kafka.MultiAZ,
-		Status:   api.ClusterReady,
+		Provider:              kafka.CloudProvider,
+		Region:                kafka.Region,
+		MultiAZ:               kafka.MultiAZ,
+		Status:                api.ClusterReady,
+		SupportedInstanceType: kafka.InstanceType,
 	}
 
 	//#1

@@ -442,7 +442,7 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 	return nil
 }
 
-// reconcileClusterInstanceType checks wether a cluster has an instance type, if not set to the instance type provided in the manual cluster configuration
+// reconcileClusterInstanceType checks wether a cluster has an instance type, if not, set to the instance type provided in the manual cluster configuration
 // If the cluster does not exists, assume the cluster supports both instance types
 func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error {
 	logger.Logger.Infof("reconciling cluster = %s instance type", cluster.ClusterID)
