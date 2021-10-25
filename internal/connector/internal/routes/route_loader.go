@@ -116,6 +116,10 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}", s.ConnectorClusterHandler.Get).Methods(http.MethodGet)
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}", s.ConnectorClusterHandler.Update).Methods(http.MethodPut)
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}", s.ConnectorClusterHandler.Delete).Methods(http.MethodDelete)
+	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/upgrades/type", s.ConnectorClusterHandler.GetConnectorUpgradesByType).Methods(http.MethodGet)
+	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/upgrades/type", s.ConnectorClusterHandler.UpgradeConnectorsByType).Methods(http.MethodPut)
+	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/upgrades/operator", s.ConnectorClusterHandler.GetConnectorUpgradesByOperator).Methods(http.MethodGet)
+	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/upgrades/operator", s.ConnectorClusterHandler.UpgradeConnectorsByOperator).Methods(http.MethodPut)
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/{_:addon[-_]parameters}", s.ConnectorClusterHandler.GetAddonParameters).Methods(http.MethodGet)
 	apiV1ConnectorClustersRouter.Use(s.AuthorizeMiddleware.Authorize)
 

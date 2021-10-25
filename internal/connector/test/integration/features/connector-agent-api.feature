@@ -399,11 +399,11 @@ Feature: connector agent API
 
     # switch back to the previous session
     Given I am logged in as "Shard"
-    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    And I set the "Authorization" header to "Bearer ${shard_token}"
 
-    Given I wait up to "5" seconds for a response event
-    Given I store the ".object.metadata.spec_checksum" selection from the response as ${deployment_spec_checksum}
-    Given I store the ".object.id" selection from the response as ${connector_deployment_id}
+    And I wait up to "5" seconds for a response event
+    And I store the ".object.metadata.spec_checksum" selection from the response as ${deployment_spec_checksum}
+    And I store the ".object.id" selection from the response as ${connector_deployment_id}
     Then the response should match json:
       """
       {
@@ -476,9 +476,30 @@ Feature: connector agent API
     #-----------------------------------------------------------------------------------------------------------------
 
     # Now lets verify connector upgrades due to catalog updates
-    Given connector deployment upgrades available are:
+    Given I am logged in as "Jimmy"
+    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
+    And the response code should be 200
+    And the response should match json:
       """
-      []
+      {
+       "items": [],
+       "kind": "",
+       "page": 0,
+       "size": 0,
+       "total": 0
+      }
+      """
+    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
+    And the response code should be 200
+    And the response should match json:
+      """
+      {
+       "items": [],
+       "kind": "",
+       "page": 0,
+       "size": 0,
+       "total": 0
+      }
       """
 
     # Simulate the catalog getting an update
@@ -494,20 +515,74 @@ Feature: connector agent API
         ]
       }
       """
-    Then connector deployment upgrades available are:
+    Then I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
+    And the response code should be 200
+    And the response should match json:
       """
-      [{
-        "deployment_id": "${connector_deployment_id}",
-        "connector_type_id": "aws-sqs-source-v1alpha1",
-        "channel": "stable",
-        "shard_metadata": {
-          "assigned_id": ${response[0].shard_metadata.assigned_id},
-          "available_id": ${response[0].shard_metadata.available_id}
-        }
-      }]
+      {
+       "items":
+          [{
+            "connector_id": "${connector_id}",
+            "connector_type_id": "aws-sqs-source-v1alpha1",
+            "channel": "stable",
+            "shard_metadata": {
+              "assigned_id": ${response.items[0].shard_metadata.assigned_id},
+              "available_id": ${response.items[0].shard_metadata.available_id}
+            }
+          }],
+       "kind": "",
+       "page": 0,
+       "size": 1,
+       "total": 1
+      }
+      """
+    And I store the ".items[0].shard_metadata.available_id" selection from the response as ${connector_resource_version}
+    And I store the ".items" selection from the response as ${upgrade_items}
+
+    # Upgrade by type
+    Then I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/type" with json body:
+      """
+      ${upgrade_items}
+      """
+    And the response code should be 204
+    And the response should match ""
+
+    # agent should get updated connector type version
+    Given I am logged in as "Shard"
+    And I set the "Authorization" header to "Bearer ${shard_token}"
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    Then the response code should be 200
+    And the ".items[0].spec.shard_metadata" selection from the response should match json:
+      """"
+      {
+        "meta_image": "quay.io/mock-image:1.0.0",
+        "operators": [
+          {
+            "type": "camel-k",
+            "versions": "[2.0.0]"
+          }
+        ]
+      }
+      """
+
+    # type upgrade is not available anymore
+    Then I am logged in as "Jimmy"
+    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
+    And the response code should be 200
+    And the response should match json:
+      """
+      {
+       "items": [],
+       "kind": "",
+       "page": 0,
+       "size": 0,
+       "total": 0
+      }
       """
 
     # Simulate the agent telling us there is an operator upgrade available for the deployment...
+    Given I am logged in as "Shard"
+    And I set the "Authorization" header to "Bearer ${shard_token}"
     When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
       {
@@ -534,31 +609,79 @@ Feature: connector agent API
       """
     Then the response code should be 204
     And the response should match ""
-    And connector deployment upgrades available are:
-      """
-      [{
-        "deployment_id": "${connector_deployment_id}",
-        "connector_type_id": "aws-sqs-source-v1alpha1",
-        "channel": "stable",
-        "operator": {
-          "assigned": {
-            "id": "camel-k-1.0.0",
-            "type": "camel-k",
-            "version": "1.0.0"
-          },
-          "available": {
-            "id": "camel-k-1.0.1",
-            "type": "camel-k",
-            "version": "1.0.1"
-          }
-        },
-        "shard_metadata": {
-          "assigned_id": ${response[0].shard_metadata.assigned_id},
-          "available_id": ${response[0].shard_metadata.available_id}
-        }
-      }]
-      """
 
+    Then I am logged in as "Jimmy"
+    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
+    And the response code should be 200
+    And the response should match json:
+      """
+      {
+       "items":
+          [{
+            "connector_id": "${connector_id}",
+            "connector_type_id": "aws-sqs-source-v1alpha1",
+            "channel": "stable",
+            "operator": {
+              "assigned_id": "camel-k-1.0.0",
+              "available_id": "camel-k-1.0.1"
+            }
+          }],
+       "kind": "",
+       "page": 0,
+       "size": 1,
+       "total": 1
+      }
+      """
+    And I store the ".items" selection from the response as ${upgrade_items}
+
+    # Upgrade by operator
+    Then I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator" with json body:
+      """
+      ${upgrade_items}
+      """
+    And the response code should be 204
+    And the response should match ""
+
+    # agent should get updated operator id
+    Given I am logged in as "Shard"
+    And I set the "Authorization" header to "Bearer ${shard_token}"
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    Then the response code should be 200
+    And the ".items[0].spec.operator_id" selection from the response should match "camel-k-1.0.1"
+
+    # agent removes available operator upgrade status
+    Given I am logged in as "Shard"
+    And I set the "Authorization" header to "Bearer ${shard_token}"
+    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+      """
+      {
+        "phase":"ready",
+        "resource_version": 45,
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }]
+        }
+      }
+      """
+    Then the response code should be 204
+    And the response should match ""
+
+    # upgrade is not available anymore
+    Then I am logged in as "Jimmy"
+    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
+    And the response code should be 200
+    And the response should match json:
+      """
+      {
+       "items": [],
+       "kind": "",
+       "page": 0,
+       "size": 0,
+       "total": 0
+      }
+      """
 
     #-----------------------------------------------------------------------------------------------------------------
     # In this part of the Scenario we test out what happens when you have a connector with an invalid connector type
