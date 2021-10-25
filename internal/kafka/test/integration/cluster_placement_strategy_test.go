@@ -214,37 +214,13 @@ func TestClusterPlacementStrategy_CheckInstanceTypePlacement(t *testing.T) {
 	_, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, nil)
 	defer teardown()
 
-	ocmConfig := test.TestServices.OCMConfig
-
-	if ocmConfig.MockMode != ocm.MockModeEmulateServer {
-		t.SkipNow()
-	}
-
 	// load existing cluster and assign kafka to it so that it is not deleted
 
 	db := test.TestServices.DBFactory.New()
-	clusterWithKafkaID := "cluster-id-that-should-not-be-deleted"
 
-	kafka := dbapi.KafkaRequest{
-		ClusterID:     clusterWithKafkaID,
-		MultiAZ:       true,
-		Region:        "us-east-1",
-		CloudProvider: "aws",
-		Name:          "dummy-kafka",
-		Status:        constants2.KafkaRequestStatusReady.String(),
-		InstanceType:  types.STANDARD.String(),
-	}
-
-	if err := db.Save(&kafka).Error; err != nil {
-		t.Error("failed to create a dummy kafka request")
-		return
-	}
-
-	clusterCriteria := services.FindClusterCriteria{
-		Provider: "aws",
-		Region:   "us-east-1",
-		MultiAZ:  true,
-	}
+	cloudProvider := "aws"
+	region := "us-east-1"
+	multiAz := true
 
 	//*********************************************************************
 	// pre-create clusters
@@ -256,9 +232,9 @@ func TestClusterPlacementStrategy_CheckInstanceTypePlacement(t *testing.T) {
 	standaloneClusters := []*api.Cluster{
 		{
 			ClusterID:             evalInstanceCluster,
-			Region:                clusterCriteria.Region,
-			MultiAZ:               clusterCriteria.MultiAZ,
-			CloudProvider:         clusterCriteria.Provider,
+			Region:                region,
+			MultiAZ:               multiAz,
+			CloudProvider:         cloudProvider,
 			ProviderType:          api.ClusterProviderStandalone,
 			IdentityProviderID:    "some-identity-provider-id",
 			ClusterDNS:            clusterDns,
@@ -267,9 +243,9 @@ func TestClusterPlacementStrategy_CheckInstanceTypePlacement(t *testing.T) {
 		},
 		{
 			ClusterID:             standardInstanceCluster,
-			Region:                clusterCriteria.Region,
-			MultiAZ:               clusterCriteria.MultiAZ,
-			CloudProvider:         clusterCriteria.Provider,
+			Region:                region,
+			MultiAZ:               multiAz,
+			CloudProvider:         cloudProvider,
 			ProviderType:          api.ClusterProviderStandalone,
 			IdentityProviderID:    "some-identity-provider-id",
 			ClusterDNS:            clusterDns,
