@@ -191,6 +191,129 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 	handlers.HandleGet(w, r, cfg)
 }
 
+func (h *ConnectorClusterHandler) GetConnectorUpgradesByType(writer http.ResponseWriter, request *http.Request) {
+	id := mux.Vars(request)["connector_cluster_id"]
+	listArgs := coreservices.NewListArguments(request.URL.Query())
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			// To make sure the user can access the cluster....
+			_, err := h.Service.Get(request.Context(), id)
+			if err != nil {
+				return nil, err
+			}
+
+			upgrades, paging, serviceError := h.Service.GetAvailableDeploymentTypeUpgrades(listArgs)
+			if serviceError != nil {
+				return nil, serviceError
+			}
+			result := make([]public.ConnectorAvailableTypeUpgrade, len(upgrades))
+			for i, upgrade := range upgrades {
+				result[i] = *presenters.PresentConnectorAvailableTypeUpgrade(&upgrade)
+			}
+
+			i = public.ConnectorAvailableTypeUpgradeList{
+				Page:  int32(paging.Page),
+				Size:  int32(paging.Size),
+				Total: int32(paging.Total),
+				Items: result,
+			}
+			return
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorClusterHandler) UpgradeConnectorsByType(writer http.ResponseWriter, request *http.Request) {
+	resource := make([]public.ConnectorAvailableTypeUpgrade, 0)
+	id := mux.Vars(request)["connector_cluster_id"]
+	cfg := handlers.HandlerConfig{
+		MarshalInto: &resource,
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			// To make sure the user can access the cluster....
+			_, err := h.Service.Get(request.Context(), id)
+			if err != nil {
+				return nil, err
+			}
+
+			upgrades := make([]dbapi.ConnectorDeploymentTypeUpgrade, len(resource))
+			for i2, upgrade := range resource {
+				upgrades[i2] = *presenters.ConvertConnectorAvailableTypeUpgrade(&upgrade)
+			}
+			return nil, h.Service.UpgradeConnectorsByType(request.Context(), id, upgrades)
+		},
+	}
+	handlers.Handle(writer, request, &cfg, http.StatusNoContent)
+}
+
+func (h *ConnectorClusterHandler) GetConnectorUpgradesByOperator(writer http.ResponseWriter, request *http.Request) {
+	id := mux.Vars(request)["connector_cluster_id"]
+	listArgs := coreservices.NewListArguments(request.URL.Query())
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			// To make sure the user can access the cluster....
+			_, err := h.Service.Get(request.Context(), id)
+			if err != nil {
+				return nil, err
+			}
+
+			upgrades, paging, serviceError := h.Service.GetAvailableDeploymentOperatorUpgrades(listArgs)
+			if serviceError != nil {
+				return nil, serviceError
+			}
+			result := make([]public.ConnectorAvailableOperatorUpgrade, len(upgrades))
+			for i, upgrade := range upgrades {
+				result[i] = *presenters.PresentConnectorAvailableOperatorUpgrade(&upgrade)
+			}
+
+			i = public.ConnectorAvailableOperatorUpgradeList{
+				Page:  int32(paging.Page),
+				Size:  int32(paging.Size),
+				Total: int32(paging.Total),
+				Items: result,
+			}
+			return
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorClusterHandler) UpgradeConnectorsByOperator(writer http.ResponseWriter, request *http.Request) {
+	var resource []public.ConnectorAvailableOperatorUpgrade
+	id := mux.Vars(request)["connector_cluster_id"]
+	cfg := handlers.HandlerConfig{
+		MarshalInto: &resource,
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			// To make sure the user can access the cluster....
+			_, err := h.Service.Get(request.Context(), id)
+			if err != nil {
+				return nil, err
+			}
+
+			upgrades := make(dbapi.ConnectorDeploymentOperatorUpgradeList, len(resource))
+			for i2, upgrade := range resource {
+				upgrades[i2] = *presenters.ConvertConnectorAvailableOperatorUpgrade(&upgrade)
+			}
+			return nil, h.Service.UpgradeConnectorsByOperator(request.Context(), id, upgrades)
+		},
+	}
+
+	handlers.Handle(writer, request, &cfg, http.StatusNoContent)
+}
+
 const (
 	connectorFleetshardOperatorRoleName = "connector_fleetshard_operator"
 )
