@@ -220,9 +220,6 @@ To stop and remove the database container when finished, run:
 make db/teardown
 ```
 
-### Running performance tests
-See this [README](./test/performance/README.md) for more info about performance tests
-
 ### Connector Service
 
 The https://github.com/bf2fc6cc711aee1a0c2a/cos-fleet-manager is used to build the `cos-fleet-manager` 

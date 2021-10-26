@@ -1,7 +1,6 @@
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 DOCS_DIR := $(PROJECT_PATH)/docs
-include $(PROJECT_PATH)/test/performance/Makefile.mk
 
 .DEFAULT_GOAL := help
 SHELL = bash
@@ -206,7 +205,6 @@ help:
 	@echo "make run/docs                    run swagger and host the api spec"
 	@echo "make test                        run unit tests"
 	@echo "make test/integration            run integration tests"
-	@echo "make test/performance            run performance tests"
 	@echo "make code/fix                    format files"
 	@echo "make generate                    generate go and openapi modules"
 	@echo "make openapi/generate            generate openapi modules"
