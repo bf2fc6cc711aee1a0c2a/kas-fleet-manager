@@ -66,17 +66,6 @@ cmd/kas-fleet-manager/kas-fleet-manager
 # Docker template
 Dockerfile_integration_tests
 
-# performance tests leftovers
-**/__pycache__
-!test/performance/reports/.keep
-test/performance/reports/*
-test/performance/token_api/config.txt
-test/performance/token_api/kafkas.txt
-test/performance/token_api/service_accounts.txt
-
-# admin api reports
-test/performance/admin-api/reports/admin_api*
-
 # local bin directory
 bin
 
