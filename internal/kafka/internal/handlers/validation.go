@@ -98,15 +98,16 @@ func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService author
 		username := auth.GetUsernameFromClaims(claims)
 		orgId := auth.GetOrgIdFromClaims(claims)
 		isOrgAdmin := auth.GetIsOrgAdminFromClaims(claims)
+		// only Kafka owner or organisation admin is allowed to perform the action
+		isOwner := (isOrgAdmin || kafkaRequest.Owner == username) && kafkaRequest.OrganisationId == orgId
+		if !isOwner {
+			return errors.New(errors.ErrorUnauthorized, "User not authorized to perform this action")
+		}
 
 		if kafkaUpdateReq.Owner != nil {
 			validationError := handlers.ValidateMinLength(kafkaUpdateReq.Owner, "owner", 1)()
 			if validationError != nil {
 				return validationError
-			}
-			// only organisation admin where the kafka was created is allowed to change the owner of a Kafka
-			if !isOrgAdmin || kafkaRequest.OrganisationId != orgId {
-				return errors.New(errors.ErrorUnauthorized, "User not authorized to perform this action")
 			}
 
 			userValid, err := authService.CheckUserValid(*kafkaUpdateReq.Owner, orgId)
@@ -115,14 +116,6 @@ func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService author
 			}
 			if !userValid {
 				return errors.NewWithCause(errors.ErrorBadRequest, err, "User %s does not belong in your organization", *kafkaUpdateReq.Owner)
-			}
-		}
-
-		if kafkaUpdateReq.ReauthenticationEnabled != nil {
-			// only Kafka owner or organisation admin is allowed to perform the action
-			isOwner := (isOrgAdmin || kafkaRequest.Owner == username) && kafkaRequest.OrganisationId == orgId
-			if !isOwner {
-				return errors.New(errors.ErrorUnauthorized, "User not authorized to perform this action")
 			}
 		}
 

@@ -303,10 +303,13 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 		want result
 	}{
 		{
-			name: "do not throw an error if update payload is empty",
+			name: "do not throw an error if update payload is empty and current user is owner",
 			arg: args{
-				ctx:                auth.SetTokenInContext(context.TODO(), token),
-				kafka:              &dbapi.KafkaRequest{},
+				ctx: auth.SetTokenInContext(context.TODO(), token),
+				kafka: &dbapi.KafkaRequest{
+					Owner:          username,
+					OrganisationId: orgId,
+				},
 				kafkaUpdateRequest: public.KafkaUpdateRequest{},
 				authService:        authorization.NewMockAuthorization(),
 			},
@@ -315,10 +318,26 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 			},
 		},
 		{
+			name: "throw an error when user is not owner of the kafka and update payload is empty",
+			arg: args{
+				ctx:                auth.SetTokenInContext(context.TODO(), token),
+				kafka:              &dbapi.KafkaRequest{},
+				kafkaUpdateRequest: public.KafkaUpdateRequest{},
+				authService:        authorization.NewMockAuthorization(),
+			},
+			want: result{
+				wantErr: true,
+				reason:  "User not authorized to perform this action",
+			},
+		},
+		{
 			name: "throw an error when empty owner passed",
 			arg: args{
-				ctx:   auth.SetTokenInContext(context.TODO(), token),
-				kafka: &dbapi.KafkaRequest{},
+				ctx: auth.SetTokenInContext(context.TODO(), token),
+				kafka: &dbapi.KafkaRequest{
+					Owner:          username,
+					OrganisationId: orgId,
+				},
 				kafkaUpdateRequest: public.KafkaUpdateRequest{
 					Owner: &emptyOwner,
 				},
@@ -330,43 +349,7 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 			},
 		},
 		{
-			name: "throw an error when kafka is owned by a different user when updating reauthentication",
-			arg: args{
-				ctx: auth.SetTokenInContext(context.TODO(), token),
-				kafka: &dbapi.KafkaRequest{
-					Owner:          "other-user",
-					OrganisationId: "some-other-organisation-id",
-				},
-				kafkaUpdateRequest: public.KafkaUpdateRequest{
-					ReauthenticationEnabled: &reauthenticationEnabled,
-				},
-				authService: authorization.NewMockAuthorization(),
-			},
-			want: result{
-				wantErr: true,
-				reason:  "User not authorized to perform this action",
-			},
-		},
-		{
-			name: "throw an error when a non admin tries to update kafka owner",
-			arg: args{
-				ctx: auth.SetTokenInContext(context.TODO(), token),
-				kafka: &dbapi.KafkaRequest{
-					Owner:          username,
-					OrganisationId: orgId,
-				},
-				kafkaUpdateRequest: public.KafkaUpdateRequest{
-					Owner: &newOwner,
-				},
-				authService: authorization.NewMockAuthorization(),
-			},
-			want: result{
-				wantErr: true,
-				reason:  "User not authorized to perform this action",
-			},
-		},
-		{
-			name: "throw an error when an admin from another organisation tries to update kafka owner",
+			name: "throw an error when an admin from another organisation tries to update kafka",
 			arg: args{
 				ctx: auth.SetTokenInContext(context.TODO(), &jwt.Token{
 					Claims: jwt.MapClaims{
@@ -380,7 +363,8 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 					OrganisationId: "some-other-organisation",
 				},
 				kafkaUpdateRequest: public.KafkaUpdateRequest{
-					Owner: &newOwner,
+					Owner:                   &newOwner,
+					ReauthenticationEnabled: &reauthenticationEnabled,
 				},
 				authService: authorization.NewMockAuthorization(),
 			},
