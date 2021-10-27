@@ -69,6 +69,7 @@ var migrations = []*gormigrate.Migration{
 	addKafkaFailedWorkerLease(),
 	resetCanaryServiceAccountForAffectedInstances(),
 	addClusterSupportedInstanceType(),
+	addKafkaReauthenticationEnabledColumn(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

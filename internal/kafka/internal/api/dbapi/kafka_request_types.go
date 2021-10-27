@@ -44,7 +44,8 @@ type KafkaRequest struct {
 	RoutesCreated bool `json:"routes_created"`
 	// Namespace is the namespace of the provisioned kafka instance.
 	// We store this in the database to ensure that old kafkas whose namespace contained "owner-<kafka-id>" information will continue to work.
-	Namespace string `json:"namespace"`
+	Namespace               string `json:"namespace"`
+	ReauthenticationEnabled bool   `json:"reauthentication_enabled"`
 }
 
 type KafkaList []*KafkaRequest
