@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 )
 
 var ValidKafkaClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
@@ -70,6 +73,57 @@ func ValidateCloudProvider(kafkaRequest *public.KafkaRequestPayload, providerCon
 		regionSupported := provider.IsRegionSupported(kafkaRequest.Region)
 		if !regionSupported {
 			return errors.RegionNotSupported("region %s is not supported for %s, supported regions are: %s", kafkaRequest.Region, kafkaRequest.CloudProvider, provider.Regions)
+		}
+
+		return nil
+	}
+}
+
+func ValidateKafkaUpdateFields(strimziVersion *string, kafkaVersion *string) handlers.Validate {
+	return func() *errors.ServiceError {
+		if (strimziVersion == nil || len(*strimziVersion) < 1) && (kafkaVersion == nil || len(*kafkaVersion) < 1) {
+			return errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version or kafka_version to be provided")
+		}
+		return nil
+	}
+}
+
+func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService authorization.Authorization, kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *public.KafkaUpdateRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		claims, claimsErr := auth.GetClaimsFromContext(ctx)
+		if claimsErr != nil {
+			return errors.NewWithCause(errors.ErrorUnauthenticated, claimsErr, "User not authenticated")
+		}
+
+		username := auth.GetUsernameFromClaims(claims)
+		orgId := auth.GetOrgIdFromClaims(claims)
+		isOrgAdmin := auth.GetIsOrgAdminFromClaims(claims)
+
+		if kafkaUpdateReq.Owner != nil {
+			validationError := handlers.ValidateMinLength(kafkaUpdateReq.Owner, "owner", 1)()
+			if validationError != nil {
+				return validationError
+			}
+			// only organisation admin where the kafka was created is allowed to change the owner of a Kafka
+			if !isOrgAdmin || kafkaRequest.OrganisationId != orgId {
+				return errors.New(errors.ErrorUnauthorized, "User not authorized to perform this action")
+			}
+
+			userValid, err := authService.CheckUserValid(*kafkaUpdateReq.Owner, orgId)
+			if err != nil {
+				return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to update kafka request owner")
+			}
+			if !userValid {
+				return errors.NewWithCause(errors.ErrorBadRequest, err, "User %s does not belong in your organization", *kafkaUpdateReq.Owner)
+			}
+		}
+
+		if kafkaUpdateReq.ReauthenticationEnabled != nil {
+			// only Kafka owner or organisation admin is allowed to perform the action
+			isOwner := (isOrgAdmin || kafkaRequest.Owner == username) && kafkaRequest.OrganisationId == orgId
+			if !isOwner {
+				return errors.New(errors.ErrorUnauthorized, "User not authorized to perform this action")
+			}
 		}
 
 		return nil

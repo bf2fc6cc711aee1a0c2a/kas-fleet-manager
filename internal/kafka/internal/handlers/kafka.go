@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 
 	"github.com/gorilla/mux"
 
@@ -19,12 +20,14 @@ import (
 type kafkaHandler struct {
 	service        services.KafkaService
 	providerConfig *config.ProviderConfig
+	authService    authorization.Authorization
 }
 
-func NewKafkaHandler(service services.KafkaService, providerConfig *config.ProviderConfig) *kafkaHandler {
+func NewKafkaHandler(service services.KafkaService, providerConfig *config.ProviderConfig, authService authorization.Authorization) *kafkaHandler {
 	return &kafkaHandler{
 		service:        service,
 		providerConfig: providerConfig,
+		authService:    authService,
 	}
 }
 
@@ -135,25 +138,43 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 // Update is the handler for updating a kafka request
 func (h kafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var kafkaUpdateReq public.KafkaUpdateRequest
+	id := mux.Vars(r)["id"]
+	ctx := r.Context()
+	kafkaRequest, kafkaGetError := h.service.Get(ctx, id)
+	validateKafkaFound := func() handlers.Validate {
+		return func() *errors.ServiceError {
+			return kafkaGetError
+		}
+	}
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &kafkaUpdateReq,
 		Validate: []handlers.Validate{
-			handlers.ValidateMinLength(&kafkaUpdateReq.Owner, "owner", 1),
+			validateKafkaFound(),
+			ValidateKafkaUserFacingUpdateFields(ctx, h.authService, kafkaRequest, &kafkaUpdateReq),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			id := mux.Vars(r)["id"]
-			ctx := r.Context()
-			kafkaRequest, err2 := h.service.Get(ctx, id)
-			if err2 != nil {
-				return nil, err2
+			updatedNeeded := false
+			if kafkaUpdateReq.ReauthenticationEnabled != nil && kafkaRequest.ReauthenticationEnabled != *kafkaUpdateReq.ReauthenticationEnabled {
+				kafkaRequest.ReauthenticationEnabled = *kafkaUpdateReq.ReauthenticationEnabled
+				updatedNeeded = true
 			}
-			if kafkaRequest.Owner != kafkaUpdateReq.Owner {
-				kafkaRequest.Owner = kafkaUpdateReq.Owner
-				err3 := h.service.VerifyAndUpdateKafka(ctx, kafkaRequest)
-				if err3 != nil {
-					return nil, err3
+
+			if kafkaUpdateReq.Owner != nil && kafkaRequest.Owner != *kafkaUpdateReq.Owner {
+				kafkaRequest.Owner = *kafkaUpdateReq.Owner
+				updatedNeeded = true
+			}
+
+			if updatedNeeded {
+				updateErr := h.service.Updates(kafkaRequest, map[string]interface{}{
+					"reauthentication_enabled": kafkaRequest.ReauthenticationEnabled,
+					"owner":                    kafkaRequest.Owner,
+				})
+
+				if updateErr != nil {
+					return nil, updateErr
 				}
 			}
+
 			return presenters.PresentKafkaRequest(kafkaRequest), nil
 		},
 	}
