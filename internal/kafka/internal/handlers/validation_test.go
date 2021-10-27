@@ -10,8 +10,11 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/onsi/gomega"
 )
 
@@ -266,6 +269,196 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 				gomega.Expect(tt.arg.kafkaRequest.Region).To(gomega.Equal(tt.want.kafkaRequest.Region))
 			}
 
+		})
+	}
+}
+
+func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
+	emptyOwner := ""
+	newOwner := "some-owner"
+	reauthenticationEnabled := true
+	username := "username"
+	orgId := "organisation_id"
+	token := &jwt.Token{
+		Claims: jwt.MapClaims{
+			"username": username,
+			"org_id":   orgId,
+		},
+	}
+	type args struct {
+		kafkaUpdateRequest public.KafkaUpdateRequest
+		ctx                context.Context
+		authService        authorization.Authorization
+		kafka              *dbapi.KafkaRequest
+	}
+
+	type result struct {
+		wantErr bool
+		reason  string
+	}
+
+	tests := []struct {
+		name string
+		arg  args
+		want result
+	}{
+		{
+			name: "do not throw an error if update payload is empty",
+			arg: args{
+				ctx:                auth.SetTokenInContext(context.TODO(), token),
+				kafka:              &dbapi.KafkaRequest{},
+				kafkaUpdateRequest: public.KafkaUpdateRequest{},
+				authService:        authorization.NewMockAuthorization(),
+			},
+			want: result{
+				wantErr: false,
+			},
+		},
+		{
+			name: "throw an error when empty owner passed",
+			arg: args{
+				ctx:   auth.SetTokenInContext(context.TODO(), token),
+				kafka: &dbapi.KafkaRequest{},
+				kafkaUpdateRequest: public.KafkaUpdateRequest{
+					Owner: &emptyOwner,
+				},
+				authService: authorization.NewMockAuthorization(),
+			},
+			want: result{
+				wantErr: true,
+				reason:  "owner is not valid. Minimum length 1 is required.",
+			},
+		},
+		{
+			name: "throw an error when kafka is owned by a different user when updating reauthentication",
+			arg: args{
+				ctx: auth.SetTokenInContext(context.TODO(), token),
+				kafka: &dbapi.KafkaRequest{
+					Owner:          "other-user",
+					OrganisationId: "some-other-organisation-id",
+				},
+				kafkaUpdateRequest: public.KafkaUpdateRequest{
+					ReauthenticationEnabled: &reauthenticationEnabled,
+				},
+				authService: authorization.NewMockAuthorization(),
+			},
+			want: result{
+				wantErr: true,
+				reason:  "User not authorized to perform this action",
+			},
+		},
+		{
+			name: "throw an error when a non admin tries to update kafka owner",
+			arg: args{
+				ctx: auth.SetTokenInContext(context.TODO(), token),
+				kafka: &dbapi.KafkaRequest{
+					Owner:          username,
+					OrganisationId: orgId,
+				},
+				kafkaUpdateRequest: public.KafkaUpdateRequest{
+					Owner: &newOwner,
+				},
+				authService: authorization.NewMockAuthorization(),
+			},
+			want: result{
+				wantErr: true,
+				reason:  "User not authorized to perform this action",
+			},
+		},
+		{
+			name: "throw an error when an admin from another organisation tries to update kafka owner",
+			arg: args{
+				ctx: auth.SetTokenInContext(context.TODO(), &jwt.Token{
+					Claims: jwt.MapClaims{
+						"username":     username,
+						"org_id":       orgId,
+						"is_org_admin": true,
+					},
+				}),
+				kafka: &dbapi.KafkaRequest{
+					Owner:          username,
+					OrganisationId: "some-other-organisation",
+				},
+				kafkaUpdateRequest: public.KafkaUpdateRequest{
+					Owner: &newOwner,
+				},
+				authService: authorization.NewMockAuthorization(),
+			},
+			want: result{
+				wantErr: true,
+				reason:  "User not authorized to perform this action",
+			},
+		},
+		{
+			name: "throw an error when new owner does not belong to the organisation",
+			arg: args{
+				ctx: auth.SetTokenInContext(context.TODO(), &jwt.Token{
+					Claims: jwt.MapClaims{
+						"username":     username,
+						"org_id":       orgId,
+						"is_org_admin": true,
+					},
+				}),
+				kafka: &dbapi.KafkaRequest{
+					Owner:          username,
+					OrganisationId: orgId,
+				},
+				kafkaUpdateRequest: public.KafkaUpdateRequest{
+					Owner: &newOwner,
+				},
+				authService: &authorization.AuthorizationMock{
+					CheckUserValidFunc: func(username, orgId string) (bool, error) {
+						return false, nil
+					},
+				},
+			},
+			want: result{
+				wantErr: true,
+				reason:  "User some-owner does not belong in your organization",
+			},
+		},
+		{
+			name: "should succeed when all the validation passes",
+			arg: args{
+				ctx: auth.SetTokenInContext(context.TODO(), &jwt.Token{
+					Claims: jwt.MapClaims{
+						"username":     username,
+						"org_id":       orgId,
+						"is_org_admin": true,
+					},
+				}),
+				kafka: &dbapi.KafkaRequest{
+					Owner:          username,
+					OrganisationId: orgId,
+				},
+				kafkaUpdateRequest: public.KafkaUpdateRequest{
+					ReauthenticationEnabled: &reauthenticationEnabled,
+					Owner:                   &newOwner,
+				},
+				authService: &authorization.AuthorizationMock{
+					CheckUserValidFunc: func(username, orgId string) (bool, error) {
+						return true, nil
+					},
+				},
+			},
+			want: result{
+				wantErr: false,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			validateFn := ValidateKafkaUserFacingUpdateFields(tt.arg.ctx, tt.arg.authService, tt.arg.kafka, &tt.arg.kafkaUpdateRequest)
+			err := validateFn()
+			gomega.Expect(tt.want.wantErr).To(gomega.Equal(err != nil))
+			if !tt.want.wantErr && err != nil {
+				t.Errorf("ValidateKafkaUserFacingUpdateFields() expected not to throw error but threw %v", err)
+			} else if tt.want.wantErr {
+				gomega.Expect(err.Reason).To(gomega.Equal(tt.want.reason))
+				return
+			}
 		})
 	}
 }

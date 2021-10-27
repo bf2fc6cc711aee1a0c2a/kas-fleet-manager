@@ -94,6 +94,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
 	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 	Expect(kafka.InstanceType).To(Equal(types.STANDARD.String()))
+	Expect(kafka.ReauthenticationEnabled).To(BeTrue())
 
 	// wait until the kafka goes into a ready state
 	// the timeout here assumes a backing cluster has already been provisioned
@@ -135,11 +136,19 @@ func TestKafkaCreate_Success(t *testing.T) {
 
 func TestKafka_Update(t *testing.T) {
 	owner := "test-user"
-
+	anotherOwner := "test_kafka_service"
+	emptyOwner := ""
 	sampleKafkaID := api.NewID()
-	emptyOwnerKafkaUpdateReq := public.KafkaUpdateRequest{}
-	sameOwnerKafkaUpdateReq := public.KafkaUpdateRequest{Owner: owner}
-	newOwnerKafkaUpdateReq := public.KafkaUpdateRequest{Owner: "test_kafka_service"}
+	reauthenticationEnabled := true
+	reauthenticationEnabled2 := false
+	emptyOwnerKafkaUpdateReq := public.KafkaUpdateRequest{Owner: &emptyOwner, ReauthenticationEnabled: &reauthenticationEnabled}
+	sameOwnerKafkaUpdateReq := public.KafkaUpdateRequest{Owner: &owner}
+	newOwnerKafkaUpdateReq := public.KafkaUpdateRequest{Owner: &anotherOwner}
+
+	emptyKafkaUpdate := public.KafkaUpdateRequest{}
+
+	reauthenticationUpdateToFalse := public.KafkaUpdateRequest{ReauthenticationEnabled: &reauthenticationEnabled2}
+	reauthenticationUpdateToTrue := public.KafkaUpdateRequest{ReauthenticationEnabled: &reauthenticationEnabled}
 
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
@@ -154,17 +163,19 @@ func TestKafka_Update(t *testing.T) {
 	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
-	account := h.NewRandAccount()
+	orgId := "13640203"
+	ownerAccout := h.NewAccount(owner, owner, "some-email@kafka.com", orgId)
+	nonOwnerAccount := h.NewAccount("other-user", "some-other-user", "some-other@kafka.com", orgId)
 
-	ctx := h.NewAuthenticatedContext(account, nil)
+	ctx := h.NewAuthenticatedContext(ownerAccout, nil)
+	nonOwnerCtx := h.NewAuthenticatedContext(nonOwnerAccount, nil)
 
-	otherUserCtx := h.NewAuthenticatedContext(account, nil)
-
+	adminAccount := h.NewRandAccount()
 	claims := jwt.MapClaims{
 		"is_org_admin": true,
 	}
 
-	adminCtx := h.NewAuthenticatedContext(account, claims)
+	adminCtx := h.NewAuthenticatedContext(adminAccount, claims)
 
 	type args struct {
 		ctx                context.Context
@@ -176,6 +187,18 @@ func TestKafka_Update(t *testing.T) {
 		args           args
 		verifyResponse func(result public.KafkaRequest, resp *http.Response, err error)
 	}{
+		{
+			name: "update with an empty body should not fail",
+			args: args{
+				ctx:                ctx,
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: emptyKafkaUpdate,
+			},
+			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+			},
+		},
 		{
 			name: "should fail if owner is empty",
 			args: args{
@@ -190,23 +213,12 @@ func TestKafka_Update(t *testing.T) {
 		{
 			name: "should fail if trying to update owner as not an owner/ org_admin",
 			args: args{
-				ctx:                otherUserCtx,
+				ctx:                nonOwnerCtx,
 				kafkaID:            sampleKafkaID,
 				kafkaUpdateRequest: newOwnerKafkaUpdateReq,
 			},
 			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should not fail if passed owner is the same",
-			args: args{
-				ctx:                ctx,
-				kafkaID:            sampleKafkaID,
-				kafkaUpdateRequest: sameOwnerKafkaUpdateReq,
-			},
-			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
 			},
 		},
 		{
@@ -218,6 +230,45 @@ func TestKafka_Update(t *testing.T) {
 			},
 			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+			},
+		},
+		{
+			name: "should fail updating reauthentication when not owner of the kafka",
+			args: args{
+				ctx:                nonOwnerCtx,
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: reauthenticationUpdateToTrue,
+			},
+			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
+			},
+		},
+		{
+			name: "should succeed changing reauthentication enabled value to true",
+			args: args{
+				ctx:                ctx,
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: reauthenticationUpdateToTrue,
+			},
+			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.ReauthenticationEnabled).To(BeTrue())
+			},
+		},
+		{
+			name: "should succeed changing reauthentication enabled value to false",
+			args: args{
+				ctx:                ctx,
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: reauthenticationUpdateToFalse,
+			},
+			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.ReauthenticationEnabled).To(BeFalse())
 			},
 		},
 		{
@@ -230,7 +281,7 @@ func TestKafka_Update(t *testing.T) {
 			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Owner).To(Equal(newOwnerKafkaUpdateReq.Owner))
+				Expect(result.Owner).To(Equal(*newOwnerKafkaUpdateReq.Owner))
 			},
 		},
 	}
@@ -261,19 +312,20 @@ func TestKafka_Update(t *testing.T) {
 		Meta: api.Meta{
 			ID: sampleKafkaID,
 		},
-		MultiAZ:               false,
-		Owner:                 owner,
-		Region:                "test",
-		CloudProvider:         "test",
-		Name:                  "test-kafka",
-		OrganisationId:        "13640203",
-		Status:                constants.KafkaRequestStatusReady.String(),
-		ClusterID:             cluster.ClusterID,
-		ActualKafkaVersion:    "2.6.0",
-		DesiredKafkaVersion:   "2.6.0",
-		ActualStrimziVersion:  "v.23.0",
-		DesiredStrimziVersion: "v0.23.0",
-		InstanceType:          types.STANDARD.String(),
+		MultiAZ:                 false,
+		Owner:                   owner,
+		Region:                  "test",
+		CloudProvider:           "test",
+		Name:                    "test-kafka",
+		OrganisationId:          orgId,
+		Status:                  constants.KafkaRequestStatusReady.String(),
+		ClusterID:               cluster.ClusterID,
+		ActualKafkaVersion:      "2.6.0",
+		DesiredKafkaVersion:     "2.6.0",
+		ActualStrimziVersion:    "v.23.0",
+		DesiredStrimziVersion:   "v0.23.0",
+		InstanceType:            types.STANDARD.String(),
+		ReauthenticationEnabled: false,
 	}
 
 	if err := db.Create(kafka).Error; err != nil {
@@ -839,11 +891,13 @@ func TestKafkaGet(t *testing.T) {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
+	reauthenticationEnabled := false
 	k := public.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
-		MultiAz:       testMultiAZ,
+		Region:                  mocks.MockCluster.Region().ID(),
+		CloudProvider:           mocks.MockCluster.CloudProvider().ID(),
+		Name:                    mockKafkaName,
+		MultiAz:                 testMultiAZ,
+		ReauthenticationEnabled: &reauthenticationEnabled,
 	}
 
 	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
@@ -862,6 +916,7 @@ func TestKafkaGet(t *testing.T) {
 	Expect(kafka.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(kafka.Name).To(Equal(mockKafkaName))
 	Expect(kafka.Status).To(Equal(constants2.KafkaRequestStatusAccepted.String()))
+	Expect(kafka.ReauthenticationEnabled).To(BeFalse())
 	// When kafka is in 'Accepted' state it means that it still has not been
 	// allocated to a cluster, which means that kas fleetshard-sync has not reported
 	// yet any status, so the version attribute (actual version) at this point
@@ -1328,12 +1383,13 @@ func TestKafkaList_Success(t *testing.T) {
 	if clusterID == "" {
 		panic("No cluster found")
 	}
-
+	reauthenticationEnabled := true
 	k := public.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
-		MultiAz:       testMultiAZ,
+		Region:                  mocks.MockCluster.Region().ID(),
+		CloudProvider:           mocks.MockCluster.CloudProvider().ID(),
+		Name:                    mockKafkaName,
+		MultiAz:                 testMultiAZ,
+		ReauthenticationEnabled: &reauthenticationEnabled,
 	}
 
 	// POST kafka request to populate the list
@@ -1365,6 +1421,7 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(seedKafka.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockKafkaName))
 	Expect(listItem.Status).To(Equal(constants2.KafkaRequestStatusAccepted.String()))
+	Expect(listItem.ReauthenticationEnabled).To(BeTrue())
 
 	// new account setup to prove that users can list kafkas instances created by a member of their org
 	account = h.NewRandAccount()

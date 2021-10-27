@@ -51,6 +51,7 @@ type OAuthSpec struct {
 	TlsTrustedCertificate  *string `json:"tlsTrustedCertificate,omitempty"`
 	CustomClaimCheck       string  `json:"customClaimCheck"`
 	FallBackUserNameClaim  string  `json:"fallbackUserNameClaim"`
+	MaximumSessionLifetime int64   `json:"maximumSessionLifetime"`
 }
 
 type TlsSpec struct {

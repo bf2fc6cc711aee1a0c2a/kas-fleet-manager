@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
@@ -108,7 +109,7 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &kafkaUpdateReq,
 		Validate: []handlers.Validate{
-			handlers.ValidateKafkaUpdateFields(&kafkaUpdateReq.KafkaVersion, &kafkaUpdateReq.StrimziVersion),
+			ValidateKafkaUpdateFields(&kafkaUpdateReq.KafkaVersion, &kafkaUpdateReq.StrimziVersion),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
