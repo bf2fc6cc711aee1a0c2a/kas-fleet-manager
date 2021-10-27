@@ -222,6 +222,17 @@ func TestKafka_Update(t *testing.T) {
 			},
 		},
 		{
+			name: "should fail if trying to update with an empty body",
+			args: args{
+				ctx:                nonOwnerCtx,
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: emptyKafkaUpdate,
+			},
+			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
 			name: "should fail when trying to update non-existent kafka",
 			args: args{
 				ctx:                ctx,
@@ -231,18 +242,6 @@ func TestKafka_Update(t *testing.T) {
 			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
-			},
-		},
-		{
-			name: "should fail updating reauthentication when not owner of the kafka",
-			args: args{
-				ctx:                nonOwnerCtx,
-				kafkaID:            sampleKafkaID,
-				kafkaUpdateRequest: reauthenticationUpdateToTrue,
-			},
-			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 			},
 		},
 		{
