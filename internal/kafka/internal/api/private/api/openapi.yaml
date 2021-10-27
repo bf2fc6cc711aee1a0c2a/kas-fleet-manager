@@ -522,8 +522,9 @@ components:
         customClaimCheck:
           type: string
         maximumSessionLifetime:
-          nullable: true
           type: long
+      required:
+      - maximumSessionLifetime
     ManagedKafka_allOf_spec_endpoint_tls:
       nullable: true
       properties:

@@ -268,6 +268,8 @@ components:
                   $ref: "#/components/schemas/ManagedKafkaCapacity"
                 oauth:
                   type: object
+                  required:
+                    - maximumSessionLifetime
                   properties:
                     clientId:
                       type: string
@@ -290,7 +292,6 @@ components:
                       type: string
                     maximumSessionLifetime:
                       type: long
-                      nullable: true
 
                 owners:
                   type: array

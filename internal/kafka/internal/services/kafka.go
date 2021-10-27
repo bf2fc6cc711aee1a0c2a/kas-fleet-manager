@@ -41,7 +41,6 @@ type KafkaRoutesAction string
 const KafkaRoutesActionCreate KafkaRoutesAction = "CREATE"
 const KafkaRoutesActionDelete KafkaRoutesAction = "DELETE"
 const CanaryServiceAccountPrefix = "canary"
-const maximumSessionLifetime = 299000 // 4m59s
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
@@ -801,7 +800,7 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		}
 
 		if kafkaRequest.ReauthenticationEnabled {
-			managedKafkaCR.Spec.OAuth.MaximumSessionLifetime = maximumSessionLifetime
+			managedKafkaCR.Spec.OAuth.MaximumSessionLifetime = 299000 // 4m59s
 		}
 
 		serviceAccounts := []managedkafka.ServiceAccount{}

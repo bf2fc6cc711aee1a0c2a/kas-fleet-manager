@@ -7,7 +7,7 @@ import (
 
 func PresentManagedKafka(from *v1.ManagedKafka) private.ManagedKafka {
 	res := private.ManagedKafka{
-		Id:   from.Annotations["id"],
+		Id:   from.Annotations["bf2.org/id"],
 		Kind: from.Kind,
 		Metadata: private.ManagedKafkaAllOfMetadata{
 			Name:      from.Name,
@@ -36,7 +36,7 @@ func PresentManagedKafka(from *v1.ManagedKafka) private.ManagedKafka {
 				FallbackUserNameClaim:  from.Spec.OAuth.FallBackUserNameClaim,
 				TlsTrustedCertificate:  getOpenAPIManagedKafkaOAuthTLSTrustedCertificate(&from.Spec.OAuth),
 				CustomClaimCheck:       from.Spec.OAuth.CustomClaimCheck,
-				MaximumSessionLifetime: &from.Spec.OAuth.MaximumSessionLifetime,
+				MaximumSessionLifetime: from.Spec.OAuth.MaximumSessionLifetime,
 			},
 			Endpoint: private.ManagedKafkaAllOfSpecEndpoint{
 				Tls:                 getOpenAPIManagedKafkaEndpointTLS(from.Spec.Endpoint.Tls),

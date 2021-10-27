@@ -20,5 +20,5 @@ type ManagedKafkaAllOfSpecOauth struct {
 	FallbackUserNameClaim  string  `json:"fallbackUserNameClaim,omitempty"`
 	TlsTrustedCertificate  *string `json:"tlsTrustedCertificate,omitempty"`
 	CustomClaimCheck       string  `json:"customClaimCheck,omitempty"`
-	MaximumSessionLifetime *int64  `json:"maximumSessionLifetime,omitempty"`
+	MaximumSessionLifetime int64   `json:"maximumSessionLifetime"`
 }
