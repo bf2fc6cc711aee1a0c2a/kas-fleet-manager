@@ -222,7 +222,7 @@ func TestKafka_Update(t *testing.T) {
 			},
 		},
 		{
-			name: "should fail if trying to update with an empty body",
+			name: "should fail if trying to update with an empty body as a non owner or org admin",
 			args: args{
 				ctx:                nonOwnerCtx,
 				kafkaID:            sampleKafkaID,
