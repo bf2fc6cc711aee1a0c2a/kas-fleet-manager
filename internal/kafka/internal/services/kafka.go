@@ -81,7 +81,6 @@ type KafkaService interface {
 	CountByStatus(status []constants2.KafkaStatus) ([]KafkaStatusCount, error)
 	ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, *errors.ServiceError)
 	VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
-	VerifyAndUpdateKafka(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
 	ListComponentVersions() ([]KafkaComponentVersions, error)
 }
 
@@ -636,31 +635,6 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 	}
 }
 
-func (k *kafkaService) VerifyAndUpdateKafka(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "User not authenticated")
-	}
-
-	orgId := auth.GetOrgIdFromClaims(claims)
-
-	if auth.GetIsOrgAdminFromClaims(claims) && orgId == kafkaRequest.OrganisationId {
-		userValid, err := k.authService.CheckUserValid(kafkaRequest.Owner, orgId)
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to update kafka request owner")
-		}
-
-		if userValid {
-			return k.Update(kafkaRequest)
-		} else {
-			return errors.NewWithCause(errors.ErrorBadRequest, err, "User %s does not belong in your organization", kafkaRequest.Owner)
-		}
-	} else {
-		return errors.NewWithCause(errors.ErrorUnauthorized, err, "User not authorized to perform this action")
-	}
-}
-
 func (k *kafkaService) UpdateStatus(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 
@@ -818,10 +792,15 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 			UserNameClaim:          keycloakConfig.UserNameClaim,
 			FallBackUserNameClaim:  keycloakConfig.FallBackUserNameClaim,
 			CustomClaimCheck:       BuildCustomClaimCheck(kafkaRequest),
+			MaximumSessionLifetime: 0,
 		}
 
 		if keycloakConfig.TLSTrustedCertificatesValue != "" {
 			managedKafkaCR.Spec.OAuth.TlsTrustedCertificate = &keycloakConfig.TLSTrustedCertificatesValue
+		}
+
+		if kafkaRequest.ReauthenticationEnabled {
+			managedKafkaCR.Spec.OAuth.MaximumSessionLifetime = 299000 // 4m59s
 		}
 
 		serviceAccounts := []managedkafka.ServiceAccount{}

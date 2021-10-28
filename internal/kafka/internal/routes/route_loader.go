@@ -2,8 +2,10 @@ package routes
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 
@@ -42,6 +44,7 @@ type options struct {
 	DataPlaneCluster      services.DataPlaneClusterService
 	DataPlaneKafkaService services.DataPlaneKafkaService
 	AccountService        account.AccountService
+	AuthService           authorization.Authorization
 	DB                    *db.ConnectionFactory
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
@@ -68,7 +71,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}
 
-	kafkaHandler := handlers.NewKafkaHandler(s.Kafka, s.ProviderConfig)
+	kafkaHandler := handlers.NewKafkaHandler(s.Kafka, s.ProviderConfig, s.AuthService)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)
