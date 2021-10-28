@@ -135,12 +135,3 @@ func ValidatQueryParam(queryParams url.Values, field string) Validate {
 	}
 
 }
-
-func ValidateKafkaUpdateFields(strimziVersion *string, kafkaVersion *string) Validate {
-	return func() *errors.ServiceError {
-		if (strimziVersion == nil || len(*strimziVersion) < 1) && (kafkaVersion == nil || len(*kafkaVersion) < 1) {
-			return errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version or kafka_version to be provided")
-		}
-		return nil
-	}
-}

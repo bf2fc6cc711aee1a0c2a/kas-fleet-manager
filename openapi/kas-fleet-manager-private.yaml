@@ -5,7 +5,7 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 # There should be no duplicated endpoints or schemas in these 2 files. They should only defined in one of them.
 info:
   title: Kafka Service Fleet Manager
-  version: 1.3.0
+  version: 1.4.0
   description: Kafka Service Fleet Manager APIs that are used by internal services e.g kas-fleetshard operators.
 servers:
   - url: https://api.openshift.com
@@ -268,6 +268,8 @@ components:
                   $ref: "#/components/schemas/ManagedKafkaCapacity"
                 oauth:
                   type: object
+                  required:
+                    - maximumSessionLifetime
                   properties:
                     clientId:
                       type: string
@@ -288,6 +290,8 @@ components:
                       nullable: true
                     customClaimCheck:
                       type: string
+                    maximumSessionLifetime:
+                      type: long
 
                 owners:
                   type: array
@@ -583,6 +587,7 @@ components:
             fallbackUserNameClaim: "preferred_username"
             tlsTrustedCertificate: ""
             customClaimCheck: ""
+            maximumSessionLifetime: 1898
           endpoint:
             bootstrapServerHost: "example-kafka--rfpsqbvq-em-u-u-z--ymjcwac.kafka.devshift.org"
             tls:

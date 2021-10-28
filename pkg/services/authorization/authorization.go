@@ -7,6 +7,7 @@ import (
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 )
 
+//go:generate moq -out authorization_moq.go . Authorization
 type Authorization interface {
 	CheckUserValid(username string, orgId string) (bool, error)
 }

@@ -82,9 +82,6 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *serviceError.ServiceError {
 // 				panic("mock out the Updates method")
 // 			},
-// 			VerifyAndUpdateKafkaFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *serviceError.ServiceError {
-// 				panic("mock out the VerifyAndUpdateKafka method")
-// 			},
 // 			VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *serviceError.ServiceError {
 // 				panic("mock out the VerifyAndUpdateKafkaAdmin method")
 // 			},
@@ -151,9 +148,6 @@ type KafkaServiceMock struct {
 
 	// UpdatesFunc mocks the Updates method.
 	UpdatesFunc func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *serviceError.ServiceError
-
-	// VerifyAndUpdateKafkaFunc mocks the VerifyAndUpdateKafka method.
-	VerifyAndUpdateKafkaFunc func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *serviceError.ServiceError
 
 	// VerifyAndUpdateKafkaAdminFunc mocks the VerifyAndUpdateKafkaAdmin method.
 	VerifyAndUpdateKafkaAdminFunc func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *serviceError.ServiceError
@@ -261,13 +255,6 @@ type KafkaServiceMock struct {
 			// Values is the values argument value.
 			Values map[string]interface{}
 		}
-		// VerifyAndUpdateKafka holds details about calls to the VerifyAndUpdateKafka method.
-		VerifyAndUpdateKafka []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// KafkaRequest is the kafkaRequest argument value.
-			KafkaRequest *dbapi.KafkaRequest
-		}
 		// VerifyAndUpdateKafkaAdmin holds details about calls to the VerifyAndUpdateKafkaAdmin method.
 		VerifyAndUpdateKafkaAdmin []struct {
 			// Ctx is the ctx argument value.
@@ -295,7 +282,6 @@ type KafkaServiceMock struct {
 	lockUpdate                         sync.RWMutex
 	lockUpdateStatus                   sync.RWMutex
 	lockUpdates                        sync.RWMutex
-	lockVerifyAndUpdateKafka           sync.RWMutex
 	lockVerifyAndUpdateKafkaAdmin      sync.RWMutex
 }
 
@@ -894,41 +880,6 @@ func (mock *KafkaServiceMock) UpdatesCalls() []struct {
 	mock.lockUpdates.RLock()
 	calls = mock.calls.Updates
 	mock.lockUpdates.RUnlock()
-	return calls
-}
-
-// VerifyAndUpdateKafka calls VerifyAndUpdateKafkaFunc.
-func (mock *KafkaServiceMock) VerifyAndUpdateKafka(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *serviceError.ServiceError {
-	if mock.VerifyAndUpdateKafkaFunc == nil {
-		panic("KafkaServiceMock.VerifyAndUpdateKafkaFunc: method is nil but KafkaService.VerifyAndUpdateKafka was just called")
-	}
-	callInfo := struct {
-		Ctx          context.Context
-		KafkaRequest *dbapi.KafkaRequest
-	}{
-		Ctx:          ctx,
-		KafkaRequest: kafkaRequest,
-	}
-	mock.lockVerifyAndUpdateKafka.Lock()
-	mock.calls.VerifyAndUpdateKafka = append(mock.calls.VerifyAndUpdateKafka, callInfo)
-	mock.lockVerifyAndUpdateKafka.Unlock()
-	return mock.VerifyAndUpdateKafkaFunc(ctx, kafkaRequest)
-}
-
-// VerifyAndUpdateKafkaCalls gets all the calls that were made to VerifyAndUpdateKafka.
-// Check the length with:
-//     len(mockedKafkaService.VerifyAndUpdateKafkaCalls())
-func (mock *KafkaServiceMock) VerifyAndUpdateKafkaCalls() []struct {
-	Ctx          context.Context
-	KafkaRequest *dbapi.KafkaRequest
-} {
-	var calls []struct {
-		Ctx          context.Context
-		KafkaRequest *dbapi.KafkaRequest
-	}
-	mock.lockVerifyAndUpdateKafka.RLock()
-	calls = mock.calls.VerifyAndUpdateKafka
-	mock.lockVerifyAndUpdateKafka.RUnlock()
 	return calls
 }
 

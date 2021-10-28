@@ -316,18 +316,9 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(4)) // only count valid Managed Kafka CR
 
-	find := func(slice []private.ManagedKafka, match func(kafka private.ManagedKafka) bool) *private.ManagedKafka {
-		for _, item := range slice {
-			if match(item) {
-				return &item
-			}
-		}
-		return nil
-	}
-
 	for _, k := range testKafkas {
 		if k.Status != constants2.KafkaRequestStatusPreparing.String() {
-			if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Bf2OrgId == k.ID }); mk != nil {
+			if mk := findManagedKafkaByID(list.Items, k.ID); mk != nil {
 				Expect(mk.Metadata.Name).To(Equal(k.Name))
 				Expect(mk.Metadata.Annotations.Bf2OrgPlacementId).To(Equal(k.PlacementId))
 				Expect(mk.Metadata.Annotations.Bf2OrgId).To(Equal(k.ID))
@@ -504,15 +495,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
 
-	find := func(slice []private.ManagedKafka, match func(kafka private.ManagedKafka) bool) *private.ManagedKafka {
-		for _, item := range slice {
-			if match(item) {
-				return &item
-			}
-		}
-		return nil
-	}
-	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Bf2OrgId == testKafka.ID }); mk != nil {
+	if mk := findManagedKafkaByID(list.Items, testKafka.ID); mk != nil {
 		Expect(mk.Spec.Endpoint.Tls.Cert).To(Equal(cert))
 		Expect(mk.Spec.Endpoint.Tls.Key).To(Equal(key))
 	} else {
@@ -570,15 +553,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
 
-	find := func(slice []private.ManagedKafka, match func(kafka private.ManagedKafka) bool) *private.ManagedKafka {
-		for _, item := range slice {
-			if match(item) {
-				return &item
-			}
-		}
-		return nil
-	}
-	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Bf2OrgId == testKafka.ID }); mk != nil {
+	if mk := findManagedKafkaByID(list.Items, testKafka.ID); mk != nil {
 		// check canary service account
 		Expect(mk.Spec.ServiceAccounts).To(HaveLen(1))
 		canaryServiceAccount := mk.Spec.ServiceAccounts[0]
@@ -637,19 +612,116 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
 
-	find := func(slice []private.ManagedKafka, match func(kafka private.ManagedKafka) bool) *private.ManagedKafka {
-		for _, item := range slice {
-			if match(item) {
-				return &item
-			}
-		}
-		return nil
-	}
-	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Bf2OrgId == testKafka.ID }); mk != nil {
+	if mk := findManagedKafkaByID(list.Items, testKafka.ID); mk != nil {
 		Expect(mk.Spec.Oauth.TlsTrustedCertificate).To(BeNil())
 	} else {
 		t.Error("failed matching managedkafka id with kafkarequest id")
 	}
+}
+
+func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *testing.T) {
+	startHook := func(c *keycloak.KeycloakConfig) {
+		c.TLSTrustedCertificatesValue = ""
+	}
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
+		username, _ := account.GetUsername()
+		return jwt.MapClaims{
+			"username": username,
+			"iss":      test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
+			"realm_access": map[string][]string{
+				"roles": {"kas_fleetshard_operator"},
+			},
+			"kas-fleetshard-operator-cluster-id": cid,
+		}
+	}, startHook)
+	defer testServer.TearDown()
+	bootstrapServerHost := "some-bootstrap⁻host"
+	ssoClientID := "some-sso-client-id"
+	ssoSecret := "some-sso-secret"
+
+	testKafka := &dbapi.KafkaRequest{
+		ClusterID:               testServer.ClusterID,
+		MultiAZ:                 false,
+		Name:                    mockKafkaName1,
+		Status:                  constants2.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:     bootstrapServerHost,
+		SsoClientID:             ssoClientID,
+		SsoClientSecret:         ssoSecret,
+		PlacementId:             "some-placement-id",
+		DesiredKafkaVersion:     "2.7.0",
+		InstanceType:            types.STANDARD.String(),
+		ReauthenticationEnabled: true, // enable session reauthentication
+	}
+
+	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
+
+	db := test.TestServices.DBFactory.New()
+
+	// create dummy kafka
+	if err := db.Save(testKafka).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
+
+	// check session lifetime value when reauthentication is enabled
+	if mk := findManagedKafkaByID(list.Items, testKafka.ID); mk != nil {
+		Expect(mk.Spec.Oauth.MaximumSessionLifetime).ToNot(BeNil())
+		Expect(mk.Spec.Oauth.MaximumSessionLifetime).To(Equal(int64(299000)))
+	} else {
+		t.Error("failed matching managedkafka id with kafkarequest id")
+	}
+
+	// now disable and check that session lifetime is set to false for first kafka
+	if err := db.Model(testKafka).UpdateColumn("reauthentication_enabled", false).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
+	// create another dummy kafka
+	anotherTestKafka := &dbapi.KafkaRequest{
+		ClusterID:               testServer.ClusterID,
+		MultiAZ:                 false,
+		Name:                    "another-kafka",
+		Status:                  constants2.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:     bootstrapServerHost,
+		SsoClientID:             ssoClientID,
+		SsoClientSecret:         ssoSecret,
+		PlacementId:             "some-placement-id",
+		DesiredKafkaVersion:     "2.7.0",
+		InstanceType:            types.STANDARD.String(),
+		ReauthenticationEnabled: true, // enable session reauthentication
+	}
+
+	if err := db.Create(anotherTestKafka).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
+	list, resp, err = testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+	// check session lifetime value when reauthentication is disabled
+	if mk := findManagedKafkaByID(list.Items, testKafka.ID); mk != nil {
+		Expect(mk.Spec.Oauth.MaximumSessionLifetime).ToNot(BeNil())
+		Expect(mk.Spec.Oauth.MaximumSessionLifetime).To(Equal(int64(0)))
+	} else {
+		t.Fatalf("failed matching managedkafka id with kafkarequest id")
+	}
+
+	// check that session lifetime value is set
+	if mk := findManagedKafkaByID(list.Items, anotherTestKafka.ID); mk != nil {
+		Expect(mk.Spec.Oauth.MaximumSessionLifetime).ToNot(BeNil())
+		Expect(mk.Spec.Oauth.MaximumSessionLifetime).To(Equal(int64(299000)))
+	} else {
+		t.Fatalf("failed matching managedkafka id with kafkarequest id")
+	}
+
 }
 
 func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
@@ -823,15 +895,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
 
-	find := func(slice []private.ManagedKafka, match func(kafka private.ManagedKafka) bool) *private.ManagedKafka {
-		for _, item := range slice {
-			if match(item) {
-				return &item
-			}
-		}
-		return nil
-	}
-	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Bf2OrgId == testKafka.ID }); mk != nil {
+	if mk := findManagedKafkaByID(list.Items, testKafka.ID); mk != nil {
 		Expect(mk.Spec.Oauth.TlsTrustedCertificate).ToNot(BeNil())
 	} else {
 		t.Error("failed matching managedkafka id with kafkarequest id")
@@ -959,4 +1023,14 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 	}
 	Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 	Expect(c.FailedReason).To(BeEmpty())
+}
+
+func findManagedKafkaByID(slice []private.ManagedKafka, kafkaId string) *private.ManagedKafka {
+	match := func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Bf2OrgId == kafkaId }
+	for _, item := range slice {
+		if match(item) {
+			return &item
+		}
+	}
+	return nil
 }
