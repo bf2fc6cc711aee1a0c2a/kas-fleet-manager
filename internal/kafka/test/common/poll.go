@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -85,22 +86,27 @@ func (poller *poller) Poll() error {
 
 	attempt := 0
 	err := *new(error)
-	errors := 0
+	errs := 0
 	maxErrors := 10
-	for errors < maxErrors {
-		err = wait.Poll(poller.interval, poller.interval*time.Duration(poller.attempts), func() (done bool, err error) {
-			attempt++
 
-			poller.logRetry(attempt, maxAttempts, start)
-			return poller.onRetry(attempt, maxAttempts)
-		})
-		if err != nil {
-			errors++
-			poller.outputFunction("Error ocurred when polling (will be ignored): %+v", err)
-		} else {
-			errors = maxErrors
+	err = wait.PollImmediate(poller.interval, poller.interval*time.Duration(poller.attempts), func() (done bool, err error) {
+		attempt++
+
+		poller.logRetry(attempt, maxAttempts, start)
+		finished, e := poller.onRetry(attempt, maxAttempts)
+		if e != nil {
+			errs++
+			poller.outputFunction("Error ocurred when polling (will be ignored): %+v", e)
+			if errs == maxErrors {
+				return finished, e
+			}
 		}
-	}
+		if attempt == maxAttempts {
+			return finished, errors.New("Timed out waiting for the condition")
+		} else {
+			return finished, nil
+		}
+	})
 
 	if poller.onFinish != nil {
 		poller.onFinish(attempt, maxAttempts, err)
