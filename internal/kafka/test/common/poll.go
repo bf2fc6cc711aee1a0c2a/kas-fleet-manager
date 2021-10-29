@@ -1,7 +1,6 @@
 package common
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -90,7 +89,6 @@ func (poller *poller) Poll() error {
 
 	err := wait.PollImmediate(poller.interval, poller.interval*time.Duration(poller.attempts), func() (done bool, err error) {
 		attempt++
-
 		poller.logRetry(attempt, maxAttempts, start)
 		finished, e := poller.onRetry(attempt, maxAttempts)
 		if e != nil {
@@ -100,11 +98,7 @@ func (poller *poller) Poll() error {
 			}
 			poller.outputFunction("Error ocurred when polling (will be ignored): %+v", e)
 		}
-		if attempt == maxAttempts {
-			return finished, errors.New("Timed out waiting for the condition")
-		} else {
-			return finished, nil
-		}
+		return finished, nil
 	})
 
 	if poller.onFinish != nil {
