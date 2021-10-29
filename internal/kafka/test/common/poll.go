@@ -85,11 +85,10 @@ func (poller *poller) Poll() error {
 	}
 
 	attempt := 0
-	err := *new(error)
 	errs := 0
 	maxErrors := 10
 
-	err = wait.PollImmediate(poller.interval, poller.interval*time.Duration(poller.attempts), func() (done bool, err error) {
+	err := wait.PollImmediate(poller.interval, poller.interval*time.Duration(poller.attempts), func() (done bool, err error) {
 		attempt++
 
 		poller.logRetry(attempt, maxAttempts, start)
