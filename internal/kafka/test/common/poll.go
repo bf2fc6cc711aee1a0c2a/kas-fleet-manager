@@ -95,10 +95,10 @@ func (poller *poller) Poll() error {
 		finished, e := poller.onRetry(attempt, maxAttempts)
 		if e != nil {
 			errs++
-			poller.outputFunction("Error ocurred when polling (will be ignored): %+v", e)
 			if errs == maxErrors {
 				return finished, e
 			}
+			poller.outputFunction("Error ocurred when polling (will be ignored): %+v", e)
 		}
 		if attempt == maxAttempts {
 			return finished, errors.New("Timed out waiting for the condition")
