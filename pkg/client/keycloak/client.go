@@ -240,12 +240,13 @@ func (kc *kcClient) IsClientExist(clientId string, accessToken string) (string, 
 	if err != nil {
 		return internalID, err
 	}
-	if *client[0].ClientID != clientId {
-		return "", errors.New("requested clientId did not match received clientId")
-	}
 	if len(client) > 0 {
-		internalID = *client[0].ID
-		return internalID, nil
+		if *client[0].ClientID != clientId {
+			return "", errors.New("requested clientId did not match received clientId")
+		} else {
+			internalID = *client[0].ID
+			return internalID, nil
+		}
 	}
 	return internalID, err
 }
