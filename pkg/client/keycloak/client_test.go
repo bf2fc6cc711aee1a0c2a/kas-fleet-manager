@@ -155,3 +155,105 @@ func Test_kcClient_GetToken(t *testing.T) {
 		})
 	}
 }
+
+func Test_kcClient_IsClientExist(t *testing.T) {
+	type fields struct {
+		goCloakClient gocloak.GoCloak
+		realmConfig   *KeycloakRealmConfig
+	}
+
+	type args struct {
+		requestClientId string
+		accessToken     string
+	}
+
+	grantType := "grantType"
+	Realm := "realmUno"
+	JwksEndpointURI := "JwksEndpointURI"
+	TokenEndpointURI := "TokenEndpointURI"
+	changeClientID := "456"
+	correctClientID := "123"
+	testID := "testID"
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "success when returned clientId match request clientId",
+			fields: fields{
+				goCloakClient: &GoCloakMock{
+					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
+						return []*gocloak.Client{
+							{
+								ClientID: &correctClientID,
+								ID:       &testID,
+							},
+						}, nil
+					},
+				},
+				realmConfig: &KeycloakRealmConfig{
+					ClientID:         clientID,
+					GrantType:        grantType,
+					ValidIssuerURI:   validIssuerURI,
+					TokenEndpointURI: TokenEndpointURI,
+					JwksEndpointURI:  JwksEndpointURI,
+					Realm:            Realm,
+				},
+			},
+			args: args{
+				requestClientId: "123",
+			},
+			wantErr: false,
+			want:    testID,
+		},
+		{
+			name: "error when returned clientId does not match request clientId",
+			fields: fields{
+				goCloakClient: &GoCloakMock{
+					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
+						return []*gocloak.Client{
+							{
+								ClientID: &changeClientID,
+								ID:       &testID,
+							},
+						}, nil
+					},
+				},
+				realmConfig: &KeycloakRealmConfig{
+					ClientID:         clientID,
+					GrantType:        grantType,
+					ValidIssuerURI:   validIssuerURI,
+					TokenEndpointURI: TokenEndpointURI,
+					JwksEndpointURI:  JwksEndpointURI,
+					Realm:            Realm,
+				},
+			},
+			args: args{
+				requestClientId: "123",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		gomega.RegisterTestingT(t)
+		t.Run(tt.name, func(t *testing.T) {
+			kc := &kcClient{
+				kcClient:    tt.fields.goCloakClient,
+				realmConfig: tt.fields.realmConfig,
+			}
+			internalId, err := kc.IsClientExist(tt.args.requestClientId, tt.args.accessToken)
+
+			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			if internalId == "" && tt.args.requestClientId == "123" {
+				gomega.Expect(err.Error()).To(gomega.Equal("requested clientId did not match received clientId"))
+			}
+			if internalId != "" {
+				gomega.Expect(internalId).To(gomega.Equal(tt.want))
+			}
+		})
+	}
+}
