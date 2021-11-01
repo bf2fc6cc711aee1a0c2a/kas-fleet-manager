@@ -84,11 +84,21 @@ func (poller *poller) Poll() error {
 	}
 
 	attempt := 0
+	errs := 0
+	maxErrors := 10
+
 	err := wait.PollImmediate(poller.interval, poller.interval*time.Duration(poller.attempts), func() (done bool, err error) {
 		attempt++
-
 		poller.logRetry(attempt, maxAttempts, start)
-		return poller.onRetry(attempt, maxAttempts)
+		finished, e := poller.onRetry(attempt, maxAttempts)
+		if e != nil {
+			errs++
+			if errs >= maxErrors {
+				return finished, e
+			}
+			poller.outputFunction("Error ocurred when polling (will be ignored): %+v", e)
+		}
+		return finished, nil
 	})
 
 	if poller.onFinish != nil {
