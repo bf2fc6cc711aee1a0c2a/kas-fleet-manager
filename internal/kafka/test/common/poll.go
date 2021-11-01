@@ -93,7 +93,7 @@ func (poller *poller) Poll() error {
 		finished, e := poller.onRetry(attempt, maxAttempts)
 		if e != nil {
 			errs++
-			if errs == maxErrors {
+			if errs >= maxErrors {
 				return finished, e
 			}
 			poller.outputFunction("Error ocurred when polling (will be ignored): %+v", e)
