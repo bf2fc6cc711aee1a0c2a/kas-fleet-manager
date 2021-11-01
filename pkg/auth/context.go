@@ -21,11 +21,14 @@ const (
 	// ocm token claim keys
 	ocmUsernameKey string = "username"
 	ocmOrgIdKey    string = "org_id"
-	isOrgAdmin     string = "is_org_admin"
+	isOrgAdmin     string = "is_org_admin" // same key used in mas-sso tokens
 
 	// sso.redhat.com token claim keys
-	ssoRHUsernameKey  string = "preferred_username"
+	ssoRHUsernameKey  string = "preferred_username" // same key used in mas-sso tokens
 	ssoRhAccountIdKey string = "account_id"
+
+	// mas-sso token claim keys
+	masSsoOrgIdKey = "rh-org-id"
 )
 
 func GetUsernameFromClaims(claims jwt.MapClaims) string {
@@ -49,7 +52,15 @@ func GetAccountIdFromClaims(claims jwt.MapClaims) string {
 
 func GetOrgIdFromClaims(claims jwt.MapClaims) string {
 	if claims[ocmOrgIdKey] != nil {
-		return claims[ocmOrgIdKey].(string)
+		if orgId, ok := claims[ocmOrgIdKey].(string); ok {
+			return orgId
+		}
+	}
+
+	if claims[masSsoOrgIdKey] != nil {
+		if orgId, ok := claims[masSsoOrgIdKey].(string); ok {
+			return orgId
+		}
 	}
 
 	return ""
