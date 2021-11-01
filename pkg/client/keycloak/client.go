@@ -215,8 +215,8 @@ func (kc *kcClient) getClient(clientId string, accessToken string) ([]*gocloak.C
 	return client, err
 }
 
-func (kc *kcClient) GetClientById(id string, accessToken string) (*gocloak.Client, error) {
-	client, err := kc.kcClient.GetClient(kc.ctx, accessToken, kc.realmConfig.Realm, id)
+func (kc *kcClient) GetClientById(internalId string, accessToken string) (*gocloak.Client, error) {
+	client, err := kc.kcClient.GetClient(kc.ctx, accessToken, kc.realmConfig.Realm, internalId)
 	if err != nil {
 		return nil, err
 	}
@@ -236,15 +236,18 @@ func (kc *kcClient) IsClientExist(clientId string, accessToken string) (string, 
 		return "", errors.New("clientId cannot be empty")
 	}
 	client, err := kc.getClient(clientId, accessToken)
-	var internalClientID string
+	var internalID string
 	if err != nil {
-		return internalClientID, err
+		return internalID, err
+	}
+	if *client[0].ClientID != clientId {
+		return "", errors.New("requested clientId did not match received clientId")
 	}
 	if len(client) > 0 {
-		internalClientID = *client[0].ID
-		return internalClientID, nil
+		internalID = *client[0].ID
+		return internalID, nil
 	}
-	return internalClientID, err
+	return internalID, err
 }
 
 func (kc *kcClient) GetClientServiceAccount(accessToken string, internalClient string) (*gocloak.User, error) {
