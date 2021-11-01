@@ -99,7 +99,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 
 		// Only persist new cluster if executing against real ocm
 		if ocmConfig.MockMode != ocm.MockModeEmulateServer {
-			pErr := PersistClusterStruct(*foundCluster, api.ClusterProvisioned)
+			pErr := PersistClusterStruct(*foundCluster, api.ClusterProvisioning)
 			if pErr != nil {
 				t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))
 			}
