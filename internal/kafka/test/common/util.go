@@ -99,7 +99,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 
 		// Only persist new cluster if executing against real ocm
 		if ocmConfig.MockMode != ocm.MockModeEmulateServer {
-			pErr := PersistClusterStruct(*foundCluster)
+			pErr := PersistClusterStruct(*foundCluster, api.ClusterProvisioned)
 			if pErr != nil {
 				t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))
 			}
@@ -150,11 +150,11 @@ func fileExists(filename string, t *testing.T) bool {
 }
 
 // PersistClusterStruct to json file to be reused by tests that require a running cluster
-func PersistClusterStruct(cluster api.Cluster) error {
-	// We intentionally always persist the cluster status as ClusterProvisioned
+func PersistClusterStruct(cluster api.Cluster, status api.ClusterStatus) error {
+	// We intentionally always persist the cluster status as ClusterProvisioned if its ready (ClusterProvisioning otherwise)
 	// with the aim of letting cluster reconciler in other tests reach
 	// the real status depending on the configured environment settings
-	cluster.Status = api.ClusterProvisioned
+	cluster.Status = status
 	file, err := json.MarshalIndent(cluster, "", " ")
 	if err != nil {
 		return ocmErrors.GeneralError(fmt.Sprintf("Failed to marshal cluster struct details to a file: %v", err))
