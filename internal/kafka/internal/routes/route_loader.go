@@ -80,7 +80,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
-	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(s.ServerConfig.TokenIssuerURL, errors.ErrorUnauthenticated)
+	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.ServerConfig.TokenIssuerURL}, errors.ErrorUnauthenticated)
 	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.AMSClient, errors.ErrorTermsNotAccepted)
 
 	// base path. Could be /api/kafkas_mgmt
@@ -188,7 +188,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		http.MethodPatch:  {auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},
 		http.MethodDelete: {auth.KasFleetManagerAdminFullRole},
 	}
-	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(s.Keycloak.GetConfig().OSDClusterIDPRealm.ValidIssuerURI, errors.ErrorNotFound))
+	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.Keycloak.GetConfig().OSDClusterIDPRealm.ValidIssuerURI}, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
 	adminRouter.HandleFunc("/kafkas", adminKafkaHandler.List).Methods(http.MethodGet)
