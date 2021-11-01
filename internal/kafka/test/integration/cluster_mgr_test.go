@@ -65,12 +65,22 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
 
+	// waiting for cluster state to become `cluster_provisioning`, so that its struct can be persisted
+	cluster, checkProvisioningErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterProvisioning)
+	Expect(checkProvisioningErr).NotTo(HaveOccurred(), "Error waiting for cluster to start provisioning: %s %v", cluster.ClusterID, checkProvisioningErr)
+
+	// save cluster struct to be reused in by the cleanup script if the cluster won't become ready before the timeout
+	err = common.PersistClusterStruct(*cluster, api.ClusterProvisioning)
+	if err != nil {
+		t.Fatalf("failed to persist cluster struct %v", err)
+	}
+
 	// waiting for cluster state to become `ready`
 	cluster, checkReadyErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterReady)
 	Expect(checkReadyErr).NotTo(HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ClusterID, checkReadyErr)
 
 	// save cluster struct to be reused in subsequent tests and cleanup script
-	err = common.PersistClusterStruct(*cluster)
+	err = common.PersistClusterStruct(*cluster, api.ClusterProvisioned)
 	if err != nil {
 		t.Fatalf("failed to persist cluster struct %v", err)
 	}
