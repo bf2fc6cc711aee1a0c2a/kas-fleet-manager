@@ -17,7 +17,7 @@ func TestRequireIssuerMiddleware(t *testing.T) {
 		token      *jwt.Token
 		next       http.Handler
 		errCode    errors.ServiceErrorCode
-		wantIssuer string
+		wantIssuer []string
 		wantCode   int
 	}{
 		{
@@ -28,7 +28,21 @@ func TestRequireIssuerMiddleware(t *testing.T) {
 				},
 			},
 			errCode:    errors.ErrorUnauthenticated,
-			wantIssuer: "desiredIssuer",
+			wantIssuer: []string{"desiredIssuer"},
+			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				shared.WriteJSONResponse(writer, http.StatusOK, "")
+			}),
+			wantCode: http.StatusOK,
+		},
+		{
+			name: "should success when issuer in the token matches one of the valid issuers",
+			token: &jwt.Token{
+				Claims: jwt.MapClaims{
+					"iss": "desiredIssuer2",
+				},
+			},
+			errCode:    errors.ErrorUnauthenticated,
+			wantIssuer: []string{"desiredIssuer", "desiredIssuer2", "desiredIssuer3"},
 			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 				shared.WriteJSONResponse(writer, http.StatusOK, "")
 			}),
@@ -42,7 +56,7 @@ func TestRequireIssuerMiddleware(t *testing.T) {
 				},
 			},
 			errCode:    errors.ErrorUnauthenticated,
-			wantIssuer: "desiredIssuer",
+			wantIssuer: []string{"desiredIssuer"},
 			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 				shared.WriteJSONResponse(writer, http.StatusOK, "")
 			}),
@@ -54,7 +68,21 @@ func TestRequireIssuerMiddleware(t *testing.T) {
 				Claims: jwt.MapClaims{},
 			},
 			errCode:    errors.ErrorUnauthenticated,
-			wantIssuer: "desiredIssuer",
+			wantIssuer: []string{"desiredIssuer"},
+			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				shared.WriteJSONResponse(writer, http.StatusOK, "")
+			}),
+			wantCode: http.StatusUnauthorized,
+		},
+		{
+			name: "should fail when issuer in the token does not match any of the valid issuers",
+			token: &jwt.Token{
+				Claims: jwt.MapClaims{
+					"iss": "anotherIssuer",
+				},
+			},
+			errCode:    errors.ErrorUnauthenticated,
+			wantIssuer: []string{"desiredIssuer", "desiredIssuer2"},
 			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 				shared.WriteJSONResponse(writer, http.StatusOK, "")
 			}),
