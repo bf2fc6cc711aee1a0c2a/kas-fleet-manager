@@ -4,12 +4,16 @@ import (
 	"net/http"
 	"testing"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
 )
 
@@ -33,34 +37,112 @@ func TestFederation_GetFederatedMetrics(t *testing.T) {
 		panic("No cluster found")
 	}
 
+	// create kafka
+	db := h.DBFactory().New()
 	account := h.NewRandAccount()
+	org, ok := account.GetOrganization()
+	if !ok {
+		t.Errorf("failed to get organization id for kafka owner")
+	}
+	kafkaId := h.NewID()
+	kafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: kafkaId,
+		},
+		MultiAZ:                 true,
+		Owner:                   account.Username(),
+		Region:                  "us-east-1",
+		CloudProvider:           "aws",
+		Name:                    "example-kafka",
+		OrganisationId:          org.ExternalID(),
+		Status:                  constants.KafkaRequestStatusReady.String(),
+		ClusterID:               clusterID,
+		ActualKafkaVersion:      "2.6.0",
+		DesiredKafkaVersion:     "2.6.0",
+		ActualStrimziVersion:    "v.23.0",
+		DesiredStrimziVersion:   "v0.23.0",
+		InstanceType:            types.STANDARD.String(),
+		ReauthenticationEnabled: true,
+	}
+
+	if err := db.Create(kafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
 	ctx := h.NewAuthenticatedContext(account, nil)
-	k := public.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
-		MultiAz:       testMultiAZ,
-	}
 
-	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
-	if err != nil {
-		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
-	}
-
-	foundKafka, err := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, seedKafka.Id, constants2.KafkaRequestStatusReady)
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka to be ready")
-	// 200 OK
-	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-
-	Expect(kafka.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
-
-	federatedMetrics, resp, err := client.DefaultApi.FederateMetrics(ctx, seedKafka.Id)
+	federatedMetrics, resp, err := client.DefaultApi.FederateMetrics(ctx, kafkaId)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to call federation endpoint:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(federatedMetrics).NotTo(BeEmpty())
+}
 
-	deleteTestKafka(t, h, ctx, client, foundKafka.Id)
+func TestFederation_GetFederatedMetricsUsingMasSsoToken(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
+	defer teardown()
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
+
+	// create kafka
+	db := h.DBFactory().New()
+	owner := h.NewRandAccount()
+	org, ok := owner.GetOrganization()
+	if !ok {
+		t.Errorf("failed to get organization id for kafka owner")
+	}
+	kafkaId := h.NewID()
+	kafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: kafkaId,
+		},
+		MultiAZ:                 true,
+		Owner:                   owner.Username(),
+		Region:                  "us-east-1",
+		CloudProvider:           "aws",
+		Name:                    "example-kafka",
+		OrganisationId:          org.ExternalID(),
+		Status:                  constants.KafkaRequestStatusReady.String(),
+		ClusterID:               clusterID,
+		ActualKafkaVersion:      "2.6.0",
+		DesiredKafkaVersion:     "2.6.0",
+		ActualStrimziVersion:    "v.23.0",
+		DesiredStrimziVersion:   "v0.23.0",
+		InstanceType:            types.STANDARD.String(),
+		ReauthenticationEnabled: true,
+	}
+
+	if err := db.Create(kafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	// Call Kafka federate metrics using mas sso token
+	masSsoSA := h.NewAccount("service-account-srvc-acct-1", "", "", org.ExternalID())
+	var keycloakConfig *keycloak.KeycloakConfig
+	h.Env.MustResolveAll(&keycloakConfig)
+	claims := jwt.MapClaims{
+		"iss":                keycloakConfig.KafkaRealm.ValidIssuerURI,
+		"rh-org-id":          org.ExternalID(),
+		"rh-user-id":         masSsoSA.ID(),
+		"preferred_username": masSsoSA.Username(),
+	}
+	masSsoCtx := h.NewAuthenticatedContext(masSsoSA, claims)
+
+	federatedMetrics, resp, err := client.DefaultApi.FederateMetrics(masSsoCtx, kafkaId)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to call federation endpoint:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(federatedMetrics).NotTo(BeEmpty())
 }
