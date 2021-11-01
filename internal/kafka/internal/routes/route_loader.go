@@ -122,6 +122,19 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1KafkasCreateRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	apiV1KafkasCreateRouter.Use(requireTermsAcceptance)
 
+	//  /kafkas/{id}/metrics
+	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()
+	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).Methods(http.MethodGet)
+	apiV1MetricsRouter.HandleFunc("/query", metricsHandler.GetMetricsByInstantQuery).Methods(http.MethodGet)
+
+	// /kafkas/{id}/metrics/federate
+	// federate endpoint separated from the rest of the /kafkas endpoints as it needs to support auth from both sso.redhat.com and mas-sso
+	apiV1MetricsFederateRouter := apiV1Router.PathPrefix("/kafkas/{id}/metrics/federate").Subrouter()
+	apiV1MetricsFederateRouter.HandleFunc("", metricsHandler.FederateMetrics).Methods(http.MethodGet)
+	apiV1MetricsFederateRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.ServerConfig.TokenIssuerURL, s.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI}, errors.ErrorUnauthenticated))
+	apiV1MetricsFederateRouter.Use(requireOrgID)
+	apiV1MetricsFederateRouter.Use(authorizeMiddleware)
+
 	//  /service_accounts
 	v1Collections = append(v1Collections, api.CollectionMetadata{
 		ID:   "service_accounts",
@@ -146,12 +159,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
 	apiV1CloudProvidersRouter.HandleFunc("", cloudProvidersHandler.ListCloudProviders).Methods(http.MethodGet)
 	apiV1CloudProvidersRouter.HandleFunc("/{id}/regions", cloudProvidersHandler.ListCloudProviderRegions).Methods(http.MethodGet)
-
-	//  /kafkas/{id}/metrics
-	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()
-	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).Methods(http.MethodGet)
-	apiV1MetricsRouter.HandleFunc("/query", metricsHandler.GetMetricsByInstantQuery).Methods(http.MethodGet)
-	apiV1MetricsRouter.HandleFunc("/federate", metricsHandler.FederateMetrics).Methods(http.MethodGet)
 
 	v1Metadata := api.VersionMetadata{
 		ID:          "v1",
