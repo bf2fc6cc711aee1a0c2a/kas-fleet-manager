@@ -8,9 +8,9 @@ import (
 )
 
 type RequireIssuerMiddleware interface {
-	// RequireIssuer will check that the given issuer is set as part of the JWT
-	// claims in the request and return code ServiceErrorCode in case it doesn't
-	RequireIssuer(issuer string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
+	// RequireIssuer checks if the iss field in the JWT claim matches one of the given issuers.
+	// If it does not, then the specified code is returned.
+	RequireIssuer(issuers []string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
 }
 
 type requireIssuerMiddleware struct {
@@ -22,7 +22,7 @@ func NewRequireIssuerMiddleware() RequireIssuerMiddleware {
 	return &requireIssuerMiddleware{}
 }
 
-func (m *requireIssuerMiddleware) RequireIssuer(issuer string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
+func (m *requireIssuerMiddleware) RequireIssuer(issuers []string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			ctx := request.Context()
@@ -32,8 +32,16 @@ func (m *requireIssuerMiddleware) RequireIssuer(issuer string, code errors.Servi
 				shared.HandleError(request, writer, serviceErr)
 				return
 			}
-			issuerMatches := claims.VerifyIssuer(issuer, true)
-			if !issuerMatches {
+
+			issuerAccepted := false
+			for _, issuer := range issuers {
+				if claims.VerifyIssuer(issuer, true) {
+					issuerAccepted = true
+					break
+				}
+			}
+
+			if !issuerAccepted {
 				shared.HandleError(request, writer, serviceErr)
 				return
 			}

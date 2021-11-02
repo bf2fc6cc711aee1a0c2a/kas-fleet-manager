@@ -12,6 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 
@@ -232,6 +233,39 @@ func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
 	Expect(re.Reason).To(Equal("Request doesn't contain the 'Authorization' header or the 'cs_jwt' cookie"))
+	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
+}
+
+func TestAuthFailure_usingMasSsoTokenOnKafkasGet(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
+	defer teardown()
+
+	// create a mas-sso service account token
+	orgId := "13640203"
+	masSsoSA := h.NewAccount("service-account-srvc-acct-1", "", "", orgId)
+	var keycloakConfig *keycloak.KeycloakConfig
+	h.Env.MustResolveAll(&keycloakConfig)
+	claims := jwt.MapClaims{
+		"iss":                keycloakConfig.KafkaRealm.ValidIssuerURI,
+		"rh-org-id":          orgId,
+		"rh-user-id":         masSsoSA.ID(),
+		"preferred_username": masSsoSA.Username(),
+	}
+
+	token := h.CreateJWTStringWithClaim(masSsoSA, claims)
+
+	restyResp, err := resty.R().
+		SetHeader("Content-Type", "application/json").
+		SetAuthToken(token).
+		Get(h.RestURL("/kafkas"))
+	Expect(err).NotTo(HaveOccurred())
+	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
+	re := parseResponse(restyResp)
+	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	Expect(re.Reason).To(Equal("Account authentication could not be verified"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
 

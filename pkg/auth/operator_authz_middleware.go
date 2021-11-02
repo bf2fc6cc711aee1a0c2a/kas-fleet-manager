@@ -27,7 +27,7 @@ func UseOperatorAuthorisationMiddleware(router *mux.Router, actor Actor, jwkVali
 	router.Use(
 		NewRolesAuhzMiddleware().RequireRealmRole(requiredRole, errors.ErrorNotFound),
 		checkClusterId(actor, clusterIdVar),
-		NewRequireIssuerMiddleware().RequireIssuer(jwkValidIssuerURI, errors.ErrorNotFound),
+		NewRequireIssuerMiddleware().RequireIssuer([]string{jwkValidIssuerURI}, errors.ErrorNotFound),
 	)
 }
 

@@ -80,7 +80,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
-	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(s.ServerConfig.TokenIssuerURL, errors.ErrorUnauthenticated)
+	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.ServerConfig.TokenIssuerURL}, errors.ErrorUnauthenticated)
 	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.AMSClient, errors.ErrorTermsNotAccepted)
 
 	// base path. Could be /api/kafkas_mgmt
@@ -122,6 +122,20 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1KafkasCreateRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	apiV1KafkasCreateRouter.Use(requireTermsAcceptance)
 
+	//  /kafkas/{id}/metrics
+	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()
+	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).Methods(http.MethodGet)
+	apiV1MetricsRouter.HandleFunc("/query", metricsHandler.GetMetricsByInstantQuery).Methods(http.MethodGet)
+
+	// /kafkas/{id}/metrics/federate
+	// federate endpoint separated from the rest of the /kafkas endpoints as it needs to support auth from both sso.redhat.com and mas-sso
+	// NOTE: this is only a temporary solution. MAS SSO auth support should be removed once we migrate to sso.redhat.com (TODO: to be done as part of MGDSTRM-6159)
+	apiV1MetricsFederateRouter := apiV1Router.PathPrefix("/kafkas/{id}/metrics/federate").Subrouter()
+	apiV1MetricsFederateRouter.HandleFunc("", metricsHandler.FederateMetrics).Methods(http.MethodGet)
+	apiV1MetricsFederateRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.ServerConfig.TokenIssuerURL, s.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI}, errors.ErrorUnauthenticated))
+	apiV1MetricsFederateRouter.Use(requireOrgID)
+	apiV1MetricsFederateRouter.Use(authorizeMiddleware)
+
 	//  /service_accounts
 	v1Collections = append(v1Collections, api.CollectionMetadata{
 		ID:   "service_accounts",
@@ -146,12 +160,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
 	apiV1CloudProvidersRouter.HandleFunc("", cloudProvidersHandler.ListCloudProviders).Methods(http.MethodGet)
 	apiV1CloudProvidersRouter.HandleFunc("/{id}/regions", cloudProvidersHandler.ListCloudProviderRegions).Methods(http.MethodGet)
-
-	//  /kafkas/{id}/metrics
-	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()
-	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).Methods(http.MethodGet)
-	apiV1MetricsRouter.HandleFunc("/query", metricsHandler.GetMetricsByInstantQuery).Methods(http.MethodGet)
-	apiV1MetricsRouter.HandleFunc("/federate", metricsHandler.FederateMetrics).Methods(http.MethodGet)
 
 	v1Metadata := api.VersionMetadata{
 		ID:          "v1",
@@ -188,7 +196,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		http.MethodPatch:  {auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},
 		http.MethodDelete: {auth.KasFleetManagerAdminFullRole},
 	}
-	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(s.Keycloak.GetConfig().OSDClusterIDPRealm.ValidIssuerURI, errors.ErrorNotFound))
+	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.Keycloak.GetConfig().OSDClusterIDPRealm.ValidIssuerURI}, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
 	adminRouter.HandleFunc("/kafkas", adminKafkaHandler.List).Methods(http.MethodGet)
