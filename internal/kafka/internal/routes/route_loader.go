@@ -129,6 +129,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	// /kafkas/{id}/metrics/federate
 	// federate endpoint separated from the rest of the /kafkas endpoints as it needs to support auth from both sso.redhat.com and mas-sso
+	// NOTE: this is only a temporary solution. MAS SSO auth support should be removed once we migrate to sso.redhat.com (TODO: to be done as part of MGDSTRM-6159)
 	apiV1MetricsFederateRouter := apiV1Router.PathPrefix("/kafkas/{id}/metrics/federate").Subrouter()
 	apiV1MetricsFederateRouter.HandleFunc("", metricsHandler.FederateMetrics).Methods(http.MethodGet)
 	apiV1MetricsFederateRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.ServerConfig.TokenIssuerURL, s.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI}, errors.ErrorUnauthenticated))

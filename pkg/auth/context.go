@@ -28,6 +28,7 @@ const (
 	ssoRhAccountIdKey string = "account_id"
 
 	// mas-sso token claim keys
+	// NOTE: This should be removed once we migrate to sso.redhat.com as it will no longer be needed (TODO: to be removed as part of MGDSTRM-6159)
 	masSsoOrgIdKey = "rh-org-id"
 )
 
@@ -57,6 +58,7 @@ func GetOrgIdFromClaims(claims jwt.MapClaims) string {
 		}
 	}
 
+	// NOTE: This should be removed once we migrate to sso.redhat.com as it will no longer be needed (TODO: to be removed as part of MGDSTRM-6159)
 	if claims[masSsoOrgIdKey] != nil {
 		if orgId, ok := claims[masSsoOrgIdKey].(string); ok {
 			return orgId
