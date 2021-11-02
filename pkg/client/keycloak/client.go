@@ -143,15 +143,18 @@ func (kc *kcClient) GetClient(clientId string, accessToken string) (*gocloak.Cli
 	params := gocloak.GetClientsParams{
 		ClientID: &clientId,
 	}
-	client, err := kc.kcClient.GetClients(kc.ctx, accessToken, kc.realmConfig.Realm, params)
+	clients, err := kc.kcClient.GetClients(kc.ctx, accessToken, kc.realmConfig.Realm, params)
 	if err != nil {
 		return nil, err
 	}
-	if len(client) > 0 {
-		return client[0], nil
-	} else {
-		return nil, nil
+	if len(clients) > 0 {
+		for _, client := range clients {
+			if *client.ClientID == clientId {
+				return client, nil
+			}
+		}
 	}
+	return nil, nil
 }
 
 func (kc *kcClient) GetToken() (string, error) {
@@ -235,20 +238,18 @@ func (kc *kcClient) IsClientExist(clientId string, accessToken string) (string, 
 	if clientId == "" {
 		return "", errors.New("clientId cannot be empty")
 	}
-	client, err := kc.getClient(clientId, accessToken)
-	var internalID string
+	clients, err := kc.getClient(clientId, accessToken)
 	if err != nil {
-		return internalID, err
+		return "", err
 	}
-	if len(client) > 0 {
-		if *client[0].ClientID != clientId {
-			return "", errors.New("requested clientId did not match received clientId")
-		} else {
-			internalID = *client[0].ID
-			return internalID, nil
+	if len(clients) > 0 {
+		for _, client := range clients {
+			if *client.ClientID == clientId {
+				return *client.ID, nil
+			}
 		}
 	}
-	return internalID, err
+	return "", err
 }
 
 func (kc *kcClient) GetClientServiceAccount(accessToken string, internalClient string) (*gocloak.User, error) {
