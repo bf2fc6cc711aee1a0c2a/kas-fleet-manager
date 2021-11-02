@@ -147,11 +147,9 @@ func (kc *kcClient) GetClient(clientId string, accessToken string) (*gocloak.Cli
 	if err != nil {
 		return nil, err
 	}
-	if len(clients) > 0 {
-		for _, client := range clients {
-			if *client.ClientID == clientId {
-				return client, nil
-			}
+	for _, client := range clients {
+		if *client.ClientID == clientId {
+			return client, nil
 		}
 	}
 	return nil, nil
@@ -242,11 +240,9 @@ func (kc *kcClient) IsClientExist(clientId string, accessToken string) (string, 
 	if err != nil {
 		return "", err
 	}
-	if len(clients) > 0 {
-		for _, client := range clients {
-			if *client.ClientID == clientId {
-				return *client.ID, nil
-			}
+	for _, client := range clients {
+		if *client.ClientID == clientId {
+			return *client.ID, nil
 		}
 	}
 	return "", err
