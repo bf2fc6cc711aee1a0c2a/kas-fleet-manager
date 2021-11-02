@@ -171,10 +171,10 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 	Realm := "realmUno"
 	JwksEndpointURI := "JwksEndpointURI"
 	TokenEndpointURI := "TokenEndpointURI"
-	changeClientID := "456"
+	otherClientID := "456"
 	correctClientID := "123"
 	correctInternalID := "correctID"
-	testInternalID := "testID"
+	otherInternalID := "otherID"
 
 	tests := []struct {
 		name    string
@@ -184,14 +184,37 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "error when no client exists with request clientId",
+			fields: fields{
+				goCloakClient: &GoCloakMock{
+					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
+						return nil, errors.Errorf("no client exists with requested clientId")
+					},
+				},
+				realmConfig: &KeycloakRealmConfig{
+					ClientID:         clientID,
+					GrantType:        grantType,
+					ValidIssuerURI:   validIssuerURI,
+					TokenEndpointURI: TokenEndpointURI,
+					JwksEndpointURI:  JwksEndpointURI,
+					Realm:            Realm,
+				},
+			},
+			args: args{
+				requestClientId: otherClientID,
+			},
+			wantErr: true,
+			want:    "",
+		},
+		{
 			name: "success when correct internal ID is returned",
 			fields: fields{
 				goCloakClient: &GoCloakMock{
 					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
 						return []*gocloak.Client{
 							{
-								ClientID: &changeClientID,
-								ID:       &testInternalID,
+								ClientID: &otherClientID,
+								ID:       &otherInternalID,
 							},
 							{
 								ClientID: &correctClientID,
@@ -210,7 +233,7 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 				},
 			},
 			args: args{
-				requestClientId: "123",
+				requestClientId: correctClientID,
 			},
 			wantErr: false,
 			want:    correctInternalID,
@@ -226,9 +249,8 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 			internalId, err := kc.IsClientExist(tt.args.requestClientId, tt.args.accessToken)
 
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
-			if internalId != "" {
-				gomega.Expect(internalId).To(gomega.Equal(tt.want))
-			}
+			gomega.Expect(internalId).To(gomega.Equal(tt.want))
+
 		})
 	}
 }
@@ -248,10 +270,10 @@ func Test_kcClient_GetClient(t *testing.T) {
 	Realm := "realmUno"
 	JwksEndpointURI := "JwksEndpointURI"
 	TokenEndpointURI := "TokenEndpointURI"
-	changeClientID := "456"
+	otherClientID := "456"
 	correctClientID := "123"
 	correctInternalID := "correctID"
-	testInternalID := "testID"
+	otherInternalID := "otherID"
 
 	tests := []struct {
 		name    string
@@ -261,14 +283,36 @@ func Test_kcClient_GetClient(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "error when no client exists with request clientId",
+			fields: fields{
+				goCloakClient: &GoCloakMock{
+					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
+						return nil, errors.Errorf("no client exists with requested clientId")
+					},
+				},
+				realmConfig: &KeycloakRealmConfig{
+					ClientID:         clientID,
+					GrantType:        grantType,
+					ValidIssuerURI:   validIssuerURI,
+					TokenEndpointURI: TokenEndpointURI,
+					JwksEndpointURI:  JwksEndpointURI,
+					Realm:            Realm,
+				},
+			},
+			args: args{
+				requestClientId: otherClientID,
+			},
+			wantErr: true,
+		},
+		{
 			name: "success when correct internal ID is returned",
 			fields: fields{
 				goCloakClient: &GoCloakMock{
 					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
 						return []*gocloak.Client{
 							{
-								ClientID: &changeClientID,
-								ID:       &testInternalID,
+								ClientID: &otherClientID,
+								ID:       &otherInternalID,
 							},
 							{
 								ClientID: &correctClientID,
