@@ -77,6 +77,8 @@ func TestFederation_GetFederatedMetrics(t *testing.T) {
 	Expect(federatedMetrics).NotTo(BeEmpty())
 }
 
+// NOTE: MAS SSO auth support for the /federate endpoint is only a temporary solution.
+// This should be removed once we migrate to sso.redhat.com (TODO: to be removed as part of MGDSTRM-6159)
 func TestFederation_GetFederatedMetricsUsingMasSsoToken(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
