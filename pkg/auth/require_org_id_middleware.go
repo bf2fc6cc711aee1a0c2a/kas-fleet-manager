@@ -34,18 +34,7 @@ func (m *requireOrgIDMiddleware) RequireOrgID(code errors.ServiceErrorCode) func
 				return
 			}
 
-			val, ok := claims[ocmOrgIdKey]
-			if !ok {
-				shared.HandleError(request, writer, serviceErr)
-				return
-			}
-
-			orgID, ok := val.(string)
-			if !ok {
-				shared.HandleError(request, writer, serviceErr)
-				return
-			}
-
+			orgID := GetOrgIdFromClaims(claims)
 			if orgID == "" {
 				shared.HandleError(request, writer, serviceErr)
 				return
