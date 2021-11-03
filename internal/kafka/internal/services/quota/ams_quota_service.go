@@ -47,7 +47,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		AccountUsername(kafka.Owner).
 		CloudProviderID(kafka.CloudProvider).
 		ProductID(instanceType.GetQuotaType().GetProduct()).
-		Managed(false).
+		Managed(true).
 		ClusterID(kafkaId).
 		ExternalClusterID(kafkaId).
 		Disconnected(false).
