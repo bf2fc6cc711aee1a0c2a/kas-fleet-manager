@@ -210,34 +210,7 @@ func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool
 
 	redirectUrl, _ = response.GetRedirectUrl()
 
-	// This function should end with this `return` when the online services terms will be removed
-	if !response.TermsRequired() {
-		return response.TermsRequired(), redirectUrl, nil
-	}
-
-	termsRedirectUrl := redirectUrl
-
-	request, err = v1.NewTermsReviewRequest().AccountUsername(username).SiteCode(TERMS_SITECODE).EventCode(TERMS_EVENTCODE_ONLINE_SERVICE).Build()
-	if err != nil {
-		return false, "", err
-	}
-	selfTermsReview = c.connection.Authorizations().V1().TermsReview()
-	postResp, err = selfTermsReview.Post().Request(request).Send()
-	if err != nil {
-		return false, "", err
-	}
-	response, ok = postResp.GetResponse()
-	if !ok {
-		return false, "", fmt.Errorf("empty response from authorization post request")
-	}
-
-	redirectUrl, _ = response.GetRedirectUrl()
-
-	if response.TermsRequired() {
-		// none of the two terms (old or new) have been accepted. Returning the redirect URL for the new terms
-		return true, termsRedirectUrl, nil
-	}
-	return false, redirectUrl, nil
+	return response.TermsRequired(), redirectUrl, nil
 }
 
 // GetClusterIngresses sends a GET request to ocm to retrieve the ingresses of an OSD cluster
