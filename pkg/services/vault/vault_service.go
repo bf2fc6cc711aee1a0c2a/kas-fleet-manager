@@ -2,6 +2,7 @@ package vault
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 )
 
 type VaultService interface {
@@ -13,6 +14,7 @@ type VaultService interface {
 }
 
 func NewVaultService(vaultConfig *Config) (VaultService, error) {
+	metrics.ResetMetricsForVaultService()
 	switch vaultConfig.Kind {
 	case "aws":
 		return NewAwsVaultService(vaultConfig)
