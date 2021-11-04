@@ -11,21 +11,21 @@ This document will guide you on how to set up a Prometheus scrape target to coll
 ### Configuring via Prometheus CR
 > The following steps are based on this [guide](https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/additional-scrape-config.md#additional-scrape-configuration) from Prometheus.
 
-1. Create a file called `prometheus-additional.yaml` with the following content:
+1. Create a file called `kafka-federate.yaml` with the following content:
     ```
-    - job_name: "prometheus"
-    static_configs:
-    - targets: ["api.openshift.com"]
-    scheme: "https"
-    metrics_path: "/api/kafkas_mgmt/v1/kafkas/<replace-this-with-your-kafka-id>/metrics/federate"
-    oauth2:
+    - job_name: "kafka-federate"
+      static_configs:
+      - targets: ["api.openshift.com"]
+      scheme: "https"
+      metrics_path: "/api/kafkas_mgmt/v1/kafkas/<replace-this-with-your-kafka-id>/metrics/federate"
+      oauth2:
         client_id: "<replace-this-with-your-service-account-client-id>"
         client_secret: "<replace-this-with-your-service-account-client-secret>"
         token_url: "https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/token"
     ```
 2. Create a secret which has the configuration specified in step 1.
     ```
-    kubectl create secret generic additional-scrape-configs --from-file=prometheus-additional.yaml --dry-run -o yaml | kubectl apply -f - -n <namespace>
+    kubectl create secret generic additional-scrape-configs --from-file=kafka-federate.yaml --dry-run -o yaml | kubectl apply -f - -n <namespace>
     ```
 3. Reference this secret in your Prometheus CR
     ```
@@ -37,7 +37,7 @@ This document will guide you on how to set up a Prometheus scrape target to coll
         ...
         additionalScrapeConfigs:
             name: additional-scrape-configs
-            key: prometheus-additional.yaml
+            key: kafka-federate.yaml
     ```
 4. The scrape target should be available once the configuration has been reloaded.
 
@@ -47,15 +47,15 @@ This document will guide you on how to set up a Prometheus scrape target to coll
     ```
     ...
     scrape_configs:
-    - job_name: "prometheus"
-        static_configs:
-        - targets: ["api.openshift.com"]
-        scheme: "https"
-        metrics_path: "/api/kafkas_mgmt/v1/kafkas/<replace-this-with-your-kafka-id>/metrics/federate"
-        oauth2:
-            client_id: "<replace-this-with-your-service-account-client-id>"
-            client_secret: "<replace-this-with-your-service-account-client-secret>"
-            token_url: "https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/token"
+    - job_name: "kafka-federate"
+      static_configs:
+      - targets: ["api.openshift.com"]
+      scheme: "https"
+      metrics_path: "/api/kafkas_mgmt/v1/kafkas/<replace-this-with-your-kafka-id>/metrics/federate"
+      oauth2:
+        client_id: "<replace-this-with-your-service-account-client-id>"
+        client_secret: "<replace-this-with-your-service-account-client-secret>"
+        token_url: "https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/token"
     ...
     ```
 2. The scrape target should be available once the configuration has been reloaded.
