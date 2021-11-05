@@ -41,6 +41,10 @@ const (
 	// KafkaMaxDurationWithProvisioningErrs the maximum duration a Kafka request
 	// might be in provisioning state while receiving 5XX errors
 	KafkaMaxDurationWithProvisioningErrs = 5 * time.Minute
+
+	// AcceptedKafkaMaxRetryDuration the maximum duration, in minutes, where KAS Fleet Manager
+	// will retry reconciliation of a Kafka request in an 'accepted' state
+	AcceptedKafkaMaxRetryDuration = 5 * time.Minute
 )
 
 // ordinals - Used to decide if a status comes after or before a given state

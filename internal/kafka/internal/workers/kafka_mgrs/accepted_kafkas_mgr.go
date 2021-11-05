@@ -94,6 +94,15 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 	if k.dataPlaneClusterConfig.StrimziOperatorVersion == "" {
 		readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
 		if err != nil || len(readyStrimziVersions) == 0 {
+			// Strimzi version may not be available at the start (i.e. during upgrade of Strimzi operator).
+			// We need to allow the reconciler to retry getting and setting of the desired strimzi version for a Kafka request
+			// until the max retry duration is reached before updating its status to 'failed'.
+			durationSinceCreation := time.Since(kafka.CreatedAt)
+			if durationSinceCreation < constants2.AcceptedKafkaMaxRetryDuration {
+				glog.V(10).Infof("No available strimzi version found for Kafka '%s'", kafka.ID)
+				return nil
+			}
+
 			kafka.Status = constants2.KafkaRequestStatusFailed.String()
 			if err != nil {
 				err = errors.Wrapf(err, "failed to get desired Strimzi version %s", kafka.ID)
