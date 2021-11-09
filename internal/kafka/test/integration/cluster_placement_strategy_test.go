@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"encoding/json"
 	"testing"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -24,6 +25,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	// Start with no cluster config and manual scaling.
 	configHook := func(clusterConfig *config.DataplaneClusterConfig) {
 		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+		clusterConfig.StrimziOperatorVersion = "strimzi-cluster-operator.v0.23.0-0"
 	}
 
 	// setup ocm server
@@ -229,28 +231,38 @@ func TestClusterPlacementStrategy_CheckInstanceTypePlacement(t *testing.T) {
 	standardInstanceCluster := "cluster-that-supports-standard-instance"
 	evalInstanceCluster := "cluster-that-supports-eval-instance"
 
+	availableStrimziVersions, err := json.Marshal([]api.StrimziVersion{
+		{
+			Version: "strimzi-cluster-operator.v0.23.0-0",
+			Ready:   true,
+		},
+	})
+	Expect(err).NotTo(HaveOccurred())
+
 	standaloneClusters := []*api.Cluster{
 		{
-			ClusterID:             evalInstanceCluster,
-			Region:                region,
-			MultiAZ:               multiAz,
-			CloudProvider:         cloudProvider,
-			ProviderType:          api.ClusterProviderStandalone,
-			IdentityProviderID:    "some-identity-provider-id",
-			ClusterDNS:            clusterDns,
-			Status:                api.ClusterReady,
-			SupportedInstanceType: api.EvalTypeSupport.String(),
+			ClusterID:                evalInstanceCluster,
+			Region:                   region,
+			MultiAZ:                  multiAz,
+			CloudProvider:            cloudProvider,
+			ProviderType:             api.ClusterProviderStandalone,
+			IdentityProviderID:       "some-identity-provider-id",
+			ClusterDNS:               clusterDns,
+			Status:                   api.ClusterReady,
+			SupportedInstanceType:    api.EvalTypeSupport.String(),
+			AvailableStrimziVersions: availableStrimziVersions,
 		},
 		{
-			ClusterID:             standardInstanceCluster,
-			Region:                region,
-			MultiAZ:               multiAz,
-			CloudProvider:         cloudProvider,
-			ProviderType:          api.ClusterProviderStandalone,
-			IdentityProviderID:    "some-identity-provider-id",
-			ClusterDNS:            clusterDns,
-			Status:                api.ClusterReady,
-			SupportedInstanceType: api.StandardTypeSupport.String(),
+			ClusterID:                standardInstanceCluster,
+			Region:                   region,
+			MultiAZ:                  multiAz,
+			CloudProvider:            cloudProvider,
+			ProviderType:             api.ClusterProviderStandalone,
+			IdentityProviderID:       "some-identity-provider-id",
+			ClusterDNS:               clusterDns,
+			Status:                   api.ClusterReady,
+			SupportedInstanceType:    api.StandardTypeSupport.String(),
+			AvailableStrimziVersions: availableStrimziVersions,
 		},
 	}
 
