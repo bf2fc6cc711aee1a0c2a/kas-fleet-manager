@@ -3,15 +3,21 @@ package config
 import (
 	"errors"
 	"fmt"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 )
 
+type InstanceType types.KafkaInstanceType
+type InstanceTypeList []InstanceType
+
 type Region struct {
-	Name    string `json:"name"`
-	Default bool   `json:"default"`
+	Name                   string           `yaml:"name"`
+	Default                bool             `yaml:"default"`
+	SupportedInstanceTypes InstanceTypeList `yaml:"supported_instance_type"`
 }
 
 type RegionList []Region

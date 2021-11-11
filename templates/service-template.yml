@@ -151,7 +151,7 @@ parameters:
 - name: SUPPORTED_CLOUD_PROVIDERS
   displayName: Supported Cloud Providers
   description: A list of supported cloud providers in a yaml format.
-  value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true}]}]"
+  value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: [ standard, eval ]}]}]"
 
 - name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
   displayName: Enable Kafka TLS

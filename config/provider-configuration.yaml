@@ -5,3 +5,4 @@ supported_providers:
     regions:
       - name: us-east-1
         default: true
+        supported_instance_type: ['standard', 'eval']
