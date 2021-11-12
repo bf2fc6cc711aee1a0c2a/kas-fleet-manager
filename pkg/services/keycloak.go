@@ -548,11 +548,22 @@ func (kc *keycloakService) registerAgentServiceAccount(clusterId string, service
 	if tokenErr != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register agent service account")
 	}
+
 	role, err := kc.getRealmRole(accessToken, roleName)
 	if err != nil {
 		return nil, err
 	}
+
 	protocolMapper := kc.kcClient.CreateProtocolMapperConfig(clusterId)
+
+	attributes := map[string]string{
+		clusterId: agentClusterId,
+	}
+
+	if kc.GetConfig().KeycloakClientExpire {
+		attributes["expire_date"] = time.Now().Local().Add(time.Hour * time.Duration(2)).Format(time.RFC3339)
+	}
+
 	c := keycloak.ClientRepresentation{
 		ClientID:               serviceAccountId,
 		Name:                   serviceAccountId,
@@ -560,9 +571,7 @@ func (kc *keycloakService) registerAgentServiceAccount(clusterId string, service
 		ServiceAccountsEnabled: true,
 		StandardFlowEnabled:    false,
 		ProtocolMappers:        protocolMapper,
-		Attributes: map[string]string{
-			clusterId: agentClusterId,
-		},
+		Attributes: attributes,
 	}
 	account, err := kc.createServiceAccountIfNotExists(accessToken, c)
 	if err != nil {
