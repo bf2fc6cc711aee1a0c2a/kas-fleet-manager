@@ -145,6 +145,9 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 		needsUpdate = true
 	}
 
+	// TODO is kas fleetshard going ot report whether kafka version is
+	// being upgraded and whether kafka ibp version is being upgraded?
+
 	// TODO for now we don't set the kafka_upgrading attribute at all because
 	// kas fleet shard operator still does not explicitely report whether kafka
 	// is being upgraded, as it is being done with strimzi operator. Wait until

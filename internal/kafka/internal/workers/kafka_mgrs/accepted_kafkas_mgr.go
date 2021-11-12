@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
 
@@ -90,7 +91,9 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 		return nil
 	}
 
+	// TODO refactor the setting of desired versions
 	kafka.ClusterID = cluster.ClusterID
+	var selectedStrimziVersion *api.StrimziVersion
 	if k.dataPlaneClusterConfig.StrimziOperatorVersion == "" {
 		readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
 		if err != nil || len(readyStrimziVersions) == 0 {
@@ -106,10 +109,41 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 			}
 			return err
 		} else {
-			kafka.DesiredStrimziVersion = readyStrimziVersions[len(readyStrimziVersions)-1].Version
+			selectedStrimziVersion = &readyStrimziVersions[len(readyStrimziVersions)-1]
+			kafka.DesiredStrimziVersion = selectedStrimziVersion.Version
 		}
 	} else {
 		kafka.DesiredStrimziVersion = k.dataPlaneClusterConfig.StrimziOperatorVersion
+	}
+
+	// Should we add KafkaVersion to dataplaneclusterconfig or reuse the existing in the kafka data type
+	// also what are the implications migrationwise
+	if k.dataPlaneClusterConfig.KafkaVersion == "" {
+		if selectedStrimziVersion == nil {
+			return errors.New(fmt.Sprintf("failed to get Kafka version %s", kafka.ID))
+		}
+
+		if len(selectedStrimziVersion.KafkaVersions) == 0 {
+			return errors.New(fmt.Sprintf("failed to get Kafka version %s", kafka.ID))
+		}
+
+		kafka.DesiredKafkaVersion = selectedStrimziVersion.KafkaVersions[len(selectedStrimziVersion.KafkaVersions)-1].Version
+	} else {
+		kafka.DesiredKafkaVersion = k.dataPlaneClusterConfig.KafkaVersion
+	}
+
+	if k.dataPlaneClusterConfig.KafkaIBPVersion == "" {
+		if selectedStrimziVersion == nil {
+			return errors.New(fmt.Sprintf("failed to get Kafka IBP version %s", kafka.ID))
+		}
+
+		if len(selectedStrimziVersion.KafkaVersions) == 0 {
+			return errors.New(fmt.Sprintf("failed to get Kafka IBP version %s", kafka.ID))
+		}
+
+		kafka.DesiredKafkaVersion = selectedStrimziVersion.KafkaVersions[len(selectedStrimziVersion.KafkaVersions)-1].Version
+	} else {
+		kafka.DesiredKafkaIBPVersion = k.dataPlaneClusterConfig.KafkaIBPVersion
 	}
 
 	glog.Infof("Kafka instance with id %s is assigned to cluster with id %s", kafka.ID, kafka.ClusterID)

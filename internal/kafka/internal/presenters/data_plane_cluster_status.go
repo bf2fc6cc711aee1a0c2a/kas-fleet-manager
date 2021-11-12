@@ -105,6 +105,7 @@ func getAvailableStrimziVersions(status private.DataPlaneClusterUpdateStatusRequ
 
 	var errors errors.ErrorList
 
+	// TODO refactor to reuse the same as the StrimziVersion methods to sort
 	sort.Slice(res, func(i, j int) bool {
 		compareRes, err := res[i].Compare(res[j])
 		if err != nil {
@@ -115,6 +116,34 @@ func getAvailableStrimziVersions(status private.DataPlaneClusterUpdateStatusRequ
 
 	if errors != nil {
 		return nil, errors
+	}
+	for idx := range res {
+
+		// Sort KafkaVersions
+		sort.Slice(res[idx].KafkaVersions, func(i, j int) bool {
+			res, err := res[idx].KafkaVersions[i].Compare(res[idx].KafkaVersions[j])
+			if err != nil {
+				errors = append(errors, err)
+			}
+			return res == -1
+		})
+
+		if errors != nil {
+			return nil, errors
+		}
+
+		// Sort KafkaIBPVersions
+		sort.Slice(res[idx].KafkaIBPVersions, func(i, j int) bool {
+			res, err := res[idx].KafkaIBPVersions[i].Compare(res[idx].KafkaIBPVersions[j])
+			if err != nil {
+				errors = append(errors, err)
+			}
+			return res == -1
+		})
+
+		if errors != nil {
+			return nil, errors
+		}
 	}
 
 	return res, nil
