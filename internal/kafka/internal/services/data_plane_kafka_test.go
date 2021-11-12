@@ -484,9 +484,12 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 
 func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 	type versions struct {
-		actualKafkaVersion   string
-		actualStrimziVersion string
-		strimziUpgrading     bool
+		actualKafkaVersion    string
+		actualStrimziVersion  string
+		actualKafkaIBPVersion string
+		strimziUpgrading      bool
+		kafkaUpgrading        bool
+		kafkaIBPUpgrading     bool
 	}
 
 	tests := []struct {
@@ -509,16 +512,22 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 				return &KafkaServiceMock{
 					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 						return &dbapi.KafkaRequest{
-							ClusterID:     "test-cluster-id",
-							Status:        constants2.KafkaRequestStatusProvisioning.String(),
-							Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
-							RoutesCreated: true,
+							ClusterID:             "test-cluster-id",
+							Status:                constants2.KafkaRequestStatusProvisioning.String(),
+							Routes:                []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+							RoutesCreated:         true,
+							ActualKafkaVersion:    "kafka-original-ver-0",
+							ActualKafkaIBPVersion: "kafka-ibp-original-ver-0",
+							ActualStrimziVersion:  "strimzi-original-ver-0",
 						}, nil
 					},
 					UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, fields map[string]interface{}) *errors.ServiceError {
 						v.actualKafkaVersion = kafkaRequest.ActualKafkaVersion
+						v.actualKafkaIBPVersion = kafkaRequest.ActualKafkaIBPVersion
 						v.actualStrimziVersion = kafkaRequest.ActualStrimziVersion
 						v.strimziUpgrading = kafkaRequest.StrimziUpgrading
+						v.kafkaUpgrading = kafkaRequest.KafkaUpgrading
+						v.kafkaIBPUpgrading = kafkaRequest.KafkaIBPUpgrading
 						return nil
 					},
 					UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
@@ -539,19 +548,23 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 							Reason: "StrimziUpdating",
 						},
 					},
-					KafkaVersion:   "kafka-1",
-					StrimziVersion: "strimzi-1",
+					KafkaVersion:    "kafka-1",
+					StrimziVersion:  "strimzi-1",
+					KafkaIBPVersion: "kafka-ibp-3",
 				},
 			},
 			wantErr: false,
 			expectedVersions: versions{
-				actualKafkaVersion:   "kafka-1",
-				actualStrimziVersion: "strimzi-1",
-				strimziUpgrading:     true,
+				actualKafkaVersion:    "kafka-1",
+				actualStrimziVersion:  "strimzi-1",
+				actualKafkaIBPVersion: "kafka-ibp-3",
+				strimziUpgrading:      true,
+				kafkaUpgrading:        false,
+				kafkaIBPUpgrading:     false,
 			},
 		},
 		{
-			name: "should set strimzi_upgrading to false",
+			name: "when the condition does not contain a reason then all upgrading fields should be set to false",
 			clusterService: &ClusterServiceMock{
 				FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 					return &api.Cluster{}, nil
@@ -561,19 +574,25 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 				return &KafkaServiceMock{
 					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 						return &dbapi.KafkaRequest{
-							ClusterID:            "test-cluster-id",
-							Status:               constants2.KafkaRequestStatusProvisioning.String(),
-							Routes:               []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
-							RoutesCreated:        true,
-							ActualKafkaVersion:   "kafka-1",
-							ActualStrimziVersion: "strimzi-1",
-							StrimziUpgrading:     true,
+							ClusterID:             "test-cluster-id",
+							Status:                constants2.KafkaRequestStatusProvisioning.String(),
+							Routes:                []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+							RoutesCreated:         true,
+							ActualKafkaVersion:    "kafka-1",
+							ActualStrimziVersion:  "strimzi-1",
+							ActualKafkaIBPVersion: "kafka-ibp-1",
+							StrimziUpgrading:      true,
+							KafkaUpgrading:        true,
+							KafkaIBPUpgrading:     true,
 						}, nil
 					},
 					UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, fields map[string]interface{}) *errors.ServiceError {
 						v.actualKafkaVersion = kafkaRequest.ActualKafkaVersion
+						v.actualKafkaIBPVersion = kafkaRequest.ActualKafkaIBPVersion
 						v.actualStrimziVersion = kafkaRequest.ActualStrimziVersion
 						v.strimziUpgrading = kafkaRequest.StrimziUpgrading
+						v.kafkaUpgrading = kafkaRequest.KafkaUpgrading
+						v.kafkaIBPUpgrading = kafkaRequest.KafkaIBPUpgrading
 						return nil
 					},
 					UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
@@ -593,15 +612,137 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 							Status: "True",
 						},
 					},
-					KafkaVersion:   "kafka-1",
-					StrimziVersion: "strimzi-1",
+					KafkaVersion:    "kafka-1",
+					KafkaIBPVersion: "kafka-ibp-1",
+					StrimziVersion:  "strimzi-1",
 				},
 			},
 			wantErr: false,
 			expectedVersions: versions{
-				actualKafkaVersion:   "kafka-1",
-				actualStrimziVersion: "strimzi-1",
-				strimziUpgrading:     false,
+				actualKafkaVersion:    "kafka-1",
+				actualKafkaIBPVersion: "kafka-ibp-1",
+				actualStrimziVersion:  "strimzi-1",
+				strimziUpgrading:      false,
+				kafkaUpgrading:        false,
+				kafkaIBPUpgrading:     false,
+			},
+		},
+		{
+			name: "when received condition is upgrading kafka then it is set to true if it wasn't",
+			clusterService: &ClusterServiceMock{
+				FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+					return &api.Cluster{}, nil
+				},
+			},
+			kafkaService: func(v *versions) KafkaService {
+				return &KafkaServiceMock{
+					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{
+							ClusterID:     "test-cluster-id",
+							Status:        constants2.KafkaRequestStatusProvisioning.String(),
+							Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+							RoutesCreated: true,
+						}, nil
+					},
+					UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, fields map[string]interface{}) *errors.ServiceError {
+						v.actualKafkaVersion = kafkaRequest.ActualKafkaVersion
+						v.actualKafkaIBPVersion = kafkaRequest.ActualKafkaIBPVersion
+						v.actualStrimziVersion = kafkaRequest.ActualStrimziVersion
+						v.strimziUpgrading = kafkaRequest.StrimziUpgrading
+						v.kafkaUpgrading = kafkaRequest.KafkaUpgrading
+						v.kafkaIBPUpgrading = kafkaRequest.KafkaIBPUpgrading
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				}
+			},
+			clusterId: "test-cluster-id",
+			status: []*dbapi.DataPlaneKafkaStatus{
+				{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type:   "Ready",
+							Status: "True",
+							Reason: "KafkaUpdating",
+						},
+					},
+					KafkaVersion:    "kafka-1",
+					StrimziVersion:  "strimzi-1",
+					KafkaIBPVersion: "kafka-ibp-3",
+				},
+			},
+			wantErr: false,
+			expectedVersions: versions{
+				actualKafkaVersion:    "kafka-1",
+				actualStrimziVersion:  "strimzi-1",
+				actualKafkaIBPVersion: "kafka-ibp-3",
+				strimziUpgrading:      false,
+				kafkaUpgrading:        true,
+				kafkaIBPUpgrading:     false,
+			},
+		},
+		{
+			name: "when received condition is upgrading kafka ibp then it is set to true if it wasn't",
+			clusterService: &ClusterServiceMock{
+				FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+					return &api.Cluster{}, nil
+				},
+			},
+			kafkaService: func(v *versions) KafkaService {
+				return &KafkaServiceMock{
+					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{
+							ClusterID:     "test-cluster-id",
+							Status:        constants2.KafkaRequestStatusProvisioning.String(),
+							Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+							RoutesCreated: true,
+						}, nil
+					},
+					UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, fields map[string]interface{}) *errors.ServiceError {
+						v.actualKafkaVersion = kafkaRequest.ActualKafkaVersion
+						v.actualKafkaIBPVersion = kafkaRequest.ActualKafkaIBPVersion
+						v.actualStrimziVersion = kafkaRequest.ActualStrimziVersion
+						v.strimziUpgrading = kafkaRequest.StrimziUpgrading
+						v.kafkaUpgrading = kafkaRequest.KafkaUpgrading
+						v.kafkaIBPUpgrading = kafkaRequest.KafkaIBPUpgrading
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				}
+			},
+			clusterId: "test-cluster-id",
+			status: []*dbapi.DataPlaneKafkaStatus{
+				{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type:   "Ready",
+							Status: "True",
+							Reason: "KafkaIbpUpdating",
+						},
+					},
+					KafkaVersion:    "kafka-1",
+					StrimziVersion:  "strimzi-1",
+					KafkaIBPVersion: "kafka-ibp-3",
+				},
+			},
+			wantErr: false,
+			expectedVersions: versions{
+				actualKafkaVersion:    "kafka-1",
+				actualStrimziVersion:  "strimzi-1",
+				actualKafkaIBPVersion: "kafka-ibp-3",
+				strimziUpgrading:      false,
+				kafkaUpgrading:        false,
+				kafkaIBPUpgrading:     true,
 			},
 		},
 	}
