@@ -1,9 +1,10 @@
 package environments
 
 import (
+	"os"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"os"
 )
 
 type TestingEnvLoader struct{}
@@ -15,7 +16,9 @@ func NewTestingEnvLoader() environments.EnvLoader {
 }
 
 func (t TestingEnvLoader) Defaults() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		"keycloak-client-expire":			 "true",
+	}
 }
 
 // The testing environment is specifically for automated testing
