@@ -11,6 +11,8 @@ package private
 
 // DataPlaneClusterUpdateStatusRequestStrimzi struct for DataPlaneClusterUpdateStatusRequestStrimzi
 type DataPlaneClusterUpdateStatusRequestStrimzi struct {
-	Ready   bool   `json:"ready"`
-	Version string `json:"version"`
+	Ready            bool     `json:"ready"`
+	Version          string   `json:"version"`
+	KafkaVersions    []string `json:"kafkaVersions,omitempty"`
+	KafkaIbpVersions []string `json:"kafkaIbpVersions,omitempty"`
 }
