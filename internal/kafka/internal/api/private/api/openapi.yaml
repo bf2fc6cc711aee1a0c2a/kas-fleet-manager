@@ -351,8 +351,20 @@ components:
           dataRetentionSize: dataRetentionSize
         strimzi:
         - ready: true
+          kafkaIbpVersions:
+          - kafkaIbpVersions
+          - kafkaIbpVersions
+          kafkaVersions:
+          - kafkaVersions
+          - kafkaVersions
           version: version
         - ready: true
+          kafkaIbpVersions:
+          - kafkaIbpVersions
+          - kafkaIbpVersions
+          kafkaVersions:
+          - kafkaVersions
+          - kafkaVersions
           version: version
         resizeInfo:
           nodeDelta: 7
@@ -631,12 +643,26 @@ components:
     DataPlaneClusterUpdateStatusRequest_strimzi:
       example:
         ready: true
+        kafkaIbpVersions:
+        - kafkaIbpVersions
+        - kafkaIbpVersions
+        kafkaVersions:
+        - kafkaVersions
+        - kafkaVersions
         version: version
       properties:
         ready:
           type: boolean
         version:
           type: string
+        kafkaVersions:
+          items:
+            type: string
+          type: array
+        kafkaIbpVersions:
+          items:
+            type: string
+          type: array
       required:
       - ready
       - version
