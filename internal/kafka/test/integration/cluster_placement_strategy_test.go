@@ -235,6 +235,12 @@ func TestClusterPlacementStrategy_CheckInstanceTypePlacement(t *testing.T) {
 		{
 			Version: "strimzi-cluster-operator.v0.23.0-0",
 			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				api.KafkaVersion{Version: "2.7.0"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				api.KafkaIBPVersion{Version: "2.7"},
+			},
 		},
 	})
 	Expect(err).NotTo(HaveOccurred())

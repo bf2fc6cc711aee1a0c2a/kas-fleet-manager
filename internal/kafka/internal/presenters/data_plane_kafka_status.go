@@ -28,11 +28,12 @@ func ConvertDataPlaneKafkaStatus(status map[string]private.DataPlaneKafkaStatus)
 			}
 		}
 		r = append(r, &dbapi.DataPlaneKafkaStatus{
-			KafkaClusterId: k,
-			Conditions:     c,
-			Routes:         routes,
-			KafkaVersion:   v.Versions.Kafka,
-			StrimziVersion: v.Versions.Strimzi,
+			KafkaClusterId:  k,
+			Conditions:      c,
+			Routes:          routes,
+			KafkaVersion:    v.Versions.Kafka,
+			StrimziVersion:  v.Versions.Strimzi,
+			KafkaIBPVersion: v.Versions.KafkaIbp,
 		})
 	}
 
