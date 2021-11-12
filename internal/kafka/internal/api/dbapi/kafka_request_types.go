@@ -28,12 +28,15 @@ type KafkaRequest struct {
 	// PlacementId field should be updated every time when a KafkaRequest is assigned to an OSD cluster (even if it's the same one again)
 	PlacementId string `json:"placement_id"`
 
-	DesiredKafkaVersion   string `json:"desired_kafka_version"`
-	ActualKafkaVersion    string `json:"actual_kafka_version"`
-	DesiredStrimziVersion string `json:"desired_strimzi_version"`
-	ActualStrimziVersion  string `json:"actual_strimzi_version"`
-	KafkaUpgrading        bool   `json:"kafka_upgrading"`
-	StrimziUpgrading      bool   `json:"strimzi_upgrading"`
+	DesiredKafkaVersion    string `json:"desired_kafka_version"`
+	ActualKafkaVersion     string `json:"actual_kafka_version"`
+	DesiredStrimziVersion  string `json:"desired_strimzi_version"`
+	ActualStrimziVersion   string `json:"actual_strimzi_version"`
+	DesiredKafkaIBPVersion string `json:"desired_kafka_ibp_version"`
+	ActualKafkaIBPVersion  string `json:"actual_kafka_ibp_version"`
+	KafkaUpgrading         bool   `json:"kafka_upgrading"`
+	StrimziUpgrading       bool   `json:"strimzi_upgrading"`
+	KafkaIBPUpgrading      bool   `json:"kafka_ibp_upgrading"`
 	// The type of kafka instance (eval or standard)
 	InstanceType string `json:"instance_type"`
 	// the quota service type for the kafka, e.g. ams, quota-management-list

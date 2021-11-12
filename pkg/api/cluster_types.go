@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	kasfleetmanagererrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/blang/semver"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -189,8 +188,26 @@ func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
 }
 
 type StrimziVersion struct {
+	Version          string            `json:"version"`
+	Ready            bool              `json:"ready"`
+	KafkaVersions    []KafkaVersion    `json:"kafkaVersions"`
+	KafkaIBPVersions []KafkaIBPVersion `json:"kafkaIBPVersions"`
+}
+
+type KafkaVersion struct {
 	Version string `json:"version"`
-	Ready   bool   `json:"ready"`
+}
+
+func (s *KafkaVersion) Compare(other KafkaVersion) (int, error) {
+	return semanticVersioningCompare(s.Version, other.Version)
+}
+
+type KafkaIBPVersion struct {
+	Version string `json:"version"`
+}
+
+func (s *KafkaIBPVersion) Compare(other KafkaIBPVersion) (int, error) {
+	return semanticVersioningCompare(s.Version, other.Version)
 }
 
 // StrimziVersionNumberPartRegex contains the regular expression needed to
@@ -209,21 +226,13 @@ func (s *StrimziVersion) Compare(other StrimziVersion) (int, error) {
 	if v1VersionNumber == "" {
 		return 0, fmt.Errorf("'%s' does not follow expected Strimzi Version format", s.Version)
 	}
-	v1, err := semver.Parse(v1VersionNumber)
-	if err != nil {
-		return 0, err
-	}
 
 	v2VersionNumber := StrimziVersionNumberPartRegex.FindString(other.Version)
 	if v2VersionNumber == "" {
 		return 0, fmt.Errorf("'%s' does not follow expected Strimzi Version format", s.Version)
 	}
 
-	v2, err := semver.Parse(v2VersionNumber)
-	if err != nil {
-		return 0, err
-	}
-	return v1.Compare(v2), nil
+	return semanticVersioningCompare(v1VersionNumber, v2VersionNumber)
 }
 
 // GetAvailableAndReadyStrimziVersions returns the cluster's list of available
@@ -261,6 +270,10 @@ func (cluster *Cluster) GetAvailableStrimziVersions() ([]StrimziVersion, error) 
 		fallbackToLegacyUnmarshal = true
 	}
 
+	// TODO can the 'availableStrimziVersions' OpenAPI attribute and all of its related logic
+	// be safely removed from all places? is prod and stage  and all of the existing
+	// entries in their corresponding DBs been migrated to the new format, and is
+	// the kasfleetshard operator only using the new 'strimzi' attribute?
 	if fallbackToLegacyUnmarshal {
 		versions = []StrimziVersion{}
 		versionsListStr := []string{}
@@ -291,6 +304,8 @@ func (cluster *Cluster) SetAvailableStrimziVersions(availableStrimziVersions []S
 
 	var errors kasfleetmanagererrors.ErrorList
 
+	// TODO refactor the sorting in more compact methods
+
 	sort.Slice(versionsToSet, func(i, j int) bool {
 		res, err := versionsToSet[i].Compare(versionsToSet[j])
 		if err != nil {
@@ -302,6 +317,37 @@ func (cluster *Cluster) SetAvailableStrimziVersions(availableStrimziVersions []S
 
 	if errors != nil {
 		return errors
+	}
+
+	for idx := range versionsToSet {
+
+		// Sort KafkaVersions
+		sort.Slice(versionsToSet[idx].KafkaVersions, func(i, j int) bool {
+			res, err := versionsToSet[idx].KafkaVersions[i].Compare(versionsToSet[idx].KafkaVersions[j])
+			if err != nil {
+				fmt.Println(errors)
+				errors = append(errors, err)
+			}
+			return res == -1
+		})
+
+		if errors != nil {
+			return errors
+		}
+
+		// Sort KafkaIBPVersions
+		sort.Slice(versionsToSet[idx].KafkaIBPVersions, func(i, j int) bool {
+			res, err := versionsToSet[idx].KafkaIBPVersions[i].Compare(versionsToSet[idx].KafkaIBPVersions[j])
+			if err != nil {
+				fmt.Println(errors)
+				errors = append(errors, err)
+			}
+			return res == -1
+		})
+
+		if errors != nil {
+			return errors
+		}
 	}
 
 	if v, err := json.Marshal(versionsToSet); err != nil {

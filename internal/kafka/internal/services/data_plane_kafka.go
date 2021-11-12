@@ -28,6 +28,8 @@ const (
 	statusDeleted    kafkaStatus = "deleted"
 	statusUnknown    kafkaStatus = "unknown"
 	strimziUpdating  string      = "StrimziUpdating"
+	kafkaUpdating    string      = "KafkaUpdating"
+	kafkaIBPUpdating string      = "KafkaIbpUpdating"
 )
 
 type DataPlaneKafkaService interface {
@@ -138,6 +140,13 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 		needsUpdate = true
 	}
 
+	prevActualKafkaIBPVersion := status.KafkaIBPVersion
+	if status.KafkaIBPVersion != "" && status.KafkaIBPVersion != kafka.ActualKafkaIBPVersion {
+		logger.Logger.Infof("Updating Kafka IBP version for Kafka ID '%s' from '%s' to '%s'", kafka.ID, prevActualKafkaIBPVersion, status.KafkaIBPVersion)
+		kafka.ActualKafkaIBPVersion = status.KafkaIBPVersion
+		needsUpdate = true
+	}
+
 	prevActualStrimziVersion := status.StrimziVersion
 	if status.StrimziVersion != "" && status.StrimziVersion != kafka.ActualStrimziVersion {
 		logger.Logger.Infof("Updating Strimzi version for Kafka ID '%s' from '%s' to '%s'", kafka.ID, prevActualStrimziVersion, status.StrimziVersion)
@@ -145,25 +154,11 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 		needsUpdate = true
 	}
 
-	// TODO for now we don't set the kafka_upgrading attribute at all because
-	// kas fleet shard operator still does not explicitely report whether kafka
-	// is being upgraded, as it is being done with strimzi operator. Wait until
-	// kas fleet shard operator has a way to report it and update the logic to do
-	// appropriately set it. section wait until kas fleetshard operator has a way to report whether
-	// kafka.KafkaUpgrading = kafkaBeingUpgraded
-	// prevKafkaUpgrading := kafka.KafkaUpgrading
-	// kafkaBeingUpgraded := kafka.DesiredKafkaVersion != kafka.ActualKafkaVersion
-	// if kafkaBeingUpgraded != kafka.KafkaUpgrading {
-	// 	logger.Logger.Infof("Kafka version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevKafkaUpgrading, kafkaBeingUpgraded)
-	// 	kafka.KafkaUpgrading = kafkaBeingUpgraded
-	// 	needsUpdate = true
-	// }
-
-	prevStrimziUpgrading := kafka.StrimziUpgrading
 	readyCondition, found := status.GetReadyCondition()
 	if found {
 		// TODO is this really correct? What happens if there is a StrimziUpdating reason
 		// but the 'status' is false? What does that mean and how should we behave?
+		prevStrimziUpgrading := kafka.StrimziUpgrading
 		strimziUpdatingReasonIsSet := readyCondition.Reason == strimziUpdating
 		if strimziUpdatingReasonIsSet && !prevStrimziUpgrading {
 			logger.Logger.Infof("Strimzi version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevStrimziUpgrading, strimziUpdatingReasonIsSet)
@@ -175,13 +170,43 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 			kafka.StrimziUpgrading = false
 			needsUpdate = true
 		}
+
+		prevKafkaUpgrading := kafka.KafkaUpgrading
+		kafkaUpdatingReasonIsSet := readyCondition.Reason == kafkaUpdating
+		if kafkaUpdatingReasonIsSet && !prevKafkaUpgrading {
+			logger.Logger.Infof("Kafka version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevKafkaUpgrading, kafkaUpdatingReasonIsSet)
+			kafka.KafkaUpgrading = true
+			needsUpdate = true
+		}
+		if !kafkaUpdatingReasonIsSet && prevKafkaUpgrading {
+			logger.Logger.Infof("Kafka version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevKafkaUpgrading, kafkaUpdatingReasonIsSet)
+			kafka.KafkaUpgrading = false
+			needsUpdate = true
+		}
+
+		prevKafkaIBPUpgrading := kafka.KafkaIBPUpgrading
+		kafkaIBPUpdatingReasonIsSet := readyCondition.Reason == kafkaIBPUpdating
+		if kafkaIBPUpdatingReasonIsSet && !prevKafkaIBPUpgrading {
+			logger.Logger.Infof("Kafka IBP version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevKafkaIBPUpgrading, kafkaIBPUpdatingReasonIsSet)
+			kafka.KafkaIBPUpgrading = true
+			needsUpdate = true
+		}
+		if !kafkaIBPUpdatingReasonIsSet && prevKafkaIBPUpgrading {
+			logger.Logger.Infof("Kafka IBP version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevKafkaIBPUpgrading, kafkaIBPUpdatingReasonIsSet)
+			kafka.KafkaIBPUpgrading = false
+			needsUpdate = true
+		}
+
 	}
 
 	if needsUpdate {
 		versionFields := map[string]interface{}{
-			"actual_kafka_version":   kafka.ActualKafkaVersion,
-			"actual_strimzi_version": kafka.ActualStrimziVersion,
-			"strimzi_upgrading":      kafka.StrimziUpgrading,
+			"actual_strimzi_version":   kafka.ActualStrimziVersion,
+			"actual_kafka_version":     kafka.ActualKafkaVersion,
+			"actual_kafka_ibp_version": kafka.ActualKafkaIBPVersion,
+			"strimzi_upgrading":        kafka.StrimziUpgrading,
+			"kafka_upgrading":          kafka.KafkaUpgrading,
+			"kafka_ibp_upgrading":      kafka.KafkaIBPUpgrading,
 		}
 
 		if err := d.kafkaService.Updates(kafka, versionFields); err != nil {

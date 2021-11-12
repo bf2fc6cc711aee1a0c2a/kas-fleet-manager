@@ -11,6 +11,7 @@ package private
 
 // DataPlaneKafkaStatusVersions Version information related to a Kafka cluster
 type DataPlaneKafkaStatusVersions struct {
-	Kafka   string `json:"kafka,omitempty"`
-	Strimzi string `json:"strimzi,omitempty"`
+	Kafka    string `json:"kafka,omitempty"`
+	Strimzi  string `json:"strimzi,omitempty"`
+	KafkaIbp string `json:"kafkaIbp,omitempty"`
 }
