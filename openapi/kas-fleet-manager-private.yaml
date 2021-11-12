@@ -443,6 +443,14 @@ components:
                 type: boolean
               version:
                 type: string
+              kafkaVersions:
+                type: array
+                items:
+                  type: string
+              kafkaIbpVersions:
+                type: array
+                items:
+                  type: string
             required:
             - ready
             - version
