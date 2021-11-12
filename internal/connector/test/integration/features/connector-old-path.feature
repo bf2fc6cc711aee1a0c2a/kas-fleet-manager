@@ -55,7 +55,7 @@ Feature: the old connectors path are still valid
 
     When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/addon_parameters"
     Then the response code should be 200
-    And get and store access token using the addon parameter response as ${agent_token}
+    And get and store access token using the addon parameter response as ${agent_token} and clientID as ${clientID}
 
     Given I am logged in as "Agent"
     Given I set the "Authorization" header to "Bearer ${agent_token}"
@@ -63,3 +63,6 @@ Feature: the old connectors path are still valid
     # There should be no deployments assigned yet, since the cluster status is unconnected
     When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
+
+    #cleanup
+    Then I delete keycloak client with clientID: ${clientID}

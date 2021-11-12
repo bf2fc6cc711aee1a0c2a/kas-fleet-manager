@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Nerzal/gocloak/v8"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"

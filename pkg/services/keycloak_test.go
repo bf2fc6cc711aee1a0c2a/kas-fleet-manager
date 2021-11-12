@@ -381,6 +381,9 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
 						return gocloak.Client{}
 					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
+					},
 				},
 			},
 			args: args{
@@ -434,6 +437,9 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
 						return gocloak.Client{}
+					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 				},
 			},

@@ -1,10 +1,11 @@
 package environments
 
 import (
+	"os"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"os"
 )
 
 type IntegrationEnvLoader struct{}
@@ -32,6 +33,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"max-allowed-instances":         "1",
 		"mas-sso-base-url":              "https://identity.api.stage.openshift.com",
 		"mas-sso-realm":                 "rhoas",
+		"keycloak-client-expire":		 "true",
 	}
 }
 
