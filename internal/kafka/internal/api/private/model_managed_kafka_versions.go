@@ -11,6 +11,7 @@ package private
 
 // ManagedKafkaVersions struct for ManagedKafkaVersions
 type ManagedKafkaVersions struct {
-	Kafka   string `json:"kafka,omitempty"`
-	Strimzi string `json:"strimzi,omitempty"`
+	Kafka    string `json:"kafka,omitempty"`
+	KafkaIbp string `json:"kafkaIbp,omitempty"`
+	Strimzi  string `json:"strimzi,omitempty"`
 }
