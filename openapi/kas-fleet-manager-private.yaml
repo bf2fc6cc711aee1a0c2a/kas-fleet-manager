@@ -220,6 +220,8 @@ components:
       properties:
         kafka:
           type: string
+        kafkaIbp:
+          type: string
         strimzi:
           type: string
 
