@@ -505,6 +505,8 @@ components:
               type: string
             strimzi:
               type: string
+            kafkaIbp:
+              type: string
         routes:
           description: "Routes created for a Kafka cluster"
           type: array
@@ -606,6 +608,7 @@ components:
           versions:
             kafka: 2.7.0
             strimzi: 0.21.2
+            kafkaIbp: "2.7"
           deleted: false
     DataPlaneKafkaStatusRequestExample:
       value:
@@ -625,6 +628,7 @@ components:
         versions:
           kafka: 2.4.1
           strimzi: 0.21.2
+          kafkaIbp: "2.4"
     400InvalidIdExample:
       value:
         id: "21"

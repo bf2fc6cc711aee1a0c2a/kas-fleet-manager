@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
@@ -50,17 +51,44 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
+	commonKafkaVersions := []string{"2.8.0", "1.3.6", "2.7.0"}
+	commonKafkaIBPVersions := []string{"2.8", "1.3", "2.7"}
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 	clusterStatusUpdateRequest.Strimzi = nil
-	clusterStatusUpdateRequest.StrimziVersions = []string{
-		"strimzi-cluster-operator.v.5.12.0-0",
-		"strimzi-cluster-operator.v.5.8.0-0",
-		"strimzi-cluster-operator.v.3.0.0-0",
+	clusterStatusUpdateRequest.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
+		private.DataPlaneClusterUpdateStatusRequestStrimzi{
+			Version:          "strimzi-cluster-operator.v.5.12.0-0",
+			Ready:            true,
+			KafkaVersions:    commonKafkaVersions,
+			KafkaIbpVersions: commonKafkaIBPVersions,
+		},
+		private.DataPlaneClusterUpdateStatusRequestStrimzi{
+			Version:          "strimzi-cluster-operator.v.5.8.0-0",
+			Ready:            true,
+			KafkaVersions:    commonKafkaVersions,
+			KafkaIbpVersions: commonKafkaIBPVersions,
+		},
+		private.DataPlaneClusterUpdateStatusRequestStrimzi{
+			Version:          "strimzi-cluster-operator.v.3.0.0-0",
+			Ready:            true,
+			KafkaVersions:    commonKafkaVersions,
+			KafkaIbpVersions: commonKafkaIBPVersions,
+		},
+	}
+	expectedCommonKafkaVersions := []api.KafkaVersion{
+		api.KafkaVersion{Version: "1.3.6"},
+		api.KafkaVersion{Version: "2.7.0"},
+		api.KafkaVersion{Version: "2.8.0"},
+	}
+	expectedCommonKafkaIBPVersions := []api.KafkaIBPVersion{
+		api.KafkaIBPVersion{Version: "1.3"},
+		api.KafkaIBPVersion{Version: "2.7"},
+		api.KafkaIBPVersion{Version: "2.8"},
 	}
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
-		{Version: "strimzi-cluster-operator.v.3.0.0-0", Ready: true},
-		{Version: "strimzi-cluster-operator.v.5.8.0-0", Ready: true},
-		{Version: "strimzi-cluster-operator.v.5.12.0-0", Ready: true},
+		{Version: "strimzi-cluster-operator.v.3.0.0-0", Ready: true, KafkaVersions: expectedCommonKafkaVersions, KafkaIBPVersions: expectedCommonKafkaIBPVersions},
+		{Version: "strimzi-cluster-operator.v.5.8.0-0", Ready: true, KafkaVersions: expectedCommonKafkaVersions, KafkaIBPVersions: expectedCommonKafkaIBPVersions},
+		{Version: "strimzi-cluster-operator.v.5.12.0-0", Ready: true, KafkaVersions: expectedCommonKafkaVersions, KafkaIBPVersions: expectedCommonKafkaIBPVersions},
 	}
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -788,31 +816,106 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziV
 	}
 
 	db := test.TestServices.DBFactory.New()
-	initialAvailableStrimziVersionsStr := `["strimzi-cluster-operator.v.8.0.0-0", "strimzi-cluster-operator.v.9.0.0-0", "strimzi-cluster-operator.v.10.0.0-0"]`
+
+	initialAvailableStrimziVersionsStr, err := json.Marshal([]api.StrimziVersion{
+		{
+			Version: "strimzi-cluster-operator.v.8.0.0-0",
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				api.KafkaVersion{Version: "2.7.0"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				api.KafkaIBPVersion{Version: "2.7"},
+			},
+		},
+		{
+			Version: "strimzi-cluster-operator.v.9.0.0-0",
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				api.KafkaVersion{Version: "2.7.0"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				api.KafkaIBPVersion{Version: "2.7"},
+			},
+		},
+		{
+			Version: "strimzi-cluster-operator.v.10.0.0-0",
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				api.KafkaVersion{Version: "2.7.0"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				api.KafkaIBPVersion{Version: "2.7"},
+			},
+		},
+	})
+
+	Expect(err).NotTo(HaveOccurred())
+
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("available_strimzi_versions", initialAvailableStrimziVersionsStr).Error
 	Expect(err).ToNot(HaveOccurred())
 
 	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
+	commonKafkaVersions := []string{"2.8.0", "2.7.0"}
+	commonKafkaIBPVersions := []string{"2.8", "2.7"}
+
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 	clusterStatusUpdateRequest.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
-		{Version: "strimzi-cluster-operator.v.5.0.0-0", Ready: false},
-		{Version: "strimzi-cluster-operator.v.7.0.0-0", Ready: false},
-		{Version: "strimzi-cluster-operator.v.3.0.0-0", Ready: true},
-	}
-	expectedAvailableStrimziVersions := []api.StrimziVersion{
-		{Version: "strimzi-cluster-operator.v.3.0.0-0", Ready: true},
-		{Version: "strimzi-cluster-operator.v.5.0.0-0", Ready: false},
-		{Version: "strimzi-cluster-operator.v.7.0.0-0", Ready: false},
+		{
+			Version:          "strimzi-cluster-operator.v.5.0.0-0",
+			Ready:            false,
+			KafkaVersions:    commonKafkaVersions,
+			KafkaIbpVersions: commonKafkaIBPVersions,
+		},
+		{
+			Version:          "strimzi-cluster-operator.v.7.0.0-0",
+			Ready:            false,
+			KafkaVersions:    commonKafkaVersions,
+			KafkaIbpVersions: commonKafkaIBPVersions,
+		},
+		{
+			Version:          "strimzi-cluster-operator.v.3.0.0-0",
+			Ready:            true,
+			KafkaVersions:    commonKafkaVersions,
+			KafkaIbpVersions: commonKafkaIBPVersions,
+		},
 	}
 	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
 	Expect(availableStrimziVersions).To(Equal([]api.StrimziVersion{
-		{Version: "strimzi-cluster-operator.v.8.0.0-0", Ready: true},
-		{Version: "strimzi-cluster-operator.v.9.0.0-0", Ready: true},
-		{Version: "strimzi-cluster-operator.v.10.0.0-0", Ready: true},
+		{
+			Version: "strimzi-cluster-operator.v.8.0.0-0",
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				api.KafkaVersion{Version: "2.7.0"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				api.KafkaIBPVersion{Version: "2.7"},
+			},
+		},
+		{
+			Version: "strimzi-cluster-operator.v.9.0.0-0",
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				api.KafkaVersion{Version: "2.7.0"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				api.KafkaIBPVersion{Version: "2.7"},
+			},
+		},
+		{
+			Version: "strimzi-cluster-operator.v.10.0.0-0",
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				api.KafkaVersion{Version: "2.7.0"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				api.KafkaIBPVersion{Version: "2.7"},
+			},
+		},
 	}))
 	Expect(err).ToNot(HaveOccurred())
 
@@ -826,6 +929,35 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziV
 	Expect(cluster.Status).To(Equal(api.ClusterReady))
 	availableStrimziVersions, err = cluster.GetAvailableStrimziVersions()
 	Expect(err).ToNot(HaveOccurred())
+
+	expectedCommonKafkaVersions := []api.KafkaVersion{
+		api.KafkaVersion{Version: "2.7.0"},
+		api.KafkaVersion{Version: "2.8.0"},
+	}
+	expectedCommonKafkaIBPVersions := []api.KafkaIBPVersion{
+		api.KafkaIBPVersion{Version: "2.7"},
+		api.KafkaIBPVersion{Version: "2.8"},
+	}
+	expectedAvailableStrimziVersions := []api.StrimziVersion{
+		{
+			Version:          "strimzi-cluster-operator.v.3.0.0-0",
+			Ready:            true,
+			KafkaVersions:    expectedCommonKafkaVersions,
+			KafkaIBPVersions: expectedCommonKafkaIBPVersions,
+		},
+		{
+			Version:          "strimzi-cluster-operator.v.5.0.0-0",
+			Ready:            false,
+			KafkaVersions:    expectedCommonKafkaVersions,
+			KafkaIBPVersions: expectedCommonKafkaIBPVersions,
+		},
+		{
+			Version:          "strimzi-cluster-operator.v.7.0.0-0",
+			Ready:            false,
+			KafkaVersions:    expectedCommonKafkaVersions,
+			KafkaIBPVersions: expectedCommonKafkaIBPVersions,
+		},
+	}
 	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
 }
 

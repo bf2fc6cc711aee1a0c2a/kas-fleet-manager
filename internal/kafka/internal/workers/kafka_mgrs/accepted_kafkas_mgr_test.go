@@ -25,6 +25,22 @@ func TestAcceptedKafkaManager(t *testing.T) {
 		{
 			Version: strimziOperatorVersion,
 			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				api.KafkaVersion{
+					Version: "2.7.0",
+				},
+				api.KafkaVersion{
+					Version: "2.8.0",
+				},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				api.KafkaIBPVersion{
+					Version: "2.7",
+				},
+				api.KafkaIBPVersion{
+					Version: "2.8",
+				},
+			},
 		},
 	})
 	if err != nil {
@@ -35,6 +51,22 @@ func TestAcceptedKafkaManager(t *testing.T) {
 		{
 			Version: strimziOperatorVersion,
 			Ready:   false,
+			KafkaVersions: []api.KafkaVersion{
+				api.KafkaVersion{
+					Version: "2.7.0",
+				},
+				api.KafkaVersion{
+					Version: "2.8.0",
+				},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				api.KafkaIBPVersion{
+					Version: "2.7",
+				},
+				api.KafkaIBPVersion{
+					Version: "2.8",
+				},
+			},
 		},
 	})
 	if err != nil {
