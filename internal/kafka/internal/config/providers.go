@@ -20,6 +20,15 @@ type Region struct {
 	SupportedInstanceTypes InstanceTypeList `yaml:"supported_instance_type"`
 }
 
+func (r Region) IsInstanceTypeSupported(instanceType InstanceType) bool {
+	for _, it := range r.SupportedInstanceTypes {
+		if it == instanceType {
+			return true
+		}
+	}
+	return false
+}
+
 type RegionList []Region
 
 func (rl RegionList) GetByName(regionName string) (Region, bool) {

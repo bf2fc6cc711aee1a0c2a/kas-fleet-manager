@@ -4,11 +4,16 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/antihax/optional"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
+
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 const gcp = "gcp"
@@ -189,5 +194,152 @@ func TestListCloudProviderRegions(t *testing.T) {
 	Expect(errFromWrongId).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", errFromWrongId)
 	Expect(respFromWrongID.StatusCode).To(Equal(http.StatusOK))
 	Expect(wrongCloudProviderList.Items).To(BeEmpty(), "Expected cloud providers regions list empty")
+}
 
+func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	usEast1 := clustersmgmtv1.NewCloudRegion().
+		ID("us-east-1").
+		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/us-east-1").
+		DisplayName("us east 1").
+		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
+		Enabled(true).
+		SupportsMultiAZ(true)
+
+	afSouth1 := clustersmgmtv1.NewCloudRegion().
+		ID("af-south-1").
+		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/af-south-1").
+		DisplayName("af-south-1").
+		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
+		Enabled(true).
+		SupportsMultiAZ(true)
+
+	euWest2 := clustersmgmtv1.NewCloudRegion().
+		ID("eu-west-2").
+		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/eu-west-2").
+		DisplayName("eu-west-2").
+		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
+		Enabled(true).
+		SupportsMultiAZ(true)
+
+	euCentral1 := clustersmgmtv1.NewCloudRegion().
+		ID("eu-central-1").
+		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/eu-central-1").
+		DisplayName("eu-central-1").
+		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
+		Enabled(true).
+		SupportsMultiAZ(true)
+
+	apSouth1 := clustersmgmtv1.NewCloudRegion().
+		ID("ap-south-1").
+		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/ap-south-1").
+		DisplayName("ap-south-1").
+		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
+		Enabled(true).
+		SupportsMultiAZ(true)
+
+	awsRegions, err := clustersmgmtv1.NewCloudRegionList().Items(usEast1, afSouth1, euWest2, euCentral1, apSouth1).Build()
+	if err != nil {
+		t.Errorf("Failed to create mock region list")
+	}
+	ocmServerBuilder.SetCloudRegionsGetResponse(awsRegions, nil)
+	ocmServer := ocmServerBuilder.Build()
+
+	defer ocmServer.Close()
+
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(pc *config.ProviderConfig) {
+		pc.ProvidersConfig.SupportedProviders = config.ProviderList{
+			{
+				Name:    "aws",
+				Default: true,
+				Regions: config.RegionList{
+					{
+						Name:                   "us-east-1",
+						Default:                true,
+						SupportedInstanceTypes: config.InstanceTypeList{"standard", "eval"},
+					},
+					{
+						Name:                   "af-south-1",
+						SupportedInstanceTypes: config.InstanceTypeList{"standard"},
+					},
+					{
+						Name:                   "eu-west-2",
+						SupportedInstanceTypes: config.InstanceTypeList{"eval"},
+					},
+					{
+						Name:                   "eu-central-1",
+						SupportedInstanceTypes: config.InstanceTypeList{},
+					},
+				},
+			},
+		}
+	})
+	defer teardown()
+
+	// Create two clusters each with different provider type
+	if err := test.TestServices.DBFactory.New().Create(dummyClusters).Error; err != nil {
+		t.Error("failed to create dummy clusters")
+		return
+	}
+
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account, nil)
+
+	// 'enabled' should only be set to true for regions that support any regions if 'instance_type' was not specified
+	regions, resp, err := client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{})
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type 'invalid': %v", err)
+	for _, r := range regions.Items {
+		if r.Id == "us-east-1" || r.Id == "af-south-1" || r.Id == "eu-west-2" {
+			Expect(r.Enabled).To(Equal(true))
+		} else {
+			Expect(r.Enabled).To(Equal(false))
+		}
+	}
+
+	// 'enabled' should only be set to true for regions that support 'eval' instance types if 'instance_type=eval' was specified
+	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
+		InstanceType: optional.NewString("eval"),
+	})
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type 'eval': %v", err)
+	for _, r := range regions.Items {
+		if r.Id == "us-east-1" || r.Id == "eu-west-2" {
+			Expect(r.Enabled).To(Equal(true))
+		} else {
+			Expect(r.Enabled).To(Equal(false))
+		}
+	}
+
+	// 'enabled' should only be set to true for regions that support 'standard' instance types if 'instance_type=standard' was specified
+	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
+		InstanceType: optional.NewString("standard"),
+	})
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type 'standard': %v", err)
+	for _, r := range regions.Items {
+		if r.Id == "us-east-1" || r.Id == "af-south-1" {
+			Expect(r.Enabled).To(Equal(true))
+		} else {
+			Expect(r.Enabled).To(Equal(false))
+		}
+	}
+
+	// all regions returned should have 'enabled' set to false if no region supports any instance types
+	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "gcp", &public.GetCloudProviderRegionsOpts{})
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type 'eval' for gcp: %v", err)
+	for _, r := range regions.Items {
+		Expect(r.Enabled).To(Equal(false))
+	}
+
+	// all regions returned should have 'enabled' set to false if specified instance type is not valid
+	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
+		InstanceType: optional.NewString("!invalid!"),
+	})
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type '!invalid!': %v", err)
+	for _, r := range regions.Items {
+		Expect(r.Enabled).To(Equal(false))
+	}
 }

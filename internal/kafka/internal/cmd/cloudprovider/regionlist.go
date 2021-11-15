@@ -2,6 +2,7 @@ package cloudprovider
 
 import (
 	"encoding/json"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
@@ -23,12 +24,14 @@ func NewRegionsListCommand(env *environments.Env) *cobra.Command {
 		},
 	}
 	cmd.Flags().String(FlagID, "aws", "Cloud provider id")
+	cmd.Flags().String(FlagInstanceType, "", "Kafka instance type to filter the regions by")
 	return cmd
 }
 
 func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
+	instanceTypeFilter := flags.MustGetString(FlagInstanceType, cmd.Flags())
 
 	var providerConfig *config.ProviderConfig
 	var cloudProviderService services.CloudProvidersService
@@ -47,8 +50,18 @@ func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	}
 
 	supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
+	provider, _ := supportedProviders.GetByName(id)
 	for _, cloudRegion := range cloudRegions {
-		cloudRegion.Enabled = supportedProviders.IsRegionSupportedForProvider(cloudRegion.CloudProvider, cloudRegion.Id)
+		region, _ := provider.Regions.GetByName(cloudRegion.Id)
+
+		// if instance_type was specified, only set enabled to true for regions that supports the specified instance type. Otherwise,
+		// set enable to true for all region that supports any instance types
+		if instanceTypeFilter != "" {
+			cloudRegion.Enabled = region.IsInstanceTypeSupported(config.InstanceType(instanceTypeFilter))
+		} else {
+			cloudRegion.Enabled = len(region.SupportedInstanceTypes) > 0
+		}
+
 		converted := presenters.PresentCloudRegion(&cloudRegion)
 		regionList.Items = append(regionList.Items, converted)
 	}
