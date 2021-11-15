@@ -936,7 +936,7 @@ objects:
                 memory: 512Mi
                 cpu: 500m
 
-  - kind: PodDisruptionBudget                
+  - kind: PodDisruptionBudget
     apiVersion: policy/v1
     metadata:
       name: kas-fleet-manager-pdb

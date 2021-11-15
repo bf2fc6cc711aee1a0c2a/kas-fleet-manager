@@ -1048,6 +1048,13 @@ Feature: create a a connector
             "reason": "Service account id is invalid"
           },
           {
+             "code": "CONNECTOR-MGMT-41",
+             "href": "/api/connector_mgmt/v1/errors/41",
+             "id": "41",
+             "kind": "Error",
+             "reason": "Instance Type not supported"
+          },
+          {
             "code": "CONNECTOR-MGMT-103",
             "href": "/api/connector_mgmt/v1/errors/103",
             "id": "103",
@@ -1141,8 +1148,8 @@ Feature: create a a connector
         ],
         "kind": "ErrorList",
         "page": 1,
-        "size": 39,
-        "total": 39
+        "size": 40,
+        "total": 40
       }
       """
 

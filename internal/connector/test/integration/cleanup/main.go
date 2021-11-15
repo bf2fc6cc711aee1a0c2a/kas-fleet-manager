@@ -70,13 +70,13 @@ func main() {
 		for _, client := range clients {
 			attributes := *client.Attributes
 			if len(attributes) > 0 && (attributes["expire_date"] != "") {
-				fmt.Println("Found client with id:", *client.ID, "and clientID:",  *client.ClientID, "and expire_date:", attributes["expire_date"])
+				fmt.Println("Found client with id:", *client.ID, "and clientID:", *client.ClientID, "and expire_date:", attributes["expire_date"])
 				expirationTime, parseErr := time.Parse(time.RFC3339, attributes["expire_date"])
 				if parseErr != nil {
-					fmt.Println("    Skipping client with id:", *client.ID, "and clientID:",  *client.ClientID, "since its expiration time", attributes["expire_date"], "did not time.Parse correctly in time.RFC3339 format:", parseErr.Error())
+					fmt.Println("    Skipping client with id:", *client.ID, "and clientID:", *client.ClientID, "since its expiration time", attributes["expire_date"], "did not time.Parse correctly in time.RFC3339 format:", parseErr.Error())
 				}
 				if time.Now().Local().After(expirationTime) {
-					fmt.Println("    Deleting client with id:", *client.ID, "and clientID:",  *client.ClientID, "since it expired at", attributes["expire_date"])
+					fmt.Println("    Deleting client with id:", *client.ID, "and clientID:", *client.ClientID, "since it expired at", attributes["expire_date"])
 					deleteErr := kcClient.DeleteClient(*client.ID, accessToken)
 					if deleteErr != nil {
 						panic(deleteErr)
