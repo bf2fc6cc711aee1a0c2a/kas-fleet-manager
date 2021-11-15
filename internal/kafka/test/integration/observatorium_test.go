@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"net/http"
 	"testing"
 
@@ -46,8 +47,10 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
-	defer teardown()
+	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 2)})
+	})
+	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
@@ -91,8 +94,10 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
-	defer teardown()
+	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 2)})
+	})
+	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
@@ -161,8 +166,10 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
-	defer teardown()
+	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 2)})
+	})
+	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()

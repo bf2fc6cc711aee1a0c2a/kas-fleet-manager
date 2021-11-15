@@ -45,6 +45,8 @@ const CanaryServiceAccountPrefix = "canary"
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
+	// HasAvailableCapacityInRegion checks if there is capacity in the clusters for a given region
+	HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError)
 	// PrepareKafkaRequest sets any required information (i.e. bootstrap server host, sso client id and secret)
 	// to the Kafka Request record in the database. The kafka request will also be updated with an updated_at
 	// timestamp and the corresponding cluster identifier.
@@ -87,27 +89,29 @@ type KafkaService interface {
 var _ KafkaService = &kafkaService{}
 
 type kafkaService struct {
-	connectionFactory   *db.ConnectionFactory
-	clusterService      ClusterService
-	keycloakService     services.KeycloakService
-	kafkaConfig         *config.KafkaConfig
-	awsConfig           *config.AWSConfig
-	quotaServiceFactory QuotaServiceFactory
-	mu                  sync.Mutex
-	awsClientFactory    aws.ClientFactory
-	authService         authorization.Authorization
+	connectionFactory      *db.ConnectionFactory
+	clusterService         ClusterService
+	keycloakService        services.KeycloakService
+	kafkaConfig            *config.KafkaConfig
+	awsConfig              *config.AWSConfig
+	quotaServiceFactory    QuotaServiceFactory
+	mu                     sync.Mutex
+	awsClientFactory       aws.ClientFactory
+	authService            authorization.Authorization
+	dataplaneClusterConfig *config.DataplaneClusterConfig
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization) *kafkaService {
 	return &kafkaService{
-		connectionFactory:   connectionFactory,
-		clusterService:      clusterService,
-		keycloakService:     keycloakService,
-		kafkaConfig:         kafkaConfig,
-		awsConfig:           awsConfig,
-		quotaServiceFactory: quotaServiceFactory,
-		awsClientFactory:    awsClientFactory,
-		authService:         authorizationService,
+		connectionFactory:      connectionFactory,
+		clusterService:         clusterService,
+		keycloakService:        keycloakService,
+		kafkaConfig:            kafkaConfig,
+		awsConfig:              awsConfig,
+		quotaServiceFactory:    quotaServiceFactory,
+		awsClientFactory:       awsClientFactory,
+		authService:            authorizationService,
+		dataplaneClusterConfig: dataplaneClusterConfig,
 	}
 }
 
@@ -121,6 +125,22 @@ func (k *kafkaService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 
 	glog.Infof("%d of %d kafka clusters currently instantiated", count, k.kafkaConfig.KafkaCapacity.MaxCapacity)
 	return count < k.kafkaConfig.KafkaCapacity.MaxCapacity, nil
+}
+
+func (k *kafkaService) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
+	regionCapacity := int64(k.dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(kafkaRequest.Region))
+	if regionCapacity <= 0 {
+		return false, nil
+	}
+
+	dbConn := k.connectionFactory.New()
+	var count int64
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).Where("region = ?", kafkaRequest.Region).Count(&count).Error; err != nil {
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka request")
+	}
+
+	glog.Infof("%d of %d kafka clusters currently instantiated in region %v", count, regionCapacity, kafkaRequest.Region)
+	return count < regionCapacity, nil
 }
 
 func (k *kafkaService) detectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
@@ -179,7 +199,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	// we need to pre-populate the ID to be able to reserve the quota
 	kafkaRequest.ID = api.NewID()
 
-	if hasCapacity, err := k.HasAvailableCapacity(); err != nil {
+	if hasCapacity, err := k.HasAvailableCapacityInRegion(kafkaRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create kafka request")
 	} else if !hasCapacity {
 		logger.Logger.Warningf("Cluster capacity(%d) exhausted", k.kafkaConfig.KafkaCapacity.MaxCapacity)
