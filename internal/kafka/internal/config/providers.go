@@ -158,10 +158,3 @@ func (provider Provider) IsRegionSupported(regionName string) bool {
 	_, ok := provider.Regions.GetByName(regionName)
 	return ok
 }
-
-func (h ProviderList) IsRegionSupportedForProvider(provider string, id string) bool {
-	if p, ok := h.GetByName(provider); ok {
-		return p.IsRegionSupported(id)
-	}
-	return false
-}
