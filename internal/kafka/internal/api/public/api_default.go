@@ -411,8 +411,9 @@ func (a *DefaultApiService) FederateMetrics(ctx _context.Context, id string) (st
 
 // GetCloudProviderRegionsOpts Optional parameters for the method 'GetCloudProviderRegions'
 type GetCloudProviderRegionsOpts struct {
-	Page optional.String
-	Size optional.String
+	Page         optional.String
+	Size         optional.String
+	InstanceType optional.String
 }
 
 /*
@@ -422,6 +423,7 @@ GetCloudProviderRegions Returns the list of supported regions of the supported c
  * @param optional nil or *GetCloudProviderRegionsOpts - Optional Parameters:
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
+ * @param "InstanceType" (optional.String) -  The Kafka instance type to filter the results by
 @return CloudRegionList
 */
 func (a *DefaultApiService) GetCloudProviderRegions(ctx _context.Context, id string, localVarOptionals *GetCloudProviderRegionsOpts) (CloudRegionList, *_nethttp.Response, error) {
@@ -447,6 +449,9 @@ func (a *DefaultApiService) GetCloudProviderRegions(ctx _context.Context, id str
 	}
 	if localVarOptionals != nil && localVarOptionals.Size.IsSet() {
 		localVarQueryParams.Add("size", parameterToString(localVarOptionals.Size.Value(), ""))
+	}
+	if localVarOptionals != nil && localVarOptionals.InstanceType.IsSet() {
+		localVarQueryParams.Add("instance_type", parameterToString(localVarOptionals.InstanceType.Value(), ""))
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
