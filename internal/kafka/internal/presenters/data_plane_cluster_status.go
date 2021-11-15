@@ -1,12 +1,9 @@
 package presenters
 
 import (
-	"sort"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
 func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRequest) (*dbapi.DataPlaneClusterStatus, error) {
@@ -103,50 +100,12 @@ func getAvailableStrimziVersions(status private.DataPlaneClusterUpdateStatusRequ
 		}
 	}
 
-	var errors errors.ErrorList
-
-	// TODO refactor to reuse the same as the StrimziVersion methods to sort
-	sort.Slice(res, func(i, j int) bool {
-		compareRes, err := res[i].Compare(res[j])
-		if err != nil {
-			errors = append(errors, err)
-		}
-		return compareRes == -1
-	})
-
-	if errors != nil {
-		return nil, errors
-	}
-	for idx := range res {
-
-		// Sort KafkaVersions
-		sort.Slice(res[idx].KafkaVersions, func(i, j int) bool {
-			res, err := res[idx].KafkaVersions[i].Compare(res[idx].KafkaVersions[j])
-			if err != nil {
-				errors = append(errors, err)
-			}
-			return res == -1
-		})
-
-		if errors != nil {
-			return nil, errors
-		}
-
-		// Sort KafkaIBPVersions
-		sort.Slice(res[idx].KafkaIBPVersions, func(i, j int) bool {
-			res, err := res[idx].KafkaIBPVersions[i].Compare(res[idx].KafkaIBPVersions[j])
-			if err != nil {
-				errors = append(errors, err)
-			}
-			return res == -1
-		})
-
-		if errors != nil {
-			return nil, errors
-		}
+	sortedRes, err := api.StrimziVersionsDeepSort(res)
+	if err != nil {
+		return nil, err
 	}
 
-	return res, nil
+	return sortedRes, nil
 }
 
 func PresentDataPlaneClusterConfig(config *dbapi.DataPlaneClusterConfig) private.DataplaneClusterAgentConfig {
