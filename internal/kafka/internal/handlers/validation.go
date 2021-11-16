@@ -79,9 +79,11 @@ func ValidateCloudProvider(kafkaRequest *public.KafkaRequestPayload, providerCon
 	}
 }
 
-func ValidateKafkaUpdateFields(strimziVersion *string, kafkaVersion *string) handlers.Validate {
+func ValidateKafkaUpdateFields(strimziVersion *string, kafkaVersion *string, KafkaIbpVersion *string) handlers.Validate {
 	return func() *errors.ServiceError {
-		if (strimziVersion == nil || len(*strimziVersion) < 1) && (kafkaVersion == nil || len(*kafkaVersion) < 1) {
+		if (strimziVersion == nil || len(*strimziVersion) < 1) &&
+			(kafkaVersion == nil || len(*kafkaVersion) < 1) &&
+			(KafkaIbpVersion == nil || len(*KafkaIbpVersion) < 1) {
 			return errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version or kafka_version to be provided")
 		}
 		return nil

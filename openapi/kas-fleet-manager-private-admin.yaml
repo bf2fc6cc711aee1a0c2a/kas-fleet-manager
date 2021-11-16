@@ -238,6 +238,10 @@ components:
               type: string
             desired_strimzi_version:
               type: string
+            desired_kafka_ibp_version:
+              type: string
+            actual_kafka_ibp_version:
+              type: string
             kafka_upgrading:
               type: boolean
             strimzi_upgrading:
@@ -289,6 +293,8 @@ components:
         strimzi_version:
           type: string
         kafka_version:
+          type: string
+        kafka_ibp_version:
           type: string
 
   securitySchemes:
