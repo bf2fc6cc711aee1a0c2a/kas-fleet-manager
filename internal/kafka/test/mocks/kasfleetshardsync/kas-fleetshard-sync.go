@@ -252,10 +252,22 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 			{
 				Ready:   true,
 				Version: "strimzi-cluster-operator.v0.23.0-0",
+				KafkaVersions: []string{
+					"2.7.0",
+				},
+				KafkaIbpVersions: []string{
+					"2.7",
+				},
 			},
 			{
 				Ready:   true,
 				Version: "strimzi-cluster-operator.v0.21.0-0",
+				KafkaVersions: []string{
+					"2.7.0",
+				},
+				KafkaIbpVersions: []string{
+					"2.7",
+				},
 			},
 		},
 		Remaining: private.DataPlaneClusterUpdateStatusRequestTotal{

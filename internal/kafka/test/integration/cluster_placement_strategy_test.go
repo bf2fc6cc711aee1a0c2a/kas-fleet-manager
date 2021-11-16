@@ -14,6 +14,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -25,7 +26,6 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	// Start with no cluster config and manual scaling.
 	configHook := func(clusterConfig *config.DataplaneClusterConfig) {
 		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
-		clusterConfig.StrimziOperatorVersion = "strimzi-cluster-operator.v0.23.0-0"
 	}
 
 	// setup ocm server
@@ -42,6 +42,11 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	if ocmConfig.MockMode != ocm.MockModeEmulateServer {
 		t.SkipNow()
 	}
+
+	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
+	kasfFleetshardSync.Start()
+	defer kasfFleetshardSync.Stop()
 
 	// load existing cluster and assign kafka to it so that it is not deleted
 
@@ -163,8 +168,8 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	err = db.Exec("UPDATE clusters set identity_provider_id = 'some-identity-provider-id'").Error
 	Expect(err).NotTo(HaveOccurred())
 
-	// Need to mark the clusters to be ready so that placement can actually happen
-	updateErr := test.TestServices.ClusterService.UpdateMultiClusterStatus([]string{"test01", "test02", "test03"}, api.ClusterReady)
+	// Need to mark the clusters to ClusterWaitingForKasFleetShardOperator so that fleetshardsync and placement can actually happen
+	updateErr := test.TestServices.ClusterService.UpdateMultiClusterStatus([]string{"test01", "test02", "test03"}, api.ClusterWaitingForKasFleetShardOperator)
 	Expect(updateErr).NotTo(HaveOccurred())
 	kafkas := []*dbapi.KafkaRequest{{
 		MultiAZ:       true,
