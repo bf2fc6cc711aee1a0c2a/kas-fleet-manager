@@ -396,9 +396,6 @@ components:
           ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
           connections: 0
           dataRetentionSize: dataRetentionSize
-        strimziVersions:
-        - strimziVersions
-        - strimziVersions
       properties:
         conditions:
           description: The cluster data plane conditions
@@ -413,10 +410,6 @@ components:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
         resizeInfo:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
-        strimziVersions:
-          items:
-            type: string
-          type: array
         strimzi:
           items:
             $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_strimzi'

@@ -79,25 +79,23 @@ func getRemaining(status private.DataPlaneClusterUpdateStatusRequest) dbapi.Data
 func getAvailableStrimziVersions(status private.DataPlaneClusterUpdateStatusRequest) ([]api.StrimziVersion, error) {
 	res := []api.StrimziVersion{}
 
-	// We try to get the versions from status.Strimzi and if it has not been defined
-	// we try to fallback to status.StrimziVersions.
-	if status.Strimzi != nil {
-		for _, val := range status.Strimzi {
-			strimziVersion := api.StrimziVersion{
-				Version: val.Version,
-				Ready:   val.Ready,
-			}
-			res = append(res, api.StrimziVersion(strimziVersion))
+	for _, val := range status.Strimzi {
+		var currKafkaVersions []api.KafkaVersion
+		for _, kafkaVersion := range val.KafkaVersions {
+			currKafkaVersions = append(currKafkaVersions, api.KafkaVersion{Version: kafkaVersion})
+		}
+		var currKafkaIBPVersions []api.KafkaIBPVersion
+		for _, kafkaIBPVersion := range val.KafkaIbpVersions {
+			currKafkaIBPVersions = append(currKafkaIBPVersions, api.KafkaIBPVersion{Version: kafkaIBPVersion})
 		}
 
-	} else { // fall back to StrimziVersions.
-		for _, val := range status.StrimziVersions {
-			strimziVersion := api.StrimziVersion{
-				Version: val,
-				Ready:   true,
-			}
-			res = append(res, api.StrimziVersion(strimziVersion))
+		strimziVersion := api.StrimziVersion{
+			Version:          val.Version,
+			Ready:            val.Ready,
+			KafkaVersions:    currKafkaVersions,
+			KafkaIBPVersions: currKafkaIBPVersions,
 		}
+		res = append(res, strimziVersion)
 	}
 
 	sortedRes, err := api.StrimziVersionsDeepSort(res)
