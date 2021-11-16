@@ -146,7 +146,6 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `QUOTA_TYPE`: Quota management service to be used. Options: `quota-management-list` and `ams`, Default: `quota-management-list`.
 - `KAS_FLEETSHARD_OLM_INDEX_IMAGE`: KAS Fleetshard operator OLM index image. Defaults to `quay.io/osd-addons/kas-fleetshard-operator:production-82b42db`.
 - `STRIMZI_OLM_INDEX_IMAGE`: Strimzi operator OLM index image. Defaults to `quay.io/osd-addons/managed-kafka:production-82b42db`.
-- `DEFAULT_KAFKA_VERSION`: Version of Kafka when creating Kafka instances. Defaults to `2.7.0`
 - `DATAPLANE_CLUSTER_SCALING_TYPE`: Dataplane cluster scaling type. Options: `manual`, `auto` and `none`, Defaults: `manual`.
 - `CLUSTER_LOGGING_OPERATOR_ADDON_ID`: The id of the cluster logging operator addon. Defaults to `''`.
 - `STRIMZI_OPERATOR_ADDON_ID`: The id of the Strimzi operator addon. Defaults to `managed-kafka-qe`.

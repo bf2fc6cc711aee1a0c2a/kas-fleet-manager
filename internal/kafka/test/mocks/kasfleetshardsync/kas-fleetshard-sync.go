@@ -254,9 +254,13 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 				Version: "strimzi-cluster-operator.v0.23.0-0",
 				KafkaVersions: []string{
 					"2.7.0",
+					"2.5.3",
+					"2.6.2",
 				},
 				KafkaIbpVersions: []string{
 					"2.7",
+					"2.5",
+					"2.6",
 				},
 			},
 			{
@@ -264,9 +268,13 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 				Version: "strimzi-cluster-operator.v0.21.0-0",
 				KafkaVersions: []string{
 					"2.7.0",
+					"2.3.1",
+					"2.1.2",
 				},
 				KafkaIbpVersions: []string{
 					"2.7",
+					"2.1",
+					"2.3",
 				},
 			},
 		},
@@ -301,7 +309,7 @@ func GetDeletedKafkaStatusResponse() private.DataPlaneKafkaStatus {
 }
 
 func GetDefaultReportedKafkaVersion() string {
-	return test.TestServices.KafkaConfig.DefaultKafkaVersion
+	return "2.7.0"
 }
 
 func GetDefaultReportedStrimziVersion() string {

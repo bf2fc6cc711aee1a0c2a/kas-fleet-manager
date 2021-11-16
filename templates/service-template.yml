@@ -394,11 +394,6 @@ parameters:
   description: Max connection attempts per second configuration for the default Kafka instance type
   value: "100"
 
-- name: DEFAULT_KAFKA_VERSION
-  displayName: Default Kafka version
-  description: The default version of Kafka when creating Kafka instances.
-  value: "2.7.0"
-
 - name: KAFKA_LIFE_SPAN
   displayName: Kafka life span expiration in hours
   description: Time period in hours after which kafka instances are deleted. This value must be a positive value
@@ -848,7 +843,6 @@ objects:
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
             - --strimzi-operator-index-image=${STRIMZI_OLM_INDEX_IMAGE}
             - --kas-fleetshard-operator-index-image=${KAS_FLEETSHARD_OLM_INDEX_IMAGE}
-            - --default-kafka-version=${DEFAULT_KAFKA_VERSION}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --kafka-domain-name=${KAFKA_DOMAIN_NAME}
             - --strimzi-operator-addon-id=${STRIMZI_OPERATOR_ADDON_ID}
