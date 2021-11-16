@@ -283,30 +283,9 @@ func (cluster *Cluster) GetAvailableStrimziVersions() ([]StrimziVersion, error) 
 		return versions, nil
 	}
 
-	fallbackToLegacyUnmarshal := false
 	err := json.Unmarshal(cluster.AvailableStrimziVersions, &versions)
 	if err != nil {
-		fallbackToLegacyUnmarshal = true
-	}
-
-	// TODO can the 'availableStrimziVersions' OpenAPI attribute and all of its related logic
-	// be safely removed from all places? is prod and stage  and all of the existing
-	// entries in their corresponding DBs been migrated to the new format, and is
-	// the kasfleetshard operator only using the new 'strimzi' attribute?
-	if fallbackToLegacyUnmarshal {
-		versions = []StrimziVersion{}
-		versionsListStr := []string{}
-		err := json.Unmarshal(cluster.AvailableStrimziVersions, &versionsListStr)
-		if err != nil {
-			return nil, err
-		}
-		for _, version := range versionsListStr {
-			strimziVersion := StrimziVersion{
-				Version: version,
-				Ready:   true,
-			}
-			versions = append(versions, strimziVersion)
-		}
+		return nil, err
 	}
 
 	return versions, nil

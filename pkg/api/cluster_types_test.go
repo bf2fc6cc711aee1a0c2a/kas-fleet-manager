@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -32,25 +31,6 @@ func TestGetAvailableStrimziVersions(t *testing.T) {
 			want: []StrimziVersion{
 				StrimziVersion{Version: "v3", Ready: true},
 				StrimziVersion{Version: "v6", Ready: false},
-				StrimziVersion{Version: "v7", Ready: true},
-			},
-			wantErr: false,
-		},
-		{
-			name: "When cluster has a non empty list of available strimzi versions in legacy list of string format those are returned",
-			cluster: func() *Cluster {
-				inputStrimziVersionsInLegacyFormat := []string{"v3", "v6", "v7"}
-				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersionsInLegacyFormat)
-				if err != nil {
-					panic(err)
-				}
-				fmt.Println(inputStrimziVersionsInLegacyFormat)
-				res := Cluster{AvailableStrimziVersions: inputStrimziVersionsJSON}
-				return &res
-			},
-			want: []StrimziVersion{
-				StrimziVersion{Version: "v3", Ready: true},
-				StrimziVersion{Version: "v6", Ready: true},
 				StrimziVersion{Version: "v7", Ready: true},
 			},
 			wantErr: false,
@@ -126,25 +106,6 @@ func TestGetAvailableAndReadyStrimziVersions(t *testing.T) {
 			},
 			want: []StrimziVersion{
 				StrimziVersion{Version: "v3", Ready: true},
-				StrimziVersion{Version: "v7", Ready: true},
-			},
-			wantErr: false,
-		},
-		{
-			name: "When cluster has a non empty list of available strimzi versions in legacy list of string format those are returned",
-			cluster: func() *Cluster {
-				inputStrimziVersionsInLegacyFormat := []string{"v3", "v6", "v7"}
-				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersionsInLegacyFormat)
-				if err != nil {
-					panic(err)
-				}
-				fmt.Println(inputStrimziVersionsInLegacyFormat)
-				res := Cluster{AvailableStrimziVersions: inputStrimziVersionsJSON}
-				return &res
-			},
-			want: []StrimziVersion{
-				StrimziVersion{Version: "v3", Ready: true},
-				StrimziVersion{Version: "v6", Ready: true},
 				StrimziVersion{Version: "v7", Ready: true},
 			},
 			wantErr: false,
