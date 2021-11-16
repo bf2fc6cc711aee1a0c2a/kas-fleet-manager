@@ -242,10 +242,12 @@ func (s *StrimziVersion) DeepCopy() *StrimziVersion {
 
 	if s.KafkaVersions != nil {
 		kafkaVersionsCopy := make([]KafkaVersion, len(s.KafkaVersions))
+		copy(kafkaVersionsCopy, s.KafkaVersions)
 		res.KafkaVersions = kafkaVersionsCopy
 	}
 	if s.KafkaIBPVersions != nil {
 		kafkaIBPVersionsCopy := make([]KafkaIBPVersion, len(s.KafkaIBPVersions))
+		copy(kafkaIBPVersionsCopy, s.KafkaIBPVersions)
 		res.KafkaIBPVersions = kafkaIBPVersionsCopy
 	}
 
