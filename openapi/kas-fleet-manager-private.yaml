@@ -432,10 +432,6 @@ components:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
         resizeInfo:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
-        strimziVersions:
-          type: array
-          items:
-            type: string
         strimzi:
           type: array
           items:
