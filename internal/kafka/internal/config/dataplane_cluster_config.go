@@ -165,6 +165,16 @@ func NewClusterConfig(clusters ClusterList) *ClusterConfig {
 	}
 }
 
+func (conf *ClusterConfig) GetCapacityForRegion(region string) int {
+	var capacity = 0
+	for _, cluster := range conf.clusterList {
+		if cluster.Region == region {
+			capacity += cluster.KafkaInstanceLimit
+		}
+	}
+	return capacity
+}
+
 func (conf *ClusterConfig) IsNumberOfKafkaWithinClusterLimit(clusterId string, count int) bool {
 	if _, exist := conf.clusterConfigMap[clusterId]; exist {
 		limit := conf.clusterConfigMap[clusterId].KafkaInstanceLimit
