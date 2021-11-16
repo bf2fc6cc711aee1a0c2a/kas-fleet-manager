@@ -91,11 +91,6 @@ func (h *dataPlaneClusterHandler) validateBody(request *private.DataPlaneCluster
 			return err
 		}
 
-		err = h.validateStrimziVersions(request)
-		if err != nil {
-			return err
-		}
-
 		err = h.validateStrimzi(request)
 		if err != nil {
 			return err
@@ -186,16 +181,6 @@ func (h *dataPlaneClusterHandler) validateRemaining(request *private.DataPlaneCl
 	}
 	if remaining.Partitions == nil {
 		return errors.FieldValidationError("remaining partitions must be set")
-	}
-
-	return nil
-}
-
-func (h *dataPlaneClusterHandler) validateStrimziVersions(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
-	for idx, strimziElem := range request.StrimziVersions {
-		if strimziElem == "" {
-			return errors.FieldValidationError(fmt.Sprintf(".status.strimziVersions[%d] cannot be empty", idx))
-		}
 	}
 
 	return nil
