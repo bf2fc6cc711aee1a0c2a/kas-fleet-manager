@@ -92,53 +92,41 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 	}
 
 	kafka.ClusterID = cluster.ClusterID
+
+	// Set desired Strimzi version
 	var selectedStrimziVersion *api.StrimziVersion
-	if k.dataPlaneClusterConfig.StrimziOperatorVersion == "" {
-		readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
-		if err != nil || len(readyStrimziVersions) == 0 {
-			// Strimzi version may not be available at the start (i.e. during upgrade of Strimzi operator).
-			// We need to allow the reconciler to retry getting and setting of the desired strimzi version for a Kafka request
-			// until the max retry duration is reached before updating its status to 'failed'.
-			durationSinceCreation := time.Since(kafka.CreatedAt)
-			if durationSinceCreation < constants2.AcceptedKafkaMaxRetryDuration {
-				glog.V(10).Infof("No available strimzi version found for Kafka '%s'", kafka.ID)
-				return nil
-			}
 
-			kafka.Status = constants2.KafkaRequestStatusFailed.String()
-			if err != nil {
-				err = errors.Wrapf(err, "failed to get desired Strimzi version %s", kafka.ID)
-			} else {
-				err = errors.New(fmt.Sprintf("failed to get desired Strimzi version %s", kafka.ID))
-			}
-			kafka.FailedReason = err.Error()
-			if err2 := k.kafkaService.Update(kafka); err2 != nil {
-				return errors.Wrapf(err2, "failed to update failed kafka %s", kafka.ID)
-			}
-			return err
-		} else {
-			selectedStrimziVersion = &readyStrimziVersions[len(readyStrimziVersions)-1]
-			kafka.DesiredStrimziVersion = selectedStrimziVersion.Version
+	readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
+	if err != nil || len(readyStrimziVersions) == 0 {
+		// Strimzi version may not be available at the start (i.e. during upgrade of Strimzi operator).
+		// We need to allow the reconciler to retry getting and setting of the desired strimzi version for a Kafka request
+		// until the max retry duration is reached before updating its status to 'failed'.
+		durationSinceCreation := time.Since(kafka.CreatedAt)
+		if durationSinceCreation < constants2.AcceptedKafkaMaxRetryDuration {
+			glog.V(10).Infof("No available strimzi version found for Kafka '%s' in Cluster ID '%s'", kafka.ID, kafka.ClusterID)
+			return nil
 		}
-	} else {
-		kafka.DesiredStrimziVersion = k.dataPlaneClusterConfig.StrimziOperatorVersion
+		kafka.Status = constants2.KafkaRequestStatusFailed.String()
+		if err != nil {
+			err = errors.Wrapf(err, "failed to get desired Strimzi version %s", kafka.ID)
+		} else {
+			err = errors.New(fmt.Sprintf("failed to get desired Strimzi version %s", kafka.ID))
+		}
+		kafka.FailedReason = err.Error()
+		if err2 := k.kafkaService.Update(kafka); err2 != nil {
+			return errors.Wrapf(err2, "failed to update failed kafka %s", kafka.ID)
+		}
+		return err
 	}
 
-	// Should we add KafkaVersion to dataplaneclusterconfig or reuse the existing in the kafka data type
-	// also what are the implications migrationwise
-	if selectedStrimziVersion == nil {
-		return errors.New(fmt.Sprintf("failed to get Kafka version %s", kafka.ID))
-	}
+	selectedStrimziVersion = &readyStrimziVersions[len(readyStrimziVersions)-1]
+	kafka.DesiredStrimziVersion = selectedStrimziVersion.Version
 
 	// Set desired Kafka version
 	if len(selectedStrimziVersion.KafkaVersions) == 0 {
 		return errors.New(fmt.Sprintf("failed to get Kafka version %s", kafka.ID))
 	}
 	kafka.DesiredKafkaVersion = selectedStrimziVersion.KafkaVersions[len(selectedStrimziVersion.KafkaVersions)-1].Version
-
-	if selectedStrimziVersion == nil {
-		return errors.New(fmt.Sprintf("failed to get Kafka IBP version %s", kafka.ID))
-	}
 
 	// Set desired Kafka IBP version
 	if len(selectedStrimziVersion.KafkaIBPVersions) == 0 {

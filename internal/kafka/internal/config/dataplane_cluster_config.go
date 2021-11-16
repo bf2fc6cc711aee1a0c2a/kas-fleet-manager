@@ -20,7 +20,6 @@ import (
 type DataplaneClusterConfig struct {
 	OpenshiftVersion             string `json:"cluster_openshift_version"`
 	ComputeMachineType           string `json:"cluster_compute_machine_type"`
-	StrimziOperatorVersion       string `json:"strimzi_operator_version"`
 	ImagePullDockerConfigContent string `json:"image_pull_docker_config_content"`
 	ImagePullDockerConfigFile    string `json:"image_pull_docker_config_file"`
 	// Possible values are:
@@ -70,7 +69,6 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	return &DataplaneClusterConfig{
 		OpenshiftVersion:                      "",
 		ComputeMachineType:                    "m5.2xlarge",
-		StrimziOperatorVersion:                "",
 		ImagePullDockerConfigContent:          "",
 		ImagePullDockerConfigFile:             "secrets/image-pull.dockerconfigjson",
 		DataPlaneClusterConfigFile:            "config/dataplane-cluster-configuration.yaml",
@@ -233,7 +231,6 @@ func (c *DataplaneClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool
 func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.OpenshiftVersion, "cluster-openshift-version", c.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")
 	fs.StringVar(&c.ComputeMachineType, "cluster-compute-machine-type", c.ComputeMachineType, "The compute machine type")
-	fs.StringVar(&c.StrimziOperatorVersion, "strimzi-operator-version", c.StrimziOperatorVersion, "The version of the Strimzi operator to install. If set, DesiredStrimziVersion in kafka_request will updated with this value. Otherwise value reported from kas-fleetshard operator will be used")
 	fs.StringVar(&c.ImagePullDockerConfigFile, "image-pull-docker-config-file", c.ImagePullDockerConfigFile, "The file that contains the docker config content for pulling MK operator images on clusters")
 	fs.StringVar(&c.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", c.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
 	fs.StringVar(&c.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", c.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")
