@@ -27,7 +27,7 @@ Feature: connector agent API
 
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
     Then the response code should be 200
-    And get and store access token using the addon parameter response as ${shard_token}
+    And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
 
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
@@ -587,6 +587,10 @@ Feature: connector agent API
       {"kind": "addon"}
       """
 
+    #cleanup
+    Then I delete keycloak client with clientID: ${clientID}
+
+
 
   Scenario: Bobby can stop and start and existing connector
     Given I am logged in as "Bobby"
@@ -604,7 +608,7 @@ Feature: connector agent API
 
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
     Then the response code should be 200
-    And get and store access token using the addon parameter response as ${shard_token}
+    And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
 
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
@@ -738,3 +742,6 @@ Feature: connector agent API
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
     Then the ".total" selection from the response should match "1"
     And the ".items[0].spec.desired_state" selection from the response should match "ready"
+
+    #cleanup
+    Then I delete keycloak client with clientID: ${clientID}
