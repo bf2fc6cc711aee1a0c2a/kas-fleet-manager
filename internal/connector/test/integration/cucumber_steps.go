@@ -3,18 +3,20 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"strings"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
 	"github.com/chirino/graphql"
 	"github.com/chirino/graphql/schema"
 	"github.com/cucumber/godog"
-	"net/url"
-	"strings"
-	"time"
 )
 
 type extender struct {
@@ -48,7 +50,7 @@ func (s *extender) theVaultDeleteCounterShouldBe(expected int64) error {
 	return nil
 }
 
-func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as string) error {
+func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as string, clientID string) error {
 	session := s.Session()
 
 	params := []public.AddonParameter{}
@@ -68,7 +70,6 @@ func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as str
 	}
 	u.User = url.UserPassword(byId["client-id"], byId["client-secret"])
 	tokenUrl := u.String()
-
 	body := url.Values{}
 	body.Set("grant_type", "client_credentials")
 	resp, err := session.Client.PostForm(tokenUrl, body)
@@ -92,10 +93,34 @@ func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as str
 	}
 
 	s.Variables[as] = fmt.Sprintf("%s", accessToken)
+	s.Variables[clientID] = byId["client-id"]
 
 	// because I was seeing "Bearer token was issued in the future" errors...
 	time.Sleep(2 * time.Second)
 
+	return nil
+}
+
+func (s *extender) deleteKeycloakClient(clientID string) error {
+	clientID = s.Variables[clientID].(string)
+	if clientID == "" {
+		return fmt.Errorf("Client id not found in session.variables[clientID]")
+	}
+
+	env := s.Suite.Helper.Env
+	var keycloakConfig *keycloak.KeycloakConfig
+	env.MustResolve(&keycloakConfig)
+	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.KafkaRealm)
+	accessToken, _ := kcClient.GetToken()
+
+	keycloakClient, err := kcClient.GetClient(clientID, accessToken)
+	if err != nil {
+		return fmt.Errorf("Error in getting keycloak client from session.variables[clientID]: %s", err.Error())
+	}
+	err = kcClient.DeleteClient(*keycloakClient.ID, accessToken)
+	if err != nil {
+		return fmt.Errorf("Error in deleting keycloak client with id: %s and clientId: %s due to %s", *keycloakClient.ID, clientID, err.Error())
+	}
 	return nil
 }
 
@@ -184,12 +209,12 @@ func init() {
 	// This is how we can contribute additional steps over the standard ones provided in the cucumber package.
 	cucumber.StepModules = append(cucumber.StepModules, func(ctx *godog.ScenarioContext, s *cucumber.TestScenario) {
 		e := &extender{s}
-		ctx.Step(`^get and store access token using the addon parameter response as \${([^"]*)}$`, e.getAndStoreAccessTokenUsingTheAddonParameterResponseAs)
+		ctx.Step(`^get and store access token using the addon parameter response as \${([^"]*)} and clientID as \${([^"]*)}$`, e.getAndStoreAccessTokenUsingTheAddonParameterResponseAs)
 		ctx.Step(`^the vault delete counter should be (\d+)$`, e.theVaultDeleteCounterShouldBe)
 		ctx.Step(`^I reset the vault counters$`, e.iResetTheVaultCounters)
 		ctx.Step(`^connector deployment upgrades available are:$`, e.connectorDeploymentUpgradesAvailableAre)
 		ctx.Step(`^update connector catalog of type "([^"]*)" and channel "([^"]*)" with shard metadata:$`, e.updateConnectorCatalogOfTypeAndChannelWithShardMetadata)
 		ctx.Step(`^I POST to "([^"]*)" a GraphQL query:$`, e.iPOSTToAGraphQLQuery)
-
+		ctx.Step(`I delete keycloak client with clientID: \${([^"]*)}$`, e.deleteKeycloakClient)
 	})
 }
