@@ -145,6 +145,14 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 		needsUpdate = true
 	}
 
+	// TODO - uncomment this once the status returns KafkaIbpVersion
+	// prevActualIbpiVersion := status.KafkaIbpVersion
+	// if status.KafkaIbpVersion != "" && status.KafkaIbpVersion != kafka.ActualKafkaIBPVersion {
+	// 	logger.Logger.Infof("Updating Ibp version version for Kafka ID '%s' from '%s' to '%s'", kafka.ID, prevActualIbpiVersion, status.KafkaIbpVersion)
+	// 	kafka.ActualKafkaIBPVersion = status.KafkaIbpVersion
+	// 	needsUpdate = true
+	// }
+
 	// TODO is kas fleetshard going ot report whether kafka version is
 	// being upgraded and whether kafka ibp version is being upgraded?
 
