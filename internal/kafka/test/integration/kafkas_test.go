@@ -58,7 +58,9 @@ func TestKafkaCreate_Success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
+	})
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -350,8 +352,9 @@ func TestKafkaCreate_OverrideDesiredStrimziVersion(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(config *config.DataplaneClusterConfig) {
-		config.StrimziOperatorVersion = desiredStrimziVersion
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
+		c.StrimziOperatorVersion = desiredStrimziVersion
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
 	})
 	defer teardown()
 
@@ -406,8 +409,8 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
-		c.KafkaCapacity.MaxCapacity = 2
+	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
 	})
 	defer tearDown()
 
@@ -427,7 +430,6 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	kafkaRegion := "dummy"
 	kafkaCloudProvider := "dummy"
 	// this value is taken from config/quota-management-list-configuration.yaml
 	orgId := "13640203"
@@ -438,7 +440,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 		{
 			MultiAZ:        false,
 			Owner:          "dummyuser1",
-			Region:         kafkaRegion,
+			Region:         mocks.MockCluster.Region().ID(),
 			CloudProvider:  kafkaCloudProvider,
 			Name:           "dummy-kafka",
 			OrganisationId: orgId,
@@ -448,7 +450,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 		{
 			MultiAZ:        false,
 			Owner:          "dummyuser2",
-			Region:         kafkaRegion,
+			Region:         mocks.MockCluster.Region().ID(),
 			CloudProvider:  kafkaCloudProvider,
 			Name:           "dummy-kafka-2",
 			OrganisationId: orgId,
@@ -567,8 +569,10 @@ func TestKafkaPost_NameUniquenessValidations(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
-	defer teardown()
+	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 3)})
+	})
+	defer tearDown()
 
 	// create two random accounts in same organisation
 	account1 := h.NewRandAccount()
@@ -787,7 +791,8 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig) {
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1000)})
 		acl.EnableInstanceLimitControl = true
 	})
 	defer teardown()
@@ -885,7 +890,9 @@ func TestKafkaGet(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
+	})
 	defer teardown()
 
 	account := h.NewRandAccount()
@@ -1080,12 +1087,13 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(ocmConfig *ocm.OCMConfig) {
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(ocmConfig *ocm.OCMConfig, c *config.DataplaneClusterConfig) {
 		if ocmConfig.MockMode == ocm.MockModeEmulateServer {
 			// increase repeat interval to allow time to delete the kafka instance before moving onto the next state
 			// no need to reset this on teardown as it is always set at the start of each test within the registerIntegrationWithHooks setup for emulated servers.
 			workers.RepeatInterval = 10 * time.Second
 		}
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 10)})
 	})
 	defer teardown()
 
@@ -1355,7 +1363,9 @@ func TestKafkaList_Success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
+		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
+	})
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)

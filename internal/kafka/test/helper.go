@@ -2,6 +2,8 @@ package test
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"net/http/httptest"
 	"testing"
 
@@ -98,4 +100,17 @@ func NewAdminPrivateAPIClient(helper *test.Helper) *adminprivate.APIClient {
 	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
 	client := adminprivate.NewAPIClient(openapiConfig)
 	return client
+}
+
+func NewMockDataplaneCluster(name string, capacity int) config.ManualCluster {
+	return config.ManualCluster{
+		Name:                  name,
+		CloudProvider:         mocks.MockCluster.CloudProvider().ID(),
+		Region:                mocks.MockCluster.Region().ID(),
+		MultiAZ:               true,
+		Schedulable:           true,
+		KafkaInstanceLimit:    capacity,
+		Status:                api.ClusterReady,
+		SupportedInstanceType: "eval,standard",
+	}
 }
