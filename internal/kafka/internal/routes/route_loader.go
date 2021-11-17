@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
@@ -110,10 +111,18 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		Kind: "KafkaList",
 	})
 	apiV1KafkasRouter := apiV1Router.PathPrefix("/kafkas").Subrouter()
-	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Get).Methods(http.MethodGet)
-	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Delete).Methods(http.MethodDelete)
-	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Update).Methods(http.MethodPatch)
-	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).Methods(http.MethodGet)
+	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Get).
+		Name(logger.NewLogEvent("get-kafka", "get a kafka instance").ToString()).
+		Methods(http.MethodGet)
+	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Delete).
+		Name(logger.NewLogEvent("delete-kafka", "delete a kafka instance").ToString()).
+		Methods(http.MethodDelete)
+	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Update).
+		Name(logger.NewLogEvent("update-kafka", "update a kafka instance").ToString()).
+		Methods(http.MethodPatch)
+	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).
+		Name(logger.NewLogEvent("list-kafka", "list all kafkas").ToString()).
+		Methods(http.MethodGet)
 	apiV1KafkasRouter.Use(requireIssuer)
 	apiV1KafkasRouter.Use(requireOrgID)
 	apiV1KafkasRouter.Use(authorizeMiddleware)
@@ -124,14 +133,20 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	//  /kafkas/{id}/metrics
 	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()
-	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).Methods(http.MethodGet)
-	apiV1MetricsRouter.HandleFunc("/query", metricsHandler.GetMetricsByInstantQuery).Methods(http.MethodGet)
+	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).
+		Name(logger.NewLogEvent("get-metrics", "list metrics by range").ToString()).
+		Methods(http.MethodGet)
+	apiV1MetricsRouter.HandleFunc("/query", metricsHandler.GetMetricsByInstantQuery).
+		Name(logger.NewLogEvent("get-metrics-instant", "get metrics by instant").ToString()).
+		Methods(http.MethodGet)
 
 	// /kafkas/{id}/metrics/federate
 	// federate endpoint separated from the rest of the /kafkas endpoints as it needs to support auth from both sso.redhat.com and mas-sso
 	// NOTE: this is only a temporary solution. MAS SSO auth support should be removed once we migrate to sso.redhat.com (TODO: to be done as part of MGDSTRM-6159)
 	apiV1MetricsFederateRouter := apiV1Router.PathPrefix("/kafkas/{id}/metrics/federate").Subrouter()
-	apiV1MetricsFederateRouter.HandleFunc("", metricsHandler.FederateMetrics).Methods(http.MethodGet)
+	apiV1MetricsFederateRouter.HandleFunc("", metricsHandler.FederateMetrics).
+		Name(logger.NewLogEvent("get-federate-metrics", "get federate metrics by id").ToString()).
+		Methods(http.MethodGet)
 	apiV1MetricsFederateRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.ServerConfig.TokenIssuerURL, s.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI}, errors.ErrorUnauthenticated))
 	apiV1MetricsFederateRouter.Use(requireOrgID)
 	apiV1MetricsFederateRouter.Use(authorizeMiddleware)
@@ -142,11 +157,21 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		Kind: "ServiceAccountList",
 	})
 	apiV1ServiceAccountsRouter := apiV1Router.PathPrefix("/service_accounts").Subrouter()
-	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.ListServiceAccounts).Methods(http.MethodGet)
-	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.CreateServiceAccount).Methods(http.MethodPost)
-	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.DeleteServiceAccount).Methods(http.MethodDelete)
-	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset_credentials", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
-	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
+	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.ListServiceAccounts).
+		Name(logger.NewLogEvent("list-service-accounts", "lists all service accounts").ToString()).
+		Methods(http.MethodGet)
+	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.CreateServiceAccount).
+		Name(logger.NewLogEvent("create-service-accounts", "create a service accounts").ToString()).
+		Methods(http.MethodPost)
+	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.DeleteServiceAccount).
+		Name(logger.NewLogEvent("delete-service-accounts", "delete a service accounts").ToString()).
+		Methods(http.MethodDelete)
+	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset_credentials", serviceAccountsHandler.ResetServiceAccountCredential).
+		Name(logger.NewLogEvent("reset-service-accounts", "reset a service accounts").ToString()).
+		Methods(http.MethodPost)
+	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).
+		Name(logger.NewLogEvent("get-service-accounts", "get a service accounts").ToString()).
+		Methods(http.MethodGet)
 
 	apiV1ServiceAccountsRouter.Use(requireIssuer)
 	apiV1ServiceAccountsRouter.Use(requireOrgID)
@@ -158,8 +183,12 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		Kind: "CloudProviderList",
 	})
 	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
-	apiV1CloudProvidersRouter.HandleFunc("", cloudProvidersHandler.ListCloudProviders).Methods(http.MethodGet)
-	apiV1CloudProvidersRouter.HandleFunc("/{id}/regions", cloudProvidersHandler.ListCloudProviderRegions).Methods(http.MethodGet)
+	apiV1CloudProvidersRouter.HandleFunc("", cloudProvidersHandler.ListCloudProviders).
+		Name(logger.NewLogEvent("list-cloud-providers", "list all cloud providers").ToString()).
+		Methods(http.MethodGet)
+	apiV1CloudProvidersRouter.HandleFunc("/{id}/regions", cloudProvidersHandler.ListCloudProviderRegions).
+		Name(logger.NewLogEvent("list-regions", "list cloud provider regions").ToString()).
+		Methods(http.MethodGet)
 
 	v1Metadata := api.VersionMetadata{
 		ID:          "v1",
@@ -182,10 +211,18 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
 	dataPlaneKafkaHandler := handlers.NewDataPlaneKafkaHandler(s.DataPlaneKafkaService, s.Kafka)
 	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
-	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).Methods(http.MethodGet)
-	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).Methods(http.MethodPut)
-	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/kafkas/status", dataPlaneKafkaHandler.UpdateKafkaStatuses).Methods(http.MethodPut)
-	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/kafkas", dataPlaneKafkaHandler.GetAll).Methods(http.MethodGet)
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).
+		Name(logger.NewLogEvent("get-dataplane-cluster-config", "get dataplane cluster config by id").ToString()).
+		Methods(http.MethodGet)
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).
+		Name(logger.NewLogEvent("update-dataplane-cluster-status", "update dataplane cluster status by id").ToString()).
+		Methods(http.MethodPut)
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/kafkas/status", dataPlaneKafkaHandler.UpdateKafkaStatuses).
+		Name(logger.NewLogEvent("update-dataplane-kafka-status", "update dataplane kafka status by id").ToString()).
+		Methods(http.MethodPut)
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/kafkas", dataPlaneKafkaHandler.GetAll).
+		Name(logger.NewLogEvent("list-dataplane-kafkas", "list all dataplane kafkas").ToString()).
+		Methods(http.MethodGet)
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, auth.Kas, s.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI, "id")
 
@@ -199,10 +236,18 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.Keycloak.GetConfig().OSDClusterIDPRealm.ValidIssuerURI}, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
-	adminRouter.HandleFunc("/kafkas", adminKafkaHandler.List).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/kafkas/{id}", adminKafkaHandler.Get).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/kafkas/{id}", adminKafkaHandler.Delete).Methods(http.MethodDelete)
-	adminRouter.HandleFunc("/kafkas/{id}", adminKafkaHandler.Update).Methods(http.MethodPatch)
+	adminRouter.HandleFunc("/kafkas", adminKafkaHandler.List).
+		Name(logger.NewLogEvent("admin-list-kafkas", "[admin] list all kafkas").ToString()).
+		Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafkas/{id}", adminKafkaHandler.Get).
+		Name(logger.NewLogEvent("admin-get-kafka", "[admin] get kafka by id").ToString()).
+		Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafkas/{id}", adminKafkaHandler.Delete).
+		Name(logger.NewLogEvent("admin-delete-kafka", "[admin] delete kafka by id").ToString()).
+		Methods(http.MethodDelete)
+	adminRouter.HandleFunc("/kafkas/{id}", adminKafkaHandler.Update).
+		Name(logger.NewLogEvent("admin-update-kafka", "[admin] update kafka by id").ToString()).
+		Methods(http.MethodPatch)
 
 	return nil
 }
