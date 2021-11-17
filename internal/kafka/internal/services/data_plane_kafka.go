@@ -154,6 +154,31 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 		needsUpdate = true
 	}
 
+	// TODO - uncomment this once the status returns KafkaIbpVersion
+	// prevActualIbpVersion := status.KafkaIbpVersion
+	// if status.KafkaIbpVersion != "" && status.KafkaIbpVersion != kafka.ActualKafkaIBPVersion {
+	// 	logger.Logger.Infof("Updating Ibp version version for Kafka ID '%s' from '%s' to '%s'", kafka.ID, prevActualIbpVersion, status.KafkaIbpVersion)
+	// 	kafka.ActualKafkaIBPVersion = status.KafkaIbpVersion
+	// 	needsUpdate = true
+	// }
+
+	// TODO is kas fleetshard going ot report whether kafka version is
+	// being upgraded and whether kafka ibp version is being upgraded?
+
+	// TODO for now we don't set the kafka_upgrading attribute at all because
+	// kas fleet shard operator still does not explicitely report whether kafka
+	// is being upgraded, as it is being done with strimzi operator. Wait until
+	// kas fleet shard operator has a way to report it and update the logic to do
+	// appropriately set it. section wait until kas fleetshard operator has a way to report whether
+	// kafka.KafkaUpgrading = kafkaBeingUpgraded
+	// prevKafkaUpgrading := kafka.KafkaUpgrading
+	// kafkaBeingUpgraded := kafka.DesiredKafkaVersion != kafka.ActualKafkaVersion
+	// if kafkaBeingUpgraded != kafka.KafkaUpgrading {
+	// 	logger.Logger.Infof("Kafka version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevKafkaUpgrading, kafkaBeingUpgraded)
+	// 	kafka.KafkaUpgrading = kafkaBeingUpgraded
+	// 	needsUpdate = true
+	// }
+
 	readyCondition, found := status.GetReadyCondition()
 	if found {
 		// TODO is this really correct? What happens if there is a StrimziUpdating reason

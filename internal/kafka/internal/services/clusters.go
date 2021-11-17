@@ -715,3 +715,28 @@ func (c clusterService) CheckStrimziVersionReady(cluster *api.Cluster, strimziVe
 	}
 	return false, nil
 }
+
+func (c clusterService) IsStrimziKafkaVersionAvailableInCluster(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error) {
+	readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
+	if err != nil {
+		return false, err
+	}
+	for _, version := range readyStrimziVersions {
+		if version.Version == strimziVersion {
+			kVvalid := false
+			for _, kversion := range version.KafkaVersions {
+				if kversion.Version == kafkaVersion {
+					kVvalid = true
+				}
+			}
+			ibpVvalid := false
+			for _, iversion := range version.KafkaIBPVersions {
+				if iversion.Version == ibpVersion {
+					ibpVvalid = true
+				}
+			}
+			return kVvalid && ibpVvalid, nil
+		}
+	}
+	return false, nil
+}
