@@ -1,13 +1,14 @@
 package handlers
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"net/http"
-	"time"
 
 	"github.com/patrickmn/go-cache"
 
@@ -33,13 +34,19 @@ func NewCloudProviderHandler(service services.CloudProvidersService, providerCon
 
 func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
+	query := r.URL.Query()
+	instanceTypeFilter := query.Get("instance_type")
+	cacheId := id
+	if instanceTypeFilter != "" {
+		cacheId = cacheId + "-" + instanceTypeFilter
+	}
 
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
 			handlers.ValidateLength(&id, "id", &handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			cachedRegionList, cached := h.cache.Get(id)
+			cachedRegionList, cached := h.cache.Get(cacheId)
 			if cached {
 				return cachedRegionList, nil
 			}
@@ -55,12 +62,23 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 				Items: []public.CloudRegion{},
 			}
 
+			provider, _ := h.supportedProviders.GetByName(id)
 			for _, cloudRegion := range cloudRegions {
-				cloudRegion.Enabled = h.supportedProviders.IsRegionSupportedForProvider(cloudRegion.CloudProvider, cloudRegion.Id)
+				region, _ := provider.Regions.GetByName(cloudRegion.Id)
+
+				// if instance_type was specified, only set enabled to true for regions that supports the specified instance type. Otherwise,
+				// set enable to true for all region that supports any instance types
+				if instanceTypeFilter != "" {
+					cloudRegion.Enabled = region.IsInstanceTypeSupported(config.InstanceType(instanceTypeFilter))
+				} else {
+					cloudRegion.Enabled = len(region.SupportedInstanceTypes) > 0
+				}
+
 				converted := presenters.PresentCloudRegion(&cloudRegion)
 				regionList.Items = append(regionList.Items, converted)
 			}
-			h.cache.Set(id, regionList, cache.DefaultExpiration)
+
+			h.cache.Set(cacheId, regionList, cache.DefaultExpiration)
 			return regionList, nil
 		},
 	}

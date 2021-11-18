@@ -1,9 +1,10 @@
 package config
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"reflect"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 
 	. "github.com/onsi/gomega"
 )
@@ -256,88 +257,6 @@ func Test_configService_IsProviderSupported(t *testing.T) {
 	}
 }
 
-func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
-	type fields struct {
-		providersConfig ProviderConfig
-	}
-	type args struct {
-		providerName string
-		regionName   string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
-	}{
-		{
-			name: "false when provider is not supported",
-			fields: fields{
-				providersConfig: ProviderConfig{
-					ProvidersConfig: ProviderConfiguration{
-						SupportedProviders: ProviderList{},
-					},
-				},
-			},
-			args: args{
-				providerName: "testProvider",
-				regionName:   "testRegion",
-			},
-			want: false,
-		},
-		{
-			name: "false when region is not supported",
-			fields: fields{
-				providersConfig: ProviderConfig{
-					ProvidersConfig: ProviderConfiguration{
-						SupportedProviders: ProviderList{
-							Provider{
-								Name: "testProvider",
-							},
-						},
-					},
-				},
-			},
-			args: args{
-				providerName: "testProvider",
-				regionName:   "testRegion",
-			},
-			want: false,
-		},
-		{
-			name: "true when region is supported",
-			fields: fields{
-				providersConfig: ProviderConfig{
-					ProvidersConfig: ProviderConfiguration{
-						SupportedProviders: ProviderList{
-							Provider{
-								Name: "testProvider",
-								Regions: RegionList{
-									Region{
-										Name: "testRegion",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			args: args{
-				providerName: "testProvider",
-				regionName:   "testRegion",
-			},
-			want: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := tt.fields.providersConfig
-			if got := c.ProvidersConfig.SupportedProviders.IsRegionSupportedForProvider(tt.args.providerName, tt.args.regionName); got != tt.want {
-				t.Errorf("IsRegionSupportedForProvider() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 func Test_configService_GetOrganisationById(t *testing.T) {
 	type result struct {
 		found        bool
