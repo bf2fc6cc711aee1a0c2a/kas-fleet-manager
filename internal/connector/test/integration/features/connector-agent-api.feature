@@ -10,6 +10,9 @@ Feature: connector agent API
     Given a user named "Bobby"
     Given a user named "Shard"
     Given a user named "Shard2"
+    Given an admin user named "Ricky Bobby" with roles "connector-fleet-manager-admin-full"
+    Given an admin user named "Cal Naughton Jr." with roles "connector-fleet-manager-admin-write"
+    Given an admin user named "Carley Bobby" with roles "connector-fleet-manager-admin-read"
 
   Scenario: connector cluster is created and agent processes assigned a deployment.
     Given I am logged in as "Jimmy"
@@ -472,12 +475,61 @@ Feature: connector agent API
       """
 
     #-----------------------------------------------------------------------------------------------------------------
-    # In this part of the Scenario we test out getting connector updates
+    # In this part of the Scenario we test out getting connector updates using the admin API
     #-----------------------------------------------------------------------------------------------------------------
 
     # Now lets verify connector upgrades due to catalog updates
-    Given I am logged in as "Jimmy"
-    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
+    Given I am logged in as "Ricky Bobby"
+    And I GET path "/v1/admin/kafka_connector_clusters/"
+    And the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "href": "${response.items[0].href}",
+            "id": "${response.items[0].id}",
+            "kind": "ConnectorCluster",
+            "metadata": {
+              "created_at": "${response.items[0].metadata.created_at}",
+              "name": "New Cluster",
+              "owner": "${response.items[0].metadata.owner}",
+              "updated_at": "${response.items[0].metadata.updated_at}"
+            },
+            "status": "unconnected"
+          },
+          {
+            "href": "${response.items[1].href}",
+            "id": "${response.items[1].id}",
+            "kind": "ConnectorCluster",
+            "metadata": {
+              "created_at": "${response.items[1].metadata.created_at}",
+              "name": "New Cluster",
+              "owner": "${response.items[1].metadata.owner}",
+              "updated_at": "${response.items[1].metadata.updated_at}"
+            },
+            "status": "ready"
+          },
+          {
+            "href": "${response.items[2].href}",
+            "id": "${response.items[2].id}",
+            "kind": "ConnectorCluster",
+            "metadata": {
+              "created_at": "${response.items[2].metadata.created_at}",
+              "name": "New Cluster",
+              "owner": "${response.items[2].metadata.owner}",
+              "updated_at": "${response.items[2].metadata.updated_at}"
+            },
+            "status": "ready"
+          }
+        ],
+        "kind": "ConnectorClusterList",
+        "page": 1,
+        "size": 3,
+        "total": 3
+      }
+      """
+    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
     And the response code should be 200
     And the response should match json:
       """
@@ -489,7 +541,8 @@ Feature: connector agent API
        "total": 0
       }
       """
-    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
+    Given I am logged in as "Carley Bobby"
+    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
     And the response code should be 200
     And the response should match json:
       """
@@ -515,7 +568,7 @@ Feature: connector agent API
         ]
       }
       """
-    Then I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
+    Then I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
     And the response code should be 200
     And the response should match json:
       """
@@ -540,7 +593,16 @@ Feature: connector agent API
     And I store the ".items" selection from the response as ${upgrade_items}
 
     # Upgrade by type
-    Then I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/type" with json body:
+    # Should fail for Carley, who can't write
+    Then I PUT path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type" with json body:
+      """
+      ${upgrade_items}
+      """
+    And the response code should be 404
+
+    # Should work for Cal, who can write
+    Given I am logged in as "Cal Naughton Jr."
+    Then I PUT path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type" with json body:
       """
       ${upgrade_items}
       """
@@ -566,8 +628,8 @@ Feature: connector agent API
       """
 
     # type upgrade is not available anymore
-    Then I am logged in as "Jimmy"
-    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
+    Then I am logged in as "Ricky Bobby"
+    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
     And the response code should be 200
     And the response should match json:
       """
@@ -610,8 +672,8 @@ Feature: connector agent API
     Then the response code should be 204
     And the response should match ""
 
-    Then I am logged in as "Jimmy"
-    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
+    Then I am logged in as "Ricky Bobby"
+    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
     And the response code should be 200
     And the response should match json:
       """
@@ -635,7 +697,7 @@ Feature: connector agent API
     And I store the ".items" selection from the response as ${upgrade_items}
 
     # Upgrade by operator
-    Then I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator" with json body:
+    Then I PUT path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator" with json body:
       """
       ${upgrade_items}
       """
@@ -669,8 +731,8 @@ Feature: connector agent API
     And the response should match ""
 
     # upgrade is not available anymore
-    Then I am logged in as "Jimmy"
-    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
+    Then I am logged in as "Ricky Bobby"
+    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
     And the response code should be 200
     And the response should match json:
       """
