@@ -12,9 +12,12 @@ import (
 )
 
 const (
-	KasFleetManagerAdminReadRole  = "kas-fleet-manager-admin-read"
-	KasFleetManagerAdminWriteRole = "kas-fleet-manager-admin-write"
-	KasFleetManagerAdminFullRole  = "kas-fleet-manager-admin-full"
+	KasFleetManagerAdminReadRole        = "kas-fleet-manager-admin-read"
+	KasFleetManagerAdminWriteRole       = "kas-fleet-manager-admin-write"
+	KasFleetManagerAdminFullRole        = "kas-fleet-manager-admin-full"
+	ConnectorFleetManagerAdminReadRole  = "connector-fleet-manager-admin-read"
+	ConnectorFleetManagerAdminWriteRole = "connector-fleet-manager-admin-write"
+	ConnectorFleetManagerAdminFullRole  = "connector-fleet-manager-admin-full"
 )
 
 // RolesAuthorizationMiddleware can be used to perform RBAC authorization checks on endpoints
