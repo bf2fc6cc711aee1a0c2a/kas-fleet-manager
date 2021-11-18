@@ -116,11 +116,11 @@ type KafkaConnectionSettings struct {
 }
 
 type ConnectorDeploymentTypeUpgrade struct {
-	ConnectorID    string                    `json:"connector_id,omitempty"`
-	DeploymentID    string                    `json:"deployment_id,omitempty"`
-	ConnectorTypeId string                    `json:"connector_type_id,omitempty"`
-	Channel         string                    `json:"channel,omitempty"`
-	ShardMetadata   *ConnectorTypeUpgrade     `json:"shard_metadata,omitempty"`
+	ConnectorID     string                `json:"connector_id,omitempty"`
+	DeploymentID    string                `json:"deployment_id,omitempty"`
+	ConnectorTypeId string                `json:"connector_type_id,omitempty"`
+	Channel         string                `json:"channel,omitempty"`
+	ShardMetadata   *ConnectorTypeUpgrade `json:"shard_metadata,omitempty"`
 }
 
 type ConnectorTypeUpgrade struct {
@@ -131,7 +131,7 @@ type ConnectorTypeUpgrade struct {
 type ConnectorDeploymentTypeUpgradeList []ConnectorDeploymentTypeUpgrade
 
 type ConnectorDeploymentOperatorUpgrade struct {
-	ConnectorID    string                    `json:"connector_id,omitempty"`
+	ConnectorID     string                    `json:"connector_id,omitempty"`
 	DeploymentID    string                    `json:"deployment_id,omitempty"`
 	ConnectorTypeId string                    `json:"connector_type_id,omitempty"`
 	Channel         string                    `json:"channel,omitempty"`
