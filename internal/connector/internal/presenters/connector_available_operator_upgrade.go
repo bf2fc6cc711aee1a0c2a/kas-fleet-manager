@@ -1,30 +1,30 @@
 package presenters
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 )
 
-func PresentConnectorAvailableOperatorUpgrade(req *dbapi.ConnectorDeploymentOperatorUpgrade) *public.ConnectorAvailableOperatorUpgrade {
-	return &public.ConnectorAvailableOperatorUpgrade{
+func PresentConnectorAvailableOperatorUpgrade(req *dbapi.ConnectorDeploymentOperatorUpgrade) *private.ConnectorAvailableOperatorUpgrade {
+	return &private.ConnectorAvailableOperatorUpgrade{
 		ConnectorId:     req.ConnectorID,
 		ConnectorTypeId: req.ConnectorTypeId,
 		Channel:         req.Channel,
-		Operator: public.ConnectorAvailableOperatorUpgradeOperator{
+		Operator: private.ConnectorAvailableOperatorUpgradeOperator{
 			AssignedId:  req.Operator.Assigned.Id,
 			AvailableId: req.Operator.Available.Id,
 		},
 	}
 }
 
-func ConvertConnectorAvailableOperatorUpgrade(req *public.ConnectorAvailableOperatorUpgrade) *dbapi.ConnectorDeploymentOperatorUpgrade {
+func ConvertConnectorAvailableOperatorUpgrade(req *private.ConnectorAvailableOperatorUpgrade) *dbapi.ConnectorDeploymentOperatorUpgrade {
 	return &dbapi.ConnectorDeploymentOperatorUpgrade{
 		ConnectorID:     req.ConnectorId,
 		ConnectorTypeId: req.ConnectorTypeId,
 		Channel:         req.Channel,
-		Operator:        &dbapi.ConnectorOperatorUpgrade{
-			Assigned:  dbapi.ConnectorOperator{
-				Id:      req.Operator.AssignedId,
+		Operator: &dbapi.ConnectorOperatorUpgrade{
+			Assigned: dbapi.ConnectorOperator{
+				Id: req.Operator.AssignedId,
 			},
 			Available: dbapi.ConnectorOperator{
 				Id: req.Operator.AvailableId,

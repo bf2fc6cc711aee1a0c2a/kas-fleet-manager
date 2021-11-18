@@ -1,23 +1,23 @@
 package presenters
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 )
 
-func PresentConnectorAvailableTypeUpgrade(req *dbapi.ConnectorDeploymentTypeUpgrade) *public.ConnectorAvailableTypeUpgrade {
-	return &public.ConnectorAvailableTypeUpgrade{
+func PresentConnectorAvailableTypeUpgrade(req *dbapi.ConnectorDeploymentTypeUpgrade) *private.ConnectorAvailableTypeUpgrade {
+	return &private.ConnectorAvailableTypeUpgrade{
 		ConnectorId:     req.ConnectorID,
 		ConnectorTypeId: req.ConnectorTypeId,
 		Channel:         req.Channel,
-		ShardMetadata: public.ConnectorAvailableTypeUpgradeShardMetadata{
+		ShardMetadata: private.ConnectorAvailableTypeUpgradeShardMetadata{
 			AssignedId:  req.ShardMetadata.AssignedId,
 			AvailableId: req.ShardMetadata.AvailableId,
 		},
 	}
 }
 
-func ConvertConnectorAvailableTypeUpgrade(req *public.ConnectorAvailableTypeUpgrade) *dbapi.ConnectorDeploymentTypeUpgrade {
+func ConvertConnectorAvailableTypeUpgrade(req *private.ConnectorAvailableTypeUpgrade) *dbapi.ConnectorDeploymentTypeUpgrade {
 	return &dbapi.ConnectorDeploymentTypeUpgrade{
 		ConnectorID:     req.ConnectorId,
 		ConnectorTypeId: req.ConnectorTypeId,
