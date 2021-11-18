@@ -197,7 +197,7 @@ func (h *dataPlaneClusterHandler) validateStrimzi(request *private.DataPlaneClus
 		}
 
 		if len(strimziElem.KafkaIbpVersions) == 0 {
-			return errors.FieldValidationError(fmt.Sprintf(".status.strimzi[%d].kafkaVersions cannot be empty", idx))
+			return errors.FieldValidationError(fmt.Sprintf(".status.strimzi[%d].kafkaIbpVersions cannot be empty", idx))
 		}
 	}
 
