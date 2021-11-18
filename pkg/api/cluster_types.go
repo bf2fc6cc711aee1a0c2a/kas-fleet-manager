@@ -206,6 +206,10 @@ type KafkaIBPVersion struct {
 	Version string `json:"version"`
 }
 
+func CompareVersion(v1, v2 string) (int, error) {
+	return semanticVersioningCompare(v1, v2)
+}
+
 func (s *KafkaIBPVersion) Compare(other KafkaIBPVersion) (int, error) {
 	return semanticVersioningCompare(s.Version, other.Version)
 }

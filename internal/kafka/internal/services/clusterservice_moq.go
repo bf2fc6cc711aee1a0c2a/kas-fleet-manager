@@ -75,6 +75,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //             InstallStrimziFunc: func(cluster *api.Cluster) (bool, *errors.ServiceError) {
 // 	               panic("mock out the InstallStrimzi method")
 //             },
+//             IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error) {
+// 	               panic("mock out the IsStrimziKafkaVersionAvailableInCluster method")
+//             },
 //             ListAllClusterIdsFunc: func() ([]api.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the ListAllClusterIds method")
 //             },
@@ -165,6 +168,9 @@ type ClusterServiceMock struct {
 
 	// InstallStrimziFunc mocks the InstallStrimzi method.
 	InstallStrimziFunc func(cluster *api.Cluster) (bool, *errors.ServiceError)
+
+	// IsStrimziKafkaVersionAvailableInClusterFunc mocks the IsStrimziKafkaVersionAvailableInCluster method.
+	IsStrimziKafkaVersionAvailableInClusterFunc func(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error)
 
 	// ListAllClusterIdsFunc mocks the ListAllClusterIds method.
 	ListAllClusterIdsFunc func() ([]api.Cluster, *errors.ServiceError)
@@ -296,6 +302,17 @@ type ClusterServiceMock struct {
 			// Cluster is the cluster argument value.
 			Cluster *api.Cluster
 		}
+		// IsStrimziKafkaVersionAvailableInCluster holds details about calls to the IsStrimziKafkaVersionAvailableInCluster method.
+		IsStrimziKafkaVersionAvailableInCluster []struct {
+			// Cluster is the cluster argument value.
+			Cluster *api.Cluster
+			// StrimziVersion is the strimziVersion argument value.
+			StrimziVersion string
+			// KafkaVersion is the kafkaVersion argument value.
+			KafkaVersion string
+			// IbpVersion is the ibpVersion argument value.
+			IbpVersion string
+		}
 		// ListAllClusterIds holds details about calls to the ListAllClusterIds method.
 		ListAllClusterIds []struct {
 		}
@@ -359,34 +376,35 @@ type ClusterServiceMock struct {
 			Status api.ClusterStatus
 		}
 	}
-	lockApplyResources                   sync.RWMutex
-	lockCheckClusterStatus               sync.RWMutex
-	lockCheckStrimziVersionReady         sync.RWMutex
-	lockConfigureAndSaveIdentityProvider sync.RWMutex
-	lockCountByStatus                    sync.RWMutex
-	lockCreate                           sync.RWMutex
-	lockDelete                           sync.RWMutex
-	lockDeleteByClusterID                sync.RWMutex
-	lockFindAllClusters                  sync.RWMutex
-	lockFindCluster                      sync.RWMutex
-	lockFindClusterByID                  sync.RWMutex
-	lockFindKafkaInstanceCount           sync.RWMutex
-	lockFindNonEmptyClusterById          sync.RWMutex
-	lockGetClusterDNS                    sync.RWMutex
-	lockGetComputeNodes                  sync.RWMutex
-	lockGetExternalID                    sync.RWMutex
-	lockInstallClusterLogging            sync.RWMutex
-	lockInstallStrimzi                   sync.RWMutex
-	lockListAllClusterIds                sync.RWMutex
-	lockListByStatus                     sync.RWMutex
-	lockListGroupByProviderAndRegion     sync.RWMutex
-	lockRegisterClusterJob               sync.RWMutex
-	lockScaleDownComputeNodes            sync.RWMutex
-	lockScaleUpComputeNodes              sync.RWMutex
-	lockSetComputeNodes                  sync.RWMutex
-	lockUpdate                           sync.RWMutex
-	lockUpdateMultiClusterStatus         sync.RWMutex
-	lockUpdateStatus                     sync.RWMutex
+	lockApplyResources                          sync.RWMutex
+	lockCheckClusterStatus                      sync.RWMutex
+	lockCheckStrimziVersionReady                sync.RWMutex
+	lockConfigureAndSaveIdentityProvider        sync.RWMutex
+	lockCountByStatus                           sync.RWMutex
+	lockCreate                                  sync.RWMutex
+	lockDelete                                  sync.RWMutex
+	lockDeleteByClusterID                       sync.RWMutex
+	lockFindAllClusters                         sync.RWMutex
+	lockFindCluster                             sync.RWMutex
+	lockFindClusterByID                         sync.RWMutex
+	lockFindKafkaInstanceCount                  sync.RWMutex
+	lockFindNonEmptyClusterById                 sync.RWMutex
+	lockGetClusterDNS                           sync.RWMutex
+	lockGetComputeNodes                         sync.RWMutex
+	lockGetExternalID                           sync.RWMutex
+	lockInstallClusterLogging                   sync.RWMutex
+	lockInstallStrimzi                          sync.RWMutex
+	lockIsStrimziKafkaVersionAvailableInCluster sync.RWMutex
+	lockListAllClusterIds                       sync.RWMutex
+	lockListByStatus                            sync.RWMutex
+	lockListGroupByProviderAndRegion            sync.RWMutex
+	lockRegisterClusterJob                      sync.RWMutex
+	lockScaleDownComputeNodes                   sync.RWMutex
+	lockScaleUpComputeNodes                     sync.RWMutex
+	lockSetComputeNodes                         sync.RWMutex
+	lockUpdate                                  sync.RWMutex
+	lockUpdateMultiClusterStatus                sync.RWMutex
+	lockUpdateStatus                            sync.RWMutex
 }
 
 // ApplyResources calls ApplyResourcesFunc.
@@ -960,6 +978,49 @@ func (mock *ClusterServiceMock) InstallStrimziCalls() []struct {
 	mock.lockInstallStrimzi.RLock()
 	calls = mock.calls.InstallStrimzi
 	mock.lockInstallStrimzi.RUnlock()
+	return calls
+}
+
+// IsStrimziKafkaVersionAvailableInCluster calls IsStrimziKafkaVersionAvailableInClusterFunc.
+func (mock *ClusterServiceMock) IsStrimziKafkaVersionAvailableInCluster(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error) {
+	if mock.IsStrimziKafkaVersionAvailableInClusterFunc == nil {
+		panic("ClusterServiceMock.IsStrimziKafkaVersionAvailableInClusterFunc: method is nil but ClusterService.IsStrimziKafkaVersionAvailableInCluster was just called")
+	}
+	callInfo := struct {
+		Cluster        *api.Cluster
+		StrimziVersion string
+		KafkaVersion   string
+		IbpVersion     string
+	}{
+		Cluster:        cluster,
+		StrimziVersion: strimziVersion,
+		KafkaVersion:   kafkaVersion,
+		IbpVersion:     ibpVersion,
+	}
+	mock.lockIsStrimziKafkaVersionAvailableInCluster.Lock()
+	mock.calls.IsStrimziKafkaVersionAvailableInCluster = append(mock.calls.IsStrimziKafkaVersionAvailableInCluster, callInfo)
+	mock.lockIsStrimziKafkaVersionAvailableInCluster.Unlock()
+	return mock.IsStrimziKafkaVersionAvailableInClusterFunc(cluster, strimziVersion, kafkaVersion, ibpVersion)
+}
+
+// IsStrimziKafkaVersionAvailableInClusterCalls gets all the calls that were made to IsStrimziKafkaVersionAvailableInCluster.
+// Check the length with:
+//     len(mockedClusterService.IsStrimziKafkaVersionAvailableInClusterCalls())
+func (mock *ClusterServiceMock) IsStrimziKafkaVersionAvailableInClusterCalls() []struct {
+	Cluster        *api.Cluster
+	StrimziVersion string
+	KafkaVersion   string
+	IbpVersion     string
+} {
+	var calls []struct {
+		Cluster        *api.Cluster
+		StrimziVersion string
+		KafkaVersion   string
+		IbpVersion     string
+	}
+	mock.lockIsStrimziKafkaVersionAvailableInCluster.RLock()
+	calls = mock.calls.IsStrimziKafkaVersionAvailableInCluster
+	mock.lockIsStrimziKafkaVersionAvailableInCluster.RUnlock()
 	return calls
 }
 

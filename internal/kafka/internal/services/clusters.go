@@ -66,6 +66,7 @@ type ClusterService interface {
 	// Install the cluster logging operator for a given cluster
 	InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
 	CheckStrimziVersionReady(cluster *api.Cluster, strimziVersion string) (bool, error)
+	IsStrimziKafkaVersionAvailableInCluster(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error)
 }
 
 type clusterService struct {

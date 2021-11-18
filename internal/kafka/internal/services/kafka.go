@@ -648,6 +648,26 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with strimzi version: %s", kafkaRequest.ID, kafkaRequest.DesiredStrimziVersion))
 		}
 
+		kafkaVersionAvailable, err2 := k.clusterService.IsStrimziKafkaVersionAvailableInCluster(cluster, kafkaRequest.DesiredStrimziVersion, kafkaRequest.DesiredKafkaVersion, kafkaRequest.DesiredKafkaIBPVersion)
+		if err2 != nil {
+			return errors.Validation(err2.Error())
+		}
+
+		if !kafkaVersionAvailable {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaVersion))
+		}
+
+		vCompRes, e := api.CompareVersion(kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion)
+
+		if e != nil {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare kafka ibp version: %s with kafka version: %s", kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
+		}
+
+		// ibp version cannot be greater than kafka version
+		if vCompRes > 0 {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s ibp version: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
+		}
+
 		return k.Update(kafkaRequest)
 	} else {
 		return errors.New(errors.ErrorUnauthenticated, "User not authenticated")
