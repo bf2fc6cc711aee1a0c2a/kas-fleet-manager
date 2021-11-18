@@ -270,9 +270,16 @@ func (k *connectorClusterService) List(ctx context.Context, listArgs *services.L
 	}
 
 	var err *errors.ServiceError
-	dbConn, err = filterToOwnerOrOrg(ctx, dbConn)
+	// allow admins to list clusters
+	admin, err := isAdmin(ctx)
 	if err != nil {
 		return nil, nil, err
+	}
+	if !admin {
+		dbConn, err = filterToOwnerOrOrg(ctx, dbConn)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
@@ -294,6 +301,15 @@ func (k *connectorClusterService) List(ctx context.Context, listArgs *services.L
 	}
 
 	return resourceList, pagingMeta, nil
+}
+
+func isAdmin(ctx context.Context) (bool, *errors.ServiceError) {
+	_, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return false, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
+	}
+
+	return auth.GetIsAdminFromContext(ctx), nil
 }
 
 func (k connectorClusterService) Update(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError {
@@ -634,7 +650,7 @@ func (k *connectorClusterService) GetAvailableDeploymentTypeUpgrades(listArgs *s
 	upgrades = make(dbapi.ConnectorDeploymentTypeUpgradeList, len(results))
 	for i, r := range results {
 		upgrades[i] = dbapi.ConnectorDeploymentTypeUpgrade{
-			ConnectorID:    r.ConnectorID,
+			ConnectorID:     r.ConnectorID,
 			DeploymentID:    r.DeploymentID,
 			ConnectorTypeId: r.ConnectorTypeID,
 			Channel:         r.Channel,
@@ -749,7 +765,7 @@ func (k *connectorClusterService) GetAvailableDeploymentOperatorUpgrades(listArg
 	upgrades = make([]dbapi.ConnectorDeploymentOperatorUpgrade, len(results))
 	for i, r := range results {
 		upgrades[i] = dbapi.ConnectorDeploymentOperatorUpgrade{
-			ConnectorID:    r.ConnectorID,
+			ConnectorID:     r.ConnectorID,
 			DeploymentID:    r.DeploymentID,
 			ConnectorTypeId: r.ConnectorTypeID,
 			Channel:         r.Channel,
