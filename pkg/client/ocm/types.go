@@ -12,12 +12,19 @@ const (
 	StandardQuota KafkaQuotaType = "standard"
 )
 
+type KafkaProduct string
+
+const (
+	RHOSAKProduct      KafkaProduct = "RHOSAK"
+	RHOSAKTrialProduct KafkaProduct = "RHOSAKTrial"
+)
+
 func (t KafkaQuotaType) GetProduct() string {
 	if t == StandardQuota {
-		return "RHOSAK"
+		return string(RHOSAKProduct)
 	}
 
-	return "RHOSAKTrial"
+	return string(RHOSAKTrialProduct)
 }
 
 func (t KafkaQuotaType) GetResourceName() string {

@@ -80,6 +80,9 @@ var _ Client = &ClientMock{}
 // 			GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 // 				panic("mock out the GetOrganisationIdFromExternalId method")
 // 			},
+// 			GetQuotaCostsForProductFunc: func(organizationID string, resourceName string, product string) ([]*amsv1.QuotaCost, error) {
+// 				panic("mock out the GetQuotaCostsForProduct method")
+// 			},
 // 			GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
 // 				panic("mock out the GetRegions method")
 // 			},
@@ -88,9 +91,6 @@ var _ Client = &ClientMock{}
 // 			},
 // 			GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
 // 				panic("mock out the GetSyncSet method")
-// 			},
-// 			HasAssignedQuotaFunc: func(organizationId string, quotaType KafkaQuotaType) (bool, error) {
-// 				panic("mock out the HasAssignedQuota method")
 // 			},
 // 			ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error) {
 // 				panic("mock out the ScaleDownComputeNodes method")
@@ -174,6 +174,9 @@ type ClientMock struct {
 	// GetOrganisationIdFromExternalIdFunc mocks the GetOrganisationIdFromExternalId method.
 	GetOrganisationIdFromExternalIdFunc func(externalId string) (string, error)
 
+	// GetQuotaCostsForProductFunc mocks the GetQuotaCostsForProduct method.
+	GetQuotaCostsForProductFunc func(organizationID string, resourceName string, product string) ([]*amsv1.QuotaCost, error)
+
 	// GetRegionsFunc mocks the GetRegions method.
 	GetRegionsFunc func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error)
 
@@ -182,9 +185,6 @@ type ClientMock struct {
 
 	// GetSyncSetFunc mocks the GetSyncSet method.
 	GetSyncSetFunc func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error)
-
-	// HasAssignedQuotaFunc mocks the HasAssignedQuota method.
-	HasAssignedQuotaFunc func(organizationId string, quotaType KafkaQuotaType) (bool, error)
 
 	// ScaleDownComputeNodesFunc mocks the ScaleDownComputeNodes method.
 	ScaleDownComputeNodesFunc func(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
@@ -313,6 +313,15 @@ type ClientMock struct {
 			// ExternalId is the externalId argument value.
 			ExternalId string
 		}
+		// GetQuotaCostsForProduct holds details about calls to the GetQuotaCostsForProduct method.
+		GetQuotaCostsForProduct []struct {
+			// OrganizationID is the organizationID argument value.
+			OrganizationID string
+			// ResourceName is the resourceName argument value.
+			ResourceName string
+			// Product is the product argument value.
+			Product string
+		}
 		// GetRegions holds details about calls to the GetRegions method.
 		GetRegions []struct {
 			// Provider is the provider argument value.
@@ -329,13 +338,6 @@ type ClientMock struct {
 			ClusterID string
 			// SyncSetID is the syncSetID argument value.
 			SyncSetID string
-		}
-		// HasAssignedQuota holds details about calls to the HasAssignedQuota method.
-		HasAssignedQuota []struct {
-			// OrganizationId is the organizationId argument value.
-			OrganizationId string
-			// QuotaType is the quotaType argument value.
-			QuotaType KafkaQuotaType
 		}
 		// ScaleDownComputeNodes holds details about calls to the ScaleDownComputeNodes method.
 		ScaleDownComputeNodes []struct {
@@ -397,10 +399,10 @@ type ClientMock struct {
 	lockGetExistingClusterMetrics       sync.RWMutex
 	lockGetIdentityProviderList         sync.RWMutex
 	lockGetOrganisationIdFromExternalId sync.RWMutex
+	lockGetQuotaCostsForProduct         sync.RWMutex
 	lockGetRegions                      sync.RWMutex
 	lockGetRequiresTermsAcceptance      sync.RWMutex
 	lockGetSyncSet                      sync.RWMutex
-	lockHasAssignedQuota                sync.RWMutex
 	lockScaleDownComputeNodes           sync.RWMutex
 	lockScaleUpComputeNodes             sync.RWMutex
 	lockSetComputeNodes                 sync.RWMutex
@@ -1046,6 +1048,45 @@ func (mock *ClientMock) GetOrganisationIdFromExternalIdCalls() []struct {
 	return calls
 }
 
+// GetQuotaCostsForProduct calls GetQuotaCostsForProductFunc.
+func (mock *ClientMock) GetQuotaCostsForProduct(organizationID string, resourceName string, product string) ([]*amsv1.QuotaCost, error) {
+	if mock.GetQuotaCostsForProductFunc == nil {
+		panic("ClientMock.GetQuotaCostsForProductFunc: method is nil but Client.GetQuotaCostsForProduct was just called")
+	}
+	callInfo := struct {
+		OrganizationID string
+		ResourceName   string
+		Product        string
+	}{
+		OrganizationID: organizationID,
+		ResourceName:   resourceName,
+		Product:        product,
+	}
+	mock.lockGetQuotaCostsForProduct.Lock()
+	mock.calls.GetQuotaCostsForProduct = append(mock.calls.GetQuotaCostsForProduct, callInfo)
+	mock.lockGetQuotaCostsForProduct.Unlock()
+	return mock.GetQuotaCostsForProductFunc(organizationID, resourceName, product)
+}
+
+// GetQuotaCostsForProductCalls gets all the calls that were made to GetQuotaCostsForProduct.
+// Check the length with:
+//     len(mockedClient.GetQuotaCostsForProductCalls())
+func (mock *ClientMock) GetQuotaCostsForProductCalls() []struct {
+	OrganizationID string
+	ResourceName   string
+	Product        string
+} {
+	var calls []struct {
+		OrganizationID string
+		ResourceName   string
+		Product        string
+	}
+	mock.lockGetQuotaCostsForProduct.RLock()
+	calls = mock.calls.GetQuotaCostsForProduct
+	mock.lockGetQuotaCostsForProduct.RUnlock()
+	return calls
+}
+
 // GetRegions calls GetRegionsFunc.
 func (mock *ClientMock) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
 	if mock.GetRegionsFunc == nil {
@@ -1140,41 +1181,6 @@ func (mock *ClientMock) GetSyncSetCalls() []struct {
 	mock.lockGetSyncSet.RLock()
 	calls = mock.calls.GetSyncSet
 	mock.lockGetSyncSet.RUnlock()
-	return calls
-}
-
-// HasAssignedQuota calls HasAssignedQuotaFunc.
-func (mock *ClientMock) HasAssignedQuota(organizationId string, quotaType KafkaQuotaType) (bool, error) {
-	if mock.HasAssignedQuotaFunc == nil {
-		panic("ClientMock.HasAssignedQuotaFunc: method is nil but Client.HasAssignedQuota was just called")
-	}
-	callInfo := struct {
-		OrganizationId string
-		QuotaType      KafkaQuotaType
-	}{
-		OrganizationId: organizationId,
-		QuotaType:      quotaType,
-	}
-	mock.lockHasAssignedQuota.Lock()
-	mock.calls.HasAssignedQuota = append(mock.calls.HasAssignedQuota, callInfo)
-	mock.lockHasAssignedQuota.Unlock()
-	return mock.HasAssignedQuotaFunc(organizationId, quotaType)
-}
-
-// HasAssignedQuotaCalls gets all the calls that were made to HasAssignedQuota.
-// Check the length with:
-//     len(mockedClient.HasAssignedQuotaCalls())
-func (mock *ClientMock) HasAssignedQuotaCalls() []struct {
-	OrganizationId string
-	QuotaType      KafkaQuotaType
-} {
-	var calls []struct {
-		OrganizationId string
-		QuotaType      KafkaQuotaType
-	}
-	mock.lockHasAssignedQuota.RLock()
-	calls = mock.calls.HasAssignedQuota
-	mock.lockHasAssignedQuota.RUnlock()
 	return calls
 }
 
