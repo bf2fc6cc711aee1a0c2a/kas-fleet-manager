@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
 
@@ -91,35 +92,47 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 	}
 
 	kafka.ClusterID = cluster.ClusterID
-	if k.dataPlaneClusterConfig.StrimziOperatorVersion == "" {
-		readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
-		if err != nil || len(readyStrimziVersions) == 0 {
-			// Strimzi version may not be available at the start (i.e. during upgrade of Strimzi operator).
-			// We need to allow the reconciler to retry getting and setting of the desired strimzi version for a Kafka request
-			// until the max retry duration is reached before updating its status to 'failed'.
-			durationSinceCreation := time.Since(kafka.CreatedAt)
-			if durationSinceCreation < constants2.AcceptedKafkaMaxRetryDuration {
-				glog.V(10).Infof("No available strimzi version found for Kafka '%s'", kafka.ID)
-				return nil
-			}
 
-			kafka.Status = constants2.KafkaRequestStatusFailed.String()
-			if err != nil {
-				err = errors.Wrapf(err, "failed to get desired Strimzi version %s", kafka.ID)
-			} else {
-				err = errors.New(fmt.Sprintf("failed to get desired Strimzi version %s", kafka.ID))
-			}
-			kafka.FailedReason = err.Error()
-			if err2 := k.kafkaService.Update(kafka); err2 != nil {
-				return errors.Wrapf(err2, "failed to update failed kafka %s", kafka.ID)
-			}
-			return err
-		} else {
-			kafka.DesiredStrimziVersion = readyStrimziVersions[len(readyStrimziVersions)-1].Version
+	// Set desired Strimzi version
+	var selectedStrimziVersion *api.StrimziVersion
+
+	readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
+	if err != nil || len(readyStrimziVersions) == 0 {
+		// Strimzi version may not be available at the start (i.e. during upgrade of Strimzi operator).
+		// We need to allow the reconciler to retry getting and setting of the desired strimzi version for a Kafka request
+		// until the max retry duration is reached before updating its status to 'failed'.
+		durationSinceCreation := time.Since(kafka.CreatedAt)
+		if durationSinceCreation < constants2.AcceptedKafkaMaxRetryDuration {
+			glog.V(10).Infof("No available strimzi version found for Kafka '%s' in Cluster ID '%s'", kafka.ID, kafka.ClusterID)
+			return nil
 		}
-	} else {
-		kafka.DesiredStrimziVersion = k.dataPlaneClusterConfig.StrimziOperatorVersion
+		kafka.Status = constants2.KafkaRequestStatusFailed.String()
+		if err != nil {
+			err = errors.Wrapf(err, "failed to get desired Strimzi version %s", kafka.ID)
+		} else {
+			err = errors.New(fmt.Sprintf("failed to get desired Strimzi version %s", kafka.ID))
+		}
+		kafka.FailedReason = err.Error()
+		if err2 := k.kafkaService.Update(kafka); err2 != nil {
+			return errors.Wrapf(err2, "failed to update failed kafka %s", kafka.ID)
+		}
+		return err
 	}
+
+	selectedStrimziVersion = &readyStrimziVersions[len(readyStrimziVersions)-1]
+	kafka.DesiredStrimziVersion = selectedStrimziVersion.Version
+
+	// Set desired Kafka version
+	if len(selectedStrimziVersion.KafkaVersions) == 0 {
+		return errors.New(fmt.Sprintf("failed to get Kafka version %s", kafka.ID))
+	}
+	kafka.DesiredKafkaVersion = selectedStrimziVersion.KafkaVersions[len(selectedStrimziVersion.KafkaVersions)-1].Version
+
+	// Set desired Kafka IBP version
+	if len(selectedStrimziVersion.KafkaIBPVersions) == 0 {
+		return errors.New(fmt.Sprintf("failed to get Kafka IBP version %s", kafka.ID))
+	}
+	kafka.DesiredKafkaIBPVersion = selectedStrimziVersion.KafkaIBPVersions[len(selectedStrimziVersion.KafkaIBPVersions)-1].Version
 
 	glog.Infof("Kafka instance with id %s is assigned to cluster with id %s", kafka.ID, kafka.ClusterID)
 	kafka.Status = constants2.KafkaRequestStatusPreparing.String()

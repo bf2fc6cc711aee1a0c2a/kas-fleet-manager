@@ -220,69 +220,74 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 
 	var testKafkas = []*dbapi.KafkaRequest{
 		{
-			ClusterID:             testServer.ClusterID,
-			MultiAZ:               false,
-			Name:                  mockKafkaName1,
-			Namespace:             "mk-1",
-			Status:                constants2.KafkaRequestStatusDeprovision.String(),
-			BootstrapServerHost:   bootstrapServerHost,
-			SsoClientID:           ssoClientID,
-			SsoClientSecret:       ssoSecret,
-			DesiredKafkaVersion:   "2.7.0",
-			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:          types.STANDARD.String(),
+			ClusterID:              testServer.ClusterID,
+			MultiAZ:                false,
+			Name:                   mockKafkaName1,
+			Namespace:              "mk-1",
+			Status:                 constants2.KafkaRequestStatusDeprovision.String(),
+			BootstrapServerHost:    bootstrapServerHost,
+			SsoClientID:            ssoClientID,
+			SsoClientSecret:        ssoSecret,
+			DesiredKafkaVersion:    "2.7.0",
+			DesiredKafkaIBPVersion: "2.7",
+			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:           types.STANDARD.String(),
 		},
 		{
-			ClusterID:             testServer.ClusterID,
-			MultiAZ:               false,
-			Name:                  mockKafkaName2,
-			Namespace:             "mk-2",
-			Status:                constants2.KafkaRequestStatusProvisioning.String(),
-			BootstrapServerHost:   bootstrapServerHost,
-			SsoClientID:           ssoClientID,
-			SsoClientSecret:       ssoSecret,
-			DesiredKafkaVersion:   "2.6.0",
-			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:          types.STANDARD.String(),
+			ClusterID:              testServer.ClusterID,
+			MultiAZ:                false,
+			Name:                   mockKafkaName2,
+			Namespace:              "mk-2",
+			Status:                 constants2.KafkaRequestStatusProvisioning.String(),
+			BootstrapServerHost:    bootstrapServerHost,
+			SsoClientID:            ssoClientID,
+			SsoClientSecret:        ssoSecret,
+			DesiredKafkaVersion:    "2.6.0",
+			DesiredKafkaIBPVersion: "2.6",
+			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:           types.STANDARD.String(),
 		},
 		{
-			ClusterID:             testServer.ClusterID,
-			MultiAZ:               false,
-			Name:                  mockKafkaName3,
-			Namespace:             "mk-3",
-			Status:                constants2.KafkaRequestStatusPreparing.String(),
-			BootstrapServerHost:   bootstrapServerHost,
-			SsoClientID:           ssoClientID,
-			SsoClientSecret:       ssoSecret,
-			DesiredKafkaVersion:   "2.7.1",
-			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:          types.EVAL.String(),
+			ClusterID:              testServer.ClusterID,
+			MultiAZ:                false,
+			Name:                   mockKafkaName3,
+			Namespace:              "mk-3",
+			Status:                 constants2.KafkaRequestStatusPreparing.String(),
+			BootstrapServerHost:    bootstrapServerHost,
+			SsoClientID:            ssoClientID,
+			SsoClientSecret:        ssoSecret,
+			DesiredKafkaVersion:    "2.7.1",
+			DesiredKafkaIBPVersion: "2.7",
+			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:           types.EVAL.String(),
 		},
 		{
-			ClusterID:             testServer.ClusterID,
-			MultiAZ:               false,
-			Name:                  mockKafkaName4,
-			Namespace:             "mk-4",
-			Status:                constants2.KafkaRequestStatusReady.String(),
-			BootstrapServerHost:   bootstrapServerHost,
-			SsoClientID:           ssoClientID,
-			SsoClientSecret:       ssoSecret,
-			DesiredKafkaVersion:   "2.7.2",
-			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:          types.STANDARD.String(),
+			ClusterID:              testServer.ClusterID,
+			MultiAZ:                false,
+			Name:                   mockKafkaName4,
+			Namespace:              "mk-4",
+			Status:                 constants2.KafkaRequestStatusReady.String(),
+			BootstrapServerHost:    bootstrapServerHost,
+			SsoClientID:            ssoClientID,
+			SsoClientSecret:        ssoSecret,
+			DesiredKafkaVersion:    "2.7.2",
+			DesiredKafkaIBPVersion: "2.7",
+			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:           types.STANDARD.String(),
 		},
 		{
-			ClusterID:             testServer.ClusterID,
-			MultiAZ:               false,
-			Namespace:             "mk-5",
-			Name:                  mockKafkaName4,
-			Status:                constants2.KafkaRequestStatusFailed.String(),
-			BootstrapServerHost:   bootstrapServerHost,
-			SsoClientID:           ssoClientID,
-			SsoClientSecret:       ssoSecret,
-			DesiredKafkaVersion:   "2.7.2",
-			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:          types.STANDARD.String(),
+			ClusterID:              testServer.ClusterID,
+			MultiAZ:                false,
+			Namespace:              "mk-5",
+			Name:                   mockKafkaName4,
+			Status:                 constants2.KafkaRequestStatusFailed.String(),
+			BootstrapServerHost:    bootstrapServerHost,
+			SsoClientID:            ssoClientID,
+			SsoClientSecret:        ssoSecret,
+			DesiredKafkaVersion:    "2.7.2",
+			DesiredKafkaIBPVersion: "2.7",
+			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:           types.STANDARD.String(),
 		},
 	}
 
@@ -297,13 +302,14 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	// create an additional kafka in failed state without "ssoSecret", "ssoClientID" and bootstrapServerHost. This indicates that the
 	// kafka failed in preparing state and should not be returned in the list
 	additionalKafka := &dbapi.KafkaRequest{
-		ClusterID:           testServer.ClusterID,
-		MultiAZ:             false,
-		Name:                mockKafkaName4,
-		Namespace:           "mk",
-		Status:              constants2.KafkaRequestStatusFailed.String(),
-		DesiredKafkaVersion: "2.7.2",
-		InstanceType:        types.EVAL.String(),
+		ClusterID:              testServer.ClusterID,
+		MultiAZ:                false,
+		Name:                   mockKafkaName4,
+		Namespace:              "mk",
+		Status:                 constants2.KafkaRequestStatusFailed.String(),
+		DesiredKafkaVersion:    "2.7.2",
+		DesiredKafkaIBPVersion: "2.7",
+		InstanceType:           types.EVAL.String(),
 	}
 
 	if err := db.Save(additionalKafka).Error; err != nil {
@@ -325,6 +331,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
 				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
 				Expect(mk.Spec.Versions.Kafka).To(Equal(k.DesiredKafkaVersion))
+				Expect(mk.Spec.Versions.KafkaIbp).To(Equal(k.DesiredKafkaIBPVersion))
 				Expect(mk.Spec.Endpoint.Tls).To(BeNil())
 			} else {
 				t.Error("failed matching managedkafka id with kafkarequest id")
@@ -335,17 +342,24 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 
 	var readyClusters, deletedClusters []string
 	updates := map[string]private.DataPlaneKafkaStatus{}
-	for _, item := range list.Items {
+	condtionsReasons := []string{
+		"StrimziUpdating",
+		"KafkaUpdating",
+		"KafkaIbpUpdating",
+	}
+	lengthConditionsReasons := len(condtionsReasons)
+	for idx, item := range list.Items {
 		if !item.Spec.Deleted {
 			updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlaneKafkaStatus{
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "True",
-					Reason: "StrimziUpdating",
+					Reason: condtionsReasons[idx%lengthConditionsReasons],
 				}},
 				Versions: private.DataPlaneKafkaStatusVersions{
-					Kafka:   fmt.Sprintf("kafka-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
-					Strimzi: fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
+					Kafka:    fmt.Sprintf("kafka-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
+					Strimzi:  fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
+					KafkaIbp: fmt.Sprintf("strimzi-ibp-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
 				},
 			}
 			readyClusters = append(readyClusters, item.Metadata.Annotations.Bf2OrgId)
@@ -394,11 +408,22 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			t.Errorf("failed to find sent kafka status update related to cluster with id %s", cid)
 		}
 
+		var sentReadyCondition string
+		for _, cond := range sentUpdate.Conditions {
+			if cond.Type == "Ready" {
+				sentReadyCondition = cond.Reason
+			}
+		}
+		Expect(sentReadyCondition).NotTo(BeEmpty())
+
 		// Test version related reported fields
 		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 		Expect(c.ActualKafkaVersion).To(Equal(sentUpdate.Versions.Kafka))
+		Expect(c.ActualKafkaIBPVersion).To(Equal(sentUpdate.Versions.KafkaIbp))
 		Expect(c.ActualStrimziVersion).To(Equal(sentUpdate.Versions.Strimzi))
-		Expect(c.StrimziUpgrading).To(BeTrue()) // should always be true since Condition.Reason is set to StrimziUpgrading
+		Expect(c.StrimziUpgrading).To(Equal(sentReadyCondition == "StrimziUpdating"))
+		Expect(c.KafkaUpgrading).To(Equal(sentReadyCondition == "KafkaUpdating"))
+		Expect(c.KafkaIBPUpgrading).To(Equal(sentReadyCondition == "KafkaIbpUpdating"))
 
 		// TODO test when kafka is being upgraded when kas fleet shard operator side
 		// appropriately reports it
@@ -422,8 +447,9 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 					Status: "True",
 				}},
 				Versions: private.DataPlaneKafkaStatusVersions{
-					Kafka:   fmt.Sprintf("kafka-new-version-%s", cid),
-					Strimzi: fmt.Sprintf("strimzi-new-version-%s", cid),
+					Kafka:    fmt.Sprintf("kafka-new-version-%s", cid),
+					KafkaIbp: fmt.Sprintf("kafka-ibp-new-version-%s", cid),
+					Strimzi:  fmt.Sprintf("strimzi-new-version-%s", cid),
 				},
 			},
 		})
@@ -479,6 +505,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		CanaryServiceAccountClientSecret: canaryServiceAccountClientSecret,
 		PlacementId:                      "some-placement-id",
 		DesiredKafkaVersion:              "2.7.0",
+		DesiredKafkaIBPVersion:           "2.7",
 		InstanceType:                     types.EVAL.String(),
 	}
 
@@ -537,6 +564,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 		CanaryServiceAccountClientSecret: canaryServiceAccountClientSecret,
 		PlacementId:                      "some-placement-id",
 		DesiredKafkaVersion:              "2.7.0",
+		DesiredKafkaIBPVersion:           "2.7",
 		InstanceType:                     types.STANDARD.String(),
 	}
 
@@ -585,16 +613,17 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 	ssoSecret := "some-sso-secret"
 
 	testKafka := &dbapi.KafkaRequest{
-		ClusterID:           testServer.ClusterID,
-		MultiAZ:             false,
-		Name:                mockKafkaName1,
-		Status:              constants2.KafkaRequestStatusReady.String(),
-		BootstrapServerHost: bootstrapServerHost,
-		SsoClientID:         ssoClientID,
-		SsoClientSecret:     ssoSecret,
-		PlacementId:         "some-placement-id",
-		DesiredKafkaVersion: "2.7.0",
-		InstanceType:        types.STANDARD.String(),
+		ClusterID:              testServer.ClusterID,
+		MultiAZ:                false,
+		Name:                   mockKafkaName1,
+		Status:                 constants2.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:    bootstrapServerHost,
+		SsoClientID:            ssoClientID,
+		SsoClientSecret:        ssoSecret,
+		PlacementId:            "some-placement-id",
+		DesiredKafkaVersion:    "2.7.0",
+		DesiredKafkaIBPVersion: "2.7",
+		InstanceType:           types.STANDARD.String(),
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -649,6 +678,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 		SsoClientSecret:         ssoSecret,
 		PlacementId:             "some-placement-id",
 		DesiredKafkaVersion:     "2.7.0",
+		DesiredKafkaIBPVersion:  "2.7",
 		InstanceType:            types.STANDARD.String(),
 		ReauthenticationEnabled: true, // enable session reauthentication
 	}
@@ -693,6 +723,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 		SsoClientSecret:         ssoSecret,
 		PlacementId:             "some-placement-id",
 		DesiredKafkaVersion:     "2.7.0",
+		DesiredKafkaIBPVersion:  "2.7",
 		InstanceType:            types.STANDARD.String(),
 		ReauthenticationEnabled: true, // enable session reauthentication
 	}
@@ -750,15 +781,16 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 
 	var testKafkas = []*dbapi.KafkaRequest{
 		{
-			ClusterID:           testServer.ClusterID,
-			MultiAZ:             false,
-			Name:                mockKafkaName2,
-			Status:              constants2.KafkaRequestStatusProvisioning.String(),
-			BootstrapServerHost: bootstrapServerHost,
-			SsoClientID:         ssoClientID,
-			SsoClientSecret:     ssoSecret,
-			DesiredKafkaVersion: "2.6.0",
-			InstanceType:        types.EVAL.String(),
+			ClusterID:              testServer.ClusterID,
+			MultiAZ:                false,
+			Name:                   mockKafkaName2,
+			Status:                 constants2.KafkaRequestStatusProvisioning.String(),
+			BootstrapServerHost:    bootstrapServerHost,
+			SsoClientID:            ssoClientID,
+			SsoClientSecret:        ssoSecret,
+			DesiredKafkaVersion:    "2.6.0",
+			DesiredKafkaIBPVersion: "2.6",
+			InstanceType:           types.EVAL.String(),
 		},
 	}
 
@@ -868,16 +900,17 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 	ssoSecret := "some-sso-secret"
 
 	testKafka := &dbapi.KafkaRequest{
-		ClusterID:           testServer.ClusterID,
-		MultiAZ:             false,
-		Name:                mockKafkaName1,
-		Status:              constants2.KafkaRequestStatusReady.String(),
-		BootstrapServerHost: bootstrapServerHost,
-		SsoClientID:         ssoClientID,
-		SsoClientSecret:     ssoSecret,
-		PlacementId:         "some-placement-id",
-		DesiredKafkaVersion: "2.7.0",
-		InstanceType:        types.STANDARD.String(),
+		ClusterID:              testServer.ClusterID,
+		MultiAZ:                false,
+		Name:                   mockKafkaName1,
+		Status:                 constants2.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:    bootstrapServerHost,
+		SsoClientID:            ssoClientID,
+		SsoClientSecret:        ssoSecret,
+		PlacementId:            "some-placement-id",
+		DesiredKafkaVersion:    "2.7.0",
+		DesiredKafkaIBPVersion: "2.7",
+		InstanceType:           types.STANDARD.String(),
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -928,15 +961,16 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	db := test.TestServices.DBFactory.New()
 
 	testKafka := dbapi.KafkaRequest{
-		ClusterID:           testServer.ClusterID,
-		MultiAZ:             false,
-		Name:                mockKafkaName1,
-		Status:              constants2.KafkaRequestStatusReady.String(),
-		BootstrapServerHost: bootstrapServerHost,
-		SsoClientID:         ssoClientID,
-		SsoClientSecret:     ssoSecret,
-		DesiredKafkaVersion: "2.7.0",
-		InstanceType:        types.STANDARD.String(),
+		ClusterID:              testServer.ClusterID,
+		MultiAZ:                false,
+		Name:                   mockKafkaName1,
+		Status:                 constants2.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:    bootstrapServerHost,
+		SsoClientID:            ssoClientID,
+		SsoClientSecret:        ssoSecret,
+		DesiredKafkaVersion:    "2.7.0",
+		DesiredKafkaIBPVersion: "2.7",
+		InstanceType:           types.STANDARD.String(),
 	}
 
 	// create dummy kafkas
@@ -986,17 +1020,18 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 	db := test.TestServices.DBFactory.New()
 
 	testKafka := dbapi.KafkaRequest{
-		ClusterID:           testServer.ClusterID,
-		MultiAZ:             false,
-		Name:                mockKafkaName1,
-		Status:              constants2.KafkaRequestStatusFailed.String(),
-		BootstrapServerHost: bootstrapServerHost,
-		SsoClientID:         ssoClientID,
-		SsoClientSecret:     ssoSecret,
-		DesiredKafkaVersion: "2.7.0",
-		FailedReason:        "test failed reason",
-		RoutesCreated:       true,
-		InstanceType:        types.STANDARD.String(),
+		ClusterID:              testServer.ClusterID,
+		MultiAZ:                false,
+		Name:                   mockKafkaName1,
+		Status:                 constants2.KafkaRequestStatusFailed.String(),
+		BootstrapServerHost:    bootstrapServerHost,
+		SsoClientID:            ssoClientID,
+		SsoClientSecret:        ssoSecret,
+		DesiredKafkaVersion:    "2.7.0",
+		DesiredKafkaIBPVersion: "2.7",
+		FailedReason:           "test failed reason",
+		RoutesCreated:          true,
+		InstanceType:           types.STANDARD.String(),
 	}
 
 	// create dummy kafkas

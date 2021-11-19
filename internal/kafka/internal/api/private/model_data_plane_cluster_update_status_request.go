@@ -12,11 +12,10 @@ package private
 // DataPlaneClusterUpdateStatusRequest Schema for the request to update a data plane cluster's status
 type DataPlaneClusterUpdateStatusRequest struct {
 	// The cluster data plane conditions
-	Conditions      []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
-	Total           DataPlaneClusterUpdateStatusRequestTotal        `json:"total,omitempty"`
-	Remaining       DataPlaneClusterUpdateStatusRequestTotal        `json:"remaining,omitempty"`
-	NodeInfo        *DatePlaneClusterUpdateStatusRequestNodeInfo    `json:"nodeInfo,omitempty"`
-	ResizeInfo      *DatePlaneClusterUpdateStatusRequestResizeInfo  `json:"resizeInfo,omitempty"`
-	StrimziVersions []string                                        `json:"strimziVersions,omitempty"`
-	Strimzi         []DataPlaneClusterUpdateStatusRequestStrimzi    `json:"strimzi,omitempty"`
+	Conditions []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
+	Total      DataPlaneClusterUpdateStatusRequestTotal        `json:"total,omitempty"`
+	Remaining  DataPlaneClusterUpdateStatusRequestTotal        `json:"remaining,omitempty"`
+	NodeInfo   *DatePlaneClusterUpdateStatusRequestNodeInfo    `json:"nodeInfo,omitempty"`
+	ResizeInfo *DatePlaneClusterUpdateStatusRequestResizeInfo  `json:"resizeInfo,omitempty"`
+	Strimzi    []DataPlaneClusterUpdateStatusRequestStrimzi    `json:"strimzi,omitempty"`
 }

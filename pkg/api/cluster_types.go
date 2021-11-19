@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	kasfleetmanagererrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/blang/semver"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -189,8 +188,26 @@ func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
 }
 
 type StrimziVersion struct {
+	Version          string            `json:"version"`
+	Ready            bool              `json:"ready"`
+	KafkaVersions    []KafkaVersion    `json:"kafkaVersions"`
+	KafkaIBPVersions []KafkaIBPVersion `json:"kafkaIBPVersions"`
+}
+
+type KafkaVersion struct {
 	Version string `json:"version"`
-	Ready   bool   `json:"ready"`
+}
+
+func (s *KafkaVersion) Compare(other KafkaVersion) (int, error) {
+	return buildAwareSemanticVersioningCompare(s.Version, other.Version)
+}
+
+type KafkaIBPVersion struct {
+	Version string `json:"version"`
+}
+
+func (s *KafkaIBPVersion) Compare(other KafkaIBPVersion) (int, error) {
+	return buildAwareSemanticVersioningCompare(s.Version, other.Version)
 }
 
 // StrimziVersionNumberPartRegex contains the regular expression needed to
@@ -209,21 +226,32 @@ func (s *StrimziVersion) Compare(other StrimziVersion) (int, error) {
 	if v1VersionNumber == "" {
 		return 0, fmt.Errorf("'%s' does not follow expected Strimzi Version format", s.Version)
 	}
-	v1, err := semver.Parse(v1VersionNumber)
-	if err != nil {
-		return 0, err
-	}
 
 	v2VersionNumber := StrimziVersionNumberPartRegex.FindString(other.Version)
 	if v2VersionNumber == "" {
 		return 0, fmt.Errorf("'%s' does not follow expected Strimzi Version format", s.Version)
 	}
 
-	v2, err := semver.Parse(v2VersionNumber)
-	if err != nil {
-		return 0, err
+	return buildAwareSemanticVersioningCompare(v1VersionNumber, v2VersionNumber)
+}
+
+func (s *StrimziVersion) DeepCopy() *StrimziVersion {
+	var res StrimziVersion = *s
+	res.KafkaVersions = nil
+	res.KafkaIBPVersions = nil
+
+	if s.KafkaVersions != nil {
+		kafkaVersionsCopy := make([]KafkaVersion, len(s.KafkaVersions))
+		copy(kafkaVersionsCopy, s.KafkaVersions)
+		res.KafkaVersions = kafkaVersionsCopy
 	}
-	return v1.Compare(v2), nil
+	if s.KafkaIBPVersions != nil {
+		kafkaIBPVersionsCopy := make([]KafkaIBPVersion, len(s.KafkaIBPVersions))
+		copy(kafkaIBPVersionsCopy, s.KafkaIBPVersions)
+		res.KafkaIBPVersions = kafkaIBPVersionsCopy
+	}
+
+	return &res
 }
 
 // GetAvailableAndReadyStrimziVersions returns the cluster's list of available
@@ -255,56 +283,96 @@ func (cluster *Cluster) GetAvailableStrimziVersions() ([]StrimziVersion, error) 
 		return versions, nil
 	}
 
-	fallbackToLegacyUnmarshal := false
 	err := json.Unmarshal(cluster.AvailableStrimziVersions, &versions)
 	if err != nil {
-		fallbackToLegacyUnmarshal = true
-	}
-
-	if fallbackToLegacyUnmarshal {
-		versions = []StrimziVersion{}
-		versionsListStr := []string{}
-		err := json.Unmarshal(cluster.AvailableStrimziVersions, &versionsListStr)
-		if err != nil {
-			return nil, err
-		}
-		for _, version := range versionsListStr {
-			strimziVersion := StrimziVersion{
-				Version: version,
-				Ready:   true,
-			}
-			versions = append(versions, strimziVersion)
-		}
+		return nil, err
 	}
 
 	return versions, nil
 }
 
-// SetAvailableStrimziVersions sets the cluster's list of available strimzi
-// versions sorted on version ascending order, or an error. If
-// availableStrimziVersions is nil an empty list is set. See
-// StrimziVersionNumberPartRegex for details on the expected strimzi version
-// format
-func (cluster *Cluster) SetAvailableStrimziVersions(availableStrimziVersions []StrimziVersion) error {
-	versionsToSet := []StrimziVersion{}
-	versionsToSet = append(versionsToSet, availableStrimziVersions...)
+// StrimziVersionsDeepSort returns a sorted copy of the provided StrimziVersions
+// in the versions slice. The following elements are sorted in ascending order:
+// - The strimzi versions
+// - For each strimzi version, their Kafka Versions
+// - For each strimzi version, their Kafka IBP Versions
+func StrimziVersionsDeepSort(versions []StrimziVersion) ([]StrimziVersion, error) {
+	if versions == nil {
+		return versions, nil
+	}
+	if len(versions) == 0 {
+		return []StrimziVersion{}, nil
+	}
+
+	var versionsToSet []StrimziVersion
+	for idx := range versions {
+		version := &versions[idx]
+		copiedStrimziVersion := version.DeepCopy()
+		versionsToSet = append(versionsToSet, *copiedStrimziVersion)
+	}
 
 	var errors kasfleetmanagererrors.ErrorList
 
 	sort.Slice(versionsToSet, func(i, j int) bool {
 		res, err := versionsToSet[i].Compare(versionsToSet[j])
 		if err != nil {
-			fmt.Println(errors)
 			errors = append(errors, err)
 		}
 		return res == -1
 	})
 
 	if errors != nil {
-		return errors
+		return nil, errors
 	}
 
-	if v, err := json.Marshal(versionsToSet); err != nil {
+	for idx := range versionsToSet {
+
+		// Sort KafkaVersions
+		sort.Slice(versionsToSet[idx].KafkaVersions, func(i, j int) bool {
+			res, err := versionsToSet[idx].KafkaVersions[i].Compare(versionsToSet[idx].KafkaVersions[j])
+			if err != nil {
+				errors = append(errors, err)
+			}
+			return res == -1
+		})
+
+		if errors != nil {
+			return nil, errors
+		}
+
+		// Sort KafkaIBPVersions
+		sort.Slice(versionsToSet[idx].KafkaIBPVersions, func(i, j int) bool {
+			res, err := versionsToSet[idx].KafkaIBPVersions[i].Compare(versionsToSet[idx].KafkaIBPVersions[j])
+			if err != nil {
+				errors = append(errors, err)
+			}
+			return res == -1
+		})
+
+		if errors != nil {
+			return nil, errors
+		}
+	}
+
+	return versionsToSet, nil
+}
+
+// SetAvailableStrimziVersions sets the cluster's list of available strimzi
+// versions. The list of versions is always stored in version ascending order,
+// with all versions deeply sorted (strimzi versions, kafka versions, kafka ibp
+// versions ...). If availableStrimziVersions is nil an empty list is set. See
+// StrimziVersionNumberPartRegex for details on the expected strimzi version
+// format
+func (cluster *Cluster) SetAvailableStrimziVersions(availableStrimziVersions []StrimziVersion) error {
+	sortedVersions, err := StrimziVersionsDeepSort(availableStrimziVersions)
+	if err != nil {
+		return err
+	}
+	if sortedVersions == nil {
+		sortedVersions = []StrimziVersion{}
+	}
+
+	if v, err := json.Marshal(sortedVersions); err != nil {
 		return err
 	} else {
 		cluster.AvailableStrimziVersions = v

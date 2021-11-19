@@ -220,6 +220,8 @@ components:
       properties:
         kafka:
           type: string
+        kafkaIbp:
+          type: string
         strimzi:
           type: string
 
@@ -430,10 +432,6 @@ components:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
         resizeInfo:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
-        strimziVersions:
-          type: array
-          items:
-            type: string
         strimzi:
           type: array
           items:
@@ -443,6 +441,14 @@ components:
                 type: boolean
               version:
                 type: string
+              kafkaVersions:
+                type: array
+                items:
+                  type: string
+              kafkaIbpVersions:
+                type: array
+                items:
+                  type: string
             required:
             - ready
             - version
@@ -494,6 +500,8 @@ components:
             kafka:
               type: string
             strimzi:
+              type: string
+            kafkaIbp:
               type: string
         routes:
           description: "Routes created for a Kafka cluster"
@@ -596,6 +604,7 @@ components:
           versions:
             kafka: 2.7.0
             strimzi: 0.21.2
+            kafkaIbp: "2.7"
           deleted: false
     DataPlaneKafkaStatusRequestExample:
       value:
@@ -615,6 +624,7 @@ components:
         versions:
           kafka: 2.4.1
           strimzi: 0.21.2
+          kafkaIbp: "2.4"
     400InvalidIdExample:
       value:
         id: "21"

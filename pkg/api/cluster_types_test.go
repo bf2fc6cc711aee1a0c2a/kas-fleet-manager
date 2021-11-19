@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -32,25 +31,6 @@ func TestGetAvailableStrimziVersions(t *testing.T) {
 			want: []StrimziVersion{
 				StrimziVersion{Version: "v3", Ready: true},
 				StrimziVersion{Version: "v6", Ready: false},
-				StrimziVersion{Version: "v7", Ready: true},
-			},
-			wantErr: false,
-		},
-		{
-			name: "When cluster has a non empty list of available strimzi versions in legacy list of string format those are returned",
-			cluster: func() *Cluster {
-				inputStrimziVersionsInLegacyFormat := []string{"v3", "v6", "v7"}
-				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersionsInLegacyFormat)
-				if err != nil {
-					panic(err)
-				}
-				fmt.Println(inputStrimziVersionsInLegacyFormat)
-				res := Cluster{AvailableStrimziVersions: inputStrimziVersionsJSON}
-				return &res
-			},
-			want: []StrimziVersion{
-				StrimziVersion{Version: "v3", Ready: true},
-				StrimziVersion{Version: "v6", Ready: true},
 				StrimziVersion{Version: "v7", Ready: true},
 			},
 			wantErr: false,
@@ -126,25 +106,6 @@ func TestGetAvailableAndReadyStrimziVersions(t *testing.T) {
 			},
 			want: []StrimziVersion{
 				StrimziVersion{Version: "v3", Ready: true},
-				StrimziVersion{Version: "v7", Ready: true},
-			},
-			wantErr: false,
-		},
-		{
-			name: "When cluster has a non empty list of available strimzi versions in legacy list of string format those are returned",
-			cluster: func() *Cluster {
-				inputStrimziVersionsInLegacyFormat := []string{"v3", "v6", "v7"}
-				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersionsInLegacyFormat)
-				if err != nil {
-					panic(err)
-				}
-				fmt.Println(inputStrimziVersionsInLegacyFormat)
-				res := Cluster{AvailableStrimziVersions: inputStrimziVersionsJSON}
-				return &res
-			},
-			want: []StrimziVersion{
-				StrimziVersion{Version: "v3", Ready: true},
-				StrimziVersion{Version: "v6", Ready: true},
 				StrimziVersion{Version: "v7", Ready: true},
 			},
 			wantErr: false,
@@ -257,6 +218,86 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 			want:                 []StrimziVersion{},
 			wantErr:              false,
 		},
+		{
+			name: "Kafka and Kafka IBP versions are stored and in sorted order",
+			inputStrimziVersions: []StrimziVersion{
+				StrimziVersion{
+					Version: "strimzi-cluster-operator-v.5.10.0-3",
+					Ready:   true,
+					KafkaVersions: []KafkaVersion{
+						KafkaVersion{Version: "2.7.5"},
+						KafkaVersion{Version: "2.7.3"},
+					},
+					KafkaIBPVersions: []KafkaIBPVersion{
+						KafkaIBPVersion{Version: "2.8"},
+						KafkaIBPVersion{Version: "2.7"},
+					},
+				},
+				StrimziVersion{
+					Version: "strimzi-cluster-operator-v.5.8.0-9",
+					Ready:   false,
+					KafkaVersions: []KafkaVersion{
+						KafkaVersion{Version: "2.9.4"},
+						KafkaVersion{Version: "2.2.1"},
+					},
+					KafkaIBPVersions: []KafkaIBPVersion{
+						KafkaIBPVersion{Version: "2.5"},
+						KafkaIBPVersion{Version: "2.6"},
+					},
+				},
+				StrimziVersion{
+					Version: "strimzi-cluster-operator-v.2.0.0-0",
+					Ready:   true,
+					KafkaVersions: []KafkaVersion{
+						KafkaVersion{Version: "4.5.6"},
+						KafkaVersion{Version: "1.2.3"},
+					},
+					KafkaIBPVersions: []KafkaIBPVersion{
+						KafkaIBPVersion{Version: "2.3"},
+						KafkaIBPVersion{Version: "2.2"},
+					},
+				},
+			},
+			want: []StrimziVersion{
+				StrimziVersion{
+					Version: "strimzi-cluster-operator-v.2.0.0-0",
+					Ready:   true,
+					KafkaVersions: []KafkaVersion{
+						KafkaVersion{Version: "1.2.3"},
+						KafkaVersion{Version: "4.5.6"},
+					},
+					KafkaIBPVersions: []KafkaIBPVersion{
+						KafkaIBPVersion{Version: "2.2"},
+						KafkaIBPVersion{Version: "2.3"},
+					},
+				},
+				StrimziVersion{
+					Version: "strimzi-cluster-operator-v.5.8.0-9",
+					Ready:   false,
+					KafkaVersions: []KafkaVersion{
+						KafkaVersion{Version: "2.2.1"},
+						KafkaVersion{Version: "2.9.4"},
+					},
+					KafkaIBPVersions: []KafkaIBPVersion{
+						KafkaIBPVersion{Version: "2.5"},
+						KafkaIBPVersion{Version: "2.6"},
+					},
+				},
+				StrimziVersion{
+					Version: "strimzi-cluster-operator-v.5.10.0-3",
+					Ready:   true,
+					KafkaVersions: []KafkaVersion{
+						KafkaVersion{Version: "2.7.3"},
+						KafkaVersion{Version: "2.7.5"},
+					},
+					KafkaIBPVersions: []KafkaIBPVersion{
+						KafkaIBPVersion{Version: "2.7"},
+						KafkaIBPVersion{Version: "2.8"},
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -362,6 +403,147 @@ func TestCompare(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.inputStrimziVersion1.Compare(tt.inputStrimziVersion2)
+			gotErr := err != nil
+			errResultTestFailed := false
+			if !reflect.DeepEqual(gotErr, tt.wantErr) {
+				errResultTestFailed = true
+				t.Errorf("wantErr: %v got: %v", tt.wantErr, gotErr)
+			}
+
+			if !errResultTestFailed {
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("want: %v got: %v", tt.want, got)
+				}
+			}
+		})
+	}
+}
+
+func Test_StrimziVersionsDeepSort(t *testing.T) {
+	type args struct {
+		versions []StrimziVersion
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		cluster func() *Cluster
+		want    []StrimziVersion
+		wantErr bool
+	}{
+		{
+			name: "When versions to sort is empty result is empty",
+			args: args{
+				versions: []StrimziVersion{},
+			},
+			want: []StrimziVersion{},
+		},
+		{
+			name: "When versions to sort is nil result is nil",
+			args: args{
+				versions: nil,
+			},
+			want: nil,
+		},
+		{
+			name: "When one of the strimzi versions does not follow semver an error is returned",
+			args: args{
+				[]StrimziVersion{StrimziVersion{Version: "strimzi-cluster-operator-v.nonsemver243-0"}, StrimziVersion{Version: "strimzi-cluster-operator-v.2.5.6-0"}},
+			},
+			wantErr: true,
+		},
+		{
+			name: "All different versions are deeply sorted",
+			args: args{
+				versions: []StrimziVersion{
+					StrimziVersion{
+						Version: "strimzi-cluster-operator-v.2.7.5-0",
+						KafkaVersions: []KafkaVersion{
+							KafkaVersion{Version: "1.5.8"},
+							KafkaVersion{Version: "0.7.1"},
+							KafkaVersion{Version: "1.5.1"},
+						},
+						KafkaIBPVersions: []KafkaIBPVersion{
+							KafkaIBPVersion{Version: "2.8"},
+							KafkaIBPVersion{Version: "1.2"},
+							KafkaIBPVersion{Version: "2.4"},
+						},
+					},
+					StrimziVersion{
+						Version: "strimzi-cluster-operator-v.2.7.3-0",
+						KafkaVersions: []KafkaVersion{
+							KafkaVersion{Version: "1.0.0"},
+							KafkaVersion{Version: "2.0.0"},
+							KafkaVersion{Version: "5.0.0"},
+						},
+						KafkaIBPVersions: []KafkaIBPVersion{
+							KafkaIBPVersion{Version: "4.0"},
+							KafkaIBPVersion{Version: "2.0"},
+							KafkaIBPVersion{Version: "3.5"},
+						},
+					},
+					StrimziVersion{
+						Version: "strimzi-cluster-operator-v.2.5.2-0",
+						KafkaVersions: []KafkaVersion{
+							KafkaVersion{Version: "2.6.1"},
+							KafkaVersion{Version: "5.7.2"},
+							KafkaVersion{Version: "2.3.5"},
+						},
+						KafkaIBPVersions: []KafkaIBPVersion{
+							KafkaIBPVersion{Version: "1.2"},
+							KafkaIBPVersion{Version: "1.1"},
+							KafkaIBPVersion{Version: "5.1"},
+						},
+					},
+				},
+			},
+			want: []StrimziVersion{
+				StrimziVersion{
+					Version: "strimzi-cluster-operator-v.2.5.2-0",
+					KafkaVersions: []KafkaVersion{
+						KafkaVersion{Version: "2.3.5"},
+						KafkaVersion{Version: "2.6.1"},
+						KafkaVersion{Version: "5.7.2"},
+					},
+					KafkaIBPVersions: []KafkaIBPVersion{
+						KafkaIBPVersion{Version: "1.1"},
+						KafkaIBPVersion{Version: "1.2"},
+						KafkaIBPVersion{Version: "5.1"},
+					},
+				},
+				StrimziVersion{
+					Version: "strimzi-cluster-operator-v.2.7.3-0",
+					KafkaVersions: []KafkaVersion{
+						KafkaVersion{Version: "1.0.0"},
+						KafkaVersion{Version: "2.0.0"},
+						KafkaVersion{Version: "5.0.0"},
+					},
+					KafkaIBPVersions: []KafkaIBPVersion{
+						KafkaIBPVersion{Version: "2.0"},
+						KafkaIBPVersion{Version: "3.5"},
+						KafkaIBPVersion{Version: "4.0"},
+					},
+				},
+				StrimziVersion{
+					Version: "strimzi-cluster-operator-v.2.7.5-0",
+					KafkaVersions: []KafkaVersion{
+						KafkaVersion{Version: "0.7.1"},
+						KafkaVersion{Version: "1.5.1"},
+						KafkaVersion{Version: "1.5.8"},
+					},
+					KafkaIBPVersions: []KafkaIBPVersion{
+						KafkaIBPVersion{Version: "1.2"},
+						KafkaIBPVersion{Version: "2.4"},
+						KafkaIBPVersion{Version: "2.8"},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := StrimziVersionsDeepSort(tt.args.versions)
 			gotErr := err != nil
 			errResultTestFailed := false
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
