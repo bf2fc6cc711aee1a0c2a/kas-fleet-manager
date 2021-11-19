@@ -412,8 +412,9 @@ func TestAdminKafka_List(t *testing.T) {
 func TestAdminKafka_Update(t *testing.T) {
 	sampleKafkaID := api.NewID()
 	fullyPopulatedKafkaUpdateRequest := adminprivate.KafkaUpdateRequest{
-		StrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
-		KafkaVersion:   "2.7.0",
+		StrimziVersion:  "strimzi-cluster-operator.v0.23.0-0",
+		KafkaVersion:    "2.7.0",
+		KafkaIbpVersion: "2.7.0",
 	}
 	emptyKafkaUpdateRequest := adminprivate.KafkaUpdateRequest{}
 	updateRequestWithKafkaVersion := adminprivate.KafkaUpdateRequest{
@@ -630,6 +631,14 @@ func TestAdminKafka_Update(t *testing.T) {
 	err2 := cluster.SetAvailableStrimziVersions([]api.StrimziVersion{{
 		Version: updateRequestWithStrimziVersion.StrimziVersion,
 		Ready:   true,
+		KafkaVersions: []api.KafkaVersion{
+			{Version: "2.6.0"},
+			{Version: "2.7.0"},
+		},
+		KafkaIBPVersions: []api.KafkaIBPVersion{
+			{Version: "2.6.0"},
+			{Version: "2.7.0"},
+		},
 	}, {
 		Ready:   true,
 		Version: fullyPopulatedKafkaUpdateRequest.StrimziVersion,
@@ -650,18 +659,20 @@ func TestAdminKafka_Update(t *testing.T) {
 		Meta: api.Meta{
 			ID: sampleKafkaID,
 		},
-		MultiAZ:               false,
-		Owner:                 "test-user",
-		Region:                "test",
-		CloudProvider:         "test",
-		Name:                  "test-kafka",
-		OrganisationId:        "13640203",
-		Status:                constants.KafkaRequestStatusReady.String(),
-		ClusterID:             cluster.ClusterID,
-		ActualKafkaVersion:    "2.6.0",
-		DesiredKafkaVersion:   "2.6.0",
-		ActualStrimziVersion:  "v.23.0",
-		DesiredStrimziVersion: "v0.23.0",
+		MultiAZ:                false,
+		Owner:                  "test-user",
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-kafka",
+		OrganisationId:         "13640203",
+		Status:                 constants.KafkaRequestStatusReady.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualKafkaVersion:     "2.6.0",
+		DesiredKafkaVersion:    "2.6.0",
+		ActualStrimziVersion:   "v.23.0",
+		DesiredStrimziVersion:  "v0.23.0",
+		ActualKafkaIBPVersion:  "2.6.0",
+		DesiredKafkaIBPVersion: "2.6.0",
 	}
 
 	if err := db.Create(kafka).Error; err != nil {

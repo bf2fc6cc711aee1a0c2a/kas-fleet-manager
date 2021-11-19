@@ -109,7 +109,7 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &kafkaUpdateReq,
 		Validate: []handlers.Validate{
-			ValidateKafkaUpdateFields(&kafkaUpdateReq.KafkaVersion, &kafkaUpdateReq.StrimziVersion),
+			ValidateKafkaUpdateFields(&kafkaUpdateReq.KafkaVersion, &kafkaUpdateReq.StrimziVersion, &kafkaUpdateReq.KafkaIbpVersion),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
@@ -129,6 +129,10 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 			}
 			if kafkaRequest.DesiredStrimziVersion != kafkaUpdateReq.StrimziVersion && kafkaUpdateReq.StrimziVersion != "" {
 				kafkaRequest.DesiredStrimziVersion = kafkaUpdateReq.StrimziVersion
+				updateRequired = true
+			}
+			if kafkaRequest.DesiredKafkaIBPVersion != kafkaUpdateReq.KafkaIbpVersion && kafkaUpdateReq.KafkaIbpVersion != "" {
+				kafkaRequest.DesiredKafkaIBPVersion = kafkaUpdateReq.KafkaIbpVersion
 				updateRequired = true
 			}
 			if updateRequired {
