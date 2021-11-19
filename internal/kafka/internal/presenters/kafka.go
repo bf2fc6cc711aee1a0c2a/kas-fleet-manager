@@ -8,16 +8,21 @@ import (
 )
 
 // ConvertKafkaRequest from payload to KafkaRequest
-func ConvertKafkaRequest(kafkaRequest public.KafkaRequestPayload) *dbapi.KafkaRequest {
-	kafka := &dbapi.KafkaRequest{
-		Region:        kafkaRequest.Region,
-		Name:          kafkaRequest.Name,
-		CloudProvider: kafkaRequest.CloudProvider,
-		MultiAZ:       kafkaRequest.MultiAz,
+func ConvertKafkaRequest(kafkaRequestPayload public.KafkaRequestPayload, dbKafkarequest ...*dbapi.KafkaRequest) *dbapi.KafkaRequest {
+	var kafka *dbapi.KafkaRequest
+	if len(dbKafkarequest) == 0 {
+		kafka = &dbapi.KafkaRequest{}
+	} else {
+		kafka = dbKafkarequest[0]
 	}
 
-	if kafkaRequest.ReauthenticationEnabled != nil {
-		kafka.ReauthenticationEnabled = *kafkaRequest.ReauthenticationEnabled
+	kafka.Region = kafkaRequestPayload.Region
+	kafka.Name = kafkaRequestPayload.Name
+	kafka.CloudProvider = kafkaRequestPayload.CloudProvider
+	kafka.MultiAZ = kafkaRequestPayload.MultiAz
+
+	if kafkaRequestPayload.ReauthenticationEnabled != nil {
+		kafka.ReauthenticationEnabled = *kafkaRequestPayload.ReauthenticationEnabled
 	} else {
 		kafka.ReauthenticationEnabled = true // true by default
 	}

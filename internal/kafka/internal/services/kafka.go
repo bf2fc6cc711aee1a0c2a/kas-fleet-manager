@@ -76,6 +76,7 @@ type KafkaService interface {
 	// See https://gorm.io/docs/update.html#Updates-multiple-columns for more info
 	Updates(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError
 	ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
+	DetectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError)
 	RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionKafkaForUsers registers all kafkas for deprovisioning given the list of owners
 	DeprovisionKafkaForUsers(users []string) *errors.ServiceError
@@ -143,7 +144,7 @@ func (k *kafkaService) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaReq
 	return count < regionCapacity, nil
 }
 
-func (k *kafkaService) detectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+func (k *kafkaService) DetectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
@@ -206,7 +207,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 		return errors.TooManyKafkaInstancesReached("cluster capacity exhausted")
 	}
 
-	instanceType, err := k.detectInstanceType(kafkaRequest)
+	instanceType, err := k.DetectInstanceType(kafkaRequest)
 	if err != nil {
 		return err
 	}

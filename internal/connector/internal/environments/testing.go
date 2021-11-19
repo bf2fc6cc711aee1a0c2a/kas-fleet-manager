@@ -17,7 +17,7 @@ func NewTestingEnvLoader() environments.EnvLoader {
 
 func (t TestingEnvLoader) Defaults() map[string]string {
 	return map[string]string{
-		"keycloak-client-expire":			 "true",
+		"keycloak-client-expire": "true",
 	}
 }
 

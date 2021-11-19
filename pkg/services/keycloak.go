@@ -571,7 +571,7 @@ func (kc *keycloakService) registerAgentServiceAccount(clusterId string, service
 		ServiceAccountsEnabled: true,
 		StandardFlowEnabled:    false,
 		ProtocolMappers:        protocolMapper,
-		Attributes: attributes,
+		Attributes:             attributes,
 	}
 	account, err := kc.createServiceAccountIfNotExists(accessToken, c)
 	if err != nil {

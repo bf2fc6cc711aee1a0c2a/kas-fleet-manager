@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"net/http"
 	"testing"
 
@@ -139,8 +140,9 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 
 func Test_Validation_validateCloudProvider(t *testing.T) {
 	type args struct {
-		kafkaRequest   public.KafkaRequestPayload
+		kafkaRequest   dbapi.KafkaRequest
 		ProviderConfig *config.ProviderConfig
+		kafkaService   services.KafkaService
 	}
 
 	type result struct {
@@ -157,7 +159,12 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "do not throw an error when default provider and region are picked",
 			arg: args{
-				kafkaRequest: public.KafkaRequestPayload{},
+				kafkaService: &services.KafkaServiceMock{
+					DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.EVAL, nil
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{},
 				ProviderConfig: &config.ProviderConfig{
 					ProvidersConfig: config.ProviderConfiguration{
 						SupportedProviders: config.ProviderList{
@@ -166,8 +173,9 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Default: true,
 								Regions: config.RegionList{
 									config.Region{
-										Name:    "us-east-1",
-										Default: true,
+										Name:                   "us-east-1",
+										Default:                true,
+										SupportedInstanceTypes: []config.InstanceType{config.InstanceType(types.EVAL)},
 									},
 								},
 							},
@@ -186,7 +194,12 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "do not throw an error when cloud provider and region matches",
 			arg: args{
-				kafkaRequest: public.KafkaRequestPayload{
+				kafkaService: &services.KafkaServiceMock{
+					DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.EVAL, nil
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
@@ -197,7 +210,8 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Name: "gcp",
 								Regions: config.RegionList{
 									config.Region{
-										Name: "eu-east-1",
+										Name:                   "eu-east-1",
+										SupportedInstanceTypes: []config.InstanceType{config.InstanceType(types.EVAL)},
 									},
 								},
 							},
@@ -205,7 +219,8 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Name: "aws",
 								Regions: config.RegionList{
 									config.Region{
-										Name: "us-east-1",
+										Name:                   "us-east-1",
+										SupportedInstanceTypes: []config.InstanceType{config.InstanceType(types.EVAL)},
 									},
 								},
 							},
@@ -224,7 +239,12 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "throws an error when cloud provider and region do not match",
 			arg: args{
-				kafkaRequest: public.KafkaRequestPayload{
+				kafkaService: &services.KafkaServiceMock{
+					DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.EVAL, nil
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},
@@ -235,7 +255,8 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Name: "aws",
 								Regions: config.RegionList{
 									config.Region{
-										Name: "us-east-1",
+										Name:                   "us-east-1",
+										SupportedInstanceTypes: []config.InstanceType{config.InstanceType(types.EVAL)},
 									},
 								},
 							},
@@ -248,12 +269,45 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 				reason:  "region us-east is not supported for aws, supported regions are: [us-east-1]",
 			},
 		},
+		{
+			name: "throws an error when instance type is not supported",
+			arg: args{
+				kafkaService: &services.KafkaServiceMock{
+					DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.EVAL, nil
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
+					CloudProvider: "aws",
+					Region:        "us-east",
+				},
+				ProviderConfig: &config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "aws",
+								Regions: config.RegionList{
+									config.Region{
+										Name:                   "us-east",
+										SupportedInstanceTypes: []config.InstanceType{config.InstanceType(types.STANDARD)},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: result{
+				wantErr: true,
+				reason:  "instance type 'eval' not supported for region 'us-east'",
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			validateFn := ValidateCloudProvider(&tt.arg.kafkaRequest, tt.arg.ProviderConfig, "creating-kafka")
+			validateFn := ValidateCloudProvider(&tt.arg.kafkaService, &tt.arg.kafkaRequest, tt.arg.ProviderConfig, "creating-kafka")
 			err := validateFn()
 			if !tt.want.wantErr && err != nil {
 				t.Errorf("validatedCloudProvider() expected not to throw error but threw %v", err)

@@ -177,6 +177,10 @@ const (
 	ErrorMalformedServiceAccountId       ServiceErrorCode = 40
 	ErrorMalformedServiceAccountIdReason string           = "Service account id is invalid"
 
+	// Region not supported
+	ErrorInstanceTypeNotSupported       ServiceErrorCode = 41
+	ErrorInstanceTypeNotSupportedReason string           = "Instance Type not supported"
+
 	// Too Many requests error. Used by rate limiting
 	ErrorTooManyRequests       ServiceErrorCode = 429
 	ErrorTooManyRequestsReason string           = "Too Many requests"
@@ -236,6 +240,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorFailedToDeleteServiceAccount, ErrorFailedToDeleteServiceAccountReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorInstanceTypeNotSupported, ErrorInstanceTypeNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMalformedKafkaClusterName, ErrorMalformedKafkaClusterNameReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, http.StatusBadRequest, nil},
@@ -555,6 +560,10 @@ func ServiceAccountNotFound(reason string, values ...interface{}) *ServiceError 
 
 func RegionNotSupported(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorRegionNotSupported, reason, values...)
+}
+
+func InstanceTypeNotSupported(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorInstanceTypeNotSupported, reason, values...)
 }
 
 func ProviderNotSupported(reason string, values ...interface{}) *ServiceError {
