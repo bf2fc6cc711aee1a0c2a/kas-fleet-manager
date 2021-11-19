@@ -640,6 +640,7 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 		if cluster == nil {
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to get cluster for kafka %s", kafkaRequest.ID))
 		}
+
 		strimziVersionReady, err2 := k.clusterService.CheckStrimziVersionReady(cluster, kafkaRequest.DesiredStrimziVersion)
 		if err2 != nil {
 			return errors.Validation(err2.Error())
@@ -647,6 +648,15 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 
 		if !strimziVersionReady {
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with strimzi version: %s", kafkaRequest.ID, kafkaRequest.DesiredStrimziVersion))
+		}
+
+		kafkaVersionAvailable, err2 := k.clusterService.IsStrimziKafkaVersionAvailableInCluster(cluster, kafkaRequest.DesiredStrimziVersion, kafkaRequest.DesiredKafkaVersion)
+		if err2 != nil {
+			return errors.Validation(err2.Error())
+		}
+
+		if !kafkaVersionAvailable {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaVersion))
 		}
 
 		return k.Update(kafkaRequest)

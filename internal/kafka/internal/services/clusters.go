@@ -66,6 +66,9 @@ type ClusterService interface {
 	// Install the cluster logging operator for a given cluster
 	InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
 	CheckStrimziVersionReady(cluster *api.Cluster, strimziVersion string) (bool, error)
+	// IsStrimziKafkaVersionAvailableInCluster checks whether a given kafkaVersion belonging
+	// to a strimziVersion is available in the cluster
+	IsStrimziKafkaVersionAvailableInCluster(cluster *api.Cluster, strimziVersion string, kafkaVersion string) (bool, error)
 }
 
 type clusterService struct {
@@ -711,6 +714,24 @@ func (c clusterService) CheckStrimziVersionReady(cluster *api.Cluster, strimziVe
 	for _, version := range readyStrimziVersions {
 		if version.Version == strimziVersion {
 			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (c clusterService) IsStrimziKafkaVersionAvailableInCluster(cluster *api.Cluster, strimziVersion string, kafkaVersion string) (bool, error) {
+	readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
+	if err != nil {
+		return false, err
+	}
+	for _, version := range readyStrimziVersions {
+		if version.Version == strimziVersion {
+			for _, kversion := range version.KafkaVersions {
+				if kversion.Version == kafkaVersion {
+					return true, nil
+				}
+			}
+			return false, nil
 		}
 	}
 	return false, nil
