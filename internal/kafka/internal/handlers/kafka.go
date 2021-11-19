@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
@@ -33,6 +33,9 @@ func NewKafkaHandler(service services.KafkaService, providerConfig *config.Provi
 
 func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var kafkaRequest public.KafkaRequestPayload
+	ctx := r.Context()
+	convKafka := &dbapi.KafkaRequest{}
+
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &kafkaRequest,
 		Validate: []handlers.Validate{
@@ -40,21 +43,11 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.ValidateLength(&kafkaRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxKafkaNameLength),
 			ValidKafkaClusterName(&kafkaRequest.Name, "name"),
 			ValidateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
-			ValidateCloudProvider(&kafkaRequest, h.providerConfig, "creating kafka requests"),
+			ValidateKafkaClaims(ctx, &kafkaRequest, convKafka),
+			ValidateCloudProvider(&h.service, convKafka, h.providerConfig, "creating kafka requests"),
 			handlers.ValidateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			ctx := r.Context()
-			convKafka := presenters.ConvertKafkaRequest(kafkaRequest)
-
-			claims, err := auth.GetClaimsFromContext(ctx)
-			if err != nil {
-				return nil, errors.Unauthenticated("user not authenticated")
-			}
-			convKafka.Owner = auth.GetUsernameFromClaims(claims)
-			convKafka.OrganisationId = auth.GetOrgIdFromClaims(claims)
-			convKafka.OwnerAccountId = auth.GetAccountIdFromClaims(claims)
-
 			svcErr := h.service.RegisterKafkaJob(convKafka)
 			if svcErr != nil {
 				return nil, svcErr

@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"regexp"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -48,7 +49,7 @@ func ValidateKafkaClusterNameIsUnique(name *string, kafkaService services.KafkaS
 
 // ValidateCloudProvider returns a validator that sets default cloud provider details if needed and validates provided
 // provider and region
-func ValidateCloudProvider(kafkaRequest *public.KafkaRequestPayload, providerConfig *config.ProviderConfig, action string) handlers.Validate {
+func ValidateCloudProvider(kafkaService *services.KafkaService, kafkaRequest *dbapi.KafkaRequest, providerConfig *config.ProviderConfig, action string) handlers.Validate {
 	return func() *errors.ServiceError {
 		// Set Cloud Provider default if not received in the request
 		supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
@@ -75,6 +76,16 @@ func ValidateCloudProvider(kafkaRequest *public.KafkaRequestPayload, providerCon
 			return errors.RegionNotSupported("region %s is not supported for %s, supported regions are: %s", kafkaRequest.Region, kafkaRequest.CloudProvider, provider.Regions)
 		}
 
+		// Validate Region/InstanceType
+		instanceType, err := (*kafkaService).DetectInstanceType(kafkaRequest)
+		if err != nil {
+			return errors.NewWithCause(errors.ErrorGeneral, err, "error detecting instance type: %s", err.Error())
+		}
+
+		region, _ := provider.Regions.GetByName(kafkaRequest.Region)
+		if !region.IsInstanceTypeSupported(config.InstanceType(instanceType)) {
+			return errors.InstanceTypeNotSupported("instance type '%s' not supported for region '%s'", instanceType.String(), region.Name)
+		}
 		return nil
 	}
 }
@@ -118,6 +129,21 @@ func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService author
 				return errors.NewWithCause(errors.ErrorBadRequest, err, "User %s does not belong in your organization", *kafkaUpdateReq.Owner)
 			}
 		}
+
+		return nil
+	}
+}
+
+func ValidateKafkaClaims(ctx context.Context, kafkaRequestPayload *public.KafkaRequestPayload, kafkaRequest *dbapi.KafkaRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		kafkaRequest = presenters.ConvertKafkaRequest(*kafkaRequestPayload, kafkaRequest)
+		claims, err := auth.GetClaimsFromContext(ctx)
+		if err != nil {
+			return errors.Unauthenticated("user not authenticated")
+		}
+		(*kafkaRequest).Owner = auth.GetUsernameFromClaims(claims)
+		(*kafkaRequest).OrganisationId = auth.GetOrgIdFromClaims(claims)
+		(*kafkaRequest).OwnerAccountId = auth.GetAccountIdFromClaims(claims)
 
 		return nil
 	}

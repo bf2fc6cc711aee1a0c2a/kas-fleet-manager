@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -39,6 +40,9 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			},
 // 			DeprovisionKafkaForUsersFunc: func(users []string) *serviceError.ServiceError {
 // 				panic("mock out the DeprovisionKafkaForUsers method")
+// 			},
+// 			DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *serviceError.ServiceError) {
+// 				panic("mock out the DetectInstanceType method")
 // 			},
 // 			GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *serviceError.ServiceError) {
 // 				panic("mock out the Get method")
@@ -109,6 +113,9 @@ type KafkaServiceMock struct {
 
 	// DeprovisionKafkaForUsersFunc mocks the DeprovisionKafkaForUsers method.
 	DeprovisionKafkaForUsersFunc func(users []string) *serviceError.ServiceError
+
+	// DetectInstanceTypeFunc mocks the DetectInstanceType method.
+	DetectInstanceTypeFunc func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *serviceError.ServiceError)
 
 	// GetFunc mocks the Get method.
 	GetFunc func(ctx context.Context, id string) (*dbapi.KafkaRequest, *serviceError.ServiceError)
@@ -186,6 +193,11 @@ type KafkaServiceMock struct {
 		DeprovisionKafkaForUsers []struct {
 			// Users is the users argument value.
 			Users []string
+		}
+		// DetectInstanceType holds details about calls to the DetectInstanceType method.
+		DetectInstanceType []struct {
+			// KafkaRequest is the kafkaRequest argument value.
+			KafkaRequest *dbapi.KafkaRequest
 		}
 		// Get holds details about calls to the Get method.
 		Get []struct {
@@ -279,6 +291,7 @@ type KafkaServiceMock struct {
 	lockDelete                         sync.RWMutex
 	lockDeprovisionExpiredKafkas       sync.RWMutex
 	lockDeprovisionKafkaForUsers       sync.RWMutex
+	lockDetectInstanceType             sync.RWMutex
 	lockGet                            sync.RWMutex
 	lockGetById                        sync.RWMutex
 	lockGetManagedKafkaByClusterID     sync.RWMutex
@@ -453,6 +466,37 @@ func (mock *KafkaServiceMock) DeprovisionKafkaForUsersCalls() []struct {
 	mock.lockDeprovisionKafkaForUsers.RLock()
 	calls = mock.calls.DeprovisionKafkaForUsers
 	mock.lockDeprovisionKafkaForUsers.RUnlock()
+	return calls
+}
+
+// DetectInstanceType calls DetectInstanceTypeFunc.
+func (mock *KafkaServiceMock) DetectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *serviceError.ServiceError) {
+	if mock.DetectInstanceTypeFunc == nil {
+		panic("KafkaServiceMock.DetectInstanceTypeFunc: method is nil but KafkaService.DetectInstanceType was just called")
+	}
+	callInfo := struct {
+		KafkaRequest *dbapi.KafkaRequest
+	}{
+		KafkaRequest: kafkaRequest,
+	}
+	mock.lockDetectInstanceType.Lock()
+	mock.calls.DetectInstanceType = append(mock.calls.DetectInstanceType, callInfo)
+	mock.lockDetectInstanceType.Unlock()
+	return mock.DetectInstanceTypeFunc(kafkaRequest)
+}
+
+// DetectInstanceTypeCalls gets all the calls that were made to DetectInstanceType.
+// Check the length with:
+//     len(mockedKafkaService.DetectInstanceTypeCalls())
+func (mock *KafkaServiceMock) DetectInstanceTypeCalls() []struct {
+	KafkaRequest *dbapi.KafkaRequest
+} {
+	var calls []struct {
+		KafkaRequest *dbapi.KafkaRequest
+	}
+	mock.lockDetectInstanceType.RLock()
+	calls = mock.calls.DetectInstanceType
+	mock.lockDetectInstanceType.RUnlock()
 	return calls
 }
 
