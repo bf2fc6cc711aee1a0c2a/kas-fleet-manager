@@ -220,6 +220,7 @@ components:
           versions:
             kafka: 2.7.0
             strimzi: 0.21.2
+            kafkaIbp: "2.7"
           deleted: false
     DataPlaneKafkaStatusRequestExample:
       value:
@@ -239,6 +240,7 @@ components:
         versions:
           kafka: 2.4.1
           strimzi: 0.21.2
+          kafkaIbp: "2.4"
     "400InvalidIdExample":
       value:
         id: "21"
@@ -291,6 +293,8 @@ components:
     ManagedKafkaVersions:
       properties:
         kafka:
+          type: string
+        kafkaIbp:
           type: string
         strimzi:
           type: string
@@ -351,8 +355,20 @@ components:
           dataRetentionSize: dataRetentionSize
         strimzi:
         - ready: true
+          kafkaIbpVersions:
+          - kafkaIbpVersions
+          - kafkaIbpVersions
+          kafkaVersions:
+          - kafkaVersions
+          - kafkaVersions
           version: version
         - ready: true
+          kafkaIbpVersions:
+          - kafkaIbpVersions
+          - kafkaIbpVersions
+          kafkaVersions:
+          - kafkaVersions
+          - kafkaVersions
           version: version
         resizeInfo:
           nodeDelta: 7
@@ -380,9 +396,6 @@ components:
           ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
           connections: 0
           dataRetentionSize: dataRetentionSize
-        strimziVersions:
-        - strimziVersions
-        - strimziVersions
       properties:
         conditions:
           description: The cluster data plane conditions
@@ -397,10 +410,6 @@ components:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
         resizeInfo:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
-        strimziVersions:
-          items:
-            type: string
-          type: array
         strimzi:
           items:
             $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_strimzi'
@@ -631,12 +640,26 @@ components:
     DataPlaneClusterUpdateStatusRequest_strimzi:
       example:
         ready: true
+        kafkaIbpVersions:
+        - kafkaIbpVersions
+        - kafkaIbpVersions
+        kafkaVersions:
+        - kafkaVersions
+        - kafkaVersions
         version: version
       properties:
         ready:
           type: boolean
         version:
           type: string
+        kafkaVersions:
+          items:
+            type: string
+          type: array
+        kafkaIbpVersions:
+          items:
+            type: string
+          type: array
       required:
       - ready
       - version
@@ -667,6 +690,8 @@ components:
         kafka:
           type: string
         strimzi:
+          type: string
+        kafkaIbp:
           type: string
     DataPlaneKafkaStatus_routes:
       properties:

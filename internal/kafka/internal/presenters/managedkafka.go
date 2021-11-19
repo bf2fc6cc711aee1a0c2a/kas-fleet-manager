@@ -43,8 +43,9 @@ func PresentManagedKafka(from *v1.ManagedKafka) private.ManagedKafka {
 				BootstrapServerHost: from.Spec.Endpoint.BootstrapServerHost,
 			},
 			Versions: private.ManagedKafkaVersions{
-				Kafka:   from.Spec.Versions.Kafka,
-				Strimzi: from.Spec.Versions.Strimzi,
+				Kafka:    from.Spec.Versions.Kafka,
+				KafkaIbp: from.Spec.Versions.KafkaIBP,
+				Strimzi:  from.Spec.Versions.Strimzi,
 			},
 			Deleted:         from.Spec.Deleted,
 			Owners:          from.Spec.Owners,

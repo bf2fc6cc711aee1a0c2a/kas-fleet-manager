@@ -27,9 +27,8 @@ type KafkaConfig struct {
 	KafkaCapacity                  KafkaCapacityConfig `json:"kafka_capacity_config"`
 	KafkaCapacityConfigFile        string              `json:"kafka_capacity_config_file"`
 
-	DefaultKafkaVersion string               `json:"default_kafka_version"`
-	KafkaLifespan       *KafkaLifespanConfig `json:"kafka_lifespan"`
-	Quota               *KafkaQuotaConfig    `json:"kafka_quota"`
+	KafkaLifespan *KafkaLifespanConfig `json:"kafka_lifespan"`
+	Quota         *KafkaQuotaConfig    `json:"kafka_quota"`
 }
 
 func NewKafkaConfig() *KafkaConfig {
@@ -40,7 +39,6 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaDomainName:                "kafka.devshift.org",
 		NumOfBrokers:                   3,
 		KafkaCapacityConfigFile:        "config/kafka-capacity-config.yaml",
-		DefaultKafkaVersion:            "2.7.0",
 		KafkaLifespan:                  NewKafkaLifespanConfig(),
 		Quota:                          NewKafkaQuotaConfig(),
 	}
@@ -51,7 +49,6 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KafkaTLSKeyFile, "kafka-tls-key-file", c.KafkaTLSKeyFile, "File containing kafka certificate private key")
 	fs.BoolVar(&c.EnableKafkaExternalCertificate, "enable-kafka-external-certificate", c.EnableKafkaExternalCertificate, "Enable custom certificate for Kafka TLS")
 	fs.StringVar(&c.KafkaCapacityConfigFile, "kafka-capacity-config-file", c.KafkaCapacityConfigFile, "File containing kafka capacity configurations")
-	fs.StringVar(&c.DefaultKafkaVersion, "default-kafka-version", c.DefaultKafkaVersion, "The default version of Kafka when creating Kafka instances")
 	fs.BoolVar(&c.KafkaLifespan.EnableDeletionOfExpiredKafka, "enable-deletion-of-expired-kafka", c.KafkaLifespan.EnableDeletionOfExpiredKafka, "Enable the deletion of kafkas when its life span has expired")
 	fs.IntVar(&c.KafkaLifespan.KafkaLifespanInHours, "kafka-lifespan", c.KafkaLifespan.KafkaLifespanInHours, "The desired lifespan of a Kafka instance")
 	fs.StringVar(&c.KafkaDomainName, "kafka-domain-name", c.KafkaDomainName, "The domain name to use for Kafka instances")

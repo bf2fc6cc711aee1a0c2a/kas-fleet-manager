@@ -18,13 +18,28 @@ import (
 
 func TestAcceptedKafkaManager(t *testing.T) {
 	testConfig := config.NewDataplaneClusterConfig()
-	testConfig.StrimziOperatorVersion = "strimzi-cluster-operator.from-config"
 
 	strimziOperatorVersion := "strimzi-cluster-operator.from-cluster"
 	availableStrimziVersions, err := json.Marshal([]api.StrimziVersion{
 		{
 			Version: strimziOperatorVersion,
 			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				api.KafkaVersion{
+					Version: "2.7.0",
+				},
+				api.KafkaVersion{
+					Version: "2.8.0",
+				},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				api.KafkaIBPVersion{
+					Version: "2.7",
+				},
+				api.KafkaIBPVersion{
+					Version: "2.8",
+				},
+			},
 		},
 	})
 	if err != nil {
@@ -35,6 +50,22 @@ func TestAcceptedKafkaManager(t *testing.T) {
 		{
 			Version: strimziOperatorVersion,
 			Ready:   false,
+			KafkaVersions: []api.KafkaVersion{
+				api.KafkaVersion{
+					Version: "2.7.0",
+				},
+				api.KafkaVersion{
+					Version: "2.8.0",
+				},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				api.KafkaIBPVersion{
+					Version: "2.7",
+				},
+				api.KafkaIBPVersion{
+					Version: "2.8",
+				},
+			},
 		},
 	})
 	if err != nil {
@@ -138,7 +169,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			},
 			wantErr:                    true,
 			wantStatus:                 constants2.KafkaRequestStatusPreparing.String(),
-			wantStrimziOperatorVersion: testConfig.StrimziOperatorVersion,
+			wantStrimziOperatorVersion: strimziOperatorVersion,
 		},
 		{
 			name: "should get desired strimzi version from cluster if the StrimziOperatorVersion is not set in the data plane config",
@@ -173,35 +204,6 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			wantErr:                    false,
 			wantStatus:                 constants2.KafkaRequestStatusPreparing.String(),
 			wantStrimziOperatorVersion: strimziOperatorVersion,
-		},
-		{
-			name: "should set desired strimzi version from data plane config if StrimziOperatorVersion is set",
-			fields: fields{
-				clusterPlmtStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
-						return mockCluster, nil
-					},
-				},
-				kafkaService: &services.KafkaServiceMock{
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
-						return &dbapi.KafkaRequest{}, nil
-					},
-				},
-				quotaService: &services.QuotaServiceMock{
-					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
-						return "sub-scription", nil
-					},
-				},
-				dataPlaneClusterConfig: testConfig,
-			},
-			args: args{
-				kafka: &dbapi.KafkaRequest{},
-			},
-			wantStatus:                 constants2.KafkaRequestStatusPreparing.String(),
-			wantStrimziOperatorVersion: testConfig.StrimziOperatorVersion,
 		},
 		{
 			name: "should keep kafka status as accepted if no strimzi operator version is available when retry period has not expired",

@@ -1,12 +1,9 @@
 package presenters
 
 import (
-	"sort"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
 func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRequest) (*dbapi.DataPlaneClusterStatus, error) {
@@ -82,42 +79,31 @@ func getRemaining(status private.DataPlaneClusterUpdateStatusRequest) dbapi.Data
 func getAvailableStrimziVersions(status private.DataPlaneClusterUpdateStatusRequest) ([]api.StrimziVersion, error) {
 	res := []api.StrimziVersion{}
 
-	// We try to get the versions from status.Strimzi and if it has not been defined
-	// we try to fallback to status.StrimziVersions.
-	if status.Strimzi != nil {
-		for _, val := range status.Strimzi {
-			strimziVersion := api.StrimziVersion{
-				Version: val.Version,
-				Ready:   val.Ready,
-			}
-			res = append(res, api.StrimziVersion(strimziVersion))
+	for _, val := range status.Strimzi {
+		var currKafkaVersions []api.KafkaVersion
+		for _, kafkaVersion := range val.KafkaVersions {
+			currKafkaVersions = append(currKafkaVersions, api.KafkaVersion{Version: kafkaVersion})
+		}
+		var currKafkaIBPVersions []api.KafkaIBPVersion
+		for _, kafkaIBPVersion := range val.KafkaIbpVersions {
+			currKafkaIBPVersions = append(currKafkaIBPVersions, api.KafkaIBPVersion{Version: kafkaIBPVersion})
 		}
 
-	} else { // fall back to StrimziVersions.
-		for _, val := range status.StrimziVersions {
-			strimziVersion := api.StrimziVersion{
-				Version: val,
-				Ready:   true,
-			}
-			res = append(res, api.StrimziVersion(strimziVersion))
+		strimziVersion := api.StrimziVersion{
+			Version:          val.Version,
+			Ready:            val.Ready,
+			KafkaVersions:    currKafkaVersions,
+			KafkaIBPVersions: currKafkaIBPVersions,
 		}
+		res = append(res, strimziVersion)
 	}
 
-	var errors errors.ErrorList
-
-	sort.Slice(res, func(i, j int) bool {
-		compareRes, err := res[i].Compare(res[j])
-		if err != nil {
-			errors = append(errors, err)
-		}
-		return compareRes == -1
-	})
-
-	if errors != nil {
-		return nil, errors
+	sortedRes, err := api.StrimziVersionsDeepSort(res)
+	if err != nil {
+		return nil, err
 	}
 
-	return res, nil
+	return sortedRes, nil
 }
 
 func PresentDataPlaneClusterConfig(config *dbapi.DataPlaneClusterConfig) private.DataplaneClusterAgentConfig {

@@ -342,65 +342,6 @@ func TestKafka_Update(t *testing.T) {
 	}
 }
 
-func TestKafkaCreate_OverrideDesiredStrimziVersion(t *testing.T) {
-	// create a mock ocm api server, keep all endpoints as defaults
-	// see the mocks package for more information on the configurable mock server
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	defer ocmServer.Close()
-
-	desiredStrimziVersion := "strimzi-test-v0.0.1-1"
-
-	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
-	// ocm
-	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
-		c.StrimziOperatorVersion = desiredStrimziVersion
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
-	})
-	defer teardown()
-
-	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
-	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
-	mockKasfFleetshardSync.Start()
-	defer mockKasfFleetshardSync.Stop()
-
-	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
-	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
-	// setup pre-requisites to performing requests
-	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account, nil)
-
-	// POST responses per openapi spec: 201, 409, 500
-	k := public.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
-		MultiAz:       testMultiAZ,
-	}
-
-	kafka, _, err := common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
-	// kafka successfully registered with database
-	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
-
-	// wait until the kafka goes into a ready state
-	// the timeout here assumes a backing cluster has already been provisioned
-	foundKafka, err := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusReady)
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
-
-	db := test.TestServices.DBFactory.New()
-	var kafkaRequest dbapi.KafkaRequest
-	if err := db.Unscoped().Where("id = ?", kafka.Id).First(&kafkaRequest).Error; err != nil {
-		t.Error("failed to find kafka request")
-	}
-	Expect(kafkaRequest.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
-	// delete test kafka to free up resources on an OSD cluster
-	deleteTestKafka(t, h, ctx, client, foundKafka.Id)
-}
-
 func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	// create a mock ocm api server, keep all endpoints as defaults
 	// see the mocks package for more information on the configurable mock server

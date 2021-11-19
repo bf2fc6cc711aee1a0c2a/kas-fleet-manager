@@ -221,7 +221,6 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	}
 
 	dbConn := k.connectionFactory.New()
-	kafkaRequest.DesiredKafkaVersion = k.kafkaConfig.DefaultKafkaVersion
 	kafkaRequest.Status = constants2.KafkaRequestStatusAccepted.String()
 	kafkaRequest.SubscriptionId = subscriptionId
 
@@ -792,8 +791,9 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 				BootstrapServerHost: kafkaRequest.BootstrapServerHost,
 			},
 			Versions: managedkafka.VersionsSpec{
-				Kafka:   kafkaRequest.DesiredKafkaVersion,
-				Strimzi: kafkaRequest.DesiredStrimziVersion,
+				Kafka:    kafkaRequest.DesiredKafkaVersion,
+				Strimzi:  kafkaRequest.DesiredStrimziVersion,
+				KafkaIBP: kafkaRequest.DesiredKafkaIBPVersion,
 			},
 			Deleted: kafkaRequest.Status == constants2.KafkaRequestStatusDeprovision.String(),
 			Owners: []string{

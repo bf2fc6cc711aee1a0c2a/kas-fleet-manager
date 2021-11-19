@@ -91,11 +91,6 @@ func (h *dataPlaneClusterHandler) validateBody(request *private.DataPlaneCluster
 			return err
 		}
 
-		err = h.validateStrimziVersions(request)
-		if err != nil {
-			return err
-		}
-
 		err = h.validateStrimzi(request)
 		if err != nil {
 			return err
@@ -191,20 +186,18 @@ func (h *dataPlaneClusterHandler) validateRemaining(request *private.DataPlaneCl
 	return nil
 }
 
-func (h *dataPlaneClusterHandler) validateStrimziVersions(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
-	for idx, strimziElem := range request.StrimziVersions {
-		if strimziElem == "" {
-			return errors.FieldValidationError(fmt.Sprintf(".status.strimziVersions[%d] cannot be empty", idx))
-		}
-	}
-
-	return nil
-}
-
 func (h *dataPlaneClusterHandler) validateStrimzi(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
 	for idx, strimziElem := range request.Strimzi {
 		if strimziElem.Version == "" {
 			return errors.FieldValidationError(fmt.Sprintf(".status.strimzi[%d].version cannot be empty", idx))
+		}
+
+		if len(strimziElem.KafkaVersions) == 0 {
+			return errors.FieldValidationError(fmt.Sprintf(".status.strimzi[%d].kafkaVersions cannot be empty", idx))
+		}
+
+		if len(strimziElem.KafkaIbpVersions) == 0 {
+			return errors.FieldValidationError(fmt.Sprintf(".status.strimzi[%d].kafkaIbpVersions cannot be empty", idx))
 		}
 	}
 

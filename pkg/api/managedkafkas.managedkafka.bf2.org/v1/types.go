@@ -30,8 +30,9 @@ type Capacity struct {
 }
 
 type VersionsSpec struct {
-	Kafka   string `json:"kafka"`
-	Strimzi string `json:"strimzi"`
+	Kafka    string `json:"kafka"`
+	Strimzi  string `json:"strimzi"`
+	KafkaIBP string `json:"kafkaIbp"`
 }
 
 type ManagedKafkaStatus struct {
