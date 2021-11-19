@@ -46,8 +46,8 @@ type Client interface {
 	GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error)
 	GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error)
 	GetOrganisationIdFromExternalId(externalId string) (string, error)
-	HasAssignedQuota(organizationId string, quotaType KafkaQuotaType) (bool, error)
 	Connection() *sdkClient.Connection
+	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 }
 
 var _ Client = &client{}
@@ -162,34 +162,6 @@ func (c *client) GetOrganisationIdFromExternalId(externalId string) (string, err
 	}
 
 	return items.Get(0).ID(), nil
-}
-
-func (c *client) HasAssignedQuota(organizationId string, quotaType KafkaQuotaType) (bool, error) {
-	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
-	quotaCostClient := organizationClient.Organization(organizationId).QuotaCost()
-
-	quotaCostList, err := quotaCostClient.List().Parameter("fetchRelatedResources", true).Send()
-	if err != nil {
-		return false, err
-	}
-
-	assigned := false
-
-	quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {
-		relatedResourcesList, hasRelatedResources := qc.GetRelatedResources()
-		// No quota is assigned if no related resources are defined or there is 0 allowed instances
-		if hasRelatedResources && qc.Allowed() > 0 {
-			for _, relatedResource := range relatedResourcesList {
-				if relatedResource.ResourceName() == quotaType.GetResourceName() && relatedResource.Product() == quotaType.GetProduct() {
-					assigned = true
-					return false
-				}
-			}
-		}
-		return true
-	})
-
-	return assigned, nil
 }
 
 func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error) {
@@ -565,4 +537,30 @@ func (c client) FindSubscriptions(query string) (*amsv1.SubscriptionsListRespons
 		return nil, err
 	}
 	return r, nil
+}
+
+// GetQuotaCostsForProduct gets the AMS QuotaCosts in the given organizationID
+// whose relatedResources contains at least a relatedResource that has the
+// given resourceName and product
+func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error) {
+	var res []*amsv1.QuotaCost
+	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
+	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
+
+	quotaCostList, err := quotaCostClient.List().Parameter("fetchRelatedResources", true).Send()
+	if err != nil {
+		return nil, err
+	}
+
+	quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {
+		relatedResourcesList := qc.RelatedResources()
+		for _, relatedResource := range relatedResourcesList {
+			if relatedResource.ResourceName() == resourceName && relatedResource.Product() == product {
+				res = append(res, qc)
+			}
+		}
+		return true
+	})
+
+	return res, nil
 }
