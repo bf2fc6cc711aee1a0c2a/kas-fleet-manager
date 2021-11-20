@@ -16,9 +16,7 @@ func NewTestingEnvLoader() environments.EnvLoader {
 }
 
 func (t TestingEnvLoader) Defaults() map[string]string {
-	return map[string]string{
-		"keycloak-client-expire": "true",
-	}
+	return map[string]string{}
 }
 
 // The testing environment is specifically for automated testing

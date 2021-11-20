@@ -19,6 +19,5 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"mas-sso-base-url":              "https://identity.api.stage.openshift.com",
 		"mas-sso-realm":                 "rhoas",
 		"osd-idp-mas-sso-realm":         "rhoas-kafka-sre",
-		"keycloak-client-expire":        "true",
 	}
 }
