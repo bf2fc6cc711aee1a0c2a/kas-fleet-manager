@@ -56,8 +56,6 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			}
 			regionList := public.CloudRegionList{
 				Kind:  "CloudRegionList",
-				Total: int32(len(cloudRegions)),
-				Size:  int32(len(cloudRegions)),
 				Page:  int32(1),
 				Items: []public.CloudRegion{},
 			}
@@ -66,18 +64,20 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			for _, cloudRegion := range cloudRegions {
 				region, _ := provider.Regions.GetByName(cloudRegion.Id)
 
-				// if instance_type was specified, only set enabled to true for regions that supports the specified instance type. Otherwise,
-				// set enable to true for all region that supports any instance types
-				if instanceTypeFilter != "" {
-					cloudRegion.Enabled = region.IsInstanceTypeSupported(config.InstanceType(instanceTypeFilter))
-				} else {
-					cloudRegion.Enabled = len(region.SupportedInstanceTypes) > 0
+				// skip any regions that do not support the specified instance type so its not included in the response
+				if instanceTypeFilter != "" && !region.IsInstanceTypeSupported(config.InstanceType(instanceTypeFilter)) {
+					continue
 				}
 
+				// Only set enabled to true if the region supports at least one instance type
+				cloudRegion.Enabled = len(region.SupportedInstanceTypes) > 0
 				cloudRegion.SupportedInstanceTypes = region.SupportedInstanceTypes.AsSlice()
 				converted := presenters.PresentCloudRegion(&cloudRegion)
 				regionList.Items = append(regionList.Items, converted)
 			}
+
+			regionList.Total = int32(len(regionList.Items))
+			regionList.Size = int32(len(regionList.Items))
 
 			h.cache.Set(cacheId, regionList, cache.DefaultExpiration)
 			return regionList, nil
