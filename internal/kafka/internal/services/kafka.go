@@ -671,14 +671,14 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s ibp version: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
 		}
 
-		vCompKafka, ek := api.CompareSemanticVersionsMajorAndMinor(kafkaRequest.DesiredKafkaVersion, kafkaRequest.ActualKafkaVersion)
+		vCompKafka, ek := api.CompareSemanticVersionsMajorAndMinor(kafkaRequest.ActualKafkaVersion, kafkaRequest.DesiredKafkaVersion)
 
 		if ek != nil {
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare desired kafka version: %s with actual kafka version: %s", kafkaRequest.DesiredKafkaVersion, kafkaRequest.ActualKafkaVersion))
 		}
 
 		// no minor/ major version downgrades allowed for kafka version
-		if vCompKafka < 0 {
+		if vCompKafka > 0 {
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s version: %s to the following kafka version: %s", kafkaRequest.ID, kafkaRequest.ActualKafkaVersion, kafkaRequest.DesiredKafkaVersion))
 		}
 
