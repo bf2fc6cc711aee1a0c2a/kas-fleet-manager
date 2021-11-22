@@ -14,6 +14,16 @@ import (
 type InstanceType types.KafkaInstanceType
 type InstanceTypeList []InstanceType
 
+// Returns a region's supported instance type list as a slice
+func (itl InstanceTypeList) AsSlice() []string {
+	instanceTypeList := []string{}
+
+	for _, it := range itl {
+		instanceTypeList = append(instanceTypeList, string(it))
+	}
+	return instanceTypeList
+}
+
 type Region struct {
 	Name                   string           `yaml:"name"`
 	Default                bool             `yaml:"default"`

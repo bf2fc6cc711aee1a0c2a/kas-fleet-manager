@@ -2,6 +2,7 @@ package integration
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/antihax/optional"
@@ -42,6 +43,57 @@ var dummyClusters = []*api.Cluster{
 		ProviderType:       api.ClusterProviderOCM,
 		IdentityProviderID: "some-identity-provider-id",
 	},
+}
+
+func setupOcmServerWithMockRegionsResp() (*httptest.Server, error) {
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	usEast1 := clustersmgmtv1.NewCloudRegion().
+		ID("us-east-1").
+		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/us-east-1").
+		DisplayName("us east 1").
+		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
+		Enabled(true).
+		SupportsMultiAZ(true)
+
+	afSouth1 := clustersmgmtv1.NewCloudRegion().
+		ID("af-south-1").
+		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/af-south-1").
+		DisplayName("af-south-1").
+		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
+		Enabled(true).
+		SupportsMultiAZ(true)
+
+	euWest2 := clustersmgmtv1.NewCloudRegion().
+		ID("eu-west-2").
+		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/eu-west-2").
+		DisplayName("eu-west-2").
+		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
+		Enabled(true).
+		SupportsMultiAZ(true)
+
+	euCentral1 := clustersmgmtv1.NewCloudRegion().
+		ID("eu-central-1").
+		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/eu-central-1").
+		DisplayName("eu-central-1").
+		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
+		Enabled(true).
+		SupportsMultiAZ(true)
+
+	apSouth1 := clustersmgmtv1.NewCloudRegion().
+		ID("ap-south-1").
+		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/ap-south-1").
+		DisplayName("ap-south-1").
+		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
+		Enabled(true).
+		SupportsMultiAZ(true)
+
+	awsRegions, err := clustersmgmtv1.NewCloudRegionList().Items(usEast1, afSouth1, euWest2, euCentral1, apSouth1).Build()
+	if err != nil {
+		return nil, err
+	}
+	ocmServerBuilder.SetCloudRegionsGetResponse(awsRegions, nil)
+	ocmServer := ocmServerBuilder.Build()
+	return ocmServer, nil
 }
 
 func TestCloudProviderRegions(t *testing.T) {
@@ -153,10 +205,35 @@ func TestListCloudProviders(t *testing.T) {
 }
 
 func TestListCloudProviderRegions(t *testing.T) {
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	ocmServer, err := setupOcmServerWithMockRegionsResp()
+	if err != nil {
+		t.Errorf("Failed to set mock ocm region list response")
+	}
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(pc *config.ProviderConfig) {
+		pc.ProvidersConfig.SupportedProviders = config.ProviderList{
+			{
+				Name:    "aws",
+				Default: true,
+				Regions: config.RegionList{
+					{
+						Name:                   "us-east-1",
+						Default:                true,
+						SupportedInstanceTypes: config.InstanceTypeList{"standard", "eval"},
+					},
+					{
+						Name:                   "af-south-1",
+						SupportedInstanceTypes: config.InstanceTypeList{"standard"},
+					},
+					{
+						Name:                   "eu-central-1",
+						SupportedInstanceTypes: config.InstanceTypeList{},
+					},
+				},
+			},
+		}
+	})
 	defer teardown()
 
 	// Create two clusters each with different provider type
@@ -168,26 +245,31 @@ func TestListCloudProviderRegions(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
+	// all regions available for the 'aws' cloud provider should be returned
 	cloudProviderRegionsList, resp1, err := client.DefaultApi.GetCloudProviderRegions(ctx, mocks.MockCluster.CloudProvider().ID(), nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
 	Expect(resp1.StatusCode).To(Equal(http.StatusOK))
-	Expect(cloudProviderRegionsList.Items).NotTo(BeEmpty(), "Expected cloud provider regions list")
+	Expect(cloudProviderRegionsList.Items).NotTo(BeEmpty(), "Expected aws cloud provider regions to return a non-empty list")
 
-	gcpCloudProviderRegions, gcpResp, gcpErr := client.DefaultApi.GetCloudProviderRegions(ctx, gcp, nil)
-	Expect(gcpErr).NotTo(HaveOccurred(), "Error occurred when attempting to list gcp cloud providers regions:  %v", gcpErr)
-	Expect(gcpResp.StatusCode).To(Equal(http.StatusOK))
-	Expect(gcpCloudProviderRegions.Items).NotTo(BeEmpty(), "Expected gcp cloud provider regions list")
-
-	// verify that region from standalone provider type is there
-	gcpHasAfEast1Region := false
-	for _, region := range gcpCloudProviderRegions.Items {
-		if region.Id == afEast1Region {
-			gcpHasAfEast1Region = true
-			break
+	// enabled should only be set to true for regions that support at least one instance type in the providers config
+	for _, cpr := range cloudProviderRegionsList.Items {
+		if cpr.Id == "us-east-1" || cpr.Id == "af-south-1" {
+			Expect(cpr.Enabled).To(BeTrue())
+		} else {
+			Expect(cpr.Enabled).To(BeFalse())
 		}
 	}
 
-	Expect(gcpHasAfEast1Region).To(BeTrue())
+	// all regions available for the 'gcp' cloud provider should be returned
+	gcpCloudProviderRegions, gcpResp, gcpErr := client.DefaultApi.GetCloudProviderRegions(ctx, gcp, nil)
+	Expect(gcpErr).NotTo(HaveOccurred(), "Error occurred when attempting to list gcp cloud providers regions:  %v", gcpErr)
+	Expect(gcpResp.StatusCode).To(Equal(http.StatusOK))
+	Expect(gcpCloudProviderRegions.Items).NotTo(BeEmpty(), "Expected gcp cloud provider regions to return a non-empty list")
+
+	// all gcp regions returned should have enabled set to false as they do not support any instance types as specified in the providers config
+	for _, cpr := range gcpCloudProviderRegions.Items {
+		Expect(cpr.Enabled).To(BeFalse())
+	}
 
 	//test with wrong provider id
 	wrongCloudProviderList, respFromWrongID, errFromWrongId := client.DefaultApi.GetCloudProviderRegions(ctx, "wrong_provider_id", nil)
@@ -197,54 +279,10 @@ func TestListCloudProviderRegions(t *testing.T) {
 }
 
 func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
-	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
-	usEast1 := clustersmgmtv1.NewCloudRegion().
-		ID("us-east-1").
-		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/us-east-1").
-		DisplayName("us east 1").
-		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
-		Enabled(true).
-		SupportsMultiAZ(true)
-
-	afSouth1 := clustersmgmtv1.NewCloudRegion().
-		ID("af-south-1").
-		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/af-south-1").
-		DisplayName("af-south-1").
-		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
-		Enabled(true).
-		SupportsMultiAZ(true)
-
-	euWest2 := clustersmgmtv1.NewCloudRegion().
-		ID("eu-west-2").
-		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/eu-west-2").
-		DisplayName("eu-west-2").
-		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
-		Enabled(true).
-		SupportsMultiAZ(true)
-
-	euCentral1 := clustersmgmtv1.NewCloudRegion().
-		ID("eu-central-1").
-		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/eu-central-1").
-		DisplayName("eu-central-1").
-		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
-		Enabled(true).
-		SupportsMultiAZ(true)
-
-	apSouth1 := clustersmgmtv1.NewCloudRegion().
-		ID("ap-south-1").
-		HREF("/api/clusters_mgmt/v1/cloud_providers/aws/regions/ap-south-1").
-		DisplayName("ap-south-1").
-		CloudProvider(mocks.GetMockCloudProviderBuilder(nil)).
-		Enabled(true).
-		SupportsMultiAZ(true)
-
-	awsRegions, err := clustersmgmtv1.NewCloudRegionList().Items(usEast1, afSouth1, euWest2, euCentral1, apSouth1).Build()
+	ocmServer, err := setupOcmServerWithMockRegionsResp()
 	if err != nil {
-		t.Errorf("Failed to create mock region list")
+		t.Errorf("Failed to set mock ocm region list response")
 	}
-	ocmServerBuilder.SetCloudRegionsGetResponse(awsRegions, nil)
-	ocmServer := ocmServerBuilder.Build()
-
 	defer ocmServer.Close()
 
 	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(pc *config.ProviderConfig) {
