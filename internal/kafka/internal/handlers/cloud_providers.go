@@ -74,6 +74,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 					cloudRegion.Enabled = len(region.SupportedInstanceTypes) > 0
 				}
 
+				cloudRegion.SupportedInstanceTypes = region.SupportedInstanceTypes.AsSlice()
 				converted := presenters.PresentCloudRegion(&cloudRegion)
 				regionList.Items = append(regionList.Items, converted)
 			}

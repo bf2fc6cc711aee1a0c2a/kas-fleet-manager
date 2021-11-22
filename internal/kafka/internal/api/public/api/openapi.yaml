@@ -1118,6 +1118,9 @@ components:
         id: us-east-1
         display_name: US East, N. Virginia
         enabled: true
+        supported_instance_types:
+        - standard
+        - eval
     ServiceAccountRequestExample:
       value:
         name: my-app-sa
@@ -1577,8 +1580,14 @@ components:
           default: false
           description: Whether the region is enabled for deploying an OSD cluster.
           type: boolean
+        supported_instance_types:
+          description: The Kafka instance types supported by this region.
+          items:
+            type: string
+          type: array
       required:
       - enabled
+      - supported_instance_types
     ServiceAccount:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'

@@ -19,9 +19,10 @@ func PresentCloudProvider(cloudProvider *api.CloudProvider) public.CloudProvider
 func PresentCloudRegion(cloudRegion *api.CloudRegion) public.CloudRegion {
 	reference := PresentReference(cloudRegion.Id, cloudRegion)
 	return public.CloudRegion{
-		Id:          reference.Id,
-		Kind:        reference.Kind,
-		DisplayName: cloudRegion.DisplayName,
-		Enabled:     cloudRegion.Enabled,
+		Id:                     reference.Id,
+		Kind:                   reference.Kind,
+		DisplayName:            cloudRegion.DisplayName,
+		Enabled:                cloudRegion.Enabled,
+		SupportedInstanceTypes: cloudRegion.SupportedInstanceTypes,
 	}
 }
