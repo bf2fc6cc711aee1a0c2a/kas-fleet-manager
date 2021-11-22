@@ -649,6 +649,39 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with strimzi version: %s", kafkaRequest.ID, kafkaRequest.DesiredStrimziVersion))
 		}
 
+		vCompOldNewIbp, eIbp := api.CompareVersion(kafkaRequest.ActualKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion)
+
+		if eIbp != nil {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare actual ibp version: %s with desired ibp version: %s", kafkaRequest.ActualKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
+		}
+
+		// actual ibp version cannot be greater than desired ibp version (no downgrade allowed)
+		if vCompOldNewIbp > 0 {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s ibp version: %s to a lower version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.ActualKafkaIBPVersion))
+		}
+
+		vCompIbpKafka, eIbpK := api.CompareVersion(kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion)
+
+		if eIbpK != nil {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare kafka ibp version: %s with kafka version: %s", kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
+		}
+
+		// ibp version cannot be greater than kafka version
+		if vCompIbpKafka > 0 {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s ibp version: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
+		}
+
+		vCompKafka, ek := api.CheckIfMinorDowngrade(kafkaRequest.ActualKafkaVersion, kafkaRequest.DesiredKafkaVersion)
+
+		if ek != nil {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare desired kafka version: %s with actual kafka version: %s", kafkaRequest.DesiredKafkaVersion, kafkaRequest.ActualKafkaVersion))
+		}
+
+		// no minor/ major version downgrades allowed for kafka version
+		if vCompKafka < 0 {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s version: %s to the following kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaVersion, kafkaRequest.ActualKafkaVersion))
+		}
+
 		kafkaVersionAvailable, err2 := k.clusterService.IsStrimziKafkaVersionAvailableInCluster(cluster, kafkaRequest.DesiredStrimziVersion, kafkaRequest.DesiredKafkaVersion, kafkaRequest.DesiredKafkaIBPVersion)
 		if err2 != nil {
 			return errors.Validation(err2.Error())
@@ -656,17 +689,6 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 
 		if !kafkaVersionAvailable {
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaVersion))
-		}
-
-		vCompRes, e := api.CompareVersion(kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion)
-
-		if e != nil {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare kafka ibp version: %s with kafka version: %s", kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
-		}
-
-		// ibp version cannot be greater than kafka version
-		if vCompRes > 0 {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s ibp version: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
 		}
 
 		return k.Update(kafkaRequest)
