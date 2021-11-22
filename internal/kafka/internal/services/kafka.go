@@ -649,7 +649,7 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with strimzi version: %s", kafkaRequest.ID, kafkaRequest.DesiredStrimziVersion))
 		}
 
-		vCompOldNewIbp, eIbp := api.CompareVersion(kafkaRequest.ActualKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion)
+		vCompOldNewIbp, eIbp := api.CompareBuildAwareSemanticVersions(kafkaRequest.ActualKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion)
 
 		if eIbp != nil {
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare actual ibp version: %s with desired ibp version: %s", kafkaRequest.ActualKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
@@ -660,7 +660,7 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s ibp version: %s to a lower version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.ActualKafkaIBPVersion))
 		}
 
-		vCompIbpKafka, eIbpK := api.CompareVersion(kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion)
+		vCompIbpKafka, eIbpK := api.CompareBuildAwareSemanticVersions(kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion)
 
 		if eIbpK != nil {
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare kafka ibp version: %s with kafka version: %s", kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
@@ -671,7 +671,7 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s ibp version: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
 		}
 
-		vCompKafka, ek := api.CheckIfMinorDowngrade(kafkaRequest.DesiredKafkaVersion, kafkaRequest.ActualKafkaVersion)
+		vCompKafka, ek := api.CompareBuildAwareSemanticVersionsMajorAndMinor(kafkaRequest.DesiredKafkaVersion, kafkaRequest.ActualKafkaVersion)
 
 		if ek != nil {
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare desired kafka version: %s with actual kafka version: %s", kafkaRequest.DesiredKafkaVersion, kafkaRequest.ActualKafkaVersion))

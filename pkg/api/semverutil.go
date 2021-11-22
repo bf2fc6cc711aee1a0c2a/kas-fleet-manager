@@ -63,14 +63,13 @@ func checkIfMinorDowngrade(current, desired string) (int, error) {
 	if currentSemver.Major < desiredSemver.Major {
 		return -1, nil
 	}
-	if currentSemver.Major == desiredSemver.Major {
-		if currentSemver.Minor == desiredSemver.Minor {
-			return 0, err
-		} else if currentSemver.Minor > desiredSemver.Minor {
-			return 1, err
-		} else {
-			return -1, nil
-		}
+	if currentSemver.Major > desiredSemver.Major {
+		return 1, nil
 	}
-	return 1, nil
+	if currentSemver.Minor == desiredSemver.Minor {
+		return 0, err
+	} else if currentSemver.Minor > desiredSemver.Minor {
+		return 1, err
+	}
+	return -1, nil
 }

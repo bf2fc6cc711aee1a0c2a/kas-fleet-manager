@@ -235,11 +235,11 @@ func (s *StrimziVersion) Compare(other StrimziVersion) (int, error) {
 	return buildAwareSemanticVersioningCompare(v1VersionNumber, v2VersionNumber)
 }
 
-func CompareVersion(v1, v2 string) (int, error) {
+func CompareBuildAwareSemanticVersions(v1, v2 string) (int, error) {
 	return buildAwareSemanticVersioningCompare(v1, v2)
 }
 
-func CheckIfMinorDowngrade(current, desired string) (int, error) {
+func CompareBuildAwareSemanticVersionsMajorAndMinor(current, desired string) (int, error) {
 	return checkIfMinorDowngrade(current, desired)
 }
 
