@@ -410,21 +410,55 @@ func TestAdminKafka_List(t *testing.T) {
 }
 
 func TestAdminKafka_Update(t *testing.T) {
-	sampleKafkaID := api.NewID()
+	sampleKafkaID1 := api.NewID()
+	sampleKafkaID2 := api.NewID()
+	sampleKafkaID3 := api.NewID()
+	sampleKafkaID4 := api.NewID()
 	fullyPopulatedKafkaUpdateRequest := adminprivate.KafkaUpdateRequest{
-		StrimziVersion:  "strimzi-cluster-operator.v0.23.0-0",
-		KafkaVersion:    "2.7.0",
-		KafkaIbpVersion: "2.7.0",
+		StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+		KafkaVersion:    "2.8.2",
+		KafkaIbpVersion: "2.8.1",
 	}
 	emptyKafkaUpdateRequest := adminprivate.KafkaUpdateRequest{}
-	updateRequestWithKafkaVersion := adminprivate.KafkaUpdateRequest{
+	ibpDowngrade := adminprivate.KafkaUpdateRequest{
+		KafkaIbpVersion: "2.6.0",
+	}
+	ibpUpgrade := adminprivate.KafkaUpdateRequest{
+		KafkaIbpVersion: "2.8.0",
+	}
+	ibpUpgradeHigherThanKafka := adminprivate.KafkaUpdateRequest{
+		KafkaIbpVersion: "2.8.2",
+	}
+	kafkaVersionMajorDowngrade := adminprivate.KafkaUpdateRequest{
+		KafkaVersion: "1.8.0",
+	}
+	kafkaVersionMinorDowngrade := adminprivate.KafkaUpdateRequest{
 		KafkaVersion: "2.7.0",
 	}
-	updateRequestWithStrimziVersion := adminprivate.KafkaUpdateRequest{
-		StrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
+	kafkaVersionPatchDowngrade := adminprivate.KafkaUpdateRequest{
+		KafkaVersion: "2.8.0",
 	}
-	unsupportedStrimziVersionUpdateRequest := adminprivate.KafkaUpdateRequest{
-		StrimziVersion: "strimzi-cluster-operator.v0.999.0-0",
+	kafkaVersionPatchUpgradeInStatus := adminprivate.KafkaUpdateRequest{
+		KafkaVersion: "2.9.0",
+	}
+	kafkaVersionPatchUpgradeNotInStatus := adminprivate.KafkaUpdateRequest{
+		KafkaVersion: "2.10.0",
+	}
+	strimziUpgrade := adminprivate.KafkaUpdateRequest{
+		StrimziVersion: "strimzi-cluster-operator.v0.25.0-0",
+	}
+	notReadyStrimziUpgrade := adminprivate.KafkaUpdateRequest{
+		StrimziVersion: "strimzi-cluster-operator.v0.25.1-0",
+	}
+	allVersionsUpgrade := adminprivate.KafkaUpdateRequest{
+		StrimziVersion:  "strimzi-cluster-operator.v0.25.0-0",
+		KafkaIbpVersion: "2.8.1",
+		KafkaVersion:    "2.8.2",
+	}
+	versionsNotInStatusForValidStrimziVersion := adminprivate.KafkaUpdateRequest{
+		StrimziVersion:  "strimzi-cluster-operator.v0.25.0-0",
+		KafkaIbpVersion: "2.8.3",
+		KafkaVersion:    "2.8.3",
 	}
 	type args struct {
 		ctx                func(h *coreTest.Helper) context.Context
@@ -442,7 +476,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{})
 				},
-				kafkaID: sampleKafkaID,
+				kafkaID: sampleKafkaID1,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
@@ -455,7 +489,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{"notallowedrole"})
 				},
-				kafkaID: sampleKafkaID,
+				kafkaID: sampleKafkaID1,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
@@ -468,84 +502,11 @@ func TestAdminKafka_Update(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
 				},
-				kafkaID: sampleKafkaID,
+				kafkaID: sampleKafkaID1,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
-			},
-		},
-		{
-			name: fmt.Sprintf("should succeed when the role defined in the request is %s", auth.KasFleetManagerAdminWriteRole),
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
-				},
-				kafkaID:            sampleKafkaID,
-				kafkaUpdateRequest: fullyPopulatedKafkaUpdateRequest,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID))
-			},
-		},
-		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID,
-				kafkaUpdateRequest: fullyPopulatedKafkaUpdateRequest,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID))
-			},
-		},
-		{
-			name: "should succeed when updating kafka version only",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID,
-				kafkaUpdateRequest: updateRequestWithKafkaVersion,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID))
-			},
-		},
-		{
-			name: "should succeed when updating strimzi version only",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID,
-				kafkaUpdateRequest: updateRequestWithStrimziVersion,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID))
-			},
-		},
-		{
-			name: "should fail when setting unsupported strimzi version",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID,
-				kafkaUpdateRequest: unsupportedStrimziVersionUpdateRequest,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
 			},
 		},
 		{
@@ -554,8 +515,151 @@ func TestAdminKafka_Update(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID,
+				kafkaID:            sampleKafkaID1,
 				kafkaUpdateRequest: emptyKafkaUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when downgrading ibp version",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: ibpDowngrade,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading ibp version to version higher than kafka version",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: ibpUpgradeHigherThanKafka,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading ibp version when already upgrade in progress",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID2,
+				kafkaUpdateRequest: ibpUpgrade,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when downgrading to lower minor kafka version",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: kafkaVersionMinorDowngrade,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when downgrading to lower patch kafka version smaller than ibp version",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID3,
+				kafkaUpdateRequest: kafkaVersionPatchDowngrade,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when downgrading to lower major kafka version",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID4,
+				kafkaUpdateRequest: kafkaVersionMajorDowngrade,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading to higher minor kafka version when not in status",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: kafkaVersionPatchUpgradeNotInStatus,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading kafka version when already upgrade in progress",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID2,
+				kafkaUpdateRequest: kafkaVersionPatchUpgradeInStatus,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading strimzi version when already upgrade in progress",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID2,
+				kafkaUpdateRequest: strimziUpgrade,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading simultaneously kafka, ibp and strimzi version when any of those not in status",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: versionsNotInStatusForValidStrimziVersion,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading strimzi version to a version that is not ready",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID2,
+				kafkaUpdateRequest: notReadyStrimziUpgrade,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
@@ -590,12 +694,108 @@ func TestAdminKafka_Update(t *testing.T) {
 					ctx := context.WithValue(context.Background(), adminprivate.ContextAccessToken, token)
 					return ctx
 				},
-				kafkaID:            sampleKafkaID,
+				kafkaID:            sampleKafkaID1,
 				kafkaUpdateRequest: fullyPopulatedKafkaUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+			},
+		},
+		{
+			name: fmt.Sprintf("should succeed when the role defined in the request is %s", auth.KasFleetManagerAdminWriteRole),
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: fullyPopulatedKafkaUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID1))
+			},
+		},
+		{
+			name: fmt.Sprintf("should succeed when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: fullyPopulatedKafkaUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID1))
+			},
+		},
+		{
+			name: "should succeed when upgrading ibp version to lower than kafka version",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: ibpUpgrade,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID1))
+				Expect(result.DesiredKafkaIbpVersion).To(Equal(ibpUpgrade.KafkaIbpVersion))
+			},
+		},
+		{
+			name: "should succeed when downgrading to lower patch kafka version",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: kafkaVersionPatchDowngrade,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID1))
+				Expect(result.DesiredKafkaVersion).To(Equal(kafkaVersionPatchDowngrade.KafkaVersion))
+			},
+		},
+		{
+			name: "should succeed when upgrading to higher minor kafka version when in status",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: kafkaVersionPatchUpgradeInStatus,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID1))
+				Expect(result.DesiredKafkaVersion).To(Equal(kafkaVersionPatchUpgradeInStatus.KafkaVersion))
+			},
+		},
+		{
+			name: "should succeed when upgrading simultaneously kafka, ibp and strimzi version",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: allVersionsUpgrade,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID1))
+				Expect(result.DesiredKafkaVersion).To(Equal(allVersionsUpgrade.KafkaVersion))
+				Expect(result.DesiredKafkaIbpVersion).To(Equal(allVersionsUpgrade.KafkaIbpVersion))
+				Expect(result.DesiredStrimziVersion).To(Equal(allVersionsUpgrade.StrimziVersion))
 			},
 		},
 	}
@@ -628,21 +828,119 @@ func TestAdminKafka_Update(t *testing.T) {
 		ProviderType:       api.ClusterProviderStandalone,
 	}
 
-	err2 := cluster.SetAvailableStrimziVersions([]api.StrimziVersion{{
-		Version: updateRequestWithStrimziVersion.StrimziVersion,
-		Ready:   true,
-		KafkaVersions: []api.KafkaVersion{
-			{Version: "2.6.0"},
-			{Version: "2.7.0"},
+	err2 := cluster.SetAvailableStrimziVersions(
+		[]api.StrimziVersion{
+			{
+				Version: "strimzi-cluster-operator.v0.20.0-0",
+				Ready:   true,
+				KafkaVersions: []api.KafkaVersion{
+					{Version: "1.8.0"},
+					{Version: "2.6.0"},
+					{Version: "2.7.0"},
+					{Version: "2.8.0"},
+				},
+				KafkaIBPVersions: []api.KafkaIBPVersion{
+					{Version: "1.8.0"},
+					{Version: "2.6.0"},
+					{Version: "2.7.0"},
+					{Version: "2.8.0"},
+				},
+			},
+			{
+				Version: "strimzi-cluster-operator.v0.22.0-0",
+				Ready:   true,
+				KafkaVersions: []api.KafkaVersion{
+					{Version: "2.6.0"},
+					{Version: "2.7.0"},
+					{Version: "2.8.0"},
+				},
+				KafkaIBPVersions: []api.KafkaIBPVersion{
+					{Version: "2.6.0"},
+					{Version: "2.7.0"},
+					{Version: "2.8.0"},
+				},
+			},
+			{
+				Version: "strimzi-cluster-operator.v0.23.0-0",
+				Ready:   true,
+				KafkaVersions: []api.KafkaVersion{
+					{Version: "2.6.0"},
+					{Version: "2.7.0"},
+					{Version: "2.8.0"},
+					{Version: "2.8.1"},
+				},
+				KafkaIBPVersions: []api.KafkaIBPVersion{
+					{Version: "2.6.0"},
+					{Version: "2.7.0"},
+					{Version: "2.8.0"},
+					{Version: "2.8.1"},
+				},
+			},
+			{
+				Version: "strimzi-cluster-operator.v0.24.0-0",
+				Ready:   true,
+				KafkaVersions: []api.KafkaVersion{
+					{Version: "2.6.0"},
+					{Version: "2.7.0"},
+					{Version: "2.8.0"},
+					{Version: "2.8.1"},
+					{Version: "2.8.2"},
+					{Version: "2.9.0"},
+				},
+				KafkaIBPVersions: []api.KafkaIBPVersion{
+					{Version: "2.6.0"},
+					{Version: "2.7.0"},
+					{Version: "2.8.0"},
+					{Version: "2.8.1"},
+					{Version: "2.8.2"},
+				},
+			},
+			{
+				Version: "strimzi-cluster-operator.v0.25.0-0",
+				Ready:   true,
+				KafkaVersions: []api.KafkaVersion{
+					{Version: "2.6.0"},
+					{Version: "2.7.0"},
+					{Version: "2.8.0"},
+					{Version: "2.8.1"},
+					{Version: "2.8.2"},
+				},
+				KafkaIBPVersions: []api.KafkaIBPVersion{
+					{Version: "2.6.0"},
+					{Version: "2.7.0"},
+					{Version: "2.8.0"},
+					{Version: "2.8.1"},
+				},
+			},
+			{
+				Version: "strimzi-cluster-operator.v0.25.1-0",
+				Ready:   false,
+				KafkaVersions: []api.KafkaVersion{
+					{Version: "2.6.0"},
+					{Version: "2.7.0"},
+					{Version: "2.8.0"},
+					{Version: "2.8.1"},
+					{Version: "2.8.2"},
+				},
+				KafkaIBPVersions: []api.KafkaIBPVersion{
+					{Version: "2.6.0"},
+					{Version: "2.7.0"},
+					{Version: "2.8.0"},
+					{Version: "2.8.1"},
+				},
+			},
+			{
+				Version: "strimzi-cluster-operator.v0.26.0-0",
+				Ready:   true,
+				KafkaVersions: []api.KafkaVersion{
+					{Version: "2.8.2"},
+				},
+				KafkaIBPVersions: []api.KafkaIBPVersion{
+					{Version: "2.8.2"},
+				},
+			},
 		},
-		KafkaIBPVersions: []api.KafkaIBPVersion{
-			{Version: "2.6.0"},
-			{Version: "2.7.0"},
-		},
-	}, {
-		Ready:   true,
-		Version: fullyPopulatedKafkaUpdateRequest.StrimziVersion,
-	}})
+	)
 
 	if err2 != nil {
 		t.Error("failed to set available strimzi versions")
@@ -654,28 +952,107 @@ func TestAdminKafka_Update(t *testing.T) {
 		return
 	}
 
-	// create a kafka that will be updated
-	kafka := &dbapi.KafkaRequest{
+	// create kafkas that will be upgraded in the tests
+	kafka1 := &dbapi.KafkaRequest{
 		Meta: api.Meta{
-			ID: sampleKafkaID,
+			ID: sampleKafkaID1,
 		},
 		MultiAZ:                false,
 		Owner:                  "test-user",
 		Region:                 "test",
 		CloudProvider:          "test",
-		Name:                   "test-kafka",
+		Name:                   "test-kafka1",
+		OrganisationId:         "13640203",
+		Status:                 constants.KafkaRequestStatusReady.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualKafkaVersion:     "2.8.1",
+		DesiredKafkaVersion:    "2.8.1",
+		ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:  "2.7.0",
+		DesiredKafkaIBPVersion: "2.7.0",
+	}
+
+	kafka2 := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: sampleKafkaID2,
+		},
+		MultiAZ:                false,
+		Owner:                  "test-user",
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-kafka2",
+		OrganisationId:         "13640203",
+		Status:                 constants.KafkaRequestStatusReady.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualKafkaVersion:     "2.8.0",
+		DesiredKafkaVersion:    "2.8.0",
+		ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:  "2.7.0",
+		DesiredKafkaIBPVersion: "2.7.0",
+		KafkaIBPUpgrading:      true,
+		KafkaUpgrading:         true,
+		StrimziUpgrading:       true,
+	}
+
+	kafka3 := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: sampleKafkaID3,
+		},
+		MultiAZ:                false,
+		Owner:                  "test-user",
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-kafka3",
+		OrganisationId:         "13640203",
+		Status:                 constants.KafkaRequestStatusReady.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualKafkaVersion:     "2.8.2",
+		DesiredKafkaVersion:    "2.8.2",
+		ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:  "2.8.1",
+		DesiredKafkaIBPVersion: "2.8.1",
+		KafkaIBPUpgrading:      true,
+	}
+
+	kafka4 := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: sampleKafkaID4,
+		},
+		MultiAZ:                false,
+		Owner:                  "test-user",
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-kafk4",
 		OrganisationId:         "13640203",
 		Status:                 constants.KafkaRequestStatusReady.String(),
 		ClusterID:              cluster.ClusterID,
 		ActualKafkaVersion:     "2.6.0",
 		DesiredKafkaVersion:    "2.6.0",
-		ActualStrimziVersion:   "v.23.0",
-		DesiredStrimziVersion:  "v0.23.0",
-		ActualKafkaIBPVersion:  "2.6.0",
-		DesiredKafkaIBPVersion: "2.6.0",
+		ActualStrimziVersion:   "strimzi-cluster-operator.v0.20.0-0",
+		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.20.0-0",
+		ActualKafkaIBPVersion:  "1.8.0",
+		DesiredKafkaIBPVersion: "1.8.0",
+		KafkaIBPUpgrading:      true,
+		KafkaUpgrading:         true,
+		StrimziUpgrading:       true,
 	}
 
-	if err := db.Create(kafka).Error; err != nil {
+	if err := db.Create(kafka1).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	if err := db.Create(kafka2).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	if err := db.Create(kafka3).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	if err := db.Create(kafka4).Error; err != nil {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
 	}
 

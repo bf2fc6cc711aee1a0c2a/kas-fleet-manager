@@ -649,7 +649,7 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with strimzi version: %s", kafkaRequest.ID, kafkaRequest.DesiredStrimziVersion))
 		}
 
-		vCompOldNewIbp, eIbp := api.CompareBuildAwareSemanticVersions(kafkaRequest.ActualKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion)
+		vCompOldNewIbp, eIbp := api.CompareBuildAwareSemanticVersions(kafkaRequest.ActualKafkaIBPVersion, kafkaRequest.DesiredKafkaIBPVersion)
 
 		if eIbp != nil {
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare actual ibp version: %s with desired ibp version: %s", kafkaRequest.ActualKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
