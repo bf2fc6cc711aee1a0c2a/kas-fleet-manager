@@ -323,61 +323,50 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	// 'enabled' should only be set to true for regions that support any regions if 'instance_type' was not specified
-	regions, resp, err := client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{})
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type 'invalid': %v", err)
-	for _, r := range regions.Items {
-		if r.Id == "us-east-1" || r.Id == "af-south-1" || r.Id == "eu-west-2" {
-			Expect(r.Enabled).To(Equal(true))
-		} else {
-			Expect(r.Enabled).To(Equal(false))
-		}
-	}
-
-	// 'enabled' should only be set to true for regions that support 'eval' instance types if 'instance_type=eval' was specified
-	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
+	// should only return regions that support 'eval' instance type if 'instance_type=eval' was specified
+	regions, resp, err := client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
 		InstanceType: optional.NewString("eval"),
 	})
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type 'eval': %v", err)
+	Expect(regions.Items).To(HaveLen(2))
 	for _, r := range regions.Items {
-		if r.Id == "us-east-1" || r.Id == "eu-west-2" {
-			Expect(r.Enabled).To(Equal(true))
-		} else {
-			Expect(r.Enabled).To(Equal(false))
-		}
+		Expect(r.Id).To(SatisfyAny(Equal("us-east-1"), Equal("eu-west-2")))
+		Expect(r.Enabled).To(Equal(true))
 	}
 
-	// 'enabled' should only be set to true for regions that support 'standard' instance types if 'instance_type=standard' was specified
+	// should only return regions that support 'standard' instance types if 'instance_type=standard' was specified
 	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
 		InstanceType: optional.NewString("standard"),
 	})
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type 'standard': %v", err)
+	Expect(regions.Items).To(HaveLen(2))
 	for _, r := range regions.Items {
-		if r.Id == "us-east-1" || r.Id == "af-south-1" {
-			Expect(r.Enabled).To(Equal(true))
-		} else {
-			Expect(r.Enabled).To(Equal(false))
-		}
+		Expect(r.Id).To(SatisfyAny(Equal("us-east-1"), Equal("af-south-1")))
+		Expect(r.Enabled).To(Equal(true))
 	}
 
-	// all regions returned should have 'enabled' set to false if no region supports any instance types
-	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "gcp", &public.GetCloudProviderRegionsOpts{})
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type 'eval' for gcp: %v", err)
-	for _, r := range regions.Items {
-		Expect(r.Enabled).To(Equal(false))
-	}
-
-	// all regions returned should have 'enabled' set to false if specified instance type is not valid
+	// should not return any regions if specified instance_type was not valid
 	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
 		InstanceType: optional.NewString("!invalid!"),
 	})
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type '!invalid!': %v", err)
-	for _, r := range regions.Items {
-		Expect(r.Enabled).To(Equal(false))
+	Expect(regions.Items).To(HaveLen(0))
+
+	// should return all regions if specified instance_type was an empty string
+	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
+		InstanceType: optional.NewString(""),
+	})
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type '!invalid!': %v", err)
+	Expect(regions.Items).ToNot(BeEmpty())
+	for _, cpr := range regions.Items {
+		if cpr.Id == "us-east-1" || cpr.Id == "af-south-1" || cpr.Id == "eu-west-2" {
+			Expect(cpr.Enabled).To(BeTrue())
+		} else {
+			Expect(cpr.Enabled).To(BeFalse())
+		}
 	}
 }
