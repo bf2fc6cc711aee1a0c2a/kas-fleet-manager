@@ -728,12 +728,14 @@ func (c clusterService) IsStrimziKafkaVersionAvailableInCluster(cluster *api.Clu
 			for _, kversion := range version.KafkaVersions {
 				if kversion.Version == kafkaVersion {
 					kVvalid = true
+					break
 				}
 			}
 			ibpVvalid := false
 			for _, iversion := range version.KafkaIBPVersions {
 				if iversion.Version == ibpVersion {
 					ibpVvalid = true
+					break
 				}
 			}
 			return kVvalid && ibpVvalid, nil
