@@ -447,6 +447,9 @@ func TestAdminKafka_Update(t *testing.T) {
 	strimziUpgrade := adminprivate.KafkaUpdateRequest{
 		StrimziVersion: "strimzi-cluster-operator.v0.25.0-0",
 	}
+	nonExistentStrimziUpgrade := adminprivate.KafkaUpdateRequest{
+		StrimziVersion: "strimzi-cluster-operator.v0.29.0-0",
+	}
 	notReadyStrimziUpgrade := adminprivate.KafkaUpdateRequest{
 		StrimziVersion: "strimzi-cluster-operator.v0.25.1-0",
 	}
@@ -634,6 +637,19 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 				kafkaID:            sampleKafkaID2,
 				kafkaUpdateRequest: strimziUpgrade,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading strimzi version to a version not in the status",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID2,
+				kafkaUpdateRequest: nonExistentStrimziUpgrade,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
