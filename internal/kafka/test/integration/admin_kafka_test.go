@@ -648,7 +648,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID2,
+				kafkaID:            sampleKafkaID1,
 				kafkaUpdateRequest: nonExistentStrimziUpgrade,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
