@@ -2,6 +2,7 @@ package presenters
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -22,36 +23,39 @@ func PresentKafkaRequestAdminEndpoint(kafkaRequest *dbapi.KafkaRequest, accountS
 	}
 
 	return &private.Kafka{
-		Id:                    reference.Id,
-		Kind:                  reference.Kind,
-		Href:                  reference.Href,
-		Status:                kafkaRequest.Status,
-		CloudProvider:         kafkaRequest.CloudProvider,
-		MultiAz:               kafkaRequest.MultiAZ,
-		Region:                kafkaRequest.Region,
-		Owner:                 kafkaRequest.Owner,
-		Name:                  kafkaRequest.Name,
-		BootstrapServerHost:   setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
-		CreatedAt:             kafkaRequest.CreatedAt,
-		UpdatedAt:             kafkaRequest.UpdatedAt,
-		FailedReason:          kafkaRequest.FailedReason,
-		DesiredKafkaVersion:   kafkaRequest.DesiredKafkaVersion,
-		ActualKafkaVersion:    kafkaRequest.ActualKafkaVersion,
-		DesiredStrimziVersion: kafkaRequest.DesiredStrimziVersion,
-		ActualStrimziVersion:  kafkaRequest.ActualStrimziVersion,
-		KafkaUpgrading:        kafkaRequest.KafkaUpgrading,
-		StrimziUpgrading:      kafkaRequest.StrimziUpgrading,
-		OrganisationId:        kafkaRequest.OrganisationId,
-		SubscriptionId:        kafkaRequest.SubscriptionId,
-		SsoClientId:           kafkaRequest.SsoClientID,
-		OwnerAccountId:        kafkaRequest.OwnerAccountId,
-		AccountNumber:         org.AccountNumber,
-		QuotaType:             kafkaRequest.QuotaType,
-		Routes:                GetRoutesFromKafkaRequest(kafkaRequest),
-		RoutesCreated:         kafkaRequest.RoutesCreated,
-		ClusterId:             kafkaRequest.ClusterID,
-		InstanceType:          kafkaRequest.InstanceType,
-		Namespace:             kafkaRequest.Namespace,
+		Id:                     reference.Id,
+		Kind:                   reference.Kind,
+		Href:                   reference.Href,
+		Status:                 kafkaRequest.Status,
+		CloudProvider:          kafkaRequest.CloudProvider,
+		MultiAz:                kafkaRequest.MultiAZ,
+		Region:                 kafkaRequest.Region,
+		Owner:                  kafkaRequest.Owner,
+		Name:                   kafkaRequest.Name,
+		BootstrapServerHost:    setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
+		CreatedAt:              kafkaRequest.CreatedAt,
+		UpdatedAt:              kafkaRequest.UpdatedAt,
+		FailedReason:           kafkaRequest.FailedReason,
+		DesiredKafkaVersion:    kafkaRequest.DesiredKafkaVersion,
+		ActualKafkaVersion:     kafkaRequest.ActualKafkaVersion,
+		DesiredStrimziVersion:  kafkaRequest.DesiredStrimziVersion,
+		ActualStrimziVersion:   kafkaRequest.ActualStrimziVersion,
+		DesiredKafkaIbpVersion: kafkaRequest.DesiredKafkaIBPVersion,
+		ActualKafkaIbpVersion:  kafkaRequest.ActualKafkaIBPVersion,
+		KafkaUpgrading:         kafkaRequest.KafkaUpgrading,
+		StrimziUpgrading:       kafkaRequest.StrimziUpgrading,
+		KafkaIbpUpgrading:      kafkaRequest.KafkaIBPUpgrading,
+		OrganisationId:         kafkaRequest.OrganisationId,
+		SubscriptionId:         kafkaRequest.SubscriptionId,
+		SsoClientId:            kafkaRequest.SsoClientID,
+		OwnerAccountId:         kafkaRequest.OwnerAccountId,
+		AccountNumber:          org.AccountNumber,
+		QuotaType:              kafkaRequest.QuotaType,
+		Routes:                 GetRoutesFromKafkaRequest(kafkaRequest),
+		RoutesCreated:          kafkaRequest.RoutesCreated,
+		ClusterId:              kafkaRequest.ClusterID,
+		InstanceType:           kafkaRequest.InstanceType,
+		Namespace:              kafkaRequest.Namespace,
 	}, nil
 }
 

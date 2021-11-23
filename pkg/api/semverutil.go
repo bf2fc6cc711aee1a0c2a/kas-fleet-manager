@@ -45,3 +45,31 @@ func buildAwareSemanticVersioningCompare(v1, v2 string) (int, error) {
 
 	return res, nil
 }
+
+// only concerned about major and minor version differences, hence only those components of version are compared:
+//  - If current major.minor is greater than desired major.minor - return 1
+//  - If current major.minor is equal to  desired major.minor - return 0
+//  - If current major.minor is smaller than desired major.minor - return -1
+func checkIfMinorDowngrade(current, desired string) (int, error) {
+	currentSemver, err := semver.ParseTolerant(current)
+	if err != nil {
+		return 0, err
+	}
+
+	desiredSemver, err := semver.ParseTolerant(desired)
+	if err != nil {
+		return 0, err
+	}
+	if currentSemver.Major < desiredSemver.Major {
+		return -1, nil
+	}
+	if currentSemver.Major > desiredSemver.Major {
+		return 1, nil
+	}
+	if currentSemver.Minor == desiredSemver.Minor {
+		return 0, err
+	} else if currentSemver.Minor > desiredSemver.Minor {
+		return 1, err
+	}
+	return -1, nil
+}

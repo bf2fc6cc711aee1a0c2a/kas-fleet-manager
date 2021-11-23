@@ -559,3 +559,106 @@ func Test_StrimziVersionsDeepSort(t *testing.T) {
 		})
 	}
 }
+
+func TestCompareSemanticVersionsMajorAndMinor(t *testing.T) {
+	tests := []struct {
+		name    string
+		current string
+		desired string
+		want    int
+		wantErr bool
+	}{
+		{
+			name:    "When desired major is smaller than current major, 1 is returned",
+			current: "3.6.0",
+			desired: "2.6.0",
+			want:    1,
+			wantErr: false,
+		},
+		{
+			name:    "When desired major is greater than current major -1, is returned",
+			current: "2.7.0",
+			desired: "3.7.0",
+			want:    -1,
+			wantErr: false,
+		},
+		{
+			name:    "When major versions are equal and desired minor is greater than current minor, -1 is returned",
+			current: "2.7.0",
+			desired: "2.8.0",
+			want:    -1,
+			wantErr: false,
+		},
+		{
+			name:    "When major versions are equal and desired minor is smaller than current minor, 1 is returned",
+			current: "2.8.0",
+			desired: "2.7.0",
+			want:    1,
+			wantErr: false,
+		},
+		{
+			name:    "When major versions are equal and desired minor is equal to current minor, 0 is returned",
+			current: "2.7.0",
+			desired: "2.7.0",
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name:    "When major and minor versions are equal and desired patch is equal to current patch, 0 is returned",
+			current: "2.7.0",
+			desired: "2.7.0",
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name:    "When major and minor versions are equal and desired patch is greater than current patch, 0 is returned",
+			current: "2.7.0",
+			desired: "2.7.1",
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name:    "When major and minor versions are equal and desired patch is smaller than current patch, 0 is returned",
+			current: "2.7.2",
+			desired: "2.7.1",
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name:    "When current is empty an error is returned",
+			current: "",
+			desired: "2.7.1",
+			wantErr: true,
+		},
+		{
+			name:    "When desired is empty an error is returned",
+			current: "2.7.1",
+			desired: "",
+			wantErr: true,
+		},
+		{
+			name:    "When current has an invalid semver version format an error is returned",
+			current: "2invalid.6.0",
+			desired: "2.7.1",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := CompareSemanticVersionsMajorAndMinor(tt.current, tt.desired)
+			gotErr := err != nil
+			errResultTestFailed := false
+			if !reflect.DeepEqual(gotErr, tt.wantErr) {
+				errResultTestFailed = true
+				t.Errorf("wantErr: %v got: %v", tt.wantErr, gotErr)
+			}
+
+			if !errResultTestFailed {
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("want: %v got: %v", tt.want, got)
+				}
+			}
+		})
+	}
+}
