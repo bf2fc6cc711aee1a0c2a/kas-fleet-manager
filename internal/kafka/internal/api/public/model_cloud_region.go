@@ -19,4 +19,6 @@ type CloudRegion struct {
 	DisplayName string `json:"display_name,omitempty"`
 	// Whether the region is enabled for deploying an OSD cluster.
 	Enabled bool `json:"enabled"`
+	// The Kafka instance types supported by this region.
+	SupportedInstanceTypes []string `json:"supported_instance_types"`
 }
