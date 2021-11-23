@@ -640,6 +640,16 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 		if cluster == nil {
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to get cluster for kafka %s", kafkaRequest.ID))
 		}
+
+		kafkaVersionAvailable, err2 := k.clusterService.IsStrimziKafkaVersionAvailableInCluster(cluster, kafkaRequest.DesiredStrimziVersion, kafkaRequest.DesiredKafkaVersion, kafkaRequest.DesiredKafkaIBPVersion)
+		if err2 != nil {
+			return errors.Validation(err2.Error())
+		}
+
+		if !kafkaVersionAvailable {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaVersion))
+		}
+
 		strimziVersionReady, err2 := k.clusterService.CheckStrimziVersionReady(cluster, kafkaRequest.DesiredStrimziVersion)
 		if err2 != nil {
 			return errors.Validation(err2.Error())
@@ -680,15 +690,6 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 		// no minor/ major version downgrades allowed for kafka version
 		if vCompKafka > 0 {
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s version: %s to the following kafka version: %s", kafkaRequest.ID, kafkaRequest.ActualKafkaVersion, kafkaRequest.DesiredKafkaVersion))
-		}
-
-		kafkaVersionAvailable, err2 := k.clusterService.IsStrimziKafkaVersionAvailableInCluster(cluster, kafkaRequest.DesiredStrimziVersion, kafkaRequest.DesiredKafkaVersion, kafkaRequest.DesiredKafkaIBPVersion)
-		if err2 != nil {
-			return errors.Validation(err2.Error())
-		}
-
-		if !kafkaVersionAvailable {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaVersion))
 		}
 
 		return k.Update(kafkaRequest)
