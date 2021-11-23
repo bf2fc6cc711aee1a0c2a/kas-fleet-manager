@@ -235,6 +235,14 @@ func (s *StrimziVersion) Compare(other StrimziVersion) (int, error) {
 	return buildAwareSemanticVersioningCompare(v1VersionNumber, v2VersionNumber)
 }
 
+func CompareBuildAwareSemanticVersions(v1, v2 string) (int, error) {
+	return buildAwareSemanticVersioningCompare(v1, v2)
+}
+
+func CompareSemanticVersionsMajorAndMinor(current, desired string) (int, error) {
+	return checkIfMinorDowngrade(current, desired)
+}
+
 func (s *StrimziVersion) DeepCopy() *StrimziVersion {
 	var res StrimziVersion = *s
 	res.KafkaVersions = nil

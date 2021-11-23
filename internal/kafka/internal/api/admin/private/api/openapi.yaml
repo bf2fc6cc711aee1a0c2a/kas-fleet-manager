@@ -293,6 +293,7 @@ components:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
       - required:
+        - kafka_ibp_upgrading
         - kafka_upgrading
         - multi_az
         - strimzi_upgrading
@@ -304,11 +305,14 @@ components:
     KafkaUpdateRequest:
       example:
         strimzi_version: strimzi_version
+        kafka_ibp_version: kafka_ibp_version
         kafka_version: kafka_version
       properties:
         strimzi_version:
           type: string
         kafka_version:
+          type: string
+        kafka_ibp_version:
           type: string
       type: object
     Error:
@@ -384,9 +388,15 @@ components:
           type: string
         desired_strimzi_version:
           type: string
+        desired_kafka_ibp_version:
+          type: string
+        actual_kafka_ibp_version:
+          type: string
         kafka_upgrading:
           type: boolean
         strimzi_upgrading:
+          type: boolean
+        kafka_ibp_upgrading:
           type: boolean
         organisation_id:
           type: string

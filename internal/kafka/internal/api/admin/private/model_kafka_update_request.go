@@ -11,6 +11,7 @@ package private
 
 // KafkaUpdateRequest struct for KafkaUpdateRequest
 type KafkaUpdateRequest struct {
-	StrimziVersion string `json:"strimzi_version,omitempty"`
-	KafkaVersion   string `json:"kafka_version,omitempty"`
+	StrimziVersion  string `json:"strimzi_version,omitempty"`
+	KafkaVersion    string `json:"kafka_version,omitempty"`
+	KafkaIbpVersion string `json:"kafka_ibp_version,omitempty"`
 }

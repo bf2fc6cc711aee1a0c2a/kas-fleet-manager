@@ -109,7 +109,7 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &kafkaUpdateReq,
 		Validate: []handlers.Validate{
-			ValidateKafkaUpdateFields(&kafkaUpdateReq.KafkaVersion, &kafkaUpdateReq.StrimziVersion),
+			ValidateKafkaUpdateFields(&kafkaUpdateReq.KafkaVersion, &kafkaUpdateReq.StrimziVersion, &kafkaUpdateReq.KafkaIbpVersion),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
@@ -124,11 +124,24 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 			}
 			updateRequired := false
 			if kafkaRequest.DesiredKafkaVersion != kafkaUpdateReq.KafkaVersion && kafkaUpdateReq.KafkaVersion != "" {
+				if kafkaRequest.KafkaUpgrading {
+					return nil, errors.New(errors.ErrorValidation, "Unable to update kafka version. Another upgrade is already in progress.")
+				}
 				kafkaRequest.DesiredKafkaVersion = kafkaUpdateReq.KafkaVersion
 				updateRequired = true
 			}
 			if kafkaRequest.DesiredStrimziVersion != kafkaUpdateReq.StrimziVersion && kafkaUpdateReq.StrimziVersion != "" {
+				if kafkaRequest.StrimziUpgrading {
+					return nil, errors.New(errors.ErrorValidation, "Unable to update strimzi version. Another upgrade is already in progress.")
+				}
 				kafkaRequest.DesiredStrimziVersion = kafkaUpdateReq.StrimziVersion
+				updateRequired = true
+			}
+			if kafkaRequest.DesiredKafkaIBPVersion != kafkaUpdateReq.KafkaIbpVersion && kafkaUpdateReq.KafkaIbpVersion != "" {
+				if kafkaRequest.KafkaIBPUpgrading {
+					return nil, errors.New(errors.ErrorValidation, "Unable to update ibp version. Another upgrade is already in progress.")
+				}
+				kafkaRequest.DesiredKafkaIBPVersion = kafkaUpdateReq.KafkaIbpVersion
 				updateRequired = true
 			}
 			if updateRequired {
