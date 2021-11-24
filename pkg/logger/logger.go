@@ -104,38 +104,37 @@ func (l *logger) prepareLogPrefix(format string, args ...interface{}) string {
 	prefix := ""
 
 	if l.username != "" {
-		prefix = fmt.Sprintf("%suser='%s' ", prefix, l.username)
+		prefix = strings.Join([]string{prefix, "user='", l.username, "' "}, "")
 	}
 
 	if event, ok := l.context.Value(ActionKey).(string); ok {
-		prefix = fmt.Sprintf("%saction='%s' ", prefix, event)
-
+		prefix = strings.Join([]string{prefix, "action='", event, "' "}, "")
 		if eventStatus, ok := l.context.Value(ActionResultKey).(string); ok {
-			prefix = fmt.Sprintf("%sresult='%s' ", prefix, eventStatus)
+			prefix = strings.Join([]string{prefix, "result='", eventStatus, "' "}, "")
 		}
 	}
 
 	if remoteAddr, ok := l.context.Value(RemoteAddrKey).(string); ok {
-		prefix = fmt.Sprintf("%ssrc_ip='%s' ", prefix, remoteAddr)
+		prefix = strings.Join([]string{prefix, "src_ip='", remoteAddr, "' "}, "")
 	}
 
 	if l.session != "" {
-		prefix = fmt.Sprintf("%ssession='%s' ", prefix, l.session)
+		prefix = strings.Join([]string{prefix, "session='", l.session, "' "}, "")
 	}
 
 	if txid, ok := l.context.Value("txid").(int64); ok {
-		prefix = fmt.Sprintf("%stx_id='%d' ", prefix, txid)
+		prefix = strings.Join([]string{prefix, "tx_id='", fmt.Sprintf("%v", txid), "' "}, "")
 	}
 
 	if l.accountID != "" {
-		prefix = fmt.Sprintf("%saccountID='%s' ", prefix, l.accountID)
+		prefix = strings.Join([]string{prefix, "accountID='", l.accountID, "' "}, "")
 	}
 
 	if opid, ok := l.context.Value(OpIDKey).(string); ok {
-		prefix = fmt.Sprintf("%sopid='%s' ", prefix, opid)
+		prefix = strings.Join([]string{prefix, "opid='", opid, "' "}, "")
 	}
 
-	return fmt.Sprintf("%s%s", prefix, orig)
+	return prefix + orig
 }
 
 func (l *logger) V(level int32) UHCLogger {
