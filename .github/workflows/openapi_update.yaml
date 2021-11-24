@@ -4,11 +4,17 @@ on:
     branches: 
       - main
     paths:
+      - ".github/workflows/openapi_update.yaml"
       - "openapi/*.yaml"
+      - "pkg/errors/errors.go"
+
+  pull_request:
+      types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
   dispatch:
-    if: github.repository == 'bf2fc6cc711aee1a0c2a/kas-fleet-manager'
+    # Uncomment after testing
+    #if: github.repository == 'bf2fc6cc711aee1a0c2a/kas-fleet-manager'
     env:
       APP_SERVICES_CI_TOKEN: ${{ secrets.GH_CI_TOKEN }}
     strategy:
