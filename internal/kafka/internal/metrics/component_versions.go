@@ -1,16 +1,18 @@
 package metrics
 
 import (
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus"
-	"time"
 )
 
 type versionsMetrics struct {
-	kafkaService   services.KafkaService
-	strimziVersion *prometheus.GaugeVec
-	kafkaVersion   *prometheus.GaugeVec
+	kafkaService    services.KafkaService
+	strimziVersion  *prometheus.GaugeVec
+	kafkaVersion    *prometheus.GaugeVec
+	kafkaIBPVersion *prometheus.GaugeVec
 }
 
 // need to invoked when the server is started and kafkaService is initialised
@@ -34,10 +36,18 @@ If the type is 'upgrade' it means the Strimzi is being upgraded.
 		}, []string{"cluster_id", "kafka_id", "type", "version"}),
 		kafkaVersion: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "kafka_version",
-			Help: `Reports the version of Kafka in terms of seconds since the epoch. 
+			Help: `Reports the version of Kafka in terms of seconds since the epoch.
 The type 'actual' is the Kafka version that is reported by kas-fleetshard.
 The type 'desired' is the desired Kafka version that is set in the kas-fleet-manager. 
 If the type is 'upgrade' it means the Kafka is being upgraded.
+`,
+		}, []string{"cluster_id", "kafka_id", "type", "version"}),
+		kafkaIBPVersion: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "kafka_ibp_version",
+			Help: `Reports the version of Kafka in terms of seconds since the epoch.
+The type 'actual' is the Kafka IBP version that is reported by kas-fleetshard.
+The type 'desired' is the desired Kafka IBP version that is set in the kas-fleet-manager.
+If the type is 'upgrade' it means the Kafka IBP version is being upgraded.
 `,
 		}, []string{"cluster_id", "kafka_id", "type", "version"}),
 	}
@@ -80,6 +90,21 @@ func (m *versionsMetrics) Collect(ch chan<- prometheus.Metric) {
 				kafkaUpgradingMetric := m.kafkaVersion.WithLabelValues(v.ClusterID, v.ID, "upgrade", v.DesiredKafkaVersion)
 				kafkaUpgradingMetric.Set(float64(time.Now().Unix()))
 				ch <- kafkaUpgradingMetric
+			}
+
+			// actual kafka ibp version
+			actualKafkaIBPMetric := m.kafkaIBPVersion.WithLabelValues(v.ClusterID, v.ID, "actual", v.ActualKafkaIBPVersion)
+			actualKafkaIBPMetric.Set(float64(time.Now().Unix()))
+			ch <- actualKafkaIBPMetric
+			//desired kafka ibp version
+			desiredKafkaIBPMetric := m.kafkaIBPVersion.WithLabelValues(v.ClusterID, v.ID, "desired", v.DesiredKafkaIBPVersion)
+			desiredKafkaIBPMetric.Set(float64(time.Now().Unix()))
+			ch <- desiredKafkaIBPMetric
+
+			if v.KafkaIBPUpgrading {
+				kafkaIBPUpgradingMetric := m.kafkaIBPVersion.WithLabelValues(v.ClusterID, v.ID, "upgrade", v.DesiredKafkaIBPVersion)
+				kafkaIBPUpgradingMetric.Set(float64(time.Now().Unix()))
+				ch <- kafkaIBPUpgradingMetric
 			}
 		}
 	} else {
