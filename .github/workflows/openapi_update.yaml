@@ -4,17 +4,17 @@ on:
     branches: 
       - main
     paths:
-      - ".github/workflows/openapi_update.yaml"
       - "openapi/*.yaml"
       - "pkg/errors/errors.go"
 
+  ## Testing remove afterwards
   pull_request:
       types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
   dispatch:
     # Uncomment after testing
-    #if: github.repository == 'bf2fc6cc711aee1a0c2a/kas-fleet-manager'
+    # if: github.repository == 'bf2fc6cc711aee1a0c2a/kas-fleet-manager'
     env:
       APP_SERVICES_CI_TOKEN: ${{ secrets.GH_CI_TOKEN }}
     strategy:
@@ -34,7 +34,10 @@ jobs:
           filters: |
             openapi:
               - 'openapi/*.yaml'
-      - if: contains(steps.filter.outputs.openapi_files, 'openapi/kas-fleet-manager.yaml')
+            errors:
+              - 'pkg/errors/errors.go'
+      # temporary disabled for testing
+      - # if: contains(steps.filter.outputs.openapi_files, 'openapi/kas-fleet-manager.yaml') || steps.filter.outputs.errors == 'true'
         name: KAS Fleet Manager OpenAPI changed
         uses: peter-evans/repository-dispatch@v1
         with:
@@ -43,7 +46,7 @@ jobs:
           event-type: openapi-spec-change
           client-payload: '{ "id": "kafka-mgmt/v1", "download_url":"https://raw.githubusercontent.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/main/openapi/kas-fleet-manager.yaml"}'
 
-      - if: contains(steps.filter.outputs.openapi_files, 'openapi/connector_mgmt.yaml')
+      - if: contains(steps.filter.outputs.openapi_files, 'openapi/connector_mgmt.yaml') || steps.filter.outputs.errors == 'true'
         name: Connector Service Fleet Manager OpenAPI changed
         uses: peter-evans/repository-dispatch@v1
         with:
