@@ -20,166 +20,418 @@ Feature: create a a connector
       {
         "items": [
           {
-            "description": "Receive data from AWS SQS",
-            "href": "/api/connector_mgmt/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
-            "id": "aws-sqs-source-v1alpha1",
             "channels": [
               "stable",
               "beta"
             ],
-            "json_schema": {
-              "description": "Receive data from AWS SQS.",
+            "description": "AWS SQS Source",
+            "href": "/api/connector_mgmt/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
+            "icon_href": "TODO",
+            "id": "aws-sqs-source-v1alpha1",
+            "kind": "ConnectorType",
+            "labels": [
+              "source"
+            ],
+            "name": "aws-sqs-source",
+            "schema": {
+              "$defs": {
+                "processors": {
+                  "extract_field": {
+                    "description": "Extract a field from the body",
+                    "properties": {
+                      "field": {
+                        "description": "The name of the field to be added",
+                        "title": "Field",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field"
+                    ],
+                    "title": "Extract Field Action",
+                    "type": "object"
+                  },
+                  "has_header_filter": {
+                    "description": "Filter based on the presence of one header",
+                    "properties": {
+                      "name": {
+                        "description": "The header name to evaluate",
+                        "example": "headerName",
+                        "title": "Header Name",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "An optional header value to compare the header to",
+                        "example": "headerValue",
+                        "title": "Header Value",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "title": "Has Header Filter Action",
+                    "type": "object"
+                  },
+                  "insert_field": {
+                    "description": "Adds a custom field with a constant value to the message in transit.\n\nThis action works with Json Object. So it will expect a Json Array or a Json Object.\n\nIf for example you have an array like '{ \"foo\":\"John\", \"bar\":30 }' and your action has been configured with field as 'element' and value as 'hello', you'll get '{ \"foo\":\"John\", \"bar\":30, \"element\":\"hello\" }'\n\nNo headers mapping supported, only constant values.",
+                    "properties": {
+                      "field": {
+                        "description": "The name of the field to be added",
+                        "title": "Field",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "The value of the field",
+                        "title": "Value",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "value"
+                    ],
+                    "title": "Insert Field Action",
+                    "type": "object"
+                  },
+                  "throttle": {
+                    "description": "The Throttle action allows to ensure that a specific sink does not get overloaded.",
+                    "properties": {
+                      "messages": {
+                        "description": "The number of messages to send in the time period set",
+                        "example": 10,
+                        "title": "Messages Number",
+                        "type": "integer"
+                      },
+                      "timePeriod": {
+                        "default": "1000",
+                        "description": "Sets the time period during which the maximum request count is valid for, in milliseconds",
+                        "title": "Time Period",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "messages"
+                    ],
+                    "title": "Throttle Action",
+                    "type": "object"
+                  }
+                }
+              },
               "properties": {
-                "accessKey": {
-                  "description": "The access key obtained from AWS",
+                "aws_access_key": {
+                  "oneOf": [
+                    {
+                      "description": "The access key obtained from AWS",
+                      "format": "password",
+                      "title": "Access Key",
+                      "type": "string"
+                    },
+                    {
+                      "description": "An opaque reference to the aws_access_key",
+                      "properties": {},
+                      "type": "object"
+                    }
+                  ],
                   "title": "Access Key",
+                  "x-group": "credentials"
+                },
+                "aws_amazon_a_w_s_host": {
+                  "description": "The hostname of the Amazon AWS cloud.",
+                  "title": "AWS Host",
                   "type": "string"
                 },
-                "deleteAfterRead": {
+                "aws_auto_create_queue": {
+                  "default": false,
+                  "description": "Setting the autocreation of the SQS queue.",
+                  "title": "Autocreate Queue",
+                  "type": "boolean"
+                },
+                "aws_delete_after_read": {
                   "default": true,
                   "description": "Delete messages after consuming them",
-                  "title": "Auto-delete messages",
-                  "type": "boolean",
-                  "x-descriptors": [
-                    "urn:alm:descriptor:com.tectonic.ui:checkbox"
-                  ]
+                  "title": "Auto-delete Messages",
+                  "type": "boolean"
                 },
-                "queueNameOrArn": {
-                  "description": "The SQS Queue name or ARN",
+                "aws_protocol": {
+                  "default": "https",
+                  "description": "The underlying protocol used to communicate with SQS",
+                  "example": "http or https",
+                  "title": "Protocol",
+                  "type": "string"
+                },
+                "aws_queue_name_or_arn": {
+                  "description": "The SQS Queue Name or ARN",
                   "title": "Queue Name",
                   "type": "string"
                 },
-                "region": {
+                "aws_region": {
                   "description": "The AWS region to connect to",
                   "example": "eu-west-1",
                   "title": "AWS Region",
                   "type": "string"
                 },
-                "secretKey": {
-                  "description": "The secret key obtained from AWS",
+                "aws_secret_key": {
                   "oneOf": [
                     {
-                      "description": "the secret value",
+                      "description": "The secret key obtained from AWS",
                       "format": "password",
+                      "title": "Secret Key",
                       "type": "string"
                     },
                     {
-                      "description": "An opaque reference to the secret",
+                      "description": "An opaque reference to the aws_secret_key",
                       "properties": {},
                       "type": "object"
                     }
                   ],
                   "title": "Secret Key",
-                  "x-descriptors": [
-                    "urn:alm:descriptor:com.tectonic.ui:password"
-                  ]
+                  "x-group": "credentials"
+                },
+                "kafka_topic": {
+                  "description": "Comma separated list of Kafka topic names",
+                  "title": "Topic Names",
+                  "type": "string"
+                },
+                "processors": {
+                  "items": {
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "insert_field": {
+                            "$ref": "#/$defs/processors/insert_field"
+                          }
+                        },
+                        "required": [
+                          "insert_field"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "extract_field": {
+                            "$ref": "#/$defs/processors/extract_field"
+                          }
+                        },
+                        "required": [
+                          "extract_field"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "has_header_filter": {
+                            "$ref": "#/$defs/processors/has_header_filter"
+                          }
+                        },
+                        "required": [
+                          "has_header_filter"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "throttle": {
+                            "$ref": "#/$defs/processors/throttle"
+                          }
+                        },
+                        "required": [
+                          "throttle"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "type": "array"
                 }
               },
               "required": [
-                "queueNameOrArn",
-                "accessKey",
-                "secretKey",
-                "region"
+                "aws_queue_name_or_arn",
+                "aws_access_key",
+                "aws_secret_key",
+                "aws_region",
+                "kafka_topic"
               ],
-              "title": "AWS SQS Source"
+              "type": "object"
             },
-            "kind": "ConnectorType",
-            "name": "aws-sqs-source",
             "version": "v1alpha1"
           },
           {
-            "json_schema" : {
-              "type" : "object",
-              "properties" : {
-                "connector" : {
-                  "type" : "object",
-                  "title" : "Log",
-                  "required" : [ ],
-                  "properties" : {
-                    "multiLine" : {
-                      "title" : "Multi Line",
-                      "description" : "Multi Line",
-                      "type" : "boolean",
-                      "default" : false
+            "channels": [
+              "stable"
+            ],
+            "description": "Log Sink",
+            "href": "/api/connector_mgmt/v1/kafka_connector_types/log_sink_0.1",
+            "icon_href": "TODO",
+            "id": "log_sink_0.1",
+            "kind": "ConnectorType",
+            "labels": [
+              "sink"
+            ],
+            "name": "Log Sink",
+            "schema": {
+             "$defs": {
+                "processors": {
+                  "extract_field": {
+                    "description": "Extract a field from the body",
+                    "properties": {
+                      "field": {
+                        "description": "The name of the field to be added",
+                        "title": "Field",
+                        "type": "string"
+                      }
                     },
-                    "showAll" : {
-                      "title" : "Show All",
-                      "description" : "Show All",
-                      "type" : "boolean",
-                      "default" : false
-                    }
-                  }
-                },
-                "kafka" : {
-                  "type" : "object",
-                  "title" : "Managed Kafka Source",
-                  "required" : [ "topic" ],
-                  "properties" : {
-                    "topic" : {
-                      "title" : "Topic names",
-                      "description" : "Comma separated list of Kafka topic names",
-                      "type" : "string"
-                    }
-                  }
-                },
-                "steps" : {
-                  "type" : "array",
-                  "items" : {
-                    "oneOf" : [ {
-                      "type" : "object",
-                      "required" : [ "insert-field" ],
-                      "properties" : {
-                        "insert-field" : {
-                          "title" : "Insert Field Action",
-                          "description" : "Adds a custom field with a constant value to the message in transit",
-                          "required" : [ "field", "value" ],
-                          "properties" : {
-                            "field" : {
-                              "title" : "Field",
-                              "description" : "The name of the field to be added",
-                              "type" : "string"
-                            },
-                            "value" : {
-                              "title" : "Value",
-                              "description" : "The value of the field",
-                              "type" : "string"
-                            }
-                          },
-                          "type" : "object"
-                        }
+                    "required": [
+                      "field"
+                    ],
+                    "title": "Extract Field Action",
+                    "type": "object"
+                  },
+                  "has_header_filter": {
+                    "description": "Filter based on the presence of one header",
+                    "properties": {
+                      "name": {
+                        "description": "The header name to evaluate",
+                        "example": "headerName",
+                        "title": "Header Name",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "An optional header value to compare the header to",
+                        "example": "headerValue",
+                        "title": "Header Value",
+                        "type": "string"
                       }
-                    }, {
-                      "type" : "object",
-                      "required" : [ "extract-field" ],
-                      "properties" : {
-                        "extract-field" : {
-                          "title" : "Extract Field Action",
-                          "description" : "Extract a field from the body",
-                          "required" : [ "field" ],
-                          "properties" : {
-                            "field" : {
-                              "title" : "Field",
-                              "description" : "The name of the field to be added",
-                              "type" : "string"
-                            }
-                          },
-                          "type" : "object"
-                        }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "title": "Has Header Filter Action",
+                    "type": "object"
+                  },
+                  "insert_field": {
+                    "description": "Adds a custom field with a constant value to the message in transit.\n\nThis action works with Json Object. So it will expect a Json Array or a Json Object.\n\nIf for example you have an array like '{ \"foo\":\"John\", \"bar\":30 }' and your action has been configured with field as 'element' and value as 'hello', you'll get '{ \"foo\":\"John\", \"bar\":30, \"element\":\"hello\" }'\n\nNo headers mapping supported, only constant values.",
+                    "properties": {
+                      "field": {
+                        "description": "The name of the field to be added",
+                        "title": "Field",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "The value of the field",
+                        "title": "Value",
+                        "type": "string"
                       }
-                    } ]
+                    },
+                    "required": [
+                      "field",
+                      "value"
+                    ],
+                    "title": "Insert Field Action",
+                    "type": "object"
+                  },
+                  "throttle": {
+                    "description": "The Throttle action allows to ensure that a specific sink does not get overloaded.",
+                    "properties": {
+                      "messages": {
+                        "description": "The number of messages to send in the time period set",
+                        "example": 10,
+                        "title": "Messages Number",
+                        "type": "integer"
+                      },
+                      "timePeriod": {
+                        "default": "1000",
+                        "description": "Sets the time period during which the maximum request count is valid for, in milliseconds",
+                        "title": "Time Period",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "messages"
+                    ],
+                    "title": "Throttle Action",
+                    "type": "object"
                   }
                 }
-              }
+              },
+              "properties": {
+                "kafka_topic": {
+                  "description": "Comma separated list of Kafka topic names",
+                  "title": "Topic Names",
+                  "type": "string"
+                },
+                "log_multi_line": {
+                  "default": false,
+                  "description": "Multi Line",
+                  "title": "Multi Line",
+                  "type": "boolean",
+                  "x-group": "common"
+                },
+                "log_show_all": {
+                  "default": false,
+                  "description": "Show All",
+                  "title": "Show All",
+                  "type": "boolean",
+                  "x-group": "common"
+                },
+                "processors": {
+                  "items": {
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "insert_field": {
+                            "$ref": "#/$defs/processors/insert_field"
+                          }
+                        },
+                        "required": [
+                          "insert_field"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "extract_field": {
+                            "$ref": "#/$defs/processors/extract_field"
+                          }
+                        },
+                        "required": [
+                          "extract_field"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "has_header_filter": {
+                            "$ref": "#/$defs/processors/has_header_filter"
+                          }
+                        },
+                        "required": [
+                          "has_header_filter"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "throttle": {
+                            "$ref": "#/$defs/processors/throttle"
+                          }
+                        },
+                        "required": [
+                          "throttle"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "kafka_topic"
+              ],
+              "type": "object"
             },
-            "id" : "log_sink_0.1",
-            "href": "/api/connector_mgmt/v1/kafka_connector_types/log_sink_0.1",
-            "kind" : "ConnectorType",
-            "icon_href" : "TODO",
-            "name" : "Log Sink",
-            "description" : "Log Sink",
-            "version" : "0.1",
-            "labels" : [ "sink" ],
-            "channels" : [ "stable" ]
+            "version": "0.1"
           }
         ],
         "kind": "ConnectorTypeList",
@@ -198,98 +450,181 @@ Feature: create a a connector
       {
         "items": [
           {
-            "json_schema" : {
-              "type" : "object",
-              "properties" : {
-                "connector" : {
-                  "type" : "object",
-                  "title" : "Log",
-                  "required" : [ ],
-                  "properties" : {
-                    "multiLine" : {
-                      "title" : "Multi Line",
-                      "description" : "Multi Line",
-                      "type" : "boolean",
-                      "default" : false
+            "channels": [
+              "stable"
+            ],
+            "description": "Log Sink",
+            "href": "/api/connector_mgmt/v1/kafka_connector_types/log_sink_0.1",
+            "icon_href": "TODO",
+            "id": "log_sink_0.1",
+            "kind": "ConnectorType",
+            "labels": [
+              "sink"
+            ],
+            "name": "Log Sink",
+            "schema": {
+              "$defs": {
+                "processors": {
+                  "extract_field": {
+                    "description": "Extract a field from the body",
+                    "properties": {
+                      "field": {
+                        "description": "The name of the field to be added",
+                        "title": "Field",
+                        "type": "string"
+                      }
                     },
-                    "showAll" : {
-                      "title" : "Show All",
-                      "description" : "Show All",
-                      "type" : "boolean",
-                      "default" : false
-                    }
-                  }
-                },
-                "kafka" : {
-                  "type" : "object",
-                  "title" : "Managed Kafka Source",
-                  "required" : [ "topic" ],
-                  "properties" : {
-                    "topic" : {
-                      "title" : "Topic names",
-                      "description" : "Comma separated list of Kafka topic names",
-                      "type" : "string"
-                    }
-                  }
-                },
-                "steps" : {
-                  "type" : "array",
-                  "items" : {
-                    "oneOf" : [ {
-                      "type" : "object",
-                      "required" : [ "insert-field" ],
-                      "properties" : {
-                        "insert-field" : {
-                          "title" : "Insert Field Action",
-                          "description" : "Adds a custom field with a constant value to the message in transit",
-                          "required" : [ "field", "value" ],
-                          "properties" : {
-                            "field" : {
-                              "title" : "Field",
-                              "description" : "The name of the field to be added",
-                              "type" : "string"
-                            },
-                            "value" : {
-                              "title" : "Value",
-                              "description" : "The value of the field",
-                              "type" : "string"
-                            }
-                          },
-                          "type" : "object"
-                        }
+                    "required": [
+                      "field"
+                    ],
+                    "title": "Extract Field Action",
+                    "type": "object"
+                  },
+                  "has_header_filter": {
+                    "description": "Filter based on the presence of one header",
+                    "properties": {
+                      "name": {
+                        "description": "The header name to evaluate",
+                        "example": "headerName",
+                        "title": "Header Name",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "An optional header value to compare the header to",
+                        "example": "headerValue",
+                        "title": "Header Value",
+                        "type": "string"
                       }
-                    }, {
-                      "type" : "object",
-                      "required" : [ "extract-field" ],
-                      "properties" : {
-                        "extract-field" : {
-                          "title" : "Extract Field Action",
-                          "description" : "Extract a field from the body",
-                          "required" : [ "field" ],
-                          "properties" : {
-                            "field" : {
-                              "title" : "Field",
-                              "description" : "The name of the field to be added",
-                              "type" : "string"
-                            }
-                          },
-                          "type" : "object"
-                        }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "title": "Has Header Filter Action",
+                    "type": "object"
+                  },
+                  "insert_field": {
+                    "description": "Adds a custom field with a constant value to the message in transit.\n\nThis action works with Json Object. So it will expect a Json Array or a Json Object.\n\nIf for example you have an array like '{ \"foo\":\"John\", \"bar\":30 }' and your action has been configured with field as 'element' and value as 'hello', you'll get '{ \"foo\":\"John\", \"bar\":30, \"element\":\"hello\" }'\n\nNo headers mapping supported, only constant values.",
+                    "properties": {
+                      "field": {
+                        "description": "The name of the field to be added",
+                        "title": "Field",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "The value of the field",
+                        "title": "Value",
+                        "type": "string"
                       }
-                    } ]
+                    },
+                    "required": [
+                      "field",
+                      "value"
+                    ],
+                    "title": "Insert Field Action",
+                    "type": "object"
+                  },
+                  "throttle": {
+                    "description": "The Throttle action allows to ensure that a specific sink does not get overloaded.",
+                    "properties": {
+                      "messages": {
+                        "description": "The number of messages to send in the time period set",
+                        "example": 10,
+                        "title": "Messages Number",
+                        "type": "integer"
+                      },
+                      "timePeriod": {
+                        "default": "1000",
+                        "description": "Sets the time period during which the maximum request count is valid for, in milliseconds",
+                        "title": "Time Period",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "messages"
+                    ],
+                    "title": "Throttle Action",
+                    "type": "object"
                   }
                 }
-              }
+              },
+              "properties": {
+                "kafka_topic": {
+                  "description": "Comma separated list of Kafka topic names",
+                  "title": "Topic Names",
+                  "type": "string"
+                },
+                "log_multi_line": {
+                  "default": false,
+                  "description": "Multi Line",
+                  "title": "Multi Line",
+                  "type": "boolean",
+                  "x-group": "common"
+                },
+                "log_show_all": {
+                  "default": false,
+                  "description": "Show All",
+                  "title": "Show All",
+                  "type": "boolean",
+                  "x-group": "common"
+                },
+                "processors": {
+                  "items": {
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "insert_field": {
+                            "$ref": "#/$defs/processors/insert_field"
+                          }
+                        },
+                        "required": [
+                          "insert_field"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "extract_field": {
+                            "$ref": "#/$defs/processors/extract_field"
+                          }
+                        },
+                        "required": [
+                          "extract_field"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "has_header_filter": {
+                            "$ref": "#/$defs/processors/has_header_filter"
+                          }
+                        },
+                        "required": [
+                          "has_header_filter"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "throttle": {
+                            "$ref": "#/$defs/processors/throttle"
+                          }
+                        },
+                        "required": [
+                          "throttle"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "kafka_topic"
+              ],
+              "type": "object"
             },
-            "id" : "log_sink_0.1",
-            "href": "/api/connector_mgmt/v1/kafka_connector_types/log_sink_0.1",
-            "kind" : "ConnectorType",
-            "icon_href" : "TODO",
-            "name" : "Log Sink",
-            "description" : "Log Sink",
-            "version" : "0.1",
-            "labels" : [ "sink" ],
-            "channels" : [ "stable" ]
+            "version": "0.1"
           }
         ],
         "kind": "ConnectorTypeList",
@@ -306,80 +641,249 @@ Feature: create a a connector
     And the response should match json:
       """
       {
-        "items": [
-          {
-            "description": "Receive data from AWS SQS",
-            "href": "/api/connector_mgmt/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
-            "id": "aws-sqs-source-v1alpha1",
-            "channels": [
-              "stable",
-              "beta"
-            ],
-            "json_schema": {
-              "description": "Receive data from AWS SQS.",
-              "properties": {
-                "accessKey": {
-                  "description": "The access key obtained from AWS",
-                  "title": "Access Key",
-                  "type": "string"
-                },
-                "deleteAfterRead": {
-                  "default": true,
-                  "description": "Delete messages after consuming them",
-                  "title": "Auto-delete messages",
-                  "type": "boolean",
-                  "x-descriptors": [
-                    "urn:alm:descriptor:com.tectonic.ui:checkbox"
-                  ]
-                },
-                "queueNameOrArn": {
-                  "description": "The SQS Queue name or ARN",
-                  "title": "Queue Name",
-                  "type": "string"
-                },
-                "region": {
-                  "description": "The AWS region to connect to",
-                  "example": "eu-west-1",
-                  "title": "AWS Region",
-                  "type": "string"
-                },
-                "secretKey": {
-                  "description": "The secret key obtained from AWS",
-                  "oneOf": [
-                    {
-                      "description": "the secret value",
-                      "format": "password",
-                      "type": "string"
-                    },
-                    {
-                      "description": "An opaque reference to the secret",
-                      "properties": {},
-                      "type": "object"
-                    }
-                  ],
-                  "title": "Secret Key",
-                  "x-descriptors": [
-                    "urn:alm:descriptor:com.tectonic.ui:password"
-                  ]
-                }
-              },
-              "required": [
-                "queueNameOrArn",
-                "accessKey",
-                "secretKey",
-                "region"
-              ],
-              "title": "AWS SQS Source"
-            },
-            "kind": "ConnectorType",
-            "name": "aws-sqs-source",
-            "version": "v1alpha1"
-          }
-        ],
-        "kind": "ConnectorTypeList",
-        "page": 1,
-        "size": 1,
-        "total": 1
+         "items": [
+           {
+             "channels": [
+               "stable",
+               "beta"
+             ],
+             "description": "AWS SQS Source",
+             "href": "/api/connector_mgmt/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
+             "icon_href": "TODO",
+             "id": "aws-sqs-source-v1alpha1",
+             "kind": "ConnectorType",
+             "labels": [
+               "source"
+             ],
+             "name": "aws-sqs-source",
+             "schema": {
+               "$defs": {
+                 "processors": {
+                   "extract_field": {
+                     "description": "Extract a field from the body",
+                     "properties": {
+                       "field": {
+                         "description": "The name of the field to be added",
+                         "title": "Field",
+                         "type": "string"
+                       }
+                     },
+                     "required": [
+                       "field"
+                     ],
+                     "title": "Extract Field Action",
+                     "type": "object"
+                   },
+                   "has_header_filter": {
+                     "description": "Filter based on the presence of one header",
+                     "properties": {
+                       "name": {
+                         "description": "The header name to evaluate",
+                         "example": "headerName",
+                         "title": "Header Name",
+                         "type": "string"
+                       },
+                       "value": {
+                         "description": "An optional header value to compare the header to",
+                         "example": "headerValue",
+                         "title": "Header Value",
+                         "type": "string"
+                       }
+                     },
+                     "required": [
+                       "name"
+                     ],
+                     "title": "Has Header Filter Action",
+                     "type": "object"
+                   },
+                   "insert_field": {
+                     "description": "Adds a custom field with a constant value to the message in transit.\n\nThis action works with Json Object. So it will expect a Json Array or a Json Object.\n\nIf for example you have an array like '{ \"foo\":\"John\", \"bar\":30 }' and your action has been configured with field as 'element' and value as 'hello', you'll get '{ \"foo\":\"John\", \"bar\":30, \"element\":\"hello\" }'\n\nNo headers mapping supported, only constant values.",
+                     "properties": {
+                       "field": {
+                         "description": "The name of the field to be added",
+                         "title": "Field",
+                         "type": "string"
+                       },
+                       "value": {
+                         "description": "The value of the field",
+                         "title": "Value",
+                         "type": "string"
+                       }
+                     },
+                     "required": [
+                       "field",
+                       "value"
+                     ],
+                     "title": "Insert Field Action",
+                     "type": "object"
+                   },
+                   "throttle": {
+                     "description": "The Throttle action allows to ensure that a specific sink does not get overloaded.",
+                     "properties": {
+                       "messages": {
+                         "description": "The number of messages to send in the time period set",
+                         "example": 10,
+                         "title": "Messages Number",
+                         "type": "integer"
+                       },
+                       "timePeriod": {
+                         "default": "1000",
+                         "description": "Sets the time period during which the maximum request count is valid for, in milliseconds",
+                         "title": "Time Period",
+                         "type": "string"
+                       }
+                     },
+                     "required": [
+                       "messages"
+                     ],
+                     "title": "Throttle Action",
+                     "type": "object"
+                   }
+                 }
+               },
+               "properties": {
+                 "aws_access_key": {
+                   "oneOf": [
+                     {
+                       "description": "The access key obtained from AWS",
+                       "format": "password",
+                       "title": "Access Key",
+                       "type": "string"
+                     },
+                     {
+                       "description": "An opaque reference to the aws_access_key",
+                       "properties": {},
+                       "type": "object"
+                     }
+                   ],
+                   "title": "Access Key",
+                   "x-group": "credentials"
+                 },
+                 "aws_amazon_a_w_s_host": {
+                   "description": "The hostname of the Amazon AWS cloud.",
+                   "title": "AWS Host",
+                   "type": "string"
+                 },
+                 "aws_auto_create_queue": {
+                   "default": false,
+                   "description": "Setting the autocreation of the SQS queue.",
+                   "title": "Autocreate Queue",
+                   "type": "boolean"
+                 },
+                 "aws_delete_after_read": {
+                   "default": true,
+                   "description": "Delete messages after consuming them",
+                   "title": "Auto-delete Messages",
+                   "type": "boolean"
+                 },
+                 "aws_protocol": {
+                   "default": "https",
+                   "description": "The underlying protocol used to communicate with SQS",
+                   "example": "http or https",
+                   "title": "Protocol",
+                   "type": "string"
+                 },
+                 "aws_queue_name_or_arn": {
+                   "description": "The SQS Queue Name or ARN",
+                   "title": "Queue Name",
+                   "type": "string"
+                 },
+                 "aws_region": {
+                   "description": "The AWS region to connect to",
+                   "example": "eu-west-1",
+                   "title": "AWS Region",
+                   "type": "string"
+                 },
+                 "aws_secret_key": {
+                   "oneOf": [
+                     {
+                       "description": "The secret key obtained from AWS",
+                       "format": "password",
+                       "title": "Secret Key",
+                       "type": "string"
+                     },
+                     {
+                       "description": "An opaque reference to the aws_secret_key",
+                       "properties": {},
+                       "type": "object"
+                     }
+                   ],
+                   "title": "Secret Key",
+                   "x-group": "credentials"
+                 },
+                 "kafka_topic": {
+                   "description": "Comma separated list of Kafka topic names",
+                   "title": "Topic Names",
+                   "type": "string"
+                 },
+                 "processors": {
+                   "items": {
+                     "oneOf": [
+                       {
+                         "properties": {
+                           "insert_field": {
+                             "$ref": "#/$defs/processors/insert_field"
+                           }
+                         },
+                         "required": [
+                           "insert_field"
+                         ],
+                         "type": "object"
+                       },
+                       {
+                         "properties": {
+                           "extract_field": {
+                             "$ref": "#/$defs/processors/extract_field"
+                           }
+                         },
+                         "required": [
+                           "extract_field"
+                         ],
+                         "type": "object"
+                       },
+                       {
+                         "properties": {
+                           "has_header_filter": {
+                             "$ref": "#/$defs/processors/has_header_filter"
+                           }
+                         },
+                         "required": [
+                           "has_header_filter"
+                         ],
+                         "type": "object"
+                       },
+                       {
+                         "properties": {
+                           "throttle": {
+                             "$ref": "#/$defs/processors/throttle"
+                           }
+                         },
+                         "required": [
+                           "throttle"
+                         ],
+                         "type": "object"
+                       }
+                     ]
+                   },
+                   "type": "array"
+                 }
+               },
+               "required": [
+                 "aws_queue_name_or_arn",
+                 "aws_access_key",
+                 "aws_secret_key",
+                 "aws_region",
+                 "kafka_topic"
+               ],
+               "type": "object"
+             },
+             "version": "v1alpha1"
+           }
+         ],
+         "kind": "ConnectorTypeList",
+         "page": 1,
+         "size": 1,
+         "total": 1
       }
       """
 
@@ -390,106 +894,189 @@ Feature: create a a connector
     And the response should match json:
       """
       {
-        "items": [
-          {
-            "json_schema" : {
-              "type" : "object",
-              "properties" : {
-                "connector" : {
-                  "type" : "object",
-                  "title" : "Log",
-                  "required" : [ ],
-                  "properties" : {
-                    "multiLine" : {
-                      "title" : "Multi Line",
-                      "description" : "Multi Line",
-                      "type" : "boolean",
-                      "default" : false
-                    },
-                    "showAll" : {
-                      "title" : "Show All",
-                      "description" : "Show All",
-                      "type" : "boolean",
-                      "default" : false
-                    }
-                  }
-                },
-                "kafka" : {
-                  "type" : "object",
-                  "title" : "Managed Kafka Source",
-                  "required" : [ "topic" ],
-                  "properties" : {
-                    "topic" : {
-                      "title" : "Topic names",
-                      "description" : "Comma separated list of Kafka topic names",
-                      "type" : "string"
-                    }
-                  }
-                },
-                "steps" : {
-                  "type" : "array",
-                  "items" : {
-                    "oneOf" : [ {
-                      "type" : "object",
-                      "required" : [ "insert-field" ],
-                      "properties" : {
-                        "insert-field" : {
-                          "title" : "Insert Field Action",
-                          "description" : "Adds a custom field with a constant value to the message in transit",
-                          "required" : [ "field", "value" ],
-                          "properties" : {
-                            "field" : {
-                              "title" : "Field",
-                              "description" : "The name of the field to be added",
-                              "type" : "string"
-                            },
-                            "value" : {
-                              "title" : "Value",
-                              "description" : "The value of the field",
-                              "type" : "string"
-                            }
-                          },
-                          "type" : "object"
-                        }
-                      }
-                    }, {
-                      "type" : "object",
-                      "required" : [ "extract-field" ],
-                      "properties" : {
-                        "extract-field" : {
-                          "title" : "Extract Field Action",
-                          "description" : "Extract a field from the body",
-                          "required" : [ "field" ],
-                          "properties" : {
-                            "field" : {
-                              "title" : "Field",
-                              "description" : "The name of the field to be added",
-                              "type" : "string"
-                            }
-                          },
-                          "type" : "object"
-                        }
-                      }
-                    } ]
-                  }
-                }
-              }
-            },
-            "id" : "log_sink_0.1",
-            "href": "/api/connector_mgmt/v1/kafka_connector_types/log_sink_0.1",
-            "kind" : "ConnectorType",
-            "icon_href" : "TODO",
-            "name" : "Log Sink",
-            "description" : "Log Sink",
-            "version" : "0.1",
-            "labels" : [ "sink" ],
-            "channels" : [ "stable" ]
-          }
-        ],
-        "kind": "ConnectorTypeList",
-        "page": 2,
-        "size": 1,
-        "total": 2
+         "items": [
+           {
+             "channels": [
+               "stable"
+             ],
+             "description": "Log Sink",
+             "href": "/api/connector_mgmt/v1/kafka_connector_types/log_sink_0.1",
+             "icon_href": "TODO",
+             "id": "log_sink_0.1",
+             "kind": "ConnectorType",
+             "labels": [
+               "sink"
+             ],
+             "name": "Log Sink",
+             "schema": {
+               "$defs": {
+                 "processors": {
+                   "extract_field": {
+                     "description": "Extract a field from the body",
+                     "properties": {
+                       "field": {
+                         "description": "The name of the field to be added",
+                         "title": "Field",
+                         "type": "string"
+                       }
+                     },
+                     "required": [
+                       "field"
+                     ],
+                     "title": "Extract Field Action",
+                     "type": "object"
+                   },
+                   "has_header_filter": {
+                     "description": "Filter based on the presence of one header",
+                     "properties": {
+                       "name": {
+                         "description": "The header name to evaluate",
+                         "example": "headerName",
+                         "title": "Header Name",
+                         "type": "string"
+                       },
+                       "value": {
+                         "description": "An optional header value to compare the header to",
+                         "example": "headerValue",
+                         "title": "Header Value",
+                         "type": "string"
+                       }
+                     },
+                     "required": [
+                       "name"
+                     ],
+                     "title": "Has Header Filter Action",
+                     "type": "object"
+                   },
+                   "insert_field": {
+                     "description": "Adds a custom field with a constant value to the message in transit.\n\nThis action works with Json Object. So it will expect a Json Array or a Json Object.\n\nIf for example you have an array like '{ \"foo\":\"John\", \"bar\":30 }' and your action has been configured with field as 'element' and value as 'hello', you'll get '{ \"foo\":\"John\", \"bar\":30, \"element\":\"hello\" }'\n\nNo headers mapping supported, only constant values.",
+                     "properties": {
+                       "field": {
+                         "description": "The name of the field to be added",
+                         "title": "Field",
+                         "type": "string"
+                       },
+                       "value": {
+                         "description": "The value of the field",
+                         "title": "Value",
+                         "type": "string"
+                       }
+                     },
+                     "required": [
+                       "field",
+                       "value"
+                     ],
+                     "title": "Insert Field Action",
+                     "type": "object"
+                   },
+                   "throttle": {
+                     "description": "The Throttle action allows to ensure that a specific sink does not get overloaded.",
+                     "properties": {
+                       "messages": {
+                         "description": "The number of messages to send in the time period set",
+                         "example": 10,
+                         "title": "Messages Number",
+                         "type": "integer"
+                       },
+                       "timePeriod": {
+                         "default": "1000",
+                         "description": "Sets the time period during which the maximum request count is valid for, in milliseconds",
+                         "title": "Time Period",
+                         "type": "string"
+                       }
+                     },
+                     "required": [
+                       "messages"
+                     ],
+                     "title": "Throttle Action",
+                     "type": "object"
+                   }
+                 }
+               },
+               "properties": {
+                 "kafka_topic": {
+                   "description": "Comma separated list of Kafka topic names",
+                   "title": "Topic Names",
+                   "type": "string"
+                 },
+                 "log_multi_line": {
+                   "default": false,
+                   "description": "Multi Line",
+                   "title": "Multi Line",
+                   "type": "boolean",
+                   "x-group": "common"
+                 },
+                 "log_show_all": {
+                   "default": false,
+                   "description": "Show All",
+                   "title": "Show All",
+                   "type": "boolean",
+                   "x-group": "common"
+                 },
+                 "processors": {
+                   "items": {
+                     "oneOf": [
+                       {
+                         "properties": {
+                           "insert_field": {
+                             "$ref": "#/$defs/processors/insert_field"
+                           }
+                         },
+                         "required": [
+                           "insert_field"
+                         ],
+                         "type": "object"
+                       },
+                       {
+                         "properties": {
+                           "extract_field": {
+                             "$ref": "#/$defs/processors/extract_field"
+                           }
+                         },
+                         "required": [
+                           "extract_field"
+                         ],
+                         "type": "object"
+                       },
+                       {
+                         "properties": {
+                           "has_header_filter": {
+                             "$ref": "#/$defs/processors/has_header_filter"
+                           }
+                         },
+                         "required": [
+                           "has_header_filter"
+                         ],
+                         "type": "object"
+                       },
+                       {
+                         "properties": {
+                           "throttle": {
+                             "$ref": "#/$defs/processors/throttle"
+                           }
+                         },
+                         "required": [
+                           "throttle"
+                         ],
+                         "type": "object"
+                       }
+                     ]
+                   },
+                   "type": "array"
+                 }
+               },
+               "required": [
+                 "kafka_topic"
+               ],
+               "type": "object"
+             },
+             "version": "0.1"
+           }
+         ],
+         "kind": "ConnectorTypeList",
+         "page": 2,
+         "size": 1,
+         "total": 2
       }
       """
 
@@ -514,9 +1101,10 @@ Feature: create a a connector
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "connector_spec": {
-            "accessKey": "test",
-            "secretKey": "test",
-            "region": "east"
+            "aws_access_key": "test",
+            "aws_secret_key": "test",
+            "aws_region": "east",
+            "kafka_topic": "test"
         }
       }
       """
@@ -529,7 +1117,7 @@ Feature: create a a connector
         "id": "21",
         "kind": "Error",
         "operation_id": "${response.operation_id}",
-        "reason": "connector spec not conform to the connector type schema. 1 errors encountered.  1st error: (root): queueNameOrArn is required"
+        "reason": "connector spec not conform to the connector type schema. 1 errors encountered.  1st error: (root): aws_queue_name_or_arn is required"
       }
       """
 
@@ -554,10 +1142,10 @@ Feature: create a a connector
           "client_secret": "test"
         },
         "connector_spec": {
-            "queueNameOrArn": "test",
-            "accessKey": "test",
-            "secretKey": "test",
-            "region": "east"
+            "aws_queue_name_or_arn": "test",
+            "aws_access_key": "test",
+            "aws_secret_key": "test",
+            "aws_region": "east"
         }
       }
       """
@@ -596,10 +1184,11 @@ Feature: create a a connector
           "client_secret": "test"
         },
         "connector_spec": {
-            "queueNameOrArn": "test",
-            "accessKey": "test",
-            "secretKey": "test",
-            "region": "east"
+            "aws_queue_name_or_arn": "test",
+            "aws_access_key": "test",
+            "aws_secret_key": "test",
+            "aws_region": "east",
+            "kafka_topic": "test"
         }
       }
       """
@@ -620,10 +1209,11 @@ Feature: create a a connector
               "client_id": "myclient"
             },
             "connector_spec": {
-              "accessKey": "test",
-              "queueNameOrArn": "test",
-              "region": "east",
-              "secretKey": {}
+              "aws_queue_name_or_arn": "test",
+              "aws_access_key": {},
+              "aws_secret_key": {},
+              "aws_region": "east",
+              "kafka_topic": "test"
             },
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "deployment_location": {
@@ -681,10 +1271,11 @@ Feature: create a a connector
           "connector_type_id": "aws-sqs-source-v1alpha1",
           "channel": "stable",
           "connector_spec": {
-              "accessKey": "test",
-              "queueNameOrArn": "test",
-              "region": "east",
-              "secretKey": {}
+              "aws_queue_name_or_arn": "test",
+              "aws_access_key": {},
+              "aws_secret_key": {},
+              "aws_region": "east",
+              "kafka_topic": "test"
           },
           "desired_state": "ready",
           "status": "assigning"
@@ -696,7 +1287,7 @@ Feature: create a a connector
       """
       {
           "connector_spec": {
-              "secretKey": {
+              "aws_secret_key": {
                 "ref": "hack"
               }
           }
@@ -726,7 +1317,7 @@ Feature: create a a connector
               "client_secret": "patched_secret 1"
             },
             "connector_spec": {
-                "secretKey": "patched_secret 2"
+                "aws_secret_key": "patched_secret 2"
             }
         }
         """
@@ -754,7 +1345,7 @@ Feature: create a a connector
 
       # The delete occurs async in a worker, so we have to wait a little for the counters to update.
       Given I sleep for 2 seconds
-      Then the vault delete counter should be 2
+      Then the vault delete counter should be 3
     Given UNLOCK--------------------------------------------------------------
 
     Given I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
@@ -1178,10 +1769,11 @@ Feature: create a a connector
           "client_secret": "test"
         },
         "connector_spec": {
-            "queueNameOrArn": "test",
-            "accessKey": "test",
-            "secretKey": "test",
-            "region": "east"
+            "aws_queue_name_or_arn": "test",
+            "aws_access_key": "test",
+            "aws_secret_key": "test",
+            "aws_region": "east",
+            "kafka_topic": "test"
         }
       }
       """

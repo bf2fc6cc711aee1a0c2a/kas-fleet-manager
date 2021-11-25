@@ -124,7 +124,7 @@ func (s *extender) deleteKeycloakClient(clientID string) error {
 }
 
 func (s *extender) updateConnectorCatalogOfTypeAndChannelWithShardMetadata(connectorTypeId, channel string, metadata *godog.DocString) error {
-	content, err := s.Expand(metadata.Content)
+	content, err := s.Expand(metadata.Content, []string{"defs", "ref"})
 	if err != nil {
 		return err
 	}

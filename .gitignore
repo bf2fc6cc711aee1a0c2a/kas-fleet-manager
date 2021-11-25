@@ -78,3 +78,6 @@ vendor
 
 # docker files
 .docker
+
+#reports dir
+reports/
