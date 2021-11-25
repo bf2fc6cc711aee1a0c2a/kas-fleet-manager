@@ -300,7 +300,7 @@ test/prepare:
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
 test/integration/kafka: test/prepare gotestsum
-	$(GOTESTSUM) --junitfile reports/integraton-tests-kafka.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
+	$(GOTESTSUM) --junitfile data/results/kas-fleet-manager-integration-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
 				./internal/kafka/test/integration/...
 .PHONY: test/integration/kafka
 
