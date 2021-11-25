@@ -3,12 +3,66 @@ package logger
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 )
+
+type LoggerKeys string
+
+const (
+	ActionKey       LoggerKeys = "Action"
+	ActionResultKey LoggerKeys = "EventResult"
+	RemoteAddrKey   LoggerKeys = "RemoteAddr"
+
+	ActionFailed  LoggerKeys = "failed"
+	ActionSuccess LoggerKeys = "success"
+
+	logEventSeparator = "$$"
+)
+
+type LogEvent struct {
+	Type        string
+	Description string
+}
+
+func NewLogEventFromString(eventTypeAndDescription string) (logEvent LogEvent) {
+	typeAndDesc := strings.Split(eventTypeAndDescription, logEventSeparator)
+	sliceLen := len(typeAndDesc)
+
+	if sliceLen > 0 {
+		logEvent.Type = typeAndDesc[0]
+	}
+
+	if sliceLen > 1 {
+		logEvent.Description = typeAndDesc[1]
+	}
+
+	return logEvent
+}
+
+func NewLogEvent(eventType string, description ...string) LogEvent {
+	res := LogEvent{
+		Type: eventType,
+	}
+
+	if len(description) != 0 {
+		res.Description = description[0]
+	}
+
+	return res
+}
+
+func (l LogEvent) ToString() string {
+	if l.Description != "" {
+		return fmt.Sprintf("%s%s%s", l.Type, logEventSeparator, l.Description)
+	}
+
+	return l.Type
+}
 
 type UHCLogger interface {
 	V(level int32) UHCLogger
@@ -29,6 +83,7 @@ type logger struct {
 	accountID string
 	// TODO username is unused, should we be logging it? Could be pii
 	username  string
+	session   string
 	sentryHub *sentry.Hub
 }
 
@@ -39,27 +94,47 @@ func NewUHCLogger(ctx context.Context) UHCLogger {
 		level:     1,
 		username:  getUsernameFromClaims(ctx),
 		sentryHub: sentry.GetHubFromContext(ctx),
+		session:   getSessionFromClaims(ctx),
 	}
 	return logger
 }
 
 func (l *logger) prepareLogPrefix(format string, args ...interface{}) string {
 	orig := fmt.Sprintf(format, args...)
-	prefix := " "
+	prefix := ""
+
+	if l.username != "" {
+		prefix = strings.Join([]string{prefix, "user='", l.username, "' "}, "")
+	}
+
+	if event, ok := l.context.Value(ActionKey).(string); ok {
+		prefix = strings.Join([]string{prefix, "action='", event, "' "}, "")
+		if eventStatus, ok := l.context.Value(ActionResultKey).(string); ok {
+			prefix = strings.Join([]string{prefix, "result='", eventStatus, "' "}, "")
+		}
+	}
+
+	if remoteAddr, ok := l.context.Value(RemoteAddrKey).(string); ok {
+		prefix = strings.Join([]string{prefix, "src_ip='", remoteAddr, "' "}, "")
+	}
+
+	if l.session != "" {
+		prefix = strings.Join([]string{prefix, "session='", l.session, "' "}, "")
+	}
 
 	if txid, ok := l.context.Value("txid").(int64); ok {
-		prefix = fmt.Sprintf("[tx_id=%d]%s", txid, prefix)
+		prefix = strings.Join([]string{prefix, "tx_id='", fmt.Sprintf("%v", txid), "' "}, "")
 	}
 
 	if l.accountID != "" {
-		prefix = fmt.Sprintf("[accountID=%s]%s", l.accountID, prefix)
+		prefix = strings.Join([]string{prefix, "accountID='", l.accountID, "' "}, "")
 	}
 
 	if opid, ok := l.context.Value(OpIDKey).(string); ok {
-		prefix = fmt.Sprintf("[opid=%s]%s", opid, prefix)
+		prefix = strings.Join([]string{prefix, "opid='", opid, "' "}, "")
 	}
 
-	return fmt.Sprintf("%s%s", prefix, orig)
+	return prefix + orig
 }
 
 func (l *logger) V(level int32) UHCLogger {
@@ -67,8 +142,28 @@ func (l *logger) V(level int32) UHCLogger {
 		context:   l.context,
 		accountID: l.accountID,
 		username:  l.username,
+		session:   l.session,
 		level:     level,
 	}
+}
+
+func getSessionFromClaims(ctx context.Context) string {
+	var claims jwt.MapClaims
+	token, err := authentication.TokenFromContext(ctx)
+	if err != nil {
+		return ""
+	}
+
+	if token != nil && token.Claims != nil {
+		claims = token.Claims.(jwt.MapClaims)
+	}
+
+	if claims["session_state"] != nil {
+		// return username from ocm token
+		return claims["session_state"].(string)
+	}
+
+	return ""
 }
 
 func (l *logger) Infof(format string, args ...interface{}) {

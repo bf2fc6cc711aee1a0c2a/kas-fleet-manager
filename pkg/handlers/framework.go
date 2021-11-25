@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
@@ -37,6 +38,21 @@ type Validate func() *errors.ServiceError
 type ErrorHandlerFunc func(r *http.Request, w http.ResponseWriter, err *errors.ServiceError)
 type HttpAction func() (interface{}, *errors.ServiceError)
 
+func success(r *http.Request) {
+	ctx := context.WithValue(r.Context(), logger.ActionResultKey, logger.ActionSuccess)
+	ulog := logger.NewUHCLogger(ctx)
+	ulog.Infof("operation ended successfully")
+}
+
+func errorHandler(r *http.Request, w http.ResponseWriter, cfg *HandlerConfig, err *errors.ServiceError) {
+	if cfg.ErrorHandler == nil {
+		cfg.ErrorHandler = shared.HandleError
+	}
+	ctx := context.WithValue(r.Context(), logger.ActionResultKey, logger.ActionFailed)
+	r = r.WithContext(ctx)
+	cfg.ErrorHandler(r, w, err)
+}
+
 func Handle(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, httpStatus int) {
 	if cfg.ErrorHandler == nil {
 		cfg.ErrorHandler = shared.HandleError
@@ -56,7 +72,7 @@ func Handle(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, httpStat
 		//err = json.Unmarshal(bytes, &cfg.MarshalInto)
 
 		if err != nil {
-			cfg.ErrorHandler(r, w, errors.MalformedRequest("Invalid request format: %s", err))
+			errorHandler(r, w, cfg, errors.MalformedRequest("Invalid request format: %s", err))
 			return
 		}
 	}
@@ -64,7 +80,7 @@ func Handle(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, httpStat
 	for _, v := range cfg.Validate {
 		err := v()
 		if err != nil {
-			cfg.ErrorHandler(r, w, err)
+			errorHandler(r, w, cfg, err)
 			return
 		}
 	}
@@ -73,9 +89,10 @@ func Handle(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, httpStat
 
 	switch {
 	case serviceErr != nil:
-		cfg.ErrorHandler(r, w, serviceErr)
+		errorHandler(r, w, cfg, serviceErr)
 	default:
 		shared.WriteJSONResponse(w, httpStatus, result)
+		success(r)
 	}
 
 }
@@ -87,7 +104,7 @@ func HandleDelete(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, ht
 	for _, v := range cfg.Validate {
 		err := v()
 		if err != nil {
-			cfg.ErrorHandler(r, w, err)
+			errorHandler(r, w, cfg, err)
 			return
 		}
 	}
@@ -96,9 +113,10 @@ func HandleDelete(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, ht
 
 	switch {
 	case serviceErr != nil:
-		cfg.ErrorHandler(r, w, serviceErr)
+		errorHandler(r, w, cfg, serviceErr)
 	default:
 		shared.WriteJSONResponse(w, httpStatus, result)
+		success(r)
 	}
 
 }
@@ -111,7 +129,7 @@ func HandleGet(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 	for _, v := range cfg.Validate {
 		err := v()
 		if err != nil {
-			cfg.ErrorHandler(r, w, err)
+			errorHandler(r, w, cfg, err)
 			return
 		}
 	}
@@ -120,8 +138,9 @@ func HandleGet(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 	switch {
 	case serviceErr == nil:
 		shared.WriteJSONResponse(w, http.StatusOK, result)
+		success(r)
 	default:
-		cfg.ErrorHandler(r, w, serviceErr)
+		errorHandler(r, w, cfg, serviceErr)
 	}
 }
 
@@ -134,14 +153,14 @@ func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 	for _, v := range cfg.Validate {
 		err := v()
 		if err != nil {
-			cfg.ErrorHandler(r, w, err)
+			errorHandler(r, w, cfg, err)
 			return
 		}
 	}
 
 	results, serviceError := cfg.Action()
 	if serviceError != nil {
-		cfg.ErrorHandler(r, w, serviceError)
+		errorHandler(r, w, cfg, serviceError)
 		return
 	}
 
@@ -151,7 +170,7 @@ func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 		}
 		flusher, ok := w.(http.Flusher)
 		if !ok {
-			cfg.ErrorHandler(r, w, errors.BadRequest("streaming unsupported"))
+			errorHandler(r, w, cfg, errors.BadRequest("streaming unsupported"))
 			return
 		}
 
@@ -185,7 +204,7 @@ func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 	} else {
 		shared.WriteJSONResponse(w, http.StatusOK, results)
 	}
-
+	success(r)
 }
 func ConvertToPrivateError(e compat.Error) compat.PrivateError {
 	return compat.PrivateError{
