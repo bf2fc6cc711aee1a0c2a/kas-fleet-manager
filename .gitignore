@@ -60,8 +60,9 @@ cmd/kas-fleet-manager/kas-fleet-manager
 # cluster details (used for testing)
 /internal/kafka/test/integration/test_cluster.json
 
-# test reports
-/reports/*.xml
+# integration test's results
+/data/results/*
+!/data/results/.keep
 
 # Docker template
 Dockerfile_integration_tests
