@@ -1,79 +1,228 @@
 {
-  "connector_type": {
-    "id": "aws-sqs-source-v1alpha1",
-    "name": "aws-sqs-source",
-    "version": "v1alpha1",
-    "title": "AWS SQS Source",
-    "description": "Receive data from AWS SQS",
-    "channels": ["stable", "beta"],
-    "json_schema": {
-      "title": "AWS SQS Source",
-      "description": "Receive data from AWS SQS.",
-      "required": [
-        "queueNameOrArn",
-        "accessKey",
-        "secretKey",
-        "region"
-      ],
-      "properties": {
-        "queueNameOrArn": {
-          "title": "Queue Name",
-          "description": "The SQS Queue name or ARN",
-          "type": "string"
+  "connector_type" : {
+    "schema" : {
+      "type" : "object",
+      "required" : [ "aws_queue_name_or_arn", "aws_access_key", "aws_secret_key", "aws_region", "kafka_topic" ],
+      "properties" : {
+        "aws_queue_name_or_arn" : {
+          "title" : "Queue Name",
+          "description" : "The SQS Queue Name or ARN",
+          "type" : "string"
         },
-        "deleteAfterRead": {
-          "title": "Auto-delete messages",
-          "description": "Delete messages after consuming them",
-          "type": "boolean",
-          "x-descriptors": [
-            "urn:alm:descriptor:com.tectonic.ui:checkbox"
-          ],
-          "default": true
+        "aws_delete_after_read" : {
+          "title" : "Auto-delete Messages",
+          "description" : "Delete messages after consuming them",
+          "type" : "boolean",
+          "default" : true
         },
-        "accessKey": {
-          "title": "Access Key",
-          "description": "The access key obtained from AWS",
-          "type": "string"
+        "aws_access_key" : {
+          "title" : "Access Key",
+          "x-group" : "credentials",
+          "oneOf" : [ {
+            "title" : "Access Key",
+            "description" : "The access key obtained from AWS",
+            "type" : "string",
+            "format" : "password"
+          }, {
+            "description" : "An opaque reference to the aws_access_key",
+            "type" : "object",
+            "properties" : { }
+          } ]
         },
-        "secretKey": {
-          "title": "Secret Key",
-          "description": "The secret key obtained from AWS",
-          "x-descriptors": [
-            "urn:alm:descriptor:com.tectonic.ui:password"
-          ],
-          "oneOf": [
-            {
-              "description": "the secret value",
-              "type": "string",
-              "format": "password"
+        "aws_secret_key" : {
+          "title" : "Secret Key",
+          "x-group" : "credentials",
+          "oneOf" : [ {
+            "title" : "Secret Key",
+            "description" : "The secret key obtained from AWS",
+            "type" : "string",
+            "format" : "password"
+          }, {
+            "description" : "An opaque reference to the aws_secret_key",
+            "type" : "object",
+            "properties" : { }
+          } ]
+        },
+        "aws_region" : {
+          "title" : "AWS Region",
+          "description" : "The AWS region to connect to",
+          "type" : "string",
+          "example" : "eu-west-1"
+        },
+        "aws_auto_create_queue" : {
+          "title" : "Autocreate Queue",
+          "description" : "Setting the autocreation of the SQS queue.",
+          "type" : "boolean",
+          "default" : false
+        },
+        "aws_amazon_a_w_s_host" : {
+          "title" : "AWS Host",
+          "description" : "The hostname of the Amazon AWS cloud.",
+          "type" : "string"
+        },
+        "aws_protocol" : {
+          "title" : "Protocol",
+          "description" : "The underlying protocol used to communicate with SQS",
+          "type" : "string",
+          "example" : "http or https",
+          "default" : "https"
+        },
+        "kafka_topic" : {
+          "title" : "Topic Names",
+          "description" : "Comma separated list of Kafka topic names",
+          "type" : "string"
+        },
+        "processors" : {
+          "type" : "array",
+          "items" : {
+            "oneOf" : [ {
+              "type" : "object",
+              "required" : [ "insert_field" ],
+              "properties" : {
+                "insert_field" : {
+                  "$ref" : "#/$defs/processors/insert_field"
+                }
+              }
+            }, {
+              "type" : "object",
+              "required" : [ "extract_field" ],
+              "properties" : {
+                "extract_field" : {
+                  "$ref" : "#/$defs/processors/extract_field"
+                }
+              }
+            }, {
+              "type" : "object",
+              "required" : [ "has_header_filter" ],
+              "properties" : {
+                "has_header_filter" : {
+                  "$ref" : "#/$defs/processors/has_header_filter"
+                }
+              }
+            }, {
+              "type" : "object",
+              "required" : [ "throttle" ],
+              "properties" : {
+                "throttle" : {
+                  "$ref" : "#/$defs/processors/throttle"
+                }
+              }
+            } ]
+          }
+        }
+      },
+      "$defs" : {
+        "processors" : {
+          "insert_field" : {
+            "title" : "Insert Field Action",
+            "description" : "Adds a custom field with a constant value to the message in transit.\n\nThis action works with Json Object. So it will expect a Json Array or a Json Object.\n\nIf for example you have an array like '{ \"foo\":\"John\", \"bar\":30 }' and your action has been configured with field as 'element' and value as 'hello', you'll get '{ \"foo\":\"John\", \"bar\":30, \"element\":\"hello\" }'\n\nNo headers mapping supported, only constant values.",
+            "required" : [ "field", "value" ],
+            "properties" : {
+              "field" : {
+                "title" : "Field",
+                "description" : "The name of the field to be added",
+                "type" : "string"
+              },
+              "value" : {
+                "title" : "Value",
+                "description" : "The value of the field",
+                "type" : "string"
+              }
             },
-            {
-              "description": "An opaque reference to the secret",
-              "type": "object",
-              "properties": {}
-            }
-          ]
-        },
-        "region": {
-          "title": "AWS Region",
-          "description": "The AWS region to connect to",
-          "type": "string",
-          "example": "eu-west-1"
+            "type" : "object"
+          },
+          "extract_field" : {
+            "title" : "Extract Field Action",
+            "description" : "Extract a field from the body",
+            "required" : [ "field" ],
+            "properties" : {
+              "field" : {
+                "title" : "Field",
+                "description" : "The name of the field to be added",
+                "type" : "string"
+              }
+            },
+            "type" : "object"
+          },
+          "has_header_filter" : {
+            "title" : "Has Header Filter Action",
+            "description" : "Filter based on the presence of one header",
+            "required" : [ "name" ],
+            "properties" : {
+              "name" : {
+                "title" : "Header Name",
+                "description" : "The header name to evaluate",
+                "type" : "string",
+                "example" : "headerName"
+              },
+              "value" : {
+                "title" : "Header Value",
+                "description" : "An optional header value to compare the header to",
+                "type" : "string",
+                "example" : "headerValue"
+              }
+            },
+            "type" : "object"
+          },
+          "throttle" : {
+            "title" : "Throttle Action",
+            "description" : "The Throttle action allows to ensure that a specific sink does not get overloaded.",
+            "required" : [ "messages" ],
+            "properties" : {
+              "messages" : {
+                "title" : "Messages Number",
+                "description" : "The number of messages to send in the time period set",
+                "type" : "integer",
+                "example" : 10
+              },
+              "timePeriod" : {
+                "title" : "Time Period",
+                "description" : "Sets the time period during which the maximum request count is valid for, in milliseconds",
+                "type" : "string",
+                "default" : "1000"
+              }
+            },
+            "type" : "object"
+          }
         }
       }
-    }
+    },
+    "id" : "aws-sqs-source-v1alpha1",
+    "kind" : "ConnectorType",
+    "icon_href" : "TODO",
+    "name" : "aws-sqs-source",
+    "description" : "AWS SQS Source",
+    "version" : "v1alpha1",
+    "labels" : [ "source" ],
+    "capabilities" : [ "processors" ],
+    "channels": ["stable", "beta"]
   },
-  "channels": {
-    "stable": {
-      "revision": 1,
-      "shard_metadata": {
-        "meta_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
-        "operators": [
-          {
-            "type": "camel-k",
-            "versions": "[1.0.0,2.0.0]"
+  "channels" : {
+    "stable" : {
+      "shard_metadata" : {
+        "connector_revision" : "5",
+        "connector_type" : "source",
+        "connector_image" : "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
+        "operators" : [ {
+          "type" : "camel-k",
+          "version" : "[1.0.0,2.0.0)"
+        } ],
+        "kamelets" : {
+          "adapter" : {
+            "name" : "aws-sqs-source",
+            "prefix" : "aws"
+          },
+          "kafka" : {
+            "name" : "managed-kafka-sink",
+            "prefix" : "kafka"
+          },
+          "processors" : {
+            "insert_field" : "insert-field-action",
+            "extract_field" : "extract-field-action",
+            "has_header_filter" : "has-header-filter-action",
+            "throttle" : "throttle-action"
           }
-        ]
+        }
       }
     },
     "beta": {

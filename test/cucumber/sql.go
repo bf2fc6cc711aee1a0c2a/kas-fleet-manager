@@ -28,7 +28,7 @@ func init() {
 func (s *TestScenario) iRunSQLExpectRowToBeAffected(sql string, expected int64) error {
 
 	var err error
-	sql, err = s.Expand(sql)
+	sql, err = s.Expand(sql, []string{})
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ type TableCell = messages.PickleStepArgument_PickleTable_PickleTableRow_PickleTa
 func (s *TestScenario) iRunSQLGivesResults(sql string, expected *godog.Table) error {
 
 	var err error
-	sql, err = s.Expand(sql)
+	sql, err = s.Expand(sql, []string{})
 	if err != nil {
 		return err
 	}
