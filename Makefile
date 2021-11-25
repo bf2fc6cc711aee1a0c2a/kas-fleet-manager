@@ -280,7 +280,7 @@ install: verify lint
 # Examples:
 #   make test TESTFLAGS="-run TestSomething"
 test: gotestsum
-	OCM_ENV=testing $(GOTESTSUM) --junitfile reports/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
+	OCM_ENV=testing $(GOTESTSUM) --junitfile data/results/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
 		$(shell go list ./... | grep -v /test)
 .PHONY: test
 
@@ -305,7 +305,7 @@ test/integration/kafka: test/prepare gotestsum
 .PHONY: test/integration/kafka
 
 test/integration/connector: test/prepare gotestsum
-	$(GOTESTSUM) --junitfile reports/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
+	$(GOTESTSUM) --junitfile data/results/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
 				./internal/connector/test/integration/...
 .PHONY: test/integration/connector
 
