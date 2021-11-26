@@ -778,20 +778,23 @@ func (k *kafkaService) CountByStatus(status []constants2.KafkaStatus) ([]KafkaSt
 }
 
 type KafkaComponentVersions struct {
-	ID                    string
-	ClusterID             string
-	DesiredStrimziVersion string
-	ActualStrimziVersion  string
-	StrimziUpgrading      bool
-	DesiredKafkaVersion   string
-	ActualKafkaVersion    string
-	KafkaUpgrading        bool
+	ID                     string
+	ClusterID              string
+	DesiredStrimziVersion  string
+	ActualStrimziVersion   string
+	StrimziUpgrading       bool
+	DesiredKafkaVersion    string
+	ActualKafkaVersion     string
+	KafkaUpgrading         bool
+	DesiredKafkaIBPVersion string
+	ActualKafkaIBPVersion  string
+	KafkaIBPUpgrading      bool
 }
 
 func (k *kafkaService) ListComponentVersions() ([]KafkaComponentVersions, error) {
 	dbConn := k.connectionFactory.New()
 	var results []KafkaComponentVersions
-	if err := dbConn.Model(&dbapi.KafkaRequest{}).Select("id", "cluster_id", "desired_strimzi_version", "actual_strimzi_version", "strimzi_upgrading", "desired_kafka_version", "actual_kafka_version", "kafka_upgrading").Scan(&results).Error; err != nil {
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).Select("id", "cluster_id", "desired_strimzi_version", "actual_strimzi_version", "strimzi_upgrading", "desired_kafka_version", "actual_kafka_version", "kafka_upgrading", "desired_kafka_ibp_version", "actual_kafka_ibp_version", "kafka_ibp_upgrading").Scan(&results).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list component versions")
 	}
 	return results, nil

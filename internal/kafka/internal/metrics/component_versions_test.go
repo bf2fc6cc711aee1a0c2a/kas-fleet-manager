@@ -1,9 +1,10 @@
 package metrics
 
 import (
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/prometheus/client_golang/prometheus"
-	"testing"
 )
 
 func TestVersionsMetrics_Collect(t *testing.T) {
@@ -27,20 +28,23 @@ func TestVersionsMetrics_Collect(t *testing.T) {
 				ListComponentVersionsFunc: func() ([]services.KafkaComponentVersions, error) {
 					return []services.KafkaComponentVersions{
 						{
-							ID:                    "1",
-							ClusterID:             "cluster1",
-							DesiredStrimziVersion: "1.0.1",
-							ActualStrimziVersion:  "1.0.0",
-							StrimziUpgrading:      true,
-							DesiredKafkaVersion:   "1.0.1",
-							ActualKafkaVersion:    "1.0.0",
-							KafkaUpgrading:        false,
+							ID:                     "1",
+							ClusterID:              "cluster1",
+							DesiredStrimziVersion:  "1.0.1",
+							ActualStrimziVersion:   "1.0.0",
+							StrimziUpgrading:       true,
+							DesiredKafkaVersion:    "1.0.1",
+							ActualKafkaVersion:     "1.0.0",
+							KafkaUpgrading:         false,
+							DesiredKafkaIBPVersion: "1.0",
+							ActualKafkaIBPVersion:  "1.0",
+							KafkaIBPUpgrading:      true,
 						},
 					}, nil
 				},
 			}},
 			args: args{ch: make(chan prometheus.Metric, 100)},
-			want: 5,
+			want: 8,
 		},
 	}
 
