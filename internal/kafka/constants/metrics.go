@@ -143,14 +143,14 @@ func GetMetricsMetaData() map[string]MetricsMetadata {
 			Help:           KafkaServerSocketServerMetricsConnectionCountDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster", "strimzi_io_cluster"},
+			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster", "strimzi_io_name"},
 		},
 		"kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum": {
 			Name:           "kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum",
 			Help:           KafkaServerSocketServerMetricsConnectionCreationRateDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster", "strimzi_io_cluster"},
+			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster", "strimzi_io_name"},
 		},
 	}
 }
