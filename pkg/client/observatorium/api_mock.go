@@ -137,6 +137,21 @@ var rangeQuerydata = map[string]pModel.Matrix{
 	"sum by (namespace, topic)(kafka_log_log_size": {
 		fakeMetricData("sum by (namespace, topic)(kafka_log_log_size", 220),
 	},
+	"sum by (namespace) (kafka_topic_partitions{topic!~\"^__redhat_.*\"})": {
+		fakeMetricData("sum by (namespace) (kafka_topic_partitions{topic!~\"^__redhat_.*\"})", 20),
+	},
+	"count by (namespace) (kafka_topic_partitions{topic!~\"^__redhat_.*\"})": {
+		fakeMetricData("count by (namespace) (kafka_topic_partitions{topic!~\"^__redhat_.*\"})", 20),
+	},
+	"count by (namespace) (kafka_consumergroup_members{consumergroup!~\"^__redhat_.*\"})": {
+		fakeMetricData("count by (namespace) (kafka_consumergroup_members{consumergroup!~\"^__redhat_.*\"})", 20),
+	},
+	"sum by (namespace) (kafka_server_socket_server_metrics_connection_count{listener=\"EXTERNAL-9094\"})": {
+		fakeMetricData("sum by (namespace) (kafka_server_socket_server_metrics_connection_count{listener=\"EXTERNAL-9094\"})", 20),
+	},
+	"sum by (namespace) (kafka_server_socket_server_metrics_connection_creation_rate)": {
+		fakeMetricData("sum by (namespace) (kafka_server_socket_server_metrics_connection_creation_rate)", 20),
+	},
 }
 
 func fakeMetricData(name string, value int) *pModel.SampleStream {

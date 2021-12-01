@@ -141,6 +141,41 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 				*metrics = append(*metrics, m)
 			},
 		},
+		"kafka_topic:kafka_topic_partitions:sum": {
+			`kafka_topic:kafka_topic_partitions:sum{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+		"kafka_topic:kafka_topic_partitions:count": {
+			`kafka_topic:kafka_topic_partitions:count{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+		"consumergroup:kafka_consumergroup_members:count": {
+			`consumergroup:kafka_consumergroup_members:count{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+		"kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum": {
+			`kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+		"kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum": {
+			`kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
 	}
 
 	for msg, f := range fetchers {
