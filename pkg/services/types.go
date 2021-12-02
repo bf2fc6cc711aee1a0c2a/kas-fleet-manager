@@ -1,15 +1,18 @@
 package services
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	"github.com/pkg/errors"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/pkg/errors"
 )
 
-var accepted_orderby_fields = []string{"name", "created_at", "updated_at", "region", "cluster_id", "cloud_provider", "owner", "organisation_id", "version"}
+func GetAcceptedOrderByParams() []string {
+	return []string{"bootstrap_server_host", "cloud_provider", "cluster_id", "created_at", "href", "id", "instance_type", "multi_az", "name", "organisation_id", "owner", "reauthentication_enabled", "region", "status", "updated_at", "version"}
+}
 
 // ListArguments are arguments relevant for listing objects.
 // This struct is common to all service List funcs in this package
@@ -72,7 +75,7 @@ func (la *ListArguments) Validate() error {
 				return errors.Errorf("invalid order by clause '%s'", orderByClause)
 			}
 
-			if !shared.Contains(accepted_orderby_fields, keywords[0]) {
+			if !shared.Contains(GetAcceptedOrderByParams(), keywords[0]) {
 				return errors.Errorf("unknown order by field '%s'", keywords[0])
 			}
 

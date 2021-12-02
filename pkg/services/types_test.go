@@ -1,8 +1,9 @@
 package services
 
 import (
-	. "github.com/onsi/gomega"
 	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 func makeParams(orderByAry []string) map[string][]string {
@@ -60,6 +61,11 @@ func Test_ValidateOrderBy(t *testing.T) {
 		{
 			name:    "No ordering - mixed",
 			params:  makeParams([]string{"region, cloud_provider desc, name"}),
+			wantErr: false,
+		},
+		{
+			name:    "No ordering - all valid params",
+			params:  makeParams(GetAcceptedOrderByParams()),
 			wantErr: false,
 		},
 	}
