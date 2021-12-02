@@ -50,6 +50,9 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *serviceError.ServiceError) {
 // 				panic("mock out the GetById method")
 // 			},
+// 			GetCNAMERecordStatusFunc: func(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error) {
+// 				panic("mock out the GetCNAMERecordStatus method")
+// 			},
 // 			GetManagedKafkaByClusterIDFunc: func(clusterID string) ([]managedkafka.ManagedKafka, *serviceError.ServiceError) {
 // 				panic("mock out the GetManagedKafkaByClusterID method")
 // 			},
@@ -122,6 +125,9 @@ type KafkaServiceMock struct {
 
 	// GetByIdFunc mocks the GetById method.
 	GetByIdFunc func(id string) (*dbapi.KafkaRequest, *serviceError.ServiceError)
+
+	// GetCNAMERecordStatusFunc mocks the GetCNAMERecordStatus method.
+	GetCNAMERecordStatusFunc func(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error)
 
 	// GetManagedKafkaByClusterIDFunc mocks the GetManagedKafkaByClusterID method.
 	GetManagedKafkaByClusterIDFunc func(clusterID string) ([]managedkafka.ManagedKafka, *serviceError.ServiceError)
@@ -211,6 +217,11 @@ type KafkaServiceMock struct {
 			// ID is the id argument value.
 			ID string
 		}
+		// GetCNAMERecordStatus holds details about calls to the GetCNAMERecordStatus method.
+		GetCNAMERecordStatus []struct {
+			// KafkaRequest is the kafkaRequest argument value.
+			KafkaRequest *dbapi.KafkaRequest
+		}
 		// GetManagedKafkaByClusterID holds details about calls to the GetManagedKafkaByClusterID method.
 		GetManagedKafkaByClusterID []struct {
 			// ClusterID is the clusterID argument value.
@@ -294,6 +305,7 @@ type KafkaServiceMock struct {
 	lockDetectInstanceType             sync.RWMutex
 	lockGet                            sync.RWMutex
 	lockGetById                        sync.RWMutex
+	lockGetCNAMERecordStatus           sync.RWMutex
 	lockGetManagedKafkaByClusterID     sync.RWMutex
 	lockHasAvailableCapacity           sync.RWMutex
 	lockHasAvailableCapacityInRegion   sync.RWMutex
@@ -563,6 +575,37 @@ func (mock *KafkaServiceMock) GetByIdCalls() []struct {
 	mock.lockGetById.RLock()
 	calls = mock.calls.GetById
 	mock.lockGetById.RUnlock()
+	return calls
+}
+
+// GetCNAMERecordStatus calls GetCNAMERecordStatusFunc.
+func (mock *KafkaServiceMock) GetCNAMERecordStatus(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error) {
+	if mock.GetCNAMERecordStatusFunc == nil {
+		panic("KafkaServiceMock.GetCNAMERecordStatusFunc: method is nil but KafkaService.GetCNAMERecordStatus was just called")
+	}
+	callInfo := struct {
+		KafkaRequest *dbapi.KafkaRequest
+	}{
+		KafkaRequest: kafkaRequest,
+	}
+	mock.lockGetCNAMERecordStatus.Lock()
+	mock.calls.GetCNAMERecordStatus = append(mock.calls.GetCNAMERecordStatus, callInfo)
+	mock.lockGetCNAMERecordStatus.Unlock()
+	return mock.GetCNAMERecordStatusFunc(kafkaRequest)
+}
+
+// GetCNAMERecordStatusCalls gets all the calls that were made to GetCNAMERecordStatus.
+// Check the length with:
+//     len(mockedKafkaService.GetCNAMERecordStatusCalls())
+func (mock *KafkaServiceMock) GetCNAMERecordStatusCalls() []struct {
+	KafkaRequest *dbapi.KafkaRequest
+} {
+	var calls []struct {
+		KafkaRequest *dbapi.KafkaRequest
+	}
+	mock.lockGetCNAMERecordStatus.RLock()
+	calls = mock.calls.GetCNAMERecordStatus
+	mock.lockGetCNAMERecordStatus.RUnlock()
 	return calls
 }
 

@@ -10,6 +10,9 @@ import (
 )
 
 func TestKafkaRoutesCNAMEManager(t *testing.T) {
+	testChangeID := "1234"
+	testChangeINSYNC := route53.ChangeStatusInsync
+
 	type fields struct {
 		kafkaService services.KafkaService
 	}
@@ -31,7 +34,12 @@ func TestKafkaRoutesCNAMEManager(t *testing.T) {
 					}, nil
 				},
 				ChangeKafkaCNAMErecordsFunc: func(kafkaRequest *dbapi.KafkaRequest, action services.KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
-					return nil, nil
+					return &route53.ChangeResourceRecordSetsOutput{
+						ChangeInfo: &route53.ChangeInfo{
+							Id:     &testChangeID,
+							Status: &testChangeINSYNC,
+						},
+					}, nil
 				},
 				UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 					if !kafkaRequest.RoutesCreated {
