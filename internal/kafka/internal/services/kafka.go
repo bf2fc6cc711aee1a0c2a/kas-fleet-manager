@@ -42,6 +42,11 @@ const KafkaRoutesActionCreate KafkaRoutesAction = "CREATE"
 const KafkaRoutesActionDelete KafkaRoutesAction = "DELETE"
 const CanaryServiceAccountPrefix = "canary"
 
+type CNameRecordStatus struct {
+	Id     *string
+	Status *string
+}
+
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
@@ -76,6 +81,7 @@ type KafkaService interface {
 	// See https://gorm.io/docs/update.html#Updates-multiple-columns for more info
 	Updates(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError
 	ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
+	GetCNAMERecordStatus(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error)
 	DetectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError)
 	RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionKafkaForUsers registers all kafkas for deprovisioning given the list of owners
@@ -746,6 +752,27 @@ func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest,
 	}
 
 	return changeRecordsOutput, nil
+}
+
+func (k *kafkaService) GetCNAMERecordStatus(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error) {
+	awsConfig := aws.Config{
+		AccessKeyID:     k.awsConfig.Route53AccessKey,
+		SecretAccessKey: k.awsConfig.Route53SecretAccessKey,
+	}
+	awsClient, err := k.awsClientFactory.NewClient(awsConfig, kafkaRequest.Region)
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create aws client")
+	}
+
+	changeOutput, err := awsClient.GetChange(kafkaRequest.RoutesCreationId)
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to CNAME record status")
+	}
+
+	return &CNameRecordStatus{
+		Id:     changeOutput.ChangeInfo.Id,
+		Status: changeOutput.ChangeInfo.Status,
+	}, nil
 }
 
 type KafkaStatusCount struct {

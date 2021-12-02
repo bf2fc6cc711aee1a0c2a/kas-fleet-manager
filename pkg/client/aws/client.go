@@ -20,6 +20,7 @@ type Client interface {
 	// route53
 	ListHostedZonesByNameInput(dnsName string) (*route53.ListHostedZonesByNameOutput, error)
 	ChangeResourceRecordSets(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)
+	GetChange(changeId string) (*route53.GetChangeOutput, error)
 }
 
 type ClientFactory interface {
@@ -78,6 +79,19 @@ func newClient(credentials Config, region string) (Client, error) {
 	return &awsClient{
 		route53Client: route53.New(sess),
 	}, nil
+}
+
+func (client *awsClient) GetChange(changeId string) (*route53.GetChangeOutput, error) {
+	changeInput := &route53.GetChangeInput{
+		Id: &changeId,
+	}
+
+	change, err := client.route53Client.GetChange(changeInput)
+	if err != nil {
+		return nil, wrapAWSError(err, "Failed to get Change.")
+	}
+
+	return change, nil
 }
 
 func (client *awsClient) ListHostedZonesByNameInput(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
