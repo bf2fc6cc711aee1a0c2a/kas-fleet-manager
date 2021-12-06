@@ -88,6 +88,7 @@ type KafkaService interface {
 	DeprovisionKafkaForUsers(users []string) *errors.ServiceError
 	DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.ServiceError
 	CountByStatus(status []constants2.KafkaStatus) ([]KafkaStatusCount, error)
+	CountByRegionAndInstanceType() ([]KafkaRegionCount, error)
 	ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, *errors.ServiceError)
 	VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
 	ListComponentVersions() ([]KafkaComponentVersions, error)
@@ -779,6 +780,23 @@ func (k *kafkaService) GetCNAMERecordStatus(kafkaRequest *dbapi.KafkaRequest) (*
 type KafkaStatusCount struct {
 	Status constants2.KafkaStatus
 	Count  int
+}
+
+type KafkaRegionCount struct {
+	Region       string
+	InstanceType string `gorm:"column:instance_type"`
+	Count        int
+}
+
+func (k *kafkaService) CountByRegionAndInstanceType() ([]KafkaRegionCount, error) {
+	dbConn := k.connectionFactory.New()
+	var results []KafkaRegionCount
+
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).Select("region as Region, instance_type, count(1) as Count").Group("region,instance_type").Scan(&results).Error; err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count kafkas")
+	}
+
+	return results, nil
 }
 
 func (k *kafkaService) CountByStatus(status []constants2.KafkaStatus) ([]KafkaStatusCount, error) {

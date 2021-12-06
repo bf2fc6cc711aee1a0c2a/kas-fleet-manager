@@ -64,12 +64,20 @@ const (
 	// DatabaseQueryDuration - metric name for database query duration in milliseconds
 	DatabaseQueryDuration = "database_query_duration"
 
+	// ClusterStatusMaxCapacity - metric name for the maximum kafka instance capacity
+	ClusterStatusCapacityMax = "cluster_status_capacity_max"
+
+	// ClusterStatusCurrentCapacity - metric name for the current number of instances
+	ClusterStatusCapacityUsed = "cluster_status_capacity_used"
+
 	LabelStatusCode = "code"
 	LabelMethod     = "method"
 	LabelPath       = "path"
 
 	LabelDatabaseQueryStatus = "status"
 	LabelDatabaseQueryType   = "query"
+	LabelRegion              = "region"
+	LabelInstanceType        = "instance_type"
 )
 
 // JobType metric to capture
@@ -139,6 +147,17 @@ var DatabaseMetricsLabels = []string{
 	LabelDatabaseQueryType,
 }
 
+var clusterStatusCapacityMaxLabels = []string{
+	LabelRegion,
+	LabelInstanceType,
+	LabelClusterID,
+}
+
+var clusterStatusCapacityUsedLabels = []string{
+	LabelRegion,
+	LabelInstanceType,
+}
+
 // #### Metrics for Dataplane clusters - Start ####
 // create a new histogramVec for cluster creation duration
 var requestClusterCreationDurationMetric = prometheus.NewHistogramVec(
@@ -184,7 +203,24 @@ func IncreaseClusterSuccessOperationsCountMetric(operation constants2.ClusterOpe
 	clusterOperationsSuccessCountMetric.With(labels).Inc()
 }
 
-// reate a new counterVec for total cluster operation counts
+func UpdateClusterStatusCapacityMaxCount(region, instanceType, clusterId string, count float64) {
+	labels := prometheus.Labels{
+		LabelRegion:       region,
+		LabelInstanceType: instanceType,
+		LabelClusterID:    clusterId,
+	}
+	clusterStatusCapacityMaxMetric.With(labels).Set(count)
+}
+
+func UpdateClusterStatusCapacityUsedCount(region, instanceType string, count float64) {
+	labels := prometheus.Labels{
+		LabelRegion:       region,
+		LabelInstanceType: instanceType,
+	}
+	clusterStatusCapacityUsedMetric.With(labels).Set(count)
+}
+
+// create a new counterVec for total cluster operation counts
 var clusterOperationsTotalCountMetric = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Subsystem: KasFleetManager,
@@ -192,6 +228,24 @@ var clusterOperationsTotalCountMetric = prometheus.NewCounterVec(
 		Help:      "number of total cluster operations",
 	},
 	ClusterOperationsCountMetricsLabels,
+)
+
+var clusterStatusCapacityMaxMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: KasFleetManager,
+		Name:      ClusterStatusCapacityMax,
+		Help:      "number of allowed instances per region and instance type",
+	},
+	clusterStatusCapacityMaxLabels,
+)
+
+var clusterStatusCapacityUsedMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: KasFleetManager,
+		Name:      ClusterStatusCapacityUsed,
+		Help:      "number of existing instances per region and instance type",
+	},
+	clusterStatusCapacityUsedLabels,
 )
 
 // IncreaseClusterTotalOperationsCountMetric - increase counter for clusterOperationsTotalCountMetric
@@ -603,6 +657,8 @@ func init() {
 	prometheus.MustRegister(clusterStatusSinceCreatedMetric)
 	prometheus.MustRegister(clusterStatusCountMetric)
 	prometheus.MustRegister(kafkaPerClusterCountMetric)
+	prometheus.MustRegister(clusterStatusCapacityMaxMetric)
+	prometheus.MustRegister(clusterStatusCapacityUsedMetric)
 
 	// metrics for Kafkas
 	prometheus.MustRegister(requestKafkaCreationDurationMetric)
@@ -640,6 +696,8 @@ func ResetMetricsForClusterManagers() {
 	clusterStatusSinceCreatedMetric.Reset()
 	clusterStatusCountMetric.Reset()
 	kafkaPerClusterCountMetric.Reset()
+	clusterStatusCapacityMaxMetric.Reset()
+	clusterStatusCapacityUsedMetric.Reset()
 }
 
 // ResetMetricsForReconcilers will reset the metrics related to the reconcilers
@@ -666,6 +724,8 @@ func Reset() {
 	clusterStatusSinceCreatedMetric.Reset()
 	clusterStatusCountMetric.Reset()
 	kafkaPerClusterCountMetric.Reset()
+	clusterStatusCapacityMaxMetric.Reset()
+	clusterStatusCapacityUsedMetric.Reset()
 
 	requestKafkaCreationDurationMetric.Reset()
 	kafkaOperationsSuccessCountMetric.Reset()
