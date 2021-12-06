@@ -1973,6 +1973,76 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 	}
 }
 
+func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		wantErr   bool
+		want      []KafkaRegionCount
+		setupFunc func()
+	}{
+		{
+			name:    "should return the counts of Kafkas per region and instance type",
+			fields:  fields{connectionFactory: db.NewMockConnectionFactory(nil)},
+			wantErr: false,
+			setupFunc: func() {
+				counters := []map[string]interface{}{
+					{
+						"region":        "us-east-1",
+						"instance_type": "standard",
+						"cluster_id":    testClusterID,
+						"Count":         1,
+					},
+					{
+						"region":        "eu-west-1",
+						"instance_type": "eval",
+						"cluster_id":    testClusterID,
+						"Count":         1,
+					},
+				}
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT region as Region, instance_type, cluster_id, count(1) as Count FROM "kafka_requests" WHERE "kafka_requests"."deleted_at" IS NULL GROUP BY region,instance_type,cluster_id`).
+					WithReply(counters)
+			},
+			want: []KafkaRegionCount{
+				{
+					Region:       "us-east-1",
+					InstanceType: "standard",
+					ClusterId:    testClusterID,
+					Count:        1,
+				}, {
+					Region:       "eu-west-1",
+					InstanceType: "eval",
+					ClusterId:    testClusterID,
+					Count:        1,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFunc != nil {
+				tt.setupFunc()
+			}
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			status, err := k.CountByRegionAndInstanceType()
+			if !tt.wantErr && err != nil {
+				t.Errorf("unexpected error for CountByRegionAndInstanceType: %v", err)
+			}
+			if !reflect.DeepEqual(status, tt.want) {
+				t.Errorf("CountByRegionAndInstanceType want = %v, got = %v", tt.want, status)
+			}
+		})
+	}
+}
+
 func TestKafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 	type fields struct {
 		awsClient aws.Client

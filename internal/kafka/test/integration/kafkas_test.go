@@ -129,6 +129,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(kafkaRequest.DesiredStrimziVersion).To(Equal("strimzi-cluster-operator.v0.23.0-0"))
 
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
+	common.CheckMetricExposed(h, t, metrics.ClusterStatusCapacityUsed)
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants2.KafkaOperationCreate.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants2.KafkaOperationCreate.String()))
 

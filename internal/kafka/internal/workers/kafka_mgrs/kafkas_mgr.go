@@ -129,7 +129,7 @@ func (k *KafkaManager) setClusterStatusCapacityUsedMetric() []error {
 
 	for _, region := range regions {
 		used := float64(region.Count)
-		metrics.UpdateClusterStatusCapacityUsedCount(region.Region, region.InstanceType, used)
+		metrics.UpdateClusterStatusCapacityUsedCount(region.Region, region.InstanceType, region.ClusterId, used)
 	}
 
 	return nil
