@@ -142,7 +142,6 @@ func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if c.SupportedInstanceType == "" {
 		c.SupportedInstanceType = api.AllInstanceTypeSupport.String()
 	}
-
 	return nil
 }
 
@@ -207,27 +206,6 @@ func (conf *ClusterConfig) ExcessClusters(clusterList map[string]api.Cluster) []
 
 func (conf *ClusterConfig) GetManualClusters() []ManualCluster {
 	return conf.clusterList
-}
-
-func (conf *ClusterConfig) ListRegionsWithClusters() []string {
-	var regions []string
-
-	hasRegion := func(newRegion string) bool {
-		for _, region := range regions {
-			if region == newRegion {
-				return true
-			}
-		}
-		return false
-	}
-
-	for _, cluster := range conf.clusterList {
-		if !hasRegion(cluster.Region) {
-			regions = append(regions, cluster.Region)
-		}
-	}
-
-	return regions
 }
 
 func (conf *ClusterConfig) MissingClusters(clusterMap map[string]api.Cluster) []ManualCluster {

@@ -67,7 +67,7 @@ const (
 	// ClusterStatusMaxCapacity - metric name for the maximum kafka instance capacity
 	ClusterStatusCapacityMax = "cluster_status_capacity_max"
 
-	// ClusterStatusCurrentCapacity - metric name for the current number of instances
+	// ClusterStatusCapacityUsed - metric name for the current number of instances
 	ClusterStatusCapacityUsed = "cluster_status_capacity_used"
 
 	LabelStatusCode = "code"
@@ -147,15 +147,10 @@ var DatabaseMetricsLabels = []string{
 	LabelDatabaseQueryType,
 }
 
-var clusterStatusCapacityMaxLabels = []string{
+var clusterStatusCapacityLabels = []string{
 	LabelRegion,
 	LabelInstanceType,
 	LabelClusterID,
-}
-
-var clusterStatusCapacityUsedLabels = []string{
-	LabelRegion,
-	LabelInstanceType,
 }
 
 // #### Metrics for Dataplane clusters - Start ####
@@ -203,6 +198,7 @@ func IncreaseClusterSuccessOperationsCountMetric(operation constants2.ClusterOpe
 	clusterOperationsSuccessCountMetric.With(labels).Inc()
 }
 
+// UpdateClusterStatusCapacityMaxCount - sets maximum capacity per region and instance type
 func UpdateClusterStatusCapacityMaxCount(region, instanceType, clusterId string, count float64) {
 	labels := prometheus.Labels{
 		LabelRegion:       region,
@@ -212,10 +208,12 @@ func UpdateClusterStatusCapacityMaxCount(region, instanceType, clusterId string,
 	clusterStatusCapacityMaxMetric.With(labels).Set(count)
 }
 
-func UpdateClusterStatusCapacityUsedCount(region, instanceType string, count float64) {
+// UpdateClusterStatusCapacityUsedCount - sets used capacity per region and instance type
+func UpdateClusterStatusCapacityUsedCount(region, instanceType, clusterId string, count float64) {
 	labels := prometheus.Labels{
 		LabelRegion:       region,
 		LabelInstanceType: instanceType,
+		LabelClusterID:    clusterId,
 	}
 	clusterStatusCapacityUsedMetric.With(labels).Set(count)
 }
@@ -230,22 +228,24 @@ var clusterOperationsTotalCountMetric = prometheus.NewCounterVec(
 	ClusterOperationsCountMetricsLabels,
 )
 
+// create a new gaugeVec for the maximum kafka instance capacity per region
 var clusterStatusCapacityMaxMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: KasFleetManager,
 		Name:      ClusterStatusCapacityMax,
 		Help:      "number of allowed instances per region and instance type",
 	},
-	clusterStatusCapacityMaxLabels,
+	clusterStatusCapacityLabels,
 )
 
+// create a new gauge vec fot the number of kafka instances grouped by region and instance type
 var clusterStatusCapacityUsedMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: KasFleetManager,
 		Name:      ClusterStatusCapacityUsed,
 		Help:      "number of existing instances per region and instance type",
 	},
-	clusterStatusCapacityUsedLabels,
+	clusterStatusCapacityLabels,
 )
 
 // IncreaseClusterTotalOperationsCountMetric - increase counter for clusterOperationsTotalCountMetric
