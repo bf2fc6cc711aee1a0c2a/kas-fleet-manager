@@ -49,6 +49,7 @@ type KafkaRequest struct {
 	// We store this in the database to ensure that old kafkas whose namespace contained "owner-<kafka-id>" information will continue to work.
 	Namespace               string `json:"namespace"`
 	ReauthenticationEnabled bool   `json:"reauthentication_enabled"`
+	RoutesCreationId        string `json:"routes_creation_id"`
 }
 
 type KafkaList []*KafkaRequest
