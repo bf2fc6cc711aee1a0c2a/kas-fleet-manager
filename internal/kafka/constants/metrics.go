@@ -15,6 +15,11 @@ const (
 	KubeletVolumeStatsUsedBytesDesc                          = "Number of used bytes in the volume"
 	HaproxyServerBytesInTotalDesc                            = "Current total of incoming bytes"
 	HaproxyServerBytesOutTotalDesc                           = "Current total of outgoing bytes"
+	KafkaTopicPartitionsSumDesc                              = "Number of topic partitions for this Kafka"
+	KafkaTopicPartitionsCountDesc                            = "Number of Topics for this Kafka"
+	KafkaConsumergroupMembersDesc                            = "Amount of members in a consumer group"
+	KafkaServerSocketServerMetricsConnectionCountDesc        = "Current number of total kafka connections"
+	KafkaServerSocketServerMetricsConnectionCreationRateDesc = "Current rate of connections creation"
 )
 
 type MetricsMetadata struct {
@@ -108,6 +113,41 @@ func GetMetricsMetaData() map[string]MetricsMetadata {
 		"kafka_namespace:haproxy_server_bytes_out_total:rate5m": {
 			Name:           "kafka_namespace:haproxy_server_bytes_out_total:rate5m",
 			Help:           HaproxyServerBytesOutTotalDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{},
+		},
+		"kafka_topic:kafka_topic_partitions:sum": {
+			Name:           "kafka_topic:kafka_topic_partitions:sum",
+			Help:           KafkaTopicPartitionsSumDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{},
+		},
+		"kafka_topic:kafka_topic_partitions:count": {
+			Name:           "kafka_topic:kafka_topic_partitions:count",
+			Help:           KafkaTopicPartitionsCountDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{},
+		},
+		"consumergroup:kafka_consumergroup_members:count": {
+			Name:           "consumergroup:kafka_consumergroup_members:count",
+			Help:           KafkaConsumergroupMembersDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{},
+		},
+		"kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum": {
+			Name:           "kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum",
+			Help:           KafkaServerSocketServerMetricsConnectionCountDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{},
+		},
+		"kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum": {
+			Name:           "kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum",
+			Help:           KafkaServerSocketServerMetricsConnectionCreationRateDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
 			VariableLabels: []string{},

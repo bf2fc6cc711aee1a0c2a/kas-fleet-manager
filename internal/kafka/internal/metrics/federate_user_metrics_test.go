@@ -1,12 +1,13 @@
 package metrics
 
 import (
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/prometheus/client_golang/prometheus"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	pModel "github.com/prometheus/common/model"
-	"testing"
 )
 
 func TestFederateMetrics_Collect(t *testing.T) {
@@ -121,6 +122,51 @@ func TestFederateMetrics_Collect(t *testing.T) {
 						{
 							Metric: map[pModel.LabelName]pModel.LabelValue{
 								"__name__": "kafka_namespace:haproxy_server_bytes_out_total:rate5m",
+							},
+						},
+					},
+				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "kafka_topic:kafka_topic_partitions:sum",
+							},
+						},
+					},
+				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "kafka_topic:kafka_topic_partitions:count",
+							},
+						},
+					},
+				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "consumergroup:kafka_consumergroup_members:count",
+							},
+						},
+					},
+				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum",
+							},
+						},
+					},
+				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum",
 							},
 						},
 					},
