@@ -51,15 +51,31 @@ func (k *KafkaRoutesCNAMEManager) Reconcile() []error {
 
 	for _, kafka := range kafkas {
 		if k.kafkaConfig.EnableKafkaExternalCertificate {
-			glog.Infof("creating CNAME records for kafka %s", kafka.ID)
-			if _, err := k.kafkaService.ChangeKafkaCNAMErecords(kafka, services.KafkaRoutesActionCreate); err != nil {
-				errs = append(errs, err)
-				continue
+			if kafka.RoutesCreationId == "" {
+				glog.Infof("creating CNAME records for kafka %s", kafka.ID)
+
+				changeOutput, err := k.kafkaService.ChangeKafkaCNAMErecords(kafka, services.KafkaRoutesActionCreate)
+
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+
+				kafka.RoutesCreationId = *changeOutput.ChangeInfo.Id
+				kafka.RoutesCreated = *changeOutput.ChangeInfo.Status == "INSYNC"
+			} else {
+				recordStatus, err := k.kafkaService.GetCNAMERecordStatus(kafka)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+				kafka.RoutesCreated = *recordStatus.Status == "INSYNC"
 			}
 		} else {
 			glog.Infof("external certificate is disabled, skip CNAME creation for Kafka %s", kafka.ID)
+			kafka.RoutesCreated = true
 		}
-		kafka.RoutesCreated = true
+
 		if err := k.kafkaService.Update(kafka); err != nil {
 			errs = append(errs, err)
 			continue
