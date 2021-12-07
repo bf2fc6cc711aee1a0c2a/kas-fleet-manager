@@ -134,8 +134,23 @@ var rangeQuerydata = map[string]pModel.Matrix{
 	"kafka_broker_quota_totalstorageusedbytes": {
 		fakeMetricData("kafka_broker_quota_totalstorageusedbytes", 1237582),
 	},
-	"sum by (namespace, topic)(kafka_log_log_size": {
-		fakeMetricData("sum by (namespace, topic)(kafka_log_log_size", 220),
+	"kafka_topic:kafka_log_log_size:sum": {
+		fakeMetricData("kafka_topic:kafka_log_log_size:sum", 220),
+	},
+	"kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum": {
+		fakeMetricData("kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum", 20),
+	},
+	"kafka_topic:kafka_topic_partitions:sum": {
+		fakeMetricData("kafka_topic:kafka_topic_partitions:sum", 20),
+	},
+	"kafka_topic:kafka_topic_partitions:count": {
+		fakeMetricData("kafka_topic:kafka_topic_partitions:count", 20),
+	},
+	"consumergroup:kafka_consumergroup_members:count": {
+		fakeMetricData("consumergroup:kafka_consumergroup_members:count", 20),
+	},
+	"kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum": {
+		fakeMetricData("kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum", 20),
 	},
 }
 
