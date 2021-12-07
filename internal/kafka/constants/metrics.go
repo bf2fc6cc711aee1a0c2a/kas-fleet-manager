@@ -15,7 +15,7 @@ const (
 	KubeletVolumeStatsUsedBytesDesc                          = "Number of used bytes in the volume"
 	HaproxyServerBytesInTotalDesc                            = "Current total of incoming bytes"
 	HaproxyServerBytesOutTotalDesc                           = "Current total of outgoing bytes"
-	KafkaTopicPartitionsSumDesc                              = "Number of partitions for this Topic"
+	KafkaTopicPartitionsSumDesc                              = "Number of topic partitions for this Kafka"
 	KafkaTopicPartitionsCountDesc                            = "Number of Topics for this Kafka"
 	KafkaConsumergroupMembersDesc                            = "Amount of members in a consumer group"
 	KafkaServerSocketServerMetricsConnectionCountDesc        = "Current number of total kafka connections"
