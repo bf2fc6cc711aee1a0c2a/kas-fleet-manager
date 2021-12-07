@@ -203,8 +203,9 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	if hasCapacity, err := k.HasAvailableCapacityInRegion(kafkaRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create kafka request")
 	} else if !hasCapacity {
-		logger.Logger.Warningf("Cluster capacity(%d) exhausted", k.kafkaConfig.KafkaCapacity.MaxCapacity)
-		return errors.TooManyKafkaInstancesReached("cluster capacity exhausted")
+		errorMsg := fmt.Sprintf("Cluster capacity(%d) exhausted in %s region", int64(k.dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(kafkaRequest.Region)), kafkaRequest.Region)
+		logger.Logger.Warningf(errorMsg)
+		return errors.TooManyKafkaInstancesReached(errorMsg)
 	}
 
 	instanceType, err := k.DetectInstanceType(kafkaRequest)
