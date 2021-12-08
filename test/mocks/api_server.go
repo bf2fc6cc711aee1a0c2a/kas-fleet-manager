@@ -527,71 +527,71 @@ func buildMockRequestHandler(successType interface{}, serviceErr *ocmErrors.Serv
 
 // marshalOCMType marshals known ocm types to a provided io.Writer using the ocm sdk marshallers
 func marshalOCMType(t interface{}, w io.Writer) error {
-	switch t.(type) { //nolint
+	switch v := t.(type) { //nolint
 	// handle cluster types
 	case *clustersmgmtv1.Cluster:
-		return clustersmgmtv1.MarshalCluster(t.(*clustersmgmtv1.Cluster), w)
+		return clustersmgmtv1.MarshalCluster(v, w)
 	// handle cluster status types
 	case *clustersmgmtv1.ClusterStatus:
-		return clustersmgmtv1.MarshalClusterStatus(t.(*clustersmgmtv1.ClusterStatus), w)
+		return clustersmgmtv1.MarshalClusterStatus(v, w)
 	// handle syncset types
 	case *clustersmgmtv1.Syncset:
-		return clustersmgmtv1.MarshalSyncset(t.(*clustersmgmtv1.Syncset), w)
+		return clustersmgmtv1.MarshalSyncset(v, w)
 	// handle identiy provider types
 	case *clustersmgmtv1.IdentityProvider:
-		return clustersmgmtv1.MarshalIdentityProvider(t.(*clustersmgmtv1.IdentityProvider), w)
+		return clustersmgmtv1.MarshalIdentityProvider(v, w)
 	// handle ingress types
 	case *clustersmgmtv1.Ingress:
-		return clustersmgmtv1.MarshalIngress(t.(*clustersmgmtv1.Ingress), w)
+		return clustersmgmtv1.MarshalIngress(v, w)
 	case []*clustersmgmtv1.Ingress:
-		return clustersmgmtv1.MarshalIngressList(t.([]*clustersmgmtv1.Ingress), w)
+		return clustersmgmtv1.MarshalIngressList(v, w)
 	// for any <type>List ocm type we'll need to follow this pattern to ensure the array of objects
 	// is wrapped with an OCMList object
 	case *clustersmgmtv1.IngressList:
-		ocmList, err := NewOCMList().WithItems(t.(*clustersmgmtv1.IngressList).Slice())
+		ocmList, err := NewOCMList().WithItems(v.Slice())
 		if err != nil {
 			return err
 		}
 		return json.NewEncoder(w).Encode(ocmList)
 	// handle cloud provider types
 	case *clustersmgmtv1.CloudProvider:
-		return clustersmgmtv1.MarshalCloudProvider(t.(*clustersmgmtv1.CloudProvider), w)
+		return clustersmgmtv1.MarshalCloudProvider(v, w)
 	case []*clustersmgmtv1.CloudProvider:
-		return clustersmgmtv1.MarshalCloudProviderList(t.([]*clustersmgmtv1.CloudProvider), w)
+		return clustersmgmtv1.MarshalCloudProviderList(v, w)
 	case *clustersmgmtv1.CloudProviderList:
-		ocmList, err := NewOCMList().WithItems(t.(*clustersmgmtv1.CloudProviderList).Slice())
+		ocmList, err := NewOCMList().WithItems(v.Slice())
 		if err != nil {
 			return err
 		}
 		return json.NewEncoder(w).Encode(ocmList)
 	// handle cloud region types
 	case *clustersmgmtv1.CloudRegion:
-		return clustersmgmtv1.MarshalCloudRegion(t.(*clustersmgmtv1.CloudRegion), w)
+		return clustersmgmtv1.MarshalCloudRegion(v, w)
 	case []*clustersmgmtv1.CloudRegion:
-		return clustersmgmtv1.MarshalCloudRegionList(t.([]*clustersmgmtv1.CloudRegion), w)
+		return clustersmgmtv1.MarshalCloudRegionList(v, w)
 	case *clustersmgmtv1.CloudRegionList:
-		ocmList, err := NewOCMList().WithItems(t.(*clustersmgmtv1.CloudRegionList).Slice())
+		ocmList, err := NewOCMList().WithItems(v.Slice())
 		if err != nil {
 			return err
 		}
 		return json.NewEncoder(w).Encode(ocmList)
 	// handle cluster addon installations
 	case *clustersmgmtv1.AddOnInstallation:
-		return clustersmgmtv1.MarshalAddOnInstallation(t.(*clustersmgmtv1.AddOnInstallation), w)
+		return clustersmgmtv1.MarshalAddOnInstallation(v, w)
 	case []*clustersmgmtv1.AddOnInstallation:
-		return clustersmgmtv1.MarshalAddOnInstallationList(t.([]*clustersmgmtv1.AddOnInstallation), w)
+		return clustersmgmtv1.MarshalAddOnInstallationList(v, w)
 	case *clustersmgmtv1.AddOnInstallationList:
-		ocmList, err := NewOCMList().WithItems(t.(*clustersmgmtv1.AddOnInstallationList).Slice())
+		ocmList, err := NewOCMList().WithItems(v.Slice())
 		if err != nil {
 			return err
 		}
 		return json.NewEncoder(w).Encode(ocmList)
 	case *clustersmgmtv1.MachinePool:
-		return clustersmgmtv1.MarshalMachinePool(t.(*clustersmgmtv1.MachinePool), w)
+		return clustersmgmtv1.MarshalMachinePool(v, w)
 	case []*clustersmgmtv1.MachinePool:
-		return clustersmgmtv1.MarshalMachinePoolList(t.([]*clustersmgmtv1.MachinePool), w)
+		return clustersmgmtv1.MarshalMachinePoolList(v, w)
 	case *clustersmgmtv1.MachinePoolList:
-		ocmList, err := NewOCMList().WithItems(t.(*clustersmgmtv1.MachinePoolList).Slice())
+		ocmList, err := NewOCMList().WithItems(v.Slice())
 		if err != nil {
 			return err
 		}
@@ -600,15 +600,15 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 	case *ocmList:
 		return json.NewEncoder(w).Encode(t)
 	case *amsv1.ClusterAuthorizationResponse:
-		return amsv1.MarshalClusterAuthorizationResponse(t.(*amsv1.ClusterAuthorizationResponse), w)
+		return amsv1.MarshalClusterAuthorizationResponse(v, w)
 	case *amsv1.Subscription:
 		return amsv1.MarshalSubscription(t.(*amsv1.Subscription), w)
 	case *authorizationsv1.TermsReviewResponse:
-		return authorizationsv1.MarshalTermsReviewResponse(t.(*authorizationsv1.TermsReviewResponse), w)
+		return authorizationsv1.MarshalTermsReviewResponse(v, w)
 	case []*amsv1.Subscription:
-		return amsv1.MarshalSubscriptionList(t.([]*amsv1.Subscription), w)
+		return amsv1.MarshalSubscriptionList(v, w)
 	case *amsv1.SubscriptionList:
-		subscList, err := NewSubscriptionList().WithItems(t.(*amsv1.SubscriptionList).Slice())
+		subscList, err := NewSubscriptionList().WithItems(v.Slice())
 		if err != nil {
 			return err
 		}
@@ -617,7 +617,7 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 		//return amsv1.MarshalSubscriptionList(list.Slice(), w)
 	// handle ocm error type
 	case *ocmErrors.ServiceError:
-		return json.NewEncoder(w).Encode(t.(*ocmErrors.ServiceError).AsOpenapiError("", ""))
+		return json.NewEncoder(w).Encode(v.AsOpenapiError("", ""))
 	}
 	return fmt.Errorf("could not recognise type %s in ocm type marshaller", reflect.TypeOf(t).String())
 }
