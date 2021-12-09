@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"context"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"net/http"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
@@ -139,6 +140,13 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 }
 
 func Test_Validation_validateCloudProvider(t *testing.T) {
+
+	evalMap := map[string]interface{}{
+		"eval": 5,
+	}
+	standardMap := map[string]interface{}{
+		"standard": 7,
+	}
 	type args struct {
 		kafkaRequest   dbapi.KafkaRequest
 		ProviderConfig *config.ProviderConfig
@@ -175,7 +183,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 									config.Region{
 										Name:                   "us-east-1",
 										Default:                true,
-										SupportedInstanceTypes: []config.InstanceType{config.InstanceType(types.EVAL)},
+										SupportedInstanceTypes: evalMap,
 									},
 								},
 							},
@@ -211,7 +219,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Regions: config.RegionList{
 									config.Region{
 										Name:                   "eu-east-1",
-										SupportedInstanceTypes: []config.InstanceType{config.InstanceType(types.EVAL)},
+										SupportedInstanceTypes: evalMap,
 									},
 								},
 							},
@@ -220,7 +228,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Regions: config.RegionList{
 									config.Region{
 										Name:                   "us-east-1",
-										SupportedInstanceTypes: []config.InstanceType{config.InstanceType(types.EVAL)},
+										SupportedInstanceTypes: evalMap,
 									},
 								},
 							},
@@ -256,7 +264,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Regions: config.RegionList{
 									config.Region{
 										Name:                   "us-east-1",
-										SupportedInstanceTypes: []config.InstanceType{config.InstanceType(types.EVAL)},
+										SupportedInstanceTypes: evalMap,
 									},
 								},
 							},
@@ -289,7 +297,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Regions: config.RegionList{
 									config.Region{
 										Name:                   "us-east",
-										SupportedInstanceTypes: []config.InstanceType{config.InstanceType(types.STANDARD)},
+										SupportedInstanceTypes: standardMap,
 									},
 								},
 							},

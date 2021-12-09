@@ -24,6 +24,21 @@ const azure = "azure"
 const afEast1Region = "af-east-1"
 const usEast1Region = "us-east-1"
 
+var allTypesMap = config.InstanceTypeMap{
+	"standard": 5,
+	"eval":     7,
+}
+
+var standardMap = config.InstanceTypeMap{
+	"standard": 5,
+}
+
+var evalMap = config.InstanceTypeMap{
+	"eval": 7,
+}
+
+var noneTypeMap = config.InstanceTypeMap{}
+
 var dummyClusters = []*api.Cluster{
 	{
 		ClusterID:          api.NewID(),
@@ -220,15 +235,15 @@ func TestListCloudProviderRegions(t *testing.T) {
 					{
 						Name:                   "us-east-1",
 						Default:                true,
-						SupportedInstanceTypes: config.InstanceTypeList{"standard", "eval"},
+						SupportedInstanceTypes: allTypesMap,
 					},
 					{
 						Name:                   "af-south-1",
-						SupportedInstanceTypes: config.InstanceTypeList{"standard"},
+						SupportedInstanceTypes: standardMap,
 					},
 					{
 						Name:                   "eu-central-1",
-						SupportedInstanceTypes: config.InstanceTypeList{},
+						SupportedInstanceTypes: noneTypeMap,
 					},
 				},
 			},
@@ -294,19 +309,19 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 					{
 						Name:                   "us-east-1",
 						Default:                true,
-						SupportedInstanceTypes: config.InstanceTypeList{"standard", "eval"},
+						SupportedInstanceTypes: allTypesMap,
 					},
 					{
 						Name:                   "af-south-1",
-						SupportedInstanceTypes: config.InstanceTypeList{"standard"},
+						SupportedInstanceTypes: standardMap,
 					},
 					{
 						Name:                   "eu-west-2",
-						SupportedInstanceTypes: config.InstanceTypeList{"eval"},
+						SupportedInstanceTypes: evalMap,
 					},
 					{
 						Name:                   "eu-central-1",
-						SupportedInstanceTypes: config.InstanceTypeList{},
+						SupportedInstanceTypes: noneTypeMap,
 					},
 				},
 			},
