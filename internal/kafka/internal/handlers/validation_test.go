@@ -140,12 +140,16 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 }
 
 func Test_Validation_validateCloudProvider(t *testing.T) {
-
-	evalMap := map[string]interface{}{
-		"eval": 5,
+	limit := int(5)
+	evalMap := config.InstanceTypeMap{
+		"eval": {
+			Limit: &limit,
+		},
 	}
-	standardMap := map[string]interface{}{
-		"standard": 7,
+	standardMap := config.InstanceTypeMap{
+		"standard": {
+			Limit: &limit,
+		},
 	}
 	type args struct {
 		kafkaRequest   dbapi.KafkaRequest

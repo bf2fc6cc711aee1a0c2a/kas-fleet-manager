@@ -24,17 +24,27 @@ const azure = "azure"
 const afEast1Region = "af-east-1"
 const usEast1Region = "us-east-1"
 
+var limit = int(5)
+
 var allTypesMap = config.InstanceTypeMap{
-	"standard": 5,
-	"eval":     7,
+	"eval": {
+		Limit: &limit,
+	},
+	"standard": {
+		Limit: &limit,
+	},
 }
 
 var standardMap = config.InstanceTypeMap{
-	"standard": 5,
+	"standard": {
+		Limit: &limit,
+	},
 }
 
 var evalMap = config.InstanceTypeMap{
-	"eval": 7,
+	"eval": {
+		Limit: &limit,
+	},
 }
 
 var noneTypeMap = config.InstanceTypeMap{}

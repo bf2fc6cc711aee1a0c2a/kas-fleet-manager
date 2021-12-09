@@ -12,7 +12,11 @@ import (
 )
 
 type InstanceType types.KafkaInstanceType
-type InstanceTypeMap map[string]interface{}
+type InstanceTypeMap map[string]InstanceTypeConfig
+
+type InstanceTypeConfig struct {
+	Limit *int `yaml:"limit,omitempty"`
+}
 
 // Returns a region's supported instance type list as a slice
 func (itl InstanceTypeMap) AsSlice() []string {
