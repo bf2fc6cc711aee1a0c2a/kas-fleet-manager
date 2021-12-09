@@ -12,27 +12,32 @@ import (
 )
 
 type InstanceType types.KafkaInstanceType
-type InstanceTypeList []InstanceType
+type InstanceTypeMap map[string]InstanceTypeConfig
+
+type InstanceTypeConfig struct {
+	Limit *int `yaml:"limit,omitempty"`
+}
 
 // Returns a region's supported instance type list as a slice
-func (itl InstanceTypeList) AsSlice() []string {
+func (itl InstanceTypeMap) AsSlice() []string {
 	instanceTypeList := []string{}
 
-	for _, it := range itl {
-		instanceTypeList = append(instanceTypeList, string(it))
+	for k := range itl {
+		instanceTypeList = append(instanceTypeList, k)
 	}
+
 	return instanceTypeList
 }
 
 type Region struct {
-	Name                   string           `yaml:"name"`
-	Default                bool             `yaml:"default"`
-	SupportedInstanceTypes InstanceTypeList `yaml:"supported_instance_type"`
+	Name                   string          `yaml:"name"`
+	Default                bool            `yaml:"default"`
+	SupportedInstanceTypes InstanceTypeMap `yaml:"supported_instance_type"`
 }
 
 func (r Region) IsInstanceTypeSupported(instanceType InstanceType) bool {
-	for _, it := range r.SupportedInstanceTypes {
-		if it == instanceType {
+	for k := range r.SupportedInstanceTypes {
+		if k == string(instanceType) {
 			return true
 		}
 	}
