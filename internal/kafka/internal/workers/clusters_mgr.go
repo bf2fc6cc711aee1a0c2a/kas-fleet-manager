@@ -198,6 +198,9 @@ func (c *ClusterManager) processMetrics() []error {
 	if err := c.setKafkaPerClusterCountMetrics(); err != nil {
 		return []error{errors.Wrapf(err, "failed to set kafka per cluster count metrics")}
 	}
+
+	c.setClusterStatusMaxCapacityMetrics()
+
 	return []error{}
 }
 
@@ -1045,6 +1048,18 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 	}
 	glog.Infof("Identity provider is set up for cluster %s", cluster.ClusterID)
 	return nil
+}
+
+func (c *ClusterManager) setClusterStatusMaxCapacityMetrics() {
+	for _, cluster := range c.DataplaneClusterConfig.ClusterConfig.GetManualClusters() {
+		supportedInstanceTypes := strings.Split(cluster.SupportedInstanceType, ",")
+		for _, instanceType := range supportedInstanceTypes {
+			if instanceType != "" {
+				capacity := float64(cluster.KafkaInstanceLimit)
+				metrics.UpdateClusterStatusCapacityMaxCount(cluster.Region, instanceType, cluster.ClusterId, capacity)
+			}
+		}
+	}
 }
 
 func (c *ClusterManager) setClusterStatusCountMetrics() error {
