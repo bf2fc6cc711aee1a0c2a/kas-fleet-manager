@@ -336,10 +336,12 @@ openapi/validate: openapi-generator
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private-admin.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private-admin.yaml
 .PHONY: openapi/validate
 
 # generate the openapi schema and generated package
-openapi/generate: openapi/generate/kas-public openapi/generate/kas-private openapi/generate/kas-admin openapi/generate/connector-public openapi/generate/connector-private
+openapi/generate: openapi/generate/kas-public openapi/generate/kas-private openapi/generate/kas-admin openapi/generate/connector-public openapi/generate/connector-private openapi/generate/connector-private-admin
 .PHONY: openapi/generate
 
 openapi/generate/kas-public: go-bindata openapi-generator
@@ -389,6 +391,13 @@ openapi/generate/connector-private: go-bindata openapi-generator
 	$(GOFMT) -w internal/connector/internal/api/private
 .PHONY: openapi/generate/connector-private
 
+openapi/generate/connector-private-admin: go-bindata openapi-generator
+	rm -rf internal/connector/internal/api/admin/private
+	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private-admin.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private-admin.yaml -g go -o internal/connector/internal/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w internal/connector/internal/api/admin/private
+.PHONY: openapi/generate/connector-private-admin
+
 # clean up code and dependencies
 code/fix:
 	@$(GO) mod tidy
@@ -405,6 +414,8 @@ run/docs:
 	docker run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 80:8080 -e URLS="[ \
 		{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },\
 		{ url: \"./openapi/connector_mgmt.yaml\", name: \"Connector Management API\"},\
+		{ url: \"./openapi/connector_mgmt-private.yaml\", name: \"Connector Management Private API\"},\
+		{ url: \"./openapi/connector_mgmt-private-admin.yaml\", name: \"Private Connector Management Admin API\"},\
 		{ url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"},\
 		{ url: \"./openapi/kas-fleet-manager-private-admin.yaml\", name: \"Private Admin API\"}]"\
 		  -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui

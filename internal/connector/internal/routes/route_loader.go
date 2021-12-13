@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	kerrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreHandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -28,6 +29,7 @@ type options struct {
 	AuthorizeMiddleware *acl.AccessControlListMiddleware
 	KeycloakService     services.KafkaKeycloakService
 
+	ConnectorAdminHandler   *handlers.ConnectorAdminHandler
 	ConnectorTypesHandler   *handlers.ConnectorTypesHandler
 	ConnectorsHandler       *handlers.ConnectorsHandler
 	ConnectorClusterHandler *handlers.ConnectorClusterHandler
@@ -101,8 +103,8 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	apiV1ConnectorsTypedRouter.HandleFunc("", s.ConnectorsHandler.Create).Methods(http.MethodPost)
 	apiV1ConnectorsTypedRouter.HandleFunc("", s.ConnectorsHandler.List).Methods(http.MethodGet)
 	apiV1ConnectorsTypedRouter.HandleFunc("/{connector_id}", s.ConnectorsHandler.Get).Methods(http.MethodGet)
-	apiV1ConnectorsRouter.HandleFunc("/{connector_id}", s.ConnectorsHandler.Patch).Methods(http.MethodPatch)
-	apiV1ConnectorsRouter.Use(s.AuthorizeMiddleware.Authorize)
+	apiV1ConnectorsTypedRouter.HandleFunc("/{connector_id}", s.ConnectorsHandler.Patch).Methods(http.MethodPatch)
+	apiV1ConnectorsTypedRouter.Use(s.AuthorizeMiddleware.Authorize)
 
 	//  /api/connector_mgmt/v1/kafka_connector_clusters
 	v1Collections = append(v1Collections, api.CollectionMetadata{
@@ -129,6 +131,21 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		agentRouter.HandleFunc("/deployments/{deployment_id}/status", s.ConnectorClusterHandler.UpdateDeploymentStatus).Methods(http.MethodPut)
 		auth.UseOperatorAuthorisationMiddleware(agentRouter, auth.Connector, s.KeycloakService.GetConfig().KafkaRealm.ValidIssuerURI, "connector_cluster_id")
 	}
+
+	// This section adds APIs accessed by connector admins
+	adminRouter := apiV1Router.PathPrefix("/admin/{_:kafka[-_]connector[-_]clusters}").Subrouter()
+	rolesMapping := map[string][]string{
+		http.MethodGet: {auth.ConnectorFleetManagerAdminReadRole, auth.ConnectorFleetManagerAdminWriteRole, auth.ConnectorFleetManagerAdminFullRole},
+		http.MethodPut: {auth.ConnectorFleetManagerAdminWriteRole, auth.ConnectorFleetManagerAdminFullRole},
+	}
+	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.KeycloakService.GetConfig().OSDClusterIDPRealm.ValidIssuerURI}, kerrors.ErrorNotFound))
+	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, kerrors.ErrorNotFound))
+	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(kerrors.ErrorNotFound))
+	adminRouter.HandleFunc("", s.ConnectorAdminHandler.ListConnectorClusters).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/{connector_cluster_id}/upgrades/type", s.ConnectorAdminHandler.GetConnectorUpgradesByType).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/{connector_cluster_id}/upgrades/type", s.ConnectorAdminHandler.UpgradeConnectorsByType).Methods(http.MethodPut)
+	adminRouter.HandleFunc("/{connector_cluster_id}/upgrades/operator", s.ConnectorAdminHandler.GetConnectorUpgradesByOperator).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/{connector_cluster_id}/upgrades/operator", s.ConnectorAdminHandler.UpgradeConnectorsByOperator).Methods(http.MethodPut)
 
 	v1Metadata := api.VersionMetadata{
 		ID:          "v1",
