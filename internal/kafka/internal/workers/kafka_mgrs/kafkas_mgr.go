@@ -70,6 +70,11 @@ func (k *KafkaManager) Reconcile() []error {
 		encounteredErrors = append(encounteredErrors, statusErrors...)
 	}
 
+	statusErrors = k.setClusterStatusCapacityUsedMetric()
+	if len(statusErrors) > 0 {
+		encounteredErrors = append(encounteredErrors, statusErrors...)
+	}
+
 	// delete kafkas of denied owners
 	accessControlListConfig := k.accessControlListConfig
 	if accessControlListConfig.EnableDenyList {
@@ -111,6 +116,20 @@ func (k *KafkaManager) setKafkaStatusCountMetric() []error {
 
 	for _, c := range counters {
 		metrics.UpdateKafkaRequestsStatusCountMetric(c.Status, c.Count)
+	}
+
+	return nil
+}
+
+func (k *KafkaManager) setClusterStatusCapacityUsedMetric() []error {
+	regions, err := k.kafkaService.CountByRegionAndInstanceType()
+	if err != nil {
+		return []error{errors.Wrap(err, "failed to count Kafkas by region")}
+	}
+
+	for _, region := range regions {
+		used := float64(region.Count)
+		metrics.UpdateClusterStatusCapacityUsedCount(region.Region, region.InstanceType, region.ClusterId, used)
 	}
 
 	return nil

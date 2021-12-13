@@ -204,6 +204,10 @@ func (conf *ClusterConfig) ExcessClusters(clusterList map[string]api.Cluster) []
 	return res
 }
 
+func (conf *ClusterConfig) GetManualClusters() []ManualCluster {
+	return conf.clusterList
+}
+
 func (conf *ClusterConfig) MissingClusters(clusterMap map[string]api.Cluster) []ManualCluster {
 	var res []ManualCluster
 

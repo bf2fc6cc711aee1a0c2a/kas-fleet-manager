@@ -30,8 +30,9 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *ocm.OCMConfig) {
+	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *ocm.OCMConfig, d *config.DataplaneClusterConfig) {
 		c.ClusterLoggingOperatorAddonID = ocm.ClusterLoggingOperatorAddonID
+		d.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
 	})
 	defer teardown()
 
@@ -121,6 +122,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	common.CheckMetricExposed(h, t, metrics.ClusterCreateRequestDuration)
 	common.CheckMetricExposed(h, t, metrics.ClusterStatusSinceCreated)
+	common.CheckMetricExposed(h, t, metrics.ClusterStatusCapacityMax)
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsSuccessCount, constants2.ClusterOperationCreate.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsTotalCount, constants2.ClusterOperationCreate.String()))
 	common.CheckMetric(h, t, fmt.Sprintf("%s_%s{worker_type=\"%s\"}", metrics.KasFleetManager, metrics.ReconcilerDuration, "cluster"), true)
