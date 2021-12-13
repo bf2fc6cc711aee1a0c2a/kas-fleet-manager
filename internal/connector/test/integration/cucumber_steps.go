@@ -9,7 +9,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
@@ -124,27 +123,6 @@ func (s *extender) deleteKeycloakClient(clientID string) error {
 	return nil
 }
 
-func (s *extender) connectorDeploymentUpgradesAvailableAre(expected *godog.DocString) error {
-	var connectorCluster services.ConnectorClusterService
-	if err := s.Suite.Helper.Env.ServiceContainer.Resolve(&connectorCluster); err != nil {
-		return err
-	}
-
-	actual, serr := connectorCluster.GetAvailableDeploymentUpgrades()
-	if serr != nil {
-		return serr
-	}
-
-	actualBytes, err := json.Marshal(actual)
-	if err != nil {
-		return err
-	}
-
-	s.Session().SetRespBytes(actualBytes)
-
-	return s.JsonMustMatch(string(actualBytes), expected.Content, true)
-}
-
 func (s *extender) updateConnectorCatalogOfTypeAndChannelWithShardMetadata(connectorTypeId, channel string, metadata *godog.DocString) error {
 	content, err := s.Expand(metadata.Content)
 	if err != nil {
@@ -212,7 +190,6 @@ func init() {
 		ctx.Step(`^get and store access token using the addon parameter response as \${([^"]*)} and clientID as \${([^"]*)}$`, e.getAndStoreAccessTokenUsingTheAddonParameterResponseAs)
 		ctx.Step(`^the vault delete counter should be (\d+)$`, e.theVaultDeleteCounterShouldBe)
 		ctx.Step(`^I reset the vault counters$`, e.iResetTheVaultCounters)
-		ctx.Step(`^connector deployment upgrades available are:$`, e.connectorDeploymentUpgradesAvailableAre)
 		ctx.Step(`^update connector catalog of type "([^"]*)" and channel "([^"]*)" with shard metadata:$`, e.updateConnectorCatalogOfTypeAndChannelWithShardMetadata)
 		ctx.Step(`^I POST to "([^"]*)" a GraphQL query:$`, e.iPOSTToAGraphQLQuery)
 		ctx.Step(`I delete keycloak client with clientID: \${([^"]*)}$`, e.deleteKeycloakClient)

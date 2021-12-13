@@ -47,6 +47,7 @@ func serviceProviders() di.Option {
 		di.Provide(services.NewConnectorsService, di.As(new(services.ConnectorsService))),
 		di.Provide(services.NewConnectorTypesService, di.As(new(services.ConnectorTypesService))),
 		di.Provide(services.NewConnectorClusterService, di.As(new(services.ConnectorClusterService))),
+		di.Provide(handlers.NewConnectorAdminHandler),
 		di.Provide(handlers.NewConnectorTypesHandler),
 		di.Provide(handlers.NewConnectorsHandler),
 		di.Provide(handlers.NewConnectorClusterHandler),

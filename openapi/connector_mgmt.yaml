@@ -86,6 +86,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/size"
+        - $ref: "#/components/parameters/orderBy"
+        - $ref: "#/components/parameters/search"
       responses:
         "200":
           content:
@@ -176,6 +178,7 @@ paths:
       security:
         - Bearer: [ ]
       summary: Create a new connector
+
     get:
       tags:
         - Connectors
@@ -599,6 +602,7 @@ paths:
         - Bearer: [ ]
       operationId: deleteConnectorCluster
       summary: Delete a connector cluster
+
   /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/addon_parameters:
     parameters:
       - name: connector_cluster_id
