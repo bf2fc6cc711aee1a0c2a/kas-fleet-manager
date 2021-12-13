@@ -10,6 +10,5 @@ func NewStageEnvLoader() environments.EnvLoader {
 		"max-allowed-instances":  "1",
 		"mas-sso-base-url":       "https://identity.api.stage.openshift.com",
 		"mas-sso-realm":          "rhoas",
-		"keycloak-client-expire": "true",
 	}
 }

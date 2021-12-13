@@ -1,13 +1,15 @@
 package integration
 
 import (
+	"os"
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers/connector"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
-	"os"
-	"testing"
 )
 
 func TestMain(m *testing.M) {
@@ -19,9 +21,11 @@ func TestMain(m *testing.M) {
 	defer ocmServer.Close()
 
 	h, teardown := test.NewHelperWithHooks(t, ocmServer,
-		func(c *config.ConnectorsConfig) {
+		func(c *config.ConnectorsConfig, kc *keycloak.KeycloakConfig) {
 			c.GraphqlAPIURL = "http://localhost:8000"
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
+
+			kc.KeycloakClientExpire = true
 		},
 		connector.ConfigProviders(false),
 	)
