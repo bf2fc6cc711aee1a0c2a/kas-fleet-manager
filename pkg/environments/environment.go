@@ -175,7 +175,7 @@ func (env *Env) CreateServices() error {
 		}
 	} else {
 		for _, validator := range validators {
-			if err := validator.Validate(); err != nil {
+			if err := validator.Validate(env); err != nil {
 				return err
 			}
 		}
