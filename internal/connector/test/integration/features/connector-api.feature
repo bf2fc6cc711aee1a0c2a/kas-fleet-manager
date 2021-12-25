@@ -1086,21 +1086,19 @@ Feature: create a connector
       """
       {
         "kind": "Connector",
-        "metadata": {
-          "name": "example 1",
-          "kafka_id":"mykafka"
-        },
+        "name": "example 1",
         "deployment_location": {
           "kind": "addon",
           "cluster_id": "default"
         },
         "kafka": {
-          "bootstrap_server": "kafka.hostname",
+          "id":"mykafka",
+          "url": "kafka.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
-        "connector_spec": {
+        "connector": {
             "aws_access_key": "test",
             "aws_secret_key": "test",
             "aws_region": "east",
@@ -1127,21 +1125,19 @@ Feature: create a connector
       """
       {
         "kind": "Connector",
-        "metadata": {
-          "name": "example 1",
-          "kafka_id":"mykafka"
-        },
+        "name": "example 1",
         "deployment_location": {
           "kind": "WRONG",
           "cluster_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
-          "bootstrap_server": "kafka.hostname",
+          "id":"mykafka",
+          "url": "kafka.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
-        "connector_spec": {
+        "connector": {
             "aws_queue_name_or_arn": "test",
             "aws_access_key": "test",
             "aws_secret_key": "test",
@@ -1169,21 +1165,19 @@ Feature: create a connector
       """
       {
         "kind": "Connector",
-        "metadata": {
-          "name": "example 1",
-          "kafka_id":"mykafka"
-        },
+        "name": "example 1",
         "deployment_location": {
           "kind": "addon",
           "cluster_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
-          "bootstrap_server": "kafka.hostname",
+          "id":"mykafka",
+          "url": "kafka.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
-        "connector_spec": {
+        "connector": {
             "aws_queue_name_or_arn": "test",
             "aws_access_key": "test",
             "aws_secret_key": "test",
@@ -1193,7 +1187,7 @@ Feature: create a connector
       }
       """
     Then the response code should be 202
-    And the ".status" selection from the response should match "assigning"
+    And the ".status.state" selection from the response should match "assigning"
 
     Given I store the ".id" selection from the response as ${connector_id}
     When I GET path "/v1/kafka_connectors?kafka_id=mykafka"
@@ -1205,10 +1199,12 @@ Feature: create a connector
           {
             "channel": "stable",
             "kafka": {
-              "bootstrap_server": "kafka.hostname",
+              "id": "mykafka",
+              "url": "kafka.hostname",
+              "client_secret": "",
               "client_id": "myclient"
             },
-            "connector_spec": {
+            "connector": {
               "aws_queue_name_or_arn": "test",
               "aws_access_key": {},
               "aws_secret_key": {},
@@ -1223,16 +1219,20 @@ Feature: create a connector
             "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
             "id": "${connector_id}",
             "kind": "Connector",
-            "metadata": {
-              "created_at": "${response.items[0].metadata.created_at}",
-              "kafka_id": "mykafka",
-              "name": "example 1",
-              "owner": "${response.items[0].metadata.owner}",
-              "resource_version": ${response.items[0].metadata.resource_version},
-              "updated_at": "${response.items[0].metadata.updated_at}"
-            },
+            "created_at": "${response.items[0].created_at}",
+            "name": "example 1",
+            "owner": "${response.items[0].owner}",
+            "resource_version": ${response.items[0].resource_version},
+            "modified_at": "${response.items[0].modified_at}",
             "desired_state": "ready",
-            "status": "assigning"
+            "schema_registry": {
+              "client_id": "",
+              "client_secret": "",
+              "id": ""
+            },
+            "status": {
+              "state": "assigning"
+            }
           }
         ],
         "kind": "ConnectorList",
@@ -1244,7 +1244,7 @@ Feature: create a connector
 
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
-    And the ".status" selection from the response should match "assigning"
+    And the ".status.state" selection from the response should match "assigning"
     And the ".id" selection from the response should match "${connector_id}"
     And the response should match json:
       """
@@ -1252,16 +1252,20 @@ Feature: create a connector
           "id": "${connector_id}",
           "kind": "Connector",
           "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
-          "metadata": {
-              "kafka_id": "mykafka",
-              "owner": "${response.metadata.owner}",
-              "name": "example 1",
-              "created_at": "${response.metadata.created_at}",
-              "updated_at": "${response.metadata.updated_at}",
-              "resource_version": ${response.metadata.resource_version}
+          "owner": "${response.owner}",
+          "name": "example 1",
+          "created_at": "${response.created_at}",
+          "modified_at": "${response.modified_at}",
+          "resource_version": ${response.resource_version},
+          "schema_registry": {
+            "client_id": "",
+            "client_secret": "",
+            "id": ""
           },
           "kafka": {
-            "bootstrap_server": "kafka.hostname",
+            "id": "mykafka",
+            "url": "kafka.hostname",
+            "client_secret": "",
             "client_id": "myclient"
           },
           "deployment_location": {
@@ -1270,15 +1274,18 @@ Feature: create a connector
           },
           "connector_type_id": "aws-sqs-source-v1alpha1",
           "channel": "stable",
-          "connector_spec": {
+          "connector": {
               "aws_queue_name_or_arn": "test",
               "aws_access_key": {},
               "aws_secret_key": {},
               "aws_region": "east",
               "kafka_topic": "test"
           },
+
           "desired_state": "ready",
-          "status": "assigning"
+          "status": {
+            "state": "assigning"
+          }
       }
       """
 
@@ -1316,7 +1323,7 @@ Feature: create a connector
             "kafka": {
               "client_secret": "patched_secret 1"
             },
-            "connector_spec": {
+            "connector": {
                 "aws_secret_key": "patched_secret 2"
             }
         }
@@ -1754,21 +1761,19 @@ Feature: create a connector
       """
       {
         "kind": "Connector",
-        "metadata": {
-          "name": "example 1",
-          "kafka_id":"mykafka"
-        },
+        "name": "example 1",
         "deployment_location": {
           "kind": "addon",
           "cluster_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
-          "bootstrap_server": "kafka.hostname",
+          "id":"mykafka",
+          "url": "kafka.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
-        "connector_spec": {
+        "connector": {
             "aws_queue_name_or_arn": "test",
             "aws_access_key": "test",
             "aws_secret_key": "test",
@@ -1778,7 +1783,7 @@ Feature: create a connector
       }
       """
     Then the response code should be 202
-    And the ".status" selection from the response should match "assigning"
+    And the ".status.state" selection from the response should match "assigning"
     And I store the ".id" selection from the response as ${connector_id}
 
     When I run SQL "UPDATE connectors SET connector_type_id='foo' WHERE id = '${connector_id}';" expect 1 row to be affected.
@@ -1792,9 +1797,12 @@ Feature: create a connector
           {
             "channel": "stable",
             "kafka": {
-              "bootstrap_server": "kafka.hostname",
+              "id": "mykafka",
+              "url": "kafka.hostname",
+              "client_secret": "",
               "client_id": "myclient"
             },
+            "connector": {},
             "connector_type_id": "foo",
             "deployment_location": {
               "cluster_id": "default",
@@ -1803,16 +1811,20 @@ Feature: create a connector
             "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
             "id": "${connector_id}",
             "kind": "Connector",
-            "metadata": {
-              "created_at": "${response.items[0].metadata.created_at}",
-              "kafka_id": "mykafka",
-              "name": "example 1",
-              "owner": "${response.items[0].metadata.owner}",
-              "resource_version": ${response.items[0].metadata.resource_version},
-              "updated_at": "${response.items[0].metadata.updated_at}"
-            },
+            "created_at": "${response.items[0].created_at}",
+            "name": "example 1",
+            "owner": "${response.items[0].owner}",
+            "resource_version": ${response.items[0].resource_version},
+            "modified_at": "${response.items[0].modified_at}",
             "desired_state": "ready",
-            "status": "bad-connector-type"
+            "schema_registry": {
+              "client_id": "",
+              "client_secret": "",
+              "id": ""
+            },
+            "status": {
+              "state": "bad-connector-type"
+            }
           }
         ],
         "kind": "ConnectorList",
@@ -1830,26 +1842,33 @@ Feature: create a connector
           "id": "${connector_id}",
           "kind": "Connector",
           "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
-          "metadata": {
-              "kafka_id": "mykafka",
-              "owner": "${response.metadata.owner}",
-              "name": "example 1",
-              "created_at": "${response.metadata.created_at}",
-              "updated_at": "${response.metadata.updated_at}",
-              "resource_version": ${response.metadata.resource_version}
-          },
+          "owner": "${response.owner}",
+          "name": "example 1",
+          "created_at": "${response.created_at}",
+          "modified_at": "${response.modified_at}",
+          "resource_version": ${response.resource_version},
           "kafka": {
-            "bootstrap_server": "kafka.hostname",
+            "id": "mykafka",
+            "url": "kafka.hostname",
+            "client_secret": "",
             "client_id": "myclient"
           },
           "deployment_location": {
               "kind": "addon",
               "cluster_id": "default"
           },
+          "connector": {},
           "connector_type_id": "foo",
           "channel": "stable",
           "desired_state": "ready",
-          "status": "bad-connector-type"
+          "schema_registry": {
+            "client_id": "",
+            "client_secret": "",
+            "id": ""
+          },
+          "status": {
+            "state": "bad-connector-type"
+          }
       }
       """
 

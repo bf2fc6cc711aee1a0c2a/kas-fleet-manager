@@ -1,28 +1,36 @@
 package handlers
 
 import (
+	"strings"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/xeipuuv/gojsonschema"
-	"strings"
 )
 
-func validateConnectorSpec(connectorTypesService services.ConnectorTypesService, resource *public.Connector, tid string) handlers.Validate {
+func validateConnector(connectorTypesService services.ConnectorTypesService, resource *public.Connector, tid string) handlers.Validate {
+	return connectorValidationFunction(connectorTypesService, &resource.ConnectorTypeId, &resource.Channel, &resource.Connector, tid)
+}
+func validateConnectorInstance(connectorTypesService services.ConnectorTypesService, resource *public.ConnectorInstance, tid string) handlers.Validate {
+	return connectorValidationFunction(connectorTypesService, &resource.ConnectorTypeId, &resource.Channel, &resource.Connector, tid)
+}
+
+func connectorValidationFunction(connectorTypesService services.ConnectorTypesService, connectorTypeId *string, channel *public.Channel, connectorConfiguration *map[string]interface{}, tid string) handlers.Validate {
 	return func() *errors.ServiceError {
 
 		// If a tid was defined on the URL verify that it matches the posted resource connector type
-		if tid != "" && tid != resource.ConnectorTypeId {
+		if tid != "" && tid != *connectorTypeId {
 			return errors.BadRequest("resource type id should be: %s", tid)
 		}
-		ct, err := connectorTypesService.Get(resource.ConnectorTypeId)
+		ct, err := connectorTypesService.Get(*connectorTypeId)
 		if err != nil {
-			return errors.BadRequest("invalid connector type id %v : %s", resource.ConnectorTypeId, err)
+			return errors.BadRequest("YYY invalid connector type id %v : %s", connectorTypeId, err)
 		}
 
-		if !shared.Contains(ct.ChannelNames(), resource.Channel) {
+		if !shared.Contains(ct.ChannelNames(), string(*channel)) {
 			return errors.BadRequest("channel is not valid. Must be one of: %s", strings.Join(ct.ChannelNames(), ", "))
 		}
 
@@ -31,8 +39,10 @@ func validateConnectorSpec(connectorTypesService services.ConnectorTypesService,
 			return err
 		}
 		schemaLoader := gojsonschema.NewGoLoader(schemaDom)
-		documentLoader := gojsonschema.NewGoLoader(resource.ConnectorSpec)
+		documentLoader := gojsonschema.NewGoLoader(connectorConfiguration)
 
 		return handlers.ValidateJsonSchema("connector type schema", schemaLoader, "connector spec", documentLoader)
 	}
 }
+
+

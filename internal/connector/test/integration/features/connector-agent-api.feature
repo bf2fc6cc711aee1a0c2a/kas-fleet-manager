@@ -25,7 +25,7 @@ Feature: connector agent API
       {}
       """
     Then the response code should be 202
-    And the ".status" selection from the response should match "unconnected"
+    And the ".status.state" selection from the response should match "unconnected"
     Given I store the ".id" selection from the response as ${connector_cluster_id}
 
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
@@ -36,10 +36,7 @@ Feature: connector agent API
       """
       {
         "kind": "Connector",
-        "metadata": {
-          "name": "example 1",
-          "kafka_id": "mykafka"
-        },
+        "name": "example 1",
         "deployment_location": {
           "kind": "addon",
           "cluster_id": "${connector_cluster_id}"
@@ -47,11 +44,12 @@ Feature: connector agent API
         "channel":"stable",
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
-          "bootstrap_server": "kafka.hostname",
+          "id": "mykafka",
+          "url": "kafka.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
-        "connector_spec": {
+        "connector": {
             "aws_queue_name_or_arn": "test",
             "aws_secret_key": "test",
             "aws_access_key": "test",
@@ -61,7 +59,7 @@ Feature: connector agent API
       }
       """
     Then the response code should be 202
-    And the ".status" selection from the response should match "assigning"
+    And the ".status.state" selection from the response should match "assigning"
     Given I store the ".id" selection from the response as ${connector_id}
 
     #-----------------------------------------------------------------------------------------------------------------
@@ -95,6 +93,14 @@ Feature: connector agent API
           },
           "spec": {
             "kafka": {
+              "client_id": "",
+              "client_secret": "",
+              "id": ""
+            },
+            "schema_registry": {
+              "client_id": "",
+              "client_secret": "",
+              "id": ""
             }
           },
           "status": {
@@ -154,11 +160,16 @@ Feature: connector agent API
             "updated_at": "${response.object.metadata.updated_at}"
           },
           "spec": {
-            "kafka_id": "mykafka",
             "kafka": {
-              "bootstrap_server": "kafka.hostname",
+              "id": "mykafka",
+              "url": "kafka.hostname",
               "client_id": "myclient",
               "client_secret": "dGVzdA=="
+            },
+            "schema_registry": {
+              "client_id": "",
+              "client_secret": "",
+              "id": ""
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -223,7 +234,7 @@ Feature: connector agent API
     Given I am logged in as "Jimmy"
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
-    And the ".status" selection from the response should match "assigned"
+    And the ".status.state" selection from the response should match "assigned"
 
     # Now that the cluster is ready, a worker should assign the connector to the cluster for deployment.
     Given I am logged in as "Shard2"
@@ -244,11 +255,16 @@ Feature: connector agent API
               "updated_at": "${response.items[0].metadata.updated_at}"
             },
             "spec": {
-              "kafka_id": "mykafka",
               "kafka": {
-                "bootstrap_server": "kafka.hostname",
+                "id": "mykafka",
+                "url": "kafka.hostname",
                 "client_id": "myclient",
                 "client_secret": "dGVzdA=="
+              },
+              "schema_registry": {
+                "client_id": "",
+                "client_secret": "",
+                "id": ""
               },
               "shard_metadata": {
                 "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -323,11 +339,16 @@ Feature: connector agent API
             "updated_at": "${response.metadata.updated_at}"
           },
           "spec": {
-            "kafka_id": "mykafka",
             "kafka": {
-              "bootstrap_server": "kafka.hostname",
+              "id": "mykafka",
+              "url": "kafka.hostname",
               "client_id": "myclient",
               "client_secret": "dGVzdA=="
+            },
+            "schema_registry": {
+              "client_id": "",
+              "client_secret": "",
+              "id": ""
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -413,7 +434,7 @@ Feature: connector agent API
     Given I am logged in as "Jimmy"
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
-    And the ".status" selection from the response should match "ready"
+    And the ".status.state" selection from the response should match "ready"
 
 
     #-----------------------------------------------------------------------------------------------------------------
@@ -425,7 +446,7 @@ Feature: connector agent API
     When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
       """
       {
-        "connector_spec": {
+        "connector": {
             "aws_queue_name_or_arn": "I-GOT-PATCHED"
         }
       }
@@ -435,7 +456,7 @@ Feature: connector agent API
     And the response should match json:
       """
       {
-        "connector_spec": {
+        "connector": {
           "aws_access_key": {},
           "aws_queue_name_or_arn": "I-GOT-PATCHED",
           "aws_region": "east",
@@ -450,21 +471,27 @@ Feature: connector agent API
         "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
         "id": "${connector_id}",
         "kafka": {
-          "bootstrap_server": "kafka.hostname",
-          "client_id": "myclient"
+          "id": "mykafka",
+          "url": "kafka.hostname",
+          "client_id": "myclient",
+          "client_secret": ""
         },
         "kind": "Connector",
-        "metadata": {
-          "name": "example 1",
-          "owner": "${response.metadata.owner}",
-          "created_at": "${response.metadata.created_at}",
-          "kafka_id": "mykafka",
-          "updated_at": "${response.metadata.updated_at}",
-          "resource_version": ${response.metadata.resource_version}
-        },
+        "name": "example 1",
+        "owner": "${response.owner}",
+        "created_at": "${response.created_at}",
+        "modified_at": "${response.modified_at}",
+        "resource_version": ${response.resource_version},
         "channel": "stable",
         "desired_state": "ready",
-        "status": "updating"
+        "schema_registry": {
+          "client_id": "",
+          "client_secret": "",
+          "id": ""
+        },
+        "status": {
+          "state": "updating"
+        }
       }
       """
 
@@ -490,11 +517,16 @@ Feature: connector agent API
             "updated_at": "${response.object.metadata.updated_at}"
           },
           "spec": {
-            "kafka_id": "mykafka",
             "kafka": {
-              "bootstrap_server": "kafka.hostname",
+              "id": "mykafka",
+              "url": "kafka.hostname",
               "client_id": "myclient",
               "client_secret": "dGVzdA=="
+            },
+            "schema_registry": {
+              "client_id": "",
+              "client_secret": "",
+              "id": ""
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -844,7 +876,7 @@ Feature: connector agent API
     # Connectors that were assigning the cluster get updated to not refer to them.
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
-    And the ".status" selection from the response should match "assigning"
+    And the ".status.state" selection from the response should match "assigning"
     And the ".deployment_location" selection from the response should match json:
       """
       {"kind": "addon"}
@@ -866,7 +898,7 @@ Feature: connector agent API
       {}
       """
     Then the response code should be 202
-    And the ".status" selection from the response should match "unconnected"
+    And the ".status.state" selection from the response should match "unconnected"
     Given I store the ".id" selection from the response as ${connector_cluster_id}
 
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
@@ -904,10 +936,7 @@ Feature: connector agent API
       """
       {
         "kind": "Connector",
-        "metadata": {
-          "name": "example 1",
-          "kafka_id": "mykafka"
-        },
+        "name": "example 1",
         "deployment_location": {
           "kind": "addon",
           "cluster_id": "${connector_cluster_id}"
@@ -915,11 +944,12 @@ Feature: connector agent API
         "channel":"stable",
         "connector_type_id": "log_sink_0.1",
         "kafka": {
-          "bootstrap_server": "kafka.hostname",
+          "id": "mykafka",
+          "url": "kafka.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
-        "connector_spec": {
+        "connector": {
           "log_multi_line": true,
           "kafka_topic":"test",
           "processors":[]
@@ -950,7 +980,7 @@ Feature: connector agent API
     Given I am logged in as "Bobby"
     Given I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".status" selection to match "ready"
     When I GET path "/v1/kafka_connectors/${connector_id}"
-    Then the ".status" selection from the response should match "ready"
+    Then the ".status.state" selection from the response should match "ready"
 
     #-----------------------------------------------------------------------------------------------------------------
     # Bobby sets desired state to stopped.. Agent sees deployment stopped, it updates status to stopped,, Bobby then see stopped status
@@ -981,7 +1011,7 @@ Feature: connector agent API
 
     Given I am logged in as "Bobby"
     When I GET path "/v1/kafka_connectors/${connector_id}"
-    Then the ".status" selection from the response should match "stopped"
+    Then the ".status.state" selection from the response should match "stopped"
 
     #-----------------------------------------------------------------------------------------------------------------
     # Bobby sets desired state to ready.. Agent sees new deployment

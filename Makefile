@@ -373,7 +373,7 @@ openapi/generate/kas-admin: go-bindata openapi-generator
 openapi/generate/connector-public: go-bindata openapi-generator
 	rm -rf internal/connector/internal/api/public
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o internal/connector/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o internal/connector/internal/api/public --package-name public --additional-properties=enumClassPrefix=true -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/connector/internal/api/public
 
 	mkdir -p .generate/openapi
@@ -386,7 +386,7 @@ openapi/generate/connector-public: go-bindata openapi-generator
 openapi/generate/connector-private: go-bindata openapi-generator
 	rm -rf internal/connector/internal/api/private
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private.yaml -g go -o internal/connector/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private.yaml -g go -o internal/connector/internal/api/private --package-name private --additional-properties=enumClassPrefix=true -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/connector/internal/api/private
 .PHONY: openapi/generate/connector-private
 
