@@ -1,6 +1,6 @@
 {
   "connector_type" : {
-    "json_schema" : {
+    "schema" : {
       "type" : "object",
       "properties" : {
         "log_multi_line" : {

@@ -785,8 +785,10 @@ components:
         owner:
           type: string
         created_at:
+          format: date-time
           type: string
         modified_at:
+          format: date-time
           type: string
 
     ServiceConnectionSettings:

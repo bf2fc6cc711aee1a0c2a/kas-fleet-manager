@@ -1,5 +1,8 @@
 openapi: 3.0.0
 info:
+  contact:
+    email: foo@bar
+    name: Red Hat
   description: Connector Service Fleet Manager apis that are used by internal services.
   title: Connector Service Fleet Manager Private APIs
   version: 0.0.3
@@ -18,6 +21,7 @@ tags:
 paths:
   /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/status:
     put:
+      description: Update the status of a connector cluster
       operationId: updateKafkaConnectorClusterStatus
       parameters:
       - description: The id of the connector cluster
@@ -63,6 +67,7 @@ paths:
       - Connector Clusters Agent
   /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments:
     get:
+      description: Returns a list of connector deployments assigned to the cluster.
       operationId: getClusterAsignedConnectorDeployments
       parameters:
       - description: The id of the connector cluster
@@ -145,6 +150,7 @@ paths:
       - Connector Clusters Agent
   /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}:
     get:
+      description: Returns a list of connector deployments assigned to the cluster.
       operationId: getClusterAsignedConnectorDeploymentById
       parameters:
       - description: The id of the connector cluster
@@ -201,6 +207,7 @@ paths:
       - Connector Clusters Agent
   /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}/status:
     put:
+      description: update the connector deployment status
       operationId: updateConnectorDeploymentStatus
       parameters:
       - description: The id of the connector cluster
@@ -259,59 +266,6 @@ paths:
       - Connector Clusters Agent
 components:
   examples:
-    ManagedKafkaExample:
-      value:
-        kind: ManagedKafka
-        metadata:
-          name: example-kafka
-          namespace: example-kafka-1rfpsqbvq1em2u9u0z54ymjcwac
-          annotations:
-            id: 1rfpsqbvq1em2u9u0z54ymjcwac
-            placement_id: ""
-        spec:
-          capacity:
-            ingress_egress_throughput_per_sec: 4Mi
-            total_max_connections: 500
-            max_data_retention_size: 100Gi
-            max_partitions: 100
-            max_data_retention_period: P14D
-            max_connection_attempts_per_sec: 100
-          oauth:
-            client_id: kafka-1rfpsqbvq1em2u9u0z54ymjcwac
-            client_secret: example-client-secret
-            token_endpoint_uri: https://example-token-endpoint-uri.com/token
-            jwks_endpoint_uri: https://example-jwks-endpoint-uri.com/certs
-            valid_issuer_endpoint_uri: https://issuer-endpoint-uri.com
-            user_name_claim: username
-            tls_trusted_certificate: ""
-            custom_claim_check: ""
-          endpoint:
-            bootstrap_server_host: example-kafka--rfpsqbvq-em-u-u-z--ymjcwac.kafka.devshift.org
-            tls:
-              cert: ""
-              key: ""
-          versions:
-            kafka: 2.7.0
-            strimzi: 0.21.2
-          deleted: false
-    DataPlaneKafkaStatusRequestExample:
-      value:
-        conditions:
-        - type: Ready
-          reason: KafkaInstanceReady
-          message: installing
-          status: "False"
-          last_transition_time: 2018-01-01T00:00:00Z
-        capacity:
-          ingress_egress_throughput_per_sec: 4Mi
-          total_maxConnections: 500
-          max_data_retention_size: 100Gi
-          max_partitions: 100
-          max_data_retention_period: P14D
-          max_connection_attempts_per_sec: 100
-        versions:
-          kafka: 2.4.1
-          strimzi: 0.21.2
     "400InvalidIdExample":
       value:
         id: "21"
@@ -387,10 +341,19 @@ components:
     ConnectorDeploymentSpec:
       description: Holds the deployment specification of a connector
       properties:
-        shard_metadata:
-          type: object
+        kafka:
+          $ref: '#/components/schemas/KafkaConnectionSettings'
+        schema_registry:
+          $ref: '#/components/schemas/SchemaRegistryConnectionSettings'
         connector_id:
           type: string
+        connector_resource_version:
+          format: int64
+          type: integer
+        connector_type_id:
+          type: string
+        connector_spec:
+          type: object
         allow_upgrade:
           deprecated: true
           description: allow the connector to upgrade to a new operator
@@ -398,19 +361,10 @@ components:
         operator_id:
           description: an optional operator id that the connector should be run under.
           type: string
-        connector_resource_version:
-          format: int64
-          type: integer
-        kafka_id:
-          type: string
-        kafka:
-          $ref: '#/components/schemas/KafkaConnectionSettings'
-        connector_type_id:
-          type: string
-        connector_spec:
-          type: object
         desired_state:
           type: string
+        shard_metadata:
+          type: object
       type: object
     ConnectorDeploymentStatus:
       description: The status of connector deployment
@@ -541,13 +495,27 @@ components:
           type: string
       type: object
     KafkaConnectionSettings:
+      allOf:
+      - $ref: '#/components/schemas/ServiceConnectionSettings'
+      description: Holds the configuration to connect to a Kafka Instance.
+    ServiceConnectionSettings:
       properties:
-        bootstrap_server:
+        id:
           type: string
         client_id:
           type: string
         client_secret:
           type: string
+        url:
+          type: string
+      required:
+      - client_id
+      - client_secret
+      - id
+    SchemaRegistryConnectionSettings:
+      allOf:
+      - $ref: '#/components/schemas/ServiceConnectionSettings'
+      description: Holds the configuration to connect to a Schem Registry Instance.
     List:
       properties:
         kind:
