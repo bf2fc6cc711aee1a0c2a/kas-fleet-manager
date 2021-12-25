@@ -3,15 +3,16 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
-	"io"
-	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/getsentry/sentry-go"
@@ -172,7 +173,7 @@ func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource db
 		return private.ConnectorDeployment{}, err
 	}
 
-	pc, err := presenters.PresentConnector(&apiSpec)
+	pc, err := presenters.PresentConnectorInstance(&apiSpec)
 	if err != nil {
 		return private.ConnectorDeployment{}, err
 	}
@@ -188,12 +189,12 @@ func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource db
 	}
 
 	converted.Spec.ShardMetadata = shardMetadata
-	converted.Spec.ConnectorSpec = pc.ConnectorSpec
-	converted.Spec.DesiredState = pc.DesiredState
+	converted.Spec.ConnectorSpec = pc.Connector
+	converted.Spec.DesiredState = string(pc.DesiredState)
 	converted.Spec.ConnectorId = pc.Id
-	converted.Spec.KafkaId = pc.Metadata.KafkaId
 	converted.Spec.Kafka = private.KafkaConnectionSettings{
-		BootstrapServer: pc.Kafka.BootstrapServer,
+		Id: pc.Kafka.Id,
+		Url: pc.Kafka.Url,
 		ClientId:        pc.Kafka.ClientId,
 		ClientSecret:    pc.Kafka.ClientSecret,
 	}

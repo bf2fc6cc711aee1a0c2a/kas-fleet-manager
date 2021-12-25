@@ -3,6 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"reflect"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
@@ -13,9 +17,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
 	"github.com/spyzhov/ajson"
-	"io/ioutil"
-	"net/http"
-	"reflect"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -53,17 +54,17 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
 			handlers.ValidateAsyncEnabled(r, "creating connector"),
-			handlers.Validation("channel", &resource.Channel, handlers.WithDefault("stable"), handlers.MaxLen(40)),
-			handlers.Validation("metadata.name", &resource.Metadata.Name,
+			handlers.Validation("channel", (*string)(&resource.Channel), handlers.WithDefault("stable"), handlers.MaxLen(40)),
+			handlers.Validation("name", &resource.Name,
 				handlers.WithDefault("New Connector"), handlers.MinLen(1), handlers.MaxLen(100)),
-			handlers.Validation("metadata.kafka_id", &resource.Metadata.KafkaId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
-			handlers.Validation("kafka.bootstrap_server", &resource.Kafka.BootstrapServer, handlers.MinLen(1)),
+			handlers.Validation("kafka.id", &resource.Kafka.Id, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
+			handlers.Validation("kafka.url", &resource.Kafka.Url, handlers.MinLen(1)),
 			handlers.Validation("kafka.client_id", &resource.Kafka.ClientId, handlers.MinLen(1)),
 			handlers.Validation("kafka.client_secret", &resource.Kafka.ClientSecret, handlers.MinLen(1)),
 			handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
-			handlers.Validation("desired_state", &resource.DesiredState, handlers.WithDefault("ready"), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
+			handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.WithDefault("ready"), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
 			handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
-			validateConnectorSpec(h.connectorTypesService, &resource, tid),
+			validateConnector(h.connectorTypesService, &resource, tid),
 		},
 
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -106,7 +107,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			return presenters.PresentConnector(convResource)
+			return presenters.PresentConnectorInstance(convResource)
 		},
 	}
 
@@ -137,7 +138,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, serr
 			}
 
-			resource, serr := presenters.PresentConnector(dbresource)
+			resource, serr := presenters.PresentConnectorInstance(dbresource)
 			if serr != nil {
 				return nil, serr
 			}
@@ -172,29 +173,29 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 
 			// But we don't want to allow the user to update ALL fields.. so copy
 			// over the fields that they are allowed to modify..
-			resource.Metadata.Name = patch.Metadata.Name
-			resource.Metadata.KafkaId = patch.Metadata.KafkaId
-			resource.ConnectorSpec = patch.ConnectorSpec
+			resource.Name = patch.Name
+			resource.Connector = patch.Connector
 			resource.DesiredState = patch.DesiredState
-			resource.Metadata.ResourceVersion = patch.Metadata.ResourceVersion
+			//TODO: verify if it can be omitted
+			//resource.ResourceVersion = patch.Metadata.ResourceVersion
 			resource.Kafka = patch.Kafka
 			resource.DeploymentLocation = patch.DeploymentLocation
 
 			// If we didn't change anything, then just skip the update...
-			originalResource, _ := presenters.PresentConnector(dbresource)
+			originalResource, _ := presenters.PresentConnectorInstance(dbresource)
 			if reflect.DeepEqual(originalResource, resource) {
 				return originalResource, nil
 			}
 
 			// revalidate
 			validates := []handlers.Validate{
-				handlers.Validation("name", &resource.Metadata.Name, handlers.MinLen(1), handlers.MaxLen(100)),
+				handlers.Validation("name", &resource.Name, handlers.MinLen(1), handlers.MaxLen(100)),
 				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
 				// handlers.Validation("kafka_id", &resource.Metadata.KafkaId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
 				handlers.Validation("Kafka client_id", &resource.Kafka.ClientId, handlers.MinLen(1)),
 				handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
-				handlers.Validation("desired_state", &resource.DesiredState, handlers.IsOneOf(dbapi.ValidDesiredStates...)),
-				validateConnectorSpec(h.connectorTypesService, &resource, connectorTypeId),
+				handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
+				validateConnectorInstance(h.connectorTypesService, &resource, connectorTypeId),
 			}
 
 			for _, v := range validates {
@@ -212,7 +213,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			//	}
 			//}
 
-			p, svcErr := presenters.ConvertConnector(resource)
+			p, svcErr := presenters.ConvertConnectorInstance(resource)
 			if svcErr != nil {
 				return nil, svcErr
 			}
@@ -227,7 +228,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, serr
 			}
 
-			if originalResource.Status != dbapi.ConnectorStatusPhaseAssigning {
+			if originalResource.Status.State != public.ConnectorState(dbapi.ConnectorStatusPhaseAssigning) {
 				dbresource.Status.Phase = dbapi.ConnectorStatusPhaseUpdating
 				p.Status.Phase = dbapi.ConnectorStatusPhaseUpdating
 				serr = h.connectorsService.SaveStatus(r.Context(), dbresource.Status)
@@ -257,7 +258,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			return presenters.PresentConnector(p)
+			return presenters.PresentConnectorInstance(p)
 		},
 	}
 
@@ -368,7 +369,7 @@ func (h ConnectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			return presenters.PresentConnector(resource)
+			return presenters.PresentConnectorInstance(resource)
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -428,7 +429,7 @@ func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			resourceList := public.ConnectorList{
+			resourceList := public.ConnectorInstanceList{
 				Kind:  "ConnectorList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
@@ -449,7 +450,7 @@ func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 
-				converted, err := presenters.PresentConnector(resource)
+				converted, err := presenters.PresentConnectorInstance(resource)
 				if err != nil {
 					glog.Errorf("connector id='%s' presentation failed: %v", resource.ID, err)
 					return nil, errors.GeneralError("internal error")

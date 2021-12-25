@@ -49,7 +49,7 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
-			handlers.Validation("name", &resource.Metadata.Name, handlers.WithDefault("New Cluster"),
+			handlers.Validation("name", &resource.Name, handlers.WithDefault("New Cluster"),
 				handlers.MinLen(1), handlers.MaxLen(100)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -67,7 +67,7 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 			if err := h.Service.Create(r.Context(), &convResource); err != nil {
 				return nil, err
 			}
-			return presenters.PresentConnectorCluster(convResource), nil
+			return presenters.PresentConnectorClusterInstance(convResource), nil
 		},
 	}
 
@@ -86,7 +86,7 @@ func (h *ConnectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentConnectorCluster(resource), nil
+			return presenters.PresentConnectorClusterInstance(resource), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -108,7 +108,7 @@ func (h *ConnectorClusterHandler) Update(w http.ResponseWriter, r *http.Request)
 			}
 
 			// Copy over the fields that support being updated...
-			existing.Name = resource.Metadata.Name
+			existing.Name = resource.Name
 
 			return nil, h.Service.Update(r.Context(), &existing)
 		},
@@ -139,7 +139,7 @@ func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			resourceList := public.ConnectorClusterList{
+			resourceList := public.ConnectorClusterInstanceList{
 				Kind:  "ConnectorClusterList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
@@ -147,7 +147,7 @@ func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, resource := range resources {
-				converted := presenters.PresentConnectorCluster(resource)
+				converted := presenters.PresentConnectorClusterInstance(resource)
 				resourceList.Items = append(resourceList.Items, converted)
 			}
 

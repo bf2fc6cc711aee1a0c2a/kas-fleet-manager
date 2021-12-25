@@ -62,21 +62,19 @@ Feature: create a connector
       """
         {
           "kind": "Connector",
-          "metadata": {
-            "name": "example 1",
-            "kafka_id":"mykafka"
-          },
+          "name": "example 1",
           "deployment_location": {
             "kind": "addon",
             "cluster_id": "default"
           },
           "kafka": {
-            "bootstrap_server": "kafka.hostname",
+            "id":"mykafka",
+            "url": "kafka.hostname",
             "client_id": "myclient",
             "client_secret": "test"
           },
           "connector_type_id": "aws-sqs-source-v1alpha1",
-          "connector_spec": "{}"
+          "connector": "{}"
         }
       """
 
@@ -125,21 +123,19 @@ Feature: create a connector
       """
       {
         "kind": "Connector",
-        "metadata": {
-          "name": "example 1",
-          "kafka_id":"mykafka"
-        },
+        "name": "example 1",
         "deployment_location": {
           "kind": "addon",
           "cluster_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
-          "bootstrap_server": "kafka.hostname",
+          "id":"mykafka",
+          "url": "kafka.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
-        "connector_spec": "{\"aws_queue_name_or_arn\": \"test\",\"aws_access_key\": \"test\",\"aws_secret_key\": \"test\",\"aws_region\": \"east\", \"kafka_topic\": \"test\"}"
+        "connector": "{\"aws_queue_name_or_arn\": \"test\",\"aws_access_key\": \"test\",\"aws_secret_key\": \"test\",\"aws_region\": \"east\", \"kafka_topic\": \"test\"}"
       }
       """
 
@@ -147,10 +143,10 @@ Feature: create a connector
       """
       mutation createConnector($input: ConnectorInput!) {
           connector1: createConnector(async: true, body: $input) {
-              status
+              status { state }
           }
           connector2: createConnector(async: true, body: $input) {
-              status
+              status { state }
           }
       }
       """
@@ -161,10 +157,14 @@ Feature: create a connector
       {
         "data": {
           "connector1": {
-            "status": "assigning"
+            "status": {
+              "state": "assigning"
+            }
           },
           "connector2": {
-            "status": "assigning"
+            "status": {
+              "state": "assigning"
+            }
           }
         }
       }
@@ -177,10 +177,10 @@ Feature: create a connector
             total
             items {
               channel
-              status
-              connector_type {
-                description
+              status {
+                state
               }
+              connector_type_id
             }
           }
       }
@@ -195,17 +195,17 @@ Feature: create a connector
             "items": [
               {
                 "channel": "stable",
-                "connector_type": {
-                  "description": "AWS SQS Source"
-                },
-                "status": "assigning"
+                "connector_type_id": "aws-sqs-source-v1alpha1",
+                "status": {
+                  "state": "assigning"
+                }
               },
               {
                 "channel": "stable",
-                "connector_type": {
-                  "description": "AWS SQS Source"
-                },
-                "status": "assigning"
+                "connector_type_id": "aws-sqs-source-v1alpha1",
+                "status": {
+                  "state": "assigning"
+                }
               }
             ],
             "total": 2
@@ -222,7 +222,9 @@ Feature: create a connector
             total
             items {
               channel
-              status
+              status {
+                state
+              }
             }
           }
       }

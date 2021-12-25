@@ -23,13 +23,13 @@ Feature: create a connector
         "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${cluster_id}",
         "id": "${cluster_id}",
         "kind": "ConnectorCluster",
-        "metadata": {
-          "created_at": "${response.metadata.created_at}",
-          "name": "New Cluster",
-          "owner": "${response.metadata.owner}",
-          "updated_at": "${response.metadata.updated_at}"
-        },
-        "status": "unconnected"
+        "created_at": "${response.created_at}",
+        "name": "New Cluster",
+        "owner": "${response.owner}",
+        "modified_at": "${response.modified_at}",
+        "status": {
+          "state": "unconnected"
+        }
       }
       """
 
@@ -48,13 +48,13 @@ Feature: create a connector
         "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${cluster_id}",
         "id": "${cluster_id}",
         "kind": "ConnectorCluster",
-        "metadata": {
-          "created_at": "${response.metadata.created_at}",
-          "name": "New Cluster",
-          "owner": "${response.metadata.owner}",
-          "updated_at": "${response.metadata.updated_at}"
-        },
-        "status": "unconnected"
+        "name": "New Cluster",
+        "created_at": "${response.created_at}",
+        "owner": "${response.owner}",
+        "modified_at": "${response.modified_at}",
+        "status": {
+          "state": "unconnected"
+        }
       }
       """
 
@@ -63,9 +63,7 @@ Feature: create a connector
     When I PUT path "/v1/kafka_connector_clusters/${cluster_id}" with json body:
       """
       {
-        "metadata": {
-          "name": "My Cluster Name"
-        }
+        "name": "My Cluster Name"
       }
       """
     Then the response code should be 204
@@ -79,13 +77,13 @@ Feature: create a connector
         "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${cluster_id}",
         "id": "${cluster_id}",
         "kind": "ConnectorCluster",
-        "metadata": {
-          "created_at": "${response.metadata.created_at}",
-          "name": "My Cluster Name",
-          "owner": "${response.metadata.owner}",
-          "updated_at": "${response.metadata.updated_at}"
-        },
-        "status": "unconnected"
+        "name": "My Cluster Name",
+        "created_at": "${response.created_at}",
+        "owner": "${response.owner}",
+        "modified_at": "${response.modified_at}",
+        "status": {
+          "state": "unconnected"
+        }
       }
       """
 
