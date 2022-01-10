@@ -1,0 +1,35 @@
+"internal/connector/**/*":
+  - valdar
+  - dhirajsb
+"internal/kafka/**/*":
+  - pb82
+  - machi1990
+  - pawelpaszki
+  - JameelB
+  - miguelsorianod
+  - ziccardi
+"pkg/**/*":
+  - valdar
+  - dhirajsb
+  - pb82
+  - machi1990
+  - pawelpaszki
+  - JameelB
+  - miguelsorianod
+  - ziccardi
+"test/**/*":
+  - valdar
+  - dhirajsb
+  - pb82
+  - machi1990
+  - pawelpaszki
+  - JameelB
+  - miguelsorianod
+  - ziccardi
+".github/**/*":
+  - pb82
+  - machi1990
+  - pawelpaszki
+  - JameelB
+  - miguelsorianod
+  - ziccardi
