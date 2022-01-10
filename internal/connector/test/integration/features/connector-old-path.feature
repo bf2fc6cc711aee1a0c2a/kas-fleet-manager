@@ -32,9 +32,10 @@ Feature: the old connectors path are still valid
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "connector_spec": {
-            "accessKey": "test",
-            "secretKey": "test",
-            "region": "east"
+            "aws_access_key": "test",
+            "aws_secret_key": "test",
+            "aws_region": "east",
+            "kafka_topic": "test"
         }
       }
       """

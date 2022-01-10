@@ -15,9 +15,9 @@ type ConnectorType struct {
 	Kind string `json:"kind,omitempty"`
 	Href string `json:"href,omitempty"`
 	// Name of the connector type.
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 	// Version of the connector type.
-	Version string `json:"version"`
+	Version string `json:"version,omitempty"`
 	// Channels of the connector type.
 	Channels []string `json:"channels,omitempty"`
 	// A description of the connector.
@@ -27,5 +27,7 @@ type ConnectorType struct {
 	// Labels used to categorize the connector
 	Labels []string `json:"labels,omitempty"`
 	// A json schema that can be used to validate a connectors connector_spec field.
-	JsonSchema map[string]interface{} `json:"json_schema"`
+	Schema map[string]interface{} `json:"schema,omitempty"`
+	// A json schema that can be used to validate a connectors connector_spec field.
+	JsonSchema map[string]interface{} `json:"json_schema,omitempty"`
 }

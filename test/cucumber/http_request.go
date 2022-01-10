@@ -75,14 +75,14 @@ func (s *TestScenario) SendHttpRequestWithJsonBodyAndStyle(method, path string, 
 	if jsonTxt != nil {
 		expanded := jsonTxt.Content
 		if expandJson {
-			expanded, err = s.Expand(expanded)
+			expanded, err = s.Expand(expanded, []string{})
 			if err != nil {
 				return err
 			}
 		}
 		body.WriteString(expanded)
 	}
-	expandedPath, err := s.Expand(path)
+	expandedPath, err := s.Expand(path, []string{})
 	if err != nil {
 		return err
 	}

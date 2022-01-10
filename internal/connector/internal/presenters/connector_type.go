@@ -20,7 +20,11 @@ func ConvertConnectorType(from public.ConnectorType) (*dbapi.ConnectorType, erro
 
 	ct.SetLabels(from.Labels)
 	ct.SetChannels(from.Channels)
-	if err := ct.SetSchema(from.JsonSchema); err != nil {
+	schemaToBeSet := from.Schema
+	if schemaToBeSet == nil {
+		schemaToBeSet = from.JsonSchema
+	}
+	if err := ct.SetSchema(schemaToBeSet); err != nil {
 		return nil, err
 	}
 	return ct, nil
@@ -39,7 +43,7 @@ func PresentConnectorType(from *dbapi.ConnectorType) (*public.ConnectorType, err
 		Name:        from.Name,
 		Version:     from.Version,
 		Description: from.Description,
-		JsonSchema:  schemaDom,
+		Schema:  schemaDom,
 		IconHref:    from.IconHref,
 		Labels:      from.LabelNames(),
 		Channels:    from.ChannelNames(),

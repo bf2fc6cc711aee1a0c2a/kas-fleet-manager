@@ -2,8 +2,9 @@ package cucumber_test
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -32,7 +33,7 @@ type extender struct {
 }
 
 func (s *extender) debug(as string) error {
-	fmt.Println(s.Expand(as))
+	fmt.Println(s.Expand(as, []string{}))
 	return nil
 }
 

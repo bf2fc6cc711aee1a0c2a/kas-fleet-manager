@@ -30,13 +30,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"net/http"
 	"os"
 	"reflect"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/cucumber/godog"
@@ -105,11 +106,14 @@ func (s *TestScenario) JsonMustMatch(actual, expected string, expand bool) error
 	var expectedParsed interface{}
 	expanded := expected
 	if expand {
-		expanded, err = s.Expand(expected)
+		expanded, err = s.Expand(expected, []string{"defs", "ref"})
 		if err != nil {
 			return err
 		}
 	}
+
+
+
 	if err := json.Unmarshal([]byte(expanded), &expectedParsed); err != nil {
 		return fmt.Errorf("error parsing expected json: %v\njson was:\n%s\n", err, expanded)
 	}
@@ -134,9 +138,12 @@ func (s *TestScenario) JsonMustMatch(actual, expected string, expand bool) error
 }
 
 // Expand replaces ${var} or $var in the string based on saved Variables in the session/test scenario.
-func (s *TestScenario) Expand(value string) (result string, rerr error) {
+func (s *TestScenario) Expand(value string, skippedVars []string) (result string, rerr error) {
 	session := s.Session()
 	return os.Expand(value, func(name string) string {
+		if contains(skippedVars, name) {
+			return "$" + name
+		}
 
 		arrayResponse := strings.HasPrefix(name, "response[")
 		if strings.HasPrefix(name, "response.") || arrayResponse {
@@ -187,6 +194,15 @@ func (s *TestScenario) Expand(value string) (result string, rerr error) {
 		}
 		return fmt.Sprint(value)
 	}), rerr
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
 
 // TestSession holds the http context for a user kinda like a browser.  Each scenario
