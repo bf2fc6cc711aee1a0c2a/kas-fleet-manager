@@ -112,8 +112,6 @@ func (s *TestScenario) JsonMustMatch(actual, expected string, expand bool) error
 		}
 	}
 
-
-
 	if err := json.Unmarshal([]byte(expanded), &expectedParsed); err != nil {
 		return fmt.Errorf("error parsing expected json: %v\njson was:\n%s\n", err, expanded)
 	}

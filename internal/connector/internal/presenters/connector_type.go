@@ -43,7 +43,7 @@ func PresentConnectorType(from *dbapi.ConnectorType) (*public.ConnectorType, err
 		Name:        from.Name,
 		Version:     from.Version,
 		Description: from.Description,
-		Schema:  schemaDom,
+		Schema:      schemaDom,
 		IconHref:    from.IconHref,
 		Labels:      from.LabelNames(),
 		Channels:    from.ChannelNames(),

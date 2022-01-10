@@ -1,13 +1,14 @@
 package connector
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/cmd/vault"
+	cmdvault "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/cmd/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/migrations"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
 	environments2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers"
@@ -22,7 +23,7 @@ func ConfigProviders(kafkaEnabled bool) di.Option {
 		di.Provide(config.NewConnectorsConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(environments2.Func(serviceProviders)),
 		di.Provide(migrations.New),
-		di.Provide(vault.NewVaultCommand),
+		di.Provide(cmdvault.NewVaultCommand),
 	)
 
 	// If we are not running in the kas-fleet-manager.. we need to inject more types into the DI container
@@ -33,6 +34,7 @@ func ConfigProviders(kafkaEnabled bool) di.Option {
 			di.Provide(environments.NewStageEnvLoader, di.Tags{"env": environments2.StageEnv}),
 			di.Provide(environments.NewIntegrationEnvLoader, di.Tags{"env": environments2.IntegrationEnv}),
 			di.Provide(environments.NewTestingEnvLoader, di.Tags{"env": environments2.TestingEnv}),
+			vault.ConfigProviders(),
 			providers.CoreConfigProviders(),
 			result,
 			di.Provide(environments2.Func(serviceProvidersNoKafka)),
