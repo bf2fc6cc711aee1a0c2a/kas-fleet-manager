@@ -658,10 +658,15 @@ components:
     ConnectorType:
       description: >-
         Represents a connector type supported by the API
-      required:
-        - name
-        - version
-        - json_schema
+      oneOf:
+        - required:
+          - name
+          - version
+          - schema
+        - required:
+            - name
+            - version
+            - json_schema
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
         - type: object
@@ -689,6 +694,11 @@ components:
               items:
                 type: string
                 enum: [ sink, source ]
+            schema:
+              description: >-
+                A json schema that can be used to validate a connectors
+                connector_spec field.
+              type: object # todo: replace with better type
             json_schema:
               description: >-
                 A json schema that can be used to validate a connectors

@@ -1010,10 +1010,15 @@ components:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/ConnectorType_allOf'
       description: Represents a connector type supported by the API
-      required:
-      - json_schema
-      - name
-      - version
+      oneOf:
+      - required:
+        - name
+        - schema
+        - version
+      - required:
+        - json_schema
+        - name
+        - version
     ConnectorTypeList:
       allOf:
       - $ref: '#/components/schemas/List'
@@ -1158,6 +1163,10 @@ components:
             - source
             type: string
           type: array
+        schema:
+          description: A json schema that can be used to validate a connectors connector_spec
+            field.
+          type: object
         json_schema:
           description: A json schema that can be used to validate a connectors connector_spec
             field.

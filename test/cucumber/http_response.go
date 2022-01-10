@@ -39,6 +39,7 @@ package cucumber
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/cucumber/godog"
 	"github.com/itchyny/gojq"
 	"github.com/pmezard/go-difflib/difflib"
@@ -83,7 +84,7 @@ func (s *TestScenario) theResponseShouldMatchJson(expected string) error {
 func (s *TestScenario) theResponseShouldMatchText(expected string) error {
 	session := s.Session()
 
-	expanded, err := s.Expand(expected)
+	expanded, err := s.Expand(expected, []string{"defs", "ref"})
 	if err != nil {
 		return err
 	}
@@ -106,7 +107,7 @@ func (s *TestScenario) theResponseShouldMatchText(expected string) error {
 
 func (s *TestScenario) theResponseHeaderShouldMatch(header, expected string) error {
 	session := s.Session()
-	expanded, err := s.Expand(expected)
+	expanded, err := s.Expand(expected, []string{"defs", "ref"})
 	if err != nil {
 		return err
 	}
@@ -149,7 +150,7 @@ func (s *TestScenario) iStoreTheSelectionFromTheResponseAs(selector string, as s
 }
 
 func (s *TestScenario) iStoreJsonAsInput(as string, value *godog.DocString) error {
-	content, err := s.Expand(value.Content)
+	content, err := s.Expand(value.Content, []string{"defs", "ref"})
 	if err != nil {
 		return err
 	}
@@ -175,7 +176,7 @@ func (s *TestScenario) theSelectionFromTheResponseShouldMatch(selector string, e
 		return err
 	}
 
-	expected, err = s.Expand(expected)
+	expected, err = s.Expand(expected, []string{"defs", "ref"})
 	if err != nil {
 		return err
 	}

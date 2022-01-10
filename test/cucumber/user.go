@@ -103,7 +103,7 @@ func (s *TestScenario) iAmLoggedInAs(name string) error {
 }
 
 func (s *TestScenario) iSetTheHeaderTo(name string, value string) error {
-	expanded, err := s.Expand(value)
+	expanded, err := s.Expand(value, []string{})
 	if err != nil {
 		return err
 	}

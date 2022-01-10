@@ -104,7 +104,7 @@ Feature: create a a connector
                 "id": "21",
                 "kind": "Error",
                 "operation_id": "${response.errors[0].extensions.response.operation_id}",
-                "reason": "connector spec not conform to the connector type schema. 4 errors encountered.  1st error: (root): queueNameOrArn is required"
+                "reason": "connector spec not conform to the connector type schema. 5 errors encountered.  1st error: (root): aws_queue_name_or_arn is required"
               }
             },
             "message": "http response status code: 400",
@@ -139,7 +139,7 @@ Feature: create a a connector
           "client_id": "myclient",
           "client_secret": "test"
         },
-        "connector_spec": "{\"queueNameOrArn\": \"test\",\"accessKey\": \"test\",\"secretKey\": \"test\",\"region\": \"east\"}"
+        "connector_spec": "{\"aws_queue_name_or_arn\": \"test\",\"aws_access_key\": \"test\",\"aws_secret_key\": \"test\",\"aws_region\": \"east\", \"kafka_topic\": \"test\"}"
       }
       """
 
@@ -196,14 +196,14 @@ Feature: create a a connector
               {
                 "channel": "stable",
                 "connector_type": {
-                  "description": "Receive data from AWS SQS"
+                  "description": "AWS SQS Source"
                 },
                 "status": "assigning"
               },
               {
                 "channel": "stable",
                 "connector_type": {
-                  "description": "Receive data from AWS SQS"
+                  "description": "AWS SQS Source"
                 },
                 "status": "assigning"
               }
