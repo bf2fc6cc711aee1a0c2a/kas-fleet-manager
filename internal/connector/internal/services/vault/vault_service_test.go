@@ -1,9 +1,9 @@
 package vault_test
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	. "github.com/onsi/gomega"
 	"github.com/prometheus/client_golang/prometheus"
@@ -34,7 +34,7 @@ func TestNewVaultService(t *testing.T) {
 			config: &vault.Config{Kind: "tmp"},
 		},
 		{
-			numSecrets: 85,
+			numSecrets: 92, // NOTE: change this to number of secrets actually in test AWS account after first failure
 			config: &vault.Config{
 				Kind:            "aws",
 				AccessKey:       vc.AccessKey,
@@ -92,9 +92,9 @@ func happyPath(vault vault.VaultService, numSecrets int) {
 
 	var builder strings.Builder
 	err = tmpl.Execute(&builder, struct {
-		GetCount int
-		SetCount int
-		TotalGetCount int
+		GetCount         int
+		SetCount         int
+		TotalGetCount    int
 		TotalDeleteCount int
 	}{numSecrets + 1, 1, numSecrets + 2, 2})
 	Expect(err).Should(BeNil())
@@ -103,30 +103,31 @@ func happyPath(vault vault.VaultService, numSecrets int) {
 }
 
 var vaultMetrics []string = getMetricNames()
+
 func getMetricNames() []string {
 	names := []string{metrics.VaultServiceTotalCount, metrics.VaultServiceSuccessCount,
 		metrics.VaultServiceErrorsCount, metrics.VaultServiceFailureCount}
 	var result []string
 	for _, m := range names {
-		result = append(result, metrics.KasFleetManager+"_"+m)
+		result = append(result, metrics.CosFleetManager+"_"+m)
 	}
 	return result
 }
 
-const expectedMetrics = `# HELP kas_fleet_manager_vault_service_errors_count count of user level errors (e.g. missing secrets) in the vault service
-# TYPE kas_fleet_manager_vault_service_errors_count counter
-kas_fleet_manager_vault_service_errors_count{operation="delete"} 1
-kas_fleet_manager_vault_service_errors_count{operation="get"} 1
-# HELP kas_fleet_manager_vault_service_success_count count of successful operations of vault service
-# TYPE kas_fleet_manager_vault_service_success_count counter
-kas_fleet_manager_vault_service_success_count{operation="delete"} {{.SetCount}}
-kas_fleet_manager_vault_service_success_count{operation="get"} {{.GetCount}}
-kas_fleet_manager_vault_service_success_count{operation="set"} {{.SetCount}}
-# HELP kas_fleet_manager_vault_service_total_count total count of operations since start of vault service
-# TYPE kas_fleet_manager_vault_service_total_count counter
-kas_fleet_manager_vault_service_total_count{operation="delete"} {{.TotalDeleteCount}}
-kas_fleet_manager_vault_service_total_count{operation="get"} {{.TotalGetCount}}
-kas_fleet_manager_vault_service_total_count{operation="set"} {{.SetCount}}
+const expectedMetrics = `# HELP cos_fleet_manager_vault_service_errors_count count of user level errors (e.g. missing secrets) in the vault service
+# TYPE cos_fleet_manager_vault_service_errors_count counter
+cos_fleet_manager_vault_service_errors_count{operation="delete"} 1
+cos_fleet_manager_vault_service_errors_count{operation="get"} 1
+# HELP cos_fleet_manager_vault_service_success_count count of successful operations of vault service
+# TYPE cos_fleet_manager_vault_service_success_count counter
+cos_fleet_manager_vault_service_success_count{operation="delete"} {{.SetCount}}
+cos_fleet_manager_vault_service_success_count{operation="get"} {{.GetCount}}
+cos_fleet_manager_vault_service_success_count{operation="set"} {{.SetCount}}
+# HELP cos_fleet_manager_vault_service_total_count total count of operations since start of vault service
+# TYPE cos_fleet_manager_vault_service_total_count counter
+cos_fleet_manager_vault_service_total_count{operation="delete"} {{.TotalDeleteCount}}
+cos_fleet_manager_vault_service_total_count{operation="get"} {{.TotalGetCount}}
+cos_fleet_manager_vault_service_total_count{operation="set"} {{.SetCount}}
 `
 
 var tmpl *template.Template = getMetricsTemplate()
