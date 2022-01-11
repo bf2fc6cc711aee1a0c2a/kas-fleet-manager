@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 )
 
