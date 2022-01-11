@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/Nerzal/gocloak/v8"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/onsi/gomega"
 	"github.com/patrickmn/go-cache"
 )
