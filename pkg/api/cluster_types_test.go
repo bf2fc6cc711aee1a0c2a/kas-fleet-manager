@@ -219,42 +219,42 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 			wantErr:              false,
 		},
 		{
-			name: "Kafka and Kafka IBP versions are stored and in sorted order",
+			name: "Dinosaur and Dinosaur IBP versions are stored and in sorted order",
 			inputStrimziVersions: []StrimziVersion{
 				StrimziVersion{
 					Version: "strimzi-cluster-operator-v.5.10.0-3",
 					Ready:   true,
-					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "2.7.5"},
-						KafkaVersion{Version: "2.7.3"},
+					DinosaurVersions: []DinosaurVersion{
+						DinosaurVersion{Version: "2.7.5"},
+						DinosaurVersion{Version: "2.7.3"},
 					},
-					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.8"},
-						KafkaIBPVersion{Version: "2.7"},
+					DinosaurIBPVersions: []DinosaurIBPVersion{
+						DinosaurIBPVersion{Version: "2.8"},
+						DinosaurIBPVersion{Version: "2.7"},
 					},
 				},
 				StrimziVersion{
 					Version: "strimzi-cluster-operator-v.5.8.0-9",
 					Ready:   false,
-					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "2.9.4"},
-						KafkaVersion{Version: "2.2.1"},
+					DinosaurVersions: []DinosaurVersion{
+						DinosaurVersion{Version: "2.9.4"},
+						DinosaurVersion{Version: "2.2.1"},
 					},
-					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.5"},
-						KafkaIBPVersion{Version: "2.6"},
+					DinosaurIBPVersions: []DinosaurIBPVersion{
+						DinosaurIBPVersion{Version: "2.5"},
+						DinosaurIBPVersion{Version: "2.6"},
 					},
 				},
 				StrimziVersion{
 					Version: "strimzi-cluster-operator-v.2.0.0-0",
 					Ready:   true,
-					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "4.5.6"},
-						KafkaVersion{Version: "1.2.3"},
+					DinosaurVersions: []DinosaurVersion{
+						DinosaurVersion{Version: "4.5.6"},
+						DinosaurVersion{Version: "1.2.3"},
 					},
-					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.3"},
-						KafkaIBPVersion{Version: "2.2"},
+					DinosaurIBPVersions: []DinosaurIBPVersion{
+						DinosaurIBPVersion{Version: "2.3"},
+						DinosaurIBPVersion{Version: "2.2"},
 					},
 				},
 			},
@@ -262,37 +262,37 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 				StrimziVersion{
 					Version: "strimzi-cluster-operator-v.2.0.0-0",
 					Ready:   true,
-					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "1.2.3"},
-						KafkaVersion{Version: "4.5.6"},
+					DinosaurVersions: []DinosaurVersion{
+						DinosaurVersion{Version: "1.2.3"},
+						DinosaurVersion{Version: "4.5.6"},
 					},
-					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.2"},
-						KafkaIBPVersion{Version: "2.3"},
+					DinosaurIBPVersions: []DinosaurIBPVersion{
+						DinosaurIBPVersion{Version: "2.2"},
+						DinosaurIBPVersion{Version: "2.3"},
 					},
 				},
 				StrimziVersion{
 					Version: "strimzi-cluster-operator-v.5.8.0-9",
 					Ready:   false,
-					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "2.2.1"},
-						KafkaVersion{Version: "2.9.4"},
+					DinosaurVersions: []DinosaurVersion{
+						DinosaurVersion{Version: "2.2.1"},
+						DinosaurVersion{Version: "2.9.4"},
 					},
-					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.5"},
-						KafkaIBPVersion{Version: "2.6"},
+					DinosaurIBPVersions: []DinosaurIBPVersion{
+						DinosaurIBPVersion{Version: "2.5"},
+						DinosaurIBPVersion{Version: "2.6"},
 					},
 				},
 				StrimziVersion{
 					Version: "strimzi-cluster-operator-v.5.10.0-3",
 					Ready:   true,
-					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "2.7.3"},
-						KafkaVersion{Version: "2.7.5"},
+					DinosaurVersions: []DinosaurVersion{
+						DinosaurVersion{Version: "2.7.3"},
+						DinosaurVersion{Version: "2.7.5"},
 					},
-					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.7"},
-						KafkaIBPVersion{Version: "2.8"},
+					DinosaurIBPVersions: []DinosaurIBPVersion{
+						DinosaurIBPVersion{Version: "2.7"},
+						DinosaurIBPVersion{Version: "2.8"},
 					},
 				},
 			},
@@ -458,41 +458,41 @@ func Test_StrimziVersionsDeepSort(t *testing.T) {
 				versions: []StrimziVersion{
 					StrimziVersion{
 						Version: "strimzi-cluster-operator-v.2.7.5-0",
-						KafkaVersions: []KafkaVersion{
-							KafkaVersion{Version: "1.5.8"},
-							KafkaVersion{Version: "0.7.1"},
-							KafkaVersion{Version: "1.5.1"},
+						DinosaurVersions: []DinosaurVersion{
+							DinosaurVersion{Version: "1.5.8"},
+							DinosaurVersion{Version: "0.7.1"},
+							DinosaurVersion{Version: "1.5.1"},
 						},
-						KafkaIBPVersions: []KafkaIBPVersion{
-							KafkaIBPVersion{Version: "2.8"},
-							KafkaIBPVersion{Version: "1.2"},
-							KafkaIBPVersion{Version: "2.4"},
+						DinosaurIBPVersions: []DinosaurIBPVersion{
+							DinosaurIBPVersion{Version: "2.8"},
+							DinosaurIBPVersion{Version: "1.2"},
+							DinosaurIBPVersion{Version: "2.4"},
 						},
 					},
 					StrimziVersion{
 						Version: "strimzi-cluster-operator-v.2.7.3-0",
-						KafkaVersions: []KafkaVersion{
-							KafkaVersion{Version: "1.0.0"},
-							KafkaVersion{Version: "2.0.0"},
-							KafkaVersion{Version: "5.0.0"},
+						DinosaurVersions: []DinosaurVersion{
+							DinosaurVersion{Version: "1.0.0"},
+							DinosaurVersion{Version: "2.0.0"},
+							DinosaurVersion{Version: "5.0.0"},
 						},
-						KafkaIBPVersions: []KafkaIBPVersion{
-							KafkaIBPVersion{Version: "4.0"},
-							KafkaIBPVersion{Version: "2.0"},
-							KafkaIBPVersion{Version: "3.5"},
+						DinosaurIBPVersions: []DinosaurIBPVersion{
+							DinosaurIBPVersion{Version: "4.0"},
+							DinosaurIBPVersion{Version: "2.0"},
+							DinosaurIBPVersion{Version: "3.5"},
 						},
 					},
 					StrimziVersion{
 						Version: "strimzi-cluster-operator-v.2.5.2-0",
-						KafkaVersions: []KafkaVersion{
-							KafkaVersion{Version: "2.6.1"},
-							KafkaVersion{Version: "5.7.2"},
-							KafkaVersion{Version: "2.3.5"},
+						DinosaurVersions: []DinosaurVersion{
+							DinosaurVersion{Version: "2.6.1"},
+							DinosaurVersion{Version: "5.7.2"},
+							DinosaurVersion{Version: "2.3.5"},
 						},
-						KafkaIBPVersions: []KafkaIBPVersion{
-							KafkaIBPVersion{Version: "1.2"},
-							KafkaIBPVersion{Version: "1.1"},
-							KafkaIBPVersion{Version: "5.1"},
+						DinosaurIBPVersions: []DinosaurIBPVersion{
+							DinosaurIBPVersion{Version: "1.2"},
+							DinosaurIBPVersion{Version: "1.1"},
+							DinosaurIBPVersion{Version: "5.1"},
 						},
 					},
 				},
@@ -500,41 +500,41 @@ func Test_StrimziVersionsDeepSort(t *testing.T) {
 			want: []StrimziVersion{
 				StrimziVersion{
 					Version: "strimzi-cluster-operator-v.2.5.2-0",
-					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "2.3.5"},
-						KafkaVersion{Version: "2.6.1"},
-						KafkaVersion{Version: "5.7.2"},
+					DinosaurVersions: []DinosaurVersion{
+						DinosaurVersion{Version: "2.3.5"},
+						DinosaurVersion{Version: "2.6.1"},
+						DinosaurVersion{Version: "5.7.2"},
 					},
-					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "1.1"},
-						KafkaIBPVersion{Version: "1.2"},
-						KafkaIBPVersion{Version: "5.1"},
+					DinosaurIBPVersions: []DinosaurIBPVersion{
+						DinosaurIBPVersion{Version: "1.1"},
+						DinosaurIBPVersion{Version: "1.2"},
+						DinosaurIBPVersion{Version: "5.1"},
 					},
 				},
 				StrimziVersion{
 					Version: "strimzi-cluster-operator-v.2.7.3-0",
-					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "1.0.0"},
-						KafkaVersion{Version: "2.0.0"},
-						KafkaVersion{Version: "5.0.0"},
+					DinosaurVersions: []DinosaurVersion{
+						DinosaurVersion{Version: "1.0.0"},
+						DinosaurVersion{Version: "2.0.0"},
+						DinosaurVersion{Version: "5.0.0"},
 					},
-					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.0"},
-						KafkaIBPVersion{Version: "3.5"},
-						KafkaIBPVersion{Version: "4.0"},
+					DinosaurIBPVersions: []DinosaurIBPVersion{
+						DinosaurIBPVersion{Version: "2.0"},
+						DinosaurIBPVersion{Version: "3.5"},
+						DinosaurIBPVersion{Version: "4.0"},
 					},
 				},
 				StrimziVersion{
 					Version: "strimzi-cluster-operator-v.2.7.5-0",
-					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "0.7.1"},
-						KafkaVersion{Version: "1.5.1"},
-						KafkaVersion{Version: "1.5.8"},
+					DinosaurVersions: []DinosaurVersion{
+						DinosaurVersion{Version: "0.7.1"},
+						DinosaurVersion{Version: "1.5.1"},
+						DinosaurVersion{Version: "1.5.8"},
 					},
-					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "1.2"},
-						KafkaIBPVersion{Version: "2.4"},
-						KafkaIBPVersion{Version: "2.8"},
+					DinosaurIBPVersions: []DinosaurIBPVersion{
+						DinosaurIBPVersion{Version: "1.2"},
+						DinosaurIBPVersion{Version: "2.4"},
+						DinosaurIBPVersion{Version: "2.8"},
 					},
 				},
 			},

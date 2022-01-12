@@ -20,7 +20,7 @@ Feature: connector agent API
     #-----------------------------------------------------------------------------------
     # Create a target cluster, and get the shard access token.
     # -----------------------------------------------------------------------------------
-    When I POST path "/v1/kafka_connector_clusters" with json body:
+    When I POST path "/v1/dinosaur_connector_clusters" with json body:
       """
       {}
       """
@@ -28,17 +28,17 @@ Feature: connector agent API
     And the ".status" selection from the response should match "unconnected"
     Given I store the ".id" selection from the response as ${connector_cluster_id}
 
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
+    When I GET path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/addon_parameters"
     Then the response code should be 200
     And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
 
-    When I POST path "/v1/kafka_connectors?async=true" with json body:
+    When I POST path "/v1/dinosaur_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id": "mykafka"
+          "dinosaur_id": "mydinosaur"
         },
         "deployment_location": {
           "kind": "addon",
@@ -46,8 +46,8 @@ Feature: connector agent API
         },
         "channel":"stable",
         "connector_type_id": "aws-sqs-source-v1alpha1",
-        "kafka": {
-          "bootstrap_server": "kafka.hostname",
+        "dinosaur": {
+          "bootstrap_server": "dinosaur.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
@@ -56,7 +56,7 @@ Feature: connector agent API
             "aws_secret_key": "test",
             "aws_access_key": "test",
             "aws_region": "east",
-            "kafka_topic": "test"
+            "dinosaur_topic": "test"
         }
       }
       """
@@ -73,12 +73,12 @@ Feature: connector agent API
     Given I set the "Authorization" header to "Bearer ${shard_token}"
 
     # There should be no deployments assigned yet, since the cluster status is unconnected
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    When I GET path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
     And the ".kind" selection from the response should match "ConnectorDeploymentList"
     And the ".total" selection from the response should match "0"
 
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments?watch=true&gt_version=0" as a json event stream
+    When I GET path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments?watch=true&gt_version=0" as a json event stream
     Then the response code should be 200
     And the response header "Content-Type" should match "application/json;stream=watch"
 
@@ -94,7 +94,7 @@ Feature: connector agent API
             "updated_at": "0001-01-01T00:00:00Z"
           },
           "spec": {
-            "kafka": {
+            "dinosaur": {
             }
           },
           "status": {
@@ -112,7 +112,7 @@ Feature: connector agent API
     Given I am logged in as "Shard2"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
 
-    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
+    When I PUT path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/status" with json body:
       """
       {
         "phase":"ready",
@@ -145,7 +145,7 @@ Feature: connector agent API
         "type": "CHANGE",
         "error": {},
         "object": {
-          "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
+          "href": "/api/connector_mgmt/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
           "id": "${connector_deployment_id}",
           "kind": "ConnectorDeployment",
           "metadata": {
@@ -154,9 +154,9 @@ Feature: connector agent API
             "updated_at": "${response.object.metadata.updated_at}"
           },
           "spec": {
-            "kafka_id": "mykafka",
-            "kafka": {
-              "bootstrap_server": "kafka.hostname",
+            "dinosaur_id": "mydinosaur",
+            "dinosaur": {
+              "bootstrap_server": "dinosaur.hostname",
               "client_id": "myclient",
               "client_secret": "dGVzdA=="
             },
@@ -169,9 +169,9 @@ Feature: connector agent API
                   "name": "aws-sqs-source",
                   "prefix": "aws"
                 },
-                "kafka": {
-                  "name": "managed-kafka-sink",
-                  "prefix": "kafka"
+                "dinosaur": {
+                  "name": "managed-dinosaur-sink",
+                  "prefix": "dinosaur"
                 },
                 "processors": {
                   "extract_field": "extract-field-action",
@@ -201,7 +201,7 @@ Feature: connector agent API
                 "kind": "base64",
                 "value": "dGVzdA=="
               },
-              "kafka_topic": "test"
+              "dinosaur_topic": "test"
             },
             "desired_state": "ready"
           },
@@ -221,21 +221,21 @@ Feature: connector agent API
 
     # at this stage the user will see that the connector is assigned to the cluster.
     Given I am logged in as "Jimmy"
-    When I GET path "/v1/kafka_connectors/${connector_id}"
+    When I GET path "/v1/dinosaur_connectors/${connector_id}"
     Then the response code should be 200
     And the ".status" selection from the response should match "assigned"
 
     # Now that the cluster is ready, a worker should assign the connector to the cluster for deployment.
     Given I am logged in as "Shard2"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    When I GET path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
     And the response should match json:
       """
       {
         "items": [
           {
-            "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
+            "href": "/api/connector_mgmt/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
             "kind": "ConnectorDeployment",
             "id": "${response.items[0].id}",
             "metadata": {
@@ -244,9 +244,9 @@ Feature: connector agent API
               "updated_at": "${response.items[0].metadata.updated_at}"
             },
             "spec": {
-              "kafka_id": "mykafka",
-              "kafka": {
-                "bootstrap_server": "kafka.hostname",
+              "dinosaur_id": "mydinosaur",
+              "dinosaur": {
+                "bootstrap_server": "dinosaur.hostname",
                 "client_id": "myclient",
                 "client_secret": "dGVzdA=="
               },
@@ -259,9 +259,9 @@ Feature: connector agent API
                     "name": "aws-sqs-source",
                     "prefix": "aws"
                   },
-                  "kafka": {
-                    "name": "managed-kafka-sink",
-                    "prefix": "kafka"
+                  "dinosaur": {
+                    "name": "managed-dinosaur-sink",
+                    "prefix": "dinosaur"
                   },
                   "processors": {
                     "extract_field": "extract-field-action",
@@ -291,7 +291,7 @@ Feature: connector agent API
                   "kind": "base64",
                   "value": "dGVzdA=="
                 },
-                "kafka_topic": "test"
+                "dinosaur_topic": "test"
               },
               "desired_state": "ready"
             },
@@ -309,12 +309,12 @@ Feature: connector agent API
         "total": 1
       }
       """
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
+    When I GET path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
     Then the response code should be 200
     And the response should match json:
       """
       {
-          "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
+          "href": "/api/connector_mgmt/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
           "kind": "ConnectorDeployment",
           "id": "${response.id}",
           "metadata": {
@@ -323,9 +323,9 @@ Feature: connector agent API
             "updated_at": "${response.metadata.updated_at}"
           },
           "spec": {
-            "kafka_id": "mykafka",
-            "kafka": {
-              "bootstrap_server": "kafka.hostname",
+            "dinosaur_id": "mydinosaur",
+            "dinosaur": {
+              "bootstrap_server": "dinosaur.hostname",
               "client_id": "myclient",
               "client_secret": "dGVzdA=="
             },
@@ -338,9 +338,9 @@ Feature: connector agent API
                   "name": "aws-sqs-source",
                   "prefix": "aws"
                 },
-                "kafka": {
-                  "name": "managed-kafka-sink",
-                  "prefix": "kafka"
+                "dinosaur": {
+                  "name": "managed-dinosaur-sink",
+                  "prefix": "dinosaur"
                 },
                 "processors": {
                   "extract_field": "extract-field-action",
@@ -370,7 +370,7 @@ Feature: connector agent API
                 "kind": "base64",
                 "value": "dGVzdA=="
               },
-              "kafka_topic": "test"
+              "dinosaur_topic": "test"
             },
             "desired_state": "ready"
           },
@@ -382,7 +382,7 @@ Feature: connector agent API
           }
       }
       """
-    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+    When I PUT path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
       {
         "phase":"ready",
@@ -405,13 +405,13 @@ Feature: connector agent API
     And the response should match ""
 
     # Verify the connector deployment status is updated.
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    When I GET path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
     And the ".items[0].status.phase" selection from the response should match "ready"
 
     # Jimmy should now see his connector's status update.
     Given I am logged in as "Jimmy"
-    When I GET path "/v1/kafka_connectors/${connector_id}"
+    When I GET path "/v1/dinosaur_connectors/${connector_id}"
     Then the response code should be 200
     And the ".status" selection from the response should match "ready"
 
@@ -422,7 +422,7 @@ Feature: connector agent API
 
     # Updating the connector config should update the deployment.
     Given I set the "Content-Type" header to "application/merge-patch+json"
-    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+    When I PATCH path "/v1/dinosaur_connectors/${connector_id}" with json body:
       """
       {
         "connector_spec": {
@@ -440,17 +440,17 @@ Feature: connector agent API
           "aws_queue_name_or_arn": "I-GOT-PATCHED",
           "aws_region": "east",
           "aws_secret_key": {},
-          "kafka_topic": "test"
+          "dinosaur_topic": "test"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "deployment_location": {
           "kind": "addon",
           "cluster_id": "${connector_cluster_id}"
         },
-        "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
+        "href": "/api/connector_mgmt/v1/dinosaur_connectors/${connector_id}",
         "id": "${connector_id}",
-        "kafka": {
-          "bootstrap_server": "kafka.hostname",
+        "dinosaur": {
+          "bootstrap_server": "dinosaur.hostname",
           "client_id": "myclient"
         },
         "kind": "Connector",
@@ -458,7 +458,7 @@ Feature: connector agent API
           "name": "example 1",
           "owner": "${response.metadata.owner}",
           "created_at": "${response.metadata.created_at}",
-          "kafka_id": "mykafka",
+          "dinosaur_id": "mydinosaur",
           "updated_at": "${response.metadata.updated_at}",
           "resource_version": ${response.metadata.resource_version}
         },
@@ -481,7 +481,7 @@ Feature: connector agent API
         "type": "CHANGE",
         "error": {},
         "object": {
-          "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${response.object.id}",
+          "href": "/api/connector_mgmt/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments/${response.object.id}",
           "id": "${response.object.id}",
           "kind": "ConnectorDeployment",
           "metadata": {
@@ -490,9 +490,9 @@ Feature: connector agent API
             "updated_at": "${response.object.metadata.updated_at}"
           },
           "spec": {
-            "kafka_id": "mykafka",
-            "kafka": {
-              "bootstrap_server": "kafka.hostname",
+            "dinosaur_id": "mydinosaur",
+            "dinosaur": {
+              "bootstrap_server": "dinosaur.hostname",
               "client_id": "myclient",
               "client_secret": "dGVzdA=="
             },
@@ -505,9 +505,9 @@ Feature: connector agent API
                   "name": "aws-sqs-source",
                   "prefix": "aws"
                 },
-                "kafka": {
-                  "name": "managed-kafka-sink",
-                  "prefix": "kafka"
+                "dinosaur": {
+                  "name": "managed-dinosaur-sink",
+                  "prefix": "dinosaur"
                 },
                 "processors": {
                   "extract_field": "extract-field-action",
@@ -537,7 +537,7 @@ Feature: connector agent API
                 "kind": "base64",
                 "value": "dGVzdA=="
               },
-              "kafka_topic": "test"
+              "dinosaur_topic": "test"
             },
             "desired_state": "ready"
           },
@@ -570,7 +570,7 @@ Feature: connector agent API
 
     # Now lets verify connector upgrades due to catalog updates
     Given I am logged in as "Ricky Bobby"
-    And I GET path "/v1/admin/kafka_connector_clusters/"
+    And I GET path "/v1/admin/dinosaur_connector_clusters/"
     And the response code should be 200
     And the response should match json:
       """
@@ -619,7 +619,7 @@ Feature: connector agent API
         "total": 3
       }
       """
-    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
+    And I GET path "/v1/admin/dinosaur_connector_clusters/${connector_cluster_id}/upgrades/type"
     And the response code should be 200
     And the response should match json:
       """
@@ -632,7 +632,7 @@ Feature: connector agent API
       }
       """
     Given I am logged in as "Carley Bobby"
-    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
+    And I GET path "/v1/admin/dinosaur_connector_clusters/${connector_cluster_id}/upgrades/operator"
     And the response code should be 200
     And the response should match json:
       """
@@ -658,7 +658,7 @@ Feature: connector agent API
         ]
       }
       """
-    Then I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
+    Then I GET path "/v1/admin/dinosaur_connector_clusters/${connector_cluster_id}/upgrades/type"
     And the response code should be 200
     And the response should match json:
       """
@@ -684,7 +684,7 @@ Feature: connector agent API
 
     # Upgrade by type
     # Should fail for Carley, who can't write
-    Then I PUT path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type" with json body:
+    Then I PUT path "/v1/admin/dinosaur_connector_clusters/${connector_cluster_id}/upgrades/type" with json body:
       """
       ${upgrade_items}
       """
@@ -692,7 +692,7 @@ Feature: connector agent API
 
     # Should work for Cal, who can write
     Given I am logged in as "Cal Naughton Jr."
-    Then I PUT path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type" with json body:
+    Then I PUT path "/v1/admin/dinosaur_connector_clusters/${connector_cluster_id}/upgrades/type" with json body:
       """
       ${upgrade_items}
       """
@@ -702,7 +702,7 @@ Feature: connector agent API
     # agent should get updated connector type version
     Given I am logged in as "Shard"
     And I set the "Authorization" header to "Bearer ${shard_token}"
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    When I GET path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
     And the ".items[0].spec.shard_metadata" selection from the response should match json:
       """"
@@ -719,7 +719,7 @@ Feature: connector agent API
 
     # type upgrade is not available anymore
     Then I am logged in as "Ricky Bobby"
-    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
+    And I GET path "/v1/admin/dinosaur_connector_clusters/${connector_cluster_id}/upgrades/type"
     And the response code should be 200
     And the response should match json:
       """
@@ -735,7 +735,7 @@ Feature: connector agent API
     # Simulate the agent telling us there is an operator upgrade available for the deployment...
     Given I am logged in as "Shard"
     And I set the "Authorization" header to "Bearer ${shard_token}"
-    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+    When I PUT path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
       {
         "phase":"ready",
@@ -763,7 +763,7 @@ Feature: connector agent API
     And the response should match ""
 
     Then I am logged in as "Ricky Bobby"
-    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
+    And I GET path "/v1/admin/dinosaur_connector_clusters/${connector_cluster_id}/upgrades/operator"
     And the response code should be 200
     And the response should match json:
       """
@@ -787,7 +787,7 @@ Feature: connector agent API
     And I store the ".items" selection from the response as ${upgrade_items}
 
     # Upgrade by operator
-    Then I PUT path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator" with json body:
+    Then I PUT path "/v1/admin/dinosaur_connector_clusters/${connector_cluster_id}/upgrades/operator" with json body:
       """
       ${upgrade_items}
       """
@@ -797,14 +797,14 @@ Feature: connector agent API
     # agent should get updated operator id
     Given I am logged in as "Shard"
     And I set the "Authorization" header to "Bearer ${shard_token}"
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    When I GET path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
     And the ".items[0].spec.operator_id" selection from the response should match "camel-k-1.0.1"
 
     # agent removes available operator upgrade status
     Given I am logged in as "Shard"
     And I set the "Authorization" header to "Bearer ${shard_token}"
-    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+    When I PUT path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
       {
         "phase":"ready",
@@ -822,7 +822,7 @@ Feature: connector agent API
 
     # upgrade is not available anymore
     Then I am logged in as "Ricky Bobby"
-    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
+    And I GET path "/v1/admin/dinosaur_connector_clusters/${connector_cluster_id}/upgrades/operator"
     And the response code should be 200
     And the response should match json:
       """
@@ -844,7 +844,7 @@ Feature: connector agent API
       | 1     |
 
     Given I am logged in as "Jimmy"
-    When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
+    When I DELETE path "/v1/dinosaur_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204
     And the response should match ""
 
@@ -854,7 +854,7 @@ Feature: connector agent API
       | 0     |
 
     # Connectors that were assigning the cluster get updated to not refer to them.
-    When I GET path "/v1/kafka_connectors/${connector_id}"
+    When I GET path "/v1/dinosaur_connectors/${connector_id}"
     Then the response code should be 200
     And the ".status" selection from the response should match "assigning"
     And the ".deployment_location" selection from the response should match json:
@@ -873,7 +873,7 @@ Feature: connector agent API
     #---------------------------------------------------------------------------------------------
     # Create a target cluster, and get the shard access token, and connect it using the Shard user
     # --------------------------------------------------------------------------------------------
-    When I POST path "/v1/kafka_connector_clusters" with json body:
+    When I POST path "/v1/dinosaur_connector_clusters" with json body:
       """
       {}
       """
@@ -881,13 +881,13 @@ Feature: connector agent API
     And the ".status" selection from the response should match "unconnected"
     Given I store the ".id" selection from the response as ${connector_cluster_id}
 
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
+    When I GET path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/addon_parameters"
     Then the response code should be 200
     And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
 
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
-    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
+    When I PUT path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/status" with json body:
       """
       {
         "phase":"ready",
@@ -912,13 +912,13 @@ Feature: connector agent API
     # Create a connector
     # --------------------------------------------------------------------------------------------
     Given I am logged in as "Bobby"
-    When I POST path "/v1/kafka_connectors?async=true" with json body:
+    When I POST path "/v1/dinosaur_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id": "mykafka"
+          "dinosaur_id": "mydinosaur"
         },
         "deployment_location": {
           "kind": "addon",
@@ -926,14 +926,14 @@ Feature: connector agent API
         },
         "channel":"stable",
         "connector_type_id": "log_sink_0.1",
-        "kafka": {
-          "bootstrap_server": "kafka.hostname",
+        "dinosaur": {
+          "bootstrap_server": "dinosaur.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
         "connector_spec": {
           "log_multi_line": true,
-          "kafka_topic":"test",
+          "dinosaur_topic":"test",
           "processors":[]
         }
       }
@@ -946,11 +946,11 @@ Feature: connector agent API
     #-----------------------------------------------------------------------------------------------------------------
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
-    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    Given I wait up to "5" seconds for a GET on path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
+    When I GET path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments"
     Then the ".total" selection from the response should match "1"
     Given I store the ".items[0].id" selection from the response as ${connector_deployment_id}
-    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+    When I PUT path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
       {
         "phase":"ready",
@@ -960,8 +960,8 @@ Feature: connector agent API
     Then the response code should be 204
 
     Given I am logged in as "Bobby"
-    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".status" selection to match "ready"
-    When I GET path "/v1/kafka_connectors/${connector_id}"
+    Given I wait up to "5" seconds for a GET on path "/v1/dinosaur_connectors/${connector_id}" response ".status" selection to match "ready"
+    When I GET path "/v1/dinosaur_connectors/${connector_id}"
     Then the ".status" selection from the response should match "ready"
 
     #-----------------------------------------------------------------------------------------------------------------
@@ -969,7 +969,7 @@ Feature: connector agent API
     #-----------------------------------------------------------------------------------------------------------------
     # Updating the connector config should update the deployment.
     Given I set the "Content-Type" header to "application/merge-patch+json"
-    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+    When I PATCH path "/v1/dinosaur_connectors/${connector_id}" with json body:
       """
       {
         "desired_state": "stopped"
@@ -979,10 +979,10 @@ Feature: connector agent API
 
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
-    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "stopped"
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
+    Given I wait up to "5" seconds for a GET on path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "stopped"
+    When I GET path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
     Then the ".spec.desired_state" selection from the response should match "stopped"
-    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+    When I PUT path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
       {
         "phase":"stopped",
@@ -992,14 +992,14 @@ Feature: connector agent API
     Then the response code should be 204
 
     Given I am logged in as "Bobby"
-    When I GET path "/v1/kafka_connectors/${connector_id}"
+    When I GET path "/v1/dinosaur_connectors/${connector_id}"
     Then the ".status" selection from the response should match "stopped"
 
     #-----------------------------------------------------------------------------------------------------------------
     # Bobby sets desired state to ready.. Agent sees new deployment
     #-----------------------------------------------------------------------------------------------------------------
     Given I set the "Content-Type" header to "application/merge-patch+json"
-    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+    When I PATCH path "/v1/dinosaur_connectors/${connector_id}" with json body:
       """
       {
         "desired_state": "ready"
@@ -1009,8 +1009,8 @@ Feature: connector agent API
 
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
-    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    Given I wait up to "5" seconds for a GET on path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
+    When I GET path "/v1/dinosaur_connector_clusters/${connector_cluster_id}/deployments"
     Then the ".total" selection from the response should match "1"
     And the ".items[0].spec.desired_state" selection from the response should match "ready"
 

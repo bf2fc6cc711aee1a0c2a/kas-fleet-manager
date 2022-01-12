@@ -1,15 +1,15 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.4
 
 COPY \
-    kas-fleet-manager \
+    fleet-manager \
     /usr/local/bin/
 
 EXPOSE 8000
 
-ENTRYPOINT ["/usr/local/bin/kas-fleet-manager", "serve"]
+ENTRYPOINT ["/usr/local/bin/fleet-manager", "serve"]
 
-LABEL name="kas-fleet-manager" \
+LABEL name="fleet-manager" \
       vendor="Red Hat" \
       version="0.0.1" \
-      summary="KasFleetManager" \
-      description="Kafka Service Fleet Manager"
+      summary="FleetManager" \
+      description="Dinosaur Service Fleet Manager"

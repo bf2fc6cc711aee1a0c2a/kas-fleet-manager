@@ -9,9 +9,9 @@ import (
 	gocloak "github.com/Nerzal/gocloak/v8"
 	"github.com/onsi/gomega"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 
 	pkgErr "github.com/pkg/errors"
 )
@@ -22,7 +22,7 @@ const (
 	secret       = "secret"
 )
 
-func TestKeycloakService_RegisterKafkaClientInSSO(t *testing.T) {
+func TestKeycloakService_RegisterDinosaurClientInSSO(t *testing.T) {
 	type fields struct {
 		kcClient keycloak.KcClient
 	}
@@ -34,7 +34,7 @@ func TestKeycloakService_RegisterKafkaClientInSSO(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "fetch kafka client secret from sso when client already exists",
+			name: "fetch dinosaur client secret from sso when client already exists",
 			fields: fields{
 				kcClient: &keycloak.KcClientMock{
 					GetTokenFunc: func() (string, error) {
@@ -55,7 +55,7 @@ func TestKeycloakService_RegisterKafkaClientInSSO(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "successfully register a new sso client for the kafka cluster",
+			name: "successfully register a new sso client for the dinosaur cluster",
 			fields: fields{
 				kcClient: &keycloak.KcClientMock{
 					GetTokenFunc: func() (string, error) {
@@ -85,7 +85,7 @@ func TestKeycloakService_RegisterKafkaClientInSSO(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "failed to register sso client for the kafka cluster",
+			name: "failed to register sso client for the dinosaur cluster",
 			fields: fields{
 				kcClient: &keycloak.KcClientMock{
 					GetTokenFunc: func() (string, error) {
@@ -120,12 +120,12 @@ func TestKeycloakService_RegisterKafkaClientInSSO(t *testing.T) {
 			keycloakService := keycloakService{
 				tt.fields.kcClient,
 			}
-			got, err := keycloakService.RegisterKafkaClientInSSO("kafka-12212", "121212")
+			got, err := keycloakService.RegisterDinosaurClientInSSO("dinosaur-12212", "121212")
 			if (err != nil) != tt.wantErr {
-				t.Errorf("RegisterKafkaClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("RegisterDinosaurClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RegisterKafkaClientInSSO() got = %+v, want %+v", got, tt.want)
+				t.Errorf("RegisterDinosaurClientInSSO() got = %+v, want %+v", got, tt.want)
 			}
 		})
 	}
@@ -179,7 +179,7 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "successfully register a new sso client for the kafka cluster",
+			name: "successfully register a new sso client for the dinosaur cluster",
 			fields: fields{
 				kcClient: &keycloak.KcClientMock{
 					GetTokenFunc: func() (string, error) {
@@ -266,7 +266,7 @@ func TestNewKeycloakService_DeRegisterClientInSSO(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "successful deleted the kafka client in sso",
+			name: "successful deleted the dinosaur client in sso",
 			fields: fields{
 				kcClient: &keycloak.KcClientMock{
 					GetTokenFunc: func() (string, error) {
@@ -286,7 +286,7 @@ func TestNewKeycloakService_DeRegisterClientInSSO(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "failed to delete the kafka client from sso",
+			name: "failed to delete the dinosaur client from sso",
 			fields: fields{
 				kcClient: &keycloak.KcClientMock{
 					GetTokenFunc: func() (string, error) {
@@ -314,14 +314,14 @@ func TestNewKeycloakService_DeRegisterClientInSSO(t *testing.T) {
 			}
 			err := keycloakService.DeRegisterClientInSSO(testClientID)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("RegisterKafkaClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("RegisterDinosaurClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 
 }
 
-func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.T) {
+func TestKeycloakService_RegisterFleetshardOperatorServiceAccount(t *testing.T) {
 	type fields struct {
 		kcClient keycloak.KcClient
 	}
@@ -392,9 +392,9 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 			},
 			want: &api.ServiceAccount{
 				ID:           fakeClientId,
-				ClientID:     "kas-fleetshard-agent-test-cluster-id",
+				ClientID:     "fleetshard-agent-test-cluster-id",
 				ClientSecret: fakeClientSecret,
-				Name:         "kas-fleetshard-agent-test-cluster-id",
+				Name:         "fleetshard-agent-test-cluster-id",
 				Description:  "service account for agent on cluster test-cluster-id",
 			},
 			wantErr: false,
@@ -449,9 +449,9 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 			},
 			want: &api.ServiceAccount{
 				ID:           fakeClientId,
-				ClientID:     "kas-fleetshard-agent-test-cluster-id",
+				ClientID:     "fleetshard-agent-test-cluster-id",
 				ClientSecret: fakeClientSecret,
-				Name:         "kas-fleetshard-agent-test-cluster-id",
+				Name:         "fleetshard-agent-test-cluster-id",
 				Description:  "service account for agent on cluster test-cluster-id",
 			},
 			wantErr: false,
@@ -462,18 +462,18 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 			keycloakService := keycloakService{
 				tt.fields.kcClient,
 			}
-			got, err := keycloakService.RegisterKasFleetshardOperatorServiceAccount(tt.args.clusterId, tt.args.roleName)
+			got, err := keycloakService.RegisterFleetshardOperatorServiceAccount(tt.args.clusterId, tt.args.roleName)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("RegisterKasFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("RegisterFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RegisterKasFleetshardOperatorServiceAccount() got = %+v, want %+v", got, tt.want)
+				t.Errorf("RegisterFleetshardOperatorServiceAccount() got = %+v, want %+v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestKeycloakService_DeRegisterKasFleetshardOperatorServiceAccount(t *testing.T) {
+func TestKeycloakService_DeRegisterFleetshardOperatorServiceAccount(t *testing.T) {
 	type fields struct {
 		kcClient keycloak.KcClient
 	}
@@ -573,7 +573,7 @@ func TestKeycloakService_DeRegisterKasFleetshardOperatorServiceAccount(t *testin
 			keycloakService := keycloakService{
 				tt.fields.kcClient,
 			}
-			err := keycloakService.DeRegisterKasFleetshardOperatorServiceAccount(tt.args.clusterId)
+			err := keycloakService.DeRegisterFleetshardOperatorServiceAccount(tt.args.clusterId)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}

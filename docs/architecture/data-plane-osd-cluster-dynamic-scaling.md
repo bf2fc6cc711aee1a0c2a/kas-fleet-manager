@@ -11,8 +11,8 @@ Data Plane OSD Cluster Dynamic Scaling functionality currently deals with:
 * Dynamic scaling of OSD Clusters
 
 Dynamic scaling evaluation/trigger for a given Data Plane OSD cluster is
-initiated and performed by KAS Fleet Shard Operator on the data plane, calling
-the `/agent-clusters/{cluster_id}/status` endpoint provided by KAS Fleet Manager.
+initiated and performed by Fleet Shard Operator on the data plane, calling
+the `/agent-clusters/{cluster_id}/status` endpoint provided by Fleet Manager.
 The information provided when this call is performed is defined in the private
 OpenAPI spec file in the `DataPlaneClusterUpdateStatusRequest` data type.
 
@@ -34,9 +34,9 @@ need to happen:
 ## OSD Cluster Capacity Calculation
 
 To calculate whether the cluster being evaluated has available capacity
-Kas Fleet Manager will check whether the number of remaining Kafka Connections
-or remaining Kafka Partitions (provided in `.status.remaining`) is less than
-what a single Kafka Cluster of Model T consumes correspondingly.
+Fleet Manager will check whether the number of remaining Dinosaur Connections
+or remaining Dinosaur Partitions (provided in `.status.remaining`) is less than
+what a single Dinosaur Cluster of Model T consumes correspondingly.
 
 If there's available capacity then the cluster will be marked as `ready` if it
 wasn't already.
@@ -55,15 +55,15 @@ If there's no available capacity:
   the current number of compute nodes it has and no more compute nodes can be
   added
 
-The capacity calculation will be performed from the data received by KAS Fleet
+The capacity calculation will be performed from the data received by Fleet
 Shard Operator, BEFORE performing the scaling actions.
 
 ## Compute nodes Scale-Up criteria
 
-KAS Fleet Manager will scale up compute nodes of a data plane cluster if
+Fleet Manager will scale up compute nodes of a data plane cluster if
 all the following conditions are true:
 
-* **At least one** of the reported Kafka attribute values has crossed its
+* **At least one** of the reported Dinosaur attribute values has crossed its
   corresponding Scale-Up threshold
 * The current number of nodes is smaller than the restricted
   ceiling value (see below for a definition of restricted ceiling)
@@ -77,12 +77,12 @@ requirements (3) ONLY in case the cluster is multi-az. In case
 cluster isn't multi-az then restricted ceiling is the same as reported ceiling
 
 Scale-Up thresholds:
-  * Kafka Connections: The number of connections required by a single Kafka Cluster of Model T
-  * Kafka Partitions: The number of partitions required by a single Kafka Cluster of Model T
+  * Dinosaur Connections: The number of connections required by a single Dinosaur Cluster of Model T
+  * Dinosaur Partitions: The number of partitions required by a single Dinosaur Cluster of Model T
 
 ### Compute nodes Scale-Up value calculation
 
-Once KAS Fleet Manager has decided to perform scale up of a data plane's cluster
+Once Fleet Manager has decided to perform scale up of a data plane's cluster
 compute nodes, it will try to scale up by the value specified
 in `.status.resizeInfo.nodeDelta`. If the cluster being
 scaled is a Multi-AZ cluster and `.status.resizeInfo.nodeDelta` is not a multiple
@@ -97,10 +97,10 @@ it will scale in a more controlled way.
 
 ## Compute nodes Scale-Down criteria
 
-KAS Fleet Manager will scale down compute nodes of a data plane cluster if all
+Fleet Manager will scale down compute nodes of a data plane cluster if all
 the following conditions are true:
 
-* **All** (notice the difference with scale-up criteria) of the reported Kafka
+* **All** (notice the difference with scale-up criteria) of the reported Dinosaur
   attribute values have crossed their corresponding Scale-Down threshold
 * The current number of nodes is strictly higher than
   the `.status.nodeInfo.currentWorkLoadMinimum` value
@@ -117,18 +117,18 @@ requirements (3) ONLY in case the cluster is multi-az. In case
 cluster isn't multi-az then restricted floor is the same as reported floor
 
 Scale-Down thresholds:
-  * Kafka Connections: The connections specified in `resizeInfo.delta.connections`.
+  * Dinosaur Connections: The connections specified in `resizeInfo.delta.connections`.
     Due to it is currently being assumed `resizeInfo.nodeDelta` will always be
     3 this means that it is a value equivalent to 3 full OSD Compute nodes worth
     of connections
-  * Kafka Partitions: The partitions specified in `resizseInfo.delta.partitions`.
+  * Dinosaur Partitions: The partitions specified in `resizseInfo.delta.partitions`.
     Due to it is currently being assumed `resizeInfo.nodeDelta` will always be 3
     this means that it is a value equivalent to 3 full OSD Compute nodes worth
     of partitions
 
 ### Compute nodes Scale-Down value calculation
 
-Once KAS Fleet Manager has decided to perform scale down of a data plane's compute
+Once Fleet Manager has decided to perform scale down of a data plane's compute
 nodes, it will try to scale down by the value specified
 in `.status.resizeInfo.nodeDelta`. If the cluster
 being scaled is a Multi-AZ cluster and `.status.resizeInfo.nodeDelta` is not a
@@ -147,7 +147,7 @@ controlled way
 The system will delete an OSD cluster, let's call it `clusterA`, from the pool of 
 available clusters when the following conditions are met:
 
-  * `clusterA` is empty i.e there are no longer any Kafka instances on `clusterA`
+  * `clusterA` is empty i.e there are no longer any Dinosaur instances on `clusterA`
   * `clusterA` is in a ready state
   * `clusterA` has at least one sibling cluster that satisfies these conditions:
     * Has the same Cloud Provider as `clusterA`
@@ -160,15 +160,15 @@ status is changed to *deprovisioning*.
 
 A call is then made to OCM to delete it. Once the cluster has been completely removed from OCM, 
 `clusterA`'s external dependencies are then removed. In this step, we are removing the keycloak 
-client created for this cluster's IDP along with removing the kas-fleetshard-operator service 
+client created for this cluster's IDP along with removing the fleetshard-operator service 
 account. At the end, `clusterA` is then *soft deleted* from from the database.
 
 ## OSD Cluster Scale-Up criteria and value calculation
 
 The cluster reconciler periodically evaluates the state of all data plane
-clusters stored in the KAS Fleet Manager database.
+clusters stored in the Fleet Manager database.
 
-KAS Fleet Manager will evaluate each defined provider's regions. For each
+Fleet Manager will evaluate each defined provider's regions. For each
 region it will create a new OSD cluster in it (a scale-up will be triggered at
 OSD cluster level) if all the following conditions are true:
 * All of the clusters in provider's region are in state `full` or `failed`

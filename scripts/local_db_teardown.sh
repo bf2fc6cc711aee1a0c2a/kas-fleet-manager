@@ -8,8 +8,8 @@
 
 set -e
 
-docker stop kas-fleet-manager-db
+docker stop fleet-manager-db
 
-docker rm kas-fleet-manager-db
+docker rm fleet-manager-db
 
-docker network rm kas-fleet-manager-network
+docker network rm fleet-manager-network

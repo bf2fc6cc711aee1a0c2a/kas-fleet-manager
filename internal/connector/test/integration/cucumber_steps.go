@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/workers"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/vault"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/cucumber"
 	"github.com/chirino/graphql"
 	"github.com/chirino/graphql/schema"
 	"github.com/cucumber/godog"
@@ -109,7 +109,7 @@ func (s *extender) deleteKeycloakClient(clientID string) error {
 	env := s.Suite.Helper.Env
 	var keycloakConfig *keycloak.KeycloakConfig
 	env.MustResolve(&keycloakConfig)
-	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.KafkaRealm)
+	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.DinosaurRealm)
 	accessToken, _ := kcClient.GetToken()
 
 	keycloakClient, err := kcClient.GetClient(clientID, accessToken)

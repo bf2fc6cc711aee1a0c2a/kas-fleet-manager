@@ -52,7 +52,7 @@ func (a *ConnectorClustersAdminApiService) GetConnectorUpgradesByOperator(ctx _c
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/upgrades/operator"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/admin/dinosaur_connector_clusters/{connector_cluster_id}/upgrades/operator"
 	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -173,7 +173,7 @@ func (a *ConnectorClustersAdminApiService) GetConnectorUpgradesByType(ctx _conte
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/upgrades/type"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/admin/dinosaur_connector_clusters/{connector_cluster_id}/upgrades/type"
 	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -283,7 +283,7 @@ ListConnectorClusters Returns a list of connector clusters
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
  * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the `ConnectorType` fields. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
- * @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of a SQL statement. Allowed fields in the search are `name`, `description`, `version`, `label`, and `channel`. Allowed operators are `<>`, `=`, or `LIKE`. Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.  Examples:  To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:  ``` name = aws-sqs-source and channel = stable ```[p-]  To return a Kafka instance with a name that starts with `aws`, use the following syntax:  ``` name like aws%25 ```  If the parameter isn't provided, or if the value is empty, then all the Connector Type that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
+ * @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of a SQL statement. Allowed fields in the search are `name`, `description`, `version`, `label`, and `channel`. Allowed operators are `<>`, `=`, or `LIKE`. Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.  Examples:  To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:  ``` name = aws-sqs-source and channel = stable ```[p-]  To return a Dinosaur instance with a name that starts with `aws`, use the following syntax:  ``` name like aws%25 ```  If the parameter isn't provided, or if the value is empty, then all the Connector Type that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
 @return ConnectorClusterList
 */
 func (a *ConnectorClustersAdminApiService) ListConnectorClusters(ctx _context.Context, localVarOptionals *ListConnectorClustersOpts) (ConnectorClusterList, *_nethttp.Response, error) {
@@ -297,7 +297,7 @@ func (a *ConnectorClustersAdminApiService) ListConnectorClusters(ctx _context.Co
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/admin/kafka_connector_clusters/"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/admin/dinosaur_connector_clusters/"
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
@@ -411,7 +411,7 @@ func (a *ConnectorClustersAdminApiService) UpgradeConnectorsByOperator(ctx _cont
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/upgrades/operator"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/admin/dinosaur_connector_clusters/{connector_cluster_id}/upgrades/operator"
 	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -524,7 +524,7 @@ func (a *ConnectorClustersAdminApiService) UpgradeConnectorsByType(ctx _context.
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/upgrades/type"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/admin/dinosaur_connector_clusters/{connector_cluster_id}/upgrades/type"
 	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)

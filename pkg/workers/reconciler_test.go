@@ -2,7 +2,7 @@ package workers
 
 import (
 	"context"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
 	"sync"
 	"testing"
 	"time"

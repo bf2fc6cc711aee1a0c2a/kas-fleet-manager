@@ -11,11 +11,11 @@ package cucumber
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
 	"github.com/dgrijalva/jwt-go"
 	"strings"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/compat"
 	"github.com/cucumber/godog"
 )
 

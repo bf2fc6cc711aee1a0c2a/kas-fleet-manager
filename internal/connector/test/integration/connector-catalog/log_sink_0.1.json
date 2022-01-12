@@ -17,9 +17,9 @@
           "default" : false,
           "x-group" : "common"
         },
-        "kafka_topic" : {
+        "dinosaur_topic" : {
           "title" : "Topic Names",
-          "description" : "Comma separated list of Kafka topic names",
+          "description" : "Comma separated list of Dinosaur topic names",
           "type" : "string"
         },
         "processors" : {
@@ -61,7 +61,7 @@
           }
         }
       },
-      "required" : [ "kafka_topic" ],
+      "required" : [ "dinosaur_topic" ],
       "$defs" : {
         "processors" : {
           "insert_field" : {
@@ -163,9 +163,9 @@
             "name" : "log-sink",
             "prefix" : "log"
           },
-          "kafka" : {
-            "name" : "managed-kafka-source",
-            "prefix" : "kafka"
+          "dinosaur" : {
+            "name" : "managed-dinosaur-source",
+            "prefix" : "dinosaur"
           },
           "processors" : {
             "insert_field" : "insert-field-action",

@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kas-fleet-manager-envoy-config
+  name: fleet-manager-envoy-config
   annotations:
     qontract.recycle: "true"
 data:
@@ -53,7 +53,7 @@ data:
                 address:
                   socket_address:
                     address: 127.0.0.1
-                    port_value: 8000 # KAS Fleet Manager port
+                    port_value: 8000 # Fleet Manager port
         transport_socket:
           name: envoy.transport_sockets.tls
           typed_config:
@@ -150,25 +150,25 @@ data:
                   - "*"
                   routes:
 
-                  # Route kas-fleet-manager's agent-cluster related endpoints
+                  # Route fleet-manager's agent-cluster related endpoints
                   # directly to the service without rate limiting
-                  - name: kas-fleet-shard-operator-agent-cluster-routes
+                  - name: fleet-shard-operator-agent-cluster-routes
                     match:
-                      prefix: /api/kafkas_mgmt/v1/agent-clusters
+                      prefix: /api/dinosaurs_mgmt/v1/agent-clusters
                     route:
                       cluster: backend
 
-                  # Apply rate limit to all other kas-fleet-manager endpoints
-                  - name: kas-fleet-manager-v1-routes
+                  # Apply rate limit to all other fleet-manager endpoints
+                  - name: fleet-manager-v1-routes
                     match:
-                      prefix: /api/kafkas_mgmt/v1
+                      prefix: /api/dinosaurs_mgmt/v1
                     route:
                       cluster: backend
                       rate_limits:
                       - actions:
                         - generic_key:
                             descriptor_key: path
-                            descriptor_value: kas_fleet_manager_v1
+                            descriptor_value: fleet_manager_v1
 
                   # This is an example of how to define a rate limit for a
                   # specific path.
@@ -197,7 +197,7 @@ data:
               - name: envoy.filters.http.ratelimit
                 typed_config:
                   "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
-                  domain: development:kas_fleet_manager # This changes by environment
+                  domain: development:fleet_manager # This changes by environment
                   failure_mode_deny: false
                   timeout: 0.05s
                   rate_limit_service:
@@ -225,6 +225,6 @@ data:
                     json_format:
                       kind: "Error"
                       id: "429"
-                      href: "/api/kafkas_mgmt/v1/errors/429"
-                      code: "KAFKAS-MGMT-429"
+                      href: "/api/dinosaurs_mgmt/v1/errors/429"
+                      code: "DINOSAURS-MGMT-429"
                       reason: "Too Many Requests"

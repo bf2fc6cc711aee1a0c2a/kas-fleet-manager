@@ -2,7 +2,7 @@
   "connector_type" : {
     "schema" : {
       "type" : "object",
-      "required" : [ "aws_queue_name_or_arn", "aws_access_key", "aws_secret_key", "aws_region", "kafka_topic" ],
+      "required" : [ "aws_queue_name_or_arn", "aws_access_key", "aws_secret_key", "aws_region", "dinosaur_topic" ],
       "properties" : {
         "aws_queue_name_or_arn" : {
           "title" : "Queue Name",
@@ -67,9 +67,9 @@
           "example" : "http or https",
           "default" : "https"
         },
-        "kafka_topic" : {
+        "dinosaur_topic" : {
           "title" : "Topic Names",
-          "description" : "Comma separated list of Kafka topic names",
+          "description" : "Comma separated list of Dinosaur topic names",
           "type" : "string"
         },
         "processors" : {
@@ -212,9 +212,9 @@
             "name" : "aws-sqs-source",
             "prefix" : "aws"
           },
-          "kafka" : {
-            "name" : "managed-kafka-sink",
-            "prefix" : "kafka"
+          "dinosaur" : {
+            "name" : "managed-dinosaur-sink",
+            "prefix" : "dinosaur"
           },
           "processors" : {
             "insert_field" : "insert-field-action",
