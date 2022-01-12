@@ -1,4 +1,4 @@
-module github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
+module github.com/bf2fc6cc711aee1a0c2a/fleet-manager
 
 go 1.15
 

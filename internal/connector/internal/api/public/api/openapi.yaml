@@ -17,7 +17,7 @@ tags:
 - name: Connectors
 - name: Connector Clusters
 paths:
-  /api/connector_mgmt/v1/kafka_connector_types/{connector_type_id}:
+  /api/connector_mgmt/v1/dinosaur_connector_types/{connector_type_id}:
     get:
       operationId: getConnectorTypeByID
       parameters:
@@ -68,7 +68,7 @@ paths:
       summary: Get a connector type by id
       tags:
       - Connector Types
-  /api/connector_mgmt/v1/kafka_connector_types:
+  /api/connector_mgmt/v1/dinosaur_connector_types:
     get:
       operationId: listConnectorTypes
       parameters:
@@ -137,7 +137,7 @@ paths:
           name = aws-sqs-source and channel = stable
           ```[p-]
 
-          To return a Kafka instance with a name that starts with `aws`, use the following syntax:
+          To return a Dinosaur instance with a name that starts with `aws`, use the following syntax:
 
           ```
           name like aws%25
@@ -187,7 +187,7 @@ paths:
       summary: Returns a list of connector types
       tags:
       - Connector Types
-  /api/connector_mgmt/v1/kafka_connectors:
+  /api/connector_mgmt/v1/dinosaur_connectors:
     get:
       operationId: listConnectors
       parameters:
@@ -213,10 +213,10 @@ paths:
         schema:
           type: string
         style: form
-      - description: The kafka cluster id
+      - description: The dinosaur cluster id
         explode: true
         in: query
-        name: kafka_id
+        name: dinosaur_id
         required: false
         schema:
           type: string
@@ -317,7 +317,7 @@ paths:
       summary: Create a new connector
       tags:
       - Connectors
-  /api/connector_mgmt/v1/kafka_connectors/{id}:
+  /api/connector_mgmt/v1/dinosaur_connectors/{id}:
     delete:
       operationId: deleteConnector
       parameters:
@@ -329,10 +329,10 @@ paths:
         schema:
           type: string
         style: simple
-      - description: The kafka cluster id
+      - description: The dinosaur cluster id
         explode: true
         in: query
-        name: kafka_id
+        name: dinosaur_id
         required: false
         schema:
           type: string
@@ -361,7 +361,7 @@ paths:
                   $ref: '#/components/examples/404DeleteExample'
               schema:
                 $ref: '#/components/schemas/Error'
-          description: No kafka request with specified ID exists
+          description: No dinosaur request with specified ID exists
         "500":
           content:
             application/json:
@@ -387,10 +387,10 @@ paths:
         schema:
           type: string
         style: simple
-      - description: The kafka cluster id
+      - description: The dinosaur cluster id
         explode: true
         in: query
-        name: kafka_id
+        name: dinosaur_id
         required: false
         schema:
           type: string
@@ -445,10 +445,10 @@ paths:
         schema:
           type: string
         style: simple
-      - description: The kafka cluster id
+      - description: The dinosaur cluster id
         explode: true
         in: query
-        name: kafka_id
+        name: dinosaur_id
         required: false
         schema:
           type: string
@@ -506,7 +506,7 @@ paths:
       summary: patch a connector
       tags:
       - Connectors
-  /api/connector_mgmt/v1/kafka_connector_clusters:
+  /api/connector_mgmt/v1/dinosaur_connector_clusters:
     get:
       operationId: listConnectorClusters
       parameters:
@@ -628,7 +628,7 @@ paths:
       summary: Create a new connector cluster
       tags:
       - Connector Clusters
-  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}:
+  /api/connector_mgmt/v1/dinosaur_connector_clusters/{connector_cluster_id}:
     delete:
       operationId: deleteConnectorCluster
       parameters:
@@ -782,7 +782,7 @@ paths:
       summary: udpate a connector cluster
       tags:
       - Connector Clusters
-  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/addon_parameters:
+  /api/connector_mgmt/v1/dinosaur_connector_clusters/{connector_cluster_id}/addon_parameters:
     get:
       operationId: getConnectorClusterAddonParameters
       parameters:
@@ -850,10 +850,10 @@ components:
         kind: Error
         href: /api/connector_mgmt/v1/errors/23
         code: CONNECTOR-MGMT-23
-        reason: 'Failed to parse search query: Unable to list Kafka requests for api_kafka_service:
-          CONNECTOR-MGMT-23: Failed to parse search query: Unsupported column name
-          for search: ''id''. Supported column names are: region, name, cloud_provider,
-          name, status. Query invalid: id = 123'
+        reason: 'Failed to parse search query: Unable to list Dinosaur requests for
+          api_dinosaur_service: CONNECTOR-MGMT-23: Failed to parse search query: Unsupported
+          column name for search: ''id''. Supported column names are: region, name,
+          cloud_provider, name, status. Query invalid: id = 123'
         operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
     "404Example":
       value:
@@ -868,7 +868,7 @@ components:
         kind: Error
         href: /api/connector_mgmt/v1/errors/7
         code: CONNECTOR-MGMT-7
-        reason: KafkaResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found
+        reason: DinosaurResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found
         operation_id: 1iYO7g2g6HTdUKUa2ksH82kQD3y
     "401Example":
       value:
@@ -884,7 +884,7 @@ components:
         kind: Error
         href: /api/connector_mgmt/v1/errors/36
         code: CONNECTOR-MGMT-36
-        reason: Kafka cluster name is already used
+        reason: Dinosaur cluster name is already used
         operation_id: 6kY0UiEkzkXCzWPeI2oYehd3ED
     "500Example":
       value:
@@ -984,7 +984,7 @@ components:
         name = aws-sqs-source and channel = stable
         ```[p-]
 
-        To return a Kafka instance with a name that starts with `aws`, use the following syntax:
+        To return a Dinosaur instance with a name that starts with `aws`, use the following syntax:
 
         ```
         name like aws%25
@@ -1031,15 +1031,15 @@ components:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/Connector_allOf'
-      description: A connector holds the configuration to connect a Kafka topic to
-        another system.
+      description: A connector holds the configuration to connect a Dinosaur topic
+        to another system.
       x-links:
         connector_type:
           operationId: getConnectorTypeByID
           parameters:
             connector_type_id: connector_type_id
           description: |
-            connector_type gets the connector type by using the the `connector_type_id` parameter in request to `GET /api/connector_mgmt/v1/kafka_connector_types/{connector_type_id}`.
+            connector_type gets the connector type by using the the `connector_type_id` parameter in request to `GET /api/connector_mgmt/v1/dinosaur_connector_types/{connector_type_id}`.
     ClusterTarget:
       discriminator:
         mapping:
@@ -1098,7 +1098,7 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorClusterList_allOf'
-    KafkaConnectionSettings:
+    DinosaurConnectionSettings:
       properties:
         bootstrap_server:
           type: string
@@ -1185,7 +1185,7 @@ components:
           type: array
     Connector_allOf_metadata:
       properties:
-        kafka_id:
+        dinosaur_id:
           type: string
         owner:
           type: string
@@ -1206,8 +1206,8 @@ components:
           $ref: '#/components/schemas/Connector_allOf_metadata'
         deployment_location:
           $ref: '#/components/schemas/ClusterTarget'
-        kafka:
-          $ref: '#/components/schemas/KafkaConnectionSettings'
+        dinosaur:
+          $ref: '#/components/schemas/DinosaurConnectionSettings'
         connector_type_id:
           type: string
         connector_spec:

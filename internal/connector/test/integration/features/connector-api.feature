@@ -13,7 +13,7 @@ Feature: create a a connector
 
   Scenario: Greg lists all connector types
     Given I am logged in as "Greg"
-    When I GET path "/v1/kafka_connector_types"
+    When I GET path "/v1/dinosaur_connector_types"
     Then the response code should be 200
     And the response should match json:
       """
@@ -25,7 +25,7 @@ Feature: create a a connector
               "beta"
             ],
             "description": "AWS SQS Source",
-            "href": "/api/connector_mgmt/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
+            "href": "/api/connector_mgmt/v1/dinosaur_connector_types/aws-sqs-source-v1alpha1",
             "icon_href": "TODO",
             "id": "aws-sqs-source-v1alpha1",
             "kind": "ConnectorType",
@@ -188,8 +188,8 @@ Feature: create a a connector
                   "title": "Secret Key",
                   "x-group": "credentials"
                 },
-                "kafka_topic": {
-                  "description": "Comma separated list of Kafka topic names",
+                "dinosaur_topic": {
+                  "description": "Comma separated list of Dinosaur topic names",
                   "title": "Topic Names",
                   "type": "string"
                 },
@@ -250,7 +250,7 @@ Feature: create a a connector
                 "aws_access_key",
                 "aws_secret_key",
                 "aws_region",
-                "kafka_topic"
+                "dinosaur_topic"
               ],
               "type": "object"
             },
@@ -261,7 +261,7 @@ Feature: create a a connector
               "stable"
             ],
             "description": "Log Sink",
-            "href": "/api/connector_mgmt/v1/kafka_connector_types/log_sink_0.1",
+            "href": "/api/connector_mgmt/v1/dinosaur_connector_types/log_sink_0.1",
             "icon_href": "TODO",
             "id": "log_sink_0.1",
             "kind": "ConnectorType",
@@ -355,8 +355,8 @@ Feature: create a a connector
                 }
               },
               "properties": {
-                "kafka_topic": {
-                  "description": "Comma separated list of Kafka topic names",
+                "dinosaur_topic": {
+                  "description": "Comma separated list of Dinosaur topic names",
                   "title": "Topic Names",
                   "type": "string"
                 },
@@ -427,7 +427,7 @@ Feature: create a a connector
                 }
               },
               "required": [
-                "kafka_topic"
+                "dinosaur_topic"
               ],
               "type": "object"
             },
@@ -443,7 +443,7 @@ Feature: create a a connector
 
   Scenario: Greg searches for sink connector types
     Given I am logged in as "Greg"
-    When I GET path "/v1/kafka_connector_types?search=label=sink"
+    When I GET path "/v1/dinosaur_connector_types?search=label=sink"
     Then the response code should be 200
     And the response should match json:
       """
@@ -454,7 +454,7 @@ Feature: create a a connector
               "stable"
             ],
             "description": "Log Sink",
-            "href": "/api/connector_mgmt/v1/kafka_connector_types/log_sink_0.1",
+            "href": "/api/connector_mgmt/v1/dinosaur_connector_types/log_sink_0.1",
             "icon_href": "TODO",
             "id": "log_sink_0.1",
             "kind": "ConnectorType",
@@ -548,8 +548,8 @@ Feature: create a a connector
                 }
               },
               "properties": {
-                "kafka_topic": {
-                  "description": "Comma separated list of Kafka topic names",
+                "dinosaur_topic": {
+                  "description": "Comma separated list of Dinosaur topic names",
                   "title": "Topic Names",
                   "type": "string"
                 },
@@ -620,7 +620,7 @@ Feature: create a a connector
                 }
               },
               "required": [
-                "kafka_topic"
+                "dinosaur_topic"
               ],
               "type": "object"
             },
@@ -636,7 +636,7 @@ Feature: create a a connector
 
   Scenario: Greg searches for connector types on beta channel, ordered by version
     Given I am logged in as "Greg"
-    When I GET path "/v1/kafka_connector_types?search=channel=beta&orderBy=version"
+    When I GET path "/v1/dinosaur_connector_types?search=channel=beta&orderBy=version"
     Then the response code should be 200
     And the response should match json:
       """
@@ -648,7 +648,7 @@ Feature: create a a connector
                "beta"
              ],
              "description": "AWS SQS Source",
-             "href": "/api/connector_mgmt/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
+             "href": "/api/connector_mgmt/v1/dinosaur_connector_types/aws-sqs-source-v1alpha1",
              "icon_href": "TODO",
              "id": "aws-sqs-source-v1alpha1",
              "kind": "ConnectorType",
@@ -811,8 +811,8 @@ Feature: create a a connector
                    "title": "Secret Key",
                    "x-group": "credentials"
                  },
-                 "kafka_topic": {
-                   "description": "Comma separated list of Kafka topic names",
+                 "dinosaur_topic": {
+                   "description": "Comma separated list of Dinosaur topic names",
                    "title": "Topic Names",
                    "type": "string"
                  },
@@ -873,7 +873,7 @@ Feature: create a a connector
                  "aws_access_key",
                  "aws_secret_key",
                  "aws_region",
-                 "kafka_topic"
+                 "dinosaur_topic"
                ],
                "type": "object"
              },
@@ -889,7 +889,7 @@ Feature: create a a connector
 
   Scenario: Greg uses paging to list connector types
     Given I am logged in as "Greg"
-    When I GET path "/v1/kafka_connector_types?orderBy=name%20asc&page=2&size=1"
+    When I GET path "/v1/dinosaur_connector_types?orderBy=name%20asc&page=2&size=1"
     Then the response code should be 200
     And the response should match json:
       """
@@ -900,7 +900,7 @@ Feature: create a a connector
                "stable"
              ],
              "description": "Log Sink",
-             "href": "/api/connector_mgmt/v1/kafka_connector_types/log_sink_0.1",
+             "href": "/api/connector_mgmt/v1/dinosaur_connector_types/log_sink_0.1",
              "icon_href": "TODO",
              "id": "log_sink_0.1",
              "kind": "ConnectorType",
@@ -994,8 +994,8 @@ Feature: create a a connector
                  }
                },
                "properties": {
-                 "kafka_topic": {
-                   "description": "Comma separated list of Kafka topic names",
+                 "dinosaur_topic": {
+                   "description": "Comma separated list of Dinosaur topic names",
                    "title": "Topic Names",
                    "type": "string"
                  },
@@ -1066,7 +1066,7 @@ Feature: create a a connector
                  }
                },
                "required": [
-                 "kafka_topic"
+                 "dinosaur_topic"
                ],
                "type": "object"
              },
@@ -1082,20 +1082,20 @@ Feature: create a a connector
 
   Scenario: Greg tries to create a connector with an invalid configuration spec
     Given I am logged in as "Greg"
-    When I POST path "/v1/kafka_connectors?async=true" with json body:
+    When I POST path "/v1/dinosaur_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id":"mykafka"
+          "dinosaur_id":"mydinosaur"
         },
         "deployment_location": {
           "kind": "addon",
           "cluster_id": "default"
         },
-        "kafka": {
-          "bootstrap_server": "kafka.hostname",
+        "dinosaur": {
+          "bootstrap_server": "dinosaur.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
@@ -1104,7 +1104,7 @@ Feature: create a a connector
             "aws_access_key": "test",
             "aws_secret_key": "test",
             "aws_region": "east",
-            "kafka_topic": "test"
+            "dinosaur_topic": "test"
         }
       }
       """
@@ -1123,21 +1123,21 @@ Feature: create a a connector
 
   Scenario: Greg tries to create a connector with an invalid deployment_location.kind
     Given I am logged in as "Greg"
-    When I POST path "/v1/kafka_connectors?async=true" with json body:
+    When I POST path "/v1/dinosaur_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id":"mykafka"
+          "dinosaur_id":"mydinosaur"
         },
         "deployment_location": {
           "kind": "WRONG",
           "cluster_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
-        "kafka": {
-          "bootstrap_server": "kafka.hostname",
+        "dinosaur": {
+          "bootstrap_server": "dinosaur.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
@@ -1165,21 +1165,21 @@ Feature: create a a connector
   Scenario: Greg creates lists and deletes a connector verifying that Evil Bob can't access Gregs Connectors
   but Coworker Sally can.
     Given I am logged in as "Greg"
-    When I POST path "/v1/kafka_connectors?async=true" with json body:
+    When I POST path "/v1/dinosaur_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id":"mykafka"
+          "dinosaur_id":"mydinosaur"
         },
         "deployment_location": {
           "kind": "addon",
           "cluster_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
-        "kafka": {
-          "bootstrap_server": "kafka.hostname",
+        "dinosaur": {
+          "bootstrap_server": "dinosaur.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
@@ -1188,7 +1188,7 @@ Feature: create a a connector
             "aws_access_key": "test",
             "aws_secret_key": "test",
             "aws_region": "east",
-            "kafka_topic": "test"
+            "dinosaur_topic": "test"
         }
       }
       """
@@ -1196,7 +1196,7 @@ Feature: create a a connector
     And the ".status" selection from the response should match "assigning"
 
     Given I store the ".id" selection from the response as ${connector_id}
-    When I GET path "/v1/kafka_connectors?kafka_id=mykafka"
+    When I GET path "/v1/dinosaur_connectors?dinosaur_id=mydinosaur"
     Then the response code should be 200
     And the response should match json:
       """
@@ -1204,8 +1204,8 @@ Feature: create a a connector
         "items": [
           {
             "channel": "stable",
-            "kafka": {
-              "bootstrap_server": "kafka.hostname",
+            "dinosaur": {
+              "bootstrap_server": "dinosaur.hostname",
               "client_id": "myclient"
             },
             "connector_spec": {
@@ -1213,19 +1213,19 @@ Feature: create a a connector
               "aws_access_key": {},
               "aws_secret_key": {},
               "aws_region": "east",
-              "kafka_topic": "test"
+              "dinosaur_topic": "test"
             },
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "deployment_location": {
               "cluster_id": "default",
               "kind": "addon"
             },
-            "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
+            "href": "/api/connector_mgmt/v1/dinosaur_connectors/${connector_id}",
             "id": "${connector_id}",
             "kind": "Connector",
             "metadata": {
               "created_at": "${response.items[0].metadata.created_at}",
-              "kafka_id": "mykafka",
+              "dinosaur_id": "mydinosaur",
               "name": "example 1",
               "owner": "${response.items[0].metadata.owner}",
               "resource_version": ${response.items[0].metadata.resource_version},
@@ -1242,7 +1242,7 @@ Feature: create a a connector
       }
       """
 
-    When I GET path "/v1/kafka_connectors/${connector_id}"
+    When I GET path "/v1/dinosaur_connectors/${connector_id}"
     Then the response code should be 200
     And the ".status" selection from the response should match "assigning"
     And the ".id" selection from the response should match "${connector_id}"
@@ -1251,17 +1251,17 @@ Feature: create a a connector
       {
           "id": "${connector_id}",
           "kind": "Connector",
-          "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
+          "href": "/api/connector_mgmt/v1/dinosaur_connectors/${connector_id}",
           "metadata": {
-              "kafka_id": "mykafka",
+              "dinosaur_id": "mydinosaur",
               "owner": "${response.metadata.owner}",
               "name": "example 1",
               "created_at": "${response.metadata.created_at}",
               "updated_at": "${response.metadata.updated_at}",
               "resource_version": ${response.metadata.resource_version}
           },
-          "kafka": {
-            "bootstrap_server": "kafka.hostname",
+          "dinosaur": {
+            "bootstrap_server": "dinosaur.hostname",
             "client_id": "myclient"
           },
           "deployment_location": {
@@ -1275,7 +1275,7 @@ Feature: create a a connector
               "aws_access_key": {},
               "aws_secret_key": {},
               "aws_region": "east",
-              "kafka_topic": "test"
+              "dinosaur_topic": "test"
           },
           "desired_state": "ready",
           "status": "assigning"
@@ -1283,7 +1283,7 @@ Feature: create a a connector
       """
 
     Given I set the "Content-Type" header to "application/merge-patch+json"
-    When I PATCH path "/v1/kafka-connectors/${connector_id}" with json body:
+    When I PATCH path "/v1/dinosaur-connectors/${connector_id}" with json body:
       """
       {
           "connector_spec": {
@@ -1310,10 +1310,10 @@ Feature: create a a connector
     Given LOCK--------------------------------------------------------------
       Given I reset the vault counters
       Given I set the "Content-Type" header to "application/merge-patch+json"
-      When I PATCH path "/v1/kafka-connectors/${connector_id}" with json body:
+      When I PATCH path "/v1/dinosaur-connectors/${connector_id}" with json body:
         """
         {
-            "kafka": {
+            "dinosaur": {
               "client_secret": "patched_secret 1"
             },
             "connector_spec": {
@@ -1328,18 +1328,18 @@ Feature: create a a connector
 
     # Before deleting the connector, lets make sure the access control work as expected for other users beside Greg
     Given I am logged in as "Coworker Sally"
-    When I GET path "/v1/kafka_connectors/${connector_id}"
+    When I GET path "/v1/dinosaur_connectors/${connector_id}"
     Then the response code should be 200
 
     Given I am logged in as "Evil Bob"
-    When I GET path "/v1/kafka_connectors/${connector_id}"
+    When I GET path "/v1/dinosaur_connectors/${connector_id}"
     Then the response code should be 404
 
     # We are going to delete the connector...
     Given LOCK--------------------------------------------------------------
       Given I reset the vault counters
       Given I am logged in as "Greg"
-      When I DELETE path "/v1/kafka_connectors/${connector_id}"
+      When I DELETE path "/v1/dinosaur_connectors/${connector_id}"
       Then the response code should be 204
       And the response should match ""
 
@@ -1348,8 +1348,8 @@ Feature: create a a connector
       Then the vault delete counter should be 3
     Given UNLOCK--------------------------------------------------------------
 
-    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
-    When I GET path "/v1/kafka_connectors/${connector_id}"
+    Given I wait up to "5" seconds for a GET on path "/v1/dinosaur_connectors/${connector_id}" response code to match "404"
+    When I GET path "/v1/dinosaur_connectors/${connector_id}"
     Then the response code should be 404
 
   Scenario: Greg can discover the API endpoints
@@ -1402,18 +1402,18 @@ Feature: create a a connector
         "href": "/api/connector_mgmt/v1",
         "collections": [
           {
-            "href": "/api/connector_mgmt/v1/kafka_connector_types",
-            "id": "kafka_connector_types",
+            "href": "/api/connector_mgmt/v1/dinosaur_connector_types",
+            "id": "dinosaur_connector_types",
             "kind": "ConnectorTypeList"
           },
           {
-            "href": "/api/connector_mgmt/v1/kafka_connectors",
-            "id": "kafka_connectors",
+            "href": "/api/connector_mgmt/v1/dinosaur_connectors",
+            "id": "dinosaur_connectors",
             "kind": "ConnectorList"
           },
           {
-            "href": "/api/connector_mgmt/v1/kafka_connector_clusters",
-            "id": "kafka_connector_clusters",
+            "href": "/api/connector_mgmt/v1/dinosaur_connector_clusters",
+            "id": "dinosaur_connector_clusters",
             "kind": "ConnectorClusterList"
           }
         ]
@@ -1430,18 +1430,18 @@ Feature: create a a connector
         "href": "/api/connector_mgmt/v1",
         "collections": [
           {
-            "href": "/api/connector_mgmt/v1/kafka_connector_types",
-            "id": "kafka_connector_types",
+            "href": "/api/connector_mgmt/v1/dinosaur_connector_types",
+            "id": "dinosaur_connector_types",
             "kind": "ConnectorTypeList"
           },
           {
-            "href": "/api/connector_mgmt/v1/kafka_connectors",
-            "id": "kafka_connectors",
+            "href": "/api/connector_mgmt/v1/dinosaur_connectors",
+            "id": "dinosaur_connectors",
             "kind": "ConnectorList"
           },
           {
-            "href": "/api/connector_mgmt/v1/kafka_connector_clusters",
-            "id": "kafka_connector_clusters",
+            "href": "/api/connector_mgmt/v1/dinosaur_connector_clusters",
+            "id": "dinosaur_connector_clusters",
             "kind": "ConnectorClusterList"
           }
         ]
@@ -1552,7 +1552,7 @@ Feature: create a a connector
             "href": "/api/connector_mgmt/v1/errors/24",
             "id": "24",
             "kind": "Error",
-            "reason": "The maximum number of allowed kafka instances has been reached"
+            "reason": "The maximum number of allowed dinosaur instances has been reached"
           },
           {
             "code": "CONNECTOR-MGMT-25",
@@ -1580,7 +1580,7 @@ Feature: create a a connector
             "href": "/api/connector_mgmt/v1/errors/32",
             "id": "32",
             "kind": "Error",
-            "reason": "Kafka cluster name is invalid"
+            "reason": "Dinosaur cluster name is invalid"
           },
           {
             "code": "CONNECTOR-MGMT-33",
@@ -1601,14 +1601,14 @@ Feature: create a a connector
             "href": "/api/connector_mgmt/v1/errors/35",
             "id": "35",
             "kind": "Error",
-            "reason": "Only multiAZ Kafkas are supported, use multi_az=true"
+            "reason": "Only multiAZ Dinosaurs are supported, use multi_az=true"
           },
           {
             "code": "CONNECTOR-MGMT-36",
             "href": "/api/connector_mgmt/v1/errors/36",
             "id": "36",
             "kind": "Error",
-            "reason": "Kafka cluster name is already used"
+            "reason": "Dinosaur cluster name is already used"
           },
           {
             "code": "CONNECTOR-MGMT-37",
@@ -1657,28 +1657,28 @@ Feature: create a a connector
             "href": "/api/connector_mgmt/v1/errors/106",
             "id": "106",
             "kind": "Error",
-            "reason": "Failed to create kafka client in the mas sso"
+            "reason": "Failed to create dinosaur client in the mas sso"
           },
           {
             "code": "CONNECTOR-MGMT-107",
             "href": "/api/connector_mgmt/v1/errors/107",
             "id": "107",
             "kind": "Error",
-            "reason": "Failed to get kafka client secret from the mas sso"
+            "reason": "Failed to get dinosaur client secret from the mas sso"
           },
           {
             "code": "CONNECTOR-MGMT-108",
             "href": "/api/connector_mgmt/v1/errors/108",
             "id": "108",
             "kind": "Error",
-            "reason": "Failed to get kafka client from the mas sso"
+            "reason": "Failed to get dinosaur client from the mas sso"
           },
           {
             "code": "CONNECTOR-MGMT-109",
             "href": "/api/connector_mgmt/v1/errors/109",
             "id": "109",
             "kind": "Error",
-            "reason": "Failed to delete kafka client from the mas sso"
+            "reason": "Failed to delete dinosaur client from the mas sso"
           },
           {
             "code": "CONNECTOR-MGMT-110",
@@ -1750,21 +1750,21 @@ Feature: create a a connector
     The user should still be able to delete the connector.
 
     Given I am logged in as "Jim"
-    When I POST path "/v1/kafka_connectors?async=true" with json body:
+    When I POST path "/v1/dinosaur_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id":"mykafka"
+          "dinosaur_id":"mydinosaur"
         },
         "deployment_location": {
           "kind": "addon",
           "cluster_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
-        "kafka": {
-          "bootstrap_server": "kafka.hostname",
+        "dinosaur": {
+          "bootstrap_server": "dinosaur.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
@@ -1773,7 +1773,7 @@ Feature: create a a connector
             "aws_access_key": "test",
             "aws_secret_key": "test",
             "aws_region": "east",
-            "kafka_topic": "test"
+            "dinosaur_topic": "test"
         }
       }
       """
@@ -1783,7 +1783,7 @@ Feature: create a a connector
 
     When I run SQL "UPDATE connectors SET connector_type_id='foo' WHERE id = '${connector_id}';" expect 1 row to be affected.
 
-    When I GET path "/v1/kafka_connectors?kafka_id=mykafka"
+    When I GET path "/v1/dinosaur_connectors?dinosaur_id=mydinosaur"
     Then the response code should be 200
     And the response should match json:
       """
@@ -1791,8 +1791,8 @@ Feature: create a a connector
         "items": [
           {
             "channel": "stable",
-            "kafka": {
-              "bootstrap_server": "kafka.hostname",
+            "dinosaur": {
+              "bootstrap_server": "dinosaur.hostname",
               "client_id": "myclient"
             },
             "connector_type_id": "foo",
@@ -1800,12 +1800,12 @@ Feature: create a a connector
               "cluster_id": "default",
               "kind": "addon"
             },
-            "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
+            "href": "/api/connector_mgmt/v1/dinosaur_connectors/${connector_id}",
             "id": "${connector_id}",
             "kind": "Connector",
             "metadata": {
               "created_at": "${response.items[0].metadata.created_at}",
-              "kafka_id": "mykafka",
+              "dinosaur_id": "mydinosaur",
               "name": "example 1",
               "owner": "${response.items[0].metadata.owner}",
               "resource_version": ${response.items[0].metadata.resource_version},
@@ -1822,24 +1822,24 @@ Feature: create a a connector
       }
       """
 
-    When I GET path "/v1/kafka_connectors/${connector_id}"
+    When I GET path "/v1/dinosaur_connectors/${connector_id}"
     Then the response code should be 200
     And the response should match json:
       """
       {
           "id": "${connector_id}",
           "kind": "Connector",
-          "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
+          "href": "/api/connector_mgmt/v1/dinosaur_connectors/${connector_id}",
           "metadata": {
-              "kafka_id": "mykafka",
+              "dinosaur_id": "mydinosaur",
               "owner": "${response.metadata.owner}",
               "name": "example 1",
               "created_at": "${response.metadata.created_at}",
               "updated_at": "${response.metadata.updated_at}",
               "resource_version": ${response.metadata.resource_version}
           },
-          "kafka": {
-            "bootstrap_server": "kafka.hostname",
+          "dinosaur": {
+            "bootstrap_server": "dinosaur.hostname",
             "client_id": "myclient"
           },
           "deployment_location": {
@@ -1856,7 +1856,7 @@ Feature: create a a connector
     Given LOCK--------------------------------------------------------------
       Given I reset the vault counters
 
-      When I DELETE path "/v1/kafka_connectors/${connector_id}"
+      When I DELETE path "/v1/dinosaur_connectors/${connector_id}"
       Then the response code should be 204
       And the response should match ""
 

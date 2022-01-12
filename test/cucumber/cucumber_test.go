@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/cucumber"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
 	"github.com/cucumber/godog"
 )
 
@@ -19,7 +19,7 @@ func Example() {
 	{
 		ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 		defer ocmServer.Close()
-		h, _, teardown := test.NewKafkaHelper(&testing.T{}, ocmServer)
+		h, _, teardown := test.NewDinosaurHelper(&testing.T{}, ocmServer)
 		defer teardown()
 		cucumber.TestMain(h)
 	}

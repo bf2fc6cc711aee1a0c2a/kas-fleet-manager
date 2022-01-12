@@ -20,7 +20,7 @@ paths:
   #
   # These are the connector related admin APIs
   #
-  /api/connector_mgmt/v1/admin/kafka_connector_clusters/:
+  /api/connector_mgmt/v1/admin/dinosaur_connector_clusters/:
     get:
       tags:
         - Connector Clusters Admin
@@ -59,7 +59,7 @@ paths:
       operationId: listConnectorClusters
       summary: Returns a list of connector clusters
 
-  /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/upgrades/type:
+  /api/connector_mgmt/v1/admin/dinosaur_connector_clusters/{connector_cluster_id}/upgrades/type:
     parameters:
       - name: connector_cluster_id
         description: The id of the connector cluster
@@ -158,7 +158,7 @@ paths:
                 $ref: "#/components/schemas/ConnectorAvailableTypeUpgrade"
         required: true
 
-  /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/upgrades/operator:
+  /api/connector_mgmt/v1/admin/dinosaur_connector_clusters/{connector_cluster_id}/upgrades/operator:
     parameters:
       - name: connector_cluster_id
         description: The id of the connector cluster

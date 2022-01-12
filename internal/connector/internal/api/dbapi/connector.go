@@ -1,19 +1,19 @@
 package dbapi
 
-import "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+import "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
 
 type ConnectorStatusPhase = string
 
 const (
-	ConnectorStatusPhaseAssigning      ConnectorStatusPhase = "assigning"      // set by kas-fleet-manager - user request
-	ConnectorStatusPhaseAssigned       ConnectorStatusPhase = "assigned"       // set by kas-fleet-manager - worker
-	ConnectorStatusPhaseUpdating       ConnectorStatusPhase = "updating"       // set by kas-fleet-manager - user request
-	ConnectorStatusPhaseStopped        ConnectorStatusPhase = "stopped"        // set by kas-fleet-manager - user request
-	ConnectorStatusPhaseProvisioning   ConnectorStatusPhase = "provisioning"   // set by kas-agent
+	ConnectorStatusPhaseAssigning      ConnectorStatusPhase = "assigning"      // set by fleet-manager - user request
+	ConnectorStatusPhaseAssigned       ConnectorStatusPhase = "assigned"       // set by fleet-manager - worker
+	ConnectorStatusPhaseUpdating       ConnectorStatusPhase = "updating"       // set by fleet-manager - user request
+	ConnectorStatusPhaseStopped        ConnectorStatusPhase = "stopped"        // set by fleet-manager - user request
+	ConnectorStatusPhaseProvisioning   ConnectorStatusPhase = "provisioning"   // set by agent
 	ConnectorStatusPhaseReady          ConnectorStatusPhase = "ready"          // set by the agent
 	ConnectorStatusPhaseFailed         ConnectorStatusPhase = "failed"         // set by the agent
-	ConnectorStatusPhaseDeprovisioning ConnectorStatusPhase = "deprovisioning" // set by kas-agent
-	ConnectorStatusPhaseDeleting       ConnectorStatusPhase = "deleting"       // set by the kas-fleet-manager - user request
+	ConnectorStatusPhaseDeprovisioning ConnectorStatusPhase = "deprovisioning" // set by agent
+	ConnectorStatusPhaseDeleting       ConnectorStatusPhase = "deleting"       // set by the fleet-manager - user request
 	ConnectorStatusPhaseDeleted        ConnectorStatusPhase = "deleted"        // set by the agent
 )
 
@@ -56,14 +56,14 @@ type Connector struct {
 	Name           string
 	Owner          string
 	OrganisationId string
-	KafkaID        string
+	DinosaurID        string
 	Version        int64 `gorm:"type:bigserial;index:"`
 
 	ConnectorTypeId string
 	ConnectorSpec   api.JSON `gorm:"type:jsonb"`
 	DesiredState    string
 	Channel         string
-	Kafka           KafkaConnectionSettings `gorm:"embedded;embeddedPrefix:kafka_"`
+	Dinosaur           DinosaurConnectionSettings `gorm:"embedded;embeddedPrefix:dinosaur_"`
 
 	Status ConnectorStatus `gorm:"foreignKey:ID"`
 }
@@ -108,7 +108,7 @@ type ConnectorDeploymentSpecStatusExtractors struct {
 	ConditionType string
 }
 
-type KafkaConnectionSettings struct {
+type DinosaurConnectionSettings struct {
 	BootstrapServer string
 	ClientId        string
 	ClientSecret    string `gorm:"-"`

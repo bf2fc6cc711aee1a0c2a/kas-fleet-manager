@@ -16,7 +16,7 @@ servers:
 tags:
 - name: Connector Clusters Admin
 paths:
-  /api/connector_mgmt/v1/admin/kafka_connector_clusters/:
+  /api/connector_mgmt/v1/admin/dinosaur_connector_clusters/:
     get:
       operationId: listConnectorClusters
       parameters:
@@ -81,7 +81,7 @@ paths:
           name = aws-sqs-source and channel = stable
           ```[p-]
 
-          To return a Kafka instance with a name that starts with `aws`, use the following syntax:
+          To return a Dinosaur instance with a name that starts with `aws`, use the following syntax:
 
           ```
           name like aws%25
@@ -131,7 +131,7 @@ paths:
       summary: Returns a list of connector clusters
       tags:
       - Connector Clusters Admin
-  /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/upgrades/type:
+  /api/connector_mgmt/v1/admin/dinosaur_connector_clusters/{connector_cluster_id}/upgrades/type:
     get:
       operationId: getConnectorUpgradesByType
       parameters:
@@ -273,7 +273,7 @@ paths:
       summary: upgrade a connector cluster
       tags:
       - Connector Clusters Admin
-  /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/upgrades/operator:
+  /api/connector_mgmt/v1/admin/dinosaur_connector_clusters/{connector_cluster_id}/upgrades/operator:
     get:
       operationId: getConnectorUpgradesByOperator
       parameters:

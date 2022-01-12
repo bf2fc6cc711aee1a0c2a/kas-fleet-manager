@@ -53,7 +53,7 @@ type ObservabilitySpec struct {
 	Alertmanager AlertmanagerConfig `json:"alertmanager,omitempty"`
 
 	// Selector for all namespaces that should be scraped
-	KafkaNamespaceSelector metav1.LabelSelector `json:"kafkaNamespaceSelector"`
+	DinosaurNamespaceSelector metav1.LabelSelector `json:"dinosaurNamespaceSelector"`
 
 	// Selector for all canary pods that should be scraped
 	CanaryPodSelector metav1.LabelSelector `json:"canaryPodSelector,omitempty"`

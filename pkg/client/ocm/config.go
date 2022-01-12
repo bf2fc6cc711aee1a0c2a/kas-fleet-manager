@@ -1,15 +1,15 @@
 package ocm
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 )
 
 const (
 	MockModeStubServer            = "stub-server"
 	MockModeEmulateServer         = "emulate-server"
-	strimziOperatorAddonID        = "managed-kafka"
-	kasFleetshardAddonID          = "kas-fleetshard-operator"
+	strimziOperatorAddonID        = "managed-dinosaur"
+	fleetshardAddonID          = "fleetshard-operator"
 	ClusterLoggingOperatorAddonID = "cluster-logging-operator"
 )
 
@@ -27,7 +27,7 @@ type OCMConfig struct {
 	EnableMock                    bool   `json:"enable_mock"`
 	MockMode                      string `json:"mock_type"`
 	StrimziOperatorAddonID        string `json:"strimzi_operator_addon_id"`
-	KasFleetshardAddonID          string `json:"kas_fleetshard_addon_id"`
+	FleetshardAddonID          string `json:"fleetshard_addon_id"`
 	ClusterLoggingOperatorAddonID string `json:"cluster_logging_operator_addon_id"`
 }
 
@@ -43,7 +43,7 @@ func NewOCMConfig() *OCMConfig {
 		EnableMock:             false,
 		MockMode:               MockModeStubServer,
 		StrimziOperatorAddonID: strimziOperatorAddonID,
-		KasFleetshardAddonID:   kasFleetshardAddonID,
+		FleetshardAddonID:   fleetshardAddonID,
 	}
 }
 
@@ -58,7 +58,7 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.EnableMock, "enable-ocm-mock", c.EnableMock, "Enable mock ocm clients")
 	fs.StringVar(&c.MockMode, "ocm-mock-mode", c.MockMode, "Set mock type")
 	fs.StringVar(&c.StrimziOperatorAddonID, "strimzi-operator-addon-id", c.StrimziOperatorAddonID, "The name of the Strimzi operator addon")
-	fs.StringVar(&c.KasFleetshardAddonID, "kas-fleetshard-addon-id", c.KasFleetshardAddonID, "The name of the kas-fleetshard operator addon")
+	fs.StringVar(&c.FleetshardAddonID, "fleetshard-addon-id", c.FleetshardAddonID, "The name of the fleetshard operator addon")
 	fs.StringVar(&c.ClusterLoggingOperatorAddonID, "cluster-logging-operator-addon-id", "", "The name of the cluster logging operator addon. An empty string indicates that the operator should not be installed")
 }
 

@@ -1,5 +1,5 @@
-# Adding Flags to KAS Fleet Manager
-This document outlines best practices and guides on how to add new flags to the KAS Fleet Manager's serve command.
+# Adding Flags to Fleet Manager
+This document outlines best practices and guides on how to add new flags to the Fleet Manager's serve command.
 
 - [Naming Conventions](#naming-conventions)
     - [Feature Flags](#feature-flags)
@@ -27,7 +27,7 @@ Flags are defined within a configuration file located in the *pkg/config/* direc
 
 Flags should assign its value to a property within a config struct or a variable within the configuration file.
 
-> NOTE: KAS Fleet Manager uses [spf13/pflag](https://github.com/spf13/pflag) for flags management.
+> NOTE: Fleet Manager uses [spf13/pflag](https://github.com/spf13/pflag) for flags management.
 
 ### Adding to an Existing Config File
 1. Select a configuration file in the *pkg/config/* directory that is relevant to the new feature that is being added.
@@ -48,18 +48,18 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 ### Adding a New Config File
 If the new configuration flag doesn't fit in any of the existing config file, a new one should be created.
 
-1. Create a new config file with a filename format of `<feature>.go` under the *internal/<resource>/config/* directory (e.g. `internal/kafka/internal/config/`).  (See [kafka.go](../internal/kafka/internal/config/kafka.go) as an example) 
+1. Create a new config file with a filename format of `<feature>.go` under the *internal/<resource>/config/* directory (e.g. `internal/dinosaur/internal/config/`).  (See [dinosaur.go](../internal/dinosaur/internal/config/dinosaur.go) as an example) 
 2. Define any new flags in the `AddFlags()` function.
-3. New config file has to implement `ConfigModule` interface and to be added into the `CoreConfigProviders()` function inside the [core providers file](../pkg/providers/core.go) or any more appropriate internal folder, e.g. [kafka providers](../internal/kafka/providers.go) (see `ConfigProviders()` function)
+3. New config file has to implement `ConfigModule` interface and to be added into the `CoreConfigProviders()` function inside the [core providers file](../pkg/providers/core.go) or any more appropriate internal folder, e.g. [dinosaur providers](../internal/dinosaur/providers.go) (see `ConfigProviders()` function)
 
 ### Verify Addition of New Flags
-Flags defined in configuration files in *pkg/config/* are added to the KAS Fleet Manager **serve** command. 
+Flags defined in configuration files in *pkg/config/* are added to the Fleet Manager **serve** command. 
 
 To verify that a new flag has been successfully added, run the following commands. 
 
 ```bash
     make binary
-    ./kas-fleet-manager serve -h
+    ./fleet-manager serve -h
 ```
 
 This will list all of the available flags that can be specified with the **serve** command. Any new flags should be listed here.
@@ -77,7 +77,7 @@ Example:
 ```
 
 ## Adding Flags to the Service Template
-Once flags have been defined, they should be added as parameters to the KAS Fleet Manager's service template. The parameters should then be used as the flag value in the serve command ran within the service container of the KAS Fleet Manager deployment .
+Once flags have been defined, they should be added as parameters to the Fleet Manager's service template. The parameters should then be used as the flag value in the serve command ran within the service container of the Fleet Manager deployment .
 
 See the [service template](../templates/service-template.yml) for more information.
 

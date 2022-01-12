@@ -76,12 +76,12 @@ objects:
             - name: CLIENT_ID
               valueFrom:
                 secretKeyRef:
-                  name: kas-fleet-manager-observatorium-configuration-red-hat-sso
+                  name: fleet-manager-observatorium-configuration-red-hat-sso
                   key: grafana.clientId
             - name: CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: kas-fleet-manager-observatorium-configuration-red-hat-sso
+                  name: fleet-manager-observatorium-configuration-red-hat-sso
                   key: grafana.clientSecret
             - name: ISSUER_URL
               value: ${ISSUER_URL}
@@ -114,10 +114,10 @@ objects:
       - from:
         - podSelector:
             matchLabels:
-              app: kas-fleet-manager
+              app: fleet-manager
         - podSelector:
             matchLabels:
-              prometheus: kafka-prometheus
+              prometheus: dinosaur-prometheus
           namespaceSelector:
             matchLabels:
               name: managed-application-services-observability

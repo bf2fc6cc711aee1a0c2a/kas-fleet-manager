@@ -10,7 +10,7 @@ func TestServiceObservatorium_GetMetrics(t *testing.T) {
 	}
 
 	type args struct {
-		metrics   *KafkaMetrics
+		metrics   *DinosaurMetrics
 		namespace string
 		rq        *MetricsReqParams
 	}
@@ -32,8 +32,8 @@ func TestServiceObservatorium_GetMetrics(t *testing.T) {
 				client: obsClientMock,
 			},
 			args: args{
-				metrics:   &KafkaMetrics{},
-				namespace: "kafka-test",
+				metrics:   &DinosaurMetrics{},
+				namespace: "dinosaur-test",
 				rq: &MetricsReqParams{
 					ResultType: Query,
 				},
@@ -46,8 +46,8 @@ func TestServiceObservatorium_GetMetrics(t *testing.T) {
 				client: obsClientMock,
 			},
 			args: args{
-				metrics:   &KafkaMetrics{},
-				namespace: "kafka-test",
+				metrics:   &DinosaurMetrics{},
+				namespace: "dinosaur-test",
 				rq: &MetricsReqParams{
 					ResultType: RangeQuery,
 				},
@@ -60,8 +60,8 @@ func TestServiceObservatorium_GetMetrics(t *testing.T) {
 				client: obsClientMock,
 			},
 			args: args{
-				metrics:   &KafkaMetrics{},
-				namespace: "kafka-test",
+				metrics:   &DinosaurMetrics{},
+				namespace: "dinosaur-test",
 				rq: &MetricsReqParams{
 					ResultType: "unsupported",
 				},

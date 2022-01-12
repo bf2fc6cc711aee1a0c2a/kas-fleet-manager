@@ -1,7 +1,7 @@
 "internal/connector/**/*":
   - valdar
   - dhirajsb
-"internal/kafka/**/*":
+"internal/dinosaur/**/*":
   - pb82
   - machi1990
   - pawelpaszki

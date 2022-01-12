@@ -17,7 +17,7 @@
 
 
 ## Project Source
-Fork kas-fleet-manager to your own Github repository: https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/fork
+Fork fleet-manager to your own Github repository: https://github.com/bf2fc6cc711aee1a0c2a/fleet-manager/fork
 
 Project source is to be found under `$GOPATH/src` by a distinct directory path.
 ```plain
@@ -26,9 +26,9 @@ $GOPATH
   /pkg
   /src
     /github.com/bf2fc6cc711aee1a0c2a/
-      /kas-fleet-manager -- our git root
+      /fleet-manager -- our git root
         /cmd
-          /kas-fleet-manager  -- Main CLI entrypoint
+          /fleet-manager  -- Main CLI entrypoint
         /pkg
           /api      -- type definitions and models (Note. openapi folder is generated - see below)
           /config   -- configuration handling
@@ -59,11 +59,11 @@ Set the following configuration in your **Launch.json** file.
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Kas Fleet Manager API",
+            "name": "Fleet Manager API",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/kas-fleet-manager/main.go",
+            "program": "${workspaceFolder}/cmd/fleet-manager/main.go",
             "env": {
                 "OCM_ENV": "development"
             },
@@ -73,7 +73,7 @@ Set the following configuration in your **Launch.json** file.
 }
 ```
 ## Modifying the API definition
-The services' OpenAPI specification is located in `openapi/kas-fleet-manager.yaml`. It can be modified using Apicurio Studio, Swagger or manually.
+The services' OpenAPI specification is located in `openapi/fleet-manager.yaml`. It can be modified using Apicurio Studio, Swagger or manually.
 
 Once you've made your changes, the second step is to validate it:
 
@@ -91,7 +91,7 @@ make openapi/generate
 See the [adding-a-new-endpoint](./docs/adding-a-new-endpoint.md) documentation.
 
 ## Adding New Serve Command Flags
-See the [Adding Flags to KAS Fleet Manager](./docs/adding-new-flags.md) documentation for more information.
+See the [Adding Flags to Fleet Manager](./docs/adding-new-flags.md) documentation for more information.
 
 ## Testing
 See the [automated testing](./docs/automated-testing.md) documentation.
