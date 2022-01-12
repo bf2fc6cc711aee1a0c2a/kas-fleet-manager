@@ -44,6 +44,59 @@ func (r Region) IsInstanceTypeSupported(instanceType InstanceType) bool {
 	return false
 }
 
+func (r Region) Validate(dataplaneClusterConfig *DataplaneClusterConfig) error {
+	counter := 1
+	totalCapacityUsed := 0
+	regionCapacity := dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(r.Name)
+
+	// verify that Limits set in this configuration matches the capacity of clusters listed in the data plane configuration
+	for k, v := range r.SupportedInstanceTypes {
+		// skip if limit is not set or is explicitly set to 0
+		if v.Limit == nil || v.Limit != nil && *v.Limit == 0 {
+			continue
+		}
+
+		if len(r.SupportedInstanceTypes) == 1 {
+			capacity := dataplaneClusterConfig.ClusterConfig.GetCapacityForRegionAndInstanceType(r.Name, k, false)
+			if *v.Limit != capacity {
+				return fmt.Errorf("limit for instance type '%s'(%d) does not match the capacity in region %s(%d)", k, *v.Limit, r.Name, capacity)
+			}
+			return nil
+		}
+
+		// ensure that limit is within min and max capacity
+		// min: the total capacity of clusters that support only this instance type
+		// max: the total capacity of clusters that supports this instance type
+		minCapacity := dataplaneClusterConfig.ClusterConfig.GetCapacityForRegionAndInstanceType(r.Name, k, true)
+		maxCapacity := dataplaneClusterConfig.ClusterConfig.GetCapacityForRegionAndInstanceType(r.Name, k, false)
+		if minCapacity > *v.Limit || maxCapacity < *v.Limit {
+			return fmt.Errorf("limit for %s instance type (%d) does not match cluster capacity configuration in region '%s': min(%d), max(%d)", k, *v.Limit, r.Name, minCapacity, maxCapacity)
+		}
+
+		// when all limits are set, ensure its total adds up to total capacity of the region.
+		if !r.RegionHasZeroOrNoLimitInstanceType() {
+			totalCapacityUsed += *v.Limit
+
+			// when we reach the last item, ensure limits for all instance types adds up to the total capacity of the region
+			if counter == len(r.SupportedInstanceTypes) && totalCapacityUsed != regionCapacity {
+				return fmt.Errorf("total limits set in region '%s' does not match cluster capacity configuration", r.Name)
+			}
+		}
+		counter++
+	}
+
+	return nil
+}
+
+func (r Region) RegionHasZeroOrNoLimitInstanceType() bool {
+	for _, it := range r.SupportedInstanceTypes {
+		if it.Limit == nil || (it.Limit != nil && *it.Limit == 0) {
+			return true
+		}
+	}
+	return false
+}
+
 type RegionList []Region
 
 func (rl RegionList) GetByName(regionName string) (Region, bool) {
@@ -105,10 +158,13 @@ func NewSupportedProvidersConfig() *ProviderConfig {
 
 var _ environments.ServiceValidator = &ProviderConfig{}
 
-func (c *ProviderConfig) Validate() error {
+func (c *ProviderConfig) Validate(env *environments.Env) error {
+	var dataplaneClusterConfig *DataplaneClusterConfig
+	env.MustResolve(&dataplaneClusterConfig)
+
 	providerDefaultCount := 0
 	for _, p := range c.ProvidersConfig.SupportedProviders {
-		if err := p.Validate(); err != nil {
+		if err := p.Validate(dataplaneClusterConfig); err != nil {
 			return err
 		}
 		if p.Default {
@@ -121,11 +177,19 @@ func (c *ProviderConfig) Validate() error {
 	return nil
 }
 
-func (provider Provider) Validate() error {
+func (provider Provider) Validate(dataplaneClusterConfig *DataplaneClusterConfig) error {
+	// verify that there is only one default region
 	defaultCount := 0
 	for _, p := range provider.Regions {
 		if p.Default {
 			defaultCount++
+		}
+
+		// validate instance type limits with the data plane cluster configuration when manual scaling is enabled
+		if dataplaneClusterConfig.IsDataPlaneManualScalingEnabled() {
+			if err := p.Validate(dataplaneClusterConfig); err != nil {
+				return err
+			}
 		}
 	}
 	if defaultCount != 1 {

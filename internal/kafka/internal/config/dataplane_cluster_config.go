@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -166,8 +167,28 @@ func NewClusterConfig(clusters ClusterList) *ClusterConfig {
 func (conf *ClusterConfig) GetCapacityForRegion(region string) int {
 	var capacity = 0
 	for _, cluster := range conf.clusterList {
-		if cluster.Region == region {
+		if cluster.Region == region && cluster.Schedulable {
 			capacity += cluster.KafkaInstanceLimit
+		}
+	}
+	return capacity
+}
+
+// GetCapacityForRegionAndInstanceType returns the total capacity for the specified region and instance type.
+// Set isolatedClustersOnly to true if you want to get the capacity of clusters that only supports this instance type.
+func (conf *ClusterConfig) GetCapacityForRegionAndInstanceType(region, instanceType string, isolatedClustersOnly bool) int {
+	var capacity = 0
+	for _, cluster := range conf.clusterList {
+		if cluster.Region == region && cluster.Schedulable {
+			if isolatedClustersOnly {
+				if cluster.SupportedInstanceType == instanceType {
+					capacity += cluster.KafkaInstanceLimit
+				}
+			} else {
+				if strings.Contains(cluster.SupportedInstanceType, instanceType) {
+					capacity += cluster.KafkaInstanceLimit
+				}
+			}
 		}
 	}
 	return capacity

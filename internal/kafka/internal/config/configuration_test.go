@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 
 	. "github.com/onsi/gomega"
@@ -494,6 +495,14 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 }
 
 func Test_configService_Validate(t *testing.T) {
+	env, err := environments.New(environments.DevelopmentEnv)
+	if err != nil {
+		t.Errorf("failed to initialize environment")
+	}
+	if err := env.ConfigContainer.ProvideValue(NewDataplaneClusterConfig()); err != nil {
+		t.Errorf("failed to set data plane cluster configuration")
+	}
+
 	type fields struct {
 		providersConfig ProviderConfig
 	}
@@ -624,7 +633,7 @@ func Test_configService_Validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := tt.fields.providersConfig
-			if err := c.Validate(); (err != nil) != tt.wantErr {
+			if err := c.Validate(env); (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -633,7 +642,8 @@ func Test_configService_Validate(t *testing.T) {
 
 func Test_configService_validateProvider(t *testing.T) {
 	type args struct {
-		provider Provider
+		provider               Provider
+		dataplaneClusterConfig *DataplaneClusterConfig
 	}
 	tests := []struct {
 		name    string
@@ -647,6 +657,7 @@ func Test_configService_validateProvider(t *testing.T) {
 					Name:    "test",
 					Default: false,
 				},
+				dataplaneClusterConfig: NewDataplaneClusterConfig(),
 			},
 			wantErr: true,
 		},
@@ -666,6 +677,7 @@ func Test_configService_validateProvider(t *testing.T) {
 						},
 					},
 				},
+				dataplaneClusterConfig: NewDataplaneClusterConfig(),
 			},
 			wantErr: true,
 		},
@@ -681,14 +693,387 @@ func Test_configService_validateProvider(t *testing.T) {
 						},
 					},
 				},
+				dataplaneClusterConfig: NewDataplaneClusterConfig(),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.args.provider.Validate(); (err != nil) != tt.wantErr {
+			if err := tt.args.provider.Validate(tt.args.dataplaneClusterConfig); (err != nil) != tt.wantErr {
 				t.Errorf("validateProvider() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
+	env, err := environments.New(environments.DevelopmentEnv)
+	if err != nil {
+		t.Errorf("failed to initialize environment")
+	}
+
+	dataplaneClusterConfig := NewDataplaneClusterConfig()
+	dataplaneClusterConfig.ClusterConfig = &ClusterConfig{
+		clusterList: ClusterList{
+			{
+				Name:                  "cluster1",
+				ClusterId:             "cluster1",
+				Region:                "us-east-1",
+				Schedulable:           true,
+				KafkaInstanceLimit:    10,
+				SupportedInstanceType: "standard,eval",
+			},
+			{
+				Name:                  "cluster2",
+				ClusterId:             "cluster2",
+				Region:                "us-east-1",
+				Schedulable:           true,
+				KafkaInstanceLimit:    5,
+				SupportedInstanceType: "eval,someOtherInstanceType",
+			},
+			{
+				Name:                  "cluster3",
+				ClusterId:             "cluster3",
+				Region:                "us-east-1",
+				Schedulable:           true,
+				KafkaInstanceLimit:    15,
+				SupportedInstanceType: "standard,eval,someOtherInstanceType",
+			},
+			{
+				Name:                  "cluster4",
+				ClusterId:             "cluster4",
+				Region:                "us-east-1",
+				Schedulable:           true,
+				KafkaInstanceLimit:    6,
+				SupportedInstanceType: "eval",
+			},
+			{
+				Name:                  "cluster5",
+				ClusterId:             "cluster5",
+				Region:                "us-east-1",
+				Schedulable:           true,
+				KafkaInstanceLimit:    7,
+				SupportedInstanceType: "standard",
+			},
+			{
+				Name:                  "cluster6",
+				ClusterId:             "cluster6",
+				Region:                "us-east-1",
+				Schedulable:           true,
+				KafkaInstanceLimit:    4,
+				SupportedInstanceType: "someOtherInstanceType",
+			},
+			{
+				Name:                  "cluster7",
+				ClusterId:             "cluster7",
+				Region:                "eu-west-1",
+				Schedulable:           true,
+				KafkaInstanceLimit:    4,
+				SupportedInstanceType: "standard",
+			},
+			{
+				Name:                  "cluster8",
+				ClusterId:             "cluster8",
+				Region:                "eu-west-1",
+				Schedulable:           true,
+				KafkaInstanceLimit:    8,
+				SupportedInstanceType: "eval",
+			},
+			{
+				Name:                  "cluster9",
+				ClusterId:             "cluster9",
+				Region:                "af-south-1",
+				Schedulable:           true,
+				KafkaInstanceLimit:    20,
+				SupportedInstanceType: "standard,eval",
+			},
+		},
+	}
+	if err := env.ConfigContainer.ProvideValue(dataplaneClusterConfig); err != nil {
+		t.Errorf("failed to set data plane cluster configuration")
+	}
+
+	usEast1EvalMaxLimit := 36
+	usEast1EvalLimit := 18
+	usEast1StandardLimit := 17
+	usEast1StandardLessThanMinimum := 5
+	usEast1StandardMoreThanMax := 50
+	usEast1SomeOtherInstanceTypeLimit := 12
+
+	euWest1StandardLimit := 4
+	euWest1EvalLimit := 8
+	euWest1StandardLessThanCapacity := 1
+	euWest1EvalMoreThanCapacity := 10
+
+	afSouth1StandardLimit := 15
+	afSouth1EvalLimit := 5
+
+	zeroLimit := 0
+
+	type fields struct {
+		providersConfig ProviderConfig
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "valid: all instances in region have no limits set",
+			fields: fields{
+				providersConfig: buildProviderConfig("aws", RegionList{
+					Region{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"standard": InstanceTypeConfig{},
+							"eval":     InstanceTypeConfig{},
+						},
+					},
+				}),
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid: instance type limits set to 0",
+			fields: fields{
+				providersConfig: buildProviderConfig("aws", RegionList{
+					Region{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"standard": InstanceTypeConfig{
+								Limit: &zeroLimit,
+							},
+							"eval": InstanceTypeConfig{
+								Limit: &zeroLimit,
+							},
+						},
+					},
+				}),
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid: standard limit set to 0 and eval has no limits",
+			fields: fields{
+				providersConfig: buildProviderConfig("aws", RegionList{
+					Region{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"standard": InstanceTypeConfig{
+								Limit: &zeroLimit,
+							},
+							"eval": InstanceTypeConfig{},
+						},
+					},
+				}),
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid: all instance types have correct limits set in region with clusters that support only one instance type",
+			fields: fields{
+				providersConfig: buildProviderConfig("aws", RegionList{
+					Region{
+						Name:    "eu-west-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"standard": InstanceTypeConfig{
+								Limit: &euWest1StandardLimit,
+							},
+							"eval": InstanceTypeConfig{
+								Limit: &euWest1EvalLimit,
+							},
+						},
+					},
+				}),
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid: incorrect limits set in region with clusters that support only one instance type",
+			fields: fields{
+				providersConfig: buildProviderConfig("aws", RegionList{
+					Region{
+						Name:    "eu-west-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"standard": InstanceTypeConfig{
+								Limit: &euWest1StandardLessThanCapacity,
+							},
+							"eval": InstanceTypeConfig{
+								Limit: &euWest1EvalMoreThanCapacity,
+							},
+						},
+					},
+				}),
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid: all instance type limit adds up to capacity of region with a cluster that supports multiple instance types",
+			fields: fields{
+				providersConfig: buildProviderConfig("aws", RegionList{
+					Region{
+						Name:    "af-south-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"standard": InstanceTypeConfig{
+								Limit: &afSouth1StandardLimit,
+							},
+							"eval": InstanceTypeConfig{
+								Limit: &afSouth1EvalLimit,
+							},
+						},
+					},
+				}),
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid: all instance type limits adds up to region capacity",
+			fields: fields{
+				providersConfig: buildProviderConfig("aws", RegionList{
+					Region{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"standard": InstanceTypeConfig{
+								Limit: &usEast1StandardLimit,
+							},
+							"eval": InstanceTypeConfig{
+								Limit: &usEast1EvalLimit,
+							},
+							"someOtherInstanceType": InstanceTypeConfig{
+								Limit: &usEast1SomeOtherInstanceTypeLimit,
+							},
+						},
+					},
+				}),
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid: instance type limits does not add up to region capacity",
+			fields: fields{
+				providersConfig: buildProviderConfig("aws", RegionList{
+					Region{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"standard": InstanceTypeConfig{
+								Limit: &usEast1StandardLimit,
+							},
+							"eval": InstanceTypeConfig{
+								Limit: &usEast1EvalMaxLimit,
+							},
+						},
+					},
+				}),
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid: all limits set and standard limit is more than the region max capacity for that instance type",
+			fields: fields{
+				providersConfig: buildProviderConfig("aws", RegionList{
+					Region{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"standard": InstanceTypeConfig{
+								Limit: &usEast1StandardMoreThanMax,
+							},
+							"eval": InstanceTypeConfig{
+								Limit: &usEast1EvalLimit,
+							},
+							"someOtherInstanceType": InstanceTypeConfig{
+								Limit: &usEast1SomeOtherInstanceTypeLimit,
+							},
+						},
+					},
+				}),
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid: eval has no limit and standard limit is within the region min and max capacity for that instance type",
+			fields: fields{
+				providersConfig: buildProviderConfig("aws", RegionList{
+					Region{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"standard": InstanceTypeConfig{
+								Limit: &usEast1StandardLimit,
+							},
+							"eval": {},
+						},
+					},
+				}),
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid: eval has no limit and standard limit is less than the region min capacity for that instance type",
+			fields: fields{
+				providersConfig: buildProviderConfig("aws", RegionList{
+					Region{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"standard": InstanceTypeConfig{
+								Limit: &usEast1StandardLessThanMinimum,
+							},
+							"eval": {},
+						},
+					},
+				}),
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid: eval has no limit and standard limit is more than the region max capacity for that instance type",
+			fields: fields{
+				providersConfig: buildProviderConfig("aws", RegionList{
+					Region{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"standard": InstanceTypeConfig{
+								Limit: &usEast1StandardMoreThanMax,
+							},
+							"eval": {},
+						},
+					},
+				}),
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := tt.fields.providersConfig
+			if err := c.Validate(env); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func buildProviderConfig(cloudProviderName string, regionList RegionList) ProviderConfig {
+	return ProviderConfig{
+		ProvidersConfig: ProviderConfiguration{
+			SupportedProviders: ProviderList{
+				{
+					Name:    cloudProviderName,
+					Default: true,
+					Regions: regionList,
+				},
+			},
+		},
 	}
 }

@@ -13,7 +13,7 @@ type ConfigModule interface {
 }
 
 type ServiceValidator interface {
-	Validate() error
+	Validate(env *Env) error
 }
 
 // BootService are services that get started on application boot.
