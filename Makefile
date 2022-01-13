@@ -43,8 +43,8 @@ DOCKER_CONFIG="${PWD}/.docker"
 ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
-MAS_SSO_BASE_URL ?="https://identity.api.stage.openshift.com"
-MAS_SSO_REALM ?="rhoas"
+SSO_BASE_URL ?="https://identity.api.stage.openshift.com"
+SSO_REALM ?="rhoas" # update your realm here
 VAULT_KIND ?= tmp
 
 GO := go
@@ -466,10 +466,10 @@ aws/setup:
 
 # Setup for mas sso credentials
 keycloak/setup:
-	@echo -n "$(MAS_SSO_CLIENT_ID)" > secrets/keycloak-service.clientId
-	@echo -n "$(MAS_SSO_CLIENT_SECRET)" > secrets/keycloak-service.clientSecret
-	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_ID)" > secrets/osd-idp-keycloak-service.clientId
-	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
+	@echo -n "$(SSO_CLIENT_ID)" > secrets/keycloak-service.clientId
+	@echo -n "$(SSO_CLIENT_SECRET)" > secrets/keycloak-service.clientSecret
+	@echo -n "$(OSD_IDP_SSO_CLIENT_ID)" > secrets/osd-idp-keycloak-service.clientId
+	@echo -n "$(OSD_IDP_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
 .PHONY:keycloak/setup
 
 # Setup for the dinosaur broker certificate
@@ -551,11 +551,11 @@ deploy/secrets:
 		-p VAULT_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/vault.secretaccesskey' ] && [ -z '${VAULT_SECRET_ACCESS_KEY}' ]) && cat ./secrets/vault.secretaccesskey || echo '${VAULT_SECRET_ACCESS_KEY}')" \
 		-p DEX_SECRET="$(shell ([ -s './secrets/dex.secret' ] && [ -z '${DEX_SECRET}' ]) && cat ./secrets/dex.secret || echo '${DEX_SECRET}')" \
 		-p DEX_PASSWORD="$(shell ([ -s './secrets/dex.password' ] && [ -z '${DEX_PASSWORD}' ]) && cat ./secrets/dex.password || echo '${DEX_PASSWORD}')" \
-		-p MAS_SSO_CLIENT_ID="$(shell ([ -s './secrets/keycloak-service.clientId' ] && [ -z '${MAS_SSO_CLIENT_ID}' ]) && cat ./secrets/keycloak-service.clientId || echo '${MAS_SSO_CLIENT_ID}')" \
-		-p MAS_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/keycloak-service.clientSecret' ] && [ -z '${MAS_SSO_CLIENT_SECRET}' ]) && cat ./secrets/keycloak-service.clientSecret || echo '${MAS_SSO_CLIENT_SECRET}')" \
-		-p OSD_IDP_MAS_SSO_CLIENT_ID="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientId' ] && [ -z '${OSD_IDP_MAS_SSO_CLIENT_ID}' ]) && cat ./secrets/osd-idp-keycloak-service.clientId || echo '${OSD_IDP_MAS_SSO_CLIENT_ID}')" \
-		-p OSD_IDP_MAS_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientSecret' ] && [ -z '${OSD_IDP_MAS_SSO_CLIENT_SECRET}' ]) && cat ./secrets/osd-idp-keycloak-service.clientSecret || echo '${OSD_IDP_MAS_SSO_CLIENT_SECRET}')" \
-		-p MAS_SSO_CRT="$(shell ([ -s './secrets/keycloak-service.crt' ] && [ -z '${MAS_SSO_CRT}' ]) && cat ./secrets/keycloak-service.crt || echo '${MAS_SSO_CRT}')" \
+		-p SSO_CLIENT_ID="$(shell ([ -s './secrets/keycloak-service.clientId' ] && [ -z '${SSO_CLIENT_ID}' ]) && cat ./secrets/keycloak-service.clientId || echo '${SSO_CLIENT_ID}')" \
+		-p SSO_CLIENT_SECRET="$(shell ([ -s './secrets/keycloak-service.clientSecret' ] && [ -z '${SSO_CLIENT_SECRET}' ]) && cat ./secrets/keycloak-service.clientSecret || echo '${SSO_CLIENT_SECRET}')" \
+		-p OSD_IDP_SSO_CLIENT_ID="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientId' ] && [ -z '${OSD_IDP_SSO_CLIENT_ID}' ]) && cat ./secrets/osd-idp-keycloak-service.clientId || echo '${OSD_IDP_SSO_CLIENT_ID}')" \
+		-p OSD_IDP_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientSecret' ] && [ -z '${OSD_IDP_SSO_CLIENT_SECRET}' ]) && cat ./secrets/osd-idp-keycloak-service.clientSecret || echo '${OSD_IDP_SSO_CLIENT_SECRET}')" \
+		-p SSO_CRT="$(shell ([ -s './secrets/keycloak-service.crt' ] && [ -z '${SSO_CRT}' ]) && cat ./secrets/keycloak-service.crt || echo '${SSO_CRT}')" \
 		-p DINOSAUR_TLS_CERT="$(shell ([ -s './secrets/dinosaur-tls.crt' ] && [ -z '${DINOSAUR_TLS_CERT}' ]) && cat ./secrets/dinosaur-tls.crt || echo '${DINOSAUR_TLS_CERT}')" \
 		-p DINOSAUR_TLS_KEY="$(shell ([ -s './secrets/dinosaur-tls.key' ] && [ -z '${DINOSAUR_TLS_KEY}' ]) && cat ./secrets/dinosaur-tls.key || echo '${DINOSAUR_TLS_KEY}')" \
 		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
@@ -587,13 +587,13 @@ deploy/service: ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE ?= "false"
 deploy/service: ENABLE_DINOSAUR_LIFE_SPAN ?= "false"
 deploy/service: DINOSAUR_LIFE_SPAN ?= "48"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
-deploy/service: MAS_SSO_ENABLE_AUTH ?= "true"
-deploy/service: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
-deploy/service: MAS_SSO_REALM ?= "rhoas"
+deploy/service: SSO_ENABLE_AUTH ?= "true"
+deploy/service: SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
+deploy/service: SSO_REALM ?= "rhoas"
 deploy/service: USER_NAME_CLAIM ?= "clientId"
 deploy/service: FALL_BACK_USER_NAME_CLAIM ?= "preferred_username"
 deploy/service: MAX_LIMIT_FOR_SSO_GET_CLIENTS ?= "100"
-deploy/service: OSD_IDP_MAS_SSO_REALM ?= "rhoas-dinosaur-sre"
+deploy/service: OSD_IDP_SSO_REALM ?= "rhoas-dinosaur-sre"
 deploy/service: TOKEN_ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
 deploy/service: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
 deploy/service: ENABLE_TERMS_ACCEPTANCE ?= "false"
@@ -631,13 +631,13 @@ deploy/service: deploy/envoy deploy/route
 		-p OCM_URL="$(OCM_URL)" \
 		-p AMS_URL="${AMS_URL}" \
 		-p JWKS_URL="$(JWKS_URL)" \
-		-p MAS_SSO_ENABLE_AUTH="${MAS_SSO_ENABLE_AUTH}" \
-		-p MAS_SSO_BASE_URL="$(MAS_SSO_BASE_URL)" \
-		-p MAS_SSO_REALM="$(MAS_SSO_REALM)" \
+		-p SSO_ENABLE_AUTH="${SSO_ENABLE_AUTH}" \
+		-p SSO_BASE_URL="$(SSO_BASE_URL)" \
+		-p SSO_REALM="$(SSO_REALM)" \
 		-p USER_NAME_CLAIM="$(USER_NAME_CLAIM)" \
 		-p FALL_BACK_USER_NAME_CLAIM="$(FALL_BACK_USER_NAME_CLAIM)" \
 		-p MAX_LIMIT_FOR_SSO_GET_CLIENTS="${MAX_LIMIT_FOR_SSO_GET_CLIENTS}" \
-		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
+		-p OSD_IDP_SSO_REALM="$(OSD_IDP_SSO_REALM)" \
 		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \
 		-p VAULT_KIND=$(VAULT_KIND) \
 		-p SERVICE_PUBLIC_HOST_URL="https://$(shell oc get routes/fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \

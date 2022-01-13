@@ -75,11 +75,11 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `OBSERVATORIUM_SERVICE_TOKEN`: Offline token used to interact with Observatorium. Defaults to value read from _./secrets/observatorium.token_
 - `DEX_SECRET`: Dex secret used to authenticate to an Observatorium instance using Dex as authentication. Defaults to value read from _./secrets/dex.secret_
 - `DEX_PASSWORD`: Dex password used to authenticate to an Observatorium instance using Dex as authentication. Defaults to value read from _./secrets/dex.secret_
-- `MAS_SSO_CLIENT_ID`: The client id for a MAS SSO service account. Defaults to value read from _./secrets/keycloak-service.clientId_
-- `MAS_SSO_CLIENT_SECRET`: The client secret for a MAS SSO service account. Defaults to value read from _./secrets/keycloak-service.clientSecret_
-- `MAS_SSO_CRT`: The TLS certificate of the MAS SSO instance. Defaults to value read from _./secrets/keycloak-service.crt_
-- `OSD_IDP_MAS_SSO_CLIENT_ID`: The client id for a MAS SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientId_
-- `OSD_IDP_MAS_SSO_CLIENT_SECRET`: The client secret for a MAS SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientSecret_
+- `SSO_CLIENT_ID`: The client id for a SSO service account. Defaults to value read from _./secrets/keycloak-service.clientId_
+- `SSO_CLIENT_SECRET`: The client secret for a SSO service account. Defaults to value read from _./secrets/keycloak-service.clientSecret_
+- `SSO_CRT`: The TLS certificate of the SSO instance. Defaults to value read from _./secrets/keycloak-service.crt_
+- `OSD_IDP_SSO_CLIENT_ID`: The client id for a SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientId_
+- `OSD_IDP_SSO_CLIENT_SECRET`: The client secret for a SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientSecret_
 - `IMAGE_PULL_DOCKER_CONFIG`: Docker config content for pulling private images. Defaults to value read from _./secrets/image-pull.dockerconfigjson_
 - `KUBE_CONFIG`: Kubeconfig content for standalone dataplane clusters communication. Defaults to `''`
 - `OBSERVABILITY_RHSSO_LOGS_CLIENT_ID`: The client id for a RHSSO service account that has read logs permission. Defaults to vaue read from _./secrets/rhsso-logs.clientId_
@@ -123,11 +123,11 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `OCM_URL`: OCM API base URL. Defaults to `https://api.stage.openshift.com`.
 - `AMS_URL`: AMS API base URL. Defaults to `''`.
 - `JWKS_URL`: JWK Token Certificate URL. Defaults to `''`.
-- `MAS_SSO_ENABLE_AUTH`: Enables MAS SSO authentication for the Data Plane. Defaults to `true`.
-- `MAS_SSO_BASE_URL`: MAS SSO base url. Defaults to `https://identity.api.stage.openshift.com`.
-- `MAS_SSO_REALM`: MAS SSO realm url. Defaults to `rhoas`.
+- `SSO_ENABLE_AUTH`: Enables SSO authentication for the Data Plane. Defaults to `true`.
+- `SSO_BASE_URL`: SSO base url. Defaults to `https://identity.api.stage.openshift.com`.
+- `SSO_REALM`: SSO realm url. Defaults to `rhoas`.
 - `MAX_LIMIT_FOR_SSO_GET_CLIENTS`: The default value of maximum number of clients fetch from mas-sso. Defaults to `100`.
-- `OSD_IDP_MAS_SSO_REALM`: MAS SSO realm for configuring OpenShift Cluster Identity Provider Clients. Defaults to `rhoas-dinosaur-sre`.
+- `OSD_IDP_SSO_REALM`: SSO realm for configuring OpenShift Cluster Identity Provider Clients. Defaults to `rhoas-dinosaur-sre`.
 - `TOKEN_ISSUER_URL`: A token issuer url used to validate if JWT token used are coming from the given issuer. Defaults to `https://sso.redhat.com/auth/realms/redhat-external`.
 - `VAULT_KIND`: The type of vault to use to store secrets. Defaults to `tmp`.
 - `OBSERVATORIUM_AUTH_TYPE`: Authentication type for the Observability stack. Options: `dex` and `redhat`, Default: `dex`.

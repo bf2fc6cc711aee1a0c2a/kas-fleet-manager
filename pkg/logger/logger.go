@@ -225,7 +225,7 @@ func getUsernameFromClaims(ctx context.Context) string {
 		// return username from ocm token
 		return claims["username"].(string)
 	} else if claims["preferred_username"] != nil {
-		// return username from mas-sso token
+		// return username from sso token
 		return claims["preferred_username"].(string)
 	}
 
