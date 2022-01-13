@@ -26,7 +26,24 @@ Apart from the installed software prerequisites, here are other ones required fo
 For automation (fleet-manager deployments and app-interface pipelines) it is required to use [vault](https://gitlab.cee.redhat.com/service/app-interface#manage-secrets-via-app-interface-openshiftnamespace-1yml-using-vault) for secrets management
 
 ### AWS
-AWS account is required for provisioning development OSD clusters.
+AWS accounts are required for provisioning development OSD clusters and to access AWS Route53 for Domain Name System. To request a AWS accounts, have a chat with your team's manager.  
+> NOTE, if you are in the Middleware, make sure to send an email to `mw-billing-leaders@redhat.com` request the account to be created. The email should follow the below format:
+```
+*Request Type*
+New AWS account
+*Team*
+<Whoever the requesting team is>
+ 
+*Cost*
+<Calculations for the estimated monthly charges>
+*Why?*
+<The reason for requesting the account> 
+```
+> NOTE
+Within the AWS account used to provision OSD clusters, you must create an osdCcsAdmin IAM user with the following requirements:
+- This user needs at least Programmatic access enabled.
+- This user must have the AdministratorAccess policy attached to it.
+See https://docs.openshift.com/dedicated/osd_planning/aws-ccs.html#ccs-aws-customer-procedure_aws-ccs for more information.
 
 ### SSO authentication
 Depending on whether interacting with public or private endpoints, the authentication should be set up as follows:
