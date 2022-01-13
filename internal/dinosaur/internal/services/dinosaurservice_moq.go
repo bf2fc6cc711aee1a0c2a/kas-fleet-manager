@@ -10,7 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/dinosaurs/types"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	manageddinosaur "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.bf2.org/v1"
+	manageddinosaur "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
 	"sync"

@@ -2,19 +2,19 @@ package presenters
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/private"
-	v1 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.bf2.org/v1"
+	v1 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
 )
 
 func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedDinosaur {
 	res := private.ManagedDinosaur{
-		Id:   from.Annotations["bf2.org/id"],
+		Id:   from.Annotations["mas/id"],
 		Kind: from.Kind,
 		Metadata: private.ManagedDinosaurAllOfMetadata{
 			Name:      from.Name,
 			Namespace: from.Namespace,
 			Annotations: private.ManagedDinosaurAllOfMetadataAnnotations{
-				Bf2OrgId:          from.Annotations["bf2.org/id"],
-				Bf2OrgPlacementId: from.Annotations["bf2.org/placementId"],
+				MasId:          from.Annotations["mas/id"],
+				MasPlacementId: from.Annotations["mas/placementId"],
 			},
 		},
 		Spec: private.ManagedDinosaurAllOfSpec{
@@ -45,7 +45,7 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedDinosaur {
 			Versions: private.ManagedDinosaurVersions{
 				Dinosaur:    from.Spec.Versions.Dinosaur,
 				DinosaurIbp: from.Spec.Versions.DinosaurIBP,
-				Strimzi:  from.Spec.Versions.Strimzi,
+				Strimzi:     from.Spec.Versions.Strimzi,
 			},
 			Deleted:         from.Spec.Deleted,
 			Owners:          from.Spec.Owners,

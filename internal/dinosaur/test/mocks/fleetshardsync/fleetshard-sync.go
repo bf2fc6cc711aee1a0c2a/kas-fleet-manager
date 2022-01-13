@@ -93,7 +93,7 @@ var defaultUpdateDinosaurStatusFunc = func(helper *coreTest.Helper, privateClien
 
 		dinosaurStatusList := make(map[string]private.DataPlaneDinosaurStatus)
 		for _, dinosaur := range dinosaurList.Items {
-			id := dinosaur.Metadata.Annotations.Bf2OrgId
+			id := dinosaur.Metadata.Annotations.MasId
 			if dinosaur.Spec.Deleted {
 				dinosaurStatusList[id] = GetDeletedDinosaurStatusResponse()
 			} else {

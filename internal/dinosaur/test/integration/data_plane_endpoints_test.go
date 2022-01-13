@@ -136,7 +136,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss":                                test.TestServices.KeycloakConfig.DinosaurRealm.ValidIssuerURI,
+			"iss":                            test.TestServices.KeycloakConfig.DinosaurRealm.ValidIssuerURI,
 			"fleetshard-operator-cluster-id": "test-cluster-id",
 		}
 	}, nil)
@@ -220,74 +220,74 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 
 	var testDinosaurs = []*dbapi.DinosaurRequest{
 		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Name:                   mockDinosaurName1,
-			Namespace:              "mk-1",
-			Status:                 constants2.DinosaurRequestStatusDeprovision.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
+			ClusterID:                 testServer.ClusterID,
+			MultiAZ:                   false,
+			Name:                      mockDinosaurName1,
+			Namespace:                 "mk-1",
+			Status:                    constants2.DinosaurRequestStatusDeprovision.String(),
+			BootstrapServerHost:       bootstrapServerHost,
+			SsoClientID:               ssoClientID,
+			SsoClientSecret:           ssoSecret,
 			DesiredDinosaurVersion:    "2.7.0",
 			DesiredDinosaurIBPVersion: "2.7",
-			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:           types.STANDARD.String(),
+			DesiredStrimziVersion:     "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:              types.STANDARD.String(),
 		},
 		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Name:                   mockDinosaurName2,
-			Namespace:              "mk-2",
-			Status:                 constants2.DinosaurRequestStatusProvisioning.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
+			ClusterID:                 testServer.ClusterID,
+			MultiAZ:                   false,
+			Name:                      mockDinosaurName2,
+			Namespace:                 "mk-2",
+			Status:                    constants2.DinosaurRequestStatusProvisioning.String(),
+			BootstrapServerHost:       bootstrapServerHost,
+			SsoClientID:               ssoClientID,
+			SsoClientSecret:           ssoSecret,
 			DesiredDinosaurVersion:    "2.6.0",
 			DesiredDinosaurIBPVersion: "2.6",
-			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:           types.STANDARD.String(),
+			DesiredStrimziVersion:     "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:              types.STANDARD.String(),
 		},
 		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Name:                   mockDinosaurName3,
-			Namespace:              "mk-3",
-			Status:                 constants2.DinosaurRequestStatusPreparing.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
+			ClusterID:                 testServer.ClusterID,
+			MultiAZ:                   false,
+			Name:                      mockDinosaurName3,
+			Namespace:                 "mk-3",
+			Status:                    constants2.DinosaurRequestStatusPreparing.String(),
+			BootstrapServerHost:       bootstrapServerHost,
+			SsoClientID:               ssoClientID,
+			SsoClientSecret:           ssoSecret,
 			DesiredDinosaurVersion:    "2.7.1",
 			DesiredDinosaurIBPVersion: "2.7",
-			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:           types.EVAL.String(),
+			DesiredStrimziVersion:     "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:              types.EVAL.String(),
 		},
 		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Name:                   mockDinosaurName4,
-			Namespace:              "mk-4",
-			Status:                 constants2.DinosaurRequestStatusReady.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
+			ClusterID:                 testServer.ClusterID,
+			MultiAZ:                   false,
+			Name:                      mockDinosaurName4,
+			Namespace:                 "mk-4",
+			Status:                    constants2.DinosaurRequestStatusReady.String(),
+			BootstrapServerHost:       bootstrapServerHost,
+			SsoClientID:               ssoClientID,
+			SsoClientSecret:           ssoSecret,
 			DesiredDinosaurVersion:    "2.7.2",
 			DesiredDinosaurIBPVersion: "2.7",
-			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:           types.STANDARD.String(),
+			DesiredStrimziVersion:     "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:              types.STANDARD.String(),
 		},
 		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Namespace:              "mk-5",
-			Name:                   mockDinosaurName4,
-			Status:                 constants2.DinosaurRequestStatusFailed.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
+			ClusterID:                 testServer.ClusterID,
+			MultiAZ:                   false,
+			Namespace:                 "mk-5",
+			Name:                      mockDinosaurName4,
+			Status:                    constants2.DinosaurRequestStatusFailed.String(),
+			BootstrapServerHost:       bootstrapServerHost,
+			SsoClientID:               ssoClientID,
+			SsoClientSecret:           ssoSecret,
 			DesiredDinosaurVersion:    "2.7.2",
 			DesiredDinosaurIBPVersion: "2.7",
-			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:           types.STANDARD.String(),
+			DesiredStrimziVersion:     "strimzi-cluster-operator.v0.23.0-0",
+			InstanceType:              types.STANDARD.String(),
 		},
 	}
 
@@ -302,14 +302,14 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 	// create an additional dinosaur in failed state without "ssoSecret", "ssoClientID" and bootstrapServerHost. This indicates that the
 	// dinosaur failed in preparing state and should not be returned in the list
 	additionalDinosaur := &dbapi.DinosaurRequest{
-		ClusterID:              testServer.ClusterID,
-		MultiAZ:                false,
-		Name:                   mockDinosaurName4,
-		Namespace:              "mk",
-		Status:                 constants2.DinosaurRequestStatusFailed.String(),
+		ClusterID:                 testServer.ClusterID,
+		MultiAZ:                   false,
+		Name:                      mockDinosaurName4,
+		Namespace:                 "mk",
+		Status:                    constants2.DinosaurRequestStatusFailed.String(),
 		DesiredDinosaurVersion:    "2.7.2",
 		DesiredDinosaurIBPVersion: "2.7",
-		InstanceType:           types.EVAL.String(),
+		InstanceType:              types.EVAL.String(),
 	}
 
 	if err := db.Save(additionalDinosaur).Error; err != nil {
@@ -326,8 +326,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 		if k.Status != constants2.DinosaurRequestStatusPreparing.String() {
 			if mk := findManagedDinosaurByID(list.Items, k.ID); mk != nil {
 				Expect(mk.Metadata.Name).To(Equal(k.Name))
-				Expect(mk.Metadata.Annotations.Bf2OrgPlacementId).To(Equal(k.PlacementId))
-				Expect(mk.Metadata.Annotations.Bf2OrgId).To(Equal(k.ID))
+				Expect(mk.Metadata.Annotations.MasPlacementId).To(Equal(k.PlacementId))
+				Expect(mk.Metadata.Annotations.MasId).To(Equal(k.ID))
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
 				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.DinosaurRequestStatusDeprovision.String()))
 				Expect(mk.Spec.Versions.Dinosaur).To(Equal(k.DesiredDinosaurVersion))
@@ -350,28 +350,28 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 	lengthConditionsReasons := len(condtionsReasons)
 	for idx, item := range list.Items {
 		if !item.Spec.Deleted {
-			updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlaneDinosaurStatus{
+			updates[item.Metadata.Annotations.MasId] = private.DataPlaneDinosaurStatus{
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "True",
 					Reason: condtionsReasons[idx%lengthConditionsReasons],
 				}},
 				Versions: private.DataPlaneDinosaurStatusVersions{
-					Dinosaur:    fmt.Sprintf("dinosaur-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
-					Strimzi:  fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
-					DinosaurIbp: fmt.Sprintf("strimzi-ibp-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
+					Dinosaur:    fmt.Sprintf("dinosaur-new-version-%s", item.Metadata.Annotations.MasId),
+					Strimzi:     fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.MasId),
+					DinosaurIbp: fmt.Sprintf("strimzi-ibp-new-version-%s", item.Metadata.Annotations.MasId),
 				},
 			}
-			readyClusters = append(readyClusters, item.Metadata.Annotations.Bf2OrgId)
+			readyClusters = append(readyClusters, item.Metadata.Annotations.MasId)
 		} else {
-			updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlaneDinosaurStatus{
+			updates[item.Metadata.Annotations.MasId] = private.DataPlaneDinosaurStatus{
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "False",
 					Reason: "Deleted",
 				}},
 			}
-			deletedClusters = append(deletedClusters, item.Metadata.Annotations.Bf2OrgId)
+			deletedClusters = append(deletedClusters, item.Metadata.Annotations.MasId)
 		}
 	}
 
@@ -449,7 +449,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 				Versions: private.DataPlaneDinosaurStatusVersions{
 					Dinosaur:    fmt.Sprintf("dinosaur-new-version-%s", cid),
 					DinosaurIbp: fmt.Sprintf("dinosaur-ibp-new-version-%s", cid),
-					Strimzi:  fmt.Sprintf("strimzi-new-version-%s", cid),
+					Strimzi:     fmt.Sprintf("strimzi-new-version-%s", cid),
 				},
 			},
 		})
@@ -504,8 +504,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaursWithTlsCerts(t *testing.
 		CanaryServiceAccountClientID:     canaryServiceAccountClientId,
 		CanaryServiceAccountClientSecret: canaryServiceAccountClientSecret,
 		PlacementId:                      "some-placement-id",
-		DesiredDinosaurVersion:              "2.7.0",
-		DesiredDinosaurIBPVersion:           "2.7",
+		DesiredDinosaurVersion:           "2.7.0",
+		DesiredDinosaurIBPVersion:        "2.7",
 		InstanceType:                     types.EVAL.String(),
 	}
 
@@ -563,8 +563,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaursWithServiceAccounts(t *t
 		CanaryServiceAccountClientID:     canaryServiceAccountClientId,
 		CanaryServiceAccountClientSecret: canaryServiceAccountClientSecret,
 		PlacementId:                      "some-placement-id",
-		DesiredDinosaurVersion:              "2.7.0",
-		DesiredDinosaurIBPVersion:           "2.7",
+		DesiredDinosaurVersion:           "2.7.0",
+		DesiredDinosaurIBPVersion:        "2.7",
 		InstanceType:                     types.STANDARD.String(),
 	}
 
@@ -613,17 +613,17 @@ func TestDataPlaneEndpoints_GetManagedDinosaursWithoutOAuthTLSCert(t *testing.T)
 	ssoSecret := "some-sso-secret"
 
 	testDinosaur := &dbapi.DinosaurRequest{
-		ClusterID:              testServer.ClusterID,
-		MultiAZ:                false,
-		Name:                   mockDinosaurName1,
-		Status:                 constants2.DinosaurRequestStatusReady.String(),
-		BootstrapServerHost:    bootstrapServerHost,
-		SsoClientID:            ssoClientID,
-		SsoClientSecret:        ssoSecret,
-		PlacementId:            "some-placement-id",
+		ClusterID:                 testServer.ClusterID,
+		MultiAZ:                   false,
+		Name:                      mockDinosaurName1,
+		Status:                    constants2.DinosaurRequestStatusReady.String(),
+		BootstrapServerHost:       bootstrapServerHost,
+		SsoClientID:               ssoClientID,
+		SsoClientSecret:           ssoSecret,
+		PlacementId:               "some-placement-id",
 		DesiredDinosaurVersion:    "2.7.0",
 		DesiredDinosaurIBPVersion: "2.7",
-		InstanceType:           types.STANDARD.String(),
+		InstanceType:              types.STANDARD.String(),
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnDinosaur = true
@@ -669,18 +669,18 @@ func TestDataPlaneEndpoints_GetManagedDinosaursWithOauthMaximumSessionLifetime(t
 	ssoSecret := "some-sso-secret"
 
 	testDinosaur := &dbapi.DinosaurRequest{
-		ClusterID:               testServer.ClusterID,
-		MultiAZ:                 false,
-		Name:                    mockDinosaurName1,
-		Status:                  constants2.DinosaurRequestStatusReady.String(),
-		BootstrapServerHost:     bootstrapServerHost,
-		SsoClientID:             ssoClientID,
-		SsoClientSecret:         ssoSecret,
-		PlacementId:             "some-placement-id",
-		DesiredDinosaurVersion:     "2.7.0",
-		DesiredDinosaurIBPVersion:  "2.7",
-		InstanceType:            types.STANDARD.String(),
-		ReauthenticationEnabled: true, // enable session reauthentication
+		ClusterID:                 testServer.ClusterID,
+		MultiAZ:                   false,
+		Name:                      mockDinosaurName1,
+		Status:                    constants2.DinosaurRequestStatusReady.String(),
+		BootstrapServerHost:       bootstrapServerHost,
+		SsoClientID:               ssoClientID,
+		SsoClientSecret:           ssoSecret,
+		PlacementId:               "some-placement-id",
+		DesiredDinosaurVersion:    "2.7.0",
+		DesiredDinosaurIBPVersion: "2.7",
+		InstanceType:              types.STANDARD.String(),
+		ReauthenticationEnabled:   true, // enable session reauthentication
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnDinosaur = true
@@ -714,18 +714,18 @@ func TestDataPlaneEndpoints_GetManagedDinosaursWithOauthMaximumSessionLifetime(t
 
 	// create another dummy dinosaur
 	anotherTestDinosaur := &dbapi.DinosaurRequest{
-		ClusterID:               testServer.ClusterID,
-		MultiAZ:                 false,
-		Name:                    "another-dinosaur",
-		Status:                  constants2.DinosaurRequestStatusReady.String(),
-		BootstrapServerHost:     bootstrapServerHost,
-		SsoClientID:             ssoClientID,
-		SsoClientSecret:         ssoSecret,
-		PlacementId:             "some-placement-id",
-		DesiredDinosaurVersion:     "2.7.0",
-		DesiredDinosaurIBPVersion:  "2.7",
-		InstanceType:            types.STANDARD.String(),
-		ReauthenticationEnabled: true, // enable session reauthentication
+		ClusterID:                 testServer.ClusterID,
+		MultiAZ:                   false,
+		Name:                      "another-dinosaur",
+		Status:                    constants2.DinosaurRequestStatusReady.String(),
+		BootstrapServerHost:       bootstrapServerHost,
+		SsoClientID:               ssoClientID,
+		SsoClientSecret:           ssoSecret,
+		PlacementId:               "some-placement-id",
+		DesiredDinosaurVersion:    "2.7.0",
+		DesiredDinosaurIBPVersion: "2.7",
+		InstanceType:              types.STANDARD.String(),
+		ReauthenticationEnabled:   true, // enable session reauthentication
 	}
 
 	if err := db.Create(anotherTestDinosaur).Error; err != nil {
@@ -781,16 +781,16 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaursWithRoutes(t *testing.T) {
 
 	var testDinosaurs = []*dbapi.DinosaurRequest{
 		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Name:                   mockDinosaurName2,
-			Status:                 constants2.DinosaurRequestStatusProvisioning.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
+			ClusterID:                 testServer.ClusterID,
+			MultiAZ:                   false,
+			Name:                      mockDinosaurName2,
+			Status:                    constants2.DinosaurRequestStatusProvisioning.String(),
+			BootstrapServerHost:       bootstrapServerHost,
+			SsoClientID:               ssoClientID,
+			SsoClientSecret:           ssoSecret,
 			DesiredDinosaurVersion:    "2.6.0",
 			DesiredDinosaurIBPVersion: "2.6",
-			InstanceType:           types.EVAL.String(),
+			InstanceType:              types.EVAL.String(),
 		},
 	}
 
@@ -808,7 +808,7 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaursWithRoutes(t *testing.T) {
 	var readyClusters []string
 	updates := map[string]private.DataPlaneDinosaurStatus{}
 	for _, item := range list.Items {
-		updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlaneDinosaurStatus{
+		updates[item.Metadata.Annotations.MasId] = private.DataPlaneDinosaurStatus{
 			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 				Type:   "Ready",
 				Status: "True",
@@ -826,7 +826,7 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaursWithRoutes(t *testing.T) {
 				},
 			},
 		}
-		readyClusters = append(readyClusters, item.Metadata.Annotations.Bf2OrgId)
+		readyClusters = append(readyClusters, item.Metadata.Annotations.MasId)
 	}
 
 	// routes will be stored the first time status are updated
@@ -900,17 +900,17 @@ func TestDataPlaneEndpoints_GetManagedDinosaursWithOAuthTLSCert(t *testing.T) {
 	ssoSecret := "some-sso-secret"
 
 	testDinosaur := &dbapi.DinosaurRequest{
-		ClusterID:              testServer.ClusterID,
-		MultiAZ:                false,
-		Name:                   mockDinosaurName1,
-		Status:                 constants2.DinosaurRequestStatusReady.String(),
-		BootstrapServerHost:    bootstrapServerHost,
-		SsoClientID:            ssoClientID,
-		SsoClientSecret:        ssoSecret,
-		PlacementId:            "some-placement-id",
+		ClusterID:                 testServer.ClusterID,
+		MultiAZ:                   false,
+		Name:                      mockDinosaurName1,
+		Status:                    constants2.DinosaurRequestStatusReady.String(),
+		BootstrapServerHost:       bootstrapServerHost,
+		SsoClientID:               ssoClientID,
+		SsoClientSecret:           ssoSecret,
+		PlacementId:               "some-placement-id",
 		DesiredDinosaurVersion:    "2.7.0",
 		DesiredDinosaurIBPVersion: "2.7",
-		InstanceType:           types.STANDARD.String(),
+		InstanceType:              types.STANDARD.String(),
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnDinosaur = true
@@ -961,16 +961,16 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaurWithErrorStatus(t *testing.T) {
 	db := test.TestServices.DBFactory.New()
 
 	testDinosaur := dbapi.DinosaurRequest{
-		ClusterID:              testServer.ClusterID,
-		MultiAZ:                false,
-		Name:                   mockDinosaurName1,
-		Status:                 constants2.DinosaurRequestStatusReady.String(),
-		BootstrapServerHost:    bootstrapServerHost,
-		SsoClientID:            ssoClientID,
-		SsoClientSecret:        ssoSecret,
+		ClusterID:                 testServer.ClusterID,
+		MultiAZ:                   false,
+		Name:                      mockDinosaurName1,
+		Status:                    constants2.DinosaurRequestStatusReady.String(),
+		BootstrapServerHost:       bootstrapServerHost,
+		SsoClientID:               ssoClientID,
+		SsoClientSecret:           ssoSecret,
 		DesiredDinosaurVersion:    "2.7.0",
 		DesiredDinosaurIBPVersion: "2.7",
-		InstanceType:           types.STANDARD.String(),
+		InstanceType:              types.STANDARD.String(),
 	}
 
 	// create dummy dinosaurs
@@ -983,7 +983,7 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaurWithErrorStatus(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed dinosaur cr
-	dinosaurReqID := list.Items[0].Metadata.Annotations.Bf2OrgId
+	dinosaurReqID := list.Items[0].Metadata.Annotations.MasId
 
 	errMessage := "test-err-message"
 	updateReq := map[string]private.DataPlaneDinosaurStatus{
@@ -1020,18 +1020,18 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaur_RemoveFailedReason(t *testing.
 	db := test.TestServices.DBFactory.New()
 
 	testDinosaur := dbapi.DinosaurRequest{
-		ClusterID:              testServer.ClusterID,
-		MultiAZ:                false,
-		Name:                   mockDinosaurName1,
-		Status:                 constants2.DinosaurRequestStatusFailed.String(),
-		BootstrapServerHost:    bootstrapServerHost,
-		SsoClientID:            ssoClientID,
-		SsoClientSecret:        ssoSecret,
+		ClusterID:                 testServer.ClusterID,
+		MultiAZ:                   false,
+		Name:                      mockDinosaurName1,
+		Status:                    constants2.DinosaurRequestStatusFailed.String(),
+		BootstrapServerHost:       bootstrapServerHost,
+		SsoClientID:               ssoClientID,
+		SsoClientSecret:           ssoSecret,
 		DesiredDinosaurVersion:    "2.7.0",
 		DesiredDinosaurIBPVersion: "2.7",
-		FailedReason:           "test failed reason",
-		RoutesCreated:          true,
-		InstanceType:           types.STANDARD.String(),
+		FailedReason:              "test failed reason",
+		RoutesCreated:             true,
+		InstanceType:              types.STANDARD.String(),
 	}
 
 	// create dummy dinosaurs
@@ -1044,7 +1044,7 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaur_RemoveFailedReason(t *testing.
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed dinosaur cr
-	dinosaurReqID := list.Items[0].Metadata.Annotations.Bf2OrgId
+	dinosaurReqID := list.Items[0].Metadata.Annotations.MasId
 
 	updateReq := map[string]private.DataPlaneDinosaurStatus{
 		dinosaurReqID: fleetshardsync.GetReadyDinosaurStatusResponse(),
@@ -1061,7 +1061,7 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaur_RemoveFailedReason(t *testing.
 }
 
 func findManagedDinosaurByID(slice []private.ManagedDinosaur, dinosaurId string) *private.ManagedDinosaur {
-	match := func(item private.ManagedDinosaur) bool { return item.Metadata.Annotations.Bf2OrgId == dinosaurId }
+	match := func(item private.ManagedDinosaur) bool { return item.Metadata.Annotations.MasId == dinosaurId }
 	for _, item := range slice {
 		if match(item) {
 			return &item
