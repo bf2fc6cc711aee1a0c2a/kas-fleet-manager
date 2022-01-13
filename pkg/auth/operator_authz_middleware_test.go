@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 )
@@ -22,7 +22,7 @@ func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 			name: "should success when clusterId matches",
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
-					"kas-fleetshard-operator-cluster-id": "12345",
+					"fleetshard-operator-cluster-id": "12345",
 				},
 			},
 			clusterId: "12345",
@@ -32,7 +32,7 @@ func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 			name: "should fail when clusterId doesn't match",
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
-					"kas-fleetshard-operator-cluster-id": "12345",
+					"fleetshard-operator-cluster-id": "12345",
 				},
 			},
 			clusterId: "invalidid",
@@ -58,7 +58,7 @@ func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 			route.Use(func(handler http.Handler) http.Handler {
 				return setContextToken(handler, tt.token)
 			})
-			route.Use(checkClusterId(Kas, "id"))
+			route.Use(checkClusterId("id"))
 			req := httptest.NewRequest("GET", "http://example.com/agent-cluster/"+tt.clusterId, nil)
 			recorder := httptest.NewRecorder()
 			route.ServeHTTP(recorder, req)
@@ -84,7 +84,7 @@ func TestOperatorAuthzMiddleware_CheckOCMToken(t *testing.T) {
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
 					"iss":                                JWKSEndpoint,
-					"kas-fleetshard-operator-cluster-id": "12345",
+					"fleetshard-operator-cluster-id": "12345",
 				},
 			},
 			clusterId: "12345",
@@ -95,7 +95,7 @@ func TestOperatorAuthzMiddleware_CheckOCMToken(t *testing.T) {
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
 					"iss":                                "",
-					"kas-fleetshard-operator-cluster-id": "12345",
+					"fleetshard-operator-cluster-id": "12345",
 				},
 			},
 			clusterId: "12345",
@@ -105,7 +105,7 @@ func TestOperatorAuthzMiddleware_CheckOCMToken(t *testing.T) {
 			name: "should fail when JWKS iss claim is nil",
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
-					"kas-fleetshard-operator-cluster-id": "12345",
+					"fleetshard-operator-cluster-id": "12345",
 				},
 			},
 			clusterId: "12345",

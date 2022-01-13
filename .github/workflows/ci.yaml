@@ -41,24 +41,24 @@ env:
   GORM_HOST: 127.0.0.1
   GORM_PORT: 5432
   GORM_NAME: serviceapitests
-  GORM_USERNAME: kas_fleet_manager
+  GORM_USERNAME: fleet_manager
   GORM_PASSWORD: foobar-bizz-buzz
   GORM_SSLMODE: disable
   GORM_DEBUG: false
-  # Dummy MAS SSO variables
-  MAS_SSO_CLIENT_ID: ${{ secrets.MAS_SSO_CLIENT_ID }}
-  MAS_SSO_CLIENT_SECRET: ${{ secrets.MAS_SSO_CLIENT_SECRET }}
-  OSD_IDP_MAS_SSO_CLIENT_ID: ${{ secrets.OSD_IDP_MAS_SSO_CLIENT_ID }}
-  OSD_IDP_MAS_SSO_CLIENT_SECRET: ${{ secrets.OSD_IDP_MAS_SSO_CLIENT_SECRET }}
+  # Dummy SSO variables
+  SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
+  SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
+  OSD_IDP_SSO_CLIENT_ID: ${{ secrets.OSD_IDP_SSO_CLIENT_ID }}
+  OSD_IDP_SSO_CLIENT_SECRET: ${{ secrets.OSD_IDP_SSO_CLIENT_SECRET }}
   # Dummy AWS credentials 
   AWS_ACCOUNT_ID: aws_accountid
   AWS_ACCESS_KEY: aws_accesskey
   AWS_SECRET_ACCESS_KEY: aws_secretaccesskey
   ROUTE53_ACCESS_KEY: aws_route53_access_key
   ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key
-  # Dummy Kafka TLS env variables
-  KAFKA_TLS_CERT: kafka_tls_cert
-  KAFKA_TLS_KEY: kafka_tls_key
+  # Dummy Dinosaur TLS env variables
+  DINOSAUR_TLS_CERT: dinosaur_tls_cert
+  DINOSAUR_TLS_KEY: dinosaur_tls_key
   # So that OCM secrets are initialised
   DOCKER_PR_CHECK: true
   TEST_TIMEOUT: 30m
@@ -72,7 +72,7 @@ jobs:
         image: postgres:11
         env:
           POSTGRES_PASSWORD: foobar-bizz-buzz
-          POSTGRES_USER: kas_fleet_manager
+          POSTGRES_USER: fleet_manager
           POSTGRES_DB: serviceapitests
         ports:
           - 5432:5432
@@ -105,7 +105,7 @@ jobs:
         run: make db/migrate
       - name: Setup tests secrets
         run: |
-          make ocm/setup aws/setup keycloak/setup kafkacert/setup observatorium/setup
+          make ocm/setup aws/setup keycloak/setup dinosaurcert/setup observatorium/setup
       - name: Lint & Test
         run: |
           export GOPATH=$(go env GOPATH)

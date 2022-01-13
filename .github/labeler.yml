@@ -3,12 +3,9 @@ common:
   - test/**/*
   - openapi/templates/**/*
   - scripts/**/*
-kafka:
-  - internal/kafka/**/*
-  - openapi/kas*
-  - cmd/kas*
-connector:
-  - internal/connector/**/*
-  - openapi/connector*
+dinosaur:
+  - internal/dinosaur/**/*
+  - openapi/fleet*
+  - cmd/fleet*
 github:
   - .github/**/*

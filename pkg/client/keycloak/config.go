@@ -3,30 +3,29 @@ package keycloak
 import (
 	"os"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
 
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 )
 
 type KeycloakConfig struct {
-	EnableAuthenticationOnKafka bool                 `json:"enable_auth"`
-	BaseURL                     string               `json:"base_url"`
-	Debug                       bool                 `json:"debug"`
-	InsecureSkipVerify          bool                 `json:"insecure-skip-verify"`
-	UserNameClaim               string               `json:"user_name_claim"`
-	FallBackUserNameClaim       string               `json:"fall_back_user_name_claim"`
-	TLSTrustedCertificatesKey   string               `json:"tls_trusted_certificates_key"`
-	TLSTrustedCertificatesValue string               `json:"tls_trusted_certificates_value"`
-	TLSTrustedCertificatesFile  string               `json:"tls_trusted_certificates_file"`
-	EnablePlain                 bool                 `json:"enable_plain"`
-	EnableOauthBearer           bool                 `json:"enable_oauth_bearer"`
-	EnableCustomClaimCheck      bool                 `json:"enable_custom_claim_check"`
-	KafkaRealm                  *KeycloakRealmConfig `json:"kafka_realm"`
-	OSDClusterIDPRealm          *KeycloakRealmConfig `json:"osd_cluster_idp_realm"`
-	MaxAllowedServiceAccounts   int                  `json:"max_allowed_service_accounts"`
-	MaxLimitForGetClients       int                  `json:"max_limit_for_get_clients"`
-	KeycloakClientExpire        bool                 `json:"keycloak_client_expire"`
+	EnableAuthenticationOnDinosaur bool                 `json:"enable_auth"`
+	BaseURL                        string               `json:"base_url"`
+	Debug                          bool                 `json:"debug"`
+	InsecureSkipVerify             bool                 `json:"insecure-skip-verify"`
+	UserNameClaim                  string               `json:"user_name_claim"`
+	FallBackUserNameClaim          string               `json:"fall_back_user_name_claim"`
+	TLSTrustedCertificatesKey      string               `json:"tls_trusted_certificates_key"`
+	TLSTrustedCertificatesValue    string               `json:"tls_trusted_certificates_value"`
+	TLSTrustedCertificatesFile     string               `json:"tls_trusted_certificates_file"`
+	EnablePlain                    bool                 `json:"enable_plain"`
+	EnableOauthBearer              bool                 `json:"enable_oauth_bearer"`
+	EnableCustomClaimCheck         bool                 `json:"enable_custom_claim_check"`
+	DinosaurRealm                  *KeycloakRealmConfig `json:"dinosaur_realm"`
+	OSDClusterIDPRealm             *KeycloakRealmConfig `json:"osd_cluster_idp_realm"`
+	MaxLimitForGetClients          int                  `json:"max_limit_for_get_clients"`
+	KeycloakClientExpire           bool                 `json:"keycloak_client_expire"`
 }
 
 type KeycloakRealmConfig struct {
@@ -49,8 +48,8 @@ func (c *KeycloakRealmConfig) setDefaultURIs(baseURL string) {
 
 func NewKeycloakConfig() *KeycloakConfig {
 	kc := &KeycloakConfig{
-		EnableAuthenticationOnKafka: true,
-		KafkaRealm: &KeycloakRealmConfig{
+		EnableAuthenticationOnDinosaur: true,
+		DinosaurRealm: &KeycloakRealmConfig{
 			ClientIDFile:     "secrets/keycloak-service.clientId",
 			ClientSecretFile: "secrets/keycloak-service.clientSecret",
 			GrantType:        "client_credentials",
@@ -68,7 +67,6 @@ func NewKeycloakConfig() *KeycloakConfig {
 		TLSTrustedCertificatesKey:  "keycloak.crt",
 		EnablePlain:                true,
 		EnableOauthBearer:          false,
-		MaxAllowedServiceAccounts:  2,
 		MaxLimitForGetClients:      100,
 		KeycloakClientExpire:       false,
 	}
@@ -76,18 +74,17 @@ func NewKeycloakConfig() *KeycloakConfig {
 }
 
 func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.BoolVar(&kc.EnableAuthenticationOnKafka, "mas-sso-enable-auth", kc.EnableAuthenticationOnKafka, "Enable authentication mas-sso integration, enabled by default")
-	fs.StringVar(&kc.KafkaRealm.ClientIDFile, "mas-sso-client-id-file", kc.KafkaRealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the Kafka service accounts realm")
-	fs.StringVar(&kc.KafkaRealm.ClientSecretFile, "mas-sso-client-secret-file", kc.KafkaRealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the Kafka service accounts realm")
-	fs.StringVar(&kc.BaseURL, "mas-sso-base-url", kc.BaseURL, "The base URL of the mas-sso, integration by default")
-	fs.StringVar(&kc.KafkaRealm.Realm, "mas-sso-realm", kc.KafkaRealm.Realm, "Realm for Kafka service accounts in the mas-sso")
-	fs.StringVar(&kc.TLSTrustedCertificatesFile, "mas-sso-cert-file", kc.TLSTrustedCertificatesFile, "File containing tls cert for the mas-sso. Useful when mas-sso uses a self-signed certificate. If the provided file does not exist, is the empty string or the provided file content is empty then no custom MAS SSO certificate is used")
-	fs.BoolVar(&kc.Debug, "mas-sso-debug", kc.Debug, "Debug flag for Keycloak API")
-	fs.BoolVar(&kc.InsecureSkipVerify, "mas-sso-insecure", kc.InsecureSkipVerify, "Disable tls verification with mas-sso")
-	fs.StringVar(&kc.OSDClusterIDPRealm.ClientIDFile, "osd-idp-mas-sso-client-id-file", kc.OSDClusterIDPRealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm")
-	fs.StringVar(&kc.OSDClusterIDPRealm.ClientSecretFile, "osd-idp-mas-sso-client-secret-file", kc.OSDClusterIDPRealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
-	fs.StringVar(&kc.OSDClusterIDPRealm.Realm, "osd-idp-mas-sso-realm", kc.OSDClusterIDPRealm.Realm, "Realm for OSD cluster IDP clients in the mas-sso")
-	fs.IntVar(&kc.MaxAllowedServiceAccounts, "max-allowed-service-accounts", kc.MaxAllowedServiceAccounts, "Max allowed service accounts per user")
+	fs.BoolVar(&kc.EnableAuthenticationOnDinosaur, "sso-enable-auth", kc.EnableAuthenticationOnDinosaur, "Enable authentication sso integration, enabled by default")
+	fs.StringVar(&kc.DinosaurRealm.ClientIDFile, "sso-client-id-file", kc.DinosaurRealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the Dinosaur service accounts realm")
+	fs.StringVar(&kc.DinosaurRealm.ClientSecretFile, "sso-client-secret-file", kc.DinosaurRealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the Dinosaur service accounts realm")
+	fs.StringVar(&kc.BaseURL, "sso-base-url", kc.BaseURL, "The base URL of the sso, integration by default")
+	fs.StringVar(&kc.DinosaurRealm.Realm, "sso-realm", kc.DinosaurRealm.Realm, "Realm for Dinosaur service accounts in the sso")
+	fs.StringVar(&kc.TLSTrustedCertificatesFile, "sso-cert-file", kc.TLSTrustedCertificatesFile, "File containing tls cert for the sso. Useful when sso uses a self-signed certificate. If the provided file does not exist, is the empty string or the provided file content is empty then no custom SSO certificate is used")
+	fs.BoolVar(&kc.Debug, "sso-debug", kc.Debug, "Debug flag for Keycloak API")
+	fs.BoolVar(&kc.InsecureSkipVerify, "sso-insecure", kc.InsecureSkipVerify, "Disable tls verification with sso")
+	fs.StringVar(&kc.OSDClusterIDPRealm.ClientIDFile, "osd-idp-sso-client-id-file", kc.OSDClusterIDPRealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm")
+	fs.StringVar(&kc.OSDClusterIDPRealm.ClientSecretFile, "osd-idp-sso-client-secret-file", kc.OSDClusterIDPRealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
+	fs.StringVar(&kc.OSDClusterIDPRealm.Realm, "osd-idp-sso-realm", kc.OSDClusterIDPRealm.Realm, "Realm for OSD cluster IDP clients in the sso")
 	fs.IntVar(&kc.MaxLimitForGetClients, "max-limit-for-sso-get-clients", kc.MaxLimitForGetClients, "Max limits for SSO get clients")
 	fs.StringVar(&kc.UserNameClaim, "user-name-claim", kc.UserNameClaim, "Human readable username token claim")
 	fs.StringVar(&kc.FallBackUserNameClaim, "fall-back-user-name-claim", kc.FallBackUserNameClaim, "Fall back username token claim")
@@ -95,11 +92,11 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (kc *KeycloakConfig) ReadFiles() error {
-	err := shared.ReadFileValueString(kc.KafkaRealm.ClientIDFile, &kc.KafkaRealm.ClientID)
+	err := shared.ReadFileValueString(kc.DinosaurRealm.ClientIDFile, &kc.DinosaurRealm.ClientID)
 	if err != nil {
 		return err
 	}
-	err = shared.ReadFileValueString(kc.KafkaRealm.ClientSecretFile, &kc.KafkaRealm.ClientSecret)
+	err = shared.ReadFileValueString(kc.DinosaurRealm.ClientSecretFile, &kc.DinosaurRealm.ClientSecret)
 	if err != nil {
 		return err
 	}
@@ -112,18 +109,18 @@ func (kc *KeycloakConfig) ReadFiles() error {
 		return err
 	}
 
-	// We read the MAS SSO TLS certificate file. If it does not exist we
+	// We read the SSO TLS certificate file. If it does not exist we
 	// intentionally continue as if it was not provided
 	err = shared.ReadFileValueString(kc.TLSTrustedCertificatesFile, &kc.TLSTrustedCertificatesValue)
 	if err != nil {
 		if os.IsNotExist(err) {
-			glog.V(10).Infof("Specified MAS SSO TLS certificate file '%s' does not exist. Proceeding as if MAS SSO TLS certificate was not provided", kc.TLSTrustedCertificatesFile)
+			glog.V(10).Infof("Specified SSO TLS certificate file '%s' does not exist. Proceeding as if SSO TLS certificate was not provided", kc.TLSTrustedCertificatesFile)
 		} else {
 			return err
 		}
 	}
 
-	kc.KafkaRealm.setDefaultURIs(kc.BaseURL)
+	kc.DinosaurRealm.setDefaultURIs(kc.BaseURL)
 	kc.OSDClusterIDPRealm.setDefaultURIs(kc.BaseURL)
 	return nil
 }

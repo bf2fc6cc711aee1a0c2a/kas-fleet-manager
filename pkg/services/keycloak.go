@@ -1,21 +1,16 @@
 package services
 
 import (
-	"context"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/Nerzal/gocloak/v8"
 	"github.com/golang/glog"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 	"github.com/google/uuid"
 )
 
@@ -24,33 +19,26 @@ const (
 	rhUserId                 = "rh-user-id"
 	username                 = "username"
 	created_at               = "created_at"
-	clusterId                = "kas-fleetshard-operator-cluster-id"
-	connectorClusterId       = "connector-fleetshard-operator-cluster-id"
+	clusterId                = "fleetshard-operator-cluster-id"
 	UserServiceAccountPrefix = "srvc-acct-"
 )
 
 //go:generate moq -out keycloakservice_moq.go . KeycloakService
 type KeycloakService interface {
-	RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError)
+	RegisterDinosaurClientInSSO(dinosaurNamespace string, orgId string) (string, *errors.ServiceError)
 	RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
-	DeRegisterClientInSSO(kafkaNamespace string) *errors.ServiceError
+	DeRegisterClientInSSO(dinosaurNamespace string) *errors.ServiceError
 	GetConfig() *keycloak.KeycloakConfig
 	GetRealmConfig() *keycloak.KeycloakRealmConfig
-	IsKafkaClientExist(clientId string) *errors.ServiceError
-	CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError)
-	DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError
-	ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
-	ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError)
-	RegisterKasFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
-	DeRegisterKasFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError
-	GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError)
-	RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
-	GetKafkaClientSecret(clientId string) (string, *errors.ServiceError)
+	IsDinosaurClientExist(clientId string) *errors.ServiceError
+	RegisterFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
+	DeRegisterFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError
+	GetDinosaurClientSecret(clientId string) (string, *errors.ServiceError)
 	CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError)
 	DeleteServiceAccountInternal(clientId string) *errors.ServiceError
 }
 
-type KafkaKeycloakService KeycloakService
+type DinosaurKeycloakService KeycloakService
 type OsdKeycloakService KeycloakService
 
 type keycloakService struct {
@@ -81,18 +69,18 @@ func NewKeycloakService(config *keycloak.KeycloakConfig, realmConfig *keycloak.K
 	}
 }
 
-func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, orgId string) (string, *errors.ServiceError) {
+func (kc *keycloakService) RegisterDinosaurClientInSSO(dinosaurClusterName string, orgId string) (string, *errors.ServiceError) {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register Kafka Client in SSO")
+		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register Dinosaur Client in SSO")
 	}
-	internalClientId, err := kc.kcClient.IsClientExist(kafkaClusterName, accessToken)
+	internalClientId, err := kc.kcClient.IsClientExist(dinosaurClusterName, accessToken)
 	if err != nil {
-		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", kafkaClusterName)
+		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", dinosaurClusterName)
 
 	}
 	if internalClientId != "" {
-		glog.V(5).Infof("Existing Kafka Client %s found", kafkaClusterName)
+		glog.V(5).Infof("Existing Dinosaur Client %s found", dinosaurClusterName)
 		secretValue, secretErr := kc.kcClient.GetClientSecret(internalClientId, accessToken)
 		if secretErr != nil {
 			return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, secretErr, "failed to get sso client secret")
@@ -103,8 +91,8 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 		"owner-rh-org-id": orgId,
 	}
 	c := keycloak.ClientRepresentation{
-		ClientID:                     kafkaClusterName,
-		Name:                         kafkaClusterName,
+		ClientID:                     dinosaurClusterName,
+		Name:                         dinosaurClusterName,
 		ServiceAccountsEnabled:       true,
 		AuthorizationServicesEnabled: false,
 		StandardFlowEnabled:          false,
@@ -119,7 +107,7 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
 	}
-	glog.V(5).Infof("Kafka Client %s created successfully", kafkaClusterName)
+	glog.V(5).Infof("Dinosaur Client %s created successfully", dinosaurClusterName)
 	return secretValue, nil
 }
 
@@ -167,7 +155,7 @@ func (kc *keycloakService) DeRegisterClientInSSO(clientId string) *errors.Servic
 		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to deregister OSD cluster client in SSO")
 	}
 	internalClientID, _ := kc.kcClient.IsClientExist(clientId, accessToken)
-	glog.V(5).Infof("Existing Kafka Client %s found", clientId)
+	glog.V(5).Infof("Existing Dinosaur Client %s found", clientId)
 	if internalClientID == "" {
 		return nil
 	}
@@ -175,7 +163,7 @@ func (kc *keycloakService) DeRegisterClientInSSO(clientId string) *errors.Servic
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteSSOClient, err, "failed to delete the sso client")
 	}
-	glog.V(5).Infof("Kafka Client %s deleted successfully", clientId)
+	glog.V(5).Infof("Dinosaur Client %s deleted successfully", clientId)
 	return nil
 }
 
@@ -187,10 +175,10 @@ func (kc *keycloakService) GetRealmConfig() *keycloak.KeycloakRealmConfig {
 	return kc.kcClient.GetRealmConfig()
 }
 
-func (kc keycloakService) IsKafkaClientExist(clientId string) *errors.ServiceError {
+func (kc keycloakService) IsDinosaurClientExist(clientId string) *errors.ServiceError {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to check Kafka client existence")
+		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to check Dinosaur client existence")
 	}
 	_, err := kc.kcClient.IsClientExist(clientId, accessToken)
 	if err != nil {
@@ -199,10 +187,10 @@ func (kc keycloakService) IsKafkaClientExist(clientId string) *errors.ServiceErr
 	return nil
 }
 
-func (kc keycloakService) GetKafkaClientSecret(clientId string) (string, *errors.ServiceError) {
+func (kc keycloakService) GetDinosaurClientSecret(clientId string) (string, *errors.ServiceError) {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to get Kafka client secret")
+		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to get Dinosaur client secret")
 	}
 	internalClientID, err := kc.kcClient.IsClientExist(clientId, accessToken)
 	if err != nil {
@@ -213,35 +201,6 @@ func (kc keycloakService) GetKafkaClientSecret(clientId string) (string, *errors
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
 	}
 	return clientSecret, nil
-}
-
-func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to create service account")
-	}
-	claims, err := auth.GetClaimsFromContext(ctx) //http requester's info
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
-	}
-	orgId := auth.GetOrgIdFromClaims(claims)
-	ownerAccountId := auth.GetAccountIdFromClaims(claims)
-	owner := auth.GetUsernameFromClaims(claims)
-	isAllowed, err := kc.checkAllowedServiceAccountsLimits(accessToken, kc.GetConfig().MaxAllowedServiceAccounts, ownerAccountId)
-	if err != nil { //5xx
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to create service account")
-	}
-	if !isAllowed { //4xx over requesters' limit
-		return nil, errors.Forbidden("Max allowed number:%d of service accounts for user:%s has reached", kc.GetConfig().MaxAllowedServiceAccounts, owner)
-	}
-	return kc.CreateServiceAccountInternal(CompleteServiceAccountRequest{
-		Owner:          owner,
-		OwnerAccountId: ownerAccountId,
-		OrgId:          orgId,
-		ClientId:       kc.buildServiceAccountIdentifier(),
-		Name:           serviceAccountRequest.Name,
-		Description:    serviceAccountRequest.Description,
-	})
 }
 
 func (kc *keycloakService) CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
@@ -303,84 +262,6 @@ func (kc *keycloakService) CreateServiceAccountInternal(request CompleteServiceA
 	return serviceAcc, nil
 }
 
-func (kc *keycloakService) buildServiceAccountIdentifier() string {
-	return UserServiceAccountPrefix + NewUUID()
-}
-
-func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to collect service account")
-	}
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil { //4xx
-		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
-	}
-	orgId := auth.GetOrgIdFromClaims(claims)
-	searchAtt := fmt.Sprintf("rh-org-id:%s", orgId)
-	clients, err := kc.kcClient.GetClients(accessToken, first, max, searchAtt)
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to collect service accounts")
-	}
-
-	var sa []api.ServiceAccount
-	for _, client := range clients {
-		acc := api.ServiceAccount{}
-		attributes := client.Attributes
-		att := *attributes
-		if !strings.HasPrefix(shared.SafeString(client.ClientID), UserServiceAccountPrefix) {
-			continue
-		}
-
-		createdAt, err := time.Parse(time.RFC3339, att["created_at"])
-		if err != nil {
-			createdAt = time.Time{}
-		}
-		acc.ID = *client.ID
-		acc.Owner = att["username"]
-		acc.CreatedAt = createdAt
-		acc.ClientID = *client.ClientID
-		acc.Name = shared.SafeString(client.Name)
-		acc.Description = shared.SafeString(client.Description)
-		sa = append(sa, acc)
-	}
-	return sa, nil
-}
-
-func (kc *keycloakService) DeleteServiceAccount(ctx context.Context, id string) *errors.ServiceError {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil { //5xx
-		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to delete service account")
-	}
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil { //4xx
-		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
-	}
-	//get service account info with keycloak service client id token
-	c, err := kc.kcClient.GetClientById(id, accessToken)
-	if err != nil { //5xx or 4xx
-		return handleKeyCloakGetClientError(err, id)
-	}
-
-	if !strings.HasPrefix(shared.SafeString(c.ClientID), UserServiceAccountPrefix) {
-		return errors.NewWithCause(errors.ErrorServiceAccountNotFound, err, "service account not found %s", id)
-	}
-
-	orgId := auth.GetOrgIdFromClaims(claims)
-	userId := auth.GetAccountIdFromClaims(claims)
-	owner := auth.GetUsernameFromClaims(claims)
-	if kc.kcClient.IsSameOrg(c, orgId) && (kc.kcClient.IsOwner(c, userId) || auth.GetIsOrgAdminFromClaims(claims)) {
-		err = kc.kcClient.DeleteClient(id, accessToken) //id existence checked
-		if err != nil {                                 //5xx
-			return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "failed to delete service account")
-		}
-		glog.V(5).Infof("deleted service account clientId = %s owned by user = %s", shared.SafeString(c.ClientID), owner)
-		return nil
-	}
-
-	return errors.NewWithCause(errors.ErrorForbidden, nil, "failed to delete service account")
-}
-
 func (kc *keycloakService) DeleteServiceAccountInternal(serviceAccountId string) *errors.ServiceError {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil { //5xx
@@ -408,53 +289,6 @@ func (kc *keycloakService) DeleteServiceAccountInternal(serviceAccountId string)
 	return nil
 }
 
-func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil { //5xx
-		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to reset service account credentials")
-	}
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil { //4xx
-		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
-	}
-	c, err := kc.kcClient.GetClientById(id, accessToken)
-	if err != nil { //5xx or 4xx
-		return nil, handleKeyCloakGetClientError(err, id)
-	}
-
-	if !strings.HasPrefix(shared.SafeString(c.ClientID), UserServiceAccountPrefix) {
-		return nil, errors.NewWithCause(errors.ErrorServiceAccountNotFound, err, "service account not found %s", id)
-	}
-
-	//http request's info
-	orgId := auth.GetOrgIdFromClaims(claims)
-	userId := auth.GetAccountIdFromClaims(claims)
-	if kc.kcClient.IsSameOrg(c, orgId) && (kc.kcClient.IsOwner(c, userId) || auth.GetIsOrgAdminFromClaims(claims)) {
-		credRep, err := kc.kcClient.RegenerateClientSecret(accessToken, id)
-		if err != nil { //5xx
-			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to reset service account credentials")
-		}
-		value := *credRep.Value
-		attributes := c.Attributes
-		att := *attributes
-		createdAt, err := time.Parse(time.RFC3339, att["created_at"])
-		if err != nil {
-			createdAt = time.Time{}
-		}
-		return &api.ServiceAccount{
-			ID:           *c.ID,
-			ClientID:     *c.ClientID,
-			CreatedAt:    createdAt,
-			Owner:        att["username"],
-			ClientSecret: value,
-			Name:         shared.SafeString(c.Name),
-			Description:  shared.SafeString(c.Description),
-		}, nil
-	} else { //4xx
-		return nil, errors.NewWithCause(errors.ErrorForbidden, nil, "failed to reset service account credentials")
-	}
-}
-
 // return error object for API caller facing funcs: 5xx or 4xx
 func handleKeyCloakGetClientError(err error, id string) *errors.ServiceError {
 	if keyErr, ok := err.(*gocloak.APIError); ok {
@@ -465,58 +299,12 @@ func handleKeyCloakGetClientError(err error, id string) *errors.ServiceError {
 	return errors.NewWithCause(errors.ErrorFailedToGetServiceAccount, err, "failed to get the service account by id %s", id)
 }
 
-func (kc *keycloakService) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
-	accessToken, tokenErr := kc.kcClient.GetToken() //get keycloak service client id token
-	if tokenErr != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to get service account by id")
-
-	}
-	claims, err := auth.GetClaimsFromContext(ctx) //gather http requester info.
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
-
-	}
-	//get service account info with keycloak service client id token
-	c, err := kc.kcClient.GetClientById(id, accessToken)
-	if err != nil { //5xx or 4xx
-		return nil, handleKeyCloakGetClientError(err, id)
-	}
-
-	if !strings.HasPrefix(shared.SafeString(c.ClientID), UserServiceAccountPrefix) {
-		return nil, errors.NewWithCause(errors.ErrorServiceAccountNotFound, err, "service account not found %s", id)
-	}
-
-	//http requester's info.
-	orgId := auth.GetOrgIdFromClaims(claims)
-	userId := auth.GetAccountIdFromClaims(claims)
-	owner := auth.GetUsernameFromClaims(claims)
-	attributes := c.Attributes
-	att := *attributes
-	createdAt, err := time.Parse(time.RFC3339, att["created_at"])
-	if err != nil {
-		createdAt = time.Time{}
-	}
-	if kc.kcClient.IsSameOrg(c, orgId) && kc.kcClient.IsOwner(c, userId) {
-		return &api.ServiceAccount{
-			ID:          *c.ID,
-			ClientID:    *c.ClientID,
-			CreatedAt:   createdAt,
-			Owner:       owner,
-			Name:        shared.SafeString(c.Name),
-			Description: shared.SafeString(c.Description),
-		}, nil
-	} else {
-		//http requester doesn't have the permission: 4xx
-		return nil, errors.NewWithCause(errors.ErrorForbidden, nil, "failed to get service account")
-	}
-}
-
-func (kc *keycloakService) RegisterKasFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+func (kc *keycloakService) RegisterFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
 	serviceAccountId := buildAgentOperatorServiceAccountId(agentClusterId)
 	return kc.registerAgentServiceAccount(clusterId, serviceAccountId, agentClusterId, roleName)
 }
 
-func (kc *keycloakService) DeRegisterKasFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
+func (kc *keycloakService) DeRegisterFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
 	accessToken, err := kc.kcClient.GetToken()
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to deregister service account")
@@ -535,11 +323,6 @@ func (kc *keycloakService) DeRegisterKasFleetshardOperatorServiceAccount(agentCl
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", internalServiceAccountId)
 	}
 	return nil
-}
-
-func (kc *keycloakService) RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) { // (agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
-	serviceAccountId := fmt.Sprintf("connector-fleetshard-agent-%s", agentClusterId)
-	return kc.registerAgentServiceAccount(connectorClusterId, serviceAccountId, agentClusterId, roleName)
 }
 
 func (kc *keycloakService) registerAgentServiceAccount(clusterId string, serviceAccountId string, agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
@@ -657,32 +440,8 @@ func (kc *keycloakService) createServiceAccountIfNotExists(token string, clientR
 
 }
 
-func (kc *keycloakService) checkAllowedServiceAccountsLimits(accessToken string, maxAllowed int, userId string) (bool, error) {
-	glog.V(5).Infof("Check if user is allowed to create service accounts: userId = %s", userId)
-	searchAtt := fmt.Sprintf("rh-user-id:%s", userId)
-	clients, err := kc.kcClient.GetClients(accessToken, 0, -1, searchAtt) // return all service accounts attached to the user
-	if err != nil {
-		return false, err
-	}
-
-	serviceAccountCount := 0
-	for _, client := range clients {
-		if !strings.HasPrefix(shared.SafeString(client.ClientID), UserServiceAccountPrefix) { // filter out internal ones and care about user facing ones for comparison
-			continue
-		}
-		serviceAccountCount++
-	}
-
-	glog.V(10).Infof("Existing number of clients found: %d & max allowed: %d, for the userId:%s", serviceAccountCount, maxAllowed, userId)
-	if serviceAccountCount >= maxAllowed {
-		return false, nil //http requester's error
-	} else {
-		return true, nil
-	}
-}
-
 func buildAgentOperatorServiceAccountId(agentClusterId string) string {
-	return fmt.Sprintf("kas-fleetshard-agent-%s", agentClusterId)
+	return fmt.Sprintf("fleetshard-agent-%s", agentClusterId)
 }
 
 func NewUUID() string {

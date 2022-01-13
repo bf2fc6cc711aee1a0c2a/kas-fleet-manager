@@ -5,9 +5,9 @@ metadata:
   annotations:
     description: PostgreSQL database service for use with the Managed Services API
     iconClass: icon-postgresql
-    openshift.io/display-name: Kafka Service Fleet Manager PostgreSQL Database
+    openshift.io/display-name: Dinosaur Service Fleet Manager PostgreSQL Database
     tags: database,postgresql
-  name: kas-fleet-manager-db
+  name: fleet-manager-db
 parameters:
 
   - name: POSTGRESQL_IMAGESTREAM_NAMESPACE
@@ -17,9 +17,9 @@ parameters:
 
   - name: DATABASE_SERVICE_NAME
     description: The name of the OpenShift Service exposed for the database.
-    displayName: Kafka Service Fleet Manager Database
+    displayName: Dinosaur Service Fleet Manager Database
     required: true
-    value: kas-fleet-manager-db
+    value: fleet-manager-db
 
   - name: DATABASE_USER
     description: Username for PostgreSQL user that will be used for accessing the database.
@@ -37,7 +37,7 @@ parameters:
     description: Name of the PostgreSQL database accessed.
     displayName: PostgreSQL Database Name
     required: true
-    value: kas-fleet-manager
+    value: fleet-manager
 
   - name: DATABASE_VOLUME_CAPACITY
     description: Volume space available for data, e.g. 512Mi, 2Gi.

@@ -1,7 +1,7 @@
 package workers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
 	"sync"
 )
 
@@ -58,6 +58,6 @@ func (b *BaseWorker) StartWorker(w Worker) {
 
 func (b *BaseWorker) StopWorker(w Worker) {
 	b.Reconciler.Stop(w)
-	metrics.ResetMetricsForKafkaManagers()
+	metrics.ResetMetricsForDinosaurManagers()
 	metrics.SetLeaderWorkerMetric(b.WorkerType, false)
 }

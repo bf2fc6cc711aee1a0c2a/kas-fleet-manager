@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
 
 	"github.com/dgrijalva/jwt-go"
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -115,7 +115,7 @@ func (authHelper *AuthHelper) CreateJWTWithClaims(account *amv1.Account, jwtClai
 		}
 	}
 
-	// TODO: Set default claim for mas-sso token here.
+	// TODO: Set default claim for sso token here.
 
 	// Override default and add properties from the specified claims. Remove any key with nil value
 	for k, v := range jwtClaims {

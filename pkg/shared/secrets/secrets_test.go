@@ -32,11 +32,11 @@ const exampleSchema1 = `
         }
       ]
     },
-    "kafka.topic": {
+    "dinosaur.topic": {
       "title": "Topic names",
       "type": "string"
     },
-    "kafka.secret": {
+    "dinosaur.secret": {
       "title": "Topic secret",
       "oneOf": [
         {
@@ -69,7 +69,7 @@ func Test_getSecretPaths(t *testing.T) {
 			args: args{
 				schemaText: exampleSchema1,
 			},
-			want:    []string{`["accessKey"]`, `["kafka.secret"]`},
+			want:    []string{`["accessKey"]`, `["dinosaur.secret"]`},
 			wantErr: false,
 		},
 	}
@@ -108,8 +108,8 @@ func Test_changePasswordFields(t *testing.T) {
 				doc: `{
 					"queueNameOrArn": "test",
 					"accessKey": "test",
-					"kafka.topic": "test",
-					"kafka.secret": "test"
+					"dinosaur.topic": "test",
+					"dinosaur.secret": "test"
 				}`,
 				f: func(node *ajson.Node) error {
 					if node.Type() == ajson.String {
@@ -121,8 +121,8 @@ func Test_changePasswordFields(t *testing.T) {
 			want: `{
 				"queueNameOrArn": "test",
 				"accessKey": {},
-				"kafka.topic": "test",
-				"kafka.secret": {}
+				"dinosaur.topic": "test",
+				"dinosaur.secret": {}
 			}`,
 		},
 	}

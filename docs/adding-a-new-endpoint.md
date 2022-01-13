@@ -23,11 +23,10 @@ Converters/presenters are defined in the `pkg/api/presenters` directory. Please 
 ## Add a new handler
 Handlers are defined in the one of the `handlers` directory. 
 * [`pkg/handlers`](../pkg/handlers) - for generic handlers that can be resused by different services
-* [`internal/kafka/internal/handlers`](../internal/kafka/internal/handlers) - for kafka service handlers
-* [`internal/connector/internal/handlers`](../internal/connector/internal/handlers) - for connector service handlers
+* [`internal/dinosaur/internal/handlers`](../internal/dinosaur/internal/handlers) - for dinosaur service handlers
 
 ### Format
-All handlers should follow a specific format as defined in this [framework](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/pkg/handlers/framework.go). See existing handlers as an example.
+All handlers should follow a specific format as defined in this [framework](https://github.com/bf2fc6cc711aee1a0c2a/fleet-manager/blob/main/pkg/handlers/framework.go). See existing handlers as an example.
 
 ### Request Validation
 Any request validation should be specified in the handler config's `Validate` field as seen below.
@@ -43,21 +42,19 @@ cfg := &handlerConfig{
 }
 ```
 
-Validation functions are available in [validation.go](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/master/pkg/handlers/validation.go). Please add any new validations in this file if required.
+Validation functions are available in [validation.go](https://github.com/bf2fc6cc711aee1a0c2a/fleet-manager/blob/master/pkg/handlers/validation.go). Please add any new validations in this file if required.
 
 ### Services
 Any backend functionality called from your handler should be specified in `services` or it's subdirectory.
 
 * [`pkg/services`](../pkg/services) - for generic services that can be reused by different services
-* [`internal/kafka/internal/services`](../internal/kafka/internal/services) - for kafka specific services
-* [`internal/connector/internal/services`](../internal/connector/internal/services) - for connector specific services
+* [`internal/dinosaur/internal/services`](../internal/dinosaur/internal/services) - for dinosaur specific services
 
 ## Add your new endpoint to the Route Loader
 
 The `route_loader.go` contains the definition of the service's endpoints. Add your new endpoint to the router and attach your handler using `HandleFunc()` here.
 
-* [`internal/kafka/internal/routes/route_loader.go`](../internal/kafka/internal/routes/route_loader.go) - for the kafka service
-* [`internal/connector/internal/routes/route_loader.go`](../internal/connector/internal/routes/route_loader.go) - for the connector service
+* [`internal/dinosaur/internal/routes/route_loader.go`](../internal/dinosaur/internal/routes/route_loader.go) - for the dinosaur service
 
 For example
 
@@ -82,13 +79,13 @@ The CLI is built using [Cobra](https://github.com/spf13/cobra).  All of the comm
 
 * [`cmd`](../cmd) - main binary entry points
 * [`pkg/cmd`](../pkg/cmd) - common sub commands
-* [`internal/kafka/internal/cmd`](../internal/kafka/internal/cmd) - kafka sub commands
+* [`internal/dinosaur/internal/cmd`](../internal/dinosaur/internal/cmd) - dinosaur sub commands
 
 ```
 /cloudprovider - command definition for the /cloudprovider endpoint
 /cluster - command definition for the /cluster endpoint
 /flags - util functions for flags validation
-/kafka - command definition for the /kafka endpoint
+/dinosaur - command definition for the /dinosaur endpoint
 ```
 
 If your endpoint is using a new resource, a new folder should be created here with the following files:

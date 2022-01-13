@@ -6,18 +6,15 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
 	"github.com/dgrijalva/jwt-go"
 )
 
 const (
-	KasFleetManagerAdminReadRole        = "kas-fleet-manager-admin-read"
-	KasFleetManagerAdminWriteRole       = "kas-fleet-manager-admin-write"
-	KasFleetManagerAdminFullRole        = "kas-fleet-manager-admin-full"
-	ConnectorFleetManagerAdminReadRole  = "connector-fleet-manager-admin-read"
-	ConnectorFleetManagerAdminWriteRole = "connector-fleet-manager-admin-write"
-	ConnectorFleetManagerAdminFullRole  = "connector-fleet-manager-admin-full"
+	FleetManagerAdminReadRole  = "fleet-manager-admin-read"
+	FleetManagerAdminWriteRole = "fleet-manager-admin-write"
+	FleetManagerAdminFullRole  = "fleet-manager-admin-full"
 )
 
 // RolesAuthorizationMiddleware can be used to perform RBAC authorization checks on endpoints

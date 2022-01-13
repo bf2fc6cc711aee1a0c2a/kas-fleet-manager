@@ -1,9 +1,9 @@
 # Quota Control
 ## Quota Management List Configurations
 
-The type and the quantity of kafka instances a user can create is controlled via the 
+The type and the quantity of dinosaur instances a user can create is controlled via the 
 [Quota Management List](../config/quota-management-list-configuration.yaml).
-If a user is not in the _Quota Management List_, only EVAL kafka instances will be allowed.
+If a user is not in the _Quota Management List_, only EVAL dinosaur instances will be allowed.
 
 The difference between STANDARD and EVAL instance is its lifespan: EVAL instance will be deleted automatically after 
 48 hours.
@@ -21,7 +21,7 @@ To get the org id:
 
 ### Max allowed instances
 If the instance limit control is enabled, the service will enforce the `max_allowed_instances` configuration as the 
-limit to how many instances (i.e. Kafka) a user can create. This configuration can be specified per user or per 
+limit to how many instances (i.e. Dinosaur) a user can create. This configuration can be specified per user or per 
 organisation in the quota list configuration. If not defined there, the service will take the default 
 `max_allowed_instances` into account instead.
 
