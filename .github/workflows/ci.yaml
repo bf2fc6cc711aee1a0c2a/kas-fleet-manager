@@ -45,11 +45,11 @@ env:
   GORM_PASSWORD: foobar-bizz-buzz
   GORM_SSLMODE: disable
   GORM_DEBUG: false
-  # Dummy MAS SSO variables
-  MAS_SSO_CLIENT_ID: ${{ secrets.MAS_SSO_CLIENT_ID }}
-  MAS_SSO_CLIENT_SECRET: ${{ secrets.MAS_SSO_CLIENT_SECRET }}
-  OSD_IDP_MAS_SSO_CLIENT_ID: ${{ secrets.OSD_IDP_MAS_SSO_CLIENT_ID }}
-  OSD_IDP_MAS_SSO_CLIENT_SECRET: ${{ secrets.OSD_IDP_MAS_SSO_CLIENT_SECRET }}
+  # Dummy SSO variables
+  SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
+  SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
+  OSD_IDP_SSO_CLIENT_ID: ${{ secrets.OSD_IDP_SSO_CLIENT_ID }}
+  OSD_IDP_SSO_CLIENT_SECRET: ${{ secrets.OSD_IDP_SSO_CLIENT_SECRET }}
   # Dummy AWS credentials 
   AWS_ACCOUNT_ID: aws_accountid
   AWS_ACCESS_KEY: aws_accesskey

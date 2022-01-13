@@ -74,17 +74,17 @@ func NewKeycloakConfig() *KeycloakConfig {
 }
 
 func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.BoolVar(&kc.EnableAuthenticationOnDinosaur, "mas-sso-enable-auth", kc.EnableAuthenticationOnDinosaur, "Enable authentication mas-sso integration, enabled by default")
-	fs.StringVar(&kc.DinosaurRealm.ClientIDFile, "mas-sso-client-id-file", kc.DinosaurRealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the Dinosaur service accounts realm")
-	fs.StringVar(&kc.DinosaurRealm.ClientSecretFile, "mas-sso-client-secret-file", kc.DinosaurRealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the Dinosaur service accounts realm")
-	fs.StringVar(&kc.BaseURL, "mas-sso-base-url", kc.BaseURL, "The base URL of the mas-sso, integration by default")
-	fs.StringVar(&kc.DinosaurRealm.Realm, "mas-sso-realm", kc.DinosaurRealm.Realm, "Realm for Dinosaur service accounts in the mas-sso")
-	fs.StringVar(&kc.TLSTrustedCertificatesFile, "mas-sso-cert-file", kc.TLSTrustedCertificatesFile, "File containing tls cert for the mas-sso. Useful when mas-sso uses a self-signed certificate. If the provided file does not exist, is the empty string or the provided file content is empty then no custom MAS SSO certificate is used")
-	fs.BoolVar(&kc.Debug, "mas-sso-debug", kc.Debug, "Debug flag for Keycloak API")
-	fs.BoolVar(&kc.InsecureSkipVerify, "mas-sso-insecure", kc.InsecureSkipVerify, "Disable tls verification with mas-sso")
-	fs.StringVar(&kc.OSDClusterIDPRealm.ClientIDFile, "osd-idp-mas-sso-client-id-file", kc.OSDClusterIDPRealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm")
-	fs.StringVar(&kc.OSDClusterIDPRealm.ClientSecretFile, "osd-idp-mas-sso-client-secret-file", kc.OSDClusterIDPRealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
-	fs.StringVar(&kc.OSDClusterIDPRealm.Realm, "osd-idp-mas-sso-realm", kc.OSDClusterIDPRealm.Realm, "Realm for OSD cluster IDP clients in the mas-sso")
+	fs.BoolVar(&kc.EnableAuthenticationOnDinosaur, "sso-enable-auth", kc.EnableAuthenticationOnDinosaur, "Enable authentication sso integration, enabled by default")
+	fs.StringVar(&kc.DinosaurRealm.ClientIDFile, "sso-client-id-file", kc.DinosaurRealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the Dinosaur service accounts realm")
+	fs.StringVar(&kc.DinosaurRealm.ClientSecretFile, "sso-client-secret-file", kc.DinosaurRealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the Dinosaur service accounts realm")
+	fs.StringVar(&kc.BaseURL, "sso-base-url", kc.BaseURL, "The base URL of the sso, integration by default")
+	fs.StringVar(&kc.DinosaurRealm.Realm, "sso-realm", kc.DinosaurRealm.Realm, "Realm for Dinosaur service accounts in the sso")
+	fs.StringVar(&kc.TLSTrustedCertificatesFile, "sso-cert-file", kc.TLSTrustedCertificatesFile, "File containing tls cert for the sso. Useful when sso uses a self-signed certificate. If the provided file does not exist, is the empty string or the provided file content is empty then no custom SSO certificate is used")
+	fs.BoolVar(&kc.Debug, "sso-debug", kc.Debug, "Debug flag for Keycloak API")
+	fs.BoolVar(&kc.InsecureSkipVerify, "sso-insecure", kc.InsecureSkipVerify, "Disable tls verification with sso")
+	fs.StringVar(&kc.OSDClusterIDPRealm.ClientIDFile, "osd-idp-sso-client-id-file", kc.OSDClusterIDPRealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm")
+	fs.StringVar(&kc.OSDClusterIDPRealm.ClientSecretFile, "osd-idp-sso-client-secret-file", kc.OSDClusterIDPRealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
+	fs.StringVar(&kc.OSDClusterIDPRealm.Realm, "osd-idp-sso-realm", kc.OSDClusterIDPRealm.Realm, "Realm for OSD cluster IDP clients in the sso")
 	fs.IntVar(&kc.MaxLimitForGetClients, "max-limit-for-sso-get-clients", kc.MaxLimitForGetClients, "Max limits for SSO get clients")
 	fs.StringVar(&kc.UserNameClaim, "user-name-claim", kc.UserNameClaim, "Human readable username token claim")
 	fs.StringVar(&kc.FallBackUserNameClaim, "fall-back-user-name-claim", kc.FallBackUserNameClaim, "Fall back username token claim")
@@ -109,12 +109,12 @@ func (kc *KeycloakConfig) ReadFiles() error {
 		return err
 	}
 
-	// We read the MAS SSO TLS certificate file. If it does not exist we
+	// We read the SSO TLS certificate file. If it does not exist we
 	// intentionally continue as if it was not provided
 	err = shared.ReadFileValueString(kc.TLSTrustedCertificatesFile, &kc.TLSTrustedCertificatesValue)
 	if err != nil {
 		if os.IsNotExist(err) {
-			glog.V(10).Infof("Specified MAS SSO TLS certificate file '%s' does not exist. Proceeding as if MAS SSO TLS certificate was not provided", kc.TLSTrustedCertificatesFile)
+			glog.V(10).Infof("Specified SSO TLS certificate file '%s' does not exist. Proceeding as if SSO TLS certificate was not provided", kc.TLSTrustedCertificatesFile)
 		} else {
 			return err
 		}

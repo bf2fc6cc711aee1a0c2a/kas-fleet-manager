@@ -243,7 +243,7 @@ parameters:
 
 - name: MAX_LIMIT_FOR_SSO_GET_CLIENTS
   displayName: Max clients fetch by get clients
-  description: The default value of maximum number of clients fetch from mas-sso.
+  description: The default value of maximum number of clients fetch from sso.
   value: "100"
 
 - name: REGISTERED_SERVICE_ACCOUNTS
@@ -271,23 +271,23 @@ parameters:
   description: A list of dinosaur-sre admin users. A user is identified by its username.
   value: "[]"
 
-- name: MAS_SSO_DEBUG
-  displayName: MAS SSO API Debug mode
-  description: Debug mode for MAS SSO API client
+- name: SSO_DEBUG
+  displayName: SSO API Debug mode
+  description: Debug mode for SSO API client
   value: "false"
 
-- name: MAS_SSO_ENABLE_AUTH
-  displayName: Enable MAS SSO Auth
-  description: Enable MAS SSO Auth for the data plane
+- name: SSO_ENABLE_AUTH
+  displayName: Enable SSO Auth
+  description: Enable SSO Auth for the data plane
   value: "true"
 
-- name: MAS_SSO_BASE_URL
-  displayName: MAS SSO Host Url
-  description: MAS SSO Host url
+- name: SSO_BASE_URL
+  displayName: SSO Host Url
+  description: SSO Host url
 
-- name: MAS_SSO_REALM
-  displayName: MAS SSO REALM for Dinosaur SSO Clients and Service Accounts
-  description: MAS SSO realm for Dinosaur SSO Clients and Service Accounts
+- name: SSO_REALM
+  displayName: SSO REALM for Dinosaur SSO Clients and Service Accounts
+  description: SSO realm for Dinosaur SSO Clients and Service Accounts
 
 - name: USER_NAME_CLAIM
   displayName: Dinosaur Oauth spec human readable token claim attribute
@@ -299,9 +299,9 @@ parameters:
   description: Dinosaur Oauth spec fall back human readable token claim attribute
   value: "preferred_username"
 
-- name: OSD_IDP_MAS_SSO_REALM
-  displayName: MAS SSO REALM for OSD Cluster Identity Provider Clients
-  description: MAS SSO realm for OSD Cluster Identity Provider Clients
+- name: OSD_IDP_SSO_REALM
+  displayName: SSO REALM for OSD Cluster Identity Provider Clients
+  description: SSO realm for OSD Cluster Identity Provider Clients
   value: "interim-test-realm"
 
 - name: CLUSTER_OPENSHIFT_VERSION
@@ -780,19 +780,19 @@ objects:
             - --enable-db-debug=${ENABLE_DB_DEBUG}
             - --ocm-client-id-file=/secrets/service/ocm-service.clientId
             - --ocm-client-secret-file=/secrets/service/ocm-service.clientSecret
-            - --mas-sso-enable-auth=${MAS_SSO_ENABLE_AUTH}
-            - --mas-sso-client-id-file=/secrets/service/keycloak-service.clientId
-            - --mas-sso-client-secret-file=/secrets/service/keycloak-service.clientSecret
-            - --mas-sso-base-url=${MAS_SSO_BASE_URL}
-            - --mas-sso-realm=${MAS_SSO_REALM}
+            - --sso-enable-auth=${SSO_ENABLE_AUTH}
+            - --sso-client-id-file=/secrets/service/keycloak-service.clientId
+            - --sso-client-secret-file=/secrets/service/keycloak-service.clientSecret
+            - --sso-base-url=${SSO_BASE_URL}
+            - --sso-realm=${SSO_REALM}
             - --user-name-claim=${USER_NAME_CLAIM}
             - --fall-back-user-name-claim=${FALL_BACK_USER_NAME_CLAIM}
             - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
-            - --osd-idp-mas-sso-realm=${OSD_IDP_MAS_SSO_REALM}
-            - --osd-idp-mas-sso-client-id-file=/secrets/service/osd-idp-keycloak-service.clientId
-            - --osd-idp-mas-sso-client-secret-file=/secrets/service/osd-idp-keycloak-service.clientSecret
-            - --mas-sso-cert-file=/secrets/service/keycloak-service.crt
-            - --mas-sso-debug=${MAS_SSO_DEBUG}
+            - --osd-idp-sso-realm=${OSD_IDP_SSO_REALM}
+            - --osd-idp-sso-client-id-file=/secrets/service/osd-idp-keycloak-service.clientId
+            - --osd-idp-sso-client-secret-file=/secrets/service/osd-idp-keycloak-service.clientSecret
+            - --sso-cert-file=/secrets/service/keycloak-service.crt
+            - --sso-debug=${SSO_DEBUG}
             - --self-token-file=/secrets/service/ocm-service.token
             - --ocm-base-url=${OCM_URL}
             - --ams-base-url=${AMS_URL}
