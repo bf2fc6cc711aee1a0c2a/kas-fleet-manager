@@ -7,8 +7,5 @@ dinosaur:
   - internal/dinosaur/**/*
   - openapi/fleet*
   - cmd/fleet*
-connector:
-  - internal/connector/**/*
-  - openapi/connector*
 github:
   - .github/**/*
