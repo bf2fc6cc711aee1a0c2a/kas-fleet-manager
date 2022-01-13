@@ -64,14 +64,14 @@ Feature: create a a connector
           "kind": "Connector",
           "metadata": {
             "name": "example 1",
-            "kafka_id":"mykafka"
+            "dinosaur_id":"mydinosaur"
           },
           "deployment_location": {
             "kind": "addon",
             "cluster_id": "default"
           },
-          "kafka": {
-            "bootstrap_server": "kafka.hostname",
+          "dinosaur": {
+            "bootstrap_server": "dinosaur.hostname",
             "client_id": "myclient",
             "client_secret": "test"
           },
@@ -127,19 +127,19 @@ Feature: create a a connector
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id":"mykafka"
+          "dinosaur_id":"mydinosaur"
         },
         "deployment_location": {
           "kind": "addon",
           "cluster_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
-        "kafka": {
-          "bootstrap_server": "kafka.hostname",
+        "dinosaur": {
+          "bootstrap_server": "dinosaur.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
-        "connector_spec": "{\"aws_queue_name_or_arn\": \"test\",\"aws_access_key\": \"test\",\"aws_secret_key\": \"test\",\"aws_region\": \"east\", \"kafka_topic\": \"test\"}"
+        "connector_spec": "{\"aws_queue_name_or_arn\": \"test\",\"aws_access_key\": \"test\",\"aws_secret_key\": \"test\",\"aws_region\": \"east\", \"dinosaur_topic\": \"test\"}"
       }
       """
 

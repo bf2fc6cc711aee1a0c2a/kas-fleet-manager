@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"sort"
 
-	kasfleetmanagererrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	fleetmanagererrors "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -89,15 +89,15 @@ const (
 	ClusterProvisioned ClusterStatus = "cluster_provisioned"
 	// ClusterFailed the cluster failed to become ready
 	ClusterFailed ClusterStatus = "failed"
-	// ClusterReady the cluster is terraformed and ready for kafka instances
+	// ClusterReady the cluster is terraformed and ready for dinosaur instances
 	ClusterReady ClusterStatus = "ready"
 	// ClusterDeprovisioning the cluster is empty and can be deprovisioned
 	ClusterDeprovisioning ClusterStatus = "deprovisioning"
 	// ClusterCleanup the cluster external resources are being removed
 	ClusterCleanup ClusterStatus = "cleanup"
-	// ClusterWaitingForKasFleetShardOperator the cluster is waiting for the KAS fleetshard operator to be ready
-	ClusterWaitingForKasFleetShardOperator ClusterStatus = "waiting_for_kas_fleetshard_operator"
-	// ClusterFull the cluster is full and cannot accept more Kafka clusters
+	// ClusterWaitingForFleetShardOperator the cluster is waiting for the fleetshard operator to be ready
+	ClusterWaitingForFleetShardOperator ClusterStatus = "waiting_for_fleetshard_operator"
+	// ClusterFull the cluster is full and cannot accept more Dinosaur clusters
 	ClusterFull ClusterStatus = "full"
 	// ClusterComputeNodeScalingUp the cluster is in the process of scaling up a compute node
 	ClusterComputeNodeScalingUp ClusterStatus = "compute_node_scaling_up"
@@ -116,7 +116,7 @@ var ordinals = map[string]int{
 	ClusterAccepted.String():                        0,
 	ClusterProvisioning.String():                    10,
 	ClusterProvisioned.String():                     20,
-	ClusterWaitingForKasFleetShardOperator.String(): 30,
+	ClusterWaitingForFleetShardOperator.String(): 30,
 	ClusterReady.String():                           40,
 	ClusterComputeNodeScalingUp.String():            50,
 	ClusterDeprovisioning.String():                  60,
@@ -126,7 +126,7 @@ var ordinals = map[string]int{
 
 // This represents the valid statuses of a dataplane cluster
 var StatusForValidCluster = []string{string(ClusterProvisioning), string(ClusterProvisioned), string(ClusterReady),
-	string(ClusterAccepted), string(ClusterWaitingForKasFleetShardOperator), string(ClusterComputeNodeScalingUp)}
+	string(ClusterAccepted), string(ClusterWaitingForFleetShardOperator), string(ClusterComputeNodeScalingUp)}
 
 // ClusterDeletionStatuses are statuses of clusters under deletion
 var ClusterDeletionStatuses = []string{ClusterCleanup.String(), ClusterDeprovisioning.String()}
@@ -190,23 +190,23 @@ func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
 type StrimziVersion struct {
 	Version          string            `json:"version"`
 	Ready            bool              `json:"ready"`
-	KafkaVersions    []KafkaVersion    `json:"kafkaVersions"`
-	KafkaIBPVersions []KafkaIBPVersion `json:"kafkaIBPVersions"`
+	DinosaurVersions    []DinosaurVersion    `json:"dinosaurVersions"`
+	DinosaurIBPVersions []DinosaurIBPVersion `json:"dinosaurIBPVersions"`
 }
 
-type KafkaVersion struct {
+type DinosaurVersion struct {
 	Version string `json:"version"`
 }
 
-func (s *KafkaVersion) Compare(other KafkaVersion) (int, error) {
+func (s *DinosaurVersion) Compare(other DinosaurVersion) (int, error) {
 	return buildAwareSemanticVersioningCompare(s.Version, other.Version)
 }
 
-type KafkaIBPVersion struct {
+type DinosaurIBPVersion struct {
 	Version string `json:"version"`
 }
 
-func (s *KafkaIBPVersion) Compare(other KafkaIBPVersion) (int, error) {
+func (s *DinosaurIBPVersion) Compare(other DinosaurIBPVersion) (int, error) {
 	return buildAwareSemanticVersioningCompare(s.Version, other.Version)
 }
 
@@ -245,18 +245,18 @@ func CompareSemanticVersionsMajorAndMinor(current, desired string) (int, error) 
 
 func (s *StrimziVersion) DeepCopy() *StrimziVersion {
 	var res StrimziVersion = *s
-	res.KafkaVersions = nil
-	res.KafkaIBPVersions = nil
+	res.DinosaurVersions = nil
+	res.DinosaurIBPVersions = nil
 
-	if s.KafkaVersions != nil {
-		kafkaVersionsCopy := make([]KafkaVersion, len(s.KafkaVersions))
-		copy(kafkaVersionsCopy, s.KafkaVersions)
-		res.KafkaVersions = kafkaVersionsCopy
+	if s.DinosaurVersions != nil {
+		dinosaurVersionsCopy := make([]DinosaurVersion, len(s.DinosaurVersions))
+		copy(dinosaurVersionsCopy, s.DinosaurVersions)
+		res.DinosaurVersions = dinosaurVersionsCopy
 	}
-	if s.KafkaIBPVersions != nil {
-		kafkaIBPVersionsCopy := make([]KafkaIBPVersion, len(s.KafkaIBPVersions))
-		copy(kafkaIBPVersionsCopy, s.KafkaIBPVersions)
-		res.KafkaIBPVersions = kafkaIBPVersionsCopy
+	if s.DinosaurIBPVersions != nil {
+		dinosaurIBPVersionsCopy := make([]DinosaurIBPVersion, len(s.DinosaurIBPVersions))
+		copy(dinosaurIBPVersionsCopy, s.DinosaurIBPVersions)
+		res.DinosaurIBPVersions = dinosaurIBPVersionsCopy
 	}
 
 	return &res
@@ -302,8 +302,8 @@ func (cluster *Cluster) GetAvailableStrimziVersions() ([]StrimziVersion, error) 
 // StrimziVersionsDeepSort returns a sorted copy of the provided StrimziVersions
 // in the versions slice. The following elements are sorted in ascending order:
 // - The strimzi versions
-// - For each strimzi version, their Kafka Versions
-// - For each strimzi version, their Kafka IBP Versions
+// - For each strimzi version, their Dinosaur Versions
+// - For each strimzi version, their Dinosaur IBP Versions
 func StrimziVersionsDeepSort(versions []StrimziVersion) ([]StrimziVersion, error) {
 	if versions == nil {
 		return versions, nil
@@ -319,7 +319,7 @@ func StrimziVersionsDeepSort(versions []StrimziVersion) ([]StrimziVersion, error
 		versionsToSet = append(versionsToSet, *copiedStrimziVersion)
 	}
 
-	var errors kasfleetmanagererrors.ErrorList
+	var errors fleetmanagererrors.ErrorList
 
 	sort.Slice(versionsToSet, func(i, j int) bool {
 		res, err := versionsToSet[i].Compare(versionsToSet[j])
@@ -335,9 +335,9 @@ func StrimziVersionsDeepSort(versions []StrimziVersion) ([]StrimziVersion, error
 
 	for idx := range versionsToSet {
 
-		// Sort KafkaVersions
-		sort.Slice(versionsToSet[idx].KafkaVersions, func(i, j int) bool {
-			res, err := versionsToSet[idx].KafkaVersions[i].Compare(versionsToSet[idx].KafkaVersions[j])
+		// Sort DinosaurVersions
+		sort.Slice(versionsToSet[idx].DinosaurVersions, func(i, j int) bool {
+			res, err := versionsToSet[idx].DinosaurVersions[i].Compare(versionsToSet[idx].DinosaurVersions[j])
 			if err != nil {
 				errors = append(errors, err)
 			}
@@ -348,9 +348,9 @@ func StrimziVersionsDeepSort(versions []StrimziVersion) ([]StrimziVersion, error
 			return nil, errors
 		}
 
-		// Sort KafkaIBPVersions
-		sort.Slice(versionsToSet[idx].KafkaIBPVersions, func(i, j int) bool {
-			res, err := versionsToSet[idx].KafkaIBPVersions[i].Compare(versionsToSet[idx].KafkaIBPVersions[j])
+		// Sort DinosaurIBPVersions
+		sort.Slice(versionsToSet[idx].DinosaurIBPVersions, func(i, j int) bool {
+			res, err := versionsToSet[idx].DinosaurIBPVersions[i].Compare(versionsToSet[idx].DinosaurIBPVersions[j])
 			if err != nil {
 				errors = append(errors, err)
 			}
@@ -367,7 +367,7 @@ func StrimziVersionsDeepSort(versions []StrimziVersion) ([]StrimziVersion, error
 
 // SetAvailableStrimziVersions sets the cluster's list of available strimzi
 // versions. The list of versions is always stored in version ascending order,
-// with all versions deeply sorted (strimzi versions, kafka versions, kafka ibp
+// with all versions deeply sorted (strimzi versions, dinosaur versions, dinosaur ibp
 // versions ...). If availableStrimziVersions is nil an empty list is set. See
 // StrimziVersionNumberPartRegex for details on the expected strimzi version
 // format

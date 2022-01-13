@@ -1,5 +1,5 @@
 // Setting a path prefixed to subsequent http requests:
-//    Given the path prefix is "/api/kafkas_mgmt"
+//    Given the path prefix is "/api/dinosaurs_mgmt"
 // Send an http request. Supports (GET|POST|PUT|DELETE|PATCH|OPTION):
 //    When I GET path "/v1/some/${kid}
 // Send an http request with a body. Supports (GET|POST|PUT|DELETE|PATCH|OPTION):

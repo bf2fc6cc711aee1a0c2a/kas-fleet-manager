@@ -9,8 +9,8 @@ import (
 )
 
 type APIObservatoriumService interface {
-	GetKafkaState(name string, namespaceName string) (KafkaState, error)
-	GetMetrics(csMetrics *KafkaMetrics, resourceNamespace string, rq *MetricsReqParams) error
+	GetDinosaurState(name string, namespaceName string) (DinosaurState, error)
+	GetMetrics(csMetrics *DinosaurMetrics, resourceNamespace string, rq *MetricsReqParams) error
 }
 type fetcher struct {
 	metric   string
@@ -23,34 +23,34 @@ type ServiceObservatorium struct {
 	client *Client
 }
 
-func (obs *ServiceObservatorium) GetKafkaState(name string, resourceNamespace string) (KafkaState, error) {
-	KafkaState := KafkaState{}
+func (obs *ServiceObservatorium) GetDinosaurState(name string, resourceNamespace string) (DinosaurState, error) {
+	DinosaurState := DinosaurState{}
 	c := obs.client
 	metric := `strimzi_resource_state{%s}`
-	labels := fmt.Sprintf(`kind=~'Kafka', name=~'%s',resource_namespace=~'%s'`, name, resourceNamespace)
+	labels := fmt.Sprintf(`kind=~'Dinosaur', name=~'%s',resource_namespace=~'%s'`, name, resourceNamespace)
 	result := c.Query(metric, labels)
 	if result.Err != nil {
-		return KafkaState, result.Err
+		return DinosaurState, result.Err
 	}
 
 	for _, s := range result.Vector {
 
 		if s.Value == 1 {
-			KafkaState.State = ClusterStateReady
+			DinosaurState.State = ClusterStateReady
 		} else {
-			KafkaState.State = ClusterStateUnknown
+			DinosaurState.State = ClusterStateUnknown
 		}
 	}
-	return KafkaState, nil
+	return DinosaurState, nil
 }
 
-func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace string, rq *MetricsReqParams) error {
+func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace string, rq *MetricsReqParams) error {
 	failedMetrics := []string{}
 	fetchers := map[string]fetcher{
 		//Check metrics for available disk space per broker
 		"kubelet_volume_stats_available_bytes": {
 			`kubelet_volume_stats_available_bytes{%s}`,
-			fmt.Sprintf(`persistentvolumeclaim=~"data-.*-kafka-[0-9]*$", namespace=~'%s'`, namespace),
+			fmt.Sprintf(`persistentvolumeclaim=~"data-.*-dinosaur-[0-9]*$", namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
@@ -58,119 +58,119 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 		//Check metrics for used disk space per broker
 		"kubelet_volume_stats_used_bytes": {
 			`kubelet_volume_stats_used_bytes{%s}`,
-			fmt.Sprintf(`persistentvolumeclaim=~"data-.*-kafka-[0-9]*$", namespace=~'%s'`, namespace),
+			fmt.Sprintf(`persistentvolumeclaim=~"data-.*-dinosaur-[0-9]*$", namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
 		//Check metrics for soft limit quota for cluster
-		"kafka_broker_quota_softlimitbytes": {
-			`kafka_broker_quota_softlimitbytes{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
+		"dinosaur_broker_quota_softlimitbytes": {
+			`dinosaur_broker_quota_softlimitbytes{%s}`,
+			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
 		//Check metrics for used space across the cluster
-		"kafka_broker_quota_totalstorageusedbytes": {
-			`kafka_broker_quota_totalstorageusedbytes{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
+		"dinosaur_broker_quota_totalstorageusedbytes": {
+			`dinosaur_broker_quota_totalstorageusedbytes{%s}`,
+			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
 		//Check metrics for messages in per topic
-		"kafka_server_brokertopicmetrics_messages_in_total": {
-			`kafka_server_brokertopicmetrics_messages_in_total{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
+		"dinosaur_server_brokertopicmetrics_messages_in_total": {
+			`dinosaur_server_brokertopicmetrics_messages_in_total{%s}`,
+			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
 		//Check metrics for bytes in per topic
-		"kafka_server_brokertopicmetrics_bytes_in_total": {
-			`kafka_server_brokertopicmetrics_bytes_in_total{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
+		"dinosaur_server_brokertopicmetrics_bytes_in_total": {
+			`dinosaur_server_brokertopicmetrics_bytes_in_total{%s}`,
+			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
 		//Check metrics for bytes out per topic
-		"kafka_server_brokertopicmetrics_bytes_out_total": {
-			`kafka_server_brokertopicmetrics_bytes_out_total{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
+		"dinosaur_server_brokertopicmetrics_bytes_out_total": {
+			`dinosaur_server_brokertopicmetrics_bytes_out_total{%s}`,
+			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
 		//Check metrics for partition states
-		"kafka_controller_kafkacontroller_offline_partitions_count": {
-			`kafka_controller_kafkacontroller_offline_partitions_count{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Kafka',namespace=~'%s'`, namespace),
+		"dinosaur_controller_dinosaurcontroller_offline_partitions_count": {
+			`dinosaur_controller_dinosaurcontroller_offline_partitions_count{%s}`,
+			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur',namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
-		"kafka_controller_kafkacontroller_global_partition_count": {
-			`kafka_controller_kafkacontroller_global_partition_count{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Kafka',namespace=~'%s'`, namespace),
+		"dinosaur_controller_dinosaurcontroller_global_partition_count": {
+			`dinosaur_controller_dinosaurcontroller_global_partition_count{%s}`,
+			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur',namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
 		//Check metrics for log size
-		"kafka_topic:kafka_log_log_size:sum": {
-			`kafka_topic:kafka_log_log_size:sum{%s}`,
+		"dinosaur_topic:dinosaur_log_log_size:sum": {
+			`dinosaur_topic:dinosaur_log_log_size:sum{%s}`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
 		//Check metrics for all traffic in/out
-		"kafka_namespace:haproxy_server_bytes_in_total:rate5m": {
-			`kafka_namespace:haproxy_server_bytes_in_total:rate5m{%s}`,
+		"dinosaur_namespace:haproxy_server_bytes_in_total:rate5m": {
+			`dinosaur_namespace:haproxy_server_bytes_in_total:rate5m{%s}`,
 			fmt.Sprintf(`exported_namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
-		"kafka_namespace:haproxy_server_bytes_out_total:rate5m": {
-			`kafka_namespace:haproxy_server_bytes_out_total:rate5m{%s}`,
+		"dinosaur_namespace:haproxy_server_bytes_out_total:rate5m": {
+			`dinosaur_namespace:haproxy_server_bytes_out_total:rate5m{%s}`,
 			fmt.Sprintf(`exported_namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
-		"kafka_topic:kafka_topic_partitions:sum": {
-			`kafka_topic:kafka_topic_partitions:sum{%s}`,
+		"dinosaur_topic:dinosaur_topic_partitions:sum": {
+			`dinosaur_topic:dinosaur_topic_partitions:sum{%s}`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
-		"kafka_topic:kafka_topic_partitions:count": {
-			`kafka_topic:kafka_topic_partitions:count{%s}`,
+		"dinosaur_topic:dinosaur_topic_partitions:count": {
+			`dinosaur_topic:dinosaur_topic_partitions:count{%s}`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
-		"consumergroup:kafka_consumergroup_members:count": {
-			`consumergroup:kafka_consumergroup_members:count{%s}`,
+		"consumergroup:dinosaur_consumergroup_members:count": {
+			`consumergroup:dinosaur_consumergroup_members:count{%s}`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
-		"kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum": {
-			`kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum{%s}`,
+		"dinosaur_namespace:dinosaur_server_socket_server_metrics_connection_count:sum": {
+			`dinosaur_namespace:dinosaur_server_socket_server_metrics_connection_count:sum{%s}`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
-		"kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum": {
-			`kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum{%s}`,
+		"dinosaur_namespace:dinosaur_server_socket_server_metrics_connection_creation_rate:sum": {
+			`dinosaur_namespace:dinosaur_server_socket_server_metrics_connection_creation_rate:sum{%s}`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)

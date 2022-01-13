@@ -3,10 +3,10 @@ common:
   - test/**/*
   - openapi/templates/**/*
   - scripts/**/*
-kafka:
-  - internal/kafka/**/*
-  - openapi/kas*
-  - cmd/kas*
+dinosaur:
+  - internal/dinosaur/**/*
+  - openapi/fleet*
+  - cmd/fleet*
 connector:
   - internal/connector/**/*
   - openapi/connector*

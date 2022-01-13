@@ -1,4 +1,4 @@
 package constants
 
-const StrimziOperatorNamespace = "redhat-managed-kafka-operator"
-const KASFleetShardOperatorNamespace = "redhat-kas-fleetshard-operator"
+const StrimziOperatorNamespace = "redhat-managed-dinosaur-operator"
+const FleetShardOperatorNamespace = "redhat-fleetshard-operator"
