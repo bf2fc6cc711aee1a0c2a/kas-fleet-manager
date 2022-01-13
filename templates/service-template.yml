@@ -241,11 +241,6 @@ parameters:
   description: The default value of maximum number of instances that can be created by users.
   value: "1"
 
-- name: MAX_ALLOWED_SERVICE_ACCOUNTS
-  displayName: Maximum allowed service accounts
-  description: The default value of maximum number of service accounts that can be created by users.
-  value: "2"
-
 - name: MAX_LIMIT_FOR_SSO_GET_CLIENTS
   displayName: Max clients fetch by get clients
   description: The default value of maximum number of clients fetch from mas-sso.
@@ -792,7 +787,6 @@ objects:
             - --mas-sso-realm=${MAS_SSO_REALM}
             - --user-name-claim=${USER_NAME_CLAIM}
             - --fall-back-user-name-claim=${FALL_BACK_USER_NAME_CLAIM}
-            - --max-allowed-service-accounts=${MAX_ALLOWED_SERVICE_ACCOUNTS}
             - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
             - --osd-idp-mas-sso-realm=${OSD_IDP_MAS_SSO_REALM}
             - --osd-idp-mas-sso-client-id-file=/secrets/service/osd-idp-keycloak-service.clientId
