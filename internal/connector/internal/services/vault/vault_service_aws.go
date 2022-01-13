@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-secretsmanager-caching-go/secretcache"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/metrics"
 )
 
 var OwnerResourceTagKey = "owner-resource"
@@ -50,7 +51,18 @@ func (k *awsVaultService) Kind() string {
 }
 
 func (k *awsVaultService) GetSecretString(name string) (string, error) {
+	metrics.IncreaseVaultServiceTotalCount("get")
 	result, err := k.secretCache.GetSecretString(name)
+	if err != nil {
+		switch err.(type) {
+		case *secretsmanager.ResourceNotFoundException:
+			metrics.IncreaseVaultServiceErrorsCount("get")
+		default:
+			metrics.IncreaseVaultServiceFailureCount("get")
+		}
+	} else {
+		metrics.IncreaseVaultServiceSuccessCount("get")
+	}
 	return result, err
 }
 
@@ -65,13 +77,17 @@ func (k *awsVaultService) SetSecretString(name string, value string, owningResou
 			})
 	}
 
+	metrics.IncreaseVaultServiceTotalCount("set")
 	_, err := k.secretClient.CreateSecret(&secretsmanager.CreateSecretInput{
 		Name:         &name,
 		SecretString: &value,
 		Tags:         tags,
 	})
 	if err != nil {
+		metrics.IncreaseVaultServiceFailureCount("set")
 		return err
+	} else {
+		metrics.IncreaseVaultServiceSuccessCount("set")
 	}
 	return nil
 }
@@ -80,11 +96,13 @@ func (k *awsVaultService) ForEachSecret(f func(name string, owningResource strin
 	paging := &secretsmanager.ListSecretsInput{}
 	err := k.secretClient.ListSecretsPages(paging, func(output *secretsmanager.ListSecretsOutput, lastPage bool) bool {
 		for _, entry := range output.SecretList {
+			metrics.IncreaseVaultServiceTotalCount("get")
 			owner := getTag(entry.Tags, OwnerResourceTagKey)
 			name := ""
 			if entry.Name != nil {
 				name = *entry.Name
 			}
+			metrics.IncreaseVaultServiceSuccessCount("get")
 			if !f(name, owner) {
 				return false
 			}
@@ -92,6 +110,7 @@ func (k *awsVaultService) ForEachSecret(f func(name string, owningResource strin
 		return true
 	})
 	if err != nil {
+		metrics.IncreaseVaultServiceFailureCount("get")
 		return err
 	}
 	return nil
@@ -107,8 +126,19 @@ func getTag(tags []*secretsmanager.Tag, key string) string {
 }
 
 func (k *awsVaultService) DeleteSecretString(name string) error {
+	metrics.IncreaseVaultServiceTotalCount("delete")
 	_, err := k.secretClient.DeleteSecret(&secretsmanager.DeleteSecretInput{
 		SecretId: &name,
 	})
+	if err != nil {
+		switch err.(type) {
+		case *secretsmanager.ResourceNotFoundException:
+			metrics.IncreaseVaultServiceErrorsCount("delete")
+		default:
+			metrics.IncreaseVaultServiceFailureCount("delete")
+		}
+	} else {
+		metrics.IncreaseVaultServiceSuccessCount("delete")
+	}
 	return err
 }

@@ -227,6 +227,15 @@ binary which is a fleet manager for connectors similar to how `kas-fleet-manager
 instances.  The `cos-fleet-manager` just imports most of the code from the `kas-fleet-manager` enabling only
 connector APIs that are in this repo's `internal/connector` package.
 
+Connector integration tests require most of the security and access configuration listed in [Prerequisites](#Prerequisites). 
+Connector service uses AWS secrets manager as a connector specific _vault service_ for storing connector secret 
+properties such as usernames, passwords, etc.
+
+Before running integration tests, the required AWS secrets files in the `secrets` directory MUST be configured using the command:
+```
+make aws/setup
+``` 
+
 ## Additional documentation:
 * [kas-fleet-manager Implementation](docs/implementation.md)
 * [Data Plane Cluster dynamic scaling architecture](docs/architecture/data-plane-osd-cluster-dynamic-scaling.md)

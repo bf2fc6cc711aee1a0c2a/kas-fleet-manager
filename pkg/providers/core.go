@@ -19,7 +19,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 )
@@ -45,7 +44,6 @@ func CoreConfigProviders() di.Option {
 		di.Provide(migrate.NewMigrateCommand),
 
 		// Add other core config providers..
-		vault.ConfigProviders(),
 		sentry.ConfigProviders(),
 		signalbus.ConfigProviders(),
 		authorization.ConfigProviders(),
