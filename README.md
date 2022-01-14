@@ -38,8 +38,9 @@ See [feature-flags](docs/feature-flags.md#Keycloak) to understand flags used for
 ### sso.redhat.com service account
 To avail of all required OCM services the fleet-manager depends on, it is required to create an sso.redhat.com service account that will be used for the communication between the fleet-manager and OCM.
 
-### AMS SKU
-To prevent from quota assignments required for certain fleet-manager resources creation being accessible externally, fake SKUs might need to be created. The benefit of this recommended approach is that the team members of a fleet-manager can still create quota-controlled resources via OCM, while they aren't yet available publicly. An example of such fake SKU is `FakeMarketplaceKafkaCluster` in [this](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml) config file
+### Quota Management with Account Management Service (AMS) SKU
+The [Account Management Service](https://api.openshift.com/?urls.primaryName=Accounts%20management%20service) manages users subscriptions. The leverage the service offered by AMS to manage quota. Quota comes in form of stock keeping unit (SKU) assigned to a given organisation. The process is the same as requesting SKU for addons which is described in the following link https://gitlab.cee.redhat.com/service/managed-tenants/-/blob/main/docs/tenants/requesting_skus.md.
+
 
 ### Configuring Observability
 The Observability stack requires a Personal Access Token to read externalized configuration from within the bf2 organization.
