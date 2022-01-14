@@ -3,7 +3,7 @@ package shared
 import (
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // This method returns true if JWT token is expired, otherwise returns false
