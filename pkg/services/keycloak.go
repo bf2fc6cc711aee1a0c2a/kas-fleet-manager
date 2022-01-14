@@ -289,16 +289,6 @@ func (kc *keycloakService) DeleteServiceAccountInternal(serviceAccountId string)
 	return nil
 }
 
-// return error object for API caller facing funcs: 5xx or 4xx
-func handleKeyCloakGetClientError(err error, id string) *errors.ServiceError {
-	if keyErr, ok := err.(*gocloak.APIError); ok {
-		if keyErr.Code == http.StatusNotFound {
-			return errors.NewWithCause(errors.ErrorServiceAccountNotFound, err, "service account not found %s", id)
-		}
-	}
-	return errors.NewWithCause(errors.ErrorFailedToGetServiceAccount, err, "failed to get the service account by id %s", id)
-}
-
 func (kc *keycloakService) RegisterFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
 	serviceAccountId := buildAgentOperatorServiceAccountId(agentClusterId)
 	return kc.registerAgentServiceAccount(clusterId, serviceAccountId, agentClusterId, roleName)
