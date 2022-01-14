@@ -17,7 +17,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 
 	"github.com/bxcodec/faker/v3"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	. "github.com/onsi/gomega"
 	"gopkg.in/resty.v1"
 )
@@ -104,7 +104,7 @@ func TestAuthFailure_withoutToken(t *testing.T) {
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
 
-func TestAuthFailure_invalidTokenWithTypMissing(t *testing.T) {
+func TestAuthFailure_invalidTokenWithInvalidTyp(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -112,7 +112,7 @@ func TestAuthFailure_invalidTokenWithTypMissing(t *testing.T) {
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
-		"typ": nil,
+		"typ": "Invalid",
 	}
 
 	token := h.CreateJWTStringWithClaim(serviceAccount, claims)
@@ -124,7 +124,7 @@ func TestAuthFailure_invalidTokenWithTypMissing(t *testing.T) {
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
-	Expect(re.Reason).To(Equal("Bearer token doesn't contain required claim 'typ'"))
+	Expect(re.Reason).To(Equal("Bearer token type 'Invalid' isn't allowed"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
 

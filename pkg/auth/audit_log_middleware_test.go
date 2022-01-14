@@ -1,13 +1,14 @@
 package auth
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/onsi/gomega"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/onsi/gomega"
 )
 
 func TestAuditLogMiddleware_AuditLog(t *testing.T) {
