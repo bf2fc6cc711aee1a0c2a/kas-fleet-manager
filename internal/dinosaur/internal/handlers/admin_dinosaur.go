@@ -1,12 +1,10 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/account"
 
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/presenters"
@@ -14,7 +12,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/handlers"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
 	"github.com/gorilla/mux"
 )
 
@@ -108,47 +105,18 @@ func (h adminDinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var dinosaurUpdateReq private.DinosaurUpdateRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &dinosaurUpdateReq,
-		Validate: []handlers.Validate{
-			ValidateDinosaurUpdateFields(&dinosaurUpdateReq.DinosaurVersion, &dinosaurUpdateReq.StrimziVersion, &dinosaurUpdateReq.DinosaurIbpVersion),
-		},
+		Validate:    []handlers.Validate{},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
-			dinosaurRequest, err2 := h.service.Get(ctx, id)
-			if err2 != nil {
-				return nil, err2
+			dinosaurRequest, svcErr := h.service.Get(ctx, id)
+			if svcErr != nil {
+				return nil, svcErr
 			}
-			dinosaurStatus := dinosaurRequest.Status
-			if !shared.Contains(constants.GetUpdateableStatuses(), dinosaurStatus) {
-				return nil, errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update dinosaur in %s status. Supported statuses for update are: %v", dinosaurStatus, constants.GetUpdateableStatuses()))
-			}
-			updateRequired := false
-			if dinosaurRequest.DesiredDinosaurVersion != dinosaurUpdateReq.DinosaurVersion && dinosaurUpdateReq.DinosaurVersion != "" {
-				if dinosaurRequest.DinosaurUpgrading {
-					return nil, errors.New(errors.ErrorValidation, "Unable to update dinosaur version. Another upgrade is already in progress.")
-				}
-				dinosaurRequest.DesiredDinosaurVersion = dinosaurUpdateReq.DinosaurVersion
-				updateRequired = true
-			}
-			if dinosaurRequest.DesiredStrimziVersion != dinosaurUpdateReq.StrimziVersion && dinosaurUpdateReq.StrimziVersion != "" {
-				if dinosaurRequest.StrimziUpgrading {
-					return nil, errors.New(errors.ErrorValidation, "Unable to update strimzi version. Another upgrade is already in progress.")
-				}
-				dinosaurRequest.DesiredStrimziVersion = dinosaurUpdateReq.StrimziVersion
-				updateRequired = true
-			}
-			if dinosaurRequest.DesiredDinosaurIBPVersion != dinosaurUpdateReq.DinosaurIbpVersion && dinosaurUpdateReq.DinosaurIbpVersion != "" {
-				if dinosaurRequest.DinosaurIBPUpgrading {
-					return nil, errors.New(errors.ErrorValidation, "Unable to update ibp version. Another upgrade is already in progress.")
-				}
-				dinosaurRequest.DesiredDinosaurIBPVersion = dinosaurUpdateReq.DinosaurIbpVersion
-				updateRequired = true
-			}
-			if updateRequired {
-				err3 := h.service.VerifyAndUpdateDinosaurAdmin(ctx, dinosaurRequest)
-				if err3 != nil {
-					return nil, err3
-				}
+
+			svcErr = h.service.VerifyAndUpdateDinosaurAdmin(ctx, dinosaurRequest)
+			if svcErr != nil {
+				return nil, svcErr
 			}
 			return presenters.PresentDinosaurRequestAdminEndpoint(dinosaurRequest, h.accountService)
 		},

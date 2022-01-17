@@ -5,9 +5,6 @@ import (
 )
 
 func PresentServiceStatus(userInDenyList bool, dinosaurMaximumCapacityReached bool) *public.ServiceStatus {
-	return &public.ServiceStatus{
-		Dinosaurs: public.ServiceStatusDinosaurs{
-			MaxCapacityReached: userInDenyList || dinosaurMaximumCapacityReached,
-		},
-	}
+	var res *public.ServiceStatus
+	return res
 }

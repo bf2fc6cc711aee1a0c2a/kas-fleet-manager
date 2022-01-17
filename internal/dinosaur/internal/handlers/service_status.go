@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/handlers"
-	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
@@ -13,13 +14,13 @@ import (
 )
 
 type serviceStatusHandler struct {
-	dinosaurService      services.DinosaurService
+	dinosaurService   services.DinosaurService
 	accessControlList *acl.AccessControlListConfig
 }
 
 func NewServiceStatusHandler(service services.DinosaurService, accessControlList *acl.AccessControlListConfig) *serviceStatusHandler {
 	return &serviceStatusHandler{
-		dinosaurService:      service,
+		dinosaurService:   service,
 		accessControlList: accessControlList,
 	}
 }

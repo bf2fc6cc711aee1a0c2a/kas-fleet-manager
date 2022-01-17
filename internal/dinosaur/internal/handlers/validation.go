@@ -15,7 +15,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/handlers"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/authorization"
 )
 
 var ValidDinosaurClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
@@ -91,52 +90,8 @@ func ValidateCloudProvider(dinosaurService *services.DinosaurService, dinosaurRe
 	}
 }
 
-func ValidateDinosaurUpdateFields(strimziVersion *string, dinosaurVersion *string, DinosaurIbpVersion *string) handlers.Validate {
-	return func() *errors.ServiceError {
-		if stringNotSet(strimziVersion) && stringNotSet(dinosaurVersion) && stringNotSet(DinosaurIbpVersion) {
-			return errors.FieldValidationError("Failed to update Dinosaur Request. Expecting at least one of the following fields: strimzi_version, dinosaur_version or dinosaur_ibp_version to be provided")
-		}
-		return nil
-	}
-}
-
 func stringNotSet(value *string) bool {
 	return value == nil || len(*value) < 1
-}
-
-func ValidateDinosaurUserFacingUpdateFields(ctx context.Context, authService authorization.Authorization, dinosaurRequest *dbapi.DinosaurRequest, dinosaurUpdateReq *public.DinosaurUpdateRequest) handlers.Validate {
-	return func() *errors.ServiceError {
-		claims, claimsErr := auth.GetClaimsFromContext(ctx)
-		if claimsErr != nil {
-			return errors.NewWithCause(errors.ErrorUnauthenticated, claimsErr, "User not authenticated")
-		}
-
-		username := auth.GetUsernameFromClaims(claims)
-		orgId := auth.GetOrgIdFromClaims(claims)
-		isOrgAdmin := auth.GetIsOrgAdminFromClaims(claims)
-		// only Dinosaur owner or organisation admin is allowed to perform the action
-		isOwner := (isOrgAdmin || dinosaurRequest.Owner == username) && dinosaurRequest.OrganisationId == orgId
-		if !isOwner {
-			return errors.New(errors.ErrorUnauthorized, "User not authorized to perform this action")
-		}
-
-		if dinosaurUpdateReq.Owner != nil {
-			validationError := handlers.ValidateMinLength(dinosaurUpdateReq.Owner, "owner", 1)()
-			if validationError != nil {
-				return validationError
-			}
-
-			userValid, err := authService.CheckUserValid(*dinosaurUpdateReq.Owner, orgId)
-			if err != nil {
-				return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to update dinosaur request owner")
-			}
-			if !userValid {
-				return errors.NewWithCause(errors.ErrorBadRequest, err, "User %s does not belong in your organization", *dinosaurUpdateReq.Owner)
-			}
-		}
-
-		return nil
-	}
 }
 
 func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.DinosaurRequestPayload, dinosaurRequest *dbapi.DinosaurRequest) handlers.Validate {
