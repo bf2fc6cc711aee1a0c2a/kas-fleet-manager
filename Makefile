@@ -45,7 +45,6 @@ OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
 SSO_BASE_URL ?="https://identity.api.stage.openshift.com"
 SSO_REALM ?="rhoas" # update your realm here
-VAULT_KIND ?= tmp
 
 GO := go
 GOFMT := gofmt
@@ -613,7 +612,6 @@ deploy/service: OBSERVABILITY_CONFIG_TAG ?= "main"
 deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
 deploy/service: STRIMZI_OPERATOR_ADDON_ID ?= "managed-dinosaur-qe"
 deploy/service: FLEETSHARD_ADDON_ID ?= "fleetshard-operator-qe"
-deploy/service: VAULT_KIND ?= "tmp"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q fleet-manager; do echo 'waiting for fleet-manager route to be created'; sleep 1; done"
@@ -639,7 +637,6 @@ deploy/service: deploy/envoy deploy/route
 		-p MAX_LIMIT_FOR_SSO_GET_CLIENTS="${MAX_LIMIT_FOR_SSO_GET_CLIENTS}" \
 		-p OSD_IDP_SSO_REALM="$(OSD_IDP_SSO_REALM)" \
 		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \
-		-p VAULT_KIND=$(VAULT_KIND) \
 		-p SERVICE_PUBLIC_HOST_URL="https://$(shell oc get routes/fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
 		-p OBSERVATORIUM_AUTH_TYPE="${OBSERVATORIUM_AUTH_TYPE}" \
 		-p DEX_USERNAME="${DEX_USERNAME}" \
