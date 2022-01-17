@@ -12,6 +12,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"math"
+	"strings"
 )
 
 // we do not add "deleted" status to the list as the kafkas are soft deleted once the status is set to "deleted", so no need to count them here.
@@ -31,10 +33,12 @@ type KafkaManager struct {
 	kafkaService            services.KafkaService
 	accessControlListConfig *acl.AccessControlListConfig
 	kafkaConfig             *config.KafkaConfig
+	dataplaneClusterConfig  *config.DataplaneClusterConfig
+	cloudProviders          *config.ProviderConfig
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, accessControlList *acl.AccessControlListConfig, kafka *config.KafkaConfig, bus signalbus.SignalBus) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, accessControlList *acl.AccessControlListConfig, kafka *config.KafkaConfig, bus signalbus.SignalBus, clusters *config.DataplaneClusterConfig, providers *config.ProviderConfig) *KafkaManager {
 	return &KafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -46,6 +50,8 @@ func NewKafkaManager(kafkaService services.KafkaService, accessControlList *acl.
 		kafkaService:            kafkaService,
 		accessControlListConfig: accessControlList,
 		kafkaConfig:             kafka,
+		dataplaneClusterConfig:  clusters,
+		cloudProviders:          providers,
 	}
 }
 
@@ -70,7 +76,7 @@ func (k *KafkaManager) Reconcile() []error {
 		encounteredErrors = append(encounteredErrors, statusErrors...)
 	}
 
-	statusErrors = k.setClusterStatusCapacityUsedMetric()
+	statusErrors = k.setClusterStatusCapacityMetrics()
 	if len(statusErrors) > 0 {
 		encounteredErrors = append(encounteredErrors, statusErrors...)
 	}
@@ -121,15 +127,71 @@ func (k *KafkaManager) setKafkaStatusCountMetric() []error {
 	return nil
 }
 
-func (k *KafkaManager) setClusterStatusCapacityUsedMetric() []error {
-	regions, err := k.kafkaService.CountByRegionAndInstanceType()
+func (k *KafkaManager) setClusterStatusCapacityMetrics() []error {
+	kafkasByRegion, err := k.kafkaService.CountByRegionAndInstanceType()
 	if err != nil {
 		return []error{errors.Wrap(err, "failed to count Kafkas by region")}
 	}
 
-	for _, region := range regions {
+	for _, region := range kafkasByRegion {
 		used := float64(region.Count)
-		metrics.UpdateClusterStatusCapacityUsedCount(region.Region, region.InstanceType, region.ClusterId, used)
+		metrics.UpdateClusterStatusCapacityUsedCount(region.CloudProvider, region.Region, region.InstanceType, region.ClusterId, used)
+	}
+
+	return k.setClusterStatusCapacityAvailableMetric(kafkasByRegion)
+}
+
+func (k *KafkaManager) setClusterStatusCapacityAvailableMetric(kafkasByRegion []services.KafkaRegionCount) []error {
+	// helper function that returns the sum of existing kafka instances for a clusterId
+	findUsedCapacityForCluster := func(clusterId string, instanceType string) (int, int) {
+		totalUsed := 0
+		instanceTypeUsed := 0
+		for _, kafkaInRegion := range kafkasByRegion {
+			if kafkaInRegion.ClusterId == clusterId {
+				totalUsed += kafkaInRegion.Count
+
+				if kafkaInRegion.InstanceType == instanceType {
+					instanceTypeUsed += kafkaInRegion.Count
+				}
+			}
+		}
+		return totalUsed, instanceTypeUsed
+	}
+
+	for _, cluster := range k.dataplaneClusterConfig.ClusterConfig.GetManualClusters() {
+		if !cluster.Schedulable {
+			continue
+		}
+
+		supportedInstanceTypes := strings.Split(cluster.SupportedInstanceType, ",")
+		for _, instanceType := range supportedInstanceTypes {
+			if instanceType == "" {
+				continue
+			}
+
+			instanceTypeLimit, err := k.cloudProviders.GetInstanceLimit(cluster.Region, cluster.CloudProvider, instanceType)
+			if err != nil {
+				return []error{errors.Wrapf(err, "failed to get instance limit for %v on %v and instance type %v",
+					cluster.Region, cluster.CloudProvider, instanceType)}
+			}
+
+			var limit = math.MaxInt64
+			if instanceTypeLimit != nil {
+				limit = *instanceTypeLimit
+			}
+
+			// The maximum available number of instances of this type is either the
+			// cluster's own instance limit or the cloud provider's (depending on
+			// which is reached sooner).
+			maxAvailable := math.Min(float64(cluster.KafkaInstanceLimit), float64(limit))
+
+			totalUsed, instanceTypeUsed := findUsedCapacityForCluster(cluster.ClusterId, instanceType)
+
+			// Calculate how many more instances of a given type can be created:
+			// min of ( total available for instance type, total available overall )
+			availableByInstanceType := math.Min(maxAvailable-float64(instanceTypeUsed), float64(cluster.KafkaInstanceLimit)-float64(totalUsed))
+			metrics.UpdateClusterStatusCapacityAvailableCount(cluster.CloudProvider, cluster.Region, instanceType, cluster.ClusterId, availableByInstanceType)
+		}
 	}
 
 	return nil
