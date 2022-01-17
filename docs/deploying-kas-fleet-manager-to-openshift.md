@@ -1,13 +1,14 @@
 # Deploying KAS Fleet Manager to OpenShift
 
-1. [Create a Namespace](#create-a-namespace)
-2. [Build and Push KAS Fleet Manager Image](#build-and-push-kas-fleet-manager-image-to-the-openshift-internal-registry)
-3. [Deploy the Database](#deploy-the-database)
-4. [Create the Secrets](#create-the-secrets)
-5. [(Optional) Deploy the Observatorium Token Refresher](#optional-deploy-the-observatorium-token-refresher)
-6. [Deploy KAS Fleet Manager](#deploy-kas-fleet-manager)
-7. [Access the Service](#access-the-service)
-8. [Removing KAS Fleet Manager from OpenShift](#removing-kas-fleet-manager-from-openshift)
+- [Deploying KAS Fleet Manager to OpenShift](#deploying-kas-fleet-manager-to-openshift)
+  - [Create a Namespace](#create-a-namespace)
+  - [Build and Push KAS Fleet Manager Image to the OpenShift Internal Registry](#build-and-push-kas-fleet-manager-image-to-the-openshift-internal-registry)
+  - [Deploy the Database](#deploy-the-database)
+  - [Create the secrets](#create-the-secrets)
+  - [(Optional) Deploy the Observatorium Token Refresher](#optional-deploy-the-observatorium-token-refresher)
+  - [Deploy KAS Fleet Manager](#deploy-kas-fleet-manager)
+  - [Access the service](#access-the-service)
+  - [Removing KAS Fleet Manager from OpenShift](#removing-kas-fleet-manager-from-openshift)
 
 ## Create a Namespace
 Create a namespace where KAS Fleet Manager will be deployed to
@@ -70,8 +71,6 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `AWS_SECRET_ACCESS_KEY`: The secret access key of an AWS account used to provision OpenShift clusters. Defaults to value read from _./secrets/aws.secretaccesskey_
 - `ROUTE53_ACCESS_KEY`: The access key of an AWS account that has Route53 permissions. Defaults to value read from _./secrets/aws.route53accesskey_
 - `ROUTE53_SECRET_ACCESS_KEY`: The secret access key of an AWS account that has Route53 permissions. Defaults to value read from _./secrets/aws.route53secretaccesskey_
-- `VAULT_ACCESS_KEY`: AWS secrets manager access key. Defaults to value read from _./secrets/vault.accesskey_
-- `VAULT_SECRET_ACCESS_KEY`: AWS secrets manager secret access key. Defaults to value read from _./secrets/vault.secretaccesskey_
 - `OBSERVATORIUM_SERVICE_TOKEN`: Offline token used to interact with Observatorium. Defaults to value read from _./secrets/observatorium.token_
 - `DEX_SECRET`: Dex secret used to authenticate to an Observatorium instance using Dex as authentication. Defaults to value read from _./secrets/dex.secret_
 - `DEX_PASSWORD`: Dex password used to authenticate to an Observatorium instance using Dex as authentication. Defaults to value read from _./secrets/dex.secret_
