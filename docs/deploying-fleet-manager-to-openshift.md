@@ -1,13 +1,14 @@
 # Deploying Fleet Manager to OpenShift
 
-1. [Create a Namespace](#create-a-namespace)
-2. [Build and Push Fleet Manager Image](#build-and-push-fleet-manager-image-to-the-openshift-internal-registry)
-3. [Deploy the Database](#deploy-the-database)
-4. [Create the Secrets](#create-the-secrets)
-5. [(Optional) Deploy the Observatorium Token Refresher](#optional-deploy-the-observatorium-token-refresher)
-6. [Deploy Fleet Manager](#deploy-fleet-manager)
-7. [Access the Service](#access-the-service)
-8. [Removing Fleet Manager from OpenShift](#removing-fleet-manager-from-openshift)
+- [Deploying Fleet Manager to OpenShift](#deploying-fleet-manager-to-openshift)
+  - [Create a Namespace](#create-a-namespace)
+  - [Build and Push Fleet Manager Image to the OpenShift Internal Registry](#build-and-push-fleet-manager-image-to-the-openshift-internal-registry)
+  - [Deploy the Database](#deploy-the-database)
+  - [Create the secrets](#create-the-secrets)
+  - [(Optional) Deploy the Observatorium Token Refresher](#optional-deploy-the-observatorium-token-refresher)
+  - [Deploy Fleet Manager](#deploy-fleet-manager)
+  - [Access the service](#access-the-service)
+  - [Removing Fleet Manager from OpenShift](#removing-fleet-manager-from-openshift)
 
 ## Create a Namespace
 Create a namespace where Fleet Manager will be deployed to
@@ -70,8 +71,6 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `AWS_SECRET_ACCESS_KEY`: The secret access key of an AWS account used to provision OpenShift clusters. Defaults to value read from _./secrets/aws.secretaccesskey_
 - `ROUTE53_ACCESS_KEY`: The access key of an AWS account that has Route53 permissions. Defaults to value read from _./secrets/aws.route53accesskey_
 - `ROUTE53_SECRET_ACCESS_KEY`: The secret access key of an AWS account that has Route53 permissions. Defaults to value read from _./secrets/aws.route53secretaccesskey_
-- `VAULT_ACCESS_KEY`: AWS secrets manager access key. Defaults to value read from _./secrets/vault.accesskey_
-- `VAULT_SECRET_ACCESS_KEY`: AWS secrets manager secret access key. Defaults to value read from _./secrets/vault.secretaccesskey_
 - `OBSERVATORIUM_SERVICE_TOKEN`: Offline token used to interact with Observatorium. Defaults to value read from _./secrets/observatorium.token_
 - `DEX_SECRET`: Dex secret used to authenticate to an Observatorium instance using Dex as authentication. Defaults to value read from _./secrets/dex.secret_
 - `DEX_PASSWORD`: Dex password used to authenticate to an Observatorium instance using Dex as authentication. Defaults to value read from _./secrets/dex.secret_
@@ -129,7 +128,6 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `MAX_LIMIT_FOR_SSO_GET_CLIENTS`: The default value of maximum number of clients fetch from mas-sso. Defaults to `100`.
 - `OSD_IDP_SSO_REALM`: SSO realm for configuring OpenShift Cluster Identity Provider Clients. Defaults to `rhoas-dinosaur-sre`.
 - `TOKEN_ISSUER_URL`: A token issuer url used to validate if JWT token used are coming from the given issuer. Defaults to `https://sso.redhat.com/auth/realms/redhat-external`.
-- `VAULT_KIND`: The type of vault to use to store secrets. Defaults to `tmp`.
 - `OBSERVATORIUM_AUTH_TYPE`: Authentication type for the Observability stack. Options: `dex` and `redhat`, Default: `dex`.
 - `DEX_USERNAME`: Username that will be used to authenticate with an Observatorium using Dex as authentication. Defaults to `admin@example.com`.
 - `DEX_URL`: Dex URL. Defaults to `http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io`.
