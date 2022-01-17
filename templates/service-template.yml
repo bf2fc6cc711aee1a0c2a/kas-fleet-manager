@@ -437,10 +437,6 @@ parameters:
   description: ID of the cluster logging operator addon
   value: ""
 
-- name: VAULT_KIND
-  description: The type of vault to use to store secrets
-  value: tmp
-
 - name: ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE
   description: Enables reconciliation for data plane clusters in the 'Ready' state
   value: "true"
@@ -850,9 +846,6 @@ objects:
             - --cluster-logging-operator-addon-id=${CLUSTER_LOGGING_OPERATOR_ADDON_ID}
             - --alsologtostderr
             - -v=${GLOG_V}
-            - --vault-kind=${VAULT_KIND}
-            - --vault-access-key-file=/secrets/service/vault.accesskey
-            - --vault-secret-access-key-file=/secrets/service/vault.secretaccesskey
             resources:
               requests:
                 cpu: ${CPU_REQUEST}
