@@ -145,9 +145,9 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	//data plane cluster config - with new clusters
 	//*********************************************************************
 	dataplaneClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
-		config.ManualCluster{ClusterId: "test03", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
-		config.ManualCluster{ClusterId: "test01", KafkaInstanceLimit: 0, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
-		config.ManualCluster{ClusterId: "test02", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
+		config.ManualCluster{ClusterId: "test03", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "eval,standard"},
+		config.ManualCluster{ClusterId: "test01", KafkaInstanceLimit: 0, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "eval,standard"},
+		config.ManualCluster{ClusterId: "test02", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "eval,standard"},
 	})
 
 	pollErr = common.WaitForClustersMatchCriteriaToBeGivenCount(test.TestServices.DBFactory, &test.TestServices.ClusterService, &clusterCriteria, 4)
@@ -175,10 +175,12 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		MultiAZ:       true,
 		Region:        "us-east-1",
 		CloudProvider: "aws",
-		Owner:         "dummyuser1",
-		Name:          "dummy-kafka-1",
-		Status:        constants2.KafkaRequestStatusAccepted.String(),
-		InstanceType:  types.STANDARD.String(),
+		// the Owner has to be email address from  config/quota-management-list-configuration.yaml
+		// in order to create STANDARD kafka instance. Otherwise it will default to EVAL
+		Owner:        "testuser3@example.com",
+		Name:         "dummy-kafka-1",
+		Status:       constants2.KafkaRequestStatusAccepted.String(),
+		InstanceType: types.STANDARD.String(),
 	}, {
 		MultiAZ:       true,
 		Region:        "us-east-1",
@@ -199,6 +201,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	kafkaFound, kafkaErr := common.WaitForKafkaClusterIDToBeAssigned(dbFactory, "dummy-kafka-1")
 	Expect(kafkaErr).NotTo(HaveOccurred())
 	Expect(kafkaFound.ClusterID).To(Equal("test03"))
+	Expect(kafkaFound.InstanceType).To(Equal(types.STANDARD.String()))
 
 	errK2 := test.TestServices.KafkaService.RegisterKafkaJob(kafkas[1])
 	if errK2 != nil {
@@ -209,6 +212,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	kafkaFound2, kafkaErr2 := common.WaitForKafkaClusterIDToBeAssigned(dbFactory, "dummy-kafka-2")
 	Expect(kafkaErr2).NotTo(HaveOccurred())
 	Expect(kafkaFound2.ClusterID).To(Equal("test02"))
+	Expect(kafkaFound2.InstanceType).To(Equal(types.EVAL.String()))
 }
 
 func TestClusterPlacementStrategy_CheckInstanceTypePlacement(t *testing.T) {

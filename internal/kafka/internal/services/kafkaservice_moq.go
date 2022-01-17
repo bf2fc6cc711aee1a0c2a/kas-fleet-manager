@@ -26,6 +26,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //
 // 		// make and configure a mocked KafkaService
 // 		mockedKafkaService := &KafkaServiceMock{
+// 			CapacityAvailableForRegionAndInstanceTypeFunc: func(instTypeRegCapacity *int, kafkaRequest *dbapi.KafkaRequest) (bool, *serviceError.ServiceError) {
+// 				panic("mock out the CapacityAvailableForRegionAndInstanceType method")
+// 			},
 // 			ChangeKafkaCNAMErecordsFunc: func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
 // 				panic("mock out the ChangeKafkaCNAMErecords method")
 // 			},
@@ -61,9 +64,6 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			},
 // 			HasAvailableCapacityFunc: func() (bool, *serviceError.ServiceError) {
 // 				panic("mock out the HasAvailableCapacity method")
-// 			},
-// 			HasAvailableCapacityInRegionFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, *serviceError.ServiceError) {
-// 				panic("mock out the HasAvailableCapacityInRegion method")
 // 			},
 // 			ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *serviceError.ServiceError) {
 // 				panic("mock out the List method")
@@ -105,6 +105,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //
 // 	}
 type KafkaServiceMock struct {
+	// CapacityAvailableForRegionAndInstanceTypeFunc mocks the CapacityAvailableForRegionAndInstanceType method.
+	CapacityAvailableForRegionAndInstanceTypeFunc func(instTypeRegCapacity *int, kafkaRequest *dbapi.KafkaRequest) (bool, *serviceError.ServiceError)
+
 	// ChangeKafkaCNAMErecordsFunc mocks the ChangeKafkaCNAMErecords method.
 	ChangeKafkaCNAMErecordsFunc func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
 
@@ -141,9 +144,6 @@ type KafkaServiceMock struct {
 	// HasAvailableCapacityFunc mocks the HasAvailableCapacity method.
 	HasAvailableCapacityFunc func() (bool, *serviceError.ServiceError)
 
-	// HasAvailableCapacityInRegionFunc mocks the HasAvailableCapacityInRegion method.
-	HasAvailableCapacityInRegionFunc func(kafkaRequest *dbapi.KafkaRequest) (bool, *serviceError.ServiceError)
-
 	// ListFunc mocks the List method.
 	ListFunc func(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *serviceError.ServiceError)
 
@@ -179,6 +179,13 @@ type KafkaServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// CapacityAvailableForRegionAndInstanceType holds details about calls to the CapacityAvailableForRegionAndInstanceType method.
+		CapacityAvailableForRegionAndInstanceType []struct {
+			// InstTypeRegCapacity is the instTypeRegCapacity argument value.
+			InstTypeRegCapacity *int
+			// KafkaRequest is the kafkaRequest argument value.
+			KafkaRequest *dbapi.KafkaRequest
+		}
 		// ChangeKafkaCNAMErecords holds details about calls to the ChangeKafkaCNAMErecords method.
 		ChangeKafkaCNAMErecords []struct {
 			// KafkaRequest is the kafkaRequest argument value.
@@ -238,11 +245,6 @@ type KafkaServiceMock struct {
 		}
 		// HasAvailableCapacity holds details about calls to the HasAvailableCapacity method.
 		HasAvailableCapacity []struct {
-		}
-		// HasAvailableCapacityInRegion holds details about calls to the HasAvailableCapacityInRegion method.
-		HasAvailableCapacityInRegion []struct {
-			// KafkaRequest is the kafkaRequest argument value.
-			KafkaRequest *dbapi.KafkaRequest
 		}
 		// List holds details about calls to the List method.
 		List []struct {
@@ -306,30 +308,65 @@ type KafkaServiceMock struct {
 			KafkaRequest *dbapi.KafkaRequest
 		}
 	}
-	lockChangeKafkaCNAMErecords        sync.RWMutex
-	lockCountByRegionAndInstanceType   sync.RWMutex
-	lockCountByStatus                  sync.RWMutex
-	lockDelete                         sync.RWMutex
-	lockDeprovisionExpiredKafkas       sync.RWMutex
-	lockDeprovisionKafkaForUsers       sync.RWMutex
-	lockDetectInstanceType             sync.RWMutex
-	lockGet                            sync.RWMutex
-	lockGetById                        sync.RWMutex
-	lockGetCNAMERecordStatus           sync.RWMutex
-	lockGetManagedKafkaByClusterID     sync.RWMutex
-	lockHasAvailableCapacity           sync.RWMutex
-	lockHasAvailableCapacityInRegion   sync.RWMutex
-	lockList                           sync.RWMutex
-	lockListByStatus                   sync.RWMutex
-	lockListComponentVersions          sync.RWMutex
-	lockListKafkasWithRoutesNotCreated sync.RWMutex
-	lockPrepareKafkaRequest            sync.RWMutex
-	lockRegisterKafkaDeprovisionJob    sync.RWMutex
-	lockRegisterKafkaJob               sync.RWMutex
-	lockUpdate                         sync.RWMutex
-	lockUpdateStatus                   sync.RWMutex
-	lockUpdates                        sync.RWMutex
-	lockVerifyAndUpdateKafkaAdmin      sync.RWMutex
+	lockCapacityAvailableForRegionAndInstanceType sync.RWMutex
+	lockChangeKafkaCNAMErecords                   sync.RWMutex
+	lockCountByRegionAndInstanceType              sync.RWMutex
+	lockCountByStatus                             sync.RWMutex
+	lockDelete                                    sync.RWMutex
+	lockDeprovisionExpiredKafkas                  sync.RWMutex
+	lockDeprovisionKafkaForUsers                  sync.RWMutex
+	lockDetectInstanceType                        sync.RWMutex
+	lockGet                                       sync.RWMutex
+	lockGetById                                   sync.RWMutex
+	lockGetCNAMERecordStatus                      sync.RWMutex
+	lockGetManagedKafkaByClusterID                sync.RWMutex
+	lockHasAvailableCapacity                      sync.RWMutex
+	lockList                                      sync.RWMutex
+	lockListByStatus                              sync.RWMutex
+	lockListComponentVersions                     sync.RWMutex
+	lockListKafkasWithRoutesNotCreated            sync.RWMutex
+	lockPrepareKafkaRequest                       sync.RWMutex
+	lockRegisterKafkaDeprovisionJob               sync.RWMutex
+	lockRegisterKafkaJob                          sync.RWMutex
+	lockUpdate                                    sync.RWMutex
+	lockUpdateStatus                              sync.RWMutex
+	lockUpdates                                   sync.RWMutex
+	lockVerifyAndUpdateKafkaAdmin                 sync.RWMutex
+}
+
+// CapacityAvailableForRegionAndInstanceType calls CapacityAvailableForRegionAndInstanceTypeFunc.
+func (mock *KafkaServiceMock) CapacityAvailableForRegionAndInstanceType(instTypeRegCapacity *int, kafkaRequest *dbapi.KafkaRequest) (bool, *serviceError.ServiceError) {
+	if mock.CapacityAvailableForRegionAndInstanceTypeFunc == nil {
+		panic("KafkaServiceMock.CapacityAvailableForRegionAndInstanceTypeFunc: method is nil but KafkaService.CapacityAvailableForRegionAndInstanceType was just called")
+	}
+	callInfo := struct {
+		InstTypeRegCapacity *int
+		KafkaRequest        *dbapi.KafkaRequest
+	}{
+		InstTypeRegCapacity: instTypeRegCapacity,
+		KafkaRequest:        kafkaRequest,
+	}
+	mock.lockCapacityAvailableForRegionAndInstanceType.Lock()
+	mock.calls.CapacityAvailableForRegionAndInstanceType = append(mock.calls.CapacityAvailableForRegionAndInstanceType, callInfo)
+	mock.lockCapacityAvailableForRegionAndInstanceType.Unlock()
+	return mock.CapacityAvailableForRegionAndInstanceTypeFunc(instTypeRegCapacity, kafkaRequest)
+}
+
+// CapacityAvailableForRegionAndInstanceTypeCalls gets all the calls that were made to CapacityAvailableForRegionAndInstanceType.
+// Check the length with:
+//     len(mockedKafkaService.CapacityAvailableForRegionAndInstanceTypeCalls())
+func (mock *KafkaServiceMock) CapacityAvailableForRegionAndInstanceTypeCalls() []struct {
+	InstTypeRegCapacity *int
+	KafkaRequest        *dbapi.KafkaRequest
+} {
+	var calls []struct {
+		InstTypeRegCapacity *int
+		KafkaRequest        *dbapi.KafkaRequest
+	}
+	mock.lockCapacityAvailableForRegionAndInstanceType.RLock()
+	calls = mock.calls.CapacityAvailableForRegionAndInstanceType
+	mock.lockCapacityAvailableForRegionAndInstanceType.RUnlock()
+	return calls
 }
 
 // ChangeKafkaCNAMErecords calls ChangeKafkaCNAMErecordsFunc.
@@ -699,37 +736,6 @@ func (mock *KafkaServiceMock) HasAvailableCapacityCalls() []struct {
 	mock.lockHasAvailableCapacity.RLock()
 	calls = mock.calls.HasAvailableCapacity
 	mock.lockHasAvailableCapacity.RUnlock()
-	return calls
-}
-
-// HasAvailableCapacityInRegion calls HasAvailableCapacityInRegionFunc.
-func (mock *KafkaServiceMock) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *serviceError.ServiceError) {
-	if mock.HasAvailableCapacityInRegionFunc == nil {
-		panic("KafkaServiceMock.HasAvailableCapacityInRegionFunc: method is nil but KafkaService.HasAvailableCapacityInRegion was just called")
-	}
-	callInfo := struct {
-		KafkaRequest *dbapi.KafkaRequest
-	}{
-		KafkaRequest: kafkaRequest,
-	}
-	mock.lockHasAvailableCapacityInRegion.Lock()
-	mock.calls.HasAvailableCapacityInRegion = append(mock.calls.HasAvailableCapacityInRegion, callInfo)
-	mock.lockHasAvailableCapacityInRegion.Unlock()
-	return mock.HasAvailableCapacityInRegionFunc(kafkaRequest)
-}
-
-// HasAvailableCapacityInRegionCalls gets all the calls that were made to HasAvailableCapacityInRegion.
-// Check the length with:
-//     len(mockedKafkaService.HasAvailableCapacityInRegionCalls())
-func (mock *KafkaServiceMock) HasAvailableCapacityInRegionCalls() []struct {
-	KafkaRequest *dbapi.KafkaRequest
-} {
-	var calls []struct {
-		KafkaRequest *dbapi.KafkaRequest
-	}
-	mock.lockHasAvailableCapacityInRegion.RLock()
-	calls = mock.calls.HasAvailableCapacityInRegion
-	mock.lockHasAvailableCapacityInRegion.RUnlock()
 	return calls
 }
 
