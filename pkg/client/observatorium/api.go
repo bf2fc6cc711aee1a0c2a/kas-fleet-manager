@@ -8,6 +8,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const privateTopicFilter string = "topic!~'__redhat_.*|__consumer_offsets|__transaction_state'"
+
 type APIObservatoriumService interface {
 	GetKafkaState(name string, namespaceName string) (KafkaState, error)
 	GetMetrics(csMetrics *KafkaMetrics, resourceNamespace string, rq *MetricsReqParams) error
@@ -82,7 +84,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 		//Check metrics for messages in per topic
 		"kafka_server_brokertopicmetrics_messages_in_total": {
 			`kafka_server_brokertopicmetrics_messages_in_total{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
+			fmt.Sprintf(`strimzi_io_kind=~'Kafka', %s, namespace=~'%s'`, privateTopicFilter, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
@@ -90,7 +92,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 		//Check metrics for bytes in per topic
 		"kafka_server_brokertopicmetrics_bytes_in_total": {
 			`kafka_server_brokertopicmetrics_bytes_in_total{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
+			fmt.Sprintf(`strimzi_io_kind=~'Kafka', %s, namespace=~'%s'`, privateTopicFilter, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
@@ -98,7 +100,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 		//Check metrics for bytes out per topic
 		"kafka_server_brokertopicmetrics_bytes_out_total": {
 			`kafka_server_brokertopicmetrics_bytes_out_total{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
+			fmt.Sprintf(`strimzi_io_kind=~'Kafka', %s, namespace=~'%s'`, privateTopicFilter, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
@@ -121,7 +123,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 		//Check metrics for log size
 		"kafka_topic:kafka_log_log_size:sum": {
 			`kafka_topic:kafka_log_log_size:sum{%s}`,
-			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			fmt.Sprintf(`%s, namespace=~'%s'`, privateTopicFilter, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
