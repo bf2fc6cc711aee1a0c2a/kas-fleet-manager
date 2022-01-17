@@ -17,10 +17,6 @@ import (
 	"github.com/golang/glog"
 )
 
-// Number of compute nodes in a Multi-AZ must be a multiple of
-// this number
-const multiAZClusterNodeScalingMultiple = 3
-
 type DataPlaneClusterService interface {
 	UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *errors.ServiceError
 	GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *errors.ServiceError)
@@ -36,11 +32,6 @@ type dataPlaneClusterService struct {
 	DinosaurConfig         *config.DinosaurConfig
 	ObservabilityConfig    *observatorium.ObservabilityConfiguration
 	DataplaneClusterConfig *config.DataplaneClusterConfig
-}
-
-type dataPlaneComputeNodesDinosaurCapacityAttributes struct {
-	Connections int
-	Partitions  int
 }
 
 func NewDataPlaneClusterService(config dataPlaneClusterService) *dataPlaneClusterService {

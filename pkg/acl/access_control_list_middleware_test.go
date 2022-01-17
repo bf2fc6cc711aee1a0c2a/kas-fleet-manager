@@ -65,7 +65,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 
-			req, err := http.NewRequest("GET", "/api/dinosaurs_mgmt/dinosaurs", nil)
+			req, err := http.NewRequest("GET", "/api/dinosaurs_mgmt/dinosaurs", nil) // TODO change here to call your fleet manager endpoint
 			if err != nil {
 				t.Fatal(err)
 			}

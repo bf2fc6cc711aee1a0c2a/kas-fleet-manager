@@ -1,18 +1,22 @@
 package integration
 
 import (
+	"net/http"
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/server"
-	"net/http"
-	"testing"
 
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 )
+
+// This tests file ensures that the terms acceptance endpoint is working
+const mockDinosaurClusterName = "my-cluster"
 
 type TestEnv struct {
 	helper   *coreTest.Helper
@@ -94,18 +98,4 @@ func TestTermsRequired_CreateDinosaur_TermsNotRequired(t *testing.T) {
 
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
-}
-
-func TestTermsRequired_ListDinosaurTermsRequired(t *testing.T) {
-	env := termsRequiredSetup(true, t)
-	defer env.teardown()
-
-	// setup pre-requisites to performing requests
-	account := env.helper.NewRandAccount()
-	ctx := env.helper.NewAuthenticatedContext(account, nil)
-
-	_, resp, err := env.client.DefaultApi.GetDinosaurs(ctx, nil)
-
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 }

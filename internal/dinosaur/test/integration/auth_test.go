@@ -12,7 +12,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
 
@@ -82,7 +81,7 @@ func TestAuthSuccess_usingSSORHToken(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(token).
-		Get(h.RestURL("/dinosaurs"))
+		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
 	Expect(err).NotTo(HaveOccurred())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusOK))
 }
@@ -96,7 +95,7 @@ func TestAuthFailure_withoutToken(t *testing.T) {
 
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
-		Get(h.RestURL("/dinosaurs"))
+		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
@@ -120,7 +119,7 @@ func TestAuthFailure_invalidTokenWithTypMissing(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(token).
-		Get(h.RestURL("/dinosaurs"))
+		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
@@ -143,7 +142,7 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(token).
-		Get(h.RestURL("/dinosaurs"))
+		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
@@ -166,7 +165,7 @@ func TestAuthFailure_invalidTokenMissingIat(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(token).
-		Get(h.RestURL("/dinosaurs"))
+		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
@@ -197,7 +196,7 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(strToken).
-		Get(h.RestURL("/dinosaurs"))
+		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
 	Expect(err).To(BeNil())
 
 	re := parseResponse(restyResp)
@@ -228,44 +227,11 @@ func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(strToken).
-		Get(h.RestURL("/dinosaurs"))
+		Get(h.RestURL("/dinosaurs")) // TODO replace dinosaurs with your endpoint
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
 	Expect(re.Reason).To(Equal("Request doesn't contain the 'Authorization' header or the 'cs_jwt' cookie"))
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
-}
-
-func TestAuthFailure_usingMasSsoTokenOnDinosaursGet(t *testing.T) {
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	defer ocmServer.Close()
-
-	h, _, teardown := test.NewDinosaurHelper(t, ocmServer)
-	defer teardown()
-
-	// create a mas-sso service account token
-	orgId := "13640203"
-	masSsoSA := h.NewAccount("service-account-srvc-acct-1", "", "", orgId)
-	var keycloakConfig *keycloak.KeycloakConfig
-	h.Env.MustResolveAll(&keycloakConfig)
-	claims := jwt.MapClaims{
-		"iss":                keycloakConfig.DinosaurRealm.ValidIssuerURI,
-		"rh-org-id":          orgId,
-		"rh-user-id":         masSsoSA.ID(),
-		"preferred_username": masSsoSA.Username(),
-	}
-
-	token := h.CreateJWTStringWithClaim(masSsoSA, claims)
-
-	restyResp, err := resty.R().
-		SetHeader("Content-Type", "application/json").
-		SetAuthToken(token).
-		Get(h.RestURL("/dinosaurs"))
-	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
-	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
-	Expect(re.Reason).To(Equal("Account authentication could not be verified"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
 

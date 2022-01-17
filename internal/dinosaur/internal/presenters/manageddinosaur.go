@@ -7,8 +7,7 @@ import (
 
 func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedDinosaur {
 	// TODO implement presenter
-	var res private.ManagedDinosaur
-	res = private.ManagedDinosaur{
+	res := private.ManagedDinosaur{
 		Id:   from.Annotations["mas/id"],
 		Kind: from.Kind,
 		Metadata: private.ManagedDinosaurAllOfMetadata{
