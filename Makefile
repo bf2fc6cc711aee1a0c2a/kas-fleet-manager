@@ -511,8 +511,6 @@ aws/setup:
 	@echo -n "$(AWS_ACCOUNT_ID)" > secrets/aws.accountid
 	@echo -n "$(AWS_ACCESS_KEY)" > secrets/aws.accesskey
 	@echo -n "$(AWS_SECRET_ACCESS_KEY)" > secrets/aws.secretaccesskey
-	@echo -n "$(VAULT_ACCESS_KEY)" > secrets/vault.accesskey
-	@echo -n "$(VAULT_SECRET_ACCESS_KEY)" > secrets/vault.secretaccesskey
 	@echo -n "$(ROUTE53_ACCESS_KEY)" > secrets/aws.route53accesskey
 	@echo -n "$(ROUTE53_SECRET_ACCESS_KEY)" > secrets/aws.route53secretaccesskey
 .PHONY: aws/setup
@@ -600,8 +598,6 @@ deploy/secrets:
 		-p AWS_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.secretaccesskey' ] && [ -z '${AWS_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.secretaccesskey || echo '${AWS_SECRET_ACCESS_KEY}')" \
 		-p ROUTE53_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53accesskey' ] && [ -z '${ROUTE53_ACCESS_KEY}' ]) && cat ./secrets/aws.route53accesskey || echo '${ROUTE53_ACCESS_KEY}')" \
 		-p ROUTE53_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53secretaccesskey' ] && [ -z '${ROUTE53_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.route53secretaccesskey || echo '${ROUTE53_SECRET_ACCESS_KEY}')" \
-		-p VAULT_ACCESS_KEY="$(shell ([ -s './secrets/vault.accesskey' ] && [ -z '${VAULT_ACCESS_KEY}' ]) && cat ./secrets/vault.accesskey || echo '${VAULT_ACCESS_KEY}')" \
-		-p VAULT_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/vault.secretaccesskey' ] && [ -z '${VAULT_SECRET_ACCESS_KEY}' ]) && cat ./secrets/vault.secretaccesskey || echo '${VAULT_SECRET_ACCESS_KEY}')" \
 		-p DEX_SECRET="$(shell ([ -s './secrets/dex.secret' ] && [ -z '${DEX_SECRET}' ]) && cat ./secrets/dex.secret || echo '${DEX_SECRET}')" \
 		-p DEX_PASSWORD="$(shell ([ -s './secrets/dex.password' ] && [ -z '${DEX_PASSWORD}' ]) && cat ./secrets/dex.password || echo '${DEX_PASSWORD}')" \
 		-p MAS_SSO_CLIENT_ID="$(shell ([ -s './secrets/keycloak-service.clientId' ] && [ -z '${MAS_SSO_CLIENT_ID}' ]) && cat ./secrets/keycloak-service.clientId || echo '${MAS_SSO_CLIENT_ID}')" \
