@@ -53,7 +53,8 @@ Depending on whether interacting with public or private endpoints, the authentic
 See [feature-flags](docs/feature-flags.md#Keycloak) to understand flags used for authentication.
 
 ### sso.redhat.com service account
-To avail of all required OCM services the fleet-manager depends on, it is required to create an sso.redhat.com service account that will be used for the communication between the fleet-manager and OCM.
+To avail of all required OCM services the fleet-manager depends on, it is required to create an sso.redhat.com service account that will be used for the communication between the fleet-manager and OCM. It is a help desk ticket to get this created which gets routed to Red Hat IT. 
+The link to create the request is https://redhat.service-now.com/help?id=sc_cat_item&sys_id=7ab45993131c9380196f7e276144b054
 
 ### Quota Management with Account Management Service (AMS) SKU
 The [Account Management Service](https://api.openshift.com/?urls.primaryName=Accounts%20management%20service) manages users subscriptions. The leverage the service offered by AMS to manage quota. Quota comes in form of stock keeping unit (SKU) assigned to a given organisation. The process is the same as requesting SKU for addons which is described in the following link https://gitlab.cee.redhat.com/service/managed-tenants/-/blob/main/docs/tenants/requesting_skus.md.
