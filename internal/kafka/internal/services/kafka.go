@@ -817,17 +817,18 @@ type KafkaStatusCount struct {
 }
 
 type KafkaRegionCount struct {
-	Region       string
-	InstanceType string `gorm:"column:instance_type"`
-	ClusterId    string `gorm:"column:cluster_id"`
-	Count        int
+	Region        string
+	InstanceType  string `gorm:"column:instance_type"`
+	ClusterId     string `gorm:"column:cluster_id"`
+	Count         int
+	CloudProvider string `gorm:"column:cloud_provider"`
 }
 
 func (k *kafkaService) CountByRegionAndInstanceType() ([]KafkaRegionCount, error) {
 	dbConn := k.connectionFactory.New()
 	var results []KafkaRegionCount
 
-	if err := dbConn.Model(&dbapi.KafkaRequest{}).Select("region as Region, instance_type, cluster_id, count(1) as Count").Group("region,instance_type,cluster_id").Scan(&results).Error; err != nil {
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).Select("region as Region, instance_type, cluster_id, cloud_provider, count(1) as Count").Group("region,instance_type,cluster_id,cloud_provider").Scan(&results).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count kafkas")
 	}
 
