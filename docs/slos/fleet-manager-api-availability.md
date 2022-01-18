@@ -20,3 +20,4 @@ All alerts are multiwindow, multi-burn-rate alerts. The following are the list o
 - `FleetManagerAPI2hto1dErrorBudgetBurn`
 - `FleetManagerAPI6hto3dErrorBudgetBurn`
   
+See [kas-fleet-manager-slos-availability-*](https://gitlab.cee.redhat.com/service/app-interface/-/tree/master/resources/observability/prometheusrules) prometheus rules in AppInterface to see how it was implemented.
