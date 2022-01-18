@@ -90,7 +90,10 @@ Expect(resp.StatusCode).To(Equal(http.StatusInternalServerError))
 
 When adding new integration tests, use the following files as guidelines:
 - [TestDinosaurPost integration test](../internal/dinosaur/test/integration/dinosaurs_test.go)
+- [Dataplane endpoint test](../internal/dinosaur/test/integration/data_plane_endpoints_test.go)
+- [Admin endpoints test](../internal/dinosaur/test/integration/admin_dinosaur_test.go)
 - [Mock OCM API server](../test/mocks/api_server.go)
+- [Mock Fleetshard Sync](../internal/dinosaur/test/mocks/fleetshardsync/fleetshard-sync.go)
 
 When adding new features to the service that interact with OCM endpoints that have not currently
 been emulated, you must add them. If you do not add them you begin seeing errors in integration

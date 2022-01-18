@@ -12,19 +12,16 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/authorization"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/onsi/gomega"
 )
 
 func Test_Validation_validateDinosaurClusterNameIsUnique(t *testing.T) {
 	type args struct {
 		dinosaurService services.DinosaurService
-		name         string
-		context      context.Context
+		name            string
+		context         context.Context
 	}
 
 	tests := []struct {
@@ -152,14 +149,14 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		},
 	}
 	type args struct {
-		dinosaurRequest   dbapi.DinosaurRequest
-		ProviderConfig *config.ProviderConfig
-		dinosaurService   services.DinosaurService
+		dinosaurRequest dbapi.DinosaurRequest
+		ProviderConfig  *config.ProviderConfig
+		dinosaurService services.DinosaurService
 	}
 
 	type result struct {
-		wantErr      bool
-		reason       string
+		wantErr         bool
+		reason          string
 		dinosaurRequest public.DinosaurRequest
 	}
 
@@ -335,180 +332,6 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 				gomega.Expect(tt.arg.dinosaurRequest.Region).To(gomega.Equal(tt.want.dinosaurRequest.Region))
 			}
 
-		})
-	}
-}
-
-func Test_Validation_ValidateDinosaurUserFacingUpdateFields(t *testing.T) {
-	emptyOwner := ""
-	newOwner := "some-owner"
-	reauthenticationEnabled := true
-	username := "username"
-	orgId := "organisation_id"
-	token := &jwt.Token{
-		Claims: jwt.MapClaims{
-			"username": username,
-			"org_id":   orgId,
-		},
-	}
-	type args struct {
-		dinosaurUpdateRequest public.DinosaurUpdateRequest
-		ctx                context.Context
-		authService        authorization.Authorization
-		dinosaur              *dbapi.DinosaurRequest
-	}
-
-	type result struct {
-		wantErr bool
-		reason  string
-	}
-
-	tests := []struct {
-		name string
-		arg  args
-		want result
-	}{
-		{
-			name: "do not throw an error if update payload is empty and current user is owner",
-			arg: args{
-				ctx: auth.SetTokenInContext(context.TODO(), token),
-				dinosaur: &dbapi.DinosaurRequest{
-					Owner:          username,
-					OrganisationId: orgId,
-				},
-				dinosaurUpdateRequest: public.DinosaurUpdateRequest{},
-				authService:        authorization.NewMockAuthorization(),
-			},
-			want: result{
-				wantErr: false,
-			},
-		},
-		{
-			name: "throw an error when user is not owner of the dinosaur and update payload is empty",
-			arg: args{
-				ctx:                auth.SetTokenInContext(context.TODO(), token),
-				dinosaur:              &dbapi.DinosaurRequest{},
-				dinosaurUpdateRequest: public.DinosaurUpdateRequest{},
-				authService:        authorization.NewMockAuthorization(),
-			},
-			want: result{
-				wantErr: true,
-				reason:  "User not authorized to perform this action",
-			},
-		},
-		{
-			name: "throw an error when empty owner passed",
-			arg: args{
-				ctx: auth.SetTokenInContext(context.TODO(), token),
-				dinosaur: &dbapi.DinosaurRequest{
-					Owner:          username,
-					OrganisationId: orgId,
-				},
-				dinosaurUpdateRequest: public.DinosaurUpdateRequest{
-					Owner: &emptyOwner,
-				},
-				authService: authorization.NewMockAuthorization(),
-			},
-			want: result{
-				wantErr: true,
-				reason:  "owner is not valid. Minimum length 1 is required.",
-			},
-		},
-		{
-			name: "throw an error when an admin from another organisation tries to update dinosaur",
-			arg: args{
-				ctx: auth.SetTokenInContext(context.TODO(), &jwt.Token{
-					Claims: jwt.MapClaims{
-						"username":     username,
-						"org_id":       orgId,
-						"is_org_admin": true,
-					},
-				}),
-				dinosaur: &dbapi.DinosaurRequest{
-					Owner:          username,
-					OrganisationId: "some-other-organisation",
-				},
-				dinosaurUpdateRequest: public.DinosaurUpdateRequest{
-					Owner:                   &newOwner,
-					ReauthenticationEnabled: &reauthenticationEnabled,
-				},
-				authService: authorization.NewMockAuthorization(),
-			},
-			want: result{
-				wantErr: true,
-				reason:  "User not authorized to perform this action",
-			},
-		},
-		{
-			name: "throw an error when new owner does not belong to the organisation",
-			arg: args{
-				ctx: auth.SetTokenInContext(context.TODO(), &jwt.Token{
-					Claims: jwt.MapClaims{
-						"username":     username,
-						"org_id":       orgId,
-						"is_org_admin": true,
-					},
-				}),
-				dinosaur: &dbapi.DinosaurRequest{
-					Owner:          username,
-					OrganisationId: orgId,
-				},
-				dinosaurUpdateRequest: public.DinosaurUpdateRequest{
-					Owner: &newOwner,
-				},
-				authService: &authorization.AuthorizationMock{
-					CheckUserValidFunc: func(username, orgId string) (bool, error) {
-						return false, nil
-					},
-				},
-			},
-			want: result{
-				wantErr: true,
-				reason:  "User some-owner does not belong in your organization",
-			},
-		},
-		{
-			name: "should succeed when all the validation passes",
-			arg: args{
-				ctx: auth.SetTokenInContext(context.TODO(), &jwt.Token{
-					Claims: jwt.MapClaims{
-						"username":     username,
-						"org_id":       orgId,
-						"is_org_admin": true,
-					},
-				}),
-				dinosaur: &dbapi.DinosaurRequest{
-					Owner:          username,
-					OrganisationId: orgId,
-				},
-				dinosaurUpdateRequest: public.DinosaurUpdateRequest{
-					ReauthenticationEnabled: &reauthenticationEnabled,
-					Owner:                   &newOwner,
-				},
-				authService: &authorization.AuthorizationMock{
-					CheckUserValidFunc: func(username, orgId string) (bool, error) {
-						return true, nil
-					},
-				},
-			},
-			want: result{
-				wantErr: false,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
-			validateFn := ValidateDinosaurUserFacingUpdateFields(tt.arg.ctx, tt.arg.authService, tt.arg.dinosaur, &tt.arg.dinosaurUpdateRequest)
-			err := validateFn()
-			gomega.Expect(tt.want.wantErr).To(gomega.Equal(err != nil))
-			if !tt.want.wantErr && err != nil {
-				t.Errorf("ValidateDinosaurUserFacingUpdateFields() expected not to throw error but threw %v", err)
-			} else if tt.want.wantErr {
-				gomega.Expect(err.Reason).To(gomega.Equal(tt.want.reason))
-				return
-			}
 		})
 	}
 }
