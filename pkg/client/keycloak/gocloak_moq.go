@@ -17,601 +17,601 @@ var _ gocloak.GoCloak = &GoCloakMock{}
 
 // GoCloakMock is a mock implementation of gocloak.GoCloak.
 //
-//     func TestSomethingThatUsesGoCloak(t *testing.T) {
+// 	func TestSomethingThatUsesGoCloak(t *testing.T) {
 //
-//         // make and configure a mocked gocloak.GoCloak
-//         mockedGoCloak := &GoCloakMock{
-//             AddClientRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
-// 	               panic("mock out the AddClientRoleComposite method")
-//             },
-//             AddClientRoleToGroupFunc: func(ctx context.Context, token string, realm string, clientID string, groupID string, roles []gocloak.Role) error {
-// 	               panic("mock out the AddClientRoleToGroup method")
-//             },
-//             AddClientRoleToUserFunc: func(ctx context.Context, token string, realm string, clientID string, userID string, roles []gocloak.Role) error {
-// 	               panic("mock out the AddClientRoleToUser method")
-//             },
-//             AddDefaultGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) error {
-// 	               panic("mock out the AddDefaultGroup method")
-//             },
-//             AddDefaultScopeToClientFunc: func(ctx context.Context, token string, realm string, clientID string, scopeID string) error {
-// 	               panic("mock out the AddDefaultScopeToClient method")
-//             },
-//             AddOptionalScopeToClientFunc: func(ctx context.Context, token string, realm string, clientID string, scopeID string) error {
-// 	               panic("mock out the AddOptionalScopeToClient method")
-//             },
-//             AddRealmRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleName string, roles []gocloak.Role) error {
-// 	               panic("mock out the AddRealmRoleComposite method")
-//             },
-//             AddRealmRoleToGroupFunc: func(ctx context.Context, token string, realm string, groupID string, roles []gocloak.Role) error {
-// 	               panic("mock out the AddRealmRoleToGroup method")
-//             },
-//             AddRealmRoleToUserFunc: func(ctx context.Context, token string, realm string, userID string, roles []gocloak.Role) error {
-// 	               panic("mock out the AddRealmRoleToUser method")
-//             },
-//             AddUserToGroupFunc: func(ctx context.Context, token string, realm string, userID string, groupID string) error {
-// 	               panic("mock out the AddUserToGroup method")
-//             },
-//             ClearKeysCacheFunc: func(ctx context.Context, token string, realm string) error {
-// 	               panic("mock out the ClearKeysCache method")
-//             },
-//             ClearRealmCacheFunc: func(ctx context.Context, token string, realm string) error {
-// 	               panic("mock out the ClearRealmCache method")
-//             },
-//             ClearUserCacheFunc: func(ctx context.Context, token string, realm string) error {
-// 	               panic("mock out the ClearUserCache method")
-//             },
-//             CreateChildGroupFunc: func(ctx context.Context, token string, realm string, groupID string, group gocloak.Group) (string, error) {
-// 	               panic("mock out the CreateChildGroup method")
-//             },
-//             CreateClientFunc: func(ctx context.Context, accessToken string, realm string, clientID gocloak.Client) (string, error) {
-// 	               panic("mock out the CreateClient method")
-//             },
-//             CreateClientProtocolMapperFunc: func(ctx context.Context, token string, realm string, clientID string, mapper gocloak.ProtocolMapperRepresentation) (string, error) {
-// 	               panic("mock out the CreateClientProtocolMapper method")
-//             },
-//             CreateClientRoleFunc: func(ctx context.Context, accessToken string, realm string, clientID string, role gocloak.Role) (string, error) {
-// 	               panic("mock out the CreateClientRole method")
-//             },
-//             CreateClientScopeFunc: func(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) (string, error) {
-// 	               panic("mock out the CreateClientScope method")
-//             },
-//             CreateClientScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, clientID string, clientsID string, roles []gocloak.Role) error {
-// 	               panic("mock out the CreateClientScopeMappingsClientRoles method")
-//             },
-//             CreateClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, clientID string, roles []gocloak.Role) error {
-// 	               panic("mock out the CreateClientScopeMappingsRealmRoles method")
-//             },
-//             CreateComponentFunc: func(ctx context.Context, accessToken string, realm string, component gocloak.Component) (string, error) {
-// 	               panic("mock out the CreateComponent method")
-//             },
-//             CreateGroupFunc: func(ctx context.Context, accessToken string, realm string, group gocloak.Group) (string, error) {
-// 	               panic("mock out the CreateGroup method")
-//             },
-//             CreateIdentityProviderFunc: func(ctx context.Context, token string, realm string, providerRep gocloak.IdentityProviderRepresentation) (string, error) {
-// 	               panic("mock out the CreateIdentityProvider method")
-//             },
-//             CreateIdentityProviderMapperFunc: func(ctx context.Context, token string, realm string, alias string, mapper gocloak.IdentityProviderMapper) error {
-// 	               panic("mock out the CreateIdentityProviderMapper method")
-//             },
-//             CreatePermissionFunc: func(ctx context.Context, token string, realm string, clientID string, permission gocloak.PermissionRepresentation) (*gocloak.PermissionRepresentation, error) {
-// 	               panic("mock out the CreatePermission method")
-//             },
-//             CreatePermissionTicketFunc: func(ctx context.Context, token string, realm string, permissions []gocloak.CreatePermissionTicketParams) (*gocloak.PermissionTicketResponseRepresentation, error) {
-// 	               panic("mock out the CreatePermissionTicket method")
-//             },
-//             CreatePolicyFunc: func(ctx context.Context, token string, realm string, clientID string, policy gocloak.PolicyRepresentation) (*gocloak.PolicyRepresentation, error) {
-// 	               panic("mock out the CreatePolicy method")
-//             },
-//             CreateRealmFunc: func(ctx context.Context, token string, realm gocloak.RealmRepresentation) (string, error) {
-// 	               panic("mock out the CreateRealm method")
-//             },
-//             CreateRealmRoleFunc: func(ctx context.Context, token string, realm string, role gocloak.Role) (string, error) {
-// 	               panic("mock out the CreateRealmRole method")
-//             },
-//             CreateResourceFunc: func(ctx context.Context, token string, realm string, clientID string, resource gocloak.ResourceRepresentation) (*gocloak.ResourceRepresentation, error) {
-// 	               panic("mock out the CreateResource method")
-//             },
-//             CreateResourceClientFunc: func(ctx context.Context, token string, realm string, resource gocloak.ResourceRepresentation) (*gocloak.ResourceRepresentation, error) {
-// 	               panic("mock out the CreateResourceClient method")
-//             },
-//             CreateResourcePolicyFunc: func(ctx context.Context, token string, realm string, resourceID string, policy gocloak.ResourcePolicyRepresentation) (*gocloak.ResourcePolicyRepresentation, error) {
-// 	               panic("mock out the CreateResourcePolicy method")
-//             },
-//             CreateScopeFunc: func(ctx context.Context, token string, realm string, clientID string, scope gocloak.ScopeRepresentation) (*gocloak.ScopeRepresentation, error) {
-// 	               panic("mock out the CreateScope method")
-//             },
-//             CreateUserFunc: func(ctx context.Context, token string, realm string, user gocloak.User) (string, error) {
-// 	               panic("mock out the CreateUser method")
-//             },
-//             CreateUserFederatedIdentityFunc: func(ctx context.Context, token string, realm string, userID string, providerID string, federatedIdentityRep gocloak.FederatedIdentityRepresentation) error {
-// 	               panic("mock out the CreateUserFederatedIdentity method")
-//             },
-//             DecodeAccessTokenFunc: func(ctx context.Context, accessToken string, realm string, expectedAudience string) (*jwt.Token, *jwt.MapClaims, error) {
-// 	               panic("mock out the DecodeAccessToken method")
-//             },
-//             DecodeAccessTokenCustomClaimsFunc: func(ctx context.Context, accessToken string, realm string, expectedAudience string, claims jwt.Claims) (*jwt.Token, error) {
-// 	               panic("mock out the DecodeAccessTokenCustomClaims method")
-//             },
-//             DeleteClientFunc: func(ctx context.Context, accessToken string, realm string, clientID string) error {
-// 	               panic("mock out the DeleteClient method")
-//             },
-//             DeleteClientProtocolMapperFunc: func(ctx context.Context, token string, realm string, clientID string, mapperID string) error {
-// 	               panic("mock out the DeleteClientProtocolMapper method")
-//             },
-//             DeleteClientRoleFunc: func(ctx context.Context, accessToken string, realm string, clientID string, roleName string) error {
-// 	               panic("mock out the DeleteClientRole method")
-//             },
-//             DeleteClientRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
-// 	               panic("mock out the DeleteClientRoleComposite method")
-//             },
-//             DeleteClientRoleFromGroupFunc: func(ctx context.Context, token string, realm string, clientID string, groupID string, roles []gocloak.Role) error {
-// 	               panic("mock out the DeleteClientRoleFromGroup method")
-//             },
-//             DeleteClientRoleFromUserFunc: func(ctx context.Context, token string, realm string, clientID string, userID string, roles []gocloak.Role) error {
-// 	               panic("mock out the DeleteClientRoleFromUser method")
-//             },
-//             DeleteClientScopeFunc: func(ctx context.Context, accessToken string, realm string, scopeID string) error {
-// 	               panic("mock out the DeleteClientScope method")
-//             },
-//             DeleteClientScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, clientID string, clientsID string, roles []gocloak.Role) error {
-// 	               panic("mock out the DeleteClientScopeMappingsClientRoles method")
-//             },
-//             DeleteClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, clientID string, roles []gocloak.Role) error {
-// 	               panic("mock out the DeleteClientScopeMappingsRealmRoles method")
-//             },
-//             DeleteComponentFunc: func(ctx context.Context, accessToken string, realm string, componentID string) error {
-// 	               panic("mock out the DeleteComponent method")
-//             },
-//             DeleteCredentialsFunc: func(ctx context.Context, token string, realm string, UserID string, CredentialID string) error {
-// 	               panic("mock out the DeleteCredentials method")
-//             },
-//             DeleteGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) error {
-// 	               panic("mock out the DeleteGroup method")
-//             },
-//             DeleteIdentityProviderFunc: func(ctx context.Context, token string, realm string, alias string) error {
-// 	               panic("mock out the DeleteIdentityProvider method")
-//             },
-//             DeleteIdentityProviderMapperFunc: func(ctx context.Context, token string, realm string, alias string, mapperID string) error {
-// 	               panic("mock out the DeleteIdentityProviderMapper method")
-//             },
-//             DeletePermissionFunc: func(ctx context.Context, token string, realm string, clientID string, permissionID string) error {
-// 	               panic("mock out the DeletePermission method")
-//             },
-//             DeletePolicyFunc: func(ctx context.Context, token string, realm string, clientID string, policyID string) error {
-// 	               panic("mock out the DeletePolicy method")
-//             },
-//             DeleteRealmFunc: func(ctx context.Context, token string, realm string) error {
-// 	               panic("mock out the DeleteRealm method")
-//             },
-//             DeleteRealmRoleFunc: func(ctx context.Context, token string, realm string, roleName string) error {
-// 	               panic("mock out the DeleteRealmRole method")
-//             },
-//             DeleteRealmRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleName string, roles []gocloak.Role) error {
-// 	               panic("mock out the DeleteRealmRoleComposite method")
-//             },
-//             DeleteRealmRoleFromGroupFunc: func(ctx context.Context, token string, realm string, groupID string, roles []gocloak.Role) error {
-// 	               panic("mock out the DeleteRealmRoleFromGroup method")
-//             },
-//             DeleteRealmRoleFromUserFunc: func(ctx context.Context, token string, realm string, userID string, roles []gocloak.Role) error {
-// 	               panic("mock out the DeleteRealmRoleFromUser method")
-//             },
-//             DeleteResourceFunc: func(ctx context.Context, token string, realm string, clientID string, resourceID string) error {
-// 	               panic("mock out the DeleteResource method")
-//             },
-//             DeleteResourceClientFunc: func(ctx context.Context, token string, realm string, resourceID string) error {
-// 	               panic("mock out the DeleteResourceClient method")
-//             },
-//             DeleteResourcePolicyFunc: func(ctx context.Context, token string, realm string, permissionID string) error {
-// 	               panic("mock out the DeleteResourcePolicy method")
-//             },
-//             DeleteScopeFunc: func(ctx context.Context, token string, realm string, clientID string, scopeID string) error {
-// 	               panic("mock out the DeleteScope method")
-//             },
-//             DeleteUserFunc: func(ctx context.Context, accessToken string, realm string, userID string) error {
-// 	               panic("mock out the DeleteUser method")
-//             },
-//             DeleteUserFederatedIdentityFunc: func(ctx context.Context, token string, realm string, userID string, providerID string) error {
-// 	               panic("mock out the DeleteUserFederatedIdentity method")
-//             },
-//             DeleteUserFromGroupFunc: func(ctx context.Context, token string, realm string, userID string, groupID string) error {
-// 	               panic("mock out the DeleteUserFromGroup method")
-//             },
-//             DeleteUserPermissionFunc: func(ctx context.Context, token string, realm string, ticketID string) error {
-// 	               panic("mock out the DeleteUserPermission method")
-//             },
-//             DisableAllCredentialsByTypeFunc: func(ctx context.Context, token string, realm string, userID string, types []string) error {
-// 	               panic("mock out the DisableAllCredentialsByType method")
-//             },
-//             ExecuteActionsEmailFunc: func(ctx context.Context, token string, realm string, params gocloak.ExecuteActionsEmail) error {
-// 	               panic("mock out the ExecuteActionsEmail method")
-//             },
-//             ExportIDPPublicBrokerConfigFunc: func(ctx context.Context, token string, realm string, alias string) (*string, error) {
-// 	               panic("mock out the ExportIDPPublicBrokerConfig method")
-//             },
-//             GetAvailableClientRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, clientID string, groupID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetAvailableClientRolesByGroupID method")
-//             },
-//             GetAvailableClientRolesByUserIDFunc: func(ctx context.Context, token string, realm string, clientID string, userID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetAvailableClientRolesByUserID method")
-//             },
-//             GetAvailableRealmRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, groupID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetAvailableRealmRolesByGroupID method")
-//             },
-//             GetAvailableRealmRolesByUserIDFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetAvailableRealmRolesByUserID method")
-//             },
-//             GetCertsFunc: func(ctx context.Context, realm string) (*gocloak.CertResponse, error) {
-// 	               panic("mock out the GetCerts method")
-//             },
-//             GetClientFunc: func(ctx context.Context, accessToken string, realm string, clientID string) (*gocloak.Client, error) {
-// 	               panic("mock out the GetClient method")
-//             },
-//             GetClientOfflineSessionsFunc: func(ctx context.Context, token string, realm string, clientID string) ([]*gocloak.UserSessionRepresentation, error) {
-// 	               panic("mock out the GetClientOfflineSessions method")
-//             },
-//             GetClientRoleFunc: func(ctx context.Context, token string, realm string, clientID string, roleName string) (*gocloak.Role, error) {
-// 	               panic("mock out the GetClientRole method")
-//             },
-//             GetClientRoleByIDFunc: func(ctx context.Context, accessToken string, realm string, roleID string) (*gocloak.Role, error) {
-// 	               panic("mock out the GetClientRoleByID method")
-//             },
-//             GetClientRolesFunc: func(ctx context.Context, accessToken string, realm string, clientID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetClientRoles method")
-//             },
-//             GetClientRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, clientID string, groupID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetClientRolesByGroupID method")
-//             },
-//             GetClientRolesByUserIDFunc: func(ctx context.Context, token string, realm string, clientID string, userID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetClientRolesByUserID method")
-//             },
-//             GetClientScopeFunc: func(ctx context.Context, token string, realm string, scopeID string) (*gocloak.ClientScope, error) {
-// 	               panic("mock out the GetClientScope method")
-//             },
-//             GetClientScopeMappingsFunc: func(ctx context.Context, token string, realm string, clientID string) (*gocloak.MappingsRepresentation, error) {
-// 	               panic("mock out the GetClientScopeMappings method")
-//             },
-//             GetClientScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, clientID string, clientsID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetClientScopeMappingsClientRoles method")
-//             },
-//             GetClientScopeMappingsClientRolesAvailableFunc: func(ctx context.Context, token string, realm string, clientID string, clientsID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetClientScopeMappingsClientRolesAvailable method")
-//             },
-//             GetClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, clientID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetClientScopeMappingsRealmRoles method")
-//             },
-//             GetClientScopeMappingsRealmRolesAvailableFunc: func(ctx context.Context, token string, realm string, clientID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetClientScopeMappingsRealmRolesAvailable method")
-//             },
-//             GetClientScopesFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
-// 	               panic("mock out the GetClientScopes method")
-//             },
-//             GetClientSecretFunc: func(ctx context.Context, token string, realm string, clientID string) (*gocloak.CredentialRepresentation, error) {
-// 	               panic("mock out the GetClientSecret method")
-//             },
-//             GetClientServiceAccountFunc: func(ctx context.Context, token string, realm string, clientID string) (*gocloak.User, error) {
-// 	               panic("mock out the GetClientServiceAccount method")
-//             },
-//             GetClientUserSessionsFunc: func(ctx context.Context, token string, realm string, clientID string) ([]*gocloak.UserSessionRepresentation, error) {
-// 	               panic("mock out the GetClientUserSessions method")
-//             },
-//             GetClientsFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
-// 	               panic("mock out the GetClients method")
-//             },
-//             GetClientsDefaultScopesFunc: func(ctx context.Context, token string, realm string, clientID string) ([]*gocloak.ClientScope, error) {
-// 	               panic("mock out the GetClientsDefaultScopes method")
-//             },
-//             GetClientsOptionalScopesFunc: func(ctx context.Context, token string, realm string, clientID string) ([]*gocloak.ClientScope, error) {
-// 	               panic("mock out the GetClientsOptionalScopes method")
-//             },
-//             GetComponentsFunc: func(ctx context.Context, accessToken string, realm string) ([]*gocloak.Component, error) {
-// 	               panic("mock out the GetComponents method")
-//             },
-//             GetCompositeClientRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, clientID string, groupID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetCompositeClientRolesByGroupID method")
-//             },
-//             GetCompositeClientRolesByRoleIDFunc: func(ctx context.Context, token string, realm string, clientID string, roleID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetCompositeClientRolesByRoleID method")
-//             },
-//             GetCompositeClientRolesByUserIDFunc: func(ctx context.Context, token string, realm string, clientID string, userID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetCompositeClientRolesByUserID method")
-//             },
-//             GetCompositeRealmRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, groupID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetCompositeRealmRolesByGroupID method")
-//             },
-//             GetCompositeRealmRolesByRoleIDFunc: func(ctx context.Context, token string, realm string, roleID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetCompositeRealmRolesByRoleID method")
-//             },
-//             GetCompositeRealmRolesByUserIDFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetCompositeRealmRolesByUserID method")
-//             },
-//             GetConfiguredUserStorageCredentialTypesFunc: func(ctx context.Context, token string, realm string, userID string) ([]string, error) {
-// 	               panic("mock out the GetConfiguredUserStorageCredentialTypes method")
-//             },
-//             GetCredentialRegistratorsFunc: func(ctx context.Context, token string, realm string) ([]string, error) {
-// 	               panic("mock out the GetCredentialRegistrators method")
-//             },
-//             GetCredentialsFunc: func(ctx context.Context, token string, realm string, UserID string) ([]*gocloak.CredentialRepresentation, error) {
-// 	               panic("mock out the GetCredentials method")
-//             },
-//             GetDefaultDefaultClientScopesFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
-// 	               panic("mock out the GetDefaultDefaultClientScopes method")
-//             },
-//             GetDefaultGroupsFunc: func(ctx context.Context, accessToken string, realm string) ([]*gocloak.Group, error) {
-// 	               panic("mock out the GetDefaultGroups method")
-//             },
-//             GetDefaultOptionalClientScopesFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
-// 	               panic("mock out the GetDefaultOptionalClientScopes method")
-//             },
-//             GetDependentPermissionsFunc: func(ctx context.Context, token string, realm string, clientID string, policyID string) ([]*gocloak.PermissionRepresentation, error) {
-// 	               panic("mock out the GetDependentPermissions method")
-//             },
-//             GetGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) (*gocloak.Group, error) {
-// 	               panic("mock out the GetGroup method")
-//             },
-//             GetGroupMembersFunc: func(ctx context.Context, accessToken string, realm string, groupID string, params gocloak.GetGroupsParams) ([]*gocloak.User, error) {
-// 	               panic("mock out the GetGroupMembers method")
-//             },
-//             GetGroupsFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetGroupsParams) ([]*gocloak.Group, error) {
-// 	               panic("mock out the GetGroups method")
-//             },
-//             GetGroupsCountFunc: func(ctx context.Context, token string, realm string, params gocloak.GetGroupsParams) (int, error) {
-// 	               panic("mock out the GetGroupsCount method")
-//             },
-//             GetIdentityProviderFunc: func(ctx context.Context, token string, realm string, alias string) (*gocloak.IdentityProviderRepresentation, error) {
-// 	               panic("mock out the GetIdentityProvider method")
-//             },
-//             GetIdentityProviderMappersFunc: func(ctx context.Context, token string, realm string, alias string) ([]*gocloak.IdentityProviderMapper, error) {
-// 	               panic("mock out the GetIdentityProviderMappers method")
-//             },
-//             GetIdentityProvidersFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.IdentityProviderRepresentation, error) {
-// 	               panic("mock out the GetIdentityProviders method")
-//             },
-//             GetIssuerFunc: func(ctx context.Context, realm string) (*gocloak.IssuerResponse, error) {
-// 	               panic("mock out the GetIssuer method")
-//             },
-//             GetKeyStoreConfigFunc: func(ctx context.Context, accessToken string, realm string) (*gocloak.KeyStoreConfig, error) {
-// 	               panic("mock out the GetKeyStoreConfig method")
-//             },
-//             GetPermissionFunc: func(ctx context.Context, token string, realm string, clientID string, permissionID string) (*gocloak.PermissionRepresentation, error) {
-// 	               panic("mock out the GetPermission method")
-//             },
-//             GetPermissionResourcesFunc: func(ctx context.Context, token string, realm string, clientID string, permissionID string) ([]*gocloak.PermissionResource, error) {
-// 	               panic("mock out the GetPermissionResources method")
-//             },
-//             GetPermissionScopesFunc: func(ctx context.Context, token string, realm string, clientID string, permissionID string) ([]*gocloak.PermissionScope, error) {
-// 	               panic("mock out the GetPermissionScopes method")
-//             },
-//             GetPermissionsFunc: func(ctx context.Context, token string, realm string, clientID string, params gocloak.GetPermissionParams) ([]*gocloak.PermissionRepresentation, error) {
-// 	               panic("mock out the GetPermissions method")
-//             },
-//             GetPoliciesFunc: func(ctx context.Context, token string, realm string, clientID string, params gocloak.GetPolicyParams) ([]*gocloak.PolicyRepresentation, error) {
-// 	               panic("mock out the GetPolicies method")
-//             },
-//             GetPolicyFunc: func(ctx context.Context, token string, realm string, clientID string, policyID string) (*gocloak.PolicyRepresentation, error) {
-// 	               panic("mock out the GetPolicy method")
-//             },
-//             GetRawUserInfoFunc: func(ctx context.Context, accessToken string, realm string) (map[string]interface{}, error) {
-// 	               panic("mock out the GetRawUserInfo method")
-//             },
-//             GetRealmFunc: func(ctx context.Context, token string, realm string) (*gocloak.RealmRepresentation, error) {
-// 	               panic("mock out the GetRealm method")
-//             },
-//             GetRealmRoleFunc: func(ctx context.Context, token string, realm string, roleName string) (*gocloak.Role, error) {
-// 	               panic("mock out the GetRealmRole method")
-//             },
-//             GetRealmRolesFunc: func(ctx context.Context, accessToken string, realm string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetRealmRoles method")
-//             },
-//             GetRealmRolesByGroupIDFunc: func(ctx context.Context, accessToken string, realm string, groupID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetRealmRolesByGroupID method")
-//             },
-//             GetRealmRolesByUserIDFunc: func(ctx context.Context, accessToken string, realm string, userID string) ([]*gocloak.Role, error) {
-// 	               panic("mock out the GetRealmRolesByUserID method")
-//             },
-//             GetRealmsFunc: func(ctx context.Context, token string) ([]*gocloak.RealmRepresentation, error) {
-// 	               panic("mock out the GetRealms method")
-//             },
-//             GetRequestingPartyPermissionDecisionFunc: func(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*gocloak.RequestingPartyPermissionDecision, error) {
-// 	               panic("mock out the GetRequestingPartyPermissionDecision method")
-//             },
-//             GetRequestingPartyPermissionsFunc: func(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*[]gocloak.RequestingPartyPermission, error) {
-// 	               panic("mock out the GetRequestingPartyPermissions method")
-//             },
-//             GetRequestingPartyTokenFunc: func(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*gocloak.JWT, error) {
-// 	               panic("mock out the GetRequestingPartyToken method")
-//             },
-//             GetResourceFunc: func(ctx context.Context, token string, realm string, clientID string, resourceID string) (*gocloak.ResourceRepresentation, error) {
-// 	               panic("mock out the GetResource method")
-//             },
-//             GetResourceClientFunc: func(ctx context.Context, token string, realm string, resourceID string) (*gocloak.ResourceRepresentation, error) {
-// 	               panic("mock out the GetResourceClient method")
-//             },
-//             GetResourcePoliciesFunc: func(ctx context.Context, token string, realm string, params gocloak.GetResourcePoliciesParams) ([]*gocloak.ResourcePolicyRepresentation, error) {
-// 	               panic("mock out the GetResourcePolicies method")
-//             },
-//             GetResourcePolicyFunc: func(ctx context.Context, token string, realm string, permissionID string) (*gocloak.ResourcePolicyRepresentation, error) {
-// 	               panic("mock out the GetResourcePolicy method")
-//             },
-//             GetResourcesFunc: func(ctx context.Context, token string, realm string, clientID string, params gocloak.GetResourceParams) ([]*gocloak.ResourceRepresentation, error) {
-// 	               panic("mock out the GetResources method")
-//             },
-//             GetResourcesClientFunc: func(ctx context.Context, token string, realm string, params gocloak.GetResourceParams) ([]*gocloak.ResourceRepresentation, error) {
-// 	               panic("mock out the GetResourcesClient method")
-//             },
-//             GetRoleMappingByGroupIDFunc: func(ctx context.Context, accessToken string, realm string, groupID string) (*gocloak.MappingsRepresentation, error) {
-// 	               panic("mock out the GetRoleMappingByGroupID method")
-//             },
-//             GetRoleMappingByUserIDFunc: func(ctx context.Context, accessToken string, realm string, userID string) (*gocloak.MappingsRepresentation, error) {
-// 	               panic("mock out the GetRoleMappingByUserID method")
-//             },
-//             GetScopeFunc: func(ctx context.Context, token string, realm string, clientID string, scopeID string) (*gocloak.ScopeRepresentation, error) {
-// 	               panic("mock out the GetScope method")
-//             },
-//             GetScopesFunc: func(ctx context.Context, token string, realm string, clientID string, params gocloak.GetScopeParams) ([]*gocloak.ScopeRepresentation, error) {
-// 	               panic("mock out the GetScopes method")
-//             },
-//             GetServerInfoFunc: func(ctx context.Context, accessToken string) (*gocloak.ServerInfoRepesentation, error) {
-// 	               panic("mock out the GetServerInfo method")
-//             },
-//             GetTokenFunc: func(ctx context.Context, realm string, options gocloak.TokenOptions) (*gocloak.JWT, error) {
-// 	               panic("mock out the GetToken method")
-//             },
-//             GetUserByIDFunc: func(ctx context.Context, accessToken string, realm string, userID string) (*gocloak.User, error) {
-// 	               panic("mock out the GetUserByID method")
-//             },
-//             GetUserCountFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetUsersParams) (int, error) {
-// 	               panic("mock out the GetUserCount method")
-//             },
-//             GetUserFederatedIdentitiesFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.FederatedIdentityRepresentation, error) {
-// 	               panic("mock out the GetUserFederatedIdentities method")
-//             },
-//             GetUserGroupsFunc: func(ctx context.Context, accessToken string, realm string, userID string, params gocloak.GetGroupsParams) ([]*gocloak.Group, error) {
-// 	               panic("mock out the GetUserGroups method")
-//             },
-//             GetUserInfoFunc: func(ctx context.Context, accessToken string, realm string) (*gocloak.UserInfo, error) {
-// 	               panic("mock out the GetUserInfo method")
-//             },
-//             GetUserOfflineSessionsForClientFunc: func(ctx context.Context, token string, realm string, userID string, clientID string) ([]*gocloak.UserSessionRepresentation, error) {
-// 	               panic("mock out the GetUserOfflineSessionsForClient method")
-//             },
-//             GetUserPermissionsFunc: func(ctx context.Context, token string, realm string, params gocloak.GetUserPermissionParams) ([]*gocloak.PermissionGrantResponseRepresentation, error) {
-// 	               panic("mock out the GetUserPermissions method")
-//             },
-//             GetUserSessionsFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.UserSessionRepresentation, error) {
-// 	               panic("mock out the GetUserSessions method")
-//             },
-//             GetUsersFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetUsersParams) ([]*gocloak.User, error) {
-// 	               panic("mock out the GetUsers method")
-//             },
-//             GetUsersByClientRoleNameFunc: func(ctx context.Context, token string, realm string, clientID string, roleName string, params gocloak.GetUsersByRoleParams) ([]*gocloak.User, error) {
-// 	               panic("mock out the GetUsersByClientRoleName method")
-//             },
-//             GetUsersByRoleNameFunc: func(ctx context.Context, token string, realm string, roleName string) ([]*gocloak.User, error) {
-// 	               panic("mock out the GetUsersByRoleName method")
-//             },
-//             GrantUserPermissionFunc: func(ctx context.Context, token string, realm string, permission gocloak.PermissionGrantParams) (*gocloak.PermissionGrantResponseRepresentation, error) {
-// 	               panic("mock out the GrantUserPermission method")
-//             },
-//             ImportIdentityProviderConfigFunc: func(ctx context.Context, token string, realm string, fromURL string, providerID string) (map[string]string, error) {
-// 	               panic("mock out the ImportIdentityProviderConfig method")
-//             },
-//             LoginFunc: func(ctx context.Context, clientID string, clientSecret string, realm string, username string, password string) (*gocloak.JWT, error) {
-// 	               panic("mock out the Login method")
-//             },
-//             LoginAdminFunc: func(ctx context.Context, username string, password string, realm string) (*gocloak.JWT, error) {
-// 	               panic("mock out the LoginAdmin method")
-//             },
-//             LoginClientFunc: func(ctx context.Context, clientID string, clientSecret string, realm string) (*gocloak.JWT, error) {
-// 	               panic("mock out the LoginClient method")
-//             },
-//             LoginClientSignedJWTFunc: func(ctx context.Context, clientID string, realm string, key interface{}, signedMethod jwt.SigningMethod, expiresAt *jwt.Time) (*gocloak.JWT, error) {
-// 	               panic("mock out the LoginClientSignedJWT method")
-//             },
-//             LoginOtpFunc: func(ctx context.Context, clientID string, clientSecret string, realm string, username string, password string, totp string) (*gocloak.JWT, error) {
-// 	               panic("mock out the LoginOtp method")
-//             },
-//             LogoutFunc: func(ctx context.Context, clientID string, clientSecret string, realm string, refreshToken string) error {
-// 	               panic("mock out the Logout method")
-//             },
-//             LogoutAllSessionsFunc: func(ctx context.Context, accessToken string, realm string, userID string) error {
-// 	               panic("mock out the LogoutAllSessions method")
-//             },
-//             LogoutPublicClientFunc: func(ctx context.Context, clientID string, realm string, accessToken string, refreshToken string) error {
-// 	               panic("mock out the LogoutPublicClient method")
-//             },
-//             LogoutUserSessionFunc: func(ctx context.Context, accessToken string, realm string, session string) error {
-// 	               panic("mock out the LogoutUserSession method")
-//             },
-//             MoveCredentialBehindFunc: func(ctx context.Context, token string, realm string, userID string, credentialID string, newPreviousCredentialID string) error {
-// 	               panic("mock out the MoveCredentialBehind method")
-//             },
-//             MoveCredentialToFirstFunc: func(ctx context.Context, token string, realm string, userID string, credentialID string) error {
-// 	               panic("mock out the MoveCredentialToFirst method")
-//             },
-//             RefreshTokenFunc: func(ctx context.Context, refreshToken string, clientID string, clientSecret string, realm string) (*gocloak.JWT, error) {
-// 	               panic("mock out the RefreshToken method")
-//             },
-//             RegenerateClientSecretFunc: func(ctx context.Context, token string, realm string, clientID string) (*gocloak.CredentialRepresentation, error) {
-// 	               panic("mock out the RegenerateClientSecret method")
-//             },
-//             RemoveDefaultGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) error {
-// 	               panic("mock out the RemoveDefaultGroup method")
-//             },
-//             RemoveDefaultScopeFromClientFunc: func(ctx context.Context, token string, realm string, clientID string, scopeID string) error {
-// 	               panic("mock out the RemoveDefaultScopeFromClient method")
-//             },
-//             RemoveOptionalScopeFromClientFunc: func(ctx context.Context, token string, realm string, clientID string, scopeID string) error {
-// 	               panic("mock out the RemoveOptionalScopeFromClient method")
-//             },
-//             RestyClientFunc: func() *resty.Client {
-// 	               panic("mock out the RestyClient method")
-//             },
-//             RetrospectTokenFunc: func(ctx context.Context, accessToken string, clientID string, clientSecret string, realm string) (*gocloak.RetrospecTokenResult, error) {
-// 	               panic("mock out the RetrospectToken method")
-//             },
-//             SetPasswordFunc: func(ctx context.Context, token string, userID string, realm string, password string, temporary bool) error {
-// 	               panic("mock out the SetPassword method")
-//             },
-//             SetRestyClientFunc: func(restyClient *resty.Client)  {
-// 	               panic("mock out the SetRestyClient method")
-//             },
-//             UpdateClientFunc: func(ctx context.Context, accessToken string, realm string, updatedClient gocloak.Client) error {
-// 	               panic("mock out the UpdateClient method")
-//             },
-//             UpdateClientProtocolMapperFunc: func(ctx context.Context, token string, realm string, clientID string, mapperID string, mapper gocloak.ProtocolMapperRepresentation) error {
-// 	               panic("mock out the UpdateClientProtocolMapper method")
-//             },
-//             UpdateClientScopeFunc: func(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) error {
-// 	               panic("mock out the UpdateClientScope method")
-//             },
-//             UpdateCredentialUserLabelFunc: func(ctx context.Context, token string, realm string, userID string, credentialID string, userLabel string) error {
-// 	               panic("mock out the UpdateCredentialUserLabel method")
-//             },
-//             UpdateGroupFunc: func(ctx context.Context, accessToken string, realm string, updatedGroup gocloak.Group) error {
-// 	               panic("mock out the UpdateGroup method")
-//             },
-//             UpdateIdentityProviderFunc: func(ctx context.Context, token string, realm string, alias string, providerRep gocloak.IdentityProviderRepresentation) error {
-// 	               panic("mock out the UpdateIdentityProvider method")
-//             },
-//             UpdatePermissionFunc: func(ctx context.Context, token string, realm string, clientID string, permission gocloak.PermissionRepresentation) error {
-// 	               panic("mock out the UpdatePermission method")
-//             },
-//             UpdatePolicyFunc: func(ctx context.Context, token string, realm string, clientID string, policy gocloak.PolicyRepresentation) error {
-// 	               panic("mock out the UpdatePolicy method")
-//             },
-//             UpdateRealmFunc: func(ctx context.Context, token string, realm gocloak.RealmRepresentation) error {
-// 	               panic("mock out the UpdateRealm method")
-//             },
-//             UpdateRealmRoleFunc: func(ctx context.Context, token string, realm string, roleName string, role gocloak.Role) error {
-// 	               panic("mock out the UpdateRealmRole method")
-//             },
-//             UpdateResourceFunc: func(ctx context.Context, token string, realm string, clientID string, resource gocloak.ResourceRepresentation) error {
-// 	               panic("mock out the UpdateResource method")
-//             },
-//             UpdateResourceClientFunc: func(ctx context.Context, token string, realm string, resource gocloak.ResourceRepresentation) error {
-// 	               panic("mock out the UpdateResourceClient method")
-//             },
-//             UpdateResourcePolicyFunc: func(ctx context.Context, token string, realm string, permissionID string, policy gocloak.ResourcePolicyRepresentation) error {
-// 	               panic("mock out the UpdateResourcePolicy method")
-//             },
-//             UpdateRoleFunc: func(ctx context.Context, accessToken string, realm string, clientID string, role gocloak.Role) error {
-// 	               panic("mock out the UpdateRole method")
-//             },
-//             UpdateScopeFunc: func(ctx context.Context, token string, realm string, clientID string, resource gocloak.ScopeRepresentation) error {
-// 	               panic("mock out the UpdateScope method")
-//             },
-//             UpdateUserFunc: func(ctx context.Context, accessToken string, realm string, user gocloak.User) error {
-// 	               panic("mock out the UpdateUser method")
-//             },
-//             UpdateUserPermissionFunc: func(ctx context.Context, token string, realm string, permission gocloak.PermissionGrantParams) (*gocloak.PermissionGrantResponseRepresentation, error) {
-// 	               panic("mock out the UpdateUserPermission method")
-//             },
-//         }
+// 		// make and configure a mocked gocloak.GoCloak
+// 		mockedGoCloak := &GoCloakMock{
+// 			AddClientRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
+// 				panic("mock out the AddClientRoleComposite method")
+// 			},
+// 			AddClientRoleToGroupFunc: func(ctx context.Context, token string, realm string, clientID string, groupID string, roles []gocloak.Role) error {
+// 				panic("mock out the AddClientRoleToGroup method")
+// 			},
+// 			AddClientRoleToUserFunc: func(ctx context.Context, token string, realm string, clientID string, userID string, roles []gocloak.Role) error {
+// 				panic("mock out the AddClientRoleToUser method")
+// 			},
+// 			AddDefaultGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) error {
+// 				panic("mock out the AddDefaultGroup method")
+// 			},
+// 			AddDefaultScopeToClientFunc: func(ctx context.Context, token string, realm string, clientID string, scopeID string) error {
+// 				panic("mock out the AddDefaultScopeToClient method")
+// 			},
+// 			AddOptionalScopeToClientFunc: func(ctx context.Context, token string, realm string, clientID string, scopeID string) error {
+// 				panic("mock out the AddOptionalScopeToClient method")
+// 			},
+// 			AddRealmRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleName string, roles []gocloak.Role) error {
+// 				panic("mock out the AddRealmRoleComposite method")
+// 			},
+// 			AddRealmRoleToGroupFunc: func(ctx context.Context, token string, realm string, groupID string, roles []gocloak.Role) error {
+// 				panic("mock out the AddRealmRoleToGroup method")
+// 			},
+// 			AddRealmRoleToUserFunc: func(ctx context.Context, token string, realm string, userID string, roles []gocloak.Role) error {
+// 				panic("mock out the AddRealmRoleToUser method")
+// 			},
+// 			AddUserToGroupFunc: func(ctx context.Context, token string, realm string, userID string, groupID string) error {
+// 				panic("mock out the AddUserToGroup method")
+// 			},
+// 			ClearKeysCacheFunc: func(ctx context.Context, token string, realm string) error {
+// 				panic("mock out the ClearKeysCache method")
+// 			},
+// 			ClearRealmCacheFunc: func(ctx context.Context, token string, realm string) error {
+// 				panic("mock out the ClearRealmCache method")
+// 			},
+// 			ClearUserCacheFunc: func(ctx context.Context, token string, realm string) error {
+// 				panic("mock out the ClearUserCache method")
+// 			},
+// 			CreateChildGroupFunc: func(ctx context.Context, token string, realm string, groupID string, group gocloak.Group) (string, error) {
+// 				panic("mock out the CreateChildGroup method")
+// 			},
+// 			CreateClientFunc: func(ctx context.Context, accessToken string, realm string, clientID gocloak.Client) (string, error) {
+// 				panic("mock out the CreateClient method")
+// 			},
+// 			CreateClientProtocolMapperFunc: func(ctx context.Context, token string, realm string, clientID string, mapper gocloak.ProtocolMapperRepresentation) (string, error) {
+// 				panic("mock out the CreateClientProtocolMapper method")
+// 			},
+// 			CreateClientRoleFunc: func(ctx context.Context, accessToken string, realm string, clientID string, role gocloak.Role) (string, error) {
+// 				panic("mock out the CreateClientRole method")
+// 			},
+// 			CreateClientScopeFunc: func(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) (string, error) {
+// 				panic("mock out the CreateClientScope method")
+// 			},
+// 			CreateClientScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, clientID string, clientsID string, roles []gocloak.Role) error {
+// 				panic("mock out the CreateClientScopeMappingsClientRoles method")
+// 			},
+// 			CreateClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, clientID string, roles []gocloak.Role) error {
+// 				panic("mock out the CreateClientScopeMappingsRealmRoles method")
+// 			},
+// 			CreateComponentFunc: func(ctx context.Context, accessToken string, realm string, component gocloak.Component) (string, error) {
+// 				panic("mock out the CreateComponent method")
+// 			},
+// 			CreateGroupFunc: func(ctx context.Context, accessToken string, realm string, group gocloak.Group) (string, error) {
+// 				panic("mock out the CreateGroup method")
+// 			},
+// 			CreateIdentityProviderFunc: func(ctx context.Context, token string, realm string, providerRep gocloak.IdentityProviderRepresentation) (string, error) {
+// 				panic("mock out the CreateIdentityProvider method")
+// 			},
+// 			CreateIdentityProviderMapperFunc: func(ctx context.Context, token string, realm string, alias string, mapper gocloak.IdentityProviderMapper) error {
+// 				panic("mock out the CreateIdentityProviderMapper method")
+// 			},
+// 			CreatePermissionFunc: func(ctx context.Context, token string, realm string, clientID string, permission gocloak.PermissionRepresentation) (*gocloak.PermissionRepresentation, error) {
+// 				panic("mock out the CreatePermission method")
+// 			},
+// 			CreatePermissionTicketFunc: func(ctx context.Context, token string, realm string, permissions []gocloak.CreatePermissionTicketParams) (*gocloak.PermissionTicketResponseRepresentation, error) {
+// 				panic("mock out the CreatePermissionTicket method")
+// 			},
+// 			CreatePolicyFunc: func(ctx context.Context, token string, realm string, clientID string, policy gocloak.PolicyRepresentation) (*gocloak.PolicyRepresentation, error) {
+// 				panic("mock out the CreatePolicy method")
+// 			},
+// 			CreateRealmFunc: func(ctx context.Context, token string, realm gocloak.RealmRepresentation) (string, error) {
+// 				panic("mock out the CreateRealm method")
+// 			},
+// 			CreateRealmRoleFunc: func(ctx context.Context, token string, realm string, role gocloak.Role) (string, error) {
+// 				panic("mock out the CreateRealmRole method")
+// 			},
+// 			CreateResourceFunc: func(ctx context.Context, token string, realm string, clientID string, resource gocloak.ResourceRepresentation) (*gocloak.ResourceRepresentation, error) {
+// 				panic("mock out the CreateResource method")
+// 			},
+// 			CreateResourceClientFunc: func(ctx context.Context, token string, realm string, resource gocloak.ResourceRepresentation) (*gocloak.ResourceRepresentation, error) {
+// 				panic("mock out the CreateResourceClient method")
+// 			},
+// 			CreateResourcePolicyFunc: func(ctx context.Context, token string, realm string, resourceID string, policy gocloak.ResourcePolicyRepresentation) (*gocloak.ResourcePolicyRepresentation, error) {
+// 				panic("mock out the CreateResourcePolicy method")
+// 			},
+// 			CreateScopeFunc: func(ctx context.Context, token string, realm string, clientID string, scope gocloak.ScopeRepresentation) (*gocloak.ScopeRepresentation, error) {
+// 				panic("mock out the CreateScope method")
+// 			},
+// 			CreateUserFunc: func(ctx context.Context, token string, realm string, user gocloak.User) (string, error) {
+// 				panic("mock out the CreateUser method")
+// 			},
+// 			CreateUserFederatedIdentityFunc: func(ctx context.Context, token string, realm string, userID string, providerID string, federatedIdentityRep gocloak.FederatedIdentityRepresentation) error {
+// 				panic("mock out the CreateUserFederatedIdentity method")
+// 			},
+// 			DecodeAccessTokenFunc: func(ctx context.Context, accessToken string, realm string, expectedAudience string) (*jwt.Token, *jwt.MapClaims, error) {
+// 				panic("mock out the DecodeAccessToken method")
+// 			},
+// 			DecodeAccessTokenCustomClaimsFunc: func(ctx context.Context, accessToken string, realm string, expectedAudience string, claims jwt.Claims) (*jwt.Token, error) {
+// 				panic("mock out the DecodeAccessTokenCustomClaims method")
+// 			},
+// 			DeleteClientFunc: func(ctx context.Context, accessToken string, realm string, clientID string) error {
+// 				panic("mock out the DeleteClient method")
+// 			},
+// 			DeleteClientProtocolMapperFunc: func(ctx context.Context, token string, realm string, clientID string, mapperID string) error {
+// 				panic("mock out the DeleteClientProtocolMapper method")
+// 			},
+// 			DeleteClientRoleFunc: func(ctx context.Context, accessToken string, realm string, clientID string, roleName string) error {
+// 				panic("mock out the DeleteClientRole method")
+// 			},
+// 			DeleteClientRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
+// 				panic("mock out the DeleteClientRoleComposite method")
+// 			},
+// 			DeleteClientRoleFromGroupFunc: func(ctx context.Context, token string, realm string, clientID string, groupID string, roles []gocloak.Role) error {
+// 				panic("mock out the DeleteClientRoleFromGroup method")
+// 			},
+// 			DeleteClientRoleFromUserFunc: func(ctx context.Context, token string, realm string, clientID string, userID string, roles []gocloak.Role) error {
+// 				panic("mock out the DeleteClientRoleFromUser method")
+// 			},
+// 			DeleteClientScopeFunc: func(ctx context.Context, accessToken string, realm string, scopeID string) error {
+// 				panic("mock out the DeleteClientScope method")
+// 			},
+// 			DeleteClientScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, clientID string, clientsID string, roles []gocloak.Role) error {
+// 				panic("mock out the DeleteClientScopeMappingsClientRoles method")
+// 			},
+// 			DeleteClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, clientID string, roles []gocloak.Role) error {
+// 				panic("mock out the DeleteClientScopeMappingsRealmRoles method")
+// 			},
+// 			DeleteComponentFunc: func(ctx context.Context, accessToken string, realm string, componentID string) error {
+// 				panic("mock out the DeleteComponent method")
+// 			},
+// 			DeleteCredentialsFunc: func(ctx context.Context, token string, realm string, UserID string, CredentialID string) error {
+// 				panic("mock out the DeleteCredentials method")
+// 			},
+// 			DeleteGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) error {
+// 				panic("mock out the DeleteGroup method")
+// 			},
+// 			DeleteIdentityProviderFunc: func(ctx context.Context, token string, realm string, alias string) error {
+// 				panic("mock out the DeleteIdentityProvider method")
+// 			},
+// 			DeleteIdentityProviderMapperFunc: func(ctx context.Context, token string, realm string, alias string, mapperID string) error {
+// 				panic("mock out the DeleteIdentityProviderMapper method")
+// 			},
+// 			DeletePermissionFunc: func(ctx context.Context, token string, realm string, clientID string, permissionID string) error {
+// 				panic("mock out the DeletePermission method")
+// 			},
+// 			DeletePolicyFunc: func(ctx context.Context, token string, realm string, clientID string, policyID string) error {
+// 				panic("mock out the DeletePolicy method")
+// 			},
+// 			DeleteRealmFunc: func(ctx context.Context, token string, realm string) error {
+// 				panic("mock out the DeleteRealm method")
+// 			},
+// 			DeleteRealmRoleFunc: func(ctx context.Context, token string, realm string, roleName string) error {
+// 				panic("mock out the DeleteRealmRole method")
+// 			},
+// 			DeleteRealmRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleName string, roles []gocloak.Role) error {
+// 				panic("mock out the DeleteRealmRoleComposite method")
+// 			},
+// 			DeleteRealmRoleFromGroupFunc: func(ctx context.Context, token string, realm string, groupID string, roles []gocloak.Role) error {
+// 				panic("mock out the DeleteRealmRoleFromGroup method")
+// 			},
+// 			DeleteRealmRoleFromUserFunc: func(ctx context.Context, token string, realm string, userID string, roles []gocloak.Role) error {
+// 				panic("mock out the DeleteRealmRoleFromUser method")
+// 			},
+// 			DeleteResourceFunc: func(ctx context.Context, token string, realm string, clientID string, resourceID string) error {
+// 				panic("mock out the DeleteResource method")
+// 			},
+// 			DeleteResourceClientFunc: func(ctx context.Context, token string, realm string, resourceID string) error {
+// 				panic("mock out the DeleteResourceClient method")
+// 			},
+// 			DeleteResourcePolicyFunc: func(ctx context.Context, token string, realm string, permissionID string) error {
+// 				panic("mock out the DeleteResourcePolicy method")
+// 			},
+// 			DeleteScopeFunc: func(ctx context.Context, token string, realm string, clientID string, scopeID string) error {
+// 				panic("mock out the DeleteScope method")
+// 			},
+// 			DeleteUserFunc: func(ctx context.Context, accessToken string, realm string, userID string) error {
+// 				panic("mock out the DeleteUser method")
+// 			},
+// 			DeleteUserFederatedIdentityFunc: func(ctx context.Context, token string, realm string, userID string, providerID string) error {
+// 				panic("mock out the DeleteUserFederatedIdentity method")
+// 			},
+// 			DeleteUserFromGroupFunc: func(ctx context.Context, token string, realm string, userID string, groupID string) error {
+// 				panic("mock out the DeleteUserFromGroup method")
+// 			},
+// 			DeleteUserPermissionFunc: func(ctx context.Context, token string, realm string, ticketID string) error {
+// 				panic("mock out the DeleteUserPermission method")
+// 			},
+// 			DisableAllCredentialsByTypeFunc: func(ctx context.Context, token string, realm string, userID string, types []string) error {
+// 				panic("mock out the DisableAllCredentialsByType method")
+// 			},
+// 			ExecuteActionsEmailFunc: func(ctx context.Context, token string, realm string, params gocloak.ExecuteActionsEmail) error {
+// 				panic("mock out the ExecuteActionsEmail method")
+// 			},
+// 			ExportIDPPublicBrokerConfigFunc: func(ctx context.Context, token string, realm string, alias string) (*string, error) {
+// 				panic("mock out the ExportIDPPublicBrokerConfig method")
+// 			},
+// 			GetAvailableClientRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, clientID string, groupID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetAvailableClientRolesByGroupID method")
+// 			},
+// 			GetAvailableClientRolesByUserIDFunc: func(ctx context.Context, token string, realm string, clientID string, userID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetAvailableClientRolesByUserID method")
+// 			},
+// 			GetAvailableRealmRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, groupID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetAvailableRealmRolesByGroupID method")
+// 			},
+// 			GetAvailableRealmRolesByUserIDFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetAvailableRealmRolesByUserID method")
+// 			},
+// 			GetCertsFunc: func(ctx context.Context, realm string) (*gocloak.CertResponse, error) {
+// 				panic("mock out the GetCerts method")
+// 			},
+// 			GetClientFunc: func(ctx context.Context, accessToken string, realm string, clientID string) (*gocloak.Client, error) {
+// 				panic("mock out the GetClient method")
+// 			},
+// 			GetClientOfflineSessionsFunc: func(ctx context.Context, token string, realm string, clientID string) ([]*gocloak.UserSessionRepresentation, error) {
+// 				panic("mock out the GetClientOfflineSessions method")
+// 			},
+// 			GetClientRoleFunc: func(ctx context.Context, token string, realm string, clientID string, roleName string) (*gocloak.Role, error) {
+// 				panic("mock out the GetClientRole method")
+// 			},
+// 			GetClientRoleByIDFunc: func(ctx context.Context, accessToken string, realm string, roleID string) (*gocloak.Role, error) {
+// 				panic("mock out the GetClientRoleByID method")
+// 			},
+// 			GetClientRolesFunc: func(ctx context.Context, accessToken string, realm string, clientID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetClientRoles method")
+// 			},
+// 			GetClientRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, clientID string, groupID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetClientRolesByGroupID method")
+// 			},
+// 			GetClientRolesByUserIDFunc: func(ctx context.Context, token string, realm string, clientID string, userID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetClientRolesByUserID method")
+// 			},
+// 			GetClientScopeFunc: func(ctx context.Context, token string, realm string, scopeID string) (*gocloak.ClientScope, error) {
+// 				panic("mock out the GetClientScope method")
+// 			},
+// 			GetClientScopeMappingsFunc: func(ctx context.Context, token string, realm string, clientID string) (*gocloak.MappingsRepresentation, error) {
+// 				panic("mock out the GetClientScopeMappings method")
+// 			},
+// 			GetClientScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, clientID string, clientsID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetClientScopeMappingsClientRoles method")
+// 			},
+// 			GetClientScopeMappingsClientRolesAvailableFunc: func(ctx context.Context, token string, realm string, clientID string, clientsID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetClientScopeMappingsClientRolesAvailable method")
+// 			},
+// 			GetClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, clientID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetClientScopeMappingsRealmRoles method")
+// 			},
+// 			GetClientScopeMappingsRealmRolesAvailableFunc: func(ctx context.Context, token string, realm string, clientID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetClientScopeMappingsRealmRolesAvailable method")
+// 			},
+// 			GetClientScopesFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
+// 				panic("mock out the GetClientScopes method")
+// 			},
+// 			GetClientSecretFunc: func(ctx context.Context, token string, realm string, clientID string) (*gocloak.CredentialRepresentation, error) {
+// 				panic("mock out the GetClientSecret method")
+// 			},
+// 			GetClientServiceAccountFunc: func(ctx context.Context, token string, realm string, clientID string) (*gocloak.User, error) {
+// 				panic("mock out the GetClientServiceAccount method")
+// 			},
+// 			GetClientUserSessionsFunc: func(ctx context.Context, token string, realm string, clientID string) ([]*gocloak.UserSessionRepresentation, error) {
+// 				panic("mock out the GetClientUserSessions method")
+// 			},
+// 			GetClientsFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
+// 				panic("mock out the GetClients method")
+// 			},
+// 			GetClientsDefaultScopesFunc: func(ctx context.Context, token string, realm string, clientID string) ([]*gocloak.ClientScope, error) {
+// 				panic("mock out the GetClientsDefaultScopes method")
+// 			},
+// 			GetClientsOptionalScopesFunc: func(ctx context.Context, token string, realm string, clientID string) ([]*gocloak.ClientScope, error) {
+// 				panic("mock out the GetClientsOptionalScopes method")
+// 			},
+// 			GetComponentsFunc: func(ctx context.Context, accessToken string, realm string) ([]*gocloak.Component, error) {
+// 				panic("mock out the GetComponents method")
+// 			},
+// 			GetCompositeClientRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, clientID string, groupID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetCompositeClientRolesByGroupID method")
+// 			},
+// 			GetCompositeClientRolesByRoleIDFunc: func(ctx context.Context, token string, realm string, clientID string, roleID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetCompositeClientRolesByRoleID method")
+// 			},
+// 			GetCompositeClientRolesByUserIDFunc: func(ctx context.Context, token string, realm string, clientID string, userID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetCompositeClientRolesByUserID method")
+// 			},
+// 			GetCompositeRealmRolesByGroupIDFunc: func(ctx context.Context, token string, realm string, groupID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetCompositeRealmRolesByGroupID method")
+// 			},
+// 			GetCompositeRealmRolesByRoleIDFunc: func(ctx context.Context, token string, realm string, roleID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetCompositeRealmRolesByRoleID method")
+// 			},
+// 			GetCompositeRealmRolesByUserIDFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetCompositeRealmRolesByUserID method")
+// 			},
+// 			GetConfiguredUserStorageCredentialTypesFunc: func(ctx context.Context, token string, realm string, userID string) ([]string, error) {
+// 				panic("mock out the GetConfiguredUserStorageCredentialTypes method")
+// 			},
+// 			GetCredentialRegistratorsFunc: func(ctx context.Context, token string, realm string) ([]string, error) {
+// 				panic("mock out the GetCredentialRegistrators method")
+// 			},
+// 			GetCredentialsFunc: func(ctx context.Context, token string, realm string, UserID string) ([]*gocloak.CredentialRepresentation, error) {
+// 				panic("mock out the GetCredentials method")
+// 			},
+// 			GetDefaultDefaultClientScopesFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
+// 				panic("mock out the GetDefaultDefaultClientScopes method")
+// 			},
+// 			GetDefaultGroupsFunc: func(ctx context.Context, accessToken string, realm string) ([]*gocloak.Group, error) {
+// 				panic("mock out the GetDefaultGroups method")
+// 			},
+// 			GetDefaultOptionalClientScopesFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
+// 				panic("mock out the GetDefaultOptionalClientScopes method")
+// 			},
+// 			GetDependentPermissionsFunc: func(ctx context.Context, token string, realm string, clientID string, policyID string) ([]*gocloak.PermissionRepresentation, error) {
+// 				panic("mock out the GetDependentPermissions method")
+// 			},
+// 			GetGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) (*gocloak.Group, error) {
+// 				panic("mock out the GetGroup method")
+// 			},
+// 			GetGroupMembersFunc: func(ctx context.Context, accessToken string, realm string, groupID string, params gocloak.GetGroupsParams) ([]*gocloak.User, error) {
+// 				panic("mock out the GetGroupMembers method")
+// 			},
+// 			GetGroupsFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetGroupsParams) ([]*gocloak.Group, error) {
+// 				panic("mock out the GetGroups method")
+// 			},
+// 			GetGroupsCountFunc: func(ctx context.Context, token string, realm string, params gocloak.GetGroupsParams) (int, error) {
+// 				panic("mock out the GetGroupsCount method")
+// 			},
+// 			GetIdentityProviderFunc: func(ctx context.Context, token string, realm string, alias string) (*gocloak.IdentityProviderRepresentation, error) {
+// 				panic("mock out the GetIdentityProvider method")
+// 			},
+// 			GetIdentityProviderMappersFunc: func(ctx context.Context, token string, realm string, alias string) ([]*gocloak.IdentityProviderMapper, error) {
+// 				panic("mock out the GetIdentityProviderMappers method")
+// 			},
+// 			GetIdentityProvidersFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.IdentityProviderRepresentation, error) {
+// 				panic("mock out the GetIdentityProviders method")
+// 			},
+// 			GetIssuerFunc: func(ctx context.Context, realm string) (*gocloak.IssuerResponse, error) {
+// 				panic("mock out the GetIssuer method")
+// 			},
+// 			GetKeyStoreConfigFunc: func(ctx context.Context, accessToken string, realm string) (*gocloak.KeyStoreConfig, error) {
+// 				panic("mock out the GetKeyStoreConfig method")
+// 			},
+// 			GetPermissionFunc: func(ctx context.Context, token string, realm string, clientID string, permissionID string) (*gocloak.PermissionRepresentation, error) {
+// 				panic("mock out the GetPermission method")
+// 			},
+// 			GetPermissionResourcesFunc: func(ctx context.Context, token string, realm string, clientID string, permissionID string) ([]*gocloak.PermissionResource, error) {
+// 				panic("mock out the GetPermissionResources method")
+// 			},
+// 			GetPermissionScopesFunc: func(ctx context.Context, token string, realm string, clientID string, permissionID string) ([]*gocloak.PermissionScope, error) {
+// 				panic("mock out the GetPermissionScopes method")
+// 			},
+// 			GetPermissionsFunc: func(ctx context.Context, token string, realm string, clientID string, params gocloak.GetPermissionParams) ([]*gocloak.PermissionRepresentation, error) {
+// 				panic("mock out the GetPermissions method")
+// 			},
+// 			GetPoliciesFunc: func(ctx context.Context, token string, realm string, clientID string, params gocloak.GetPolicyParams) ([]*gocloak.PolicyRepresentation, error) {
+// 				panic("mock out the GetPolicies method")
+// 			},
+// 			GetPolicyFunc: func(ctx context.Context, token string, realm string, clientID string, policyID string) (*gocloak.PolicyRepresentation, error) {
+// 				panic("mock out the GetPolicy method")
+// 			},
+// 			GetRawUserInfoFunc: func(ctx context.Context, accessToken string, realm string) (map[string]interface{}, error) {
+// 				panic("mock out the GetRawUserInfo method")
+// 			},
+// 			GetRealmFunc: func(ctx context.Context, token string, realm string) (*gocloak.RealmRepresentation, error) {
+// 				panic("mock out the GetRealm method")
+// 			},
+// 			GetRealmRoleFunc: func(ctx context.Context, token string, realm string, roleName string) (*gocloak.Role, error) {
+// 				panic("mock out the GetRealmRole method")
+// 			},
+// 			GetRealmRolesFunc: func(ctx context.Context, accessToken string, realm string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetRealmRoles method")
+// 			},
+// 			GetRealmRolesByGroupIDFunc: func(ctx context.Context, accessToken string, realm string, groupID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetRealmRolesByGroupID method")
+// 			},
+// 			GetRealmRolesByUserIDFunc: func(ctx context.Context, accessToken string, realm string, userID string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetRealmRolesByUserID method")
+// 			},
+// 			GetRealmsFunc: func(ctx context.Context, token string) ([]*gocloak.RealmRepresentation, error) {
+// 				panic("mock out the GetRealms method")
+// 			},
+// 			GetRequestingPartyPermissionDecisionFunc: func(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*gocloak.RequestingPartyPermissionDecision, error) {
+// 				panic("mock out the GetRequestingPartyPermissionDecision method")
+// 			},
+// 			GetRequestingPartyPermissionsFunc: func(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*[]gocloak.RequestingPartyPermission, error) {
+// 				panic("mock out the GetRequestingPartyPermissions method")
+// 			},
+// 			GetRequestingPartyTokenFunc: func(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*gocloak.JWT, error) {
+// 				panic("mock out the GetRequestingPartyToken method")
+// 			},
+// 			GetResourceFunc: func(ctx context.Context, token string, realm string, clientID string, resourceID string) (*gocloak.ResourceRepresentation, error) {
+// 				panic("mock out the GetResource method")
+// 			},
+// 			GetResourceClientFunc: func(ctx context.Context, token string, realm string, resourceID string) (*gocloak.ResourceRepresentation, error) {
+// 				panic("mock out the GetResourceClient method")
+// 			},
+// 			GetResourcePoliciesFunc: func(ctx context.Context, token string, realm string, params gocloak.GetResourcePoliciesParams) ([]*gocloak.ResourcePolicyRepresentation, error) {
+// 				panic("mock out the GetResourcePolicies method")
+// 			},
+// 			GetResourcePolicyFunc: func(ctx context.Context, token string, realm string, permissionID string) (*gocloak.ResourcePolicyRepresentation, error) {
+// 				panic("mock out the GetResourcePolicy method")
+// 			},
+// 			GetResourcesFunc: func(ctx context.Context, token string, realm string, clientID string, params gocloak.GetResourceParams) ([]*gocloak.ResourceRepresentation, error) {
+// 				panic("mock out the GetResources method")
+// 			},
+// 			GetResourcesClientFunc: func(ctx context.Context, token string, realm string, params gocloak.GetResourceParams) ([]*gocloak.ResourceRepresentation, error) {
+// 				panic("mock out the GetResourcesClient method")
+// 			},
+// 			GetRoleMappingByGroupIDFunc: func(ctx context.Context, accessToken string, realm string, groupID string) (*gocloak.MappingsRepresentation, error) {
+// 				panic("mock out the GetRoleMappingByGroupID method")
+// 			},
+// 			GetRoleMappingByUserIDFunc: func(ctx context.Context, accessToken string, realm string, userID string) (*gocloak.MappingsRepresentation, error) {
+// 				panic("mock out the GetRoleMappingByUserID method")
+// 			},
+// 			GetScopeFunc: func(ctx context.Context, token string, realm string, clientID string, scopeID string) (*gocloak.ScopeRepresentation, error) {
+// 				panic("mock out the GetScope method")
+// 			},
+// 			GetScopesFunc: func(ctx context.Context, token string, realm string, clientID string, params gocloak.GetScopeParams) ([]*gocloak.ScopeRepresentation, error) {
+// 				panic("mock out the GetScopes method")
+// 			},
+// 			GetServerInfoFunc: func(ctx context.Context, accessToken string) (*gocloak.ServerInfoRepesentation, error) {
+// 				panic("mock out the GetServerInfo method")
+// 			},
+// 			GetTokenFunc: func(ctx context.Context, realm string, options gocloak.TokenOptions) (*gocloak.JWT, error) {
+// 				panic("mock out the GetToken method")
+// 			},
+// 			GetUserByIDFunc: func(ctx context.Context, accessToken string, realm string, userID string) (*gocloak.User, error) {
+// 				panic("mock out the GetUserByID method")
+// 			},
+// 			GetUserCountFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetUsersParams) (int, error) {
+// 				panic("mock out the GetUserCount method")
+// 			},
+// 			GetUserFederatedIdentitiesFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.FederatedIdentityRepresentation, error) {
+// 				panic("mock out the GetUserFederatedIdentities method")
+// 			},
+// 			GetUserGroupsFunc: func(ctx context.Context, accessToken string, realm string, userID string, params gocloak.GetGroupsParams) ([]*gocloak.Group, error) {
+// 				panic("mock out the GetUserGroups method")
+// 			},
+// 			GetUserInfoFunc: func(ctx context.Context, accessToken string, realm string) (*gocloak.UserInfo, error) {
+// 				panic("mock out the GetUserInfo method")
+// 			},
+// 			GetUserOfflineSessionsForClientFunc: func(ctx context.Context, token string, realm string, userID string, clientID string) ([]*gocloak.UserSessionRepresentation, error) {
+// 				panic("mock out the GetUserOfflineSessionsForClient method")
+// 			},
+// 			GetUserPermissionsFunc: func(ctx context.Context, token string, realm string, params gocloak.GetUserPermissionParams) ([]*gocloak.PermissionGrantResponseRepresentation, error) {
+// 				panic("mock out the GetUserPermissions method")
+// 			},
+// 			GetUserSessionsFunc: func(ctx context.Context, token string, realm string, userID string) ([]*gocloak.UserSessionRepresentation, error) {
+// 				panic("mock out the GetUserSessions method")
+// 			},
+// 			GetUsersFunc: func(ctx context.Context, accessToken string, realm string, params gocloak.GetUsersParams) ([]*gocloak.User, error) {
+// 				panic("mock out the GetUsers method")
+// 			},
+// 			GetUsersByClientRoleNameFunc: func(ctx context.Context, token string, realm string, clientID string, roleName string, params gocloak.GetUsersByRoleParams) ([]*gocloak.User, error) {
+// 				panic("mock out the GetUsersByClientRoleName method")
+// 			},
+// 			GetUsersByRoleNameFunc: func(ctx context.Context, token string, realm string, roleName string) ([]*gocloak.User, error) {
+// 				panic("mock out the GetUsersByRoleName method")
+// 			},
+// 			GrantUserPermissionFunc: func(ctx context.Context, token string, realm string, permission gocloak.PermissionGrantParams) (*gocloak.PermissionGrantResponseRepresentation, error) {
+// 				panic("mock out the GrantUserPermission method")
+// 			},
+// 			ImportIdentityProviderConfigFunc: func(ctx context.Context, token string, realm string, fromURL string, providerID string) (map[string]string, error) {
+// 				panic("mock out the ImportIdentityProviderConfig method")
+// 			},
+// 			LoginFunc: func(ctx context.Context, clientID string, clientSecret string, realm string, username string, password string) (*gocloak.JWT, error) {
+// 				panic("mock out the Login method")
+// 			},
+// 			LoginAdminFunc: func(ctx context.Context, username string, password string, realm string) (*gocloak.JWT, error) {
+// 				panic("mock out the LoginAdmin method")
+// 			},
+// 			LoginClientFunc: func(ctx context.Context, clientID string, clientSecret string, realm string) (*gocloak.JWT, error) {
+// 				panic("mock out the LoginClient method")
+// 			},
+// 			LoginClientSignedJWTFunc: func(ctx context.Context, clientID string, realm string, key interface{}, signedMethod jwt.SigningMethod, expiresAt *jwt.Time) (*gocloak.JWT, error) {
+// 				panic("mock out the LoginClientSignedJWT method")
+// 			},
+// 			LoginOtpFunc: func(ctx context.Context, clientID string, clientSecret string, realm string, username string, password string, totp string) (*gocloak.JWT, error) {
+// 				panic("mock out the LoginOtp method")
+// 			},
+// 			LogoutFunc: func(ctx context.Context, clientID string, clientSecret string, realm string, refreshToken string) error {
+// 				panic("mock out the Logout method")
+// 			},
+// 			LogoutAllSessionsFunc: func(ctx context.Context, accessToken string, realm string, userID string) error {
+// 				panic("mock out the LogoutAllSessions method")
+// 			},
+// 			LogoutPublicClientFunc: func(ctx context.Context, clientID string, realm string, accessToken string, refreshToken string) error {
+// 				panic("mock out the LogoutPublicClient method")
+// 			},
+// 			LogoutUserSessionFunc: func(ctx context.Context, accessToken string, realm string, session string) error {
+// 				panic("mock out the LogoutUserSession method")
+// 			},
+// 			MoveCredentialBehindFunc: func(ctx context.Context, token string, realm string, userID string, credentialID string, newPreviousCredentialID string) error {
+// 				panic("mock out the MoveCredentialBehind method")
+// 			},
+// 			MoveCredentialToFirstFunc: func(ctx context.Context, token string, realm string, userID string, credentialID string) error {
+// 				panic("mock out the MoveCredentialToFirst method")
+// 			},
+// 			RefreshTokenFunc: func(ctx context.Context, refreshToken string, clientID string, clientSecret string, realm string) (*gocloak.JWT, error) {
+// 				panic("mock out the RefreshToken method")
+// 			},
+// 			RegenerateClientSecretFunc: func(ctx context.Context, token string, realm string, clientID string) (*gocloak.CredentialRepresentation, error) {
+// 				panic("mock out the RegenerateClientSecret method")
+// 			},
+// 			RemoveDefaultGroupFunc: func(ctx context.Context, accessToken string, realm string, groupID string) error {
+// 				panic("mock out the RemoveDefaultGroup method")
+// 			},
+// 			RemoveDefaultScopeFromClientFunc: func(ctx context.Context, token string, realm string, clientID string, scopeID string) error {
+// 				panic("mock out the RemoveDefaultScopeFromClient method")
+// 			},
+// 			RemoveOptionalScopeFromClientFunc: func(ctx context.Context, token string, realm string, clientID string, scopeID string) error {
+// 				panic("mock out the RemoveOptionalScopeFromClient method")
+// 			},
+// 			RestyClientFunc: func() *resty.Client {
+// 				panic("mock out the RestyClient method")
+// 			},
+// 			RetrospectTokenFunc: func(ctx context.Context, accessToken string, clientID string, clientSecret string, realm string) (*gocloak.RetrospecTokenResult, error) {
+// 				panic("mock out the RetrospectToken method")
+// 			},
+// 			SetPasswordFunc: func(ctx context.Context, token string, userID string, realm string, password string, temporary bool) error {
+// 				panic("mock out the SetPassword method")
+// 			},
+// 			SetRestyClientFunc: func(restyClient *resty.Client)  {
+// 				panic("mock out the SetRestyClient method")
+// 			},
+// 			UpdateClientFunc: func(ctx context.Context, accessToken string, realm string, updatedClient gocloak.Client) error {
+// 				panic("mock out the UpdateClient method")
+// 			},
+// 			UpdateClientProtocolMapperFunc: func(ctx context.Context, token string, realm string, clientID string, mapperID string, mapper gocloak.ProtocolMapperRepresentation) error {
+// 				panic("mock out the UpdateClientProtocolMapper method")
+// 			},
+// 			UpdateClientScopeFunc: func(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) error {
+// 				panic("mock out the UpdateClientScope method")
+// 			},
+// 			UpdateCredentialUserLabelFunc: func(ctx context.Context, token string, realm string, userID string, credentialID string, userLabel string) error {
+// 				panic("mock out the UpdateCredentialUserLabel method")
+// 			},
+// 			UpdateGroupFunc: func(ctx context.Context, accessToken string, realm string, updatedGroup gocloak.Group) error {
+// 				panic("mock out the UpdateGroup method")
+// 			},
+// 			UpdateIdentityProviderFunc: func(ctx context.Context, token string, realm string, alias string, providerRep gocloak.IdentityProviderRepresentation) error {
+// 				panic("mock out the UpdateIdentityProvider method")
+// 			},
+// 			UpdatePermissionFunc: func(ctx context.Context, token string, realm string, clientID string, permission gocloak.PermissionRepresentation) error {
+// 				panic("mock out the UpdatePermission method")
+// 			},
+// 			UpdatePolicyFunc: func(ctx context.Context, token string, realm string, clientID string, policy gocloak.PolicyRepresentation) error {
+// 				panic("mock out the UpdatePolicy method")
+// 			},
+// 			UpdateRealmFunc: func(ctx context.Context, token string, realm gocloak.RealmRepresentation) error {
+// 				panic("mock out the UpdateRealm method")
+// 			},
+// 			UpdateRealmRoleFunc: func(ctx context.Context, token string, realm string, roleName string, role gocloak.Role) error {
+// 				panic("mock out the UpdateRealmRole method")
+// 			},
+// 			UpdateResourceFunc: func(ctx context.Context, token string, realm string, clientID string, resource gocloak.ResourceRepresentation) error {
+// 				panic("mock out the UpdateResource method")
+// 			},
+// 			UpdateResourceClientFunc: func(ctx context.Context, token string, realm string, resource gocloak.ResourceRepresentation) error {
+// 				panic("mock out the UpdateResourceClient method")
+// 			},
+// 			UpdateResourcePolicyFunc: func(ctx context.Context, token string, realm string, permissionID string, policy gocloak.ResourcePolicyRepresentation) error {
+// 				panic("mock out the UpdateResourcePolicy method")
+// 			},
+// 			UpdateRoleFunc: func(ctx context.Context, accessToken string, realm string, clientID string, role gocloak.Role) error {
+// 				panic("mock out the UpdateRole method")
+// 			},
+// 			UpdateScopeFunc: func(ctx context.Context, token string, realm string, clientID string, resource gocloak.ScopeRepresentation) error {
+// 				panic("mock out the UpdateScope method")
+// 			},
+// 			UpdateUserFunc: func(ctx context.Context, accessToken string, realm string, user gocloak.User) error {
+// 				panic("mock out the UpdateUser method")
+// 			},
+// 			UpdateUserPermissionFunc: func(ctx context.Context, token string, realm string, permission gocloak.PermissionGrantParams) (*gocloak.PermissionGrantResponseRepresentation, error) {
+// 				panic("mock out the UpdateUserPermission method")
+// 			},
+// 		}
 //
-//         // use mockedGoCloak in code that requires gocloak.GoCloak
-//         // and then make assertions.
+// 		// use mockedGoCloak in code that requires gocloak.GoCloak
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type GoCloakMock struct {
 	// AddClientRoleCompositeFunc mocks the AddClientRoleComposite method.
 	AddClientRoleCompositeFunc func(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error
