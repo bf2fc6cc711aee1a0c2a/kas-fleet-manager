@@ -3,9 +3,10 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"net/http"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 
@@ -56,6 +57,14 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
 	mockKasfFleetshardSync.Start()
 	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)

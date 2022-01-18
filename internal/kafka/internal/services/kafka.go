@@ -13,7 +13,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
@@ -97,31 +96,33 @@ type KafkaService interface {
 var _ KafkaService = &kafkaService{}
 
 type kafkaService struct {
-	connectionFactory      *db.ConnectionFactory
-	clusterService         ClusterService
-	keycloakService        services.KeycloakService
-	kafkaConfig            *config.KafkaConfig
-	awsConfig              *config.AWSConfig
-	quotaServiceFactory    QuotaServiceFactory
-	mu                     sync.Mutex
-	awsClientFactory       aws.ClientFactory
-	authService            authorization.Authorization
-	dataplaneClusterConfig *config.DataplaneClusterConfig
-	providerConfig         *config.ProviderConfig
+	connectionFactory        *db.ConnectionFactory
+	clusterService           ClusterService
+	keycloakService          services.KeycloakService
+	kafkaConfig              *config.KafkaConfig
+	awsConfig                *config.AWSConfig
+	quotaServiceFactory      QuotaServiceFactory
+	mu                       sync.Mutex
+	awsClientFactory         aws.ClientFactory
+	authService              authorization.Authorization
+	dataplaneClusterConfig   *config.DataplaneClusterConfig
+	providerConfig           *config.ProviderConfig
+	clusterPlacementStrategy ClusterPlacementStrategy
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, providerConfig *config.ProviderConfig) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, providerConfig *config.ProviderConfig, clusterPlacementStrategy ClusterPlacementStrategy) *kafkaService {
 	return &kafkaService{
-		connectionFactory:      connectionFactory,
-		clusterService:         clusterService,
-		keycloakService:        keycloakService,
-		kafkaConfig:            kafkaConfig,
-		awsConfig:              awsConfig,
-		quotaServiceFactory:    quotaServiceFactory,
-		awsClientFactory:       awsClientFactory,
-		authService:            authorizationService,
-		dataplaneClusterConfig: dataplaneClusterConfig,
-		providerConfig:         providerConfig,
+		connectionFactory:        connectionFactory,
+		clusterService:           clusterService,
+		keycloakService:          keycloakService,
+		kafkaConfig:              kafkaConfig,
+		awsConfig:                awsConfig,
+		quotaServiceFactory:      quotaServiceFactory,
+		awsClientFactory:         awsClientFactory,
+		authService:              authorizationService,
+		dataplaneClusterConfig:   dataplaneClusterConfig,
+		providerConfig:           providerConfig,
+		clusterPlacementStrategy: clusterPlacementStrategy,
 	}
 }
 
@@ -159,96 +160,15 @@ func (k *kafkaService) hasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaReq
 func (k *kafkaService) CapacityAvailableForRegionAndInstanceType(instTypeRegCapacity *int, kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 
-	// get all kafkas
-	var kafkas []*dbapi.KafkaRequest
-
+	var count int64
 	if err := dbConn.Model(&dbapi.KafkaRequest{}).
 		Where("region = ?", kafkaRequest.Region).
 		Where("cloud_provider = ?", kafkaRequest.CloudProvider).
-		Order("created_at asc").
-		Scan(&kafkas).Error; err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to check region capacity")
+		Where("instance_type = ?", kafkaRequest.InstanceType).
+		Count(&count).Error; err != nil {
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka request")
 	}
-
-	// get clusterID values of kafkas (including empty values for accepted kafkas)
-	clusterIDs := make(map[string]int)
-	// create a queue of accepted kafkas without cluster IDs (to determine their placement on available clusters)
-	acceptedKafkasQueue := make([]string, 0)
-	// counter for kafkas of the instance type to be created
-	desiredInstanceTypeKafkas := 0
-	// iterate over all kafkas and
-	// - populate clusterIDs (used for cluster capacity later on)
-	// - create a queue of kafkas without cluster ID assigned
-	// - count number of kafkas of the type about to be created
-	for _, kafka := range kafkas {
-		if kafka.ClusterID != "" {
-			// increase count of kafkas on specific cluster ([clusterID]int++)
-			clusterIDs[kafka.ClusterID]++
-		} else {
-			// add instance type of kafka without clusterID assigned to queue
-			acceptedKafkasQueue = append(acceptedKafkasQueue, kafka.InstanceType)
-		}
-		if kafka.InstanceType == kafkaRequest.InstanceType {
-			// increase count of kafkas of the type about to be created currently in the region
-			desiredInstanceTypeKafkas++
-			// if kafka type capacity per region reached - throw an error immediately
-			if instTypeRegCapacity != nil && desiredInstanceTypeKafkas >= int(*instTypeRegCapacity) {
-				return false, errors.TooManyKafkaInstancesReached(fmt.Sprintf("Capacity reached for region: %s for instance type: %s", kafkaRequest.Region, kafkaRequest.InstanceType))
-			}
-		}
-	}
-
-	// if autoscaling is enabled, there is capacity left - limit hasn't been reached for the instance type
-	if k.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
-		return true, nil
-	}
-
-	// get cluster list
-	clusterList := k.dataplaneClusterConfig.ClusterConfig.GetManualClusters()
-
-	if len(clusterList) == 0 {
-		return false, errors.TooManyKafkaInstancesReached("No capacity available")
-	}
-
-	// iterate over cluster list and get global capacity, instance capacity and decrease cluster capacity
-	for _, cluster := range clusterList {
-		// ignore clusters from different regions and not Schedulable clusters
-		if cluster.Region != kafkaRequest.Region || !cluster.Schedulable || cluster.Status != api.ClusterReady {
-			continue
-		}
-		_, ok := clusterIDs[cluster.ClusterId]
-		if ok {
-			// decrease cluster limit by substracting kafkas already placed on that cluster
-			cluster.KafkaInstanceLimit = cluster.KafkaInstanceLimit - clusterIDs[cluster.ClusterId]
-		}
-		if cluster.KafkaInstanceLimit == 0 {
-			continue
-		}
-
-		// create a tempQueue (it will be assigned with kafkas left over without cluster ID after current cluster reaches its capacity)
-		tempQueue := make([]string, 0)
-		// iterate over kafkas without clusterID
-		for _, k := range acceptedKafkasQueue {
-			// if cluster limit is 0 or cluster doesn't support desired kafka - add kafka to the tempQueue
-			if cluster.KafkaInstanceLimit == 0 || !strings.Contains(cluster.SupportedInstanceType, k) {
-				tempQueue = append(tempQueue, k)
-			} else {
-				// otherwise decrement the limit of current cluster
-				cluster.KafkaInstanceLimit--
-			}
-		}
-
-		// recreate kafkas queue after iterating over all kafkas and constructing new queue
-		acceptedKafkasQueue = tempQueue
-		// no more kafkas in the queue and cluster capacity greater than 0
-		// if cluster supports desired instance type - return true and no error
-		if (len(acceptedKafkasQueue) == 0 || !shared.Contains(acceptedKafkasQueue, kafkaRequest.InstanceType)) && cluster.KafkaInstanceLimit > 0 && strings.Contains(cluster.SupportedInstanceType, kafkaRequest.InstanceType) {
-			return true, nil
-		}
-	}
-
-	// no capacity left in the region
-	return false, errors.TooManyKafkaInstancesReached(fmt.Sprintf("Capacity reached for region: %s for instance type: %s", kafkaRequest.Region, kafkaRequest.InstanceType))
+	return instTypeRegCapacity == nil || count <= int64(*instTypeRegCapacity), nil
 }
 
 func (k *kafkaService) DetectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
@@ -332,6 +252,15 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	dbConn := k.connectionFactory.New()
 	kafkaRequest.Status = constants2.KafkaRequestStatusAccepted.String()
 	kafkaRequest.SubscriptionId = subscriptionId
+
+	cluster, e := k.clusterPlacementStrategy.FindCluster(kafkaRequest)
+	if e != nil || cluster == nil {
+		msg := fmt.Sprintf("No available cluster found for '%s' Kafka instance", kafkaRequest.InstanceType)
+		logger.Logger.Warningf(msg)
+		return errors.TooManyKafkaInstancesReached(fmt.Sprintf("Failed to find cluster for kafka request in region: %s for instance type: %s", kafkaRequest.Region, kafkaRequest.InstanceType))
+	}
+
+	kafkaRequest.ClusterID = cluster.ClusterID
 
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a kafka A is created, at the time of creation the quota-type was ams. At some point in the future

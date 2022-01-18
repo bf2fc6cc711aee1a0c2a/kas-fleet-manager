@@ -340,9 +340,10 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 			evalKafka4,
 			errorCheckWithError,
 		},
+		// there should be one more spot for standard instance
 		{
 			standardKafka4,
-			errorCheckWithError,
+			errorCheckNoError,
 		},
 		{
 			standardKafkaIncorrectRegion,
@@ -640,30 +641,18 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	// this value is taken from config/quota-management-list-configuration.yaml
-	orgId := "13640203"
-
-	// create dummy kafkas
-	db := test.TestServices.DBFactory.New()
-	kafkas := []*dbapi.KafkaRequest{
-		{
-			MultiAZ:        true,
-			Owner:          "dummyuser1",
-			Region:         mocks.MockCluster.Region().ID(),
-			CloudProvider:  mocks.MockCluster.CloudProvider().ID(),
-			Name:           "dummy-kafka",
-			OrganisationId: orgId,
-			Status:         constants2.KafkaRequestStatusAccepted.String(),
-			InstanceType:   types.STANDARD.String(),
-		},
-	}
-
-	if err := db.Create(&kafkas).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
-		return
-	}
-
 	k := public.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          "dummy-kafka",
+		MultiAz:       testMultiAZ,
+	}
+
+	_, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
+
+	Expect(err).ToNot(HaveOccurred(), "Error posting object:  %v", err)
+
+	k = public.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
@@ -772,6 +761,19 @@ func TestKafkaPost_NameUniquenessValidations(t *testing.T) {
 		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 3)})
 	})
 	defer tearDown()
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
 
 	// create two random accounts in same organisation
 	account1 := h.NewRandAccount()
@@ -996,6 +998,19 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	})
 	defer teardown()
 
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
+
 	// this value is taken from config/quota-management-list-configuration.yaml
 	orgIdWithLimitOfOne := "12147054"
 	internalUserAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
@@ -1093,6 +1108,19 @@ func TestKafkaGet(t *testing.T) {
 		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
 	})
 	defer teardown()
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)

@@ -12,7 +12,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/pkg/errors"
@@ -25,12 +24,12 @@ type AcceptedKafkaManager struct {
 	workers.BaseWorker
 	kafkaService           services.KafkaService
 	quotaServiceFactory    services.QuotaServiceFactory
-	clusterPlmtStrategy    services.ClusterPlacementStrategy
 	dataPlaneClusterConfig *config.DataplaneClusterConfig
+	clusterService         services.ClusterService
 }
 
 // NewAcceptedKafkaManager creates a new kafka manager
-func NewAcceptedKafkaManager(kafkaService services.KafkaService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus, dataPlaneClusterConfig *config.DataplaneClusterConfig) *AcceptedKafkaManager {
+func NewAcceptedKafkaManager(kafkaService services.KafkaService, quotaServiceFactory services.QuotaServiceFactory, bus signalbus.SignalBus, dataPlaneClusterConfig *config.DataplaneClusterConfig, clusterService services.ClusterService) *AcceptedKafkaManager {
 	return &AcceptedKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -41,8 +40,8 @@ func NewAcceptedKafkaManager(kafkaService services.KafkaService, quotaServiceFac
 		},
 		kafkaService:           kafkaService,
 		quotaServiceFactory:    quotaServiceFactory,
-		clusterPlmtStrategy:    clusterPlmtStrategy,
 		dataPlaneClusterConfig: dataPlaneClusterConfig,
+		clusterService:         clusterService,
 	}
 }
 
@@ -81,17 +80,11 @@ func (k *AcceptedKafkaManager) Reconcile() []error {
 }
 
 func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest) error {
-	cluster, err := k.clusterPlmtStrategy.FindCluster(kafka)
-	if err != nil {
-		return errors.Wrapf(err, "failed to find cluster for kafka request %s", kafka.ID)
-	}
+	cluster, e := k.clusterService.FindClusterByID(kafka.ClusterID)
 
-	if cluster == nil {
-		logger.Logger.Warningf("No available cluster found for Kafka instance with id %s", kafka.ID)
-		return nil
+	if cluster == nil || e != nil {
+		return errors.Wrapf(e, "failed to find cluster for kafka request %s", kafka.ID)
 	}
-
-	kafka.ClusterID = cluster.ClusterID
 
 	// Set desired Strimzi version
 	var selectedStrimziVersion *api.StrimziVersion
