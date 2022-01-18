@@ -7,7 +7,7 @@ A service for provisioning and managing fleets of Kafka instances.
 For more information on how the service works, see [the implementation documentation](docs/implementation.md).
 
 ## Prerequisites
-* [Golang 1.15+](https://golang.org/dl/)
+* [Golang 1.16+](https://golang.org/dl/)
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 
@@ -51,7 +51,7 @@ make aws/setup
     ```
     make keycloak/setup MAS_SSO_CLIENT_ID=<mas_sso_client_id> MAS_SSO_CLIENT_SECRET=<mas_sso_client_secret> OSD_IDP_MAS_SSO_CLIENT_ID=<osd_idp_mas_sso_client_id> OSD_IDP_MAS_SSO_CLIENT_SECRET=<osd_idp_mas_sso_client_secret>
     ```
-    > Values can be found in [Vault](https://vault.devshift.net/ui/vault/secrets/managed-services-ci/show/managed-service-api/integration-tests).
+    > Values can be found in [Vault](https://vault.devshift.net/ui/vault/secrets/managed-application-services/show/MK-Control-Plane-team/integration-tests).
 5. Setup Kafka TLS cert
 ```
 make kafkacert/setup
