@@ -6,7 +6,6 @@ import (
 )
 
 func PresentCloudProvider(cloudProvider *api.CloudProvider) public.CloudProvider {
-
 	reference := PresentReference(cloudProvider.Id, cloudProvider)
 	return public.CloudProvider{
 		Id:          reference.Id,

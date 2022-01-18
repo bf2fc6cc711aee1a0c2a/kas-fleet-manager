@@ -1,8 +1,9 @@
 package handlers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
 	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
@@ -143,29 +144,13 @@ func (h dinosaurHandler) Update(w http.ResponseWriter, r *http.Request) {
 		MarshalInto: &dinosaurUpdateReq,
 		Validate: []handlers.Validate{
 			validateDinosaurFound(),
-			ValidateDinosaurUserFacingUpdateFields(ctx, h.authService, dinosaurRequest, &dinosaurUpdateReq),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			updatedNeeded := false
-			if dinosaurUpdateReq.ReauthenticationEnabled != nil && dinosaurRequest.ReauthenticationEnabled != *dinosaurUpdateReq.ReauthenticationEnabled {
-				dinosaurRequest.ReauthenticationEnabled = *dinosaurUpdateReq.ReauthenticationEnabled
-				updatedNeeded = true
-			}
-
-			if dinosaurUpdateReq.Owner != nil && dinosaurRequest.Owner != *dinosaurUpdateReq.Owner {
-				dinosaurRequest.Owner = *dinosaurUpdateReq.Owner
-				updatedNeeded = true
-			}
-
-			if updatedNeeded {
-				updateErr := h.service.Updates(dinosaurRequest, map[string]interface{}{
-					"reauthentication_enabled": dinosaurRequest.ReauthenticationEnabled,
-					"owner":                    dinosaurRequest.Owner,
-				})
-
-				if updateErr != nil {
-					return nil, updateErr
-				}
+			// TODO implement update logic
+			var updDinosaurRequest *dbapi.DinosaurRequest
+			svcErr := h.service.Update(updDinosaurRequest)
+			if svcErr != nil {
+				return nil, svcErr
 			}
 
 			return presenters.PresentDinosaurRequest(dinosaurRequest), nil
