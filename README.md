@@ -7,7 +7,7 @@ A service for provisioning and managing fleets of Dinosaur instances.
 For more information on how the service works, see [the implementation documentation](docs/implementation.md).
 
 ## Prerequisites
-* [Golang 1.15+](https://golang.org/dl/)
+* [Golang 1.16+](https://golang.org/dl/)
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 
