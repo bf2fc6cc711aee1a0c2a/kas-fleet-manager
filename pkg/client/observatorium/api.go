@@ -26,7 +26,7 @@ type ServiceObservatorium struct {
 func (obs *ServiceObservatorium) GetDinosaurState(name string, resourceNamespace string) (DinosaurState, error) {
 	DinosaurState := DinosaurState{}
 	c := obs.client
-	metric := `strimzi_resource_state{%s}`
+	metric := `dinosaur_operator_resource_state{%s}`
 	labels := fmt.Sprintf(`kind=~'Dinosaur', name=~'%s',resource_namespace=~'%s'`, name, resourceNamespace)
 	result := c.Query(metric, labels)
 	if result.Err != nil {
@@ -66,7 +66,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 		//Check metrics for soft limit quota for cluster
 		"dinosaur_broker_quota_softlimitbytes": {
 			`dinosaur_broker_quota_softlimitbytes{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
+			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
@@ -74,7 +74,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 		//Check metrics for used space across the cluster
 		"dinosaur_broker_quota_totalstorageusedbytes": {
 			`dinosaur_broker_quota_totalstorageusedbytes{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
+			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
@@ -82,7 +82,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 		//Check metrics for messages in per topic
 		"dinosaur_server_brokertopicmetrics_messages_in_total": {
 			`dinosaur_server_brokertopicmetrics_messages_in_total{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
+			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
@@ -90,7 +90,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 		//Check metrics for bytes in per topic
 		"dinosaur_server_brokertopicmetrics_bytes_in_total": {
 			`dinosaur_server_brokertopicmetrics_bytes_in_total{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
+			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
@@ -98,7 +98,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 		//Check metrics for bytes out per topic
 		"dinosaur_server_brokertopicmetrics_bytes_out_total": {
 			`dinosaur_server_brokertopicmetrics_bytes_out_total{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
+			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
@@ -106,14 +106,14 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 		//Check metrics for partition states
 		"dinosaur_controller_dinosaurcontroller_offline_partitions_count": {
 			`dinosaur_controller_dinosaurcontroller_offline_partitions_count{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur',namespace=~'%s'`, namespace),
+			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur',namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
 		},
 		"dinosaur_controller_dinosaurcontroller_global_partition_count": {
 			`dinosaur_controller_dinosaurcontroller_global_partition_count{%s}`,
-			fmt.Sprintf(`strimzi_io_kind=~'Dinosaur',namespace=~'%s'`, namespace),
+			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur',namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},

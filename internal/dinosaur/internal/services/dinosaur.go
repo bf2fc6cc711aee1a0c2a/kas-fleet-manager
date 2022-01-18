@@ -100,7 +100,7 @@ type dinosaurService struct {
 	connectionFactory      *db.ConnectionFactory
 	clusterService         ClusterService
 	keycloakService        services.KeycloakService
-	dinosaurConfig            *config.DinosaurConfig
+	dinosaurConfig         *config.DinosaurConfig
 	awsConfig              *config.AWSConfig
 	quotaServiceFactory    QuotaServiceFactory
 	mu                     sync.Mutex
@@ -114,7 +114,7 @@ func NewDinosaurService(connectionFactory *db.ConnectionFactory, clusterService 
 		connectionFactory:      connectionFactory,
 		clusterService:         clusterService,
 		keycloakService:        keycloakService,
-		dinosaurConfig:            dinosaurConfig,
+		dinosaurConfig:         dinosaurConfig,
 		awsConfig:              awsConfig,
 		quotaServiceFactory:    quotaServiceFactory,
 		awsClientFactory:       awsClientFactory,
@@ -649,7 +649,7 @@ func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dino
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to get cluster for dinosaur %s", dinosaurRequest.ID))
 		}
 
-		dinosaurVersionAvailable, err2 := k.clusterService.IsStrimziDinosaurVersionAvailableInCluster(cluster, dinosaurRequest.DesiredStrimziVersion, dinosaurRequest.DesiredDinosaurVersion, dinosaurRequest.DesiredDinosaurIBPVersion)
+		dinosaurVersionAvailable, err2 := k.clusterService.IsDinosaurVersionAvailableInCluster(cluster, dinosaurRequest.DesiredDinosaurOperatorVersion, dinosaurRequest.DesiredDinosaurVersion)
 		if err2 != nil {
 			return errors.Validation(err2.Error())
 		}
@@ -658,35 +658,13 @@ func (k *dinosaurService) VerifyAndUpdateDinosaurAdmin(ctx context.Context, dino
 			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update dinosaur: %s with dinosaur version: %s", dinosaurRequest.ID, dinosaurRequest.DesiredDinosaurVersion))
 		}
 
-		strimziVersionReady, err2 := k.clusterService.CheckStrimziVersionReady(cluster, dinosaurRequest.DesiredStrimziVersion)
+		dinosaruOperatorVersionReady, err2 := k.clusterService.CheckDinosaurOperatorVersionReady(cluster, dinosaurRequest.DesiredDinosaurOperatorVersion)
 		if err2 != nil {
 			return errors.Validation(err2.Error())
 		}
 
-		if !strimziVersionReady {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update dinosaur: %s with strimzi version: %s", dinosaurRequest.ID, dinosaurRequest.DesiredStrimziVersion))
-		}
-
-		vCompOldNewIbp, eIbp := api.CompareBuildAwareSemanticVersions(dinosaurRequest.ActualDinosaurIBPVersion, dinosaurRequest.DesiredDinosaurIBPVersion)
-
-		if eIbp != nil {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare actual ibp version: %s with desired ibp version: %s", dinosaurRequest.ActualDinosaurIBPVersion, dinosaurRequest.DesiredDinosaurVersion))
-		}
-
-		// actual ibp version cannot be greater than desired ibp version (no downgrade allowed)
-		if vCompOldNewIbp > 0 {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade dinosaur: %s ibp version: %s to a lower version: %s", dinosaurRequest.ID, dinosaurRequest.DesiredDinosaurIBPVersion, dinosaurRequest.ActualDinosaurIBPVersion))
-		}
-
-		vCompIbpDinosaur, eIbpK := api.CompareBuildAwareSemanticVersions(dinosaurRequest.DesiredDinosaurIBPVersion, dinosaurRequest.DesiredDinosaurVersion)
-
-		if eIbpK != nil {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare dinosaur ibp version: %s with dinosaur version: %s", dinosaurRequest.DesiredDinosaurIBPVersion, dinosaurRequest.DesiredDinosaurVersion))
-		}
-
-		// ibp version cannot be greater than dinosaur version
-		if vCompIbpDinosaur > 0 {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update dinosaur: %s ibp version: %s with dinosaur version: %s", dinosaurRequest.ID, dinosaurRequest.DesiredDinosaurIBPVersion, dinosaurRequest.DesiredDinosaurVersion))
+		if !dinosaruOperatorVersionReady {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update dinosaur: %s with dinosaur operator version: %s", dinosaurRequest.ID, dinosaurRequest.DesiredDinosaurOperatorVersion))
 		}
 
 		vCompDinosaur, ek := api.CompareSemanticVersionsMajorAndMinor(dinosaurRequest.ActualDinosaurVersion, dinosaurRequest.DesiredDinosaurVersion)
@@ -825,23 +803,20 @@ func (k *dinosaurService) CountByStatus(status []constants2.DinosaurStatus) ([]D
 }
 
 type DinosaurComponentVersions struct {
-	ID                     string
-	ClusterID              string
-	DesiredStrimziVersion  string
-	ActualStrimziVersion   string
-	StrimziUpgrading       bool
-	DesiredDinosaurVersion    string
-	ActualDinosaurVersion     string
-	DinosaurUpgrading         bool
-	DesiredDinosaurIBPVersion string
-	ActualDinosaurIBPVersion  string
-	DinosaurIBPUpgrading      bool
+	ID                             string
+	ClusterID                      string
+	DesiredDinosaurOperatorVersion string
+	ActualDinosaurOperatorVersion  string
+	DinosaurOperatorUpgrading      bool
+	DesiredDinosaurVersion         string
+	ActualDinosaurVersion          string
+	DinosaurUpgrading              bool
 }
 
 func (k *dinosaurService) ListComponentVersions() ([]DinosaurComponentVersions, error) {
 	dbConn := k.connectionFactory.New()
 	var results []DinosaurComponentVersions
-	if err := dbConn.Model(&dbapi.DinosaurRequest{}).Select("id", "cluster_id", "desired_strimzi_version", "actual_strimzi_version", "strimzi_upgrading", "desired_dinosaur_version", "actual_dinosaur_version", "dinosaur_upgrading", "desired_dinosaur_ibp_version", "actual_dinosaur_ibp_version", "dinosaur_ibp_upgrading").Scan(&results).Error; err != nil {
+	if err := dbConn.Model(&dbapi.DinosaurRequest{}).Select("id", "cluster_id", "desired_dinosaur_operator_version", "actual_dinosaur_operator_version", "dinosaur_operator_upgrading", "desired_dinosaur_version", "actual_dinosaur_version", "dinosaur_upgrading").Scan(&results).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list component versions")
 	}
 	return results, nil
@@ -884,9 +859,8 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.DinosaurRequest, dinosaurConf
 				BootstrapServerHost: dinosaurRequest.BootstrapServerHost,
 			},
 			Versions: manageddinosaur.VersionsSpec{
-				Dinosaur:    dinosaurRequest.DesiredDinosaurVersion,
-				Strimzi:  dinosaurRequest.DesiredStrimziVersion,
-				DinosaurIBP: dinosaurRequest.DesiredDinosaurIBPVersion,
+				Dinosaur:         dinosaurRequest.DesiredDinosaurVersion,
+				DinosaurOperator: dinosaurRequest.DesiredDinosaurOperatorVersion,
 			},
 			Deleted: dinosaurRequest.Status == constants2.DinosaurRequestStatusDeprovision.String(),
 			Owners: []string{

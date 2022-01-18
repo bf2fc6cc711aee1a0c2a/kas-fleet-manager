@@ -35,28 +35,28 @@ import (
 )
 
 const (
-	observabilityNamespace          = "managed-application-services-observability"
-	observabilityCatalogSourceImage = "quay.io/rhoas/observability-operator-index:v3.0.8"
-	observabilityOperatorGroupName  = "observability-operator-group-name"
-	observabilityCatalogSourceName  = "observability-operator-manifests"
-	observabilitySubscriptionName   = "observability-operator"
-	observatoriumDexSecretName      = "observatorium-configuration-dex"
-	observatoriumSSOSecretName      = "observatorium-configuration-red-hat-sso"
-	syncsetName                     = "ext-managedservice-cluster-mgr"
-	imagePullSecretName             = "rhoas-image-pull-secret"
-	strimziAddonNamespace           = constants.StrimziOperatorNamespace
-	strimziQEAddonNamespace         = "redhat-managed-dinosaur-operator-qe"
-	fleetshardAddonNamespace     = constants.FleetShardOperatorNamespace
-	fleetshardQEAddonNamespace   = "redhat-fleetshard-operator-qe"
-	openIDIdentityProviderName      = "Dinosaur_SRE"
-	mkReadOnlyGroupName             = "mk-readonly-access"
-	mkSREGroupName                  = "dinosaur-sre"
-	mkReadOnlyRoleBindingName       = "mk-dedicated-readers"
-	mkSRERoleBindingName            = "dinosaur-sre-cluster-admin"
-	dedicatedReadersRoleBindingName = "dedicated-readers"
-	clusterAdminRoleName            = "cluster-admin"
-	IngressLabelName                = "ingressType"
-	IngressLabelValue               = "sharded"
+	observabilityNamespace           = "managed-application-services-observability"
+	observabilityCatalogSourceImage  = "quay.io/rhoas/observability-operator-index:v3.0.8"
+	observabilityOperatorGroupName   = "observability-operator-group-name"
+	observabilityCatalogSourceName   = "observability-operator-manifests"
+	observabilitySubscriptionName    = "observability-operator"
+	observatoriumDexSecretName       = "observatorium-configuration-dex"
+	observatoriumSSOSecretName       = "observatorium-configuration-red-hat-sso"
+	syncsetName                      = "ext-managedservice-cluster-mgr"
+	imagePullSecretName              = "rhoas-image-pull-secret"
+	dinosaurOperatorAddonNamespace   = constants.DinosaurOperatorNamespace
+	dinosaurOperatorQEAddonNamespace = "redhat-managed-dinosaur-operator-qe"
+	fleetshardAddonNamespace         = constants.FleetShardOperatorNamespace
+	fleetshardQEAddonNamespace       = "redhat-fleetshard-operator-qe"
+	openIDIdentityProviderName       = "Dinosaur_SRE"
+	mkReadOnlyGroupName              = "mk-readonly-access"
+	mkSREGroupName                   = "dinosaur-sre"
+	mkReadOnlyRoleBindingName        = "mk-dedicated-readers"
+	mkSRERoleBindingName             = "dinosaur-sre-cluster-admin"
+	dedicatedReadersRoleBindingName  = "dedicated-readers"
+	clusterAdminRoleName             = "cluster-admin"
+	IngressLabelName                 = "ingressType"
+	IngressLabelValue                = "sharded"
 )
 
 var clusterMetricsStatuses = []api.ClusterStatus{
@@ -113,7 +113,7 @@ type ClusterManagerOptions struct {
 	SupportedProviders         *config.ProviderConfig
 	ClusterService             services.ClusterService
 	CloudProvidersService      services.CloudProvidersService
-	FleetshardOperatorAddon services.FleetshardOperatorAddon
+	FleetshardOperatorAddon    services.FleetshardOperatorAddon
 	OsdIdpKeycloakService      coreServices.OsdKeycloakService
 }
 
@@ -584,7 +584,7 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 }
 
 func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) error {
-	strimziOperatorIsReady, err := c.reconcileStrimziOperator(provisionedCluster)
+	dinosaurOperatorIsReady, err := c.reconcileDinosaurOperator(provisionedCluster)
 	if err != nil {
 		return err
 	}
@@ -605,7 +605,7 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 		return errs
 	}
 
-	if strimziOperatorIsReady && fleetshardOperatorIsReady && (clusterLoggingOperatorIsReady || c.OCMConfig.ClusterLoggingOperatorAddonID == "") {
+	if dinosaurOperatorIsReady && fleetshardOperatorIsReady && (clusterLoggingOperatorIsReady || c.OCMConfig.ClusterLoggingOperatorAddonID == "") {
 		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForFleetShardOperator, provisionedCluster.ClusterID)
 		if err := c.ClusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForFleetShardOperator); err != nil {
 			return errors.Wrapf(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
@@ -616,13 +616,13 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 	return nil
 }
 
-// reconcileStrimziOperator installs the Strimzi operator on a provisioned clusters
-func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster) (bool, error) {
-	ready, err := c.ClusterService.InstallStrimzi(&provisionedCluster)
+// reconcileDinosaurOperator installs the Dinosaur operator on a provisioned clusters
+func (c *ClusterManager) reconcileDinosaurOperator(provisionedCluster api.Cluster) (bool, error) {
+	ready, err := c.ClusterService.InstallDinosaurOperator(&provisionedCluster)
 	if err != nil {
 		return false, err
 	}
-	glog.V(5).Infof("ready status of strimzi installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
+	glog.V(5).Infof("ready status of dinosaur operator installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
 	return ready, nil
 }
 
@@ -777,9 +777,9 @@ func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 		c.buildObservabilityOperatorGroupResource(),
 		c.buildObservabilitySubscriptionResource(),
 	}
-	strimiNS := strimziAddonNamespace
-	if c.OCMConfig.StrimziOperatorAddonID == "managed-dinosaur-qe" {
-		strimiNS = strimziQEAddonNamespace
+	strimiNS := dinosaurOperatorAddonNamespace
+	if c.OCMConfig.DinosaurOperatorAddonID == "managed-dinosaur-qe" {
+		strimiNS = dinosaurOperatorQEAddonNamespace
 	}
 	fleetshardNS := fleetshardAddonNamespace
 	if c.OCMConfig.FleetshardAddonID == "fleetshard-operator-qe" {

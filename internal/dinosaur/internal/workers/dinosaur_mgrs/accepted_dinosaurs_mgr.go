@@ -23,7 +23,7 @@ import (
 // AcceptedDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type AcceptedDinosaurManager struct {
 	workers.BaseWorker
-	dinosaurService           services.DinosaurService
+	dinosaurService        services.DinosaurService
 	quotaServiceFactory    services.QuotaServiceFactory
 	clusterPlmtStrategy    services.ClusterPlacementStrategy
 	dataPlaneClusterConfig *config.DataplaneClusterConfig
@@ -39,7 +39,7 @@ func NewAcceptedDinosaurManager(dinosaurService services.DinosaurService, quotaS
 				SignalBus: bus,
 			},
 		},
-		dinosaurService:           dinosaurService,
+		dinosaurService:        dinosaurService,
 		quotaServiceFactory:    quotaServiceFactory,
 		clusterPlmtStrategy:    clusterPlmtStrategy,
 		dataPlaneClusterConfig: dataPlaneClusterConfig,
@@ -93,24 +93,24 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Dino
 
 	dinosaur.ClusterID = cluster.ClusterID
 
-	// Set desired Strimzi version
-	var selectedStrimziVersion *api.StrimziVersion
+	// Set desired dinosaur operator version
+	var selectedDinosaurOperatorVersion *api.DinosaurOperatorVersion
 
-	readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
-	if err != nil || len(readyStrimziVersions) == 0 {
-		// Strimzi version may not be available at the start (i.e. during upgrade of Strimzi operator).
-		// We need to allow the reconciler to retry getting and setting of the desired strimzi version for a Dinosaur request
+	readyDinosaurOperatorVersions, err := cluster.GetAvailableAndReadyDinosaurOperatorVersions()
+	if err != nil || len(readyDinosaurOperatorVersions) == 0 {
+		// Dinosaur Operator version may not be available at the start (i.e. during upgrade of Dinosaur operator).
+		// We need to allow the reconciler to retry getting and setting of the desired Dinosaur Operator version for a Dinosaur request
 		// until the max retry duration is reached before updating its status to 'failed'.
 		durationSinceCreation := time.Since(dinosaur.CreatedAt)
 		if durationSinceCreation < constants2.AcceptedDinosaurMaxRetryDuration {
-			glog.V(10).Infof("No available strimzi version found for Dinosaur '%s' in Cluster ID '%s'", dinosaur.ID, dinosaur.ClusterID)
+			glog.V(10).Infof("No available dinosaur operator version found for Dinosaur '%s' in Cluster ID '%s'", dinosaur.ID, dinosaur.ClusterID)
 			return nil
 		}
 		dinosaur.Status = constants2.DinosaurRequestStatusFailed.String()
 		if err != nil {
-			err = errors.Wrapf(err, "failed to get desired Strimzi version %s", dinosaur.ID)
+			err = errors.Wrapf(err, "failed to get desired dinosaur operator version %s", dinosaur.ID)
 		} else {
-			err = errors.New(fmt.Sprintf("failed to get desired Strimzi version %s", dinosaur.ID))
+			err = errors.New(fmt.Sprintf("failed to get desired dinosaur operator version %s", dinosaur.ID))
 		}
 		dinosaur.FailedReason = err.Error()
 		if err2 := k.dinosaurService.Update(dinosaur); err2 != nil {
@@ -119,20 +119,14 @@ func (k *AcceptedDinosaurManager) reconcileAcceptedDinosaur(dinosaur *dbapi.Dino
 		return err
 	}
 
-	selectedStrimziVersion = &readyStrimziVersions[len(readyStrimziVersions)-1]
-	dinosaur.DesiredStrimziVersion = selectedStrimziVersion.Version
+	selectedDinosaurOperatorVersion = &readyDinosaurOperatorVersions[len(readyDinosaurOperatorVersions)-1]
+	dinosaur.DesiredDinosaurOperatorVersion = selectedDinosaurOperatorVersion.Version
 
 	// Set desired Dinosaur version
-	if len(selectedStrimziVersion.DinosaurVersions) == 0 {
+	if len(selectedDinosaurOperatorVersion.DinosaurVersions) == 0 {
 		return errors.New(fmt.Sprintf("failed to get Dinosaur version %s", dinosaur.ID))
 	}
-	dinosaur.DesiredDinosaurVersion = selectedStrimziVersion.DinosaurVersions[len(selectedStrimziVersion.DinosaurVersions)-1].Version
-
-	// Set desired Dinosaur IBP version
-	if len(selectedStrimziVersion.DinosaurIBPVersions) == 0 {
-		return errors.New(fmt.Sprintf("failed to get Dinosaur IBP version %s", dinosaur.ID))
-	}
-	dinosaur.DesiredDinosaurIBPVersion = selectedStrimziVersion.DinosaurIBPVersions[len(selectedStrimziVersion.DinosaurIBPVersions)-1].Version
+	dinosaur.DesiredDinosaurVersion = selectedDinosaurOperatorVersion.DinosaurVersions[len(selectedDinosaurOperatorVersion.DinosaurVersions)-1].Version
 
 	glog.Infof("Dinosaur instance with id %s is assigned to cluster with id %s", dinosaur.ID, dinosaur.ClusterID)
 	dinosaur.Status = constants2.DinosaurRequestStatusPreparing.String()

@@ -90,10 +90,6 @@ func ValidateCloudProvider(dinosaurService *services.DinosaurService, dinosaurRe
 	}
 }
 
-func stringNotSet(value *string) bool {
-	return value == nil || len(*value) < 1
-}
-
 func ValidateDinosaurClaims(ctx context.Context, dinosaurRequestPayload *public.DinosaurRequestPayload, dinosaurRequest *dbapi.DinosaurRequest) handlers.Validate {
 	return func() *errors.ServiceError {
 		dinosaurRequest = presenters.ConvertDinosaurRequest(*dinosaurRequestPayload, dinosaurRequest)

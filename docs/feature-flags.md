@@ -120,11 +120,11 @@ This lists the feature flags and their sub-configurations to enable/disable and 
         - `cluster-compute-machine-type` [Optional]: The compute machine type to be used for provisioning a new dataplane cluster (default: `m5.2xlarge`).
         - `cluster-openshift-version` [Optional]: The OpenShift version to be installed on the dataplane cluster (default: `""`, empty string indicates that the latest stable version will be used). 
 - **cluster-logging-operator-addon-id**: Enables the Cluster Logging Operator addon with Cloud Watch and application level logs enabled. (default: `""`, An empty string indicates that the operator should not be installed).
-- **strimzi-operator-cs-namespace**: Strimzi operator catalog source namespace.
-- **strimzi-operator-index-image**: Strimzi operator index image name
-- **strimzi-operator-namespace**: Strimzi operator namespace
-- **strimzi-operator-package**: Strimzi operator package name
-- **strimzi-operator-sub-channel**: Strimzi operator subscription channel
+- **dinosaur-operator-cs-namespace**: Dinosaur operator catalog source namespace.
+- **dinosaur-operator-index-image**: Dinosaur operator index image name
+- **dinosaur-operator-namespace**: Dinosaur operator namespace
+- **dinosaur-operator-package**: Dinosaur operator package name
+- **dinosaur-operator-sub-channel**: Dinosaur operator subscription channel
 - **fleetshard-operator-cs-namespace**: fleetshard operator catalog source namespace
 - **fleetshard-operator-index-image**: fleetshard operator index image name
 - **fleetshard-operator-namespace**: fleetshard operator namespace

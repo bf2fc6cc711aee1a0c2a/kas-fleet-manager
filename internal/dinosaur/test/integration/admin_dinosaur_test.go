@@ -39,7 +39,7 @@ func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []s
 
 func TestAdminDinosaur_Get(t *testing.T) {
 	sampleDinosaurID := api.NewID()
-	desiredStrimziVersion := "test"
+	desiredDinosaurOperatorVersion := "test"
 	type args struct {
 		ctx        func(h *coreTest.Helper) context.Context
 		dinosaurID string
@@ -87,7 +87,7 @@ func TestAdminDinosaur_Get(t *testing.T) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleDinosaurID))
-				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
+				Expect(result.DesiredDinosaurOperatorVersion).To(Equal(desiredDinosaurOperatorVersion))
 				Expect(result.AccountNumber).ToNot(BeEmpty())
 				Expect(result.Namespace).ToNot(BeEmpty())
 			},
@@ -104,7 +104,7 @@ func TestAdminDinosaur_Get(t *testing.T) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleDinosaurID))
-				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
+				Expect(result.DesiredDinosaurOperatorVersion).To(Equal(desiredDinosaurOperatorVersion))
 				Expect(result.ClusterId).ShouldNot(BeNil())
 				Expect(result.Namespace).ToNot(BeEmpty())
 			},
@@ -121,7 +121,7 @@ func TestAdminDinosaur_Get(t *testing.T) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleDinosaurID))
-				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
+				Expect(result.DesiredDinosaurOperatorVersion).To(Equal(desiredDinosaurOperatorVersion))
 				Expect(result.ClusterId).ShouldNot(BeNil())
 				Expect(result.Namespace).ToNot(BeEmpty())
 			},
@@ -177,15 +177,15 @@ func TestAdminDinosaur_Get(t *testing.T) {
 	defer tearDown()
 	db := test.TestServices.DBFactory.New()
 	dinosaur := &dbapi.DinosaurRequest{
-		MultiAZ:               false,
-		Owner:                 "test-user",
-		Region:                "test",
-		CloudProvider:         "test",
-		Name:                  "test-dinosaur",
-		OrganisationId:        "13640203",
-		DesiredStrimziVersion: desiredStrimziVersion,
-		Status:                constants.DinosaurRequestStatusReady.String(),
-		Namespace:             fmt.Sprintf("dinosaur-%s", sampleDinosaurID),
+		MultiAZ:                        false,
+		Owner:                          "test-user",
+		Region:                         "test",
+		CloudProvider:                  "test",
+		Name:                           "test-dinosaur",
+		OrganisationId:                 "13640203",
+		DesiredDinosaurOperatorVersion: desiredDinosaurOperatorVersion,
+		Status:                         constants.DinosaurRequestStatusReady.String(),
+		Namespace:                      fmt.Sprintf("dinosaur-%s", sampleDinosaurID),
 	}
 	dinosaur.ID = sampleDinosaurID
 

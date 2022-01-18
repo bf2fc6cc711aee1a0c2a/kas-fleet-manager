@@ -354,7 +354,7 @@ func TestStandaloneProvider_buildIdentityProviderResource(t *testing.T) {
 	}
 }
 
-func TestStandaloneProvider_buildStrimziOperatorNamespace(t *testing.T) {
+func TestStandaloneProvider_buildDinosaurOperatorNamespace(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		dataplaneClusterConfig *config.DataplaneClusterConfig
@@ -370,7 +370,7 @@ func TestStandaloneProvider_buildStrimziOperatorNamespace(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
+					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace: "namespace-name",
 					},
 				},
@@ -390,7 +390,7 @@ func TestStandaloneProvider_buildStrimziOperatorNamespace(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
+					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace: "another-namespace-name",
 					},
 				},
@@ -411,13 +411,13 @@ func TestStandaloneProvider_buildStrimziOperatorNamespace(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
-			namespace := provider.buildStrimziOperatorNamespace()
+			namespace := provider.buildDinosaurOperatorNamespace()
 			Expect(namespace).To(Equal(test.want))
 		})
 	}
 }
 
-func TestStandaloneProvider_buildStrimziCatalogSource(t *testing.T) {
+func TestStandaloneProvider_buildDinosaurOperatorCatalogSource(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		dataplaneClusterConfig *config.DataplaneClusterConfig
@@ -433,7 +433,7 @@ func TestStandaloneProvider_buildStrimziCatalogSource(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
+					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace:              "namespace-name",
 						CatalogSourceNamespace: "catalog-namespace",
 						IndexImage:             "index-image-1",
@@ -446,7 +446,7 @@ func TestStandaloneProvider_buildStrimziCatalogSource(t *testing.T) {
 					Kind:       operatorsv1alpha1.CatalogSourceKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      strimziOperatorCatalogSourceName,
+					Name:      dinosaurOperatorCatalogSourceName,
 					Namespace: "catalog-namespace",
 				},
 				Spec: operatorsv1alpha1.CatalogSourceSpec{
@@ -460,7 +460,7 @@ func TestStandaloneProvider_buildStrimziCatalogSource(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
+					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace:              "another-namespace-name",
 						CatalogSourceNamespace: "another-catalog-namespace",
 						IndexImage:             "index-image-2",
@@ -473,7 +473,7 @@ func TestStandaloneProvider_buildStrimziCatalogSource(t *testing.T) {
 					Kind:       operatorsv1alpha1.CatalogSourceKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      strimziOperatorCatalogSourceName,
+					Name:      dinosaurOperatorCatalogSourceName,
 					Namespace: "another-catalog-namespace",
 				},
 				Spec: operatorsv1alpha1.CatalogSourceSpec{
@@ -488,13 +488,13 @@ func TestStandaloneProvider_buildStrimziCatalogSource(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
-			catalogSource := provider.buildStrimziOperatorCatalogSource()
+			catalogSource := provider.buildDinosaurOperatorCatalogSource()
 			Expect(catalogSource).To(Equal(test.want))
 		})
 	}
 }
 
-func TestStandaloneProvider_buildStrimziOperatorGroup(t *testing.T) {
+func TestStandaloneProvider_buildDinosaurOperatorOperatorGroup(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		dataplaneClusterConfig *config.DataplaneClusterConfig
@@ -510,7 +510,7 @@ func TestStandaloneProvider_buildStrimziOperatorGroup(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
+					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace:              "namespace-name",
 						CatalogSourceNamespace: "catalog-namespace",
 						IndexImage:             "index-image-1",
@@ -523,7 +523,7 @@ func TestStandaloneProvider_buildStrimziOperatorGroup(t *testing.T) {
 					Kind:       operatorsv1alpha2.OperatorGroupKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      strimziOperatorOperatorGroupName,
+					Name:      dinosaurOperatorOperatorGroupName,
 					Namespace: "namespace-name",
 				},
 				Spec: operatorsv1alpha2.OperatorGroupSpec{},
@@ -534,7 +534,7 @@ func TestStandaloneProvider_buildStrimziOperatorGroup(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
+					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace:              "another-namespace-name",
 						CatalogSourceNamespace: "another-catalog-namespace",
 						IndexImage:             "index-image-2",
@@ -547,7 +547,7 @@ func TestStandaloneProvider_buildStrimziOperatorGroup(t *testing.T) {
 					Kind:       operatorsv1alpha2.OperatorGroupKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      strimziOperatorOperatorGroupName,
+					Name:      dinosaurOperatorOperatorGroupName,
 					Namespace: "another-namespace-name",
 				},
 				Spec: operatorsv1alpha2.OperatorGroupSpec{},
@@ -559,13 +559,13 @@ func TestStandaloneProvider_buildStrimziOperatorGroup(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
-			operatorGroup := provider.buildStrimziOperatorOperatorGroup()
+			operatorGroup := provider.buildDinosaurOperatorOperatorGroup()
 			Expect(operatorGroup).To(Equal(test.want))
 		})
 	}
 }
 
-func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
+func TestStandaloneProvider_buildDinosaurOperatorSubscription(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		dataplaneClusterConfig *config.DataplaneClusterConfig
@@ -581,7 +581,7 @@ func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
+					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace:              "namespace-name",
 						CatalogSourceNamespace: "catalog-namespace",
 						IndexImage:             "index-image-1",
@@ -596,11 +596,11 @@ func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
 					Kind:       operatorsv1alpha1.SubscriptionKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      strimziOperatorSubscriptionName,
+					Name:      dinosaurOperatorSubscriptionName,
 					Namespace: "namespace-name",
 				},
 				Spec: &operatorsv1alpha1.SubscriptionSpec{
-					CatalogSource:          strimziOperatorCatalogSourceName,
+					CatalogSource:          dinosaurOperatorCatalogSourceName,
 					Channel:                "alpha",
 					CatalogSourceNamespace: "catalog-namespace",
 					InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
@@ -613,7 +613,7 @@ func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
+					DinosaurOperatorOLMConfig: config.OperatorInstallationConfig{
 						Namespace:              "another-namespace-name",
 						CatalogSourceNamespace: "another-catalog-namespace",
 						IndexImage:             "index-image-2",
@@ -628,11 +628,11 @@ func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
 					Kind:       operatorsv1alpha1.SubscriptionKind,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      strimziOperatorSubscriptionName,
+					Name:      dinosaurOperatorSubscriptionName,
 					Namespace: "another-namespace-name",
 				},
 				Spec: &operatorsv1alpha1.SubscriptionSpec{
-					CatalogSource:          strimziOperatorCatalogSourceName,
+					CatalogSource:          dinosaurOperatorCatalogSourceName,
 					Channel:                "beta",
 					CatalogSourceNamespace: "another-catalog-namespace",
 					InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
@@ -646,7 +646,7 @@ func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
-			subscription := provider.buildStrimziOperatorSubscription()
+			subscription := provider.buildDinosaurOperatorSubscription()
 			Expect(subscription).To(Equal(test.want))
 		})
 	}

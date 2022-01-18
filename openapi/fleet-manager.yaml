@@ -1149,7 +1149,7 @@ components:
       value:
         metric:
           __name__: dinosaur_server_brokertopicmetrics_bytes_in_total
-          strimzi_io_cluster: dinosaur-service
+          dinosaur_operator_io_cluster: dinosaur-service
           topic: __consumer_offsets
         values:
           - timestamp: 1611670230000
@@ -1162,7 +1162,7 @@ components:
       value:
         metric:
           __name__: dinosaur_server_brokertopicmetrics_bytes_in_total
-          strimzi_io_cluster: dinosaur-service
+          dinosaur_operator_io_cluster: dinosaur-service
           topic: __consumer_offsets
         timestamp: 1611670230000
         value: 84154

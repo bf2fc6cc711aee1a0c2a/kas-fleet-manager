@@ -28,15 +28,12 @@ type DinosaurRequest struct {
 	// PlacementId field should be updated every time when a DinosaurRequest is assigned to an OSD cluster (even if it's the same one again)
 	PlacementId string `json:"placement_id"`
 
-	DesiredDinosaurVersion    string `json:"desired_dinosaur_version"`
-	ActualDinosaurVersion     string `json:"actual_dinosaur_version"`
-	DesiredStrimziVersion  string `json:"desired_strimzi_version"`
-	ActualStrimziVersion   string `json:"actual_strimzi_version"`
-	DesiredDinosaurIBPVersion string `json:"desired_dinosaur_ibp_version"`
-	ActualDinosaurIBPVersion  string `json:"actual_dinosaur_ibp_version"`
-	DinosaurUpgrading         bool   `json:"dinosaur_upgrading"`
-	StrimziUpgrading       bool   `json:"strimzi_upgrading"`
-	DinosaurIBPUpgrading      bool   `json:"dinosaur_ibp_upgrading"`
+	DesiredDinosaurVersion         string `json:"desired_dinosaur_version"`
+	ActualDinosaurVersion          string `json:"actual_dinosaur_version"`
+	DesiredDinosaurOperatorVersion string `json:"desired_dinosaur_operator_version"`
+	ActualDinosaurOperatorVersion  string `json:"actual_dinosaur_operator_version"`
+	DinosaurUpgrading              bool   `json:"dinosaur_upgrading"`
+	DinosaurOperatorUpgrading      bool   `json:"dinosaur_operator_upgrading"`
 	// The type of dinosaur instance (eval or standard)
 	InstanceType string `json:"instance_type"`
 	// the quota service type for the dinosaur, e.g. ams, quota-management-list

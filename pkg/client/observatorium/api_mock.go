@@ -157,9 +157,9 @@ var rangeQuerydata = map[string]pModel.Matrix{
 func fakeMetricData(name string, value int) *pModel.SampleStream {
 	return &pModel.SampleStream{
 		Metric: pModel.Metric{
-			"__name__":           pModel.LabelValue(name),
-			"pod":                "whatever",
-			"strimzi_io_cluster": "whatever",
+			"__name__":                     pModel.LabelValue(name),
+			"pod":                          "whatever",
+			"dinosaur_operator_io_cluster": "whatever",
 		},
 		Values: []pModel.SamplePair{{Timestamp: 0, Value: pModel.SampleValue(value)},
 			{Timestamp: 0, Value: pModel.SampleValue(value)}},
@@ -167,12 +167,12 @@ func fakeMetricData(name string, value int) *pModel.SampleStream {
 }
 
 var queryData = map[string]pModel.Vector{
-	"strimzi_resource_state": pModel.Vector{
+	"dinosaur_operator_resource_state": pModel.Vector{
 		&pModel.Sample{
 			Metric: pModel.Metric{
-				"strimzi_io_kind": "Dinosaur",
-				"strimzi_io_name": "test-dinosaur",
-				"namespace":       "my-dinosaur-namespace",
+				"dinosaur_operator_io_kind": "Dinosaur",
+				"dinosaur_operator_io_name": "test-dinosaur",
+				"namespace":                 "my-dinosaur-namespace",
 			},
 			Timestamp: pModel.Time(1607506882175),
 			Value:     1,
@@ -182,10 +182,10 @@ var queryData = map[string]pModel.Vector{
 	"dinosaur_server_brokertopicmetrics_bytes_in_total": pModel.Vector{
 		&pModel.Sample{
 			Metric: pModel.Metric{
-				"__name__":           "dinosaur_server_brokertopicmetrics_bytes_in_total",
-				"pod":                "whatever",
-				"strimzi_io_cluster": "whatever",
-				"topic":              "whatever",
+				"__name__":                     "dinosaur_server_brokertopicmetrics_bytes_in_total",
+				"pod":                          "whatever",
+				"dinosaur_operator_io_cluster": "whatever",
+				"topic":                        "whatever",
 			},
 			Timestamp: pModel.Time(1607506882175),
 			Value:     293617,
@@ -194,10 +194,10 @@ var queryData = map[string]pModel.Vector{
 	"dinosaur_server_brokertopicmetrics_messages_in_total": pModel.Vector{
 		&pModel.Sample{
 			Metric: pModel.Metric{
-				"__name__":           "dinosaur_server_brokertopicmetrics_messages_in_total",
-				"pod":                "whatever",
-				"strimzi_io_cluster": "whatever",
-				"topic":              "whatever",
+				"__name__":                     "dinosaur_server_brokertopicmetrics_messages_in_total",
+				"pod":                          "whatever",
+				"dinosaur_operator_io_cluster": "whatever",
+				"topic":                        "whatever",
 			},
 			Timestamp: pModel.Time(1607506882175),
 			Value:     1016,
@@ -206,10 +206,10 @@ var queryData = map[string]pModel.Vector{
 	"dinosaur_broker_quota_softlimitbytes": pModel.Vector{
 		&pModel.Sample{
 			Metric: pModel.Metric{
-				"__name__":           "dinosaur_broker_quota_softlimitbytes",
-				"pod":                "whatever",
-				"strimzi_io_cluster": "whatever",
-				"topic":              "whatever",
+				"__name__":                     "dinosaur_broker_quota_softlimitbytes",
+				"pod":                          "whatever",
+				"dinosaur_operator_io_cluster": "whatever",
+				"topic":                        "whatever",
 			},
 			Timestamp: pModel.Time(1607506882175),
 			Value:     30000,
@@ -218,10 +218,10 @@ var queryData = map[string]pModel.Vector{
 	"dinosaur_broker_quota_totalstorageusedbytes": pModel.Vector{
 		&pModel.Sample{
 			Metric: pModel.Metric{
-				"__name__":           "dinosaur_broker_quota_totalstorageusedbytes",
-				"pod":                "whatever",
-				"strimzi_io_cluster": "whatever",
-				"topic":              "whatever",
+				"__name__":                     "dinosaur_broker_quota_totalstorageusedbytes",
+				"pod":                          "whatever",
+				"dinosaur_operator_io_cluster": "whatever",
+				"topic":                        "whatever",
 			},
 			Timestamp: pModel.Time(1607506882175),
 			Value:     2207924332,

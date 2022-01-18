@@ -21,15 +21,14 @@ import (
 type dinosaurStatus string
 
 const (
-	statusInstalling dinosaurStatus = "installing"
-	statusReady      dinosaurStatus = "ready"
-	statusError      dinosaurStatus = "error"
-	statusRejected   dinosaurStatus = "rejected"
-	statusDeleted    dinosaurStatus = "deleted"
-	statusUnknown    dinosaurStatus = "unknown"
-	strimziUpdating  string      = "StrimziUpdating"
-	dinosaurUpdating    string      = "DinosaurUpdating"
-	dinosaurIBPUpdating string      = "DinosaurIbpUpdating"
+	statusInstalling         dinosaurStatus = "installing"
+	statusReady              dinosaurStatus = "ready"
+	statusError              dinosaurStatus = "error"
+	statusRejected           dinosaurStatus = "rejected"
+	statusDeleted            dinosaurStatus = "deleted"
+	statusUnknown            dinosaurStatus = "unknown"
+	dinosaurOperatorUpdating string         = "DinosaurOperatorUpdating"
+	dinosaurUpdating         string         = "DinosaurUpdating"
 )
 
 type DataPlaneDinosaurService interface {
@@ -37,16 +36,16 @@ type DataPlaneDinosaurService interface {
 }
 
 type dataPlaneDinosaurService struct {
-	dinosaurService   DinosaurService
-	clusterService ClusterService
-	dinosaurConfig    *config.DinosaurConfig
+	dinosaurService DinosaurService
+	clusterService  ClusterService
+	dinosaurConfig  *config.DinosaurConfig
 }
 
 func NewDataPlaneDinosaurService(dinosaurSrv DinosaurService, clusterSrv ClusterService, dinosaurConfig *config.DinosaurConfig) *dataPlaneDinosaurService {
 	return &dataPlaneDinosaurService{
-		dinosaurService:   dinosaurSrv,
-		clusterService: clusterSrv,
-		dinosaurConfig:    dinosaurConfig,
+		dinosaurService: dinosaurSrv,
+		clusterService:  clusterSrv,
+		dinosaurConfig:  dinosaurConfig,
 	}
 }
 
@@ -102,6 +101,7 @@ func (d *dataPlaneDinosaurService) UpdateDataPlaneDinosaurService(ctx context.Co
 			log.Error(errors.Wrapf(e, "Error updating dinosaur '%s' version fields", ks.DinosaurClusterId))
 		}
 	}
+
 	return nil
 }
 
@@ -140,34 +140,27 @@ func (d *dataPlaneDinosaurService) setDinosaurRequestVersionFields(dinosaur *dba
 		needsUpdate = true
 	}
 
-	prevActualDinosaurIBPVersion := status.DinosaurIBPVersion
-	if status.DinosaurIBPVersion != "" && status.DinosaurIBPVersion != dinosaur.ActualDinosaurIBPVersion {
-		logger.Logger.Infof("Updating Dinosaur IBP version for Dinosaur ID '%s' from '%s' to '%s'", dinosaur.ID, prevActualDinosaurIBPVersion, status.DinosaurIBPVersion)
-		dinosaur.ActualDinosaurIBPVersion = status.DinosaurIBPVersion
-		needsUpdate = true
-	}
-
-	prevActualStrimziVersion := status.StrimziVersion
-	if status.StrimziVersion != "" && status.StrimziVersion != dinosaur.ActualStrimziVersion {
-		logger.Logger.Infof("Updating Strimzi version for Dinosaur ID '%s' from '%s' to '%s'", dinosaur.ID, prevActualStrimziVersion, status.StrimziVersion)
-		dinosaur.ActualStrimziVersion = status.StrimziVersion
+	prevActualDinosaurOperatorVersion := status.DinosaurOperatorVersion
+	if status.DinosaurOperatorVersion != "" && status.DinosaurOperatorVersion != dinosaur.ActualDinosaurOperatorVersion {
+		logger.Logger.Infof("Updating Dinosaur operator version for Dinosaur ID '%s' from '%s' to '%s'", dinosaur.ID, prevActualDinosaurOperatorVersion, status.DinosaurOperatorVersion)
+		dinosaur.ActualDinosaurOperatorVersion = status.DinosaurOperatorVersion
 		needsUpdate = true
 	}
 
 	readyCondition, found := status.GetReadyCondition()
 	if found {
-		// TODO is this really correct? What happens if there is a StrimziUpdating reason
+		// TODO is this really correct? What happens if there is a DinosaurOperatorUpdating reason
 		// but the 'status' is false? What does that mean and how should we behave?
-		prevStrimziUpgrading := dinosaur.StrimziUpgrading
-		strimziUpdatingReasonIsSet := readyCondition.Reason == strimziUpdating
-		if strimziUpdatingReasonIsSet && !prevStrimziUpgrading {
-			logger.Logger.Infof("Strimzi version for Dinosaur ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevStrimziUpgrading, strimziUpdatingReasonIsSet)
-			dinosaur.StrimziUpgrading = true
+		prevDinosaurOperatorUpgrading := dinosaur.DinosaurOperatorUpgrading
+		dinosaurOperatorUpdatingReasonIsSet := readyCondition.Reason == dinosaurOperatorUpdating
+		if dinosaurOperatorUpdatingReasonIsSet && !prevDinosaurOperatorUpgrading {
+			logger.Logger.Infof("Dinosaur operator version for Dinosaur ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurOperatorUpgrading, dinosaurOperatorUpdatingReasonIsSet)
+			dinosaur.DinosaurOperatorUpgrading = true
 			needsUpdate = true
 		}
-		if !strimziUpdatingReasonIsSet && prevStrimziUpgrading {
-			logger.Logger.Infof("Strimzi version for Dinosaur ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevStrimziUpgrading, strimziUpdatingReasonIsSet)
-			dinosaur.StrimziUpgrading = false
+		if !dinosaurOperatorUpdatingReasonIsSet && prevDinosaurOperatorUpgrading {
+			logger.Logger.Infof("Dinosaur operator version for Dinosaur ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurOperatorUpgrading, dinosaurOperatorUpdatingReasonIsSet)
+			dinosaur.DinosaurOperatorUpgrading = false
 			needsUpdate = true
 		}
 
@@ -184,29 +177,14 @@ func (d *dataPlaneDinosaurService) setDinosaurRequestVersionFields(dinosaur *dba
 			needsUpdate = true
 		}
 
-		prevDinosaurIBPUpgrading := dinosaur.DinosaurIBPUpgrading
-		dinosaurIBPUpdatingReasonIsSet := readyCondition.Reason == dinosaurIBPUpdating
-		if dinosaurIBPUpdatingReasonIsSet && !prevDinosaurIBPUpgrading {
-			logger.Logger.Infof("Dinosaur IBP version for Dinosaur ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurIBPUpgrading, dinosaurIBPUpdatingReasonIsSet)
-			dinosaur.DinosaurIBPUpgrading = true
-			needsUpdate = true
-		}
-		if !dinosaurIBPUpdatingReasonIsSet && prevDinosaurIBPUpgrading {
-			logger.Logger.Infof("Dinosaur IBP version for Dinosaur ID '%s' upgrade state changed from %t to %t", dinosaur.ID, prevDinosaurIBPUpgrading, dinosaurIBPUpdatingReasonIsSet)
-			dinosaur.DinosaurIBPUpgrading = false
-			needsUpdate = true
-		}
-
 	}
 
 	if needsUpdate {
 		versionFields := map[string]interface{}{
-			"actual_strimzi_version":   dinosaur.ActualStrimziVersion,
-			"actual_dinosaur_version":     dinosaur.ActualDinosaurVersion,
-			"actual_dinosaur_ibp_version": dinosaur.ActualDinosaurIBPVersion,
-			"strimzi_upgrading":        dinosaur.StrimziUpgrading,
-			"dinosaur_upgrading":          dinosaur.DinosaurUpgrading,
-			"dinosaur_ibp_upgrading":      dinosaur.DinosaurIBPUpgrading,
+			"actual_dinosaur_operator_version": dinosaur.ActualDinosaurOperatorVersion,
+			"actual_dinosaur_version":          dinosaur.ActualDinosaurVersion,
+			"dinosaur_operator_upgrading":      dinosaur.DinosaurOperatorUpgrading,
+			"dinosaur_upgrading":               dinosaur.DinosaurUpgrading,
 		}
 
 		if err := d.dinosaurService.Updates(dinosaur, versionFields); err != nil {

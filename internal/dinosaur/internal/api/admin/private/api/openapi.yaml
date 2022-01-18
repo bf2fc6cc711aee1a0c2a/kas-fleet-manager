@@ -311,10 +311,9 @@ components:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
       - required:
-        - dinosaur_ibp_upgrading
+        - dinosaur_operator_upgrading
         - dinosaur_upgrading
         - multi_az
-        - strimzi_upgrading
       - $ref: '#/components/schemas/Dinosaur_allOf'
     DinosaurList:
       allOf:
@@ -322,15 +321,12 @@ components:
       - $ref: '#/components/schemas/DinosaurList_allOf'
     DinosaurUpdateRequest:
       example:
-        strimzi_version: strimzi_version
         dinosaur_version: dinosaur_version
-        dinosaur_ibp_version: dinosaur_ibp_version
+        dinosaur_operator_version: dinosaur_operator_version
       properties:
-        strimzi_version:
+        dinosaur_operator_version:
           type: string
         dinosaur_version:
-          type: string
-        dinosaur_ibp_version:
           type: string
       type: object
     Error:
@@ -400,21 +396,15 @@ components:
           type: string
         actual_dinosaur_version:
           type: string
-        actual_strimzi_version:
+        actual_dinosaur_operator_version:
           type: string
         desired_dinosaur_version:
           type: string
-        desired_strimzi_version:
-          type: string
-        desired_dinosaur_ibp_version:
-          type: string
-        actual_dinosaur_ibp_version:
+        desired_dinosaur_operator_version:
           type: string
         dinosaur_upgrading:
           type: boolean
-        strimzi_upgrading:
-          type: boolean
-        dinosaur_ibp_upgrading:
+        dinosaur_operator_upgrading:
           type: boolean
         organisation_id:
           type: string

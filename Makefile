@@ -595,7 +595,7 @@ deploy/service: ENABLE_TERMS_ACCEPTANCE ?= "false"
 deploy/service: ENABLE_DENY_LIST ?= "false"
 deploy/service: ALLOW_EVALUATOR_INSTANCE ?= "true"
 deploy/service: QUOTA_TYPE ?= "quota-management-list"
-deploy/service: STRIMZI_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-dinosaur:production-82b42db"
+deploy/service: DINOSAUR_OPERATOR_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-dinosaur:production-82b42db"
 deploy/service: FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/fleetshard-operator:production-82b42db"
 deploy/service: DEX_USERNAME ?= "admin@example.com"
 deploy/service: DEX_URL ?= "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io"
@@ -606,7 +606,7 @@ deploy/service: OBSERVATORIUM_TENANT ?= "test"
 deploy/service: OBSERVABILITY_CONFIG_CHANNEL ?= "resources"
 deploy/service: OBSERVABILITY_CONFIG_TAG ?= "main"
 deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
-deploy/service: STRIMZI_OPERATOR_ADDON_ID ?= "managed-dinosaur-qe"
+deploy/service: DINOSAUR_OPERATOR_OPERATOR_ADDON_ID ?= "managed-dinosaur-qe"
 deploy/service: FLEETSHARD_ADDON_ID ?= "fleetshard-operator-qe"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
@@ -650,8 +650,8 @@ deploy/service: deploy/envoy deploy/route
 		-p ALLOW_EVALUATOR_INSTANCE="${ALLOW_EVALUATOR_INSTANCE}" \
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
 		-p FLEETSHARD_OLM_INDEX_IMAGE="${FLEETSHARD_OLM_INDEX_IMAGE}" \
-		-p STRIMZI_OLM_INDEX_IMAGE="${STRIMZI_OLM_INDEX_IMAGE}" \
-		-p STRIMZI_OPERATOR_ADDON_ID="${STRIMZI_OPERATOR_ADDON_ID}" \
+		-p DINOSAUR_OPERATOR_OLM_INDEX_IMAGE="${DINOSAUR_OPERATOR_OLM_INDEX_IMAGE}" \
+		-p DINOSAUR_OPERATOR_OPERATOR_ADDON_ID="${DINOSAUR_OPERATOR_OPERATOR_ADDON_ID}" \
 		-p FLEETSHARD_ADDON_ID="${FLEETSHARD_ADDON_ID}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
 		-p CLUSTER_LOGGING_OPERATOR_ADDON_ID="${CLUSTER_LOGGING_OPERATOR_ADDON_ID}" \

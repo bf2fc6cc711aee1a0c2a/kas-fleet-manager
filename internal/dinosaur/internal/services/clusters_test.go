@@ -2028,7 +2028,7 @@ func TestClusterService_ApplyResources(t *testing.T) {
 	}
 }
 
-func TestClusterService_InstallStrimzi(t *testing.T) {
+func TestClusterService_InstallDinosaurOperator(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		clusterProviderFactory clusters.ProviderFactory
@@ -2061,12 +2061,12 @@ func TestClusterService_InstallStrimzi(t *testing.T) {
 		want    bool
 	}{
 		{
-			name: "successfully install strimzi",
+			name: "successfully install dinosaur operator",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-						return &clusters.ProviderMock{InstallStrimziFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
+						return &clusters.ProviderMock{InstallDinosaurOperatorFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
 							return true, nil
 						}}, nil
 					},
@@ -2080,13 +2080,13 @@ func TestClusterService_InstallStrimzi(t *testing.T) {
 			want:    true,
 		},
 		{
-			name: "error when failed to install strimzi",
+			name: "error when failed to install dinosaur operator",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							InstallStrimziFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
+							InstallDinosaurOperatorFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
 								return false, errors.Errorf("failed to install addon")
 							}}, nil
 					},
@@ -2110,13 +2110,13 @@ func TestClusterService_InstallStrimzi(t *testing.T) {
 				providerFactory:   tt.fields.clusterProviderFactory,
 			}
 
-			got, err := c.InstallStrimzi(tt.args.cluster)
+			got, err := c.InstallDinosaurOperator(tt.args.cluster)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("InstallStrimzi() error = %v, wantErr = %v", err, tt.wantErr)
+				t.Errorf("InstallDinosaurOperator() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("InstallStrimzi want %v, but got %v", tt.want, got)
+				t.Errorf("InstallDinosaurOperator want %v, but got %v", tt.want, got)
 			}
 		})
 	}

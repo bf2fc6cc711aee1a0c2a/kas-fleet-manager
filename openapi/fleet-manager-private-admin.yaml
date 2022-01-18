@@ -201,9 +201,8 @@ components:
         - $ref: 'fleet-manager.yaml#/components/schemas/ObjectReference'
         - required:
           - multi_az
-          - strimzi_upgrading
+          - dinosaur_operator_upgrading
           - dinosaur_upgrading
-          - dinosaur_ibp_upgrading
         - type: object
           properties:
             status:
@@ -233,21 +232,15 @@ components:
               type: string
             actual_dinosaur_version:
               type: string
-            actual_strimzi_version:
+            actual_dinosaur_operator_version:
               type: string
             desired_dinosaur_version:
               type: string
-            desired_strimzi_version:
-              type: string
-            desired_dinosaur_ibp_version:
-              type: string
-            actual_dinosaur_ibp_version:
+            desired_dinosaur_operator_version:
               type: string
             dinosaur_upgrading:
               type: boolean
-            strimzi_upgrading:
-              type: boolean
-            dinosaur_ibp_upgrading:
+            dinosaur_operator_upgrading:
               type: boolean
             organisation_id:
               type: string
@@ -293,11 +286,9 @@ components:
       type: object
       properties:
         # for now only support updating the following fields. May add more when use cases arise.
-        strimzi_version:
+        dinosaur_operator_version:
           type: string
         dinosaur_version:
-          type: string
-        dinosaur_ibp_version:
           type: string
 
   securitySchemes:

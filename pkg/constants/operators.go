@@ -1,4 +1,4 @@
 package constants
 
-const StrimziOperatorNamespace = "redhat-managed-dinosaur-operator"
+const DinosaurOperatorNamespace = "redhat-managed-dinosaur-operator"
 const FleetShardOperatorNamespace = "redhat-fleetshard-operator"
