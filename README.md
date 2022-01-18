@@ -10,6 +10,7 @@ For more information on how the service works, see [the implementation documenta
 * [Golang 1.16+](https://golang.org/dl/)
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
+* [Node.js v12.20+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 
 There are a number of prerequisites required for running kas-fleet-manager due to its interaction with external services. All of the below are required to run kas-fleet-manager locally.
 ### User Account & Organization Setup
