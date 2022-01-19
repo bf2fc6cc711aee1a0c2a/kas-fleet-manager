@@ -796,6 +796,7 @@ components:
         - id
         - client_id
         - client_secret
+        - url
       properties:
         id:
           type: string

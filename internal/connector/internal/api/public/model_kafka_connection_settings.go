@@ -14,5 +14,5 @@ type KafkaConnectionSettings struct {
 	Id           string `json:"id"`
 	ClientId     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
-	Url          string `json:"url,omitempty"`
+	Url          string `json:"url"`
 }
