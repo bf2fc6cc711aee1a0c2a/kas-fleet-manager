@@ -213,7 +213,7 @@ components:
             customClaimCheck: ""
             maximumSessionLifetime: 1898
           endpoint:
-            bootstrapServerHost: example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.dinosaur.devshift.org
+            host: example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.example.dinosaur.com
             tls:
               cert: ""
               key: ""
@@ -533,7 +533,7 @@ components:
           type: string
     ManagedDinosaur_allOf_spec_endpoint:
       properties:
-        bootstrapServerHost:
+        host:
           type: string
         tls:
           $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_endpoint_tls'

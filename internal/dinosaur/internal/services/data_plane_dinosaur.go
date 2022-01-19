@@ -318,16 +318,16 @@ func (d *dataPlaneDinosaurService) persistDinosaurRoutes(dinosaur *dbapi.Dinosau
 
 func buildRoutes(routesInRequest []dbapi.DataPlaneDinosaurRouteRequest, dinosaur *dbapi.DinosaurRequest, clusterDNS string) ([]dbapi.DataPlaneDinosaurRoute, error) {
 	routes := []dbapi.DataPlaneDinosaurRoute{}
-	bootstrapServer := dinosaur.BootstrapServerHost
+	dinosaurHost := dinosaur.Host
 	for _, r := range routesInRequest {
 		if strings.HasSuffix(r.Router, clusterDNS) {
 			router := dbapi.DataPlaneDinosaurRoute{
 				Router: r.Router,
 			}
 			if r.Prefix != "" {
-				router.Domain = fmt.Sprintf("%s-%s", r.Prefix, bootstrapServer)
+				router.Domain = fmt.Sprintf("%s-%s", r.Prefix, dinosaurHost)
 			} else {
-				router.Domain = bootstrapServer
+				router.Domain = dinosaurHost
 			}
 			routes = append(routes, router)
 		} else {

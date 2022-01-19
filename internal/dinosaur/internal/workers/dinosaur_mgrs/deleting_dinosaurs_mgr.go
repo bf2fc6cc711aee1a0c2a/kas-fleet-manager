@@ -18,7 +18,7 @@ import (
 // DeletingDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type DeletingDinosaurManager struct {
 	workers.BaseWorker
-	dinosaurService        services.DinosaurService
+	dinosaurService     services.DinosaurService
 	keycloakConfig      *keycloak.KeycloakConfig
 	quotaServiceFactory services.QuotaServiceFactory
 }
@@ -33,7 +33,7 @@ func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, keyclo
 				SignalBus: bus,
 			},
 		},
-		dinosaurService:        dinosaurService,
+		dinosaurService:     dinosaurService,
 		keycloakConfig:      keycloakConfig,
 		quotaServiceFactory: quotaServiceFactory,
 	}
@@ -76,7 +76,7 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 
 	for _, deprovisioningDinosaur := range deprovisioningDinosaurs {
 		// As long as one of the three fields checked below are empty, the Dinosaur wouldn't have been provisioned to an OSD cluster and should be deleted immediately
-		if deprovisioningDinosaur.BootstrapServerHost == "" {
+		if deprovisioningDinosaur.Host == "" {
 			deletingDinosaurs = append(deletingDinosaurs, deprovisioningDinosaur)
 			continue
 		}

@@ -22,9 +22,10 @@ type DinosaurRequest struct {
 	SubscriptionId                   string `json:"subscription_id"`
 	Owner                            string `json:"owner" gorm:"index"` // TODO: ocm owner?
 	OwnerAccountId                   string `json:"owner_account_id"`
-	BootstrapServerHost              string `json:"bootstrap_server_host"`
-	OrganisationId                   string `json:"organisation_id" gorm:"index"`
-	FailedReason                     string `json:"failed_reason"`
+	// The DNS host (domain) of the Dinosaur service
+	Host           string `json:"host"`
+	OrganisationId string `json:"organisation_id" gorm:"index"`
+	FailedReason   string `json:"failed_reason"`
 	// PlacementId field should be updated every time when a DinosaurRequest is assigned to an OSD cluster (even if it's the same one again)
 	PlacementId string `json:"placement_id"`
 

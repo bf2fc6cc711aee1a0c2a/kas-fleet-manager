@@ -52,7 +52,7 @@ type DinosaurService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
 	// HasAvailableCapacityInRegion checks if there is capacity in the clusters for a given region
 	HasAvailableCapacityInRegion(dinosaurRequest *dbapi.DinosaurRequest) (bool, *errors.ServiceError)
-	// PrepareDinosaurRequest sets any required information (i.e. bootstrap server host, sso client id and secret)
+	// PrepareDinosaurRequest sets any required information (i.e. dinosaur host, sso client id and secret)
 	// to the Dinosaur Request record in the database. The dinosaur request will also be updated with an updated_at
 	// timestamp and the corresponding cluster identifier.
 	PrepareDinosaurRequest(dinosaurRequest *dbapi.DinosaurRequest) *errors.ServiceError
@@ -258,11 +258,11 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.Dinosaur
 
 	dinosaurRequest.Namespace = fmt.Sprintf("dinosaur-%s", strings.ToLower(dinosaurRequest.ID))
 	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedDinosaurIngressDnsNamePrefix, 1)
-	dinosaurRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedDinosaurIdentifier, clusterDNS)
+	dinosaurRequest.Host = fmt.Sprintf("%s.%s", truncatedDinosaurIdentifier, clusterDNS)
 
 	if k.dinosaurConfig.EnableDinosaurExternalCertificate {
-		// If we enable DinosaurTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
-		dinosaurRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedDinosaurIdentifier, k.dinosaurConfig.DinosaurDomainName)
+		// If we enable DinosaurTLS, the host should use the external domain name rather than the cluster domain
+		dinosaurRequest.Host = fmt.Sprintf("%s.%s", truncatedDinosaurIdentifier, k.dinosaurConfig.DinosaurDomainName)
 	}
 
 	if k.keycloakService.GetConfig().EnableAuthenticationOnDinosaur {
@@ -297,7 +297,7 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.Dinosaur
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
 		},
-		BootstrapServerHost:              dinosaurRequest.BootstrapServerHost,
+		Host:                             dinosaurRequest.Host,
 		SsoClientID:                      dinosaurRequest.SsoClientID,
 		SsoClientSecret:                  dinosaurRequest.SsoClientSecret,
 		CanaryServiceAccountClientID:     dinosaurRequest.CanaryServiceAccountClientID,
@@ -592,7 +592,7 @@ func (k *dinosaurService) GetManagedDinosaurByClusterID(clusterID string) ([]man
 	dbConn := k.connectionFactory.New().
 		Where("cluster_id = ?", clusterID).
 		Where("status IN (?)", dinosaurManagedCRStatuses).
-		Where("bootstrap_server_host != ''")
+		Where("host != ''")
 
 	if k.keycloakService.GetConfig().EnableAuthenticationOnDinosaur {
 		dbConn = dbConn.
@@ -856,7 +856,7 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.DinosaurRequest, dinosaurConf
 				MaxConnectionAttemptsPerSec:   dinosaurConfig.DinosaurCapacity.MaxConnectionAttemptsPerSec,
 			},
 			Endpoint: manageddinosaur.EndpointSpec{
-				BootstrapServerHost: dinosaurRequest.BootstrapServerHost,
+				Host: dinosaurRequest.Host,
 			},
 			Versions: manageddinosaur.VersionsSpec{
 				Dinosaur:         dinosaurRequest.DesiredDinosaurVersion,

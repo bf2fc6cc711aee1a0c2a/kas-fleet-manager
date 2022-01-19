@@ -27,7 +27,7 @@ type Dinosaur struct {
 	Region                         string                `json:"region,omitempty"`
 	Owner                          string                `json:"owner,omitempty"`
 	Name                           string                `json:"name,omitempty"`
-	BootstrapServerHost            string                `json:"bootstrap_server_host,omitempty"`
+	Host                           string                `json:"host,omitempty"`
 	CreatedAt                      time.Time             `json:"created_at,omitempty"`
 	UpdatedAt                      time.Time             `json:"updated_at,omitempty"`
 	FailedReason                   string                `json:"failed_reason,omitempty"`

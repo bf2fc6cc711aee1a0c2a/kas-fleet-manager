@@ -11,6 +11,6 @@ package private
 
 // ManagedDinosaurAllOfSpecEndpoint struct for ManagedDinosaurAllOfSpecEndpoint
 type ManagedDinosaurAllOfSpecEndpoint struct {
-	BootstrapServerHost string                               `json:"bootstrapServerHost,omitempty"`
-	Tls                 *ManagedDinosaurAllOfSpecEndpointTls `json:"tls,omitempty"`
+	Host string                               `json:"host,omitempty"`
+	Tls  *ManagedDinosaurAllOfSpecEndpointTls `json:"tls,omitempty"`
 }

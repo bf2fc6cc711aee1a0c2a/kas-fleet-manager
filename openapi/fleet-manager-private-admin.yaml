@@ -220,7 +220,7 @@ components:
               type: string
             name:
               type: string
-            bootstrap_server_host:
+            host:
               type: string
             created_at:
               format: date-time

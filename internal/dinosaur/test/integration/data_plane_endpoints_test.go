@@ -112,7 +112,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 		}
 	}, nil)
 	defer testServer.TearDown()
-	bootstrapServerHost := "some-bootstrap⁻host"
+	dinosaurHost := "some-dinosaur-host"
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 
@@ -123,7 +123,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 			Name:                           mockDinosaurName1,
 			Namespace:                      "mk-1",
 			Status:                         constants2.DinosaurRequestStatusDeprovision.String(),
-			BootstrapServerHost:            bootstrapServerHost,
+			Host:                           dinosaurHost,
 			SsoClientID:                    ssoClientID,
 			SsoClientSecret:                ssoSecret,
 			DesiredDinosaurVersion:         "2.7.0",
@@ -136,7 +136,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 			Name:                           mockDinosaurName2,
 			Namespace:                      "mk-2",
 			Status:                         constants2.DinosaurRequestStatusProvisioning.String(),
-			BootstrapServerHost:            bootstrapServerHost,
+			Host:                           dinosaurHost,
 			SsoClientID:                    ssoClientID,
 			SsoClientSecret:                ssoSecret,
 			DesiredDinosaurVersion:         "2.6.0",
@@ -149,7 +149,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 			Name:                           mockDinosaurName3,
 			Namespace:                      "mk-3",
 			Status:                         constants2.DinosaurRequestStatusPreparing.String(),
-			BootstrapServerHost:            bootstrapServerHost,
+			Host:                           dinosaurHost,
 			SsoClientID:                    ssoClientID,
 			SsoClientSecret:                ssoSecret,
 			DesiredDinosaurVersion:         "2.7.1",
@@ -162,7 +162,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 			Name:                           mockDinosaurName4,
 			Namespace:                      "mk-4",
 			Status:                         constants2.DinosaurRequestStatusReady.String(),
-			BootstrapServerHost:            bootstrapServerHost,
+			Host:                           dinosaurHost,
 			SsoClientID:                    ssoClientID,
 			SsoClientSecret:                ssoSecret,
 			DesiredDinosaurVersion:         "2.7.2",
@@ -175,7 +175,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 			Namespace:                      "mk-5",
 			Name:                           mockDinosaurName4,
 			Status:                         constants2.DinosaurRequestStatusFailed.String(),
-			BootstrapServerHost:            bootstrapServerHost,
+			Host:                           dinosaurHost,
 			SsoClientID:                    ssoClientID,
 			SsoClientSecret:                ssoSecret,
 			DesiredDinosaurVersion:         "2.7.2",
@@ -192,7 +192,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 		return
 	}
 
-	// create an additional dinosaur in failed state without "ssoSecret", "ssoClientID" and bootstrapServerHost. This indicates that the
+	// create an additional dinosaur in failed state without "ssoSecret", "ssoClientID" and host. This indicates that the
 	// dinosaur failed in preparing state and should not be returned in the list
 	additionalDinosaur := &dbapi.DinosaurRequest{
 		ClusterID:              testServer.ClusterID,

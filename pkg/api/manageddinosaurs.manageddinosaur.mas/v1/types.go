@@ -60,8 +60,8 @@ type TlsSpec struct {
 }
 
 type EndpointSpec struct {
-	BootstrapServerHost string   `json:"bootstrapServerHost"`
-	Tls                 *TlsSpec `json:"tls,omitempty"`
+	Host string   `json:"host"`
+	Tls  *TlsSpec `json:"tls,omitempty"`
 }
 
 type ServiceAccount struct {
