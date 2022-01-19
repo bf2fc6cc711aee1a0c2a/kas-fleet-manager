@@ -30,12 +30,9 @@ import (
 )
 
 const (
-	JwtKeyFile           = "test/support/jwt_private_key.pem"
-	JwtCAFile            = "test/support/jwt_ca.pem"
-	MaxClusterCapacity   = 1000
-	AllInstanceTypes     = "standard,eval"
-	EvalInstanceType     = "eval"
-	StandardInstanceType = "standard"
+	JwtKeyFile         = "test/support/jwt_private_key.pem"
+	JwtCAFile          = "test/support/jwt_ca.pem"
+	MaxClusterCapacity = 1000
 )
 
 var (
@@ -80,7 +77,7 @@ func buildManualCluster(kafkaInstanceLimit int, supportedInstanceType, region st
 		ClusterId:             api.NewID(),
 		CloudProvider:         testKafkaRequestProvider,
 		Region:                region,
-		MultiAZ:               false,
+		MultiAZ:               true,
 		Schedulable:           true,
 		KafkaInstanceLimit:    kafkaInstanceLimit,
 		Status:                api.ClusterReady,
@@ -89,7 +86,23 @@ func buildManualCluster(kafkaInstanceLimit int, supportedInstanceType, region st
 	}
 }
 
-func buildProviderConfiguration(regionName string, standardLimit, evalLimit int) *config.ProviderConfig {
+func buildProviderConfiguration(regionName string, standardLimit, evalLimit int, noLimit bool) *config.ProviderConfig {
+
+	instanceTypeLimits := config.InstanceTypeMap{
+		"standard": config.InstanceTypeConfig{
+			Limit: &standardLimit,
+		},
+		"eval": config.InstanceTypeConfig{
+			Limit: &evalLimit,
+		},
+	}
+
+	if noLimit {
+		instanceTypeLimits = config.InstanceTypeMap{
+			"standard": config.InstanceTypeConfig{},
+			"eval":     config.InstanceTypeConfig{},
+		}
+	}
 
 	return &config.ProviderConfig{
 		ProvidersConfig: config.ProviderConfiguration{
@@ -99,16 +112,9 @@ func buildProviderConfiguration(regionName string, standardLimit, evalLimit int)
 					Default: true,
 					Regions: config.RegionList{
 						{
-							Name:    regionName,
-							Default: true,
-							SupportedInstanceTypes: config.InstanceTypeMap{
-								"standard": config.InstanceTypeConfig{
-									Limit: &standardLimit,
-								},
-								"eval": config.InstanceTypeConfig{
-									Limit: &evalLimit,
-								},
-							},
+							Name:                   regionName,
+							Default:                true,
+							SupportedInstanceTypes: instanceTypeLimits,
 						},
 					},
 				},
@@ -935,17 +941,17 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 
 	mockCluster := &api.Cluster{
 		Meta: api.Meta{
-			ID:        "id",
+			ID:        testID,
 			CreatedAt: time.Now(),
 		},
-		ClusterID:                "cluster-id",
-		MultiAZ:                  true,
-		Region:                   "us-east-1",
-		Status:                   "ready",
+		Region:                   testKafkaRequestRegion,
+		ClusterID:                testClusterID,
+		CloudProvider:            testKafkaRequestProvider,
+		Status:                   api.ClusterReady,
 		AvailableStrimziVersions: availableStrimziVersions,
 	}
 
-	defaultDataplaneClusterConfig := []config.ManualCluster{buildManualCluster(1, AllInstanceTypes, testKafkaRequestRegion)}
+	defaultDataplaneClusterConfig := []config.ManualCluster{buildManualCluster(1, api.AllInstanceTypeSupport.String(), testKafkaRequestRegion)}
 
 	tests := []struct {
 		name    string
@@ -974,7 +980,44 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 						return "fake-subscription-id", nil
 					},
 				},
-				providerConfig: buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity),
+				providerConfig: buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "0"}})
+				mocket.Catcher.NewMock().WithQuery("INSERT")
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			error: errorCheck{
+				wantErr: false,
+			},
+		},
+		{
+			name: "registering kafka job succeeds when kafka limit is set to nil",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				clusterService:         nil,
+				kafkaConfig:            defaultKafkaConf,
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return mockCluster, nil
+					},
+				},
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "fake-subscription-id", nil
+					},
+				},
+				providerConfig: buildProviderConfiguration(testKafkaRequestRegion, 0, 0, true),
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -1006,7 +1049,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 						return "fake-subscription-id", nil
 					},
 				},
-				providerConfig: buildProviderConfiguration(testKafkaRequestRegion, 0, MaxClusterCapacity),
+				providerConfig: buildProviderConfiguration(testKafkaRequestRegion, 0, MaxClusterCapacity, false),
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -1032,7 +1075,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				clusterService:         nil,
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
-				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, 0),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, 0, false),
 				kafkaConfig:            defaultKafkaConf,
 				quotaService: &QuotaServiceMock{
 					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
@@ -1062,7 +1105,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				clusterService:         nil,
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
-				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
 				kafkaConfig: config.KafkaConfig{
 					KafkaCapacity: config.KafkaCapacityConfig{
 						MaxCapacity: MaxClusterCapacity,
@@ -1104,7 +1147,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
-				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, 0, 0),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, 0, 0, false),
 				kafkaConfig:            defaultKafkaConf,
 				clusterService:         nil,
 				quotaService: &QuotaServiceMock{
@@ -1135,7 +1178,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
-				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
 				kafkaConfig:            defaultKafkaConf,
 				clusterService:         nil,
 				quotaService: &QuotaServiceMock{
@@ -1168,7 +1211,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
-				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
 				kafkaConfig:            defaultKafkaConf,
 				clusterService:         nil,
 				quotaService: &QuotaServiceMock{

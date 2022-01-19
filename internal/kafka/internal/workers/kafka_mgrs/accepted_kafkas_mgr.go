@@ -83,7 +83,7 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 	cluster, e := k.clusterService.FindClusterByID(kafka.ClusterID)
 
 	if cluster == nil || e != nil {
-		return errors.Wrapf(e, "failed to find cluster for kafka request %s", kafka.ID)
+		return errors.Wrapf(e, "failed to find cluster with '%s' for kafka request '%s'", kafka.ClusterID, kafka.ID)
 	}
 
 	// Set desired Strimzi version
