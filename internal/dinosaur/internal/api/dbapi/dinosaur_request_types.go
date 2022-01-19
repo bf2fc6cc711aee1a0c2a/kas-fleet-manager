@@ -45,9 +45,8 @@ type DinosaurRequest struct {
 	RoutesCreated bool `json:"routes_created"`
 	// Namespace is the namespace of the provisioned dinosaur instance.
 	// We store this in the database to ensure that old dinosaurs whose namespace contained "owner-<dinosaur-id>" information will continue to work.
-	Namespace               string `json:"namespace"`
-	ReauthenticationEnabled bool   `json:"reauthentication_enabled"`
-	RoutesCreationId        string `json:"routes_creation_id"`
+	Namespace        string `json:"namespace"`
+	RoutesCreationId string `json:"routes_creation_id"`
 }
 
 type DinosaurList []*DinosaurRequest

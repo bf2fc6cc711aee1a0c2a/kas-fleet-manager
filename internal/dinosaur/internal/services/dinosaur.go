@@ -887,10 +887,6 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.DinosaurRequest, dinosaurConf
 			managedDinosaurCR.Spec.OAuth.TlsTrustedCertificate = &keycloakConfig.TLSTrustedCertificatesValue
 		}
 
-		if dinosaurRequest.ReauthenticationEnabled {
-			managedDinosaurCR.Spec.OAuth.MaximumSessionLifetime = 299000 // 4m59s
-		}
-
 		serviceAccounts := []manageddinosaur.ServiceAccount{}
 		serviceAccounts = append(serviceAccounts, manageddinosaur.ServiceAccount{
 			Name:      "canary",

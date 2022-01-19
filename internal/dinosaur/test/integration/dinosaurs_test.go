@@ -74,7 +74,6 @@ func TestDinosaurCreate_Success(t *testing.T) {
 	Expect(dinosaur.Kind).To(Equal(presenters.KindDinosaur))
 	Expect(dinosaur.Href).To(Equal(fmt.Sprintf("/api/dinosaurs_mgmt/v1/dinosaurs/%s", dinosaur.Id)))
 	Expect(dinosaur.InstanceType).To(Equal(types.STANDARD.String()))
-	Expect(dinosaur.ReauthenticationEnabled).To(BeTrue())
 }
 
 func TestDinosaurCreate_TooManyDinosaurs(t *testing.T) {
@@ -294,13 +293,11 @@ func TestDinosaurGet(t *testing.T) {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	reauthenticationEnabled := false
 	k := public.DinosaurRequestPayload{
-		Region:                  mocks.MockCluster.Region().ID(),
-		CloudProvider:           mocks.MockCluster.CloudProvider().ID(),
-		Name:                    mockDinosaurName,
-		MultiAz:                 testMultiAZ,
-		ReauthenticationEnabled: &reauthenticationEnabled,
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockDinosaurName,
+		MultiAz:       testMultiAZ,
 	}
 
 	seedDinosaur, _, err := client.DefaultApi.CreateDinosaur(ctx, true, k)
@@ -319,7 +316,6 @@ func TestDinosaurGet(t *testing.T) {
 	Expect(dinosaur.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(dinosaur.Name).To(Equal(mockDinosaurName))
 	Expect(dinosaur.Status).To(Equal(constants2.DinosaurRequestStatusAccepted.String()))
-	Expect(dinosaur.ReauthenticationEnabled).To(BeFalse())
 	// When dinosaur is in 'Accepted' state it means that it still has not been
 	// allocated to a cluster, which means that fleetshard-sync has not reported
 	// yet any status, so the version attribute (actual version) at this point
@@ -510,13 +506,11 @@ func TestDinosaurList_Success(t *testing.T) {
 	Expect(initList.Size).To(Equal(int32(0)), "Expected Size == 0")
 	Expect(initList.Total).To(Equal(int32(0)), "Expected Total == 0")
 
-	reauthenticationEnabled := true
 	k := public.DinosaurRequestPayload{
-		Region:                  mocks.MockCluster.Region().ID(),
-		CloudProvider:           mocks.MockCluster.CloudProvider().ID(),
-		Name:                    mockDinosaurName,
-		MultiAz:                 testMultiAZ,
-		ReauthenticationEnabled: &reauthenticationEnabled,
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockDinosaurName,
+		MultiAz:       testMultiAZ,
 	}
 
 	// POST dinosaur request to populate the list
@@ -548,7 +542,6 @@ func TestDinosaurList_Success(t *testing.T) {
 	Expect(seedDinosaur.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockDinosaurName))
 	Expect(listItem.Status).To(Equal(constants2.DinosaurRequestStatusAccepted.String()))
-	Expect(listItem.ReauthenticationEnabled).To(BeTrue())
 
 	// new account setup to prove that users can list dinosaurs instances created by a member of their org
 	account = h.NewRandAccount()

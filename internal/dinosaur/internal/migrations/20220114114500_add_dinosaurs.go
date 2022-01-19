@@ -43,7 +43,6 @@ func addDinosaurRequest() *gormigrate.Migration {
 		Routes                           api.JSON `json:"routes"`
 		RoutesCreated                    bool     `json:"routes_created"`
 		Namespace                        string   `json:"namespace"`
-		ReauthenticationEnabled          bool     `json:"reauthentication_enabled"`
 		RoutesCreationId                 string   `json:"routes_creation_id"`
 	}
 
