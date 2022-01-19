@@ -7,13 +7,14 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 
+	"net/http"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/goava/di"
-	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreservices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -49,7 +50,7 @@ func (h *ConnectorAdminHandler) ListConnectorClusters(w http.ResponseWriter, r *
 				return nil, err
 			}
 
-			resourceList := private.ConnectorClusterList{
+			resourceList := private.ConnectorClusterInstanceList{
 				Kind:  "ConnectorClusterList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
@@ -57,7 +58,7 @@ func (h *ConnectorAdminHandler) ListConnectorClusters(w http.ResponseWriter, r *
 			}
 
 			for _, resource := range resources {
-				converted := presenters.PresentConnectorClusterAdmin(resource)
+				converted := presenters.PresentPrivateConnectorClusterInstance(resource)
 				resourceList.Items = append(resourceList.Items, converted)
 			}
 
