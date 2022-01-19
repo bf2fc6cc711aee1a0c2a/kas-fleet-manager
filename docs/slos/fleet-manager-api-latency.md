@@ -24,3 +24,4 @@ All alerts are multiwindow, multi-burn-rate alerts. The following are the list o
 - `FleetManagerAPILatency30mto6hP90BudgetBurn`
 - `FleetManagerAPILatency2hto1dor6hto3dP90BudgetBurn`
   
+See [kas-fleet-manager-slos-latency-*](https://gitlab.cee.redhat.com/service/app-interface/-/tree/master/resources/observability/prometheusrules) prometheus rules in AppInterface to see how it was implemented.
