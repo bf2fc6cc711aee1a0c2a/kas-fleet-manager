@@ -1,7 +1,7 @@
 Feature: connector agent API
   In order to deploy connectors to an addon OSD cluster
   As a managed connector agent
-  I need to be able update agent status, get assigned connectors
+  I need to be able to update agent status, get assigned connectors
   and update connector status.
 
   Background:
@@ -586,7 +586,7 @@ Feature: connector agent API
               "owner": "${response.items[0].metadata.owner}",
               "updated_at": "${response.items[0].metadata.updated_at}"
             },
-            "status": "unconnected"
+            "status": "ready"
           },
           {
             "href": "${response.items[1].href}",
@@ -599,24 +599,12 @@ Feature: connector agent API
               "updated_at": "${response.items[1].metadata.updated_at}"
             },
             "status": "ready"
-          },
-          {
-            "href": "${response.items[2].href}",
-            "id": "${response.items[2].id}",
-            "kind": "ConnectorCluster",
-            "metadata": {
-              "created_at": "${response.items[2].metadata.created_at}",
-              "name": "New Cluster",
-              "owner": "${response.items[2].metadata.owner}",
-              "updated_at": "${response.items[2].metadata.updated_at}"
-            },
-            "status": "ready"
           }
         ],
         "kind": "ConnectorClusterList",
         "page": 1,
-        "size": 3,
-        "total": 3
+        "size": 2,
+        "total": 2
       }
       """
     And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
@@ -1015,4 +1003,8 @@ Feature: connector agent API
     And the ".items[0].spec.desired_state" selection from the response should match "ready"
 
     #cleanup
-    Then I delete keycloak client with clientID: ${clientID}
+    Given I am logged in as "Bobby"
+    When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
+    Then the response code should be 204
+    And the response should match ""
+    And I delete keycloak client with clientID: ${clientID}
