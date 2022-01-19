@@ -300,7 +300,7 @@ components:
                 endpoint:
                   type: object
                   properties:
-                    bootstrapServerHost:
+                    host:
                       type: string
                     tls:
                       type: object
@@ -589,7 +589,7 @@ components:
             customClaimCheck: ""
             maximumSessionLifetime: 1898
           endpoint:
-            bootstrapServerHost: "example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.dinosaur.devshift.org"
+            host: "example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.example.dinosaur.com"
             tls:
               cert: ""
               key: ""

@@ -42,7 +42,7 @@ paths:
           similar to the syntax of the `order by` clause of an SQL statement.
           Each query can be ordered by any of the following `dinosaurRequests` fields:
 
-          * bootstrap_server_host
+          * host
           * cloud_provider
           * cluster_id
           * created_at
@@ -384,7 +384,7 @@ components:
           type: string
         name:
           type: string
-        bootstrap_server_host:
+        host:
           type: string
         created_at:
           format: date-time

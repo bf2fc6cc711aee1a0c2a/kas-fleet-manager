@@ -11,7 +11,7 @@ import (
 )
 
 func GetAcceptedOrderByParams() []string {
-	return []string{"bootstrap_server_host", "cloud_provider", "cluster_id", "created_at", "href", "id", "instance_type", "multi_az", "name", "organisation_id", "owner", "reauthentication_enabled", "region", "status", "updated_at", "version"}
+	return []string{"host", "cloud_provider", "cluster_id", "created_at", "href", "id", "instance_type", "multi_az", "name", "organisation_id", "owner", "reauthentication_enabled", "region", "status", "updated_at", "version"}
 }
 
 // ListArguments are arguments relevant for listing objects.

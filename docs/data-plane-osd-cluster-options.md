@@ -49,7 +49,7 @@ clusters:
 fleet-manager allows provisioning of dinosaurs in an already preexisting standalone dataplane cluster. To do so, add the standalone cluster in the [dataplane-cluster-configuration.yaml](../config/dataplane-cluster-configuration.yaml) giving the:
  - `name` of the kubeconfig context to use. This option is required and it has to be an existing name of a context in kubeconfig
  - `provider_type` must be set to `standalone`. This is required to indicate that we are using a standalone
- - `cluster_dns` This will be used to build dinosaur bootstrap url and to communicate with clusters e.g `apps.example.dns.com`. This option is required.
+ - `cluster_dns` This will be used to build dinosaur host url and to communicate with clusters e.g `apps.example.dns.com`. This option is required.
  - `cloud_provider` the cloud provider where the standalone cluster is provisioned in
  - `region` the cloud region where the standalone cluster is provisioned
  - ... rest of the options

@@ -28,7 +28,7 @@ func addDinosaurRequest() *gormigrate.Migration {
 		SubscriptionId                   string   `json:"subscription_id"`
 		Owner                            string   `json:"owner" gorm:"index"`
 		OwnerAccountId                   string   `json:"owner_account_id"`
-		BootstrapServerHost              string   `json:"bootstrap_server_host"`
+		Host                             string   `json:"host"`
 		OrganisationId                   string   `json:"organisation_id" gorm:"index"`
 		FailedReason                     string   `json:"failed_reason"`
 		PlacementId                      string   `json:"placement_id"`
