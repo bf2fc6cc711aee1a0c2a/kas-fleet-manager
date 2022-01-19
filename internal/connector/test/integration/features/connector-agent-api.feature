@@ -612,25 +612,25 @@ Feature: connector agent API
             "href": "${response.items[0].href}",
             "id": "${response.items[0].id}",
             "kind": "ConnectorCluster",
-            "metadata": {
-              "created_at": "${response.items[0].metadata.created_at}",
-              "name": "New Cluster",
-              "owner": "${response.items[0].metadata.owner}",
-              "updated_at": "${response.items[0].metadata.updated_at}"
-            },
-            "status": "ready"
+            "created_at": "${response.items[0].created_at}",
+            "name": "New Cluster",
+            "owner": "${response.items[0].owner}",
+            "modified_at": "${response.items[0].modified_at}",
+            "status": {
+              "state": "ready"
+            }
           },
           {
             "href": "${response.items[1].href}",
             "id": "${response.items[1].id}",
             "kind": "ConnectorCluster",
-            "metadata": {
-              "created_at": "${response.items[1].metadata.created_at}",
-              "name": "New Cluster",
-              "owner": "${response.items[1].metadata.owner}",
-              "updated_at": "${response.items[1].metadata.updated_at}"
-            },
-            "status": "ready"
+            "created_at": "${response.items[1].created_at}",
+            "name": "New Cluster",
+            "owner": "${response.items[1].owner}",
+            "modified_at": "${response.items[1].modified_at}",
+            "status": {
+              "state": "ready"
+            }
           }
         ],
         "kind": "ConnectorClusterList",
