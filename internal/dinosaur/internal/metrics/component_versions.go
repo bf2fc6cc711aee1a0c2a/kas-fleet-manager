@@ -9,10 +9,9 @@ import (
 )
 
 type versionsMetrics struct {
-	dinosaurService    services.DinosaurService
-	strimziVersion  *prometheus.GaugeVec
-	dinosaurVersion    *prometheus.GaugeVec
-	dinosaurIBPVersion *prometheus.GaugeVec
+	dinosaurService         services.DinosaurService
+	dinosaurOperatorVersion *prometheus.GaugeVec
+	dinosaurVersion         *prometheus.GaugeVec
 }
 
 // need to invoked when the server is started and dinosaurService is initialised
@@ -26,12 +25,12 @@ func RegisterVersionMetrics(dinosaurService services.DinosaurService) {
 func newVersionMetrics(dinosaurService services.DinosaurService) *versionsMetrics {
 	return &versionsMetrics{
 		dinosaurService: dinosaurService,
-		strimziVersion: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "strimzi_version",
-			Help: `Reports the version of Strimzi in terms of seconds since the epoch. 
-The type 'actual' is the Strimzi version that is reported by fleetshard.
-The type 'desired' is the desired Strimzi version that is set in the fleet-manager. 
-If the type is 'upgrade' it means the Strimzi is being upgraded.
+		dinosaurOperatorVersion: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "dinosaur_operator_version",
+			Help: `Reports the version of Dinosaur Operator in terms of seconds since the epoch. 
+The type 'actual' is the Dinosaur Operator version that is reported by fleetshard.
+The type 'desired' is the desired Dinosaur Operator version that is set in the fleet-manager. 
+If the type is 'upgrade' it means the Dinosaur Operator is being upgraded.
 `,
 		}, []string{"cluster_id", "dinosaur_id", "type", "version"}),
 		dinosaurVersion: prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -42,19 +41,11 @@ The type 'desired' is the desired Dinosaur version that is set in the fleet-mana
 If the type is 'upgrade' it means the Dinosaur is being upgraded.
 `,
 		}, []string{"cluster_id", "dinosaur_id", "type", "version"}),
-		dinosaurIBPVersion: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "dinosaur_ibp_version",
-			Help: `Reports the version of Dinosaur in terms of seconds since the epoch.
-The type 'actual' is the Dinosaur IBP version that is reported by fleetshard.
-The type 'desired' is the desired Dinosaur IBP version that is set in the fleet-manager.
-If the type is 'upgrade' it means the Dinosaur IBP version is being upgraded.
-`,
-		}, []string{"cluster_id", "dinosaur_id", "type", "version"}),
 	}
 }
 
 func (m *versionsMetrics) Describe(ch chan<- *prometheus.Desc) {
-	ch <- m.strimziVersion.WithLabelValues("", "", "", "").Desc()
+	ch <- m.dinosaurOperatorVersion.WithLabelValues("", "", "", "").Desc()
 }
 
 func (m *versionsMetrics) Collect(ch chan<- prometheus.Metric) {
@@ -62,19 +53,19 @@ func (m *versionsMetrics) Collect(ch chan<- prometheus.Metric) {
 	// the generated metrics will be put on the channel
 	if versions, err := m.dinosaurService.ListComponentVersions(); err == nil {
 		for _, v := range versions {
-			// actual strimzi version
-			actualStrimziMetric := m.strimziVersion.WithLabelValues(v.ClusterID, v.ID, "actual", v.ActualStrimziVersion)
-			actualStrimziMetric.Set(float64(time.Now().Unix()))
-			ch <- actualStrimziMetric
+			// actual dinosaur operator version
+			actualDinosaurOperatorMetric := m.dinosaurOperatorVersion.WithLabelValues(v.ClusterID, v.ID, "actual", v.ActualDinosaurOperatorVersion)
+			actualDinosaurOperatorMetric.Set(float64(time.Now().Unix()))
+			ch <- actualDinosaurOperatorMetric
 			//desired metric
-			desiredStrimziMetric := m.strimziVersion.WithLabelValues(v.ClusterID, v.ID, "desired", v.DesiredStrimziVersion)
-			desiredStrimziMetric.Set(float64(time.Now().Unix()))
-			ch <- desiredStrimziMetric
+			desiredDinosaurOperatorMetric := m.dinosaurOperatorVersion.WithLabelValues(v.ClusterID, v.ID, "desired", v.DesiredDinosaurOperatorVersion)
+			desiredDinosaurOperatorMetric.Set(float64(time.Now().Unix()))
+			ch <- desiredDinosaurOperatorMetric
 
-			if v.StrimziUpgrading {
-				strimziUpgradingMetric := m.strimziVersion.WithLabelValues(v.ClusterID, v.ID, "upgrade", v.DesiredStrimziVersion)
-				strimziUpgradingMetric.Set(float64(time.Now().Unix()))
-				ch <- strimziUpgradingMetric
+			if v.DinosaurOperatorUpgrading {
+				dinosaurOperatorUpgradingMetric := m.dinosaurOperatorVersion.WithLabelValues(v.ClusterID, v.ID, "upgrade", v.DesiredDinosaurOperatorVersion)
+				dinosaurOperatorUpgradingMetric.Set(float64(time.Now().Unix()))
+				ch <- dinosaurOperatorUpgradingMetric
 			}
 
 			// actual dinosaur version
@@ -90,21 +81,6 @@ func (m *versionsMetrics) Collect(ch chan<- prometheus.Metric) {
 				dinosaurUpgradingMetric := m.dinosaurVersion.WithLabelValues(v.ClusterID, v.ID, "upgrade", v.DesiredDinosaurVersion)
 				dinosaurUpgradingMetric.Set(float64(time.Now().Unix()))
 				ch <- dinosaurUpgradingMetric
-			}
-
-			// actual dinosaur ibp version
-			actualDinosaurIBPMetric := m.dinosaurIBPVersion.WithLabelValues(v.ClusterID, v.ID, "actual", v.ActualDinosaurIBPVersion)
-			actualDinosaurIBPMetric.Set(float64(time.Now().Unix()))
-			ch <- actualDinosaurIBPMetric
-			//desired dinosaur ibp version
-			desiredDinosaurIBPMetric := m.dinosaurIBPVersion.WithLabelValues(v.ClusterID, v.ID, "desired", v.DesiredDinosaurIBPVersion)
-			desiredDinosaurIBPMetric.Set(float64(time.Now().Unix()))
-			ch <- desiredDinosaurIBPMetric
-
-			if v.DinosaurIBPUpgrading {
-				dinosaurIBPUpgradingMetric := m.dinosaurIBPVersion.WithLabelValues(v.ClusterID, v.ID, "upgrade", v.DesiredDinosaurIBPVersion)
-				dinosaurIBPUpgradingMetric.Set(float64(time.Now().Unix()))
-				ch <- dinosaurIBPUpgradingMetric
 			}
 		}
 	} else {

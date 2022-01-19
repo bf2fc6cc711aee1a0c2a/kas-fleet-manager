@@ -8,8 +8,8 @@ import (
 const (
 	MockModeStubServer            = "stub-server"
 	MockModeEmulateServer         = "emulate-server"
-	strimziOperatorAddonID        = "managed-dinosaur"
-	fleetshardAddonID          = "fleetshard-operator"
+	dinosaurOperatorAddonID       = "managed-dinosaur"
+	fleetshardAddonID             = "fleetshard-operator"
 	ClusterLoggingOperatorAddonID = "cluster-logging-operator"
 )
 
@@ -26,24 +26,24 @@ type OCMConfig struct {
 	Debug                         bool   `json:"debug"`
 	EnableMock                    bool   `json:"enable_mock"`
 	MockMode                      string `json:"mock_type"`
-	StrimziOperatorAddonID        string `json:"strimzi_operator_addon_id"`
-	FleetshardAddonID          string `json:"fleetshard_addon_id"`
+	DinosaurOperatorAddonID       string `json:"dinosaur_operator_addon_id"`
+	FleetshardAddonID             string `json:"fleetshard_addon_id"`
 	ClusterLoggingOperatorAddonID string `json:"cluster_logging_operator_addon_id"`
 }
 
 func NewOCMConfig() *OCMConfig {
 	return &OCMConfig{
-		BaseURL:                "https://api-integration.6943.hive-integration.openshiftapps.com",
-		AmsUrl:                 "https://api.stage.openshift.com",
-		TokenURL:               "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
-		ClientIDFile:           "secrets/ocm-service.clientId",
-		ClientSecretFile:       "secrets/ocm-service.clientSecret",
-		SelfTokenFile:          "secrets/ocm-service.token",
-		Debug:                  false,
-		EnableMock:             false,
-		MockMode:               MockModeStubServer,
-		StrimziOperatorAddonID: strimziOperatorAddonID,
-		FleetshardAddonID:   fleetshardAddonID,
+		BaseURL:                 "https://api-integration.6943.hive-integration.openshiftapps.com",
+		AmsUrl:                  "https://api.stage.openshift.com",
+		TokenURL:                "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
+		ClientIDFile:            "secrets/ocm-service.clientId",
+		ClientSecretFile:        "secrets/ocm-service.clientSecret",
+		SelfTokenFile:           "secrets/ocm-service.token",
+		Debug:                   false,
+		EnableMock:              false,
+		MockMode:                MockModeStubServer,
+		DinosaurOperatorAddonID: dinosaurOperatorAddonID,
+		FleetshardAddonID:       fleetshardAddonID,
 	}
 }
 
@@ -57,7 +57,7 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.Debug, "ocm-debug", c.Debug, "Debug flag for OCM API")
 	fs.BoolVar(&c.EnableMock, "enable-ocm-mock", c.EnableMock, "Enable mock ocm clients")
 	fs.StringVar(&c.MockMode, "ocm-mock-mode", c.MockMode, "Set mock type")
-	fs.StringVar(&c.StrimziOperatorAddonID, "strimzi-operator-addon-id", c.StrimziOperatorAddonID, "The name of the Strimzi operator addon")
+	fs.StringVar(&c.DinosaurOperatorAddonID, "dinosaur-operator-addon-id", c.DinosaurOperatorAddonID, "The name of the Dinosaur operator addon")
 	fs.StringVar(&c.FleetshardAddonID, "fleetshard-addon-id", c.FleetshardAddonID, "The name of the fleetshard operator addon")
 	fs.StringVar(&c.ClusterLoggingOperatorAddonID, "cluster-logging-operator-addon-id", "", "The name of the cluster logging operator addon. An empty string indicates that the operator should not be installed")
 }

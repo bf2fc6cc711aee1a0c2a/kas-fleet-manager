@@ -199,8 +199,8 @@ func (o *OCMProvider) GetComputeNodes(clusterSpec *types.ClusterSpec) (*types.Co
 	}, nil
 }
 
-func (o *OCMProvider) InstallStrimzi(clusterSpec *types.ClusterSpec) (bool, error) {
-	return o.installAddon(clusterSpec, o.ocmConfig.StrimziOperatorAddonID)
+func (o *OCMProvider) InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (bool, error) {
+	return o.installAddon(clusterSpec, o.ocmConfig.DinosaurOperatorAddonID)
 }
 
 func (o *OCMProvider) InstallClusterLogging(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {

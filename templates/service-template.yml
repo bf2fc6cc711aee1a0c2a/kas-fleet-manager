@@ -417,9 +417,9 @@ parameters:
   description: The domain name to use for Dinosaur instances
   value: bf2.dinosaur-stage.rhcloud.com
 
-- name: STRIMZI_OPERATOR_ADDON_ID
-  displayName: Strimzi operator addon ID
-  description: ID of the Strimzi operator addon
+- name: DINOSAUR_OPERATOR_OPERATOR_ADDON_ID
+  displayName: Dinosaur operator addon ID
+  description: ID of the Dinosaur operator addon
   value: "managed-dinosaur-qe"
 
 - name: FLEETSHARD_ADDON_ID
@@ -436,9 +436,9 @@ parameters:
   description: Enables reconciliation for data plane clusters in the 'Ready' state
   value: "true"
 
-- name: STRIMZI_OLM_INDEX_IMAGE
-  displayName: Strimzi operator OLM index image
-  description: Strimzi operator OLM index image
+- name: DINOSAUR_OPERATOR_OLM_INDEX_IMAGE
+  displayName: Dinosaur operator OLM index image
+  description: Dinosaur operator OLM index image
   value: "quay.io/osd-addons/managed-dinosaur:production-82b42db"
 
 - name: FLEETSHARD_OLM_INDEX_IMAGE
@@ -831,11 +831,11 @@ objects:
             - --observability-config-tag=${OBSERVABILITY_CONFIG_TAG}
             - --image-pull-docker-config-file=/secrets/service/image-pull.dockerconfigjson
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
-            - --strimzi-operator-index-image=${STRIMZI_OLM_INDEX_IMAGE}
+            - --dinosaur-operator-index-image=${DINOSAUR_OPERATOR_OLM_INDEX_IMAGE}
             - --fleetshard-operator-index-image=${FLEETSHARD_OLM_INDEX_IMAGE}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --dinosaur-domain-name=${DINOSAUR_DOMAIN_NAME}
-            - --strimzi-operator-addon-id=${STRIMZI_OPERATOR_ADDON_ID}
+            - --dinosaur-operator-addon-id=${DINOSAUR_OPERATOR_OPERATOR_ADDON_ID}
             - --fleetshard-addon-id=${FLEETSHARD_ADDON_ID}
             - --cluster-logging-operator-addon-id=${CLUSTER_LOGGING_OPERATOR_ADDON_ID}
             - --alsologtostderr

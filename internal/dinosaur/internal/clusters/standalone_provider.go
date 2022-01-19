@@ -25,9 +25,9 @@ import (
 )
 
 const (
-	strimziOperatorCatalogSourceName          = "managed-dinosaur-cs"
-	strimziOperatorOperatorGroupName          = "managed-dinosaur-og"
-	strimziOperatorSubscriptionName           = "managed-dinosaur-sub"
+	dinosaurOperatorCatalogSourceName      = "managed-dinosaur-cs"
+	dinosaurOperatorOperatorGroupName      = "managed-dinosaur-og"
+	dinosaurOperatorSubscriptionName       = "managed-dinosaur-sub"
 	fleetShardOperatorCatalogSourceName    = "fleetshard-operator-cs"
 	fleetShardOperatorOperatorGroupName    = "fleetshard-operator-og"
 	fleetShardOperatorSubscriptionName     = "fleetshard-operator-sub"
@@ -71,83 +71,83 @@ func (s *StandaloneProvider) Delete(spec *types.ClusterSpec) (bool, error) {
 	return true, nil
 }
 
-func (s *StandaloneProvider) InstallStrimzi(clusterSpec *types.ClusterSpec) (bool, error) {
+func (s *StandaloneProvider) InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (bool, error) {
 	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
 		Resources: []interface{}{
-			s.buildStrimziOperatorNamespace(),
-			s.buildStrimziOperatorCatalogSource(),
-			s.buildStrimziOperatorOperatorGroup(),
-			s.buildStrimziOperatorSubscription(),
+			s.buildDinosaurOperatorNamespace(),
+			s.buildDinosaurOperatorCatalogSource(),
+			s.buildDinosaurOperatorOperatorGroup(),
+			s.buildDinosaurOperatorSubscription(),
 		},
 	})
 
 	return true, err
 }
 
-func (s *StandaloneProvider) buildStrimziOperatorNamespace() *v1.Namespace {
-	strimziOLMConfig := s.dataplaneClusterConfig.StrimziOperatorOLMConfig
+func (s *StandaloneProvider) buildDinosaurOperatorNamespace() *v1.Namespace {
+	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.DinosaurOperatorOLMConfig
 	return &v1.Namespace{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: v1.SchemeGroupVersion.String(),
 			Kind:       "Namespace",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: strimziOLMConfig.Namespace,
+			Name: dinosaurOperatorOLMConfig.Namespace,
 		},
 	}
 }
 
-func (s *StandaloneProvider) buildStrimziOperatorCatalogSource() *operatorsv1alpha1.CatalogSource {
-	strimziOLMConfig := s.dataplaneClusterConfig.StrimziOperatorOLMConfig
+func (s *StandaloneProvider) buildDinosaurOperatorCatalogSource() *operatorsv1alpha1.CatalogSource {
+	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.DinosaurOperatorOLMConfig
 	return &operatorsv1alpha1.CatalogSource{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
 			Kind:       operatorsv1alpha1.CatalogSourceKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      strimziOperatorCatalogSourceName,
-			Namespace: strimziOLMConfig.CatalogSourceNamespace,
+			Name:      dinosaurOperatorCatalogSourceName,
+			Namespace: dinosaurOperatorOLMConfig.CatalogSourceNamespace,
 		},
 		Spec: operatorsv1alpha1.CatalogSourceSpec{
 			SourceType: operatorsv1alpha1.SourceTypeGrpc,
-			Image:      strimziOLMConfig.IndexImage,
+			Image:      dinosaurOperatorOLMConfig.IndexImage,
 		},
 	}
 }
 
-func (s *StandaloneProvider) buildStrimziOperatorOperatorGroup() *operatorsv1alpha2.OperatorGroup {
-	strimziOLMConfig := s.dataplaneClusterConfig.StrimziOperatorOLMConfig
+func (s *StandaloneProvider) buildDinosaurOperatorOperatorGroup() *operatorsv1alpha2.OperatorGroup {
+	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.DinosaurOperatorOLMConfig
 	return &operatorsv1alpha2.OperatorGroup{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: operatorsv1alpha2.SchemeGroupVersion.String(),
 			Kind:       operatorsv1alpha2.OperatorGroupKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      strimziOperatorOperatorGroupName,
-			Namespace: strimziOLMConfig.Namespace,
+			Name:      dinosaurOperatorOperatorGroupName,
+			Namespace: dinosaurOperatorOLMConfig.Namespace,
 		},
 		//Spec.TargetNamespaces intentionally not set, which means "select all namespaces"
 		Spec: operatorsv1alpha2.OperatorGroupSpec{},
 	}
 }
 
-func (s *StandaloneProvider) buildStrimziOperatorSubscription() *operatorsv1alpha1.Subscription {
-	strimziOLMConfig := s.dataplaneClusterConfig.StrimziOperatorOLMConfig
+func (s *StandaloneProvider) buildDinosaurOperatorSubscription() *operatorsv1alpha1.Subscription {
+	dinosaurOperatorOLMConfig := s.dataplaneClusterConfig.DinosaurOperatorOLMConfig
 	return &operatorsv1alpha1.Subscription{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
 			Kind:       operatorsv1alpha1.SubscriptionKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      strimziOperatorSubscriptionName,
-			Namespace: strimziOLMConfig.Namespace,
+			Name:      dinosaurOperatorSubscriptionName,
+			Namespace: dinosaurOperatorOLMConfig.Namespace,
 		},
 		Spec: &operatorsv1alpha1.SubscriptionSpec{
-			CatalogSource:          strimziOperatorCatalogSourceName,
-			Channel:                strimziOLMConfig.SubscriptionChannel,
-			CatalogSourceNamespace: strimziOLMConfig.CatalogSourceNamespace,
+			CatalogSource:          dinosaurOperatorCatalogSourceName,
+			Channel:                dinosaurOperatorOLMConfig.SubscriptionChannel,
+			CatalogSourceNamespace: dinosaurOperatorOLMConfig.CatalogSourceNamespace,
 			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
-			Package:                strimziOLMConfig.Package,
+			Package:                dinosaurOperatorOLMConfig.Package,
 		},
 	}
 }

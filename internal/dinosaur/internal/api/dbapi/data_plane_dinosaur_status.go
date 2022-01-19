@@ -6,12 +6,11 @@ import (
 
 type DataPlaneDinosaurStatus struct {
 	DinosaurClusterId string
-	Conditions     []DataPlaneDinosaurStatusCondition
+	Conditions        []DataPlaneDinosaurStatusCondition
 	// Going to ignore the rest of fields (like capacity and versions) for now, until when they are needed
-	Routes          []DataPlaneDinosaurRouteRequest
-	DinosaurVersion    string
-	StrimziVersion  string
-	DinosaurIBPVersion string
+	Routes                  []DataPlaneDinosaurRouteRequest
+	DinosaurVersion         string
+	DinosaurOperatorVersion string
 }
 
 type DataPlaneDinosaurStatusCondition struct {

@@ -142,10 +142,10 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `ALLOW_EVALUATOR_INSTANCE`: Enables creation of evaluator Dinosaur instances. Defaults to `true`.
 - `QUOTA_TYPE`: Quota management service to be used. Options: `quota-management-list` and `ams`, Default: `quota-management-list`.
 - `FLEETSHARD_OLM_INDEX_IMAGE`: Fleetshard operator OLM index image. Defaults to `quay.io/osd-addons/fleetshard-operator:production-82b42db`.
-- `STRIMZI_OLM_INDEX_IMAGE`: Strimzi operator OLM index image. Defaults to `quay.io/osd-addons/managed-dinosaur:production-82b42db`.
+- `DINOSAUR_OPERATOR_OLM_INDEX_IMAGE`: Dinosaur operator OLM index image. Defaults to `quay.io/osd-addons/managed-dinosaur:production-82b42db`.
 - `DATAPLANE_CLUSTER_SCALING_TYPE`: Dataplane cluster scaling type. Options: `manual`, `auto` and `none`, Defaults: `manual`.
 - `CLUSTER_LOGGING_OPERATOR_ADDON_ID`: The id of the cluster logging operator addon. Defaults to `''`.
-- `STRIMZI_OPERATOR_ADDON_ID`: The id of the Strimzi operator addon. Defaults to `managed-dinosaur-qe`.
+- `DINOSAUR_OPERATOR_OPERATOR_ADDON_ID`: The id of the Dinosaur operator addon. Defaults to `managed-dinosaur-qe`.
 - `FLEETSHARD_ADDON_ID`: The id of the fleetshard operator addon. Defaults to `fleetshard-operator-qe`.
 
 ## Access the service

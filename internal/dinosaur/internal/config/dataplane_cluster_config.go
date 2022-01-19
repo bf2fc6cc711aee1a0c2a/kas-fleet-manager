@@ -30,14 +30,14 @@ type DataplaneClusterConfig struct {
 	DataPlaneClusterConfigFile            string `json:"dataplane_cluster_config_file"`
 	ReadOnlyUserList                      userv1.OptionalNames
 	ReadOnlyUserListFile                  string
-	DinosaurSREUsers                         userv1.OptionalNames
-	DinosaurSREUsersFile                     string
+	DinosaurSREUsers                      userv1.OptionalNames
+	DinosaurSREUsersFile                  string
 	ClusterConfig                         *ClusterConfig `json:"clusters_config"`
 	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
 	Kubeconfig                            string         `json:"kubeconfig"`
 	RawKubernetesConfig                   *clientcmdapi.Config
-	StrimziOperatorOLMConfig              OperatorInstallationConfig `json:"strimzi_operator_olm_config"`
-	FleetshardOperatorOLMConfig        OperatorInstallationConfig `json:"fleetshard_operator_olm_config"`
+	DinosaurOperatorOLMConfig             OperatorInstallationConfig `json:"dinosaur_operator_olm_config"`
+	FleetshardOperatorOLMConfig           OperatorInstallationConfig `json:"fleetshard_operator_olm_config"`
 }
 
 type OperatorInstallationConfig struct {
@@ -73,15 +73,15 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 		ImagePullDockerConfigFile:             "secrets/image-pull.dockerconfigjson",
 		DataPlaneClusterConfigFile:            "config/dataplane-cluster-configuration.yaml",
 		ReadOnlyUserListFile:                  "config/read-only-user-list.yaml",
-		DinosaurSREUsersFile:                     "config/dinosaur-sre-user-list.yaml",
+		DinosaurSREUsersFile:                  "config/dinosaur-sre-user-list.yaml",
 		DataPlaneClusterScalingType:           ManualScaling,
 		ClusterConfig:                         &ClusterConfig{},
 		EnableReadyDataPlaneClustersReconcile: true,
 		Kubeconfig:                            getDefaultKubeconfig(),
-		StrimziOperatorOLMConfig: OperatorInstallationConfig{
+		DinosaurOperatorOLMConfig: OperatorInstallationConfig{
 			IndexImage:             "quay.io/osd-addons/managed-dinosaur:production-82b42db",
 			CatalogSourceNamespace: "openshift-marketplace",
-			Namespace:              constants.StrimziOperatorNamespace,
+			Namespace:              constants.DinosaurOperatorNamespace,
 			SubscriptionChannel:    "alpha",
 			Package:                "managed-dinosaur",
 		},
@@ -103,7 +103,7 @@ type ManualCluster struct {
 	Region                string                  `yaml:"region"`
 	MultiAZ               bool                    `yaml:"multi_az"`
 	Schedulable           bool                    `yaml:"schedulable"`
-	DinosaurInstanceLimit    int                     `yaml:"dinosaur_instance_limit"`
+	DinosaurInstanceLimit int                     `yaml:"dinosaur_instance_limit"`
 	Status                api.ClusterStatus       `yaml:"status"`
 	ProviderType          api.ClusterProviderType `yaml:"provider_type"`
 	ClusterDNS            string                  `yaml:"cluster_dns"`
@@ -242,11 +242,11 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.DinosaurSREUsersFile, "dinosaur-sre-user-list-file", c.DinosaurSREUsersFile, "File contains a list of dinosaur-sre users with cluster-admin permissions to data plane clusters")
 	fs.BoolVar(&c.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", c.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
 	fs.StringVar(&c.Kubeconfig, "kubeconfig", c.Kubeconfig, "A path to kubeconfig file used for communication with standalone clusters")
-	fs.StringVar(&c.StrimziOperatorOLMConfig.CatalogSourceNamespace, "strimzi-operator-cs-namespace", c.StrimziOperatorOLMConfig.CatalogSourceNamespace, "Strimzi operator catalog source namespace.")
-	fs.StringVar(&c.StrimziOperatorOLMConfig.IndexImage, "strimzi-operator-index-image", c.StrimziOperatorOLMConfig.IndexImage, "Strimzi operator index image")
-	fs.StringVar(&c.StrimziOperatorOLMConfig.Namespace, "strimzi-operator-namespace", c.StrimziOperatorOLMConfig.Namespace, "Strimzi operator namespace")
-	fs.StringVar(&c.StrimziOperatorOLMConfig.Package, "strimzi-operator-package", c.StrimziOperatorOLMConfig.Package, "Strimzi operator package")
-	fs.StringVar(&c.StrimziOperatorOLMConfig.SubscriptionChannel, "strimzi-operator-sub-channel", c.StrimziOperatorOLMConfig.SubscriptionChannel, "Strimzi operator subscription channel")
+	fs.StringVar(&c.DinosaurOperatorOLMConfig.CatalogSourceNamespace, "dinosaur-operator-cs-namespace", c.DinosaurOperatorOLMConfig.CatalogSourceNamespace, "Dinosaur operator catalog source namespace.")
+	fs.StringVar(&c.DinosaurOperatorOLMConfig.IndexImage, "dinosaur-operator-index-image", c.DinosaurOperatorOLMConfig.IndexImage, "Dinosaur operator index image")
+	fs.StringVar(&c.DinosaurOperatorOLMConfig.Namespace, "dinosaur-operator-namespace", c.DinosaurOperatorOLMConfig.Namespace, "Dinosaur operator namespace")
+	fs.StringVar(&c.DinosaurOperatorOLMConfig.Package, "dinosaur-operator-package", c.DinosaurOperatorOLMConfig.Package, "Dinosaur operator package")
+	fs.StringVar(&c.DinosaurOperatorOLMConfig.SubscriptionChannel, "dinosaur-operator-sub-channel", c.DinosaurOperatorOLMConfig.SubscriptionChannel, "Dinosaur operator subscription channel")
 	fs.StringVar(&c.FleetshardOperatorOLMConfig.CatalogSourceNamespace, "fleetshard-operator-cs-namespace", c.FleetshardOperatorOLMConfig.CatalogSourceNamespace, "fleetshard operator catalog source namespace.")
 	fs.StringVar(&c.FleetshardOperatorOLMConfig.IndexImage, "fleetshard-operator-index-image", c.FleetshardOperatorOLMConfig.IndexImage, "fleetshard operator index image")
 	fs.StringVar(&c.FleetshardOperatorOLMConfig.Namespace, "fleetshard-operator-namespace", c.FleetshardOperatorOLMConfig.Namespace, "fleetshard operator namespace")

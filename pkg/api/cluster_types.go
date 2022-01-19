@@ -113,15 +113,15 @@ const (
 
 // ordinals - Used to decide if a status comes after or before a given state
 var ordinals = map[string]int{
-	ClusterAccepted.String():                        0,
-	ClusterProvisioning.String():                    10,
-	ClusterProvisioned.String():                     20,
+	ClusterAccepted.String():                     0,
+	ClusterProvisioning.String():                 10,
+	ClusterProvisioned.String():                  20,
 	ClusterWaitingForFleetShardOperator.String(): 30,
-	ClusterReady.String():                           40,
-	ClusterComputeNodeScalingUp.String():            50,
-	ClusterDeprovisioning.String():                  60,
-	ClusterCleanup.String():                         70,
-	ClusterFailed.String():                          80,
+	ClusterReady.String():                        40,
+	ClusterComputeNodeScalingUp.String():         50,
+	ClusterDeprovisioning.String():               60,
+	ClusterCleanup.String():                      70,
+	ClusterFailed.String():                       80,
 }
 
 // This represents the valid statuses of a dataplane cluster
@@ -148,13 +148,13 @@ type Cluster struct {
 	ProviderSpec JSON `json:"provider_spec"`
 	// store the specs of the openshift/k8s cluster which can be used to access the cluster
 	ClusterSpec JSON `json:"cluster_spec"`
-	// List of available strimzi versions in the cluster. Content MUST be stored
+	// List of available dinosaur operator versions in the cluster. Content MUST be stored
 	// with the versions sorted in ascending order as a JSON. See
-	// StrimziVersionNumberPartRegex for details on the expected strimzi version
-	// format. See the StrimziVersion data type for the format of JSON stored. Use the
-	// `SetAvailableStrimziVersions` helper method to ensure the correct order is set.
+	// DinosaurOperatorVersionNumberPartRegex for details on the expected dinosaur operator version
+	// format. See the DinosaurOperatorVersion data type for the format of JSON stored. Use the
+	// `SetAvailableDinosaurOperatorVersions` helper method to ensure the correct order is set.
 	// Latest position in the list is considered the newest available version.
-	AvailableStrimziVersions JSON `json:"available_strimzi_versions"`
+	AvailableDinosaurOperatorVersions JSON `json:"available_dinosaur_operator_versions"`
 	// SupportedInstanceType holds information on what kind of instances types can be provisioned on this cluster.
 	// A cluster can support two kinds of instance types: 'eval', 'standard' or both in this case it will be a comma separated list of instance types e.g 'standard,eval'.
 	SupportedInstanceType string `json:"supported_instance_type"`
@@ -187,11 +187,10 @@ func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-type StrimziVersion struct {
+type DinosaurOperatorVersion struct {
 	Version          string            `json:"version"`
 	Ready            bool              `json:"ready"`
-	DinosaurVersions    []DinosaurVersion    `json:"dinosaurVersions"`
-	DinosaurIBPVersions []DinosaurIBPVersion `json:"dinosaurIBPVersions"`
+	DinosaurVersions []DinosaurVersion `json:"dinosaurVersions"`
 }
 
 type DinosaurVersion struct {
@@ -202,34 +201,26 @@ func (s *DinosaurVersion) Compare(other DinosaurVersion) (int, error) {
 	return buildAwareSemanticVersioningCompare(s.Version, other.Version)
 }
 
-type DinosaurIBPVersion struct {
-	Version string `json:"version"`
-}
-
-func (s *DinosaurIBPVersion) Compare(other DinosaurIBPVersion) (int, error) {
-	return buildAwareSemanticVersioningCompare(s.Version, other.Version)
-}
-
-// StrimziVersionNumberPartRegex contains the regular expression needed to
-// extract the semver version number for a StrimziVersion. StrimziVersion
+// DinosaurOperatorVersionNumberPartRegex contains the regular expression needed to
+// extract the semver version number for a DinosaurOperatorVersion. DinosaurOperatorVersion
 // follows the format of: prefix_string-X.Y.Z-B where X,Y,Z,B are numbers
-var StrimziVersionNumberPartRegex = regexp.MustCompile(`\d+\.\d+\.\d+-\d+$`)
+var DinosaurOperatorVersionNumberPartRegex = regexp.MustCompile(`\d+\.\d+\.\d+-\d+$`)
 
 // Compare returns compares s.Version with other.Version comparing the version
-// number suffix specified there using StrimziVersionNumberPartRegex to extract
+// number suffix specified there using DinosaurOperatorVersionNumberPartRegex to extract
 // the version number. If s.Version is smaller than other.Version a -1 is returned.
 // If s.Version is equal than other.Version 0 is returned. If s.Version is greater
 // than other.Version 1 is returned. If there is an error during the comparison
 // an error is returned
-func (s *StrimziVersion) Compare(other StrimziVersion) (int, error) {
-	v1VersionNumber := StrimziVersionNumberPartRegex.FindString(s.Version)
+func (s *DinosaurOperatorVersion) Compare(other DinosaurOperatorVersion) (int, error) {
+	v1VersionNumber := DinosaurOperatorVersionNumberPartRegex.FindString(s.Version)
 	if v1VersionNumber == "" {
-		return 0, fmt.Errorf("'%s' does not follow expected Strimzi Version format", s.Version)
+		return 0, fmt.Errorf("'%s' does not follow expected Dinosaur Operator Version format", s.Version)
 	}
 
-	v2VersionNumber := StrimziVersionNumberPartRegex.FindString(other.Version)
+	v2VersionNumber := DinosaurOperatorVersionNumberPartRegex.FindString(other.Version)
 	if v2VersionNumber == "" {
-		return 0, fmt.Errorf("'%s' does not follow expected Strimzi Version format", s.Version)
+		return 0, fmt.Errorf("'%s' does not follow expected Dinosaur Operator Version format", s.Version)
 	}
 
 	return buildAwareSemanticVersioningCompare(v1VersionNumber, v2VersionNumber)
@@ -243,36 +234,30 @@ func CompareSemanticVersionsMajorAndMinor(current, desired string) (int, error) 
 	return checkIfMinorDowngrade(current, desired)
 }
 
-func (s *StrimziVersion) DeepCopy() *StrimziVersion {
-	var res StrimziVersion = *s
+func (s *DinosaurOperatorVersion) DeepCopy() *DinosaurOperatorVersion {
+	var res DinosaurOperatorVersion = *s
 	res.DinosaurVersions = nil
-	res.DinosaurIBPVersions = nil
 
 	if s.DinosaurVersions != nil {
 		dinosaurVersionsCopy := make([]DinosaurVersion, len(s.DinosaurVersions))
 		copy(dinosaurVersionsCopy, s.DinosaurVersions)
 		res.DinosaurVersions = dinosaurVersionsCopy
 	}
-	if s.DinosaurIBPVersions != nil {
-		dinosaurIBPVersionsCopy := make([]DinosaurIBPVersion, len(s.DinosaurIBPVersions))
-		copy(dinosaurIBPVersionsCopy, s.DinosaurIBPVersions)
-		res.DinosaurIBPVersions = dinosaurIBPVersionsCopy
-	}
 
 	return &res
 }
 
-// GetAvailableAndReadyStrimziVersions returns the cluster's list of available
+// GetAvailableAndReadyDinosaurOperatorVersions returns the cluster's list of available
 // and ready versions or an error. An empty list is returned if there are no
 // available and ready versions
-func (cluster *Cluster) GetAvailableAndReadyStrimziVersions() ([]StrimziVersion, error) {
-	strimziVersions, err := cluster.GetAvailableStrimziVersions()
+func (cluster *Cluster) GetAvailableAndReadyDinosaurOperatorVersions() ([]DinosaurOperatorVersion, error) {
+	dinosaurOperatorVersions, err := cluster.GetAvailableDinosaurOperatorVersions()
 	if err != nil {
 		return nil, err
 	}
 
-	res := []StrimziVersion{}
-	for _, val := range strimziVersions {
+	res := []DinosaurOperatorVersion{}
+	for _, val := range dinosaurOperatorVersions {
 		if val.Ready {
 			res = append(res, val)
 		}
@@ -280,18 +265,18 @@ func (cluster *Cluster) GetAvailableAndReadyStrimziVersions() ([]StrimziVersion,
 	return res, nil
 }
 
-// GetAvailableStrimziVersions returns the cluster's list of available strimzi
+// GetAvailableDinosaurOperatorVersions returns the cluster's list of available dinosaur operator
 // versions or an error. An empty list is returned if there are no versions.
 // This returns the available versions in the cluster independently on whether
 // they are ready or not. If you want to only get the available and ready
-// versions use the GetAvailableAndReadyStrimziVersions method
-func (cluster *Cluster) GetAvailableStrimziVersions() ([]StrimziVersion, error) {
-	versions := []StrimziVersion{}
-	if cluster.AvailableStrimziVersions == nil {
+// versions use the GetAvailableAndReadyDinosaurOperatorVersions method
+func (cluster *Cluster) GetAvailableDinosaurOperatorVersions() ([]DinosaurOperatorVersion, error) {
+	versions := []DinosaurOperatorVersion{}
+	if cluster.AvailableDinosaurOperatorVersions == nil {
 		return versions, nil
 	}
 
-	err := json.Unmarshal(cluster.AvailableStrimziVersions, &versions)
+	err := json.Unmarshal(cluster.AvailableDinosaurOperatorVersions, &versions)
 	if err != nil {
 		return nil, err
 	}
@@ -299,24 +284,23 @@ func (cluster *Cluster) GetAvailableStrimziVersions() ([]StrimziVersion, error) 
 	return versions, nil
 }
 
-// StrimziVersionsDeepSort returns a sorted copy of the provided StrimziVersions
+// DinosaurOperatorVersionsDeepSort returns a sorted copy of the provided DinosaurOperatorVersions
 // in the versions slice. The following elements are sorted in ascending order:
-// - The strimzi versions
-// - For each strimzi version, their Dinosaur Versions
-// - For each strimzi version, their Dinosaur IBP Versions
-func StrimziVersionsDeepSort(versions []StrimziVersion) ([]StrimziVersion, error) {
+// - The dinosaur operator versions
+// - For each dinosaur operator version, their Dinosaur Versions
+func DinosaurOperatorVersionsDeepSort(versions []DinosaurOperatorVersion) ([]DinosaurOperatorVersion, error) {
 	if versions == nil {
 		return versions, nil
 	}
 	if len(versions) == 0 {
-		return []StrimziVersion{}, nil
+		return []DinosaurOperatorVersion{}, nil
 	}
 
-	var versionsToSet []StrimziVersion
+	var versionsToSet []DinosaurOperatorVersion
 	for idx := range versions {
 		version := &versions[idx]
-		copiedStrimziVersion := version.DeepCopy()
-		versionsToSet = append(versionsToSet, *copiedStrimziVersion)
+		copiedDinosaurOperatorVersion := version.DeepCopy()
+		versionsToSet = append(versionsToSet, *copiedDinosaurOperatorVersion)
 	}
 
 	var errors fleetmanagererrors.ErrorList
@@ -348,15 +332,6 @@ func StrimziVersionsDeepSort(versions []StrimziVersion) ([]StrimziVersion, error
 			return nil, errors
 		}
 
-		// Sort DinosaurIBPVersions
-		sort.Slice(versionsToSet[idx].DinosaurIBPVersions, func(i, j int) bool {
-			res, err := versionsToSet[idx].DinosaurIBPVersions[i].Compare(versionsToSet[idx].DinosaurIBPVersions[j])
-			if err != nil {
-				errors = append(errors, err)
-			}
-			return res == -1
-		})
-
 		if errors != nil {
 			return nil, errors
 		}
@@ -365,25 +340,25 @@ func StrimziVersionsDeepSort(versions []StrimziVersion) ([]StrimziVersion, error
 	return versionsToSet, nil
 }
 
-// SetAvailableStrimziVersions sets the cluster's list of available strimzi
+// SetAvailableDinosaurOperatorVersions sets the cluster's list of available dinosaur operator
 // versions. The list of versions is always stored in version ascending order,
-// with all versions deeply sorted (strimzi versions, dinosaur versions, dinosaur ibp
-// versions ...). If availableStrimziVersions is nil an empty list is set. See
-// StrimziVersionNumberPartRegex for details on the expected strimzi version
+// with all versions deeply sorted (dinosaur operator versions, dinosaur versions ...).
+// If availableDinosaurOperatorVersions is nil an empty list is set. See
+// DinosaurOperatorVersionNumberPartRegex for details on the expected dinosaur operator version
 // format
-func (cluster *Cluster) SetAvailableStrimziVersions(availableStrimziVersions []StrimziVersion) error {
-	sortedVersions, err := StrimziVersionsDeepSort(availableStrimziVersions)
+func (cluster *Cluster) SetAvailableDinosaurOperatorVersions(availableDinosaurOperatorVersions []DinosaurOperatorVersion) error {
+	sortedVersions, err := DinosaurOperatorVersionsDeepSort(availableDinosaurOperatorVersions)
 	if err != nil {
 		return err
 	}
 	if sortedVersions == nil {
-		sortedVersions = []StrimziVersion{}
+		sortedVersions = []DinosaurOperatorVersion{}
 	}
 
 	if v, err := json.Marshal(sortedVersions); err != nil {
 		return err
 	} else {
-		cluster.AvailableStrimziVersions = v
+		cluster.AvailableDinosaurOperatorVersions = v
 		return nil
 	}
 }

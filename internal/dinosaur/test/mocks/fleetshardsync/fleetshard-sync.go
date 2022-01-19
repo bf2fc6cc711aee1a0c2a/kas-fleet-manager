@@ -35,7 +35,7 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, priv
 	}
 
 	for _, cluster := range clusters {
-		managedDinosaurAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.StrimziOperatorAddonID)
+		managedDinosaurAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.DinosaurOperatorAddonID)
 		if err != nil {
 			return err
 		}
@@ -137,7 +137,7 @@ func NewMockFleetshardSyncBuilder(helper *coreTest.Helper, t *testing.T) MockFle
 			ocmClient:                    ocmClient,
 			privateClient:                test.NewPrivateAPIClient(helper),
 			updateDataplaneClusterStatus: defaultUpdateDataplaneClusterStatusFunc,
-			updateDinosaurClusterStatus:     defaultUpdateDinosaurStatusFunc,
+			updateDinosaurClusterStatus:  defaultUpdateDinosaurStatusFunc,
 			interval:                     1 * time.Second,
 		},
 	}
@@ -174,7 +174,7 @@ type mockFleetshardSync struct {
 	privateClient                *private.APIClient
 	interval                     time.Duration
 	updateDataplaneClusterStatus func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error
-	updateDinosaurClusterStatus     func(helper *coreTest.Helper, privateClient *private.APIClient) error
+	updateDinosaurClusterStatus  func(helper *coreTest.Helper, privateClient *private.APIClient) error
 }
 
 var _ MockFleetshardSync = &mockFleetshardSync{}
@@ -248,33 +248,23 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 			Current:                &[]int32{5}[0],
 			CurrentWorkLoadMinimum: &[]int32{3}[0],
 		},
-		Strimzi: []private.DataPlaneClusterUpdateStatusRequestStrimzi{
+		DinosaurOperator: []private.DataPlaneClusterUpdateStatusRequestDinosaurOperator{
 			{
 				Ready:   true,
-				Version: "strimzi-cluster-operator.v0.23.0-0",
+				Version: "dinosaur-operator.v0.23.0-0",
 				DinosaurVersions: []string{
 					"2.7.0",
 					"2.5.3",
 					"2.6.2",
 				},
-				DinosaurIbpVersions: []string{
-					"2.7",
-					"2.5",
-					"2.6",
-				},
 			},
 			{
 				Ready:   true,
-				Version: "strimzi-cluster-operator.v0.21.0-0",
+				Version: "dinosaur-operator.v0.21.0-0",
 				DinosaurVersions: []string{
 					"2.7.0",
 					"2.3.1",
 					"2.1.2",
-				},
-				DinosaurIbpVersions: []string{
-					"2.7",
-					"2.1",
-					"2.3",
 				},
 			},
 		},
@@ -312,8 +302,8 @@ func GetDefaultReportedDinosaurVersion() string {
 	return "2.7.0"
 }
 
-func GetDefaultReportedStrimziVersion() string {
-	return "strimzi-cluster-operator.v0.23.0-0"
+func GetDefaultReportedDinosaurOperatorVersion() string {
+	return "dinosaur-operator.v0.23.0-0"
 }
 
 // Return a dinosaur status for a ready cluster
@@ -326,8 +316,8 @@ func GetReadyDinosaurStatusResponse() private.DataPlaneDinosaurStatus {
 			},
 		},
 		Versions: private.DataPlaneDinosaurStatusVersions{
-			Dinosaur:   GetDefaultReportedDinosaurVersion(),
-			Strimzi: GetDefaultReportedStrimziVersion(),
+			Dinosaur:         GetDefaultReportedDinosaurVersion(),
+			DinosaurOperator: GetDefaultReportedDinosaurOperatorVersion(),
 		},
 	}
 }

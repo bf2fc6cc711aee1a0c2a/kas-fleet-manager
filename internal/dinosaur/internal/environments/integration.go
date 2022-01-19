@@ -42,7 +42,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"quota-type":                           "quota-management-list",
 		"enable-deletion-of-expired-dinosaur":  "true",
 		"dataplane-cluster-scaling-type":       "auto", // need to set this to 'auto' for integration environment as some tests rely on this
-		"strimzi-operator-addon-id":            "managed-dinosaur-qe",
+		"dinosaur-operator-addon-id":           "managed-dinosaur-qe",
 		"fleetshard-addon-id":                  "fleetshard-operator-qe",
 	}
 }

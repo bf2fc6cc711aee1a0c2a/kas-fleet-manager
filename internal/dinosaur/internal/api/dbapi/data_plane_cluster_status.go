@@ -3,11 +3,11 @@ package dbapi
 import "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
 
 type DataPlaneClusterStatus struct {
-	Conditions               []DataPlaneClusterStatusCondition
-	NodeInfo                 DataPlaneClusterStatusNodeInfo
-	ResizeInfo               DataPlaneClusterStatusResizeInfo
-	Remaining                DataPlaneClusterStatusCapacity
-	AvailableStrimziVersions []api.StrimziVersion
+	Conditions                        []DataPlaneClusterStatusCondition
+	NodeInfo                          DataPlaneClusterStatusNodeInfo
+	ResizeInfo                        DataPlaneClusterStatusResizeInfo
+	Remaining                         DataPlaneClusterStatusCapacity
+	AvailableDinosaurOperatorVersions []api.DinosaurOperatorVersion
 }
 
 type DataPlaneClusterStatusCondition struct {

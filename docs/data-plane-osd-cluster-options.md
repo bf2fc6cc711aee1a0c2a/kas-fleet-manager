@@ -56,7 +56,7 @@ fleet-manager allows provisioning of dinosaurs in an already preexisting standal
 
 > NOTE: `kubeconfig` path can be configured via the `--kubeconfig` CLI flag. Otherwise is defaults to `$HOME/.kube/config`
 
-> NOTE: [OLM](https://github.com/operator-framework/operator-lifecycle-manager#installation) in the destination standalone cluster/s is a prerequisite to be able to install strimzi and fleetshard operators
+> NOTE: [OLM](https://github.com/operator-framework/operator-lifecycle-manager#installation) in the destination standalone cluster/s is a prerequisite to be able to install dinosaur operator and fleetshard operators
  
 ## Configuring OSD Cluster Creation and AutoScaling
 
@@ -81,6 +81,6 @@ Once auto scaling is enabled this will activate the scaling up/down of compute n
         - Once the table is available, the generated **INSERT** command can now be run.
 
 2. Ensure the cluster is ready to be used for incoming Dinosaur requests.
-    - Take note of the status of the cluster, `cluster_provisioned`, when you registered it to the database in step 2. This means that the cluster has been successfully provisioned but still have remaining resources to set up (i.e. Strimzi operator installation).
+    - Take note of the status of the cluster, `cluster_provisioned`, when you registered it to the database in step 2. This means that the cluster has been successfully provisioned but still have remaining resources to set up (i.e. Dinosaur operator installation).
     - Run the service using `make run` and let it reconcile resources required in order to make the cluster ready to be used by Dinosaur requests.
     - Once done, the cluster status in your database should have changed to `ready`. This means that the service can now assign this cluster to any incoming Dinosaur requests so that the service can process them.

@@ -219,8 +219,7 @@ components:
               key: ""
           versions:
             dinosaur: 2.7.0
-            strimzi: 0.21.2
-            dinosaurIbp: "2.7"
+            dinosaurOperator: 0.21.2
           deleted: false
     DataPlaneDinosaurStatusRequestExample:
       value:
@@ -239,8 +238,7 @@ components:
           maxConnectionAttemptsPerSec: 100
         versions:
           dinosaur: 2.4.1
-          strimzi: 0.21.2
-          dinosaurIbp: "2.4"
+          dinosaurOperator: 0.21.2
     "400InvalidIdExample":
       value:
         id: "21"
@@ -294,9 +292,7 @@ components:
       properties:
         dinosaur:
           type: string
-        dinosaurIbp:
-          type: string
-        strimzi:
+        dinosaurOperator:
           type: string
       type: object
     ManagedDinosaur:
@@ -353,23 +349,6 @@ components:
           ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
           connections: 0
           dataRetentionSize: dataRetentionSize
-        strimzi:
-        - dinosaurVersions:
-          - dinosaurVersions
-          - dinosaurVersions
-          dinosaurIbpVersions:
-          - dinosaurIbpVersions
-          - dinosaurIbpVersions
-          ready: true
-          version: version
-        - dinosaurVersions:
-          - dinosaurVersions
-          - dinosaurVersions
-          dinosaurIbpVersions:
-          - dinosaurIbpVersions
-          - dinosaurIbpVersions
-          ready: true
-          version: version
         resizeInfo:
           nodeDelta: 7
           delta:
@@ -391,6 +370,17 @@ components:
           type: type
           message: message
           status: status
+        dinosaurOperator:
+        - dinosaurVersions:
+          - dinosaurVersions
+          - dinosaurVersions
+          ready: true
+          version: version
+        - dinosaurVersions:
+          - dinosaurVersions
+          - dinosaurVersions
+          ready: true
+          version: version
         remaining:
           partitions: 6
           ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
@@ -410,9 +400,9 @@ components:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
         resizeInfo:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
-        strimzi:
+        dinosaurOperator:
           items:
-            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_strimzi'
+            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_dinosaurOperator'
           type: array
       type: object
     DataPlaneDinosaurStatus:
@@ -637,14 +627,11 @@ components:
         partitions:
           nullable: true
           type: integer
-    DataPlaneClusterUpdateStatusRequest_strimzi:
+    DataPlaneClusterUpdateStatusRequest_dinosaurOperator:
       example:
         dinosaurVersions:
         - dinosaurVersions
         - dinosaurVersions
-        dinosaurIbpVersions:
-        - dinosaurIbpVersions
-        - dinosaurIbpVersions
         ready: true
         version: version
       properties:
@@ -653,10 +640,6 @@ components:
         version:
           type: string
         dinosaurVersions:
-          items:
-            type: string
-          type: array
-        dinosaurIbpVersions:
           items:
             type: string
           type: array
@@ -689,9 +672,7 @@ components:
       properties:
         dinosaur:
           type: string
-        strimzi:
-          type: string
-        dinosaurIbp:
+        dinosaurOperator:
           type: string
     DataPlaneDinosaurStatus_routes:
       properties:

@@ -26,7 +26,7 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"quota-type":                                      "quota-management-list",
 		"enable-deletion-of-expired-dinosaur":             "true",
 		"dataplane-cluster-scaling-type":                  "manual",
-		"strimzi-operator-addon-id":                       "managed-dinosaur-qe",
+		"dinosaur-operator-addon-id":                      "managed-dinosaur-qe",
 		"fleetshard-addon-id":                             "fleetshard-operator-qe",
 		"observability-red-hat-sso-auth-server-url":       "https://sso.redhat.com/auth",
 		"observability-red-hat-sso-realm":                 "redhat-external",

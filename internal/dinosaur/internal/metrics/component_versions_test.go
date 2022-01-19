@@ -28,17 +28,14 @@ func TestVersionsMetrics_Collect(t *testing.T) {
 				ListComponentVersionsFunc: func() ([]services.DinosaurComponentVersions, error) {
 					return []services.DinosaurComponentVersions{
 						{
-							ID:                     "1",
-							ClusterID:              "cluster1",
-							DesiredStrimziVersion:  "1.0.1",
-							ActualStrimziVersion:   "1.0.0",
-							StrimziUpgrading:       true,
-							DesiredDinosaurVersion:    "1.0.1",
-							ActualDinosaurVersion:     "1.0.0",
-							DinosaurUpgrading:         false,
-							DesiredDinosaurIBPVersion: "1.0",
-							ActualDinosaurIBPVersion:  "1.0",
-							DinosaurIBPUpgrading:      true,
+							ID:                             "1",
+							ClusterID:                      "cluster1",
+							DesiredDinosaurOperatorVersion: "1.0.1",
+							ActualDinosaurOperatorVersion:  "1.0.0",
+							DinosaurOperatorUpgrading:      true,
+							DesiredDinosaurVersion:         "1.0.1",
+							ActualDinosaurVersion:          "1.0.0",
+							DinosaurUpgrading:              false,
 						},
 					}, nil
 				},

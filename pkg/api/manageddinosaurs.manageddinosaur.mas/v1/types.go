@@ -30,9 +30,8 @@ type Capacity struct {
 }
 
 type VersionsSpec struct {
-	Dinosaur    string `json:"dinosaur"`
-	Strimzi  string `json:"strimzi"`
-	DinosaurIBP string `json:"dinosaurIbp"`
+	Dinosaur         string `json:"dinosaur"`
+	DinosaurOperator string `json:"dinosaurOperator"`
 }
 
 type ManagedDinosaurStatus struct {
@@ -85,7 +84,7 @@ type ManagedDinosaur struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Id     string             `json:"id,omitempty"`
+	Id     string                `json:"id,omitempty"`
 	Spec   ManagedDinosaurSpec   `json:"spec,omitempty"`
 	Status ManagedDinosaurStatus `json:"status,omitempty"`
 }

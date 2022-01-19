@@ -118,74 +118,69 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 
 	var testDinosaurs = []*dbapi.DinosaurRequest{
 		{
-			ClusterID:                 testServer.ClusterID,
-			MultiAZ:                   false,
-			Name:                      mockDinosaurName1,
-			Namespace:                 "mk-1",
-			Status:                    constants2.DinosaurRequestStatusDeprovision.String(),
-			BootstrapServerHost:       bootstrapServerHost,
-			SsoClientID:               ssoClientID,
-			SsoClientSecret:           ssoSecret,
-			DesiredDinosaurVersion:    "2.7.0",
-			DesiredDinosaurIBPVersion: "2.7",
-			DesiredStrimziVersion:     "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:              types.STANDARD.String(),
+			ClusterID:                      testServer.ClusterID,
+			MultiAZ:                        false,
+			Name:                           mockDinosaurName1,
+			Namespace:                      "mk-1",
+			Status:                         constants2.DinosaurRequestStatusDeprovision.String(),
+			BootstrapServerHost:            bootstrapServerHost,
+			SsoClientID:                    ssoClientID,
+			SsoClientSecret:                ssoSecret,
+			DesiredDinosaurVersion:         "2.7.0",
+			DesiredDinosaurOperatorVersion: "dinosaur-operator.v0.23.0-0",
+			InstanceType:                   types.STANDARD.String(),
 		},
 		{
-			ClusterID:                 testServer.ClusterID,
-			MultiAZ:                   false,
-			Name:                      mockDinosaurName2,
-			Namespace:                 "mk-2",
-			Status:                    constants2.DinosaurRequestStatusProvisioning.String(),
-			BootstrapServerHost:       bootstrapServerHost,
-			SsoClientID:               ssoClientID,
-			SsoClientSecret:           ssoSecret,
-			DesiredDinosaurVersion:    "2.6.0",
-			DesiredDinosaurIBPVersion: "2.6",
-			DesiredStrimziVersion:     "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:              types.STANDARD.String(),
+			ClusterID:                      testServer.ClusterID,
+			MultiAZ:                        false,
+			Name:                           mockDinosaurName2,
+			Namespace:                      "mk-2",
+			Status:                         constants2.DinosaurRequestStatusProvisioning.String(),
+			BootstrapServerHost:            bootstrapServerHost,
+			SsoClientID:                    ssoClientID,
+			SsoClientSecret:                ssoSecret,
+			DesiredDinosaurVersion:         "2.6.0",
+			DesiredDinosaurOperatorVersion: "dinosaur-operator.v0.23.0-0",
+			InstanceType:                   types.STANDARD.String(),
 		},
 		{
-			ClusterID:                 testServer.ClusterID,
-			MultiAZ:                   false,
-			Name:                      mockDinosaurName3,
-			Namespace:                 "mk-3",
-			Status:                    constants2.DinosaurRequestStatusPreparing.String(),
-			BootstrapServerHost:       bootstrapServerHost,
-			SsoClientID:               ssoClientID,
-			SsoClientSecret:           ssoSecret,
-			DesiredDinosaurVersion:    "2.7.1",
-			DesiredDinosaurIBPVersion: "2.7",
-			DesiredStrimziVersion:     "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:              types.EVAL.String(),
+			ClusterID:                      testServer.ClusterID,
+			MultiAZ:                        false,
+			Name:                           mockDinosaurName3,
+			Namespace:                      "mk-3",
+			Status:                         constants2.DinosaurRequestStatusPreparing.String(),
+			BootstrapServerHost:            bootstrapServerHost,
+			SsoClientID:                    ssoClientID,
+			SsoClientSecret:                ssoSecret,
+			DesiredDinosaurVersion:         "2.7.1",
+			DesiredDinosaurOperatorVersion: "dinosaur-operator.v0.23.0-0",
+			InstanceType:                   types.EVAL.String(),
 		},
 		{
-			ClusterID:                 testServer.ClusterID,
-			MultiAZ:                   false,
-			Name:                      mockDinosaurName4,
-			Namespace:                 "mk-4",
-			Status:                    constants2.DinosaurRequestStatusReady.String(),
-			BootstrapServerHost:       bootstrapServerHost,
-			SsoClientID:               ssoClientID,
-			SsoClientSecret:           ssoSecret,
-			DesiredDinosaurVersion:    "2.7.2",
-			DesiredDinosaurIBPVersion: "2.7",
-			DesiredStrimziVersion:     "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:              types.STANDARD.String(),
+			ClusterID:                      testServer.ClusterID,
+			MultiAZ:                        false,
+			Name:                           mockDinosaurName4,
+			Namespace:                      "mk-4",
+			Status:                         constants2.DinosaurRequestStatusReady.String(),
+			BootstrapServerHost:            bootstrapServerHost,
+			SsoClientID:                    ssoClientID,
+			SsoClientSecret:                ssoSecret,
+			DesiredDinosaurVersion:         "2.7.2",
+			DesiredDinosaurOperatorVersion: "dinosaur-operator.v0.23.0-0",
+			InstanceType:                   types.STANDARD.String(),
 		},
 		{
-			ClusterID:                 testServer.ClusterID,
-			MultiAZ:                   false,
-			Namespace:                 "mk-5",
-			Name:                      mockDinosaurName4,
-			Status:                    constants2.DinosaurRequestStatusFailed.String(),
-			BootstrapServerHost:       bootstrapServerHost,
-			SsoClientID:               ssoClientID,
-			SsoClientSecret:           ssoSecret,
-			DesiredDinosaurVersion:    "2.7.2",
-			DesiredDinosaurIBPVersion: "2.7",
-			DesiredStrimziVersion:     "strimzi-cluster-operator.v0.23.0-0",
-			InstanceType:              types.STANDARD.String(),
+			ClusterID:                      testServer.ClusterID,
+			MultiAZ:                        false,
+			Namespace:                      "mk-5",
+			Name:                           mockDinosaurName4,
+			Status:                         constants2.DinosaurRequestStatusFailed.String(),
+			BootstrapServerHost:            bootstrapServerHost,
+			SsoClientID:                    ssoClientID,
+			SsoClientSecret:                ssoSecret,
+			DesiredDinosaurVersion:         "2.7.2",
+			DesiredDinosaurOperatorVersion: "dinosaur-operator.v0.23.0-0",
+			InstanceType:                   types.STANDARD.String(),
 		},
 	}
 
@@ -200,14 +195,13 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 	// create an additional dinosaur in failed state without "ssoSecret", "ssoClientID" and bootstrapServerHost. This indicates that the
 	// dinosaur failed in preparing state and should not be returned in the list
 	additionalDinosaur := &dbapi.DinosaurRequest{
-		ClusterID:                 testServer.ClusterID,
-		MultiAZ:                   false,
-		Name:                      mockDinosaurName4,
-		Namespace:                 "mk",
-		Status:                    constants2.DinosaurRequestStatusFailed.String(),
-		DesiredDinosaurVersion:    "2.7.2",
-		DesiredDinosaurIBPVersion: "2.7",
-		InstanceType:              types.EVAL.String(),
+		ClusterID:              testServer.ClusterID,
+		MultiAZ:                false,
+		Name:                   mockDinosaurName4,
+		Namespace:              "mk",
+		Status:                 constants2.DinosaurRequestStatusFailed.String(),
+		DesiredDinosaurVersion: "2.7.2",
+		InstanceType:           types.EVAL.String(),
 	}
 
 	if err := db.Save(additionalDinosaur).Error; err != nil {
@@ -229,7 +223,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
 				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.DinosaurRequestStatusDeprovision.String()))
 				Expect(mk.Spec.Versions.Dinosaur).To(Equal(k.DesiredDinosaurVersion))
-				Expect(mk.Spec.Versions.DinosaurIbp).To(Equal(k.DesiredDinosaurIBPVersion))
 				Expect(mk.Spec.Endpoint.Tls).To(BeNil())
 			} else {
 				t.Error("failed matching manageddinosaur id with dinosaurrequest id")
@@ -241,9 +234,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 	var readyClusters, deletedClusters []string
 	updates := map[string]private.DataPlaneDinosaurStatus{}
 	condtionsReasons := []string{
-		"StrimziUpdating",
+		"DinosaurOperatorUpdating",
 		"DinosaurUpdating",
-		"DinosaurIbpUpdating",
 	}
 	lengthConditionsReasons := len(condtionsReasons)
 	for idx, item := range list.Items {
@@ -255,9 +247,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 					Reason: condtionsReasons[idx%lengthConditionsReasons],
 				}},
 				Versions: private.DataPlaneDinosaurStatusVersions{
-					Dinosaur:    fmt.Sprintf("dinosaur-new-version-%s", item.Metadata.Annotations.MasId),
-					Strimzi:     fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.MasId),
-					DinosaurIbp: fmt.Sprintf("strimzi-ibp-new-version-%s", item.Metadata.Annotations.MasId),
+					Dinosaur:         fmt.Sprintf("dinosaur-new-version-%s", item.Metadata.Annotations.MasId),
+					DinosaurOperator: fmt.Sprintf("dinosaur-operator-new-version-%s", item.Metadata.Annotations.MasId),
 				},
 			}
 			readyClusters = append(readyClusters, item.Metadata.Annotations.MasId)
@@ -317,11 +308,9 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 		// Test version related reported fields
 		Expect(c.Status).To(Equal(constants2.DinosaurRequestStatusReady.String()))
 		Expect(c.ActualDinosaurVersion).To(Equal(sentUpdate.Versions.Dinosaur))
-		Expect(c.ActualDinosaurIBPVersion).To(Equal(sentUpdate.Versions.DinosaurIbp))
-		Expect(c.ActualStrimziVersion).To(Equal(sentUpdate.Versions.Strimzi))
-		Expect(c.StrimziUpgrading).To(Equal(sentReadyCondition == "StrimziUpdating"))
+		Expect(c.ActualDinosaurOperatorVersion).To(Equal(sentUpdate.Versions.DinosaurOperator))
+		Expect(c.DinosaurOperatorUpgrading).To(Equal(sentReadyCondition == "DinosaurOperatorUpdating"))
 		Expect(c.DinosaurUpgrading).To(Equal(sentReadyCondition == "DinosaurUpdating"))
-		Expect(c.DinosaurIBPUpgrading).To(Equal(sentReadyCondition == "DinosaurIbpUpdating"))
 
 		// TODO test when dinosaur is being upgraded when fleet shard operator side
 		// appropriately reports it
@@ -345,9 +334,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 					Status: "True",
 				}},
 				Versions: private.DataPlaneDinosaurStatusVersions{
-					Dinosaur:    fmt.Sprintf("dinosaur-new-version-%s", cid),
-					DinosaurIbp: fmt.Sprintf("dinosaur-ibp-new-version-%s", cid),
-					Strimzi:     fmt.Sprintf("strimzi-new-version-%s", cid),
+					Dinosaur:         fmt.Sprintf("dinosaur-new-version-%s", cid),
+					DinosaurOperator: fmt.Sprintf("dinosaur-operator-new-version-%s", cid),
 				},
 			},
 		})
@@ -359,9 +347,9 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 			t.Errorf("failed to find dinosaur cluster with id %s due to error: %v", cid, err)
 		}
 
-		// Make sure that the dinosaur stays in ready state and status of strimzi upgrade is false.
+		// Make sure that the dinosaur stays in ready state and status of dinosaur operator upgrade is false.
 		Expect(c.Status).To(Equal(constants2.DinosaurRequestStatusReady.String()))
-		Expect(c.StrimziUpgrading).To(BeFalse())
+		Expect(c.DinosaurOperatorUpgrading).To(BeFalse())
 	}
 }
 

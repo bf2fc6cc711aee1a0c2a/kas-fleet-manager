@@ -3,23 +3,23 @@ package constants
 import "github.com/prometheus/client_golang/prometheus"
 
 const (
-	DinosaurServerBrokertopicmetricsMessagesInTotalDesc         = "Attribute exposed for management (dinosaur.server<type=BrokerTopicMetrics, name=MessagesInPerSec, topic=__strimzi_canary><>Count)"
-	DinosaurServerBrokertopicmetricsBytesInTotalDesc            = "Attribute exposed for management (dinosaur.server<type=BrokerTopicMetrics, name=BytesInPerSec, topic=__strimzi_canary><>Count)"
-	DinosaurServerBrokertopicmetricsBytesOutTotalDesc           = "Attribute exposed for management (dinosaur.server<type=BrokerTopicMetrics, name=BytesOutPerSec, topic=__strimzi_canary><>Count)"
+	DinosaurServerBrokertopicmetricsMessagesInTotalDesc            = "Attribute exposed for management (dinosaur.server<type=BrokerTopicMetrics, name=MessagesInPerSec, topic=__dinosaur_operator_canary><>Count)"
+	DinosaurServerBrokertopicmetricsBytesInTotalDesc               = "Attribute exposed for management (dinosaur.server<type=BrokerTopicMetrics, name=BytesInPerSec, topic=__dinosaur_operator_canary><>Count)"
+	DinosaurServerBrokertopicmetricsBytesOutTotalDesc              = "Attribute exposed for management (dinosaur.server<type=BrokerTopicMetrics, name=BytesOutPerSec, topic=__dinosaur_operator_canary><>Count)"
 	DinosaurControllerDinosaurcontrollerOfflinePartitionsCountDesc = "Attribute exposed for management (dinosaur.controller<type=DinosaurController, name=OfflinePartitionsCount><>Value)"
 	DinosaurControllerDinosaurcontrollerGlobalPartitionCountDesc   = "Attribute exposed for management (dinosaur.controller<type=DinosaurController, name=GlobalPartitionCount><>Value)"
 	DinosaurTopicDinosaurLogLogSizeSumDesc                         = "Attribute exposed for management (dinosaur.log<type=Log, name=Size, topic=__consumer_offsets, partition=18><>Value)"
-	DinosaurBrokerQuotaSoftlimitbytesDesc                       = "Attribute exposed for management (io.strimzi.dinosaur.quotas<type=StorageChecker, name=SoftLimitBytes><>Value)"
-	DinosaurBrokerQuotaTotalstorageusedbytesDesc                = "Attribute exposed for management (io.strimzi.dinosaur.quotas<type=StorageChecker, name=TotalStorageUsedBytes><>Value)"
-	KubeletVolumeStatsAvailableBytesDesc                     = "Number of available bytes in the volume"
-	KubeletVolumeStatsUsedBytesDesc                          = "Number of used bytes in the volume"
-	HaproxyServerBytesInTotalDesc                            = "Current total of incoming bytes"
-	HaproxyServerBytesOutTotalDesc                           = "Current total of outgoing bytes"
-	DinosaurTopicPartitionsSumDesc                              = "Number of topic partitions for this Dinosaur"
-	DinosaurTopicPartitionsCountDesc                            = "Number of Topics for this Dinosaur"
-	DinosaurConsumergroupMembersDesc                            = "Amount of members in a consumer group"
-	DinosaurServerSocketServerMetricsConnectionCountDesc        = "Current number of total dinosaur connections"
-	DinosaurServerSocketServerMetricsConnectionCreationRateDesc = "Current rate of connections creation"
+	DinosaurBrokerQuotaSoftlimitbytesDesc                          = "Attribute exposed for management (io.dinosaur_operator.dinosaur.quotas<type=StorageChecker, name=SoftLimitBytes><>Value)"
+	DinosaurBrokerQuotaTotalstorageusedbytesDesc                   = "Attribute exposed for management (io.dinosaur_operator.dinosaur.quotas<type=StorageChecker, name=TotalStorageUsedBytes><>Value)"
+	KubeletVolumeStatsAvailableBytesDesc                           = "Number of available bytes in the volume"
+	KubeletVolumeStatsUsedBytesDesc                                = "Number of used bytes in the volume"
+	HaproxyServerBytesInTotalDesc                                  = "Current total of incoming bytes"
+	HaproxyServerBytesOutTotalDesc                                 = "Current total of outgoing bytes"
+	DinosaurTopicPartitionsSumDesc                                 = "Number of topic partitions for this Dinosaur"
+	DinosaurTopicPartitionsCountDesc                               = "Number of Topics for this Dinosaur"
+	DinosaurConsumergroupMembersDesc                               = "Amount of members in a consumer group"
+	DinosaurServerSocketServerMetricsConnectionCountDesc           = "Current number of total dinosaur connections"
+	DinosaurServerSocketServerMetricsConnectionCreationRateDesc    = "Current rate of connections creation"
 )
 
 type MetricsMetadata struct {
@@ -38,35 +38,35 @@ func GetMetricsMetaData() map[string]MetricsMetadata {
 			Help:           DinosaurServerBrokertopicmetricsMessagesInTotalDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{"topic", "statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+			VariableLabels: []string{"topic", "statefulset_kubernetes_io_pod_name", "dinosaur_operator_io_cluster"},
 		},
 		"dinosaur_server_brokertopicmetrics_bytes_in_total": {
 			Name:           "dinosaur_server_brokertopicmetrics_bytes_in_total",
 			Help:           DinosaurServerBrokertopicmetricsBytesInTotalDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{"topic", "statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+			VariableLabels: []string{"topic", "statefulset_kubernetes_io_pod_name", "dinosaur_operator_io_cluster"},
 		},
 		"dinosaur_server_brokertopicmetrics_bytes_out_total": {
 			Name:           "dinosaur_server_brokertopicmetrics_bytes_out_total",
 			Help:           DinosaurServerBrokertopicmetricsBytesOutTotalDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{"topic", "statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+			VariableLabels: []string{"topic", "statefulset_kubernetes_io_pod_name", "dinosaur_operator_io_cluster"},
 		},
 		"dinosaur_controller_dinosaurcontroller_offline_partitions_count": {
 			Name:           "dinosaur_controller_dinosaurcontroller_offline_partitions_count",
 			Help:           DinosaurControllerDinosaurcontrollerOfflinePartitionsCountDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "dinosaur_operator_io_cluster"},
 		},
 		"dinosaur_controller_dinosaurcontroller_global_partition_count": {
 			Name:           "dinosaur_controller_dinosaurcontroller_global_partition_count",
 			Help:           DinosaurControllerDinosaurcontrollerGlobalPartitionCountDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "dinosaur_operator_io_cluster"},
 		},
 		"dinosaur_topic:dinosaur_log_log_size:sum": {
 			Name:           "dinosaur_topic:dinosaur_log_log_size:sum",
@@ -80,14 +80,14 @@ func GetMetricsMetaData() map[string]MetricsMetadata {
 			Help:           DinosaurBrokerQuotaSoftlimitbytesDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "dinosaur_operator_io_cluster"},
 		},
 		"dinosaur_broker_quota_totalstorageusedbytes": {
 			Name:           "dinosaur_broker_quota_totalstorageusedbytes",
 			Help:           DinosaurBrokerQuotaTotalstorageusedbytesDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "dinosaur_operator_io_cluster"},
 		},
 		"kubelet_volume_stats_available_bytes": {
 			Name:           "kubelet_volume_stats_available_bytes",

@@ -11,7 +11,6 @@ package private
 
 // DinosaurUpdateRequest struct for DinosaurUpdateRequest
 type DinosaurUpdateRequest struct {
-	StrimziVersion     string `json:"strimzi_version,omitempty"`
-	DinosaurVersion    string `json:"dinosaur_version,omitempty"`
-	DinosaurIbpVersion string `json:"dinosaur_ibp_version,omitempty"`
+	DinosaurOperatorVersion string `json:"dinosaur_operator_version,omitempty"`
+	DinosaurVersion         string `json:"dinosaur_version,omitempty"`
 }

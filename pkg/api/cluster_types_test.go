@@ -6,62 +6,62 @@ import (
 	"testing"
 )
 
-func TestGetAvailableStrimziVersions(t *testing.T) {
+func TestGetAvailableDinosaurOperatorVersions(t *testing.T) {
 	tests := []struct {
 		name    string
 		cluster func() *Cluster
-		want    []StrimziVersion
+		want    []DinosaurOperatorVersion
 		wantErr bool
 	}{
 		{
-			name: "When cluster has a non empty list of available strimzi versions those are returned",
+			name: "When cluster has a non empty list of available dinosaur operator versions those are returned",
 			cluster: func() *Cluster {
-				inputStrimziVersions := []StrimziVersion{
-					StrimziVersion{Version: "v3", Ready: true},
-					StrimziVersion{Version: "v6", Ready: false},
-					StrimziVersion{Version: "v7", Ready: true},
+				inputDinosaurOperatorVersions := []DinosaurOperatorVersion{
+					DinosaurOperatorVersion{Version: "v3", Ready: true},
+					DinosaurOperatorVersion{Version: "v6", Ready: false},
+					DinosaurOperatorVersion{Version: "v7", Ready: true},
 				}
-				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersions)
+				inputDinosaurOperatorVersionsJSON, err := json.Marshal(inputDinosaurOperatorVersions)
 				if err != nil {
 					panic(err)
 				}
-				res := Cluster{AvailableStrimziVersions: inputStrimziVersionsJSON}
+				res := Cluster{AvailableDinosaurOperatorVersions: inputDinosaurOperatorVersionsJSON}
 				return &res
 			},
-			want: []StrimziVersion{
-				StrimziVersion{Version: "v3", Ready: true},
-				StrimziVersion{Version: "v6", Ready: false},
-				StrimziVersion{Version: "v7", Ready: true},
+			want: []DinosaurOperatorVersion{
+				DinosaurOperatorVersion{Version: "v3", Ready: true},
+				DinosaurOperatorVersion{Version: "v6", Ready: false},
+				DinosaurOperatorVersion{Version: "v7", Ready: true},
 			},
 			wantErr: false,
 		},
 		{
-			name: "When cluster has an empty list of available strimzi the empty list is returned",
+			name: "When cluster has an empty list of available dinosaur operator the empty list is returned",
 			cluster: func() *Cluster {
-				inputStrimziVersions := []StrimziVersion{}
-				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersions)
+				inputDinosaurOperatorVersions := []DinosaurOperatorVersion{}
+				inputDinosaurOperatorVersionsJSON, err := json.Marshal(inputDinosaurOperatorVersions)
 				if err != nil {
 					panic(err)
 				}
-				res := Cluster{AvailableStrimziVersions: inputStrimziVersionsJSON}
+				res := Cluster{AvailableDinosaurOperatorVersions: inputDinosaurOperatorVersionsJSON}
 				return &res
 			},
-			want:    []StrimziVersion{},
+			want:    []DinosaurOperatorVersion{},
 			wantErr: false,
 		},
 		{
-			name: "When cluster has a nil list of available strimzi the empty list is returned",
+			name: "When cluster has a nil list of available dinosaur operator the empty list is returned",
 			cluster: func() *Cluster {
-				res := Cluster{AvailableStrimziVersions: nil}
+				res := Cluster{AvailableDinosaurOperatorVersions: nil}
 				return &res
 			},
-			want:    []StrimziVersion{},
+			want:    []DinosaurOperatorVersion{},
 			wantErr: false,
 		},
 		{
 			name: "When cluster has an invalid JSON an error is returned",
 			cluster: func() *Cluster {
-				res := Cluster{AvailableStrimziVersions: []byte(`"keyone": valueone`)}
+				res := Cluster{AvailableDinosaurOperatorVersions: []byte(`"keyone": valueone`)}
 				return &res
 			},
 			wantErr: true,
@@ -70,7 +70,7 @@ func TestGetAvailableStrimziVersions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := tt.cluster().GetAvailableStrimziVersions()
+			res, err := tt.cluster().GetAvailableDinosaurOperatorVersions()
 			gotErr := err != nil
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("wantErr: %v got: %v", tt.wantErr, err)
@@ -82,61 +82,61 @@ func TestGetAvailableStrimziVersions(t *testing.T) {
 	}
 }
 
-func TestGetAvailableAndReadyStrimziVersions(t *testing.T) {
+func TestGetAvailableAndReadyDinosaurOperatorVersions(t *testing.T) {
 	tests := []struct {
 		name    string
 		cluster func() *Cluster
-		want    []StrimziVersion
+		want    []DinosaurOperatorVersion
 		wantErr bool
 	}{
 		{
-			name: "When cluster has a non empty list of available strimzi versions those ready returned",
+			name: "When cluster has a non empty list of available dinosaur operator versions those ready returned",
 			cluster: func() *Cluster {
-				inputStrimziVersions := []StrimziVersion{
-					StrimziVersion{Version: "v3", Ready: true},
-					StrimziVersion{Version: "v6", Ready: false},
-					StrimziVersion{Version: "v7", Ready: true},
+				inputDinosaurOperatorVersions := []DinosaurOperatorVersion{
+					DinosaurOperatorVersion{Version: "v3", Ready: true},
+					DinosaurOperatorVersion{Version: "v6", Ready: false},
+					DinosaurOperatorVersion{Version: "v7", Ready: true},
 				}
-				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersions)
+				inputDinosaurOperatorVersionsJSON, err := json.Marshal(inputDinosaurOperatorVersions)
 				if err != nil {
 					panic(err)
 				}
-				res := Cluster{AvailableStrimziVersions: inputStrimziVersionsJSON}
+				res := Cluster{AvailableDinosaurOperatorVersions: inputDinosaurOperatorVersionsJSON}
 				return &res
 			},
-			want: []StrimziVersion{
-				StrimziVersion{Version: "v3", Ready: true},
-				StrimziVersion{Version: "v7", Ready: true},
+			want: []DinosaurOperatorVersion{
+				DinosaurOperatorVersion{Version: "v3", Ready: true},
+				DinosaurOperatorVersion{Version: "v7", Ready: true},
 			},
 			wantErr: false,
 		},
 		{
-			name: "When cluster has an empty list of available strimzi the empty list is returned",
+			name: "When cluster has an empty list of available dinosaur operator the empty list is returned",
 			cluster: func() *Cluster {
-				inputStrimziVersions := []StrimziVersion{}
-				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersions)
+				inputDinosaurOperatorVersions := []DinosaurOperatorVersion{}
+				inputDinosaurOperatorVersionsJSON, err := json.Marshal(inputDinosaurOperatorVersions)
 				if err != nil {
 					panic(err)
 				}
-				res := Cluster{AvailableStrimziVersions: inputStrimziVersionsJSON}
+				res := Cluster{AvailableDinosaurOperatorVersions: inputDinosaurOperatorVersionsJSON}
 				return &res
 			},
-			want:    []StrimziVersion{},
+			want:    []DinosaurOperatorVersion{},
 			wantErr: false,
 		},
 		{
-			name: "When cluster has a nil list of available strimzi the empty list is returned",
+			name: "When cluster has a nil list of available dinosaur operator the empty list is returned",
 			cluster: func() *Cluster {
-				res := Cluster{AvailableStrimziVersions: nil}
+				res := Cluster{AvailableDinosaurOperatorVersions: nil}
 				return &res
 			},
-			want:    []StrimziVersion{},
+			want:    []DinosaurOperatorVersion{},
 			wantErr: false,
 		},
 		{
 			name: "When cluster has an invalid JSON an error is returned",
 			cluster: func() *Cluster {
-				res := Cluster{AvailableStrimziVersions: []byte(`"keyone": valueone`)}
+				res := Cluster{AvailableDinosaurOperatorVersions: []byte(`"keyone": valueone`)}
 				return &res
 			},
 			wantErr: true,
@@ -145,7 +145,7 @@ func TestGetAvailableAndReadyStrimziVersions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := tt.cluster().GetAvailableAndReadyStrimziVersions()
+			res, err := tt.cluster().GetAvailableAndReadyDinosaurOperatorVersions()
 			gotErr := err != nil
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("wantErr: %v got: %v", tt.wantErr, err)
@@ -157,142 +157,118 @@ func TestGetAvailableAndReadyStrimziVersions(t *testing.T) {
 	}
 }
 
-func TestSetAvailableStrimziVersions(t *testing.T) {
+func TestSetAvailableDinosaurOperatorVersions(t *testing.T) {
 	tests := []struct {
-		name                 string
-		inputStrimziVersions []StrimziVersion
-		want                 []StrimziVersion
-		wantErr              bool
+		name                          string
+		inputDinosaurOperatorVersions []DinosaurOperatorVersion
+		want                          []DinosaurOperatorVersion
+		wantErr                       bool
 	}{
 		{
-			name: "When setting a non empty ordered list of strimzi versions that list is stored as is",
-			inputStrimziVersions: []StrimziVersion{
-				StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: true},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: false},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: true},
+			name: "When setting a non empty ordered list of dinosaur operator versions that list is stored as is",
+			inputDinosaurOperatorVersions: []DinosaurOperatorVersion{
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.3.0.0-0", Ready: true},
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.6.0.0-0", Ready: false},
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.7.0.0-0", Ready: true},
 			},
-			want: []StrimziVersion{
-				StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: true},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: false},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: true},
-			},
-			wantErr: false,
-		},
-		{
-			name: "When setting a non empty unordered list of strimzi versions that list is stored in semver ascending order",
-			inputStrimziVersions: []StrimziVersion{
-				StrimziVersion{Version: "strimzi-cluster-operator-v.5.0.0-0", Ready: true},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
-			},
-			want: []StrimziVersion{
-				StrimziVersion{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.5.0.0-0", Ready: true},
+			want: []DinosaurOperatorVersion{
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.3.0.0-0", Ready: true},
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.6.0.0-0", Ready: false},
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.7.0.0-0", Ready: true},
 			},
 			wantErr: false,
 		},
 		{
-			name: "When setting a non empty unordered list of strimzi versions that list is stored in semver ascending order (case 2)",
-			inputStrimziVersions: []StrimziVersion{
-				StrimziVersion{Version: "strimzi-cluster-operator-v.5.10.0-3", Ready: true},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.5.8.0-9", Ready: false},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
+			name: "When setting a non empty unordered list of dinosaur operator versions that list is stored in semver ascending order",
+			inputDinosaurOperatorVersions: []DinosaurOperatorVersion{
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.5.0.0-0", Ready: true},
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.3.0.0-0", Ready: false},
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.2.0.0-0", Ready: true},
 			},
-			want: []StrimziVersion{
-				StrimziVersion{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.5.8.0-9", Ready: false},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.5.10.0-3", Ready: true},
+			want: []DinosaurOperatorVersion{
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.2.0.0-0", Ready: true},
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.3.0.0-0", Ready: false},
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.5.0.0-0", Ready: true},
 			},
 			wantErr: false,
 		},
 		{
-			name:                 "When setting an empty list of strimzi versions that list is stored as the empty list",
-			inputStrimziVersions: []StrimziVersion{},
-			want:                 []StrimziVersion{},
-			wantErr:              false,
+			name: "When setting a non empty unordered list of dinosaur operator versions that list is stored in semver ascending order (case 2)",
+			inputDinosaurOperatorVersions: []DinosaurOperatorVersion{
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.5.10.0-3", Ready: true},
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.5.8.0-9", Ready: false},
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.2.0.0-0", Ready: true},
+			},
+			want: []DinosaurOperatorVersion{
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.2.0.0-0", Ready: true},
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.5.8.0-9", Ready: false},
+				DinosaurOperatorVersion{Version: "dinosaur-operator-v.5.10.0-3", Ready: true},
+			},
+			wantErr: false,
 		},
 		{
-			name:                 "When setting a nil list of strimzi versions that list is stored as the empty list",
-			inputStrimziVersions: nil,
-			want:                 []StrimziVersion{},
-			wantErr:              false,
+			name:                          "When setting an empty list of dinosaur operator versions that list is stored as the empty list",
+			inputDinosaurOperatorVersions: []DinosaurOperatorVersion{},
+			want:                          []DinosaurOperatorVersion{},
+			wantErr:                       false,
 		},
 		{
-			name: "Dinosaur and Dinosaur IBP versions are stored and in sorted order",
-			inputStrimziVersions: []StrimziVersion{
-				StrimziVersion{
-					Version: "strimzi-cluster-operator-v.5.10.0-3",
+			name:                          "When setting a nil list of dinosaur operator versions that list is stored as the empty list",
+			inputDinosaurOperatorVersions: nil,
+			want:                          []DinosaurOperatorVersion{},
+			wantErr:                       false,
+		},
+		{
+			name: "Dinosaur versions are stored and in sorted order",
+			inputDinosaurOperatorVersions: []DinosaurOperatorVersion{
+				DinosaurOperatorVersion{
+					Version: "dinosaur-operator-v.5.10.0-3",
 					Ready:   true,
 					DinosaurVersions: []DinosaurVersion{
 						DinosaurVersion{Version: "2.7.5"},
 						DinosaurVersion{Version: "2.7.3"},
 					},
-					DinosaurIBPVersions: []DinosaurIBPVersion{
-						DinosaurIBPVersion{Version: "2.8"},
-						DinosaurIBPVersion{Version: "2.7"},
-					},
 				},
-				StrimziVersion{
-					Version: "strimzi-cluster-operator-v.5.8.0-9",
+				DinosaurOperatorVersion{
+					Version: "dinosaur-operator-v.5.8.0-9",
 					Ready:   false,
 					DinosaurVersions: []DinosaurVersion{
 						DinosaurVersion{Version: "2.9.4"},
 						DinosaurVersion{Version: "2.2.1"},
 					},
-					DinosaurIBPVersions: []DinosaurIBPVersion{
-						DinosaurIBPVersion{Version: "2.5"},
-						DinosaurIBPVersion{Version: "2.6"},
-					},
 				},
-				StrimziVersion{
-					Version: "strimzi-cluster-operator-v.2.0.0-0",
+				DinosaurOperatorVersion{
+					Version: "dinosaur-operator-v.2.0.0-0",
 					Ready:   true,
 					DinosaurVersions: []DinosaurVersion{
 						DinosaurVersion{Version: "4.5.6"},
 						DinosaurVersion{Version: "1.2.3"},
-					},
-					DinosaurIBPVersions: []DinosaurIBPVersion{
-						DinosaurIBPVersion{Version: "2.3"},
-						DinosaurIBPVersion{Version: "2.2"},
 					},
 				},
 			},
-			want: []StrimziVersion{
-				StrimziVersion{
-					Version: "strimzi-cluster-operator-v.2.0.0-0",
+			want: []DinosaurOperatorVersion{
+				DinosaurOperatorVersion{
+					Version: "dinosaur-operator-v.2.0.0-0",
 					Ready:   true,
 					DinosaurVersions: []DinosaurVersion{
 						DinosaurVersion{Version: "1.2.3"},
 						DinosaurVersion{Version: "4.5.6"},
 					},
-					DinosaurIBPVersions: []DinosaurIBPVersion{
-						DinosaurIBPVersion{Version: "2.2"},
-						DinosaurIBPVersion{Version: "2.3"},
-					},
 				},
-				StrimziVersion{
-					Version: "strimzi-cluster-operator-v.5.8.0-9",
+				DinosaurOperatorVersion{
+					Version: "dinosaur-operator-v.5.8.0-9",
 					Ready:   false,
 					DinosaurVersions: []DinosaurVersion{
 						DinosaurVersion{Version: "2.2.1"},
 						DinosaurVersion{Version: "2.9.4"},
 					},
-					DinosaurIBPVersions: []DinosaurIBPVersion{
-						DinosaurIBPVersion{Version: "2.5"},
-						DinosaurIBPVersion{Version: "2.6"},
-					},
 				},
-				StrimziVersion{
-					Version: "strimzi-cluster-operator-v.5.10.0-3",
+				DinosaurOperatorVersion{
+					Version: "dinosaur-operator-v.5.10.0-3",
 					Ready:   true,
 					DinosaurVersions: []DinosaurVersion{
 						DinosaurVersion{Version: "2.7.3"},
 						DinosaurVersion{Version: "2.7.5"},
-					},
-					DinosaurIBPVersions: []DinosaurIBPVersion{
-						DinosaurIBPVersion{Version: "2.7"},
-						DinosaurIBPVersion{Version: "2.8"},
 					},
 				},
 			},
@@ -303,7 +279,7 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cluster := &Cluster{}
-			err := cluster.SetAvailableStrimziVersions(tt.inputStrimziVersions)
+			err := cluster.SetAvailableDinosaurOperatorVersions(tt.inputDinosaurOperatorVersions)
 			gotErr := err != nil
 			errResultTestFailed := false
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
@@ -312,8 +288,8 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 			}
 
 			if !errResultTestFailed {
-				var got []StrimziVersion
-				err := json.Unmarshal(cluster.AvailableStrimziVersions, &got)
+				var got []DinosaurOperatorVersion
+				err := json.Unmarshal(cluster.AvailableDinosaurOperatorVersions, &got)
 				if err != nil {
 					panic(err)
 				}
@@ -328,81 +304,81 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 
 func TestCompare(t *testing.T) {
 	tests := []struct {
-		name                 string
-		inputStrimziVersion1 StrimziVersion
-		inputStrimziVersion2 StrimziVersion
-		want                 int
-		wantErr              bool
+		name                          string
+		inputDinosaurOperatorVersion1 DinosaurOperatorVersion
+		inputDinosaurOperatorVersion2 DinosaurOperatorVersion
+		want                          int
+		wantErr                       bool
 	}{
 		{
-			name:                 "When inputStrimziVersion1 is smaller than inputStrimziVersion2 -1 is returned",
-			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: true},
-			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: false},
-			want:                 -1,
-			wantErr:              false,
+			name:                          "When inputDinosaurOperatorVersion1 is smaller than inputDinosaurOperatorVersion2 -1 is returned",
+			inputDinosaurOperatorVersion1: DinosaurOperatorVersion{Version: "dinosaur-operator-v.3.0.0-0", Ready: true},
+			inputDinosaurOperatorVersion2: DinosaurOperatorVersion{Version: "dinosaur-operator-v.6.0.0-0", Ready: false},
+			want:                          -1,
+			wantErr:                       false,
 		},
 		{
-			name:                 "When inputStrimziVersion1 is equal than inputStrimziVersion2 0 is returned",
-			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: true},
-			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
-			want:                 0,
-			wantErr:              false,
+			name:                          "When inputDinosaurOperatorVersion1 is equal than inputDinosaurOperatorVersion2 0 is returned",
+			inputDinosaurOperatorVersion1: DinosaurOperatorVersion{Version: "dinosaur-operator-v.3.0.0-0", Ready: true},
+			inputDinosaurOperatorVersion2: DinosaurOperatorVersion{Version: "dinosaur-operator-v.3.0.0-0", Ready: false},
+			want:                          0,
+			wantErr:                       false,
 		},
 		{
-			name:                 "When inputStrimziVersion1 is bigger than inputStrimziVersion2 1 is returned",
-			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: true},
-			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
-			want:                 1,
-			wantErr:              false,
+			name:                          "When inputDinosaurOperatorVersion1 is bigger than inputDinosaurOperatorVersion2 1 is returned",
+			inputDinosaurOperatorVersion1: DinosaurOperatorVersion{Version: "dinosaur-operator-v.6.0.0-0", Ready: true},
+			inputDinosaurOperatorVersion2: DinosaurOperatorVersion{Version: "dinosaur-operator-v.3.0.0-0", Ready: false},
+			want:                          1,
+			wantErr:                       false,
 		},
 		{
-			name:                 "Check that semver-level comparison is performed",
-			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.6.3.10-6", Ready: true},
-			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.6.3.8-9", Ready: false},
-			want:                 1,
-			wantErr:              false,
+			name:                          "Check that semver-level comparison is performed",
+			inputDinosaurOperatorVersion1: DinosaurOperatorVersion{Version: "dinosaur-operator-v.6.3.10-6", Ready: true},
+			inputDinosaurOperatorVersion2: DinosaurOperatorVersion{Version: "dinosaur-operator-v.6.3.8-9", Ready: false},
+			want:                          1,
+			wantErr:                       false,
 		},
 		{
-			name:                 "When inputStrimziVersion1 is empty an error is returned",
-			inputStrimziVersion1: StrimziVersion{Version: "", Ready: true},
-			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
-			wantErr:              true,
+			name:                          "When inputDinosaurOperatorVersion1 is empty an error is returned",
+			inputDinosaurOperatorVersion1: DinosaurOperatorVersion{Version: "", Ready: true},
+			inputDinosaurOperatorVersion2: DinosaurOperatorVersion{Version: "dinosaur-operator-v.3.0.0-0", Ready: false},
+			wantErr:                       true,
 		},
 		{
-			name:                 "When inputStrimziVersion2 is empty an error is returned",
-			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: true},
-			inputStrimziVersion2: StrimziVersion{Version: "", Ready: false},
-			wantErr:              true,
+			name:                          "When inputDinosaurOperatorVersion2 is empty an error is returned",
+			inputDinosaurOperatorVersion1: DinosaurOperatorVersion{Version: "dinosaur-operator-v.6.0.0-0", Ready: true},
+			inputDinosaurOperatorVersion2: DinosaurOperatorVersion{Version: "", Ready: false},
+			wantErr:                       true,
 		},
 		{
-			name:                 "When inputStrimziVersion1 has an invalid semver version format an error is returned",
-			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.6invalid.0.0-0", Ready: true},
-			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: false},
-			wantErr:              true,
+			name:                          "When inputDinosaurOperatorVersion1 has an invalid semver version format an error is returned",
+			inputDinosaurOperatorVersion1: DinosaurOperatorVersion{Version: "dinosaur-operator-v.6invalid.0.0-0", Ready: true},
+			inputDinosaurOperatorVersion2: DinosaurOperatorVersion{Version: "dinosaur-operator-v.7.0.0-0", Ready: false},
+			wantErr:                       true,
 		},
 		{
-			name:                 "When inputStrimziVersion1 has an invalid expected format an error is returned",
-			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0", Ready: true},
-			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: false},
-			wantErr:              true,
+			name:                          "When inputDinosaurOperatorVersion1 has an invalid expected format an error is returned",
+			inputDinosaurOperatorVersion1: DinosaurOperatorVersion{Version: "dinosaur-operator-v.6.0.0", Ready: true},
+			inputDinosaurOperatorVersion2: DinosaurOperatorVersion{Version: "dinosaur-operator-v.7.0.0-0", Ready: false},
+			wantErr:                       true,
 		},
 		{
-			name:                 "When inputStrimziVersion2 has an invalid semver version format an error is returned",
-			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: true},
-			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.6invalid.0.0-0", Ready: false},
-			wantErr:              true,
+			name:                          "When inputDinosaurOperatorVersion2 has an invalid semver version format an error is returned",
+			inputDinosaurOperatorVersion1: DinosaurOperatorVersion{Version: "dinosaur-operator-v.6.0.0-0", Ready: true},
+			inputDinosaurOperatorVersion2: DinosaurOperatorVersion{Version: "dinosaur-operator-v.6invalid.0.0-0", Ready: false},
+			wantErr:                       true,
 		},
 		{
-			name:                 "When inputStrimziVersion2 has an invalid expected format an error is returned",
-			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: true},
-			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0", Ready: true},
-			wantErr:              true,
+			name:                          "When inputDinosaurOperatorVersion2 has an invalid expected format an error is returned",
+			inputDinosaurOperatorVersion1: DinosaurOperatorVersion{Version: "dinosaur-operator-v.7.0.0-0", Ready: true},
+			inputDinosaurOperatorVersion2: DinosaurOperatorVersion{Version: "dinosaur-operator-v.6.0.0", Ready: true},
+			wantErr:                       true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.inputStrimziVersion1.Compare(tt.inputStrimziVersion2)
+			got, err := tt.inputDinosaurOperatorVersion1.Compare(tt.inputDinosaurOperatorVersion2)
 			gotErr := err != nil
 			errResultTestFailed := false
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
@@ -419,24 +395,24 @@ func TestCompare(t *testing.T) {
 	}
 }
 
-func Test_StrimziVersionsDeepSort(t *testing.T) {
+func Test_DinosaurOperatorVersionsDeepSort(t *testing.T) {
 	type args struct {
-		versions []StrimziVersion
+		versions []DinosaurOperatorVersion
 	}
 
 	tests := []struct {
 		name    string
 		args    args
 		cluster func() *Cluster
-		want    []StrimziVersion
+		want    []DinosaurOperatorVersion
 		wantErr bool
 	}{
 		{
 			name: "When versions to sort is empty result is empty",
 			args: args{
-				versions: []StrimziVersion{},
+				versions: []DinosaurOperatorVersion{},
 			},
-			want: []StrimziVersion{},
+			want: []DinosaurOperatorVersion{},
 		},
 		{
 			name: "When versions to sort is nil result is nil",
@@ -446,95 +422,65 @@ func Test_StrimziVersionsDeepSort(t *testing.T) {
 			want: nil,
 		},
 		{
-			name: "When one of the strimzi versions does not follow semver an error is returned",
+			name: "When one of the dinosaur operator versions does not follow semver an error is returned",
 			args: args{
-				[]StrimziVersion{StrimziVersion{Version: "strimzi-cluster-operator-v.nonsemver243-0"}, StrimziVersion{Version: "strimzi-cluster-operator-v.2.5.6-0"}},
+				[]DinosaurOperatorVersion{DinosaurOperatorVersion{Version: "dinosaur-operator-v.nonsemver243-0"}, DinosaurOperatorVersion{Version: "dinosaur-operator-v.2.5.6-0"}},
 			},
 			wantErr: true,
 		},
 		{
 			name: "All different versions are deeply sorted",
 			args: args{
-				versions: []StrimziVersion{
-					StrimziVersion{
-						Version: "strimzi-cluster-operator-v.2.7.5-0",
+				versions: []DinosaurOperatorVersion{
+					DinosaurOperatorVersion{
+						Version: "dinosaur-operator-v.2.7.5-0",
 						DinosaurVersions: []DinosaurVersion{
 							DinosaurVersion{Version: "1.5.8"},
 							DinosaurVersion{Version: "0.7.1"},
 							DinosaurVersion{Version: "1.5.1"},
 						},
-						DinosaurIBPVersions: []DinosaurIBPVersion{
-							DinosaurIBPVersion{Version: "2.8"},
-							DinosaurIBPVersion{Version: "1.2"},
-							DinosaurIBPVersion{Version: "2.4"},
-						},
 					},
-					StrimziVersion{
-						Version: "strimzi-cluster-operator-v.2.7.3-0",
+					DinosaurOperatorVersion{
+						Version: "dinosaur-operator-v.2.7.3-0",
 						DinosaurVersions: []DinosaurVersion{
 							DinosaurVersion{Version: "1.0.0"},
 							DinosaurVersion{Version: "2.0.0"},
 							DinosaurVersion{Version: "5.0.0"},
 						},
-						DinosaurIBPVersions: []DinosaurIBPVersion{
-							DinosaurIBPVersion{Version: "4.0"},
-							DinosaurIBPVersion{Version: "2.0"},
-							DinosaurIBPVersion{Version: "3.5"},
-						},
 					},
-					StrimziVersion{
-						Version: "strimzi-cluster-operator-v.2.5.2-0",
+					DinosaurOperatorVersion{
+						Version: "dinosaur-operator-v.2.5.2-0",
 						DinosaurVersions: []DinosaurVersion{
 							DinosaurVersion{Version: "2.6.1"},
 							DinosaurVersion{Version: "5.7.2"},
 							DinosaurVersion{Version: "2.3.5"},
 						},
-						DinosaurIBPVersions: []DinosaurIBPVersion{
-							DinosaurIBPVersion{Version: "1.2"},
-							DinosaurIBPVersion{Version: "1.1"},
-							DinosaurIBPVersion{Version: "5.1"},
-						},
 					},
 				},
 			},
-			want: []StrimziVersion{
-				StrimziVersion{
-					Version: "strimzi-cluster-operator-v.2.5.2-0",
+			want: []DinosaurOperatorVersion{
+				DinosaurOperatorVersion{
+					Version: "dinosaur-operator-v.2.5.2-0",
 					DinosaurVersions: []DinosaurVersion{
 						DinosaurVersion{Version: "2.3.5"},
 						DinosaurVersion{Version: "2.6.1"},
 						DinosaurVersion{Version: "5.7.2"},
 					},
-					DinosaurIBPVersions: []DinosaurIBPVersion{
-						DinosaurIBPVersion{Version: "1.1"},
-						DinosaurIBPVersion{Version: "1.2"},
-						DinosaurIBPVersion{Version: "5.1"},
-					},
 				},
-				StrimziVersion{
-					Version: "strimzi-cluster-operator-v.2.7.3-0",
+				DinosaurOperatorVersion{
+					Version: "dinosaur-operator-v.2.7.3-0",
 					DinosaurVersions: []DinosaurVersion{
 						DinosaurVersion{Version: "1.0.0"},
 						DinosaurVersion{Version: "2.0.0"},
 						DinosaurVersion{Version: "5.0.0"},
 					},
-					DinosaurIBPVersions: []DinosaurIBPVersion{
-						DinosaurIBPVersion{Version: "2.0"},
-						DinosaurIBPVersion{Version: "3.5"},
-						DinosaurIBPVersion{Version: "4.0"},
-					},
 				},
-				StrimziVersion{
-					Version: "strimzi-cluster-operator-v.2.7.5-0",
+				DinosaurOperatorVersion{
+					Version: "dinosaur-operator-v.2.7.5-0",
 					DinosaurVersions: []DinosaurVersion{
 						DinosaurVersion{Version: "0.7.1"},
 						DinosaurVersion{Version: "1.5.1"},
 						DinosaurVersion{Version: "1.5.8"},
-					},
-					DinosaurIBPVersions: []DinosaurIBPVersion{
-						DinosaurIBPVersion{Version: "1.2"},
-						DinosaurIBPVersion{Version: "2.4"},
-						DinosaurIBPVersion{Version: "2.8"},
 					},
 				},
 			},
@@ -543,7 +489,7 @@ func Test_StrimziVersionsDeepSort(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := StrimziVersionsDeepSort(tt.args.versions)
+			got, err := DinosaurOperatorVersionsDeepSort(tt.args.versions)
 			gotErr := err != nil
 			errResultTestFailed := false
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
