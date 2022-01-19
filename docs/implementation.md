@@ -38,13 +38,14 @@ ocm token
 ## Dinosaur Workers
 
 The Dinosaur Workers are responsible for reconciling Dinosaurs as requested by an end-user. 
-There are currently six dinosaur workers:
+There are currently 7 dinosaur workers:
 - `dinosaur_mgr.go` responsible for reconciling dinosaur metrics and performing cleanup of trial dinosaurs, and cleanup of dinosaurs of denied owners. 
 - `deleting_dinosaur_mgr.go` responsible for handling the deletion of dinosaurs e.g removing resources like AWS Route53 entry, Keycloak secrets client
 - `accepted_dinosaur_mgr.go` responsible for checking if user is within Quota before provisioning a dinosaur. Afterwards, it will periodically reconcile on all pending Dinosaur resources, attempt to find a valid OpenShift cluster to fit it's requirements (cloud provider, region, etc.) and provision a Dinosaur instance to the cluster. Once a suitable Dataplane cluster has been found, we'll update the status of the Dinosaur resource to reflect it's current progress. 
 - `preparing_dinosaur_mgr.go` responsible for creating external resources e.g AWS Route53 DNS, Keycloak authentication secrets 
 - `provisioned_dinosaur_mgr.go` responsible for checking if a provisioned dinosaur is ready as reported by the fleetshard-operator
-- `ready_dinosaur_mgr` responsible for reconciling external resources of a ready dinosaur e.g keycloak client and secret
+- `ready_dinosaur_mgr.go` responsible for reconciling external resources of a ready dinosaurs
+- `dinosaurs_routes_cname_mgr.go` responsible for reconciliation of DNS records for each dinosaurs' routes.
 
 Once the Dinosaur Workers have set up a Dinosaur resource, the status of the Dinosaur request will be `ready`.
 If provisioning of a dinosaur fails, the status will be `failed` and a failed reason will be capture in the database. 

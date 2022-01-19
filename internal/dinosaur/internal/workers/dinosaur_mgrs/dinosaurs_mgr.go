@@ -28,9 +28,9 @@ var dinosaurMetricsStatuses = []constants2.DinosaurStatus{
 // DinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type DinosaurManager struct {
 	workers.BaseWorker
-	dinosaurService            services.DinosaurService
+	dinosaurService         services.DinosaurService
 	accessControlListConfig *acl.AccessControlListConfig
-	dinosaurConfig             *config.DinosaurConfig
+	dinosaurConfig          *config.DinosaurConfig
 }
 
 // NewDinosaurManager creates a new dinosaur manager
@@ -43,9 +43,9 @@ func NewDinosaurManager(dinosaurService services.DinosaurService, accessControlL
 				SignalBus: bus,
 			},
 		},
-		dinosaurService:            dinosaurService,
+		dinosaurService:         dinosaurService,
 		accessControlListConfig: accessControlList,
-		dinosaurConfig:             dinosaur,
+		dinosaurConfig:          dinosaur,
 	}
 }
 
@@ -86,7 +86,7 @@ func (k *DinosaurManager) Reconcile() []error {
 		}
 	}
 
-	// cleaning up expired qdinosaurs
+	// cleaning up expired dinosaurs
 	dinosaurConfig := k.dinosaurConfig
 	if dinosaurConfig.DinosaurLifespan.EnableDeletionOfExpiredDinosaur {
 		glog.Infoln("deprovisioning expired dinosaurs")

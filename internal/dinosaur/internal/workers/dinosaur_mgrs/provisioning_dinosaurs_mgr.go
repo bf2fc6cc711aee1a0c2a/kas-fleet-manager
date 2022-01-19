@@ -1,11 +1,12 @@
 package dinosaur_mgrs
 
 import (
+	"time"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
-	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/workers"
@@ -17,7 +18,7 @@ import (
 // ProvisioningDinosaurManager represents a dinosaur manager that periodically reconciles dinosaur requests
 type ProvisioningDinosaurManager struct {
 	workers.BaseWorker
-	dinosaurService         services.DinosaurService
+	dinosaurService      services.DinosaurService
 	observatoriumService services.ObservatoriumService
 }
 
@@ -31,7 +32,7 @@ func NewProvisioningDinosaurManager(dinosaurService services.DinosaurService, ob
 				SignalBus: bus,
 			},
 		},
-		dinosaurService:         dinosaurService,
+		dinosaurService:      dinosaurService,
 		observatoriumService: observatoriumService,
 	}
 }
@@ -63,6 +64,7 @@ func (k *ProvisioningDinosaurManager) Reconcile() []error {
 	for _, dinosaur := range provisioningDinosaurs {
 		glog.V(10).Infof("provisioning dinosaur id = %s", dinosaur.ID)
 		metrics.UpdateDinosaurRequestsStatusSinceCreatedMetric(constants2.DinosaurRequestStatusProvisioning, dinosaur.ID, dinosaur.ClusterID, time.Since(dinosaur.CreatedAt))
+		// TODO implement additional reconcilation logic for provisioning dinosaurs
 	}
 
 	return encounteredErrors
