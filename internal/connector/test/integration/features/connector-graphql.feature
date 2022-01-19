@@ -69,7 +69,9 @@ Feature: create a connector
           },
           "kafka": {
             "id":"mykafka",
-            "url": "kafka.hostname",
+            "url": "kafka.hostname"
+          },
+          "service_account": {
             "client_id": "myclient",
             "client_secret": "test"
           },
@@ -131,10 +133,12 @@ Feature: create a connector
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
           "id":"mykafka",
-          "url": "kafka.hostname",
-          "client_id": "myclient",
-          "client_secret": "test"
+          "url": "kafka.hostname"
         },
+          "service_account": {
+            "client_id": "myclient",
+            "client_secret": "test"
+          },
         "connector": "{\"aws_queue_name_or_arn\": \"test\",\"aws_access_key\": \"test\",\"aws_secret_key\": \"test\",\"aws_region\": \"east\", \"kafka_topic\": \"test\"}"
       }
       """

@@ -17,6 +17,7 @@ type Connector struct {
 	DeploymentLocation DeploymentLocation               `json:"deployment_location"`
 	DesiredState       ConnectorDesiredState            `json:"desired_state"`
 	Kafka              KafkaConnectionSettings          `json:"kafka"`
+	ServiceAccount     ServiceAccount                   `json:"service_account"`
 	SchemaRegistry     SchemaRegistryConnectionSettings `json:"schema_registry,omitempty"`
 	Connector          map[string]interface{}           `json:"connector"`
 }

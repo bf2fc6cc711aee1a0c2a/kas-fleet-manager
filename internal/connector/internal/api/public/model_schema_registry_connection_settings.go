@@ -11,8 +11,6 @@ package public
 
 // SchemaRegistryConnectionSettings Holds the configuration to connect to a Schem Registry Instance.
 type SchemaRegistryConnectionSettings struct {
-	Id           string `json:"id"`
-	ClientId     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
-	Url          string `json:"url"`
+	Id  string `json:"id"`
+	Url string `json:"url"`
 }

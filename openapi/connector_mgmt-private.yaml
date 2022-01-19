@@ -300,6 +300,8 @@ components:
       description: Holds the deployment specification of a connector
       type: object
       properties:
+        service_account:
+          $ref: 'connector_mgmt.yaml#/components/schemas/ServiceAccount'
         kafka:
           $ref: 'connector_mgmt.yaml#/components/schemas/KafkaConnectionSettings'
         schema_registry:
