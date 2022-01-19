@@ -243,6 +243,14 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 		return err
 	}
 
+	cluster, e := k.clusterPlacementStrategy.FindCluster(kafkaRequest)
+	if e != nil || cluster == nil {
+		msg := fmt.Sprintf("No available cluster found for '%s' Kafka instance in region: '%s'", kafkaRequest.InstanceType, kafkaRequest.Region)
+		logger.Logger.Warningf(msg)
+		return errors.TooManyKafkaInstancesReached(fmt.Sprintf("No capacity available for region: %s for instance type: %s", kafkaRequest.Region, kafkaRequest.InstanceType))
+	}
+
+	kafkaRequest.ClusterID = cluster.ClusterID
 	subscriptionId, err := k.reserveQuota(kafkaRequest)
 
 	if err != nil {
@@ -252,15 +260,6 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	dbConn := k.connectionFactory.New()
 	kafkaRequest.Status = constants2.KafkaRequestStatusAccepted.String()
 	kafkaRequest.SubscriptionId = subscriptionId
-
-	cluster, e := k.clusterPlacementStrategy.FindCluster(kafkaRequest)
-	if e != nil || cluster == nil {
-		msg := fmt.Sprintf("No available cluster found for '%s' Kafka instance", kafkaRequest.InstanceType)
-		logger.Logger.Warningf(msg)
-		return errors.TooManyKafkaInstancesReached(fmt.Sprintf("Failed to find cluster for kafka request in region: %s for instance type: %s", kafkaRequest.Region, kafkaRequest.InstanceType))
-	}
-
-	kafkaRequest.ClusterID = cluster.ClusterID
 
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a kafka A is created, at the time of creation the quota-type was ams. At some point in the future

@@ -613,31 +613,34 @@ func TestKafka_Update(t *testing.T) {
 }
 
 func TestKafkaCreate_TooManyKafkas(t *testing.T) {
-	// create a mock ocm api server, keep all endpoints as defaults
-	// see the mocks package for more information on the configurable mock server
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	// Start with no cluster config and manual scaling.
+	configHook := func(clusterConfig *config.DataplaneClusterConfig) {
+		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+		clusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
+			config.ManualCluster{ClusterId: "test01", ClusterDNS: "app.example.com", Status: api.ClusterReady, KafkaInstanceLimit: 1, Region: mocks.MockCluster.Region().ID(), MultiAZ: testMultiAZ, CloudProvider: mocks.MockCluster.CloudProvider().ID(), Schedulable: true, SupportedInstanceType: "standard,eval"},
+		})
+	}
+
+	// setup ocm server
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
-	// ocm
-	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
-	})
-	defer tearDown()
+	// start servers
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, configHook)
+	defer teardown()
 
-	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
-	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
-	mockKasfFleetshardSync.Start()
-	defer mockKasfFleetshardSync.Stop()
+	ocmConfig := test.TestServices.OCMConfig
 
-	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	if ocmConfig.MockMode != ocm.MockModeEmulateServer || h.Env.Name == environments.TestingEnv {
+		t.SkipNow()
 	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
-	// setup pre-requisites to performing requests
+
+	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
+	kasfFleetshardSync.Start()
+	defer kasfFleetshardSync.Stop()
+
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
@@ -650,18 +653,13 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 
 	_, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
 
-	Expect(err).ToNot(HaveOccurred(), "Error posting object:  %v", err)
+	Expect(err).ToNot(HaveOccurred(), "Unexpected error occurred when creating kafka:  %v", err)
 
-	k = public.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
-		MultiAz:       testMultiAZ,
-	}
+	k.Name = mockKafkaName
 
 	_, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
 
-	Expect(err).To(HaveOccurred(), "Error posting object:  %v", err)
+	Expect(err).To(HaveOccurred(), "Expecting error to be thrown when creating more kafkas than allowed by the cluster limit:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 }
 
