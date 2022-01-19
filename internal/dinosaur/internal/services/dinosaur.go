@@ -265,46 +265,16 @@ func (k *dinosaurService) PrepareDinosaurRequest(dinosaurRequest *dbapi.Dinosaur
 		dinosaurRequest.Host = fmt.Sprintf("%s.%s", truncatedDinosaurIdentifier, k.dinosaurConfig.DinosaurDomainName)
 	}
 
-	if k.keycloakService.GetConfig().EnableAuthenticationOnDinosaur {
-		dinosaurRequest.SsoClientID = BuildKeycloakClientNameIdentifier(dinosaurRequest.ID)
-		dinosaurRequest.SsoClientSecret, err = k.keycloakService.RegisterDinosaurClientInSSO(dinosaurRequest.SsoClientID, dinosaurRequest.OrganisationId)
-		if err != nil {
-			return errors.FailedToCreateSSOClient("failed to create sso client %s:%v", dinosaurRequest.SsoClientID, err)
-		}
-		clientId := strings.ToLower(fmt.Sprintf("%s-%s", CanaryServiceAccountPrefix, dinosaurRequest.ID))
-		serviceAccountRequest := services.CompleteServiceAccountRequest{
-			Owner:          dinosaurRequest.Owner,
-			OwnerAccountId: dinosaurRequest.OwnerAccountId,
-			ClientId:       clientId,
-			OrgId:          dinosaurRequest.OrganisationId,
-			Name:           fmt.Sprintf("canary-service-account-for-dinosaur %s", dinosaurRequest.ID),
-			Description:    fmt.Sprintf("canary service account for dinosaur %s", dinosaurRequest.ID),
-		}
-
-		canaryServiceAccount, err := k.keycloakService.CreateServiceAccountInternal(serviceAccountRequest)
-
-		if err != nil {
-			return errors.FailedToCreateSSOClient("failed to  create canary service account %s:%v", dinosaurRequest.ID, err)
-		}
-
-		dinosaurRequest.CanaryServiceAccountClientID = canaryServiceAccount.ClientID
-		dinosaurRequest.CanaryServiceAccountClientSecret = canaryServiceAccount.ClientSecret
-	}
-
 	// Update the Dinosaur Request record in the database
 	// Only updates the fields below
 	updatedDinosaurRequest := &dbapi.DinosaurRequest{
 		Meta: api.Meta{
 			ID: dinosaurRequest.ID,
 		},
-		Host:                             dinosaurRequest.Host,
-		SsoClientID:                      dinosaurRequest.SsoClientID,
-		SsoClientSecret:                  dinosaurRequest.SsoClientSecret,
-		CanaryServiceAccountClientID:     dinosaurRequest.CanaryServiceAccountClientID,
-		CanaryServiceAccountClientSecret: dinosaurRequest.CanaryServiceAccountClientSecret,
-		PlacementId:                      api.NewID(),
-		Status:                           constants2.DinosaurRequestStatusProvisioning.String(),
-		Namespace:                        dinosaurRequest.Namespace,
+		Host:        dinosaurRequest.Host,
+		PlacementId: api.NewID(),
+		Status:      constants2.DinosaurRequestStatusProvisioning.String(),
+		Namespace:   dinosaurRequest.Namespace,
 	}
 	if err := k.Update(updatedDinosaurRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update dinosaur request")
@@ -479,22 +449,6 @@ func (k *dinosaurService) Delete(dinosaurRequest *dbapi.DinosaurRequest) *errors
 
 	// if the we don't have the clusterID we can only delete the row from the database
 	if dinosaurRequest.ClusterID != "" {
-		// delete the dinosaur client in mas sso
-		if k.keycloakService.GetConfig().EnableAuthenticationOnDinosaur {
-			clientId := BuildKeycloakClientNameIdentifier(dinosaurRequest.ID)
-			keycloakErr := k.keycloakService.DeRegisterClientInSSO(clientId)
-			if keycloakErr != nil {
-				return errors.NewWithCause(errors.ErrorGeneral, keycloakErr, "error deleting sso client")
-			}
-
-			if dinosaurRequest.CanaryServiceAccountClientID != "" {
-				keycloakErr = k.keycloakService.DeleteServiceAccountInternal(dinosaurRequest.CanaryServiceAccountClientID)
-				if keycloakErr != nil {
-					return errors.NewWithCause(errors.ErrorGeneral, keycloakErr, "error deleting canary service account")
-				}
-			}
-		}
-
 		routes, err := dinosaurRequest.GetRoutes()
 		if err != nil {
 			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
@@ -593,12 +547,6 @@ func (k *dinosaurService) GetManagedDinosaurByClusterID(clusterID string) ([]man
 		Where("cluster_id = ?", clusterID).
 		Where("status IN (?)", dinosaurManagedCRStatuses).
 		Where("host != ''")
-
-	if k.keycloakService.GetConfig().EnableAuthenticationOnDinosaur {
-		dbConn = dbConn.
-			Where("sso_client_id != ''").
-			Where("sso_client_secret != ''")
-	}
 
 	var dinosaurRequestList dbapi.DinosaurList
 	if err := dbConn.Find(&dinosaurRequestList).Error; err != nil {
@@ -868,32 +816,6 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.DinosaurRequest, dinosaurConf
 			},
 		},
 		Status: manageddinosaur.ManagedDinosaurStatus{},
-	}
-
-	if keycloakConfig.EnableAuthenticationOnDinosaur {
-		managedDinosaurCR.Spec.OAuth = manageddinosaur.OAuthSpec{
-			ClientId:               dinosaurRequest.SsoClientID,
-			ClientSecret:           dinosaurRequest.SsoClientSecret,
-			TokenEndpointURI:       keycloakConfig.DinosaurRealm.TokenEndpointURI,
-			JwksEndpointURI:        keycloakConfig.DinosaurRealm.JwksEndpointURI,
-			ValidIssuerEndpointURI: keycloakConfig.DinosaurRealm.ValidIssuerURI,
-			UserNameClaim:          keycloakConfig.UserNameClaim,
-			FallBackUserNameClaim:  keycloakConfig.FallBackUserNameClaim,
-			CustomClaimCheck:       BuildCustomClaimCheck(dinosaurRequest),
-			MaximumSessionLifetime: 0,
-		}
-
-		if keycloakConfig.TLSTrustedCertificatesValue != "" {
-			managedDinosaurCR.Spec.OAuth.TlsTrustedCertificate = &keycloakConfig.TLSTrustedCertificatesValue
-		}
-
-		serviceAccounts := []manageddinosaur.ServiceAccount{}
-		serviceAccounts = append(serviceAccounts, manageddinosaur.ServiceAccount{
-			Name:      "canary",
-			Principal: dinosaurRequest.CanaryServiceAccountClientID,
-			Password:  dinosaurRequest.CanaryServiceAccountClientSecret,
-		})
-		managedDinosaurCR.Spec.ServiceAccounts = serviceAccounts
 	}
 
 	if dinosaurConfig.EnableDinosaurExternalCertificate {

@@ -9,19 +9,15 @@ import (
 
 type DinosaurRequest struct {
 	api.Meta
-	Region                           string `json:"region"`
-	ClusterID                        string `json:"cluster_id" gorm:"index"`
-	CloudProvider                    string `json:"cloud_provider"`
-	MultiAZ                          bool   `json:"multi_az"`
-	Name                             string `json:"name" gorm:"index"`
-	Status                           string `json:"status" gorm:"index"`
-	SsoClientID                      string `json:"sso_client_id"`
-	SsoClientSecret                  string `json:"sso_client_secret"`
-	CanaryServiceAccountClientID     string `json:"canary_service_account_client_id"`
-	CanaryServiceAccountClientSecret string `json:"canary_service_account_client_secret"`
-	SubscriptionId                   string `json:"subscription_id"`
-	Owner                            string `json:"owner" gorm:"index"` // TODO: ocm owner?
-	OwnerAccountId                   string `json:"owner_account_id"`
+	Region         string `json:"region"`
+	ClusterID      string `json:"cluster_id" gorm:"index"`
+	CloudProvider  string `json:"cloud_provider"`
+	MultiAZ        bool   `json:"multi_az"`
+	Name           string `json:"name" gorm:"index"`
+	Status         string `json:"status" gorm:"index"`
+	SubscriptionId string `json:"subscription_id"`
+	Owner          string `json:"owner" gorm:"index"` // TODO: ocm owner?
+	OwnerAccountId string `json:"owner_account_id"`
 	// The DNS host (domain) of the Dinosaur service
 	Host           string `json:"host"`
 	OrganisationId string `json:"organisation_id" gorm:"index"`

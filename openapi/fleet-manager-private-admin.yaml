@@ -246,8 +246,6 @@ components:
               type: string
             subscription_id:
               type: string
-            sso_client_id:
-              type: string
             owner_account_id:
               type: string
             account_number:

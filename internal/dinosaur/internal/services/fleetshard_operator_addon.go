@@ -43,12 +43,12 @@ func NewFleetshardOperatorAddon(o fleetshardOperatorAddon) FleetshardOperatorAdd
 
 type fleetshardOperatorAddon struct {
 	di.Inject
-	SsoService          services.DinosaurKeycloakService
-	ProviderFactory     clusters.ProviderFactory
-	ServerConfig        *server.ServerConfig
+	SsoService       services.DinosaurKeycloakService
+	ProviderFactory  clusters.ProviderFactory
+	ServerConfig     *server.ServerConfig
 	FleetShardConfig *config.FleetshardConfig
-	OCMConfig           *ocm.OCMConfig
-	KeycloakConfig      *keycloak.KeycloakConfig
+	OCMConfig        *ocm.OCMConfig
+	KeycloakConfig   *keycloak.KeycloakConfig
 }
 
 func (o *fleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {

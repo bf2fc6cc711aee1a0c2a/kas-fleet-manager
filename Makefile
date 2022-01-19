@@ -550,7 +550,6 @@ deploy/secrets:
 		-p SSO_CLIENT_SECRET="$(shell ([ -s './secrets/keycloak-service.clientSecret' ] && [ -z '${SSO_CLIENT_SECRET}' ]) && cat ./secrets/keycloak-service.clientSecret || echo '${SSO_CLIENT_SECRET}')" \
 		-p OSD_IDP_SSO_CLIENT_ID="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientId' ] && [ -z '${OSD_IDP_SSO_CLIENT_ID}' ]) && cat ./secrets/osd-idp-keycloak-service.clientId || echo '${OSD_IDP_SSO_CLIENT_ID}')" \
 		-p OSD_IDP_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientSecret' ] && [ -z '${OSD_IDP_SSO_CLIENT_SECRET}' ]) && cat ./secrets/osd-idp-keycloak-service.clientSecret || echo '${OSD_IDP_SSO_CLIENT_SECRET}')" \
-		-p SSO_CRT="$(shell ([ -s './secrets/keycloak-service.crt' ] && [ -z '${SSO_CRT}' ]) && cat ./secrets/keycloak-service.crt || echo '${SSO_CRT}')" \
 		-p DINOSAUR_TLS_CERT="$(shell ([ -s './secrets/dinosaur-tls.crt' ] && [ -z '${DINOSAUR_TLS_CERT}' ]) && cat ./secrets/dinosaur-tls.crt || echo '${DINOSAUR_TLS_CERT}')" \
 		-p DINOSAUR_TLS_KEY="$(shell ([ -s './secrets/dinosaur-tls.key' ] && [ -z '${DINOSAUR_TLS_KEY}' ]) && cat ./secrets/dinosaur-tls.key || echo '${DINOSAUR_TLS_KEY}')" \
 		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
@@ -582,7 +581,6 @@ deploy/service: ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE ?= "false"
 deploy/service: ENABLE_DINOSAUR_LIFE_SPAN ?= "false"
 deploy/service: DINOSAUR_LIFE_SPAN ?= "48"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
-deploy/service: SSO_ENABLE_AUTH ?= "true"
 deploy/service: SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy/service: SSO_REALM ?= "rhoas"
 deploy/service: USER_NAME_CLAIM ?= "clientId"
@@ -625,7 +623,6 @@ deploy/service: deploy/envoy deploy/route
 		-p OCM_URL="$(OCM_URL)" \
 		-p AMS_URL="${AMS_URL}" \
 		-p JWKS_URL="$(JWKS_URL)" \
-		-p SSO_ENABLE_AUTH="${SSO_ENABLE_AUTH}" \
 		-p SSO_BASE_URL="$(SSO_BASE_URL)" \
 		-p SSO_REALM="$(SSO_REALM)" \
 		-p USER_NAME_CLAIM="$(USER_NAME_CLAIM)" \
