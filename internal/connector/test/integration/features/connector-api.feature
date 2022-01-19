@@ -1228,7 +1228,8 @@ Feature: create a connector
             "schema_registry": {
               "client_id": "",
               "client_secret": "",
-              "id": ""
+              "id": "",
+              "url": ""
             },
             "status": {
               "state": "assigning"
@@ -1260,7 +1261,8 @@ Feature: create a connector
           "schema_registry": {
             "client_id": "",
             "client_secret": "",
-            "id": ""
+            "id": "",
+            "url": ""
           },
           "kafka": {
             "id": "mykafka",
@@ -1820,7 +1822,8 @@ Feature: create a connector
             "schema_registry": {
               "client_id": "",
               "client_secret": "",
-              "id": ""
+              "id": "",
+              "url": ""
             },
             "status": {
               "state": "bad-connector-type"
@@ -1864,7 +1867,8 @@ Feature: create a connector
           "schema_registry": {
             "client_id": "",
             "client_secret": "",
-            "id": ""
+            "id": "",
+              "url": ""
           },
           "status": {
             "state": "bad-connector-type"

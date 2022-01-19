@@ -95,12 +95,14 @@ Feature: connector agent API
             "kafka": {
               "client_id": "",
               "client_secret": "",
-              "id": ""
+              "id": "",
+              "url": ""
             },
             "schema_registry": {
               "client_id": "",
               "client_secret": "",
-              "id": ""
+              "id": "",
+              "url": ""
             }
           },
           "status": {
@@ -169,7 +171,8 @@ Feature: connector agent API
             "schema_registry": {
               "client_id": "",
               "client_secret": "",
-              "id": ""
+              "id": "",
+              "url": ""
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -264,7 +267,8 @@ Feature: connector agent API
               "schema_registry": {
                 "client_id": "",
                 "client_secret": "",
-                "id": ""
+                "id": "",
+                "url": ""
               },
               "shard_metadata": {
                 "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -348,7 +352,8 @@ Feature: connector agent API
             "schema_registry": {
               "client_id": "",
               "client_secret": "",
-              "id": ""
+              "id": "",
+              "url": ""
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -487,7 +492,8 @@ Feature: connector agent API
         "schema_registry": {
           "client_id": "",
           "client_secret": "",
-          "id": ""
+          "id": "",
+          "url": ""
         },
         "status": {
           "state": "updating"
@@ -526,7 +532,8 @@ Feature: connector agent API
             "schema_registry": {
               "client_id": "",
               "client_secret": "",
-              "id": ""
+              "id": "",
+              "url": ""
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
