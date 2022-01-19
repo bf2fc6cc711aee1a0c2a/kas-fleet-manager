@@ -75,14 +75,10 @@ func (k *DeletingDinosaurManager) Reconcile() []error {
 	}
 
 	for _, deprovisioningDinosaur := range deprovisioningDinosaurs {
-		// As long as one of the three fields checked below are empty, the Dinosaur wouldn't have been provisioned to an OSD cluster and should be deleted immediately
+		glog.V(10).Infof("deprovision dinosaur id = %s", deprovisioningDinosaur.ID)
+		// TODO check if a deprovisioningDinosaur can be deleted and add it to deletingDinosaurs array
+		// deletingDinosaurs = append(deletingDinosaurs, deprovisioningDinosaur)
 		if deprovisioningDinosaur.Host == "" {
-			deletingDinosaurs = append(deletingDinosaurs, deprovisioningDinosaur)
-			continue
-		}
-
-		// If EnableAuthenticationOnDinosaur is not set, these fields would also be empty even when provisioned to an OSD cluster
-		if k.keycloakConfig.EnableAuthenticationOnDinosaur && (deprovisioningDinosaur.SsoClientID == "" || deprovisioningDinosaur.SsoClientSecret == "") {
 			deletingDinosaurs = append(deletingDinosaurs, deprovisioningDinosaur)
 		}
 	}
