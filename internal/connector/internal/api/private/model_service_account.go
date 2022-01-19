@@ -9,8 +9,8 @@
 
 package private
 
-// SchemaRegistryConnectionSettings Holds the configuration to connect to a Schem Registry Instance.
-type SchemaRegistryConnectionSettings struct {
-	Id  string `json:"id"`
-	Url string `json:"url"`
+// ServiceAccount struct for ServiceAccount
+type ServiceAccount struct {
+	ClientId     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
 }

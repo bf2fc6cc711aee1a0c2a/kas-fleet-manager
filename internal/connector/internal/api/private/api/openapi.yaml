@@ -338,6 +338,8 @@ components:
     ConnectorDeploymentSpec:
       description: Holds the deployment specification of a connector
       properties:
+        service_account:
+          $ref: '#/components/schemas/ServiceAccount'
         kafka:
           $ref: '#/components/schemas/KafkaConnectionSettings'
         schema_registry:
@@ -491,6 +493,15 @@ components:
         href:
           type: string
       type: object
+    ServiceAccount:
+      properties:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+      required:
+      - client_id
+      - client_secret
     KafkaConnectionSettings:
       allOf:
       - $ref: '#/components/schemas/ServiceConnectionSettings'
@@ -499,15 +510,9 @@ components:
       properties:
         id:
           type: string
-        client_id:
-          type: string
-        client_secret:
-          type: string
         url:
           type: string
       required:
-      - client_id
-      - client_secret
       - id
       - url
     SchemaRegistryConnectionSettings:

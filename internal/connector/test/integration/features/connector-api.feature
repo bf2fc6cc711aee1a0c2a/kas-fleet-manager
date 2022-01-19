@@ -1093,9 +1093,11 @@ Feature: create a connector
         },
         "kafka": {
           "id":"mykafka",
-          "url": "kafka.hostname",
-          "client_id": "myclient",
-          "client_secret": "test"
+          "url": "kafka.hostname"
+        },
+        "service_account": {
+          "client_secret": "test",
+          "client_id": "myclient"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "connector": {
@@ -1133,9 +1135,11 @@ Feature: create a connector
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
           "id":"mykafka",
-          "url": "kafka.hostname",
-          "client_id": "myclient",
-          "client_secret": "test"
+          "url": "kafka.hostname"
+        },
+        "service_account": {
+          "client_secret": "test",
+          "client_id": "myclient"
         },
         "connector": {
             "aws_queue_name_or_arn": "test",
@@ -1173,9 +1177,11 @@ Feature: create a connector
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
           "id":"mykafka",
-          "url": "kafka.hostname",
-          "client_id": "myclient",
-          "client_secret": "test"
+          "url": "kafka.hostname"
+        },
+        "service_account": {
+          "client_secret": "test",
+          "client_id": "myclient"
         },
         "connector": {
             "aws_queue_name_or_arn": "test",
@@ -1200,7 +1206,9 @@ Feature: create a connector
             "channel": "stable",
             "kafka": {
               "id": "mykafka",
-              "url": "kafka.hostname",
+              "url": "kafka.hostname"
+            },
+            "service_account": {
               "client_secret": "",
               "client_id": "myclient"
             },
@@ -1226,8 +1234,6 @@ Feature: create a connector
             "modified_at": "${response.items[0].modified_at}",
             "desired_state": "ready",
             "schema_registry": {
-              "client_id": "",
-              "client_secret": "",
               "id": "",
               "url": ""
             },
@@ -1259,14 +1265,14 @@ Feature: create a connector
           "modified_at": "${response.modified_at}",
           "resource_version": ${response.resource_version},
           "schema_registry": {
-            "client_id": "",
-            "client_secret": "",
             "id": "",
             "url": ""
           },
           "kafka": {
             "id": "mykafka",
-            "url": "kafka.hostname",
+            "url": "kafka.hostname"
+          },
+          "service_account": {
             "client_secret": "",
             "client_id": "myclient"
           },
@@ -1322,7 +1328,7 @@ Feature: create a connector
       When I PATCH path "/v1/kafka-connectors/${connector_id}" with json body:
         """
         {
-            "kafka": {
+            "service_account": {
               "client_secret": "patched_secret 1"
             },
             "connector": {
@@ -1771,7 +1777,9 @@ Feature: create a connector
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
           "id":"mykafka",
-          "url": "kafka.hostname",
+          "url": "kafka.hostname"
+        },
+        "service_account": {
           "client_id": "myclient",
           "client_secret": "test"
         },
@@ -1800,7 +1808,9 @@ Feature: create a connector
             "channel": "stable",
             "kafka": {
               "id": "mykafka",
-              "url": "kafka.hostname",
+              "url": "kafka.hostname"
+            },
+            "service_account": {
               "client_secret": "",
               "client_id": "myclient"
             },
@@ -1820,8 +1830,6 @@ Feature: create a connector
             "modified_at": "${response.items[0].modified_at}",
             "desired_state": "ready",
             "schema_registry": {
-              "client_id": "",
-              "client_secret": "",
               "id": "",
               "url": ""
             },
@@ -1852,7 +1860,9 @@ Feature: create a connector
           "resource_version": ${response.resource_version},
           "kafka": {
             "id": "mykafka",
-            "url": "kafka.hostname",
+            "url": "kafka.hostname"
+          },
+          "service_account": {
             "client_secret": "",
             "client_id": "myclient"
           },
@@ -1865,10 +1875,8 @@ Feature: create a connector
           "channel": "stable",
           "desired_state": "ready",
           "schema_registry": {
-            "client_id": "",
-            "client_secret": "",
             "id": "",
-              "url": ""
+            "url": ""
           },
           "status": {
             "state": "bad-connector-type"

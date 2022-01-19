@@ -9,8 +9,8 @@
 
 package public
 
-// ServiceConnectionSettings struct for ServiceConnectionSettings
-type ServiceConnectionSettings struct {
-	Id  string `json:"id"`
-	Url string `json:"url"`
+// ServiceAccount struct for ServiceAccount
+type ServiceAccount struct {
+	ClientId     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
 }

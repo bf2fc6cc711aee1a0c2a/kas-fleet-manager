@@ -11,6 +11,7 @@ package private
 
 // ConnectorDeploymentSpec Holds the deployment specification of a connector
 type ConnectorDeploymentSpec struct {
+	ServiceAccount           ServiceAccount                   `json:"service_account,omitempty"`
 	Kafka                    KafkaConnectionSettings          `json:"kafka,omitempty"`
 	SchemaRegistry           SchemaRegistryConnectionSettings `json:"schema_registry,omitempty"`
 	ConnectorId              string                           `json:"connector_id,omitempty"`

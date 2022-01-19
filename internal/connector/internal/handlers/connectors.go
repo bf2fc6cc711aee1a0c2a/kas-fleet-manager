@@ -59,8 +59,8 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 				handlers.WithDefault("New Connector"), handlers.MinLen(1), handlers.MaxLen(100)),
 			handlers.Validation("kafka.id", &resource.Kafka.Id, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
 			handlers.Validation("kafka.url", &resource.Kafka.Url, handlers.MinLen(1)),
-			handlers.Validation("kafka.client_id", &resource.Kafka.ClientId, handlers.MinLen(1)),
-			handlers.Validation("kafka.client_secret", &resource.Kafka.ClientSecret, handlers.MinLen(1)),
+			handlers.Validation("service_account.client_id", &resource.ServiceAccount.ClientId, handlers.MinLen(1)),
+			handlers.Validation("service_account.client_secret", &resource.ServiceAccount.ClientSecret, handlers.MinLen(1)),
 			handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
 			handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.WithDefault("ready"), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
 			handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
@@ -179,6 +179,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			//TODO: verify if it can be omitted
 			//resource.ResourceVersion = patch.Metadata.ResourceVersion
 			resource.Kafka = patch.Kafka
+			resource.ServiceAccount = patch.ServiceAccount
 			resource.DeploymentLocation = patch.DeploymentLocation
 
 			// If we didn't change anything, then just skip the update...
@@ -192,7 +193,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				handlers.Validation("name", &resource.Name, handlers.MinLen(1), handlers.MaxLen(100)),
 				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
 				// handlers.Validation("kafka_id", &resource.Metadata.KafkaId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
-				handlers.Validation("Kafka client_id", &resource.Kafka.ClientId, handlers.MinLen(1)),
+				handlers.Validation("service_account.client_id", &resource.ServiceAccount.ClientId, handlers.MinLen(1)),
 				handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
 				handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
 				validateConnectorInstance(h.connectorTypesService, &resource, connectorTypeId),

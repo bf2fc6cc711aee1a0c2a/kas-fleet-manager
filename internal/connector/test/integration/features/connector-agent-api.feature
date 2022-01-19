@@ -45,7 +45,9 @@ Feature: connector agent API
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
           "id": "mykafka",
-          "url": "kafka.hostname",
+          "url": "kafka.hostname"
+        },
+        "service_account": {
           "client_id": "myclient",
           "client_secret": "test"
         },
@@ -93,14 +95,14 @@ Feature: connector agent API
           },
           "spec": {
             "kafka": {
-              "client_id": "",
-              "client_secret": "",
               "id": "",
               "url": ""
             },
-            "schema_registry": {
+            "service_account": {
               "client_id": "",
-              "client_secret": "",
+              "client_secret": ""
+            },
+            "schema_registry": {
               "id": "",
               "url": ""
             }
@@ -164,13 +166,13 @@ Feature: connector agent API
           "spec": {
             "kafka": {
               "id": "mykafka",
-              "url": "kafka.hostname",
+              "url": "kafka.hostname"
+            },
+            "service_account": {
               "client_id": "myclient",
               "client_secret": "dGVzdA=="
             },
             "schema_registry": {
-              "client_id": "",
-              "client_secret": "",
               "id": "",
               "url": ""
             },
@@ -260,13 +262,13 @@ Feature: connector agent API
             "spec": {
               "kafka": {
                 "id": "mykafka",
-                "url": "kafka.hostname",
+                "url": "kafka.hostname"
+              },
+              "service_account": {
                 "client_id": "myclient",
                 "client_secret": "dGVzdA=="
               },
               "schema_registry": {
-                "client_id": "",
-                "client_secret": "",
                 "id": "",
                 "url": ""
               },
@@ -345,13 +347,13 @@ Feature: connector agent API
           "spec": {
             "kafka": {
               "id": "mykafka",
-              "url": "kafka.hostname",
+              "url": "kafka.hostname"
+            },
+            "service_account": {
               "client_id": "myclient",
               "client_secret": "dGVzdA=="
             },
             "schema_registry": {
-              "client_id": "",
-              "client_secret": "",
               "id": "",
               "url": ""
             },
@@ -477,9 +479,15 @@ Feature: connector agent API
         "id": "${connector_id}",
         "kafka": {
           "id": "mykafka",
-          "url": "kafka.hostname",
+          "url": "kafka.hostname"
+        },
+        "service_account": {
           "client_id": "myclient",
           "client_secret": ""
+        },
+        "schema_registry": {
+          "id": "",
+          "url": ""
         },
         "kind": "Connector",
         "name": "example 1",
@@ -489,12 +497,6 @@ Feature: connector agent API
         "resource_version": ${response.resource_version},
         "channel": "stable",
         "desired_state": "ready",
-        "schema_registry": {
-          "client_id": "",
-          "client_secret": "",
-          "id": "",
-          "url": ""
-        },
         "status": {
           "state": "updating"
         }
@@ -525,13 +527,13 @@ Feature: connector agent API
           "spec": {
             "kafka": {
               "id": "mykafka",
-              "url": "kafka.hostname",
+              "url": "kafka.hostname"
+            },
+            "service_account": {
               "client_id": "myclient",
               "client_secret": "dGVzdA=="
             },
             "schema_registry": {
-              "client_id": "",
-              "client_secret": "",
               "id": "",
               "url": ""
             },
@@ -952,7 +954,9 @@ Feature: connector agent API
         "connector_type_id": "log_sink_0.1",
         "kafka": {
           "id": "mykafka",
-          "url": "kafka.hostname",
+          "url": "kafka.hostname"
+        },
+        "service_account": {
           "client_id": "myclient",
           "client_secret": "test"
         },
