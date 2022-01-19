@@ -322,7 +322,6 @@ paths:
           * name
           * organisation_id
           * owner
-          * reauthentication_enabled
           * region
           * status
           * updated_at
@@ -878,7 +877,6 @@ components:
         updated_at: 2020-10-05T12:56:36.362208Z
         version: 2.6.0
         instance_type: standard
-        reauthentication_enabled: true
     DinosaurRequestFailedCreationStatusExample:
       value:
         id: 1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
@@ -895,7 +893,6 @@ components:
         updated_at: 2020-10-05T12:56:36.362208Z
         failed_reason: a reason the Dinosaur request creation failed
         instance_type: standard
-        reauthentication_enabled: true
     CloudProviderExample:
       value:
         kind: CloudProvider
@@ -1138,7 +1135,6 @@ components:
         * name
         * organisation_id
         * owner
-        * reauthentication_enabled
         * region
         * status
         * updated_at
@@ -1277,7 +1273,6 @@ components:
     DinosaurRequestPayload:
       description: Schema for the request body sent to /dinosaurs POST
       example:
-        reauthentication_enabled: true
         multi_az: true
         name: name
         cloud_provider: cloud_provider
@@ -1298,12 +1293,6 @@ components:
         region:
           description: The region where the Dinosaur cluster will be created in
           type: string
-        reauthentication_enabled:
-          description: Whether connection reauthentication is enabled or not. If set
-            to true, connection reauthentication on the Dinosaur instance will be
-            required every 5 minutes. The default value is true
-          nullable: true
-          type: boolean
       required:
       - name
       type: object
@@ -1410,17 +1399,10 @@ components:
     DinosaurUpdateRequest:
       example:
         owner: owner
-        reauthentication_enabled: true
       properties:
         owner:
           nullable: true
           type: string
-        reauthentication_enabled:
-          description: Whether connection reauthentication is enabled or not. If set
-            to true, connection reauthentication on the Dinosaur instance will be
-            required every 5 minutes.
-          nullable: true
-          type: boolean
       type: object
     Error_allOf:
       properties:
@@ -1470,11 +1452,8 @@ components:
           type: string
         instance_type:
           type: string
-        reauthentication_enabled:
-          type: boolean
       required:
       - multi_az
-      - reauthentication_enabled
     DinosaurRequestList_allOf:
       example: '{"kind":"DinosaurRequestList","page":"1","size":"1","total":"1","item":{"$ref":"#/components/examples/DinosaurRequestExample"}}'
       properties:

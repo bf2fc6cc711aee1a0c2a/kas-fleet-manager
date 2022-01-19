@@ -19,6 +19,4 @@ type DinosaurRequestPayload struct {
 	Name string `json:"name"`
 	// The region where the Dinosaur cluster will be created in
 	Region string `json:"region,omitempty"`
-	// Whether connection reauthentication is enabled or not. If set to true, connection reauthentication on the Dinosaur instance will be required every 5 minutes. The default value is true
-	ReauthenticationEnabled *bool `json:"reauthentication_enabled,omitempty"`
 }

@@ -12,6 +12,4 @@ package public
 // DinosaurUpdateRequest struct for DinosaurUpdateRequest
 type DinosaurUpdateRequest struct {
 	Owner *string `json:"owner,omitempty"`
-	// Whether connection reauthentication is enabled or not. If set to true, connection reauthentication on the Dinosaur instance will be required every 5 minutes.
-	ReauthenticationEnabled *bool `json:"reauthentication_enabled,omitempty"`
 }
