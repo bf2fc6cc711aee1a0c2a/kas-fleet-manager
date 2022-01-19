@@ -32,8 +32,8 @@ func ConvertConnectorInstance(from public.ConnectorInstance) (*dbapi.Connector, 
 		Channel: 		 string(from.Channel),
 		Kafka: dbapi.KafkaConnectionSettings{
 			BootstrapServer: from.Kafka.Url,
-			ClientId:        from.Kafka.ClientId,
-			ClientSecret:    from.Kafka.ClientSecret,
+			ClientId:        from.ServiceAccount.ClientId,
+			ClientSecret:    from.ServiceAccount.ClientSecret,
 		},
 		Status: dbapi.ConnectorStatus{
 			Phase: string(from.Status.State),
@@ -74,6 +74,8 @@ func PresentConnectorInstance(from *dbapi.Connector) (public.ConnectorInstance, 
 		Kafka: public.KafkaConnectionSettings{
 			Id: from.KafkaID,
 			Url: from.Kafka.BootstrapServer,
+		},
+		ServiceAccount: public.ServiceAccount{
 			ClientId:        from.Kafka.ClientId,
 			ClientSecret:    from.Kafka.ClientSecret,
 		},

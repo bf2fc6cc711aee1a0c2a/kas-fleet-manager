@@ -11,8 +11,6 @@ package private
 
 // ServiceConnectionSettings struct for ServiceConnectionSettings
 type ServiceConnectionSettings struct {
-	Id           string `json:"id"`
-	ClientId     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
-	Url          string `json:"url"`
+	Id  string `json:"id"`
+	Url string `json:"url"`
 }

@@ -794,18 +794,21 @@ components:
     ServiceConnectionSettings:
       required:
         - id
-        - client_id
-        - client_secret
         - url
       properties:
         id:
           type: string
+        url:
+          type: string
+
+    ServiceAccount:
+      required:
+        - client_id
+        - client_secret
+      properties:
         client_id:
           type: string
         client_secret:
-          type: string
-        # optional, should not be needed as long term but useful in the short term
-        url:
           type: string
 
     DeploymentLocation:
@@ -877,7 +880,6 @@ components:
         # schema registry specific properties
         #- type: object
         #  properties:
-
 
     #
     # Addons
@@ -977,10 +979,13 @@ components:
     ConnectorConfiguration:
       required:
         - kafka
+        - service_account
         - connector
       properties:
         kafka:
           $ref: "#/components/schemas/KafkaConnectionSettings"
+        service_account:
+          $ref: '#/components/schemas/ServiceAccount'
         schema_registry:
           $ref: "#/components/schemas/SchemaRegistryConnectionSettings"
         connector:

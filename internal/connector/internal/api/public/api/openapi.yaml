@@ -1250,17 +1250,20 @@ components:
       properties:
         id:
           type: string
+        url:
+          type: string
+      required:
+      - id
+      - url
+    ServiceAccount:
+      properties:
         client_id:
           type: string
         client_secret:
           type: string
-        url:
-          type: string
       required:
       - client_id
       - client_secret
-      - id
-      - url
     DeploymentLocation:
       discriminator:
         mapping:
@@ -1369,6 +1372,8 @@ components:
       properties:
         kafka:
           $ref: '#/components/schemas/KafkaConnectionSettings'
+        service_account:
+          $ref: '#/components/schemas/ServiceAccount'
         schema_registry:
           $ref: '#/components/schemas/SchemaRegistryConnectionSettings'
         connector:
@@ -1376,6 +1381,7 @@ components:
       required:
       - connector
       - kafka
+      - service_account
     ConnectorMeta:
       properties:
         name:

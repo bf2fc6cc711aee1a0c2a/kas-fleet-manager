@@ -28,6 +28,7 @@ type ConnectorInstance struct {
 	DesiredState       ConnectorDesiredState            `json:"desired_state"`
 	ResourceVersion    int64                            `json:"resource_version,omitempty"`
 	Kafka              KafkaConnectionSettings          `json:"kafka"`
+	ServiceAccount     ServiceAccount                   `json:"service_account"`
 	SchemaRegistry     SchemaRegistryConnectionSettings `json:"schema_registry,omitempty"`
 	Connector          map[string]interface{}           `json:"connector"`
 	Status             ConnectorInstanceStatusStatus    `json:"status,omitempty"`
