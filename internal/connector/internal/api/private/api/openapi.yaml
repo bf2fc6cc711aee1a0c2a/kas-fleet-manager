@@ -509,6 +509,7 @@ components:
       - client_id
       - client_secret
       - id
+      - url
     SchemaRegistryConnectionSettings:
       allOf:
       - $ref: '#/components/schemas/ServiceConnectionSettings'

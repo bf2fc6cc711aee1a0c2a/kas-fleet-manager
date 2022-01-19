@@ -1260,6 +1260,7 @@ components:
       - client_id
       - client_secret
       - id
+      - url
     DeploymentLocation:
       discriminator:
         mapping:
