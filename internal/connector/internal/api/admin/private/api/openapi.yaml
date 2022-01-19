@@ -70,7 +70,8 @@ paths:
           Search criteria.
 
           The syntax of this parameter is similar to the syntax of the `where` clause of a
-          SQL statement. Allowed fields in the search are `name`, `description`, `version`, `label`, and `channel`. Allowed operators are `<>`, `=`, or `LIKE`.
+          SQL statement. Allowed fields in the search are `name`, `description`, `version`, `label`, and `channel`.
+          Allowed operators are `<>`, `=`, or `LIKE`.
           Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
 
           Examples:
@@ -106,7 +107,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorClusterList'
+                $ref: '#/components/schemas/ConnectorClusterInstanceList'
           description: A list of connector clusters
         "401":
           content:
@@ -487,10 +488,10 @@ components:
         operator:
           $ref: '#/components/schemas/ConnectorAvailableOperatorUpgrade_operator'
       type: object
-    ConnectorClusterList:
+    ConnectorClusterInstanceList:
       allOf:
       - $ref: '#/components/schemas/List'
-      - $ref: '#/components/schemas/ConnectorClusterList_allOf'
+      - $ref: '#/components/schemas/ConnectorClusterInstanceList_allOf'
     List:
       properties:
         kind:
@@ -508,11 +509,11 @@ components:
       - size
       - total
       type: object
-    ConnectorCluster:
+    ConnectorClusterInstance:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/ConnectorCluster_allOf'
-      description: Schema for the request to update a data plane cluster's status
+      - $ref: '#/components/schemas/ConnectorClusterInstanceMeta'
+      - $ref: '#/components/schemas/ConnectorClusterInstanceStatus'
     ObjectReference:
       properties:
         id:
@@ -522,6 +523,34 @@ components:
         href:
           type: string
       type: object
+    ConnectorClusterInstanceMeta:
+      allOf:
+      - $ref: '#/components/schemas/ObjectMeta'
+      - $ref: '#/components/schemas/ConnectorClusterMeta'
+    ObjectMeta:
+      properties:
+        owner:
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        modified_at:
+          format: date-time
+          type: string
+      type: object
+    ConnectorClusterMeta:
+      properties:
+        name:
+          type: string
+    ConnectorClusterInstanceStatus:
+      properties:
+        status:
+          $ref: '#/components/schemas/ConnectorClusterInstanceStatus_status'
+    ConnectorClusterState:
+      enum:
+      - disconnected
+      - ready
+      type: string
     Error:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -558,29 +587,17 @@ components:
           type: string
         available_id:
           type: string
-    ConnectorClusterList_allOf:
+    ConnectorClusterInstanceList_allOf:
       properties:
         items:
           items:
-            $ref: '#/components/schemas/ConnectorCluster'
+            $ref: '#/components/schemas/ConnectorClusterInstance'
           type: array
-    ConnectorCluster_allOf_metadata:
+    ConnectorClusterInstanceStatus_status:
       properties:
-        owner:
-          type: string
-        name:
-          type: string
-        created_at:
-          format: date-time
-          type: string
-        updated_at:
-          format: date-time
-          type: string
-    ConnectorCluster_allOf:
-      properties:
-        metadata:
-          $ref: '#/components/schemas/ConnectorCluster_allOf_metadata'
-        status:
+        state:
+          $ref: '#/components/schemas/ConnectorClusterState'
+        error:
           type: string
     Error_allOf:
       properties:

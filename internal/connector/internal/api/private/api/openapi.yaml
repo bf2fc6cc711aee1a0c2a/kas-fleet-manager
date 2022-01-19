@@ -1,8 +1,5 @@
 openapi: 3.0.0
 info:
-  contact:
-    email: foo@bar
-    name: Red Hat
   description: Connector Service Fleet Manager apis that are used by internal services.
   title: Connector Service Fleet Manager Private APIs
   version: 0.0.3

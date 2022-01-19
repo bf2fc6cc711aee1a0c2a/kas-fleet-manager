@@ -1,6 +1,7 @@
 package presenters
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -33,6 +34,22 @@ func PresentConnectorClusterInstance(from dbapi.ConnectorCluster) public.Connect
 		ModifiedAt: from.UpdatedAt,
 		Status: public.ConnectorClusterInstanceStatusStatus{
 			State: public.ConnectorClusterState(from.Status.Phase),
+		},
+	}
+}
+
+func PresentPrivateConnectorClusterInstance(from dbapi.ConnectorCluster) private.ConnectorClusterInstance {
+	reference := PresentReference(from.ID, from)
+	return private.ConnectorClusterInstance{
+		Id:   reference.Id,
+		Kind: reference.Kind,
+		Href: reference.Href,
+		Owner:     from.Owner,
+		Name:      from.Name,
+		CreatedAt: from.CreatedAt,
+		ModifiedAt: from.UpdatedAt,
+		Status: private.ConnectorClusterInstanceStatusStatus{
+			State: private.ConnectorClusterState(from.Status.Phase),
 		},
 	}
 }

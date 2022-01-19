@@ -7,9 +7,6 @@ info:
   title: Connector Service Fleet Manager Private APIs
   version: 0.0.3
   description: Connector Service Fleet Manager apis that are used by internal services.
-  contact: 
-    name: "Red Hat"
-    email: "foo@bar"
 servers:
   - url: https://api.openshift.com
     description: Main (production) server
