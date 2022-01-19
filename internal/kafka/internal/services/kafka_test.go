@@ -1072,6 +1072,11 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 						AllowEvaluatorInstance: false,
 					},
 				},
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return mockCluster, nil
+					},
+				},
 				quotaService: &QuotaServiceMock{
 					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						// No RHOSAK quota assigned
