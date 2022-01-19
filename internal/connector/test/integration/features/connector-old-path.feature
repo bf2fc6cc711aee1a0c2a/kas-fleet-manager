@@ -66,4 +66,8 @@ Feature: the old connectors path are still valid
     Then the response code should be 200
 
     #cleanup
+    Given I am logged in as "Bob"
+    When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
+    Then the response code should be 204
+    And the response should match ""
     Then I delete keycloak client with clientID: ${clientID}
