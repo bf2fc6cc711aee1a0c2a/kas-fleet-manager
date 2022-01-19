@@ -616,6 +616,9 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	// Start with no cluster config and manual scaling.
 	configHook := func(clusterConfig *config.DataplaneClusterConfig) {
 		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+		clusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
+			config.ManualCluster{ClusterId: "test01", ClusterDNS: "app.example.com", Status: api.ClusterReady, KafkaInstanceLimit: 1, Region: mocks.MockCluster.Region().ID(), MultiAZ: testMultiAZ, CloudProvider: mocks.MockCluster.CloudProvider().ID(), Schedulable: true, SupportedInstanceType: "standard,eval"},
+		})
 	}
 
 	// setup ocm server
