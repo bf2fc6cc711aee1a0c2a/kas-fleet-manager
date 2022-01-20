@@ -68,6 +68,11 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 		return errors.BadRequest("Cluster agent with ID '%s' not found", clusterID)
 	}
 
+	if !d.clusterCanProcessStatusReports(cluster) {
+		glog.V(10).Infof("Cluster with ID '%s' is in '%s' state. Ignoring status report...", clusterID, cluster.Status)
+		return nil
+	}
+
 	fleetShardOperatorReady, err := d.isFleetShardOperatorReady(status)
 	if err != nil {
 		return errors.ToServiceError(err)
@@ -109,6 +114,13 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 	}
 
 	return nil
+}
+
+func (d *dataPlaneClusterService) clusterCanProcessStatusReports(cluster *api.Cluster) bool {
+	return cluster.Status == api.ClusterReady ||
+		cluster.Status == api.ClusterComputeNodeScalingUp ||
+		cluster.Status == api.ClusterFull ||
+		cluster.Status == api.ClusterWaitingForFleetShardOperator
 }
 
 func (d *dataPlaneClusterService) isFleetShardOperatorReady(status *dbapi.DataPlaneClusterStatus) (bool, error) {
