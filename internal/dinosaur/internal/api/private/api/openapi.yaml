@@ -261,63 +261,9 @@ components:
       - $ref: '#/components/schemas/ListReference'
       - $ref: '#/components/schemas/ManagedDinosaurList_allOf'
       description: A list of ManagedDinosaur
-    DatePlaneClusterUpdateStatusRequestNodeInfo:
-      example:
-        ceiling: 1
-        current: 5
-        currentWorkLoadMinimum: 2
-        floor: 5
-      nullable: true
-      properties:
-        ceiling:
-          nullable: true
-          type: integer
-        floor:
-          nullable: true
-          type: integer
-        current:
-          nullable: true
-          type: integer
-        currentWorkLoadMinimum:
-          nullable: true
-          type: integer
-      type: object
-    DatePlaneClusterUpdateStatusRequestResizeInfo:
-      example:
-        nodeDelta: 7
-        delta:
-          partitions: 3
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-          connections: 9
-          dataRetentionSize: dataRetentionSize
-      nullable: true
-      properties:
-        nodeDelta:
-          nullable: true
-          type: integer
-        delta:
-          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo_delta'
-      type: object
     DataPlaneClusterUpdateStatusRequest:
       description: Schema for the request to update a data plane cluster's status
       example:
-        total:
-          partitions: 6
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-          connections: 0
-          dataRetentionSize: dataRetentionSize
-        resizeInfo:
-          nodeDelta: 7
-          delta:
-            partitions: 3
-            ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-            connections: 9
-            dataRetentionSize: dataRetentionSize
-        nodeInfo:
-          ceiling: 1
-          current: 5
-          currentWorkLoadMinimum: 2
-          floor: 5
         conditions:
         - reason: reason
           type: type
@@ -338,25 +284,12 @@ components:
           - dinosaurVersions
           ready: true
           version: version
-        remaining:
-          partitions: 6
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-          connections: 0
-          dataRetentionSize: dataRetentionSize
       properties:
         conditions:
           description: The cluster data plane conditions
           items:
             $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
           type: array
-        total:
-          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_total'
-        remaining:
-          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_total'
-        nodeInfo:
-          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
-        resizeInfo:
-          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
         dinosaurOperator:
           items:
             $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_dinosaurOperator'
@@ -483,26 +416,6 @@ components:
             allOf:
             - $ref: '#/components/schemas/ManagedDinosaur'
           type: array
-    DatePlaneClusterUpdateStatusRequestResizeInfo_delta:
-      example:
-        partitions: 3
-        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-        connections: 9
-        dataRetentionSize: dataRetentionSize
-      nullable: true
-      properties:
-        ingressEgressThroughputPerSec:
-          nullable: true
-          type: string
-        connections:
-          nullable: true
-          type: integer
-        dataRetentionSize:
-          nullable: true
-          type: string
-        partitions:
-          nullable: true
-          type: integer
     DataPlaneClusterUpdateStatusRequest_conditions:
       example:
         reason: reason
@@ -518,25 +431,6 @@ components:
           type: string
         status:
           type: string
-    DataPlaneClusterUpdateStatusRequest_total:
-      example:
-        partitions: 6
-        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-        connections: 0
-        dataRetentionSize: dataRetentionSize
-      properties:
-        ingressEgressThroughputPerSec:
-          nullable: true
-          type: string
-        connections:
-          nullable: true
-          type: integer
-        dataRetentionSize:
-          nullable: true
-          type: string
-        partitions:
-          nullable: true
-          type: integer
     DataPlaneClusterUpdateStatusRequest_dinosaurOperator:
       example:
         dinosaurVersions:

@@ -13,9 +13,5 @@ package private
 type DataPlaneClusterUpdateStatusRequest struct {
 	// The cluster data plane conditions
 	Conditions       []DataPlaneClusterUpdateStatusRequestConditions       `json:"conditions,omitempty"`
-	Total            DataPlaneClusterUpdateStatusRequestTotal              `json:"total,omitempty"`
-	Remaining        DataPlaneClusterUpdateStatusRequestTotal              `json:"remaining,omitempty"`
-	NodeInfo         *DatePlaneClusterUpdateStatusRequestNodeInfo          `json:"nodeInfo,omitempty"`
-	ResizeInfo       *DatePlaneClusterUpdateStatusRequestResizeInfo        `json:"resizeInfo,omitempty"`
 	DinosaurOperator []DataPlaneClusterUpdateStatusRequestDinosaurOperator `json:"dinosaurOperator,omitempty"`
 }
