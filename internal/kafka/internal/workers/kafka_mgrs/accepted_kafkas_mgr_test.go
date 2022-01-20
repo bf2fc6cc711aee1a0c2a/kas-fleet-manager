@@ -89,7 +89,6 @@ func TestAcceptedKafkaManager(t *testing.T) {
 
 	type fields struct {
 		kafkaService           services.KafkaService
-		clusterPlmtStrategy    services.ClusterPlacementStrategy
 		quotaService           services.QuotaService
 		dataPlaneClusterConfig *config.DataplaneClusterConfig
 		clusterService         services.ClusterService
@@ -111,11 +110,6 @@ func TestAcceptedKafkaManager(t *testing.T) {
 				quotaService: &services.QuotaServiceMock{
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
 						return "", nil
-					},
-				},
-				clusterPlmtStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
-						return nil, errors.GeneralError("test")
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -143,11 +137,6 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return mockCluster, nil
 					},
 				},
-				clusterPlmtStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
-						return nil, nil
-					},
-				},
 				kafkaService: &services.KafkaServiceMock{
 					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return errors.GeneralError("test")
@@ -172,108 +161,108 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			wantStatus:                 constants2.KafkaRequestStatusPreparing.String(),
 			wantStrimziOperatorVersion: strimziOperatorVersion,
 		},
-		// {
-		// 	name: "should get desired strimzi version from cluster if the StrimziOperatorVersion is not set in the data plane config",
-		// 	fields: fields{
-		// 		clusterService: &services.ClusterServiceMock{
-		// 			FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-		// 				return &mockClusterWithoutAvailableStrimziVersion, nil
-		// 			},
-		// 		},
-		// 		kafkaService: &services.KafkaServiceMock{
-		// 			UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-		// 				return nil
-		// 			},
-		// 			GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
-		// 				return &dbapi.KafkaRequest{}, nil
-		// 			},
-		// 		},
-		// 		quotaService: &services.QuotaServiceMock{
-		// 			ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
-		// 				return "sub-scription", nil
-		// 			},
-		// 		},
-		// 		dataPlaneClusterConfig: config.NewDataplaneClusterConfig(),
-		// 	},
-		// 	args: args{
-		// 		kafka: &dbapi.KafkaRequest{
-		// 			ClusterID: mockCluster.ClusterID,
-		// 			Meta: api.Meta{
-		// 				CreatedAt: time.Now(),
-		// 			},
-		// 		},
-		// 	},
-		// 	wantErr:                    false,
-		// 	wantStatus:                 constants2.KafkaRequestStatusPreparing.String(),
-		// 	wantStrimziOperatorVersion: strimziOperatorVersion,
-		// },
-		// {
-		// 	name: "should keep kafka status as accepted if no strimzi operator version is available when retry period has not expired",
-		// 	fields: fields{
-		// 		clusterService: &services.ClusterServiceMock{
-		// 			FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-		// 				return &mockClusterWithoutAvailableStrimziVersion, nil
-		// 			},
-		// 		},
-		// 		kafkaService: &services.KafkaServiceMock{
-		// 			UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-		// 				return nil
-		// 			},
-		// 			GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
-		// 				return &dbapi.KafkaRequest{}, nil
-		// 			},
-		// 		},
-		// 		quotaService: &services.QuotaServiceMock{
-		// 			ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
-		// 				return "sub-scription", nil
-		// 			},
-		// 		},
-		// 		dataPlaneClusterConfig: config.NewDataplaneClusterConfig(),
-		// 	},
-		// 	args: args{
-		// 		kafka: &dbapi.KafkaRequest{
-		// 			ClusterID: mockCluster.ClusterID,
-		// 			Meta: api.Meta{
-		// 				CreatedAt: time.Now(),
-		// 			},
-		// 		},
-		// 	},
-		// 	wantErr: false,
-		// },
-		// {
-		// 	name: "should set kafka status to failed if no strimzi operator version is available after retry period has expired",
-		// 	fields: fields{
-		// 		clusterService: &services.ClusterServiceMock{
-		// 			FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-		// 				return &mockClusterWithoutAvailableStrimziVersion, nil
-		// 			},
-		// 		},
-		// 		kafkaService: &services.KafkaServiceMock{
-		// 			UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-		// 				return nil
-		// 			},
-		// 			GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
-		// 				return &dbapi.KafkaRequest{}, nil
-		// 			},
-		// 		},
-		// 		quotaService: &services.QuotaServiceMock{
-		// 			ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
-		// 				return "sub-scription", nil
-		// 			},
-		// 		},
-		// 		dataPlaneClusterConfig: config.NewDataplaneClusterConfig(),
-		// 	},
-		// 	args: args{
-		// 		kafka: &dbapi.KafkaRequest{
-		// 			ClusterID: mockCluster.ClusterID,
-		// 			Meta: api.Meta{
-		// 				CreatedAt: time.Now().Add(time.Duration(-constants2.AcceptedKafkaMaxRetryDuration)),
-		// 			},
-		// 		},
-		// 	},
-		// 	wantErr:    true,
-		// 	wantStatus: constants2.KafkaRequestStatusFailed.String(),
-		// },
+		{
+			name: "should get desired strimzi version from cluster if the StrimziOperatorVersion is not set in the data plane config",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return mockCluster, nil
+					},
+				},
+				kafkaService: &services.KafkaServiceMock{
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{}, nil
+					},
+				},
+				quotaService: &services.QuotaServiceMock{
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "sub-scription", nil
+					},
+				},
+				dataPlaneClusterConfig: config.NewDataplaneClusterConfig(),
+			},
+			args: args{
+				kafka: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						CreatedAt: time.Now(),
+					},
+					ClusterID: mockCluster.ClusterID,
+				},
+			},
+			wantErr:                    false,
+			wantStatus:                 constants2.KafkaRequestStatusPreparing.String(),
+			wantStrimziOperatorVersion: strimziOperatorVersion,
+		},
+		{
+			name: "should keep kafka status as accepted if no strimzi operator version is available when retry period has not expired",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &mockClusterWithoutAvailableStrimziVersion, nil
+					},
+				},
+				kafkaService: &services.KafkaServiceMock{
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{}, nil
+					},
+				},
+				quotaService: &services.QuotaServiceMock{
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "sub-scription", nil
+					},
+				},
+				dataPlaneClusterConfig: config.NewDataplaneClusterConfig(),
+			},
+			args: args{
+				kafka: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						CreatedAt: time.Now(),
+					},
+					ClusterID: mockCluster.ClusterID,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should set kafka status to failed if no strimzi operator version is available after retry period has expired",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &mockClusterWithoutAvailableStrimziVersion, nil
+					},
+				},
+				kafkaService: &services.KafkaServiceMock{
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{}, nil
+					},
+				},
+				quotaService: &services.QuotaServiceMock{
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "sub-scription", nil
+					},
+				},
+				dataPlaneClusterConfig: config.NewDataplaneClusterConfig(),
+			},
+			args: args{
+				kafka: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						CreatedAt: time.Now().Add(time.Duration(-constants2.AcceptedKafkaMaxRetryDuration)),
+					},
+					ClusterID: mockCluster.ClusterID,
+				},
+			},
+			wantErr:    true,
+			wantStatus: constants2.KafkaRequestStatusFailed.String(),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -287,7 +276,6 @@ func TestAcceptedKafkaManager(t *testing.T) {
 					},
 				},
 				dataPlaneClusterConfig: tt.fields.dataPlaneClusterConfig,
-				clusterPlmtStrategy:    tt.fields.clusterPlmtStrategy,
 			}
 			err := k.reconcileAcceptedKafka(tt.args.kafka)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))

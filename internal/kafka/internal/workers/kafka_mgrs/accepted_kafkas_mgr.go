@@ -85,22 +85,25 @@ func (k *AcceptedKafkaManager) Reconcile() []error {
 func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest) error {
 	var cluster *api.Cluster
 	if kafka.ClusterID != "" {
-		cluster, e := k.clusterService.FindClusterByID(kafka.ClusterID)
+		foundCluster, e := k.clusterService.FindClusterByID(kafka.ClusterID)
 
-		if cluster == nil || e != nil {
+		if foundCluster == nil || e != nil {
 			return errors.Wrapf(e, "failed to find cluster with '%s' for kafka request '%s'", kafka.ClusterID, kafka.ID)
 		}
+		cluster = foundCluster
 	} else {
 		// temporary code that will be removed once the deployment to Prod happen
-		cluster, err := k.clusterPlmtStrategy.FindCluster(kafka)
+		foundCluster, err := k.clusterPlmtStrategy.FindCluster(kafka)
 		if err != nil {
 			return errors.Wrapf(err, "failed to find cluster for kafka request %s", kafka.ID)
 		}
 
-		if cluster == nil {
+		if foundCluster == nil {
 			logger.Logger.Warningf("No available cluster found for Kafka instance with id %s", kafka.ID)
 			return nil
 		}
+
+		cluster = foundCluster
 
 		kafka.ClusterID = cluster.ClusterID
 	}
