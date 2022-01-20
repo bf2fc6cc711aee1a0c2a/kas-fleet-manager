@@ -775,19 +775,19 @@ func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 		c.buildObservabilityOperatorGroupResource(),
 		c.buildObservabilitySubscriptionResource(),
 	}
-	strimiNS := strimziAddonNamespace
+	strimziNamespace := strimziAddonNamespace
 	if c.OCMConfig.StrimziOperatorAddonID == "managed-kafka-qe" {
-		strimiNS = strimziQEAddonNamespace
+		strimziNamespace = strimziQEAddonNamespace
 	}
-	kasFleetshardNS := kasFleetshardAddonNamespace
+	kasFleetshardNamespace := kasFleetshardAddonNamespace
 	if c.OCMConfig.KasFleetshardAddonID == "kas-fleetshard-operator-qe" {
-		kasFleetshardNS = kasFleetshardQEAddonNamespace
+		kasFleetshardNamespace = kasFleetshardQEAddonNamespace
 	}
 
-	if s := c.buildImagePullSecret(strimiNS); s != nil {
+	if s := c.buildImagePullSecret(strimziNamespace); s != nil {
 		r = append(r, s)
 	}
-	if s := c.buildImagePullSecret(kasFleetshardNS); s != nil {
+	if s := c.buildImagePullSecret(kasFleetshardNamespace); s != nil {
 		r = append(r, s)
 	}
 	return types.ResourceSet{
