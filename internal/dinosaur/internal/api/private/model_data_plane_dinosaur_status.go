@@ -13,7 +13,6 @@ package private
 type DataPlaneDinosaurStatus struct {
 	// The status conditions of a Dinosaur cluster
 	Conditions []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
-	Capacity   DataPlaneDinosaurStatusCapacity                 `json:"capacity,omitempty"`
 	Versions   DataPlaneDinosaurStatusVersions                 `json:"versions,omitempty"`
 	// Routes created for a Dinosaur cluster
 	Routes *[]DataPlaneDinosaurStatusRoutes `json:"routes,omitempty"`

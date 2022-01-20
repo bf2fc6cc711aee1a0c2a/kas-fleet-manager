@@ -7,18 +7,13 @@ import (
 )
 
 type KeycloakConfig struct {
-	BaseURL                string               `json:"base_url"`
-	Debug                  bool                 `json:"debug"`
-	InsecureSkipVerify     bool                 `json:"insecure-skip-verify"`
-	UserNameClaim          string               `json:"user_name_claim"`
-	FallBackUserNameClaim  string               `json:"fall_back_user_name_claim"`
-	EnablePlain            bool                 `json:"enable_plain"`
-	EnableOauthBearer      bool                 `json:"enable_oauth_bearer"`
-	EnableCustomClaimCheck bool                 `json:"enable_custom_claim_check"`
-	DinosaurRealm          *KeycloakRealmConfig `json:"dinosaur_realm"`
-	OSDClusterIDPRealm     *KeycloakRealmConfig `json:"osd_cluster_idp_realm"`
-	MaxLimitForGetClients  int                  `json:"max_limit_for_get_clients"`
-	KeycloakClientExpire   bool                 `json:"keycloak_client_expire"`
+	BaseURL               string               `json:"base_url"`
+	Debug                 bool                 `json:"debug"`
+	InsecureSkipVerify    bool                 `json:"insecure-skip-verify"`
+	DinosaurRealm         *KeycloakRealmConfig `json:"dinosaur_realm"`
+	OSDClusterIDPRealm    *KeycloakRealmConfig `json:"osd_cluster_idp_realm"`
+	MaxLimitForGetClients int                  `json:"max_limit_for_get_clients"`
+	KeycloakClientExpire  bool                 `json:"keycloak_client_expire"`
 }
 
 type KeycloakRealmConfig struct {
@@ -53,10 +48,6 @@ func NewKeycloakConfig() *KeycloakConfig {
 		},
 		Debug:                 false,
 		InsecureSkipVerify:    false,
-		UserNameClaim:         "clientId",
-		FallBackUserNameClaim: "preferred_username",
-		EnablePlain:           true,
-		EnableOauthBearer:     false,
 		MaxLimitForGetClients: 100,
 		KeycloakClientExpire:  false,
 	}
@@ -74,8 +65,6 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.OSDClusterIDPRealm.ClientSecretFile, "osd-idp-sso-client-secret-file", kc.OSDClusterIDPRealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
 	fs.StringVar(&kc.OSDClusterIDPRealm.Realm, "osd-idp-sso-realm", kc.OSDClusterIDPRealm.Realm, "Realm for OSD cluster IDP clients in the sso")
 	fs.IntVar(&kc.MaxLimitForGetClients, "max-limit-for-sso-get-clients", kc.MaxLimitForGetClients, "Max limits for SSO get clients")
-	fs.StringVar(&kc.UserNameClaim, "user-name-claim", kc.UserNameClaim, "Human readable username token claim")
-	fs.StringVar(&kc.FallBackUserNameClaim, "fall-back-user-name-claim", kc.FallBackUserNameClaim, "Fall back username token claim")
 	fs.BoolVar(&kc.KeycloakClientExpire, "keycloak-client-expire", kc.KeycloakClientExpire, "Whether or not to tag Keycloak created Client to expire in 2 hours (useful for cleaning up after integrations tests)")
 }
 

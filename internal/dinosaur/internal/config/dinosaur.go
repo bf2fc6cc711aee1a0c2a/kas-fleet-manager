@@ -7,28 +7,22 @@ import (
 )
 
 type DinosaurCapacityConfig struct {
-	IngressEgressThroughputPerSec string `json:"ingressEgressThroughputPerSec"`
-	TotalMaxConnections           int    `json:"totalMaxConnections"`
-	MaxDataRetentionSize          string `json:"maxDataRetentionSize"`
-	MaxPartitions                 int    `json:"maxPartitions"`
-	MaxDataRetentionPeriod        string `json:"maxDataRetentionPeriod"`
-	MaxConnectionAttemptsPerSec   int    `json:"maxConnectionAttemptsPerSec"`
-	MaxCapacity                   int64  `json:"maxCapacity"`
+	MaxCapacity int64 `json:"maxCapacity"`
 }
 
 type DinosaurConfig struct {
-	DinosaurTLSCert                   string              `json:"dinosaur_tls_cert"`
-	DinosaurTLSCertFile               string              `json:"dinosaur_tls_cert_file"`
-	DinosaurTLSKey                    string              `json:"dinosaur_tls_key"`
-	DinosaurTLSKeyFile                string              `json:"dinosaur_tls_key_file"`
-	EnableDinosaurExternalCertificate bool                `json:"enable_dinosaur_external_certificate"`
-	NumOfBrokers                   int                 `json:"num_of_brokers"`
-	DinosaurDomainName                string              `json:"dinosaur_domain_name"`
+	DinosaurTLSCert                   string                 `json:"dinosaur_tls_cert"`
+	DinosaurTLSCertFile               string                 `json:"dinosaur_tls_cert_file"`
+	DinosaurTLSKey                    string                 `json:"dinosaur_tls_key"`
+	DinosaurTLSKeyFile                string                 `json:"dinosaur_tls_key_file"`
+	EnableDinosaurExternalCertificate bool                   `json:"enable_dinosaur_external_certificate"`
+	NumOfBrokers                      int                    `json:"num_of_brokers"`
+	DinosaurDomainName                string                 `json:"dinosaur_domain_name"`
 	DinosaurCapacity                  DinosaurCapacityConfig `json:"dinosaur_capacity_config"`
-	DinosaurCapacityConfigFile        string              `json:"dinosaur_capacity_config_file"`
+	DinosaurCapacityConfigFile        string                 `json:"dinosaur_capacity_config_file"`
 
 	DinosaurLifespan *DinosaurLifespanConfig `json:"dinosaur_lifespan"`
-	Quota         *DinosaurQuotaConfig    `json:"dinosaur_quota"`
+	Quota            *DinosaurQuotaConfig    `json:"dinosaur_quota"`
 }
 
 func NewDinosaurConfig() *DinosaurConfig {
@@ -37,10 +31,10 @@ func NewDinosaurConfig() *DinosaurConfig {
 		DinosaurTLSKeyFile:                "secrets/dinosaur-tls.key",
 		EnableDinosaurExternalCertificate: false,
 		DinosaurDomainName:                "dinosaur.devshift.org",
-		NumOfBrokers:                   3,
+		NumOfBrokers:                      3,
 		DinosaurCapacityConfigFile:        "config/dinosaur-capacity-config.yaml",
 		DinosaurLifespan:                  NewDinosaurLifespanConfig(),
-		Quota:                          NewDinosaurQuotaConfig(),
+		Quota:                             NewDinosaurQuotaConfig(),
 	}
 }
 

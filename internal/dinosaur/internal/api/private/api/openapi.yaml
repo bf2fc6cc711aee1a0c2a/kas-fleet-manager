@@ -194,24 +194,6 @@ components:
             mas/id: 1rfpsqbvq1em2u9u0z54ymjcwac
             mas/placementId: ""
         spec:
-          capacity:
-            ingressEgressThroughputPerSec: 4Mi
-            totalMaxConnections: 500
-            maxDataRetentionSize: 100Gi
-            maxPartitions: 100
-            maxDataRetentionPeriod: P14D
-            maxConnectionAttemptsPerSec: 100
-          oauth:
-            clientId: dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac
-            clientSecret: example-client-secret
-            tokenEndpointUri: https://example-token-endpoint-uri.com/token
-            jwksEndpointUri: https://example-jwks-endpoint-uri.com/certs
-            validIssuerEndpointUri: https://issuer-endpoint-uri.com
-            userNameClaim: clientId
-            fallbackUserNameClaim: preferred_username
-            tlsTrustedCertificate: ""
-            customClaimCheck: ""
-            maximumSessionLifetime: 1898
           endpoint:
             host: example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.example.dinosaur.com
             tls:
@@ -229,13 +211,6 @@ components:
           message: installing
           status: "False"
           lastTransitionTime: 2018-01-01T00:00:00Z
-        capacity:
-          ingressEgressThroughputPerSec: 4Mi
-          totalMaxConnections: 500
-          maxDataRetentionSize: 100Gi
-          maxPartitions: 100
-          maxDataRetentionPeriod: P14D
-          maxConnectionAttemptsPerSec: 100
         versions:
           dinosaur: 2.4.1
           dinosaurOperator: 0.21.2
@@ -269,24 +244,6 @@ components:
           type: string
         kind:
           type: string
-      type: object
-    ManagedDinosaurCapacity:
-      properties:
-        ingressEgressThroughputPerSec:
-          type: string
-        totalMaxConnections:
-          format: int
-          type: integer
-        maxDataRetentionSize:
-          type: string
-        maxPartitions:
-          format: int
-          type: integer
-        maxDataRetentionPeriod:
-          type: string
-        maxConnectionAttemptsPerSec:
-          format: int
-          type: integer
       type: object
     ManagedDinosaurVersions:
       properties:
@@ -415,8 +372,6 @@ components:
           items:
             $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
           type: array
-        capacity:
-          $ref: '#/components/schemas/DataPlaneDinosaurStatus_capacity'
         versions:
           $ref: '#/components/schemas/DataPlaneDinosaurStatus_versions'
         routes:
@@ -487,43 +442,6 @@ components:
           type: string
         annotations:
           $ref: '#/components/schemas/ManagedDinosaur_allOf_metadata_annotations'
-    ManagedDinosaur_allOf_spec_serviceAccounts:
-      properties:
-        name:
-          type: string
-        principal:
-          type: string
-        password:
-          type: string
-      required:
-      - name
-      - password
-      - principal
-    ManagedDinosaur_allOf_spec_oauth:
-      properties:
-        clientId:
-          type: string
-        clientSecret:
-          type: string
-        tokenEndpointURI:
-          type: string
-        jwksEndpointURI:
-          type: string
-        validIssuerEndpointURI:
-          type: string
-        userNameClaim:
-          type: string
-        fallbackUserNameClaim:
-          type: string
-        tlsTrustedCertificate:
-          nullable: true
-          type: string
-        customClaimCheck:
-          type: string
-        maximumSessionLifetime:
-          type: long
-      required:
-      - maximumSessionLifetime
     ManagedDinosaur_allOf_spec_endpoint_tls:
       nullable: true
       properties:
@@ -539,14 +457,6 @@ components:
           $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_endpoint_tls'
     ManagedDinosaur_allOf_spec:
       properties:
-        serviceAccounts:
-          items:
-            $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_serviceAccounts'
-          type: array
-        capacity:
-          $ref: '#/components/schemas/ManagedDinosaurCapacity'
-        oauth:
-          $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_oauth'
         owners:
           items:
             type: string
@@ -646,27 +556,6 @@ components:
       required:
       - ready
       - version
-    DataPlaneDinosaurStatus_capacity:
-      description: Capacity information of the data plane cluster
-      properties:
-        ingressEgressThroughputPerSec:
-          nullable: true
-          type: string
-        totalMaxConnections:
-          nullable: true
-          type: integer
-        maxDataRetentionSize:
-          nullable: true
-          type: string
-        maxPartitions:
-          nullable: true
-          type: integer
-        maxDataRetentionPeriod:
-          nullable: true
-          type: string
-        maxConnectionAttemptsPerSec:
-          nullable: true
-          type: integer
     DataPlaneDinosaurStatus_versions:
       description: Version information related to a Dinosaur cluster
       properties:

@@ -284,16 +284,6 @@ parameters:
   displayName: SSO REALM for Dinosaur SSO Clients and Service Accounts
   description: SSO realm for Dinosaur SSO Clients and Service Accounts
 
-- name: USER_NAME_CLAIM
-  displayName: Dinosaur Oauth spec human readable token claim attribute
-  description: Dinosaur Oauth spec human readable token claim attribute
-  value: "clientId"
-
-- name: FALL_BACK_USER_NAME_CLAIM
-  displayName: Dinosaur Oauth spec fall back human readable token claim attribute
-  description: Dinosaur Oauth spec fall back human readable token claim attribute
-  value: "preferred_username"
-
 - name: OSD_IDP_SSO_REALM
   displayName: SSO REALM for OSD Cluster Identity Provider Clients
   description: SSO realm for OSD Cluster Identity Provider Clients
@@ -353,36 +343,6 @@ parameters:
   displayName: Maximum number of clusters
   description: Maximum number of allowed dinosaur clusters
   value: "1000"
-
-- name: DINOSAUR_CAPACITY_INGRESS_THROUGHPUT
-  displayName: Dinosaur ingress throughput
-  description: Ingress throughput configuration for the default Dinosaur instance type
-  value: "2Mi"
-
-- name: DINOSAUR_CAPACITY_TOTAL_MAX_CONNECTIONS
-  displayName: Dinosaur total max connections
-  description: Total max connections configuration for the default Dinosaur instance type
-  value: "100"
-
-- name: DINOSAUR_CAPACITY_MAX_DATA_RETENTION_SIZE
-  displayName: Dinosaur max data retention size
-  description: Data retention size configuration for the default Dinosaur instance type
-  value: "60Gi"
-
-- name: DINOSAUR_CAPACITY_MAX_PARTITIONS
-  displayName: Dinosaur max partitions
-  description: Max partitions configuration for the default Dinosaur instance type
-  value: "100"
-
-- name: DINOSAUR_CAPACITY_MAX_DATA_RETENTION_PERIOD
-  displayName: Dinosaur max data retention period
-  description: Data retention period configuration for the default Dinosaur instance type
-  value: "P14D"
-
-- name: DINOSAUR_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC
-  displayName: Dinosaur max connection attempts per second
-  description: Max connection attempts per second configuration for the default Dinosaur instance type
-  value: "100"
 
 - name: DINOSAUR_LIFE_SPAN
   displayName: Dinosaur life span expiration in hours
@@ -507,12 +467,6 @@ objects:
     data:
       dinosaur-capacity-config.yaml: |-
         maxCapacity: ${DINOSAUR_CAPACITY_MAX_CAPACITY}
-        ingressEgressThroughputPerSec: ${DINOSAUR_CAPACITY_INGRESS_THROUGHPUT}
-        totalMaxConnections: ${DINOSAUR_CAPACITY_TOTAL_MAX_CONNECTIONS}
-        maxDataRetentionSize: ${DINOSAUR_CAPACITY_MAX_DATA_RETENTION_SIZE}
-        maxPartitions: ${DINOSAUR_CAPACITY_MAX_PARTITIONS}
-        maxDataRetentionPeriod: ${DINOSAUR_CAPACITY_MAX_DATA_RETENTION_PERIOD}
-        maxConnectionAttemptsPerSec: ${DINOSAUR_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC}
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -775,8 +729,6 @@ objects:
             - --sso-client-secret-file=/secrets/service/keycloak-service.clientSecret
             - --sso-base-url=${SSO_BASE_URL}
             - --sso-realm=${SSO_REALM}
-            - --user-name-claim=${USER_NAME_CLAIM}
-            - --fall-back-user-name-claim=${FALL_BACK_USER_NAME_CLAIM}
             - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
             - --osd-idp-sso-realm=${OSD_IDP_SSO_REALM}
             - --osd-idp-sso-client-id-file=/secrets/service/osd-idp-keycloak-service.clientId

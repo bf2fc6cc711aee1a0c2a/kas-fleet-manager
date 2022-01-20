@@ -795,14 +795,6 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.DinosaurRequest, dinosaurConf
 			},
 		},
 		Spec: manageddinosaur.ManagedDinosaurSpec{
-			Capacity: manageddinosaur.Capacity{
-				IngressEgressThroughputPerSec: dinosaurConfig.DinosaurCapacity.IngressEgressThroughputPerSec,
-				TotalMaxConnections:           dinosaurConfig.DinosaurCapacity.TotalMaxConnections,
-				MaxDataRetentionSize:          dinosaurConfig.DinosaurCapacity.MaxDataRetentionSize,
-				MaxPartitions:                 dinosaurConfig.DinosaurCapacity.MaxPartitions,
-				MaxDataRetentionPeriod:        dinosaurConfig.DinosaurCapacity.MaxDataRetentionPeriod,
-				MaxConnectionAttemptsPerSec:   dinosaurConfig.DinosaurCapacity.MaxConnectionAttemptsPerSec,
-			},
 			Endpoint: manageddinosaur.EndpointSpec{
 				Host: dinosaurRequest.Host,
 			},
