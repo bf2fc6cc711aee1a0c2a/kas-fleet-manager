@@ -17,46 +17,7 @@ Further customizations for existing endpoints are described in the following sec
 This endpoint is used to update the control plane of the status of a data plane cluster.
 
 #### Request
-The **DataPlaneClusterUpdateStatusRequest** is the schema used for the request body for this endpoint. This defines multiple fields relating to the status of a cluster as well as additional information like the cluster's capacity, available service and service operator versions.
-
-##### Customization
-- `.total`: This field should define a list of data plane cluster resources and their total capacity, currently used and available, that can be consumed by an instance or cluster deployed by your service (e.g. storage, cpu or memory).
-
-    For example:
-    ```
-        total:
-            ...
-            properties: {
-                storage:
-                    type: string # example value may be '100Gi'.
-            }
-    ```
-- `.remaining`: This field should define a list of data plane cluster resources that states the available/remaining capacity that can still be consumed by an instance or cluster deployed by your service. The list of resources you define here should match the resources you defined in **.total**.
-
-    For example:
-    ```
-        remaining:
-            ...
-            properties: {
-                storage:
-                    type: string # example value may be '50Gi'. This means that the dataplane cluster only has 50/100Gi storage left available that can be consumed by 'Dinosaur' clusters.
-            }
-    ```
-- `.resizeInfo`: This field contains information needed by the control plane on how to scale the data plane cluster. The schema `DatePlaneClusterUpdateStatusRequestResizeInfo` is used to define the properties for this field.
-
-    The property `delta` in this schema should be updated. This should define a list of data plane resources, consumed by 'Dinosaur' clusters, and the amount that they would be increased or decreased when applying the `nodeDelta`. The list of resources you define here should match the resources you defined in **.total**.
-
-    For example:
-    ```
-        resizeInfo:
-            nodeDelta:
-                type: integer # example value may be '3'
-            delta:
-                properties: {
-                    storage:
-                        type: string # example value may be '20Gi'. This means that storage will increase by 20Gi if the data plane cluster was scaled up by 3 nodes (new total for storage will then be '120Gi'). If the data plane cluster was scaled down by 3 nodes, then the storage will decrease by 20Gi (new total will then be '80Gi').
-                }
-    ```
+The **DataPlaneClusterUpdateStatusRequest** is the schema used for the request body for this endpoint. This defines multiple fields relating to the status of a cluster as well as additional information like  availability of the service and service operator and their versions.
 
 #### Response
 ##### Customization
@@ -69,19 +30,6 @@ This endpoint is used to update the control plane of the statuses of instances o
 
 #### Request
 The **DataPlaneDinosaurStatusUpdateRequest** is the schema used for the request body for this endpoint. The fields in each 'Dinosaur' status is defined by the **DataPlaneDinosaurStatus** schema.
-
-##### Customization
-- `.capacity`: This field should define a list of data plane resources consumed by a 'Dinosaur' cluster. The list of resources you define here should be the same resources defined in **DataPlaneClusterUpdateStatusRequest.total**.
-
-    For example:
-    ```
-        capacity:
-            ...
-            properties: {
-                storage:
-                    type: string # example value here could be '5Gi'. This means that this 'Dinosaur' cluster is currently consuming 5Gi of storage.
-            }
-    ```
 
 #### Response
 ##### Customization
