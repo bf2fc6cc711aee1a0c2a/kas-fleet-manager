@@ -72,7 +72,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
 	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
+		// c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
 	})
 	defer teardown()
 
@@ -340,10 +340,9 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 			evalKafka4,
 			errorCheckWithError,
 		},
-		// there should be one more spot for standard instance
 		{
 			standardKafka4,
-			errorCheckNoError,
+			errorCheckWithError,
 		},
 		{
 			standardKafkaIncorrectRegion,

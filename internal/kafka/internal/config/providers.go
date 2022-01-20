@@ -9,6 +9,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
+
+	errs "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
 type InstanceType types.KafkaInstanceType
@@ -216,11 +218,11 @@ func (c *ProviderConfig) ReadFiles() error {
 func (c *ProviderConfig) GetInstanceLimit(region string, providerName string, instanceType string) (*int, error) {
 	provider, ok := c.ProvidersConfig.SupportedProviders.GetByName(providerName)
 	if !ok {
-		return nil, fmt.Errorf("cloud provider '%s' is unsupported", providerName)
+		return nil, errs.ProviderNotSupported(fmt.Sprintf("cloud provider '%s' is unsupported", providerName))
 	}
 	reg, ok := provider.Regions.GetByName(region)
 	if !ok {
-		return nil, fmt.Errorf("'%s' region in '%s' cloud provider is unsupported", region, providerName)
+		return nil, errs.RegionNotSupported(fmt.Sprintf("'%s' region in '%s' cloud provider is unsupported", region, providerName))
 	}
 	return reg.getLimitSetForInstanceTypeInRegion(instanceType)
 }

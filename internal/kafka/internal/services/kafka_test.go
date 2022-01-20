@@ -1041,6 +1041,11 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				clusterService:         nil,
 				kafkaConfig:            defaultKafkaConf,
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return nil, nil
+					},
+				},
 				quotaService: &QuotaServiceMock{
 					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						return true, nil
@@ -1077,6 +1082,11 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, 0, false),
 				kafkaConfig:            defaultKafkaConf,
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return nil, nil
+					},
+				},
 				quotaService: &QuotaServiceMock{
 					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						return false, nil
@@ -1150,6 +1160,11 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, 0, 0, false),
 				kafkaConfig:            defaultKafkaConf,
 				clusterService:         nil,
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return nil, nil
+					},
+				},
 				quotaService: &QuotaServiceMock{
 					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						return true, nil

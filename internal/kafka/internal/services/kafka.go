@@ -146,7 +146,7 @@ func (k *kafkaService) hasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaReq
 	}
 
 	if regInstTypeLimit != nil && int64(*regInstTypeLimit) == 0 {
-		return false, errors.TooManyKafkaInstancesReached(fmt.Sprintf("No capacity available for region: %s for instance type: %s", kafkaRequest.Region, kafkaRequest.InstanceType))
+		return false, nil
 	}
 
 	// if auto scaling is enabled and no limit set - capacity is available in the region
@@ -168,7 +168,7 @@ func (k *kafkaService) CapacityAvailableForRegionAndInstanceType(instTypeRegCapa
 		Count(&count).Error; err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka request")
 	}
-	return instTypeRegCapacity == nil || count <= int64(*instTypeRegCapacity), nil
+	return instTypeRegCapacity == nil || count < int64(*instTypeRegCapacity), nil
 }
 
 func (k *kafkaService) DetectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
@@ -234,13 +234,18 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 
 	kafkaRequest.InstanceType = instanceType.String()
 
-	if _, err := k.hasAvailableCapacityInRegion(kafkaRequest); err != nil {
-		errorMsg := fmt.Sprintf(
-			"Cluster capacity(%d) exhausted in '%s' region for '%s' instance type",
-			int64(k.dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(kafkaRequest.Region)),
-			kafkaRequest.Region, kafkaRequest.InstanceType)
-		logger.Logger.Warningf(errorMsg)
+	hasCapacity, err := k.hasAvailableCapacityInRegion(kafkaRequest)
+	if err != nil {
+		if err.Code == errors.ErrorGeneral {
+			err = errors.NewWithCause(errors.ErrorGeneral, err, "unable to validate your request, please try again")
+			logger.Logger.Errorf(err.Reason)
+		}
 		return err
+	}
+	if !hasCapacity {
+		errorMsg := fmt.Sprintf("Capacity exhausted in '%s' region for '%s' instance type", kafkaRequest.Region, kafkaRequest.InstanceType)
+		logger.Logger.Warningf(errorMsg)
+		return errors.TooManyKafkaInstancesReached(fmt.Sprintf("No capacity available for region: %s for instance type: %s", kafkaRequest.Region, kafkaRequest.InstanceType))
 	}
 
 	cluster, e := k.clusterPlacementStrategy.FindCluster(kafkaRequest)
