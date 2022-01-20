@@ -1,4 +1,4 @@
-Feature: create a a connector
+Feature: create a connector
   In order to use connectors api
   As an API user
   I need to be able to manage connectors
