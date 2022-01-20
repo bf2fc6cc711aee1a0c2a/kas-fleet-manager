@@ -40,8 +40,6 @@ type Provider interface {
 	// Install the dinosaur operator in a given cluster
 	InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (bool, error)
 	// Install the cluster logging operator for a given cluster
-	InstallClusterLogging(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error)
-	// Install the cluster logging operator for a given cluster
 	InstallFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error)
 }
 

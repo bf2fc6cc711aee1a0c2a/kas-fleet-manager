@@ -143,7 +143,6 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `FLEETSHARD_OLM_INDEX_IMAGE`: Fleetshard operator OLM index image. Defaults to `quay.io/osd-addons/fleetshard-operator:production-82b42db`.
 - `DINOSAUR_OPERATOR_OLM_INDEX_IMAGE`: Dinosaur operator OLM index image. Defaults to `quay.io/osd-addons/managed-dinosaur:production-82b42db`.
 - `DATAPLANE_CLUSTER_SCALING_TYPE`: Dataplane cluster scaling type. Options: `manual`, `auto` and `none`, Defaults: `manual`.
-- `CLUSTER_LOGGING_OPERATOR_ADDON_ID`: The id of the cluster logging operator addon. Defaults to `''`.
 - `DINOSAUR_OPERATOR_OPERATOR_ADDON_ID`: The id of the Dinosaur operator addon. Defaults to `managed-dinosaur-qe`.
 - `FLEETSHARD_ADDON_ID`: The id of the fleetshard operator addon. Defaults to `fleetshard-operator-qe`.
 

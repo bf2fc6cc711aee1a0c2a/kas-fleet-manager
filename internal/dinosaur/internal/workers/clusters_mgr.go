@@ -34,6 +34,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// TODO change these constants to match your own
 const (
 	observabilityNamespace           = "managed-application-services-observability"
 	observabilityCatalogSourceImage  = "quay.io/rhoas/observability-operator-index:v3.0.8"
@@ -71,25 +72,6 @@ var clusterMetricsStatuses = []api.ClusterStatus{
 }
 
 type Worker = workers.Worker
-
-var clusterLoggingOperatorAddonParams = []types.Parameter{
-	{
-		Id:    "use-cloudwatch",
-		Value: "true",
-	},
-	{
-		Id:    "use-app-logs",
-		Value: "true",
-	},
-	{
-		Id:    "use-infra-logs",
-		Value: "false",
-	},
-	{
-		Id:    "use-audit-logs",
-		Value: "false",
-	},
-}
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
 
@@ -587,23 +569,13 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 		return err
 	}
 
-	clusterLoggingOperatorIsReady := false
-
-	if c.OCMConfig.ClusterLoggingOperatorAddonID != "" {
-		ready, err := c.reconcileClusterLoggingOperator(provisionedCluster)
-		if err != nil {
-			return err
-		}
-		clusterLoggingOperatorIsReady = ready
-	}
-
 	glog.Infof("Provisioning fleetshard-operator as it is enabled")
 	fleetshardOperatorIsReady, errs := c.FleetshardOperatorAddon.Provision(provisionedCluster)
 	if errs != nil {
 		return errs
 	}
 
-	if dinosaurOperatorIsReady && fleetshardOperatorIsReady && (clusterLoggingOperatorIsReady || c.OCMConfig.ClusterLoggingOperatorAddonID == "") {
+	if dinosaurOperatorIsReady && fleetshardOperatorIsReady {
 		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForFleetShardOperator, provisionedCluster.ClusterID)
 		if err := c.ClusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForFleetShardOperator); err != nil {
 			return errors.Wrapf(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
@@ -621,16 +593,6 @@ func (c *ClusterManager) reconcileDinosaurOperator(provisionedCluster api.Cluste
 		return false, err
 	}
 	glog.V(5).Infof("ready status of dinosaur operator installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
-	return ready, nil
-}
-
-// reconcileClusterLoggingOperator installs the cluster logging operator on provisioned clusters
-func (c *ClusterManager) reconcileClusterLoggingOperator(provisionedCluster api.Cluster) (bool, error) {
-	ready, err := c.ClusterService.InstallClusterLogging(&provisionedCluster, clusterLoggingOperatorAddonParams)
-	if err != nil {
-		return false, err
-	}
-	glog.V(5).Infof("ready status of cluster logging installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
 	return ready, nil
 }
 

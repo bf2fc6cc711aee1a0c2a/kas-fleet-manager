@@ -382,11 +382,6 @@ parameters:
   description: ID of the fleetshard addon
   value: "fleetshard-operator-qe"
 
-- name: CLUSTER_LOGGING_OPERATOR_ADDON_ID
-  displayName: Cluster logging operator addon ID
-  description: ID of the cluster logging operator addon
-  value: ""
-
 - name: ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE
   description: Enables reconciliation for data plane clusters in the 'Ready' state
   value: "true"
@@ -782,7 +777,6 @@ objects:
             - --dinosaur-domain-name=${DINOSAUR_DOMAIN_NAME}
             - --dinosaur-operator-addon-id=${DINOSAUR_OPERATOR_OPERATOR_ADDON_ID}
             - --fleetshard-addon-id=${FLEETSHARD_ADDON_ID}
-            - --cluster-logging-operator-addon-id=${CLUSTER_LOGGING_OPERATOR_ADDON_ID}
             - --alsologtostderr
             - -v=${GLOG_V}
             resources:

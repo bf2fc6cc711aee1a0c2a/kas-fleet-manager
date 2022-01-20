@@ -63,8 +63,6 @@ type ClusterService interface {
 	ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError
 	// Install the dinosaur operator in a given cluster
 	InstallDinosaurOperator(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
-	// Install the cluster logging operator for a given cluster
-	InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
 	CheckDinosaurOperatorVersionReady(cluster *api.Cluster, dinosaurOperatorVersion string) (bool, error)
 	IsDinosaurVersionAvailableInCluster(cluster *api.Cluster, dinosaurOperatorVersion string, dinosaurVersion string) (bool, error)
 }
@@ -678,18 +676,6 @@ func (c clusterService) InstallDinosaurOperator(cluster *api.Cluster) (bool, *ap
 	}
 	if ready, err := p.InstallDinosaurOperator(buildClusterSpec(cluster)); err != nil {
 		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install dinosaur for cluster %s", cluster.ClusterID)
-	} else {
-		return ready, nil
-	}
-}
-
-func (c clusterService) InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
-	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-	if ready, err := p.InstallClusterLogging(buildClusterSpec(cluster), params); err != nil {
-		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install cluster-logging for cluster %s", cluster.ClusterID)
 	} else {
 		return ready, nil
 	}
