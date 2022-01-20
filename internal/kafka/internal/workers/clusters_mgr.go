@@ -55,8 +55,6 @@ const (
 	mkSRERoleBindingName            = "kafka-sre-cluster-admin"
 	dedicatedReadersRoleBindingName = "dedicated-readers"
 	clusterAdminRoleName            = "cluster-admin"
-	IngressLabelName                = "ingressType"
-	IngressLabelValue               = "sharded"
 )
 
 var clusterMetricsStatuses = []api.ClusterStatus{
