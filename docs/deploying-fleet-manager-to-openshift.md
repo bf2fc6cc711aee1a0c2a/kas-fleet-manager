@@ -76,7 +76,6 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `DEX_PASSWORD`: Dex password used to authenticate to an Observatorium instance using Dex as authentication. Defaults to value read from _./secrets/dex.secret_
 - `SSO_CLIENT_ID`: The client id for a SSO service account. Defaults to value read from _./secrets/keycloak-service.clientId_
 - `SSO_CLIENT_SECRET`: The client secret for a SSO service account. Defaults to value read from _./secrets/keycloak-service.clientSecret_
-- `SSO_CRT`: The TLS certificate of the SSO instance. Defaults to value read from _./secrets/keycloak-service.crt_
 - `OSD_IDP_SSO_CLIENT_ID`: The client id for a SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientId_
 - `OSD_IDP_SSO_CLIENT_SECRET`: The client secret for a SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientSecret_
 - `IMAGE_PULL_DOCKER_CONFIG`: Docker config content for pulling private images. Defaults to value read from _./secrets/image-pull.dockerconfigjson_

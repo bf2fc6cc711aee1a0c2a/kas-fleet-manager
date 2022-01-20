@@ -127,7 +127,6 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()
 	serverConfig.JwksURL = jwkURL
-	keycloakConfig.EnableAuthenticationOnDinosaur = false
 
 	// the configuration hook might set config options that influence which config files are loaded,
 	// by env.LoadConfig()

@@ -276,11 +276,6 @@ parameters:
   description: Debug mode for SSO API client
   value: "false"
 
-- name: SSO_ENABLE_AUTH
-  displayName: Enable SSO Auth
-  description: Enable SSO Auth for the data plane
-  value: "true"
-
 - name: SSO_BASE_URL
   displayName: SSO Host Url
   description: SSO Host url
@@ -776,7 +771,6 @@ objects:
             - --enable-db-debug=${ENABLE_DB_DEBUG}
             - --ocm-client-id-file=/secrets/service/ocm-service.clientId
             - --ocm-client-secret-file=/secrets/service/ocm-service.clientSecret
-            - --sso-enable-auth=${SSO_ENABLE_AUTH}
             - --sso-client-id-file=/secrets/service/keycloak-service.clientId
             - --sso-client-secret-file=/secrets/service/keycloak-service.clientSecret
             - --sso-base-url=${SSO_BASE_URL}
@@ -787,7 +781,6 @@ objects:
             - --osd-idp-sso-realm=${OSD_IDP_SSO_REALM}
             - --osd-idp-sso-client-id-file=/secrets/service/osd-idp-keycloak-service.clientId
             - --osd-idp-sso-client-secret-file=/secrets/service/osd-idp-keycloak-service.clientSecret
-            - --sso-cert-file=/secrets/service/keycloak-service.crt
             - --sso-debug=${SSO_DEBUG}
             - --self-token-file=/secrets/service/ocm-service.token
             - --ocm-base-url=${OCM_URL}

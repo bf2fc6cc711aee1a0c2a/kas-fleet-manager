@@ -48,9 +48,6 @@ func (k *ReadyDinosaurManager) Stop() {
 
 func (k *ReadyDinosaurManager) Reconcile() []error {
 	glog.Infoln("reconciling ready dinosaurs")
-	if !k.keycloakConfig.EnableAuthenticationOnDinosaur {
-		return nil
-	}
 
 	var encounteredErrors []error
 
