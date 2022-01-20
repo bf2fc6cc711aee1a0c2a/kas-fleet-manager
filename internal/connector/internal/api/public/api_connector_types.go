@@ -133,8 +133,8 @@ func (a *ConnectorTypesApiService) GetConnectorTypeByID(ctx _context.Context, co
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// ListConnectorTypesOpts Optional parameters for the method 'ListConnectorTypes'
-type ListConnectorTypesOpts struct {
+// GetConnectorTypesOpts Optional parameters for the method 'GetConnectorTypes'
+type GetConnectorTypesOpts struct {
 	Page    optional.String
 	Size    optional.String
 	OrderBy optional.String
@@ -142,17 +142,17 @@ type ListConnectorTypesOpts struct {
 }
 
 /*
-ListConnectorTypes Returns a list of connector types
+GetConnectorTypes Returns a list of connector types
 Returns a list of connector types
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *ListConnectorTypesOpts - Optional Parameters:
+ * @param optional nil or *GetConnectorTypesOpts - Optional Parameters:
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
  * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the `ConnectorType` fields. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
  * @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of a SQL statement. Allowed fields in the search are `name`, `description`, `version`, `label`, and `channel`. Allowed operators are `<>`, `=`, or `LIKE`. Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.  Examples:  To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:  ``` name = aws-sqs-source and channel = stable ```[p-]  To return a Kafka instance with a name that starts with `aws`, use the following syntax:  ``` name like aws%25 ```  If the parameter isn't provided, or if the value is empty, then all the Connector Type that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
 @return ConnectorTypeList
 */
-func (a *ConnectorTypesApiService) ListConnectorTypes(ctx _context.Context, localVarOptionals *ListConnectorTypesOpts) (ConnectorTypeList, *_nethttp.Response, error) {
+func (a *ConnectorTypesApiService) GetConnectorTypes(ctx _context.Context, localVarOptionals *GetConnectorTypesOpts) (ConnectorTypeList, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}

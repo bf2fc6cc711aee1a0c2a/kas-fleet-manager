@@ -44,33 +44,6 @@ paths:
                 $ref: '#/components/schemas/VersionMetadata'
           description: Version metadata
 
-
-  "/api/kafkas_mgmt/v1/status":
-    get:
-      tags:
-        - Connector Service
-      operationId: getServiceStatus
-      summary: Returns the status of resources
-      description: Returns the status of resources
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServiceStatus'
-          description: Ok
-        "500":
-          description: Unexpected error occurred
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                500Example:
-                  $ref: '#/components/examples/500Example'
-      security:
-        - Bearer: [ ]
-
   #
   # Connector Types
   #
@@ -135,7 +108,7 @@ paths:
         - Connector Types
       security:
         - Bearer: [ ]
-      operationId: listConnectorTypes
+      operationId: getConnectorTypes
       summary: Returns a list of connector types
       description: Returns a list of connector types
       parameters:
