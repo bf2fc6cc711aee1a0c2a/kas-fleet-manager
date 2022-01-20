@@ -19,9 +19,6 @@ type KeycloakConfig struct {
 	TLSTrustedCertificatesKey   string               `json:"tls_trusted_certificates_key"`
 	TLSTrustedCertificatesValue string               `json:"tls_trusted_certificates_value"`
 	TLSTrustedCertificatesFile  string               `json:"tls_trusted_certificates_file"`
-	EnablePlain                 bool                 `json:"enable_plain"`
-	EnableOauthBearer           bool                 `json:"enable_oauth_bearer"`
-	EnableCustomClaimCheck      bool                 `json:"enable_custom_claim_check"`
 	KafkaRealm                  *KeycloakRealmConfig `json:"kafka_realm"`
 	OSDClusterIDPRealm          *KeycloakRealmConfig `json:"osd_cluster_idp_realm"`
 	MaxAllowedServiceAccounts   int                  `json:"max_allowed_service_accounts"`
@@ -66,8 +63,6 @@ func NewKeycloakConfig() *KeycloakConfig {
 		UserNameClaim:              "clientId",
 		FallBackUserNameClaim:      "preferred_username",
 		TLSTrustedCertificatesKey:  "keycloak.crt",
-		EnablePlain:                true,
-		EnableOauthBearer:          false,
 		MaxAllowedServiceAccounts:  2,
 		MaxLimitForGetClients:      100,
 		KeycloakClientExpire:       false,
