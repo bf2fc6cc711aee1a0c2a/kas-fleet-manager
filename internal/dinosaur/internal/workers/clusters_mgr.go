@@ -737,16 +737,16 @@ func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 		c.buildObservabilityOperatorGroupResource(),
 		c.buildObservabilitySubscriptionResource(),
 	}
-	strimiNS := dinosaurOperatorAddonNamespace
+	managedDinosaurOperatorNamespace := dinosaurOperatorAddonNamespace
 	if c.OCMConfig.DinosaurOperatorAddonID == "managed-dinosaur-qe" {
-		strimiNS = dinosaurOperatorQEAddonNamespace
+		managedDinosaurOperatorNamespace = dinosaurOperatorQEAddonNamespace
 	}
 	fleetshardNS := fleetshardAddonNamespace
 	if c.OCMConfig.FleetshardAddonID == "fleetshard-operator-qe" {
 		fleetshardNS = fleetshardQEAddonNamespace
 	}
 
-	if s := c.buildImagePullSecret(strimiNS); s != nil {
+	if s := c.buildImagePullSecret(managedDinosaurOperatorNamespace); s != nil {
 		r = append(r, s)
 	}
 	if s := c.buildImagePullSecret(fleetshardNS); s != nil {
