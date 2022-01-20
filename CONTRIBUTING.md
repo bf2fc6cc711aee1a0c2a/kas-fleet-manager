@@ -73,7 +73,7 @@ Set the following configuration in your **Launch.json** file.
 }
 ```
 ## Modifying the API definition
-The services' OpenAPI specification is located in `openapi/kas-fleet-manager.yaml`. It can be modified using Apicurio Studio, Swagger or manually.
+The services' OpenAPI specification is located in `openapi/kas-fleet-manager.yaml`. It can be modified using Apicurio Studio, Swagger or manually. The OpenAPI files follows the [RHOAS API standards](https://api.appservices.tech/docs/api-standards.html), each modification has to adhere to it.  
 
 Once you've made your changes, the second step is to validate it:
 
