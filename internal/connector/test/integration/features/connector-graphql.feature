@@ -17,7 +17,7 @@ Feature: create a connector
     When I POST to "/v1/graphql" a GraphQL query:
       """
       query {
-        listConnectorTypes {
+        getConnectorTypes {
           size
           page
           total
@@ -35,7 +35,7 @@ Feature: create a connector
       """
       {
         "data": {
-          "listConnectorTypes": {
+          "getConnectorTypes": {
             "items": [
               {
                 "id": "aws-sqs-source-v1alpha1",
