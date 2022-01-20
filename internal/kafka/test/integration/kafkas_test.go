@@ -305,8 +305,8 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 
 	errorCheckUnsupportedRegion := errorCheck{
 		wantErr:  true,
-		code:     errors.ErrorGeneral,
-		httpCode: http.StatusInternalServerError,
+		code:     errors.ErrorRegionNotSupported,
+		httpCode: http.StatusBadRequest,
 	}
 
 	kafkaValidations := []kafkaValidation{

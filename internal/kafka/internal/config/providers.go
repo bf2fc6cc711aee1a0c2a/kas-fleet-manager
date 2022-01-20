@@ -46,11 +46,11 @@ func (r Region) IsInstanceTypeSupported(instanceType InstanceType) bool {
 	return false
 }
 
-func (r Region) getLimitSetForInstanceTypeInRegion(t string) (*int, error) {
+func (r Region) getLimitSetForInstanceTypeInRegion(t string) (*int, *errs.ServiceError) {
 	if it, found := r.SupportedInstanceTypes[t]; found {
 		return it.Limit, nil
 	}
-	return nil, fmt.Errorf("Instance type: %s is not supported", t)
+	return nil, errs.InstanceTypeNotSupported(fmt.Sprintf("Instance type: %s is not supported", t))
 }
 
 func (r Region) Validate(dataplaneClusterConfig *DataplaneClusterConfig) error {
@@ -215,7 +215,7 @@ func (c *ProviderConfig) ReadFiles() error {
 	return readFileProvidersConfig(c.ProvidersConfigFile, &c.ProvidersConfig)
 }
 
-func (c *ProviderConfig) GetInstanceLimit(region string, providerName string, instanceType string) (*int, error) {
+func (c *ProviderConfig) GetInstanceLimit(region string, providerName string, instanceType string) (*int, *errs.ServiceError) {
 	provider, ok := c.ProvidersConfig.SupportedProviders.GetByName(providerName)
 	if !ok {
 		return nil, errs.ProviderNotSupported(fmt.Sprintf("cloud provider '%s' is unsupported", providerName))

@@ -142,7 +142,7 @@ func (k *kafkaService) hasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaReq
 	// get region limit for instance type
 	regInstTypeLimit, e := k.providerConfig.GetInstanceLimit(kafkaRequest.Region, kafkaRequest.CloudProvider, kafkaRequest.InstanceType)
 	if e != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, e, fmt.Sprintf("Unable to get instance limit for region: %s and instance type: %s", kafkaRequest.Region, kafkaRequest.InstanceType))
+		return false, e
 	}
 
 	if regInstTypeLimit != nil && int64(*regInstTypeLimit) == 0 {
