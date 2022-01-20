@@ -7,9 +7,10 @@ A service for provisioning and managing fleets of Dinosaur instances.
 For more information on how the service works, see [the implementation documentation](docs/implementation.md).
 
 ## Prerequisites
-* [Golang 1.15+](https://golang.org/dl/)
+* [Golang 1.16+](https://golang.org/dl/)
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
+* [Node.js v12.20+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 
 Apart from the installed software prerequisites, here are other ones required for running fleet-manager due to its interaction with external services. All of the below are required to run fleet-manager locally.
 
