@@ -583,8 +583,6 @@ deploy/service: DINOSAUR_LIFE_SPAN ?= "48"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
 deploy/service: SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy/service: SSO_REALM ?= "rhoas"
-deploy/service: USER_NAME_CLAIM ?= "clientId"
-deploy/service: FALL_BACK_USER_NAME_CLAIM ?= "preferred_username"
 deploy/service: MAX_LIMIT_FOR_SSO_GET_CLIENTS ?= "100"
 deploy/service: OSD_IDP_SSO_REALM ?= "rhoas-dinosaur-sre"
 deploy/service: TOKEN_ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
@@ -625,8 +623,6 @@ deploy/service: deploy/envoy deploy/route
 		-p JWKS_URL="$(JWKS_URL)" \
 		-p SSO_BASE_URL="$(SSO_BASE_URL)" \
 		-p SSO_REALM="$(SSO_REALM)" \
-		-p USER_NAME_CLAIM="$(USER_NAME_CLAIM)" \
-		-p FALL_BACK_USER_NAME_CLAIM="$(FALL_BACK_USER_NAME_CLAIM)" \
 		-p MAX_LIMIT_FOR_SSO_GET_CLIENTS="${MAX_LIMIT_FOR_SSO_GET_CLIENTS}" \
 		-p OSD_IDP_SSO_REALM="$(OSD_IDP_SSO_REALM)" \
 		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \

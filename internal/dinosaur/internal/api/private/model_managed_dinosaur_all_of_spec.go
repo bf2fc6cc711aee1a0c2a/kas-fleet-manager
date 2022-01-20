@@ -11,11 +11,8 @@ package private
 
 // ManagedDinosaurAllOfSpec struct for ManagedDinosaurAllOfSpec
 type ManagedDinosaurAllOfSpec struct {
-	ServiceAccounts []ManagedDinosaurAllOfSpecServiceAccounts `json:"serviceAccounts,omitempty"`
-	Capacity        ManagedDinosaurCapacity                   `json:"capacity,omitempty"`
-	Oauth           ManagedDinosaurAllOfSpecOauth             `json:"oauth,omitempty"`
-	Owners          []string                                  `json:"owners,omitempty"`
-	Endpoint        ManagedDinosaurAllOfSpecEndpoint          `json:"endpoint,omitempty"`
-	Versions        ManagedDinosaurVersions                   `json:"versions,omitempty"`
-	Deleted         bool                                      `json:"deleted"`
+	Owners   []string                         `json:"owners,omitempty"`
+	Endpoint ManagedDinosaurAllOfSpecEndpoint `json:"endpoint,omitempty"`
+	Versions ManagedDinosaurVersions          `json:"versions,omitempty"`
+	Deleted  bool                             `json:"deleted"`
 }
