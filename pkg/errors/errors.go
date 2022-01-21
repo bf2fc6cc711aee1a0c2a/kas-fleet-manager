@@ -25,164 +25,207 @@ const (
 	// To support connector errors too..
 	CONNECTOR_MGMT_ERROR_CODE_PREFIX = "CONNECTOR-MGMT"
 	CONNECTOR_MGMT_ERROR_HREF        = "/api/connector_mgmt/v1/errors/"
+)
 
+const (
 	// Forbidden occurs when a user is not allowed to access the service
 	ErrorForbidden       ServiceErrorCode = 4
+	ErrorForbiddenTag    string           = "ActionForbidden"
 	ErrorForbiddenReason string           = "Forbidden to perform this action"
 
 	// Forbidden occurs when a user or organisation has reached maximum number of allowed instances
 	ErrorMaxAllowedInstanceReached       ServiceErrorCode = 5
+	ErrorMaxAllowedInstanceReachedTag    string           = "MaxAllowedInstanceReached"
 	ErrorMaxAllowedInstanceReachedReason string           = "Forbidden to create more instances than the maximum allowed"
 
 	// Conflict occurs when a database constraint is violated
 	ErrorConflict       ServiceErrorCode = 6
+	ErrorConflictTag    string           = "ResourceConflict"
 	ErrorConflictReason string           = "An entity with the specified unique values already exists"
 
 	// NotFound occurs when a record is not found in the database
 	ErrorNotFound       ServiceErrorCode = 7
+	ErrorNotFoundTag    string           = "ResourceNotFound"
 	ErrorNotFoundReason string           = "Resource not found"
 
 	// Validation occurs when an object fails validation
 	ErrorValidation       ServiceErrorCode = 8
-	ErrorValidationReason string           = "General validation failure"
+	ErrorValidationTag    string           = "RequestNotValid"
+	ErrorValidationReason string           = "Request validation failure"
 
 	// General occurs when an error fails to match any other error code
 	ErrorGeneral       ServiceErrorCode = 9
+	ErrorGeneralTag    string           = "UnknownError"
 	ErrorGeneralReason string           = "Unspecified error"
 
 	// NotImplemented occurs when an API REST method is not implemented in a handler
 	ErrorNotImplemented       ServiceErrorCode = 10
+	ErrorNotImplementedTag    string           = "MethodNotImplemented"
 	ErrorNotImplementedReason string           = "HTTP Method not implemented for this endpoint"
 
 	// Unauthorized occurs when the requester is not authorized to perform the specified action
 	ErrorUnauthorized       ServiceErrorCode = 11
+	ErrorUnauthorizedTag    string           = "Unauthorized"
 	ErrorUnauthorizedReason string           = "Account is unauthorized to perform this action"
 
 	// Unauthorized occurs when the requester is not authorized to perform the specified action
 	ErrorTermsNotAccepted       ServiceErrorCode = 12
+	ErrorTermsNotAcceptedTag    string           = "TermsNotAccepted"
 	ErrorTermsNotAcceptedReason string           = "Required terms have not been accepted"
 
 	// Unauthenticated occurs when the provided credentials cannot be validated
 	ErrorUnauthenticated       ServiceErrorCode = 15
+	ErrorUnauthenticatedTag    string           = "Unauthenticated"
 	ErrorUnauthenticatedReason string           = "Account authentication could not be verified"
 
 	// MalformedRequest occurs when the request body cannot be read
 	ErrorMalformedRequest       ServiceErrorCode = 17
+	ErrorMalformedRequestTag    string           = "ErrorMalformedRequest"
 	ErrorMalformedRequestReason string           = "Unable to read request body"
 
 	// Bad Request
 	ErrorBadRequest       ServiceErrorCode = 21
+	ErrorBadRequestTag    string           = "BadRequest"
 	ErrorBadRequestReason string           = "Bad request"
 
 	// Invalid Search Query
 	ErrorFailedToParseSearch       ServiceErrorCode = 23
+	ErrorFailedToParseSearchTag    string           = "FailedToParseSearch"
 	ErrorFailedToParseSearchReason string           = "Failed to parse search query"
 
 	// TooManyRequests occurs when a the kafka instances capacity gets filled up
 	ErrorTooManyKafkaInstancesReached       ServiceErrorCode = 24
+	ErrorTooManyKafkaInstancesReachedTag    string           = "TooManyKafkaInstancesReached"
 	ErrorTooManyKafkaInstancesReachedReason string           = "The maximum number of allowed kafka instances has been reached"
 
 	// Gone occurs when a record is accessed that has been deleted
 	ErrorGone       ServiceErrorCode = 25
+	ErrorGoneTag    string           = "ResourceGone"
 	ErrorGoneReason string           = "Resource gone"
 
 	// Synchronous request not supported
 	ErrorSyncActionNotSupported       ServiceErrorCode = 103
+	ErrorSyncActionNotSupportedTag    string           = "SyncActionNotSupported"
 	ErrorSyncActionNotSupportedReason string           = "Synchronous action is not supported, use async=true parameter"
 
 	// Failed to create sso client - an internal error incurred when calling keycloak server
 	ErrorFailedToCreateSSOClient       ServiceErrorCode = 106
+	ErrorFailedToCreateSSOClientTag    string           = "FailedToCreateSSOClient"
 	ErrorFailedToCreateSSOClientReason string           = "Failed to create kafka client in the mas sso"
 
 	// Failed to get sso client secret  - an internal error incurred when calling keycloak server
 	ErrorFailedToGetSSOClientSecret       ServiceErrorCode = 107
+	ErrorFailedToGetSSOClientSecretTag    string           = "FailedToGetSSOClientSecret"
 	ErrorFailedToGetSSOClientSecretReason string           = "Failed to get kafka client secret from the mas sso"
 
 	// Failed to get sso client - an internal error incurred when calling keycloak server
 	ErrorFailedToGetSSOClient       ServiceErrorCode = 108
+	ErrorFailedToGetSSOClientTag    string           = "FailedToGetSSOClient"
 	ErrorFailedToGetSSOClientReason string           = "Failed to get kafka client from the mas sso"
 
 	// Failed to delete sso client - an internal error incurred when calling keycloak server
 	ErrorFailedToDeleteSSOClient       ServiceErrorCode = 109
+	ErrorFailedToDeleteSSOClientTag    string           = "FailedToDeleteSSOClient"
 	ErrorFailedToDeleteSSOClientReason string           = "Failed to delete kafka client from the mas sso"
 
 	// Failed to create service account, after validating user's request, but failed at the server end
 	// it is an internal server error
 	ErrorFailedToCreateServiceAccount       ServiceErrorCode = 110
+	ErrorFailedToCreateServiceAccountTag    string           = "FailedToCreateServiceAccount"
 	ErrorFailedToCreateServiceAccountReason string           = "Failed to create service account"
 
 	// Failed to get service account - an internal error incurred when calling keycloak server
 	ErrorFailedToGetServiceAccount       ServiceErrorCode = 111
+	ErrorFailedToGetServiceAccountTag    string           = "FailedToGetServiceAccount"
 	ErrorFailedToGetServiceAccountReason string           = "Failed to get service account"
 
 	// Failed to delete service account - an internal error incurred when calling keycloak server
 	ErrorFailedToDeleteServiceAccount       ServiceErrorCode = 112
+	ErrorFailedToDeleteServiceAccountTag    string           = "FailedToDeleteServiceAccount"
 	ErrorFailedToDeleteServiceAccountReason string           = "Failed to delete service account"
 
 	// Failed to find service account - a client error as incorrect SA is given
 	ErrorServiceAccountNotFound       ServiceErrorCode = 113
+	ErrorServiceAccountNotFoundTag    string           = "ServiceAccountNotFound"
 	ErrorServiceAccountNotFoundReason string           = "Failed to find service account"
 
 	// Insufficient quota
 	ErrorInsufficientQuota       ServiceErrorCode = 120
+	ErrorInsufficientQuotaTag    string           = "InsufficientQuota"
 	ErrorInsufficientQuotaReason string           = "Insufficient quota"
+
 	// Failed to check Quota
 	ErrorFailedToCheckQuota       ServiceErrorCode = 121
+	ErrorFailedToCheckQuotaTag    string           = "FailedToCheckQuota"
 	ErrorFailedToCheckQuotaReason string           = "Failed to check quota"
 	// Provider not supported
 	ErrorProviderNotSupported       ServiceErrorCode = 30
+	ErrorProviderNotSupportedTag    string           = "ProviderNotSupported"
 	ErrorProviderNotSupportedReason string           = "Provider not supported"
 
 	// Region not supported
 	ErrorRegionNotSupported       ServiceErrorCode = 31
+	ErrorRegionNotSupportedTag    string           = "RegionNotSupported"
 	ErrorRegionNotSupportedReason string           = "Region not supported"
 
 	// Invalid kafka cluster name
 	ErrorMalformedKafkaClusterName       ServiceErrorCode = 32
+	ErrorMalformedKafkaClusterNameTag    string           = "MalformedKafkaClusterName"
 	ErrorMalformedKafkaClusterNameReason string           = "Kafka cluster name is invalid"
 
 	// Minimum field length validation
 	ErrorMinimumFieldLength       ServiceErrorCode = 33
+	ErrorMinimumFieldLengthTag    string           = "MinimumFieldLength"
 	ErrorMinimumFieldLengthReason string           = "Minimum field length not reached"
 
 	// Maximum field length validation
 	ErrorMaximumFieldLength       ServiceErrorCode = 34
+	ErrorMaximumFieldLengthTag    string           = "MaximumFieldLength"
 	ErrorMaximumFieldLengthReason string           = "Maximum field length has been depassed"
 
 	// Only MultiAZ is supported
 	ErrorOnlyMultiAZSupported       ServiceErrorCode = 35
+	ErrorOnlyMultiAZSupportedTag    string           = "OnlyMultiAZSupported"
 	ErrorOnlyMultiAZSupportedReason string           = "Only multiAZ Kafkas are supported, use multi_az=true"
 
 	// Kafka cluster name must be unique
 	ErrorDuplicateKafkaClusterName       ServiceErrorCode = 36
+	ErrorDuplicateKafkaClusterNameTag    string           = "DuplicateKafkaClusterName"
 	ErrorDuplicateKafkaClusterNameReason string           = "Kafka cluster name is already used"
 
 	// A generic field validation error when validating API requests input
 	ErrorFieldValidationError       ServiceErrorCode = 37
+	ErrorFieldValidationErrorTag    string           = "FieldValidationError"
 	ErrorFieldValidationErrorReason string           = "Field validation failed"
 
 	// Failure to send an error response (i.e. unable to send error response as the error can't be converted to JSON.)
 	ErrorUnableToSendErrorResponse       ServiceErrorCode = 1000
+	ErrorUnableToSendErrorResponseTag    string           = "UnableToSendErrorResponse"
 	ErrorUnableToSendErrorResponseReason string           = "An unexpected error happened, please check the log of the service for details"
 
 	// Invalid service account name
 	ErrorMalformedServiceAccountName       ServiceErrorCode = 38
+	ErrorMalformedServiceAccountNameTag    string           = "MalformedServiceAccountName"
 	ErrorMalformedServiceAccountNameReason string           = "Service account name is invalid"
 
 	// Invalid service account desc
 	ErrorMalformedServiceAccountDesc       ServiceErrorCode = 39
+	ErrorMalformedServiceAccountDescTag    string           = "MalformedServiceAccountDesc"
 	ErrorMalformedServiceAccountDescReason string           = "Service account desc is invalid"
 
 	// Invalid service account desc
 	ErrorMalformedServiceAccountId       ServiceErrorCode = 40
+	ErrorMalformedServiceAccountIdTag    string           = "MalformedServiceAccountId"
 	ErrorMalformedServiceAccountIdReason string           = "Service account id is invalid"
 
 	// Region not supported
 	ErrorInstanceTypeNotSupported       ServiceErrorCode = 41
+	ErrorInstanceTypeNotSupportedTag    string           = "InstanceTypeNotSupported"
 	ErrorInstanceTypeNotSupportedReason string           = "Instance Type not supported"
 
 	// Too Many requests error. Used by rate limiting
 	ErrorTooManyRequests       ServiceErrorCode = 429
+	ErrorTooManyRequestsTag    string           = "TooManyRequests"
 	ErrorTooManyRequestsReason string           = "Too Many requests"
 )
 
@@ -213,46 +256,46 @@ func Find(code ServiceErrorCode) (bool, *ServiceError) {
 
 func Errors() ServiceErrors {
 	return ServiceErrors{
-		ServiceError{ErrorForbidden, ErrorForbiddenReason, http.StatusForbidden, nil},
-		ServiceError{ErrorMaxAllowedInstanceReached, ErrorMaxAllowedInstanceReachedReason, http.StatusForbidden, nil},
-		ServiceError{ErrorTooManyKafkaInstancesReached, ErrorTooManyKafkaInstancesReachedReason, http.StatusForbidden, nil},
-		ServiceError{ErrorTooManyRequests, ErrorTooManyRequestsReason, http.StatusTooManyRequests, nil},
-		ServiceError{ErrorConflict, ErrorConflictReason, http.StatusConflict, nil},
-		ServiceError{ErrorNotFound, ErrorNotFoundReason, http.StatusNotFound, nil},
-		ServiceError{ErrorGone, ErrorGoneReason, http.StatusGone, nil},
-		ServiceError{ErrorValidation, ErrorValidationReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorGeneral, ErrorGeneralReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorNotImplemented, ErrorNotImplementedReason, http.StatusMethodNotAllowed, nil},
-		ServiceError{ErrorUnauthorized, ErrorUnauthorizedReason, http.StatusForbidden, nil},
-		ServiceError{ErrorTermsNotAccepted, ErrorTermsNotAcceptedReason, http.StatusForbidden, nil},
-		ServiceError{ErrorUnauthenticated, ErrorUnauthenticatedReason, http.StatusUnauthorized, nil},
-		ServiceError{ErrorMalformedRequest, ErrorMalformedRequestReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorBadRequest, ErrorBadRequestReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorFailedToParseSearch, ErrorFailedToParseSearchReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorFailedToCreateSSOClient, ErrorFailedToCreateSSOClientReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFailedToGetSSOClientSecret, ErrorFailedToGetSSOClientSecretReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFailedToGetSSOClient, ErrorFailedToGetSSOClientReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFailedToDeleteSSOClient, ErrorFailedToDeleteSSOClientReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFailedToCreateServiceAccount, ErrorFailedToCreateServiceAccountReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFailedToGetServiceAccount, ErrorFailedToGetServiceAccountReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorServiceAccountNotFound, ErrorServiceAccountNotFoundReason, http.StatusNotFound, nil},
-		ServiceError{ErrorFailedToDeleteServiceAccount, ErrorFailedToDeleteServiceAccountReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorInstanceTypeNotSupported, ErrorInstanceTypeNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMalformedKafkaClusterName, ErrorMalformedKafkaClusterNameReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorDuplicateKafkaClusterName, ErrorDuplicateKafkaClusterNameReason, http.StatusConflict, nil},
-		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, http.StatusForbidden, nil},
-		ServiceError{ErrorFailedToCheckQuota, ErrorFailedToCheckQuotaReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorMalformedServiceAccountName, ErrorMalformedServiceAccountNameReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMalformedServiceAccountDesc, ErrorMalformedServiceAccountDescReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorForbidden, ErrorForbiddenReason, ErrorForbiddenTag, http.StatusForbidden, nil},
+		ServiceError{ErrorMaxAllowedInstanceReached, ErrorMaxAllowedInstanceReachedReason, ErrorMaxAllowedInstanceReachedTag, http.StatusForbidden, nil},
+		ServiceError{ErrorTooManyKafkaInstancesReached, ErrorTooManyKafkaInstancesReachedReason, ErrorTooManyKafkaInstancesReachedTag, http.StatusForbidden, nil},
+		ServiceError{ErrorTooManyRequests, ErrorTooManyRequestsReason, ErrorTooManyRequestsTag, http.StatusTooManyRequests, nil},
+		ServiceError{ErrorConflict, ErrorConflictReason, ErrorConflictTag, http.StatusConflict, nil},
+		ServiceError{ErrorNotFound, ErrorNotFoundReason, ErrorNotFoundTag, http.StatusNotFound, nil},
+		ServiceError{ErrorGone, ErrorGoneReason, ErrorGoneTag, http.StatusGone, nil},
+		ServiceError{ErrorValidation, ErrorValidationReason, ErrorValidationTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorGeneral, ErrorGeneralReason, ErrorGeneralTag, http.StatusInternalServerError, nil},
+		ServiceError{ErrorNotImplemented, ErrorNotImplementedReason, ErrorNotImplementedTag, http.StatusMethodNotAllowed, nil},
+		ServiceError{ErrorUnauthorized, ErrorUnauthorizedReason, ErrorUnauthorizedTag, http.StatusForbidden, nil},
+		ServiceError{ErrorTermsNotAccepted, ErrorTermsNotAcceptedReason, ErrorTermsNotAcceptedTag, http.StatusForbidden, nil},
+		ServiceError{ErrorUnauthenticated, ErrorUnauthenticatedReason, ErrorUnauthenticatedTag, http.StatusUnauthorized, nil},
+		ServiceError{ErrorMalformedRequest, ErrorMalformedRequestReason, ErrorMalformedRequestTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorBadRequest, ErrorBadRequestReason, ErrorBadRequestTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorFailedToParseSearch, ErrorFailedToParseSearchReason, ErrorFailedToParseSearchTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason, ErrorSyncActionNotSupportedTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorFailedToCreateSSOClient, ErrorFailedToCreateSSOClientReason, ErrorFailedToCreateSSOClientTag, http.StatusInternalServerError, nil},
+		ServiceError{ErrorFailedToGetSSOClientSecret, ErrorFailedToGetSSOClientSecretReason, ErrorFailedToGetSSOClientSecretTag, http.StatusInternalServerError, nil},
+		ServiceError{ErrorFailedToGetSSOClient, ErrorFailedToGetSSOClientReason, ErrorFailedToGetSSOClientTag, http.StatusInternalServerError, nil},
+		ServiceError{ErrorFailedToDeleteSSOClient, ErrorFailedToDeleteSSOClientReason, ErrorFailedToDeleteSSOClientTag, http.StatusInternalServerError, nil},
+		ServiceError{ErrorFailedToCreateServiceAccount, ErrorFailedToCreateServiceAccountReason, ErrorFailedToCreateServiceAccountTag, http.StatusInternalServerError, nil},
+		ServiceError{ErrorFailedToGetServiceAccount, ErrorFailedToGetServiceAccountReason, ErrorFailedToGetServiceAccountTag, http.StatusInternalServerError, nil},
+		ServiceError{ErrorServiceAccountNotFound, ErrorServiceAccountNotFoundReason, ErrorServiceAccountNotFoundTag, http.StatusNotFound, nil},
+		ServiceError{ErrorFailedToDeleteServiceAccount, ErrorFailedToDeleteServiceAccountReason, ErrorFailedToDeleteServiceAccountTag, http.StatusInternalServerError, nil},
+		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, ErrorProviderNotSupportedTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, ErrorRegionNotSupportedTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorInstanceTypeNotSupported, ErrorInstanceTypeNotSupportedReason, ErrorInstanceTypeNotSupportedTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorMalformedKafkaClusterName, ErrorMalformedKafkaClusterNameReason, ErrorMalformedKafkaClusterNameTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, ErrorMinimumFieldLengthTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, ErrorMaximumFieldLengthTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason, ErrorOnlyMultiAZSupportedTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorDuplicateKafkaClusterName, ErrorDuplicateKafkaClusterNameReason, ErrorDuplicateKafkaClusterNameTag, http.StatusConflict, nil},
+		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, ErrorUnableToSendErrorResponseTag, http.StatusInternalServerError, nil},
+		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, ErrorFieldValidationErrorTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, ErrorInsufficientQuotaTag, http.StatusForbidden, nil},
+		ServiceError{ErrorFailedToCheckQuota, ErrorFailedToCheckQuotaReason, ErrorFailedToCheckQuotaTag, http.StatusInternalServerError, nil},
+		ServiceError{ErrorMalformedServiceAccountName, ErrorMalformedServiceAccountNameReason, ErrorMalformedServiceAccountNameTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorMalformedServiceAccountDesc, ErrorMalformedServiceAccountDescReason, ErrorMalformedServiceAccountDescTag, http.StatusBadRequest, nil},
+		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, ErrorMalformedServiceAccountIdTag, http.StatusBadRequest, nil},
 	}
 }
 
@@ -302,6 +345,8 @@ type ServiceError struct {
 	Code ServiceErrorCode
 	// Reason is the context-specific reason the error was generated
 	Reason string
+	// Identifier that represents type of error (e.g. InvalidData)
+	Tag string
 	// HttpCode is the HttpCode associated with the error when the error is returned as an API response
 	HttpCode int
 	// The original error that is causing the ServiceError, can be used for inspection
@@ -319,7 +364,7 @@ func NewWithCause(code ServiceErrorCode, cause error, reason string, values ...i
 	exists, err := Find(code)
 	if !exists {
 		glog.Errorf("Undefined error code used: %d", code)
-		err = &ServiceError{ErrorGeneral, "Unspecified error", http.StatusInternalServerError, nil}
+		err = &ServiceError{ErrorGeneral, "Unspecified error", ErrorGeneralTag, http.StatusInternalServerError, nil}
 	}
 
 	// TODO - if cause is nil, should we use the reason as the cause?
