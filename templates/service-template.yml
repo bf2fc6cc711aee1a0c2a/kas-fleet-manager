@@ -158,30 +158,10 @@ parameters:
   description: Enable the Dinosaur TLS certificate
   value: "false"
 
-- name: DEX_URL
-  displayName: Dex url
-  description: A URL to dex that will be used by the observability stack for authentication.
-  value: "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io"
-
-- name: DEX_USERNAME
-  displayName: Dex username
-  description: Dex username that will be used by the observability stack for authentication.
-  value: "admin@example.com"
-
-- name: OBSERVATORIUM_GATEWAY
-  displayName: Observatorium gateway
-  description: A URL to an Observatorium instance where observability metrics will sent to.
-  value: ""
-
 - name: OBSERVATORIUM_RHSSO_GATEWAY
   displayName: Observatorium Red Hat SSO gateway
   description: A URL to an Observatorium instance where observability metrics will sent to.
   value: ""
-
-- name: OBSERVATORIUM_TENANT
-  displayName: Observatorium tenant
-  description: Observatorium tenant where observability metrics will sent to.
-  value: "test"
 
 - name: OBSERVATORIUM_RHSSO_REALM
   displayName: Observatorium Red Hat SSO realm
@@ -202,11 +182,6 @@ parameters:
   displayName: Observatorium Red Hat SSO token refresher URL
   description: Observatorium Red Hat SSO token refresher URL for observability stack.
   value: ""
-
-- name: OBSERVATORIUM_AUTH_TYPE
-  displayName: Observatorium auth type
-  description: Observatorium auth type for observability stack, this value on start decides which auth type to use.
-  value: "dex"
 
 - name: ENABLE_OBSERVATORIUM_DEBUG
   displayName: Enable Observatorium Debug Logging
@@ -689,17 +664,9 @@ objects:
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
             - --aws-route53-access-key-file=/secrets/service/aws.route53accesskey
             - --aws-route53-secret-access-key-file=/secrets/service/aws.route53secretaccesskey
-            - --dex-password-file=/secrets/service/dex.password
-            - --dex-secret-file=/secrets/service/dex.secret
-            - --dex-username=${DEX_USERNAME}
-            - --dex-url=${DEX_URL}
-            - --observatorium-gateway=${OBSERVATORIUM_GATEWAY}
-            - --observatorium-tenant=${OBSERVATORIUM_TENANT}
             - --observatorium-debug=${ENABLE_OBSERVATORIUM_DEBUG}
             - --observatorium-ignore-ssl=${OBSERVATORIUM_INSECURE}
             - --observatorium-timeout=${OBSERVATORIUM_TIMEOUT}
-            - --observatorium-auth-type=${OBSERVATORIUM_AUTH_TYPE}
-            - --observatorium-token-file=/secrets/service/observatorium.token
             - --observability-red-hat-sso-logs-client-id-file=/secrets/observatorium/logs.clientId
             - --observability-red-hat-sso-logs-secret-file=/secrets/observatorium/logs.clientSecret
             - --observability-red-hat-sso-metrics-client-id-file=/secrets/observatorium/metrics.clientId

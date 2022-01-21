@@ -41,8 +41,8 @@ const (
 	observabilityOperatorGroupName   = "observability-operator-group-name"
 	observabilityCatalogSourceName   = "observability-operator-manifests"
 	observabilitySubscriptionName    = "observability-operator"
-	observatoriumDexSecretName       = "observatorium-configuration-dex"
 	observatoriumSSOSecretName       = "observatorium-configuration-red-hat-sso"
+	observatoriumAuthType            = "redhat"
 	syncsetName                      = "ext-managedservice-cluster-mgr"
 	imagePullSecretName              = "rhoas-image-pull-secret"
 	dinosaurOperatorAddonNamespace   = constants.DinosaurOperatorNamespace
@@ -731,7 +731,6 @@ func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 		c.buildDinosaurSREGroupResource(),
 		c.buildDinosaurSreClusterRoleBindingResource(),
 		c.buildObservabilityNamespaceResource(),
-		c.buildObservatoriumDexSecretResource(),
 		c.buildObservatoriumSSOSecretResource(),
 		c.buildObservabilityCatalogSourceResource(),
 		c.buildObservabilityOperatorGroupResource(),
@@ -770,35 +769,10 @@ func (c *ClusterManager) buildObservabilityNamespaceResource() *k8sCoreV1.Namesp
 	}
 }
 
-func (c *ClusterManager) buildObservatoriumDexSecretResource() *k8sCoreV1.Secret {
-	observabilityConfig := c.ObservabilityConfiguration
-	stringDataMap := map[string]string{
-		"authType":    observatorium.AuthTypeDex,
-		"gateway":     observabilityConfig.ObservatoriumGateway,
-		"tenant":      observabilityConfig.ObservatoriumTenant,
-		"dexUrl":      observabilityConfig.DexUrl,
-		"dexPassword": observabilityConfig.DexPassword,
-		"dexSecret":   observabilityConfig.DexSecret,
-		"dexUsername": observabilityConfig.DexUsername,
-	}
-	return &k8sCoreV1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: metav1.SchemeGroupVersion.Version,
-			Kind:       "Secret",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      observatoriumDexSecretName,
-			Namespace: observabilityNamespace,
-		},
-		Type:       k8sCoreV1.SecretTypeOpaque,
-		StringData: stringDataMap,
-	}
-}
-
 func (c *ClusterManager) buildObservatoriumSSOSecretResource() *k8sCoreV1.Secret {
 	observabilityConfig := c.ObservabilityConfiguration
 	stringDataMap := map[string]string{
-		"authType":               observatorium.AuthTypeSso,
+		"authType":               observatoriumAuthType,
 		"gateway":                observabilityConfig.RedHatSsoGatewayUrl,
 		"tenant":                 observabilityConfig.RedHatSsoTenant,
 		"redHatSsoAuthServerUrl": observabilityConfig.RedHatSsoAuthServerUrl,

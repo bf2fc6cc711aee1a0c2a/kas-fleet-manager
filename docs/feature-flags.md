@@ -67,22 +67,8 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 ## Observability
 - **enable-observatorium-mock**: Enables use of a mock Observatorium client.
     - `observatorium-timeout` [Optional]: Timeout to be used for Observatorium requests (default: `240s`).
-    - `observatorium-token-file` [Optional]: The path to the file containing a token for authenticating with Observatorium (default: `'secrets/observatorium.token'`).
 - **observatorium-debug**: Enables Observatorium debug logging.
 - **observatorium-ignore-ssl**: Disables Observatorium TLS verification.
-- **observatorium-auth-type**[Optional]: This allows for the choice of either Red Hat SSO (`redhat`) or Dex
-(`dex`) as the authentication medium for interaction between fleet-manager and Observatorium (default: `dex`, options: `redhat` or `dex`).
-
-### Dex Authentication
-- The '[Required]' in the following denotes that these flags are required to use Dex Authentication with the service.
-    - `dex-password-file`[Required]: The path to the file containing the Dex password for use with Dex
-    authentication.
-    - `dex-secret-file`[Required]: The path to the file containing the Dex secret for use with Dex
-    authentication.
-    - `dex-username`[Required]: The Dex username for authentication (default: `admin@example.com`)
-    - `dex-url`[Required]: The Dex URL for authentication (default: `http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io`).
-    - `observatorium-gateway`[Required]: The Observatorium URL for use with dex authentication (default: `https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io`).
-    - `observatorium-tenant`[Required]: The Observatorium tenant name for use with dex authentication (default: `test`).
 
 ### Red Hat SSO Authentication
 - The '[Required]' in the following denotes that these flags are required to use Red Hat SSO Authentication with the service.

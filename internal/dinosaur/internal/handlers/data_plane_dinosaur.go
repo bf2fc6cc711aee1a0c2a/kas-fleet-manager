@@ -12,13 +12,13 @@ import (
 )
 
 type dataPlaneDinosaurHandler struct {
-	service      services.DataPlaneDinosaurService
+	service         services.DataPlaneDinosaurService
 	dinosaurService services.DinosaurService
 }
 
 func NewDataPlaneDinosaurHandler(service services.DataPlaneDinosaurService, dinosaurService services.DinosaurService) *dataPlaneDinosaurHandler {
 	return &dataPlaneDinosaurHandler{
-		service:      service,
+		service:         service,
 		dinosaurService: dinosaurService,
 	}
 }

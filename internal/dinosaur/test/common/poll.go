@@ -25,7 +25,7 @@ var defaultLogFunction = func(pattern string, args ...interface{}) {
 }
 
 const (
-	defaultPollInterval     = 1 * time.Second
+	defaultPollInterval        = 1 * time.Second
 	defaultDinosaurPollTimeout = 20 * time.Minute
 	// defaultMaxRetryLogs - Maximum number of retry log to show. The waiting period between each of the logs is
 	// calculated so that at maximum `defaultMaxRetryLogs` statements are logged if reaching the last attempt

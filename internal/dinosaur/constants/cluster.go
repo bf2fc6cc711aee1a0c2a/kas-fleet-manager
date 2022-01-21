@@ -12,7 +12,7 @@ const (
 
 	// The DNS prefixes used for traffic ingress
 	ManagedDinosaurIngressDnsNamePrefix = "kas"
-	DefaultIngressDnsNamePrefix      = "apps"
+	DefaultIngressDnsNamePrefix         = "apps"
 )
 
 func (c ClusterOperation) String() string {
