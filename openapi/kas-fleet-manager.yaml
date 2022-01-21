@@ -831,13 +831,19 @@ components:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
         - type: object
-          properties:
-            code:
-              type: string
-            reason:
-              type: string
-            operation_id:
-              type: string
+      properties:
+        code:
+          description: 'Code is the numeric and distinct ID for the error'
+          type: string
+        reason:
+          description: 'Human redable description of error'
+          type: string
+        tag:
+          description: 'Identifier that represents type of error'
+          type: string
+        operation_id:
+          description: 'Id of request that can be used for tracing'
+          type: string
     ErrorList:
       allOf:
         - $ref: "#/components/schemas/List"
