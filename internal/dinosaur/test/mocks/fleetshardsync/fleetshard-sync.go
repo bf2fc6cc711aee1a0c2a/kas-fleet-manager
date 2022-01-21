@@ -15,7 +15,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )

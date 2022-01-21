@@ -7,7 +7,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
 
@@ -83,7 +83,7 @@ func TestOperatorAuthzMiddleware_CheckOCMToken(t *testing.T) {
 			name: "should success when JWKS Endpoint matches",
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
-					"iss":                                JWKSEndpoint,
+					"iss":                            JWKSEndpoint,
 					"fleetshard-operator-cluster-id": "12345",
 				},
 			},
@@ -94,7 +94,7 @@ func TestOperatorAuthzMiddleware_CheckOCMToken(t *testing.T) {
 			name: "should fail when JWKS iss claim is empty",
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
-					"iss":                                "",
+					"iss":                            "",
 					"fleetshard-operator-cluster-id": "12345",
 				},
 			},

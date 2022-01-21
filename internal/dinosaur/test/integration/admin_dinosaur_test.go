@@ -15,7 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	. "github.com/onsi/gomega"
 )
 

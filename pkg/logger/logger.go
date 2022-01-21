@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/getsentry/sentry-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 )

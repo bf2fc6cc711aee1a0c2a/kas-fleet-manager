@@ -14,7 +14,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
