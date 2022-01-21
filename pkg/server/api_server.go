@@ -17,8 +17,8 @@ import (
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 
 	_ "github.com/auth0/go-jwt-middleware"
-	_ "github.com/dgrijalva/jwt-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
+	_ "github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
 	gorillahandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"

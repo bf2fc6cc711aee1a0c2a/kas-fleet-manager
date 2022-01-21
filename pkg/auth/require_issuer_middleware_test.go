@@ -7,7 +7,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/onsi/gomega"
 )
 

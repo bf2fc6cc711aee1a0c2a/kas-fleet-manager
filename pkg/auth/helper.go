@@ -12,7 +12,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
 
@@ -155,7 +155,7 @@ func ParseJWTKeys(jwtKeyFilePath, jwtCAFilePath string) (*rsa.PrivateKey, *rsa.P
 	}
 
 	// Parse keys
-	privateKey, err := jwt.ParseRSAPrivateKeyFromPEMWithPassword(privateBytes, "passwd")
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEMWithPassword(privateBytes, "passwd") //nolint
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unable to parse JWT private key: %s", err.Error())
 	}

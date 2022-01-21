@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/bxcodec/faker/v3"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/rs/xid"
