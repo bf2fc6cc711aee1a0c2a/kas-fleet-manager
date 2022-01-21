@@ -41,7 +41,7 @@ func TestVersionsMetrics_Collect(t *testing.T) {
 				},
 			}},
 			args: args{ch: make(chan prometheus.Metric, 100)},
-			want: 8,
+			want: 5,
 		},
 	}
 
