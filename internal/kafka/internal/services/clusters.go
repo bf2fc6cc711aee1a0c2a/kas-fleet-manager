@@ -481,8 +481,7 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 	var res []ResKafkaInstanceCount
 	query := c.connectionFactory.New().
 		Model(&dbapi.KafkaRequest{}).
-		Select("cluster_id as Clusterid, count(1) as Count").
-		Where("status != ?", constants2.KafkaRequestStatusAccepted.String()) // kafka in accepted state do not have a cluster_id assigned to them
+		Select("cluster_id as Clusterid, count(1) as Count")
 
 	if len(clusterIDs) > 0 {
 		query = query.Where("cluster_id in (?)", clusterIDs)

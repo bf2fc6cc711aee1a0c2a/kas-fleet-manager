@@ -3,6 +3,8 @@ package integration
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/antihax/optional"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -12,7 +14,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
-	"testing"
 )
 
 const (
@@ -20,6 +21,7 @@ const (
 	mockKafkaName2           = "a-kafka1"
 	mockKafkaName3           = "z-kafka1"
 	mockKafkaName4           = "b-kafka1"
+	mockKafkaName5           = "c-kafka1"
 	nonExistentKafkaName     = "non-existentKafka"
 	nonExistentColumnName    = "non_existentColumn"
 	sqlDeleteQuery           = "delete * from clusters;"

@@ -9,6 +9,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
+
+	errs "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
 type InstanceType types.KafkaInstanceType
@@ -42,6 +44,13 @@ func (r Region) IsInstanceTypeSupported(instanceType InstanceType) bool {
 		}
 	}
 	return false
+}
+
+func (r Region) getLimitSetForInstanceTypeInRegion(t string) (*int, *errs.ServiceError) {
+	if it, found := r.SupportedInstanceTypes[t]; found {
+		return it.Limit, nil
+	}
+	return nil, errs.InstanceTypeNotSupported(fmt.Sprintf("Instance type: %s is not supported", t))
 }
 
 func (r Region) Validate(dataplaneClusterConfig *DataplaneClusterConfig) error {
@@ -204,6 +213,18 @@ func (c *ProviderConfig) AddFlags(fs *pflag.FlagSet) {
 
 func (c *ProviderConfig) ReadFiles() error {
 	return readFileProvidersConfig(c.ProvidersConfigFile, &c.ProvidersConfig)
+}
+
+func (c *ProviderConfig) GetInstanceLimit(region string, providerName string, instanceType string) (*int, *errs.ServiceError) {
+	provider, ok := c.ProvidersConfig.SupportedProviders.GetByName(providerName)
+	if !ok {
+		return nil, errs.ProviderNotSupported(fmt.Sprintf("cloud provider '%s' is unsupported", providerName))
+	}
+	reg, ok := provider.Regions.GetByName(region)
+	if !ok {
+		return nil, errs.RegionNotSupported(fmt.Sprintf("'%s' region in '%s' cloud provider is unsupported", region, providerName))
+	}
+	return reg.getLimitSetForInstanceTypeInRegion(instanceType)
 }
 
 // Read the contents of file into the providers config
