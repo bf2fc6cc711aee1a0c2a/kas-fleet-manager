@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -45,6 +47,17 @@ const (
 	longKafkaName      = "thisisaninvalidkafkaclusternamethatexceedsthenamesizelimit"
 )
 
+type errorCheck struct {
+	wantErr  bool
+	code     errors.ServiceErrorCode
+	httpCode int
+}
+
+type kafkaValidation struct {
+	kafka  *dbapi.KafkaRequest
+	eCheck errorCheck
+}
+
 // TestKafkaCreate_Success validates the happy path of the kafka post endpoint:
 // - kafka successfully registered with database
 // - kafka worker picks up on creation job
@@ -59,7 +72,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
 	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
+		// c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
 	})
 	defer teardown()
 
@@ -135,6 +148,261 @@ func TestKafkaCreate_Success(t *testing.T) {
 
 	// delete test kafka to free up resources on an OSD cluster
 	deleteTestKafka(t, h, ctx, client, foundKafka.Id)
+}
+
+func TestKafka_InstanceTypeCapacity(t *testing.T) {
+	clusterDns := "app.example.com"
+	clusterCriteria := services.FindClusterCriteria{
+		Provider: "aws",
+		Region:   "us-east-1",
+		MultiAZ:  true,
+	}
+	// Start with no cluster config and manual scaling.
+	configHook := func(clusterConfig *config.DataplaneClusterConfig) {
+		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+		clusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
+			config.ManualCluster{ClusterId: "test01", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard,eval"},
+			config.ManualCluster{ClusterId: "test02", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard"},
+			config.ManualCluster{ClusterId: "test03", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "eval"},
+			config.ManualCluster{ClusterId: "test04", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 0, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard,eval"},
+		})
+	}
+
+	// setup ocm server
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	// start servers
+	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, configHook)
+	defer teardown()
+
+	ocmConfig := test.TestServices.OCMConfig
+
+	if ocmConfig.MockMode != ocm.MockModeEmulateServer || h.Env.Name == environments.TestingEnv {
+		t.SkipNow()
+	}
+
+	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
+	kasfFleetshardSync.Start()
+	defer kasfFleetshardSync.Stop()
+
+	unsupportedRegion := "eu-west-1"
+
+	providerConfig := ProviderConfig(h)
+
+	evalLimit := int(3)
+
+	standardLimit := int(3)
+
+	providerConfig.ProvidersConfig = config.ProviderConfiguration{
+		SupportedProviders: config.ProviderList{
+			{
+				Name:    "aws",
+				Default: true,
+				Regions: config.RegionList{
+					{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: config.InstanceTypeMap{
+							"standard": config.InstanceTypeConfig{
+								Limit: &standardLimit,
+							},
+							"eval": config.InstanceTypeConfig{
+								Limit: &evalLimit,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	pollErr := common.WaitForClustersMatchCriteriaToBeGivenCount(test.TestServices.DBFactory, &test.TestServices.ClusterService, &clusterCriteria, 4)
+	Expect(pollErr).NotTo(HaveOccurred())
+
+	// add identity provider id for all of the clusters to avoid configuring the KAFKA_SRE IDP as it is not needed
+	db := test.TestServices.DBFactory.New()
+	err := db.Exec("UPDATE clusters set identity_provider_id = 'some-identity-provider-id'").Error
+	Expect(err).NotTo(HaveOccurred())
+
+	// Need to mark the clusters to ClusterWaitingForKasFleetShardOperator so that fleetshardsync and placement can actually happen
+	updateErr := test.TestServices.ClusterService.UpdateMultiClusterStatus([]string{"test01", "test02", "test03", "test04"}, api.ClusterReady)
+	Expect(updateErr).NotTo(HaveOccurred())
+
+	standardKafka1 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "testuser1@example.com"
+		kafkaRequest.Name = "dummy-kafka-1"
+		kafkaRequest.InstanceType = types.STANDARD.String()
+	})
+
+	standardKafka2 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "testuser2@example.com"
+		kafkaRequest.Name = "dummy-kafka-2"
+		kafkaRequest.InstanceType = types.STANDARD.String()
+	})
+
+	standardKafka3 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "testuser3@example.com"
+		kafkaRequest.Name = "dummy-kafka-3"
+		kafkaRequest.InstanceType = types.STANDARD.String()
+	})
+
+	standardKafka4 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "testuser4@example.com"
+		kafkaRequest.Name = "dummy-kafka-4"
+		kafkaRequest.InstanceType = types.STANDARD.String()
+	})
+
+	standardKafkaIncorrectRegion := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "testuser5@example.com"
+		kafkaRequest.Name = "dummy-kafka-5"
+		kafkaRequest.InstanceType = types.STANDARD.String()
+		kafkaRequest.Region = unsupportedRegion
+	})
+
+	evalKafka1 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "dummyuser1"
+		kafkaRequest.Name = "dummy-kafka-6"
+		kafkaRequest.InstanceType = types.EVAL.String()
+	})
+
+	evalKafka2 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "dummyuser2"
+		kafkaRequest.Name = "dummy-kafka-7"
+		kafkaRequest.InstanceType = types.EVAL.String()
+	})
+
+	evalKafka3 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "dummyuser3"
+		kafkaRequest.Name = "dummy-kafka-8"
+		kafkaRequest.InstanceType = types.EVAL.String()
+	})
+
+	evalKafka4 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "dummyuser4"
+		kafkaRequest.Name = "dummy-kafka-9"
+		kafkaRequest.InstanceType = types.EVAL.String()
+	})
+
+	evalKafkaIncorrectRegion := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "testuser5@example.com"
+		kafkaRequest.Name = "dummy-kafka-10"
+		kafkaRequest.InstanceType = types.STANDARD.String()
+		kafkaRequest.Region = unsupportedRegion
+	})
+
+	errorCheckWithError := errorCheck{
+		wantErr:  true,
+		code:     errors.ErrorTooManyKafkaInstancesReached,
+		httpCode: http.StatusForbidden,
+	}
+
+	errorCheckNoError := errorCheck{
+		wantErr: false,
+	}
+
+	errorCheckUnsupportedRegion := errorCheck{
+		wantErr:  true,
+		code:     errors.ErrorRegionNotSupported,
+		httpCode: http.StatusBadRequest,
+	}
+
+	kafkaValidations := []kafkaValidation{
+		{
+			standardKafka1,
+			errorCheckNoError,
+		},
+		{
+			standardKafka2,
+			errorCheckNoError,
+		},
+		{
+			standardKafka3,
+			errorCheckNoError,
+		},
+		{
+			evalKafka1,
+			errorCheckNoError,
+		},
+		{
+			evalKafka2,
+			errorCheckNoError,
+		},
+		// the "standard,eval" cluster should be filled up by standard instances, hence despite of
+		// global capacity being available for eval instances, there is no space on clusters supporting this type of instance
+		{
+			evalKafka3,
+			errorCheckWithError,
+		},
+		{
+			evalKafka4,
+			errorCheckWithError,
+		},
+		{
+			standardKafka4,
+			errorCheckWithError,
+		},
+		{
+			standardKafkaIncorrectRegion,
+			errorCheckUnsupportedRegion,
+		},
+		{
+			evalKafkaIncorrectRegion,
+			errorCheckUnsupportedRegion,
+		},
+	}
+
+	standardClusters := "test01,test02"
+
+	evalClusters := "test01,test03"
+
+	testValidations(standardClusters, evalClusters, t, kafkaValidations)
+}
+
+// build a test kafka request
+func buildKafkaRequest(modifyFn func(kafkaRequest *dbapi.KafkaRequest)) *dbapi.KafkaRequest {
+	kafkaRequest := &dbapi.KafkaRequest{
+		Region:        "us-east-1",
+		CloudProvider: "aws",
+		Name:          "dummy-kafka-1",
+		MultiAZ:       true,
+		Owner:         "dummyuser2",
+		Status:        constants2.KafkaRequestStatusAccepted.String(),
+		InstanceType:  types.STANDARD.String(),
+	}
+	if modifyFn != nil {
+		modifyFn(kafkaRequest)
+	}
+	return kafkaRequest
+}
+
+func testValidations(standardClusters, evalClusters string, t *testing.T, kafkaValidations []kafkaValidation) {
+	for _, val := range kafkaValidations {
+		errK := test.TestServices.KafkaService.RegisterKafkaJob(val.kafka)
+		if (errK != nil) != val.eCheck.wantErr {
+			t.Errorf("Unexpected error %v, wantErr = %v for kafka %s", errK, val.eCheck.wantErr, val.kafka.Name)
+		}
+
+		if val.eCheck.wantErr {
+			if errK == nil {
+				t.Errorf("RegisterKafkaJob() expected err to be received but got nil")
+			} else {
+				if errK.Code != val.eCheck.code {
+					t.Errorf("RegisterKafkaJob() received error code %v, expected error %v for kafka %s", errK.Code, val.eCheck.code, val.kafka.Name)
+				}
+				if errK.HttpCode != val.eCheck.httpCode {
+					t.Errorf("RegisterKafkaJob() received http code %v, expected %v for kafka %s", errK.HttpCode, val.eCheck.httpCode, val.kafka.Name)
+				}
+			}
+		}
+	}
+}
+
+func ProviderConfig(h *coreTest.Helper) (providerConfig *config.ProviderConfig) {
+	h.Env.MustResolve(&providerConfig)
+	return
 }
 
 func TestKafka_Update(t *testing.T) {
@@ -344,78 +612,53 @@ func TestKafka_Update(t *testing.T) {
 }
 
 func TestKafkaCreate_TooManyKafkas(t *testing.T) {
-	// create a mock ocm api server, keep all endpoints as defaults
-	// see the mocks package for more information on the configurable mock server
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	// Start with no cluster config and manual scaling.
+	configHook := func(clusterConfig *config.DataplaneClusterConfig) {
+		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+		clusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
+			config.ManualCluster{ClusterId: "test01", ClusterDNS: "app.example.com", Status: api.ClusterReady, KafkaInstanceLimit: 1, Region: mocks.MockCluster.Region().ID(), MultiAZ: testMultiAZ, CloudProvider: mocks.MockCluster.CloudProvider().ID(), Schedulable: true, SupportedInstanceType: "standard,eval"},
+		})
+	}
+
+	// setup ocm server
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
-	// ocm
-	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
-	})
-	defer tearDown()
+	// start servers
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, configHook)
+	defer teardown()
 
-	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
-	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
-	mockKasfFleetshardSync.Start()
-	defer mockKasfFleetshardSync.Stop()
+	ocmConfig := test.TestServices.OCMConfig
 
-	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	if ocmConfig.MockMode != ocm.MockModeEmulateServer || h.Env.Name == environments.TestingEnv {
+		t.SkipNow()
 	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
-	// setup pre-requisites to performing requests
+
+	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
+	kasfFleetshardSync.Start()
+	defer kasfFleetshardSync.Stop()
+
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-
-	kafkaCloudProvider := "dummy"
-	// this value is taken from config/quota-management-list-configuration.yaml
-	orgId := "13640203"
-
-	// create dummy kafkas
-	db := test.TestServices.DBFactory.New()
-	kafkas := []*dbapi.KafkaRequest{
-		{
-			MultiAZ:        false,
-			Owner:          "dummyuser1",
-			Region:         mocks.MockCluster.Region().ID(),
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka",
-			OrganisationId: orgId,
-			Status:         constants2.KafkaRequestStatusAccepted.String(),
-			InstanceType:   types.STANDARD.String(),
-		},
-		{
-			MultiAZ:        false,
-			Owner:          "dummyuser2",
-			Region:         mocks.MockCluster.Region().ID(),
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka-2",
-			OrganisationId: orgId,
-			Status:         constants2.KafkaRequestStatusAccepted.String(),
-			InstanceType:   types.STANDARD.String(),
-		},
-	}
-
-	if err := db.Create(&kafkas).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
-		return
-	}
 
 	k := public.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
+		Name:          "dummy-kafka",
 		MultiAz:       testMultiAZ,
 	}
 
+	_, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
+
+	Expect(err).ToNot(HaveOccurred(), "Unexpected error occurred when creating kafka:  %v", err)
+
+	k.Name = mockKafkaName
+
 	_, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
 
-	Expect(err).To(HaveOccurred(), "Error posting object:  %v", err)
+	Expect(err).To(HaveOccurred(), "Expecting error to be thrown when creating more kafkas than allowed by the cluster limit:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 }
 
@@ -511,10 +754,21 @@ func TestKafkaPost_NameUniquenessValidations(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 3)})
-	})
+	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, nil)
 	defer tearDown()
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
 
 	// create two random accounts in same organisation
 	account1 := h.NewRandAccount()
@@ -734,10 +988,22 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	defer ocmServer.Close()
 
 	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1000)})
 		acl.EnableInstanceLimitControl = true
 	})
 	defer teardown()
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
 
 	// this value is taken from config/quota-management-list-configuration.yaml
 	orgIdWithLimitOfOne := "12147054"
@@ -832,10 +1098,21 @@ func TestKafkaGet(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
-		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
-	})
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, nil)
 	defer teardown()
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)

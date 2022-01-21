@@ -279,7 +279,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ClusterID:              testServer.ClusterID,
 			MultiAZ:                false,
 			Namespace:              "mk-5",
-			Name:                   mockKafkaName4,
+			Name:                   mockKafkaName5,
 			Status:                 constants2.KafkaRequestStatusFailed.String(),
 			BootstrapServerHost:    bootstrapServerHost,
 			SsoClientID:            ssoClientID,

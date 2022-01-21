@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -39,7 +40,6 @@ var (
 	testKafkaRequestProvider = "aws"
 	testKafkaRequestName     = "test-cluster"
 	testClusterID            = "test-cluster-id"
-	testClusterName          = "test-cluster-name"
 	testID                   = "test"
 	testUser                 = "test-user"
 	kafkaRequestTableName    = "kafka_requests"
@@ -65,23 +65,62 @@ func buildKafkaRequest(modifyFn func(kafkaRequest *dbapi.KafkaRequest)) *dbapi.K
 	return kafkaRequest
 }
 
-func buildDataplaneClusterConfig() *config.DataplaneClusterConfig {
+func buildDataplaneClusterConfig(clusters []config.ManualCluster) *config.DataplaneClusterConfig {
 	dataplane := config.NewDataplaneClusterConfig()
-	dataplane.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{
-		{
-			Name:                  testClusterName,
-			ClusterId:             testClusterID,
-			CloudProvider:         testKafkaRequestProvider,
-			Region:                testKafkaRequestRegion,
-			MultiAZ:               false,
-			Schedulable:           true,
-			KafkaInstanceLimit:    1,
-			Status:                api.ClusterReady,
-			ProviderType:          api.ClusterProviderOCM,
-			SupportedInstanceType: "eval,standard",
-		},
-	})
+	dataplane.ClusterConfig = config.NewClusterConfig(clusters)
 	return dataplane
+}
+
+func buildManualCluster(kafkaInstanceLimit int, supportedInstanceType, region string) config.ManualCluster {
+	return config.ManualCluster{
+		Name:                  api.NewID(),
+		ClusterId:             api.NewID(),
+		CloudProvider:         testKafkaRequestProvider,
+		Region:                region,
+		MultiAZ:               true,
+		Schedulable:           true,
+		KafkaInstanceLimit:    kafkaInstanceLimit,
+		Status:                api.ClusterReady,
+		ProviderType:          api.ClusterProviderOCM,
+		SupportedInstanceType: supportedInstanceType,
+	}
+}
+
+func buildProviderConfiguration(regionName string, standardLimit, evalLimit int, noLimit bool) *config.ProviderConfig {
+
+	instanceTypeLimits := config.InstanceTypeMap{
+		"standard": config.InstanceTypeConfig{
+			Limit: &standardLimit,
+		},
+		"eval": config.InstanceTypeConfig{
+			Limit: &evalLimit,
+		},
+	}
+
+	if noLimit {
+		instanceTypeLimits = config.InstanceTypeMap{
+			"standard": config.InstanceTypeConfig{},
+			"eval":     config.InstanceTypeConfig{},
+		}
+	}
+
+	return &config.ProviderConfig{
+		ProvidersConfig: config.ProviderConfiguration{
+			SupportedProviders: config.ProviderList{
+				{
+					Name:    "aws",
+					Default: true,
+					Regions: config.RegionList{
+						{
+							Name:                   regionName,
+							Default:                true,
+							SupportedInstanceTypes: instanceTypeLimits,
+						},
+					},
+				},
+			},
+		},
+	}
 }
 
 // This test should act as a "golden" test to describe the general testing approach taken in the service, for people
@@ -851,6 +890,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 		quotaService           QuotaService
 		kafkaConfig            config.KafkaConfig
 		dataplaneClusterConfig *config.DataplaneClusterConfig
+		providerConfig         *config.ProviderConfig
+		clusterPlmtStrategy    ClusterPlacementStrategy
 	}
 
 	type errorCheck struct {
@@ -870,6 +911,48 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 		Quota: config.NewKafkaQuotaConfig(),
 	}
 
+	strimziOperatorVersion := "strimzi-cluster-operator.from-cluster"
+	availableStrimziVersions, err := json.Marshal([]api.StrimziVersion{
+		{
+			Version: strimziOperatorVersion,
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				{
+					Version: "2.7.0",
+				},
+				{
+					Version: "2.8.0",
+				},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				{
+					Version: "2.7",
+				},
+				{
+					Version: "2.8",
+				},
+			},
+		},
+	})
+
+	if err != nil {
+		t.Fatal("failed to convert available strimzi versions to json")
+	}
+
+	mockCluster := &api.Cluster{
+		Meta: api.Meta{
+			ID:        testID,
+			CreatedAt: time.Now(),
+		},
+		Region:                   testKafkaRequestRegion,
+		ClusterID:                testClusterID,
+		CloudProvider:            testKafkaRequestProvider,
+		Status:                   api.ClusterReady,
+		AvailableStrimziVersions: availableStrimziVersions,
+	}
+
+	defaultDataplaneClusterConfig := []config.ManualCluster{buildManualCluster(1, api.AllInstanceTypeSupport.String(), testKafkaRequestRegion)}
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -883,7 +966,12 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				clusterService:         nil,
 				kafkaConfig:            defaultKafkaConf,
-				dataplaneClusterConfig: buildDataplaneClusterConfig(),
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return mockCluster, nil
+					},
+				},
 				quotaService: &QuotaServiceMock{
 					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						return true, nil
@@ -892,6 +980,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 						return "fake-subscription-id", nil
 					},
 				},
+				providerConfig: buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -909,11 +998,124 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 		{
+			name: "registering kafka job succeeds when kafka limit is set to nil",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				clusterService:         nil,
+				kafkaConfig:            defaultKafkaConf,
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return mockCluster, nil
+					},
+				},
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "fake-subscription-id", nil
+					},
+				},
+				providerConfig: buildProviderConfiguration(testKafkaRequestRegion, 0, 0, true),
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "0"}})
+				mocket.Catcher.NewMock().WithQuery("INSERT")
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			error: errorCheck{
+				wantErr: false,
+			},
+		},
+		{
+			name: "unsuccessful registering kafka job with limit set to zero for standard instance",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				clusterService:         nil,
+				kafkaConfig:            defaultKafkaConf,
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return nil, nil
+					},
+				},
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "fake-subscription-id", nil
+					},
+				},
+				providerConfig: buildProviderConfiguration(testKafkaRequestRegion, 0, MaxClusterCapacity, false),
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.STANDARD.String()
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "0"}})
+				mocket.Catcher.NewMock().WithQuery("INSERT")
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			error: errorCheck{
+				wantErr:  true,
+				code:     errors.ErrorTooManyKafkaInstancesReached,
+				httpCode: http.StatusForbidden,
+			},
+		},
+		{
+			name: "unsuccessful registering kafka job with limit set to zero for eval instance",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				clusterService:         nil,
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, 0, false),
+				kafkaConfig:            defaultKafkaConf,
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return nil, nil
+					},
+				},
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return false, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "fake-subscription-id", nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.EVAL.String()
+				}),
+			},
+			error: errorCheck{
+				wantErr:  true,
+				code:     errors.ErrorTooManyKafkaInstancesReached,
+				httpCode: http.StatusForbidden,
+			},
+		},
+		{
 			name: "registering kafka job eval disabled",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				clusterService:         nil,
-				dataplaneClusterConfig: buildDataplaneClusterConfig(),
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
 				kafkaConfig: config.KafkaConfig{
 					KafkaCapacity: config.KafkaCapacityConfig{
 						MaxCapacity: MaxClusterCapacity,
@@ -921,6 +1123,11 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					Quota: &config.KafkaQuotaConfig{
 						Type:                   api.QuotaManagementListQuotaType.String(),
 						AllowEvaluatorInstance: false,
+					},
+				},
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return mockCluster, nil
 					},
 				},
 				quotaService: &QuotaServiceMock{
@@ -949,39 +1156,21 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			name: "registering kafka too many instances",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
-				dataplaneClusterConfig: buildDataplaneClusterConfig(),
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, 0, 0, false),
 				kafkaConfig:            defaultKafkaConf,
 				clusterService:         nil,
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return nil, nil
+					},
+				},
 				quotaService: &QuotaServiceMock{
 					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						return true, nil
 					},
-				},
-			},
-			args: args{
-				kafkaRequest: buildKafkaRequest(nil),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": fmt.Sprintf("%d", MaxClusterCapacity)}})
-				mocket.Catcher.NewMock().WithExecException().WithQueryException()
-			},
-			error: errorCheck{
-				wantErr:  true,
-				code:     errors.ErrorTooManyKafkaInstancesReached,
-				httpCode: http.StatusForbidden,
-			},
-		},
-		{
-			name: "registering kafka too many eval",
-			fields: fields{
-				connectionFactory:      db.NewMockConnectionFactory(nil),
-				dataplaneClusterConfig: buildDataplaneClusterConfig(),
-				kafkaConfig:            defaultKafkaConf,
-				clusterService:         nil,
-				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
-						// No RHOSAK quota assigned
-						return instanceType != types.STANDARD, nil
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "fake-subscription-id", nil
 					},
 				},
 			},
@@ -989,14 +1178,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().
-					NewMock().
-					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE region = $1 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithReply([]map[string]interface{}{{"count": "1"}})
-				mocket.Catcher.
-					NewMock().
-					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND (organisation_id = $3)`).
-					WithReply([]map[string]interface{}{{"count": "1"}})
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).WithReply([]map[string]interface{}{})
+				mocket.Catcher.NewMock().WithQuery("INSERT")
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			error: errorCheck{
@@ -1009,7 +1192,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			name: "registering kafka job fails: postgres error",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
-				dataplaneClusterConfig: buildDataplaneClusterConfig(),
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
 				kafkaConfig:            defaultKafkaConf,
 				clusterService:         nil,
 				quotaService: &QuotaServiceMock{
@@ -1027,7 +1211,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "0"}})
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).WithReply([]map[string]interface{}{})
 				mocket.Catcher.NewMock().WithQuery("INSERT").WithExecException()
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -1041,7 +1225,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			name: "registering kafka job fails: quota error",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
-				dataplaneClusterConfig: buildDataplaneClusterConfig(),
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
 				kafkaConfig:            defaultKafkaConf,
 				clusterService:         nil,
 				quotaService: &QuotaServiceMock{
@@ -1054,46 +1239,12 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "0"}})
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND "kafka_requests"."deleted_at" IS NULL`).WithReply([]map[string]interface{}{})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			error: errorCheck{
 				wantErr:  true,
 				code:     errors.ErrorInsufficientQuota,
-				httpCode: http.StatusForbidden,
-			},
-		},
-		{
-			name: "registering kafka job: region out of capacity",
-			fields: fields{
-				connectionFactory:      db.NewMockConnectionFactory(nil),
-				clusterService:         nil,
-				kafkaConfig:            defaultKafkaConf,
-				dataplaneClusterConfig: buildDataplaneClusterConfig(),
-				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
-						return true, nil
-					},
-					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
-						return "fake-subscription-id", nil
-					},
-				},
-			},
-			args: args{
-				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
-					kafkaRequest.ID = ""
-					kafkaRequest.Region = "eu-west-1"
-				}),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "0"}})
-				mocket.Catcher.NewMock().WithQuery("INSERT")
-				mocket.Catcher.NewMock().WithExecException().WithQueryException()
-			},
-			error: errorCheck{
-				wantErr:  true,
-				code:     errors.ErrorTooManyKafkaInstancesReached,
 				httpCode: http.StatusForbidden,
 			},
 		},
@@ -1105,11 +1256,13 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			}
 
 			k := &kafkaService{
-				connectionFactory:      tt.fields.connectionFactory,
-				clusterService:         tt.fields.clusterService,
-				kafkaConfig:            &tt.fields.kafkaConfig,
-				awsConfig:              config.NewAWSConfig(),
-				dataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
+				connectionFactory:        tt.fields.connectionFactory,
+				clusterService:           tt.fields.clusterService,
+				kafkaConfig:              &tt.fields.kafkaConfig,
+				awsConfig:                config.NewAWSConfig(),
+				providerConfig:           tt.fields.providerConfig,
+				clusterPlacementStrategy: tt.fields.clusterPlmtStrategy,
+				dataplaneClusterConfig:   tt.fields.dataplaneClusterConfig,
 				quotaServiceFactory: &QuotaServiceFactoryMock{
 					GetQuotaServiceFunc: func(quotaType api.QuotaType) (QuotaService, *errors.ServiceError) {
 						return tt.fields.quotaService, nil
@@ -2084,7 +2237,7 @@ func TestKafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 					},
 					Name:   "test-kafka-cname",
 					Routes: []byte("[{\"domain\": \"test-kafka-id.example.com\", \"router\": \"test-kafka-id.rhcloud.com\"}]"),
-					Region: "us-east-1",
+					Region: testKafkaRequestRegion,
 				},
 				action: KafkaRoutesActionCreate,
 			},
@@ -2114,7 +2267,7 @@ func TestKafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 					},
 					Name:   "test-kafka-cname",
 					Routes: []byte("[{\"domain\": \"test-kafka-id.example.com\", \"router\": \"test-kafka-id.rhcloud.com\"}]"),
-					Region: "us-east-1",
+					Region: testKafkaRequestRegion,
 				},
 				action: KafkaRoutesActionDelete,
 			},
