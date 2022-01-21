@@ -2,10 +2,11 @@ package services
 
 import (
 	"errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
@@ -179,7 +180,7 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 			wantErr: true,
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				cache:             cache.New(5*time.Minute, 10*time.Minute),
+				cache:             cache.New(1*time.Second, 2*time.Second),
 				providerFactory:   nil, // should not be called
 			},
 			setupFn: func() {
@@ -198,7 +199,7 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 						},
 					}, nil
 				}},
-				cache: cache.New(5*time.Minute, 10*time.Minute),
+				cache: cache.New(1*time.Second, 2*time.Second),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -213,7 +214,7 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				providerFactory:   nil, // should not be called,
-				cache:             cache.New(5*time.Minute, 10*time.Minute),
+				cache:             cache.New(1*time.Second, 2*time.Second),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -297,7 +298,7 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 							},
 						}, nil
 					}},
-				cache: cache.New(5*time.Minute, 10*time.Minute),
+				cache: cache.New(1*time.Second, 2*time.Second),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -383,7 +384,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 			wantErr: true,
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				cache:             cache.New(5*time.Minute, 10*time.Minute),
+				cache:             cache.New(1*time.Second, 2*time.Second),
 				providerFactory:   nil, // should not be called
 			},
 			setupFn: func() {
@@ -462,7 +463,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 							},
 						}, nil
 					}},
-				cache: cache.New(5*time.Minute, 10*time.Minute),
+				cache: cache.New(1*time.Second, 2*time.Second),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()

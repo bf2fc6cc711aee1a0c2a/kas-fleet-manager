@@ -2,8 +2,9 @@ package routes
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
@@ -37,16 +38,17 @@ type options struct {
 	OCMConfig      *ocm.OCMConfig
 	ProviderConfig *config.ProviderConfig
 
-	AMSClient             ocm.AMSClient
-	Kafka                 services.KafkaService
-	CloudProviders        services.CloudProvidersService
-	Observatorium         services.ObservatoriumService
-	Keycloak              coreServices.KafkaKeycloakService
-	DataPlaneCluster      services.DataPlaneClusterService
-	DataPlaneKafkaService services.DataPlaneKafkaService
-	AccountService        account.AccountService
-	AuthService           authorization.Authorization
-	DB                    *db.ConnectionFactory
+	AMSClient                ocm.AMSClient
+	Kafka                    services.KafkaService
+	CloudProviders           services.CloudProvidersService
+	Observatorium            services.ObservatoriumService
+	Keycloak                 coreServices.KafkaKeycloakService
+	DataPlaneCluster         services.DataPlaneClusterService
+	DataPlaneKafkaService    services.DataPlaneKafkaService
+	AccountService           account.AccountService
+	AuthService              authorization.Authorization
+	DB                       *db.ConnectionFactory
+	ClusterPlacementStrategy services.ClusterPlacementStrategy
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
 	AccessControlListConfig     *acl.AccessControlListConfig
@@ -73,7 +75,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	}
 
 	kafkaHandler := handlers.NewKafkaHandler(s.Kafka, s.ProviderConfig, s.AuthService)
-	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
+	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig, s.Kafka, s.ClusterPlacementStrategy)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)

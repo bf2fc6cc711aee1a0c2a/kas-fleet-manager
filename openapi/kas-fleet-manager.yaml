@@ -1036,6 +1036,12 @@ components:
           type: array
           items: 
             type: string
+        capacity:
+          description: 'Indicates whether there is capacity left per instance type'
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/RegionCapacityListItem"
       required:
         - enabled
         - supported_instance_types
@@ -1079,6 +1085,18 @@ components:
           type: string
       example:
         $ref: "#/components/examples/ServiceAccountRequestExample"
+    RegionCapacityListItem:
+      description: 'schema for a kafka instance type capacity in region'
+      type: object
+      properties:
+        instance_type:
+          description: 'kafka instance type'
+          type: string
+        max_capacity_reached:
+          description: 'flag indicating whether the capacity for the instance type in the region is reached'
+          type: boolean
+      required:
+        - max_capacity_reached
     ServiceAccountListItem:
       description: ''
       allOf:

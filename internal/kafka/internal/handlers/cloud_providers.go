@@ -4,11 +4,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 
 	"github.com/patrickmn/go-cache"
 
@@ -19,16 +22,20 @@ import (
 const cloudProvidersCacheKey = "cloudProviderList"
 
 type cloudProvidersHandler struct {
-	service            services.CloudProvidersService
-	cache              *cache.Cache
-	supportedProviders config.ProviderList
+	service                  services.CloudProvidersService
+	cache                    *cache.Cache
+	supportedProviders       config.ProviderList
+	kafkaService             services.KafkaService
+	clusterPlacementStrategy services.ClusterPlacementStrategy
 }
 
-func NewCloudProviderHandler(service services.CloudProvidersService, providerConfig *config.ProviderConfig) *cloudProvidersHandler {
+func NewCloudProviderHandler(service services.CloudProvidersService, providerConfig *config.ProviderConfig, kafkaService services.KafkaService, clusterPlacementStrategy services.ClusterPlacementStrategy) *cloudProvidersHandler {
 	return &cloudProvidersHandler{
-		service:            service,
-		supportedProviders: providerConfig.ProvidersConfig.SupportedProviders,
-		cache:              cache.New(5*time.Minute, 10*time.Minute),
+		service:                  service,
+		supportedProviders:       providerConfig.ProvidersConfig.SupportedProviders,
+		cache:                    cache.New(1*time.Second, 2*time.Second),
+		kafkaService:             kafkaService,
+		clusterPlacementStrategy: clusterPlacementStrategy,
 	}
 }
 
@@ -69,10 +76,36 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 					continue
 				}
 
-				// Only set enabled to true if the region supports at least one instance type
 				cloudRegion.Enabled = len(region.SupportedInstanceTypes) > 0
 				cloudRegion.SupportedInstanceTypes = region.SupportedInstanceTypes.AsSlice()
+
+				kafka := &dbapi.KafkaRequest{}
+
+				// Enabled set to true and Capacity set only if at least one instance type is supported by the region
+				if len(region.SupportedInstanceTypes) > 0 {
+					capacities := []api.RegionCapacityListItem{}
+					cloudRegion.Enabled = true
+					cloudRegion.SupportedInstanceTypes = region.SupportedInstanceTypes.AsSlice()
+					for _, instType := range cloudRegion.SupportedInstanceTypes {
+						maxCapacityReached := true
+						kafka.InstanceType = instType
+						kafka.Region = cloudRegion.Id
+						kafka.CloudProvider = cloudRegion.CloudProvider
+						hasCapacity, err := h.kafkaService.HasAvailableCapacityInRegion(kafka)
+						logger.Logger.Warningf("hasCapacity %+v", hasCapacity)
+						if err == nil && hasCapacity {
+							cluster, err := h.clusterPlacementStrategy.FindCluster(kafka)
+							if err == nil && cluster != nil {
+								maxCapacityReached = false
+							}
+						}
+						capacity := api.RegionCapacityListItem{InstanceType: instType, MaxCapacityReached: maxCapacityReached}
+						capacities = append(capacities, capacity)
+					}
+					cloudRegion.Capacity = capacities
+				}
 				converted := presenters.PresentCloudRegion(&cloudRegion)
+				logger.Logger.Warningf("capacity %+v", &cloudRegion.Capacity)
 				regionList.Items = append(regionList.Items, converted)
 			}
 

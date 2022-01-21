@@ -1,11 +1,12 @@
 package services
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
@@ -33,7 +34,7 @@ func NewCloudProvidersService(providerFactory clusters.ProviderFactory, connecti
 	return &cloudProvidersService{
 		providerFactory:   providerFactory,
 		connectionFactory: connectionFactory,
-		cache:             cache.New(5*time.Minute, 10*time.Minute),
+		cache:             cache.New(1*time.Second, 2*time.Second),
 	}
 }
 
