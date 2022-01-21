@@ -147,7 +147,7 @@ paths:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       responses:
         '200':
-          description: The ManagedDinosaurAgent CR Spec
+          description: The Data Plane Cluster Agent configuration
           content:
             application/json:
               schema:
@@ -173,8 +173,8 @@ paths:
           description: Auth token is not valid.
       security:
         - Bearer: [ ]
-      operationId: getDinosaurAgent
-      summary: Get the spec of the ManagedDinosaurAgent CR spec
+      operationId: getDataPlaneClusterAgentConfig
+      summary: Get the data plane cluster agent configuration
 
 components:
   schemas:
