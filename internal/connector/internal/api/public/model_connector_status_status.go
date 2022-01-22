@@ -9,8 +9,8 @@
 
 package public
 
-// ConnectorInstanceStatusStatus struct for ConnectorInstanceStatusStatus
-type ConnectorInstanceStatusStatus struct {
+// ConnectorStatusStatus struct for ConnectorStatusStatus
+type ConnectorStatusStatus struct {
 	State ConnectorState `json:"state,omitempty"`
 	Error string         `json:"error,omitempty"`
 }

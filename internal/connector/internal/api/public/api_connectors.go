@@ -31,17 +31,17 @@ CreateConnector Create a new connector
 Create a new connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param async Perform the action in an asynchronous manner
- * @param connector Connector data
-@return ConnectorInstance
+ * @param connectorRequest Connector data
+@return Connector
 */
-func (a *ConnectorsApiService) CreateConnector(ctx _context.Context, async bool, connector Connector) (ConnectorInstance, *_nethttp.Response, error) {
+func (a *ConnectorsApiService) CreateConnector(ctx _context.Context, async bool, connectorRequest ConnectorRequest) (Connector, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  ConnectorInstance
+		localVarReturnValue  Connector
 	)
 
 	// create path and map variables
@@ -69,7 +69,7 @@ func (a *ConnectorsApiService) CreateConnector(ctx _context.Context, async bool,
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = &connector
+	localVarPostBody = &connectorRequest
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -274,16 +274,16 @@ Get a connector
  * @param id The ID of record
  * @param optional nil or *GetConnectorOpts - Optional Parameters:
  * @param "KafkaId" (optional.String) -  The kafka cluster id
-@return ConnectorInstance
+@return Connector
 */
-func (a *ConnectorsApiService) GetConnector(ctx _context.Context, id string, localVarOptionals *GetConnectorOpts) (ConnectorInstance, *_nethttp.Response, error) {
+func (a *ConnectorsApiService) GetConnector(ctx _context.Context, id string, localVarOptionals *GetConnectorOpts) (Connector, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  ConnectorInstance
+		localVarReturnValue  Connector
 	)
 
 	// create path and map variables
@@ -394,16 +394,16 @@ Returns a list of connector types
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
  * @param "KafkaId" (optional.String) -  The kafka cluster id
-@return ConnectorInstanceList
+@return ConnectorList
 */
-func (a *ConnectorsApiService) ListConnectors(ctx _context.Context, localVarOptionals *ListConnectorsOpts) (ConnectorInstanceList, *_nethttp.Response, error) {
+func (a *ConnectorsApiService) ListConnectors(ctx _context.Context, localVarOptionals *ListConnectorsOpts) (ConnectorList, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  ConnectorInstanceList
+		localVarReturnValue  ConnectorList
 	)
 
 	// create path and map variables
@@ -503,19 +503,19 @@ PatchConnector Patch a connector
 Patch a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
- * @param connector Data to patch the connector with
+ * @param connectorRequest Data to patch the connector with
  * @param optional nil or *PatchConnectorOpts - Optional Parameters:
  * @param "KafkaId" (optional.String) -  The kafka cluster id
-@return ConnectorInstance
+@return Connector
 */
-func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, connector Connector, localVarOptionals *PatchConnectorOpts) (ConnectorInstance, *_nethttp.Response, error) {
+func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, connectorRequest ConnectorRequest, localVarOptionals *PatchConnectorOpts) (Connector, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  ConnectorInstance
+		localVarReturnValue  Connector
 	)
 
 	// create path and map variables
@@ -547,7 +547,7 @@ func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, c
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = &connector
+	localVarPostBody = &connectorRequest
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return localVarReturnValue, nil, err

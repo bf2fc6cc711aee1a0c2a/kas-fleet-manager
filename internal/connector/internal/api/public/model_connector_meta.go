@@ -9,11 +9,19 @@
 
 package public
 
+import (
+	"time"
+)
+
 // ConnectorMeta struct for ConnectorMeta
 type ConnectorMeta struct {
+	Owner              string                `json:"owner,omitempty"`
+	CreatedAt          time.Time             `json:"created_at,omitempty"`
+	ModifiedAt         time.Time             `json:"modified_at,omitempty"`
 	Name               string                `json:"name"`
 	ConnectorTypeId    string                `json:"connector_type_id"`
 	Channel            Channel               `json:"channel,omitempty"`
 	DeploymentLocation DeploymentLocation    `json:"deployment_location"`
 	DesiredState       ConnectorDesiredState `json:"desired_state"`
+	ResourceVersion    int64                 `json:"resource_version,omitempty"`
 }
