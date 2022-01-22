@@ -248,7 +248,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorInstanceList'
+                $ref: '#/components/schemas/ConnectorList'
           description: A list of connectors
         "401":
           content:
@@ -292,7 +292,7 @@ paths:
               ConnectorCreateExample:
                 $ref: '#/components/examples/ConnectorCreateExample'
             schema:
-              $ref: '#/components/schemas/Connector'
+              $ref: '#/components/schemas/ConnectorRequest'
         description: Connector data
         required: true
       responses:
@@ -300,7 +300,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorInstance'
+                $ref: '#/components/schemas/Connector'
           description: Accepted
         "400":
           content:
@@ -428,7 +428,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorInstance'
+                $ref: '#/components/schemas/Connector'
           description: The connector matching the request
         "401":
           content:
@@ -486,10 +486,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Connector'
+              $ref: '#/components/schemas/ConnectorRequest'
           application/merge-patch+json:
             schema:
-              $ref: '#/components/schemas/Connector'
+              $ref: '#/components/schemas/ConnectorRequest'
           application/json-patch+json:
             schema:
               description: A JSON Patch, RFC 6902 - https://tools.ietf.org/html/rfc6902
@@ -501,7 +501,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorInstance'
+                $ref: '#/components/schemas/Connector'
           description: The connector matching the request
         "401":
           content:
@@ -567,7 +567,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorClusterInstanceList'
+                $ref: '#/components/schemas/ConnectorClusterList'
           description: A list of connector clusters
         "401":
           content:
@@ -611,7 +611,7 @@ paths:
               ConnectorClusterCreateExample:
                 $ref: '#/components/examples/ConnectorClusterCreateExample'
             schema:
-              $ref: '#/components/schemas/ConnectorCluster'
+              $ref: '#/components/schemas/ConnectorClusterRequest'
         description: Connector cluster data
         required: true
       responses:
@@ -619,7 +619,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorClusterInstance'
+                $ref: '#/components/schemas/ConnectorCluster'
           description: Accepted
         "400":
           content:
@@ -731,7 +731,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorClusterInstance'
+                $ref: '#/components/schemas/ConnectorCluster'
           description: The connector cluster matching the request
         "401":
           content:
@@ -781,7 +781,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConnectorCluster'
+              $ref: '#/components/schemas/ConnectorClusterRequest'
         description: Data to updated connector with
         required: true
       responses:
@@ -1299,31 +1299,31 @@ components:
       - disconnected
       - ready
       type: string
-    ConnectorClusterMeta:
+    ConnectorClusterRequestMeta:
       properties:
         name:
           type: string
-    ConnectorCluster:
+    ConnectorClusterRequest:
       allOf:
-      - $ref: '#/components/schemas/ConnectorClusterMeta'
+      - $ref: '#/components/schemas/ConnectorClusterRequestMeta'
       description: Schema for the request to update a data plane cluster's status
-    ConnectorClusterInstanceMeta:
+    ConnectorClusterMeta:
       allOf:
       - $ref: '#/components/schemas/ObjectMeta'
-      - $ref: '#/components/schemas/ConnectorClusterMeta'
-    ConnectorClusterInstanceStatus:
+      - $ref: '#/components/schemas/ConnectorClusterRequestMeta'
+    ConnectorClusterStatus:
       properties:
         status:
-          $ref: '#/components/schemas/ConnectorClusterInstanceStatus_status'
-    ConnectorClusterInstance:
+          $ref: '#/components/schemas/ConnectorClusterStatus_status'
+    ConnectorCluster:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/ConnectorClusterInstanceMeta'
-      - $ref: '#/components/schemas/ConnectorClusterInstanceStatus'
-    ConnectorClusterInstanceList:
+      - $ref: '#/components/schemas/ConnectorClusterMeta'
+      - $ref: '#/components/schemas/ConnectorClusterStatus'
+    ConnectorClusterList:
       allOf:
       - $ref: '#/components/schemas/List'
-      - $ref: '#/components/schemas/ConnectorClusterInstanceList_allOf'
+      - $ref: '#/components/schemas/ConnectorClusterList_allOf'
     Channel:
       default: stable
       enum:
@@ -1357,7 +1357,7 @@ components:
       - connector
       - kafka
       - service_account
-    ConnectorMeta:
+    ConnectorRequestMeta:
       properties:
         name:
           type: string
@@ -1374,29 +1374,29 @@ components:
       - deployment_location
       - desired_state
       - name
-    Connector:
+    ConnectorRequest:
       allOf:
-      - $ref: '#/components/schemas/ConnectorMeta'
+      - $ref: '#/components/schemas/ConnectorRequestMeta'
       - $ref: '#/components/schemas/ConnectorConfiguration'
-    ConnectorInstanceMeta:
+    ConnectorMeta:
       allOf:
       - $ref: '#/components/schemas/ObjectMeta'
-      - $ref: '#/components/schemas/ConnectorMeta'
-      - $ref: '#/components/schemas/ConnectorInstanceMeta_allOf'
-    ConnectorInstanceStatus:
+      - $ref: '#/components/schemas/ConnectorRequestMeta'
+      - $ref: '#/components/schemas/ConnectorMeta_allOf'
+    ConnectorStatus:
       properties:
         status:
-          $ref: '#/components/schemas/ConnectorInstanceStatus_status'
-    ConnectorInstance:
+          $ref: '#/components/schemas/ConnectorStatus_status'
+    Connector:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/ConnectorInstanceMeta'
+      - $ref: '#/components/schemas/ConnectorMeta'
       - $ref: '#/components/schemas/ConnectorConfiguration'
-      - $ref: '#/components/schemas/ConnectorInstanceStatus'
-    ConnectorInstanceList:
+      - $ref: '#/components/schemas/ConnectorStatus'
+    ConnectorList:
       allOf:
       - $ref: '#/components/schemas/List'
-      - $ref: '#/components/schemas/ConnectorInstanceList_allOf'
+      - $ref: '#/components/schemas/ConnectorList_allOf'
     ConnectorType:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -1424,41 +1424,41 @@ components:
         operation_id:
           type: string
     VersionMetadata_allOf:
-      example: '{"kind":"APIVersion","id":"v1","href":"/api/connector_mgmt/v1","collections":[{"id":"kafkas","href":"/api/connector_mgmt/v1/kafka_connectors","kind":"ConnectorInstanceList"}]}'
+      example: '{"kind":"APIVersion","id":"v1","href":"/api/connector_mgmt/v1","collections":[{"id":"kafkas","href":"/api/connector_mgmt/v1/kafka_connectors","kind":"ConnectorList"}]}'
       properties:
         collections:
           items:
             allOf:
             - $ref: '#/components/schemas/ObjectReference'
           type: array
-    ConnectorClusterInstanceStatus_status:
+    ConnectorClusterStatus_status:
       properties:
         state:
           $ref: '#/components/schemas/ConnectorClusterState'
         error:
           type: string
-    ConnectorClusterInstanceList_allOf:
+    ConnectorClusterList_allOf:
       properties:
         items:
           items:
-            $ref: '#/components/schemas/ConnectorClusterInstance'
+            $ref: '#/components/schemas/ConnectorCluster'
           type: array
-    ConnectorInstanceMeta_allOf:
+    ConnectorMeta_allOf:
       properties:
         resource_version:
           format: int64
           type: integer
-    ConnectorInstanceStatus_status:
+    ConnectorStatus_status:
       properties:
         state:
           $ref: '#/components/schemas/ConnectorState'
         error:
           type: string
-    ConnectorInstanceList_allOf:
+    ConnectorList_allOf:
       properties:
         items:
           items:
-            $ref: '#/components/schemas/ConnectorInstance'
+            $ref: '#/components/schemas/Connector'
           type: array
     ConnectorType_allOf:
       properties:

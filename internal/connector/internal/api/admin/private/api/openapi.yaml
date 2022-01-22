@@ -107,7 +107,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorClusterInstanceList'
+                $ref: '#/components/schemas/ConnectorClusterList'
           description: A list of connector clusters
         "401":
           content:
@@ -488,10 +488,10 @@ components:
         operator:
           $ref: '#/components/schemas/ConnectorAvailableOperatorUpgrade_operator'
       type: object
-    ConnectorClusterInstanceList:
+    ConnectorClusterList:
       allOf:
       - $ref: '#/components/schemas/List'
-      - $ref: '#/components/schemas/ConnectorClusterInstanceList_allOf'
+      - $ref: '#/components/schemas/ConnectorClusterList_allOf'
     List:
       properties:
         kind:
@@ -509,11 +509,11 @@ components:
       - size
       - total
       type: object
-    ConnectorClusterInstance:
+    ConnectorCluster:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/ConnectorClusterInstanceMeta'
-      - $ref: '#/components/schemas/ConnectorClusterInstanceStatus'
+      - $ref: '#/components/schemas/ConnectorClusterMeta'
+      - $ref: '#/components/schemas/ConnectorClusterStatus'
     ObjectReference:
       properties:
         id:
@@ -523,10 +523,10 @@ components:
         href:
           type: string
       type: object
-    ConnectorClusterInstanceMeta:
+    ConnectorClusterMeta:
       allOf:
       - $ref: '#/components/schemas/ObjectMeta'
-      - $ref: '#/components/schemas/ConnectorClusterMeta'
+      - $ref: '#/components/schemas/ConnectorClusterRequestMeta'
     ObjectMeta:
       properties:
         owner:
@@ -538,14 +538,14 @@ components:
           format: date-time
           type: string
       type: object
-    ConnectorClusterMeta:
+    ConnectorClusterRequestMeta:
       properties:
         name:
           type: string
-    ConnectorClusterInstanceStatus:
+    ConnectorClusterStatus:
       properties:
         status:
-          $ref: '#/components/schemas/ConnectorClusterInstanceStatus_status'
+          $ref: '#/components/schemas/ConnectorClusterStatus_status'
     ConnectorClusterState:
       enum:
       - disconnected
@@ -587,13 +587,13 @@ components:
           type: string
         available_id:
           type: string
-    ConnectorClusterInstanceList_allOf:
+    ConnectorClusterList_allOf:
       properties:
         items:
           items:
-            $ref: '#/components/schemas/ConnectorClusterInstance'
+            $ref: '#/components/schemas/ConnectorCluster'
           type: array
-    ConnectorClusterInstanceStatus_status:
+    ConnectorClusterStatus_status:
       properties:
         state:
           $ref: '#/components/schemas/ConnectorClusterState'

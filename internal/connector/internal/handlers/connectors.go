@@ -47,7 +47,7 @@ func NewConnectorsHandler(connectorsService services.ConnectorsService, connecto
 }
 
 func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var resource public.Connector
+	var resource public.ConnectorRequest
 	tid := mux.Vars(r)["tid"]
 	cfg := &handlers.HandlerConfig{
 
@@ -64,7 +64,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
 			handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.WithDefault("ready"), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
 			handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
-			validateConnector(h.connectorTypesService, &resource, tid),
+			validateConnectorRequest(h.connectorTypesService, &resource, tid),
 		},
 
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -75,7 +75,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			//	return nil, err
 			//}
 
-			convResource, err := presenters.ConvertConnector(resource)
+			convResource, err := presenters.ConvertConnectorRequest(resource)
 			if err != nil {
 				return nil, err
 			}
@@ -107,7 +107,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			return presenters.PresentConnectorInstance(convResource)
+			return presenters.PresentConnector(convResource)
 		},
 	}
 
@@ -138,7 +138,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, serr
 			}
 
-			resource, serr := presenters.PresentConnectorInstance(dbresource)
+			resource, serr := presenters.PresentConnector(dbresource)
 			if serr != nil {
 				return nil, serr
 			}
@@ -165,7 +165,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, serr
 			}
 
-			patch := public.Connector{}
+			patch := public.ConnectorRequest{}
 			serr = PatchResource(resource, contentType, patchBytes, &patch)
 			if serr != nil {
 				return nil, serr
@@ -176,14 +176,13 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			resource.Name = patch.Name
 			resource.Connector = patch.Connector
 			resource.DesiredState = patch.DesiredState
-			//TODO: verify if it can be omitted
-			//resource.ResourceVersion = patch.Metadata.ResourceVersion
 			resource.Kafka = patch.Kafka
 			resource.ServiceAccount = patch.ServiceAccount
+			resource.SchemaRegistry = patch.SchemaRegistry
 			resource.DeploymentLocation = patch.DeploymentLocation
 
 			// If we didn't change anything, then just skip the update...
-			originalResource, _ := presenters.PresentConnectorInstance(dbresource)
+			originalResource, _ := presenters.PresentConnector(dbresource)
 			if reflect.DeepEqual(originalResource, resource) {
 				return originalResource, nil
 			}
@@ -196,7 +195,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				handlers.Validation("service_account.client_id", &resource.ServiceAccount.ClientId, handlers.MinLen(1)),
 				handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
 				handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
-				validateConnectorInstance(h.connectorTypesService, &resource, connectorTypeId),
+				validateConnector(h.connectorTypesService, &resource, connectorTypeId),
 			}
 
 			for _, v := range validates {
@@ -214,7 +213,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			//	}
 			//}
 
-			p, svcErr := presenters.ConvertConnectorInstance(resource)
+			p, svcErr := presenters.ConvertConnector(resource)
 			if svcErr != nil {
 				return nil, svcErr
 			}
@@ -259,7 +258,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			return presenters.PresentConnectorInstance(p)
+			return presenters.PresentConnector(p)
 		},
 	}
 
@@ -370,7 +369,7 @@ func (h ConnectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			return presenters.PresentConnectorInstance(resource)
+			return presenters.PresentConnector(resource)
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -430,7 +429,7 @@ func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			resourceList := public.ConnectorInstanceList{
+			resourceList := public.ConnectorList{
 				Kind:  "ConnectorList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
@@ -451,7 +450,7 @@ func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 
-				converted, err := presenters.PresentConnectorInstance(resource)
+				converted, err := presenters.PresentConnector(resource)
 				if err != nil {
 					glog.Errorf("connector id='%s' presentation failed: %v", resource.ID, err)
 					return nil, errors.GeneralError("internal error")

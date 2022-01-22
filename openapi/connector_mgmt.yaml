@@ -167,7 +167,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Connector"
+              $ref: "#/components/schemas/ConnectorRequest"
             examples:
               ConnectorCreateExample:
                 $ref: "#/components/examples/ConnectorCreateExample"
@@ -177,7 +177,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConnectorInstance"
+                $ref: "#/components/schemas/Connector"
           description: Accepted
         "400":
           content:
@@ -236,7 +236,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConnectorInstanceList"
+                $ref: "#/components/schemas/ConnectorList"
           description: A list of connectors
         "401":
           content:
@@ -278,7 +278,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConnectorInstance"
+                $ref: "#/components/schemas/Connector"
           description: The connector matching the request
         "401":
           content:
@@ -362,10 +362,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Connector"
+              $ref: "#/components/schemas/ConnectorRequest"
           application/merge-patch+json:
             schema:
-              $ref: "#/components/schemas/Connector"
+              $ref: "#/components/schemas/ConnectorRequest"
           application/json-patch+json:
             schema:
               description: A JSON Patch, RFC 6902 - https://tools.ietf.org/html/rfc6902
@@ -376,7 +376,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConnectorInstance"
+                $ref: "#/components/schemas/Connector"
           description: The connector matching the request
         "401":
           content:
@@ -431,7 +431,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConnectorCluster"
+              $ref: "#/components/schemas/ConnectorClusterRequest"
             examples:
               ConnectorClusterCreateExample:
                 $ref: "#/components/examples/ConnectorClusterCreateExample"
@@ -441,7 +441,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConnectorClusterInstance"
+                $ref: "#/components/schemas/ConnectorCluster"
           description: Accepted
         "400":
           content:
@@ -495,7 +495,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConnectorClusterInstanceList"
+                $ref: "#/components/schemas/ConnectorClusterList"
           description: A list of connector clusters
         "401":
           content:
@@ -537,7 +537,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConnectorClusterInstance"
+                $ref: "#/components/schemas/ConnectorCluster"
           description: The connector cluster matching the request
         "401":
           content:
@@ -579,7 +579,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConnectorCluster"
+              $ref: "#/components/schemas/ConnectorClusterRequest"
         required: true
       responses:
         "204":
@@ -814,7 +814,7 @@ components:
             collections:
               - id: "kafkas"
                 href: "/api/connector_mgmt/v1/kafka_connectors"
-                kind: "ConnectorInstanceList"
+                kind: "ConnectorList"
           properties:
             collections:
               type: array
@@ -883,22 +883,22 @@ components:
         - disconnected
         - ready
 
-    ConnectorClusterMeta:
+    ConnectorClusterRequestMeta:
       properties:
         name:
           type: string
 
-    ConnectorCluster:
+    ConnectorClusterRequest:
       description: "Schema for the request to update a data plane cluster's status"
       allOf:
-        - $ref: "#/components/schemas/ConnectorClusterMeta"
+        - $ref: "#/components/schemas/ConnectorClusterRequestMeta"
 
-    ConnectorClusterInstanceMeta:
+    ConnectorClusterMeta:
       allOf:
         - $ref: "#/components/schemas/ObjectMeta"
-        - $ref: "#/components/schemas/ConnectorClusterMeta"
+        - $ref: "#/components/schemas/ConnectorClusterRequestMeta"
 
-    ConnectorClusterInstanceStatus:
+    ConnectorClusterStatus:
       properties:
         status:
           type: object
@@ -908,13 +908,13 @@ components:
             error:
               type: string
 
-    ConnectorClusterInstance:
+    ConnectorCluster:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
-        - $ref: "#/components/schemas/ConnectorClusterInstanceMeta"
-        - $ref: "#/components/schemas/ConnectorClusterInstanceStatus"
+        - $ref: "#/components/schemas/ConnectorClusterMeta"
+        - $ref: "#/components/schemas/ConnectorClusterStatus"
 
-    ConnectorClusterInstanceList:
+    ConnectorClusterList:
       allOf:
         - $ref: "#/components/schemas/List"
         - type: object
@@ -922,7 +922,7 @@ components:
             items:
               type: array
               items:
-                $ref: "#/components/schemas/ConnectorClusterInstance"
+                $ref: "#/components/schemas/ConnectorCluster"
 
     #
     # Connector
@@ -968,7 +968,7 @@ components:
           # error handling
           type: object
 
-    ConnectorMeta:
+    ConnectorRequestMeta:
       required:
         - name
         - connector_type_id
@@ -986,22 +986,22 @@ components:
         desired_state:
           $ref: "#/components/schemas/ConnectorDesiredState"
 
-    Connector:
+    ConnectorRequest:
       allOf:
-        - $ref: "#/components/schemas/ConnectorMeta"
+        - $ref: "#/components/schemas/ConnectorRequestMeta"
         - $ref: "#/components/schemas/ConnectorConfiguration"
 
-    ConnectorInstanceMeta:
+    ConnectorMeta:
       allOf:
         - $ref: "#/components/schemas/ObjectMeta"
-        - $ref: "#/components/schemas/ConnectorMeta"
+        - $ref: "#/components/schemas/ConnectorRequestMeta"
         - type: object
           properties:
             resource_version:
               type: integer
               format: int64
 
-    ConnectorInstanceStatus:
+    ConnectorStatus:
       properties:
         status:
           type: object
@@ -1011,14 +1011,14 @@ components:
             error:
               type: string
 
-    ConnectorInstance:
+    Connector:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
-        - $ref: "#/components/schemas/ConnectorInstanceMeta"
+        - $ref: "#/components/schemas/ConnectorMeta"
         - $ref: "#/components/schemas/ConnectorConfiguration"
-        - $ref: "#/components/schemas/ConnectorInstanceStatus"
+        - $ref: "#/components/schemas/ConnectorStatus"
 
-    ConnectorInstanceList:
+    ConnectorList:
       allOf:
         - $ref: "#/components/schemas/List"
         - type: object
@@ -1026,7 +1026,7 @@ components:
             items:
               type: array
               items:
-                $ref: "#/components/schemas/ConnectorInstance"
+                $ref: "#/components/schemas/Connector"
     #
     # Connector Types
     #

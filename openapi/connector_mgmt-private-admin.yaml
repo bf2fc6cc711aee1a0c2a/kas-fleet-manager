@@ -34,7 +34,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/ConnectorClusterInstanceList"
+                $ref: "connector_mgmt.yaml#/components/schemas/ConnectorClusterList"
           description: A list of connector clusters
         "401":
           content:

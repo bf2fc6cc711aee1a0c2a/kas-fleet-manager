@@ -50,7 +50,7 @@ func (h *ConnectorAdminHandler) ListConnectorClusters(w http.ResponseWriter, r *
 				return nil, err
 			}
 
-			resourceList := private.ConnectorClusterInstanceList{
+			resourceList := private.ConnectorClusterList{
 				Kind:  "ConnectorClusterList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
@@ -58,7 +58,7 @@ func (h *ConnectorAdminHandler) ListConnectorClusters(w http.ResponseWriter, r *
 			}
 
 			for _, resource := range resources {
-				converted := presenters.PresentPrivateConnectorClusterInstance(resource)
+				converted := presenters.PresentPrivateConnectorCluster(resource)
 				resourceList.Items = append(resourceList.Items, converted)
 			}
 

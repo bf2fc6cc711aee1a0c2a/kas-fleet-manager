@@ -45,7 +45,7 @@ func NewConnectorClusterHandler(handler ConnectorClusterHandler) *ConnectorClust
 }
 
 func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var resource public.ConnectorCluster
+	var resource public.ConnectorClusterRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
@@ -54,7 +54,7 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			convResource := presenters.ConvertConnectorCluster(resource)
+			convResource := presenters.ConvertConnectorClusterRequest(resource)
 
 			claims, err := auth.GetClaimsFromContext(r.Context())
 			if err != nil {
@@ -67,7 +67,7 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 			if err := h.Service.Create(r.Context(), &convResource); err != nil {
 				return nil, err
 			}
-			return presenters.PresentConnectorClusterInstance(convResource), nil
+			return presenters.PresentConnectorCluster(convResource), nil
 		},
 	}
 
@@ -86,14 +86,14 @@ func (h *ConnectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentConnectorClusterInstance(resource), nil
+			return presenters.PresentConnectorCluster(resource), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
 }
 
 func (h *ConnectorClusterHandler) Update(w http.ResponseWriter, r *http.Request) {
-	var resource public.ConnectorCluster
+	var resource public.ConnectorClusterRequest
 
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	cfg := &handlers.HandlerConfig{
@@ -139,7 +139,7 @@ func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			resourceList := public.ConnectorClusterInstanceList{
+			resourceList := public.ConnectorClusterList{
 				Kind:  "ConnectorClusterList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
@@ -147,7 +147,7 @@ func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, resource := range resources {
-				converted := presenters.PresentConnectorClusterInstance(resource)
+				converted := presenters.PresentConnectorCluster(resource)
 				resourceList.Items = append(resourceList.Items, converted)
 			}
 
