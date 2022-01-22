@@ -9,15 +9,27 @@
 
 package public
 
+import (
+	"time"
+)
+
 // Connector struct for Connector
 type Connector struct {
+	Id                 string                           `json:"id,omitempty"`
+	Kind               string                           `json:"kind,omitempty"`
+	Href               string                           `json:"href,omitempty"`
+	Owner              string                           `json:"owner,omitempty"`
+	CreatedAt          time.Time                        `json:"created_at,omitempty"`
+	ModifiedAt         time.Time                        `json:"modified_at,omitempty"`
 	Name               string                           `json:"name"`
 	ConnectorTypeId    string                           `json:"connector_type_id"`
 	Channel            Channel                          `json:"channel,omitempty"`
 	DeploymentLocation DeploymentLocation               `json:"deployment_location"`
 	DesiredState       ConnectorDesiredState            `json:"desired_state"`
+	ResourceVersion    int64                            `json:"resource_version,omitempty"`
 	Kafka              KafkaConnectionSettings          `json:"kafka"`
 	ServiceAccount     ServiceAccount                   `json:"service_account"`
 	SchemaRegistry     SchemaRegistryConnectionSettings `json:"schema_registry,omitempty"`
 	Connector          map[string]interface{}           `json:"connector"`
+	Status             ConnectorStatusStatus            `json:"status,omitempty"`
 }

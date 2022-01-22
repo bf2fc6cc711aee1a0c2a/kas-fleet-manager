@@ -9,7 +9,14 @@
 
 package public
 
+import (
+	"time"
+)
+
 // ConnectorClusterMeta struct for ConnectorClusterMeta
 type ConnectorClusterMeta struct {
-	Name string `json:"name,omitempty"`
+	Owner      string    `json:"owner,omitempty"`
+	CreatedAt  time.Time `json:"created_at,omitempty"`
+	ModifiedAt time.Time `json:"modified_at,omitempty"`
+	Name       string    `json:"name,omitempty"`
 }

@@ -82,7 +82,7 @@ Feature: create a connector
 
     When I POST to "/v1/graphql" a GraphQL query:
       """
-      mutation createConnector($input: ConnectorInput!) {
+      mutation createConnector($input: ConnectorRequestInput!) {
           createConnector(async: true, body: $input) {
               id
           }
@@ -135,17 +135,17 @@ Feature: create a connector
           "id":"mykafka",
           "url": "kafka.hostname"
         },
-          "service_account": {
-            "client_id": "myclient",
-            "client_secret": "test"
-          },
+        "service_account": {
+          "client_id": "myclient",
+          "client_secret": "test"
+        },
         "connector": "{\"aws_queue_name_or_arn\": \"test\",\"aws_access_key\": \"test\",\"aws_secret_key\": \"test\",\"aws_region\": \"east\", \"kafka_topic\": \"test\"}"
       }
       """
 
     When I POST to "/v1/graphql" a GraphQL query:
       """
-      mutation createConnector($input: ConnectorInput!) {
+      mutation createConnector($input: ConnectorRequestInput!) {
           connector1: createConnector(async: true, body: $input) {
               status { state }
           }

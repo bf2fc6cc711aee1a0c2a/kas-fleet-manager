@@ -31,17 +31,17 @@ CreateConnectorCluster Create a new connector cluster
 Create a new connector cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param async Perform the action in an asynchronous manner
- * @param connectorCluster Connector cluster data
-@return ConnectorClusterInstance
+ * @param connectorClusterRequest Connector cluster data
+@return ConnectorCluster
 */
-func (a *ConnectorClustersApiService) CreateConnectorCluster(ctx _context.Context, async bool, connectorCluster ConnectorCluster) (ConnectorClusterInstance, *_nethttp.Response, error) {
+func (a *ConnectorClustersApiService) CreateConnectorCluster(ctx _context.Context, async bool, connectorClusterRequest ConnectorClusterRequest) (ConnectorCluster, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  ConnectorClusterInstance
+		localVarReturnValue  ConnectorCluster
 	)
 
 	// create path and map variables
@@ -69,7 +69,7 @@ func (a *ConnectorClustersApiService) CreateConnectorCluster(ctx _context.Contex
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = &connectorCluster
+	localVarPostBody = &connectorClusterRequest
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -257,16 +257,16 @@ GetConnectorCluster Get a connector cluster
 Get a connector cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param connectorClusterId The id of the connector cluster
-@return ConnectorClusterInstance
+@return ConnectorCluster
 */
-func (a *ConnectorClustersApiService) GetConnectorCluster(ctx _context.Context, connectorClusterId string) (ConnectorClusterInstance, *_nethttp.Response, error) {
+func (a *ConnectorClustersApiService) GetConnectorCluster(ctx _context.Context, connectorClusterId string) (ConnectorCluster, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  ConnectorClusterInstance
+		localVarReturnValue  ConnectorCluster
 	)
 
 	// create path and map variables
@@ -479,16 +479,16 @@ Returns a list of connector clusters
  * @param optional nil or *ListConnectorClustersOpts - Optional Parameters:
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
-@return ConnectorClusterInstanceList
+@return ConnectorClusterList
 */
-func (a *ConnectorClustersApiService) ListConnectorClusters(ctx _context.Context, localVarOptionals *ListConnectorClustersOpts) (ConnectorClusterInstanceList, *_nethttp.Response, error) {
+func (a *ConnectorClustersApiService) ListConnectorClusters(ctx _context.Context, localVarOptionals *ListConnectorClustersOpts) (ConnectorClusterList, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  ConnectorClusterInstanceList
+		localVarReturnValue  ConnectorClusterList
 	)
 
 	// create path and map variables
@@ -580,9 +580,9 @@ UpdateConnectorClusterById udpate a connector cluster
 udpate a connector cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param connectorClusterId The id of the connector cluster
- * @param connectorCluster Data to updated connector with
+ * @param connectorClusterRequest Data to updated connector with
 */
-func (a *ConnectorClustersApiService) UpdateConnectorClusterById(ctx _context.Context, connectorClusterId string, connectorCluster ConnectorCluster) (*_nethttp.Response, error) {
+func (a *ConnectorClustersApiService) UpdateConnectorClusterById(ctx _context.Context, connectorClusterId string, connectorClusterRequest ConnectorClusterRequest) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPut
 		localVarPostBody     interface{}
@@ -617,7 +617,7 @@ func (a *ConnectorClustersApiService) UpdateConnectorClusterById(ctx _context.Co
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = &connectorCluster
+	localVarPostBody = &connectorClusterRequest
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, err

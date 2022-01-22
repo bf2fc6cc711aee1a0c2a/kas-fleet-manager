@@ -173,7 +173,7 @@ func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource db
 		return private.ConnectorDeployment{}, err
 	}
 
-	pc, err := presenters.PresentConnectorInstance(&apiSpec)
+	pc, err := presenters.PresentConnector(&apiSpec)
 	if err != nil {
 		return private.ConnectorDeployment{}, err
 	}

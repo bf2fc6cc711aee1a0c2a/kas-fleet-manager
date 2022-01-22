@@ -9,7 +9,7 @@
 
 package public
 
-// ConnectorClusterInstanceStatus struct for ConnectorClusterInstanceStatus
-type ConnectorClusterInstanceStatus struct {
-	Status ConnectorClusterInstanceStatusStatus `json:"status,omitempty"`
+// ConnectorClusterStatus struct for ConnectorClusterStatus
+type ConnectorClusterStatus struct {
+	Status ConnectorClusterStatusStatus `json:"status,omitempty"`
 }
