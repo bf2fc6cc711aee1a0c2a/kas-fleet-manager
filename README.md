@@ -115,13 +115,16 @@ make binary
     public | leader_leases      | table | kas_fleet_manager
     public | migrations         | table | kas_fleet_manager
     ```
-
-3. Start the service
+3. Generate OCM token secret
+    ```
+    make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
+    ```
+4. Start the service
     ```
     ./kas-fleet-manager serve
     ```
     >**NOTE**: The service has numerous feature flags which can be used to enable/disable certain features of the service. Please see the [feature flag](./docs/feature-flags.md) documentation for more information.
-4. Verify the local service is working
+5. Verify the local service is working
     ```
     curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas
    {"kind":"KafkaRequestList","page":1,"size":0,"total":0,"items":[]}
@@ -146,17 +149,41 @@ curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/
 # Delete a kafka request
 curl -v -X DELETE -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/<kafka_request_id>
 ```
+#### Using RHOAS CLI to manage Kafka instances
+
+The locally installed kas-fleet-manager doesn't deploy TLS enabled kafka admin server but the default URL scheme used by the app-service-cli is HTTPS. So, the url scheme should be changed to http in the CLI [code](https://github.com/redhat-developer/app-services-cli/blob/main/pkg/core/connection/api/defaultapi/default_client.go#L155) and it should be built locally
+```
+make binary
+```
+Then, it can be pointed towards the locally running fleet manager
+```
+./rhoas login --mas-auth-url=stage --api-gateway=http://localhost:8000
+``` 
+Now, various kafka specific operations can be performed as described [here](http://appservices.tech/commands/rhoas_kafka)
+
+#### Using the Kafka admin-server API
+ - The admin-server API is used for managing topics, acls, and consumer groups. The API specification can be found [here](https://github.com/bf2fc6cc711aee1a0c2a/kafka-admin-api/blob/main/kafka-admin/src/main/resources/openapi-specs/kafka-admin-rest.yaml)
+- To get the API endpoint, use the following command
+```
+oc get routes -n kafka-c7ndprea8ueq4mmrm3c0 | grep admin-server
+
+# Here c7ndprea8ueq4mmrm3c0 is the kafka instance ID.
+```
 
 ### View the API docs
 ```
 # Start Swagger UI container
 make run/docs
 
-# Launch Swagger UI and Verify from a browser: http://localhost
+# Launch Swagger UI and Verify from a browser: http://localhost:8082
 
 # Remove Swagger UI conainer
 make run/docs/teardown
 ```
+## Using podman instead of docker
+- Install the podman-docker utility
+- Check the etc/subuid and etc/subgid files and make sure that the configured range includes the UID of current user
+
 ## Additional CLI commands
 
 In addition to the REST API exposed via `make run`, there are additional commands to interact directly
