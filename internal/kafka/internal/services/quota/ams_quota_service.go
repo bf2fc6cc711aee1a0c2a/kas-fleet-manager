@@ -123,7 +123,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
 	}
 	if bm == "" {
-		return "", errors.InsufficientQuotaError("Error getting billing model: No available billing model found")
+		return "", errors.InsufficientQuotaError("Error getting billing model: No available quota found")
 	}
 	rr.BillingModel(amsv1.BillingModel(bm))
 
