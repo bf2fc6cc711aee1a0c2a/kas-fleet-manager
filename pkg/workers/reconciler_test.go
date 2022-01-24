@@ -2,7 +2,6 @@ package workers
 
 import (
 	"context"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
 	"sync"
 	"testing"
 	"time"
@@ -12,9 +11,7 @@ import (
 
 func TestReconciler_Wakeup(t *testing.T) {
 	RegisterTestingT(t)
-	r := Reconciler{
-		SignalBus: signalbus.NewSignalBus(),
-	}
+	r := Reconciler{}
 	var stopchan chan struct{}
 	var wg sync.WaitGroup
 

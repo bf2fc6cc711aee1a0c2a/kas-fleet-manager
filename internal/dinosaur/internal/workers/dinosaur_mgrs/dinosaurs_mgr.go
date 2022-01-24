@@ -7,7 +7,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/acl"
 	serviceErr "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/workers"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
@@ -34,14 +33,12 @@ type DinosaurManager struct {
 }
 
 // NewDinosaurManager creates a new dinosaur manager
-func NewDinosaurManager(dinosaurService services.DinosaurService, accessControlList *acl.AccessControlListConfig, dinosaur *config.DinosaurConfig, bus signalbus.SignalBus) *DinosaurManager {
+func NewDinosaurManager(dinosaurService services.DinosaurService, accessControlList *acl.AccessControlListConfig, dinosaur *config.DinosaurConfig) *DinosaurManager {
 	return &DinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "general_dinosaur_worker",
-			Reconciler: workers.Reconciler{
-				SignalBus: bus,
-			},
+			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService:         dinosaurService,
 		accessControlListConfig: accessControlList,

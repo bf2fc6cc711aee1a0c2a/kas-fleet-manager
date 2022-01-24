@@ -5,7 +5,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/workers"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -24,14 +23,12 @@ type DeletingDinosaurManager struct {
 }
 
 // NewDeletingDinosaurManager creates a new dinosaur manager
-func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, keycloakConfig *keycloak.KeycloakConfig, quotaServiceFactory services.QuotaServiceFactory, bus signalbus.SignalBus) *DeletingDinosaurManager {
+func NewDeletingDinosaurManager(dinosaurService services.DinosaurService, keycloakConfig *keycloak.KeycloakConfig, quotaServiceFactory services.QuotaServiceFactory) *DeletingDinosaurManager {
 	return &DeletingDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "deleting_dinosaur",
-			Reconciler: workers.Reconciler{
-				SignalBus: bus,
-			},
+			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService:     dinosaurService,
 		keycloakConfig:      keycloakConfig,

@@ -3,7 +3,6 @@ package dinosaur_mgrs
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/workers"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
@@ -18,12 +17,12 @@ type DinosaurRoutesCNAMEManager struct {
 
 var _ workers.Worker = &DinosaurRoutesCNAMEManager{}
 
-func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConfig *config.DinosaurConfig, bus signalbus.SignalBus) *DinosaurRoutesCNAMEManager {
+func NewDinosaurCNAMEManager(dinosaurService services.DinosaurService, kafkfConfig *config.DinosaurConfig) *DinosaurRoutesCNAMEManager {
 	return &DinosaurRoutesCNAMEManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "dinosaur_dns",
-			Reconciler: workers.Reconciler{SignalBus: bus},
+			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService: dinosaurService,
 		dinosaurConfig:  kafkfConfig,

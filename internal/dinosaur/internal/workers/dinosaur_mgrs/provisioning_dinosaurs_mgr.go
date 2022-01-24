@@ -5,7 +5,6 @@ import (
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
@@ -23,14 +22,12 @@ type ProvisioningDinosaurManager struct {
 }
 
 // NewProvisioningDinosaurManager creates a new dinosaur manager
-func NewProvisioningDinosaurManager(dinosaurService services.DinosaurService, observatoriumService services.ObservatoriumService, bus signalbus.SignalBus) *ProvisioningDinosaurManager {
+func NewProvisioningDinosaurManager(dinosaurService services.DinosaurService, observatoriumService services.ObservatoriumService) *ProvisioningDinosaurManager {
 	return &ProvisioningDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "provisioning_dinosaur",
-			Reconciler: workers.Reconciler{
-				SignalBus: bus,
-			},
+			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService:      dinosaurService,
 		observatoriumService: observatoriumService,

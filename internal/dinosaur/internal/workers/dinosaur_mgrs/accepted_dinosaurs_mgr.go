@@ -9,7 +9,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/logger"
@@ -30,14 +29,12 @@ type AcceptedDinosaurManager struct {
 }
 
 // NewAcceptedDinosaurManager creates a new dinosaur manager
-func NewAcceptedDinosaurManager(dinosaurService services.DinosaurService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus, dataPlaneClusterConfig *config.DataplaneClusterConfig) *AcceptedDinosaurManager {
+func NewAcceptedDinosaurManager(dinosaurService services.DinosaurService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, dataPlaneClusterConfig *config.DataplaneClusterConfig) *AcceptedDinosaurManager {
 	return &AcceptedDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "accepted_dinosaur",
-			Reconciler: workers.Reconciler{
-				SignalBus: bus,
-			},
+			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService:        dinosaurService,
 		quotaServiceFactory:    quotaServiceFactory,
