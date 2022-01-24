@@ -71,9 +71,7 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `AWS_SECRET_ACCESS_KEY`: The secret access key of an AWS account used to provision OpenShift clusters. Defaults to value read from _./secrets/aws.secretaccesskey_
 - `ROUTE53_ACCESS_KEY`: The access key of an AWS account that has Route53 permissions. Defaults to value read from _./secrets/aws.route53accesskey_
 - `ROUTE53_SECRET_ACCESS_KEY`: The secret access key of an AWS account that has Route53 permissions. Defaults to value read from _./secrets/aws.route53secretaccesskey_
-- `OBSERVATORIUM_SERVICE_TOKEN`: Offline token used to interact with Observatorium. Defaults to value read from _./secrets/observatorium.token_
-- `DEX_SECRET`: Dex secret used to authenticate to an Observatorium instance using Dex as authentication. Defaults to value read from _./secrets/dex.secret_
-- `DEX_PASSWORD`: Dex password used to authenticate to an Observatorium instance using Dex as authentication. Defaults to value read from _./secrets/dex.secret_
+value read from _./secrets/dex.secret_
 - `SSO_CLIENT_ID`: The client id for a SSO service account. Defaults to value read from _./secrets/keycloak-service.clientId_
 - `SSO_CLIENT_SECRET`: The client secret for a SSO service account. Defaults to value read from _./secrets/keycloak-service.clientSecret_
 - `OSD_IDP_SSO_CLIENT_ID`: The client id for a SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientId_
@@ -127,11 +125,6 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `MAX_LIMIT_FOR_SSO_GET_CLIENTS`: The default value of maximum number of clients fetch from mas-sso. Defaults to `100`.
 - `OSD_IDP_SSO_REALM`: SSO realm for configuring OpenShift Cluster Identity Provider Clients. Defaults to `rhoas-dinosaur-sre`.
 - `TOKEN_ISSUER_URL`: A token issuer url used to validate if JWT token used are coming from the given issuer. Defaults to `https://sso.redhat.com/auth/realms/redhat-external`.
-- `OBSERVATORIUM_AUTH_TYPE`: Authentication type for the Observability stack. Options: `dex` and `redhat`, Default: `dex`.
-- `DEX_USERNAME`: Username that will be used to authenticate with an Observatorium using Dex as authentication. Defaults to `admin@example.com`.
-- `DEX_URL`: Dex URL. Defaults to `http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io`.
-- `OBSERVATORIUM_GATEWAY`: URL of an Observatorium using Dex as authentication. Defaults to `https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io`.
-- `OBSERVATORIUM_TENANT`: Tenant of an Observatorium using Dex as authentication. Defaults to `test`.
 - `OBSERVATORIUM_RHSSO_GATEWAY`: URL of an Observatorium using RHSSO as authentication. Defaults to `''`.
 - `OBSERVATORIUM_RHSSO_TENANT`: Tenant of an Observatorium using RHSSO as authentication. Defaults to `''`.
 - `OBSERVATORIUM_RHSSO_AUTH_SERVER_URL`: RHSSO auth server URL used for Observatorium authentication. Defaults to `''`.
@@ -143,7 +136,6 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `FLEETSHARD_OLM_INDEX_IMAGE`: Fleetshard operator OLM index image. Defaults to `quay.io/osd-addons/fleetshard-operator:production-82b42db`.
 - `DINOSAUR_OPERATOR_OLM_INDEX_IMAGE`: Dinosaur operator OLM index image. Defaults to `quay.io/osd-addons/managed-dinosaur:production-82b42db`.
 - `DATAPLANE_CLUSTER_SCALING_TYPE`: Dataplane cluster scaling type. Options: `manual`, `auto` and `none`, Defaults: `manual`.
-- `CLUSTER_LOGGING_OPERATOR_ADDON_ID`: The id of the cluster logging operator addon. Defaults to `''`.
 - `DINOSAUR_OPERATOR_OPERATOR_ADDON_ID`: The id of the Dinosaur operator addon. Defaults to `managed-dinosaur-qe`.
 - `FLEETSHARD_ADDON_ID`: The id of the fleetshard operator addon. Defaults to `fleetshard-operator-qe`.
 

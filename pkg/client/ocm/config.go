@@ -14,21 +14,20 @@ const (
 )
 
 type OCMConfig struct {
-	BaseURL                       string `json:"base_url"`
-	AmsUrl                        string `json:"ams_url"`
-	ClientID                      string `json:"client-id"`
-	ClientIDFile                  string `json:"client-id_file"`
-	ClientSecret                  string `json:"client-secret"`
-	ClientSecretFile              string `json:"client-secret_file"`
-	SelfToken                     string `json:"self_token"`
-	SelfTokenFile                 string `json:"self_token_file"`
-	TokenURL                      string `json:"token_url"`
-	Debug                         bool   `json:"debug"`
-	EnableMock                    bool   `json:"enable_mock"`
-	MockMode                      string `json:"mock_type"`
-	DinosaurOperatorAddonID       string `json:"dinosaur_operator_addon_id"`
-	FleetshardAddonID             string `json:"fleetshard_addon_id"`
-	ClusterLoggingOperatorAddonID string `json:"cluster_logging_operator_addon_id"`
+	BaseURL                 string `json:"base_url"`
+	AmsUrl                  string `json:"ams_url"`
+	ClientID                string `json:"client-id"`
+	ClientIDFile            string `json:"client-id_file"`
+	ClientSecret            string `json:"client-secret"`
+	ClientSecretFile        string `json:"client-secret_file"`
+	SelfToken               string `json:"self_token"`
+	SelfTokenFile           string `json:"self_token_file"`
+	TokenURL                string `json:"token_url"`
+	Debug                   bool   `json:"debug"`
+	EnableMock              bool   `json:"enable_mock"`
+	MockMode                string `json:"mock_type"`
+	DinosaurOperatorAddonID string `json:"dinosaur_operator_addon_id"`
+	FleetshardAddonID       string `json:"fleetshard_addon_id"`
 }
 
 func NewOCMConfig() *OCMConfig {
@@ -59,7 +58,6 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.MockMode, "ocm-mock-mode", c.MockMode, "Set mock type")
 	fs.StringVar(&c.DinosaurOperatorAddonID, "dinosaur-operator-addon-id", c.DinosaurOperatorAddonID, "The name of the Dinosaur operator addon")
 	fs.StringVar(&c.FleetshardAddonID, "fleetshard-addon-id", c.FleetshardAddonID, "The name of the fleetshard operator addon")
-	fs.StringVar(&c.ClusterLoggingOperatorAddonID, "cluster-logging-operator-addon-id", "", "The name of the cluster logging operator addon. An empty string indicates that the operator should not be installed")
 }
 
 func (c *OCMConfig) ReadFiles() error {

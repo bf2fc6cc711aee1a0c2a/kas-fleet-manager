@@ -20,11 +20,11 @@ func Test_AMSCheckQuota(t *testing.T) {
 	}
 	type args struct {
 		dinosaurID           string
-		reserve           bool
-		owner             string
+		reserve              bool
+		owner                string
 		dinosaurInstanceType types.DinosaurInstanceType
-		hasStandardQuota  bool
-		hasEvalQuota      bool
+		hasStandardQuota     bool
+		hasEvalQuota         bool
 	}
 	tests := []struct {
 		name    string
@@ -197,7 +197,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 	}
 	type args struct {
 		dinosaurID string
-		owner   string
+		owner      string
 	}
 	tests := []struct {
 		name             string

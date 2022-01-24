@@ -31,7 +31,7 @@ type Services struct {
 	di.Inject
 	DBFactory             *db.ConnectionFactory
 	KeycloakConfig        *keycloak.KeycloakConfig
-	DinosaurConfig           *config.DinosaurConfig
+	DinosaurConfig        *config.DinosaurConfig
 	MetricsServer         *server.MetricsServer
 	HealthCheckServer     *server.HealthCheckServer
 	Workers               []coreWorkers.Worker
@@ -43,7 +43,7 @@ type Services struct {
 	ClusterService        services.ClusterService
 	OCMClient             ocm.ClusterManagementClient
 	OCMConfig             *ocm.OCMConfig
-	DinosaurService          services.DinosaurService
+	DinosaurService       services.DinosaurService
 	ObservatoriumClient   *observatorium.Client
 	ClusterManager        *workers.ClusterManager
 	ServerConfig          *server.ServerConfig
@@ -109,7 +109,7 @@ func NewMockDataplaneCluster(name string, capacity int) config.ManualCluster {
 		Region:                mocks.MockCluster.Region().ID(),
 		MultiAZ:               true,
 		Schedulable:           true,
-		DinosaurInstanceLimit:    capacity,
+		DinosaurInstanceLimit: capacity,
 		Status:                api.ClusterReady,
 		SupportedInstanceType: "eval,standard",
 	}

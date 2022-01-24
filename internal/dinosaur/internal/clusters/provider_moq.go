@@ -46,9 +46,6 @@ var _ Provider = &ProviderMock{}
 // 			GetComputeNodesFunc: func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
 // 				panic("mock out the GetComputeNodes method")
 // 			},
-// 			InstallClusterLoggingFunc: func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
-// 				panic("mock out the InstallClusterLogging method")
-// 			},
 // 			InstallDinosaurOperatorFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
 // 				panic("mock out the InstallDinosaurOperator method")
 // 			},
@@ -97,9 +94,6 @@ type ProviderMock struct {
 
 	// GetComputeNodesFunc mocks the GetComputeNodes method.
 	GetComputeNodesFunc func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error)
-
-	// InstallClusterLoggingFunc mocks the InstallClusterLogging method.
-	InstallClusterLoggingFunc func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error)
 
 	// InstallDinosaurOperatorFunc mocks the InstallDinosaurOperator method.
 	InstallDinosaurOperatorFunc func(clusterSpec *types.ClusterSpec) (bool, error)
@@ -165,13 +159,6 @@ type ProviderMock struct {
 			// Spec is the spec argument value.
 			Spec *types.ClusterSpec
 		}
-		// InstallClusterLogging holds details about calls to the InstallClusterLogging method.
-		InstallClusterLogging []struct {
-			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types.ClusterSpec
-			// Params is the params argument value.
-			Params []ocm.Parameter
-		}
 		// InstallDinosaurOperator holds details about calls to the InstallDinosaurOperator method.
 		InstallDinosaurOperator []struct {
 			// ClusterSpec is the clusterSpec argument value.
@@ -215,7 +202,6 @@ type ProviderMock struct {
 	lockGetCloudProviders       sync.RWMutex
 	lockGetClusterDNS           sync.RWMutex
 	lockGetComputeNodes         sync.RWMutex
-	lockInstallClusterLogging   sync.RWMutex
 	lockInstallDinosaurOperator sync.RWMutex
 	lockInstallFleetshard       sync.RWMutex
 	lockScaleDown               sync.RWMutex
@@ -502,41 +488,6 @@ func (mock *ProviderMock) GetComputeNodesCalls() []struct {
 	mock.lockGetComputeNodes.RLock()
 	calls = mock.calls.GetComputeNodes
 	mock.lockGetComputeNodes.RUnlock()
-	return calls
-}
-
-// InstallClusterLogging calls InstallClusterLoggingFunc.
-func (mock *ProviderMock) InstallClusterLogging(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
-	if mock.InstallClusterLoggingFunc == nil {
-		panic("ProviderMock.InstallClusterLoggingFunc: method is nil but Provider.InstallClusterLogging was just called")
-	}
-	callInfo := struct {
-		ClusterSpec *types.ClusterSpec
-		Params      []ocm.Parameter
-	}{
-		ClusterSpec: clusterSpec,
-		Params:      params,
-	}
-	mock.lockInstallClusterLogging.Lock()
-	mock.calls.InstallClusterLogging = append(mock.calls.InstallClusterLogging, callInfo)
-	mock.lockInstallClusterLogging.Unlock()
-	return mock.InstallClusterLoggingFunc(clusterSpec, params)
-}
-
-// InstallClusterLoggingCalls gets all the calls that were made to InstallClusterLogging.
-// Check the length with:
-//     len(mockedProvider.InstallClusterLoggingCalls())
-func (mock *ProviderMock) InstallClusterLoggingCalls() []struct {
-	ClusterSpec *types.ClusterSpec
-	Params      []ocm.Parameter
-} {
-	var calls []struct {
-		ClusterSpec *types.ClusterSpec
-		Params      []ocm.Parameter
-	}
-	mock.lockInstallClusterLogging.RLock()
-	calls = mock.calls.InstallClusterLogging
-	mock.lockInstallClusterLogging.RUnlock()
 	return calls
 }
 

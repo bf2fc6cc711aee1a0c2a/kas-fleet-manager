@@ -537,15 +537,12 @@ deploy/secrets:
 		-p OCM_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-service.clientId' ] && [ -z '${OCM_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-service.clientId || echo '${OCM_SERVICE_CLIENT_ID}')" \
 		-p OCM_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-service.clientSecret' ] && [ -z '${OCM_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-service.clientSecret || echo '${OCM_SERVICE_CLIENT_SECRET}')" \
 		-p OCM_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-service.token' ] && [ -z '${OCM_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-service.token || echo '${OCM_SERVICE_TOKEN}')" \
-		-p OBSERVATORIUM_SERVICE_TOKEN="$(shell ([ -s './secrets/observatorium.token' ] && [ -z '${OBSERVATORIUM_SERVICE_TOKEN}' ]) && cat ./secrets/observatorium.token || echo '${OBSERVATORIUM_SERVICE_TOKEN}')" \
 		-p SENTRY_KEY="$(shell ([ -s './secrets/sentry.key' ] && [ -z '${SENTRY_KEY}' ]) && cat ./secrets/sentry.key || echo '${SENTRY_KEY}')" \
 		-p AWS_ACCESS_KEY="$(shell ([ -s './secrets/aws.accesskey' ] && [ -z '${AWS_ACCESS_KEY}' ]) && cat ./secrets/aws.accesskey || echo '${AWS_ACCESS_KEY}')" \
 		-p AWS_ACCOUNT_ID="$(shell ([ -s './secrets/aws.accountid' ] && [ -z '${AWS_ACCOUNT_ID}' ]) && cat ./secrets/aws.accountid || echo '${AWS_ACCOUNT_ID}')" \
 		-p AWS_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.secretaccesskey' ] && [ -z '${AWS_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.secretaccesskey || echo '${AWS_SECRET_ACCESS_KEY}')" \
 		-p ROUTE53_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53accesskey' ] && [ -z '${ROUTE53_ACCESS_KEY}' ]) && cat ./secrets/aws.route53accesskey || echo '${ROUTE53_ACCESS_KEY}')" \
 		-p ROUTE53_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53secretaccesskey' ] && [ -z '${ROUTE53_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.route53secretaccesskey || echo '${ROUTE53_SECRET_ACCESS_KEY}')" \
-		-p DEX_SECRET="$(shell ([ -s './secrets/dex.secret' ] && [ -z '${DEX_SECRET}' ]) && cat ./secrets/dex.secret || echo '${DEX_SECRET}')" \
-		-p DEX_PASSWORD="$(shell ([ -s './secrets/dex.password' ] && [ -z '${DEX_PASSWORD}' ]) && cat ./secrets/dex.password || echo '${DEX_PASSWORD}')" \
 		-p SSO_CLIENT_ID="$(shell ([ -s './secrets/keycloak-service.clientId' ] && [ -z '${SSO_CLIENT_ID}' ]) && cat ./secrets/keycloak-service.clientId || echo '${SSO_CLIENT_ID}')" \
 		-p SSO_CLIENT_SECRET="$(shell ([ -s './secrets/keycloak-service.clientSecret' ] && [ -z '${SSO_CLIENT_SECRET}' ]) && cat ./secrets/keycloak-service.clientSecret || echo '${SSO_CLIENT_SECRET}')" \
 		-p OSD_IDP_SSO_CLIENT_ID="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientId' ] && [ -z '${OSD_IDP_SSO_CLIENT_ID}' ]) && cat ./secrets/osd-idp-keycloak-service.clientId || echo '${OSD_IDP_SSO_CLIENT_ID}')" \
@@ -593,12 +590,7 @@ deploy/service: ALLOW_EVALUATOR_INSTANCE ?= "true"
 deploy/service: QUOTA_TYPE ?= "quota-management-list"
 deploy/service: DINOSAUR_OPERATOR_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-dinosaur:production-82b42db"
 deploy/service: FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/fleetshard-operator:production-82b42db"
-deploy/service: DEX_USERNAME ?= "admin@example.com"
-deploy/service: DEX_URL ?= "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io"
-deploy/service: OBSERVATORIUM_GATEWAY ?= "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io"
-deploy/service: OBSERVATORIUM_TENANT ?= "test"
 deploy/service: OBSERVABILITY_CONFIG_REPO ?= "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents"
-deploy/service: OBSERVATORIUM_TENANT ?= "test"
 deploy/service: OBSERVABILITY_CONFIG_CHANNEL ?= "resources"
 deploy/service: OBSERVABILITY_CONFIG_TAG ?= "main"
 deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
@@ -627,11 +619,6 @@ deploy/service: deploy/envoy deploy/route
 		-p OSD_IDP_SSO_REALM="$(OSD_IDP_SSO_REALM)" \
 		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \
 		-p SERVICE_PUBLIC_HOST_URL="https://$(shell oc get routes/fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
-		-p OBSERVATORIUM_AUTH_TYPE="${OBSERVATORIUM_AUTH_TYPE}" \
-		-p DEX_USERNAME="${DEX_USERNAME}" \
-		-p DEX_URL="${DEX_URL}" \
-		-p OBSERVATORIUM_GATEWAY="${OBSERVATORIUM_GATEWAY}" \
-		-p OBSERVATORIUM_TENANT="${OBSERVATORIUM_TENANT}" \
 		-p OBSERVATORIUM_RHSSO_GATEWAY="${OBSERVATORIUM_RHSSO_GATEWAY}" \
 		-p OBSERVATORIUM_RHSSO_REALM="${OBSERVATORIUM_RHSSO_REALM}" \
 		-p OBSERVATORIUM_RHSSO_TENANT="${OBSERVATORIUM_RHSSO_TENANT}" \
@@ -647,7 +634,6 @@ deploy/service: deploy/envoy deploy/route
 		-p DINOSAUR_OPERATOR_OPERATOR_ADDON_ID="${DINOSAUR_OPERATOR_OPERATOR_ADDON_ID}" \
 		-p FLEETSHARD_ADDON_ID="${FLEETSHARD_ADDON_ID}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
-		-p CLUSTER_LOGGING_OPERATOR_ADDON_ID="${CLUSTER_LOGGING_OPERATOR_ADDON_ID}" \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 

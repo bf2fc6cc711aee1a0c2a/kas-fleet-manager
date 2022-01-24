@@ -203,10 +203,6 @@ func (o *OCMProvider) InstallDinosaurOperator(clusterSpec *types.ClusterSpec) (b
 	return o.installAddon(clusterSpec, o.ocmConfig.DinosaurOperatorAddonID)
 }
 
-func (o *OCMProvider) InstallClusterLogging(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
-	return o.installAddonWithParams(clusterSpec, o.ocmConfig.ClusterLoggingOperatorAddonID, params)
-}
-
 func (o *OCMProvider) InstallFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 	return o.installAddonWithParams(clusterSpec, o.ocmConfig.FleetshardAddonID, params)
 }
