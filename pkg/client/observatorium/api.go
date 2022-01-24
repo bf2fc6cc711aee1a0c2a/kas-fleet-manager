@@ -26,7 +26,7 @@ type ServiceObservatorium struct {
 func (obs *ServiceObservatorium) GetDinosaurState(name string, resourceNamespace string) (DinosaurState, error) {
 	DinosaurState := DinosaurState{}
 	c := obs.client
-	metric := `dinosaur_operator_resource_state{%s}`
+	metric := `dinosaur_operator_resource_state{%s}` // TODO change this to reflect your app specific readness state metric
 	labels := fmt.Sprintf(`kind=~'Dinosaur', name=~'%s',resource_namespace=~'%s'`, name, resourceNamespace)
 	result := c.Query(metric, labels)
 	if result.Err != nil {
@@ -46,6 +46,7 @@ func (obs *ServiceObservatorium) GetDinosaurState(name string, resourceNamespace
 
 func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace string, rq *MetricsReqParams) error {
 	failedMetrics := []string{}
+	// TODO update metrics names and add more specifics metrics for your service
 	fetchers := map[string]fetcher{
 		//Check metrics for available disk space per broker
 		"kubelet_volume_stats_available_bytes": {
@@ -63,69 +64,6 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 				*metrics = append(*metrics, m)
 			},
 		},
-		//Check metrics for soft limit quota for cluster
-		"dinosaur_broker_quota_softlimitbytes": {
-			`dinosaur_broker_quota_softlimitbytes{%s}`,
-			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
-		},
-		//Check metrics for used space across the cluster
-		"dinosaur_broker_quota_totalstorageusedbytes": {
-			`dinosaur_broker_quota_totalstorageusedbytes{%s}`,
-			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
-		},
-		//Check metrics for messages in per topic
-		"dinosaur_server_brokertopicmetrics_messages_in_total": {
-			`dinosaur_server_brokertopicmetrics_messages_in_total{%s}`,
-			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
-		},
-		//Check metrics for bytes in per topic
-		"dinosaur_server_brokertopicmetrics_bytes_in_total": {
-			`dinosaur_server_brokertopicmetrics_bytes_in_total{%s}`,
-			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
-		},
-		//Check metrics for bytes out per topic
-		"dinosaur_server_brokertopicmetrics_bytes_out_total": {
-			`dinosaur_server_brokertopicmetrics_bytes_out_total{%s}`,
-			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur', namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
-		},
-		//Check metrics for partition states
-		"dinosaur_controller_dinosaurcontroller_offline_partitions_count": {
-			`dinosaur_controller_dinosaurcontroller_offline_partitions_count{%s}`,
-			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur',namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
-		},
-		"dinosaur_controller_dinosaurcontroller_global_partition_count": {
-			`dinosaur_controller_dinosaurcontroller_global_partition_count{%s}`,
-			fmt.Sprintf(`dinosaur_operator_io_kind=~'Dinosaur',namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
-		},
-		//Check metrics for log size
-		"dinosaur_topic:dinosaur_log_log_size:sum": {
-			`dinosaur_topic:dinosaur_log_log_size:sum{%s}`,
-			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
-		},
 		//Check metrics for all traffic in/out
 		"dinosaur_namespace:haproxy_server_bytes_in_total:rate5m": {
 			`dinosaur_namespace:haproxy_server_bytes_in_total:rate5m{%s}`,
@@ -137,27 +75,6 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *DinosaurMetrics, namespace 
 		"dinosaur_namespace:haproxy_server_bytes_out_total:rate5m": {
 			`dinosaur_namespace:haproxy_server_bytes_out_total:rate5m{%s}`,
 			fmt.Sprintf(`exported_namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
-		},
-		"dinosaur_topic:dinosaur_topic_partitions:sum": {
-			`dinosaur_topic:dinosaur_topic_partitions:sum{%s}`,
-			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
-		},
-		"dinosaur_topic:dinosaur_topic_partitions:count": {
-			`dinosaur_topic:dinosaur_topic_partitions:count{%s}`,
-			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
-		},
-		"consumergroup:dinosaur_consumergroup_members:count": {
-			`consumergroup:dinosaur_consumergroup_members:count{%s}`,
-			fmt.Sprintf(`namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
