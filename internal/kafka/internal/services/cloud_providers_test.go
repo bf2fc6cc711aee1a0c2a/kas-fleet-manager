@@ -180,7 +180,7 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 			wantErr: true,
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				cache:             cache.New(1*time.Second, 2*time.Second),
+				cache:             cache.New(5*time.Minute, 10*time.Minute),
 				providerFactory:   nil, // should not be called
 			},
 			setupFn: func() {
@@ -199,7 +199,7 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 						},
 					}, nil
 				}},
-				cache: cache.New(1*time.Second, 2*time.Second),
+				cache: cache.New(5*time.Minute, 10*time.Minute),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -214,7 +214,7 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				providerFactory:   nil, // should not be called,
-				cache:             cache.New(1*time.Second, 2*time.Second),
+				cache:             cache.New(5*time.Minute, 10*time.Minute),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -298,7 +298,7 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 							},
 						}, nil
 					}},
-				cache: cache.New(1*time.Second, 2*time.Second),
+				cache: cache.New(5*time.Minute, 10*time.Minute),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -384,7 +384,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 			wantErr: true,
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				cache:             cache.New(1*time.Second, 2*time.Second),
+				cache:             cache.New(5*time.Minute, 10*time.Minute),
 				providerFactory:   nil, // should not be called
 			},
 			setupFn: func() {
@@ -463,7 +463,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 							},
 						}, nil
 					}},
-				cache: cache.New(1*time.Second, 2*time.Second),
+				cache: cache.New(5*time.Minute, 10*time.Minute),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()

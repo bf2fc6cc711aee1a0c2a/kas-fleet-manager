@@ -15,6 +15,7 @@ import (
 )
 
 const keyCloudProvidersWithRegions = "cloudProviderWithRegions"
+const keyCloudProviderRegions = "cloudProviderRegions"
 
 var cloudPoviderIdToDisplayNameMapping map[string]string = map[string]string{
 	"aws":   "Amazon Web Services",
@@ -28,13 +29,14 @@ type CloudProvidersService interface {
 	GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError)
 	ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError)
 	ListCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError)
+	ListCachedCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError)
 }
 
 func NewCloudProvidersService(providerFactory clusters.ProviderFactory, connectionFactory *db.ConnectionFactory) CloudProvidersService {
 	return &cloudProvidersService{
 		providerFactory:   providerFactory,
 		connectionFactory: connectionFactory,
-		cache:             cache.New(1*time.Second, 2*time.Second),
+		cache:             cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
@@ -178,6 +180,27 @@ func (p cloudProvidersService) ListCloudProviderRegions(id string) ([]api.CloudR
 	}
 
 	return cloudRegionList, nil
+}
+
+func (p cloudProvidersService) ListCachedCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError) {
+	cachedRegionList, cached := p.cache.Get(id)
+	if cached {
+		return convertToCloudProviderRegions(cachedRegionList)
+	}
+	cloudProviderRegions, err := p.ListCloudProviderRegions(id)
+	if err != nil {
+		return nil, err
+	}
+	p.cache.Set(keyCloudProviderRegions, cloudProviderRegions, cache.DefaultExpiration)
+	return cloudProviderRegions, nil
+}
+
+func convertToCloudProviderRegions(cachedCloudProviderRegions interface{}) ([]api.CloudRegion, *errors.ServiceError) {
+	cloudProviderRegions, ok := cachedCloudProviderRegions.([]api.CloudRegion)
+	if ok {
+		return cloudProviderRegions, nil
+	}
+	return nil, nil
 }
 
 func (p cloudProvidersService) getAvailableClusterProviderTypes() ([]Cluster, *errors.ServiceError) {

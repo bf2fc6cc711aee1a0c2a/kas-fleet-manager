@@ -27,7 +27,7 @@ var _ RequireTermsAcceptanceMiddleware = &requireTermsAcceptanceMiddleware{}
 func NewRequireTermsAcceptanceMiddleware() RequireTermsAcceptanceMiddleware {
 	return &requireTermsAcceptanceMiddleware{
 		// entries will expire in 5 minutes and will be evicted every 10 minutes
-		cache: cache.New(1*time.Second, 2*time.Second),
+		cache: cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 

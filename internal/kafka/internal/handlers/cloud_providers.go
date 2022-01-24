@@ -11,7 +11,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 
 	"github.com/patrickmn/go-cache"
 
@@ -33,7 +32,7 @@ func NewCloudProviderHandler(service services.CloudProvidersService, providerCon
 	return &cloudProvidersHandler{
 		service:                  service,
 		supportedProviders:       providerConfig.ProvidersConfig.SupportedProviders,
-		cache:                    cache.New(1*time.Second, 2*time.Second),
+		cache:                    cache.New(5*time.Minute, 10*time.Minute),
 		kafkaService:             kafkaService,
 		clusterPlacementStrategy: clusterPlacementStrategy,
 	}
@@ -44,20 +43,13 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 	query := r.URL.Query()
 	instanceTypeFilter := query.Get("instance_type")
 	cacheId := id
-	if instanceTypeFilter != "" {
-		cacheId = cacheId + "-" + instanceTypeFilter
-	}
 
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
 			handlers.ValidateLength(&id, "id", &handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			cachedRegionList, cached := h.cache.Get(cacheId)
-			if cached {
-				return cachedRegionList, nil
-			}
-			cloudRegions, err := h.service.ListCloudProviderRegions(id)
+			cloudRegions, err := h.service.ListCachedCloudProviderRegions(id)
 			if err != nil {
 				return nil, err
 			}
@@ -76,9 +68,6 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 					continue
 				}
 
-				cloudRegion.Enabled = len(region.SupportedInstanceTypes) > 0
-				cloudRegion.SupportedInstanceTypes = region.SupportedInstanceTypes.AsSlice()
-
 				kafka := &dbapi.KafkaRequest{}
 
 				// Enabled set to true and Capacity set only if at least one instance type is supported by the region
@@ -92,7 +81,6 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 						kafka.Region = cloudRegion.Id
 						kafka.CloudProvider = cloudRegion.CloudProvider
 						hasCapacity, err := h.kafkaService.HasAvailableCapacityInRegion(kafka)
-						logger.Logger.Warningf("hasCapacity %+v", hasCapacity)
 						if err == nil && hasCapacity {
 							cluster, err := h.clusterPlacementStrategy.FindCluster(kafka)
 							if err == nil && cluster != nil {
@@ -105,7 +93,6 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 					cloudRegion.Capacity = capacities
 				}
 				converted := presenters.PresentCloudRegion(&cloudRegion)
-				logger.Logger.Warningf("capacity %+v", &cloudRegion.Capacity)
 				regionList.Items = append(regionList.Items, converted)
 			}
 
