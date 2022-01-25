@@ -63,7 +63,10 @@ make kafkacert/setup
 ```
 make observatorium/setup
 ```
-
+8. Generate OCM token secret
+```
+make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
+```
 ## Running a Local Observatorium Token Refresher 
 > NOTE: This is only required if your Observatorium instance is authenticated using sso.redhat.com.
 
@@ -115,16 +118,13 @@ make binary
     public | leader_leases      | table | kas_fleet_manager
     public | migrations         | table | kas_fleet_manager
     ```
-3. Generate OCM token secret
-    ```
-    make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
-    ```
-4. Start the service
+
+3. Start the service
     ```
     ./kas-fleet-manager serve
     ```
     >**NOTE**: The service has numerous feature flags which can be used to enable/disable certain features of the service. Please see the [feature flag](./docs/feature-flags.md) documentation for more information.
-5. Verify the local service is working
+4. Verify the local service is working
     ```
     curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas
    {"kind":"KafkaRequestList","page":1,"size":0,"total":0,"items":[]}
