@@ -14,9 +14,10 @@ const (
 
 type DinosaurProduct string
 
+// TODO change this to correspond to your own product types created in AMS
 const (
-	RHOSAKProduct      DinosaurProduct = "RHOSAK"
-	RHOSAKTrialProduct DinosaurProduct = "RHOSAKTrial"
+	RHOSAKProduct      DinosaurProduct = "RHOSAK"      // this is the standard product type
+	RHOSAKTrialProduct DinosaurProduct = "RHOSAKTrial" // this is trial product type which does not have any cost
 )
 
 func (t DinosaurQuotaType) GetProduct() string {
@@ -28,7 +29,7 @@ func (t DinosaurQuotaType) GetProduct() string {
 }
 
 func (t DinosaurQuotaType) GetResourceName() string {
-	return "rhosak"
+	return "rhosak" //TODO change this to match your own AMS resource type. Usually it is the name of the product
 }
 
 func (t DinosaurQuotaType) Equals(t1 DinosaurQuotaType) bool {
