@@ -67,6 +67,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	return nil
 }
 
+// TODO change /dinosaurs path param and any reference to Dinosaur to correspond to your own service Rest resource
 func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, openApiFilePath string) error {
 	openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, openApiFilePath)
 	if err != nil {
@@ -84,7 +85,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.ServerConfig.TokenIssuerURL}, errors.ErrorUnauthenticated)
 	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.AMSClient, errors.ErrorTermsNotAccepted)
 
-	// base path. Could be /api/dinosaurs_mgmt
+	// base path.
 	apiRouter := mainRouter.PathPrefix(basePath).Subrouter()
 
 	// /v1
