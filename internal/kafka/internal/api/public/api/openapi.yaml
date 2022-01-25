@@ -61,6 +61,10 @@ paths:
       - errors
   /api/kafkas_mgmt/v1/status:
     get:
+      deprecated: true
+      description: '[DEPRECATED] The service capacity status is now reported per cloud
+        provider region and Kafka instance type in the /api/kafkas_mgmt/v1/cloud_providers/{id}/regions
+        endpoint. Please use this endpoint instead.'
       operationId: getServiceStatus
       responses:
         "200":
@@ -1138,7 +1142,9 @@ components:
         enabled: true
         supported_instance_types:
         - standard
-        - eval
+        capacity:
+        - instance_type: standard
+          max_capacity_reached: true
     ServiceAccountRequestExample:
       value:
         name: my-app-sa
