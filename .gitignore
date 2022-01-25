@@ -45,7 +45,6 @@ cmd/fleet-manager/fleet-manager
 # Ignore secret files
 /secrets/db.ca_cert
 /secrets/aws.*
-/secrets/vault.*
 /secrets/ocm-service.*
 /secrets/dinosaur-tls.*
 /secrets/keycloak-service.*

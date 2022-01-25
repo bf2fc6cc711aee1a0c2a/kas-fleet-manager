@@ -6,7 +6,6 @@ import (
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
@@ -25,14 +24,12 @@ type PreparingDinosaurManager struct {
 }
 
 // NewPreparingDinosaurManager creates a new dinosaur manager
-func NewPreparingDinosaurManager(dinosaurService services.DinosaurService, bus signalbus.SignalBus) *PreparingDinosaurManager {
+func NewPreparingDinosaurManager(dinosaurService services.DinosaurService) *PreparingDinosaurManager {
 	return &PreparingDinosaurManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "preparing_dinosaur",
-			Reconciler: workers.Reconciler{
-				SignalBus: bus,
-			},
+			Reconciler: workers.Reconciler{},
 		},
 		dinosaurService: dinosaurService,
 	}

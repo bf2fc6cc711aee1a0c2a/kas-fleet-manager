@@ -2,10 +2,11 @@ package test
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur"
 	adminprivate "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/admin/private"
@@ -20,7 +21,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/server"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
 	coreWorkers "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test"
 	"github.com/goava/di"
@@ -36,7 +36,6 @@ type Services struct {
 	HealthCheckServer     *server.HealthCheckServer
 	Workers               []coreWorkers.Worker
 	LeaderElectionManager *coreWorkers.LeaderElectionManager
-	SignalBus             signalbus.SignalBus
 	APIServer             *server.ApiServer
 	BootupServices        []environments.BootService
 	CloudProvidersService services.CloudProvidersService
