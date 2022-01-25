@@ -820,7 +820,7 @@ type KafkaRegionCount struct {
 	Region        string
 	InstanceType  string `gorm:"column:instance_type"`
 	ClusterId     string `gorm:"column:cluster_id"`
-	Count         int
+	Count         float64
 	CloudProvider string `gorm:"column:cloud_provider"`
 }
 
