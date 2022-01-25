@@ -32,7 +32,7 @@ const (
 
 //go:generate moq -out kas_fleetshard_operator_addon_moq.go . KasFleetshardOperatorAddon
 type KasFleetshardOperatorAddon interface {
-	Provision(cluster api.Cluster) (bool, *errors.ServiceError)
+	Provision(cluster api.Cluster) (bool, string, *errors.ServiceError)
 	ReconcileParameters(cluster api.Cluster) *errors.ServiceError
 	RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError
 }
@@ -51,15 +51,23 @@ type kasFleetshardOperatorAddon struct {
 	KeycloakConfig      *keycloak.KeycloakConfig
 }
 
-func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {
+func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, string, *errors.ServiceError) {
+	serviceAccountId := ""
 	kasFleetshardAddonID := o.OCMConfig.KasFleetshardAddonID
 	params, paramsErr := o.getAddonParams(cluster)
 	if paramsErr != nil {
-		return false, paramsErr
+		return false, "", paramsErr
 	}
+
+	for _, param := range params {
+		if param.Id == kasFleetshardOperatorParamServiceAccountId {
+			serviceAccountId = param.Value
+		}
+	}
+
 	p, err := o.ProviderFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
+		return false, "", errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
 	}
 	glog.V(5).Infof("Provision addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
 	spec := &types.ClusterSpec{
@@ -69,9 +77,9 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *erro
 		AdditionalInfo: cluster.ClusterSpec,
 	}
 	if ready, err := p.InstallKasFleetshard(spec, params); err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to install addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
+		return false, "", errors.NewWithCause(errors.ErrorGeneral, err, "failed to install addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
 	} else {
-		return ready, nil
+		return ready, serviceAccountId, nil
 	}
 }
 
