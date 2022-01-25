@@ -198,7 +198,9 @@ func (c *ClusterManager) processMetrics() []error {
 		return []error{errors.Wrapf(err, "failed to set kafka per cluster count metrics")}
 	}
 
-	c.setClusterStatusMaxCapacityMetrics()
+	if err := c.setClusterStatusMaxCapacityMetrics(); err != nil {
+		return []error{errors.Wrapf(err, "failed to set kafka max capacity metrics")}
+	}
 
 	return []error{}
 }
@@ -1049,7 +1051,7 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 	return nil
 }
 
-func (c *ClusterManager) setClusterStatusMaxCapacityMetrics() []error {
+func (c *ClusterManager) setClusterStatusMaxCapacityMetrics() error {
 	for _, cluster := range c.DataplaneClusterConfig.ClusterConfig.GetManualClusters() {
 		if !cluster.Schedulable {
 			continue
@@ -1060,8 +1062,8 @@ func (c *ClusterManager) setClusterStatusMaxCapacityMetrics() []error {
 			if instanceType != "" {
 				instanceTypeLimit, err := c.SupportedProviders.GetInstanceLimit(cluster.Region, cluster.CloudProvider, instanceType)
 				if err != nil {
-					return []error{errors.Wrapf(err, "failed to get instance limit for %v on %v and instance type %v",
-						cluster.Region, cluster.CloudProvider, instanceType)}
+					return errors.Wrapf(err, "failed to get instance limit for %v on %v and instance type %v",
+						cluster.Region, cluster.CloudProvider, instanceType)
 				}
 
 				var limit = math.MaxInt64
