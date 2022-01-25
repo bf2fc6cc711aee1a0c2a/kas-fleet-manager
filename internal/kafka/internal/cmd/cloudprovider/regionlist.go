@@ -47,6 +47,7 @@ func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 		Total: int32(len(cloudRegions)),
 		Size:  int32(len(cloudRegions)),
 		Page:  int32(1),
+		Items: []public.CloudRegion{},
 	}
 
 	supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
