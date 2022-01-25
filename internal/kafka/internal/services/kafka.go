@@ -90,7 +90,7 @@ type KafkaService interface {
 	ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, *errors.ServiceError)
 	VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
 	ListComponentVersions() ([]KafkaComponentVersions, error)
-	CapacityAvailableForRegionAndInstanceType(instTypeRegCapacity *int, kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError)
+	HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError)
 }
 
 var _ KafkaService = &kafkaService{}
@@ -138,7 +138,7 @@ func (k *kafkaService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 	return count < k.kafkaConfig.KafkaCapacity.MaxCapacity, nil
 }
 
-func (k *kafkaService) hasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
+func (k *kafkaService) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
 	// get region limit for instance type
 	regInstTypeLimit, e := k.providerConfig.GetInstanceLimit(kafkaRequest.Region, kafkaRequest.CloudProvider, kafkaRequest.InstanceType)
 	if e != nil {
@@ -154,10 +154,10 @@ func (k *kafkaService) hasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaReq
 		return true, nil
 	}
 	// check capacity
-	return k.CapacityAvailableForRegionAndInstanceType(regInstTypeLimit, kafkaRequest)
+	return k.capacityAvailableForRegionAndInstanceType(regInstTypeLimit, kafkaRequest)
 }
 
-func (k *kafkaService) CapacityAvailableForRegionAndInstanceType(instTypeRegCapacity *int, kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
+func (k *kafkaService) capacityAvailableForRegionAndInstanceType(instTypeRegCapacity *int, kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 
 	var count int64
@@ -234,7 +234,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 
 	kafkaRequest.InstanceType = instanceType.String()
 
-	hasCapacity, err := k.hasAvailableCapacityInRegion(kafkaRequest)
+	hasCapacity, err := k.HasAvailableCapacityInRegion(kafkaRequest)
 	if err != nil {
 		if err.Code == errors.ErrorGeneral {
 			err = errors.NewWithCause(errors.ErrorGeneral, err, "unable to validate your request, please try again")

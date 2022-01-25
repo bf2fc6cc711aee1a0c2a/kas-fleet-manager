@@ -6,8 +6,11 @@ import (
 	"testing"
 
 	"github.com/antihax/optional"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -24,7 +27,7 @@ const azure = "azure"
 const afEast1Region = "af-east-1"
 const usEast1Region = "us-east-1"
 
-var limit = int(5)
+var limit = int(1)
 
 var allTypesMap = config.InstanceTypeMap{
 	"eval": {
@@ -385,13 +388,79 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 		InstanceType: optional.NewString(""),
 	})
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type '!invalid!': %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions when specifying empty instance type: %v", err)
 	Expect(regions.Items).ToNot(BeEmpty())
 	for _, cpr := range regions.Items {
 		if cpr.Id == "us-east-1" || cpr.Id == "af-south-1" || cpr.Id == "eu-west-2" {
 			Expect(cpr.Enabled).To(BeTrue())
+			if cpr.Id == "us-east-1" {
+				for _, capacity := range cpr.Capacity {
+					Expect(capacity.MaxCapacityReached).To(BeFalse())
+				}
+			}
 		} else {
 			Expect(cpr.Enabled).To(BeFalse())
+		}
+	}
+
+	// create kafkas of supported instance types ("standard" and "eval") in the "us-east-1" region and confirm that
+	// MaxCapacityReached will be false (due to the limit being set to 1 instance of given type in this region)
+	db := test.TestServices.DBFactory.New()
+	kafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: api.NewID(),
+		},
+		MultiAZ:        true,
+		Owner:          "owner",
+		Region:         mocks.MockCluster.Region().ID(),
+		CloudProvider:  mocks.MockCluster.CloudProvider().ID(),
+		Name:           "test-kafka",
+		OrganisationId: orgId,
+		Status:         constants.KafkaRequestStatusReady.String(),
+		ClusterID:      mocks.MockCluster.ID(),
+		InstanceType:   types.STANDARD.String(),
+	}
+
+	if err := db.Create(kafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
+		InstanceType: optional.NewString(""),
+	})
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions when specifying empty instance type: %v", err)
+	Expect(regions.Items).ToNot(BeEmpty())
+	for _, cpr := range regions.Items {
+		if cpr.Id == "us-east-1" {
+			for _, capacity := range cpr.Capacity {
+				if capacity.InstanceType == types.STANDARD.String() {
+					Expect(capacity.MaxCapacityReached).To(BeTrue())
+				} else if capacity.InstanceType == types.EVAL.String() {
+					Expect(capacity.MaxCapacityReached).To(BeFalse())
+				}
+			}
+		}
+	}
+
+	kafka.ID = api.NewID()
+	kafka.InstanceType = types.EVAL.String()
+
+	if err := db.Create(kafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
+		InstanceType: optional.NewString(""),
+	})
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions when specifying empty instance type: %v", err)
+	Expect(regions.Items).ToNot(BeEmpty())
+	for _, cpr := range regions.Items {
+		if cpr.Id == "us-east-1" {
+			for _, capacity := range cpr.Capacity {
+				Expect(capacity.MaxCapacityReached).To(BeTrue())
+			}
 		}
 	}
 }
