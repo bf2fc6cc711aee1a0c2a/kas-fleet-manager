@@ -1628,6 +1628,7 @@ components:
             - $ref: '#/components/schemas/RegionCapacityListItem'
           type: array
       required:
+      - capacity
       - enabled
       - supported_instance_types
     ServiceAccount:

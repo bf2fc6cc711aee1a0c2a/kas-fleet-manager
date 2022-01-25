@@ -22,5 +22,5 @@ type CloudRegion struct {
 	// The Kafka instance types supported by this region.
 	SupportedInstanceTypes []string `json:"supported_instance_types"`
 	// Indicates whether there is capacity left per instance type
-	Capacity []RegionCapacityListItem `json:"capacity,omitempty"`
+	Capacity []RegionCapacityListItem `json:"capacity"`
 }

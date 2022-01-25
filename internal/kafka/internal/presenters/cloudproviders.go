@@ -23,15 +23,22 @@ func PresentCloudRegion(cloudRegion *api.CloudRegion) public.CloudRegion {
 		Kind:                   reference.Kind,
 		DisplayName:            cloudRegion.DisplayName,
 		Enabled:                cloudRegion.Enabled,
-		SupportedInstanceTypes: cloudRegion.SupportedInstanceTypes,
+		SupportedInstanceTypes: getSupportedInstanceTypes(cloudRegion.SupportedInstanceTypes),
 		Capacity:               GetRegionCapacityItems(cloudRegion.Capacity),
 	}
 }
 
 func GetRegionCapacityItems(capacityItems []api.RegionCapacityListItem) []public.RegionCapacityListItem {
-	var items []public.RegionCapacityListItem
+	items := make([]public.RegionCapacityListItem, 0)
 	for _, c := range capacityItems {
 		items = append(items, public.RegionCapacityListItem{InstanceType: c.InstanceType, MaxCapacityReached: c.MaxCapacityReached})
 	}
 	return items
+}
+
+func getSupportedInstanceTypes(instTypes []string) []string {
+	if len(instTypes) > 0 {
+		return instTypes
+	}
+	return make([]string, 0)
 }

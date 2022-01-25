@@ -42,7 +42,6 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 	id := mux.Vars(r)["id"]
 	query := r.URL.Query()
 	instanceTypeFilter := query.Get("instance_type")
-	cacheId := id
 
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
@@ -71,7 +70,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 				kafka := &dbapi.KafkaRequest{}
 
 				// Enabled set to true and Capacity set only if at least one instance type is supported by the region
-				if len(region.SupportedInstanceTypes) > 0 {
+				if region.SupportedInstanceTypes != nil && len(region.SupportedInstanceTypes) > 0 {
 					capacities := []api.RegionCapacityListItem{}
 					cloudRegion.Enabled = true
 					cloudRegion.SupportedInstanceTypes = region.SupportedInstanceTypes.AsSlice()
@@ -99,7 +98,6 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			regionList.Total = int32(len(regionList.Items))
 			regionList.Size = int32(len(regionList.Items))
 
-			h.cache.Set(cacheId, regionList, cache.DefaultExpiration)
 			return regionList, nil
 		},
 	}
