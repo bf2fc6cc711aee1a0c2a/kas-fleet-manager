@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -16,30 +17,13 @@ const (
 )
 
 func UseOperatorAuthorisationMiddleware(router *mux.Router, actor Actor, jwkValidIssuerURI string, clusterIdVar string) {
-	var requiredRole string
-
-	if actor == Kas {
-		requiredRole = "kas_fleetshard_operator"
-	} else {
-		requiredRole = "connector_fleetshard_operator"
-	}
-
 	router.Use(
-		NewRolesAuhzMiddleware().RequireRealmRole(requiredRole, errors.ErrorNotFound),
 		checkClusterId(actor, clusterIdVar),
 		NewRequireIssuerMiddleware().RequireIssuer([]string{jwkValidIssuerURI}, errors.ErrorNotFound),
 	)
 }
 
 func checkClusterId(actor Actor, clusterIdVar string) mux.MiddlewareFunc {
-	var clusterIdClaimKey string
-
-	if actor == Kas {
-		clusterIdClaimKey = "kas-fleetshard-operator-cluster-id"
-	} else {
-		clusterIdClaimKey = "connector-fleetshard-operator-cluster-id"
-	}
-
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			ctx := request.Context()
@@ -50,12 +34,20 @@ func checkClusterId(actor Actor, clusterIdVar string) mux.MiddlewareFunc {
 				shared.HandleError(request, writer, errors.NotFound(""))
 				return
 			}
-			if clusterIdInClaim, ok := claims[clusterIdClaimKey].(string); ok {
-				if clusterIdInClaim == clusterId {
-					next.ServeHTTP(writer, request)
-					return
+			if clientId, ok := claims["clientId"].(string); ok {
+				if actor == Kas {
+					if clientId == fmt.Sprintf("kas-fleetshard-agent-%s", clusterId) {
+						next.ServeHTTP(writer, request)
+						return
+					}
+				} else {
+					if clientId == fmt.Sprintf("connector-fleetshard-agent-%s", clusterId) {
+						next.ServeHTTP(writer, request)
+						return
+					}
 				}
 			}
+
 			shared.HandleError(request, writer, errors.NotFound(""))
 		})
 	}

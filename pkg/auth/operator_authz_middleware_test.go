@@ -22,7 +22,7 @@ func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 			name: "should success when clusterId matches",
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
-					"kas-fleetshard-operator-cluster-id": "12345",
+					"clientId": "kas-fleetshard-agent-12345",
 				},
 			},
 			clusterId: "12345",

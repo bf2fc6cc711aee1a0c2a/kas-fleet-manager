@@ -601,15 +601,18 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 	}
 
 	glog.Infof("Provisioning kas-fleetshard-operator as it is enabled")
-	kasFleetshardOperatorIsReady, errs := c.KasFleetshardOperatorAddon.Provision(provisionedCluster)
+	kasFleetshardOperatorIsReady, serviceAccountId, errs := c.KasFleetshardOperatorAddon.Provision(provisionedCluster)
 	if errs != nil {
 		return errs
 	}
 
 	if strimziOperatorIsReady && kasFleetshardOperatorIsReady && (clusterLoggingOperatorIsReady || c.OCMConfig.ClusterLoggingOperatorAddonID == "") {
 		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForKasFleetShardOperator, provisionedCluster.ClusterID)
-		if err := c.ClusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator); err != nil {
+		if err := c.ClusterService.UpdateStatusAndServiceAccountId(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator, serviceAccountId); err != nil {
 			return errors.Wrapf(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
+		}
+		if serviceAccountId != "" {
+
 		}
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator)
 		return nil
