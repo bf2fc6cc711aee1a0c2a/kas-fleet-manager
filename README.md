@@ -181,8 +181,15 @@ make run/docs
 make run/docs/teardown
 ```
 ## Using podman instead of docker
-- Install the podman-docker utility
-- Check the etc/subuid and etc/subgid files and make sure that the configured range includes the UID of current user
+Install the podman-docker utility. This will create a symbolic link for ```/run/docker.sock``` to ```/run/podman/podman.sock```
+```
+#Fedora and RHEL8
+dnf -y install podman-docker
+
+#Ubuntu 21.10 or higher
+apt -y install podman-docker
+```
+Note: As this is running rootless containers, please check the etc/subuid and etc/subgid files and make sure that the configured range includes the UID of current user. Please find more details [here](https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md#enable-user-namespaces-on-rhel7-machines)
 
 ## Additional CLI commands
 
