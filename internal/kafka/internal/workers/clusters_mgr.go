@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"math"
 
 	kafkaConstants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
@@ -197,7 +198,9 @@ func (c *ClusterManager) processMetrics() []error {
 		return []error{errors.Wrapf(err, "failed to set kafka per cluster count metrics")}
 	}
 
-	c.setClusterStatusMaxCapacityMetrics()
+	if err := c.setClusterStatusMaxCapacityMetrics(); err != nil {
+		return []error{errors.Wrapf(err, "failed to set kafka max capacity metrics")}
+	}
 
 	return []error{}
 }
@@ -1048,16 +1051,35 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 	return nil
 }
 
-func (c *ClusterManager) setClusterStatusMaxCapacityMetrics() {
+func (c *ClusterManager) setClusterStatusMaxCapacityMetrics() error {
 	for _, cluster := range c.DataplaneClusterConfig.ClusterConfig.GetManualClusters() {
+		if !cluster.Schedulable {
+			continue
+		}
+
 		supportedInstanceTypes := strings.Split(cluster.SupportedInstanceType, ",")
 		for _, instanceType := range supportedInstanceTypes {
 			if instanceType != "" {
-				capacity := float64(cluster.KafkaInstanceLimit)
-				metrics.UpdateClusterStatusCapacityMaxCount(cluster.Region, instanceType, cluster.ClusterId, capacity)
+				instanceTypeLimit, err := c.SupportedProviders.GetInstanceLimit(cluster.Region, cluster.CloudProvider, instanceType)
+				if err != nil {
+					return errors.Wrapf(err, "failed to get instance limit for %v on %v and instance type %v",
+						cluster.Region, cluster.CloudProvider, instanceType)
+				}
+
+				var limit = math.MaxInt64
+				if instanceTypeLimit != nil {
+					limit = *instanceTypeLimit
+				}
+
+				// take the cloud providers instance limit into account when calculating maximum capacity:
+				// minimum of (cluster limit, provider limit)
+				capacity := math.Min(float64(cluster.KafkaInstanceLimit), float64(limit))
+				metrics.UpdateClusterStatusCapacityMaxCount(cluster.CloudProvider, cluster.Region, instanceType, cluster.ClusterId, capacity)
 			}
 		}
 	}
+
+	return nil
 }
 
 func (c *ClusterManager) setClusterStatusCountMetrics() error {

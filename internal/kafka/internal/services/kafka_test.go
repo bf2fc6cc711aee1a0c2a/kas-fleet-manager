@@ -2158,7 +2158,7 @@ func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
 				}
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT region as Region, instance_type, cluster_id, count(1) as Count FROM "kafka_requests" WHERE "kafka_requests"."deleted_at" IS NULL GROUP BY region,instance_type,cluster_id`).
+					WithQuery(`SELECT region as Region, instance_type, cluster_id, cloud_provider, count(1) as Count FROM "kafka_requests" WHERE "kafka_requests"."deleted_at" IS NULL GROUP BY region,instance_type,cluster_id,cloud_provider`).
 					WithReply(counters)
 			},
 			want: []KafkaRegionCount{

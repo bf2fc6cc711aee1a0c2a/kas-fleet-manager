@@ -70,6 +70,9 @@ const (
 	// ClusterStatusCapacityUsed - metric name for the current number of instances
 	ClusterStatusCapacityUsed = "cluster_status_capacity_used"
 
+	// ClusterStatusCapacityAvailable - metric name for the number of available instances
+	ClusterStatusCapacityAvailable = "cluster_status_capacity_available"
+
 	LabelStatusCode = "code"
 	LabelMethod     = "method"
 	LabelPath       = "path"
@@ -78,6 +81,7 @@ const (
 	LabelDatabaseQueryType   = "query"
 	LabelRegion              = "region"
 	LabelInstanceType        = "instance_type"
+	LabelCloudProvider       = "cloud_provider"
 )
 
 // JobType metric to capture
@@ -151,6 +155,7 @@ var clusterStatusCapacityLabels = []string{
 	LabelRegion,
 	LabelInstanceType,
 	LabelClusterID,
+	LabelCloudProvider,
 }
 
 // #### Metrics for Dataplane clusters - Start ####
@@ -199,23 +204,36 @@ func IncreaseClusterSuccessOperationsCountMetric(operation constants2.ClusterOpe
 }
 
 // UpdateClusterStatusCapacityMaxCount - sets maximum capacity per region and instance type
-func UpdateClusterStatusCapacityMaxCount(region, instanceType, clusterId string, count float64) {
+func UpdateClusterStatusCapacityMaxCount(provider string, region, instanceType, clusterId string, count float64) {
 	labels := prometheus.Labels{
-		LabelRegion:       region,
-		LabelInstanceType: instanceType,
-		LabelClusterID:    clusterId,
+		LabelRegion:        region,
+		LabelInstanceType:  instanceType,
+		LabelClusterID:     clusterId,
+		LabelCloudProvider: provider,
 	}
 	clusterStatusCapacityMaxMetric.With(labels).Set(count)
 }
 
 // UpdateClusterStatusCapacityUsedCount - sets used capacity per region and instance type
-func UpdateClusterStatusCapacityUsedCount(region, instanceType, clusterId string, count float64) {
+func UpdateClusterStatusCapacityUsedCount(provider string, region, instanceType, clusterId string, count float64) {
 	labels := prometheus.Labels{
-		LabelRegion:       region,
-		LabelInstanceType: instanceType,
-		LabelClusterID:    clusterId,
+		LabelRegion:        region,
+		LabelInstanceType:  instanceType,
+		LabelClusterID:     clusterId,
+		LabelCloudProvider: provider,
 	}
 	clusterStatusCapacityUsedMetric.With(labels).Set(count)
+}
+
+// UpdateClusterStatusCapacityAvailableCount - sets used capacity per region and instance type
+func UpdateClusterStatusCapacityAvailableCount(provider string, region, instanceType, clusterId string, count float64) {
+	labels := prometheus.Labels{
+		LabelRegion:        region,
+		LabelInstanceType:  instanceType,
+		LabelClusterID:     clusterId,
+		LabelCloudProvider: provider,
+	}
+	clusterStatusCapacityAvailableMetric.With(labels).Set(count)
 }
 
 // create a new counterVec for total cluster operation counts
@@ -244,6 +262,16 @@ var clusterStatusCapacityUsedMetric = prometheus.NewGaugeVec(
 		Subsystem: KasFleetManager,
 		Name:      ClusterStatusCapacityUsed,
 		Help:      "number of existing instances per region and instance type",
+	},
+	clusterStatusCapacityLabels,
+)
+
+// create a new gauge vec fot the number of kafka instances grouped by region and instance type
+var clusterStatusCapacityAvailableMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: KasFleetManager,
+		Name:      ClusterStatusCapacityAvailable,
+		Help:      "number of available instances per region and instance type",
 	},
 	clusterStatusCapacityLabels,
 )
@@ -659,6 +687,7 @@ func init() {
 	prometheus.MustRegister(kafkaPerClusterCountMetric)
 	prometheus.MustRegister(clusterStatusCapacityMaxMetric)
 	prometheus.MustRegister(clusterStatusCapacityUsedMetric)
+	prometheus.MustRegister(clusterStatusCapacityAvailableMetric)
 
 	// metrics for Kafkas
 	prometheus.MustRegister(requestKafkaCreationDurationMetric)
@@ -698,6 +727,7 @@ func ResetMetricsForClusterManagers() {
 	kafkaPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
+	clusterStatusCapacityAvailableMetric.Reset()
 }
 
 // ResetMetricsForReconcilers will reset the metrics related to the reconcilers
@@ -726,6 +756,7 @@ func Reset() {
 	kafkaPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
+	clusterStatusCapacityAvailableMetric.Reset()
 
 	requestKafkaCreationDurationMetric.Reset()
 	kafkaOperationsSuccessCountMetric.Reset()
