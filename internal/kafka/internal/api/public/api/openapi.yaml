@@ -59,33 +59,6 @@ paths:
       summary: Returns the list of possible API errors
       tags:
       - errors
-  /api/kafkas_mgmt/v1/status:
-    get:
-      deprecated: true
-      description: '[DEPRECATED] The service capacity status is now reported per cloud
-        provider region and Kafka instance type in the /api/kafkas_mgmt/v1/cloud_providers/{id}/regions
-        endpoint. Please use this endpoint instead.'
-      operationId: getServiceStatus
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServiceStatus'
-          description: Ok
-        "500":
-          content:
-            application/json:
-              examples:
-                "500Example":
-                  $ref: '#/components/examples/500Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error occurred
-      security:
-      - Bearer: []
-      summary: Returns the status of resources, such as whether maximum service capacity
-        has been reached
   /api/kafkas_mgmt/v1/kafkas/{id}:
     delete:
       operationId: deleteKafkaById
