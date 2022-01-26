@@ -77,18 +77,6 @@ The file [kas-fleet-manager Envoy ConfigMap](https://gitlab.cee.redhat.com/servi
 
 For more information on the setup, please see the [Rate Limiting template](https://gitlab.cee.redhat.com/service/rate-limiting-templates) and engage AppSRE for help. 
 
-### Configuring Observability
-The Observability stack requires a Personal Access Token to read externalized configuration from within the bf2 organization.
-For development cycles, you will need to generate a personal token for your own GitHub user (with bf2 access) and place it within
-the `secrets/observability-config-access.token` file.
-
-To generate a new token:
-1. Follow the steps [found here](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token),
-making sure to check **ONLY** the `repo` box at the top of the scopes/permissions list (which will check each of the subcategory boxes beneath it).
-2. Copy the value of your Personal Access Token to a secure private location. Once you leave the page, you cannot access the value
-again & you will be forced to reset the token to receive a new value should you lose the original.
-3. Paste the token value in the `secrets/observability-config-access.token` file.
-
 ### Data Plane OSD cluster setup
 fleet-manager can be started without a dataplane OSD cluster, however, no Dinosaurs will be placed or provisioned. To setup a data plane OSD cluster, please follow the `Using an existing OSD cluster with manual scaling enabled` option in the [data-plane-osd-cluster-options.md](docs/data-plane-osd-cluster-options.md) guide.
 

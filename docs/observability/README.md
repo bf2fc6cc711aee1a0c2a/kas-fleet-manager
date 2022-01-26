@@ -39,3 +39,38 @@ At the end of each file, outside of the JSON data, the `name` and `grafana-folde
 See [SLOs README](../slos/README.md) for more informtion about metrics and their use in measuring SLIs.
 
 See [here](https://gitlab.cee.redhat.com/service/app-interface#add-a-grafana-dashboard) for information about adding Grafana dashboards in App-Sre
+
+## Observatorium
+
+The service that the Fleet Manager manages (Dinosaur in the case of this template)
+can send metrics to a [Observatorium](https://github.com/observatorium/observatorium)
+instance from the data plane. Fleet Manager is also able to interact directly
+with Observatorium to retrieve the metrics sent by the managed
+service (Dinosaur) from the data plane.
+
+### Configuring Observatorium
+
+To configure a new managed service to use Observatorium a Red Hat managed
+Observatorium service can be used. For that, a new `Observatorium Tenant` has
+to be created and configured in that Red Hat managed Observatorium service. That
+task is done by the Red Hat Observability team. To do so there's
+an Onboarding process. See the[Onboarding a Tenant into Red Hat’s Observatorium Instance](https://docs.google.com/document/d/1pjM9RRvij-IgwqQMt5q798B_4k4A9Y16uT2oV9sxN3g) document on how to do it.
+
+If you have any doubts about the onboarding process, The Red Hat Observability
+team can be contacted on the #forum-observatorium Slack channel.
+
+## Observability stack
+
+When a data plane cluster is created/assigned in Fleet Manager, the Observability stack is installed as part of the [cluster
+Terraforming process](../implementation.md).
+
+The observability stack includes:
+* [Observability Operator](https://github.com/redhat-developer/observability-operator): The Observability Operator deploys & maintains a common platform for Application Services to share and utilize to aid in monitoring & reporting on their service components. It integrates with the Observatorium project for pushing metrics and logs to a central location. See the linked repository on details about what is deployed / configured by the operator
+* Configuration to set up the Observability stack through Observability Operator. This
+  configuration is done by hosting a set of configuration files in a git remote repository that has to be provided as part of
+  the Fleet Manager configuration. An example of a git remote repository containing the observability stack configuration in a git remote
+  repository for the Managed Kafka service can be found in the [observability-resources-mk](https://github.com/bf2fc6cc711aee1a0c2a/observability-resources-mk) git repository
+
+To provide the parameters to set up the observability stack in fleet manager those are set as
+CLI flags to the kas-fleet-manager code. See the [Observability section in the feature-flags documentation file](../feature-flags.md#Observability)
+for details.
