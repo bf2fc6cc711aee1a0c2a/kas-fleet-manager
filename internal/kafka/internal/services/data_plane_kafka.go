@@ -73,12 +73,15 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 		var e *serviceError.ServiceError
 		switch s := getStatus(ks); s {
 		case statusReady:
-			// Only store the routes (and create them) when the Kafkas are ready, as by the time they are ready,
-			// the routes should definitely be there.
+			// Store the routes (and create them) when Kafka is ready. By the time it is ready, the routes should definitely be there.
 			e = d.persistKafkaRoutes(kafka, ks, cluster)
 			if e == nil {
 				e = d.setKafkaClusterReady(kafka)
 			}
+		case statusInstalling:
+			// Store the routes (and create them) if they are available at this stage to lessen the length of time taken to provision the Kafka.
+			// The routes list will either be empty or complete.
+			e = d.persistKafkaRoutes(kafka, ks, cluster)
 		case statusError:
 			// when getStatus returns statusError we know that the ready
 			// condition will be there so there's no need to check for it
@@ -313,6 +316,12 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 		logger.Logger.V(10).Infof("skip persisting routes for Kafka %s as they are already stored", kafka.ID)
 		return nil
 	}
+
+	if len(kafkaStatus.Routes) < 1 {
+		logger.Logger.V(10).Infof("skip persisting routes for Kafka %s as they are not available", kafka.ID)
+		return nil
+	}
+
 	logger.Logger.Infof("store routes information for kafka %s", kafka.ID)
 	clusterDNS, err := d.clusterService.GetClusterDNS(cluster.ClusterID)
 	if err != nil {
@@ -335,6 +344,7 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 	if err := d.kafkaService.Update(kafka); err != nil {
 		return serviceError.NewWithCause(err.Code, err, "failed to update routes for kafka cluster %s", kafka.ID)
 	}
+
 	return nil
 }
 

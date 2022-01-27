@@ -98,7 +98,7 @@ var defaultUpdateKafkaStatusFunc = func(helper *coreTest.Helper, privateClient *
 				kafkaStatusList[id] = GetDeletedKafkaStatusResponse()
 			} else {
 				// Update any other clusters not in a 'deprovisioning' state to 'ready'
-				kafkaStatusList[id] = GetReadyKafkaStatusResponse()
+				kafkaStatusList[id] = GetReadyKafkaStatusResponse(dataplaneCluster.ClusterDNS)
 			}
 		}
 
@@ -317,7 +317,7 @@ func GetDefaultReportedStrimziVersion() string {
 }
 
 // Return a kafka status for a ready cluster
-func GetReadyKafkaStatusResponse() private.DataPlaneKafkaStatus {
+func GetReadyKafkaStatusResponse(clusterDNS string) private.DataPlaneKafkaStatus {
 	return private.DataPlaneKafkaStatus{
 		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
 			{
@@ -328,6 +328,13 @@ func GetReadyKafkaStatusResponse() private.DataPlaneKafkaStatus {
 		Versions: private.DataPlaneKafkaStatusVersions{
 			Kafka:   GetDefaultReportedKafkaVersion(),
 			Strimzi: GetDefaultReportedStrimziVersion(),
+		},
+		Routes: &[]private.DataPlaneKafkaStatusRoutes{
+			{
+				Name:   "test-route",
+				Prefix: "",
+				Router: clusterDNS,
+			},
 		},
 	}
 }
