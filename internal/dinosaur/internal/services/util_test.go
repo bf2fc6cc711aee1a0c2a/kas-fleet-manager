@@ -147,7 +147,7 @@ func Test_handleUpdateError(t *testing.T) {
 	}
 }
 
-func Test_TruncateString(t *testing.T) {
+func Test_truncateString(t *testing.T) {
 	exampleString := "example-string"
 	type args struct {
 		str string
@@ -177,8 +177,8 @@ func Test_TruncateString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := TruncateString(tt.args.str, tt.args.num); got != tt.want {
-				t.Errorf("TruncateString() = %v, want %v", got, tt.want)
+			if got := truncateString(tt.args.str, tt.args.num); got != tt.want {
+				t.Errorf("truncateString() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -225,7 +225,7 @@ func Test_buildTruncateDinosaurIdentifier(t *testing.T) {
 	}
 }
 
-func Test_MaskProceedingandTrailingDash(t *testing.T) {
+func Test_maskProceedingandTrailingDash(t *testing.T) {
 	type args struct {
 		name string
 	}
@@ -251,8 +251,8 @@ func Test_MaskProceedingandTrailingDash(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := MaskProceedingandTrailingDash(tt.args.name); got != tt.want {
-				t.Errorf("MaskProceedingandTrailingDash() = %v, want %v", got, tt.want)
+			if got := maskProceedingandTrailingDash(tt.args.name); got != tt.want {
+				t.Errorf("maskProceedingandTrailingDash() = %v, want %v", got, tt.want)
 			}
 		})
 	}
