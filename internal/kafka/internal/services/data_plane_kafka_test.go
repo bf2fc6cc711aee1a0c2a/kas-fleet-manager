@@ -161,7 +161,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 		},
 		{
-			name: "should use routes in the requests in they are presented",
+			name: "should use routes in the requests if they are present",
 			clusterService: &ClusterServiceMock{
 				FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 					return &api.Cluster{}, nil
@@ -236,6 +236,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 			clusterId: "test-cluster-id",
 			status: []*dbapi.DataPlaneKafkaStatus{
+				// route not available yet, so Kafka will not update (rejected count +1)
 				{
 					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
 						{
@@ -245,12 +246,13 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						},
 					},
 				},
-				// This will set "RoutesCreated" to true
+				// routes available, this will set "RoutesCreated" to true but should not set status to Ready
 				{
 					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
 						{
 							Type:   "Ready",
-							Status: "True",
+							Status: "False",
+							Reason: "Installing",
 						},
 					},
 					Routes: []dbapi.DataPlaneKafkaRouteRequest{

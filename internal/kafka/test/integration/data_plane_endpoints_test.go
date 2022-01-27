@@ -44,6 +44,7 @@ type TestServer struct {
 type claimsFunc func(account *v1.Account, clusterId string, h *coreTest.Helper) jwt.MapClaims
 
 var clusterId = api.NewID()
+var clusterDNS = "some-cluster.dns.org"
 
 func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer {
 
@@ -61,7 +62,7 @@ func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer 
 		CloudProvider:         "baremetal",
 		Status:                api.ClusterReady,
 		IdentityProviderID:    "some-id",
-		ClusterDNS:            "some-cluster.dns.org",
+		ClusterDNS:            clusterDNS,
 		ProviderType:          api.ClusterProviderStandalone,
 		SupportedInstanceType: api.AllInstanceTypeSupport.String(),
 	}
@@ -360,6 +361,13 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 					Kafka:    fmt.Sprintf("kafka-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
 					Strimzi:  fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
 					KafkaIbp: fmt.Sprintf("strimzi-ibp-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
+				},
+				Routes: &[]private.DataPlaneKafkaStatusRoutes{
+					{
+						Name:   "test-route",
+						Prefix: "",
+						Router: clusterDNS,
+					},
 				},
 			}
 			readyClusters = append(readyClusters, item.Metadata.Annotations.Bf2OrgId)
@@ -1047,7 +1055,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 	kafkaReqID := list.Items[0].Metadata.Annotations.Bf2OrgId
 
 	updateReq := map[string]private.DataPlaneKafkaStatus{
-		kafkaReqID: kasfleetshardsync.GetReadyKafkaStatusResponse(),
+		kafkaReqID: kasfleetshardsync.GetReadyKafkaStatusResponse(clusterDNS),
 	}
 	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
 	Expect(err).NotTo(HaveOccurred())
