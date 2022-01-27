@@ -63,7 +63,10 @@ make kafkacert/setup
 ```
 make observatorium/setup
 ```
-
+8. Generate OCM token secret
+```
+make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
+```
 ## Running a Local Observatorium Token Refresher 
 > NOTE: This is only required if your Observatorium instance is authenticated using sso.redhat.com.
 
@@ -146,17 +149,48 @@ curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/
 # Delete a kafka request
 curl -v -X DELETE -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/<kafka_request_id>
 ```
+#### Using RHOAS CLI to manage Kafka instances
+
+The locally installed kas-fleet-manager doesn't deploy TLS enabled kafka admin server but the default URL scheme used by the app-service-cli is HTTPS. So, the url scheme should be changed to http in the CLI [code](https://github.com/redhat-developer/app-services-cli/blob/main/pkg/core/connection/api/defaultapi/default_client.go#L155) and it should be built locally
+```
+make binary
+```
+Then, it can be pointed towards the locally running fleet manager
+```
+./rhoas login --mas-auth-url=stage --api-gateway=http://localhost:8000
+``` 
+Now, various kafka specific operations can be performed as described [here](http://appservices.tech/commands/rhoas_kafka)
+
+#### Using the Kafka admin-server API
+ - The admin-server API is used for managing topics, acls, and consumer groups. The API specification can be found [here](https://github.com/bf2fc6cc711aee1a0c2a/kafka-admin-api/blob/main/kafka-admin/src/main/resources/openapi-specs/kafka-admin-rest.yaml)
+- To get the API endpoint, use the following command
+```
+oc get routes -n kafka-c7ndprea8ueq4mmrm3c0 | grep admin-server
+
+# Here c7ndprea8ueq4mmrm3c0 is the kafka instance ID.
+```
 
 ### View the API docs
 ```
 # Start Swagger UI container
 make run/docs
 
-# Launch Swagger UI and Verify from a browser: http://localhost
+# Launch Swagger UI and Verify from a browser: http://localhost:8082
 
 # Remove Swagger UI conainer
 make run/docs/teardown
 ```
+## Using podman instead of docker
+Install the podman-docker utility. This will create a symbolic link for ```/run/docker.sock``` to ```/run/podman/podman.sock```
+```
+#Fedora and RHEL8
+dnf -y install podman-docker
+
+#Ubuntu 21.10 or higher
+apt -y install podman-docker
+```
+Note: As this is running rootless containers, please check the etc/subuid and etc/subgid files and make sure that the configured range includes the UID of current user. Please find more details [here](https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md#enable-user-namespaces-on-rhel7-machines)
+
 ## Additional CLI commands
 
 In addition to the REST API exposed via `make run`, there are additional commands to interact directly
