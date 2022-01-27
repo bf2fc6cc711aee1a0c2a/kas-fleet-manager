@@ -22,7 +22,6 @@ type KafkaConfig struct {
 	KafkaTLSKey                    string              `json:"kafka_tls_key"`
 	KafkaTLSKeyFile                string              `json:"kafka_tls_key_file"`
 	EnableKafkaExternalCertificate bool                `json:"enable_kafka_external_certificate"`
-	NumOfBrokers                   int                 `json:"num_of_brokers"`
 	KafkaDomainName                string              `json:"kafka_domain_name"`
 	KafkaCapacity                  KafkaCapacityConfig `json:"kafka_capacity_config"`
 	KafkaCapacityConfigFile        string              `json:"kafka_capacity_config_file"`
@@ -37,7 +36,6 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaTLSKeyFile:                "secrets/kafka-tls.key",
 		EnableKafkaExternalCertificate: false,
 		KafkaDomainName:                "kafka.devshift.org",
-		NumOfBrokers:                   3,
 		KafkaCapacityConfigFile:        "config/kafka-capacity-config.yaml",
 		KafkaLifespan:                  NewKafkaLifespanConfig(),
 		Quota:                          NewKafkaQuotaConfig(),
