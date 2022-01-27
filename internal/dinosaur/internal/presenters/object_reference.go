@@ -47,7 +47,7 @@ func objectKind(i interface{}) string {
 func objectPath(id string, obj interface{}) string {
 	switch obj.(type) {
 	case dbapi.DinosaurRequest, *dbapi.DinosaurRequest:
-		return fmt.Sprintf("%s/dinosaurs/%s", BasePath, id)
+		return fmt.Sprintf("%s/dinosaurs/%s", BasePath, id) // TODO change /dinosaurs to match your rest resource
 	case errors.ServiceError, *errors.ServiceError:
 		return fmt.Sprintf("%s/errors/%s", BasePath, id)
 	default:

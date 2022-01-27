@@ -98,6 +98,7 @@ func isAllowedLabel(lable string) bool {
 	return false
 }
 
+// TODO change supported labels to match the metrics labels supported for your service
 func getSupportedLables() []string {
 	return []string{"__name__", "dinosaur_operator_io_cluster", "topic", "persistentvolumeclaim", "statefulset_kubernetes_io_pod_name", "exported_service", "exported_pod", "route"}
 }
