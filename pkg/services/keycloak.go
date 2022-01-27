@@ -92,7 +92,7 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 
 	}
 	if internalClientId != "" {
-		glog.V(5).Infof("Existing Kafka Client %s found", kafkaClusterName)
+		glog.V(5).Infof("Existing Kafka Client %s found with internal id = %s", kafkaClusterName, internalClientId)
 		secretValue, secretErr := kc.kcClient.GetClientSecret(internalClientId, accessToken)
 		if secretErr != nil {
 			return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, secretErr, "failed to get sso client secret")
@@ -119,7 +119,7 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
 	}
-	glog.V(5).Infof("Kafka Client %s created successfully", kafkaClusterName)
+	glog.V(5).Infof("Kafka Client %s created successfully with internal id = %s", kafkaClusterName, internalClient)
 	return secretValue, nil
 }
 
@@ -157,7 +157,7 @@ func (kc *keycloakService) RegisterOSDClusterClientInSSO(clusterId string, clust
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
 	}
-
+	glog.V(5).Infof("Kafka Client %s created successfully with internal id = %s", clusterId, internalClient)
 	return secretValue, nil
 }
 
@@ -175,7 +175,7 @@ func (kc *keycloakService) DeRegisterClientInSSO(clientId string) *errors.Servic
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteSSOClient, err, "failed to delete the sso client")
 	}
-	glog.V(5).Infof("Kafka Client %s deleted successfully", clientId)
+	glog.V(5).Infof("Kafka Client %s with internal id of %s deleted successfully", clientId, internalClientID)
 	return nil
 }
 
@@ -299,7 +299,7 @@ func (kc *keycloakService) CreateServiceAccountInternal(request CompleteServiceA
 		creationTime = time.Time{}
 	}
 	serviceAcc.CreatedAt = creationTime
-	glog.V(5).Infof("service account clientId = %s created for user = %s", serviceAcc.ClientID, request.Owner)
+	glog.V(5).Infof("service account clientId = %s and internal id = %s created for user = %s", serviceAcc.ClientID, serviceAcc.ID, request.Owner)
 	return serviceAcc, nil
 }
 
@@ -374,7 +374,7 @@ func (kc *keycloakService) DeleteServiceAccount(ctx context.Context, id string) 
 		if err != nil {                                 //5xx
 			return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "failed to delete service account")
 		}
-		glog.V(5).Infof("deleted service account clientId = %s owned by user = %s", shared.SafeString(c.ClientID), owner)
+		glog.V(5).Infof("deleted service account clientId = %s and internal id = %s owned by user = %s", shared.SafeString(c.ClientID), id, owner)
 		return nil
 	}
 
@@ -404,7 +404,7 @@ func (kc *keycloakService) DeleteServiceAccountInternal(serviceAccountId string)
 		}
 	}
 
-	glog.V(5).Infof("deleted service account clientId = %s", id)
+	glog.V(5).Infof("deleted service account clientId = %s and internal id = %s", serviceAccountId, id)
 	return nil
 }
 
@@ -441,6 +441,7 @@ func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, i
 		if err != nil {
 			createdAt = time.Time{}
 		}
+		glog.V(5).Infof("Client %s with internal id = %s updated successfully ", *c.ClientID, *c.ID)
 		return &api.ServiceAccount{
 			ID:           *c.ID,
 			ClientID:     *c.ClientID,
@@ -534,6 +535,7 @@ func (kc *keycloakService) DeRegisterKasFleetshardOperatorServiceAccount(agentCl
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", internalServiceAccountId)
 	}
+	glog.V(5).Infof("deleted service account clientId = %s and internal id = %s", serviceAccountId, internalServiceAccountId)
 	return nil
 }
 
@@ -603,7 +605,7 @@ func (kc *keycloakService) registerAgentServiceAccount(clusterId string, service
 			return nil, errors.NewWithCause(errors.ErrorGeneral, addRoleErr, "failed to add role to agent service account")
 		}
 	}
-	glog.V(5).Infof("Client %s created successfully", serviceAccountId)
+	glog.V(5).Infof("Client %s created successfully with internal id = %s", serviceAccountId, account.ID)
 	return account, nil
 }
 
@@ -637,7 +639,7 @@ func (kc *keycloakService) createServiceAccountIfNotExists(token string, clientR
 			return nil, errors.NewWithCause(errors.ErrorFailedToCreateServiceAccount, err, "failed to create service account")
 		}
 	} else {
-		glog.V(10).Infof("Existing client found for %s, internalId=%s", clientRep.ClientID, *client.ID)
+		glog.V(5).Infof("Existing client found for %s with internal id = %s", clientRep.ClientID, *client.ID)
 		internalClientId = *client.ID
 	}
 
