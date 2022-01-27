@@ -16,7 +16,6 @@ type DinosaurConfig struct {
 	DinosaurTLSKey                    string                 `json:"dinosaur_tls_key"`
 	DinosaurTLSKeyFile                string                 `json:"dinosaur_tls_key_file"`
 	EnableDinosaurExternalCertificate bool                   `json:"enable_dinosaur_external_certificate"`
-	NumOfBrokers                      int                    `json:"num_of_brokers"`
 	DinosaurDomainName                string                 `json:"dinosaur_domain_name"`
 	DinosaurCapacity                  DinosaurCapacityConfig `json:"dinosaur_capacity_config"`
 	DinosaurCapacityConfigFile        string                 `json:"dinosaur_capacity_config_file"`
@@ -31,7 +30,6 @@ func NewDinosaurConfig() *DinosaurConfig {
 		DinosaurTLSKeyFile:                "secrets/dinosaur-tls.key",
 		EnableDinosaurExternalCertificate: false,
 		DinosaurDomainName:                "dinosaur.devshift.org",
-		NumOfBrokers:                      3,
 		DinosaurCapacityConfigFile:        "config/dinosaur-capacity-config.yaml",
 		DinosaurLifespan:                  NewDinosaurLifespanConfig(),
 		Quota:                             NewDinosaurQuotaConfig(),
