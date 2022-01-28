@@ -124,7 +124,6 @@ func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBa
 		ChangeBatch:  recordChangeBatch,
 	}
 
-	// TODO Check status is changed to INSYNC
 	recordSetsOutput, err := client.route53Client.ChangeResourceRecordSets(recordChanges)
 
 	if err != nil {
