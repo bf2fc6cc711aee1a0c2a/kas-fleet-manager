@@ -7,7 +7,7 @@ import (
 
 func addKafkaStorageSize() *gormigrate.Migration {
 	type KafkaRequest struct {
-		KafkaStorageSize string `json:"kafka_storage_size" gorm:"default:'60Gi'"`
+		KafkaStorageSize string `json:"kafka_storage_size" gorm:"default:'1000Gi'"`
 	}
 
 	return &gormigrate.Migration{
