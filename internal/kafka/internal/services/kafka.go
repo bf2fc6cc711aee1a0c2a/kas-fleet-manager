@@ -263,8 +263,10 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	}
 
 	dbConn := k.connectionFactory.New()
-	kafkaRequest.Status = constants2.KafkaRequestStatusAccepted.String()
 	kafkaRequest.SubscriptionId = subscriptionId
+	kafkaRequest.Status = constants2.KafkaRequestStatusAccepted.String()
+	// when creating new kafka - default storage size is assigned
+	kafkaRequest.KafkaStorageSize = constants2.DefaultKafkaStorageSize.String()
 
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a kafka A is created, at the time of creation the quota-type was ams. At some point in the future
