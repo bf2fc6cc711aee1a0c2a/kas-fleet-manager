@@ -22,78 +22,6 @@ func TestFederateMetrics_Collect(t *testing.T) {
 					Vector: []*pModel.Sample{
 						{
 							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "dinosaur_server_brokertopicmetrics_messages_in_total",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "dinosaur_server_brokertopicmetrics_bytes_in_total",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "dinosaur_server_brokertopicmetrics_bytes_out_total",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "dinosaur_controller_dinosaurcontroller_offline_partitions_count",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "dinosaur_controller_dinosaurcontroller_global_partition_count",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "dinosaur_topic:dinosaur_log_log_size:sum",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "dinosaur_broker_quota_softlimitbytes",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "dinosaur_broker_quota_totalstorageusedbytes",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
 								"__name__": "kubelet_volume_stats_available_bytes",
 							},
 						},
@@ -122,33 +50,6 @@ func TestFederateMetrics_Collect(t *testing.T) {
 						{
 							Metric: map[pModel.LabelName]pModel.LabelValue{
 								"__name__": "dinosaur_namespace:haproxy_server_bytes_out_total:rate5m",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "dinosaur_topic:dinosaur_topic_partitions:sum",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "dinosaur_topic:dinosaur_topic_partitions:count",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "consumergroup:dinosaur_consumergroup_members:count",
 							},
 						},
 					},

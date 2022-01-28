@@ -40,7 +40,6 @@ type DinosaurRoutesAction string
 
 const DinosaurRoutesActionCreate DinosaurRoutesAction = "CREATE"
 const DinosaurRoutesActionDelete DinosaurRoutesAction = "DELETE"
-const CanaryServiceAccountPrefix = "canary"
 
 type CNameRecordStatus struct {
 	Id     *string

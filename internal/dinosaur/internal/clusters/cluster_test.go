@@ -1,17 +1,24 @@
 package clusters
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm/clusterservicetest"
-	"reflect"
-	"testing"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
-const openshiftVersion = "openshift-v4.6.1"
+const (
+	mockClusterMultiAZ       = true
+	mockClusterCloudProvider = "aws"
+	mockClusterRegion        = "us-east-1"
+	mockClusterBYOC          = false
+	mockClusterManaged       = true
+	openshiftVersion         = "openshift-v4.6.1"
+)
 
 func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 	awsConfig := &config.AWSConfig{}
@@ -104,13 +111,13 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 			},
 			args: args{
 				clusterRequest: &types.ClusterRequest{
-					CloudProvider: clusterservicetest.MockClusterCloudProvider,
-					Region:        clusterservicetest.MockClusterRegion,
-					MultiAZ:       clusterservicetest.MockClusterMultiAZ,
+					CloudProvider: mockClusterCloudProvider,
+					Region:        mockClusterRegion,
+					MultiAZ:       mockClusterMultiAZ,
 				},
 			},
 			wantFn: func() *clustersmgmtv1.Cluster {
-				cluster, err := clusterservicetest.NewMockCluster(func(builder *clustersmgmtv1.ClusterBuilder) {
+				cluster, err := newMockCluster(func(builder *clustersmgmtv1.ClusterBuilder) {
 					// these values will be ignored by the conversion as they're unsupported. so expect different
 					// values than we provide.
 					builder.CCS(clustersmgmtv1.NewCCS().Enabled(true))
@@ -151,4 +158,17 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 			}
 		})
 	}
+}
+
+// newMockCluster create a default OCM Cluster Service cluster struct and apply modifications if provided.
+func newMockCluster(modifyFn func(*clustersmgmtv1.ClusterBuilder)) (*clustersmgmtv1.Cluster, error) {
+	mock := clustersmgmtv1.NewCluster()
+	mock.CloudProvider(clustersmgmtv1.NewCloudProvider().ID(mockClusterCloudProvider))
+	mock.Region(clustersmgmtv1.NewCloudRegion().ID(mockClusterRegion))
+	mock.CCS(clustersmgmtv1.NewCCS().Enabled(mockClusterBYOC))
+	mock.Managed(mockClusterManaged)
+	if modifyFn != nil {
+		modifyFn(mock)
+	}
+	return mock.Build()
 }

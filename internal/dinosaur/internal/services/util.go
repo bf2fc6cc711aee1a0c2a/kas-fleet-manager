@@ -22,7 +22,7 @@ const (
 // All OpenShift route hosts must confirm to DNS1035. This will inverse the validation RE from k8s (https://github.com/kubernetes/apimachinery/blob/master/pkg/util/validation/validation.go#L219)
 var dns1035ReplacementRE = regexp.MustCompile(`[^a-z]([^-a-z0-9]*[^a-z0-9])?`)
 
-func TruncateString(str string, num int) string {
+func truncateString(str string, num int) string {
 	truncatedString := str
 	if len(str) > num {
 		truncatedString = str[0:num]
@@ -33,12 +33,12 @@ func TruncateString(str string, num int) string {
 // buildTruncateDinosaurIdentifier creates a unique identifier for a dinosaur cluster given
 // the dinosaur request object
 func buildTruncateDinosaurIdentifier(dinosaurRequest *dbapi.DinosaurRequest) string {
-	return fmt.Sprintf("%s-%s", TruncateString(dinosaurRequest.Name, truncatedNameLen), strings.ToLower(dinosaurRequest.ID))
+	return fmt.Sprintf("%s-%s", truncateString(dinosaurRequest.Name, truncatedNameLen), strings.ToLower(dinosaurRequest.ID))
 }
 
-// MaskProceedingandTrailingDash replaces the first and final character of a string with a subdomain safe
+// maskProceedingandTrailingDash replaces the first and final character of a string with a subdomain safe
 // value if is a dash.
-func MaskProceedingandTrailingDash(name string) string {
+func maskProceedingandTrailingDash(name string) string {
 	if strings.HasSuffix(name, "-") {
 		name = name[:len(name)-1] + appendChar
 	}
@@ -53,7 +53,7 @@ func MaskProceedingandTrailingDash(name string) string {
 func replaceHostSpecialChar(name string) (string, error) {
 	replacedName := dns1035ReplacementRE.ReplaceAllString(strings.ToLower(name), replacementForSpecialChar)
 
-	replacedName = MaskProceedingandTrailingDash(replacedName)
+	replacedName = maskProceedingandTrailingDash(replacedName)
 
 	// This should never fail based on above replacement of invalid characters.
 	validationErrors := validation.IsDNS1035Label(replacedName)
@@ -62,13 +62,4 @@ func replaceHostSpecialChar(name string) (string, error) {
 	}
 
 	return replacedName, nil
-}
-
-// BuildKeycloakClientNameIdentifier builds an identifier based on the dinosaur request id
-func BuildKeycloakClientNameIdentifier(dinosaurRequestID string) string {
-	return fmt.Sprintf("%s-%s", "dinosaur", strings.ToLower(dinosaurRequestID))
-}
-
-func BuildCustomClaimCheck(dinosaurRequest *dbapi.DinosaurRequest) string {
-	return fmt.Sprintf("@.rh-org-id == '%s'", dinosaurRequest.OrganisationId)
 }

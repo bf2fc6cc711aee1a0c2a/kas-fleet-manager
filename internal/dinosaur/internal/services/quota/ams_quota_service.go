@@ -18,7 +18,7 @@ func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder
 	rr := amsv1.ReservedResourceBuilder{}
 	rr.ResourceType("cluster.aws") //cluster.aws
 	rr.BYOC(false)                 //false
-	rr.ResourceName("rhosak")      //"rhosak"
+	rr.ResourceName("rhosak")      // TODO change this to correspond to your product resource name
 	rr.BillingModel("marketplace") // "marketplace" or "standard"
 	rr.AvailabilityZoneType("single")
 	rr.Count(1)

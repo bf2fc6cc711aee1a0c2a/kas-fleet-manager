@@ -19,7 +19,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/mocks/fleetshardsync"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm/clusterservicetest"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
@@ -536,9 +535,9 @@ func TestDinosaurList_Success(t *testing.T) {
 	Expect(listItem.Kind).To(Equal(presenters.KindDinosaur))
 	Expect(seedDinosaur.Href).To(Equal(listItem.Href))
 	Expect(seedDinosaur.Region).To(Equal(listItem.Region))
-	Expect(listItem.Region).To(Equal(clusterservicetest.MockClusterRegion))
+	Expect(listItem.Region).To(Equal(mocks.MockCluster.Region().ID()))
 	Expect(seedDinosaur.CloudProvider).To(Equal(listItem.CloudProvider))
-	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
+	Expect(listItem.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(seedDinosaur.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockDinosaurName))
 	Expect(listItem.Status).To(Equal(constants2.DinosaurRequestStatusAccepted.String()))
@@ -565,9 +564,9 @@ func TestDinosaurList_Success(t *testing.T) {
 	Expect(listItem.Kind).To(Equal(presenters.KindDinosaur))
 	Expect(seedDinosaur.Href).To(Equal(listItem.Href))
 	Expect(seedDinosaur.Region).To(Equal(listItem.Region))
-	Expect(listItem.Region).To(Equal(clusterservicetest.MockClusterRegion))
+	Expect(listItem.Region).To(Equal(mocks.MockCluster.Region().ID()))
 	Expect(seedDinosaur.CloudProvider).To(Equal(listItem.CloudProvider))
-	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
+	Expect(listItem.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(seedDinosaur.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockDinosaurName))
 	Expect(listItem.Status).To(Equal(constants2.DinosaurRequestStatusAccepted.String()))
