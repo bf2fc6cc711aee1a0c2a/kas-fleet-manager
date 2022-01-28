@@ -217,7 +217,7 @@ help:
 	@echo "make observatorium/token-refresher/setup" setup a local observatorium token refresher
 	@echo "make docker/login/internal       login to an openshift cluster image registry"
 	@echo "make image/build/push/internal   build and push image to an openshift cluster image registry."
-	@echo "make deploy                      deploy the service via templates to an openshift cluster"
+	@echo "deploy/project                   deploy the service via templates to an openshift cluster"
 	@echo "make undeploy                    remove the service deployments from an openshift cluster"
 	@echo "openapi/spec/validate            validate OpenAPI spec using spectral"
 	@echo "$(fake)"
