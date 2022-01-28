@@ -470,9 +470,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				"deleting": 0,
 				"rejected": 0,
 			}
-			s := NewDataPlaneKafkaService(tt.kafkaService(counter), tt.clusterService, &config.KafkaConfig{
-				NumOfBrokers: 1,
-			})
+			s := NewDataPlaneKafkaService(tt.kafkaService(counter), tt.clusterService, &config.KafkaConfig{})
 			err := s.UpdateDataPlaneKafkaService(context.TODO(), tt.clusterId, tt.status)
 			if err != nil && !tt.wantErr {
 				t.Errorf("unexpected error %v", err)
@@ -752,9 +750,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := versions{}
-			s := NewDataPlaneKafkaService(tt.kafkaService(&v), tt.clusterService, &config.KafkaConfig{
-				NumOfBrokers: 1,
-			})
+			s := NewDataPlaneKafkaService(tt.kafkaService(&v), tt.clusterService, &config.KafkaConfig{})
 			err := s.UpdateDataPlaneKafkaService(context.TODO(), tt.clusterId, tt.status)
 			if err != nil && !tt.wantErr {
 				t.Errorf("unexpected error %v", err)
