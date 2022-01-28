@@ -72,6 +72,7 @@ var migrations = []*gormigrate.Migration{
 	addKafkaReauthenticationEnabledColumn(),
 	addKafkaIBPVersionRelatedFields(),
 	addKafkaRoutesCreationIdColumn(),
+	addKafkaStorageSize(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

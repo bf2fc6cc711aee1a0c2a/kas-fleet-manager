@@ -249,6 +249,8 @@ components:
               type: boolean
             kafka_ibp_upgrading:
               type: boolean
+            kafka_storage_size:
+              type: string
             organisation_id:
               type: string
             subscription_id:

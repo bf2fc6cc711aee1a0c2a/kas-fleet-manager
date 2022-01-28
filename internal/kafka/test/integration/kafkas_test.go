@@ -140,6 +140,8 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(kafkaRequest.Namespace).To(Equal(fmt.Sprintf("kafka-%s", strings.ToLower(kafkaRequest.ID))))
 	// this is set by the mockKasfFleetshardSync
 	Expect(kafkaRequest.DesiredStrimziVersion).To(Equal("strimzi-cluster-operator.v0.23.0-0"))
+	// default kafka_storage_size should be set on creation
+	Expect(kafkaRequest.KafkaStorageSize).To(Equal(constants2.DefaultKafkaStorageSize.String()))
 
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
 	common.CheckMetricExposed(h, t, metrics.ClusterStatusCapacityUsed)

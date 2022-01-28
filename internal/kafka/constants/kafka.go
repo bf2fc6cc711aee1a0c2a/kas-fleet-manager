@@ -10,6 +10,8 @@ type KafkaStatus string
 // KafkaOperation type
 type KafkaOperation string
 
+type KafkaDefaultStorageSize string
+
 const (
 	// KafkaRequestStatusAccepted - kafka request status when accepted by kafka worker
 	KafkaRequestStatusAccepted KafkaStatus = "accepted"
@@ -45,6 +47,9 @@ const (
 	// AcceptedKafkaMaxRetryDuration the maximum duration, in minutes, where KAS Fleet Manager
 	// will retry reconciliation of a Kafka request in an 'accepted' state
 	AcceptedKafkaMaxRetryDuration = 5 * time.Minute
+
+	// default kafka storage size
+	DefaultKafkaStorageSize KafkaDefaultStorageSize = "60Gi"
 )
 
 // ordinals - Used to decide if a status comes after or before a given state
@@ -70,6 +75,10 @@ func (k KafkaOperation) String() string {
 
 // KafkaStatus Methods
 func (k KafkaStatus) String() string {
+	return string(k)
+}
+
+func (k KafkaDefaultStorageSize) String() string {
 	return string(k)
 }
 
