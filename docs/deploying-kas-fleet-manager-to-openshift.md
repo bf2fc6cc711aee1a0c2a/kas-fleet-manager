@@ -20,18 +20,14 @@ make deploy/project <OPTIONAL_PARAMETERS>
 - `NAMESPACE`: The namespace where the image will be pushed to. Defaults to 'kas-fleet-manager-$USER.'
 
 ## Build and Push KAS Fleet Manager Image to the OpenShift Internal Registry
-Login to the OpenShift internal image registry
+Login to the OpenShift cluster
 
 >**NOTE**: Ensure that the user used has the correct permissions to push to the OpenShift image registry. For more information, see the [accessing the registry](https://docs.openshift.com/container-platform/4.5/registry/accessing-the-registry.html#prerequisites) guide.
 ```
-# Login to the OpenShift cluster
 oc login <api-url> -u <username> -p <password>
-
-# Login to the OpenShift image registry
-make docker/login/internal
 ```
 
-Build and push the image
+Build and push the image to the logged in OpenShift cluster's image registry
 ```
 # Build and push the image to the OpenShift image registry.
 GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal <OPTIONAL_PARAMETERS>
@@ -92,10 +88,11 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 >**NOTE**: This is only needed if your Observatorium instance is using RHSSO as authentication.
 
 ```
-make deploy/token-refresher OBSERVATORIUM_URL=<observatorium-url> <OPTIONAL_PARAMETERS>
+make deploy/token-refresher <OPTIONAL_PARAMETERS>
 ```
 
 **Optional parameters**
+- `OBSERVATORIUM_URL`: URL of the Observatorium instance to connect to. Defaults to `https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/managedkafka`
 - `ISSUER_URL`: The issuer URL of your authentication service. Defaults to `https://sso.redhat.com/auth/realms/redhat-external`
 - `OBSERVATORIUM_TOKEN_REFRESHER_IMAGE`: The image repository used for the Observatorium token refresher deployment. Defaults to `quay.io/rhoas/mk-token-refresher`.
 - `OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG`: The image tag used for the Observatorium token refresher deployment. Defaults to `latest`
@@ -110,7 +107,7 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 
 **Optional parameters**:
 - `NAMESPACE`: The namespace where the service will be deployed to. Defaults to managed-services-$USER.
-- `ENV`: Environment used for the KAS Fleet Manager deployment. Options: `development`, `integration`, `testing`, `stage` and `production`, Default: `development`.
+- `FLEET_MANAGER_ENV`: Environment used for the KAS Fleet Manager deployment. Options: `development`, `integration`, `testing`, `stage` and `production`, Default: `development`.
 - `IMAGE_REGISTRY`: Registry used by the image. Defaults to the OpenShift internal registry.
 - `IMAGE_REPOSITORY`: Image repository. Defaults to '\<namespace\>/kas-fleet-manager'.
 - `REPLICAS`: Number of replicas of the KAS Fleet Manager deployment. Defaults to `1`.

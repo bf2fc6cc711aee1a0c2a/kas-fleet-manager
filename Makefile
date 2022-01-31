@@ -485,7 +485,7 @@ image/build/internal: binary
 
 # push the image to the OpenShift internal registry
 image/push/internal: IMAGE_TAG ?= $(image_tag)
-image/push/internal:
+image/push/internal: docker/login/internal
 	docker push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)"
 .PHONY: image/push/internal
 
@@ -628,7 +628,7 @@ deploy/route:
 # deploy service via templates to an OpenShift cluster
 deploy/service: IMAGE_REGISTRY ?= $(internal_image_registry)
 deploy/service: IMAGE_REPOSITORY ?= $(image_repository)
-deploy/service: ENV ?= "development"
+deploy/service: FLEET_MANAGER_ENV ?= "development"
 deploy/service: REPLICAS ?= "1"
 deploy/service: ENABLE_KAFKA_EXTERNAL_CERTIFICATE ?= "false"
 deploy/service: ENABLE_KAFKA_LIFE_SPAN ?= "false"
@@ -665,7 +665,7 @@ deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
 	@oc process -f ./templates/service-template.yml \
-		-p ENVIRONMENT="$(ENV)" \
+		-p ENVIRONMENT="$(FLEET_MANAGER_ENV)" \
 		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
 		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
 		-p IMAGE_TAG=$(IMAGE_TAG) \
@@ -733,6 +733,7 @@ undeploy:
 deploy/token-refresher: ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
 deploy/token-refresher: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE ?= "quay.io/rhoas/mk-token-refresher"
 deploy/token-refresher: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG ?= "latest"
+deploy/token-refresher: OBSERVATORIUM_URL ?= "https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/managedkafka"
 deploy/token-refresher:
 	@-oc process -f ./templates/observatorium-token-refresher.yml \
 		-p ISSUER_URL=${ISSUER_URL} \
