@@ -45,6 +45,7 @@ func PresentKafkaRequestAdminEndpoint(kafkaRequest *dbapi.KafkaRequest, accountS
 		KafkaUpgrading:         kafkaRequest.KafkaUpgrading,
 		StrimziUpgrading:       kafkaRequest.StrimziUpgrading,
 		KafkaIbpUpgrading:      kafkaRequest.KafkaIBPUpgrading,
+		KafkaStorageSize:       kafkaRequest.KafkaStorageSize,
 		OrganisationId:         kafkaRequest.OrganisationId,
 		SubscriptionId:         kafkaRequest.SubscriptionId,
 		SsoClientId:            kafkaRequest.SsoClientID,
