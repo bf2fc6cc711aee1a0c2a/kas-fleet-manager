@@ -40,6 +40,7 @@ type Kafka struct {
 	KafkaUpgrading         bool               `json:"kafka_upgrading"`
 	StrimziUpgrading       bool               `json:"strimzi_upgrading"`
 	KafkaIbpUpgrading      bool               `json:"kafka_ibp_upgrading"`
+	KafkaStorageSize       string             `json:"kafka_storage_size,omitempty"`
 	OrganisationId         string             `json:"organisation_id,omitempty"`
 	SubscriptionId         string             `json:"subscription_id,omitempty"`
 	SsoClientId            string             `json:"sso_client_id,omitempty"`
