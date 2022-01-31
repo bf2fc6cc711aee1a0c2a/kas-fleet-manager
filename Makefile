@@ -570,7 +570,7 @@ deploy/route:
 # deploy service via templates to an OpenShift cluster
 deploy/service: IMAGE_REGISTRY ?= $(internal_image_registry)
 deploy/service: IMAGE_REPOSITORY ?= $(image_repository)
-deploy/service: OCM_ENV ?= "development"
+deploy/service: FLEET_MANAGER_ENV ?= "development"
 deploy/service: REPLICAS ?= "1"
 deploy/service: ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE ?= "false"
 deploy/service: ENABLE_DINOSAUR_LIFE_SPAN ?= "false"
@@ -598,7 +598,7 @@ deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q fleet-manager; do echo 'waiting for fleet-manager route to be created'; sleep 1; done"
 	@oc process -f ./templates/service-template.yml \
-		-p ENVIRONMENT="$(OCM_ENV)" \
+		-p ENVIRONMENT="$(FLEET_MANAGER_ENV)" \
 		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
 		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
 		-p IMAGE_TAG=$(IMAGE_TAG) \
