@@ -33,6 +33,7 @@ on:
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
 
+# TODO make sure that the secrets are configured for your repository
 env:
   # set ocm env to integration
   OCM_ENV: integration
