@@ -365,7 +365,7 @@ paths:
               $ref: "#/components/schemas/ConnectorRequest"
           application/merge-patch+json:
             schema:
-              $ref: "#/components/schemas/ConnectorRequest"
+              type: object
           application/json-patch+json:
             schema:
               description: A JSON Patch, RFC 6902 - https://tools.ietf.org/html/rfc6902
