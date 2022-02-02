@@ -7,6 +7,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -16,6 +17,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
+	resource "k8s.io/apimachinery/pkg/api/resource"
 )
 
 var ValidKafkaClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
@@ -91,10 +93,13 @@ func ValidateCloudProvider(kafkaService *services.KafkaService, kafkaRequest *db
 	}
 }
 
-func ValidateKafkaUpdateFields(strimziVersion *string, kafkaVersion *string, KafkaIbpVersion *string) handlers.Validate {
+func ValidateKafkaUpdateFields(kafkaUpdateRequest *private.KafkaUpdateRequest) handlers.Validate {
 	return func() *errors.ServiceError {
-		if stringNotSet(strimziVersion) && stringNotSet(kafkaVersion) && stringNotSet(KafkaIbpVersion) {
-			return errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version or kafka_ibp_version to be provided")
+		if stringNotSet(&kafkaUpdateRequest.StrimziVersion) &&
+			stringNotSet(&kafkaUpdateRequest.KafkaVersion) &&
+			stringNotSet(&kafkaUpdateRequest.KafkaIbpVersion) &&
+			stringNotSet(&kafkaUpdateRequest.KafkaStorageSize) {
+			return errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version or kafka_storage_size to be provided")
 		}
 		return nil
 	}
@@ -150,6 +155,26 @@ func ValidateKafkaClaims(ctx context.Context, kafkaRequestPayload *public.KafkaR
 		(*kafkaRequest).OrganisationId = auth.GetOrgIdFromClaims(claims)
 		(*kafkaRequest).OwnerAccountId = auth.GetAccountIdFromClaims(claims)
 
+		return nil
+	}
+}
+
+func ValidateKafkaStorageSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *private.KafkaUpdateRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		if !stringNotSet(&kafkaUpdateReq.KafkaStorageSize) {
+			currentSize, err := resource.ParseQuantity(kafkaRequest.KafkaStorageSize)
+			if err != nil {
+				return errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: '%s'", kafkaRequest.KafkaStorageSize)
+			}
+			requestedSize, err := resource.ParseQuantity(kafkaUpdateReq.KafkaStorageSize)
+			if err != nil {
+				return errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current requested size: '%s'", kafkaUpdateReq.KafkaStorageSize)
+			}
+			reqSize, _ := requestedSize.AsInt64()
+			if currentSize.CmpInt64(reqSize) > -1 {
+				return errors.FieldValidationError("Failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", kafkaUpdateReq.KafkaStorageSize, kafkaRequest.KafkaStorageSize)
+			}
+		}
 		return nil
 	}
 }

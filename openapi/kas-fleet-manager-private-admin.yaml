@@ -301,6 +301,8 @@ components:
           type: string
         kafka_ibp_version:
           type: string
+        kafka_storage_size:
+          type: string
 
   securitySchemes:
     Bearer:

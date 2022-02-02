@@ -325,12 +325,15 @@ components:
         strimzi_version: strimzi_version
         kafka_ibp_version: kafka_ibp_version
         kafka_version: kafka_version
+        kafka_storage_size: kafka_storage_size
       properties:
         strimzi_version:
           type: string
         kafka_version:
           type: string
         kafka_ibp_version:
+          type: string
+        kafka_storage_size:
           type: string
       type: object
     Error:
