@@ -105,18 +105,23 @@ func (h adminKafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 
+	id := mux.Vars(r)["id"]
+	ctx := r.Context()
+	kafkaRequest, err := h.service.Get(ctx, id)
+
 	var kafkaUpdateReq private.KafkaUpdateRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &kafkaUpdateReq,
 		Validate: []handlers.Validate{
-			ValidateKafkaUpdateFields(&kafkaUpdateReq.KafkaVersion, &kafkaUpdateReq.StrimziVersion, &kafkaUpdateReq.KafkaIbpVersion),
+			ValidateKafkaUpdateFields(
+				&kafkaUpdateReq,
+			),
+			ValidateKafkaStorageSize(kafkaRequest, &kafkaUpdateReq),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			id := mux.Vars(r)["id"]
-			ctx := r.Context()
-			kafkaRequest, err2 := h.service.Get(ctx, id)
-			if err2 != nil {
-				return nil, err2
+
+			if err != nil {
+				return nil, err
 			}
 			kafkaStatus := kafkaRequest.Status
 			if !shared.Contains(constants.GetUpdateableStatuses(), kafkaStatus) {
@@ -142,6 +147,10 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 					return nil, errors.New(errors.ErrorValidation, "Unable to update ibp version. Another upgrade is already in progress.")
 				}
 				kafkaRequest.DesiredKafkaIBPVersion = kafkaUpdateReq.KafkaIbpVersion
+				updateRequired = true
+			}
+			if kafkaUpdateReq.KafkaStorageSize != "" && kafkaRequest.KafkaStorageSize != kafkaUpdateReq.KafkaStorageSize {
+				kafkaRequest.KafkaStorageSize = kafkaUpdateReq.KafkaStorageSize
 				updateRequired = true
 			}
 			if updateRequired {
