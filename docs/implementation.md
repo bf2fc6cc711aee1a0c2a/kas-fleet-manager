@@ -21,7 +21,7 @@ The OpenAPI spec for this API can be seen by running:
 make run/docs
 ```
 
-This will serve the OpenAPI spec on `localhost:80`
+This will serve the OpenAPI spec on `localhost:8082`
 
 It's important to note that the system is asynchronous, meaning that once a Kafka resource is
 created via the REST API, there won't be a running Kafka instance created by the time the HTTP
