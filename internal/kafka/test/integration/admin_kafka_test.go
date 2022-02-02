@@ -414,7 +414,7 @@ func TestAdminKafka_Update(t *testing.T) {
 	sampleKafkaID2 := api.NewID()
 	sampleKafkaID3 := api.NewID()
 	sampleKafkaID4 := api.NewID()
-	fullyPopulatedKafkaUpdateRequest := adminprivate.KafkaUpdateRequest{
+	fullyPopulatedKafkaVersionUpdateRequest := adminprivate.KafkaUpdateRequest{
 		StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
 		KafkaVersion:    "2.8.2",
 		KafkaIbpVersion: "2.8.1",
@@ -463,6 +463,42 @@ func TestAdminKafka_Update(t *testing.T) {
 		KafkaIbpVersion: "2.8.3",
 		KafkaVersion:    "2.8.3",
 	}
+
+	allFieldsUpdateRequest := adminprivate.KafkaUpdateRequest{
+		StrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		KafkaVersion:     "2.8.2",
+		KafkaIbpVersion:  "2.8.1",
+		KafkaStorageSize: "70Gi",
+	}
+
+	sameStorageSizeUpdateRequest := adminprivate.KafkaUpdateRequest{
+		KafkaStorageSize: "60Gi",
+	}
+
+	biggerStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
+		KafkaStorageSize: "70Gi",
+	}
+
+	biggerStorageDifferentFormatUpdateRequest := adminprivate.KafkaUpdateRequest{
+		KafkaStorageSize: "75000Mi",
+	}
+
+	smallerStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
+		KafkaStorageSize: "50Gi",
+	}
+
+	wrongFormatStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
+		KafkaStorageSize: "70Gb",
+	}
+
+	randomStringStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
+		KafkaStorageSize: "M2h9O8wO7k",
+	}
+
+	smallerStorageDifferentFormatUpdateRequest := adminprivate.KafkaUpdateRequest{
+		KafkaStorageSize: "50000Mi",
+	}
+
 	type args struct {
 		ctx                func(h *coreTest.Helper) context.Context
 		kafkaID            string
@@ -688,7 +724,7 @@ func TestAdminKafka_Update(t *testing.T) {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
 				},
 				kafkaID:            "nonexistentkafkaID",
-				kafkaUpdateRequest: fullyPopulatedKafkaUpdateRequest,
+				kafkaUpdateRequest: fullyPopulatedKafkaVersionUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(HaveOccurred())
@@ -711,7 +747,7 @@ func TestAdminKafka_Update(t *testing.T) {
 					return ctx
 				},
 				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: fullyPopulatedKafkaUpdateRequest,
+				kafkaUpdateRequest: fullyPopulatedKafkaVersionUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(HaveOccurred())
@@ -725,7 +761,7 @@ func TestAdminKafka_Update(t *testing.T) {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
 				},
 				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: fullyPopulatedKafkaUpdateRequest,
+				kafkaUpdateRequest: fullyPopulatedKafkaVersionUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
@@ -740,7 +776,7 @@ func TestAdminKafka_Update(t *testing.T) {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
 				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: fullyPopulatedKafkaUpdateRequest,
+				kafkaUpdateRequest: fullyPopulatedKafkaVersionUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
@@ -814,6 +850,132 @@ func TestAdminKafka_Update(t *testing.T) {
 				Expect(result.DesiredStrimziVersion).To(Equal(allVersionsUpgrade.StrimziVersion))
 			},
 		},
+		{
+			name: "should succeed when upgrading all possible values",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: allFieldsUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID1))
+				Expect(result.DesiredKafkaVersion).To(Equal(allFieldsUpdateRequest.KafkaVersion))
+				Expect(result.DesiredKafkaIbpVersion).To(Equal(allFieldsUpdateRequest.KafkaIbpVersion))
+				Expect(result.DesiredStrimziVersion).To(Equal(allFieldsUpdateRequest.StrimziVersion))
+				Expect(result.KafkaStorageSize).To(Equal(allFieldsUpdateRequest.KafkaStorageSize))
+			},
+		},
+		{
+			name: "should fail when attempting to upgrade to the same storage size",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: sameStorageSizeUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should succeed when upgrading to bigger storage in different format",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: biggerStorageDifferentFormatUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID1))
+				Expect(result.KafkaStorageSize).To(Equal(biggerStorageDifferentFormatUpdateRequest.KafkaStorageSize))
+			},
+		},
+		{
+			name: "should fail when attempting to upgrade to smaller storage size",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: smallerStorageUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when attempting to upgrade to smaller storage size in different format",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: smallerStorageDifferentFormatUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when attempting to upgrade to smaller storage size in wrong format",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: wrongFormatStorageUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when attempting to upgrade to smaller storage size when providing random string as new storage size",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: randomStringStorageUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when attempting to upgrade storage with current storage size not set",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID4,
+				kafkaUpdateRequest: biggerStorageUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when attempting to upgrade storage with current storage size set to some incorrect value",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID3,
+				kafkaUpdateRequest: biggerStorageUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
 	}
 
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
@@ -844,119 +1006,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		ProviderType:       api.ClusterProviderStandalone,
 	}
 
-	err2 := cluster.SetAvailableStrimziVersions(
-		[]api.StrimziVersion{
-			{
-				Version: "strimzi-cluster-operator.v0.20.0-0",
-				Ready:   true,
-				KafkaVersions: []api.KafkaVersion{
-					{Version: "1.8.0"},
-					{Version: "2.6.0"},
-					{Version: "2.7.0"},
-					{Version: "2.8.0"},
-				},
-				KafkaIBPVersions: []api.KafkaIBPVersion{
-					{Version: "1.8.0"},
-					{Version: "2.6.0"},
-					{Version: "2.7.0"},
-					{Version: "2.8.0"},
-				},
-			},
-			{
-				Version: "strimzi-cluster-operator.v0.22.0-0",
-				Ready:   true,
-				KafkaVersions: []api.KafkaVersion{
-					{Version: "2.6.0"},
-					{Version: "2.7.0"},
-					{Version: "2.8.0"},
-				},
-				KafkaIBPVersions: []api.KafkaIBPVersion{
-					{Version: "2.6.0"},
-					{Version: "2.7.0"},
-					{Version: "2.8.0"},
-				},
-			},
-			{
-				Version: "strimzi-cluster-operator.v0.23.0-0",
-				Ready:   true,
-				KafkaVersions: []api.KafkaVersion{
-					{Version: "2.6.0"},
-					{Version: "2.7.0"},
-					{Version: "2.8.0"},
-					{Version: "2.8.1"},
-				},
-				KafkaIBPVersions: []api.KafkaIBPVersion{
-					{Version: "2.6.0"},
-					{Version: "2.7.0"},
-					{Version: "2.8.0"},
-					{Version: "2.8.1"},
-				},
-			},
-			{
-				Version: "strimzi-cluster-operator.v0.24.0-0",
-				Ready:   true,
-				KafkaVersions: []api.KafkaVersion{
-					{Version: "2.6.0"},
-					{Version: "2.7.0"},
-					{Version: "2.8.0"},
-					{Version: "2.8.1"},
-					{Version: "2.8.2"},
-					{Version: "2.9.0"},
-				},
-				KafkaIBPVersions: []api.KafkaIBPVersion{
-					{Version: "2.6.0"},
-					{Version: "2.7.0"},
-					{Version: "2.8.0"},
-					{Version: "2.8.1"},
-					{Version: "2.8.2"},
-				},
-			},
-			{
-				Version: "strimzi-cluster-operator.v0.25.0-0",
-				Ready:   true,
-				KafkaVersions: []api.KafkaVersion{
-					{Version: "2.6.0"},
-					{Version: "2.7.0"},
-					{Version: "2.8.0"},
-					{Version: "2.8.1"},
-					{Version: "2.8.2"},
-				},
-				KafkaIBPVersions: []api.KafkaIBPVersion{
-					{Version: "2.6.0"},
-					{Version: "2.7.0"},
-					{Version: "2.8.0"},
-					{Version: "2.8.1"},
-				},
-			},
-			{
-				Version: "strimzi-cluster-operator.v0.25.1-0",
-				Ready:   false,
-				KafkaVersions: []api.KafkaVersion{
-					{Version: "2.6.0"},
-					{Version: "2.7.0"},
-					{Version: "2.8.0"},
-					{Version: "2.8.1"},
-					{Version: "2.8.2"},
-				},
-				KafkaIBPVersions: []api.KafkaIBPVersion{
-					{Version: "2.6.0"},
-					{Version: "2.7.0"},
-					{Version: "2.8.0"},
-					{Version: "2.8.1"},
-				},
-			},
-			{
-				Version: "strimzi-cluster-operator.v0.26.0-0",
-				Ready:   true,
-				KafkaVersions: []api.KafkaVersion{
-					{Version: "2.8.2"},
-				},
-				KafkaIBPVersions: []api.KafkaIBPVersion{
-					{Version: "2.8.2"},
-				},
-			},
-		},
-	)
+	err2 := cluster.SetAvailableStrimziVersions(getTestStrimziVersionsMatrix())
 
 	if err2 != nil {
 		t.Error("failed to set available strimzi versions")
@@ -987,6 +1037,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
 		ActualKafkaIBPVersion:  "2.7.0",
 		DesiredKafkaIBPVersion: "2.7.0",
+		KafkaStorageSize:       "60Gi",
 	}
 
 	kafka2 := &dbapi.KafkaRequest{
@@ -1031,6 +1082,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		ActualKafkaIBPVersion:  "2.8.1",
 		DesiredKafkaIBPVersion: "2.8.1",
 		KafkaIBPUpgrading:      true,
+		KafkaStorageSize:       "random",
 	}
 
 	kafka4 := &dbapi.KafkaRequest{
@@ -1079,5 +1131,119 @@ func TestAdminKafka_Update(t *testing.T) {
 			result, resp, err := client.DefaultApi.UpdateKafkaById(ctx, tt.args.kafkaID, tt.args.kafkaUpdateRequest)
 			tt.verifyResponse(result, resp, err)
 		})
+	}
+}
+
+func getTestStrimziVersionsMatrix() []api.StrimziVersion {
+	return []api.StrimziVersion{
+		{
+			Version: "strimzi-cluster-operator.v0.20.0-0",
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				{Version: "1.8.0"},
+				{Version: "2.6.0"},
+				{Version: "2.7.0"},
+				{Version: "2.8.0"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				{Version: "1.8.0"},
+				{Version: "2.6.0"},
+				{Version: "2.7.0"},
+				{Version: "2.8.0"},
+			},
+		},
+		{
+			Version: "strimzi-cluster-operator.v0.22.0-0",
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				{Version: "2.6.0"},
+				{Version: "2.7.0"},
+				{Version: "2.8.0"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				{Version: "2.6.0"},
+				{Version: "2.7.0"},
+				{Version: "2.8.0"},
+			},
+		},
+		{
+			Version: "strimzi-cluster-operator.v0.23.0-0",
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				{Version: "2.6.0"},
+				{Version: "2.7.0"},
+				{Version: "2.8.0"},
+				{Version: "2.8.1"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				{Version: "2.6.0"},
+				{Version: "2.7.0"},
+				{Version: "2.8.0"},
+				{Version: "2.8.1"},
+			},
+		},
+		{
+			Version: "strimzi-cluster-operator.v0.24.0-0",
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				{Version: "2.6.0"},
+				{Version: "2.7.0"},
+				{Version: "2.8.0"},
+				{Version: "2.8.1"},
+				{Version: "2.8.2"},
+				{Version: "2.9.0"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				{Version: "2.6.0"},
+				{Version: "2.7.0"},
+				{Version: "2.8.0"},
+				{Version: "2.8.1"},
+				{Version: "2.8.2"},
+			},
+		},
+		{
+			Version: "strimzi-cluster-operator.v0.25.0-0",
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				{Version: "2.6.0"},
+				{Version: "2.7.0"},
+				{Version: "2.8.0"},
+				{Version: "2.8.1"},
+				{Version: "2.8.2"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				{Version: "2.6.0"},
+				{Version: "2.7.0"},
+				{Version: "2.8.0"},
+				{Version: "2.8.1"},
+			},
+		},
+		{
+			Version: "strimzi-cluster-operator.v0.25.1-0",
+			Ready:   false,
+			KafkaVersions: []api.KafkaVersion{
+				{Version: "2.6.0"},
+				{Version: "2.7.0"},
+				{Version: "2.8.0"},
+				{Version: "2.8.1"},
+				{Version: "2.8.2"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				{Version: "2.6.0"},
+				{Version: "2.7.0"},
+				{Version: "2.8.0"},
+				{Version: "2.8.1"},
+			},
+		},
+		{
+			Version: "strimzi-cluster-operator.v0.26.0-0",
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				{Version: "2.8.2"},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				{Version: "2.8.2"},
+			},
+		},
 	}
 }

@@ -912,7 +912,7 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 			Capacity: managedkafka.Capacity{
 				IngressEgressThroughputPerSec: kafkaConfig.KafkaCapacity.IngressEgressThroughputPerSec,
 				TotalMaxConnections:           kafkaConfig.KafkaCapacity.TotalMaxConnections,
-				MaxDataRetentionSize:          kafkaConfig.KafkaCapacity.MaxDataRetentionSize,
+				MaxDataRetentionSize:          kafkaRequest.KafkaStorageSize,
 				MaxPartitions:                 kafkaConfig.KafkaCapacity.MaxPartitions,
 				MaxDataRetentionPeriod:        kafkaConfig.KafkaCapacity.MaxDataRetentionPeriod,
 				MaxConnectionAttemptsPerSec:   kafkaConfig.KafkaCapacity.MaxConnectionAttemptsPerSec,
