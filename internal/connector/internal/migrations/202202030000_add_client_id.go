@@ -6,21 +6,15 @@ package migrations
 // is done here, even though the same type is defined in pkg/api
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/go-gormigrate/gormigrate/v2"
-	"gorm.io/gorm"
 )
 
-func addClusterServiceAccountId() *gormigrate.Migration {
-	type Cluster struct {
-		ClientID string
-	}
-	return &gormigrate.Migration{
-		ID: "20220201101500",
-		Migrate: func(tx *gorm.DB) error {
-			return tx.AutoMigrate(&Cluster{})
-		},
-		Rollback: func(tx *gorm.DB) error {
-			return tx.Migrator().DropColumn(&Cluster{}, "client_id")
-		},
-	}
+func addClientId(migrationId string) *gormigrate.Migration {
+
+	return db.CreateMigrationFromActions(migrationId,
+		// add operator_id column
+		db.ExecAction(`ALTER TABLE connector_clusters ADD client_id text`,
+			`ALTER TABLE connector_clusters DROP COLUMN client_id`),
+	)
 }

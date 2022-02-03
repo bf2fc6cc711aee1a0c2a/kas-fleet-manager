@@ -27,6 +27,7 @@ var migrations = []*gormigrate.Migration{
 	addDeploymentOperatorId("202110140000"),
 	connectorRefactor("202201310000"),
 	addConnectorTypeCapabilitiesTable("202202040000"),
+	addClientId("202202030000"),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

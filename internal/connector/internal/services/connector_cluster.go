@@ -47,6 +47,7 @@ type ConnectorClusterService interface {
 }
 
 var _ ConnectorClusterService = &connectorClusterService{}
+var _ auth.AuthAgentService = &connectorClusterService{}
 
 type connectorClusterService struct {
 	connectionFactory     *db.ConnectionFactory
@@ -369,6 +370,11 @@ func (k *connectorClusterService) GetConnectorClusterStatus(ctx context.Context,
 		return resource.Status, services.HandleGetError("Connector cluster status", "id", id, err)
 	}
 	return resource.Status, nil
+}
+
+func (k *connectorClusterService) GetClientId(clusterID string) (string, error) {
+	// TODO: this must be implemented
+	return "", nil
 }
 
 // Create creates a connector deployment in the database

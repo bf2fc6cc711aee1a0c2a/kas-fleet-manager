@@ -27,7 +27,7 @@ type ClusterService interface {
 	GetExternalID(clusterID string) (string, *apiErrors.ServiceError)
 	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
 	UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error
-	UpdateStatusAndServiceAccountId(cluster api.Cluster, status api.ClusterStatus, serviceClientId string) error
+	UpdateStatusAndClientId(cluster api.Cluster, status api.ClusterStatus, serviceClientId string) error
 	// Update updates a Cluster. Only fields whose value is different than the
 	// zero-value of their corresponding type will be updated
 	Update(cluster api.Cluster) *apiErrors.ServiceError
@@ -36,6 +36,7 @@ type ClusterService interface {
 	// If the cluster has not been found nil is returned. If there has been an issue
 	// finding the cluster an error is set
 	FindClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
+	GetClientId(clusterId string) (string, error)
 	ScaleUpComputeNodes(clusterID string, increment int) (*types.ClusterSpec, *apiErrors.ServiceError)
 	ScaleDownComputeNodes(clusterID string, decrement int) (*types.ClusterSpec, *apiErrors.ServiceError)
 	SetComputeNodes(clusterID string, numNodes int) (*types.ClusterSpec, *apiErrors.ServiceError)
@@ -191,10 +192,10 @@ func (c clusterService) Update(cluster api.Cluster) *apiErrors.ServiceError {
 }
 
 func (c clusterService) UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error {
-	return c.UpdateStatusAndServiceAccountId(cluster, status, "")
+	return c.UpdateStatusAndClientId(cluster, status, "")
 }
 
-func (c clusterService) UpdateStatusAndServiceAccountId(cluster api.Cluster, status api.ClusterStatus, serviceClientId string) error {
+func (c clusterService) UpdateStatusAndClientId(cluster api.Cluster, status api.ClusterStatus, clientId string) error {
 	if status.String() == "" {
 		return apiErrors.Validation("status is undefined")
 	}
@@ -216,8 +217,8 @@ func (c clusterService) UpdateStatusAndServiceAccountId(cluster api.Cluster, sta
 		query, arg = "cluster_id = ?", cluster.ClusterID
 	}
 
-	if serviceClientId != "" {
-		if err := dbConn.Model(&api.Cluster{}).Where(query, arg).Updates(map[string]interface{}{"status": status, "serviceClientId": serviceClientId}).Error; err != nil {
+	if clientId != "" {
+		if err := dbConn.Model(&api.Cluster{}).Where(query, arg).Updates(map[string]interface{}{"status": status, "client_id": clientId}).Error; err != nil {
 			return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster status")
 		}
 	} else {
@@ -319,6 +320,17 @@ func (c clusterService) FindClusterByID(clusterID string) (*api.Cluster, *apiErr
 	}
 
 	return cluster, nil
+}
+
+func (c clusterService) GetClientId(clusterId string) (string, error) {
+	if cluster, err := c.FindClusterByID(clusterId); err != nil {
+		return "", err
+	} else {
+		if cluster == nil {
+			return "", nil
+		}
+		return cluster.ClientID, nil
+	}
 }
 
 // ScaleUpComputeNodes adds three additional compute nodes to cluster specified by clusterID

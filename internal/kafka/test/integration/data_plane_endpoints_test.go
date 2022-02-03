@@ -69,6 +69,7 @@ func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer 
 		ClusterDNS:            clusterDNS,
 		ProviderType:          api.ClusterProviderStandalone,
 		SupportedInstanceType: api.AllInstanceTypeSupport.String(),
+		ClientID:              fmt.Sprintf("kas-fleetshard-agent-%s", clusterId),
 	}
 
 	err := cluster.SetAvailableStrimziVersions(getTestStrimziVersionsMatrix())
@@ -131,7 +132,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 		Put(testServer.Helper.RestURL("/agent-clusters/" + clusterId + "/kafkas/status"))
 
 	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusBadRequest)) //the clusterId is not valid
+	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound)) //the clusterId is not valid
 
 	clusterStatusUpdateRequest := private.DataPlaneClusterUpdateStatusRequest{}
 	restyResp, err = resty.R().
@@ -141,7 +142,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 		Put(testServer.Helper.RestURL("/agent-clusters/" + clusterId + "/status"))
 
 	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusBadRequest)) //the clusterId is not valid
+	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound)) //the clusterId is not valid
 }
 
 func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
@@ -184,7 +185,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
-			"kas-fleetshard-operator-cluster-id": "different-cluster-id",
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", "different-cluster-id"),
 		}
 	}, nil)
 	defer testServer.TearDown()
@@ -221,7 +222,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
-			"kas-fleetshard-operator-cluster-id": cid,
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
 		}
 	}, nil)
 	defer testServer.TearDown()
@@ -557,7 +558,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
-			"kas-fleetshard-operator-cluster-id": cid,
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
 		}
 	}, startHook)
 	defer testServer.TearDown()
@@ -616,7 +617,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
-			"kas-fleetshard-operator-cluster-id": cid,
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
 		}
 	}, startHook)
 	defer testServer.TearDown()
@@ -678,7 +679,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
-			"kas-fleetshard-operator-cluster-id": cid,
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
 		}
 	}, startHook)
 	defer testServer.TearDown()
@@ -734,7 +735,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
-			"kas-fleetshard-operator-cluster-id": cid,
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
 		}
 	}, startHook)
 	defer testServer.TearDown()
@@ -838,7 +839,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
-			"kas-fleetshard-operator-cluster-id": cid,
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
 		}
 	}, nil)
 	defer testServer.TearDown()
@@ -965,7 +966,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
-			"kas-fleetshard-operator-cluster-id": cid,
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
 		}
 	}, startHook)
 	defer testServer.TearDown()
@@ -1024,7 +1025,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
-			"kas-fleetshard-operator-cluster-id": cid,
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
 		}
 	}, nil)
 	defer testServer.TearDown()
@@ -1083,7 +1084,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
-			"kas-fleetshard-operator-cluster-id": cid,
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
 		}
 	}, nil)
 	defer testServer.TearDown()

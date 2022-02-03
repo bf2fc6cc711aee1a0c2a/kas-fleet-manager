@@ -82,7 +82,7 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 					KafkaRealm: &keycloak.KeycloakRealmConfig{},
 				},
 			}
-			ready, err := agentOperatorAddon.Provision(api.Cluster{
+			ready, _, err := agentOperatorAddon.Provision(api.Cluster{
 				ClusterID:    "test-cluster-id",
 				ProviderType: api.ClusterProviderOCM,
 			})
@@ -201,7 +201,7 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 					KafkaRealm: &keycloak.KeycloakRealmConfig{},
 				},
 			}
-			err := agentOperatorAddon.ReconcileParameters(api.Cluster{
+			_, err := agentOperatorAddon.ReconcileParameters(api.Cluster{
 				ClusterID:    "test-cluster-id",
 				ProviderType: api.ClusterProviderOCM,
 			})
