@@ -9,7 +9,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
 
@@ -91,21 +90,6 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 			return errors.Wrapf(e, "failed to find cluster with '%s' for kafka request '%s'", kafka.ClusterID, kafka.ID)
 		}
 		cluster = foundCluster
-	} else {
-		// temporary code that will be removed once the deployment to Prod happen
-		foundCluster, err := k.clusterPlmtStrategy.FindCluster(kafka)
-		if err != nil {
-			return errors.Wrapf(err, "failed to find cluster for kafka request %s", kafka.ID)
-		}
-
-		if foundCluster == nil {
-			logger.Logger.Warningf("No available cluster found for Kafka instance with id %s", kafka.ID)
-			return nil
-		}
-
-		cluster = foundCluster
-
-		kafka.ClusterID = cluster.ClusterID
 	}
 
 	// Set desired Strimzi version
