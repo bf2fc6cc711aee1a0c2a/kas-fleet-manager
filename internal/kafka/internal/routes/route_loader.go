@@ -79,7 +79,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
-	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Kafka, s.AccessControlListConfig)
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
@@ -99,11 +98,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1ErrorsRouter := apiV1Router.PathPrefix("/errors").Subrouter()
 	apiV1ErrorsRouter.HandleFunc("", errorsHandler.List).Methods(http.MethodGet)
 	apiV1ErrorsRouter.HandleFunc("/{id}", errorsHandler.Get).Methods(http.MethodGet)
-
-	// /status
-	apiV1Status := apiV1Router.PathPrefix("/status").Subrouter()
-	apiV1Status.HandleFunc("", serviceStatusHandler.Get).Methods(http.MethodGet)
-	apiV1Status.Use(requireIssuer)
 
 	v1Collections := []api.CollectionMetadata{}
 
