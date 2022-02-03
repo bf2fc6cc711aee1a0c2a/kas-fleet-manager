@@ -29,6 +29,19 @@ $GOPATH
       /fleet-manager -- our git root
         /cmd
           /fleet-manager  -- Main CLI entrypoint
+        /internal   -- service specific implementations
+           /dinosaur 
+               providers.go -- dinosaurs service injection setup
+              /test  -- integration test folder
+              /internal 
+                /services -- dinosaurs services
+                /workers  -- dinosaurs workers
+                /api      -- generated data transfer objects for the API and database entities 
+                /migrations -- dinosaurs database migrations
+                /presenters -- DTO converters and presenters
+                /routes  -- routes setup 
+                /environments -- environment setup 
+                /handlers -- api endpoint handlers
         /pkg
           /api      -- type definitions and models (Note. openapi folder is generated - see below)
           /config   -- configuration handling

@@ -93,6 +93,3 @@ If your endpoint is using a new resource, a new folder should be created here wi
 - _flags.go_: Definition for common flags used across your command. 
 
 Any subcommands (i.e. `get`, `list`, `create`) should be added as separate files.
-
-## Unit and Integration Tests
-Please see the [Contributing](../CONTRIBUTING.md) guide for more information.

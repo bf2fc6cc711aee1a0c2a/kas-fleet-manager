@@ -1,8 +1,8 @@
 # Implementation
 
-This document is intended to be an overview of the implementation details of the service.
+This document is intended to be an overview of the implementation details of the service. 
 
-The system is comprised of three main components:
+The system is comprised of three main components, each implemented using the layered architecture:
 
 - REST API
 - Dinosaur Worker
@@ -13,7 +13,26 @@ The system is comprised of three main components:
 ## REST API
 
 The system has a REST API for managing Dinosaur resources. This is the primary interface used by
-end-users to communicate with the service.
+end-users to communicate with the service. 
+From a high level the API is a layered architecture service, divided into the following layers
+```
+api-routes -> http middleware -> handler -> business logic -> database / external API calls. 
+```
+1. `api-routes` layer is responsible for wiring the routes that are to be exposed.
+2. `http middleware layer` is where all the pre-flight checks like terms acceptance are performed
+3. `handler layer` is responsible for the wiring of the incoming http request to the appropriate business logic. 
+   It's also in this layer where validation are performed. All the conversion and and presention from/to the DTO are done in this layer too.
+4. `business logic` layer or also known as the application service layer is where all the business specific logic resides.
+5. `database` layer is the final layer where database specific knowledges resides. We can also perform external API calls e.g SSO API calls, DNS system calls    
+
+>NOTE: The inner layers shouldn't know any details about the outer layer. e.g the business logic layer should call methods in the http middleware layer.
+
+The Rest endpoints are of three categories.
+- [Public user facing API](../openapi/fleet-manager.yaml)
+- [The admin endpoints](../openapi/fleet-manager-private-admin.yaml) to perform some admin tasks like upgrades. The endpoint is not visible to the normal user and it requires special permissions to be accessed
+- [The fleetshard synchronisation endpoints](../openapi/fleet-manager-private.yaml) for communication between the fleetshard operator and the fleet manager. The endpoint is not visible to the user and it requires a special _service account_ in sso to be accessed.
+
+They are all setup in the [route_loder.go](../internal/dinosaur/internal/routes/route_loader.go) file.
 
 The OpenAPI spec for this API can be seen by running:
 
@@ -21,7 +40,9 @@ The OpenAPI spec for this API can be seen by running:
 make run/docs
 ```
 
-This will serve the OpenAPI spec on `localhost:80`
+This will serve the OpenAPI spec on `localhost:8082`
+
+See the [customizing OpenAPI Spec](./customizing-openapi-spec.md) for more info on customizing OpenAPI spec.
 
 It's important to note that the system is asynchronous, meaning that once a Dinosaur resource is
 created via the REST API, there won't be a running Dinosaur instance created by the time the HTTP
@@ -34,6 +55,8 @@ requests, to obtain a short-lived token run:
 ```
 ocm token
 ```
+
+See [adding a new endpoint](./adding-a-new-endpoint.md) documentation for more info on how the http endpoints are structured.
 
 ## Dinosaur Workers
 

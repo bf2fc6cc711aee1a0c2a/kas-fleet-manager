@@ -19,7 +19,7 @@ make deploy/project <OPTIONAL_PARAMETERS>
 **Optional parameters**:
 - `NAMESPACE`: The namespace where the image will be pushed to. Defaults to 'fleet-manager-$USER.'
 
-## Build and Push KAS Fleet Manager Image to the OpenShift Internal Registry
+## Build and Push Fleet Manager Image to the OpenShift Internal Registry
 Login to the OpenShift cluster
 
 >**NOTE**: Ensure that the user used has the correct permissions to push to the OpenShift image registry. For more information, see the [accessing the registry](https://docs.openshift.com/container-platform/4.5/registry/accessing-the-registry.html#prerequisites) guide.
@@ -104,7 +104,7 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 
 **Optional parameters**:
 - `NAMESPACE`: The namespace where the service will be deployed to. Defaults to managed-services-$USER.
-- `FLEET_MANAGER_ENV`: Environment used for the KAS Fleet Manager deployment. Options: `development`, `integration`, `testing`, `stage` and `production`, Default: `development`.
+- `FLEET_MANAGER_ENV`: Environment used for the Fleet Manager deployment. Options: `development`, `integration`, `testing`, `stage` and `production`, Default: `development`.
 - `IMAGE_REGISTRY`: Registry used by the image. Defaults to the OpenShift internal registry.
 - `IMAGE_REPOSITORY`: Image repository. Defaults to '\<namespace\>/fleet-manager'.
 - `REPLICAS`: Number of replicas of the Fleet Manager deployment. Defaults to `1`.

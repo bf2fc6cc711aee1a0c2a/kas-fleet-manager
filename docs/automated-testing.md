@@ -46,8 +46,45 @@ loop one by one. For an example of writing a table driven test, see:
 - [The Test_dinosaurService_Get test in this repository](../internal/dinosaur/internal/services/dinosaur_test.go)
 
 
+Unit tests can be run using the following command
+
+```shell
+make test
+```
+
 ## Integration Tests
 
+### Running tests
+
+Integration tests can be executed against a real or "emulated" OCM environment. Executing against
+an emulated environment can be useful to get fast feedback as OpenShift clusters will not actually
+be provisioned, reducing testing time greatly.
+
+Both scenarios require a database and OCM token to be setup before running integration tests, run:
+
+```
+make db/setup
+make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
+```
+
+To run integration tests with an "emulated" OCM environment, run:
+
+```
+OCM_ENV=integration make test/integration
+```
+
+To run integration tests with a real OCM environment, run:
+
+```
+make test/integration
+```
+
+To stop and remove the database container when finished, run:
+```
+make db/teardown
+```
+
+### Adding new tests
 Before every integration test, `RegisterIntegration()` must be invoked. This will ensure that the
 API server and background workers are running and that the database has been reset to a clean
 state. `RegisterIntegration()` also returns a teardown function that should be invoked at the end
