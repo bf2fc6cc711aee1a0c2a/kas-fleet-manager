@@ -142,7 +142,7 @@ type Cluster struct {
 	StatusDetails      string        `json:"status_details" gorm:"-"`
 	IdentityProviderID string        `json:"identity_provider_id"`
 	ClusterDNS         string        `json:"cluster_dns"`
-	ServiceAccountId   string        `json:"service_account_id"`
+	ClientID           string        `json:"client_id"`
 	// the provider type for the cluster, e.g. OCM, AWS, GCP, Standalone etc
 	ProviderType ClusterProviderType `json:"provider_type"`
 	// store the provider-specific information that can be used to managed the openshift/k8s cluster

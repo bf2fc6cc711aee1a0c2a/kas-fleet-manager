@@ -114,11 +114,11 @@ func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, private.DataPlaneClusterUpdateStatusRequest{})
-	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest)) // We expect 400 error in this test because the cluster ID does not exist
+	Expect(resp.StatusCode).To(Equal(http.StatusNotFound)) // We expect 404 error in this test because the cluster ID does not exist
 	Expect(err).To(HaveOccurred())
 
 	_, resp, err = privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
-	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest)) // We expect 400 error in this test because the cluster ID does not exist
+	Expect(resp.StatusCode).To(Equal(http.StatusNotFound)) // We expect 404 error in this test because the cluster ID does not exist
 	Expect(err).To(HaveOccurred())
 }
 

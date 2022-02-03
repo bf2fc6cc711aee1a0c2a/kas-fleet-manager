@@ -13,10 +13,11 @@ import (
 
 func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 	tests := []struct {
-		name      string
-		token     *jwt.Token
-		clusterId string
-		want      int
+		name             string
+		token            *jwt.Token
+		clusterId        string
+		authAgentService AuthAgentService
+		want             int
 	}{
 		{
 			name: "should success when clusterId matches",
@@ -26,25 +27,33 @@ func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 				},
 			},
 			clusterId: "12345",
-			want:      http.StatusOK,
+			authAgentService: &AuthAgentServiceMock{
+				GetClientIdFunc: func(clusterId string) (string, error) {
+					if clusterId == "12345" {
+						return "kas-fleetshard-agent-12345", nil
+					}
+					return "", nil
+				},
+			},
+			want: http.StatusOK,
 		},
 		{
 			name: "should fail when clusterId doesn't match",
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
-					"kas-fleetshard-operator-cluster-id": "12345",
+					"clientId": "kas-fleetshard-agent-12345",
 				},
 			},
 			clusterId: "invalidid",
-			want:      http.StatusNotFound,
-		},
-		{
-			name: "should fail when clusterId claim isn't presented",
-			token: &jwt.Token{
-				Claims: jwt.MapClaims{},
+			authAgentService: &AuthAgentServiceMock{
+				GetClientIdFunc: func(clusterId string) (string, error) {
+					if clusterId == "12345" {
+						return "kas-fleetshard-agent-12345", nil
+					}
+					return "", nil
+				},
 			},
-			clusterId: "12345",
-			want:      http.StatusNotFound,
+			want: http.StatusNotFound,
 		},
 	}
 
@@ -58,7 +67,7 @@ func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 			route.Use(func(handler http.Handler) http.Handler {
 				return setContextToken(handler, tt.token)
 			})
-			route.Use(checkClusterId(Kas, "id"))
+			route.Use(checkClusterId(Kas, "id", tt.authAgentService))
 			req := httptest.NewRequest("GET", "http://example.com/agent-cluster/"+tt.clusterId, nil)
 			recorder := httptest.NewRecorder()
 			route.ServeHTTP(recorder, req)
