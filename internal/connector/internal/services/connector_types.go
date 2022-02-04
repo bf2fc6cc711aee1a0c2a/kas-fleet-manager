@@ -78,11 +78,14 @@ func (cts *connectorTypesService) Create(resource *dbapi.ConnectorType) *errors.
 		if dbConn.Model(&resource).Association("Labels").Replace(resource.Labels) != nil {
 			return errors.GeneralError("failed to update connector type %q labels: %v", tid, err)
 		}
+		if dbConn.Model(&resource).Association("Capabilities").Replace(resource.Capabilities) != nil {
+			return errors.GeneralError("failed to update connector type %q capabilities: %v", tid, err)
+		}
 	}
 
 	// read it back.... to get the updated version...
 	if err := dbConn.Where("id = ?", tid).
-		Preload("Channels").Preload("Labels").
+		Preload("Channels").Preload("Labels").Preload("Capabilities").
 		First(&resource).Error; err != nil {
 		return services.HandleGetError("Connector", "id", tid, err)
 	}
@@ -109,6 +112,7 @@ func (cts *connectorTypesService) Get(id string) (*dbapi.ConnectorType, *errors.
 	err := dbConn.
 		Preload("Channels").
 		Preload("Labels").
+		Preload("Capabilities").
 		Where("connector_types.id = ?", id).
 		First(&resource).Error
 
@@ -174,6 +178,7 @@ func (cts *connectorTypesService) List(ctx context.Context, listArgs *services.L
 	result := dbConn.
 		Preload("Channels").
 		Preload("Labels").
+		Preload("Capabilities").
 		Find(&resourceList)
 	if result.Error != nil {
 		return nil, nil, errors.ToServiceError(result.Error)

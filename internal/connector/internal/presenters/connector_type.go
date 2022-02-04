@@ -44,6 +44,7 @@ func ConvertConnectorType(from public.ConnectorType) (*dbapi.ConnectorType, erro
 
 	ct.SetLabels(from.Labels)
 	ct.SetChannels(toStringSlice(from.Channels))
+	ct.SetCapabilities(from.Capabilities)
 	schemaToBeSet := from.Schema
 	if schemaToBeSet == nil {
 		schemaToBeSet = from.Schema
@@ -61,15 +62,16 @@ func PresentConnectorType(from *dbapi.ConnectorType) (*public.ConnectorType, err
 	}
 	reference := PresentReference(from.ID, from)
 	return &public.ConnectorType{
-		Id:          reference.Id,
-		Kind:        reference.Kind,
-		Href:        reference.Href,
-		Name:        from.Name,
-		Version:     from.Version,
-		Description: from.Description,
-		Schema:      schemaDom,
-		IconHref:    from.IconHref,
-		Labels:      from.LabelNames(),
-		Channels:    toChannelSlice(from.ChannelNames()),
+		Id:           reference.Id,
+		Kind:         reference.Kind,
+		Href:         reference.Href,
+		Name:         from.Name,
+		Version:      from.Version,
+		Description:  from.Description,
+		Schema:       schemaDom,
+		IconHref:     from.IconHref,
+		Labels:       from.LabelNames(),
+		Channels:     toChannelSlice(from.ChannelNames()),
+		Capabilities: from.CapabilitiesNames(),
 	}, nil
 }
