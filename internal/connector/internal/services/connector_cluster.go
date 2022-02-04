@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	goerrors "errors"
 	"fmt"
+	"reflect"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
@@ -19,7 +21,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
 	"github.com/spyzhov/ajson"
 	"gorm.io/gorm"
-	"reflect"
 )
 
 type ConnectorClusterService interface {
@@ -537,13 +538,13 @@ func getSecretsFromVaultAsBase64(resource *dbapi.Connector, cts ConnectorTypesSe
 	}
 	// move secrets to a vault.
 
-	if resource.Kafka.ClientSecretRef != "" {
-		v, err := vault.GetSecretString(resource.Kafka.ClientSecretRef)
+	if resource.ServiceAccount.ClientSecretRef != "" {
+		v, err := vault.GetSecretString(resource.ServiceAccount.ClientSecretRef)
 		if err != nil {
 			return errors.GeneralError("could not get kafka client secrets from the vault: %v", err.Error())
 		}
 		encoded := base64.StdEncoding.EncodeToString([]byte(v))
-		resource.Kafka.ClientSecret = encoded
+		resource.ServiceAccount.ClientSecret = encoded
 	}
 
 	if len(resource.ConnectorSpec) != 0 {

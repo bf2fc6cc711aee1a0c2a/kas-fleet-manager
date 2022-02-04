@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	goerrors "errors"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -152,10 +153,10 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 	_ = db.AddPostCommitAction(ctx, func() {
 		// delete related distributed resources...
 
-		if resource.Kafka.ClientSecretRef != "" {
-			err := k.vaultService.DeleteSecretString(resource.Kafka.ClientSecretRef)
+		if resource.ServiceAccount.ClientSecretRef != "" {
+			err := k.vaultService.DeleteSecretString(resource.ServiceAccount.ClientSecretRef)
 			if err != nil {
-				logger.Logger.Errorf("failed to delete vault secret key '%s': %v", resource.Kafka.ClientSecretRef, err)
+				logger.Logger.Errorf("failed to delete vault secret key '%s': %v", resource.ServiceAccount.ClientSecretRef, err)
 			}
 		}
 

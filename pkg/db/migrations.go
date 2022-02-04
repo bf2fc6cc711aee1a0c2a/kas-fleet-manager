@@ -135,6 +135,27 @@ func CreateTableAction(table interface{}) MigrationAction {
 	}
 }
 
+func DropTableAction(table interface{}) MigrationAction {
+	caller := ""
+	if _, file, no, ok := runtime.Caller(1); ok {
+		caller = fmt.Sprintf("[ %s:%d ]", file, no)
+	}
+	return func(tx *gorm.DB, apply bool) error {
+		if apply {
+			err := tx.Migrator().DropTable(table)
+			if err != nil {
+				return errors.Wrap(err, caller)
+			}
+		} else {
+			err := tx.AutoMigrate(table)
+			if err != nil {
+				return errors.Wrap(err, caller)
+			}
+		}
+		return nil
+	}
+}
+
 func AddTableColumnsAction(table interface{}) MigrationAction {
 	caller := ""
 	if _, file, no, ok := runtime.Caller(1); ok {
@@ -160,6 +181,26 @@ func AddTableColumnsAction(table interface{}) MigrationAction {
 				if err := tx.Migrator().DropColumn(table, field.DBName); err != nil {
 					return errors.Wrap(err, caller)
 				}
+			}
+		}
+		return nil
+
+	}
+}
+
+func AddTableColumnAction(table interface{}, columnName string) MigrationAction {
+	caller := ""
+	if _, file, no, ok := runtime.Caller(1); ok {
+		caller = fmt.Sprintf("[ %s:%d ]", file, no)
+	}
+	return func(tx *gorm.DB, apply bool) error {
+		if apply {
+			if err := tx.Migrator().AddColumn(table, columnName); err != nil {
+				return errors.Wrap(err, caller)
+			}
+		} else {
+			if err := tx.Migrator().DropColumn(table, columnName); err != nil {
+				return errors.Wrap(err, caller)
 			}
 		}
 		return nil
@@ -198,6 +239,26 @@ func DropTableColumnsAction(table interface{}, tableName ...string) MigrationAct
 				if err := tx.Migrator().AddColumn(table, field.DBName); err != nil {
 					return errors.Wrap(err, caller)
 				}
+			}
+		}
+		return nil
+
+	}
+}
+
+func RenameTableColumnAction(table interface{}, oldFieldName string, newFieldName string) MigrationAction {
+	caller := ""
+	if _, file, no, ok := runtime.Caller(1); ok {
+		caller = fmt.Sprintf("[ %s:%d ]", file, no)
+	}
+	return func(tx *gorm.DB, apply bool) error {
+		if apply {
+			if err := tx.Migrator().RenameColumn(table, oldFieldName, newFieldName); err != nil {
+				return errors.Wrap(err, caller)
+			}
+		} else {
+			if err := tx.Migrator().RenameColumn(table, newFieldName, oldFieldName); err != nil {
+				return errors.Wrap(err, caller)
 			}
 		}
 		return nil

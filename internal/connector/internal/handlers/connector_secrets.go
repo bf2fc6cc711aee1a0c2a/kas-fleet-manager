@@ -11,8 +11,8 @@ import (
 
 func stripSecretReferences(resource *dbapi.Connector, ct *dbapi.ConnectorType) *errors.ServiceError {
 	// clear out secrets..
-	resource.Kafka.ClientSecret = ""
-	resource.Kafka.ClientSecretRef = ""
+	resource.ServiceAccount.ClientSecret = ""
+	resource.ServiceAccount.ClientSecretRef = ""
 	if len(resource.ConnectorSpec) != 0 {
 		updated, err := secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
 			if node.Type() == ajson.Object {
@@ -41,13 +41,13 @@ func stripSecretReferences(resource *dbapi.Connector, ct *dbapi.ConnectorType) *
 func moveSecretsToVault(resource *dbapi.Connector, ct *dbapi.ConnectorType, vault vault.VaultService, errorOnObject bool) *errors.ServiceError {
 
 	// move secrets to a vault.
-	if resource.Kafka.ClientSecret != "" {
+	if resource.ServiceAccount.ClientSecret != "" {
 		keyId := api.NewID()
-		if err := vault.SetSecretString(keyId, resource.Kafka.ClientSecret, "/v1/connector/"+resource.ID); err != nil {
+		if err := vault.SetSecretString(keyId, resource.ServiceAccount.ClientSecret, "/v1/connector/"+resource.ID); err != nil {
 			return errors.GeneralError("could not store kafka client secret in the vault: %v", err.Error())
 		}
-		resource.Kafka.ClientSecret = ""
-		resource.Kafka.ClientSecretRef = keyId
+		resource.ServiceAccount.ClientSecret = ""
+		resource.ServiceAccount.ClientSecretRef = keyId
 	}
 
 	if len(resource.ConnectorSpec) != 0 {
@@ -91,8 +91,8 @@ func moveSecretsToVault(resource *dbapi.Connector, ct *dbapi.ConnectorType, vaul
 
 func getSecretRefs(resource *dbapi.Connector, ct *dbapi.ConnectorType) (result []string, err error) {
 
-	if resource.Kafka.ClientSecretRef != "" {
-		result = append(result, resource.Kafka.ClientSecretRef)
+	if resource.ServiceAccount.ClientSecretRef != "" {
+		result = append(result, resource.ServiceAccount.ClientSecretRef)
 	}
 
 	// find the existing secrets...

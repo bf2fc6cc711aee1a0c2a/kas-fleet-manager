@@ -1179,6 +1179,10 @@ Feature: create a connector
           "id":"mykafka",
           "url": "kafka.hostname"
         },
+        "schema_registry": {
+          "id":"myregistry",
+          "url": "registry.hostname"
+        },
         "service_account": {
           "client_secret": "test",
           "client_id": "myclient"
@@ -1208,6 +1212,10 @@ Feature: create a connector
               "id": "mykafka",
               "url": "kafka.hostname"
             },
+            "schema_registry": {
+              "id":"myregistry",
+              "url": "registry.hostname"
+            },
             "service_account": {
               "client_secret": "",
               "client_id": "myclient"
@@ -1233,10 +1241,6 @@ Feature: create a connector
             "resource_version": ${response.items[0].resource_version},
             "modified_at": "${response.items[0].modified_at}",
             "desired_state": "ready",
-            "schema_registry": {
-              "id": "",
-              "url": ""
-            },
             "status": {
               "state": "assigning"
             }
@@ -1265,8 +1269,8 @@ Feature: create a connector
           "modified_at": "${response.modified_at}",
           "resource_version": ${response.resource_version},
           "schema_registry": {
-            "id": "",
-            "url": ""
+            "id": "myregistry",
+            "url": "registry.hostname"
           },
           "kafka": {
             "id": "mykafka",
@@ -1779,6 +1783,10 @@ Feature: create a connector
           "id":"mykafka",
           "url": "kafka.hostname"
         },
+        "schema_registry": {
+          "id": "myregistry",
+          "url": "registry.hostname"
+        },
         "service_account": {
           "client_id": "myclient",
           "client_secret": "test"
@@ -1830,8 +1838,8 @@ Feature: create a connector
             "modified_at": "${response.items[0].modified_at}",
             "desired_state": "ready",
             "schema_registry": {
-              "id": "",
-              "url": ""
+              "id": "myregistry",
+              "url": "registry.hostname"
             },
             "status": {
               "state": "bad-connector-type"
@@ -1875,8 +1883,8 @@ Feature: create a connector
           "channel": "stable",
           "desired_state": "ready",
           "schema_registry": {
-            "id": "",
-            "url": ""
+            "id": "myregistry",
+            "url": "registry.hostname"
           },
           "status": {
             "state": "bad-connector-type"
