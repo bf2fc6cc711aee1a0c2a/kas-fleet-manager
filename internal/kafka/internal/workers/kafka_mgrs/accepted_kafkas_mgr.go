@@ -82,15 +82,10 @@ func (k *AcceptedKafkaManager) Reconcile() []error {
 }
 
 func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest) error {
-	var cluster *api.Cluster
-
-	foundCluster, e := k.clusterService.FindClusterByID(kafka.ClusterID)
-
-	if foundCluster == nil || e != nil {
+	cluster, e := k.clusterService.FindClusterByID(kafka.ClusterID)
+	if cluster == nil || e != nil {
 		return errors.Wrapf(e, "failed to find cluster with '%s' for kafka request '%s'", kafka.ClusterID, kafka.ID)
 	}
-	cluster = foundCluster
-
 	// Set desired Strimzi version
 	var selectedStrimziVersion *api.StrimziVersion
 
