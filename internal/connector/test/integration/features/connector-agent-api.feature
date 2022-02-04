@@ -613,39 +613,19 @@ Feature: connector agent API
     Given I am logged in as "Ricky Bobby"
     And I GET path "/v1/admin/kafka_connector_clusters/"
     And the response code should be 200
-    And the response should match json:
+    And the ".items[0]" selection from the response should match json:
       """
       {
-        "items": [
-          {
-            "href": "${response.items[0].href}",
-            "id": "${response.items[0].id}",
-            "kind": "ConnectorCluster",
-            "created_at": "${response.items[0].created_at}",
-            "name": "New Cluster",
-            "owner": "${response.items[0].owner}",
-            "modified_at": "${response.items[0].modified_at}",
-            "status": {
-              "state": "ready"
-            }
-          },
-          {
-            "href": "${response.items[1].href}",
-            "id": "${response.items[1].id}",
-            "kind": "ConnectorCluster",
-            "created_at": "${response.items[1].created_at}",
-            "name": "New Cluster",
-            "owner": "${response.items[1].owner}",
-            "modified_at": "${response.items[1].modified_at}",
-            "status": {
-              "state": "ready"
-            }
-          }
-        ],
-        "kind": "ConnectorClusterList",
-        "page": 1,
-        "size": 2,
-        "total": 2
+        "href": "${response.items[0].href}",
+        "id": "${response.items[0].id}",
+        "kind": "ConnectorCluster",
+        "created_at": "${response.items[0].created_at}",
+        "name": "New Cluster",
+        "owner": "${response.items[0].owner}",
+        "modified_at": "${response.items[0].modified_at}",
+        "status": {
+          "state": "ready"
+        }
       }
       """
     And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
