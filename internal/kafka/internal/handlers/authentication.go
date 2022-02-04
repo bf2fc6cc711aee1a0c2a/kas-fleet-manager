@@ -26,7 +26,7 @@ func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig 
 
 	return authentication.NewHandler().
 			Logger(authnLogger).
-		    KeysInsecure(ServerConfig.VerifyInsecure).
+			KeysInsecure(ServerConfig.VerifyInsecure).
 			KeysURL(ServerConfig.JwksURL).                              //ocm JWK JSON web token signing certificates URL
 			KeysFile(ServerConfig.JwksFile).                            //ocm JWK backup JSON web token signing certificates
 			KeysURL(KeycloakConfig.KafkaRealm.JwksEndpointURI).         // mas-sso JWK Cert URL

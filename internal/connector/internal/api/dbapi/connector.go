@@ -102,7 +102,7 @@ type ConnectorDeploymentStatus struct {
 }
 
 type KafkaConnectionSettings struct {
-	KafkaID        	string `gorm:"column:id"`
+	KafkaID         string `gorm:"column:id"`
 	BootstrapServer string
 }
 

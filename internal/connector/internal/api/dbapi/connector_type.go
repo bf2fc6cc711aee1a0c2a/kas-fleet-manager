@@ -23,6 +23,8 @@ type ConnectorType struct {
 	IconHref string
 	// labels used to categorize the connector
 	Labels []ConnectorTypeLabel `gorm:"foreignKey:ConnectorTypeID"`
+	// connector capabilities used to understand what features a connector support
+	Capabilities []ConnectorTypeCapability `gorm:"foreignKey:ConnectorTypeID"`
 }
 
 type ConnectorTypeList []*ConnectorType
@@ -38,6 +40,11 @@ type ConnectorChannel struct {
 type ConnectorTypeLabel struct {
 	ConnectorTypeID string `gorm:"primaryKey"`
 	Label           string `gorm:"primaryKey"`
+}
+
+type ConnectorTypeCapability struct {
+	ConnectorTypeID string `gorm:"primaryKey"`
+	Capability      string `gorm:"primaryKey"`
 }
 
 type ConnectorShardMetadata struct {
@@ -61,6 +68,23 @@ func (ct *ConnectorType) SetChannels(channels []string) {
 	for i, name := range channels {
 		ct.Channels[i] = ConnectorChannel{
 			Channel: name,
+		}
+	}
+}
+
+func (ct *ConnectorType) CapabilitiesNames() []string {
+	capabilities := make([]string, len(ct.Capabilities))
+	for i := 0; i < len(capabilities); i++ {
+		capabilities[i] = ct.Capabilities[i].Capability
+	}
+	return capabilities
+}
+
+func (ct *ConnectorType) SetCapabilities(capabilities []string) {
+	ct.Capabilities = make([]ConnectorTypeCapability, len(capabilities))
+	for i, name := range capabilities {
+		ct.Capabilities[i] = ConnectorTypeCapability{
+			Capability: name,
 		}
 	}
 }

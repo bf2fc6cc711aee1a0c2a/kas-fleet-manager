@@ -32,8 +32,8 @@ func ConvertConnectorRequest(from public.ConnectorRequest) (*dbapi.Connector, *e
 			Url:              from.SchemaRegistry.Url,
 		},
 		ServiceAccount: dbapi.ServiceAccount{
-			ClientId:        from.ServiceAccount.ClientId,
-			ClientSecret:    from.ServiceAccount.ClientSecret,
+			ClientId:     from.ServiceAccount.ClientId,
+			ClientSecret: from.ServiceAccount.ClientSecret,
 		},
 	}, nil
 }
