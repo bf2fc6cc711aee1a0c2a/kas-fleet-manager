@@ -281,6 +281,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			gomega.Expect(tt.args.kafka.Status).To(gomega.Equal(tt.wantStatus))
 			gomega.Expect(tt.args.kafka.DesiredStrimziVersion).To(gomega.Equal(tt.wantStrimziOperatorVersion))
+			gomega.Expect(tt.args.kafka.ClusterID).ToNot(gomega.Equal(""))
 		})
 	}
 }
