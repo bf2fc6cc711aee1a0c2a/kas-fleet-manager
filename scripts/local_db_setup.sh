@@ -13,6 +13,7 @@ docker network create kas-fleet-manager-network || true
 docker run \
   --name=kas-fleet-manager-db \
   --net kas-fleet-manager-network \
+  --restart=always \
   -e POSTGRES_PASSWORD=$(cat secrets/db.password) \
   -e POSTGRES_USER=$(cat secrets/db.user) \
   -e POSTGRES_DB=$(cat secrets/db.name) \
