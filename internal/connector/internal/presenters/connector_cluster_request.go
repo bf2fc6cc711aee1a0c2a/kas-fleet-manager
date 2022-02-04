@@ -7,6 +7,6 @@ import (
 
 func ConvertConnectorClusterRequest(from public.ConnectorClusterRequest) dbapi.ConnectorCluster {
 	return dbapi.ConnectorCluster{
-		Name:  from.Name,
+		Name: from.Name,
 	}
 }

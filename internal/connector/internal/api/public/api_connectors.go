@@ -145,21 +145,14 @@ func (a *ConnectorsApiService) CreateConnector(ctx _context.Context, async bool,
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// DeleteConnectorOpts Optional parameters for the method 'DeleteConnector'
-type DeleteConnectorOpts struct {
-	KafkaId optional.String
-}
-
 /*
 DeleteConnector Delete a connector
 Delete a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
- * @param optional nil or *DeleteConnectorOpts - Optional Parameters:
- * @param "KafkaId" (optional.String) -  The kafka cluster id
 @return Error
 */
-func (a *ConnectorsApiService) DeleteConnector(ctx _context.Context, id string, localVarOptionals *DeleteConnectorOpts) (Error, *_nethttp.Response, error) {
+func (a *ConnectorsApiService) DeleteConnector(ctx _context.Context, id string) (Error, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodDelete
 		localVarPostBody     interface{}
@@ -177,9 +170,6 @@ func (a *ConnectorsApiService) DeleteConnector(ctx _context.Context, id string, 
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	if localVarOptionals != nil && localVarOptionals.KafkaId.IsSet() {
-		localVarQueryParams.Add("kafka_id", parameterToString(localVarOptionals.KafkaId.Value(), ""))
-	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -262,21 +252,14 @@ func (a *ConnectorsApiService) DeleteConnector(ctx _context.Context, id string, 
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// GetConnectorOpts Optional parameters for the method 'GetConnector'
-type GetConnectorOpts struct {
-	KafkaId optional.String
-}
-
 /*
 GetConnector Get a connector
 Get a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
- * @param optional nil or *GetConnectorOpts - Optional Parameters:
- * @param "KafkaId" (optional.String) -  The kafka cluster id
 @return Connector
 */
-func (a *ConnectorsApiService) GetConnector(ctx _context.Context, id string, localVarOptionals *GetConnectorOpts) (Connector, *_nethttp.Response, error) {
+func (a *ConnectorsApiService) GetConnector(ctx _context.Context, id string) (Connector, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -294,9 +277,6 @@ func (a *ConnectorsApiService) GetConnector(ctx _context.Context, id string, loc
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	if localVarOptionals != nil && localVarOptionals.KafkaId.IsSet() {
-		localVarQueryParams.Add("kafka_id", parameterToString(localVarOptionals.KafkaId.Value(), ""))
-	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -381,9 +361,8 @@ func (a *ConnectorsApiService) GetConnector(ctx _context.Context, id string, loc
 
 // ListConnectorsOpts Optional parameters for the method 'ListConnectors'
 type ListConnectorsOpts struct {
-	Page    optional.String
-	Size    optional.String
-	KafkaId optional.String
+	Page optional.String
+	Size optional.String
 }
 
 /*
@@ -393,7 +372,6 @@ Returns a list of connector types
  * @param optional nil or *ListConnectorsOpts - Optional Parameters:
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
- * @param "KafkaId" (optional.String) -  The kafka cluster id
 @return ConnectorList
 */
 func (a *ConnectorsApiService) ListConnectors(ctx _context.Context, localVarOptionals *ListConnectorsOpts) (ConnectorList, *_nethttp.Response, error) {
@@ -417,9 +395,6 @@ func (a *ConnectorsApiService) ListConnectors(ctx _context.Context, localVarOpti
 	}
 	if localVarOptionals != nil && localVarOptionals.Size.IsSet() {
 		localVarQueryParams.Add("size", parameterToString(localVarOptionals.Size.Value(), ""))
-	}
-	if localVarOptionals != nil && localVarOptionals.KafkaId.IsSet() {
-		localVarQueryParams.Add("kafka_id", parameterToString(localVarOptionals.KafkaId.Value(), ""))
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -493,22 +468,15 @@ func (a *ConnectorsApiService) ListConnectors(ctx _context.Context, localVarOpti
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// PatchConnectorOpts Optional parameters for the method 'PatchConnector'
-type PatchConnectorOpts struct {
-	KafkaId optional.String
-}
-
 /*
 PatchConnector Patch a connector
 Patch a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
- * @param connectorRequest Data to patch the connector with
- * @param optional nil or *PatchConnectorOpts - Optional Parameters:
- * @param "KafkaId" (optional.String) -  The kafka cluster id
+ * @param body Data to patch the connector with
 @return Connector
 */
-func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, connectorRequest ConnectorRequest, localVarOptionals *PatchConnectorOpts) (Connector, *_nethttp.Response, error) {
+func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, body map[string]interface{}) (Connector, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
@@ -526,11 +494,8 @@ func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, c
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	if localVarOptionals != nil && localVarOptionals.KafkaId.IsSet() {
-		localVarQueryParams.Add("kafka_id", parameterToString(localVarOptionals.KafkaId.Value(), ""))
-	}
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json", "application/merge-patch+json", "application/json-patch+json"}
+	localVarHTTPContentTypes := []string{"application/merge-patch+json", "application/json-patch+json", "application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -547,7 +512,7 @@ func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, c
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = &connectorRequest
+	localVarPostBody = &body
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return localVarReturnValue, nil, err

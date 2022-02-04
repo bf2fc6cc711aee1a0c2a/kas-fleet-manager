@@ -193,12 +193,12 @@ func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource db
 	converted.Spec.DesiredState = string(pc.DesiredState)
 	converted.Spec.ConnectorId = pc.Id
 	converted.Spec.Kafka = private.KafkaConnectionSettings{
-		Id: pc.Kafka.Id,
+		Id:  pc.Kafka.Id,
 		Url: pc.Kafka.Url,
 	}
 	converted.Spec.ServiceAccount = private.ServiceAccount{
-		ClientId:        pc.ServiceAccount.ClientId,
-		ClientSecret:    pc.ServiceAccount.ClientSecret,
+		ClientId:     pc.ServiceAccount.ClientId,
+		ClientSecret: pc.ServiceAccount.ClientSecret,
 	}
 	converted.Spec.ConnectorTypeId = pc.ConnectorTypeId
 	return converted, nil

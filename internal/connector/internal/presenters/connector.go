@@ -29,7 +29,7 @@ func ConvertConnector(from public.Connector) (*dbapi.Connector, *errors.ServiceE
 		ConnectorTypeId: from.ConnectorTypeId,
 		ConnectorSpec:   spec,
 		DesiredState:    string(from.DesiredState),
-		Channel: 		 string(from.Channel),
+		Channel:         string(from.Channel),
 		Kafka: dbapi.KafkaConnectionSettings{
 			BootstrapServer: from.Kafka.Url,
 			ClientId:        from.ServiceAccount.ClientId,
@@ -61,23 +61,23 @@ func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceE
 		ResourceVersion: from.Version,
 
 		DeploymentLocation: public.DeploymentLocation{
-			Kind:          from.TargetKind,
-			ClusterId:     from.AddonClusterId,
+			Kind:      from.TargetKind,
+			ClusterId: from.AddonClusterId,
 		},
 		ConnectorTypeId: from.ConnectorTypeId,
-		Connector:   	 spec,
+		Connector:       spec,
 		Status: public.ConnectorStatusStatus{
 			State: public.ConnectorState(from.Status.Phase),
 		},
 		DesiredState: public.ConnectorDesiredState(from.DesiredState),
-		Channel: public.Channel(from.Channel),
+		Channel:      public.Channel(from.Channel),
 		Kafka: public.KafkaConnectionSettings{
-			Id: from.KafkaID,
+			Id:  from.KafkaID,
 			Url: from.Kafka.BootstrapServer,
 		},
 		ServiceAccount: public.ServiceAccount{
-			ClientId:        from.Kafka.ClientId,
-			ClientSecret:    from.Kafka.ClientSecret,
+			ClientId:     from.Kafka.ClientId,
+			ClientSecret: from.Kafka.ClientSecret,
 		},
 	}, nil
 }
