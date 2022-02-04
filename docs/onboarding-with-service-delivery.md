@@ -1,3 +1,5 @@
+> NOTE this document refers to Red Hat internal components
+
 # Deploying the Fleet Manager with AppInterface and Onboarding with AppSRE
 
 To onboard with Service Delivery AppSRE, please follow the following [onboarding document](https://gitlab.cee.redhat.com/app-sre/contract/-/blob/master/content/service/service_onboarding_flow.md) which details the whole process. 

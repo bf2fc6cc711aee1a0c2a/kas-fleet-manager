@@ -17,6 +17,9 @@ An appropriate SLI implementation is the count of successful API HTTP requests w
 The SLI implementation should be chosen based on observing the service running in production over a long period of time and from running API performance tests.
 
 ## Alerts
+
+> NOTE this section contains references to Red Hat internal components
+
 All alerts are multiwindow, multi-burn-rate alerts. The following are the list of alerts that are associated with this SLO.
 
 - `FleetManagerAPILatency30mto6hP99BudgetBurn`

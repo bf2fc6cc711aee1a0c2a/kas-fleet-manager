@@ -38,6 +38,8 @@ At the end of each file, outside of the JSON data, the `name` and `grafana-folde
 ## Further information
 See [SLOs README](../slos/README.md) for more informtion about metrics and their use in measuring SLIs.
 
+> NOTE this document contains references to Red Hat internal components
+
 See [here](https://gitlab.cee.redhat.com/service/app-interface#add-a-grafana-dashboard) for information about adding Grafana dashboards in App-Sre
 
 ## Observatorium

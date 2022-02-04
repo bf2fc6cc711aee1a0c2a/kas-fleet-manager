@@ -1,4 +1,7 @@
+> NOTE this document refers to Red Hat internal components
+
 # Quota Management with Account Management Service (AMS) SKU
+
 The [Account Management Service](https://api.openshift.com/?urls.primaryName=Accounts%20management%20service) manages users subscriptions. The fleet manager uses the service offered by AMS to manage quota. Quota comes in form of stock keeping unit (SKU) assigned to a given organisation. The process is the same as requesting SKU for addons which is described in the following link https://gitlab.cee.redhat.com/service/managed-tenants/-/blob/main/docs/tenants/requesting_skus.md.
 
 # User Account & Organization Setup
