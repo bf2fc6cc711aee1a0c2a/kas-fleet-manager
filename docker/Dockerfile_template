@@ -36,7 +36,7 @@ RUN curl -o /usr/local/bin/jq http://stedolan.github.io/jq/download/linux64/jq &
   chmod +x /usr/local/bin/jq
 
 # install OCM CLI
-RUN curl -Lo ocm https://github.com/openshift-online/ocm-cli/releases/download/v0.1.42/ocm-linux-amd64 && \
+RUN curl -Lo ocm https://github.com/openshift-online/ocm-cli/releases/download/v0.1.60/ocm-linux-amd64 && \
   chmod +x ocm && sudo mv ocm /usr/local/bin/
 
 COPY test/support/jwt_ca.pem /usr/local/share/ca-certificates/jwt_ca.pem
