@@ -643,6 +643,7 @@ deploy/service: FALL_BACK_USER_NAME_CLAIM ?= "preferred_username"
 deploy/service: MAX_ALLOWED_SERVICE_ACCOUNTS ?= "2"
 deploy/service: MAX_LIMIT_FOR_SSO_GET_CLIENTS ?= "100"
 deploy/service: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
+deploy/service: JWKS_VERIFY_INSECURE ?= "false"
 deploy/service: TOKEN_ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
 deploy/service: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
 deploy/service: ENABLE_TERMS_ACCEPTANCE ?= "false"
@@ -678,6 +679,7 @@ deploy/service: deploy/envoy deploy/route
 		-p OCM_MOCK_MODE=$(OCM_MOCK_MODE) \
 		-p OCM_URL="$(OCM_URL)" \
 		-p AMS_URL="${AMS_URL}" \
+		-p JWKS_VERIFY_INSECURE="${JWKS_VERIFY_INSECURE}" \
 		-p JWKS_URL="$(JWKS_URL)" \
 		-p MAS_SSO_INSECURE="$(MAS_SSO_INSECURE)" \
 		-p MAS_SSO_ENABLE_AUTH="${MAS_SSO_ENABLE_AUTH}" \
