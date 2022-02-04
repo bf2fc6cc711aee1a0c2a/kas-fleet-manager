@@ -18,6 +18,7 @@ type ServerConfig struct {
 	// For production it is "https://api.openshift.com"
 	PublicHostURL         string `json:"public_url"`
 	EnableTermsAcceptance bool   `json:"enable_terms_acceptance"`
+	VerifyInsecure        bool   `json:"verify_insecure"`
 }
 
 func NewServerConfig() *ServerConfig {
@@ -30,6 +31,7 @@ func NewServerConfig() *ServerConfig {
 		HTTPSCertFile:  "",
 		HTTPSKeyFile:   "",
 		PublicHostURL:  "http://localhost",
+		VerifyInsecure: false,
 	}
 }
 
@@ -43,6 +45,7 @@ func (s *ServerConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.JwksFile, "jwks-file", s.JwksFile, "File containing the the JSON web token signing certificates.")
 	fs.StringVar(&s.TokenIssuerURL, "token-issuer-url", s.TokenIssuerURL, "A token issuer URL. Used to validate if a JWT token used for public endpoints was issued from the given URL.")
 	fs.StringVar(&s.PublicHostURL, "public-host-url", s.PublicHostURL, "Public http host URL of the service")
+	fs.BoolVar(&s.VerifyInsecure, "jwks-verify-insecure", s.VerifyInsecure, "Skip TlS verification fetch jwks certs")
 }
 
 func (s *ServerConfig) ReadFiles() error {
