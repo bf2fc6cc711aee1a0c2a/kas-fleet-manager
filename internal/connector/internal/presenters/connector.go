@@ -24,14 +24,20 @@ func ConvertConnector(from public.Connector) (*dbapi.Connector, *errors.ServiceE
 		AddonClusterId:  from.DeploymentLocation.ClusterId,
 		Name:            from.Name,
 		Owner:           from.Owner,
-		KafkaID:         from.Kafka.Id,
 		Version:         from.ResourceVersion,
 		ConnectorTypeId: from.ConnectorTypeId,
 		ConnectorSpec:   spec,
 		DesiredState:    string(from.DesiredState),
 		Channel:         string(from.Channel),
 		Kafka: dbapi.KafkaConnectionSettings{
+			KafkaID:         from.Kafka.Id,
 			BootstrapServer: from.Kafka.Url,
+		},
+		SchemaRegistry: dbapi.SchemaRegistryConnectionSettings{
+			SchemaRegistryID: from.SchemaRegistry.Id,
+			Url:              from.SchemaRegistry.Url,
+		},
+		ServiceAccount: dbapi.ServiceAccount{
 			ClientId:        from.ServiceAccount.ClientId,
 			ClientSecret:    from.ServiceAccount.ClientSecret,
 		},
@@ -72,12 +78,17 @@ func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceE
 		DesiredState: public.ConnectorDesiredState(from.DesiredState),
 		Channel:      public.Channel(from.Channel),
 		Kafka: public.KafkaConnectionSettings{
-			Id:  from.KafkaID,
+			Id: from.Kafka.KafkaID,
 			Url: from.Kafka.BootstrapServer,
 		},
-		ServiceAccount: public.ServiceAccount{
-			ClientId:     from.Kafka.ClientId,
-			ClientSecret: from.Kafka.ClientSecret,
+		SchemaRegistry: public.SchemaRegistryConnectionSettings{
+			Id: from.SchemaRegistry.SchemaRegistryID,
+			Url: from.SchemaRegistry.Url,
 		},
+		ServiceAccount: public.ServiceAccount{
+			ClientId:        from.ServiceAccount.ClientId,
+			ClientSecret:    from.ServiceAccount.ClientSecret,
+		},
+
 	}, nil
 }
