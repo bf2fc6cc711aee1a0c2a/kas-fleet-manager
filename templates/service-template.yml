@@ -286,6 +286,11 @@ parameters:
   description: Enable MAS SSO Auth for the data plane
   value: "true"
 
+- name: MAS_SSO_INSECURE
+  displayName: Enable MAS SSO Insecure Connection
+  description: Enable MAS SSO insecure connection
+  value: "false"
+
 - name: MAS_SSO_BASE_URL
   displayName: MAS SSO Host Url
   description: MAS SSO Host url
@@ -781,6 +786,7 @@ objects:
             - --enable-db-debug=${ENABLE_DB_DEBUG}
             - --ocm-client-id-file=/secrets/service/ocm-service.clientId
             - --ocm-client-secret-file=/secrets/service/ocm-service.clientSecret
+            - --mas-sso-insecure=${MAS_SSO_INSECURE}
             - --mas-sso-enable-auth=${MAS_SSO_ENABLE_AUTH}
             - --mas-sso-client-id-file=/secrets/service/keycloak-service.clientId
             - --mas-sso-client-secret-file=/secrets/service/keycloak-service.clientSecret
