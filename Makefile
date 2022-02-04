@@ -635,6 +635,7 @@ deploy/service: ENABLE_KAFKA_LIFE_SPAN ?= "false"
 deploy/service: KAFKA_LIFE_SPAN ?= "48"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
 deploy/service: MAS_SSO_ENABLE_AUTH ?= "true"
+deploy/service: MAS_SSO_INSECURE ?= "false"
 deploy/service: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy/service: MAS_SSO_REALM ?= "rhoas"
 deploy/service: USER_NAME_CLAIM ?= "clientId"
@@ -678,6 +679,7 @@ deploy/service: deploy/envoy deploy/route
 		-p OCM_URL="$(OCM_URL)" \
 		-p AMS_URL="${AMS_URL}" \
 		-p JWKS_URL="$(JWKS_URL)" \
+		-p MAS_SSO_INSECURE="$(MAS_SSO_INSECURE)" \
 		-p MAS_SSO_ENABLE_AUTH="${MAS_SSO_ENABLE_AUTH}" \
 		-p MAS_SSO_BASE_URL="$(MAS_SSO_BASE_URL)" \
 		-p MAS_SSO_REALM="$(MAS_SSO_REALM)" \
