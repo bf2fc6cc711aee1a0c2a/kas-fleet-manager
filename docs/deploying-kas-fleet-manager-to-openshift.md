@@ -84,7 +84,7 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `OBSERVABILITY_RHSSO_METRICS_SECRET`: The client secret for a RHSSO service account that has remote-write metrics permission. Defaults to vaue read from _./secrets/rhsso-metrics.clientSecret_
 - `OBSERVABILITY_RHSSO_METRICS_CLIENT_ID`: The client id for a RHSSO service account that has read metrics permission. Defaults to `''`
 - `OBSERVABILITY_RHSSO_METRICS_SECRET`: The client secret for a RHSSO service account that has read metrics permission. Defaults to `''`
-
+- `JWKS_VERIFY_INSECURE`: Skip TLS insecure verification for the connection for fetching jwks certificate. Defaults to value false.
 ## (Optional) Deploy the Observatorium Token Refresher
 >**NOTE**: This is only needed if your Observatorium instance is using RHSSO as authentication.
 
