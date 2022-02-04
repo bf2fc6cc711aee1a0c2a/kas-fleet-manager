@@ -19,13 +19,19 @@ func ConvertConnectorRequest(from public.ConnectorRequest) (*dbapi.Connector, *e
 		TargetKind:      from.DeploymentLocation.Kind,
 		AddonClusterId:  from.DeploymentLocation.ClusterId,
 		Name:            from.Name,
-		KafkaID:         from.Kafka.Id,
 		ConnectorTypeId: from.ConnectorTypeId,
 		ConnectorSpec:   spec,
 		DesiredState:    string(from.DesiredState),
 		Channel:         string(from.Channel),
 		Kafka: dbapi.KafkaConnectionSettings{
+			KafkaID:         from.Kafka.Id,
 			BootstrapServer: from.Kafka.Url,
+		},
+		SchemaRegistry: dbapi.SchemaRegistryConnectionSettings{
+			SchemaRegistryID: from.SchemaRegistry.Id,
+			Url:              from.SchemaRegistry.Url,
+		},
+		ServiceAccount: dbapi.ServiceAccount{
 			ClientId:        from.ServiceAccount.ClientId,
 			ClientSecret:    from.ServiceAccount.ClientSecret,
 		},

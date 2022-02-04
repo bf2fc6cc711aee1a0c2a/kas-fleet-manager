@@ -56,14 +56,15 @@ type Connector struct {
 	Name           string
 	Owner          string
 	OrganisationId string
-	KafkaID        string
 	Version        int64 `gorm:"type:bigserial;index:"`
 
 	ConnectorTypeId string
 	ConnectorSpec   api.JSON `gorm:"type:jsonb"`
 	DesiredState    string
 	Channel         string
-	Kafka           KafkaConnectionSettings `gorm:"embedded;embeddedPrefix:kafka_"`
+	Kafka           KafkaConnectionSettings          `gorm:"embedded;embeddedPrefix:kafka_"`
+	SchemaRegistry  SchemaRegistryConnectionSettings `gorm:"embedded;embeddedPrefix:schema_registry_"`
+	ServiceAccount  ServiceAccount                   `gorm:"embedded;embeddedPrefix:service_account_"`
 
 	Status ConnectorStatus `gorm:"foreignKey:ID"`
 }
@@ -100,16 +101,17 @@ type ConnectorDeploymentStatus struct {
 	UpgradeAvailable bool
 }
 
-type ConnectorDeploymentSpecStatusExtractors struct {
-	ApiVersion    string
-	Kind          string
-	Name          string
-	JsonPath      string
-	ConditionType string
+type KafkaConnectionSettings struct {
+	KafkaID        	string `gorm:"column:id"`
+	BootstrapServer string
 }
 
-type KafkaConnectionSettings struct {
-	BootstrapServer string
+type SchemaRegistryConnectionSettings struct {
+	SchemaRegistryID string `gorm:"column:id"`
+	Url              string
+}
+
+type ServiceAccount struct {
 	ClientId        string
 	ClientSecret    string `gorm:"-"`
 	ClientSecretRef string `gorm:"column:client_secret"`
