@@ -38,8 +38,8 @@ func ConvertConnector(from public.Connector) (*dbapi.Connector, *errors.ServiceE
 			Url:              from.SchemaRegistry.Url,
 		},
 		ServiceAccount: dbapi.ServiceAccount{
-			ClientId:        from.ServiceAccount.ClientId,
-			ClientSecret:    from.ServiceAccount.ClientSecret,
+			ClientId:     from.ServiceAccount.ClientId,
+			ClientSecret: from.ServiceAccount.ClientSecret,
 		},
 		Status: dbapi.ConnectorStatus{
 			Phase: string(from.Status.State),
@@ -78,17 +78,16 @@ func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceE
 		DesiredState: public.ConnectorDesiredState(from.DesiredState),
 		Channel:      public.Channel(from.Channel),
 		Kafka: public.KafkaConnectionSettings{
-			Id: from.Kafka.KafkaID,
+			Id:  from.Kafka.KafkaID,
 			Url: from.Kafka.BootstrapServer,
 		},
 		SchemaRegistry: public.SchemaRegistryConnectionSettings{
-			Id: from.SchemaRegistry.SchemaRegistryID,
+			Id:  from.SchemaRegistry.SchemaRegistryID,
 			Url: from.SchemaRegistry.Url,
 		},
 		ServiceAccount: public.ServiceAccount{
-			ClientId:        from.ServiceAccount.ClientId,
-			ClientSecret:    from.ServiceAccount.ClientSecret,
+			ClientId:     from.ServiceAccount.ClientId,
+			ClientSecret: from.ServiceAccount.ClientSecret,
 		},
-
 	}, nil
 }

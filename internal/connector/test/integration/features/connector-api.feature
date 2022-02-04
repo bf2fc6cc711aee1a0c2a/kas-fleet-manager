@@ -32,6 +32,9 @@ Feature: create a connector
             "labels": [
               "source"
             ],
+            "capabilities": [
+              "processors"
+            ],
             "name": "aws-sqs-source",
             "schema": {
               "$defs": {
@@ -268,6 +271,9 @@ Feature: create a connector
             "labels": [
               "sink"
             ],
+            "capabilities": [
+              "processors"
+            ],
             "name": "Log Sink",
             "schema": {
              "$defs": {
@@ -460,6 +466,9 @@ Feature: create a connector
             "kind": "ConnectorType",
             "labels": [
               "sink"
+            ],
+            "capabilities": [
+              "processors"
             ],
             "name": "Log Sink",
             "schema": {
@@ -655,6 +664,9 @@ Feature: create a connector
              "labels": [
                "source"
              ],
+             "capabilities": [
+              "processors"
+            ],
              "name": "aws-sqs-source",
              "schema": {
                "$defs": {
@@ -907,6 +919,9 @@ Feature: create a connector
              "labels": [
                "sink"
              ],
+             "capabilities": [
+              "processors"
+            ],
              "name": "Log Sink",
              "schema": {
                "$defs": {

@@ -28,7 +28,7 @@ func connectorRefactor(migrationId string) *gormigrate.Migration {
 	type TargetKind = string
 
 	type KafkaConnectionSettings struct {
-		KafkaID        	string `gorm:"column:id"`
+		KafkaID         string `gorm:"column:id"`
 		BootstrapServer string
 	}
 
@@ -79,7 +79,7 @@ func connectorRefactor(migrationId string) *gormigrate.Migration {
 		db.RenameTableColumnAction(&Connector{}, "kafka_client_secret", "service_account_client_secret"),
 		db.ExecAction(`ALTER TABLE connectors DROP COLUMN kafka_client_secret_ref`,
 			`ALTER TABLE connectors ADD kafka_client_secret_ref text`),
-		db.AddTableColumnAction(&Connector{},"SchemaRegistryID"),
-		db.AddTableColumnAction(&Connector{},"Url"),
+		db.AddTableColumnAction(&Connector{}, "SchemaRegistryID"),
+		db.AddTableColumnAction(&Connector{}, "Url"),
 	)
 }
