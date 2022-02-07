@@ -25,12 +25,12 @@ func ConvertConnectorCluster(from public.ConnectorCluster) dbapi.ConnectorCluste
 func PresentConnectorCluster(from dbapi.ConnectorCluster) public.ConnectorCluster {
 	reference := PresentReference(from.ID, from)
 	return public.ConnectorCluster{
-		Id:   reference.Id,
-		Kind: reference.Kind,
-		Href: reference.Href,
-		Owner:     from.Owner,
-		Name:      from.Name,
-		CreatedAt: from.CreatedAt,
+		Id:         reference.Id,
+		Kind:       reference.Kind,
+		Href:       reference.Href,
+		Owner:      from.Owner,
+		Name:       from.Name,
+		CreatedAt:  from.CreatedAt,
 		ModifiedAt: from.UpdatedAt,
 		Status: public.ConnectorClusterStatusStatus{
 			State: public.ConnectorClusterState(from.Status.Phase),
@@ -41,12 +41,12 @@ func PresentConnectorCluster(from dbapi.ConnectorCluster) public.ConnectorCluste
 func PresentPrivateConnectorCluster(from dbapi.ConnectorCluster) private.ConnectorCluster {
 	reference := PresentReference(from.ID, from)
 	return private.ConnectorCluster{
-		Id:   reference.Id,
-		Kind: reference.Kind,
-		Href: reference.Href,
-		Owner:     from.Owner,
-		Name:      from.Name,
-		CreatedAt: from.CreatedAt,
+		Id:         reference.Id,
+		Kind:       reference.Kind,
+		Href:       reference.Href,
+		Owner:      from.Owner,
+		Name:       from.Name,
+		CreatedAt:  from.CreatedAt,
 		ModifiedAt: from.UpdatedAt,
 		Status: private.ConnectorClusterStatusStatus{
 			State: private.ConnectorClusterState(from.Status.Phase),

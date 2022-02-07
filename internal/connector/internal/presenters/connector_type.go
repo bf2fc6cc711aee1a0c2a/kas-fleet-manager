@@ -7,7 +7,7 @@ import (
 )
 
 func toStringSlice(channels []public.Channel) []string {
-	if (channels == nil) {
+	if channels == nil {
 		return nil
 	}
 
@@ -19,7 +19,7 @@ func toStringSlice(channels []public.Channel) []string {
 }
 
 func toChannelSlice(strings []string) []public.Channel {
-	if (strings == nil) {
+	if strings == nil {
 		return nil
 	}
 
