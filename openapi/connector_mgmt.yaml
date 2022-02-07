@@ -351,18 +351,17 @@ paths:
       requestBody:
         description: Data to patch the connector with
         content:
-          application/json:
-            schema:
-              anyOf:
-                - $ref: "#/components/schemas/ConnectorRequest"
-                - type: object
           application/merge-patch+json:
             schema:
-              $ref: "#/components/schemas/ConnectorRequest"
+              type: object
           application/json-patch+json:
             schema:
               description: A JSON Patch, RFC 6902 - https://tools.ietf.org/html/rfc6902
               type: object
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectorRequest"
+  
         required: true
       responses:
         "202":

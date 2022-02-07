@@ -44,5 +44,3 @@ func connectorValidationFunction(connectorTypesService services.ConnectorTypesSe
 		return handlers.ValidateJsonSchema("connector type schema", schemaLoader, "connector spec", documentLoader)
 	}
 }
-
-

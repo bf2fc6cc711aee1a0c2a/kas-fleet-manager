@@ -23,7 +23,7 @@ func ConvertConnectorRequest(from public.ConnectorRequest) (*dbapi.Connector, *e
 		ConnectorTypeId: from.ConnectorTypeId,
 		ConnectorSpec:   spec,
 		DesiredState:    string(from.DesiredState),
-		Channel: 		 string(from.Channel),
+		Channel:         string(from.Channel),
 		Kafka: dbapi.KafkaConnectionSettings{
 			BootstrapServer: from.Kafka.Url,
 			ClientId:        from.ServiceAccount.ClientId,
