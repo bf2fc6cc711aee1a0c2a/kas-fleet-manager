@@ -42,7 +42,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa.ClientId).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
-	Expect(sa.Owner).Should(Equal(account.Username()))
+	Expect(sa.CreatedBy).Should(Equal(account.Username()))
 	Expect(sa.Id).NotTo(BeEmpty())
 	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
 
@@ -52,8 +52,8 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(sa.ClientId).NotTo(BeEmpty())
-	Expect(sa.Owner).NotTo(BeEmpty())
-	Expect(sa.Owner).Should(Equal(account.Username()))
+	Expect(sa.CreatedBy).NotTo(BeEmpty())
+	Expect(sa.CreatedBy).Should(Equal(account.Username()))
 	Expect(sa.Id).NotTo(BeEmpty())
 	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
 
@@ -63,8 +63,8 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(Equal(oldSecret))
-	Expect(sa.Owner).Should(Equal(account.Username()))
-	Expect(sa.Owner).NotTo(BeEmpty())
+	Expect(sa.CreatedBy).Should(Equal(account.Username()))
+	Expect(sa.CreatedBy).NotTo(BeEmpty())
 	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
 
 	//verify delete
@@ -249,7 +249,7 @@ func TestServiceAccount_CreationLimits(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa.ClientId).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
-	Expect(sa.Owner).Should(Equal(account.Username()))
+	Expect(sa.CreatedBy).Should(Equal(account.Username()))
 	Expect(sa.Id).NotTo(BeEmpty())
 
 	r = public.ServiceAccountRequest{
@@ -261,7 +261,7 @@ func TestServiceAccount_CreationLimits(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa2.ClientId).NotTo(BeEmpty())
 	Expect(sa2.ClientSecret).NotTo(BeEmpty())
-	Expect(sa2.Owner).Should(Equal(account.Username()))
+	Expect(sa2.CreatedBy).Should(Equal(account.Username()))
 	Expect(sa2.Id).NotTo(BeEmpty())
 
 	// limit has reached for 2 service accounts
