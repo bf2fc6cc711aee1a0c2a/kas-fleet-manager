@@ -219,7 +219,7 @@ help:
 	@echo "make image/build/push/internal   build and push image to an openshift cluster image registry."
 	@echo "make deploy                      deploy the service via templates to an openshift cluster"
 	@echo "make undeploy                    remove the service deployments from an openshift cluster"
-	@echo "openapi/spec/validate            validate OpenAPI spec using spectral"
+	@echo "make openapi/spec/validate            validate OpenAPI spec using spectral"
 	@echo "$(fake)"
 .PHONY: help
 
