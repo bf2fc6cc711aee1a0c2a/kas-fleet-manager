@@ -14,6 +14,7 @@ type ConnectorState string
 
 // List of ConnectorState
 const (
+	CONNECTORSTATE_ASSIGNING      ConnectorState = "assigning"
 	CONNECTORSTATE_READY          ConnectorState = "ready"
 	CONNECTORSTATE_STOPPED        ConnectorState = "stopped"
 	CONNECTORSTATE_DELETED        ConnectorState = "deleted"
