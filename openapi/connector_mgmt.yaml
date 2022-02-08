@@ -860,6 +860,7 @@ components:
     ConnectorClusterState:
       type: string
       enum:
+        - assigning
         - disconnected
         - ready
 
