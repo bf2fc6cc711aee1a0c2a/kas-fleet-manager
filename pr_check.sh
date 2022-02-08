@@ -36,6 +36,8 @@ export PATH="${GOBIN}:${PATH}"
 
 export IMAGE_NAME="test/kas-fleet-manager"
 
+INTEGRATION_ENV=integration
+
 # copy dockerfile depending on targetted environment and set env vars in the dockerfile
 if [[ -z "${OCM_ENV}" ]] || [[ "${OCM_ENV}" == "${INTEGRATION_ENV}" ]];
 then
@@ -52,6 +54,13 @@ else
   sed -i "s/<aws_secret_access_key>/${AWS_SECRET_ACCESS_KEY}/g" Dockerfile_integration_tests
   sed -i "s/<ocm_offline_token>/${OCM_OFFLINE_TOKEN}/g" Dockerfile_integration_tests
   sed -i "s/<observatorium_config_access_token>/${OBSERVATORIUM_CONFIG_ACCESS_TOKEN}/g" Dockerfile_integration_tests
+  if [[ -z "${REPORTPORTAL_ENDPOINT}" ]] || [[ -z "${REPORTPORTAL_ACCESS_TOKEN}" ]] || [[ -z "${REPORTPORTAL_PROJECT}" ]];  then
+    echo "Required report portal env vars not provided. Exiting...".
+    exit 1
+  fi
+  sed -i "s#<report_portal_endpoint>#${REPORTPORTAL_ENDPOINT}#g" Dockerfile_integration_tests
+  sed -i "s/<report_portal_access_token>/${REPORTPORTAL_ACCESS_TOKEN}/g" Dockerfile_integration_tests
+  sed -i "s/<report_portal_project>/${REPORTPORTAL_PROJECT}/g" Dockerfile_integration_tests
 fi
 
 if [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_ID}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_SECRET}" ]];

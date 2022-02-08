@@ -314,6 +314,17 @@ test/integration/connector/cleanup:
 test/integration: test/integration/kafka test/integration/connector
 .PHONY: test/integration
 
+test/report-portal-format-results:
+	xmllint --xpath '//testsuite[position()<=1]' data/results/kas-fleet-manager-integration-tests.xml > data/results/kas-fleet-manager-integration-tests-stage.xml
+.PHONY: test/report-portal-format-results
+
+# push results to report-portal
+test/report-portal/push: test/report-portal-format-results
+	curl -k -X POST "$(REPORTPORTAL_ENDPOINT)/api/v1/$(REPORTPORTAL_PROJECT)/launch/import" \
+	  -H "accept: */*" -H "Content-Type: multipart/form-data" -H "Authorization: bearer $(REPORTPORTAL_ACCESS_TOKEN)" \
+			-F "file=@data/results/kas-fleet-manager-integration-tests-stage.xml;type=text/xml"
+.PHONY: test/report-portal/push
+
 # remove OSD cluster after running tests against real OCM
 # requires OCM_OFFLINE_TOKEN env var exported
 test/cluster/cleanup:
