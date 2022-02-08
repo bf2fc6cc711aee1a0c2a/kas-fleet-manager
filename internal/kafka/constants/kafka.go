@@ -94,5 +94,6 @@ func GetUpdateableStatuses() []string {
 		KafkaRequestStatusProvisioning.String(),
 		KafkaRequestStatusFailed.String(),
 		KafkaRequestStatusReady.String(),
+		KafkaRequestStatusDeprovision.String(),
 	}
 }
