@@ -246,11 +246,9 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			BootstrapServerHost:    bootstrapServerHost,
 			SsoClientID:            ssoClientID,
 			SsoClientSecret:        ssoSecret,
-			ActualKafkaVersion:     "2.8.1",
 			DesiredKafkaVersion:    "2.8.1",
 			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
 			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
-			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
 			KafkaStorageSize:       storageSize,
@@ -264,11 +262,9 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			BootstrapServerHost:    bootstrapServerHost,
 			SsoClientID:            ssoClientID,
 			SsoClientSecret:        ssoSecret,
-			ActualKafkaVersion:     "2.8.1",
 			DesiredKafkaVersion:    "2.8.1",
 			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
 			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
-			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
 			KafkaStorageSize:       storageSize,
@@ -282,11 +278,9 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			BootstrapServerHost:    bootstrapServerHost,
 			SsoClientID:            ssoClientID,
 			SsoClientSecret:        ssoSecret,
-			ActualKafkaVersion:     "2.8.1",
 			DesiredKafkaVersion:    "2.8.1",
 			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
 			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
-			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.EVAL.String(),
 			KafkaStorageSize:       storageSize,
@@ -315,24 +309,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			Namespace:              "mk-5",
 			Name:                   mockKafkaName5,
 			Status:                 constants2.KafkaRequestStatusFailed.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
-			ActualKafkaVersion:     "2.8.1",
-			DesiredKafkaVersion:    "2.8.1",
-			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
-			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
-			ActualKafkaIBPVersion:  "2.7.0",
-			DesiredKafkaIBPVersion: "2.7.0",
-			InstanceType:           types.STANDARD.String(),
-			KafkaStorageSize:       storageSize,
-		},
-		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Namespace:              "mk-5",
-			Name:                   mockKafkaName5,
-			Status:                 constants2.KafkaRequestStatusDeprovision.String(),
 			BootstrapServerHost:    bootstrapServerHost,
 			SsoClientID:            ssoClientID,
 			SsoClientSecret:        ssoSecret,
@@ -387,7 +363,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(len(list.Items)).To(Equal(5)) // only count valid Managed Kafka CR
+	Expect(list.Items).To(HaveLen(4)) // only count valid Managed Kafka CR
 
 	for _, k := range testKafkas {
 		if k.Status != constants2.KafkaRequestStatusPreparing.String() && k.Status != constants2.KafkaRequestStatusDeprovision.String() {
