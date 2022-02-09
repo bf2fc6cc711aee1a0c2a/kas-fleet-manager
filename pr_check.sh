@@ -48,19 +48,17 @@ else
     exit 1
   fi
   cp docker/Dockerfile_template Dockerfile_integration_tests
-  sed -i "s/<ocm_env>/${OCM_ENV}/g" Dockerfile_integration_tests
-  sed -i "s/<aws_access_key>/${AWS_ACCESS_KEY}/g" Dockerfile_integration_tests
-  sed -i "s/<aws_account_id>/${AWS_ACCOUNT_ID}/g" Dockerfile_integration_tests
-  sed -i "s/<aws_secret_access_key>/${AWS_SECRET_ACCESS_KEY}/g" Dockerfile_integration_tests
-  sed -i "s/<ocm_offline_token>/${OCM_OFFLINE_TOKEN}/g" Dockerfile_integration_tests
-  sed -i "s/<observatorium_config_access_token>/${OBSERVATORIUM_CONFIG_ACCESS_TOKEN}/g" Dockerfile_integration_tests
+  sed -i -e "s/<ocm_env>/${OCM_ENV}/g" -e "s/<aws_access_key>/${AWS_ACCESS_KEY}/g" \
+  -e "s/<aws_account_id>/${AWS_ACCOUNT_ID}/g" -e  "s/<aws_secret_access_key>/${AWS_SECRET_ACCESS_KEY}/g" \
+  -e "s/<ocm_offline_token>/${OCM_OFFLINE_TOKEN}/g" \
+  -e "s/<observatorium_config_access_token>/${OBSERVATORIUM_CONFIG_ACCESS_TOKEN}/g" Dockerfile_integration_tests
   if [[ -z "${REPORTPORTAL_ENDPOINT}" ]] || [[ -z "${REPORTPORTAL_ACCESS_TOKEN}" ]] || [[ -z "${REPORTPORTAL_PROJECT}" ]];  then
     echo "Required report portal env vars not provided. Exiting...".
     exit 1
   fi
-  sed -i "s#<report_portal_endpoint>#${REPORTPORTAL_ENDPOINT}#g" Dockerfile_integration_tests
-  sed -i "s/<report_portal_access_token>/${REPORTPORTAL_ACCESS_TOKEN}/g" Dockerfile_integration_tests
-  sed -i "s/<report_portal_project>/${REPORTPORTAL_PROJECT}/g" Dockerfile_integration_tests
+  sed -i -e "s#<report_portal_endpoint>#${REPORTPORTAL_ENDPOINT}#g" \
+  -e "s/<report_portal_access_token>/${REPORTPORTAL_ACCESS_TOKEN}/g" \
+  -e "s/<report_portal_project>/${REPORTPORTAL_PROJECT}/g" Dockerfile_integration_tests
 fi
 
 if [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_ID}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_SECRET}" ]];
@@ -68,10 +66,9 @@ then
    echo "Required mas sso env var: client id & client secret & crt is not provided"
    exit 1
 else
-  sed -i "s/<mas_sso_client_id>/${MAS_SSO_CLIENT_ID}/g" Dockerfile_integration_tests
-  sed -i "s/<mas_sso_client_secret>/${MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
-  sed -i "s/<osd_idp_mas_sso_client_id>/${OSD_IDP_MAS_SSO_CLIENT_ID}/g" Dockerfile_integration_tests
-  sed -i "s/<osd_idp_mas_sso_client_secret>/${OSD_IDP_MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
+  sed -i -e "s/<mas_sso_client_id>/${MAS_SSO_CLIENT_ID}/g" -e "s/<mas_sso_client_secret>/${MAS_SSO_CLIENT_SECRET}/g" \
+  -e  "s/<osd_idp_mas_sso_client_id>/${OSD_IDP_MAS_SSO_CLIENT_ID}/g" \
+  -e  "s/<osd_idp_mas_sso_client_secret>/${OSD_IDP_MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
 fi
 
 docker login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
