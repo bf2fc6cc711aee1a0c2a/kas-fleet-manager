@@ -529,6 +529,10 @@ components:
           type: integer
         total:
           type: integer
+        items:
+          items:
+            $ref: '#/components/schemas/ObjectReference'
+          type: array
       required:
       - items
       - kind
