@@ -1144,6 +1144,7 @@ func TestKafkaGet(t *testing.T) {
 	Expect(kafka.Name).To(Equal(mockKafkaName))
 	Expect(kafka.Status).To(Equal(constants2.KafkaRequestStatusAccepted.String()))
 	Expect(kafka.ReauthenticationEnabled).To(BeFalse())
+	Expect(kafka.KafkaStorageSize).To(Equal(test.TestServices.KafkaConfig.KafkaCapacity.MaxDataRetentionSize))
 	// When kafka is in 'Accepted' state it means that it still has not been
 	// allocated to a cluster, which means that kas fleetshard-sync has not reported
 	// yet any status, so the version attribute (actual version) at this point
