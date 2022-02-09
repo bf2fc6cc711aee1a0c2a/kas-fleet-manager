@@ -51,6 +51,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest) public.KafkaRequest {
 		Version:                 kafkaRequest.ActualKafkaVersion,
 		InstanceType:            kafkaRequest.InstanceType,
 		ReauthenticationEnabled: kafkaRequest.ReauthenticationEnabled,
+		KafkaStorageSize:        kafkaRequest.KafkaStorageSize,
 	}
 }
 
