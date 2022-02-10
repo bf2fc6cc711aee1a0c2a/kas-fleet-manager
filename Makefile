@@ -225,7 +225,6 @@ help:
 	@echo "make docker/login/internal       login to an openshift cluster image registry"
 	@echo "make docker/login                login to the quay.io container registry"
 	@echo "make image/build/push/internal   build and push image to an openshift cluster image registry."
-	@echo "make deploy                      deploy the service via templates to an openshift cluster"
 	@echo "make deploy/db                   deploy the postgres db via templates to an openshift cluster"
 	@echo "make deploy/secrets              deploy the secrets via templates to an openshift cluster"
 	@echo "make deploy/envoy                deploy the envoy config via templates to an openshift cluster"
