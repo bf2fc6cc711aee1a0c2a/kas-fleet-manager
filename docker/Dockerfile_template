@@ -27,6 +27,9 @@ ENV OSD_IDP_MAS_SSO_CLIENT_SECRET <osd_idp_mas_sso_client_secret>
 ENV KAFKA_TLS_CERT <kafka_tls_cert>
 ENV KAFKA_TLS_KEY <kafka_tls_key>
 ENV DEBIAN_FRONTEND=noninteractive
+ENV REPORTPORTAL_ENDPOINT <report_portal_endpoint>
+ENV REPORTPORTAL_ACCESS_TOKEN <report_portal_access_token>
+ENV REPORTPORTAL_PROJECT <report_portal_project>
 
 RUN apt-get update
 RUN apt-get install -y make sudo git wget curl ca-certificates
@@ -42,6 +45,9 @@ RUN curl -Lo ocm https://github.com/openshift-online/ocm-cli/releases/download/v
 COPY test/support/jwt_ca.pem /usr/local/share/ca-certificates/jwt_ca.pem
 COPY test/support/gitlab-ca.crt /usr/local/share/ca-certificates/gitlab-ca.crt
 RUN update-ca-certificates
+
+# install xmllint (part of the libxml2-utils)
+RUN apt install libxml2-utils
 
 # copy the setup scripts and the pr check script
 COPY db_setup_docker.sql /docker-entrypoint-initdb.d/
