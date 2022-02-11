@@ -299,7 +299,7 @@ install: verify lint
 # Examples:
 #   make test TESTFLAGS="-run TestSomething"
 test: gotestsum
-	OCM_ENV=testing $(GOTESTSUM) --junitfile data/results/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
+	OCM_ENV=testing $(GOTESTSUM) --junitfile data/results/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 -coverprofile cover.out $(TESTFLAGS) \
 		$(shell go list ./... | grep -v /test)
 .PHONY: test
 
@@ -337,14 +337,18 @@ test/integration: test/integration/kafka test/integration/connector
 .PHONY: test/integration
 
 test/report-portal-format-results:
-	xmllint --xpath '//testsuite[position()<=1]' data/results/kas-fleet-manager-integration-tests.xml > data/results/kas-fleet-manager-integration-tests-stage.xml
+ifeq ($(OCM_ENV), development)
+	@xmllint --xpath '//testsuite[position()<=1]' data/results/kas-fleet-manager-integration-tests.xml > data/results/kas-fleet-manager-integration-tests-stage.xml
+endif
 .PHONY: test/report-portal-format-results
 
 # push results to report-portal
 test/report-portal/push: test/report-portal-format-results
-	curl -k -X POST "$(REPORTPORTAL_ENDPOINT)/api/v1/$(REPORTPORTAL_PROJECT)/launch/import" \
-	  -H "accept: */*" -H "Content-Type: multipart/form-data" -H "Authorization: bearer $(REPORTPORTAL_ACCESS_TOKEN)" \
+ifeq ($(OCM_ENV), development)
+	@curl -k -X POST "$(REPORTPORTAL_ENDPOINT)/api/v1/$(REPORTPORTAL_PROJECT)/launch/import" \
+		-H "accept: */*" -H "Content-Type: multipart/form-data" -H "Authorization: bearer $(REPORTPORTAL_ACCESS_TOKEN)" \
 			-F "file=@data/results/kas-fleet-manager-integration-tests-stage.xml;type=text/xml"
+endif
 .PHONY: test/report-portal/push
 
 # remove OSD cluster after running tests against real OCM
