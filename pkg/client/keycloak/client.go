@@ -217,6 +217,7 @@ func (kc *kcClient) getClient(clientId string, accessToken string) ([]*gocloak.C
 
 func (kc *kcClient) GetClientById(internalId string, accessToken string) (*gocloak.Client, error) {
 	client, err := kc.kcClient.GetClient(kc.ctx, accessToken, kc.realmConfig.Realm, internalId)
+
 	if err != nil {
 		return nil, err
 	}

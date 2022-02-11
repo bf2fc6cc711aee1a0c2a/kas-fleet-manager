@@ -16,6 +16,7 @@ var (
 	// Kafka cluster names must consist of lower-case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character. For example, 'my-name', or 'abc-123'.
 
 	ValidUuidRegexp               = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+	ValidClientIdUuidRegexp       = regexp.MustCompile(`^srvc-acct-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 	ValidServiceAccountNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
 	ValidServiceAccountDescRegexp = regexp.MustCompile(`^[a-zA-Z0-9.,\-\s]*$`)
 	MinRequiredFieldLength        = 1
@@ -23,6 +24,7 @@ var (
 	MaxServiceAccountNameLength = 50
 	MaxServiceAccountDescLength = 255
 	MaxServiceAccountId         = 36
+	MaxServiceAccountClientId   = 47
 )
 
 // ValidateAsyncEnabled returns a validator that returns an error if the async query param is not true
@@ -58,6 +60,15 @@ func ValidateServiceAccountId(value *string, field string) Validate {
 	return func() *errors.ServiceError {
 		if !ValidUuidRegexp.MatchString(*value) {
 			return errors.MalformedServiceAccountId("%s does not match %s", field, ValidUuidRegexp.String())
+		}
+		return nil
+	}
+}
+
+func ValidateServiceAccountClientId(value *string, field string) Validate {
+	return func() *errors.ServiceError {
+		if !ValidClientIdUuidRegexp.MatchString(*value) {
+			return errors.MalformedServiceAccountId("%s does not match %s", field, ValidClientIdUuidRegexp.String())
 		}
 		return nil
 	}

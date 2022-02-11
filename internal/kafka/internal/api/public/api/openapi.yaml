@@ -680,6 +680,15 @@ paths:
   /api/kafkas_mgmt/v1/service_accounts:
     get:
       operationId: getServiceAccounts
+      parameters:
+      - description: client_id of the service account to be retrieved
+        explode: true
+        in: query
+        name: client_id
+        required: false
+        schema:
+          type: string
+        style: form
       responses:
         "200":
           content:
