@@ -348,6 +348,8 @@ ifeq ($(OCM_ENV), development)
 	@curl -k -X POST "$(REPORTPORTAL_ENDPOINT)/api/v1/$(REPORTPORTAL_PROJECT)/launch/import" \
 		-H "accept: */*" -H "Content-Type: multipart/form-data" -H "Authorization: bearer $(REPORTPORTAL_ACCESS_TOKEN)" \
 			-F "file=@data/results/kas-fleet-manager-integration-tests-stage.xml;type=text/xml"
+else
+	@echo "pushing results to report portal skipped"
 endif
 .PHONY: test/report-portal/push
 
