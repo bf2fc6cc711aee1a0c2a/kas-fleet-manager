@@ -178,6 +178,27 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 				*metrics = append(*metrics, m)
 			},
 		},
+		"kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m": {
+			`kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+		"kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m": {
+			`kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+		"kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m": {
+			`kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
 	}
 
 	for msg, f := range fetchers {

@@ -20,6 +20,9 @@ const (
 	KafkaConsumergroupMembersDesc                            = "Amount of members in a consumer group"
 	KafkaServerSocketServerMetricsConnectionCountDesc        = "Current number of total kafka connections"
 	KafkaServerSocketServerMetricsConnectionCreationRateDesc = "Current rate of connections creation"
+	IncomingMessagesRateDesc                                 = "Current rate of incoming messages over the last 5 minutes"
+	TotalIncomingBytesRateDesc                               = "Current total rate of incoming bytes over the last 5 minutes"
+	TotalOutgoingBytesRateDesc                               = "Current total rate of outgoing bytes over the last 5 minutes"
 )
 
 type MetricsMetadata struct {
@@ -148,6 +151,27 @@ func GetMetricsMetaData() map[string]MetricsMetadata {
 		"kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum": {
 			Name:           "kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum",
 			Help:           KafkaServerSocketServerMetricsConnectionCreationRateDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{},
+		},
+		"kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m": {
+			Name:           "kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m",
+			Help:           IncomingMessagesRateDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{},
+		},
+		"kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m": {
+			Name:           "kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m",
+			Help:           TotalIncomingBytesRateDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{},
+		},
+		"kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m": {
+			Name:           "kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m",
+			Help:           TotalOutgoingBytesRateDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
 			VariableLabels: []string{},

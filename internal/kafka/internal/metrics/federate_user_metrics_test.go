@@ -171,6 +171,33 @@ func TestFederateMetrics_Collect(t *testing.T) {
 						},
 					},
 				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m",
+							},
+						},
+					},
+				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m",
+							},
+						},
+					},
+				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m",
+							},
+						},
+					},
+				},
 			},
 		},
 	}
