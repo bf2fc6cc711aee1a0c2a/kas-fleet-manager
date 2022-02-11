@@ -865,3 +865,97 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 		})
 	}
 }
+
+func TestKeycloakService_GetServiceAccountByClientId(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		ctx context.Context
+	}
+
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
+	if err != nil {
+		t.Fatalf("failed to create auth helper: %s", err.Error())
+	}
+	account, err := authHelper.NewAccount("", "", "", testClientID)
+	if err != nil {
+		t.Fatal("failed to build a new account")
+	}
+
+	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	if err != nil {
+		t.Fatalf("failed to create jwt: %s", err.Error())
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		want    *api.ServiceAccount
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Get service account by client_id",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						testID := "12221"
+						att := map[string]string{}
+						return gocloak.Client{
+							ClientID:   &testID,
+							Attributes: &att,
+						}
+					},
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return true
+					},
+					GetClientFunc: func(id string, accessToken string) (*gocloak.Client, error) {
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						att := map[string]string{}
+						return &gocloak.Client{
+							ID:         &testID,
+							ClientID:   &testID,
+							Attributes: &att,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: auth.SetTokenInContext(context.TODO(), jwt),
+			},
+			want: &api.ServiceAccount{
+				ID:          fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
+				ClientID:    fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
+				Name:        "",
+				Description: "",
+				CreatedAt:   time.Time{},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			keycloakService := services.NewKeycloakServiceWithClient(tt.fields.kcClient)
+			got, err := keycloakService.GetServiceAccountByClientId(tt.args.ctx, testClientID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetServiceAccountById() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetServiceAccountById() got = %+v, want %+v", got, tt.want)
+			}
+		})
+	}
+}

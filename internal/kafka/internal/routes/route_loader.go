@@ -159,6 +159,13 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		Kind: "ServiceAccountList",
 	})
 	apiV1ServiceAccountsRouter := apiV1Router.PathPrefix("/service_accounts").Subrouter()
+	apiV1ServiceAccountsRouter.
+		Path("").
+		Queries("client_id", "").
+		HandlerFunc(serviceAccountsHandler.GetServiceAccountByClientId).
+		Name(logger.NewLogEvent("get-service-accounts", "get a service account by clientId").ToString()).
+		Methods(http.MethodGet)
+
 	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.ListServiceAccounts).
 		Name(logger.NewLogEvent("list-service-accounts", "lists all service accounts").ToString()).
 		Methods(http.MethodGet)
@@ -172,7 +179,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		Name(logger.NewLogEvent("reset-service-accounts", "reset a service accounts").ToString()).
 		Methods(http.MethodPost)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).
-		Name(logger.NewLogEvent("get-service-accounts", "get a service accounts").ToString()).
+		Name(logger.NewLogEvent("get-service-accounts", "get a service account by id").ToString()).
 		Methods(http.MethodGet)
 
 	apiV1ServiceAccountsRouter.Use(requireIssuer)

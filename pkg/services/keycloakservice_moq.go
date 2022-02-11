@@ -48,6 +48,9 @@ var _ KeycloakService = &KeycloakServiceMock{}
 // 			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
 // 				panic("mock out the GetRealmConfig method")
 // 			},
+// 			GetServiceAccountByClientIdFunc: func(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
+// 				panic("mock out the GetServiceAccountByClientId method")
+// 			},
 // 			GetServiceAccountByIdFunc: func(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
 // 				panic("mock out the GetServiceAccountById method")
 // 			},
@@ -105,6 +108,9 @@ type KeycloakServiceMock struct {
 
 	// GetRealmConfigFunc mocks the GetRealmConfig method.
 	GetRealmConfigFunc func() *keycloak.KeycloakRealmConfig
+
+	// GetServiceAccountByClientIdFunc mocks the GetServiceAccountByClientId method.
+	GetServiceAccountByClientIdFunc func(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
 
 	// GetServiceAccountByIdFunc mocks the GetServiceAccountById method.
 	GetServiceAccountByIdFunc func(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError)
@@ -177,6 +183,13 @@ type KeycloakServiceMock struct {
 		// GetRealmConfig holds details about calls to the GetRealmConfig method.
 		GetRealmConfig []struct {
 		}
+		// GetServiceAccountByClientId holds details about calls to the GetServiceAccountByClientId method.
+		GetServiceAccountByClientId []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ClientId is the clientId argument value.
+			ClientId string
+		}
 		// GetServiceAccountById holds details about calls to the GetServiceAccountById method.
 		GetServiceAccountById []struct {
 			// Ctx is the ctx argument value.
@@ -243,6 +256,7 @@ type KeycloakServiceMock struct {
 	lockGetConfig                                         sync.RWMutex
 	lockGetKafkaClientSecret                              sync.RWMutex
 	lockGetRealmConfig                                    sync.RWMutex
+	lockGetServiceAccountByClientId                       sync.RWMutex
 	lockGetServiceAccountById                             sync.RWMutex
 	lockIsKafkaClientExist                                sync.RWMutex
 	lockListServiceAcc                                    sync.RWMutex
@@ -527,6 +541,41 @@ func (mock *KeycloakServiceMock) GetRealmConfigCalls() []struct {
 	mock.lockGetRealmConfig.RLock()
 	calls = mock.calls.GetRealmConfig
 	mock.lockGetRealmConfig.RUnlock()
+	return calls
+}
+
+// GetServiceAccountByClientId calls GetServiceAccountByClientIdFunc.
+func (mock *KeycloakServiceMock) GetServiceAccountByClientId(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
+	if mock.GetServiceAccountByClientIdFunc == nil {
+		panic("KeycloakServiceMock.GetServiceAccountByClientIdFunc: method is nil but KeycloakService.GetServiceAccountByClientId was just called")
+	}
+	callInfo := struct {
+		Ctx      context.Context
+		ClientId string
+	}{
+		Ctx:      ctx,
+		ClientId: clientId,
+	}
+	mock.lockGetServiceAccountByClientId.Lock()
+	mock.calls.GetServiceAccountByClientId = append(mock.calls.GetServiceAccountByClientId, callInfo)
+	mock.lockGetServiceAccountByClientId.Unlock()
+	return mock.GetServiceAccountByClientIdFunc(ctx, clientId)
+}
+
+// GetServiceAccountByClientIdCalls gets all the calls that were made to GetServiceAccountByClientId.
+// Check the length with:
+//     len(mockedKeycloakService.GetServiceAccountByClientIdCalls())
+func (mock *KeycloakServiceMock) GetServiceAccountByClientIdCalls() []struct {
+	Ctx      context.Context
+	ClientId string
+} {
+	var calls []struct {
+		Ctx      context.Context
+		ClientId string
+	}
+	mock.lockGetServiceAccountByClientId.RLock()
+	calls = mock.calls.GetServiceAccountByClientId
+	mock.lockGetServiceAccountByClientId.RUnlock()
 	return calls
 }
 

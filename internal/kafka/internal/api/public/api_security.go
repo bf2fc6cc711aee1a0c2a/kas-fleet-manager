@@ -11,6 +11,7 @@ package public
 
 import (
 	_context "context"
+	"github.com/antihax/optional"
 	_ioutil "io/ioutil"
 	_nethttp "net/http"
 	_neturl "net/url"
@@ -314,12 +315,19 @@ func (a *SecurityApiService) GetServiceAccountById(ctx _context.Context, id stri
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+// GetServiceAccountsOpts Optional parameters for the method 'GetServiceAccounts'
+type GetServiceAccountsOpts struct {
+	ClientId optional.String
+}
+
 /*
 GetServiceAccounts Returns a list of service accounts
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param optional nil or *GetServiceAccountsOpts - Optional Parameters:
+ * @param "ClientId" (optional.String) -  client_id of the service account to be retrieved
 @return ServiceAccountList
 */
-func (a *SecurityApiService) GetServiceAccounts(ctx _context.Context) (ServiceAccountList, *_nethttp.Response, error) {
+func (a *SecurityApiService) GetServiceAccounts(ctx _context.Context, localVarOptionals *GetServiceAccountsOpts) (ServiceAccountList, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -335,6 +343,9 @@ func (a *SecurityApiService) GetServiceAccounts(ctx _context.Context) (ServiceAc
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
+	if localVarOptionals != nil && localVarOptionals.ClientId.IsSet() {
+		localVarQueryParams.Add("client_id", parameterToString(localVarOptionals.ClientId.Value(), ""))
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
