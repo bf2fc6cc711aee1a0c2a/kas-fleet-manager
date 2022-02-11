@@ -152,6 +152,15 @@ var rangeQuerydata = map[string]pModel.Matrix{
 	"kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum": {
 		fakeMetricData("kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum", 20),
 	},
+	"kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m": {
+		fakeMetricData("kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m", 1321),
+	},
+	"kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m": {
+		fakeMetricData("kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m", 9834345),
+	},
+	"kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m": {
+		fakeMetricData("kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m", 9194889),
+	},
 }
 
 func fakeMetricData(name string, value int) *pModel.SampleStream {
