@@ -22,33 +22,6 @@ func TestFederateMetrics_Collect(t *testing.T) {
 					Vector: []*pModel.Sample{
 						{
 							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "kafka_server_brokertopicmetrics_messages_in_total",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "kafka_server_brokertopicmetrics_bytes_in_total",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
-								"__name__": "kafka_server_brokertopicmetrics_bytes_out_total",
-							},
-						},
-					},
-				},
-				{
-					Vector: []*pModel.Sample{
-						{
-							Metric: map[pModel.LabelName]pModel.LabelValue{
 								"__name__": "kafka_controller_kafkacontroller_offline_partitions_count",
 							},
 						},

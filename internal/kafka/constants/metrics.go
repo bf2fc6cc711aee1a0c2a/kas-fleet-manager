@@ -3,9 +3,6 @@ package constants
 import "github.com/prometheus/client_golang/prometheus"
 
 const (
-	KafkaServerBrokertopicmetricsMessagesInTotalDesc         = "Attribute exposed for management (kafka.server<type=BrokerTopicMetrics, name=MessagesInPerSec, topic=__strimzi_canary><>Count)"
-	KafkaServerBrokertopicmetricsBytesInTotalDesc            = "Attribute exposed for management (kafka.server<type=BrokerTopicMetrics, name=BytesInPerSec, topic=__strimzi_canary><>Count)"
-	KafkaServerBrokertopicmetricsBytesOutTotalDesc           = "Attribute exposed for management (kafka.server<type=BrokerTopicMetrics, name=BytesOutPerSec, topic=__strimzi_canary><>Count)"
 	KafkaControllerKafkacontrollerOfflinePartitionsCountDesc = "Attribute exposed for management (kafka.controller<type=KafkaController, name=OfflinePartitionsCount><>Value)"
 	KafkaControllerKafkacontrollerGlobalPartitionCountDesc   = "Attribute exposed for management (kafka.controller<type=KafkaController, name=GlobalPartitionCount><>Value)"
 	KafkaTopicKafkaLogLogSizeSumDesc                         = "Attribute exposed for management (kafka.log<type=Log, name=Size, topic=__consumer_offsets, partition=18><>Value)"
@@ -20,9 +17,9 @@ const (
 	KafkaConsumergroupMembersDesc                            = "Amount of members in a consumer group"
 	KafkaServerSocketServerMetricsConnectionCountDesc        = "Current number of total kafka connections"
 	KafkaServerSocketServerMetricsConnectionCreationRateDesc = "Current rate of connections creation"
-	IncomingMessagesRateDesc                                 = "Current rate of incoming messages over the last 5 minutes"
-	TotalIncomingBytesRateDesc                               = "Current total rate of incoming bytes over the last 5 minutes"
-	TotalOutgoingBytesRateDesc                               = "Current total rate of outgoing bytes over the last 5 minutes"
+	KafkaTopicIncomingMessagesRateDesc                       = "Current rate of incoming messages over the last 5 minutes"
+	KafkaTopicTotalIncomingBytesRateDesc                     = "Current total rate of incoming bytes over the last 5 minutes"
+	KafkaTopicTotalOutgoingBytesRateDesc                     = "Current total rate of outgoing bytes over the last 5 minutes"
 )
 
 type MetricsMetadata struct {
@@ -36,27 +33,6 @@ type MetricsMetadata struct {
 
 func GetMetricsMetaData() map[string]MetricsMetadata {
 	return map[string]MetricsMetadata{
-		"kafka_server_brokertopicmetrics_messages_in_total": {
-			Name:           "kafka_server_brokertopicmetrics_messages_in_total",
-			Help:           KafkaServerBrokertopicmetricsMessagesInTotalDesc,
-			Type:           prometheus.GaugeValue,
-			TypeName:       "GAUGE",
-			VariableLabels: []string{"topic", "statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
-		},
-		"kafka_server_brokertopicmetrics_bytes_in_total": {
-			Name:           "kafka_server_brokertopicmetrics_bytes_in_total",
-			Help:           KafkaServerBrokertopicmetricsBytesInTotalDesc,
-			Type:           prometheus.GaugeValue,
-			TypeName:       "GAUGE",
-			VariableLabels: []string{"topic", "statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
-		},
-		"kafka_server_brokertopicmetrics_bytes_out_total": {
-			Name:           "kafka_server_brokertopicmetrics_bytes_out_total",
-			Help:           KafkaServerBrokertopicmetricsBytesOutTotalDesc,
-			Type:           prometheus.GaugeValue,
-			TypeName:       "GAUGE",
-			VariableLabels: []string{"topic", "statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
-		},
 		"kafka_controller_kafkacontroller_offline_partitions_count": {
 			Name:           "kafka_controller_kafkacontroller_offline_partitions_count",
 			Help:           KafkaControllerKafkacontrollerOfflinePartitionsCountDesc,
@@ -157,24 +133,24 @@ func GetMetricsMetaData() map[string]MetricsMetadata {
 		},
 		"kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m": {
 			Name:           "kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m",
-			Help:           IncomingMessagesRateDesc,
+			Help:           KafkaTopicIncomingMessagesRateDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{},
+			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster", "topic"},
 		},
 		"kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m": {
 			Name:           "kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m",
-			Help:           TotalIncomingBytesRateDesc,
+			Help:           KafkaTopicTotalIncomingBytesRateDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{},
+			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster", "topic"},
 		},
 		"kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m": {
 			Name:           "kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m",
-			Help:           TotalOutgoingBytesRateDesc,
+			Help:           KafkaTopicTotalOutgoingBytesRateDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{},
+			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster", "topic"},
 		},
 	}
 }

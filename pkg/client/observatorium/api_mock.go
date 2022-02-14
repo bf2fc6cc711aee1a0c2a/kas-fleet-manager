@@ -113,15 +113,6 @@ var rangeQuerydata = map[string]pModel.Matrix{
 	"kubelet_volume_stats_available_bytes": {
 		fakeMetricData("kubelet_volume_stats_available_bytes", 220792516608),
 	},
-	"kafka_server_brokertopicmetrics_messages_in_total": {
-		fakeMetricData("kafka_server_brokertopicmetrics_messages_in_total", 3040),
-	},
-	"kafka_server_brokertopicmetrics_bytes_in_total": {
-		fakeMetricData("kafka_server_brokertopicmetrics_bytes_in_total", 293617),
-	},
-	"kafka_server_brokertopicmetrics_bytes_out_total": {
-		fakeMetricData("kafka_server_brokertopicmetrics_bytes_out_total", 152751),
-	},
 	"kafka_controller_kafkacontroller_offline_partitions_count": {
 		fakeMetricData("kafka_controller_kafkacontroller_offline_partitions_count", 0),
 	},
