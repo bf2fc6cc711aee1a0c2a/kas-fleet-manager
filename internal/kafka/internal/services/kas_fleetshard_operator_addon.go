@@ -19,7 +19,7 @@ const (
 
 	//parameter names for the kas-fleetshard-operator service account
 	kasFleetshardOperatorParamMasSSOBaseUrl        = "sso-auth-server-url"
-	kasFleetshardOperatorParamServiceAccountId     = "sso-client-id"
+	KasFleetshardOperatorParamServiceAccountId     = "sso-client-id"
 	kasFleetshardOperatorParamServiceAccountSecret = "sso-secret"
 	// parameter names for the cluster id
 	kasFleetshardOperatorParamClusterId = "cluster-id"
@@ -30,10 +30,27 @@ const (
 	kasFleetshardOperatorParamResyncInterval = "resync-interval"
 )
 
+type ParameterList []types.Parameter
+
+type KasFleetshardOperatorParams interface {
+	GetParam(name string) string
+}
+
+func (p ParameterList) GetParam(name string) string {
+	return func() string {
+		for _, param := range p {
+			if param.Id == name {
+				return param.Value
+			}
+		}
+		return ""
+	}()
+}
+
 //go:generate moq -out kas_fleetshard_operator_addon_moq.go . KasFleetshardOperatorAddon
 type KasFleetshardOperatorAddon interface {
-	Provision(cluster api.Cluster) (bool, *errors.ServiceError)
-	ReconcileParameters(cluster api.Cluster) *errors.ServiceError
+	Provision(cluster api.Cluster) (bool, ParameterList, *errors.ServiceError)
+	ReconcileParameters(cluster api.Cluster) (ParameterList, *errors.ServiceError)
 	RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError
 }
 
@@ -51,15 +68,16 @@ type kasFleetshardOperatorAddon struct {
 	KeycloakConfig      *keycloak.KeycloakConfig
 }
 
-func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {
+func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, ParameterList, *errors.ServiceError) {
 	kasFleetshardAddonID := o.OCMConfig.KasFleetshardAddonID
 	params, paramsErr := o.getAddonParams(cluster)
 	if paramsErr != nil {
-		return false, paramsErr
+		return false, nil, paramsErr
 	}
+
 	p, err := o.ProviderFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
+		return false, nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
 	}
 	glog.V(5).Infof("Provision addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
 	spec := &types.ClusterSpec{
@@ -69,21 +87,21 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *erro
 		AdditionalInfo: cluster.ClusterSpec,
 	}
 	if ready, err := p.InstallKasFleetshard(spec, params); err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to install addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
+		return false, params, errors.NewWithCause(errors.ErrorGeneral, err, "failed to install addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
 	} else {
-		return ready, nil
+		return ready, params, nil
 	}
 }
 
-func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *errors.ServiceError {
+func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) (ParameterList, *errors.ServiceError) {
 	kasFleetshardAddonID := o.OCMConfig.KasFleetshardAddonID
 	params, paramsErr := o.getAddonParams(cluster)
 	if paramsErr != nil {
-		return paramsErr
+		return nil, paramsErr
 	}
 	p, err := o.ProviderFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
 	}
 
 	glog.V(5).Infof("Reconcile parameters for addon %s on cluster %s", kasFleetshardAddonID, cluster.ClusterID)
@@ -94,13 +112,13 @@ func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *e
 		AdditionalInfo: cluster.ClusterSpec,
 	}
 	if updated, err := p.InstallKasFleetshard(spec, params); err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update parameters for addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to update parameters for addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
 	} else if updated {
 		glog.V(5).Infof("Addon parameters for addon %s on cluster %s are updated", kasFleetshardAddonID, cluster.ClusterID)
-		return nil
+		return params, nil
 	} else {
 		glog.V(5).Infof("Addon parameters for addon %s on cluster %s are not updated", kasFleetshardAddonID, cluster.ClusterID)
-		return nil
+		return params, nil
 	}
 }
 
@@ -126,7 +144,7 @@ func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.Servic
 			Value: o.KeycloakConfig.KafkaRealm.ValidIssuerURI,
 		},
 		{
-			Id:    kasFleetshardOperatorParamServiceAccountId,
+			Id:    KasFleetshardOperatorParamServiceAccountId,
 			Value: serviceAccount.ClientID,
 		},
 		{

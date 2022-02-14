@@ -23,12 +23,12 @@ import (
 
 type options struct {
 	di.Inject
-	ConnectorsConfig    *config.ConnectorsConfig
-	ServerConfig        *server.ServerConfig
-	ErrorsHandler       *coreHandlers.ErrorHandler
-	AuthorizeMiddleware *acl.AccessControlListMiddleware
-	KeycloakService     services.KafkaKeycloakService
-
+	ConnectorsConfig        *config.ConnectorsConfig
+	ServerConfig            *server.ServerConfig
+	ErrorsHandler           *coreHandlers.ErrorHandler
+	AuthorizeMiddleware     *acl.AccessControlListMiddleware
+	KeycloakService         services.KafkaKeycloakService
+	AuthAgentService        auth.AuthAgentService
 	ConnectorAdminHandler   *handlers.ConnectorAdminHandler
 	ConnectorTypesHandler   *handlers.ConnectorTypesHandler
 	ConnectorsHandler       *handlers.ConnectorsHandler
@@ -129,7 +129,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		agentRouter.HandleFunc("/deployments", s.ConnectorClusterHandler.ListDeployments).Methods(http.MethodGet)
 		agentRouter.HandleFunc("/deployments/{deployment_id}", s.ConnectorClusterHandler.GetDeployment).Methods(http.MethodGet)
 		agentRouter.HandleFunc("/deployments/{deployment_id}/status", s.ConnectorClusterHandler.UpdateDeploymentStatus).Methods(http.MethodPut)
-		auth.UseOperatorAuthorisationMiddleware(agentRouter, auth.Connector, s.KeycloakService.GetConfig().KafkaRealm.ValidIssuerURI, "connector_cluster_id")
+		auth.UseOperatorAuthorisationMiddleware(agentRouter, auth.Connector, s.KeycloakService.GetConfig().KafkaRealm.ValidIssuerURI, "connector_cluster_id", s.AuthAgentService)
 	}
 
 	// This section adds APIs accessed by connector admins
