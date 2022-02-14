@@ -219,7 +219,7 @@ func NewAuthenticatedContextForDataPlaneCluster(h *coreTest.Helper, clusterID st
 		"realm_access": map[string][]string{
 			"roles": {"kas_fleetshard_operator"},
 		},
-		"kas-fleetshard-operator-cluster-id": clusterID,
+		"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", clusterID),
 	}
 	token := h.CreateJWTStringWithClaim(account, claims)
 	ctx := context.WithValue(context.Background(), private.ContextAccessToken, token)

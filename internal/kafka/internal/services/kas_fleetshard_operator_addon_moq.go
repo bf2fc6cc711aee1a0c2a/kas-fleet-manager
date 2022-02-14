@@ -19,10 +19,10 @@ var _ KasFleetshardOperatorAddon = &KasFleetshardOperatorAddonMock{}
 //
 // 		// make and configure a mocked KasFleetshardOperatorAddon
 // 		mockedKasFleetshardOperatorAddon := &KasFleetshardOperatorAddonMock{
-// 			ProvisionFunc: func(cluster api.Cluster) (bool, *serviceError.ServiceError) {
+// 			ProvisionFunc: func(cluster api.Cluster) (bool, ParameterList, *serviceError.ServiceError) {
 // 				panic("mock out the Provision method")
 // 			},
-// 			ReconcileParametersFunc: func(cluster api.Cluster) *serviceError.ServiceError {
+// 			ReconcileParametersFunc: func(cluster api.Cluster) (ParameterList, *serviceError.ServiceError) {
 // 				panic("mock out the ReconcileParameters method")
 // 			},
 // 			RemoveServiceAccountFunc: func(cluster api.Cluster) *serviceError.ServiceError {
@@ -36,10 +36,10 @@ var _ KasFleetshardOperatorAddon = &KasFleetshardOperatorAddonMock{}
 // 	}
 type KasFleetshardOperatorAddonMock struct {
 	// ProvisionFunc mocks the Provision method.
-	ProvisionFunc func(cluster api.Cluster) (bool, *serviceError.ServiceError)
+	ProvisionFunc func(cluster api.Cluster) (bool, ParameterList, *serviceError.ServiceError)
 
 	// ReconcileParametersFunc mocks the ReconcileParameters method.
-	ReconcileParametersFunc func(cluster api.Cluster) *serviceError.ServiceError
+	ReconcileParametersFunc func(cluster api.Cluster) (ParameterList, *serviceError.ServiceError)
 
 	// RemoveServiceAccountFunc mocks the RemoveServiceAccount method.
 	RemoveServiceAccountFunc func(cluster api.Cluster) *serviceError.ServiceError
@@ -68,7 +68,7 @@ type KasFleetshardOperatorAddonMock struct {
 }
 
 // Provision calls ProvisionFunc.
-func (mock *KasFleetshardOperatorAddonMock) Provision(cluster api.Cluster) (bool, *serviceError.ServiceError) {
+func (mock *KasFleetshardOperatorAddonMock) Provision(cluster api.Cluster) (bool, ParameterList, *serviceError.ServiceError) {
 	if mock.ProvisionFunc == nil {
 		panic("KasFleetshardOperatorAddonMock.ProvisionFunc: method is nil but KasFleetshardOperatorAddon.Provision was just called")
 	}
@@ -99,7 +99,7 @@ func (mock *KasFleetshardOperatorAddonMock) ProvisionCalls() []struct {
 }
 
 // ReconcileParameters calls ReconcileParametersFunc.
-func (mock *KasFleetshardOperatorAddonMock) ReconcileParameters(cluster api.Cluster) *serviceError.ServiceError {
+func (mock *KasFleetshardOperatorAddonMock) ReconcileParameters(cluster api.Cluster) (ParameterList, *serviceError.ServiceError) {
 	if mock.ReconcileParametersFunc == nil {
 		panic("KasFleetshardOperatorAddonMock.ReconcileParametersFunc: method is nil but KasFleetshardOperatorAddon.ReconcileParameters was just called")
 	}

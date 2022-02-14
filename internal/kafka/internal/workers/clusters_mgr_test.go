@@ -383,8 +383,8 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 			name: "successful strimzi cluster, logging operator and kas fleetshard operator installation",
 			fields: fields{
 				agentOperator: &services.KasFleetshardOperatorAddonMock{
-					ProvisionFunc: func(cluster api.Cluster) (bool, *apiErrors.ServiceError) {
-						return true, nil
+					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
+						return true, services.ParameterList{}, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -450,8 +450,8 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					},
 				},
 				agentOperator: &services.KasFleetshardOperatorAddonMock{
-					ProvisionFunc: func(cluster api.Cluster) (bool, *apiErrors.ServiceError) {
-						return false, apiErrors.GeneralError("failed to provision kas fleetshard operator")
+					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
+						return false, services.ParameterList{}, apiErrors.GeneralError("failed to provision kas fleetshard operator")
 					},
 				},
 			},
