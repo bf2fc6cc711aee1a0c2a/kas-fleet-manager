@@ -13,6 +13,9 @@ For more information on how the service works, see [the implementation documenta
 * [Node.js v12.20+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 
 There are a number of prerequisites required for running kas-fleet-manager due to its interaction with external services. All of the below are required to run kas-fleet-manager locally.
+
+> NOTE: some of the hyperlinks in the [User Account & Organization Setup](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager#user-account--organization-setup) and [Populating configuration](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager#populating-configuration) are not publicly accessible outside of Red Hat organization.
+
 ### User Account & Organization Setup
 1. Request additional permissions for your user account in OCM stage. [Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/812).
     - Ensure your user has the role `ManagedKafkaService`. This allows your user to create Syncsets.
