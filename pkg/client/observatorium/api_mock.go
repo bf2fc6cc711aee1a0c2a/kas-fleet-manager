@@ -113,15 +113,6 @@ var rangeQuerydata = map[string]pModel.Matrix{
 	"kubelet_volume_stats_available_bytes": {
 		fakeMetricData("kubelet_volume_stats_available_bytes", 220792516608),
 	},
-	"kafka_server_brokertopicmetrics_messages_in_total": {
-		fakeMetricData("kafka_server_brokertopicmetrics_messages_in_total", 3040),
-	},
-	"kafka_server_brokertopicmetrics_bytes_in_total": {
-		fakeMetricData("kafka_server_brokertopicmetrics_bytes_in_total", 293617),
-	},
-	"kafka_server_brokertopicmetrics_bytes_out_total": {
-		fakeMetricData("kafka_server_brokertopicmetrics_bytes_out_total", 152751),
-	},
 	"kafka_controller_kafkacontroller_offline_partitions_count": {
 		fakeMetricData("kafka_controller_kafkacontroller_offline_partitions_count", 0),
 	},
@@ -151,6 +142,15 @@ var rangeQuerydata = map[string]pModel.Matrix{
 	},
 	"kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum": {
 		fakeMetricData("kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum", 20),
+	},
+	"kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m": {
+		fakeMetricData("kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m", 1321),
+	},
+	"kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m": {
+		fakeMetricData("kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m", 9834345),
+	},
+	"kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m": {
+		fakeMetricData("kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m", 9194889),
 	},
 }
 
