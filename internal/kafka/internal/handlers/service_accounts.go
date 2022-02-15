@@ -121,6 +121,37 @@ func (s serviceAccountsHandler) ResetServiceAccountCredential(w http.ResponseWri
 	handlers.HandleGet(w, r, cfg)
 }
 
+func (s serviceAccountsHandler) GetServiceAccountByClientId(w http.ResponseWriter, r *http.Request) {
+	clientId := r.FormValue("client_id")
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.ValidateLength(&clientId, "client_id", &handlers.MinRequiredFieldLength, &handlers.MaxServiceAccountClientId),
+			handlers.ValidateServiceAccountClientId(&clientId, "client_id"),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+			ctx := r.Context()
+			serviceAccountList := public.ServiceAccountList{
+				Kind:  "ServiceAccountList",
+				Items: []public.ServiceAccountListItem{},
+			}
+
+			sa, err := s.service.GetServiceAccountByClientId(ctx, clientId)
+			if err != nil {
+				if err.Code == errors.ErrorServiceAccountNotFound {
+					return serviceAccountList, nil
+				}
+				return nil, err
+			}
+
+			converted := presenters.PresentServiceAccountListItem(sa)
+			serviceAccountList.Items = append(serviceAccountList.Items, converted)
+			return serviceAccountList, nil
+		},
+	}
+
+	handlers.HandleList(w, r, cfg)
+}
+
 func (s serviceAccountsHandler) GetServiceAccountById(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	cfg := &handlers.HandlerConfig{
