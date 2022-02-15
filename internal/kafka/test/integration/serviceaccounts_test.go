@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/antihax/optional"
 	"net/http"
 	"testing"
 	"time"
@@ -13,6 +14,48 @@ import (
 	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
 )
+
+func TestServiceAccounts_GetByClientID(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
+	// ocm
+	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
+	defer teardown()
+
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account, nil)
+
+	opts := public.GetServiceAccountsOpts{
+		ClientId: optional.NewString("srvc-acct-12345678-1234-1234-1234-123456789012"),
+	}
+
+	list, resp, err := client.SecurityApi.GetServiceAccounts(ctx, &opts)
+	Expect(err).ShouldNot(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(list.Items).To(HaveLen(0))
+
+	// Create one Service Account
+	r := public.ServiceAccountRequest{
+		Name:        "managed-service-integration-test-account",
+		Description: "created by the managed service integration tests",
+	}
+	sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
+	Expect(err).ShouldNot(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+
+	// Find service account by clientid
+	opts.ClientId = optional.NewString(sa.ClientId)
+
+	list, resp, err = client.SecurityApi.GetServiceAccounts(ctx, &opts)
+	Expect(err).ShouldNot(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(list.Items).To(HaveLen(1))
+	Expect(list.Items[0].ClientId == sa.ClientId)
+	Expect(list.Items[0].Id == sa.Id)
+	Expect(list.Items[0].Name == sa.Name)
+}
 
 func TestServiceAccounts_Success(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -27,7 +70,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, nil)
 
 	//verify list
-	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx)
+	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx, nil)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	currTime := time.Now().Format(time.RFC3339)
@@ -76,7 +119,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	f := false
-	accounts, _, _ := client.SecurityApi.GetServiceAccounts(ctx)
+	accounts, _, _ := client.SecurityApi.GetServiceAccounts(ctx, nil)
 	for _, a := range accounts.Items {
 		if a.Id == id {
 			f = true
@@ -103,7 +146,7 @@ func TestServiceAccounts_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 
 	ctx := h.NewAuthenticatedContext(account, claims)
 
-	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx)
+	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx, nil)
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
@@ -126,7 +169,7 @@ func TestServiceAccounts_CorrectTokenIssuer_AuthzSuccess(t *testing.T) {
 
 	ctx := h.NewAuthenticatedContext(account, claims)
 
-	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx)
+	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx, nil)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 }
