@@ -251,7 +251,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	cluster, e := k.clusterPlacementStrategy.FindCluster(kafkaRequest)
 	if e != nil || cluster == nil {
 		msg := fmt.Sprintf("No available cluster found for '%s' Kafka instance in region: '%s'", kafkaRequest.InstanceType, kafkaRequest.Region)
-		logger.Logger.Warningf(msg)
+		logger.Logger.Infof(msg)
 		return errors.TooManyKafkaInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType))
 	}
 
