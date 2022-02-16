@@ -429,7 +429,7 @@ parameters:
 
 - name: KAFKA_DOMAIN_NAME
   description: The domain name to use for Kafka instances
-  value: bf2.kafka-stage.rhcloud.com
+  value: kafka.bf2.dev
 
 - name: STRIMZI_OPERATOR_ADDON_ID
   displayName: Strimzi operator addon ID
