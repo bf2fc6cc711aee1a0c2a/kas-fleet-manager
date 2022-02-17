@@ -3,6 +3,9 @@ package constants
 import "github.com/prometheus/client_golang/prometheus"
 
 const (
+	KafkaServerBrokertopicmetricsMessagesInTotalDesc         = "Attribute exposed for management (kafka.server<type=BrokerTopicMetrics, name=MessagesInPerSec, topic=__strimzi_canary><>Count)"
+	KafkaServerBrokertopicmetricsBytesInTotalDesc            = "Attribute exposed for management (kafka.server<type=BrokerTopicMetrics, name=BytesInPerSec, topic=__strimzi_canary><>Count)"
+	KafkaServerBrokertopicmetricsBytesOutTotalDesc           = "Attribute exposed for management (kafka.server<type=BrokerTopicMetrics, name=BytesOutPerSec, topic=__strimzi_canary><>Count)"
 	KafkaControllerKafkacontrollerOfflinePartitionsCountDesc = "Attribute exposed for management (kafka.controller<type=KafkaController, name=OfflinePartitionsCount><>Value)"
 	KafkaControllerKafkacontrollerGlobalPartitionCountDesc   = "Attribute exposed for management (kafka.controller<type=KafkaController, name=GlobalPartitionCount><>Value)"
 	KafkaTopicKafkaLogLogSizeSumDesc                         = "Attribute exposed for management (kafka.log<type=Log, name=Size, topic=__consumer_offsets, partition=18><>Value)"
@@ -33,6 +36,27 @@ type MetricsMetadata struct {
 
 func GetMetricsMetaData() map[string]MetricsMetadata {
 	return map[string]MetricsMetadata{
+		"kafka_server_brokertopicmetrics_messages_in_total": {
+			Name:           "kafka_server_brokertopicmetrics_messages_in_total",
+			Help:           KafkaServerBrokertopicmetricsMessagesInTotalDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{"topic", "statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+		},
+		"kafka_server_brokertopicmetrics_bytes_in_total": {
+			Name:           "kafka_server_brokertopicmetrics_bytes_in_total",
+			Help:           KafkaServerBrokertopicmetricsBytesInTotalDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{"topic", "statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+		},
+		"kafka_server_brokertopicmetrics_bytes_out_total": {
+			Name:           "kafka_server_brokertopicmetrics_bytes_out_total",
+			Help:           KafkaServerBrokertopicmetricsBytesOutTotalDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{"topic", "statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+		},
 		"kafka_controller_kafkacontroller_offline_partitions_count": {
 			Name:           "kafka_controller_kafkacontroller_offline_partitions_count",
 			Help:           KafkaControllerKafkacontrollerOfflinePartitionsCountDesc,

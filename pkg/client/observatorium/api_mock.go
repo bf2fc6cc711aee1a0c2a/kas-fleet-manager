@@ -90,7 +90,7 @@ func (*httpAPIMock) Buildinfo(ctx context.Context) (pV1.BuildinfoResult, error) 
 //getMockQueryData
 func getMockQueryData(query string) pModel.Vector {
 	for key, values := range queryData {
-		if strings.Contains(query, key) {
+		if strings.HasPrefix(query, key) {
 			return values
 		}
 	}
@@ -101,7 +101,7 @@ func getMockQueryData(query string) pModel.Vector {
 //getMockQueryRangeData
 func getMockQueryRangeData(query string) pModel.Matrix {
 	for key, values := range rangeQuerydata {
-		if strings.Contains(query, key) {
+		if strings.HasPrefix(query, key) {
 			return values
 		}
 	}
@@ -110,6 +110,15 @@ func getMockQueryRangeData(query string) pModel.Matrix {
 }
 
 var rangeQuerydata = map[string]pModel.Matrix{
+	"kafka_server_brokertopicmetrics_messages_in_total": {
+		fakeMetricData("kafka_server_brokertopicmetrics_messages_in_total", 3040),
+	},
+	"kafka_server_brokertopicmetrics_bytes_in_total": {
+		fakeMetricData("kafka_server_brokertopicmetrics_bytes_in_total", 293617),
+	},
+	"kafka_server_brokertopicmetrics_bytes_out_total": {
+		fakeMetricData("kafka_server_brokertopicmetrics_bytes_out_total", 152751),
+	},
 	"kubelet_volume_stats_available_bytes": {
 		fakeMetricData("kubelet_volume_stats_available_bytes", 220792516608),
 	},
