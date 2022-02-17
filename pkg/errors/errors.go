@@ -30,9 +30,9 @@ const (
 	ErrorForbidden       ServiceErrorCode = 4
 	ErrorForbiddenReason string           = "Forbidden to perform this action"
 
-	// [DEPRECATED:120] Forbidden occurs when a user or organisation has reached maximum number of allowed instances
+	// Forbidden occurs when a user or organisation has reached maximum number of allowed instances
 	ErrorMaxAllowedInstanceReached       ServiceErrorCode = 5
-	ErrorMaxAllowedInstanceReachedReason string           = "Forbidden to create more instances than the maximum allowed"
+	ErrorMaxAllowedInstanceReachedReason string           = "[DEPRECATED:120] Forbidden to create more instances than the maximum allowed"
 
 	// Conflict occurs when a database constraint is violated
 	ErrorConflict       ServiceErrorCode = 6
