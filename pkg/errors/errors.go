@@ -30,7 +30,7 @@ const (
 	ErrorForbidden       ServiceErrorCode = 4
 	ErrorForbiddenReason string           = "Forbidden to perform this action"
 
-	// Forbidden occurs when a user or organisation has reached maximum number of allowed instances
+	// [DEPRECATED:120] Forbidden occurs when a user or organisation has reached maximum number of allowed instances
 	ErrorMaxAllowedInstanceReached       ServiceErrorCode = 5
 	ErrorMaxAllowedInstanceReachedReason string           = "Forbidden to create more instances than the maximum allowed"
 
