@@ -1,0 +1,24 @@
+---
+supported_kafka_sizes:
+  - id: standard
+    sizes:
+    - id: x1
+      ingressThroughputPerSec: "50Mi"
+      egressThroughputPerSec: "100Mi"
+      totalMaxConnections: 3000
+      maxConnectionAttemptsPerSec: 100
+      maxDataRetentionSize: "1000Gi"
+      maxDataRetentionPeriod: "P14D"
+      maxPartitions: 1500
+      cost: 1
+  - id: eval
+    sizes:
+    - id: x1
+      ingressThroughputPerSec: "30Mi"
+      egressThroughputPerSec: "30Mi"
+      totalMaxConnections: 3000
+      maxConnectionAttemptsPerSec: 100
+      maxDataRetentionSize: "1000Gi"
+      maxDataRetentionPeriod: "P14D"
+      maxPartitions: 1000
+      cost: 1
