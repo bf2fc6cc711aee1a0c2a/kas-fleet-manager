@@ -26,8 +26,9 @@ type KafkaConfig struct {
 	KafkaCapacity                  KafkaCapacityConfig `json:"kafka_capacity_config"`
 	KafkaCapacityConfigFile        string              `json:"kafka_capacity_config_file"`
 
-	KafkaLifespan *KafkaLifespanConfig `json:"kafka_lifespan"`
-	Quota         *KafkaQuotaConfig    `json:"kafka_quota"`
+	KafkaLifespan       *KafkaLifespanConfig       `json:"kafka_lifespan"`
+	Quota               *KafkaQuotaConfig          `json:"kafka_quota"`
+	SupportedKafkaSizes *KafkaSupportedSizesConfig `json:"kafka_supported_sizes"`
 }
 
 func NewKafkaConfig() *KafkaConfig {
@@ -39,6 +40,7 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaCapacityConfigFile:        "config/kafka-capacity-config.yaml",
 		KafkaLifespan:                  NewKafkaLifespanConfig(),
 		Quota:                          NewKafkaQuotaConfig(),
+		SupportedKafkaSizes:            NewKafkaSupportedSizesConfig(),
 	}
 }
 
@@ -52,6 +54,7 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KafkaDomainName, "kafka-domain-name", c.KafkaDomainName, "The domain name to use for Kafka instances")
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
 	fs.BoolVar(&c.Quota.AllowEvaluatorInstance, "allow-evaluator-instance", c.Quota.AllowEvaluatorInstance, "Allow the creation of kafka evaluator instances")
+	fs.StringVar(&c.SupportedKafkaSizes.SupportedKafkaSizesConfigFile, "supported-kafka-sizes-config-file", c.SupportedKafkaSizes.SupportedKafkaSizesConfigFile, "File containing the supported kafka sizes configuration")
 }
 
 func (c *KafkaConfig) ReadFiles() error {
@@ -71,5 +74,10 @@ func (c *KafkaConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-	return nil
+
+	supportedKafkaSizesContents, err := shared.ReadFile(c.SupportedKafkaSizes.SupportedKafkaSizesConfigFile)
+	if err != nil {
+		return err
+	}
+	return yaml.Unmarshal([]byte(supportedKafkaSizesContents), &c.SupportedKafkaSizes.SupportedKafkaSizesConfig)
 }
