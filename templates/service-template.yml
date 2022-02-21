@@ -157,6 +157,11 @@ parameters:
   description: A list of supported cloud providers in a yaml format.
   value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, eval: {}}}]}]"
 
+- name: SUPPORTED_KAFKA_SIZES
+  displayName: Supported Kafka Sizes
+  description: A list of supported Kafka sizes in a yaml format.
+  value: "[{size: eval.x1, ingressThroughputPerSec: 30Mi, egressThroughputPerSec: 30Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1000, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100}, {size: standard.x1, ingressThroughputPerSec: 50Mi, egressThroughputPerSec: 100Mi, totalMaxConnections: 2000, maxDataRetentionSize: 1000Gi, maxPartitions: 1500, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100}]"
+
 - name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
   displayName: Enable Kafka TLS
   description: Enable the Kafka TLS certificate
@@ -483,6 +488,15 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
+      name: kas-fleet-manager-kafka-sizes-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      kafka-sizes-configuration.yaml: |-
+        supported_kafka_sizes: ${SUPPORTED_KAFKA_SIZES}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
       name: kas-fleet-manager-allowed-users-config
       annotations:
         qontract.recycle: "true"
@@ -643,6 +657,9 @@ objects:
           - name: kas-fleet-manager-providers-config
             configMap:
               name: kas-fleet-manager-providers-config
+          - name: kas-fleet-manager-kafka-sizes-config
+            configMap:
+              name: kas-fleet-manager-kafka-sizes-config
           - name: kas-fleet-manager-allowed-users-config
             configMap:
               name: kas-fleet-manager-allowed-users-config
@@ -717,6 +734,9 @@ objects:
             - name: kas-fleet-manager-providers-config
               mountPath: /config/provider-configuration.yaml
               subPath: provider-configuration.yaml
+            - name: kas-fleet-manager-kafka-sizes-config
+              mountPath: /config/kafka-sizes-configuration.yaml
+              subPath: kafka-sizes-configuration.yaml
             - name: kas-fleet-manager-allowed-users-config
               mountPath: /config/quota-management-list-configuration.yaml
               subPath: quota-management-list-configuration.yaml
