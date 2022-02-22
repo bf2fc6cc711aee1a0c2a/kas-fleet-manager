@@ -1,3 +1,15 @@
+# This configuration defines a list of supported Kafka instance sizes for KAS Fleet Manager. 
+# Modify this file to add additional Kafka instance sizes or change the values of the default sizes listed below.
+# 
+# The following properties must be defined for each Kafka instance size (all values must be larger than '0'):
+#   - size: The Kafka instance size. Each size should only be defined once.
+#   - ingressThroughputPerSec: Maximum limit for ingress throughput per second (MB/s).
+#   - egressThroughputPerSec: Maximum limit for egress throughput per second (MB/s).
+#   - totalMaxConnections: Maximum client connections allowed.
+#   - maxConnectionAttemptsPerSec: Maximum client connection attempts per second.
+#   - maxDataRetentionSize: Maximum storage (GB).
+#   - maxDataRetentionPeriod: Maximum duration(ISO8601) for retaining data.
+#   - maxPartitions: Maximum partitions for all topics combined.
 ---
 supported_kafka_sizes:
   - size: "standard.x1"
