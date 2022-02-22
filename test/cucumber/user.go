@@ -27,6 +27,7 @@ func init() {
 		ctx.Step(`^I am logged in as "([^"]*)"$`, s.iAmLoggedInAs)
 		ctx.Step(`^I set the "([^"]*)" header to "([^"]*)"$`, s.iSetTheHeaderTo)
 		ctx.Step(`^an admin user named "([^"]+)" with roles "([^"]+)"$`, s.Suite.createAdminUserNamed)
+		ctx.Step(`^I store userid for "([^"]+)" as \${([^"]*)}$`, s.storeUserId)
 	})
 }
 
@@ -58,6 +59,7 @@ func (s *TestSuite) createUserNamedInOrganization(name string, orgid string) err
 	s.users[name] = &TestUser{
 		Name:  name,
 		Token: token,
+		UserName: account.Username(),
 		Ctx:   context.WithValue(context.Background(), compat.ContextAccessToken, token),
 	}
 	return nil
@@ -92,8 +94,21 @@ func (s *TestSuite) createAdminUserNamed(name, roles string) error {
 	s.users[name] = &TestUser{
 		Name:  name,
 		Token: token,
+		UserName: account.Username(),
 		Ctx:   context.WithValue(context.Background(), compat.ContextAccessToken, token),
 	}
+	return nil
+}
+
+func (s *TestScenario) storeUserId(name, varName string) error {
+	s.Suite.Mu.Lock()
+	defer s.Suite.Mu.Unlock()
+
+	user := s.Suite.users[name]
+	if user != nil {
+		s.Variables[varName] = user.UserName
+	}
+
 	return nil
 }
 

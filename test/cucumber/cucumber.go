@@ -59,10 +59,11 @@ type TestSuite struct {
 // TestUser represents a user that can login to the system.  The same users are shared by
 // the different test scenarios.
 type TestUser struct {
-	Name  string
-	Token string
-	Ctx   context.Context
-	Mu    sync.Mutex
+	Name     string
+	Token    string
+	UserName string
+	Ctx      context.Context
+	Mu       sync.Mutex
 }
 
 // TestScenario holds that state of single scenario.  It is not accessed
@@ -168,10 +169,10 @@ func (s *TestScenario) Expand(value string, skippedVars []string) (result string
 				switch next := next.(type) {
 				case string:
 					return next
-				case float64:
-					return fmt.Sprintf("%f", next)
 				case float32:
-					return fmt.Sprintf("%f", next)
+				case float64:
+					// handle int64 returned as float in json
+					return strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", next), "0"), ".")
 				case nil:
 					rerr = fmt.Errorf("field ${%s} not found in json response:\n%s\n", name, string(session.RespBytes))
 					return ""

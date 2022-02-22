@@ -9,9 +9,8 @@
 
 package public
 
-// DeploymentLocation struct for DeploymentLocation
-type DeploymentLocation struct {
-	Kind        string `json:"kind"`
-	ClusterId   string `json:"cluster_id,omitempty"`
-	NamespaceId string `json:"namespace_id,omitempty"`
+// ConnectorNamespaceTenantUser struct for ConnectorNamespaceTenantUser
+type ConnectorNamespaceTenantUser struct {
+	Kind   string `json:"kind,omitempty"`
+	UserId string `json:"user_id,omitempty"`
 }
