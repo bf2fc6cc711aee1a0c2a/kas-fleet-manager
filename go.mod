@@ -45,6 +45,7 @@ require (
 	github.com/rs/xid v1.2.1
 	github.com/santhosh-tekuri/jsonschema/v3 v3.0.1
 	github.com/selvatico/go-mocket v1.0.7
+	github.com/senseyeio/duration v0.0.0-20180430131211-7c2a214ada46
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spyzhov/ajson v0.4.2
