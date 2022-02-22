@@ -9,9 +9,8 @@
 
 package public
 
-// DeploymentLocation struct for DeploymentLocation
-type DeploymentLocation struct {
-	Kind        string `json:"kind"`
-	ClusterId   string `json:"cluster_id,omitempty"`
-	NamespaceId string `json:"namespace_id,omitempty"`
+// ConnectorNamespaceRequestMetaAnnotations struct for ConnectorNamespaceRequestMetaAnnotations
+type ConnectorNamespaceRequestMetaAnnotations struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }

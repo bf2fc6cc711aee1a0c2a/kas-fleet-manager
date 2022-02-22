@@ -6,7 +6,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
@@ -23,13 +22,14 @@ import (
 
 type ConnectorAdminHandler struct {
 	di.Inject
-	Bus            signalbus.SignalBus
-	Service        services.ConnectorClusterService
-	Keycloak       coreservices.KafkaKeycloakService
-	ConnectorTypes services.ConnectorTypesService
-	Vault          vault.VaultService
-	KeycloakConfig *keycloak.KeycloakConfig
-	ServerConfig   *server.ServerConfig
+	Bus              signalbus.SignalBus
+	Service          services.ConnectorClusterService
+	NamespaceService services.ConnectorNamespaceService
+	Keycloak         coreservices.KafkaKeycloakService
+	ConnectorTypes   services.ConnectorTypesService
+	Vault            vault.VaultService
+	KeycloakConfig   *keycloak.KeycloakConfig
+	ServerConfig     *server.ServerConfig
 }
 
 func NewConnectorAdminHandler(handler ConnectorAdminHandler) *ConnectorAdminHandler {
@@ -57,9 +57,9 @@ func (h *ConnectorAdminHandler) ListConnectorClusters(w http.ResponseWriter, r *
 				Total: int32(paging.Total),
 			}
 
-			for _, resource := range resources {
-				converted := presenters.PresentPrivateConnectorCluster(resource)
-				resourceList.Items = append(resourceList.Items, converted)
+			resourceList.Items = make([]private.ConnectorCluster, len(resources))
+			for i, resource := range resources {
+				resourceList.Items[i] = presenters.PresentPrivateConnectorCluster(resource)
 			}
 
 			return resourceList, nil
@@ -86,8 +86,8 @@ func (h *ConnectorAdminHandler) GetConnectorUpgradesByType(writer http.ResponseW
 				return nil, serviceError
 			}
 			result := make([]private.ConnectorAvailableTypeUpgrade, len(upgrades))
-			for i, upgrade := range upgrades {
-				result[i] = *presenters.PresentConnectorAvailableTypeUpgrade(&upgrade)
+			for j, upgrade := range upgrades {
+				result[j] = *presenters.PresentConnectorAvailableTypeUpgrade(&upgrade)
 			}
 
 			i = private.ConnectorAvailableTypeUpgradeList{
@@ -101,19 +101,6 @@ func (h *ConnectorAdminHandler) GetConnectorUpgradesByType(writer http.ResponseW
 	}
 
 	handlers.HandleGet(writer, request, &cfg)
-}
-
-func isAdmin(request *http.Request) *errors.ServiceError {
-	ctx := request.Context()
-	_, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
-	}
-
-	if !auth.GetIsAdminFromContext(ctx) {
-		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authorized")
-	}
-	return nil
 }
 
 func (h *ConnectorAdminHandler) UpgradeConnectorsByType(writer http.ResponseWriter, request *http.Request) {
@@ -195,4 +182,100 @@ func (h *ConnectorAdminHandler) UpgradeConnectorsByOperator(writer http.Response
 	}
 
 	handlers.Handle(writer, request, &cfg, http.StatusNoContent)
+}
+
+func (h *ConnectorAdminHandler) GetConnectorNamespaces(writer http.ResponseWriter, request *http.Request) {
+	listArgs := coreservices.NewListArguments(request.URL.Query())
+	cfg := handlers.HandlerConfig{
+		Action: func() (interface{}, *errors.ServiceError) {
+			if err := isAdmin(request); err != nil {
+				return nil, err
+			}
+
+			namespaces, paging, err := h.NamespaceService.List(request.Context(), []string{}, listArgs)
+			if err != nil {
+				return nil, err
+			}
+
+			result := private.ConnectorNamespaceList{
+				Kind:  "ConnectorNamespaceList",
+				Page:  int32(paging.Page),
+				Size:  int32(paging.Size),
+				Total: int32(paging.Total),
+			}
+
+			result.Items = make([]private.ConnectorNamespace, len(namespaces))
+			for i, namespace := range namespaces {
+				result.Items[i] = presenters.PresentPrivateConnectorNamespace(namespace)
+			}
+
+			return result, nil
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorAdminHandler) CreateConnectorNamespace(writer http.ResponseWriter, request *http.Request) {
+	var resource private.ConnectorNamespaceWithTenantRequest
+	cfg := handlers.HandlerConfig{
+		MarshalInto: &resource,
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			if serviceError = isAdmin(request); serviceError != nil {
+				return nil, serviceError
+			}
+
+			ctx := request.Context()
+			connectorNamespace := presenters.ConvertConnectorNamespaceWithTenantRequest(&resource)
+			if connectorNamespace.TenantUserId != nil {
+				connectorNamespace.Owner = *connectorNamespace.TenantUserId
+			} else {
+				// NOTE: admin user is owner
+				claims, err := auth.GetClaimsFromContext(ctx)
+				if err != nil {
+					return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
+				}
+				connectorNamespace.Owner = auth.GetUsernameFromClaims(claims)
+			}
+			if err := h.NamespaceService.Create(ctx, connectorNamespace); err != nil {
+				return nil, err
+			}
+			i = presenters.PresentPrivateConnectorNamespace(connectorNamespace)
+			return
+		},
+	}
+
+	handlers.Handle(writer, request, &cfg, http.StatusCreated)
+}
+
+func (h *ConnectorAdminHandler) DeleteConnectorNamespace(writer http.ResponseWriter, request *http.Request) {
+	namespaceId := mux.Vars(request)["namespace_id"]
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("namespace_id", &namespaceId, handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			if serviceError = isAdmin(request); serviceError != nil {
+				return nil, serviceError
+			}
+
+			serviceError = h.NamespaceService.Delete(request.Context(), namespaceId)
+			return nil, serviceError
+		},
+	}
+
+	handlers.HandleDelete(writer, request, &cfg, http.StatusNoContent)
+}
+
+func isAdmin(request *http.Request) *errors.ServiceError {
+	ctx := request.Context()
+	_, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
+	}
+
+	if !auth.GetIsAdminFromContext(ctx) {
+		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authorized")
+	}
+	return nil
 }

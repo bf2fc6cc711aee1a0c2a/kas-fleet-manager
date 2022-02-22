@@ -21,7 +21,7 @@ import (
 func ConfigProviders(kafkaEnabled bool) di.Option {
 
 	result := di.Options(
-		di.Provide(config.NewConnectorsConfig, di.As(new(environments2.ConfigModule))),
+		di.Provide(config.NewConnectorsConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
 		di.Provide(environments2.Func(serviceProviders)),
 		di.Provide(migrations.New),
 		di.Provide(cmdvault.NewVaultCommand),
@@ -51,6 +51,8 @@ func serviceProviders() di.Option {
 		di.Provide(services.NewConnectorTypesService, di.As(new(services.ConnectorTypesService))),
 		di.Provide(services.NewConnectorClusterService, di.As(new(services.ConnectorClusterService))),
 		di.Provide(services.NewConnectorClusterService, di.As(new(auth.AuthAgentService))),
+		di.Provide(services.NewConnectorNamespaceService, di.As(new(services.ConnectorNamespaceService))),
+		di.Provide(handlers.NewConnectorNamespaceHandler),
 		di.Provide(handlers.NewConnectorAdminHandler),
 		di.Provide(handlers.NewConnectorTypesHandler),
 		di.Provide(handlers.NewConnectorsHandler),

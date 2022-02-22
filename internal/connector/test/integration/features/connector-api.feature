@@ -1449,6 +1449,11 @@ Feature: create a connector
             "href": "/api/connector_mgmt/v1/kafka_connector_clusters",
             "id": "kafka_connector_clusters",
             "kind": "ConnectorClusterList"
+          },
+          {
+            "href": "/api/connector_mgmt/v1/kafka_connector_namespaces",
+            "id": "kafka_connector_namespaces",
+            "kind": "ConnectorNamespaceList"
           }
         ]
       }
@@ -1477,6 +1482,11 @@ Feature: create a connector
             "href": "/api/connector_mgmt/v1/kafka_connector_clusters",
             "id": "kafka_connector_clusters",
             "kind": "ConnectorClusterList"
+          },
+          {
+            "href": "/api/connector_mgmt/v1/kafka_connector_namespaces",
+            "id": "kafka_connector_namespaces",
+            "kind": "ConnectorNamespaceList"
           }
         ]
       }

@@ -616,7 +616,7 @@ Feature: connector agent API
 
     # Now lets verify connector upgrades due to catalog updates
     Given I am logged in as "Ricky Bobby"
-    And I GET path "/v1/admin/kafka_connector_clusters/"
+    And I GET path "/v1/admin/kafka_connector_clusters"
     And the response code should be 200
     And the ".items[0]" selection from the response should match json:
       """
@@ -625,7 +625,7 @@ Feature: connector agent API
         "id": "${response.items[0].id}",
         "kind": "ConnectorCluster",
         "created_at": "${response.items[0].created_at}",
-        "name": "New Cluster",
+        "name": "${response.items[0].name}",
         "owner": "${response.items[0].owner}",
         "modified_at": "${response.items[0].modified_at}",
         "status": {
