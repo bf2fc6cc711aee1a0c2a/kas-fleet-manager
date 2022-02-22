@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/pflag"
@@ -82,4 +83,8 @@ func (c *KafkaConfig) ReadFiles() error {
 		return err
 	}
 	return yaml.Unmarshal([]byte(supportedKafkaSizesContents), &c.SupportedKafkaSizes.SupportedKafkaSizesConfig)
+}
+
+func (c *KafkaConfig) Validate(env *environments.Env) error {
+	return c.SupportedKafkaSizes.SupportedKafkaSizesConfig.validate()
 }
