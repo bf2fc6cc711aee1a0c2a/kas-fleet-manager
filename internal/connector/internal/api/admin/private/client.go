@@ -49,6 +49,8 @@ type APIClient struct {
 	// API Services
 
 	ConnectorClustersAdminApi *ConnectorClustersAdminApiService
+
+	ConnectorNamespacesAdminApi *ConnectorNamespacesAdminApiService
 }
 
 type service struct {
@@ -68,6 +70,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 
 	// API Services
 	c.ConnectorClustersAdminApi = (*ConnectorClustersAdminApiService)(&c.common)
+	c.ConnectorNamespacesAdminApi = (*ConnectorNamespacesAdminApiService)(&c.common)
 
 	return c
 }

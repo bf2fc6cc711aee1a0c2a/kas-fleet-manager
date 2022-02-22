@@ -13,14 +13,20 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
+	"time"
 )
 
 type ConnectorsConfig struct {
-	ConnectorCatalogDirs []string                `json:"connector_types"`
-	CatalogEntries       []ConnectorCatalogEntry `json:"connector_type_urls"`
+	ConnectorEvalDurationString string                  `json:"connector_eval_duration"`
+	ConnectorEvalOrganizations  []string                `json:"connector_eval_organizations"`
+	ConnectorCatalogDirs        []string                `json:"connector_types"`
+	CatalogEntries              []ConnectorCatalogEntry `json:"connector_type_urls"`
+	ConnectorEvalDuration       time.Duration
 }
 
 var _ environments.ConfigModule = &ConnectorsConfig{}
+
+var _ environments.ServiceValidator = &ConnectorsConfig{}
 
 type ConnectorChannelConfig struct {
 	Revision      int64                  `json:"revision,omitempty"`
@@ -38,6 +44,8 @@ func NewConnectorsConfig() *ConnectorsConfig {
 
 func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringArrayVar(&c.ConnectorCatalogDirs, "connector-catalog", c.ConnectorCatalogDirs, "Directory containing connector catalog entries")
+	fs.StringArrayVar(&c.ConnectorEvalOrganizations, "connector-eval-duration", c.ConnectorCatalogDirs, "Connector eval duration in go duration format")
+	fs.StringArrayVar(&c.ConnectorEvalOrganizations, "connector-eval-organizations", c.ConnectorCatalogDirs, "Connector eval organization IDs")
 }
 
 func (c *ConnectorsConfig) ReadFiles() error {
@@ -83,5 +91,15 @@ func (c *ConnectorsConfig) ReadFiles() error {
 	})
 	glog.Infof("loaded %d connector types", len(values))
 	c.CatalogEntries = values
+	return nil
+}
+
+func (c *ConnectorsConfig) Validate(env *environments.Env) error {
+	// validate duration
+	duration, err := time.ParseDuration(c.ConnectorEvalDurationString)
+	if err != nil {
+		return err
+	}
+	c.ConnectorEvalDuration = duration
 	return nil
 }

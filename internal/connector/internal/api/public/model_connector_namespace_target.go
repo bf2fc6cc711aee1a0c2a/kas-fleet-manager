@@ -9,9 +9,8 @@
 
 package public
 
-// DeploymentLocation struct for DeploymentLocation
-type DeploymentLocation struct {
+// ConnectorNamespaceTarget Targets workloads to an addon cluster namespace
+type ConnectorNamespaceTarget struct {
 	Kind        string `json:"kind"`
-	ClusterId   string `json:"cluster_id,omitempty"`
 	NamespaceId string `json:"namespace_id,omitempty"`
 }
