@@ -149,7 +149,7 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				kafkaRequest.DesiredKafkaIBPVersion = kafkaUpdateReq.KafkaIbpVersion
 				updateRequired = true
 			}
-			if kafkaUpdateReq.KafkaStorageSize != "" && kafkaRequest.KafkaStorageSize != kafkaUpdateReq.KafkaStorageSize {
+			if kafkaUpdateReq.KafkaStorageSize != "" && kafkaUpdateReq.KafkaStorageSize != kafkaRequest.KafkaStorageSize {
 				kafkaRequest.KafkaStorageSize = kafkaUpdateReq.KafkaStorageSize
 				updateRequired = true
 			}
