@@ -117,42 +117,51 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				&kafkaUpdateReq,
 			),
 			ValidateKafkaStorageSize(kafkaRequest, &kafkaUpdateReq),
+			func() *errors.ServiceError { // Validate status
+				kafkaStatus := kafkaRequest.Status
+				if !shared.Contains(constants.GetUpdateableStatuses(), kafkaStatus) {
+					return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka in %s status. Supported statuses for update are: %v", kafkaStatus, constants.GetUpdateableStatuses()))
+				}
+				return nil
+			},
+			func() *errors.ServiceError { // Validate DesiredKafkaVersion
+				if kafkaRequest.DesiredKafkaVersion != kafkaUpdateReq.KafkaVersion && kafkaUpdateReq.KafkaVersion != "" && kafkaRequest.KafkaUpgrading {
+					return errors.New(errors.ErrorValidation, "Unable to update kafka version. Another upgrade is already in progress.")
+				}
+				return nil
+			},
+			func() *errors.ServiceError { // Validate DesiredStrimziVersion
+				if kafkaRequest.DesiredStrimziVersion != kafkaUpdateReq.StrimziVersion && kafkaUpdateReq.StrimziVersion != "" && kafkaRequest.StrimziUpgrading {
+					return errors.New(errors.ErrorValidation, "Unable to update strimzi version. Another upgrade is already in progress.")
+				}
+				return nil
+			},
+			func() *errors.ServiceError { // Validate DesiredKafkaIBPVersion
+				if kafkaRequest.DesiredKafkaIBPVersion != kafkaUpdateReq.KafkaIbpVersion && kafkaUpdateReq.KafkaIbpVersion != "" && kafkaRequest.KafkaIBPUpgrading {
+					return errors.New(errors.ErrorValidation, "Unable to update ibp version. Another upgrade is already in progress.")
+				}
+				return nil
+			},
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
 			if err != nil {
 				return nil, err
 			}
-			kafkaStatus := kafkaRequest.Status
-			if !shared.Contains(constants.GetUpdateableStatuses(), kafkaStatus) {
-				return nil, errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka in %s status. Supported statuses for update are: %v", kafkaStatus, constants.GetUpdateableStatuses()))
-			}
-			updateRequired := false
-			if kafkaRequest.DesiredKafkaVersion != kafkaUpdateReq.KafkaVersion && kafkaUpdateReq.KafkaVersion != "" {
-				if kafkaRequest.KafkaUpgrading {
-					return nil, errors.New(errors.ErrorValidation, "Unable to update kafka version. Another upgrade is already in progress.")
+
+			update := func(val1 *string, val2 string) bool {
+				if val2 != "" && *val1 != val2 {
+					*val1 = val2
+					return true
 				}
-				kafkaRequest.DesiredKafkaVersion = kafkaUpdateReq.KafkaVersion
-				updateRequired = true
+				return false
 			}
-			if kafkaRequest.DesiredStrimziVersion != kafkaUpdateReq.StrimziVersion && kafkaUpdateReq.StrimziVersion != "" {
-				if kafkaRequest.StrimziUpgrading {
-					return nil, errors.New(errors.ErrorValidation, "Unable to update strimzi version. Another upgrade is already in progress.")
-				}
-				kafkaRequest.DesiredStrimziVersion = kafkaUpdateReq.StrimziVersion
-				updateRequired = true
-			}
-			if kafkaRequest.DesiredKafkaIBPVersion != kafkaUpdateReq.KafkaIbpVersion && kafkaUpdateReq.KafkaIbpVersion != "" {
-				if kafkaRequest.KafkaIBPUpgrading {
-					return nil, errors.New(errors.ErrorValidation, "Unable to update ibp version. Another upgrade is already in progress.")
-				}
-				kafkaRequest.DesiredKafkaIBPVersion = kafkaUpdateReq.KafkaIbpVersion
-				updateRequired = true
-			}
-			if kafkaUpdateReq.KafkaStorageSize != "" && kafkaUpdateReq.KafkaStorageSize != kafkaRequest.KafkaStorageSize {
-				kafkaRequest.KafkaStorageSize = kafkaUpdateReq.KafkaStorageSize
-				updateRequired = true
-			}
+
+			updateRequired := update(&kafkaRequest.DesiredKafkaVersion, kafkaUpdateReq.KafkaVersion)
+			updateRequired = update(&kafkaRequest.DesiredStrimziVersion, kafkaUpdateReq.StrimziVersion) || updateRequired
+			updateRequired = update(&kafkaRequest.DesiredKafkaIBPVersion, kafkaUpdateReq.KafkaIbpVersion) || updateRequired
+			updateRequired = update(&kafkaRequest.KafkaStorageSize, kafkaUpdateReq.KafkaStorageSize) || updateRequired
+
 			if updateRequired {
 				err3 := h.service.VerifyAndUpdateKafkaAdmin(ctx, kafkaRequest)
 				if err3 != nil {
