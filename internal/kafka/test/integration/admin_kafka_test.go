@@ -770,6 +770,21 @@ func TestAdminKafka_Update(t *testing.T) {
 			},
 		},
 		{
+			name: "should not fail when attempting to upgrade to the same storage size",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: sameStorageSizeUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).ToNot(HaveOccurred())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.KafkaStorageSize).To(Equal(sameStorageSizeUpdateRequest.KafkaStorageSize))
+			},
+		},
+		{
 			name: fmt.Sprintf("should succeed when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
@@ -867,19 +882,6 @@ func TestAdminKafka_Update(t *testing.T) {
 				Expect(result.DesiredKafkaIbpVersion).To(Equal(allFieldsUpdateRequest.KafkaIbpVersion))
 				Expect(result.DesiredStrimziVersion).To(Equal(allFieldsUpdateRequest.StrimziVersion))
 				Expect(result.KafkaStorageSize).To(Equal(allFieldsUpdateRequest.KafkaStorageSize))
-			},
-		},
-		{
-			name: "should fail when attempting to upgrade to the same storage size",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: sameStorageSizeUpdateRequest,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
 			},
 		},
 		{
