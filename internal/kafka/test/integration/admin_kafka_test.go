@@ -410,6 +410,7 @@ func TestAdminKafka_List(t *testing.T) {
 }
 
 func TestAdminKafka_Update(t *testing.T) {
+	nonExistentKafkaId := "non-existent"
 	sampleKafkaID1 := api.NewID()
 	sampleKafkaID2 := api.NewID()
 	sampleKafkaID3 := api.NewID()
@@ -747,6 +748,20 @@ func TestAdminKafka_Update(t *testing.T) {
 					return ctx
 				},
 				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: fullyPopulatedKafkaVersionUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(HaveOccurred())
+				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+			},
+		},
+		{
+			name: fmt.Sprintf("should fail when trying to patch non-existent kafka"),
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
+				},
+				kafkaID:            nonExistentKafkaId,
 				kafkaUpdateRequest: fullyPopulatedKafkaVersionUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
