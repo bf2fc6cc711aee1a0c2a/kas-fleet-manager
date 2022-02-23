@@ -159,22 +159,15 @@ func ValidateKafkaClaims(ctx context.Context, kafkaRequestPayload *public.KafkaR
 	}
 }
 
-func ValidateKafkaStorageSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *private.KafkaUpdateRequest) handlers.Validate {
-	return func() *errors.ServiceError {
-		if !stringNotSet(&kafkaUpdateReq.KafkaStorageSize) {
-			currentSize, err := resource.ParseQuantity(kafkaRequest.KafkaStorageSize)
-			if err != nil {
-				return errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: '%s'", kafkaRequest.KafkaStorageSize)
-			}
-			requestedSize, err := resource.ParseQuantity(kafkaUpdateReq.KafkaStorageSize)
-			if err != nil {
-				return errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current requested size: '%s'", kafkaUpdateReq.KafkaStorageSize)
-			}
-			reqSize, _ := requestedSize.AsInt64()
-			if currentSize.CmpInt64(reqSize) > -1 {
-				return errors.FieldValidationError("Failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", kafkaUpdateReq.KafkaStorageSize, kafkaRequest.KafkaStorageSize)
-			}
-		}
-		return nil
+func CompareKafkaStorageSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *private.KafkaUpdateRequest) (int, *errors.ServiceError) {
+	currentSize, err := resource.ParseQuantity(kafkaRequest.KafkaStorageSize)
+	if err != nil {
+		return 0, errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: '%s'", kafkaRequest.KafkaStorageSize)
 	}
+	requestedSize, err := resource.ParseQuantity(kafkaUpdateReq.KafkaStorageSize)
+	if err != nil {
+		return 0, errors.FieldValidationError("Failed to update Kafka Request. Unable to parse requested storage size: '%s'", kafkaUpdateReq.KafkaStorageSize)
+	}
+	reqSize, _ := requestedSize.AsInt64()
+	return currentSize.CmpInt64(reqSize), nil
 }
