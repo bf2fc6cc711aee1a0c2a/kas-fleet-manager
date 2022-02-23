@@ -770,7 +770,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			},
 		},
 		{
-			name: "should fail when attempting to upgrade to the same storage size",
+			name: "should not fail when attempting to upgrade to the same storage size",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
@@ -779,7 +779,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaUpdateRequest: sameStorageSizeUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.KafkaStorageSize).To(Equal(sameStorageSizeUpdateRequest.KafkaStorageSize))
 			},

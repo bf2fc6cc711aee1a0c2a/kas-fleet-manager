@@ -153,9 +153,9 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				if e != nil {
 					return nil, e
 				}
-				if result > 0 {
+				if result < 0 {
 					return nil, errors.FieldValidationError("Failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", kafkaUpdateReq.KafkaStorageSize, kafkaRequest.KafkaStorageSize)
-				} else if result < 0 {
+				} else if result > 0 {
 					kafkaRequest.KafkaStorageSize = kafkaUpdateReq.KafkaStorageSize
 					updateRequired = true
 				} // if the requested and current storage sizes are the same - do nothing

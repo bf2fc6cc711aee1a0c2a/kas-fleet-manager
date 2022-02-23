@@ -168,6 +168,6 @@ func CompareKafkaStorageSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *p
 	if err != nil {
 		return 0, errors.FieldValidationError("Failed to update Kafka Request. Unable to parse requested storage size: '%s'", kafkaUpdateReq.KafkaStorageSize)
 	}
-	reqSize, _ := requestedSize.AsInt64()
-	return currentSize.CmpInt64(reqSize), nil
+	currSize, _ := currentSize.AsInt64()
+	return requestedSize.CmpInt64(currSize), nil
 }
