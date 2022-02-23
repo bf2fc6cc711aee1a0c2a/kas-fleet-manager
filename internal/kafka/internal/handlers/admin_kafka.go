@@ -116,7 +116,7 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 			ValidateKafkaUpdateFields(
 				&kafkaUpdateReq,
 			),
-			ValidateKafkaStorageSize(kafkaRequest, &kafkaUpdateReq),
+			ValidateKafkaStorageSize(kafkaRequest, &kafkaUpdateReq, id),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 

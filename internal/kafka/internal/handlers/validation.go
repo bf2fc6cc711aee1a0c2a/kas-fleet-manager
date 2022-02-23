@@ -159,20 +159,24 @@ func ValidateKafkaClaims(ctx context.Context, kafkaRequestPayload *public.KafkaR
 	}
 }
 
-func ValidateKafkaStorageSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *private.KafkaUpdateRequest) handlers.Validate {
+func ValidateKafkaStorageSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *private.KafkaUpdateRequest, kafkaId string) handlers.Validate {
 	return func() *errors.ServiceError {
 		if !stringNotSet(&kafkaUpdateReq.KafkaStorageSize) {
-			currentSize, err := resource.ParseQuantity(kafkaRequest.KafkaStorageSize)
-			if err != nil {
-				return errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: '%s'", kafkaRequest.KafkaStorageSize)
-			}
-			requestedSize, err := resource.ParseQuantity(kafkaUpdateReq.KafkaStorageSize)
-			if err != nil {
-				return errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current requested size: '%s'", kafkaUpdateReq.KafkaStorageSize)
-			}
-			currSize, _ := currentSize.AsInt64()
-			if requestedSize.CmpInt64(currSize) < 0 {
-				return errors.FieldValidationError("Failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", kafkaUpdateReq.KafkaStorageSize, kafkaRequest.KafkaStorageSize)
+			if kafkaRequest != nil {
+				currentSize, err := resource.ParseQuantity(kafkaRequest.KafkaStorageSize)
+				if err != nil {
+					return errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: '%s'", kafkaRequest.KafkaStorageSize)
+				}
+				requestedSize, err := resource.ParseQuantity(kafkaUpdateReq.KafkaStorageSize)
+				if err != nil {
+					return errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current requested size: '%s'", kafkaUpdateReq.KafkaStorageSize)
+				}
+				currSize, _ := currentSize.AsInt64()
+				if requestedSize.CmpInt64(currSize) < 0 {
+					return errors.FieldValidationError("Failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", kafkaUpdateReq.KafkaStorageSize, kafkaRequest.KafkaStorageSize)
+				}
+			} else {
+				return errors.NotFound("Kafka with id: %s was not found", kafkaId)
 			}
 		}
 		return nil
