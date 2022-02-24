@@ -3,17 +3,18 @@ package config
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	"github.com/ghodss/yaml"
 	"github.com/spf13/pflag"
+	"gopkg.in/yaml.v2"
 )
 
 type KafkaCapacityConfig struct {
-	IngressEgressThroughputPerSec string `json:"ingressEgressThroughputPerSec"`
-	TotalMaxConnections           int    `json:"totalMaxConnections"`
-	MaxDataRetentionSize          string `json:"maxDataRetentionSize"`
-	MaxPartitions                 int    `json:"maxPartitions"`
-	MaxDataRetentionPeriod        string `json:"maxDataRetentionPeriod"`
-	MaxConnectionAttemptsPerSec   int    `json:"maxConnectionAttemptsPerSec"`
+	IngressEgressThroughputPerSec string `yaml:"ingressEgressThroughputPerSec"`
+	TotalMaxConnections           int    `yaml:"totalMaxConnections"`
+	MaxDataRetentionSize          string `yaml:"maxDataRetentionSize"`
+	MaxPartitions                 int    `yaml:"maxPartitions"`
+	MaxDataRetentionPeriod        string `yaml:"maxDataRetentionPeriod"`
+	MaxConnectionAttemptsPerSec   int    `yaml:"maxConnectionAttemptsPerSec"`
+	MaxCapacity                   int64  `yaml:"maxCapacity"`
 }
 
 type KafkaConfig struct {
@@ -82,7 +83,7 @@ func (c *KafkaConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-	return yaml.Unmarshal([]byte(supportedKafkaSizesContents), &c.SupportedKafkaSizes.SupportedKafkaSizesConfig)
+	return yaml.UnmarshalStrict([]byte(supportedKafkaSizesContents), &c.SupportedKafkaSizes.SupportedKafkaSizesConfig)
 }
 
 func (c *KafkaConfig) Validate(env *environments.Env) error {
