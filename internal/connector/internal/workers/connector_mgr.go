@@ -199,15 +199,17 @@ func (k *ConnectorManager) ReconcileConnectorCatalogEntry(id string, channel str
 	return nil
 }
 
+//goland:noinspection VacuumSwitchStatement
 func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *dbapi.Connector) error {
 	switch connector.TargetKind {
 	case dbapi.AddonTargetKind:
 
-		cluster, err := k.connectorClusterService.FindReadyCluster(connector.Owner, connector.OrganisationId, connector.AddonClusterId)
+		var namespace *dbapi.ConnectorNamespace
+		namespace, err := k.connectorClusterService.FindReadyNamespace(connector.Owner, connector.OrganisationId, connector.NamespaceId)
 		if err != nil {
-			return errors.Wrapf(err, "failed to find cluster for connector request %s", connector.ID)
+			return errors.Wrapf(err, "failed to find namespace for connector request %s", connector.ID)
 		}
-		if cluster == nil {
+		if namespace == nil {
 			// we will try to find a ready cluster again in the next reconcile
 			return nil
 		}
@@ -219,10 +221,10 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *db
 
 		var status = dbapi.ConnectorStatus{}
 		status.ID = connector.ID
-		status.ClusterID = cluster.ID
+		status.NamespaceID = &namespace.ID
 		status.Phase = dbapi.ConnectorStatusPhaseAssigned
 		if err = k.connectorService.SaveStatus(ctx, status); err != nil {
-			return errors.Wrapf(err, "failed to update connector status %s with cluster details", connector.ID)
+			return errors.Wrapf(err, "failed to update connector status %s with namespace details", status.ID)
 		}
 
 		deployment := dbapi.ConnectorDeployment{
@@ -230,7 +232,8 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *db
 				ID: api.NewID(),
 			},
 			ConnectorID:            connector.ID,
-			ClusterID:              cluster.ID,
+			ClusterID:              namespace.ClusterId,
+			NamespaceID:            namespace.ID,
 			ConnectorVersion:       connector.Version,
 			ConnectorTypeChannelId: channelVersion,
 			Status:                 dbapi.ConnectorDeploymentStatus{},

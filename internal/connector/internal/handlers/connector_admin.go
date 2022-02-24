@@ -227,8 +227,8 @@ func (h *ConnectorAdminHandler) CreateConnectorNamespace(writer http.ResponseWri
 
 			ctx := request.Context()
 			connectorNamespace := presenters.ConvertConnectorNamespaceWithTenantRequest(&resource)
-			if connectorNamespace.TenantUserId != nil {
-				connectorNamespace.Owner = *connectorNamespace.TenantUserId
+			if connectorNamespace.TenantUser != nil {
+				connectorNamespace.Owner = connectorNamespace.TenantUser.ID
 			} else {
 				// NOTE: admin user is owner
 				claims, err := auth.GetClaimsFromContext(ctx)

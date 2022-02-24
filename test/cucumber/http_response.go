@@ -31,7 +31,7 @@
 //    Then the ".deployment_location" selection from the response should match json:
 //      """
 //      {
-//          "kind": "addon",
+//          "namespace_id": "default"
 //      }
 //      """
 package cucumber

@@ -47,11 +47,11 @@ var AllTargetKind = []TargetKind{
 type Connector struct {
 	api.Meta
 
-	TargetKind     TargetKind
-	AddonClusterId string
-	CloudProvider  string
-	Region         string
-	MultiAZ        bool
+	TargetKind    TargetKind
+	NamespaceId   *string
+	CloudProvider string
+	Region        string
+	MultiAZ       bool
 
 	Name           string
 	Owner          string
@@ -71,8 +71,8 @@ type Connector struct {
 
 type ConnectorStatus struct {
 	api.Meta
-	ClusterID string
-	Phase     string
+	NamespaceID *string
+	Phase       string
 }
 
 type ConnectorList []*Connector
@@ -86,6 +86,8 @@ type ConnectorDeployment struct {
 	ConnectorVersion       int64
 	ConnectorTypeChannelId int64
 	ClusterID              string
+	NamespaceID            string
+	NamespaceName          string `gorm:"->"` // readonly field, used to join connector_namespaces
 	AllowUpgrade           bool
 	Status                 ConnectorDeploymentStatus `gorm:"foreignKey:ID"`
 }
@@ -121,6 +123,7 @@ type ConnectorDeploymentTypeUpgrade struct {
 	ConnectorID     string                `json:"connector_id,omitempty"`
 	DeploymentID    string                `json:"deployment_id,omitempty"`
 	ConnectorTypeId string                `json:"connector_type_id,omitempty"`
+	Namespace       string                `json:"namespace,omitempty"`
 	Channel         string                `json:"channel,omitempty"`
 	ShardMetadata   *ConnectorTypeUpgrade `json:"shard_metadata,omitempty"`
 }
@@ -136,6 +139,7 @@ type ConnectorDeploymentOperatorUpgrade struct {
 	ConnectorID     string                    `json:"connector_id,omitempty"`
 	DeploymentID    string                    `json:"deployment_id,omitempty"`
 	ConnectorTypeId string                    `json:"connector_type_id,omitempty"`
+	Namespace       string                    `json:"namespace,omitempty"`
 	Channel         string                    `json:"channel,omitempty"`
 	Operator        *ConnectorOperatorUpgrade `json:"operator,omitempty"`
 }

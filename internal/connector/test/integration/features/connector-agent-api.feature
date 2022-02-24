@@ -28,6 +28,10 @@ Feature: connector agent API
     And the ".status.state" selection from the response should match "disconnected"
     Given I store the ".id" selection from the response as ${connector_cluster_id}
 
+    When I GET path "/v1/kafka_connector_namespaces/?search=cluster_id=${connector_cluster_id}"
+    Then the response code should be 200
+    Given I store the ".items[0].id" selection from the response as ${connector_namespace_id}
+
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
     Then the response code should be 200
     And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
@@ -39,8 +43,7 @@ Feature: connector agent API
         "kind": "Connector",
         "name": "example 1",
         "deployment_location": {
-          "kind": "addon",
-          "cluster_id": "${connector_cluster_id}"
+          "namespace_id": "${connector_namespace_id}"
         },
         "channel":"stable",
         "connector_type_id": "aws-sqs-source-v1alpha1",
@@ -209,6 +212,8 @@ Feature: connector agent API
               ]
             },
             "connector_id": "${connector_id}",
+            "namespace_id": "${connector_namespace_id}",
+            "namespace_name": "default-connector-namespace",
             "connector_resource_version": ${response.object.spec.connector_resource_version},
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "connector_spec": {
@@ -305,6 +310,8 @@ Feature: connector agent API
                 ]
               },
               "connector_id": "${connector_id}",
+              "namespace_id": "${connector_namespace_id}",
+              "namespace_name": "default-connector-namespace",
               "connector_resource_version": ${response.items[0].spec.connector_resource_version},
               "connector_type_id": "aws-sqs-source-v1alpha1",
               "connector_spec": {
@@ -390,6 +397,8 @@ Feature: connector agent API
               ]
             },
             "connector_id": "${connector_id}",
+            "namespace_id": "${connector_namespace_id}",
+            "namespace_name": "default-connector-namespace",
             "connector_resource_version": ${response.spec.connector_resource_version},
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "connector_spec": {
@@ -477,8 +486,7 @@ Feature: connector agent API
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "deployment_location": {
-          "kind": "addon",
-          "cluster_id": "${connector_cluster_id}"
+          "namespace_id": "${connector_namespace_id}"
         },
         "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
         "id": "${connector_id}",
@@ -570,6 +578,8 @@ Feature: connector agent API
               ]
             },
             "connector_id": "${connector_id}",
+            "namespace_id": "${connector_namespace_id}",
+            "namespace_name": "default-connector-namespace",
             "connector_resource_version": ${response.object.spec.connector_resource_version},
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "connector_spec": {
@@ -680,6 +690,7 @@ Feature: connector agent API
        "items":
           [{
             "connector_id": "${connector_id}",
+            "namespace": "default-connector-namespace",
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "channel": "stable",
             "shard_metadata": {
@@ -785,6 +796,7 @@ Feature: connector agent API
        "items":
           [{
             "connector_id": "${connector_id}",
+            "namespace": "default-connector-namespace",
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "channel": "stable",
             "operator": {
@@ -873,7 +885,7 @@ Feature: connector agent API
     And the ".status.state" selection from the response should match "assigning"
     And the ".deployment_location" selection from the response should match json:
       """
-      {"kind": "addon"}
+      {}
       """
 
 
@@ -890,6 +902,10 @@ Feature: connector agent API
     Then the response code should be 202
     And the ".status.state" selection from the response should match "disconnected"
     Given I store the ".id" selection from the response as ${connector_cluster_id}
+
+    When I GET path "/v1/kafka_connector_namespaces/?search=cluster_id=${connector_cluster_id}"
+    Then the response code should be 200
+    Given I store the ".items[0].id" selection from the response as ${connector_namespace_id}
 
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
     Then the response code should be 200
@@ -929,8 +945,7 @@ Feature: connector agent API
         "kind": "Connector",
         "name": "example 1",
         "deployment_location": {
-          "kind": "addon",
-          "cluster_id": "${connector_cluster_id}"
+          "namespace_id": "${connector_namespace_id}"
         },
         "channel":"stable",
         "connector_type_id": "log_sink_0.1",

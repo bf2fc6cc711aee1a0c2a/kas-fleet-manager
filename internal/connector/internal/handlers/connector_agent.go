@@ -232,6 +232,7 @@ func (h *ConnectorClusterHandler) GetDeployment(w http.ResponseWriter, r *http.R
 			handlers.Validation("deployment_id", &deploymentId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			var resource dbapi.ConnectorDeployment
 			resource, err := h.Service.GetDeployment(r.Context(), deploymentId)
 			if err != nil {
 				return nil, err

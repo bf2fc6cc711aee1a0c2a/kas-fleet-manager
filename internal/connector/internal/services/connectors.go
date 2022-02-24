@@ -39,7 +39,8 @@ type connectorsService struct {
 	connectorTypesService ConnectorTypesService
 }
 
-func NewConnectorsService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService vault.VaultService, connectorTypesService ConnectorTypesService) *connectorsService {
+func NewConnectorsService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus,
+	vaultService vault.VaultService, connectorTypesService ConnectorTypesService) *connectorsService {
 	return &connectorsService{
 		connectionFactory:     connectionFactory,
 		bus:                   bus,
@@ -93,7 +94,7 @@ func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*db
 	dbConn = dbConn.Preload("Status")
 
 	var err *errors.ServiceError
-	dbConn, err = filterToOwnerOrOrg(ctx, dbConn)
+	dbConn, err = filterConnectorsToOwnerOrOrg(ctx, dbConn, k.connectionFactory)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +109,8 @@ func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*db
 	return &resource, nil
 }
 
-func filterToOwnerOrOrg(ctx context.Context, dbConn *gorm.DB) (*gorm.DB, *errors.ServiceError) {
+func filterConnectorsToOwnerOrOrg(ctx context.Context, dbConn *gorm.DB, factory *db.ConnectionFactory) (*gorm.DB, *errors.ServiceError) {
+
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return dbConn, errors.Unauthenticated("user not authenticated")
@@ -123,7 +125,13 @@ func filterToOwnerOrOrg(ctx context.Context, dbConn *gorm.DB) (*gorm.DB, *errors
 
 	// filter by organisationId if a user is part of an organisation and is not allowed as a service account
 	if filterByOrganisationId {
-		dbConn = dbConn.Where("organisation_id = ?", orgId)
+		// unassigned connectors with no namespace_id use owner and org
+		// assigned connectors use tenant user or organisation
+		dbConn = dbConn.Where("(namespace_id is null AND (owner = ? or organisation_id = ?)) OR (namespace_id is not null AND namespace_id IN (?))",
+			owner,
+			orgId,
+			factory.New().Table("connector_namespaces").Select("id").
+				Where("deleted_at is null AND (tenant_user_id = ? OR tenant_organisation_id = ?)", owner, orgId))
 	} else {
 		dbConn = dbConn.Where("owner = ?", owner)
 	}
@@ -202,7 +210,7 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 	}
 
 	var err *errors.ServiceError
-	dbConn, err = filterToOwnerOrOrg(ctx, dbConn)
+	dbConn, err = filterConnectorsToOwnerOrOrg(ctx, dbConn, k.connectionFactory)
 	if err != nil {
 		return nil, nil, err
 	}

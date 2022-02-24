@@ -1103,8 +1103,6 @@ Feature: create a connector
         "kind": "Connector",
         "name": "example 1",
         "deployment_location": {
-          "kind": "addon",
-          "cluster_id": "default"
         },
         "kafka": {
           "id":"mykafka",
@@ -1136,7 +1134,7 @@ Feature: create a connector
       }
       """
 
-  Scenario: Greg tries to create a connector with an invalid deployment_location.kind
+  Scenario: Greg tries to create a connector with an invalid namespace_id
     Given I am logged in as "Greg"
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
@@ -1144,8 +1142,7 @@ Feature: create a connector
         "kind": "Connector",
         "name": "example 1",
         "deployment_location": {
-          "kind": "WRONG",
-          "cluster_id": "default"
+          "namespace_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
@@ -1160,7 +1157,8 @@ Feature: create a connector
             "aws_queue_name_or_arn": "test",
             "aws_access_key": "test",
             "aws_secret_key": "test",
-            "aws_region": "east"
+            "aws_region": "east",
+            "kafka_topic": "test"
         }
       }
       """
@@ -1168,12 +1166,12 @@ Feature: create a connector
     And the response should match json:
       """
       {
-        "code": "CONNECTOR-MGMT-33",
-        "href": "/api/connector_mgmt/v1/errors/33",
-        "id": "33",
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
         "kind": "Error",
         "operation_id": "${response.operation_id}",
-        "reason": "deployment_location.kind is not valid. Must be one of: addon"
+        "reason": "deployment_location.namespace_id is not valid: KAFKAS-MGMT-9: failed to get connector namespace: record not found"
       }
       """
 
@@ -1186,8 +1184,6 @@ Feature: create a connector
         "kind": "Connector",
         "name": "example 1",
         "deployment_location": {
-          "kind": "addon",
-          "cluster_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
@@ -1244,8 +1240,6 @@ Feature: create a connector
             },
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "deployment_location": {
-              "cluster_id": "default",
-              "kind": "addon"
             },
             "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
             "id": "${connector_id}",
@@ -1296,8 +1290,6 @@ Feature: create a connector
             "client_id": "myclient"
           },
           "deployment_location": {
-              "kind": "addon",
-              "cluster_id": "default"
           },
           "connector_type_id": "aws-sqs-source-v1alpha1",
           "channel": "stable",
@@ -1800,8 +1792,6 @@ Feature: create a connector
         "kind": "Connector",
         "name": "example 1",
         "deployment_location": {
-          "kind": "addon",
-          "cluster_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
@@ -1850,8 +1840,6 @@ Feature: create a connector
             "connector": {},
             "connector_type_id": "foo",
             "deployment_location": {
-              "cluster_id": "default",
-              "kind": "addon"
             },
             "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
             "id": "${connector_id}",
@@ -1900,8 +1888,6 @@ Feature: create a connector
             "client_id": "myclient"
           },
           "deployment_location": {
-              "kind": "addon",
-              "cluster_id": "default"
           },
           "connector": {},
           "connector_type_id": "foo",

@@ -8,6 +8,7 @@ import (
 	goerrors "errors"
 	"fmt"
 	"github.com/golang/glog"
+	"math/rand"
 	"reflect"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
@@ -37,7 +38,7 @@ type ConnectorClusterService interface {
 	GetConnectorWithBase64Secrets(ctx context.Context, resource dbapi.ConnectorDeployment) (dbapi.Connector, *errors.ServiceError)
 	ListConnectorDeployments(ctx context.Context, id string, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError)
 	UpdateConnectorDeploymentStatus(ctx context.Context, status dbapi.ConnectorDeploymentStatus) *errors.ServiceError
-	FindReadyCluster(owner string, orgId string, group string) (*dbapi.ConnectorCluster, *errors.ServiceError)
+	FindReadyNamespace(owner string, orgId string, namespaceId *string) (*dbapi.ConnectorNamespace, *errors.ServiceError)
 	GetDeploymentByConnectorId(ctx context.Context, connectorID string) (dbapi.ConnectorDeployment, *errors.ServiceError)
 	GetDeployment(ctx context.Context, id string) (dbapi.ConnectorDeployment, *errors.ServiceError)
 	GetAvailableDeploymentTypeUpgrades(listArgs *services.ListArguments) (dbapi.ConnectorDeploymentTypeUpgradeList, *api.PagingMeta, *errors.ServiceError)
@@ -52,23 +53,35 @@ var _ ConnectorClusterService = &connectorClusterService{}
 var _ auth.AuthAgentService = &connectorClusterService{}
 
 type connectorClusterService struct {
-	connectionFactory     *db.ConnectionFactory
-	bus                   signalbus.SignalBus
-	connectorTypesService ConnectorTypesService
-	vaultService          vault.VaultService
-	keycloakService       services.KafkaKeycloakService
-	connectorsService     ConnectorsService
+	connectionFactory         *db.ConnectionFactory
+	bus                       signalbus.SignalBus
+	connectorTypesService     ConnectorTypesService
+	vaultService              vault.VaultService
+	keycloakService           services.KafkaKeycloakService
+	connectorsService         ConnectorsService
+	connectorNamespaceService ConnectorNamespaceService
+	deploymentColumns         []string
 }
 
 func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService vault.VaultService,
-	connectorTypesService ConnectorTypesService, connectorsService ConnectorsService, keycloakService services.KafkaKeycloakService) *connectorClusterService {
+	connectorTypesService ConnectorTypesService, connectorsService ConnectorsService,
+	keycloakService services.KafkaKeycloakService, connectorNamespaceService ConnectorNamespaceService) *connectorClusterService {
+	types, _ := connectionFactory.New().Migrator().ColumnTypes(&dbapi.ConnectorDeployment{})
+	nTypes := len(types)
+	columnNames := make([]string, nTypes+1)
+	for i, columnType := range types {
+		columnNames[i] = "connector_deployments." + columnType.Name()
+	}
+	columnNames[nTypes] = "connector_namespaces.name AS namespace_name"
 	return &connectorClusterService{
-		connectionFactory:     connectionFactory,
-		bus:                   bus,
-		connectorTypesService: connectorTypesService,
-		vaultService:          vaultService,
-		connectorsService:     connectorsService,
-		keycloakService:       keycloakService,
+		connectionFactory:         connectionFactory,
+		bus:                       bus,
+		connectorTypesService:     connectorTypesService,
+		vaultService:              vaultService,
+		connectorsService:         connectorsService,
+		keycloakService:           keycloakService,
+		connectorNamespaceService: connectorNamespaceService,
+		deploymentColumns:         columnNames,
 	}
 }
 
@@ -118,9 +131,38 @@ func (k *connectorClusterService) Create(ctx context.Context, resource *dbapi.Co
 	if err := dbConn.Save(resource).Error; err != nil {
 		return errors.GeneralError("failed to create connector: %v", err)
 	}
+
+	// create a default namespace for the new cluster
+	if err := k.connectorNamespaceService.CreateDefaultNamespace(ctx, resource); err != nil {
+		return err
+	}
 	// TODO: increment connector cluster metrics
 	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
 	return nil
+}
+
+func filterClusterToOwnerOrOrg(ctx context.Context, dbConn *gorm.DB) (*gorm.DB, *errors.ServiceError) {
+
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return dbConn, errors.Unauthenticated("user not authenticated")
+	}
+	owner := auth.GetUsernameFromClaims(claims)
+	if owner == "" {
+		return dbConn, errors.Unauthenticated("user not authenticated")
+	}
+
+	orgId := auth.GetOrgIdFromClaims(claims)
+	filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
+
+	// filter by organisationId if a user is part of an organisation and is not allowed as a service account
+	if filterByOrganisationId {
+		// include namespaces where either user or organisation is the tenant
+		dbConn = dbConn.Where("organisation_id = ?", orgId)
+	} else {
+		dbConn = dbConn.Where("owner = ?", owner)
+	}
+	return dbConn, nil
 }
 
 // Get gets a connector by id from the database
@@ -131,7 +173,7 @@ func (k *connectorClusterService) Get(ctx context.Context, id string) (dbapi.Con
 	dbConn = dbConn.Where("id = ?", id)
 
 	var err *errors.ServiceError
-	dbConn, err = filterToOwnerOrOrg(ctx, dbConn)
+	dbConn, err = filterClusterToOwnerOrOrg(ctx, dbConn)
 	if err != nil {
 		return resource, err
 	}
@@ -195,12 +237,37 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 		}
 	}
 
+	// Delete all namespaces assigned to the cluster..
+	dbConn = k.connectionFactory.New()
+	{
+		rows, err := dbConn.
+			Model(&dbapi.ConnectorNamespace{}).
+			Select("id").
+			Where("cluster_id = ?", id).
+			Rows()
+		if err != nil {
+			return errors.GeneralError("unable find namespaces of cluster %s: %s", id, err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			namespace := dbapi.ConnectorNamespace{}
+			err := dbConn.ScanRows(rows, &namespace)
+			if err != nil {
+				return errors.GeneralError("Unable to scan connector namespace: %s", err)
+			}
+			if err := dbConn.Delete(&namespace).Error; err != nil {
+				return errors.GeneralError("failed to delete connector namespace: %s", err)
+			}
+		}
+	}
+
 	// Clear the cluster from any connectors that were using it.
 	{
 		rows, err := dbConn.
 			Model(&dbapi.Connector{}).
-			Select("id").
-			Where("addon_cluster_id = ?", id).
+			Select("connectors.id").
+			Joins("INNER JOIN connector_namespaces ON connector_namespaces.id = connectors.namespace_id").
+			Where("connector_namespaces.cluster_id = ?", id).
 			Rows()
 		if err != nil {
 			return errors.GeneralError("unable find connector using cluster %s: %s", id, err)
@@ -213,7 +280,7 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 				return errors.GeneralError("Unable to scan connector: %s", err)
 			}
 
-			if err := dbConn.Model(&connector).Update("addon_cluster_id", "").Error; err != nil {
+			if err := dbConn.Model(&connector).Update("namespace_id", nil).Error; err != nil {
 				return errors.GeneralError("failed to update connector: %s", err)
 			}
 
@@ -288,7 +355,7 @@ func (k *connectorClusterService) List(ctx context.Context, listArgs *services.L
 		return nil, nil, err
 	}
 	if !admin {
-		dbConn, err = filterToOwnerOrOrg(ctx, dbConn)
+		dbConn, err = filterClusterToOwnerOrOrg(ctx, dbConn)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -437,9 +504,10 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 		Size: listArgs.Size,
 	}
 
-	dbConn = dbConn.Where("cluster_id = ?", id)
+	dbConn = dbConn.
+		Where("connector_deployments.cluster_id = ?", id)
 	if gtVersion != 0 {
-		dbConn = dbConn.Where("version > ?", gtVersion)
+		dbConn = dbConn.Where("connector_deployments.version > ?", gtVersion)
 	}
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
@@ -453,7 +521,10 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 	dbConn = dbConn.Offset((pagingMeta.Page - 1) * pagingMeta.Size).Limit(pagingMeta.Size)
 
 	// default the order by version
-	dbConn = dbConn.Order("version")
+	dbConn = dbConn.Order("connector_deployments.version")
+
+	// add namespace_name column
+	dbConn = k.selectDeploymentColumns(dbConn)
 
 	// execute query
 	if err := dbConn.Find(&resourceList).Error; err != nil {
@@ -461,6 +532,12 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 	}
 
 	return resourceList, pagingMeta, nil
+}
+
+func (k *connectorClusterService) selectDeploymentColumns(dbConn *gorm.DB) *gorm.DB {
+	// join connector_namespaces for namespace name
+	return dbConn.Select(k.deploymentColumns).
+		Joins("INNER JOIN connector_namespaces ON connector_namespaces.id = namespace_id")
 }
 
 func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Context, deploymentStatus dbapi.ConnectorDeploymentStatus) *errors.ServiceError {
@@ -516,25 +593,52 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 	return nil
 }
 
-func (k *connectorClusterService) FindReadyCluster(owner string, orgId string, connectorClusterId string) (*dbapi.ConnectorCluster, *errors.ServiceError) {
+func (k *connectorClusterService) FindReadyNamespace(owner string, orgID string, namespaceID *string) (*dbapi.ConnectorNamespace, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
-	var resource dbapi.ConnectorCluster
+	var namespaces dbapi.ConnectorNamespaceList
 
-	dbConn = dbConn.Where("id = ? AND status_phase = ?", connectorClusterId, dbapi.ConnectorClusterPhaseReady)
+	if namespaceID != nil {
+		dbConn = dbConn.Where("connector_namespaces.id = ?", namespaceID)
+	}
+	dbConn = dbConn.Joins("INNER JOIN connector_clusters"+
+		" ON cluster_id = connector_clusters.id and connector_clusters.status_phase = ?", dbapi.ConnectorClusterPhaseReady)
 
-	if orgId != "" {
-		dbConn = dbConn.Where("organisation_id = ?", orgId)
+	if orgID != "" {
+		dbConn = dbConn.Where("tenant_organisation_id = ? or tenant_user_id = ?", orgID, owner)
 	} else {
-		dbConn = dbConn.Where("owner = ?", owner)
+		dbConn = dbConn.Where("tenant_owner_id = ?", owner)
 	}
 
-	if err := dbConn.First(&resource).Error; err != nil {
-		if goerrors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, errors.GeneralError("failed to query ready addon connector cluster: %v", err.Error())
+	if err := dbConn.Find(&namespaces).Error; err != nil {
+		return nil, errors.GeneralError("failed to query ready connector namespace: %v", err.Error())
 	}
-	return &resource, nil
+
+	n := len(namespaces)
+	if n == 1 {
+		return namespaces[0], nil
+	} else if n > 1 {
+		// prioritise and select from multiple namespaces
+		ownerNamespaces := dbapi.ConnectorNamespaceList{}
+		orgNamespaces := dbapi.ConnectorNamespaceList{}
+		for _, namespace := range namespaces {
+			if namespace.TenantUserId != nil {
+				ownerNamespaces = append(ownerNamespaces, namespace)
+			} else {
+				orgNamespaces = append(orgNamespaces, namespace)
+			}
+		}
+
+		// TODO replace with more sophisticated load balancing logic in the future
+		// prefer owner tenant
+		n := len(ownerNamespaces)
+		if n > 0 {
+			return ownerNamespaces[rand.Intn(n)], nil
+		} else {
+			return orgNamespaces[rand.Intn(len(orgNamespaces))], nil
+		}
+	}
+
+	return nil, nil
 }
 
 func Checksum(spec interface{}) (string, error) {
@@ -622,17 +726,18 @@ func getSecretsFromVaultAsBase64(resource *dbapi.Connector, cts ConnectorTypesSe
 func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context, connectorID string) (resource dbapi.ConnectorDeployment, serr *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
-	dbConn = dbConn.Where("connector_id = ?", connectorID)
+	dbConn = k.selectDeploymentColumns(dbConn).Where("connector_id = ?", connectorID)
 	if err := dbConn.First(&resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector deployment", "connector_id", connectorID, err)
 	}
 	return
 }
+
 func (k *connectorClusterService) GetDeployment(ctx context.Context, id string) (resource dbapi.ConnectorDeployment, serr *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
-	dbConn = dbConn.Unscoped().Where("id = ?", id)
-	if err := dbConn.First(&resource).Error; err != nil {
+	dbConn = dbConn.Unscoped().Where("connector_deployments.id = ?", id)
+	if err := k.selectDeploymentColumns(dbConn).First(&resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector deployment", "id", id, err)
 	}
 
@@ -651,6 +756,7 @@ func (k *connectorClusterService) GetAvailableDeploymentTypeUpgrades(listArgs *s
 		ConnectorTypeUpgradeFrom int64
 		ConnectorTypeUpgradeTo   int64
 		ConnectorTypeID          string
+		Namespace                string
 		Channel                  string
 	}
 
@@ -663,10 +769,12 @@ func (k *connectorClusterService) GetAvailableDeploymentTypeUpgrades(listArgs *s
 		"connector_shard_metadata.id AS connector_type_upgrade_from",
 		"connector_shard_metadata.latest_id AS connector_type_upgrade_to",
 		"connector_shard_metadata.connector_type_id",
+		"connector_namespaces.name AS namespace",
 		"connector_shard_metadata.channel",
 	)
 	dbConn = dbConn.Joins("LEFT JOIN connector_shard_metadata ON connector_shard_metadata.id = connector_deployments.connector_type_channel_id")
 	dbConn = dbConn.Joins("LEFT JOIN connector_deployment_statuses ON connector_deployment_statuses.id = connector_deployments.id")
+	dbConn = dbConn.Joins("LEFT JOIN connector_namespaces ON connector_namespaces.id = connector_deployments.namespace_id")
 	dbConn = dbConn.Where("connector_shard_metadata.latest_id IS NOT NULL")
 	dbConn = dbConn.Or("connector_deployment_statuses.upgrade_available")
 
@@ -687,6 +795,7 @@ func (k *connectorClusterService) GetAvailableDeploymentTypeUpgrades(listArgs *s
 			ConnectorID:     r.ConnectorID,
 			DeploymentID:    r.DeploymentID,
 			ConnectorTypeId: r.ConnectorTypeID,
+			Namespace:       r.Namespace,
 			Channel:         r.Channel,
 		}
 
@@ -768,6 +877,7 @@ func (k *connectorClusterService) GetAvailableDeploymentOperatorUpgrades(listArg
 		ConnectorID        string
 		DeploymentID       string
 		ConnectorTypeID    string
+		Namespace          string
 		Channel            string
 		ConnectorOperators api.JSON
 	}
@@ -779,11 +889,13 @@ func (k *connectorClusterService) GetAvailableDeploymentOperatorUpgrades(listArg
 		"connector_deployments.connector_id AS connector_id",
 		"connector_deployments.id AS deployment_id",
 		"connector_shard_metadata.connector_type_id",
+		"connector_namespaces.name AS namespace",
 		"connector_shard_metadata.channel",
 		"connector_deployment_statuses.operators AS connector_operators",
 	)
 	dbConn = dbConn.Joins("LEFT JOIN connector_shard_metadata ON connector_shard_metadata.id = connector_deployments.connector_type_channel_id")
 	dbConn = dbConn.Joins("LEFT JOIN connector_deployment_statuses ON connector_deployment_statuses.id = connector_deployments.id")
+	dbConn = dbConn.Joins("LEFT JOIN connector_namespaces ON connector_namespaces.id = connector_deployments.namespace_id")
 	dbConn = dbConn.Where("connector_deployment_statuses.upgrade_available")
 
 	if err := dbConn.Scan(&results).Error; err != nil {
@@ -802,6 +914,7 @@ func (k *connectorClusterService) GetAvailableDeploymentOperatorUpgrades(listArg
 			ConnectorID:     r.ConnectorID,
 			DeploymentID:    r.DeploymentID,
 			ConnectorTypeId: r.ConnectorTypeID,
+			Namespace:       r.Namespace,
 			Channel:         r.Channel,
 		}
 

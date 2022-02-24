@@ -1083,34 +1083,8 @@ components:
           type: string
 
     DeploymentLocation:
-      discriminator:
-        propertyName: kind
-        mapping:
-          ConnectorCluster: "#/components/schemas/ConnectorClusterTarget"
-          ConnectorNamespace: "#/components/schemas/ConnectorNamespaceTarget"
-      oneOf:
-        - $ref: "#/components/schemas/ConnectorClusterTarget"
-        - $ref: "#/components/schemas/ConnectorNamespaceTarget"
-
-    ConnectorClusterTarget:
-      description: "Targets workloads to an addon cluster"
       type: object
-      required:
-        - kind
       properties:
-        kind:
-          type: string
-        cluster_id:
-          type: string
-
-    ConnectorNamespaceTarget:
-      description: "Targets workloads to an addon cluster namespace"
-      type: object
-      required:
-        - kind
-      properties:
-        kind:
-          type: string
         namespace_id:
           type: string
 
@@ -1713,8 +1687,7 @@ components:
       value:
         name: MyLogger
         deployment_location:
-          kind: "ConnectoCluster"
-          cluster_id: "9bsv0s7tne7g02gh5g4g"
+          namespace_id: "9bsv0s7tne7g02gh5g4g"
         kafka:
           id: "9bsv0s6brfr002pfnkh0"
           client_id: "srvc-acct-162ef2d8-0209-4117-8462-df63c2025c26"

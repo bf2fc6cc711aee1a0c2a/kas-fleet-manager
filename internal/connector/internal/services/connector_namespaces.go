@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -24,6 +26,7 @@ type ConnectorNamespaceService interface {
 	SetEvalClusterId(request *dbapi.ConnectorNamespace) *errors.ServiceError
 	GetOwnerClusterIds(userId string, ownerClusterIds *[]string) *errors.ServiceError
 	GetOrgClusterIds(userId string, organisationId string, orgClusterIds *[]string) *errors.ServiceError
+	CreateDefaultNamespace(ctx context.Context, connectorCluster *dbapi.ConnectorCluster) *errors.ServiceError
 }
 
 var _ ConnectorNamespaceService = &connectorNamespaceService{}
@@ -140,7 +143,7 @@ func (k *connectorNamespaceService) Create(ctx context.Context, request *dbapi.C
 		return errors.GeneralError("failed to create connector namespace: %v", err)
 	}
 	// reload namespace to get version update
-	if err := dbConn.Find(request).Error; err != nil {
+	if err := dbConn.Select("version").First(request).Error; err != nil {
 		return errors.GeneralError("failed to read new connector namespace: %v", err)
 	}
 
@@ -154,6 +157,10 @@ func (k *connectorNamespaceService) Update(ctx context.Context, request *dbapi.C
 	dbConn := k.connectionFactory.New()
 	if err := dbConn.Save(request).Error; err != nil {
 		return errors.GeneralError("failed to update connector namespace: %v", err)
+	}
+	// reload namespace to get version update
+	if err := dbConn.Select("version").First(request).Error; err != nil {
+		return errors.GeneralError("failed to read updated connector namespace: %v", err)
 	}
 
 	// TODO use signal bus and a namespace worker to sync connectors in updated namespace
@@ -170,7 +177,7 @@ func (k *connectorNamespaceService) Get(ctx context.Context, namespaceID string)
 			ID: namespaceID,
 		},
 	}
-	if err := dbConn.Find(result).Error; err != nil {
+	if err := dbConn.First(result).Error; err != nil {
 		return nil, errors.GeneralError("failed to get connector namespace: %v", err)
 	}
 
@@ -235,7 +242,77 @@ func (k *connectorNamespaceService) Delete(ctx context.Context, namespaceId stri
 		return errors.GeneralError("failed to delete connector namespace: %v", err)
 	}
 
+	// Clear the namespace from any connectors that were using it.
+	// TODO do this asynchronously in a namespace reconciler
+	dbConn = k.connectionFactory.New()
+	{
+		rows, err := dbConn.
+			Model(&dbapi.Connector{}).
+			Select("id").
+			Where("namespace_id = ?", namespaceId).
+			Rows()
+		if err != nil {
+			return errors.GeneralError("unable find connector using namespace %s: %s", namespaceId, err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			connector := dbapi.Connector{}
+			err := dbConn.ScanRows(rows, &connector)
+			if err != nil {
+				return errors.GeneralError("Unable to scan connector: %s", err)
+			}
+
+			if err := dbConn.Model(&connector).Update("namespace_id", nil).Error; err != nil {
+				return errors.GeneralError("failed to update connector: %s", err)
+			}
+
+			status := dbapi.ConnectorStatus{}
+			status.ID = connector.ID
+			status.NamespaceID = nil
+			if err := dbConn.Model(&status).Update("phase", "assigning").Error; err != nil {
+				return errors.GeneralError("failed to update connector status: %s", err)
+			}
+		}
+	}
+
 	// TODO: increment connector namespace metrics
 	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
 	return nil
+}
+
+// TODO make this a configurable property in the future
+const defaultNamespaceName = "default-connector-namespace"
+
+func (k *connectorNamespaceService) CreateDefaultNamespace(ctx context.Context, connectorCluster *dbapi.ConnectorCluster) *errors.ServiceError {
+	namespaceRequest := presenters.ConvertConnectorNamespaceRequest(&public.ConnectorNamespaceRequest{
+		Name: defaultNamespaceName,
+		Annotations: []public.ConnectorNamespaceRequestMetaAnnotations{
+			{
+				Name:  "connector_mgmt.api.openshift.com/profile",
+				Value: "default-profile",
+			},
+		},
+		ClusterId: connectorCluster.ID,
+	})
+
+	// namespace has the same owner and tenant org as cluster
+	owner := connectorCluster.Owner
+	namespaceRequest.Owner = owner
+	organisationId := connectorCluster.OrganisationId
+	if organisationId != "" {
+		namespaceRequest.TenantOrganisationId = &organisationId
+		namespaceRequest.TenantOrganisation = &dbapi.ConnectorTenantOrganisation{
+			Model: db.Model{
+				ID: organisationId,
+			},
+		}
+	} else {
+		namespaceRequest.TenantUserId = &owner
+		namespaceRequest.TenantUser = &dbapi.ConnectorTenantUser{
+			Model: db.Model{
+				ID: owner,
+			},
+		}
+	}
+	return k.Create(ctx, namespaceRequest)
 }

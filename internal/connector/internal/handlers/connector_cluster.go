@@ -32,13 +32,14 @@ var (
 
 type ConnectorClusterHandler struct {
 	di.Inject
-	Bus            signalbus.SignalBus
-	Service        services.ConnectorClusterService
-	Keycloak       coreservices.KafkaKeycloakService
-	ConnectorTypes services.ConnectorTypesService
-	Vault          vault.VaultService
-	KeycloakConfig *keycloak.KeycloakConfig
-	ServerConfig   *server.ServerConfig
+	Bus                signalbus.SignalBus
+	Service            services.ConnectorClusterService
+	Keycloak           coreservices.KafkaKeycloakService
+	ConnectorTypes     services.ConnectorTypesService
+	ConnectorNamespace services.ConnectorNamespaceService
+	Vault              vault.VaultService
+	KeycloakConfig     *keycloak.KeycloakConfig
+	ServerConfig       *server.ServerConfig
 }
 
 func NewConnectorClusterHandler(handler ConnectorClusterHandler) *ConnectorClusterHandler {
