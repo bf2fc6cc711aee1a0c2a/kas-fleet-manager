@@ -113,6 +113,15 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &kafkaUpdateReq,
 		Validate: []handlers.Validate{
+			func() *errors.ServiceError { // Validate kafka found
+				if err != nil {
+					return err
+				}
+				if kafkaRequest == nil {
+					return errors.NotFound("Unable to find kafka with id '%s'", id)
+				}
+				return nil
+			},
 			ValidateKafkaUpdateFields(
 				&kafkaUpdateReq,
 			),
