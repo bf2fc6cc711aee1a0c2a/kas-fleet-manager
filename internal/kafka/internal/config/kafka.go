@@ -3,18 +3,18 @@ package config
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	"github.com/ghodss/yaml"
 	"github.com/spf13/pflag"
+	"gopkg.in/yaml.v2"
 )
 
 type KafkaCapacityConfig struct {
-	IngressEgressThroughputPerSec string `json:"ingressEgressThroughputPerSec"`
-	TotalMaxConnections           int    `json:"totalMaxConnections"`
-	MaxDataRetentionSize          string `json:"maxDataRetentionSize"`
-	MaxPartitions                 int    `json:"maxPartitions"`
-	MaxDataRetentionPeriod        string `json:"maxDataRetentionPeriod"`
-	MaxConnectionAttemptsPerSec   int    `json:"maxConnectionAttemptsPerSec"`
-	MaxCapacity                   int64  `json:"maxCapacity"`
+	IngressEgressThroughputPerSec string `yaml:"ingressEgressThroughputPerSec"`
+	TotalMaxConnections           int    `yaml:"totalMaxConnections"`
+	MaxDataRetentionSize          string `yaml:"maxDataRetentionSize"`
+	MaxPartitions                 int    `yaml:"maxPartitions"`
+	MaxDataRetentionPeriod        string `yaml:"maxDataRetentionPeriod"`
+	MaxConnectionAttemptsPerSec   int    `yaml:"maxConnectionAttemptsPerSec"`
+	MaxCapacity                   int64  `yaml:"maxCapacity"`
 }
 
 type KafkaConfig struct {
@@ -24,8 +24,8 @@ type KafkaConfig struct {
 	KafkaTLSKeyFile                string              `json:"kafka_tls_key_file"`
 	EnableKafkaExternalCertificate bool                `json:"enable_kafka_external_certificate"`
 	KafkaDomainName                string              `json:"kafka_domain_name"`
-	KafkaCapacity                  KafkaCapacityConfig `json:"kafka_capacity_config"`
-	KafkaCapacityConfigFile        string              `json:"kafka_capacity_config_file"`
+	KafkaCapacity                  KafkaCapacityConfig `yaml:"kafka_capacity_config"`
+	KafkaCapacityConfigFile        string              `yaml:"kafka_capacity_config_file"`
 
 	KafkaLifespan       *KafkaLifespanConfig       `json:"kafka_lifespan"`
 	Quota               *KafkaQuotaConfig          `json:"kafka_quota"`
@@ -80,7 +80,7 @@ func (c *KafkaConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-	return yaml.Unmarshal([]byte(supportedKafkaSizesContents), &c.SupportedKafkaSizes.SupportedKafkaSizesConfig)
+	return yaml.UnmarshalStrict([]byte(supportedKafkaSizesContents), &c.SupportedKafkaSizes.SupportedKafkaSizesConfig)
 }
 
 func (c *KafkaConfig) Validate(env *environments.Env) error {
