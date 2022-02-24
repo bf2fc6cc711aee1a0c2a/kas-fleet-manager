@@ -145,7 +145,9 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 						return token, nil
 					},
 					GetConfigFunc: func() *keycloak.KeycloakConfig {
-						return keycloak.NewKeycloakConfig()
+						config := keycloak.NewKeycloakConfig()
+						config.MaxAllowedServiceAccounts = 2
+						return config
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -216,7 +218,7 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// max allowed: 2
+			// max allowed: 50
 			tt.fields.kcClient.GetConfig().MaxAllowedServiceAccounts = 2
 			keycloakService := services.NewKeycloakServiceWithClient(tt.fields.kcClient)
 

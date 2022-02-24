@@ -63,7 +63,7 @@ func NewKeycloakConfig() *KeycloakConfig {
 		UserNameClaim:              "clientId",
 		FallBackUserNameClaim:      "preferred_username",
 		TLSTrustedCertificatesKey:  "keycloak.crt",
-		MaxAllowedServiceAccounts:  2,
+		MaxAllowedServiceAccounts:  50,
 		MaxLimitForGetClients:      100,
 		KeycloakClientExpire:       false,
 	}
