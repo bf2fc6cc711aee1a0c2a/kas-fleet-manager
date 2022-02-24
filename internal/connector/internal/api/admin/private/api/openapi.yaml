@@ -678,10 +678,13 @@ components:
           available_id: 6
           assigned_id: 0
         connector_id: connector_id
+        namespace: namespace
         channel: channel
         connector_type_id: connector_type_id
       properties:
         connector_id:
+          type: string
+        namespace:
           type: string
         connector_type_id:
           type: string
@@ -698,6 +701,7 @@ components:
       description: An available operator upgrade for a connector
       example:
         connector_id: connector_id
+        namespace: namespace
         channel: channel
         operator:
           available_id: available_id
@@ -705,6 +709,8 @@ components:
         connector_type_id: connector_type_id
       properties:
         connector_id:
+          type: string
+        namespace:
           type: string
         connector_type_id:
           type: string

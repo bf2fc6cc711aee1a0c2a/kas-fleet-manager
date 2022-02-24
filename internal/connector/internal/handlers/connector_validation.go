@@ -14,9 +14,6 @@ import (
 func validateConnectorRequest(connectorTypesService services.ConnectorTypesService, resource *public.ConnectorRequest, tid string) handlers.Validate {
 	return connectorValidationFunction(connectorTypesService, &resource.ConnectorTypeId, &resource.Channel, &resource.Connector, tid)
 }
-func validateConnector(connectorTypesService services.ConnectorTypesService, resource *public.Connector, tid string) handlers.Validate {
-	return connectorValidationFunction(connectorTypesService, &resource.ConnectorTypeId, &resource.Channel, &resource.Connector, tid)
-}
 
 func connectorValidationFunction(connectorTypesService services.ConnectorTypesService, connectorTypeId *string, channel *public.Channel, connectorConfiguration *map[string]interface{}, tid string) handlers.Validate {
 	return func() *errors.ServiceError {

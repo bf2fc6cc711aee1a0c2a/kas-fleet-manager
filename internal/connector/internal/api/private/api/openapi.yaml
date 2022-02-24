@@ -351,6 +351,10 @@ components:
           type: integer
         connector_type_id:
           type: string
+        namespace_id:
+          type: string
+        namespace_name:
+          type: string
         connector_spec:
           type: object
         allow_upgrade:

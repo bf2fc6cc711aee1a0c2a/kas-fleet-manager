@@ -16,12 +16,16 @@ func ConvertConnector(from public.Connector) (*dbapi.Connector, *errors.ServiceE
 		return nil, errors.BadRequest("invalid connector spec: %v", err)
 	}
 
+	var namespaceId *string
+	if from.DeploymentLocation.NamespaceId != "" {
+		namespaceId = &from.DeploymentLocation.NamespaceId
+	}
 	return &dbapi.Connector{
 		Meta: api.Meta{
 			ID: from.Id,
 		},
-		TargetKind:      from.DeploymentLocation.Kind,
-		AddonClusterId:  from.DeploymentLocation.ClusterId,
+		TargetKind:      dbapi.AddonTargetKind,
+		NamespaceId:     namespaceId,
 		Name:            from.Name,
 		Owner:           from.Owner,
 		Version:         from.ResourceVersion,
@@ -54,6 +58,11 @@ func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceE
 		return public.Connector{}, errors.BadRequest("invalid connector spec: %v", err)
 	}
 
+	namespaceId := ""
+	if from.NamespaceId != nil {
+		namespaceId = *from.NamespaceId
+	}
+
 	reference := PresentReference(from.ID, from)
 	return public.Connector{
 		Id:   reference.Id,
@@ -67,8 +76,7 @@ func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceE
 		ResourceVersion: from.Version,
 
 		DeploymentLocation: public.DeploymentLocation{
-			Kind:      from.TargetKind,
-			ClusterId: from.AddonClusterId,
+			NamespaceId: namespaceId,
 		},
 		ConnectorTypeId: from.ConnectorTypeId,
 		Connector:       spec,

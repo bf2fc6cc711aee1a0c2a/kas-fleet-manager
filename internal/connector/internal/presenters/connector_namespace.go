@@ -8,6 +8,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"strings"
+	"time"
+)
+
+const (
+	UserKind         string = "user"
+	OrganisationKind string = "organisation"
 )
 
 func ConvertConnectorNamespaceRequest(namespaceRequest *public.ConnectorNamespaceRequest) *dbapi.ConnectorNamespace {
@@ -53,21 +59,23 @@ func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *private.Connec
 		Name:      namespaceRequest.Name,
 		ClusterId: namespaceRequest.ClusterId,
 	}
-	if namespaceRequest.Tenant.UserId != "" {
+	switch namespaceRequest.Tenant.Kind {
+	case UserKind:
 		result.TenantUserId = &namespaceRequest.Tenant.UserId
 		result.TenantUser = &dbapi.ConnectorTenantUser{
 			Model: db.Model{
 				ID: *result.TenantUserId,
 			},
 		}
-	}
-	if namespaceRequest.Tenant.OrganisationId != "" {
+	case OrganisationKind:
 		result.TenantOrganisationId = &namespaceRequest.Tenant.OrganisationId
 		result.TenantOrganisation = &dbapi.ConnectorTenantOrganisation{
 			Model: db.Model{
 				ID: *result.TenantOrganisationId,
 			},
 		}
+	default:
+		// ignore, should have been validated earlier
 	}
 	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
 	for i, annotation := range namespaceRequest.Annotations {
@@ -102,17 +110,16 @@ func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace) public.Conne
 		Tenant:      public.ConnectorNamespaceTenant{},
 		Annotations: annotations,
 	}
-	if namespace.TenantUserId != nil {
-		result.Tenant.Kind = "user"
-		result.Tenant.UserId = *namespace.TenantUserId
+	if namespace.TenantUser != nil {
+		result.Tenant.Kind = UserKind
+		result.Tenant.UserId = namespace.TenantUser.ID
 	}
-	if namespace.TenantOrganisationId != nil {
-		result.Tenant.Kind = "organisation"
-		result.Tenant.OrganisationId = *namespace.TenantOrganisationId
+	if namespace.TenantOrganisation != nil {
+		result.Tenant.Kind = OrganisationKind
+		result.Tenant.OrganisationId = namespace.TenantOrganisation.ID
 	}
 	if namespace.Expiration != nil {
-		bytes, _ := json.Marshal(namespace.Expiration)
-		result.Expiration = strings.Trim(string(bytes), "\"")
+		result.Expiration = getTimestamp(*namespace.Expiration)
 	}
 
 	return result
@@ -141,18 +148,22 @@ func PresentPrivateConnectorNamespace(namespace *dbapi.ConnectorNamespace) priva
 		Tenant:      private.ConnectorNamespaceTenant{},
 		Annotations: annotations,
 	}
-	if namespace.TenantUserId != nil {
-		result.Tenant.Kind = "user"
-		result.Tenant.UserId = *namespace.TenantUserId
+	if namespace.TenantUser != nil {
+		result.Tenant.Kind = UserKind
+		result.Tenant.UserId = namespace.TenantUser.ID
 	}
 	if namespace.TenantOrganisationId != nil {
-		result.Tenant.Kind = "organisation"
-		result.Tenant.OrganisationId = *namespace.TenantOrganisationId
+		result.Tenant.Kind = OrganisationKind
+		result.Tenant.OrganisationId = namespace.TenantOrganisation.ID
 	}
 	if namespace.Expiration != nil {
-		bytes, _ := json.Marshal(namespace.Expiration)
-		result.Expiration = string(bytes)
+		result.Expiration = getTimestamp(*namespace.Expiration)
 	}
 
 	return result
+}
+
+func getTimestamp(expiration time.Time) string {
+	bytes, _ := json.Marshal(expiration)
+	return strings.Trim(string(bytes), "\"")
 }

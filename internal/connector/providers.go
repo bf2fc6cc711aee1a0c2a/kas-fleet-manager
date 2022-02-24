@@ -49,8 +49,7 @@ func serviceProviders() di.Option {
 	return di.Options(
 		di.Provide(services.NewConnectorsService, di.As(new(services.ConnectorsService))),
 		di.Provide(services.NewConnectorTypesService, di.As(new(services.ConnectorTypesService))),
-		di.Provide(services.NewConnectorClusterService, di.As(new(services.ConnectorClusterService))),
-		di.Provide(services.NewConnectorClusterService, di.As(new(auth.AuthAgentService))),
+		di.Provide(services.NewConnectorClusterService, di.As(new(services.ConnectorClusterService)), di.As(new(auth.AuthAgentService))),
 		di.Provide(services.NewConnectorNamespaceService, di.As(new(services.ConnectorNamespaceService))),
 		di.Provide(handlers.NewConnectorNamespaceHandler),
 		di.Provide(handlers.NewConnectorAdminHandler),

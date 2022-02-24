@@ -22,8 +22,6 @@ Feature: the old connectors path are still valid
           "kafka_id":"mykafka"
         },
         "deployment_location": {
-          "kind": "addon",
-          "cluster_id": "default"
         },
         "kafka": {
           "bootstrap_server": "kafka.hostname",

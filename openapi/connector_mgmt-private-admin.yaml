@@ -424,6 +424,8 @@ components:
       properties:
         connector_id:
           type: string
+        namespace:
+          type: string
         connector_type_id:
           type: string
         channel:
@@ -453,6 +455,8 @@ components:
       type: object
       properties:
         connector_id:
+          type: string
+        namespace:
           type: string
         connector_type_id:
           type: string

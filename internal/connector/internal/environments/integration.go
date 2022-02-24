@@ -33,6 +33,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"max-allowed-instances":         "1",
 		"mas-sso-base-url":              "http://127.0.0.1:8180",
 		"mas-sso-realm":                 "rhoas",
+		"connector-eval-duration":       "48h",
 	}
 }
 

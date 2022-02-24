@@ -10,31 +10,31 @@ Feature: connector namespaces API
     Given a user named "Gru" in organization "13640210"
 
     # eval users used in public API
-    Given a user named "Stuart" in organization "13640210"
+    Given a user named "Stuart" in organization "13640221"
     Given I store userid for "Stuart" as ${stuart_user_id}
-    Given a user named "Kevin" in organization "13640211"
+    Given a user named "Kevin" in organization "13640222"
     Given I store userid for "Kevin" as ${kevin_user_id}
-    Given a user named "Bob" in organization "13640212"
-    Given I store userid for "Bob" as ${bob_user_id}
+    Given a user named "Carl" in organization "13640223"
+    Given I store userid for "Carl" as ${carl_user_id}
 
     # eval users used in admin API
-    Given a user named "Dave" in organization "13640213"
+    Given a user named "Dave" in organization "13640224"
     Given I store userid for "Dave" as ${dave_user_id}
-    Given a user named "Phil" in organization "13640214"
+    Given a user named "Phil" in organization "13640225"
     Given I store userid for "Phil" as ${phil_user_id}
-    Given a user named "Tim" in organization "13640215"
+    Given a user named "Tim" in organization "13640226"
     Given I store userid for "Tim" as ${tim_user_id}
 
-    # users in organisation 13640220
-    Given a user named "Dusty" in organization "13640220"
+    # users in organization 13640230
+    Given a user named "Dusty" in organization "13640230"
     Given I store userid for "Dusty" as ${dusty_user_id}
-    Given a user named "Lucky" in organization "13640220"
+    Given a user named "Lucky" in organization "13640230"
     Given I store userid for "Lucky" as ${lucky_user_id}
-    Given a user named "Ned" in organization "13640220"
+    Given a user named "Ned" in organization "13640230"
     Given I store userid for "Ned" as ${ned_user_id}
 
-    # users in organisation 13640221
-    Given a user named "El Guapo" in organization "13640221"
+    # users in organization 13640231
+    Given a user named "El Guapo" in organization "13640231"
     Given I store userid for "El Guapo" as ${guapo_user_id}
 
   Scenario Outline: Create eval namespace
@@ -138,9 +138,9 @@ Feature: connector namespaces API
       | user   | user_id        |
       | Stuart | stuart_user_id |
       | Kevin  | kevin_user_id  |
-      | Bob    | bob_user_id    |
+      | Carl    | carl_user_id    |
 
-  Scenario: Create namespaces in cluster for organization 13640220
+  Scenario: Create namespaces in cluster for organization 13640230
     Given I am logged in as "Dusty"
     When I POST path "/v1/kafka_connector_clusters" with json body:
      """
@@ -157,18 +157,40 @@ Feature: connector namespaces API
     And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
     And I remember keycloak client for cleanup with clientID: ${clientID}
 
-   # There should be no namespaces at first for organization 13640220
+   # There should be default namespace at first for organization 13640230
     Given I am logged in as "Lucky"
     When I GET path "/v1/kafka_connector_namespaces"
     Then the response code should be 200
     And the response should match json:
      """
      {
-       "items": [],
+       "items": [
+         {
+           "cluster_id": "${connector_cluster_id}",
+           "created_at": "${response.items[0].created_at}",
+           "href": "${response.items[0].href}",
+           "id": "${response.items[0].id}",
+           "kind": "ConnectorNamespace",
+           "modified_at": "${response.items[0].modified_at}",
+           "name": "default-connector-namespace",
+           "owner": "${dusty_user_id}",
+           "tenant": {
+             "kind": "organisation",
+             "organisation_id": "13640230"
+           },
+           "annotations": [
+             {
+               "name": "connector_mgmt.api.openshift.com/profile",
+               "value": "default-profile"
+             }
+           ],
+           "version": ${response.items[0].version}
+         }
+       ],
        "kind": "ConnectorNamespaceList",
        "page": 1,
-       "size": 0,
-       "total": 0
+       "size": 1,
+       "total": 1
      }
      """
 
@@ -208,7 +230,7 @@ Feature: connector namespaces API
       ],
       "tenant": {
         "kind": "organisation",
-        "organisation_id": "13640220"
+        "organisation_id": "13640230"
       }
     }
     """
@@ -216,38 +238,59 @@ Feature: connector namespaces API
 
    # All organization members MUST be able to see the org tenant namespace
     Given I am logged in as "Ned"
-    When I GET path "/v1/kafka_connector_namespaces/"
+    When I GET path "/v1/kafka_connector_namespaces/?orderBy=name"
     Then the response code should be 200
     And the response should match json:
      """
      {
        "items": [
-          {
-            "id": "${namespace_id}",
-            "kind": "ConnectorNamespace",
-            "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${namespace_id}",
-            "name": "shared_namespace",
-            "owner": "${lucky_user_id}",
-            "version": ${response.items[0].version},
-            "cluster_id": "${connector_cluster_id}",
-            "created_at": "${response.items[0].created_at}",
-            "modified_at": "${response.items[0].modified_at}",
-            "annotations": [
-              {
-                "name": "connector_mgmt.api.openshift.com/profile",
-                "value": "default-profile"
-              }
-            ],
-            "tenant": {
-              "kind": "organisation",
-              "organisation_id": "13640220"
-            }
-          }
+         {
+           "cluster_id": "${connector_cluster_id}",
+           "created_at": "${response.items[0].created_at}",
+           "href": "${response.items[0].href}",
+           "id": "${response.items[0].id}",
+           "kind": "ConnectorNamespace",
+           "modified_at": "${response.items[0].modified_at}",
+           "name": "default-connector-namespace",
+           "owner": "${dusty_user_id}",
+           "tenant": {
+             "kind": "organisation",
+             "organisation_id": "13640230"
+           },
+           "annotations": [
+             {
+               "name": "connector_mgmt.api.openshift.com/profile",
+               "value": "default-profile"
+             }
+           ],
+           "version": ${response.items[0].version}
+         },
+         {
+           "id": "${namespace_id}",
+           "kind": "ConnectorNamespace",
+           "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${namespace_id}",
+           "name": "shared_namespace",
+           "owner": "${lucky_user_id}",
+           "version": ${response.items[1].version},
+           "cluster_id": "${connector_cluster_id}",
+           "created_at": "${response.items[1].created_at}",
+           "modified_at": "${response.items[1].modified_at}",
+           "annotations": [
+             {
+               "name": "connector_mgmt.api.openshift.com/profile",
+               "value": "default-profile"
+             }
+           ],
+           "tenant": {
+             "kind": "organisation",
+             "organisation_id": "13640230"
+           }
+         }
        ],
        "kind": "ConnectorNamespaceList",
        "page": 1,
-       "size": 1,
-       "total": 1
+       "size": 2,
+       "total": 2
      }
      """
 
@@ -260,11 +303,33 @@ Feature: connector namespaces API
     And the response should match json:
      """
      {
-       "items": [],
+       "items": [
+         {
+           "cluster_id": "${connector_cluster_id}",
+           "created_at": "${response.items[0].created_at}",
+           "href": "${response.items[0].href}",
+           "id": "${response.items[0].id}",
+           "kind": "ConnectorNamespace",
+           "modified_at": "${response.items[0].modified_at}",
+           "name": "default-connector-namespace",
+           "owner": "${dusty_user_id}",
+           "tenant": {
+             "kind": "organisation",
+             "organisation_id": "13640230"
+           },
+           "annotations": [
+             {
+               "name": "connector_mgmt.api.openshift.com/profile",
+               "value": "default-profile"
+             }
+           ],
+           "version": ${response.items[0].version}
+         }
+       ],
        "kind": "ConnectorNamespaceList",
        "page": 1,
-       "size": 0,
-       "total": 0
+       "size": 1,
+       "total": 1
      }
      """
 
@@ -299,18 +364,40 @@ Feature: connector namespaces API
    # In this part of the Scenario we create connector namespaces
    #-----------------------------------------------------------------------------------------------------------------
 
-   # There should be no namespaces first
+   # There should be default namespace first
     Given I am logged in as "Ricky Bobby"
     When I GET path "/v1/admin/kafka_connector_namespaces/?search=cluster_id=${connector_cluster_id}"
     Then the response code should be 200
     And the response should match json:
      """
      {
-       "items": [],
+       "items": [
+         {
+           "cluster_id": "${connector_cluster_id}",
+           "created_at": "${response.items[0].created_at}",
+           "href": "${response.items[0].href}",
+           "id": "${response.items[0].id}",
+           "kind": "ConnectorNamespace",
+           "modified_at": "${response.items[0].modified_at}",
+           "name": "default-connector-namespace",
+           "owner": "${<user_id>}",
+           "tenant": {
+             "kind": "organisation",
+             "organisation_id": "${response.items[0].tenant.organisation_id}"
+           },
+           "annotations": [
+             {
+               "name": "connector_mgmt.api.openshift.com/profile",
+               "value": "default-profile"
+             }
+           ],
+           "version": ${response.items[0].version}
+         }
+       ],
        "kind": "ConnectorNamespaceList",
        "page": 1,
-       "size": 0,
-       "total": 0
+       "size": 1,
+       "total": 1
      }
      """
 
@@ -369,11 +456,33 @@ Feature: connector namespaces API
     And the response should match json:
      """
      {
-       "items": [],
+       "items": [
+         {
+           "cluster_id": "${connector_cluster_id}",
+           "created_at": "${response.items[0].created_at}",
+           "href": "${response.items[0].href}",
+           "id": "${response.items[0].id}",
+           "kind": "ConnectorNamespace",
+           "modified_at": "${response.items[0].modified_at}",
+           "name": "default-connector-namespace",
+           "owner": "${<user_id>}",
+           "tenant": {
+             "kind": "organisation",
+             "organisation_id": "${response.items[0].tenant.organisation_id}"
+           },
+           "annotations": [
+             {
+               "name": "connector_mgmt.api.openshift.com/profile",
+               "value": "default-profile"
+             }
+           ],
+           "version": ${response.items[0].version}
+         }
+       ],
        "kind": "ConnectorNamespaceList",
        "page": 1,
-       "size": 0,
-       "total": 0
+       "size": 1,
+       "total": 1
      }
      """
 
@@ -389,7 +498,7 @@ Feature: connector namespaces API
       | Phil | phil_user_id |
       | Tim  | tim_user_id  |
 
-  Scenario: Use Admin API to create namespace for organization 13640221.
+  Scenario: Use Admin API to create namespace for organization 13640231.
     Given I am logged in as "El Guapo"
 
    #-----------------------------------------------------------------------------------
@@ -414,18 +523,40 @@ Feature: connector namespaces API
    # In this part of the Scenario we create connector namespace
    #-----------------------------------------------------------------------------------------------------------------
 
-   # There should be no namespaces first in cluster ${connector_cluster_id}
+   # There should be default namespace in cluster ${connector_cluster_id}
     Given I am logged in as "Ricky Bobby"
     When I GET path "/v1/admin/kafka_connector_namespaces/?search=cluster_id=${connector_cluster_id}"
     Then the response code should be 200
     And the response should match json:
      """
      {
-       "items": [],
+       "items": [
+         {
+           "cluster_id": "${connector_cluster_id}",
+           "created_at": "${response.items[0].created_at}",
+           "href": "${response.items[0].href}",
+           "id": "${response.items[0].id}",
+           "kind": "ConnectorNamespace",
+           "modified_at": "${response.items[0].modified_at}",
+           "name": "default-connector-namespace",
+           "owner": "${guapo_user_id}",
+           "tenant": {
+             "kind": "organisation",
+             "organisation_id": "13640231"
+           },
+           "annotations": [
+             {
+               "name": "connector_mgmt.api.openshift.com/profile",
+               "value": "default-profile"
+             }
+           ],
+           "version": ${response.items[0].version}
+         }
+       ],
        "kind": "ConnectorNamespaceList",
        "page": 1,
-       "size": 0,
-       "total": 0
+       "size": 1,
+       "total": 1
      }
      """
 
@@ -444,7 +575,7 @@ Feature: connector namespaces API
       ],
       "tenant": {
         "kind": "organisation",
-        "organisation_id": "13640221"
+        "organisation_id": "13640231"
       }
     }
     """
@@ -469,7 +600,7 @@ Feature: connector namespaces API
       ],
       "tenant": {
         "kind": "organisation",
-        "organisation_id": "13640221"
+        "organisation_id": "13640231"
       }
     }
     """
@@ -484,11 +615,33 @@ Feature: connector namespaces API
     And the response should match json:
      """
      {
-       "items": [],
+       "items": [
+         {
+           "cluster_id": "${connector_cluster_id}",
+           "created_at": "${response.items[0].created_at}",
+           "href": "${response.items[0].href}",
+           "id": "${response.items[0].id}",
+           "kind": "ConnectorNamespace",
+           "modified_at": "${response.items[0].modified_at}",
+           "name": "default-connector-namespace",
+           "owner": "${guapo_user_id}",
+           "tenant": {
+             "kind": "organisation",
+             "organisation_id": "13640231"
+           },
+           "annotations": [
+             {
+               "name": "connector_mgmt.api.openshift.com/profile",
+               "value": "default-profile"
+             }
+           ],
+           "version": ${response.items[0].version}
+         }
+       ],
        "kind": "ConnectorNamespaceList",
        "page": 1,
-       "size": 0,
-       "total": 0
+       "size": 1,
+       "total": 1
      }
      """
 
