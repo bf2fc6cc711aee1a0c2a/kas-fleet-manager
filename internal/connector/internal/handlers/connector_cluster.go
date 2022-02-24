@@ -4,6 +4,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
+	"github.com/golang/glog"
 
 	"net/http"
 	"net/url"
@@ -174,13 +175,20 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 
 			acc, err := h.Keycloak.RegisterConnectorFleetshardOperatorServiceAccount(connectorClusterId, connectorFleetshardOperatorRoleName)
 			if err != nil {
-				return false, errors.GeneralError("failed to create service account for connector cluster %s due to error: %v", connectorClusterId, err)
+				return nil, errors.GeneralError("failed to create service account for connector cluster %s due to error: %v", connectorClusterId, err)
 			}
 			u, eerr := h.buildTokenURL(acc)
 			if eerr != nil {
 				return false, errors.GeneralError("failed creating auth token url")
 			}
 			params := h.buildAddonParams(acc, connectorClusterId, u)
+			if serviceError = h.Service.UpdateClientId(connectorClusterId, acc.ClientID); serviceError != nil {
+				// deregister account in case the cluster is abandoned
+				if err := h.Keycloak.DeRegisterConnectorFleetshardOperatorServiceAccount(connectorClusterId); err != nil {
+					glog.Errorf("Error de-registering service account for cluster '%s': %v", connectorClusterId, err)
+				}
+				return nil, errors.GeneralError("failed to update client id for connector cluster %s: %v", connectorClusterId, serviceError)
+			}
 			result := make([]public.AddonParameter, len(params))
 			for i, p := range params {
 				result[i] = presenters.PresentAddonParameter(p)

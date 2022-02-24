@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	goerrors "errors"
 	"fmt"
+	"github.com/golang/glog"
 	"reflect"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
@@ -44,6 +45,7 @@ type ConnectorClusterService interface {
 	GetAvailableDeploymentOperatorUpgrades(listArgs *services.ListArguments) (dbapi.ConnectorDeploymentOperatorUpgradeList, *api.PagingMeta, *errors.ServiceError)
 	UpgradeConnectorsByOperator(ctx context.Context, clusterId string, upgrades dbapi.ConnectorDeploymentOperatorUpgradeList) *errors.ServiceError
 	CleanupDeployments() *errors.ServiceError
+	UpdateClientId(clusterId string, clientID string) *errors.ServiceError
 }
 
 var _ ConnectorClusterService = &connectorClusterService{}
@@ -54,16 +56,19 @@ type connectorClusterService struct {
 	bus                   signalbus.SignalBus
 	connectorTypesService ConnectorTypesService
 	vaultService          vault.VaultService
+	keycloakService       services.KafkaKeycloakService
 	connectorsService     ConnectorsService
 }
 
-func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService vault.VaultService, connectorTypesService ConnectorTypesService, connectorsService ConnectorsService) *connectorClusterService {
+func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService vault.VaultService,
+	connectorTypesService ConnectorTypesService, connectorsService ConnectorsService, keycloakService services.KafkaKeycloakService) *connectorClusterService {
 	return &connectorClusterService{
 		connectionFactory:     connectionFactory,
 		bus:                   bus,
 		connectorTypesService: connectorTypesService,
 		vaultService:          vaultService,
 		connectorsService:     connectorsService,
+		keycloakService:       keycloakService,
 	}
 }
 
@@ -219,8 +224,13 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 			}
 		}
 	}
-	return nil
 
+	glog.V(5).Infof("Removing agent service account for connector cluster %s", id)
+	if err := k.keycloakService.DeRegisterConnectorFleetshardOperatorServiceAccount(id); err != nil {
+		return errors.GeneralError("failed to remove connector service account for cluster %s: %s", id, err)
+	}
+
+	return nil
 }
 
 func (k connectorClusterService) ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) *errors.ServiceError {
@@ -373,8 +383,25 @@ func (k *connectorClusterService) GetConnectorClusterStatus(ctx context.Context,
 }
 
 func (k *connectorClusterService) GetClientId(clusterID string) (string, error) {
-	// TODO: this must be implemented
-	return "", nil
+	dbConn := k.connectionFactory.New()
+	var resource dbapi.ConnectorCluster
+	dbConn = dbConn.Select("client_id").Where("id = ?", clusterID)
+
+	// use Limit(1) and Find() to avoid ErrRecordNotFound
+	if err := dbConn.Limit(1).Find(&resource).Error; err != nil {
+		return "", services.HandleGetError("Connector cluster client_id", "id", clusterID, err)
+	}
+	return resource.ClientId, nil
+}
+
+func (k *connectorClusterService) UpdateClientId(clusterId string, clientID string) *errors.ServiceError {
+	dbConn := k.connectionFactory.New()
+
+	cluster := dbapi.ConnectorCluster{Meta: api.Meta{ID: clusterId}, ClientId: clientID}
+	if err := dbConn.Updates(cluster).Error; err != nil {
+		return services.HandleGetError("Connector cluster client_id", "id", clusterId, err)
+	}
+	return nil
 }
 
 // Create creates a connector deployment in the database
