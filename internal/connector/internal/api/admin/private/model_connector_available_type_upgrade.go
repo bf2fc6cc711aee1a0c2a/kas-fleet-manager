@@ -12,6 +12,7 @@ package private
 // ConnectorAvailableTypeUpgrade An available type upgrade for a connector
 type ConnectorAvailableTypeUpgrade struct {
 	ConnectorId     string                                     `json:"connector_id,omitempty"`
+	Namespace       string                                     `json:"namespace,omitempty"`
 	ConnectorTypeId string                                     `json:"connector_type_id,omitempty"`
 	Channel         string                                     `json:"channel,omitempty"`
 	ShardMetadata   ConnectorAvailableTypeUpgradeShardMetadata `json:"shard_metadata,omitempty"`
