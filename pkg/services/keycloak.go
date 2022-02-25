@@ -198,7 +198,7 @@ func (kc keycloakService) IsKafkaClientExist(clientId string) *errors.ServiceErr
 	}
 	_, err := kc.kcClient.IsClientExist(clientId, accessToken)
 	if err != nil {
-		return errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", kasClusterId)
+		return errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clientId)
 	}
 	return nil
 }
@@ -210,7 +210,7 @@ func (kc keycloakService) GetKafkaClientSecret(clientId string) (string, *errors
 	}
 	internalClientID, err := kc.kcClient.IsClientExist(clientId, accessToken)
 	if err != nil {
-		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", kasClusterId)
+		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clientId)
 	}
 	clientSecret, err := kc.kcClient.GetClientSecret(internalClientID, accessToken)
 	if err != nil {
