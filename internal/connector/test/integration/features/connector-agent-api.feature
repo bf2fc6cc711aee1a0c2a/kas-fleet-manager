@@ -625,7 +625,7 @@ Feature: connector agent API
         "owner": "${response.items[0].owner}",
         "modified_at": "${response.items[0].modified_at}",
         "status": {
-          "state": "ready"
+          "state": "${response.items[0].status.state}"
         }
       }
       """
