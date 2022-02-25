@@ -59,33 +59,6 @@ paths:
       summary: Returns the list of possible API errors
       tags:
       - errors
-  /api/kafkas_mgmt/v1/status:
-    get:
-      deprecated: true
-      description: '[DEPRECATED] The service capacity status is now reported per cloud
-        provider region and Kafka instance type in the /api/kafkas_mgmt/v1/cloud_providers/{id}/regions
-        endpoint. Please use this endpoint instead.'
-      operationId: getServiceStatus
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServiceStatus'
-          description: Ok
-        "500":
-          content:
-            application/json:
-              examples:
-                "500Example":
-                  $ref: '#/components/examples/500Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error occurred
-      security:
-      - Bearer: []
-      summary: Returns the status of resources, such as whether maximum service capacity
-        has been reached
   /api/kafkas_mgmt/v1/kafkas/{id}:
     delete:
       operationId: deleteKafkaById
@@ -1564,15 +1537,6 @@ components:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/VersionMetadata_allOf'
-    ServiceStatus:
-      description: Schema for the service status response body
-      example:
-        kafkas:
-          max_capacity_reached: true
-      properties:
-        kafkas:
-          $ref: '#/components/schemas/ServiceStatus_kafkas'
-      type: object
     KafkaRequestPayload:
       description: Schema for the request body sent to /kafkas POST
       example:
@@ -1838,14 +1802,6 @@ components:
             allOf:
             - $ref: '#/components/schemas/ObjectReference'
           type: array
-    ServiceStatus_kafkas:
-      description: The Kafka resource api status
-      properties:
-        max_capacity_reached:
-          description: Indicates whether we have reached Kafka maximum capacity
-          type: boolean
-      required:
-      - max_capacity_reached
     CloudProviderList_allOf:
       example: '{"kind":"CloudProviderList","page":"1","size":"1","total":"1","item":{"$ref":"#/components/examples/CloudProviderExample"}}'
       properties:
