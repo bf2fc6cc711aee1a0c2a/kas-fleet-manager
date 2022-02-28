@@ -1,6 +1,7 @@
 ---
 # see https://docs.google.com/spreadsheets/d/1W4H1IgDXKv24Sf7aWeqeAqxjKVj8EJB9giYN9obqPgU/edit#gid=493008265
 ingressEgressThroughputPerSec: "2Mi"
+maxCapacity: 1000
 totalMaxConnections: 100
 maxDataRetentionSize: "60Gi"
 maxPartitions: 100

@@ -12,8 +12,7 @@ import (
 func BuildApiRegionCapacityListItemSlice(modifyFn func(regionCapacityListItems []api.RegionCapacityListItem)) []api.RegionCapacityListItem {
 	apiRegionCapacityListItem := []api.RegionCapacityListItem{
 		{
-			InstanceType:       types.STANDARD.String(),
-			MaxCapacityReached: false,
+			InstanceType: types.STANDARD.String(),
 		},
 	}
 	if modifyFn != nil {
@@ -25,8 +24,7 @@ func BuildApiRegionCapacityListItemSlice(modifyFn func(regionCapacityListItems [
 func BuildRegionCapacityListItemSlice(modifyFn func(regionCapacityListItems []public.RegionCapacityListItem)) []public.RegionCapacityListItem {
 	regionCapacityListItem := []public.RegionCapacityListItem{
 		{
-			InstanceType:       types.STANDARD.String(),
-			MaxCapacityReached: false,
+			InstanceType: types.STANDARD.String(),
 		},
 	}
 	if modifyFn != nil {

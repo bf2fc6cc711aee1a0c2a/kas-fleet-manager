@@ -119,6 +119,46 @@ func TestPresentDataPlaneClusterConfig(t *testing.T) {
 		})
 	}
 }
+func sampleValidDataPlaneClusterUpdateStatusRequest() *private.DataPlaneClusterUpdateStatusRequest {
+	return &private.DataPlaneClusterUpdateStatusRequest{
+		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+			{
+				Type:   "Ready",
+				Status: "True",
+			},
+		},
+		Total: private.DataPlaneClusterUpdateStatusRequestTotal{
+			IngressThroughputPerSec: &[]string{"test"}[0],
+			EgressThroughputPerSec:  &[]string{"test"}[0],
+			Connections:             &[]int32{1000000}[0],
+			DataRetentionSize:       &[]string{"test"}[0],
+			Partitions:              &[]int32{1000000}[0],
+		},
+		NodeInfo: &private.DatePlaneClusterUpdateStatusRequestNodeInfo{
+			Ceiling:                &[]int32{20}[0],
+			Floor:                  &[]int32{3}[0],
+			Current:                &[]int32{5}[0],
+			CurrentWorkLoadMinimum: &[]int32{3}[0],
+		},
+		Remaining: private.DataPlaneClusterUpdateStatusRequestTotal{
+			Connections:             &[]int32{1000000}[0],
+			Partitions:              &[]int32{1000000}[0],
+			IngressThroughputPerSec: &[]string{"test"}[0],
+			EgressThroughputPerSec:  &[]string{"test"}[0],
+			DataRetentionSize:       &[]string{"test"}[0],
+		},
+		ResizeInfo: &private.DatePlaneClusterUpdateStatusRequestResizeInfo{
+			NodeDelta: &[]int32{3}[0],
+			Delta: &private.DatePlaneClusterUpdateStatusRequestResizeInfoDelta{
+				Connections:             &[]int32{10000}[0],
+				Partitions:              &[]int32{10000}[0],
+				IngressThroughputPerSec: &[]string{"test"}[0],
+				EgressThroughputPerSec:  &[]string{"test"}[0],
+				DataRetentionSize:       &[]string{"test"}[0],
+			},
+		},
+	}
+}
 
 func TestGetAvailableStrimziVersions(t *testing.T) {
 	type args struct {
