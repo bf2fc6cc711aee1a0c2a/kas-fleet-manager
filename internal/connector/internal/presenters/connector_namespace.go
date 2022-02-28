@@ -7,6 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"strings"
 	"time"
 )
@@ -16,13 +17,17 @@ const (
 	OrganisationKind string = "organisation"
 )
 
-func ConvertConnectorNamespaceRequest(namespaceRequest *public.ConnectorNamespaceRequest) *dbapi.ConnectorNamespace {
+var NamespaceKinds = []string{UserKind, OrganisationKind}
+
+func ConvertConnectorNamespaceRequest(namespaceRequest *public.ConnectorNamespaceRequest,
+	userID string, organisationID string) (*dbapi.ConnectorNamespace, *errors.ServiceError) {
 	result := &dbapi.ConnectorNamespace{
 		Model: db.Model{
 			ID: api.NewID(),
 		},
 		Name:      namespaceRequest.Name,
 		ClusterId: namespaceRequest.ClusterId,
+		Owner:     userID,
 	}
 	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
 	for i, annotation := range namespaceRequest.Annotations {
@@ -30,16 +35,38 @@ func ConvertConnectorNamespaceRequest(namespaceRequest *public.ConnectorNamespac
 		result.Annotations[i].Name = annotation.Name
 		result.Annotations[i].Value = annotation.Value
 	}
+	switch namespaceRequest.Kind {
+	case UserKind:
+		result.TenantUserId = &userID
+		result.TenantUser = &dbapi.ConnectorTenantUser{
+			Model: db.Model{
+				ID: userID,
+			},
+		}
+	case OrganisationKind:
+		if organisationID == "" {
+			return nil, errors.BadRequest("missing organization for tenant organisation namespace")
+		}
+		result.TenantOrganisationId = &organisationID
+		result.TenantOrganisation = &dbapi.ConnectorTenantOrganisation{
+			Model: db.Model{
+				ID: organisationID,
+			},
+		}
+	default:
+		return nil, errors.BadRequest("invalid tenant kind: %s", namespaceRequest.Kind)
+	}
 
-	return result
+	return result, nil
 }
 
-func ConvertConnectorNamespaceEvalRequest(namespaceRequest *public.ConnectorNamespaceEvalRequest) *dbapi.ConnectorNamespace {
+func ConvertConnectorNamespaceEvalRequest(namespaceRequest *public.ConnectorNamespaceEvalRequest, userID string) *dbapi.ConnectorNamespace {
 	result := &dbapi.ConnectorNamespace{
 		Model: db.Model{
 			ID: api.NewID(),
 		},
-		Name: namespaceRequest.Name,
+		Name:                 namespaceRequest.Name,
+		Owner:                userID,
 	}
 	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
 	for i, annotation := range namespaceRequest.Annotations {
@@ -47,11 +74,17 @@ func ConvertConnectorNamespaceEvalRequest(namespaceRequest *public.ConnectorName
 		result.Annotations[i].Name = annotation.Name
 		result.Annotations[i].Value = annotation.Value
 	}
+	result.TenantUserId = &result.Owner
+	result.TenantUser = &dbapi.ConnectorTenantUser{
+		Model: db.Model{
+			ID: userID,
+		},
+	}
 
 	return result
 }
 
-func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *private.ConnectorNamespaceWithTenantRequest) *dbapi.ConnectorNamespace {
+func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *private.ConnectorNamespaceWithTenantRequest) (*dbapi.ConnectorNamespace, *errors.ServiceError) {
 	result := &dbapi.ConnectorNamespace{
 		Model: db.Model{
 			ID: api.NewID(),
@@ -75,7 +108,7 @@ func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *private.Connec
 			},
 		}
 	default:
-		// ignore, should have been validated earlier
+		return nil, errors.BadRequest("invalid kind %s", namespaceRequest.Tenant.Kind)
 	}
 	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
 	for i, annotation := range namespaceRequest.Annotations {
@@ -84,7 +117,7 @@ func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *private.Connec
 		result.Annotations[i].Value = annotation.Value
 	}
 
-	return result
+	return result, nil
 }
 
 func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace) public.ConnectorNamespace {

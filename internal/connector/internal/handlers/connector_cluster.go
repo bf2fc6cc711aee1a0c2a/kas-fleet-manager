@@ -246,3 +246,36 @@ func (o *ConnectorClusterHandler) buildTokenURL(serviceAccount *api.ServiceAccou
 	u.User = url.UserPassword(serviceAccount.ClientID, serviceAccount.ClientSecret)
 	return u.String(), nil
 }
+
+func (h *ConnectorClusterHandler) GetNamespaces(writer http.ResponseWriter, request *http.Request) {
+	connectorClusterId := mux.Vars(request)["connector_cluster_id"]
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+			ctx := request.Context()
+			listArgs := coreservices.NewListArguments(request.URL.Query())
+			resources, paging, err := h.ConnectorNamespace.List(ctx, []string{connectorClusterId} ,listArgs)
+			if err != nil {
+				return nil, err
+			}
+
+			resourceList := public.ConnectorNamespaceList{
+				Kind:  "ConnectorNamespaceList",
+				Page:  int32(paging.Page),
+				Size:  int32(paging.Size),
+				Total: int32(paging.Total),
+			}
+
+			for _, resource := range resources {
+				converted := presenters.PresentConnectorNamespace(resource)
+				resourceList.Items = append(resourceList.Items, converted)
+			}
+
+			return resourceList, nil
+		},
+	}
+
+	handlers.HandleList(writer, request, cfg)
+}

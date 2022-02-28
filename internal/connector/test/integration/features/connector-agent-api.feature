@@ -28,7 +28,7 @@ Feature: connector agent API
     And the ".status.state" selection from the response should match "disconnected"
     Given I store the ".id" selection from the response as ${connector_cluster_id}
 
-    When I GET path "/v1/kafka_connector_namespaces/?search=cluster_id=${connector_cluster_id}"
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/namespaces"
     Then the response code should be 200
     Given I store the ".items[0].id" selection from the response as ${connector_namespace_id}
 

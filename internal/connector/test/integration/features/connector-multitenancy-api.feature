@@ -201,6 +201,7 @@ Feature: connector namespaces API
     {
       "name": "shared_namespace",
       "cluster_id": "${connector_cluster_id}",
+      "kind": "organisation",
       "annotations": [
         {
           "name": "connector_mgmt.api.openshift.com/profile",
@@ -451,7 +452,7 @@ Feature: connector namespaces API
     Given I am logged in as "Ricky Bobby"
     When I DELETE path "/v1/admin/kafka_connector_namespaces/${namespace_id}"
     Then the response code should be 204
-    And I GET path "/v1/admin/kafka_connector_namespaces?search=cluster_id=${connector_cluster_id}"
+    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/namespaces"
     And the response code should be 200
     And the response should match json:
      """

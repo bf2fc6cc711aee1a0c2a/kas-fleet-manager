@@ -110,6 +110,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}", s.ConnectorClusterHandler.Update).Methods(http.MethodPut)
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}", s.ConnectorClusterHandler.Delete).Methods(http.MethodDelete)
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/{_:addon[-_]parameters}", s.ConnectorClusterHandler.GetAddonParameters).Methods(http.MethodGet)
+	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/namespaces", s.ConnectorClusterHandler.GetNamespaces).Methods(http.MethodGet)
 	apiV1ConnectorClustersRouter.Use(s.AuthorizeMiddleware.Authorize)
 
 	//  /api/connector_mgmt/v1/kafka_connector_namespaces
@@ -150,6 +151,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, kerrors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(kerrors.ErrorNotFound))
 	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]clusters}", s.ConnectorAdminHandler.ListConnectorClusters).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]clusters}/{connector_cluster_id}/namespaces", s.ConnectorAdminHandler.GetClusterNamespaces).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]clusters}/{connector_cluster_id}/upgrades/type", s.ConnectorAdminHandler.GetConnectorUpgradesByType).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]clusters}/{connector_cluster_id}/upgrades/type", s.ConnectorAdminHandler.UpgradeConnectorsByType).Methods(http.MethodPut)
 	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]clusters}/{connector_cluster_id}/upgrades/operator", s.ConnectorAdminHandler.GetConnectorUpgradesByOperator).Methods(http.MethodGet)

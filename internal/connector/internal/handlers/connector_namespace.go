@@ -20,8 +20,6 @@ import (
 
 var (
 	maxConnectorNamespaceIdLength   = 32
-	maxConnectorNamespaceNameLength = 63
-	defaultNamespaceName            = "default_namespace"
 )
 
 type ConnectorNamespaceHandler struct {
@@ -39,12 +37,11 @@ func (h *ConnectorNamespaceHandler) Create(w http.ResponseWriter, r *http.Reques
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
-			handlers.Validation("name", &resource.Name, handlers.WithDefault(defaultNamespaceName),
-				handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceNameLength)),
+			handlers.Validation("name", &resource.Name, handlers.MinLen(1)),
+			handlers.Validation("cluster_id", &resource.ClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("kind", &resource.Kind, handlers.IsOneOf(presenters.NamespaceKinds...)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-
-			convResource := presenters.ConvertConnectorNamespaceRequest(&resource)
 
 			ctx := r.Context()
 			claims, err := auth.GetClaimsFromContext(ctx)
@@ -52,17 +49,14 @@ func (h *ConnectorNamespaceHandler) Create(w http.ResponseWriter, r *http.Reques
 				return nil, errors.Unauthenticated("user not authenticated")
 			}
 			userID := auth.GetUsernameFromClaims(claims)
-			convResource.Owner = userID
 			organisationId := auth.GetOrgIdFromClaims(claims)
-			if convResource.ClusterId == "" {
-				if err := h.Service.SetTenantClusterId(convResource, organisationId); err != nil {
-					return nil, err
-				}
-			} else {
-				// TODO move auth checks in an orthogonal feature
-				if err := h.checkAuthorizedAccess(userID, convResource, organisationId); err != nil {
-					return nil, err
-				}
+
+			convResource, serr := presenters.ConvertConnectorNamespaceRequest(&resource, userID, organisationId)
+			if serr != nil {
+				return nil, serr
+			}
+			if err := h.checkAuthorizedAccess(userID, convResource, organisationId); err != nil {
+				return nil, err
 			}
 
 			// set tenant to org if there is one, or set it to user
@@ -133,30 +127,21 @@ func (h *ConnectorNamespaceHandler) CreateEvaluation(w http.ResponseWriter, r *h
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
-			handlers.Validation("name", &resource.Name, handlers.WithDefault(defaultNamespaceName),
-				handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceNameLength)),
+			handlers.Validation("name", &resource.Name, handlers.MinLen(1)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-
-			convResource := presenters.ConvertConnectorNamespaceEvalRequest(&resource)
 
 			claims, err := auth.GetClaimsFromContext(r.Context())
 			if err != nil {
 				return nil, errors.Unauthenticated("user not authenticated")
 			}
 			userId := auth.GetUsernameFromClaims(claims)
-			convResource.Owner = userId
+
+			convResource := presenters.ConvertConnectorNamespaceEvalRequest(&resource, userId)
 			if err := h.Service.SetEvalClusterId(convResource); err != nil {
 				return nil, err
 			}
 
-			// set tenant user for eval namespace
-			convResource.TenantUserId = &convResource.Owner
-			convResource.TenantUser = &dbapi.ConnectorTenantUser{
-				Model: db.Model{
-					ID: userId,
-				},
-			}
 			if err := h.Service.Create(r.Context(), convResource); err != nil {
 				return nil, err
 			}
@@ -237,7 +222,6 @@ func (h *ConnectorNamespaceHandler) List(w http.ResponseWriter, r *http.Request)
 			if err != nil {
 				return nil, errors.Unauthenticated("user not authenticated")
 			}
-			// TODO handle creating default namespaces in List()
 			userId := auth.GetUsernameFromClaims(claims)
 			var ownerClusterIds []string
 			if err := h.Service.GetOwnerClusterIds(userId, &ownerClusterIds); err != nil {

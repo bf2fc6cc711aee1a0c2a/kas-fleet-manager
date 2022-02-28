@@ -184,6 +184,42 @@ func (h *ConnectorAdminHandler) UpgradeConnectorsByOperator(writer http.Response
 	handlers.Handle(writer, request, &cfg, http.StatusNoContent)
 }
 
+func (h *ConnectorAdminHandler) GetClusterNamespaces(writer http.ResponseWriter, request *http.Request) {
+	id := mux.Vars(request)["connector_cluster_id"]
+	listArgs := coreservices.NewListArguments(request.URL.Query())
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+			if err := isAdmin(request); err != nil {
+				return nil, err
+			}
+
+			namespaces, paging, err := h.NamespaceService.List(request.Context(), []string{id}, listArgs)
+			if err != nil {
+				return nil, err
+			}
+
+			result := private.ConnectorNamespaceList{
+				Kind:  "ConnectorNamespaceList",
+				Page:  int32(paging.Page),
+				Size:  int32(paging.Size),
+				Total: int32(paging.Total),
+			}
+
+			result.Items = make([]private.ConnectorNamespace, len(namespaces))
+			for i, namespace := range namespaces {
+				result.Items[i] = presenters.PresentPrivateConnectorNamespace(namespace)
+			}
+
+			return result, nil
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
 func (h *ConnectorAdminHandler) GetConnectorNamespaces(writer http.ResponseWriter, request *http.Request) {
 	listArgs := coreservices.NewListArguments(request.URL.Query())
 	cfg := handlers.HandlerConfig{
@@ -226,7 +262,10 @@ func (h *ConnectorAdminHandler) CreateConnectorNamespace(writer http.ResponseWri
 			}
 
 			ctx := request.Context()
-			connectorNamespace := presenters.ConvertConnectorNamespaceWithTenantRequest(&resource)
+			connectorNamespace, serviceError := presenters.ConvertConnectorNamespaceWithTenantRequest(&resource)
+			if serviceError != nil {
+				return nil, serviceError
+			}
 			if connectorNamespace.TenantUser != nil {
 				connectorNamespace.Owner = connectorNamespace.TenantUser.ID
 			} else {
