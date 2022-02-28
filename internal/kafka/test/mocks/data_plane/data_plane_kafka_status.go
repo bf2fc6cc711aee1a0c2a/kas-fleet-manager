@@ -8,6 +8,7 @@ import (
 
 var (
 	ingress                      = "2Mi"
+	egress                       = "3Mi"
 	maxConnections         int32 = 1000
 	maxDataRetention             = "1000Gi"
 	maxPartitions          int32 = 1000
@@ -35,12 +36,13 @@ func BuildPrivateDataPlaneKafkaStatus(modifyFn func(status map[string]private.Da
 			},
 		},
 		Capacity: private.DataPlaneKafkaStatusCapacity{
-			IngressEgressThroughputPerSec: &ingress,
-			TotalMaxConnections:           &maxConnections,
-			MaxDataRetentionSize:          &maxDataRetention,
-			MaxPartitions:                 &maxPartitions,
-			MaxDataRetentionPeriod:        &maxDataRetentionPeriod,
-			MaxConnectionAttemptsPerSec:   &maxConnectionAttempts,
+			IngressThroughputPerSec:     &ingress,
+			EgressThroughputPerSec:      &egress,
+			TotalMaxConnections:         &maxConnections,
+			MaxDataRetentionSize:        &maxDataRetention,
+			MaxPartitions:               &maxPartitions,
+			MaxDataRetentionPeriod:      &maxDataRetentionPeriod,
+			MaxConnectionAttemptsPerSec: &maxConnectionAttempts,
 		},
 		Versions: private.DataPlaneKafkaStatusVersions{
 			Kafka:    kafkaVersion,

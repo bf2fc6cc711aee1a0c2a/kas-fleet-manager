@@ -992,18 +992,20 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *dbapi.DataPlaneClusterStatu
 			CurrentWorkLoadMinimum: 0,
 		},
 		Remaining: dbapi.DataPlaneClusterStatusCapacity{
-			Connections:                   0,
-			Partitions:                    0,
-			IngressEgressThroughputPerSec: "",
-			DataRetentionSize:             "",
+			Connections:             0,
+			Partitions:              0,
+			IngressThroughputPerSec: "",
+			EgressThroughputPerSec:  "",
+			DataRetentionSize:       "",
 		},
 		ResizeInfo: dbapi.DataPlaneClusterStatusResizeInfo{
 			NodeDelta: multiAZClusterNodeScalingMultiple,
 			Delta: dbapi.DataPlaneClusterStatusCapacity{
-				Connections:                   0,
-				Partitions:                    0,
-				IngressEgressThroughputPerSec: "",
-				DataRetentionSize:             "",
+				Connections:             0,
+				Partitions:              0,
+				IngressThroughputPerSec: "",
+				EgressThroughputPerSec:  "",
+				DataRetentionSize:       "",
 			},
 		},
 	}
