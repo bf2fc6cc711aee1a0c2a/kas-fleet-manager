@@ -5,7 +5,7 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 # There should be no duplicated endpoints or schemas in these 2 files. They should only defined in one of them.
 info:
   title: Kafka Service Fleet Manager
-  version: 1.4.0
+  version: 1.5.0
   description: Kafka Service Fleet Manager APIs that are used by internal services e.g kas-fleetshard operators.
 servers:
   - url: https://api.openshift.com
@@ -199,7 +199,9 @@ components:
     ManagedKafkaCapacity:
       type: object
       properties:
-        ingressEgressThroughputPerSec:
+        ingressThroughputPerSec:
+          type: string
+        egressThroughputPerSec:
           type: string
         totalMaxConnections:
           type: integer
@@ -364,7 +366,10 @@ components:
           type: object
           nullable: true
           properties:
-            ingressEgressThroughputPerSec:
+            ingressThroughputPerSec:
+              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+              nullable: true
+            egressThroughputPerSec:
               type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
               nullable: true
             connections:
@@ -400,7 +405,10 @@ components:
         total:
           type: object
           properties:
-            ingressEgressThroughputPerSec:
+            ingressThroughputPerSec:
+              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+              nullable: true
+            egressThroughputPerSec:
               type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
               nullable: true
             connections:
@@ -416,7 +424,10 @@ components:
           type: object
           properties:
             # TODO 'total', 'remaining' attributes share the same properties so should we refactor it to a common schema?
-            ingressEgressThroughputPerSec:
+            ingressThroughputPerSec:
+              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+              nullable: true
+            egressThroughputPerSec:
               type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
               nullable: true
             connections:
@@ -474,7 +485,10 @@ components:
           description: "Capacity information of the data plane cluster"
           type: object
           properties:
-            ingressEgressThroughputPerSec:
+            ingressThroughputPerSec:
+              type: string #example: 4Mi
+              nullable: true
+            egressThroughputPerSec:
               type: string #example: 4Mi
               nullable: true
             totalMaxConnections:
@@ -579,7 +593,8 @@ components:
             bf2.org/placementId: ""
         spec:
           capacity:
-            ingressEgressThroughputPerSec: 4Mi
+            ingressThroughputPerSec: 4Mi
+            egressThroughputPerSec: 4Mi
             totalMaxConnections: 500
             maxDataRetentionSize: 100Gi
             maxPartitions: 100
@@ -615,7 +630,8 @@ components:
             status: "False"
             lastTransitionTime: "2018-01-01T00:00:00Z"
         capacity:
-          ingressEgressThroughputPerSec: 4Mi
+          ingressThroughputPerSec: 4Mi
+          egressThroughputPerSec: 4Mi
           totalMaxConnections: 500
           maxDataRetentionSize: 100Gi
           maxPartitions: 100
