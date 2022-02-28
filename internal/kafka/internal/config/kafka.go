@@ -35,7 +35,7 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaTLSCertFile:               "secrets/kafka-tls.crt",
 		KafkaTLSKeyFile:                "secrets/kafka-tls.key",
 		EnableKafkaExternalCertificate: false,
-		KafkaDomainName:                "kafka.devshift.org",
+		KafkaDomainName:                "kafka.bf2.dev",
 		KafkaCapacityConfigFile:        "config/kafka-capacity-config.yaml",
 		KafkaLifespan:                  NewKafkaLifespanConfig(),
 		Quota:                          NewKafkaQuotaConfig(),

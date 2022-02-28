@@ -38,6 +38,7 @@ type ConnectorCluster struct {
 	Owner          string
 	OrganisationId string
 	Name           string
+	ClientId       string
 	Status         ConnectorClusterStatus `gorm:"embedded;embeddedPrefix:status_"`
 }
 
@@ -56,11 +57,7 @@ func (c *ConditionList) Scan(value interface{}) error {
 	if !ok {
 		return fmt.Errorf("failed to unmarshal json value: %v", value)
 	}
-
-	result := ConditionList{}
-	err := json.Unmarshal([]byte(s), &result)
-	*c = ConditionList(result)
-	return err
+	return json.Unmarshal([]byte(s), c)
 }
 
 func (c ConditionList) Value() (driver.Value, error) {
@@ -77,11 +74,7 @@ func (o *OperatorList) Scan(value interface{}) error {
 	if !ok {
 		return fmt.Errorf("failed to unmarshal json value: %v", value)
 	}
-
-	result := OperatorList{}
-	err := json.Unmarshal([]byte(s), &result)
-	*o = OperatorList(result)
-	return err
+	return json.Unmarshal([]byte(s), o)
 }
 
 func (o OperatorList) Value() (driver.Value, error) {

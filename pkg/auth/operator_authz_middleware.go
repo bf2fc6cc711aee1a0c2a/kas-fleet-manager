@@ -8,53 +8,15 @@ import (
 	"net/http"
 )
 
-type Actor string
-
-const (
-	Kas       Actor = "kas"
-	Connector Actor = "connector"
-)
-
-func UseOperatorAuthorisationMiddleware(router *mux.Router, actor Actor, jwkValidIssuerURI string, clusterIdVar string, clusterService AuthAgentService) {
+func UseOperatorAuthorisationMiddleware(router *mux.Router, jwkValidIssuerURI string, clusterIdVar string, clusterService AuthAgentService) {
 	router.Use(
-		checkClusterId(actor, clusterIdVar, clusterService),
+		checkClusterId(clusterIdVar, clusterService),
 		NewRequireIssuerMiddleware().RequireIssuer([]string{jwkValidIssuerURI}, errors.ErrorNotFound),
 	)
 }
 
-func checkClusterId(actor Actor, clusterIdVar string, authAgentService AuthAgentService) mux.MiddlewareFunc {
-	if actor == Kas {
-		return checkKafkaClusterId(clusterIdVar, authAgentService)
-	} else {
-		return checkConnectorClusterId(clusterIdVar)
-	}
-}
 
-func checkConnectorClusterId(clusterIdVar string) mux.MiddlewareFunc {
-	var clusterIdClaimKey = "connector-fleetshard-operator-cluster-id"
-
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			ctx := request.Context()
-			clusterId := mux.Vars(request)[clusterIdVar]
-			claims, err := GetClaimsFromContext(ctx)
-			if err != nil {
-				// deliberately return 404 here so that it will appear as the endpoint doesn't exist if requests are not authorised
-				shared.HandleError(request, writer, errors.NotFound(""))
-				return
-			}
-			if clusterIdInClaim, ok := claims[clusterIdClaimKey].(string); ok {
-				if clusterIdInClaim == clusterId {
-					next.ServeHTTP(writer, request)
-					return
-				}
-			}
-			shared.HandleError(request, writer, errors.NotFound(""))
-		})
-	}
-}
-
-func checkKafkaClusterId(clusterIdVar string, authAgentService AuthAgentService) mux.MiddlewareFunc {
+func checkClusterId(clusterIdVar string, authAgentService AuthAgentService) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			ctx := request.Context()

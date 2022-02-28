@@ -86,7 +86,6 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 	if cluster == nil || e != nil {
 		return errors.Wrapf(e, "failed to find cluster with '%s' for kafka request '%s'", kafka.ClusterID, kafka.ID)
 	}
-	// Set desired Strimzi version
 	var selectedStrimziVersion *api.StrimziVersion
 
 	readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
@@ -113,15 +112,14 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 	}
 
 	selectedStrimziVersion = &readyStrimziVersions[len(readyStrimziVersions)-1]
+
 	kafka.DesiredStrimziVersion = selectedStrimziVersion.Version
 
-	// Set desired Kafka version
 	if len(selectedStrimziVersion.KafkaVersions) == 0 {
 		return errors.New(fmt.Sprintf("failed to get Kafka version %s", kafka.ID))
 	}
 	kafka.DesiredKafkaVersion = selectedStrimziVersion.KafkaVersions[len(selectedStrimziVersion.KafkaVersions)-1].Version
 
-	// Set desired Kafka IBP version
 	if len(selectedStrimziVersion.KafkaIBPVersions) == 0 {
 		return errors.New(fmt.Sprintf("failed to get Kafka IBP version %s", kafka.ID))
 	}

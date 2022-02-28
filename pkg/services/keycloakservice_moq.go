@@ -30,6 +30,9 @@ var _ KeycloakService = &KeycloakServiceMock{}
 // 			DeRegisterClientInSSOFunc: func(kafkaNamespace string) *errors.ServiceError {
 // 				panic("mock out the DeRegisterClientInSSO method")
 // 			},
+// 			DeRegisterConnectorFleetshardOperatorServiceAccountFunc: func(agentClusterId string) *errors.ServiceError {
+// 				panic("mock out the DeRegisterConnectorFleetshardOperatorServiceAccount method")
+// 			},
 // 			DeRegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) *errors.ServiceError {
 // 				panic("mock out the DeRegisterKasFleetshardOperatorServiceAccount method")
 // 			},
@@ -90,6 +93,9 @@ type KeycloakServiceMock struct {
 
 	// DeRegisterClientInSSOFunc mocks the DeRegisterClientInSSO method.
 	DeRegisterClientInSSOFunc func(kafkaNamespace string) *errors.ServiceError
+
+	// DeRegisterConnectorFleetshardOperatorServiceAccountFunc mocks the DeRegisterConnectorFleetshardOperatorServiceAccount method.
+	DeRegisterConnectorFleetshardOperatorServiceAccountFunc func(agentClusterId string) *errors.ServiceError
 
 	// DeRegisterKasFleetshardOperatorServiceAccountFunc mocks the DeRegisterKasFleetshardOperatorServiceAccount method.
 	DeRegisterKasFleetshardOperatorServiceAccountFunc func(agentClusterId string) *errors.ServiceError
@@ -154,6 +160,11 @@ type KeycloakServiceMock struct {
 		DeRegisterClientInSSO []struct {
 			// KafkaNamespace is the kafkaNamespace argument value.
 			KafkaNamespace string
+		}
+		// DeRegisterConnectorFleetshardOperatorServiceAccount holds details about calls to the DeRegisterConnectorFleetshardOperatorServiceAccount method.
+		DeRegisterConnectorFleetshardOperatorServiceAccount []struct {
+			// AgentClusterId is the agentClusterId argument value.
+			AgentClusterId string
 		}
 		// DeRegisterKasFleetshardOperatorServiceAccount holds details about calls to the DeRegisterKasFleetshardOperatorServiceAccount method.
 		DeRegisterKasFleetshardOperatorServiceAccount []struct {
@@ -247,24 +258,25 @@ type KeycloakServiceMock struct {
 			ClientId string
 		}
 	}
-	lockCreateServiceAccount                              sync.RWMutex
-	lockCreateServiceAccountInternal                      sync.RWMutex
-	lockDeRegisterClientInSSO                             sync.RWMutex
-	lockDeRegisterKasFleetshardOperatorServiceAccount     sync.RWMutex
-	lockDeleteServiceAccount                              sync.RWMutex
-	lockDeleteServiceAccountInternal                      sync.RWMutex
-	lockGetConfig                                         sync.RWMutex
-	lockGetKafkaClientSecret                              sync.RWMutex
-	lockGetRealmConfig                                    sync.RWMutex
-	lockGetServiceAccountByClientId                       sync.RWMutex
-	lockGetServiceAccountById                             sync.RWMutex
-	lockIsKafkaClientExist                                sync.RWMutex
-	lockListServiceAcc                                    sync.RWMutex
-	lockRegisterConnectorFleetshardOperatorServiceAccount sync.RWMutex
-	lockRegisterKafkaClientInSSO                          sync.RWMutex
-	lockRegisterKasFleetshardOperatorServiceAccount       sync.RWMutex
-	lockRegisterOSDClusterClientInSSO                     sync.RWMutex
-	lockResetServiceAccountCredentials                    sync.RWMutex
+	lockCreateServiceAccount                                sync.RWMutex
+	lockCreateServiceAccountInternal                        sync.RWMutex
+	lockDeRegisterClientInSSO                               sync.RWMutex
+	lockDeRegisterConnectorFleetshardOperatorServiceAccount sync.RWMutex
+	lockDeRegisterKasFleetshardOperatorServiceAccount       sync.RWMutex
+	lockDeleteServiceAccount                                sync.RWMutex
+	lockDeleteServiceAccountInternal                        sync.RWMutex
+	lockGetConfig                                           sync.RWMutex
+	lockGetKafkaClientSecret                                sync.RWMutex
+	lockGetRealmConfig                                      sync.RWMutex
+	lockGetServiceAccountByClientId                         sync.RWMutex
+	lockGetServiceAccountById                               sync.RWMutex
+	lockIsKafkaClientExist                                  sync.RWMutex
+	lockListServiceAcc                                      sync.RWMutex
+	lockRegisterConnectorFleetshardOperatorServiceAccount   sync.RWMutex
+	lockRegisterKafkaClientInSSO                            sync.RWMutex
+	lockRegisterKasFleetshardOperatorServiceAccount         sync.RWMutex
+	lockRegisterOSDClusterClientInSSO                       sync.RWMutex
+	lockResetServiceAccountCredentials                      sync.RWMutex
 }
 
 // CreateServiceAccount calls CreateServiceAccountFunc.
@@ -361,6 +373,37 @@ func (mock *KeycloakServiceMock) DeRegisterClientInSSOCalls() []struct {
 	mock.lockDeRegisterClientInSSO.RLock()
 	calls = mock.calls.DeRegisterClientInSSO
 	mock.lockDeRegisterClientInSSO.RUnlock()
+	return calls
+}
+
+// DeRegisterConnectorFleetshardOperatorServiceAccount calls DeRegisterConnectorFleetshardOperatorServiceAccountFunc.
+func (mock *KeycloakServiceMock) DeRegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
+	if mock.DeRegisterConnectorFleetshardOperatorServiceAccountFunc == nil {
+		panic("KeycloakServiceMock.DeRegisterConnectorFleetshardOperatorServiceAccountFunc: method is nil but KeycloakService.DeRegisterConnectorFleetshardOperatorServiceAccount was just called")
+	}
+	callInfo := struct {
+		AgentClusterId string
+	}{
+		AgentClusterId: agentClusterId,
+	}
+	mock.lockDeRegisterConnectorFleetshardOperatorServiceAccount.Lock()
+	mock.calls.DeRegisterConnectorFleetshardOperatorServiceAccount = append(mock.calls.DeRegisterConnectorFleetshardOperatorServiceAccount, callInfo)
+	mock.lockDeRegisterConnectorFleetshardOperatorServiceAccount.Unlock()
+	return mock.DeRegisterConnectorFleetshardOperatorServiceAccountFunc(agentClusterId)
+}
+
+// DeRegisterConnectorFleetshardOperatorServiceAccountCalls gets all the calls that were made to DeRegisterConnectorFleetshardOperatorServiceAccount.
+// Check the length with:
+//     len(mockedKeycloakService.DeRegisterConnectorFleetshardOperatorServiceAccountCalls())
+func (mock *KeycloakServiceMock) DeRegisterConnectorFleetshardOperatorServiceAccountCalls() []struct {
+	AgentClusterId string
+} {
+	var calls []struct {
+		AgentClusterId string
+	}
+	mock.lockDeRegisterConnectorFleetshardOperatorServiceAccount.RLock()
+	calls = mock.calls.DeRegisterConnectorFleetshardOperatorServiceAccount
+	mock.lockDeRegisterConnectorFleetshardOperatorServiceAccount.RUnlock()
 	return calls
 }
 
