@@ -3,6 +3,8 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/golang/glog"
 	"net/url"
 	"strings"
 	"time"
@@ -11,7 +13,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
 	"github.com/chirino/graphql"
 	"github.com/chirino/graphql/schema"
@@ -100,25 +101,29 @@ func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as str
 	return nil
 }
 
-func (s *extender) deleteKeycloakClient(clientID string) error {
-	clientID = s.Variables[clientID].(string)
-	if clientID == "" {
-		return fmt.Errorf("Client id not found in session.variables[clientID]")
-	}
+const clientIdList = "_client_id_list"
 
-	env := s.Suite.Helper.Env
-	var keycloakConfig *keycloak.KeycloakConfig
-	env.MustResolve(&keycloakConfig)
-	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.KafkaRealm)
-	accessToken, _ := kcClient.GetToken()
+func (s *extender) deleteKeycloakClients(sc *godog.Scenario, err error) {
 
-	keycloakClient, err := kcClient.GetClient(clientID, accessToken)
-	if err != nil {
-		return fmt.Errorf("Error in getting keycloak client from session.variables[clientID]: %s", err.Error())
+	if clientIds, ok := s.Variables[clientIdList].([]string); ok {
+		env := s.Suite.Helper.Env
+		var keycloakService services.KafkaKeycloakService
+		env.MustResolve(&keycloakService)
+
+		for _, clientID := range clientIds {
+			if err := keycloakService.DeleteServiceAccountInternal(clientID); err != nil {
+				glog.Errorf("Error deleting keycloak client with clientId %s: %s", clientID, err)
+			}
+		}
 	}
-	err = kcClient.DeleteClient(*keycloakClient.ID, accessToken)
-	if err != nil {
-		return fmt.Errorf("Error in deleting keycloak client with id: %s and clientId: %s due to %s", *keycloakClient.ID, clientID, err.Error())
+}
+
+func (s *extender) rememberKeycloakClientForCleanup(clientID string) error {
+	clientIDs, ok := s.Variables[clientIdList].([]string)
+	if !ok {
+		s.Variables[clientIdList] = []string{s.Variables[clientID].(string)}
+	} else {
+		s.Variables[clientIdList] = append(clientIDs, s.Variables[clientID].(string))
 	}
 	return nil
 }
@@ -192,6 +197,8 @@ func init() {
 		ctx.Step(`^I reset the vault counters$`, e.iResetTheVaultCounters)
 		ctx.Step(`^update connector catalog of type "([^"]*)" and channel "([^"]*)" with shard metadata:$`, e.updateConnectorCatalogOfTypeAndChannelWithShardMetadata)
 		ctx.Step(`^I POST to "([^"]*)" a GraphQL query:$`, e.iPOSTToAGraphQLQuery)
-		ctx.Step(`I delete keycloak client with clientID: \${([^"]*)}$`, e.deleteKeycloakClient)
+		ctx.Step(`I remember keycloak client for cleanup with clientID: \${([^"]*)}$`, e.rememberKeycloakClientForCleanup)
+
+		ctx.AfterScenario(e.deleteKeycloakClients)
 	})
 }
