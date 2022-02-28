@@ -133,6 +133,139 @@ paths:
       summary: Returns a list of connector clusters
       tags:
       - Connector Clusters Admin
+  /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/namespaces:
+    get:
+      operationId: getClusterNamespaces
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+      - description: |-
+          Specifies the order by criteria. The syntax of this parameter is
+          similar to the syntax of the `order by` clause of an SQL statement.
+          Each query can be ordered by any of the `ConnectorType` fields.
+          For example, to return all Connector types ordered by their name, use the following syntax:
+
+          ```sql
+          name asc
+          ```
+
+          To return all Connector types ordered by their name _and_ version, use the following syntax:
+
+          ```sql
+          name asc, version asc
+          ```
+
+          If the parameter isn't provided, or if the value is empty, then
+          the results are ordered by name.
+        examples:
+          orderBy:
+            value: name asc
+        explode: true
+        in: query
+        name: orderBy
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: |
+          Search criteria.
+
+          The syntax of this parameter is similar to the syntax of the `where` clause of a
+          SQL statement. Allowed fields in the search are `name`, `description`, `version`, `label`, and `channel`.
+          Allowed operators are `<>`, `=`, or `LIKE`.
+          Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
+
+          Examples:
+
+          To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:
+
+          ```
+          name = aws-sqs-source and channel = stable
+          ```[p-]
+
+          To return a Kafka instance with a name that starts with `aws`, use the following syntax:
+
+          ```
+          name like aws%25
+          ```
+
+          If the parameter isn't provided, or if the value is empty, then all the Connector Type
+          that the user has permission to see are returned.
+
+          Note. If the query is invalid, an error is returned.
+        examples:
+          search:
+            value: name = aws-sqs-source and channel = stable
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorNamespaceList'
+          description: Connector namespaces
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector namespace exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Get a list of available connector namespaces in cluster
+      tags:
+      - Connector Clusters Admin
   /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/upgrades/type:
     get:
       operationId: getConnectorUpgradesByType
@@ -721,8 +854,12 @@ components:
       type: object
     ConnectorNamespaceWithTenantRequest:
       allOf:
-      - $ref: '#/components/schemas/ConnectorNamespaceRequest'
+      - $ref: '#/components/schemas/ConnectorNamespaceEvalRequest'
       - $ref: '#/components/schemas/ConnectorNamespaceWithTenantRequest_allOf'
+      required:
+      - cluster_id
+      - name
+      - tenant
     ConnectorClusterList:
       allOf:
       - $ref: '#/components/schemas/List'
@@ -841,11 +978,6 @@ components:
         organisation_id:
           type: string
       type: object
-    ConnectorNamespaceRequest:
-      allOf:
-      - $ref: '#/components/schemas/ConnectorNamespaceEvalRequest'
-      - $ref: '#/components/schemas/ConnectorNamespaceRequest_allOf'
-      description: A connector namespace create request
     ConnectorNamespaceEvalRequest:
       allOf:
       - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
@@ -884,6 +1016,8 @@ components:
           type: string
     ConnectorNamespaceWithTenantRequest_allOf:
       properties:
+        cluster_id:
+          type: string
         tenant:
           $ref: '#/components/schemas/ConnectorNamespaceTenant'
     ConnectorClusterList_allOf:
@@ -940,12 +1074,6 @@ components:
       required:
       - name
       - value
-    ConnectorNamespaceRequest_allOf:
-      properties:
-        cluster_id:
-          type: string
-      required:
-      - name
   securitySchemes:
     Bearer:
       bearerFormat: JWT

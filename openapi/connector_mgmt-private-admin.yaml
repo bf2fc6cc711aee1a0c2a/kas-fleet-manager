@@ -61,6 +61,60 @@ paths:
       operationId: listConnectorClusters
       summary: Returns a list of connector clusters
 
+  /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/namespaces:
+    get:
+      tags:
+        - Connector Clusters Admin
+      parameters:
+        - name: connector_cluster_id
+          description: The id of the connector cluster
+          schema:
+            type: string
+          in: path
+          required: true
+        - $ref: "connector_mgmt.yaml#/components/parameters/page"
+        - $ref: "connector_mgmt.yaml#/components/parameters/size"
+        - $ref: "connector_mgmt.yaml#/components/parameters/orderBy"
+        - $ref: "connector_mgmt.yaml#/components/parameters/search"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/ConnectorNamespaceList"
+          description: Connector namespaces
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
+          description: No matching connector namespace exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+      security:
+        - Bearer: [ ]
+      operationId: getClusterNamespaces
+      summary: Get a list of available connector namespaces in cluster
+
   /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/upgrades/type:
     parameters:
       - name: connector_cluster_id
@@ -471,10 +525,16 @@ components:
               type: string
 
     ConnectorNamespaceWithTenantRequest:
+      required:
+        - name
+        - cluster_id
+        - tenant
       allOf:
-        - $ref: "connector_mgmt.yaml#/components/schemas/ConnectorNamespaceRequest"
+        - $ref: "connector_mgmt.yaml#/components/schemas/ConnectorNamespaceEvalRequest"
         - type: object
           properties:
+            cluster_id:
+              type: string
             tenant:
               $ref: "connector_mgmt.yaml#/components/schemas/ConnectorNamespaceTenant"
 
