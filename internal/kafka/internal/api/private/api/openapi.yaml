@@ -3,7 +3,7 @@ info:
   description: Kafka Service Fleet Manager APIs that are used by internal services
     e.g kas-fleetshard operators.
   title: Kafka Service Fleet Manager
-  version: 1.4.0
+  version: 1.5.0
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -195,7 +195,8 @@ components:
             bf2.org/placementId: ""
         spec:
           capacity:
-            ingressEgressThroughputPerSec: 4Mi
+            ingressThroughputPerSec: 4Mi
+            egressThroughputPerSec: 4Mi
             totalMaxConnections: 500
             maxDataRetentionSize: 100Gi
             maxPartitions: 100
@@ -231,7 +232,8 @@ components:
           status: "False"
           lastTransitionTime: 2018-01-01T00:00:00Z
         capacity:
-          ingressEgressThroughputPerSec: 4Mi
+          ingressThroughputPerSec: 4Mi
+          egressThroughputPerSec: 4Mi
           totalMaxConnections: 500
           maxDataRetentionSize: 100Gi
           maxPartitions: 100
@@ -274,7 +276,9 @@ components:
       type: object
     ManagedKafkaCapacity:
       properties:
-        ingressEgressThroughputPerSec:
+        ingressThroughputPerSec:
+          type: string
+        egressThroughputPerSec:
           type: string
         totalMaxConnections:
           format: int
@@ -334,7 +338,8 @@ components:
         nodeDelta: 7
         delta:
           partitions: 3
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+          egressThroughputPerSec: egressThroughputPerSec
+          ingressThroughputPerSec: ingressThroughputPerSec
           connections: 9
           dataRetentionSize: dataRetentionSize
       nullable: true
@@ -350,7 +355,8 @@ components:
       example:
         total:
           partitions: 6
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+          egressThroughputPerSec: egressThroughputPerSec
+          ingressThroughputPerSec: ingressThroughputPerSec
           connections: 0
           dataRetentionSize: dataRetentionSize
         strimzi:
@@ -374,7 +380,8 @@ components:
           nodeDelta: 7
           delta:
             partitions: 3
-            ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+            egressThroughputPerSec: egressThroughputPerSec
+            ingressThroughputPerSec: ingressThroughputPerSec
             connections: 9
             dataRetentionSize: dataRetentionSize
         nodeInfo:
@@ -393,7 +400,8 @@ components:
           status: status
         remaining:
           partitions: 6
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+          egressThroughputPerSec: egressThroughputPerSec
+          ingressThroughputPerSec: ingressThroughputPerSec
           connections: 0
           dataRetentionSize: dataRetentionSize
       properties:
@@ -586,12 +594,16 @@ components:
     DatePlaneClusterUpdateStatusRequestResizeInfo_delta:
       example:
         partitions: 3
-        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+        egressThroughputPerSec: egressThroughputPerSec
+        ingressThroughputPerSec: ingressThroughputPerSec
         connections: 9
         dataRetentionSize: dataRetentionSize
       nullable: true
       properties:
-        ingressEgressThroughputPerSec:
+        ingressThroughputPerSec:
+          nullable: true
+          type: string
+        egressThroughputPerSec:
           nullable: true
           type: string
         connections:
@@ -621,11 +633,15 @@ components:
     DataPlaneClusterUpdateStatusRequest_total:
       example:
         partitions: 6
-        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+        egressThroughputPerSec: egressThroughputPerSec
+        ingressThroughputPerSec: ingressThroughputPerSec
         connections: 0
         dataRetentionSize: dataRetentionSize
       properties:
-        ingressEgressThroughputPerSec:
+        ingressThroughputPerSec:
+          nullable: true
+          type: string
+        egressThroughputPerSec:
           nullable: true
           type: string
         connections:
@@ -666,7 +682,10 @@ components:
     DataPlaneKafkaStatus_capacity:
       description: Capacity information of the data plane cluster
       properties:
-        ingressEgressThroughputPerSec:
+        ingressThroughputPerSec:
+          nullable: true
+          type: string
+        egressThroughputPerSec:
           nullable: true
           type: string
         totalMaxConnections:
