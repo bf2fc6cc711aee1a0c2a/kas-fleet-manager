@@ -21,12 +21,13 @@ import (
 )
 
 type Capacity struct {
-	IngressEgressThroughputPerSec string `json:"ingressEgressThroughputPerSec"`
-	TotalMaxConnections           int    `json:"totalMaxConnections"`
-	MaxDataRetentionSize          string `json:"maxDataRetentionSize"`
-	MaxPartitions                 int    `json:"maxPartitions"`
-	MaxDataRetentionPeriod        string `json:"maxDataRetentionPeriod"`
-	MaxConnectionAttemptsPerSec   int    `json:"maxConnectionAttemptsPerSec"`
+	IngressThroughputPerSec     string `json:"ingressThroughputPerSec"`
+	EgressThroughputPerSec      string `json:"egressThroughputPerSec"`
+	TotalMaxConnections         int    `json:"totalMaxConnections"`
+	MaxDataRetentionSize        string `json:"maxDataRetentionSize"`
+	MaxPartitions               int    `json:"maxPartitions"`
+	MaxDataRetentionPeriod      string `json:"maxDataRetentionPeriod"`
+	MaxConnectionAttemptsPerSec int    `json:"maxConnectionAttemptsPerSec"`
 }
 
 type VersionsSpec struct {
