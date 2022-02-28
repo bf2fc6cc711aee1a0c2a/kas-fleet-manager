@@ -237,10 +237,11 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 			},
 		},
 		Total: private.DataPlaneClusterUpdateStatusRequestTotal{
-			IngressEgressThroughputPerSec: &[]string{"test"}[0],
-			Connections:                   &[]int32{1000000}[0],
-			DataRetentionSize:             &[]string{"test"}[0],
-			Partitions:                    &[]int32{1000000}[0],
+			IngressThroughputPerSec: &[]string{"test"}[0],
+			EgressThroughputPerSec:  &[]string{"test"}[0],
+			Connections:             &[]int32{1000000}[0],
+			DataRetentionSize:       &[]string{"test"}[0],
+			Partitions:              &[]int32{1000000}[0],
 		},
 		NodeInfo: &private.DatePlaneClusterUpdateStatusRequestNodeInfo{
 			Ceiling:                &[]int32{20}[0],
@@ -279,18 +280,20 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 			},
 		},
 		Remaining: private.DataPlaneClusterUpdateStatusRequestTotal{
-			Connections:                   &[]int32{1000000}[0], // TODO set the values taking the scale-up value if possible or a deterministic way to know we'll pass it
-			Partitions:                    &[]int32{1000000}[0],
-			IngressEgressThroughputPerSec: &[]string{"test"}[0],
-			DataRetentionSize:             &[]string{"test"}[0],
+			Connections:             &[]int32{1000000}[0], // TODO set the values taking the scale-up value if possible or a deterministic way to know we'll pass it
+			Partitions:              &[]int32{1000000}[0],
+			IngressThroughputPerSec: &[]string{"test"}[0],
+			EgressThroughputPerSec:  &[]string{"test"}[0],
+			DataRetentionSize:       &[]string{"test"}[0],
 		},
 		ResizeInfo: &private.DatePlaneClusterUpdateStatusRequestResizeInfo{
 			NodeDelta: &[]int32{3}[0],
 			Delta: &private.DatePlaneClusterUpdateStatusRequestResizeInfoDelta{
-				Connections:                   &[]int32{10000}[0],
-				Partitions:                    &[]int32{10000}[0],
-				IngressEgressThroughputPerSec: &[]string{"test"}[0],
-				DataRetentionSize:             &[]string{"test"}[0],
+				Connections:             &[]int32{10000}[0],
+				Partitions:              &[]int32{10000}[0],
+				IngressThroughputPerSec: &[]string{"test"}[0],
+				EgressThroughputPerSec:  &[]string{"test"}[0],
+				DataRetentionSize:       &[]string{"test"}[0],
 			},
 		},
 	}
