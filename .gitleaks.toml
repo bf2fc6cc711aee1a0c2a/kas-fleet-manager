@@ -1,0 +1,5 @@
+[allowlist]
+  description = "Allowlist"
+  files = [
+    '''test/support/jwt_private_key\.pem$''',
+  ]
