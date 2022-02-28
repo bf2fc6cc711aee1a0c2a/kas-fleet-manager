@@ -22,7 +22,6 @@ type ConnectorNamespaceService interface {
 	Get(ctx context.Context, namespaceID string) (*dbapi.ConnectorNamespace, *errors.ServiceError)
 	List(ctx context.Context, clusterIDs []string, listArguments *services.ListArguments) (dbapi.ConnectorNamespaceList, *api.PagingMeta, *errors.ServiceError)
 	Delete(ctx context.Context, namespaceName string) *errors.ServiceError
-	SetTenantClusterId(request *dbapi.ConnectorNamespace, organisationId string) *errors.ServiceError
 	SetEvalClusterId(request *dbapi.ConnectorNamespace) *errors.ServiceError
 	GetOwnerClusterIds(userId string, ownerClusterIds *[]string) *errors.ServiceError
 	GetOrgClusterIds(userId string, organisationId string, orgClusterIds *[]string) *errors.ServiceError
@@ -48,46 +47,6 @@ func NewConnectorNamespaceService(factory *db.ConnectionFactory, config *config.
 		connectorsConfig:  config,
 		bus:               bus,
 	}
-}
-
-func (k *connectorNamespaceService) SetTenantClusterId(request *dbapi.ConnectorNamespace, organisationId string) *errors.ServiceError {
-	userID := request.Owner
-
-	// get owned clusters
-	var ownerClusterIds []string
-	if err := k.GetOwnerClusterIds(userID, &ownerClusterIds); err != nil {
-		return err
-	}
-
-	numOwnerClusters := len(ownerClusterIds)
-	if numOwnerClusters == 0 {
-
-		// get org clusters
-		var orgClusterIds []string
-		if err := k.GetOrgClusterIds(userID, organisationId, &orgClusterIds); err != nil {
-			return err
-		}
-
-		numOrgClusters := len(orgClusterIds)
-		if numOrgClusters == 0 {
-			return errors.Unauthorized("no clusters for organisation %v", organisationId)
-		} else if numOrgClusters == 1 {
-			request.ClusterId = orgClusterIds[0]
-		} else {
-			// TODO add support for load balancing strategies
-			// pick a cluster at random
-			request.ClusterId = orgClusterIds[rand.Intn(numOrgClusters)]
-		}
-
-	} else if numOwnerClusters == 1 {
-		request.ClusterId = ownerClusterIds[0]
-	} else {
-		// TODO add support for load balancing strategies
-		// pick a cluster at random
-		request.ClusterId = ownerClusterIds[rand.Intn(numOwnerClusters)]
-	}
-
-	return nil
 }
 
 func (k *connectorNamespaceService) GetOrgClusterIds(userId, organisationId string, orgClusterIds *[]string) *errors.ServiceError {
@@ -220,6 +179,16 @@ func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []strin
 	}
 	dbConn = dbConn.Offset((pagingMeta.Page - 1) * pagingMeta.Size).Limit(pagingMeta.Size)
 
+	if len(listArguments.OrderBy) == 0 {
+		// default orderBy name
+		dbConn = dbConn.Order("name ASC")
+	}
+
+	// Set the order by arguments if any
+	for _, orderByArg := range listArguments.OrderBy {
+		dbConn = dbConn.Order(orderByArg)
+	}
+
 	// execute query
 	result := dbConn.
 		Preload("Annotations").
@@ -284,7 +253,15 @@ func (k *connectorNamespaceService) Delete(ctx context.Context, namespaceId stri
 const defaultNamespaceName = "default-connector-namespace"
 
 func (k *connectorNamespaceService) CreateDefaultNamespace(ctx context.Context, connectorCluster *dbapi.ConnectorCluster) *errors.ServiceError {
-	namespaceRequest := presenters.ConvertConnectorNamespaceRequest(&public.ConnectorNamespaceRequest{
+	owner := connectorCluster.Owner
+	organisationId := connectorCluster.OrganisationId
+
+	kind := presenters.UserKind
+	if organisationId != "" {
+		kind = presenters.OrganisationKind
+	}
+
+	namespaceRequest, err := presenters.ConvertConnectorNamespaceRequest(&public.ConnectorNamespaceRequest{
 		Name: defaultNamespaceName,
 		Annotations: []public.ConnectorNamespaceRequestMetaAnnotations{
 			{
@@ -293,26 +270,11 @@ func (k *connectorNamespaceService) CreateDefaultNamespace(ctx context.Context, 
 			},
 		},
 		ClusterId: connectorCluster.ID,
-	})
+		Kind: kind,
+	}, owner, organisationId)
 
-	// namespace has the same owner and tenant org as cluster
-	owner := connectorCluster.Owner
-	namespaceRequest.Owner = owner
-	organisationId := connectorCluster.OrganisationId
-	if organisationId != "" {
-		namespaceRequest.TenantOrganisationId = &organisationId
-		namespaceRequest.TenantOrganisation = &dbapi.ConnectorTenantOrganisation{
-			Model: db.Model{
-				ID: organisationId,
-			},
-		}
-	} else {
-		namespaceRequest.TenantUserId = &owner
-		namespaceRequest.TenantUser = &dbapi.ConnectorTenantUser{
-			Model: db.Model{
-				ID: owner,
-			},
-		}
+	if err != nil {
+		return err
 	}
 	return k.Create(ctx, namespaceRequest)
 }

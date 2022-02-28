@@ -13,6 +13,6 @@ package private
 type ConnectorNamespaceWithTenantRequest struct {
 	Name        string                                     `json:"name"`
 	Annotations []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
-	ClusterId   string                                     `json:"cluster_id,omitempty"`
-	Tenant      ConnectorNamespaceTenant                   `json:"tenant,omitempty"`
+	ClusterId   string                                     `json:"cluster_id"`
+	Tenant      ConnectorNamespaceTenant                   `json:"tenant"`
 }
