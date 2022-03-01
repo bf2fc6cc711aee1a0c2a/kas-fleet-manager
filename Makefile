@@ -480,7 +480,7 @@ db/setup:
 .PHONY: db/setup
 
 db/migrate:
-	OCM_ENV=integration $(GO) run ./cmd/kas-fleet-manager migrate
+	$(GO) run ./cmd/kas-fleet-manager migrate
 .PHONY: db/migrate
 
 db/teardown:
