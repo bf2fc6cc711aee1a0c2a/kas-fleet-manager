@@ -28,7 +28,7 @@ Feature: create a connector
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
         "status": {
-          "state": "unconnected"
+          "state": "disconnected"
         }
       }
       """
@@ -53,7 +53,7 @@ Feature: create a connector
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
         "status": {
-          "state": "unconnected"
+          "state": "disconnected"
         }
       }
       """
@@ -82,7 +82,7 @@ Feature: create a connector
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
         "status": {
-          "state": "unconnected"
+          "state": "disconnected"
         }
       }
       """

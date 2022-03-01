@@ -62,7 +62,7 @@ Feature: the old connectors path are still valid
     Given I am logged in as "Agent"
     Given I set the "Authorization" header to "Bearer ${agent_token}"
 
-    # There should be no deployments assigned yet, since the cluster status is unconnected
+    # There should be no deployments assigned yet, since the cluster status is disconnected
     When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
 

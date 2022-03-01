@@ -14,23 +14,14 @@ type ConnectorClusterPhaseEnum = string
 
 const (
 	// ConnectorClusterPhaseUnconnected - cluster status when first created
-	ConnectorClusterPhaseUnconnected ConnectorClusterPhaseEnum = "unconnected"
+	ConnectorClusterPhaseUnconnected ConnectorClusterPhaseEnum = "disconnected"
 	// ConnectorClusterPhaseReady- cluster status when it operational
 	ConnectorClusterPhaseReady ConnectorClusterPhaseEnum = "ready"
-	// ConnectorClusterPhaseFull- cluster status when it full and cannot accept anymore deployments
-	ConnectorClusterPhaseFull ConnectorClusterPhaseEnum = "full"
-	// ConnectorClusterPhaseFailed- cluster status when it has failed
-	ConnectorClusterPhaseFailed ConnectorClusterPhaseEnum = "failed"
-	// ConnectorClusterPhaseFailed- cluster status when it has been deleted
-	ConnectorClusterPhaseDeleted ConnectorClusterPhaseEnum = "deleted"
 )
 
 var AllConnectorClusterStatus = []ConnectorClusterPhaseEnum{
 	ConnectorClusterPhaseUnconnected,
 	ConnectorClusterPhaseReady,
-	ConnectorClusterPhaseFull,
-	ConnectorClusterPhaseFailed,
-	ConnectorClusterPhaseDeleted,
 }
 
 type ConnectorCluster struct {

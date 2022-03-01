@@ -25,7 +25,7 @@ Feature: connector agent API
       {}
       """
     Then the response code should be 202
-    And the ".status.state" selection from the response should match "unconnected"
+    And the ".status.state" selection from the response should match "disconnected"
     Given I store the ".id" selection from the response as ${connector_cluster_id}
 
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
@@ -77,7 +77,7 @@ Feature: connector agent API
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
 
-    # There should be no deployments assigned yet, since the cluster status is unconnected
+    # There should be no deployments assigned yet, since the cluster status is disconnected
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
     And the ".kind" selection from the response should match "ConnectorDeploymentList"
@@ -888,7 +888,7 @@ Feature: connector agent API
       {}
       """
     Then the response code should be 202
-    And the ".status.state" selection from the response should match "unconnected"
+    And the ".status.state" selection from the response should match "disconnected"
     Given I store the ".id" selection from the response as ${connector_cluster_id}
 
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
