@@ -52,6 +52,10 @@ Feature: connector agent API
           "client_id": "myclient",
           "client_secret": "test"
         },
+        "schema_registry": {
+          "id": "myregistry",
+          "url": "registry.hostname"
+        },
         "connector": {
             "aws_queue_name_or_arn": "test",
             "aws_secret_key": "test",
@@ -174,8 +178,8 @@ Feature: connector agent API
               "client_secret": "dGVzdA=="
             },
             "schema_registry": {
-              "id": "",
-              "url": ""
+              "id": "myregistry",
+              "url": "registry.hostname"
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -270,8 +274,8 @@ Feature: connector agent API
                 "client_secret": "dGVzdA=="
               },
               "schema_registry": {
-                "id": "",
-                "url": ""
+                "id": "myregistry",
+                "url": "registry.hostname"
               },
               "shard_metadata": {
                 "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -355,8 +359,8 @@ Feature: connector agent API
               "client_secret": "dGVzdA=="
             },
             "schema_registry": {
-              "id": "",
-              "url": ""
+              "id": "myregistry",
+              "url": "registry.hostname"
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -487,8 +491,8 @@ Feature: connector agent API
           "client_secret": ""
         },
         "schema_registry": {
-          "id": "",
-          "url": ""
+          "id": "myregistry",
+          "url": "registry.hostname"
         },
         "kind": "Connector",
         "name": "example 1",
@@ -535,8 +539,8 @@ Feature: connector agent API
               "client_secret": "dGVzdA=="
             },
             "schema_registry": {
-              "id": "",
-              "url": ""
+              "id": "myregistry",
+              "url": "registry.hostname"
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",

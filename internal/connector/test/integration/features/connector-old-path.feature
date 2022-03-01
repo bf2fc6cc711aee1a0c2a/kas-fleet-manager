@@ -44,7 +44,7 @@ Feature: the old connectors path are still valid
     When I GET path "/v1/kafka-connector-clusters"
     Then the response code should be 200
 
-  Scenario: Agent user should be to list deployments
+  Scenario: Agent user should be able to list deployments
     Given I am logged in as "Bob"
 
     When I POST path "/v1/kafka-connector-clusters" with json body:
