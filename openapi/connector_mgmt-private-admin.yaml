@@ -478,7 +478,7 @@ components:
       properties:
         connector_id:
           type: string
-        namespace:
+        namespace_id:
           type: string
         connector_type_id:
           type: string
@@ -510,7 +510,7 @@ components:
       properties:
         connector_id:
           type: string
-        namespace:
+        namespace_id:
           type: string
         connector_type_id:
           type: string

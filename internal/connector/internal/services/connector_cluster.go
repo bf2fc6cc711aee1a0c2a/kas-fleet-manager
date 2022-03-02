@@ -756,7 +756,7 @@ func (k *connectorClusterService) GetAvailableDeploymentTypeUpgrades(listArgs *s
 		ConnectorTypeUpgradeFrom int64
 		ConnectorTypeUpgradeTo   int64
 		ConnectorTypeID          string
-		Namespace                string
+		NamespaceID              string
 		Channel                  string
 	}
 
@@ -766,15 +766,14 @@ func (k *connectorClusterService) GetAvailableDeploymentTypeUpgrades(listArgs *s
 	dbConn = dbConn.Select(
 		"connector_deployments.connector_id AS connector_id",
 		"connector_deployments.id AS deployment_id",
+		"connector_deployments.namespace_id AS namespace_id",
 		"connector_shard_metadata.id AS connector_type_upgrade_from",
 		"connector_shard_metadata.latest_id AS connector_type_upgrade_to",
 		"connector_shard_metadata.connector_type_id",
-		"connector_namespaces.name AS namespace",
 		"connector_shard_metadata.channel",
 	)
 	dbConn = dbConn.Joins("LEFT JOIN connector_shard_metadata ON connector_shard_metadata.id = connector_deployments.connector_type_channel_id")
 	dbConn = dbConn.Joins("LEFT JOIN connector_deployment_statuses ON connector_deployment_statuses.id = connector_deployments.id")
-	dbConn = dbConn.Joins("LEFT JOIN connector_namespaces ON connector_namespaces.id = connector_deployments.namespace_id")
 	dbConn = dbConn.Where("connector_shard_metadata.latest_id IS NOT NULL")
 	dbConn = dbConn.Or("connector_deployment_statuses.upgrade_available")
 
@@ -795,7 +794,7 @@ func (k *connectorClusterService) GetAvailableDeploymentTypeUpgrades(listArgs *s
 			ConnectorID:     r.ConnectorID,
 			DeploymentID:    r.DeploymentID,
 			ConnectorTypeId: r.ConnectorTypeID,
-			Namespace:       r.Namespace,
+			NamespaceID:     r.NamespaceID,
 			Channel:         r.Channel,
 		}
 
@@ -876,9 +875,9 @@ func (k *connectorClusterService) GetAvailableDeploymentOperatorUpgrades(listArg
 	type Result struct {
 		ConnectorID        string
 		DeploymentID       string
-		ConnectorTypeID    string
-		Namespace          string
-		Channel            string
+		ConnectorTypeID string
+		NamespaceID     string
+		Channel         string
 		ConnectorOperators api.JSON
 	}
 
@@ -888,14 +887,13 @@ func (k *connectorClusterService) GetAvailableDeploymentOperatorUpgrades(listArg
 	dbConn = dbConn.Select(
 		"connector_deployments.connector_id AS connector_id",
 		"connector_deployments.id AS deployment_id",
+		"connector_deployments.namespace_id AS namespace_id",
 		"connector_shard_metadata.connector_type_id",
-		"connector_namespaces.name AS namespace",
 		"connector_shard_metadata.channel",
 		"connector_deployment_statuses.operators AS connector_operators",
 	)
 	dbConn = dbConn.Joins("LEFT JOIN connector_shard_metadata ON connector_shard_metadata.id = connector_deployments.connector_type_channel_id")
 	dbConn = dbConn.Joins("LEFT JOIN connector_deployment_statuses ON connector_deployment_statuses.id = connector_deployments.id")
-	dbConn = dbConn.Joins("LEFT JOIN connector_namespaces ON connector_namespaces.id = connector_deployments.namespace_id")
 	dbConn = dbConn.Where("connector_deployment_statuses.upgrade_available")
 
 	if err := dbConn.Scan(&results).Error; err != nil {
@@ -914,7 +912,7 @@ func (k *connectorClusterService) GetAvailableDeploymentOperatorUpgrades(listArg
 			ConnectorID:     r.ConnectorID,
 			DeploymentID:    r.DeploymentID,
 			ConnectorTypeId: r.ConnectorTypeID,
-			Namespace:       r.Namespace,
+			NamespaceID:     r.NamespaceID,
 			Channel:         r.Channel,
 		}
 

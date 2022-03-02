@@ -690,7 +690,7 @@ Feature: connector agent API
        "items":
           [{
             "connector_id": "${connector_id}",
-            "namespace": "default-connector-namespace",
+            "namespace_id": "${connector_namespace_id}",
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "channel": "stable",
             "shard_metadata": {
@@ -796,7 +796,7 @@ Feature: connector agent API
        "items":
           [{
             "connector_id": "${connector_id}",
-            "namespace": "default-connector-namespace",
+            "namespace_id": "${connector_namespace_id}",
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "channel": "stable",
             "operator": {

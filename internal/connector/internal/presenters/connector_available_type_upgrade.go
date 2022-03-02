@@ -9,7 +9,7 @@ func PresentConnectorAvailableTypeUpgrade(req *dbapi.ConnectorDeploymentTypeUpgr
 	return &private.ConnectorAvailableTypeUpgrade{
 		ConnectorId:     req.ConnectorID,
 		ConnectorTypeId: req.ConnectorTypeId,
-		Namespace:       req.Namespace,
+		NamespaceId:       req.NamespaceID,
 		Channel:         req.Channel,
 		ShardMetadata: private.ConnectorAvailableTypeUpgradeShardMetadata{
 			AssignedId:  req.ShardMetadata.AssignedId,
@@ -22,7 +22,7 @@ func ConvertConnectorAvailableTypeUpgrade(req *private.ConnectorAvailableTypeUpg
 	return &dbapi.ConnectorDeploymentTypeUpgrade{
 		ConnectorID:     req.ConnectorId,
 		ConnectorTypeId: req.ConnectorTypeId,
-		Namespace:       req.Namespace,
+		NamespaceID:     req.NamespaceId,
 		Channel:         req.Channel,
 		ShardMetadata: &dbapi.ConnectorTypeUpgrade{
 			AssignedId:  req.ShardMetadata.AssignedId,

@@ -807,17 +807,17 @@ components:
     ConnectorAvailableTypeUpgrade:
       description: An available type upgrade for a connector
       example:
+        namespace_id: namespace_id
         shard_metadata:
           available_id: 6
           assigned_id: 0
         connector_id: connector_id
-        namespace: namespace
         channel: channel
         connector_type_id: connector_type_id
       properties:
         connector_id:
           type: string
-        namespace:
+        namespace_id:
           type: string
         connector_type_id:
           type: string
@@ -833,8 +833,8 @@ components:
     ConnectorAvailableOperatorUpgrade:
       description: An available operator upgrade for a connector
       example:
+        namespace_id: namespace_id
         connector_id: connector_id
-        namespace: namespace
         channel: channel
         operator:
           available_id: available_id
@@ -843,7 +843,7 @@ components:
       properties:
         connector_id:
           type: string
-        namespace:
+        namespace_id:
           type: string
         connector_type_id:
           type: string
