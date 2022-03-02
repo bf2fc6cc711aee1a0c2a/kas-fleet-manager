@@ -9,7 +9,7 @@ func PresentConnectorAvailableOperatorUpgrade(req *dbapi.ConnectorDeploymentOper
 	return &private.ConnectorAvailableOperatorUpgrade{
 		ConnectorId:     req.ConnectorID,
 		ConnectorTypeId: req.ConnectorTypeId,
-		Namespace:       req.Namespace,
+		NamespaceId:       req.NamespaceID,
 		Channel:         req.Channel,
 		Operator: private.ConnectorAvailableOperatorUpgradeOperator{
 			AssignedId:  req.Operator.Assigned.Id,
@@ -22,7 +22,7 @@ func ConvertConnectorAvailableOperatorUpgrade(req *private.ConnectorAvailableOpe
 	return &dbapi.ConnectorDeploymentOperatorUpgrade{
 		ConnectorID:     req.ConnectorId,
 		ConnectorTypeId: req.ConnectorTypeId,
-		Namespace:       req.Namespace,
+		NamespaceID:     req.NamespaceId,
 		Channel:         req.Channel,
 		Operator: &dbapi.ConnectorOperatorUpgrade{
 			Assigned: dbapi.ConnectorOperator{
