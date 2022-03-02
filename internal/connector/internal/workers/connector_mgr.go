@@ -201,50 +201,43 @@ func (k *ConnectorManager) ReconcileConnectorCatalogEntry(id string, channel str
 
 //goland:noinspection VacuumSwitchStatement
 func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *dbapi.Connector) error {
-	switch connector.TargetKind {
-	case dbapi.AddonTargetKind:
+	var namespace *dbapi.ConnectorNamespace
+	namespace, err := k.connectorClusterService.FindReadyNamespace(connector.Owner, connector.OrganisationId, connector.NamespaceId)
+	if err != nil {
+		return errors.Wrapf(err, "failed to find namespace for connector request %s", connector.ID)
+	}
+	if namespace == nil {
+		// we will try to find a ready cluster again in the next reconcile
+		return nil
+	}
 
-		var namespace *dbapi.ConnectorNamespace
-		namespace, err := k.connectorClusterService.FindReadyNamespace(connector.Owner, connector.OrganisationId, connector.NamespaceId)
-		if err != nil {
-			return errors.Wrapf(err, "failed to find namespace for connector request %s", connector.ID)
-		}
-		if namespace == nil {
-			// we will try to find a ready cluster again in the next reconcile
-			return nil
-		}
+	channelVersion, err := k.connectorTypesService.GetLatestConnectorShardMetadataID(connector.ConnectorTypeId, connector.Channel)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get latest channel version for connector request %s", connector.ID)
+	}
 
-		channelVersion, err := k.connectorTypesService.GetLatestConnectorShardMetadataID(connector.ConnectorTypeId, connector.Channel)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get latest channel version for connector request %s", connector.ID)
-		}
+	var status = dbapi.ConnectorStatus{}
+	status.ID = connector.ID
+	status.NamespaceID = &namespace.ID
+	status.Phase = dbapi.ConnectorStatusPhaseAssigned
+	if err = k.connectorService.SaveStatus(ctx, status); err != nil {
+		return errors.Wrapf(err, "failed to update connector status %s with namespace details", status.ID)
+	}
 
-		var status = dbapi.ConnectorStatus{}
-		status.ID = connector.ID
-		status.NamespaceID = &namespace.ID
-		status.Phase = dbapi.ConnectorStatusPhaseAssigned
-		if err = k.connectorService.SaveStatus(ctx, status); err != nil {
-			return errors.Wrapf(err, "failed to update connector status %s with namespace details", status.ID)
-		}
+	deployment := dbapi.ConnectorDeployment{
+		Meta: api.Meta{
+			ID: api.NewID(),
+		},
+		ConnectorID:            connector.ID,
+		ClusterID:              namespace.ClusterId,
+		NamespaceID:            namespace.ID,
+		ConnectorVersion:       connector.Version,
+		ConnectorTypeChannelId: channelVersion,
+		Status:                 dbapi.ConnectorDeploymentStatus{},
+	}
 
-		deployment := dbapi.ConnectorDeployment{
-			Meta: api.Meta{
-				ID: api.NewID(),
-			},
-			ConnectorID:            connector.ID,
-			ClusterID:              namespace.ClusterId,
-			NamespaceID:            namespace.ID,
-			ConnectorVersion:       connector.Version,
-			ConnectorTypeChannelId: channelVersion,
-			Status:                 dbapi.ConnectorDeploymentStatus{},
-		}
-
-		if err = k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {
-			return errors.Wrapf(err, "failed to create connector deployment for connector %s", connector.ID)
-		}
-
-	default:
-		return errors.Errorf("target kind not supported: %s", connector.TargetKind)
+	if err = k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {
+		return errors.Wrapf(err, "failed to create connector deployment for connector %s", connector.ID)
 	}
 	return nil
 }

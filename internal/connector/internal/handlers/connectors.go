@@ -67,7 +67,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
 			handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.WithDefault("ready"), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
 			validateConnectorRequest(h.connectorTypesService, &resource, tid),
-			handlers.Validation("deployment_location.namespace_id", &resource.DeploymentLocation.NamespaceId,
+			handlers.Validation("namespace_id", &resource.NamespaceId,
 				handlers.MaxLen(maxConnectorNamespaceIdLength), validateNamespaceID(h.namespaceService, r.Context())),
 		},
 
@@ -183,7 +183,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			resource.Kafka = patch.Kafka
 			resource.ServiceAccount = patch.ServiceAccount
 			resource.SchemaRegistry = patch.SchemaRegistry
-			resource.DeploymentLocation = patch.DeploymentLocation
+			resource.NamespaceId = patch.NamespaceId
 
 			// If we didn't change anything, then just skip the update...
 			originalResource, _ := presenters.PresentConnector(dbresource)
@@ -197,7 +197,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
 				// handlers.Validation("kafka_id", &resource.Metadata.KafkaId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
 				handlers.Validation("service_account.client_id", &resource.ServiceAccount.ClientId, handlers.MinLen(1)),
-				handlers.Validation("deployment_location.namespace_id", &resource.DeploymentLocation.NamespaceId, handlers.MaxLen(maxConnectorNamespaceIdLength)),
+				handlers.Validation("namespace_id", &resource.NamespaceId, handlers.MaxLen(maxConnectorNamespaceIdLength)),
 			}
 
 			for _, v := range validates {

@@ -105,7 +105,7 @@ Feature: connector namespaces API
       ],
       "tenant": {
         "kind": "user",
-        "user_id": "${<user_id>}"
+        "id": "${<user_id>}"
       }
     }
     """
@@ -176,7 +176,7 @@ Feature: connector namespaces API
            "owner": "${dusty_user_id}",
            "tenant": {
              "kind": "organisation",
-             "organisation_id": "13640230"
+             "id": "13640230"
            },
            "annotations": [
              {
@@ -231,7 +231,7 @@ Feature: connector namespaces API
       ],
       "tenant": {
         "kind": "organisation",
-        "organisation_id": "13640230"
+        "id": "13640230"
       }
     }
     """
@@ -256,7 +256,7 @@ Feature: connector namespaces API
            "owner": "${dusty_user_id}",
            "tenant": {
              "kind": "organisation",
-             "organisation_id": "13640230"
+             "id": "13640230"
            },
            "annotations": [
              {
@@ -284,7 +284,7 @@ Feature: connector namespaces API
            ],
            "tenant": {
              "kind": "organisation",
-             "organisation_id": "13640230"
+             "id": "13640230"
            }
          }
        ],
@@ -316,7 +316,7 @@ Feature: connector namespaces API
            "owner": "${dusty_user_id}",
            "tenant": {
              "kind": "organisation",
-             "organisation_id": "13640230"
+             "id": "13640230"
            },
            "annotations": [
              {
@@ -384,7 +384,7 @@ Feature: connector namespaces API
            "owner": "${<user_id>}",
            "tenant": {
              "kind": "organisation",
-             "organisation_id": "${response.items[0].tenant.organisation_id}"
+             "id": "${response.items[0].tenant.id}"
            },
            "annotations": [
              {
@@ -417,7 +417,7 @@ Feature: connector namespaces API
       ],
       "tenant": {
         "kind": "user",
-        "user_id": "${<user_id>}"
+        "id": "${<user_id>}"
       }
     }
     """
@@ -442,7 +442,7 @@ Feature: connector namespaces API
       ],
       "tenant": {
         "kind": "user",
-        "user_id": "${<user_id>}"
+        "id": "${<user_id>}"
       }
     }
     """
@@ -469,7 +469,7 @@ Feature: connector namespaces API
            "owner": "${<user_id>}",
            "tenant": {
              "kind": "organisation",
-             "organisation_id": "${response.items[0].tenant.organisation_id}"
+             "id": "${response.items[0].tenant.id}"
            },
            "annotations": [
              {
@@ -543,7 +543,7 @@ Feature: connector namespaces API
            "owner": "${guapo_user_id}",
            "tenant": {
              "kind": "organisation",
-             "organisation_id": "13640231"
+             "id": "13640231"
            },
            "annotations": [
              {
@@ -576,7 +576,7 @@ Feature: connector namespaces API
       ],
       "tenant": {
         "kind": "organisation",
-        "organisation_id": "13640231"
+        "id": "13640231"
       }
     }
     """
@@ -601,7 +601,7 @@ Feature: connector namespaces API
       ],
       "tenant": {
         "kind": "organisation",
-        "organisation_id": "13640231"
+        "id": "13640231"
       }
     }
     """
@@ -628,7 +628,7 @@ Feature: connector namespaces API
            "owner": "${guapo_user_id}",
            "tenant": {
              "kind": "organisation",
-             "organisation_id": "13640231"
+             "id": "13640231"
            },
            "annotations": [
              {

@@ -42,9 +42,7 @@ Feature: connector agent API
       {
         "kind": "Connector",
         "name": "example 1",
-        "deployment_location": {
-          "namespace_id": "${connector_namespace_id}"
-        },
+        "namespace_id": "${connector_namespace_id}",
         "channel":"stable",
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
@@ -485,9 +483,7 @@ Feature: connector agent API
           "kafka_topic": "test"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
-        "deployment_location": {
-          "namespace_id": "${connector_namespace_id}"
-        },
+        "namespace_id": "${connector_namespace_id}",
         "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
         "id": "${connector_id}",
         "kafka": {
@@ -883,9 +879,9 @@ Feature: connector agent API
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
     And the ".status.state" selection from the response should match "assigning"
-    And the ".deployment_location" selection from the response should match json:
+    And the ".namespace_id" selection from the response should match json:
       """
-      {}
+      null
       """
 
 
@@ -944,9 +940,7 @@ Feature: connector agent API
       {
         "kind": "Connector",
         "name": "example 1",
-        "deployment_location": {
-          "namespace_id": "${connector_namespace_id}"
-        },
+        "namespace_id": "${connector_namespace_id}",
         "channel":"stable",
         "connector_type_id": "log_sink_0.1",
         "kafka": {

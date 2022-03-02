@@ -1102,8 +1102,6 @@ Feature: create a connector
       {
         "kind": "Connector",
         "name": "example 1",
-        "deployment_location": {
-        },
         "kafka": {
           "id":"mykafka",
           "url": "kafka.hostname"
@@ -1141,9 +1139,7 @@ Feature: create a connector
       {
         "kind": "Connector",
         "name": "example 1",
-        "deployment_location": {
-          "namespace_id": "default"
-        },
+        "namespace_id": "default",
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
           "id":"mykafka",
@@ -1171,7 +1167,7 @@ Feature: create a connector
         "id": "21",
         "kind": "Error",
         "operation_id": "${response.operation_id}",
-        "reason": "deployment_location.namespace_id is not valid: KAFKAS-MGMT-9: failed to get connector namespace: record not found"
+        "reason": "namespace_id is not valid: KAFKAS-MGMT-9: failed to get connector namespace: record not found"
       }
       """
 
@@ -1183,8 +1179,6 @@ Feature: create a connector
       {
         "kind": "Connector",
         "name": "example 1",
-        "deployment_location": {
-        },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
           "id":"mykafka",
@@ -1239,8 +1233,6 @@ Feature: create a connector
               "kafka_topic": "test"
             },
             "connector_type_id": "aws-sqs-source-v1alpha1",
-            "deployment_location": {
-            },
             "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
             "id": "${connector_id}",
             "kind": "Connector",
@@ -1288,8 +1280,6 @@ Feature: create a connector
           "service_account": {
             "client_secret": "",
             "client_id": "myclient"
-          },
-          "deployment_location": {
           },
           "connector_type_id": "aws-sqs-source-v1alpha1",
           "channel": "stable",
@@ -1791,8 +1781,6 @@ Feature: create a connector
       {
         "kind": "Connector",
         "name": "example 1",
-        "deployment_location": {
-        },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
           "id":"mykafka",
@@ -1839,8 +1827,6 @@ Feature: create a connector
             },
             "connector": {},
             "connector_type_id": "foo",
-            "deployment_location": {
-            },
             "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
             "id": "${connector_id}",
             "kind": "Connector",
@@ -1886,8 +1872,6 @@ Feature: create a connector
           "service_account": {
             "client_secret": "",
             "client_id": "myclient"
-          },
-          "deployment_location": {
           },
           "connector": {},
           "connector_type_id": "foo",
