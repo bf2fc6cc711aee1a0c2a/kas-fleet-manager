@@ -32,22 +32,9 @@ var AgentSetConnectorStatusPhase = []ConnectorStatusPhase{
 	ConnectorStatusPhaseDeleted,
 }
 
-type TargetKind = string
-
-const (
-	AddonTargetKind         TargetKind = "addon"
-	CloudProviderTargetKind TargetKind = "cloud_provider"
-)
-
-var AllTargetKind = []TargetKind{
-	AddonTargetKind,
-	CloudProviderTargetKind,
-}
-
 type Connector struct {
 	api.Meta
 
-	TargetKind    TargetKind
 	NamespaceId   *string
 	CloudProvider string
 	Region        string

@@ -54,6 +54,6 @@ func IsOneOf(options ...string) ValidateOption {
 				}
 			}
 		}
-		return errors.MinimumFieldLengthNotReached("%s is not valid. Must be one of: %s", field, strings.Join(options, ", "))
+		return errors.BadRequest("%s is not valid. Must be one of: %s", field, strings.Join(options, ", "))
 	}
 }

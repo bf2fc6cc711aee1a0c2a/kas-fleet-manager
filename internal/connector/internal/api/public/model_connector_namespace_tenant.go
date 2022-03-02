@@ -11,7 +11,7 @@ package public
 
 // ConnectorNamespaceTenant struct for ConnectorNamespaceTenant
 type ConnectorNamespaceTenant struct {
-	Kind           string `json:"kind"`
-	UserId         string `json:"user_id,omitempty"`
-	OrganisationId string `json:"organisation_id,omitempty"`
+	Kind ConnectorNamespaceTenantKind `json:"kind"`
+	// Either user or organisation id depending on the value of kind
+	Id string `json:"id"`
 }

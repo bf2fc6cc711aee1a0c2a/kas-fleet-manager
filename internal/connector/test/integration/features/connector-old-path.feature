@@ -21,8 +21,6 @@ Feature: the old connectors path are still valid
           "name": "example 1",
           "kafka_id":"mykafka"
         },
-        "deployment_location": {
-        },
         "kafka": {
           "bootstrap_server": "kafka.hostname",
           "client_id": "myclient",

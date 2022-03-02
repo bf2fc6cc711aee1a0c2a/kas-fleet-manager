@@ -256,9 +256,9 @@ func (k *connectorNamespaceService) CreateDefaultNamespace(ctx context.Context, 
 	owner := connectorCluster.Owner
 	organisationId := connectorCluster.OrganisationId
 
-	kind := presenters.UserKind
+	kind := public.CONNECTORNAMESPACETENANTKIND_USER
 	if organisationId != "" {
-		kind = presenters.OrganisationKind
+		kind = public.CONNECTORNAMESPACETENANTKIND_ORGANISATION
 	}
 
 	namespaceRequest, err := presenters.ConvertConnectorNamespaceRequest(&public.ConnectorNamespaceRequest{

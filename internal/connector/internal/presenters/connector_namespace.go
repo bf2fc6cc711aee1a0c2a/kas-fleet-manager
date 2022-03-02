@@ -1,23 +1,21 @@
 package presenters
 
 import (
-	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/json"
 	"strings"
 	"time"
 )
 
-const (
-	UserKind         string = "user"
-	OrganisationKind string = "organisation"
-)
-
-var NamespaceKinds = []string{UserKind, OrganisationKind}
+var AllNamespaceTenantKinds = map[string]public.ConnectorNamespaceTenantKind{
+	string(public.CONNECTORNAMESPACETENANTKIND_USER):         public.CONNECTORNAMESPACETENANTKIND_USER,
+	string(public.CONNECTORNAMESPACETENANTKIND_ORGANISATION): public.CONNECTORNAMESPACETENANTKIND_ORGANISATION,
+}
 
 func ConvertConnectorNamespaceRequest(namespaceRequest *public.ConnectorNamespaceRequest,
 	userID string, organisationID string) (*dbapi.ConnectorNamespace, *errors.ServiceError) {
@@ -36,14 +34,14 @@ func ConvertConnectorNamespaceRequest(namespaceRequest *public.ConnectorNamespac
 		result.Annotations[i].Value = annotation.Value
 	}
 	switch namespaceRequest.Kind {
-	case UserKind:
+	case public.CONNECTORNAMESPACETENANTKIND_USER:
 		result.TenantUserId = &userID
 		result.TenantUser = &dbapi.ConnectorTenantUser{
 			Model: db.Model{
 				ID: userID,
 			},
 		}
-	case OrganisationKind:
+	case public.CONNECTORNAMESPACETENANTKIND_ORGANISATION:
 		if organisationID == "" {
 			return nil, errors.BadRequest("missing organization for tenant organisation namespace")
 		}
@@ -65,8 +63,8 @@ func ConvertConnectorNamespaceEvalRequest(namespaceRequest *public.ConnectorName
 		Model: db.Model{
 			ID: api.NewID(),
 		},
-		Name:                 namespaceRequest.Name,
-		Owner:                userID,
+		Name:  namespaceRequest.Name,
+		Owner: userID,
 	}
 	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
 	for i, annotation := range namespaceRequest.Annotations {
@@ -93,15 +91,15 @@ func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *private.Connec
 		ClusterId: namespaceRequest.ClusterId,
 	}
 	switch namespaceRequest.Tenant.Kind {
-	case UserKind:
-		result.TenantUserId = &namespaceRequest.Tenant.UserId
+	case private.USER:
+		result.TenantUserId = &namespaceRequest.Tenant.Id
 		result.TenantUser = &dbapi.ConnectorTenantUser{
 			Model: db.Model{
 				ID: *result.TenantUserId,
 			},
 		}
-	case OrganisationKind:
-		result.TenantOrganisationId = &namespaceRequest.Tenant.OrganisationId
+	case private.ORGANISATION:
+		result.TenantOrganisationId = &namespaceRequest.Tenant.Id
 		result.TenantOrganisation = &dbapi.ConnectorTenantOrganisation{
 			Model: db.Model{
 				ID: *result.TenantOrganisationId,
@@ -144,12 +142,12 @@ func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace) public.Conne
 		Annotations: annotations,
 	}
 	if namespace.TenantUser != nil {
-		result.Tenant.Kind = UserKind
-		result.Tenant.UserId = namespace.TenantUser.ID
+		result.Tenant.Kind = public.CONNECTORNAMESPACETENANTKIND_USER
+		result.Tenant.Id = namespace.TenantUser.ID
 	}
 	if namespace.TenantOrganisation != nil {
-		result.Tenant.Kind = OrganisationKind
-		result.Tenant.OrganisationId = namespace.TenantOrganisation.ID
+		result.Tenant.Kind = public.CONNECTORNAMESPACETENANTKIND_ORGANISATION
+		result.Tenant.Id = namespace.TenantOrganisation.ID
 	}
 	if namespace.Expiration != nil {
 		result.Expiration = getTimestamp(*namespace.Expiration)
@@ -182,12 +180,12 @@ func PresentPrivateConnectorNamespace(namespace *dbapi.ConnectorNamespace) priva
 		Annotations: annotations,
 	}
 	if namespace.TenantUser != nil {
-		result.Tenant.Kind = UserKind
-		result.Tenant.UserId = namespace.TenantUser.ID
+		result.Tenant.Kind = private.USER
+		result.Tenant.Id = namespace.TenantUser.ID
 	}
 	if namespace.TenantOrganisationId != nil {
-		result.Tenant.Kind = OrganisationKind
-		result.Tenant.OrganisationId = namespace.TenantOrganisation.ID
+		result.Tenant.Kind = private.ORGANISATION
+		result.Tenant.Id = namespace.TenantOrganisation.ID
 	}
 	if namespace.Expiration != nil {
 		result.Expiration = getTimestamp(*namespace.Expiration)
