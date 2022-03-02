@@ -13,7 +13,6 @@ type KafkaCapacityConfig struct {
 	MaxPartitions                 int    `json:"maxPartitions"`
 	MaxDataRetentionPeriod        string `json:"maxDataRetentionPeriod"`
 	MaxConnectionAttemptsPerSec   int    `json:"maxConnectionAttemptsPerSec"`
-	MaxCapacity                   int64  `json:"maxCapacity"`
 }
 
 type KafkaConfig struct {

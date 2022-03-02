@@ -373,11 +373,6 @@ parameters:
   description: The public HTTP host URL of the service
   value: "https://api.openshift.com"
 
-- name: KAFKA_CAPACITY_MAX_CAPACITY
-  displayName: Maximum number of clusters
-  description: Maximum number of allowed kafka clusters
-  value: "1000"
-
 - name: KAFKA_CAPACITY_INGRESS_THROUGHPUT
   displayName: Kafka ingress throughput
   description: Ingress throughput configuration for the default Kafka instance type
@@ -539,7 +534,6 @@ objects:
         qontract.recycle: "true"
     data:
       kafka-capacity-config.yaml: |-
-        maxCapacity: ${KAFKA_CAPACITY_MAX_CAPACITY}
         ingressEgressThroughputPerSec: ${KAFKA_CAPACITY_INGRESS_THROUGHPUT}
         totalMaxConnections: ${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}
         maxDataRetentionSize: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE}

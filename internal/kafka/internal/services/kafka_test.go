@@ -349,75 +349,6 @@ func Test_kafkaService_GetById(t *testing.T) {
 	}
 }
 
-func Test_kafkaService_HasAvailableCapacity(t *testing.T) {
-	type fields struct {
-		connectionFactory *db.ConnectionFactory
-		kafkaConfig       *config.KafkaConfig
-	}
-
-	tests := []struct {
-		name        string
-		fields      fields
-		setupFn     func()
-		wantErr     bool
-		hasCapacity bool
-	}{
-		{
-			name:        "capacity exhausted",
-			hasCapacity: false,
-			fields: fields{
-				kafkaConfig: &config.KafkaConfig{
-					KafkaCapacity: config.KafkaCapacityConfig{
-						MaxCapacity: MaxClusterCapacity,
-					},
-				},
-				connectionFactory: db.NewMockConnectionFactory(nil),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply([]map[string]interface{}{{"a": fmt.Sprintf("%d", MaxClusterCapacity)}})
-			},
-			wantErr: false,
-		},
-		{
-			name:        "capacity available",
-			hasCapacity: true,
-			fields: fields{
-				kafkaConfig: &config.KafkaConfig{
-					KafkaCapacity: config.KafkaCapacityConfig{
-						MaxCapacity: MaxClusterCapacity,
-					},
-				},
-				connectionFactory: db.NewMockConnectionFactory(nil),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply([]map[string]interface{}{{"a": "999"}})
-				// This is necessary otherwise if the query is wrong, the caller will receive a `0` result al `count`
-				mocket.Catcher.NewMock().WithExecException().WithQueryException() // With this, an expected query will throw an exception
-			},
-			wantErr: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.setupFn != nil {
-				tt.setupFn()
-			}
-
-			k := &kafkaService{
-				connectionFactory: tt.fields.connectionFactory,
-				kafkaConfig:       tt.fields.kafkaConfig,
-			}
-
-			if hasCapacity, err := k.HasAvailableCapacity(); (err != nil) != tt.wantErr {
-				t.Errorf("HasAvailableCapacity() error = %v, wantErr = %v", err, tt.wantErr)
-			} else if hasCapacity != tt.hasCapacity {
-				t.Errorf("HasAvailableCapacity() hasCapacity = %v, wanted = %v", hasCapacity, tt.hasCapacity)
-			}
-		})
-	}
-}
-
 func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
@@ -905,10 +836,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 	}
 
 	defaultKafkaConf := config.KafkaConfig{
-		KafkaCapacity: config.KafkaCapacityConfig{
-			MaxCapacity: MaxClusterCapacity,
-		},
-		Quota: config.NewKafkaQuotaConfig(),
+		KafkaCapacity: config.KafkaCapacityConfig{},
+		Quota:         config.NewKafkaQuotaConfig(),
 	}
 
 	strimziOperatorVersion := "strimzi-cluster-operator.from-cluster"
@@ -1117,9 +1046,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
 				kafkaConfig: config.KafkaConfig{
-					KafkaCapacity: config.KafkaCapacityConfig{
-						MaxCapacity: MaxClusterCapacity,
-					},
+					KafkaCapacity: config.KafkaCapacityConfig{},
 					Quota: &config.KafkaQuotaConfig{
 						Type:                   api.QuotaManagementListQuotaType.String(),
 						AllowEvaluatorInstance: false,

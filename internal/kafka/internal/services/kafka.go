@@ -49,7 +49,6 @@ type CNameRecordStatus struct {
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
-	HasAvailableCapacity() (bool, *errors.ServiceError)
 	// PrepareKafkaRequest sets any required information (i.e. bootstrap server host, sso client id and secret)
 	// to the Kafka Request record in the database. The kafka request will also be updated with an updated_at
 	// timestamp and the corresponding cluster identifier.
@@ -124,18 +123,6 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService Clu
 		providerConfig:           providerConfig,
 		clusterPlacementStrategy: clusterPlacementStrategy,
 	}
-}
-
-func (k *kafkaService) HasAvailableCapacity() (bool, *errors.ServiceError) {
-	dbConn := k.connectionFactory.New()
-	var count int64
-
-	if err := dbConn.Model(&dbapi.KafkaRequest{}).Count(&count).Error; err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka request")
-	}
-
-	glog.Infof("%d of %d kafka clusters currently instantiated", count, k.kafkaConfig.KafkaCapacity.MaxCapacity)
-	return count < k.kafkaConfig.KafkaCapacity.MaxCapacity, nil
 }
 
 func (k *kafkaService) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
