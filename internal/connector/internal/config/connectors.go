@@ -17,16 +17,13 @@ import (
 )
 
 type ConnectorsConfig struct {
-	ConnectorEvalDurationString string                  `json:"connector_eval_duration"`
-	ConnectorEvalOrganizations  []string                `json:"connector_eval_organizations"`
-	ConnectorCatalogDirs        []string                `json:"connector_types"`
-	CatalogEntries              []ConnectorCatalogEntry `json:"connector_type_urls"`
-	ConnectorEvalDuration       time.Duration
+	ConnectorEvalDuration      time.Duration           `json:"connector_eval_duration"`
+	ConnectorEvalOrganizations []string                `json:"connector_eval_organizations"`
+	ConnectorCatalogDirs       []string                `json:"connector_types"`
+	CatalogEntries             []ConnectorCatalogEntry `json:"connector_type_urls"`
 }
 
 var _ environments.ConfigModule = &ConnectorsConfig{}
-
-var _ environments.ServiceValidator = &ConnectorsConfig{}
 
 type ConnectorChannelConfig struct {
 	Revision      int64                  `json:"revision,omitempty"`
@@ -44,7 +41,7 @@ func NewConnectorsConfig() *ConnectorsConfig {
 
 func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringArrayVar(&c.ConnectorCatalogDirs, "connector-catalog", c.ConnectorCatalogDirs, "Directory containing connector catalog entries")
-	fs.StringVar(&c.ConnectorEvalDurationString, "connector-eval-duration", c.ConnectorEvalDurationString, "Connector eval duration in golang duration format")
+	fs.DurationVar(&c.ConnectorEvalDuration, "connector-eval-duration", c.ConnectorEvalDuration, "Connector eval duration in golang duration format")
 	fs.StringArrayVar(&c.ConnectorEvalOrganizations, "connector-eval-organizations", c.ConnectorEvalOrganizations, "Connector eval organization IDs")
 }
 
@@ -91,15 +88,5 @@ func (c *ConnectorsConfig) ReadFiles() error {
 	})
 	glog.Infof("loaded %d connector types", len(values))
 	c.CatalogEntries = values
-	return nil
-}
-
-func (c *ConnectorsConfig) Validate(env *environments.Env) error {
-	// validate duration
-	duration, err := time.ParseDuration(c.ConnectorEvalDurationString)
-	if err != nil {
-		return err
-	}
-	c.ConnectorEvalDuration = duration
 	return nil
 }

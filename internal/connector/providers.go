@@ -21,7 +21,7 @@ import (
 func ConfigProviders(kafkaEnabled bool) di.Option {
 
 	result := di.Options(
-		di.Provide(config.NewConnectorsConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
+		di.Provide(config.NewConnectorsConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(environments2.Func(serviceProviders)),
 		di.Provide(migrations.New),
 		di.Provide(cmdvault.NewVaultCommand),

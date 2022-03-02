@@ -3,6 +3,7 @@ package integration
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -23,7 +24,7 @@ func TestMain(m *testing.M) {
 	h, teardown := test.NewHelperWithHooks(t, ocmServer,
 		func(c *config.ConnectorsConfig, kc *keycloak.KeycloakConfig) {
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
-			c.ConnectorEvalDurationString = "30m"
+			c.ConnectorEvalDuration, _ = time.ParseDuration("30m")
 			c.ConnectorEvalOrganizations = []string{"13640210"}
 
 			kc.KeycloakClientExpire = true
