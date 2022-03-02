@@ -2,15 +2,14 @@ package handlers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
-	"net/http"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/goava/di"
+	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -19,7 +18,7 @@ import (
 )
 
 var (
-	maxConnectorNamespaceIdLength   = 32
+	maxConnectorNamespaceIdLength = 32
 )
 
 type ConnectorNamespaceHandler struct {
@@ -39,10 +38,15 @@ func (h *ConnectorNamespaceHandler) Create(w http.ResponseWriter, r *http.Reques
 		Validate: []handlers.Validate{
 			handlers.Validation("name", &resource.Name, handlers.MinLen(1)),
 			handlers.Validation("cluster_id", &resource.ClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
-			handlers.Validation("kind", &resource.Kind, handlers.IsOneOf(presenters.NamespaceKinds...)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
+			// validate tenant kind
+			if _, ok := presenters.AllNamespaceTenantKinds[string(resource.Kind)]; !ok {
+				return nil, coreservices.HandleCreateError("connector namespace",
+					errors.MinimumFieldLengthNotReached("%s is not valid. Must be one of: [%s, %s]", "namespace_id",
+						public.CONNECTORNAMESPACETENANTKIND_USER, public.CONNECTORNAMESPACETENANTKIND_ORGANISATION))
+			}
 			ctx := r.Context()
 			claims, err := auth.GetClaimsFromContext(ctx)
 			if err != nil {

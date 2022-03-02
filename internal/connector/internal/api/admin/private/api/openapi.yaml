@@ -953,31 +953,21 @@ components:
       - name
       type: object
     ConnectorNamespaceTenant:
-      discriminator:
-        mapping:
-          user: '#/components/schemas/ConnectorNamespaceTenantUser'
-          organisation: '#/components/schemas/ConnectorNamespaceTenantOrganisation'
-        propertyName: kind
-      oneOf:
-      - $ref: '#/components/schemas/ConnectorNamespaceTenantUser'
-      - $ref: '#/components/schemas/ConnectorNamespaceTenantOrganisation'
+      properties:
+        kind:
+          $ref: '#/components/schemas/ConnectorNamespaceTenantKind'
+        id:
+          description: Either user or organisation id depending on the value of kind
+          type: string
       required:
+      - id
       - kind
       type: object
-    ConnectorNamespaceTenantUser:
-      properties:
-        kind:
-          type: string
-        user_id:
-          type: string
-      type: object
-    ConnectorNamespaceTenantOrganisation:
-      properties:
-        kind:
-          type: string
-        organisation_id:
-          type: string
-      type: object
+    ConnectorNamespaceTenantKind:
+      enum:
+      - user
+      - organisation
+      type: string
     ConnectorNamespaceEvalRequest:
       allOf:
       - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'

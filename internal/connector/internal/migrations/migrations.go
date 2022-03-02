@@ -31,6 +31,7 @@ var migrations = []*gormigrate.Migration{
 	addConnectorNamespaceTables("202202070000"),
 	addConnectorNamespaceDeployment("202202220000"),
 	addDeletedAtIndex("202202280000"),
+	deleteConnectorTargetKind("202203020000"),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

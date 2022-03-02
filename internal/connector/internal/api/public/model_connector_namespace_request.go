@@ -14,6 +14,5 @@ type ConnectorNamespaceRequest struct {
 	Name        string                                     `json:"name"`
 	Annotations []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
 	ClusterId   string                                     `json:"cluster_id"`
-	// One of 'user' or 'organisation' similar to 'ConnectorNamespaceTenant'
-	Kind string `json:"kind"`
+	Kind        ConnectorNamespaceTenantKind               `json:"kind"`
 }

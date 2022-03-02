@@ -15,12 +15,11 @@ func ConvertConnectorRequest(from public.ConnectorRequest) (*dbapi.Connector, *e
 		return nil, errors.BadRequest("invalid connector spec: %v", err)
 	}
 
-	namespaceId := &from.DeploymentLocation.NamespaceId
+	namespaceId := &from.NamespaceId
 	if *namespaceId == "" {
 		namespaceId = nil
 	}
 	return &dbapi.Connector{
-		TargetKind:      dbapi.AddonTargetKind,
 		NamespaceId:     namespaceId,
 		Name:            from.Name,
 		ConnectorTypeId: from.ConnectorTypeId,

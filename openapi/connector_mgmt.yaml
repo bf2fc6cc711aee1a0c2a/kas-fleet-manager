@@ -1137,12 +1137,6 @@ components:
         client_secret:
           type: string
 
-    DeploymentLocation:
-      type: object
-      properties:
-        namespace_id:
-          type: string
-
     VersionMetadata:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
@@ -1305,17 +1299,16 @@ components:
       required:
         - name
         - connector_type_id
-        - deployment_location
         - desired_state
       properties:
         name:
           type: string
         connector_type_id:
           type: string
+        namespace_id:
+          type: string
         channel:
           $ref: "#/components/schemas/Channel"
-        deployment_location:
-          $ref: "#/components/schemas/DeploymentLocation"
         desired_state:
           $ref: "#/components/schemas/ConnectorDesiredState"
 
@@ -1456,33 +1449,22 @@ components:
         - $ref: "#/components/schemas/ObjectMeta"
         - $ref: "#/components/schemas/ConnectorNamespaceRequestMeta"
 
+    ConnectorNamespaceTenantKind:
+      type: string
+      enum:
+        - user
+        - organisation
+
     ConnectorNamespaceTenant:
       type: object
       required:
         - kind
-      discriminator:
-        propertyName: kind
-        mapping:
-          user: "#/components/schemas/ConnectorNamespaceTenantUser"
-          organisation: "#/components/schemas/ConnectorNamespaceTenantOrganisation"
-      oneOf:
-        - $ref: "#/components/schemas/ConnectorNamespaceTenantUser"
-        - $ref: "#/components/schemas/ConnectorNamespaceTenantOrganisation"
-
-    ConnectorNamespaceTenantUser:
-      type: object
+        - id
       properties:
         kind:
-          type: string
-        user_id:
-          type: string
-
-    ConnectorNamespaceTenantOrganisation:
-      type: object
-      properties:
-        kind:
-          type: string
-        organisation_id:
+          $ref: "#/components/schemas/ConnectorNamespaceTenantKind"
+        id:
+          description: Either user or organisation id depending on the value of kind
           type: string
 
     ConnectorNamespaceRequest:
@@ -1498,8 +1480,7 @@ components:
             cluster_id:
               type: string
             kind:
-              type: string
-              description: One of 'user' or 'organisation' similar to 'ConnectorNamespaceTenant'
+              $ref: "#/components/schemas/ConnectorNamespaceTenantKind"
 
     ConnectorNamespaceEvalRequest:
       description: An evaluation connector namespace create request
@@ -1746,8 +1727,7 @@ components:
     ConnectorCreateExample:
       value:
         name: MyLogger
-        deployment_location:
-          namespace_id: "9bsv0s7tne7g02gh5g4g"
+        namespace_id: "9bsv0s7tne7g02gh5g4g"
         kafka:
           id: "9bsv0s6brfr002pfnkh0"
           client_id: "srvc-acct-162ef2d8-0209-4117-8462-df63c2025c26"

@@ -17,14 +17,13 @@ func ConvertConnector(from public.Connector) (*dbapi.Connector, *errors.ServiceE
 	}
 
 	var namespaceId *string
-	if from.DeploymentLocation.NamespaceId != "" {
-		namespaceId = &from.DeploymentLocation.NamespaceId
+	if from.NamespaceId != "" {
+		namespaceId = &from.NamespaceId
 	}
 	return &dbapi.Connector{
 		Meta: api.Meta{
 			ID: from.Id,
 		},
-		TargetKind:      dbapi.AddonTargetKind,
 		NamespaceId:     namespaceId,
 		Name:            from.Name,
 		Owner:           from.Owner,
@@ -74,10 +73,7 @@ func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceE
 		CreatedAt:       from.CreatedAt,
 		ModifiedAt:      from.UpdatedAt,
 		ResourceVersion: from.Version,
-
-		DeploymentLocation: public.DeploymentLocation{
-			NamespaceId: namespaceId,
-		},
+		NamespaceId:     namespaceId,
 		ConnectorTypeId: from.ConnectorTypeId,
 		Connector:       spec,
 		Status: public.ConnectorStatusStatus{
