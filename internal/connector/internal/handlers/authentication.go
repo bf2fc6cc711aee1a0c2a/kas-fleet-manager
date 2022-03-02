@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
@@ -32,7 +33,6 @@ func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig 
 			Public("^/api/connector_mgmt/?$").
 			Public("^/api/connector_mgmt/v1/?$").
 			Public("^/api/connector_mgmt/v1/openapi/?$").
-			Public("^/api/connector_mgmt/v1/graphiql/?$").
-			Public("^/api/connector_mgmt/v1/schema.graphql$"),
+			Public("^/api/connector_mgmt/v1/graphiql/?$"),
 		nil
 }

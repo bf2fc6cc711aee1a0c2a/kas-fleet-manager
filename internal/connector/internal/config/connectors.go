@@ -3,21 +3,21 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"sort"
+	"strings"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
-	"io/ioutil"
-	"path/filepath"
-	"sort"
-	"strings"
 )
 
 type ConnectorsConfig struct {
 	ConnectorCatalogDirs []string                `json:"connector_types"`
 	CatalogEntries       []ConnectorCatalogEntry `json:"connector_type_urls"`
-	GraphqlAPIURL        string
 }
 
 var _ environments.ConfigModule = &ConnectorsConfig{}
@@ -38,7 +38,6 @@ func NewConnectorsConfig() *ConnectorsConfig {
 
 func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringArrayVar(&c.ConnectorCatalogDirs, "connector-catalog", c.ConnectorCatalogDirs, "Directory containing connector catalog entries")
-	fs.StringVar(&c.GraphqlAPIURL, "graphql-api-url", c.GraphqlAPIURL, "URL of the API that the graphql endpoint will call.  Setting this enables the '/api/connector_mgmt/v1/graphql' endpoint\"")
 }
 
 func (c *ConnectorsConfig) ReadFiles() error {
