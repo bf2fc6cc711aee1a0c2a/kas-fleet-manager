@@ -12,8 +12,6 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/bxcodec/faker/v3 v3.2.0
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
-	github.com/chirino/graphql v0.0.0-20210707003802-dfaf250c773e
-	github.com/chirino/graphql-4-apis v0.0.0-20210708183827-e0ef9ee72fe3
 	github.com/cucumber/godog v0.10.1-0.20210705192606-df8c6e49b40b
 	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
