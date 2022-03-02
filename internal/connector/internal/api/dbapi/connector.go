@@ -123,7 +123,7 @@ type ConnectorDeploymentTypeUpgrade struct {
 	ConnectorID     string                `json:"connector_id,omitempty"`
 	DeploymentID    string                `json:"deployment_id,omitempty"`
 	ConnectorTypeId string                `json:"connector_type_id,omitempty"`
-	Namespace       string                `json:"namespace,omitempty"`
+	NamespaceID     string                `json:"namespace_id,omitempty"`
 	Channel         string                `json:"channel,omitempty"`
 	ShardMetadata   *ConnectorTypeUpgrade `json:"shard_metadata,omitempty"`
 }
@@ -139,7 +139,7 @@ type ConnectorDeploymentOperatorUpgrade struct {
 	ConnectorID     string                    `json:"connector_id,omitempty"`
 	DeploymentID    string                    `json:"deployment_id,omitempty"`
 	ConnectorTypeId string                    `json:"connector_type_id,omitempty"`
-	Namespace       string                    `json:"namespace,omitempty"`
+	NamespaceID     string                    `json:"namespace_id,omitempty"`
 	Channel         string                    `json:"channel,omitempty"`
 	Operator        *ConnectorOperatorUpgrade `json:"operator,omitempty"`
 }
