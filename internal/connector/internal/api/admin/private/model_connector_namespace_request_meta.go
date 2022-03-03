@@ -11,6 +11,6 @@ package private
 
 // ConnectorNamespaceRequestMeta struct for ConnectorNamespaceRequestMeta
 type ConnectorNamespaceRequestMeta struct {
-	Name        string                                     `json:"name"`
+	Name        string                                     `json:"name,omitempty"`
 	Annotations []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
 }

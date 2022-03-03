@@ -177,7 +177,7 @@ func (h *ConnectorNamespaceHandler) Get(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *ConnectorNamespaceHandler) Update(w http.ResponseWriter, r *http.Request) {
-	var resource public.ConnectorNamespaceRequest
+	var resource public.ConnectorNamespacePatchRequest
 
 	connectorNamespaceId := mux.Vars(r)["connector_namespace_id"]
 	cfg := &handlers.HandlerConfig{
@@ -193,7 +193,12 @@ func (h *ConnectorNamespaceHandler) Update(w http.ResponseWriter, r *http.Reques
 			}
 
 			// Copy over the fields that support being updated...
-			existing.Name = resource.Name
+			if len(resource.Name) != 0 {
+				existing.Name = resource.Name
+			} else {
+				// name is the only updatable field for now
+				return nil, nil
+			}
 
 			return nil, h.Service.Update(r.Context(), existing)
 		},
