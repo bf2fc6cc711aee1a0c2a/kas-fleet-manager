@@ -598,11 +598,11 @@ UpdateConnectorNamespaceById udpate a connector namespace
 udpate a connector namespace
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param connectorNamespaceId The id of the connector namespace
- * @param connectorNamespaceRequest Data to updated connector with
+ * @param connectorNamespacePatchRequest Data to update namespace with
 */
-func (a *ConnectorNamespacesApiService) UpdateConnectorNamespaceById(ctx _context.Context, connectorNamespaceId string, connectorNamespaceRequest ConnectorNamespaceRequest) (*_nethttp.Response, error) {
+func (a *ConnectorNamespacesApiService) UpdateConnectorNamespaceById(ctx _context.Context, connectorNamespaceId string, connectorNamespacePatchRequest ConnectorNamespacePatchRequest) (*_nethttp.Response, error) {
 	var (
-		localVarHTTPMethod   = _nethttp.MethodPut
+		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
@@ -635,7 +635,7 @@ func (a *ConnectorNamespacesApiService) UpdateConnectorNamespaceById(ctx _contex
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = &connectorNamespaceRequest
+	localVarPostBody = &connectorNamespacePatchRequest
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, err

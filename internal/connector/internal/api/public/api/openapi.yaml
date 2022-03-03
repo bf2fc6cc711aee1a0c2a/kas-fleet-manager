@@ -1263,7 +1263,7 @@ paths:
       summary: Get a connector namespace
       tags:
       - Connector Namespaces
-    put:
+    patch:
       description: udpate a connector namespace
       operationId: updateConnectorNamespaceById
       parameters:
@@ -1279,8 +1279,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConnectorNamespaceRequest'
-        description: Data to updated connector with
+              $ref: '#/components/schemas/ConnectorNamespacePatchRequest'
+        description: Data to update namespace with
         required: true
       responses:
         "204":
@@ -1918,8 +1918,6 @@ components:
           items:
             $ref: '#/components/schemas/ConnectorNamespaceRequestMeta_annotations'
           type: array
-      required:
-      - name
       type: object
     ConnectorNamespaceMeta:
       allOf:
@@ -1943,17 +1941,24 @@ components:
       type: object
     ConnectorNamespaceRequest:
       allOf:
-      - $ref: '#/components/schemas/ConnectorNamespaceEvalRequest'
+      - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
       - $ref: '#/components/schemas/ConnectorNamespaceRequest_allOf'
       description: A connector namespace create request
       required:
       - cluster_id
       - kind
       - name
+    ConnectorNamespacePatchRequest:
+      allOf:
+      - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
+      - type: object
+      description: A connector namespace patch request
     ConnectorNamespaceEvalRequest:
       allOf:
       - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
       description: An evaluation connector namespace create request
+      required:
+      - name
     ConnectorNamespaceList:
       allOf:
       - $ref: '#/components/schemas/List'

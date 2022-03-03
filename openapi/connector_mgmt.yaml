@@ -907,7 +907,7 @@ paths:
                 500Example:
                   $ref: "#/components/examples/500Example"
           description: Unexpected error occurred
-    put:
+    patch:
       tags:
         - Connector Namespaces
       security:
@@ -916,11 +916,11 @@ paths:
       summary: udpate a connector namespace
       description: udpate a connector namespace
       requestBody:
-        description: Data to updated connector with
+        description: Data to update namespace with
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConnectorNamespaceRequest"
+              $ref: "#/components/schemas/ConnectorNamespacePatchRequest"
         required: true
       responses:
         "204":
@@ -1425,8 +1425,6 @@ components:
     # Connector Namespaces
     #
     ConnectorNamespaceRequestMeta:
-      required:
-        - name
       type: object
       properties:
         name:
@@ -1474,7 +1472,7 @@ components:
         - cluster_id
         - kind
       allOf:
-        - $ref: "#/components/schemas/ConnectorNamespaceEvalRequest"
+        - $ref: "#/components/schemas/ConnectorNamespaceRequestMeta"
         - type: object
           properties:
             cluster_id:
@@ -1482,8 +1480,16 @@ components:
             kind:
               $ref: "#/components/schemas/ConnectorNamespaceTenantKind"
 
+    ConnectorNamespacePatchRequest:
+      description: A connector namespace patch request
+      allOf:
+        - $ref: "#/components/schemas/ConnectorNamespaceRequestMeta"
+        - type: object
+
     ConnectorNamespaceEvalRequest:
       description: An evaluation connector namespace create request
+      required:
+        - name
       allOf:
         - $ref: "#/components/schemas/ConnectorNamespaceRequestMeta"
 

@@ -949,8 +949,6 @@ components:
           items:
             $ref: '#/components/schemas/ConnectorNamespaceRequestMeta_annotations'
           type: array
-      required:
-      - name
       type: object
     ConnectorNamespaceTenant:
       properties:
@@ -972,6 +970,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
       description: An evaluation connector namespace create request
+      required:
+      - name
     ConnectorAvailableTypeUpgradeList_allOf:
       properties:
         items:
