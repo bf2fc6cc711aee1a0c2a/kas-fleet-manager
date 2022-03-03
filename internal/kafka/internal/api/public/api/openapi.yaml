@@ -521,6 +521,60 @@ paths:
       security:
       - Bearer: []
       summary: Creates a Kafka request
+  /api/kafkas_mgmt/v1/supported_sizes:
+    get:
+      operationId: getSupportedSizes
+      parameters:
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        explode: true
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        explode: true
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportedKafkaProfileList'
+          description: Returned list of supported Kafka instance profiles and sizes
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns the list of supported Kafka instance profiles and sizes
   /api/kafkas_mgmt/v1/cloud_providers:
     get:
       operationId: getCloudProviders
@@ -1124,6 +1178,20 @@ components:
         failed_reason: a reason the Kafka request creation failed
         instance_type: standard
         reauthentication_enabled: true
+    SupportedKafkaProfileExample:
+      value:
+        kind: SupportedKafkaProfile
+        id: eval
+        sizes:
+        - id: x1
+          ingressThroughputPerSec: 30Mi
+          egressThroughputPerSec: 30Mi
+          totalMaxConnections: 3000
+          maxDataRetentionSize: 1000Gi
+          maxPartitions: 1000
+          maxDataRetentionPeriod: P14D
+          maxConnectionAttemptsPerSec: 100
+          cost: 1
     CloudProviderExample:
       value:
         kind: CloudProvider
@@ -1570,6 +1638,62 @@ components:
       required:
       - name
       type: object
+    SupportedKafkaProfileList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/SupportedKafkaProfileList_allOf'
+    SupportedKafkaProfile:
+      description: Supported Kafka Profile
+      properties:
+        kind:
+          description: Indicates the type of this object. Will be 'SupportedKafkaProfile'
+            link.
+          type: string
+        id:
+          description: Unique identifier of the Kafka instance profile.
+          type: string
+        sizes:
+          description: ' A list of Kafka instance sizes available for this profile'
+          items:
+            allOf:
+            - $ref: '#/components/schemas/SupportedKafkaSize'
+          type: array
+    SupportedKafkaSize:
+      description: Supported Kafka Size
+      properties:
+        kind:
+          description: Indicates the type of this object. Will be 'SupportedKafkaSize'
+            link.
+          type: string
+        id:
+          description: Unique identifier of the Kafka instance size.
+          type: string
+        ingressThroughputPerSec:
+          description: Ingress throughput per second available to the Kafka instance.
+          type: string
+        egressThroughputPerSec:
+          description: Egress throughput per second available to the Kafka instance.
+          type: string
+        totalMaxConnections:
+          description: Total amount of connections available to the Kafka instance.
+          type: int
+        maxDataRetentionSize:
+          description: Maximum data storage available to the Kafka instance.
+          type: string
+        maxPartitions:
+          description: Total amount of partitions available to the Kafka instance.
+          type: int
+        maxDataRetentionPeriod:
+          description: Maximum data retention period available to the Kafka instance.
+          type: string
+        maxConnectionAttemptsPerSec:
+          description: Maximium connection attempts per second available to the Kafka
+            instance.
+          type: int
+        cost:
+          description: Quota cost for this supported Kafka size.
+          type: int
+      type: object
     CloudProviderList:
       allOf:
       - $ref: '#/components/schemas/List'
@@ -1801,6 +1925,14 @@ components:
           items:
             allOf:
             - $ref: '#/components/schemas/ObjectReference'
+          type: array
+    SupportedKafkaProfileList_allOf:
+      example: '{"kind":"SupportedKafkaProfileList","page":"1","size":"1","total":"1","item":{"$ref":"#/components/examples/SupportedKafkaProfileExample"}}'
+      properties:
+        items:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/SupportedKafkaProfile'
           type: array
     CloudProviderList_allOf:
       example: '{"kind":"CloudProviderList","page":"1","size":"1","total":"1","item":{"$ref":"#/components/examples/CloudProviderExample"}}'
