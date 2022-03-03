@@ -37,6 +37,7 @@ type options struct {
 	ServerConfig   *server.ServerConfig
 	OCMConfig      *ocm.OCMConfig
 	ProviderConfig *config.ProviderConfig
+	KafkaConfig    *config.KafkaConfig
 
 	AMSClient                ocm.AMSClient
 	Kafka                    services.KafkaService
@@ -76,7 +77,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	}
 
 	kafkaHandler := handlers.NewKafkaHandler(s.Kafka, s.ProviderConfig, s.AuthService)
-	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig, s.Kafka, s.ClusterPlacementStrategy)
+	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig, s.Kafka, s.ClusterPlacementStrategy, s.KafkaConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)

@@ -51,6 +51,8 @@ type KafkaRequest struct {
 	Namespace               string `json:"namespace"`
 	ReauthenticationEnabled bool   `json:"reauthentication_enabled"`
 	RoutesCreationId        string `json:"routes_creation_id"`
+	ProfileId               string `json:"profile_id"`
+	SizeId                  string `json:"size_id"`
 }
 
 type KafkaList []*KafkaRequest

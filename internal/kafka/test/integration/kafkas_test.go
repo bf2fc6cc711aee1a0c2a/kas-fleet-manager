@@ -166,7 +166,9 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 			config.ManualCluster{ClusterId: "test01", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard,eval"},
 			config.ManualCluster{ClusterId: "test02", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard"},
 			config.ManualCluster{ClusterId: "test03", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "eval"},
-			config.ManualCluster{ClusterId: "test04", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 0, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard,eval"},
+			config.ManualCluster{ClusterId: "test04", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard"},
+			config.ManualCluster{ClusterId: "test05", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "eval"},
+			config.ManualCluster{ClusterId: "test06", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 0, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard,eval"},
 		})
 	}
 
@@ -194,9 +196,9 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 
 	providerConfig := ProviderConfig(h)
 
-	evalLimit := int(3)
+	evalLimit := int(5)
 
-	standardLimit := int(3)
+	standardLimit := int(5)
 
 	providerConfig.ProvidersConfig = config.ProviderConfiguration{
 		SupportedProviders: config.ProviderList{
@@ -221,7 +223,90 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		},
 	}
 
-	pollErr := common.WaitForClustersMatchCriteriaToBeGivenCount(test.TestServices.DBFactory, &test.TestServices.ClusterService, &clusterCriteria, 4)
+	kafkaConfig := KafkaConfig(h)
+
+	kafkaConfig.SupportedKafkaSizes.SupportedKafkaSizesConfig = config.SupportedKafkaSizesConfig{
+		SupportedKafkaProfiles: []config.KafkaProfile{
+			{
+				Id: "standard",
+				Sizes: []config.KafkaInstanceSize{
+					{
+						Id:                          "x1",
+						IngressThroughputPerSec:     "30Mi",
+						EgressThroughputPerSec:      "30Mi",
+						TotalMaxConnections:         1000,
+						MaxDataRetentionSize:        "100Gi",
+						MaxPartitions:               1000,
+						MaxDataRetentionPeriod:      "P14D",
+						MaxConnectionAttemptsPerSec: 100,
+						Cost:                        1,
+					},
+					{
+						Id:                          "x2",
+						IngressThroughputPerSec:     "60Mi",
+						EgressThroughputPerSec:      "60Mi",
+						TotalMaxConnections:         2000,
+						MaxDataRetentionSize:        "200Gi",
+						MaxPartitions:               2000,
+						MaxDataRetentionPeriod:      "P14D",
+						MaxConnectionAttemptsPerSec: 200,
+						Cost:                        2,
+					},
+					{
+						Id:                          "x3",
+						IngressThroughputPerSec:     "60Mi",
+						EgressThroughputPerSec:      "60Mi",
+						TotalMaxConnections:         2000,
+						MaxDataRetentionSize:        "200Gi",
+						MaxPartitions:               2000,
+						MaxDataRetentionPeriod:      "P14D",
+						MaxConnectionAttemptsPerSec: 200,
+						Cost:                        3,
+					},
+				},
+			},
+			{
+				Id: "eval",
+				Sizes: []config.KafkaInstanceSize{
+					{
+						Id:                          "x1",
+						IngressThroughputPerSec:     "30Mi",
+						EgressThroughputPerSec:      "30Mi",
+						TotalMaxConnections:         1000,
+						MaxDataRetentionSize:        "100Gi",
+						MaxPartitions:               1000,
+						MaxDataRetentionPeriod:      "P14D",
+						MaxConnectionAttemptsPerSec: 100,
+						Cost:                        1,
+					},
+					{
+						Id:                          "x2",
+						IngressThroughputPerSec:     "60Mi",
+						EgressThroughputPerSec:      "60Mi",
+						TotalMaxConnections:         2000,
+						MaxDataRetentionSize:        "200Gi",
+						MaxPartitions:               2000,
+						MaxDataRetentionPeriod:      "P14D",
+						MaxConnectionAttemptsPerSec: 200,
+						Cost:                        2,
+					},
+					{
+						Id:                          "x3",
+						IngressThroughputPerSec:     "60Mi",
+						EgressThroughputPerSec:      "60Mi",
+						TotalMaxConnections:         2000,
+						MaxDataRetentionSize:        "200Gi",
+						MaxPartitions:               2000,
+						MaxDataRetentionPeriod:      "P14D",
+						MaxConnectionAttemptsPerSec: 200,
+						Cost:                        3,
+					},
+				},
+			},
+		},
+	}
+
+	pollErr := common.WaitForClustersMatchCriteriaToBeGivenCount(test.TestServices.DBFactory, &test.TestServices.ClusterService, &clusterCriteria, 6)
 	Expect(pollErr).NotTo(HaveOccurred())
 
 	// add identity provider id for all of the clusters to avoid configuring the KAFKA_SRE IDP as it is not needed
@@ -233,66 +318,106 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 	updateErr := test.TestServices.ClusterService.UpdateMultiClusterStatus([]string{"test01", "test02", "test03", "test04"}, api.ClusterReady)
 	Expect(updateErr).NotTo(HaveOccurred())
 
-	standardKafka1 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+	tooLargeStandardKafka := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "testuser1@example.com"
 		kafkaRequest.Name = "dummy-kafka-1"
+		kafkaRequest.InstanceType = types.STANDARD.String()
+		kafkaRequest.SizeId = "x3"
+		kafkaRequest.ProfileId = types.STANDARD.String()
+	})
+
+	x2StandardKafka := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "testuser1@example.com"
+		kafkaRequest.Name = "dummy-kafka-2"
+		kafkaRequest.InstanceType = types.STANDARD.String()
+		kafkaRequest.SizeId = "x2"
+		kafkaRequest.ProfileId = types.STANDARD.String()
+	})
+
+	standardKafka1 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "testuser1@example.com"
+		kafkaRequest.Name = "dummy-kafka-3"
 		kafkaRequest.InstanceType = types.STANDARD.String()
 	})
 
 	standardKafka2 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "testuser2@example.com"
-		kafkaRequest.Name = "dummy-kafka-2"
+		kafkaRequest.Name = "dummy-kafka-4"
 		kafkaRequest.InstanceType = types.STANDARD.String()
 	})
 
 	standardKafka3 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "testuser3@example.com"
-		kafkaRequest.Name = "dummy-kafka-3"
+		kafkaRequest.Name = "dummy-kafka-5"
 		kafkaRequest.InstanceType = types.STANDARD.String()
 	})
 
 	standardKafka4 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "testuser4@example.com"
-		kafkaRequest.Name = "dummy-kafka-4"
+		kafkaRequest.Name = "dummy-kafka-6"
 		kafkaRequest.InstanceType = types.STANDARD.String()
 	})
 
 	standardKafkaIncorrectRegion := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "testuser5@example.com"
-		kafkaRequest.Name = "dummy-kafka-5"
+		kafkaRequest.Name = "dummy-kafka-7"
 		kafkaRequest.InstanceType = types.STANDARD.String()
 		kafkaRequest.Region = unsupportedRegion
 	})
 
-	evalKafka1 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+	tooLargeEvalKafka := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "dummyuser1"
-		kafkaRequest.Name = "dummy-kafka-6"
+		kafkaRequest.Name = "dummy-kafka-8"
+		kafkaRequest.InstanceType = types.EVAL.String()
+		kafkaRequest.SizeId = "x3"
+		kafkaRequest.ProfileId = types.EVAL.String()
+	})
+
+	x2EvalKafka := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "dummyuser2"
+		kafkaRequest.Name = "dummy-kafka-9"
+		kafkaRequest.InstanceType = types.EVAL.String()
+		kafkaRequest.SizeId = "x2"
+		kafkaRequest.ProfileId = types.EVAL.String()
+	})
+
+	evalKafka1 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "dummyuser3"
+		kafkaRequest.Name = "dummy-kafka-10"
 		kafkaRequest.InstanceType = types.EVAL.String()
 	})
 
 	evalKafka2 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-		kafkaRequest.Owner = "dummyuser2"
-		kafkaRequest.Name = "dummy-kafka-7"
+		kafkaRequest.Owner = "dummyuser4"
+		kafkaRequest.Name = "dummy-kafka-11"
 		kafkaRequest.InstanceType = types.EVAL.String()
 	})
 
 	evalKafka3 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-		kafkaRequest.Owner = "dummyuser3"
-		kafkaRequest.Name = "dummy-kafka-8"
+		kafkaRequest.Owner = "dummyuser5"
+		kafkaRequest.Name = "dummy-kafka-12"
 		kafkaRequest.InstanceType = types.EVAL.String()
 	})
 
 	evalKafka4 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-		kafkaRequest.Owner = "dummyuser4"
-		kafkaRequest.Name = "dummy-kafka-9"
+		kafkaRequest.Owner = "dummyuser6"
+		kafkaRequest.Name = "dummy-kafka-13"
 		kafkaRequest.InstanceType = types.EVAL.String()
 	})
 
 	evalKafkaIncorrectRegion := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "testuser5@example.com"
-		kafkaRequest.Name = "dummy-kafka-10"
-		kafkaRequest.InstanceType = types.STANDARD.String()
+		kafkaRequest.Name = "dummy-kafka-14"
+		kafkaRequest.InstanceType = types.EVAL.String()
 		kafkaRequest.Region = unsupportedRegion
+	})
+
+	evalKafkaIncorrectSizeParams := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+		kafkaRequest.Owner = "testuser5@example.com"
+		kafkaRequest.Name = "dummy-kafka-14"
+		kafkaRequest.InstanceType = types.EVAL.String()
+		kafkaRequest.SizeId = "x0"
+		kafkaRequest.ProfileId = types.EVAL.String()
 	})
 
 	errorCheckWithError := errorCheck{
@@ -311,7 +436,31 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		httpCode: http.StatusBadRequest,
 	}
 
+	errorCheckInvalidSizeParams := errorCheck{
+		wantErr:  true,
+		code:     errors.ErrorGeneral,
+		httpCode: http.StatusInternalServerError,
+	}
+
 	kafkaValidations := []kafkaValidation{
+		// first two kafkas are larger than cluster capacity (3 vs 2), hence can't be placed into
+		// any cluster despite of the global capacity being 5 for eval and standard instance types
+		{
+			tooLargeStandardKafka,
+			errorCheckWithError,
+		},
+		{
+			tooLargeEvalKafka,
+			errorCheckWithError,
+		},
+		{
+			x2StandardKafka,
+			errorCheckNoError,
+		},
+		{
+			x2EvalKafka,
+			errorCheckNoError,
+		},
 		{
 			standardKafka1,
 			errorCheckNoError,
@@ -354,11 +503,15 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 			evalKafkaIncorrectRegion,
 			errorCheckUnsupportedRegion,
 		},
+		{
+			evalKafkaIncorrectSizeParams,
+			errorCheckInvalidSizeParams,
+		},
 	}
 
-	standardClusters := "test01,test02"
+	standardClusters := "test01,test02, test04"
 
-	evalClusters := "test01,test03"
+	evalClusters := "test01,test03, test05"
 
 	testValidations(standardClusters, evalClusters, t, kafkaValidations)
 }

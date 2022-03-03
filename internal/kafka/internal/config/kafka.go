@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
@@ -85,4 +87,26 @@ func (c *KafkaConfig) ReadFiles() error {
 
 func (c *KafkaConfig) Validate(env *environments.Env) error {
 	return c.SupportedKafkaSizes.SupportedKafkaSizesConfig.validate()
+}
+
+func (c *KafkaConfig) GetFirstAvailableSize(instanceType string) (string, error) {
+	for _, profile := range c.SupportedKafkaSizes.SupportedKafkaSizesConfig.SupportedKafkaProfiles {
+		if profile.Id == instanceType {
+			return profile.Sizes[0].Id, nil
+		}
+	}
+	return "", fmt.Errorf("Unable to find kafka size for '%s'", instanceType)
+}
+
+func (c *KafkaConfig) CheckSizingCombinationExists(profileId, sizeId string) (bool, error) {
+	for _, profile := range c.SupportedKafkaSizes.SupportedKafkaSizesConfig.SupportedKafkaProfiles {
+		if profile.Id == profileId {
+			for _, size := range profile.Sizes {
+				if size.Id == sizeId {
+					return true, nil
+				}
+			}
+		}
+	}
+	return false, fmt.Errorf("Size id: '%s' not found for '%s' profile id", sizeId, profileId)
 }

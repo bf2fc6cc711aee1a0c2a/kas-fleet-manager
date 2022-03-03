@@ -178,3 +178,13 @@ func ValidateKafkaStorageSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *
 		return nil
 	}
 }
+
+func ValidateSizingParams(kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
+	return func() *errors.ServiceError {
+		if (!stringNotSet(&kafkaRequestPayload.ProfileId) && stringNotSet(&kafkaRequestPayload.SizeId)) ||
+			(stringNotSet(&kafkaRequestPayload.ProfileId) && !stringNotSet(&kafkaRequestPayload.SizeId)) {
+			return errors.FieldValidationError("Failed to create kafka request. When providing sizing params. Both of them have to be set")
+		}
+		return nil
+	}
+}

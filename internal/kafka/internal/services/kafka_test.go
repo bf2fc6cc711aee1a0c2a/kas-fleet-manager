@@ -904,11 +904,51 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 		kafkaRequest *dbapi.KafkaRequest
 	}
 
+	supportedKafkaSizesConfig := config.KafkaSupportedSizesConfig{
+		SupportedKafkaSizesConfig: config.SupportedKafkaSizesConfig{
+			SupportedKafkaProfiles: []config.KafkaProfile{
+				{
+					Id: "standard",
+					Sizes: []config.KafkaInstanceSize{
+						{
+							Id:                          "x1",
+							IngressThroughputPerSec:     "30Mi",
+							EgressThroughputPerSec:      "30Mi",
+							TotalMaxConnections:         1000,
+							MaxDataRetentionSize:        "100Gi",
+							MaxPartitions:               1000,
+							MaxDataRetentionPeriod:      "P14D",
+							MaxConnectionAttemptsPerSec: 100,
+							Cost:                        1,
+						},
+					},
+				},
+				{
+					Id: "eval",
+					Sizes: []config.KafkaInstanceSize{
+						{
+							Id:                          "x1",
+							IngressThroughputPerSec:     "30Mi",
+							EgressThroughputPerSec:      "30Mi",
+							TotalMaxConnections:         1000,
+							MaxDataRetentionSize:        "100Gi",
+							MaxPartitions:               1000,
+							MaxDataRetentionPeriod:      "P14D",
+							MaxConnectionAttemptsPerSec: 100,
+							Cost:                        1,
+						},
+					},
+				},
+			},
+		},
+	}
+
 	defaultKafkaConf := config.KafkaConfig{
 		KafkaCapacity: config.KafkaCapacityConfig{
 			MaxCapacity: MaxClusterCapacity,
 		},
-		Quota: config.NewKafkaQuotaConfig(),
+		Quota:               config.NewKafkaQuotaConfig(),
+		SupportedKafkaSizes: &supportedKafkaSizesConfig,
 	}
 
 	strimziOperatorVersion := "strimzi-cluster-operator.from-cluster"
@@ -989,9 +1029,9 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "0"}})
-				mocket.Catcher.NewMock().WithQuery("INSERT")
-				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 			},
 			error: errorCheck{
 				wantErr: false,
@@ -1026,9 +1066,9 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "0"}})
-				mocket.Catcher.NewMock().WithQuery("INSERT")
-				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithExecException().WithQueryException()
 			},
 			error: errorCheck{
 				wantErr: false,
@@ -1064,9 +1104,9 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "0"}})
-				mocket.Catcher.NewMock().WithQuery("INSERT")
-				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithExecException().WithQueryException()
 			},
 			error: errorCheck{
 				wantErr:  true,
@@ -1124,6 +1164,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 						Type:                   api.QuotaManagementListQuotaType.String(),
 						AllowEvaluatorInstance: false,
 					},
+					SupportedKafkaSizes: &supportedKafkaSizesConfig,
 				},
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
 					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {

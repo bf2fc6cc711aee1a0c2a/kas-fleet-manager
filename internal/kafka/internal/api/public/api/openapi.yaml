@@ -444,6 +444,8 @@ paths:
                 $ref: '#/components/examples/USRegionExample'
               EURegion:
                 $ref: '#/components/examples/EURegionExample'
+              ExplicitSizeExample:
+                $ref: '#/components/examples/ExplicitSizeExample'
             schema:
               $ref: '#/components/schemas/KafkaRequestPayload'
         description: Kafka data
@@ -1090,6 +1092,13 @@ components:
         region: eu-west-1
         cloud_provider: aws
         name: serviceapitest
+    ExplicitSizeExample:
+      value:
+        region: us-east-1
+        cloud_provider: aws
+        name: test_kafka
+        profile_id: standard
+        size_id: x1
     KafkaRequestExample:
       value:
         id: 1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
@@ -1541,8 +1550,10 @@ components:
       description: Schema for the request body sent to /kafkas POST
       example:
         reauthentication_enabled: true
+        profile_id: profile_id
         multi_az: true
         name: name
+        size_id: size_id
         cloud_provider: cloud_provider
         region: region
       properties:
@@ -1567,6 +1578,12 @@ components:
             every 5 minutes. The default value is true
           nullable: true
           type: boolean
+        profile_id:
+          description: Id of the size profile
+          type: string
+        size_id:
+          description: Id of the kafka instance size
+          type: string
       required:
       - name
       type: object
@@ -1782,6 +1799,10 @@ components:
         reauthentication_enabled:
           type: boolean
         kafka_storage_size:
+          type: string
+        profile_id:
+          type: string
+        size_id:
           type: string
       required:
       - multi_az
