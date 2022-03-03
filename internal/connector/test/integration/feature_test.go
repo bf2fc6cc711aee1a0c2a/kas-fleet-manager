@@ -24,7 +24,7 @@ func TestMain(m *testing.M) {
 	h, teardown := test.NewHelperWithHooks(t, ocmServer,
 		func(c *config.ConnectorsConfig, kc *keycloak.KeycloakConfig) {
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
-			c.ConnectorEvalDuration, _ = time.ParseDuration("30m")
+			c.ConnectorEvalDuration, _ = time.ParseDuration("2s")
 			c.ConnectorEvalOrganizations = []string{"13640210"}
 
 			kc.KeycloakClientExpire = true

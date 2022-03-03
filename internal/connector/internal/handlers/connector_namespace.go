@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
@@ -59,7 +60,7 @@ func (h *ConnectorNamespaceHandler) Create(w http.ResponseWriter, r *http.Reques
 			if serr != nil {
 				return nil, serr
 			}
-			if err := h.checkAuthorizedAccess(userID, convResource, organisationId); err != nil {
+			if err := h.checkAuthorizedClusterAccess(userID, convResource, organisationId); err != nil {
 				return nil, err
 			}
 
@@ -91,7 +92,7 @@ func (h *ConnectorNamespaceHandler) Create(w http.ResponseWriter, r *http.Reques
 	handlers.Handle(w, r, cfg, http.StatusCreated)
 }
 
-func (h *ConnectorNamespaceHandler) checkAuthorizedAccess(userID string, convResource *dbapi.ConnectorNamespace,
+func (h *ConnectorNamespaceHandler) checkAuthorizedClusterAccess(userID string, convResource *dbapi.ConnectorNamespace,
 	organisationId string) *errors.ServiceError {
 
 	var ownerClusterIds []string
@@ -208,7 +209,7 @@ func (h *ConnectorNamespaceHandler) Delete(w http.ResponseWriter, r *http.Reques
 				handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			err := h.Service.Delete(r.Context(), connectorNamespaceId)
+			err := h.Service.Delete(connectorNamespaceId)
 			return nil, err
 		},
 	}
@@ -227,29 +228,17 @@ func (h *ConnectorNamespaceHandler) List(w http.ResponseWriter, r *http.Request)
 				return nil, errors.Unauthenticated("user not authenticated")
 			}
 			userId := auth.GetUsernameFromClaims(claims)
-			var ownerClusterIds []string
-			if err := h.Service.GetOwnerClusterIds(userId, &ownerClusterIds); err != nil {
-				return nil, err
-			}
 			organisationId := auth.GetOrgIdFromClaims(claims)
-			var orgClusterIds []string
-			if err := h.Service.GetOrgClusterIds(userId, organisationId, &orgClusterIds); err != nil {
-				return nil, err
+
+			userQuery := fmt.Sprintf("owner = '%s' or tenant_user_id = '%s' or tenant_organisation_id = '%s'",
+				userId, userId, organisationId)
+			if len(listArgs.Search) == 0 {
+				listArgs.Search = userQuery
+			} else {
+				listArgs.Search = fmt.Sprintf("%s AND %s", listArgs.Search, userQuery)
 			}
 
-			clusterIds := append(ownerClusterIds, orgClusterIds...)
-			if len(clusterIds) == 0 {
-				// user doesn't have access to any clusters
-				return public.ConnectorNamespaceList{
-					Kind:  "ConnectorNamespaceList",
-					Page:  1,
-					Size:  0,
-					Total: 0,
-					Items: make([]public.ConnectorNamespace, 0),
-				}, nil
-			}
-
-			resources, paging, serviceError := h.Service.List(ctx, clusterIds, listArgs)
+			resources, paging, serviceError := h.Service.List(ctx, nil, listArgs)
 			if serviceError != nil {
 				return nil, serviceError
 			}

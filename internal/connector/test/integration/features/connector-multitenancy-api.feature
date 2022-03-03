@@ -111,22 +111,47 @@ Feature: connector namespaces API
     """
     And I store the ".id" selection from the response as ${namespace_id}
 
-   # Delete eval namespace
-    Given I am logged in as "<user>"
-    When I DELETE path "/v1/kafka_connector_namespaces/${namespace_id}"
-    Then the response code should be 204
-    And I GET path "/v1/kafka_connector_namespaces"
-    And the response code should be 200
-    And the response should match json:
+    # eval namespace MUST be in list of user's namespaces
+    Given I GET path "/v1/kafka_connector_namespaces/"
+    Then the response code should be 200
      """
      {
-       "items": [],
+       "items": [
+         {
+           "cluster_id": "${connector_cluster_id}",
+           "href": "${response.items[0].href}",
+           "id": "${namespace_id}",
+           "kind": "ConnectorNamespace",
+           "name": "<user>_namespace",
+           "owner": "${<user_id>}",
+           "version": ${response.items[0].version}
+           "created_at": "${response.items[0].created_at}",
+           "modified_at": "${response.items[0].modified_at}",
+           "expiration": "${response.expiration}",
+           "tenant": {
+             "kind": "user",
+             "id": "${<user_id>}"
+           },
+           "annotations": [
+             {
+               "name": "connector_mgmt.api.openshift.com/profile",
+               "value": "default-profile"
+             }
+           ],
+         }
+       ],
        "kind": "ConnectorNamespaceList",
        "page": 1,
-       "size": 0,
-       "total": 0
+       "size": 1,
+       "total": 1
      }
      """
+
+    # Eval namespace should expire and get deleted after 2 seconds as configured in internal/connector/test/integration/feature_test.go:27
+    Given I sleep for 3 seconds
+    And I GET path "/v1/kafka_connector_namespaces/"
+    Then the response code should be 200
+    And the ".total" selection from the response should match "0"
 
    # cleanup eval cluster
     Given I am logged in as "Gru"
