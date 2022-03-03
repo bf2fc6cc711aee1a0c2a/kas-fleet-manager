@@ -9,8 +9,8 @@
 
 package public
 
-// ConnectorNamespaceRequestMeta struct for ConnectorNamespaceRequestMeta
-type ConnectorNamespaceRequestMeta struct {
+// ConnectorNamespacePatchRequest A connector namespace patch request
+type ConnectorNamespacePatchRequest struct {
 	Name        string                                     `json:"name,omitempty"`
 	Annotations []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
 }

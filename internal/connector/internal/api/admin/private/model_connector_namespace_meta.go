@@ -18,6 +18,6 @@ type ConnectorNamespaceMeta struct {
 	Owner       string                                     `json:"owner,omitempty"`
 	CreatedAt   time.Time                                  `json:"created_at,omitempty"`
 	ModifiedAt  time.Time                                  `json:"modified_at,omitempty"`
-	Name        string                                     `json:"name"`
+	Name        string                                     `json:"name,omitempty"`
 	Annotations []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
 }
