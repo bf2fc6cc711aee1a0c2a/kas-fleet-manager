@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
@@ -1204,27 +1203,6 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 			}
 		})
 	}
-}
-
-func buildKafka(modifyFn func(kafkaRequest *dbapi.KafkaRequest)) *dbapi.KafkaRequest {
-	kafkaRequest := &dbapi.KafkaRequest{
-		Meta: api.Meta{
-			ID:        testID,
-			DeletedAt: gorm.DeletedAt{Valid: true},
-		},
-		Region:        testKafkaRequestRegion,
-		ClusterID:     testClusterID,
-		CloudProvider: testKafkaRequestProvider,
-		Name:          testKafkaRequestName,
-		MultiAZ:       false,
-		Owner:         testUser,
-		SizeId:        "x1",
-		ProfileId:     "standard",
-	}
-	if modifyFn != nil {
-		modifyFn(kafkaRequest)
-	}
-	return kafkaRequest
 }
 
 func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
