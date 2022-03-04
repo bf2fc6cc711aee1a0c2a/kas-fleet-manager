@@ -27,9 +27,9 @@ type KafkaConfig struct {
 	KafkaCapacity                  KafkaCapacityConfig `yaml:"kafka_capacity_config"`
 	KafkaCapacityConfigFile        string              `yaml:"kafka_capacity_config_file"`
 
-	KafkaLifespan       *KafkaLifespanConfig       `json:"kafka_lifespan"`
-	Quota               *KafkaQuotaConfig          `json:"kafka_quota"`
-	SupportedKafkaSizes *KafkaSupportedSizesConfig `json:"kafka_supported_sizes"`
+	KafkaLifespan          *KafkaLifespanConfig               `json:"kafka_lifespan"`
+	Quota                  *KafkaQuotaConfig                  `json:"kafka_quota"`
+	SupportedInstanceTypes *KafkaSupportedInstanceTypesConfig `json:"kafka_supported_sizes"`
 }
 
 func NewKafkaConfig() *KafkaConfig {
@@ -41,7 +41,7 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaCapacityConfigFile:        "config/kafka-capacity-config.yaml",
 		KafkaLifespan:                  NewKafkaLifespanConfig(),
 		Quota:                          NewKafkaQuotaConfig(),
-		SupportedKafkaSizes:            NewKafkaSupportedSizesConfig(),
+		SupportedInstanceTypes:         NewKafkaSupportedInstanceTypesConfig(),
 	}
 }
 
@@ -55,7 +55,7 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KafkaDomainName, "kafka-domain-name", c.KafkaDomainName, "The domain name to use for Kafka instances")
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
 	fs.BoolVar(&c.Quota.AllowEvaluatorInstance, "allow-evaluator-instance", c.Quota.AllowEvaluatorInstance, "Allow the creation of kafka evaluator instances")
-	fs.StringVar(&c.SupportedKafkaSizes.SupportedKafkaSizesConfigFile, "supported-kafka-sizes-config-file", c.SupportedKafkaSizes.SupportedKafkaSizesConfigFile, "File containing the supported kafka sizes configuration")
+	fs.StringVar(&c.SupportedInstanceTypes.ConfigurationFile, "supported-kafka-instance-types-config-file", c.SupportedInstanceTypes.ConfigurationFile, "File containing the supported instance types configuration")
 }
 
 func (c *KafkaConfig) ReadFiles() error {
@@ -76,13 +76,13 @@ func (c *KafkaConfig) ReadFiles() error {
 		return err
 	}
 
-	supportedKafkaSizesContents, err := shared.ReadFile(c.SupportedKafkaSizes.SupportedKafkaSizesConfigFile)
+	SupportedInstanceTypesFileContent, err := shared.ReadFile(c.SupportedInstanceTypes.ConfigurationFile)
 	if err != nil {
 		return err
 	}
-	return yaml.UnmarshalStrict([]byte(supportedKafkaSizesContents), &c.SupportedKafkaSizes.SupportedKafkaSizesConfig)
+	return yaml.UnmarshalStrict([]byte(SupportedInstanceTypesFileContent), &c.SupportedInstanceTypes.Configuration)
 }
 
 func (c *KafkaConfig) Validate(env *environments.Env) error {
-	return c.SupportedKafkaSizes.SupportedKafkaSizesConfig.validate()
+	return c.SupportedInstanceTypes.Configuration.validate()
 }
