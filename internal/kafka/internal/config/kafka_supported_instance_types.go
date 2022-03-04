@@ -56,6 +56,7 @@ type KafkaInstanceSize struct {
 	MaxDataRetentionPeriod      string `yaml:"maxDataRetentionPeriod"`
 	MaxConnectionAttemptsPerSec int    `yaml:"maxConnectionAttemptsPerSec"`
 	QuotaConsumed               int    `yaml:"quotaConsumed"`
+	QuotaType                   string `yaml:"quotaType"`
 }
 
 // validates Kafka instance size configuration to ensure the following:
@@ -65,7 +66,7 @@ type KafkaInstanceSize struct {
 // - any int values must not be less than or equal to zero
 func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 	if k.EgressThroughputPerSec == "" || k.IngressThroughputPerSec == "" ||
-		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize == "" || k.Id == "" {
+		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize == "" || k.Id == "" || k.QuotaType == "" {
 		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' is missing required parameters.", k.Id, instanceTypeId)
 	}
 
