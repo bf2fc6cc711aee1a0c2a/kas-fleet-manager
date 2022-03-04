@@ -209,7 +209,7 @@ func (k *connectorNamespaceService) Delete(namespaceId string) *errors.ServiceEr
 
 		if err := dbConn.Where("id = ?", namespaceId).
 			First(&dbapi.ConnectorNamespace{}).Error; err != nil {
-			return services.HandleGetError("Connector cluster", "id", namespaceId, err)
+			return services.HandleGetError("Connector namespace", "id", namespaceId, err)
 		}
 
 		// TODO do this asynchronously in a namespace reconciler
