@@ -1,12 +1,12 @@
-# This configuration defines a list of supported Kafka instance profile and their sizes for KAS Fleet Manager. 
-# Modify this file to add additional Kafka instance profiles or sizes or change the values of the default profiles listed below.
+# This configuration defines a list of supported Kafka instance types and their available sizes for KAS Fleet Manager. 
+# Modify this file to add additional Kafka instance types and sizes or change the default values listed below.
 # 
-# The following properties must be defined for each Kafka profile:
-#   - id: Identifier for the Kafka profile. Each profile name should be unique.
-#   - sizes: A list of Kafka instance sizes available for this profile (should not be an empty list)
+# The following properties must be defined for each Kafka instance type:
+#   - id: Identifier for the Kafka instance type. Each instance type name should be unique.
+#   - sizes: A list of sizes available for this instance type (should not be an empty list)
 #
-# The following properties must be defined for each Kafka instance size (all values must be larger than '0'):
-#   - id: The Kafka instance size identifier. Each size id should be unique.
+# The following properties must be defined for each size (all values must be larger than '0'):
+#   - id: The size identifier. Each size id should be unique.
 #   - ingressThroughputPerSec: Maximum limit for ingress throughput per second (MB/s).
 #   - egressThroughputPerSec: Maximum limit for egress throughput per second (MB/s).
 #   - totalMaxConnections: Maximum client connections allowed.
@@ -16,7 +16,7 @@
 #   - maxPartitions: Maximum partitions for all topics combined.
 #   - cost: Quota cost for selecting this size for a Kafka instance.
 ---
-supported_kafka_sizes:
+supported_instance_types:
   - id: standard
     sizes:
     - id: x1
