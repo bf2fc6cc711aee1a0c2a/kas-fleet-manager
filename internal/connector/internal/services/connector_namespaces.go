@@ -12,6 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
+	"gorm.io/gorm"
 	"math/rand"
 	"time"
 )
@@ -204,45 +205,23 @@ func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []strin
 }
 
 func (k *connectorNamespaceService) Delete(namespaceId string) *errors.ServiceError {
-	dbConn := k.connectionFactory.New()
-	dbConn = dbConn.Where("id = ?", namespaceId)
-	if err := dbConn.Delete(&dbapi.ConnectorNamespace{}).Error; err != nil {
-		return errors.GeneralError("failed to delete connector namespace: %v", err)
-	}
+	if err := k.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
 
-	// Clear the namespace from any connectors that were using it.
-	// TODO do this asynchronously in a namespace reconciler
-	dbConn = k.connectionFactory.New()
-	{
-		rows, err := dbConn.
-			Model(&dbapi.Connector{}).
-			Select("id").
-			Where("namespace_id = ?", namespaceId).
-			Rows()
-		if err != nil {
-			return errors.GeneralError("Unable to find connector using namespace %s: %s", namespaceId, err)
+		if err := dbConn.Where("id = ?", namespaceId).
+			First(&dbapi.ConnectorNamespace{}).Error; err != nil {
+			return services.HandleGetError("Connector cluster", "id", namespaceId, err)
 		}
-		defer rows.Close()
-		for rows.Next() {
-			connector := dbapi.Connector{}
-			err := dbConn.ScanRows(rows, &connector)
-			if err != nil {
-				return errors.GeneralError("Unable to scan connector: %s", err)
-			}
 
-			if err := dbConn.Model(&connector).Update("namespace_id", nil).Error; err != nil {
-				return errors.GeneralError("Failed to update connector: %s", err)
-			}
-
-			status := dbapi.ConnectorStatus{}
-			status.ID = connector.ID
-			status.NamespaceID = nil
-			if err := dbConn.Model(&status).
-				Update("namespace_id", nil).
-				Update("phase", dbapi.ConnectorStatusPhaseAssigning).Error; err != nil {
-				return errors.GeneralError("Failed to update connector status: %s", err)
-			}
+		// TODO do this asynchronously in a namespace reconciler
+		if err := dbConn.Where("id = ?", namespaceId).
+			Delete(&dbapi.ConnectorNamespace{}).Error; err != nil {
+			return services.HandleDeleteError("Connector namespace", "id", namespaceId, err)
 		}
+
+		// Clear the namespace from any connectors that were using it.
+		return removeConnectorsFromNamespace(dbConn, "connector_namespaces.id = ?", namespaceId)
+	}); err != nil {
+		return services.HandleDeleteError("Connector namespace", "id", namespaceId, err)
 	}
 
 	// TODO: increment connector namespace metrics
@@ -271,7 +250,7 @@ func (k *connectorNamespaceService) CreateDefaultNamespace(ctx context.Context, 
 			},
 		},
 		ClusterId: connectorCluster.ID,
-		Kind: kind,
+		Kind:      kind,
 	}, owner, organisationId)
 
 	if err != nil {
@@ -287,4 +266,19 @@ func (k *connectorNamespaceService) GetExpiredNamespaces() (dbapi.ConnectorNames
 		return nil, errors.GeneralError("Error retrieving expired namespaces: %s", err)
 	}
 	return result, nil
+}
+
+func removeConnectorsFromNamespace(dbConn *gorm.DB, query interface{}, values ...interface{}) error {
+	namespaceSubQuery :=dbConn.Table("connector_namespaces").Select("id").Where(query, values)
+	if err := dbConn.Select("namespace_id").
+		Where("namespace_id IN (?)", namespaceSubQuery).
+		Updates(&dbapi.Connector{ NamespaceId: nil}).Error; err != nil {
+		return services.HandleUpdateError("Connector", err)
+	}
+	if err := dbConn.Select("namespace_id", "phase").
+		Where("namespace_id IN (?)", namespaceSubQuery).
+		Updates(&dbapi.ConnectorStatus{NamespaceID: nil, Phase: "assigning"}).Error; err != nil {
+		return services.HandleUpdateError("Connector", err)
+	}
+	return nil
 }
