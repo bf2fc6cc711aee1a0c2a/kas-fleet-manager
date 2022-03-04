@@ -15,12 +15,16 @@
 #   - maxDataRetentionPeriod: Maximum duration(ISO8601) for retaining data.
 #   - maxPartitions: Maximum partitions for all topics combined.
 <<<<<<< HEAD
+<<<<<<< HEAD
 #   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
 #   - quotaType: Quota type that will be consumed when this size is selected.
 #   - capacityConsumed: Data plane cluster capacity consumed by this Kafka instance size (only used for manual scaling)
 =======
 #   - cost: Quota cost for selecting this size for a Kafka instance.
 >>>>>>> 49daa039 (refactor: rename supported_kafka_sizes to supported_instance_types)
+=======
+#   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
+>>>>>>> 86786087 (refactor: rename cost to quotaConsumed)
 ---
 supported_instance_types:
   - id: standard
