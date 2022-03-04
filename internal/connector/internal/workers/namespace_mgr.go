@@ -2,7 +2,6 @@ package workers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/golang/glog"
@@ -56,7 +55,7 @@ func (m *NamespaceManager) Reconcile() []error {
 	for _, namespace := range namespaces {
 		id := namespace.ID
 		if err := m.namespaceService.Delete(id); err != nil {
-			errs = append(errs, errors.GeneralError("Error deleting namespace %s: %s", id, err))
+			errs = append(errs, err)
 			success--
 		}
 	}

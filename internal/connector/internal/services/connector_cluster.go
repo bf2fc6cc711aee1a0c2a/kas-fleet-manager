@@ -195,101 +195,40 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 		return errors.Unauthenticated("user not authenticated")
 	}
 
-	dbConn := k.connectionFactory.New()
-	var resource dbapi.ConnectorCluster
-	if err := dbConn.Where("owner = ? AND id = ?", owner, id).First(&resource).Error; err != nil {
-		return services.HandleGetError("Connector cluster", "id", id, err)
-	}
+	if err := k.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
 
-	if err := dbConn.Delete(&resource).Error; err != nil {
-		return errors.GeneralError("unable to delete connector with id %s: %s", resource.ID, err)
-	}
+		var resource dbapi.ConnectorCluster
+		if err := dbConn.Where("owner = ? AND id = ?", owner, id).First(&resource).Error; err != nil {
+			return services.HandleGetError("Connector cluster", "id", id, err)
+		}
 
-	// Delete all deployments assigned to the cluster..
-	dbConn = k.connectionFactory.New()
-	{
-		rows, err := dbConn.
-			Model(&dbapi.ConnectorDeployment{}).
-			Select("id").
-			Where("cluster_id = ?", id).
-			Rows()
-		if err != nil {
-			return errors.GeneralError("unable find deployments of cluster %s: %s", id, err)
+		// delete cluster
+		if err := dbConn.Delete(&dbapi.ConnectorCluster{}, "id = ?", id).Error; err != nil {
+			return services.HandleDeleteError("Connector cluster", "id", id, err)
 		}
-		defer rows.Close()
-		for rows.Next() {
-			deployment := dbapi.ConnectorDeployment{}
-			err := dbConn.ScanRows(rows, &deployment)
-			if err != nil {
-				return errors.GeneralError("Unable to scan connector deployment: %s", err)
-			}
-			deploymentStatus := dbapi.ConnectorDeploymentStatus{
-				Meta: api.Meta{
-					ID: deployment.ID,
-				},
-			}
-			if err := dbConn.Delete(&deploymentStatus).Error; err != nil {
-				return errors.GeneralError("failed to delete connector deployment status: %s", err)
-			}
-			if err := dbConn.Delete(&deployment).Error; err != nil {
-				return errors.GeneralError("failed to delete connector deployment: %s", err)
-			}
-		}
-	}
 
-	// Delete all namespaces assigned to the cluster..
-	dbConn = k.connectionFactory.New()
-	{
-		rows, err := dbConn.
-			Model(&dbapi.ConnectorNamespace{}).
-			Select("id").
-			Where("cluster_id = ?", id).
-			Rows()
-		if err != nil {
-			return errors.GeneralError("unable find namespaces of cluster %s: %s", id, err)
+		// Delete all deployments assigned to the cluster..
+		if err := dbConn.Delete(&dbapi.ConnectorDeploymentStatus{}, "id IN (?)",
+			dbConn.Table("connector_deployments").Select("id").Where("cluster_id = ?", id)).Error; err != nil {
+			return services.HandleDeleteError("Connector deployment status", "cluster_id", id, err)
 		}
-		defer rows.Close()
-		for rows.Next() {
-			namespace := dbapi.ConnectorNamespace{}
-			err := dbConn.ScanRows(rows, &namespace)
-			if err != nil {
-				return errors.GeneralError("Unable to scan connector namespace: %s", err)
-			}
-			if err := dbConn.Delete(&namespace).Error; err != nil {
-				return errors.GeneralError("failed to delete connector namespace: %s", err)
-			}
+		if err := dbConn.Delete(&dbapi.ConnectorDeployment{}, "cluster_id = ?", id).Error; err != nil {
+			return services.HandleDeleteError("Connector deployment", "cluster_id", id, err)
 		}
-	}
 
-	// Clear the cluster from any connectors that were using it.
-	{
-		rows, err := dbConn.
-			Model(&dbapi.Connector{}).
-			Select("connectors.id").
-			Joins("INNER JOIN connector_namespaces ON connector_namespaces.id = connectors.namespace_id").
-			Where("connector_namespaces.cluster_id = ?", id).
-			Rows()
-		if err != nil {
-			return errors.GeneralError("unable find connector using cluster %s: %s", id, err)
+		// Delete all namespaces assigned to the cluster..
+		if err := dbConn.Delete(&dbapi.ConnectorNamespace{}, "cluster_id = ?", id).Error; err != nil {
+			return services.HandleDeleteError("Connector namespace", "cluster_id", id, err)
 		}
-		defer rows.Close()
-		for rows.Next() {
-			connector := dbapi.Connector{}
-			err := dbConn.ScanRows(rows, &connector)
-			if err != nil {
-				return errors.GeneralError("Unable to scan connector: %s", err)
-			}
 
-			if err := dbConn.Model(&connector).Update("namespace_id", nil).Error; err != nil {
-				return errors.GeneralError("failed to update connector: %s", err)
-			}
-
-			status := dbapi.ConnectorStatus{}
-			status.ID = connector.ID
-			if err := dbConn.Model(&status).Update("phase", "assigning").Error; err != nil {
-				return errors.GeneralError("failed to update connector status: %s", err)
-			}
+		// Clear the cluster from any connectors that were using it.
+		if err := removeConnectorsFromNamespace(dbConn, "connector_namespaces.cluster_id = ?", id); err != nil {
+			return err
 		}
+
+		return nil
+	}); err != nil {
+		return services.HandleDeleteError("Connector cluster", "id", id, err)
 	}
 
 	glog.V(5).Infof("Removing agent service account for connector cluster %s", id)
@@ -875,9 +814,9 @@ func (k *connectorClusterService) GetAvailableDeploymentOperatorUpgrades(listArg
 	type Result struct {
 		ConnectorID        string
 		DeploymentID       string
-		ConnectorTypeID string
-		NamespaceID     string
-		Channel         string
+		ConnectorTypeID    string
+		NamespaceID        string
+		Channel            string
 		ConnectorOperators api.JSON
 	}
 
