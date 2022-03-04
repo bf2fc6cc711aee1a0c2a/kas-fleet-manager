@@ -157,10 +157,10 @@ parameters:
   description: A list of supported cloud providers in a yaml format.
   value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, eval: {}}}]}]"
 
-- name: SUPPORTED_KAFKA_SIZES
-  displayName: Supported Kafka Sizes
-  description: A list of supported Kafka sizes in a yaml format.
-  value: "[{id: eval, sizes: [{id: x1, ingressThroughputPerSec: 30Mi, egressThroughputPerSec: 30Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1000, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, cost: 1}]}, {id: standard, sizes: [{id: x1, ingressThroughputPerSec: 50Mi, egressThroughputPerSec: 100Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1500, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, cost: 1}]}]"
+- name: SUPPORTED_INSTANCE_TYPES
+  displayName: Supported Kafka instance types
+  description: A list of supported Kafka instance types in a yaml format.
+  value: "[{id: eval, sizes: [{id: x1, ingressThroughputPerSec: 30Mi, egressThroughputPerSec: 30Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1000, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, capacityConsumed: 1, quotaType: rhosak, quotaConsumed: 1}]}, {id: standard, sizes: [{id: x1, ingressThroughputPerSec: 50Mi, egressThroughputPerSec: 100Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1500, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, capacityConsumed: 1, quotaType: rhosak, quotaConsumed: 1}]}]"
 
 - name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
   displayName: Enable Kafka TLS
@@ -483,12 +483,12 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-kafka-sizes-config
+      name: kas-fleet-manager-kafka-instance-types-config
       annotations:
         qontract.recycle: "true"
     data:
-      kafka-sizes-configuration.yaml: |-
-        supported_kafka_sizes: ${SUPPORTED_KAFKA_SIZES}  
+      kafka-instance-types-configuration.yaml: |-
+        supported_instance_types: ${SUPPORTED_INSTANCE_TYPES}  
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -651,9 +651,9 @@ objects:
           - name: kas-fleet-manager-providers-config
             configMap:
               name: kas-fleet-manager-providers-config
-          - name: kas-fleet-manager-kafka-sizes-config
+          - name: kas-fleet-manager-kafka-instance-types-config
             configMap:
-              name: kas-fleet-manager-kafka-sizes-config              
+              name: kas-fleet-manager-kafka-instance-types-config              
           - name: kas-fleet-manager-allowed-users-config
             configMap:
               name: kas-fleet-manager-allowed-users-config
@@ -728,9 +728,9 @@ objects:
             - name: kas-fleet-manager-providers-config
               mountPath: /config/provider-configuration.yaml
               subPath: provider-configuration.yaml
-            - name: kas-fleet-manager-kafka-sizes-config
-              mountPath: /config/kafka-sizes-configuration.yaml
-              subPath: kafka-sizes-configuration.yaml              
+            - name: kas-fleet-manager-kafka-instance-types-config
+              mountPath: /config/kafka-instance-types-configuration.yaml
+              subPath: kafka-instance-types-configuration.yaml              
             - name: kas-fleet-manager-allowed-users-config
               mountPath: /config/quota-management-list-configuration.yaml
               subPath: quota-management-list-configuration.yaml
