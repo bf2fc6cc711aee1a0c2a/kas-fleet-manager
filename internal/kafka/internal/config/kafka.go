@@ -26,8 +26,8 @@ type KafkaConfig struct {
 	KafkaTLSKeyFile                string              `json:"kafka_tls_key_file"`
 	EnableKafkaExternalCertificate bool                `json:"enable_kafka_external_certificate"`
 	KafkaDomainName                string              `json:"kafka_domain_name"`
-	KafkaCapacity                  KafkaCapacityConfig `json:"kafka_capacity_config"`
-	KafkaCapacityConfigFile        string              `json:"kafka_capacity_config_file"`
+	KafkaCapacity                  KafkaCapacityConfig `yaml:"kafka_capacity_config"`
+	KafkaCapacityConfigFile        string              `yaml:"kafka_capacity_config_file"`
 	BrowserUrl                     string              `json:"browser_url"`
 
 	KafkaLifespan          *KafkaLifespanConfig               `json:"kafka_lifespan"`
