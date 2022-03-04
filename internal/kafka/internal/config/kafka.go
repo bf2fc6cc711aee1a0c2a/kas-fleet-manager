@@ -2,173 +2,108 @@ package config
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	"github.com/senseyeio/duration"
-	"k8s.io/apimachinery/pkg/api/resource"
+	"github.com/spf13/pflag"
+	"gopkg.in/yaml.v2"
 )
 
-type KafkaInstanceType struct {
-	Id    string              `yaml:"id"`
-	Sizes []KafkaInstanceSize `yaml:"sizes"`
+type KafkaCapacityConfig struct {
+	IngressEgressThroughputPerSec string `yaml:"ingressEgressThroughputPerSec"`
+	TotalMaxConnections           int    `yaml:"totalMaxConnections"`
+	MaxDataRetentionSize          string `yaml:"maxDataRetentionSize"`
+	MaxPartitions                 int    `yaml:"maxPartitions"`
+	MaxDataRetentionPeriod        string `yaml:"maxDataRetentionPeriod"`
+	MaxConnectionAttemptsPerSec   int    `yaml:"maxConnectionAttemptsPerSec"`
 }
 
-// validates kafka instance type config to ensure the following:
-// - id must be defined and included in the valid instance type id list
-// - sizes cannot be an empty list and each size id must be unique
-func (kp *KafkaInstanceType) validate() error {
-	if kp.Id == "" || len(kp.Sizes) == 0 {
-		return fmt.Errorf("Kafka instance type '%s' is missing required parameters.", kp.Id)
-	}
+type KafkaConfig struct {
+	KafkaTLSCert                   string              `json:"kafka_tls_cert"`
+	KafkaTLSCertFile               string              `json:"kafka_tls_cert_file"`
+	KafkaTLSKey                    string              `json:"kafka_tls_key"`
+	KafkaTLSKeyFile                string              `json:"kafka_tls_key_file"`
+	EnableKafkaExternalCertificate bool                `json:"enable_kafka_external_certificate"`
+	KafkaDomainName                string              `json:"kafka_domain_name"`
+	KafkaCapacity                  KafkaCapacityConfig `yaml:"kafka_capacity_config"`
+	KafkaCapacityConfigFile        string              `yaml:"kafka_capacity_config_file"`
 
-	if !shared.Contains(types.ValidKafkaInstanceTypes, kp.Id) {
-		return fmt.Errorf("kafka instance type id '%s' is not valid. Valid kafka instance types are: '%v'", kp.Id, types.ValidKafkaInstanceTypes)
-	}
-
-	existingSizes := make(map[string]int, len(kp.Sizes))
-
-	for _, kafkaInstanceSize := range kp.Sizes {
-		if _, ok := existingSizes[kafkaInstanceSize.Id]; ok {
-			return fmt.Errorf("Kafka instance size '%s' for instance type '%s' was defined more than once.", kafkaInstanceSize.Id, kp.Id)
-		}
-		existingSizes[kafkaInstanceSize.Id]++
-
-		if err := kafkaInstanceSize.validate(kp.Id); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	KafkaLifespan          *KafkaLifespanConfig               `json:"kafka_lifespan"`
+	Quota                  *KafkaQuotaConfig                  `json:"kafka_quota"`
+	SupportedInstanceTypes *KafkaSupportedInstanceTypesConfig `json:"kafka_supported_sizes"`
 }
 
-type KafkaInstanceSize struct {
-	Id                          string `yaml:"id"`
-	IngressThroughputPerSec     string `yaml:"ingressThroughputPerSec"`
-	EgressThroughputPerSec      string `yaml:"egressThroughputPerSec"`
-	TotalMaxConnections         int    `yaml:"totalMaxConnections"`
-	MaxDataRetentionSize        string `yaml:"maxDataRetentionSize"`
-	MaxPartitions               int    `yaml:"maxPartitions"`
-	MaxDataRetentionPeriod      string `yaml:"maxDataRetentionPeriod"`
-	MaxConnectionAttemptsPerSec int    `yaml:"maxConnectionAttemptsPerSec"`
-	QuotaConsumed               int    `yaml:"quotaConsumed"`
-	QuotaType                   string `yaml:"quotaType"`
-	CapacityConsumed            int    `yaml:"capacityConsumed"`
+func NewKafkaConfig() *KafkaConfig {
+	return &KafkaConfig{
+		KafkaTLSCertFile:               "secrets/kafka-tls.crt",
+		KafkaTLSKeyFile:                "secrets/kafka-tls.key",
+		EnableKafkaExternalCertificate: false,
+		KafkaDomainName:                "kafka.bf2.dev",
+		KafkaCapacityConfigFile:        "config/kafka-capacity-config.yaml",
+		KafkaLifespan:                  NewKafkaLifespanConfig(),
+		Quota:                          NewKafkaQuotaConfig(),
+		SupportedInstanceTypes:         NewKafkaSupportedInstanceTypesConfig(),
+	}
 }
 
-// validates Kafka instance size configuration to ensure the following:
-//
-// - all properties must be defined
-// - any non-id string values must be parseable
-// - any int values must not be less than or equal to zero
-func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
-	if k.EgressThroughputPerSec == "" || k.IngressThroughputPerSec == "" ||
-		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize == "" || k.Id == "" || k.QuotaType == "" {
-		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' is missing required parameters.", k.Id, instanceTypeId)
-	}
+func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&c.KafkaTLSCertFile, "kafka-tls-cert-file", c.KafkaTLSCertFile, "File containing kafka certificate")
+	fs.StringVar(&c.KafkaTLSKeyFile, "kafka-tls-key-file", c.KafkaTLSKeyFile, "File containing kafka certificate private key")
+	fs.BoolVar(&c.EnableKafkaExternalCertificate, "enable-kafka-external-certificate", c.EnableKafkaExternalCertificate, "Enable custom certificate for Kafka TLS")
+	fs.StringVar(&c.KafkaCapacityConfigFile, "kafka-capacity-config-file", c.KafkaCapacityConfigFile, "File containing kafka capacity configurations")
+	fs.BoolVar(&c.KafkaLifespan.EnableDeletionOfExpiredKafka, "enable-deletion-of-expired-kafka", c.KafkaLifespan.EnableDeletionOfExpiredKafka, "Enable the deletion of kafkas when its life span has expired")
+	fs.IntVar(&c.KafkaLifespan.KafkaLifespanInHours, "kafka-lifespan", c.KafkaLifespan.KafkaLifespanInHours, "The desired lifespan of a Kafka instance")
+	fs.StringVar(&c.KafkaDomainName, "kafka-domain-name", c.KafkaDomainName, "The domain name to use for Kafka instances")
+	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
+	fs.BoolVar(&c.Quota.AllowEvaluatorInstance, "allow-evaluator-instance", c.Quota.AllowEvaluatorInstance, "Allow the creation of kafka evaluator instances")
+	fs.StringVar(&c.SupportedInstanceTypes.ConfigurationFile, "supported-kafka-instance-types-config-file", c.SupportedInstanceTypes.ConfigurationFile, "File containing the supported instance types configuration")
+}
 
-	egressThroughputQuantity, err := resource.ParseQuantity(k.EgressThroughputPerSec)
+func (c *KafkaConfig) ReadFiles() error {
+	err := shared.ReadFileValueString(c.KafkaTLSCertFile, &c.KafkaTLSCert)
 	if err != nil {
-		return fmt.Errorf("egressThroughputPerSec for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
+		return err
 	}
-
-	ingressThroughputQuantity, err := resource.ParseQuantity(k.IngressThroughputPerSec)
+	err = shared.ReadFileValueString(c.KafkaTLSKeyFile, &c.KafkaTLSKey)
 	if err != nil {
-		return fmt.Errorf("ingressThroughputPerSec for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
+		return err
 	}
-
-	maxDataRetentionSize, err := resource.ParseQuantity(k.MaxDataRetentionSize)
+	content, err := shared.ReadFile(c.KafkaCapacityConfigFile)
 	if err != nil {
-		return fmt.Errorf("maxDataRetentionSize for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
+		return err
 	}
-
-	maxDataRetentionPeriod, err := duration.ParseISO8601(k.MaxDataRetentionPeriod)
+	err = yaml.Unmarshal([]byte(content), &c.KafkaCapacity)
 	if err != nil {
-		return fmt.Errorf("maxDataRetentionPeriod for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
+		return err
 	}
 
-	if maxDataRetentionPeriod.IsZero() || egressThroughputQuantity.CmpInt64(1) < 0 ||
-		ingressThroughputQuantity.CmpInt64(1) < 0 || maxDataRetentionSize.CmpInt64(1) < 0 ||
-		k.TotalMaxConnections <= 0 || k.MaxPartitions <= 0 || k.MaxConnectionAttemptsPerSec <= 0 ||
-		k.QuotaConsumed < 1 || k.CapacityConsumed < 1 {
-		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' specifies a property value less than or equals to Zero.", k.Id, instanceTypeId)
+	SupportedInstanceTypesFileContent, err := shared.ReadFile(c.SupportedInstanceTypes.ConfigurationFile)
+	if err != nil {
+		return err
 	}
-
-	return nil
+	return yaml.UnmarshalStrict([]byte(SupportedInstanceTypesFileContent), &c.SupportedInstanceTypes.Configuration)
 }
 
-type SupportedKafkaInstanceTypesConfig struct {
-	SupportedKafkaInstanceTypes []KafkaInstanceType `yaml:"supported_instance_types"`
+func (c *KafkaConfig) Validate(env *environments.Env) error {
+	return c.SupportedInstanceTypes.Configuration.validate()
 }
 
-func (s *SupportedKafkaInstanceTypesConfig) validate() error {
-	existingInstanceTypes := make(map[string]int, len(s.SupportedKafkaInstanceTypes))
-
-	for _, KafkaInstanceType := range s.SupportedKafkaInstanceTypes {
-		if _, ok := existingInstanceTypes[KafkaInstanceType.Id]; ok {
-			return fmt.Errorf("Kafka instance type id '%s' was defined more than once.", KafkaInstanceType.Id)
-		}
-		existingInstanceTypes[KafkaInstanceType.Id]++
-
-		if err := KafkaInstanceType.validate(); err != nil {
-			return err
-		}
+func (c *KafkaConfig) GetFirstAvailableSize(instanceType string) (*KafkaInstanceSize, error) {
+	kafkaInstanceType, err := c.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
+	if err != nil {
+		return nil, err
 	}
-
-	return nil
-}
-
-type KafkaSupportedInstanceTypesConfig struct {
-	Configuration     SupportedKafkaInstanceTypesConfig
-	ConfigurationFile string
-}
-
-func NewKafkaSupportedInstanceTypesConfig() *KafkaSupportedInstanceTypesConfig {
-	return &KafkaSupportedInstanceTypesConfig{
-		ConfigurationFile: "config/kafka-instance-types-configuration.yaml",
+	if len(kafkaInstanceType.Sizes) < 1 || kafkaInstanceType.Sizes[0].Id == "" {
+		return nil, errors.New(errors.ErrorGeneral, fmt.Sprintf("Unable to get size for instance type: '%s'", instanceType))
 	}
+	return &kafkaInstanceType.Sizes[0], nil
 }
 
-func (s *SupportedKafkaInstanceTypesConfig) GetKafkaInstanceTypeByID(instanceType string) (*KafkaInstanceType, error) {
-	for _, t := range s.SupportedKafkaInstanceTypes {
-		if t.Id == instanceType {
-			ret := t
-			return &ret, nil
-		}
+func (c *KafkaConfig) GetKafkaInstanceSize(instanceType, sizeId string) (*KafkaInstanceSize, error) {
+	kafkaInstanceType, err := c.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
+	if err != nil {
+		return nil, err
 	}
-	return nil, fmt.Errorf("Unable to find kafka instance type for '%s'", instanceType)
-}
-
-func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(sizeId string) (*KafkaInstanceSize, error) {
-	for _, size := range kp.Sizes {
-		if size.Id == sizeId {
-			ret := size
-			return &ret, nil
-		}
-	}
-	return nil, fmt.Errorf("Kafka instance size id: '%s' not found for '%s' instance type", sizeId, kp.Id)
-}
-
-type Plan string
-
-func (p Plan) String() string {
-	return string(p)
-}
-
-func (p Plan) GetInstanceType() (string, error) {
-	t := strings.Split(strings.TrimSpace(p.String()), ".")
-	if len(t) != 2 {
-		return "", errors.New(errors.ErrorGeneral, fmt.Sprintf("Unsupported plan provided: '%s'", p))
-	}
-	return t[0], nil
-}
-
-func (p Plan) GetSizeID() (string, error) {
-	t := strings.Split(strings.TrimSpace(p.String()), ".")
-	if len(t) != 2 {
-		return "", errors.New(errors.ErrorGeneral, fmt.Sprintf("Unsupported plan provided: '%s'", p))
-	}
-	return t[1], nil
+	return kafkaInstanceType.GetKafkaInstanceSizeByID(sizeId)
 }
