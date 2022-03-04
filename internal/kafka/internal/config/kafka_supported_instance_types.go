@@ -3,15 +3,11 @@ package config
 import (
 	"fmt"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/senseyeio/duration"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
-
-var validKafkaInstanceTypeIds = []string{
-	"eval",
-	"standard",
-}
 
 type KafkaInstanceType struct {
 	Id    string              `yaml:"id"`
@@ -26,8 +22,8 @@ func (kp *KafkaInstanceType) validate() error {
 		return fmt.Errorf("Kafka instance type '%s' is missing required parameters.", kp.Id)
 	}
 
-	if !shared.Contains(validKafkaInstanceTypeIds, kp.Id) {
-		return fmt.Errorf("kafka instance type id '%s' is not valid. Valid kafka instance types are: '%v'", kp.Id, validKafkaInstanceTypeIds)
+	if !shared.Contains(types.ValidKafkaInstanceTypes, kp.Id) {
+		return fmt.Errorf("kafka instance type id '%s' is not valid. Valid kafka instance types are: '%v'", kp.Id, types.ValidKafkaInstanceTypes)
 	}
 
 	existingSizes := make(map[string]int, len(kp.Sizes))
