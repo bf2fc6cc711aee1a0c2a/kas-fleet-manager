@@ -830,7 +830,7 @@ objects:
             - --read-only-user-list-file=/config/read-only-user-list.yaml
             - --kafka-sre-user-list-file=/config/kafka-sre-user-list.yaml
             - --kafka-capacity-config-file=/config/kafka-capacity-config.yaml
-            - --supported-kafka-sizes-config-file=/config/kafka-sizes-configuration.yaml
+            - --supported-kafka-instance-types-config-file=/config/kafka-instance-types-configuration.yaml
             - --kafka-lifespan=${KAFKA_LIFE_SPAN}
             - --enable-deletion-of-expired-kafka=${ENABLE_KAFKA_LIFE_SPAN}
             - --aws-access-key-file=/secrets/service/aws.accesskey
