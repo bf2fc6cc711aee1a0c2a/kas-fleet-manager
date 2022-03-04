@@ -1,6 +1,6 @@
-# This configuration defines a list of supported Kafka instance types and their available sizes for KAS Fleet Manager. 
+# This configuration defines a list of supported Kafka instance types and their available sizes for KAS Fleet Manager.
 # Modify this file to add additional Kafka instance types and sizes or change the default values listed below.
-# 
+#
 # The following properties must be defined for each Kafka instance type:
 #   - id: Identifier for the Kafka instance type. Each instance type name should be unique.
 #   - sizes: A list of sizes available for this instance type (should not be an empty list)
@@ -14,20 +14,9 @@
 #   - maxDataRetentionSize: Maximum storage (GB).
 #   - maxDataRetentionPeriod: Maximum duration(ISO8601) for retaining data.
 #   - maxPartitions: Maximum partitions for all topics combined.
-<<<<<<< HEAD
-<<<<<<< HEAD
 #   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
 #   - quotaType: Quota type that will be consumed when this size is selected.
-<<<<<<< HEAD
 #   - capacityConsumed: Data plane cluster capacity consumed by this Kafka instance size (only used for manual scaling)
-=======
-#   - cost: Quota cost for selecting this size for a Kafka instance.
->>>>>>> 49daa039 (refactor: rename supported_kafka_sizes to supported_instance_types)
-=======
-#   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
->>>>>>> 86786087 (refactor: rename cost to quotaConsumed)
-=======
->>>>>>> 123b9b5f (feat: add quotaType to the supported_instance_types config)
 ---
 supported_instance_types:
   - id: standard
