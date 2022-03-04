@@ -55,7 +55,7 @@ type KafkaInstanceSize struct {
 	MaxPartitions               int    `yaml:"maxPartitions"`
 	MaxDataRetentionPeriod      string `yaml:"maxDataRetentionPeriod"`
 	MaxConnectionAttemptsPerSec int    `yaml:"maxConnectionAttemptsPerSec"`
-	Cost                        int    `yaml:"cost"`
+	QuotaConsumed               int    `yaml:"quotaConsumed"`
 }
 
 // validates Kafka instance size configuration to ensure the following:
@@ -92,7 +92,7 @@ func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 	if maxDataRetentionPeriod.IsZero() || egressThroughputQuantity.CmpInt64(1) < 0 ||
 		ingressThroughputQuantity.CmpInt64(1) < 0 || maxDataRetentionSize.CmpInt64(1) < 0 ||
 		k.TotalMaxConnections <= 0 || k.MaxPartitions <= 0 || k.MaxConnectionAttemptsPerSec <= 0 ||
-		k.Cost < 1 {
+		k.QuotaConsumed < 1 {
 		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' specifies a property value less than or equals to Zero.", k.Id, instanceTypeId)
 	}
 
