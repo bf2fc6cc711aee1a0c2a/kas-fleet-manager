@@ -507,7 +507,7 @@ docker/login/internal:
 .PHONY: docker/login/internal
 
 # Build the binary and image
-image/build: binary
+image/build: 
 	docker --config="${DOCKER_CONFIG}" build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
 .PHONY: image/build
 
@@ -518,7 +518,7 @@ image/push: image/build
 
 # build binary and image for OpenShift deployment
 image/build/internal: IMAGE_TAG ?= $(image_tag)
-image/build/internal: binary
+image/build/internal: 
 	docker build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
 .PHONY: image/build/internal
 
