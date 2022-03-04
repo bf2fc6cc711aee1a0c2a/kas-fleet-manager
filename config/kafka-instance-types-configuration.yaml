@@ -14,7 +14,7 @@
 #   - maxDataRetentionSize: Maximum storage (GB).
 #   - maxDataRetentionPeriod: Maximum duration(ISO8601) for retaining data.
 #   - maxPartitions: Maximum partitions for all topics combined.
-#   - cost: Quota cost for selecting this size for a Kafka instance.
+#   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
 ---
 supported_instance_types:
   - id: standard
@@ -27,7 +27,7 @@ supported_instance_types:
       maxDataRetentionSize: "1000Gi"
       maxDataRetentionPeriod: "P14D"
       maxPartitions: 1500
-      cost: 1
+      quotaConsumed: 1
   - id: eval
     sizes:
     - id: x1
@@ -38,4 +38,4 @@ supported_instance_types:
       maxDataRetentionSize: "1000Gi"
       maxDataRetentionPeriod: "P14D"
       maxPartitions: 1000
-      cost: 1
+      quotaConsumed: 1
