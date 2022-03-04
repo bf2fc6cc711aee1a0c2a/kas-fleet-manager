@@ -18,6 +18,7 @@
 <<<<<<< HEAD
 #   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
 #   - quotaType: Quota type that will be consumed when this size is selected.
+<<<<<<< HEAD
 #   - capacityConsumed: Data plane cluster capacity consumed by this Kafka instance size (only used for manual scaling)
 =======
 #   - cost: Quota cost for selecting this size for a Kafka instance.
@@ -25,6 +26,8 @@
 =======
 #   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
 >>>>>>> 86786087 (refactor: rename cost to quotaConsumed)
+=======
+>>>>>>> 123b9b5f (feat: add quotaType to the supported_instance_types config)
 ---
 supported_instance_types:
   - id: standard
