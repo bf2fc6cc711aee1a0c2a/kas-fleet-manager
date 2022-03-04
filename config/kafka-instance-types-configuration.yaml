@@ -15,6 +15,7 @@
 #   - maxDataRetentionPeriod: Maximum duration(ISO8601) for retaining data.
 #   - maxPartitions: Maximum partitions for all topics combined.
 #   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
+#   - quotaType: Quota type that will be consumed when this size is selected.
 ---
 supported_instance_types:
   - id: standard
@@ -28,6 +29,7 @@ supported_instance_types:
       maxDataRetentionPeriod: "P14D"
       maxPartitions: 1500
       quotaConsumed: 1
+      quotaType: "rhosak"
   - id: eval
     sizes:
     - id: x1
@@ -39,3 +41,4 @@ supported_instance_types:
       maxDataRetentionPeriod: "P14D"
       maxPartitions: 1000
       quotaConsumed: 1
+      quotaType: "rhosak"
