@@ -4,6 +4,7 @@ WORKDIR /workspace
 
 COPY . ./
 
+RUN go mod vendor 
 RUN make binary
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.4
