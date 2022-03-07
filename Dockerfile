@@ -1,8 +1,14 @@
+FROM registry.ci.openshift.org/openshift/release:golang-1.17 AS builder
+
+WORKDIR /workspace
+
+COPY . ./
+
+RUN make binary
+
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.4
 
-COPY \
-    kas-fleet-manager \
-    /usr/local/bin/
+COPY --from=builder /workspace/kas-fleet-manager /usr/local/bin/
 
 EXPOSE 8000
 
