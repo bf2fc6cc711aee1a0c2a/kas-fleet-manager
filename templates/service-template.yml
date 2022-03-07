@@ -378,6 +378,11 @@ parameters:
   description: Ingress throughput configuration for the default Kafka instance type
   value: "2Mi"
 
+- name: KAFKA_CAPACITY_EGRESS_THROUGHPUT
+  displayName: Kafka egress throughput
+  description: Egress throughput configuration for the default Kafka instance type
+  value: "2Mi"
+
 - name: KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS
   displayName: Kafka total max connections
   description: Total max connections configuration for the default Kafka instance type
@@ -526,7 +531,8 @@ objects:
     data:
       kafka-capacity-config.yaml: |-
         maxCapacity: ${KAFKA_CAPACITY_MAX_CAPACITY}
-        ingressEgressThroughputPerSec: ${KAFKA_CAPACITY_INGRESS_THROUGHPUT}
+        ingressThroughputPerSec: ${KAFKA_CAPACITY_INGRESS_THROUGHPUT}
+        egressThroughputPerSec: ${KAFKA_CAPACITY_EGRESS_THROUGHPUT}
         totalMaxConnections: ${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}
         maxDataRetentionSize: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE}
         maxPartitions: ${KAFKA_CAPACITY_MAX_PARTITIONS}

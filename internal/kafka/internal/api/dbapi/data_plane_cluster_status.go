@@ -30,10 +30,11 @@ type DataPlaneClusterStatusResizeInfo struct {
 }
 
 type DataPlaneClusterStatusCapacity struct {
-	IngressEgressThroughputPerSec string
-	Connections                   int
-	DataRetentionSize             string
-	Partitions                    int
+	IngressThroughputPerSec string
+	EgressThroughputPerSec  string
+	Connections             int
+	DataRetentionSize       string
+	Partitions              int
 }
 
 type DataPlaneClusterConfigObservability struct {

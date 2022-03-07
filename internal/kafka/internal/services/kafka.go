@@ -925,12 +925,13 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		},
 		Spec: managedkafka.ManagedKafkaSpec{
 			Capacity: managedkafka.Capacity{
-				IngressEgressThroughputPerSec: kafkaConfig.KafkaCapacity.IngressEgressThroughputPerSec,
-				TotalMaxConnections:           kafkaConfig.KafkaCapacity.TotalMaxConnections,
-				MaxDataRetentionSize:          kafkaRequest.KafkaStorageSize,
-				MaxPartitions:                 kafkaConfig.KafkaCapacity.MaxPartitions,
-				MaxDataRetentionPeriod:        kafkaConfig.KafkaCapacity.MaxDataRetentionPeriod,
-				MaxConnectionAttemptsPerSec:   kafkaConfig.KafkaCapacity.MaxConnectionAttemptsPerSec,
+				IngressThroughputPerSec:     kafkaConfig.KafkaCapacity.IngressThroughputPerSec,
+				EgressThroughputPerSec:      kafkaConfig.KafkaCapacity.EgressThroughputPerSec,
+				TotalMaxConnections:         kafkaConfig.KafkaCapacity.TotalMaxConnections,
+				MaxDataRetentionSize:        kafkaRequest.KafkaStorageSize,
+				MaxPartitions:               kafkaConfig.KafkaCapacity.MaxPartitions,
+				MaxDataRetentionPeriod:      kafkaConfig.KafkaCapacity.MaxDataRetentionPeriod,
+				MaxConnectionAttemptsPerSec: kafkaConfig.KafkaCapacity.MaxConnectionAttemptsPerSec,
 			},
 			Endpoint: managedkafka.EndpointSpec{
 				BootstrapServerHost: kafkaRequest.BootstrapServerHost,

@@ -11,10 +11,11 @@ package private
 
 // ManagedKafkaCapacity struct for ManagedKafkaCapacity
 type ManagedKafkaCapacity struct {
-	IngressEgressThroughputPerSec string `json:"ingressEgressThroughputPerSec,omitempty"`
-	TotalMaxConnections           int32  `json:"totalMaxConnections,omitempty"`
-	MaxDataRetentionSize          string `json:"maxDataRetentionSize,omitempty"`
-	MaxPartitions                 int32  `json:"maxPartitions,omitempty"`
-	MaxDataRetentionPeriod        string `json:"maxDataRetentionPeriod,omitempty"`
-	MaxConnectionAttemptsPerSec   int32  `json:"maxConnectionAttemptsPerSec,omitempty"`
+	IngressThroughputPerSec     string `json:"ingressThroughputPerSec,omitempty"`
+	EgressThroughputPerSec      string `json:"egressThroughputPerSec,omitempty"`
+	TotalMaxConnections         int32  `json:"totalMaxConnections,omitempty"`
+	MaxDataRetentionSize        string `json:"maxDataRetentionSize,omitempty"`
+	MaxPartitions               int32  `json:"maxPartitions,omitempty"`
+	MaxDataRetentionPeriod      string `json:"maxDataRetentionPeriod,omitempty"`
+	MaxConnectionAttemptsPerSec int32  `json:"maxConnectionAttemptsPerSec,omitempty"`
 }
