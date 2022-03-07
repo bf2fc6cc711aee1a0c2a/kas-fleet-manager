@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -176,35 +175,14 @@ func (k *kafkaService) capacityAvailableForRegionAndInstanceType(instTypeRegCapa
 	}
 
 	for _, k := range kafkas {
-		i, err := strconv.ParseInt(strings.TrimPrefix(k.SizeId, "x"), 10, 64)
+		i, err := ParseSize(k.SizeId)
 		if err != nil {
 			return false, errors.NewWithCause(errors.ErrorGeneral, err, errMessage)
 		}
 		count += i
 	}
 
-	var rSize string
-	var err error
-
-	if kafkaRequest.SizeId == "" {
-		rSize, err = k.kafkaConfig.GetFirstAvailableSize(kafkaRequest.InstanceType)
-		if err != nil {
-			return false, errors.NewWithCause(errors.ErrorGeneral, err, errMessage)
-		}
-		kafkaRequest.SizeId = rSize
-		kafkaRequest.ProfileId = kafkaRequest.InstanceType
-	} else {
-		if kafkaRequest.InstanceType != kafkaRequest.ProfileId {
-			return false, errors.NewWithCause(errors.ErrorGeneral, err, "Mismatch between profile id '%s' and kafka instance type: `%s`", kafkaRequest.ProfileId, kafkaRequest.InstanceType)
-		}
-		_, err := k.kafkaConfig.CheckSizingCombinationExists(kafkaRequest.ProfileId, kafkaRequest.SizeId)
-		if err != nil {
-			return false, errors.NewWithCause(errors.ErrorGeneral, err, errMessage)
-		}
-		rSize = kafkaRequest.SizeId
-	}
-
-	kafkaSize, err := strconv.ParseInt(strings.TrimPrefix(rSize, "x"), 10, 64)
+	kafkaSize, err := ParseSize(kafkaRequest.SizeId)
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, errMessage)
 	}
@@ -269,13 +247,6 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	defer k.mu.Unlock()
 	// we need to pre-populate the ID to be able to reserve the quota
 	kafkaRequest.ID = api.NewID()
-
-	instanceType, err := k.DetectInstanceType(kafkaRequest)
-	if err != nil {
-		return err
-	}
-
-	kafkaRequest.InstanceType = instanceType.String()
 
 	hasCapacity, err := k.HasAvailableCapacityInRegion(kafkaRequest)
 	if err != nil {

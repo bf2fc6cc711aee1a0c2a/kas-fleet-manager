@@ -130,3 +130,21 @@ func NewKafkaSupportedSizesConfig() *KafkaSupportedSizesConfig {
 		SupportedKafkaSizesConfigFile: "config/kafka-sizes-configuration.yaml",
 	}
 }
+
+func (s *SupportedKafkaSizesConfig) GetProfileByID(instanceType string) (KafkaProfile, error) {
+	for _, profile := range s.SupportedKafkaProfiles {
+		if profile.Id == instanceType {
+			return profile, nil
+		}
+	}
+	return KafkaProfile{}, fmt.Errorf("Unable to find kafka size for '%s'", instanceType)
+}
+
+func (kp *KafkaProfile) GetSizeByID(instanceType, sizeId string) (KafkaInstanceSize, error) {
+	for _, size := range kp.Sizes {
+		if size.Id == sizeId {
+			return size, nil
+		}
+	}
+	return KafkaInstanceSize{}, fmt.Errorf("Size id: '%s' not found for '%s' profile id", sizeId, instanceType)
+}

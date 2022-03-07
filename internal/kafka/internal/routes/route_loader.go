@@ -76,7 +76,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}
 
-	kafkaHandler := handlers.NewKafkaHandler(s.Kafka, s.ProviderConfig, s.AuthService)
+	kafkaHandler := handlers.NewKafkaHandler(s.Kafka, s.ProviderConfig, s.AuthService, s.KafkaConfig)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig, s.Kafka, s.ClusterPlacementStrategy, s.KafkaConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)

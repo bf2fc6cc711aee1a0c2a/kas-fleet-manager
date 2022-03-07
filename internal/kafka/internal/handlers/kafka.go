@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
@@ -22,13 +24,15 @@ type kafkaHandler struct {
 	service        services.KafkaService
 	providerConfig *config.ProviderConfig
 	authService    authorization.Authorization
+	kafkaConfig    *config.KafkaConfig
 }
 
-func NewKafkaHandler(service services.KafkaService, providerConfig *config.ProviderConfig, authService authorization.Authorization) *kafkaHandler {
+func NewKafkaHandler(service services.KafkaService, providerConfig *config.ProviderConfig, authService authorization.Authorization, kafkaConfig *config.KafkaConfig) *kafkaHandler {
 	return &kafkaHandler{
 		service:        service,
 		providerConfig: providerConfig,
 		authService:    authService,
+		kafkaConfig:    kafkaConfig,
 	}
 }
 
@@ -43,15 +47,36 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.ValidateAsyncEnabled(r, "creating kafka requests"),
 			handlers.ValidateLength(&kafkaRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxKafkaNameLength),
 			ValidKafkaClusterName(&kafkaRequest.Name, "name"),
-			ValidateSizingParams(&kafkaRequest),
+			// ValidatePlan(h.service, h.kafkaConfig, &kafkaRequest.Plan, convKafka),
 			ValidateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
 			ValidateKafkaClaims(ctx, &kafkaRequest, convKafka),
 			ValidateCloudProvider(&h.service, convKafka, h.providerConfig, "creating kafka requests"),
 			handlers.ValidateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
+			func() *errors.ServiceError { // Validate plan
+				instanceType, err := h.service.DetectInstanceType(convKafka)
+				if err != nil {
+					return err
+				}
+				if !stringNotSet(&kafkaRequest.Plan) {
+					p := strings.Split(kafkaRequest.Plan, ".")
+					_, e := h.kafkaConfig.CheckSizingCombinationExists(instanceType.String(), p[1])
+
+					if e != nil || len(p) != 2 || p[0] != string(instanceType) {
+						return errors.NewWithCause(errors.ErrorGeneral, e, fmt.Sprintf("Unsupported plan provided: '%s'", kafkaRequest.Plan))
+					}
+					convKafka.SizeId = p[1]
+				} else {
+					rSize, err := h.kafkaConfig.GetFirstAvailableSize(instanceType.String())
+					if err != nil {
+						return errors.NewWithCause(errors.ErrorGeneral, err, "unable to validate your request, please try again")
+					}
+					convKafka.SizeId = rSize
+				}
+				convKafka.InstanceType = instanceType.String()
+				return nil
+			},
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			convKafka.ProfileId = kafkaRequest.ProfileId
-			convKafka.SizeId = kafkaRequest.SizeId
 			svcErr := h.service.RegisterKafkaJob(convKafka)
 			if svcErr != nil {
 				return nil, svcErr

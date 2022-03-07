@@ -80,7 +80,6 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 						maxCapacityReached := true
 						kafka.InstanceType = instType
 						kafka.Region = cloudRegion.Id
-						kafka.ProfileId = instType
 						size, _ := h.kafkaConfig.GetFirstAvailableSize(instType)
 						kafka.SizeId = size
 						kafka.CloudProvider = cloudRegion.CloudProvider

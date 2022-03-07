@@ -231,6 +231,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	ssoSecret := "some-sso-secret"
 	storageSize := "60Gi"
 	updatedStorageSize := "70Gi"
+	sizeId := "x1"
 
 	biggerStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
 		KafkaStorageSize: updatedStorageSize,
@@ -253,6 +254,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -271,6 +273,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -289,6 +292,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.EVAL.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -307,6 +311,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -325,6 +330,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -343,6 +349,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 	}

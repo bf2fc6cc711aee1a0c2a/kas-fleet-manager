@@ -71,9 +71,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.DataplaneClusterConfig) {
-		// c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
-	})
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, nil)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -150,6 +148,56 @@ func TestKafkaCreate_Success(t *testing.T) {
 
 	// delete test kafka to free up resources on an OSD cluster
 	deleteTestKafka(t, h, ctx, client, foundKafka.Id)
+}
+
+func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, nil)
+	defer teardown()
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
+
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account, nil)
+
+	k := public.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockKafkaName,
+		MultiAz:       testMultiAZ,
+		Plan:          fmt.Sprintf("%s.x1", types.STANDARD.String()),
+	}
+
+	kafka, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
+
+	// successful creation of kafka with valid "plan" format
+	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
+	Expect(kafka.InstanceType).To(Equal(types.STANDARD.String()))
+
+	// unsuccessful creation of kafka with invalid instance type provided in the "plan" parameter
+	k.Plan = "invalid.x1"
+	kafka, _, err = client.DefaultApi.CreateKafka(ctx, true, k)
+	Expect(err).To(HaveOccurred(), "Error should have occurred when attempting to create kafka with invalid instance type provided in the plan")
+
+	// unsuccessful creation of kafka with invalid size_id provided in the "plan" parameter
+	k.Plan = fmt.Sprintf("%s.x9999", types.STANDARD.String())
+	kafka, _, err = client.DefaultApi.CreateKafka(ctx, true, k)
+	Expect(err).To(HaveOccurred(), "Error should have occurred when attempting to create kafka unsupported size_id")
 }
 
 func TestKafka_InstanceTypeCapacity(t *testing.T) {
@@ -323,7 +371,6 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		kafkaRequest.Name = "dummy-kafka-1"
 		kafkaRequest.InstanceType = types.STANDARD.String()
 		kafkaRequest.SizeId = "x3"
-		kafkaRequest.ProfileId = types.STANDARD.String()
 	})
 
 	x2StandardKafka := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -331,31 +378,34 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		kafkaRequest.Name = "dummy-kafka-2"
 		kafkaRequest.InstanceType = types.STANDARD.String()
 		kafkaRequest.SizeId = "x2"
-		kafkaRequest.ProfileId = types.STANDARD.String()
 	})
 
 	standardKafka1 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "testuser1@example.com"
 		kafkaRequest.Name = "dummy-kafka-3"
 		kafkaRequest.InstanceType = types.STANDARD.String()
+		kafkaRequest.SizeId = "x1"
 	})
 
 	standardKafka2 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "testuser2@example.com"
 		kafkaRequest.Name = "dummy-kafka-4"
 		kafkaRequest.InstanceType = types.STANDARD.String()
+		kafkaRequest.SizeId = "x1"
 	})
 
 	standardKafka3 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "testuser3@example.com"
 		kafkaRequest.Name = "dummy-kafka-5"
 		kafkaRequest.InstanceType = types.STANDARD.String()
+		kafkaRequest.SizeId = "x1"
 	})
 
 	standardKafka4 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "testuser4@example.com"
 		kafkaRequest.Name = "dummy-kafka-6"
 		kafkaRequest.InstanceType = types.STANDARD.String()
+		kafkaRequest.SizeId = "x1"
 	})
 
 	standardKafkaIncorrectRegion := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -363,6 +413,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		kafkaRequest.Name = "dummy-kafka-7"
 		kafkaRequest.InstanceType = types.STANDARD.String()
 		kafkaRequest.Region = unsupportedRegion
+		kafkaRequest.SizeId = "x1"
 	})
 
 	tooLargeEvalKafka := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -370,7 +421,6 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		kafkaRequest.Name = "dummy-kafka-8"
 		kafkaRequest.InstanceType = types.EVAL.String()
 		kafkaRequest.SizeId = "x3"
-		kafkaRequest.ProfileId = types.EVAL.String()
 	})
 
 	x2EvalKafka := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -378,31 +428,34 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		kafkaRequest.Name = "dummy-kafka-9"
 		kafkaRequest.InstanceType = types.EVAL.String()
 		kafkaRequest.SizeId = "x2"
-		kafkaRequest.ProfileId = types.EVAL.String()
 	})
 
 	evalKafka1 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "dummyuser3"
 		kafkaRequest.Name = "dummy-kafka-10"
 		kafkaRequest.InstanceType = types.EVAL.String()
+		kafkaRequest.SizeId = "x1"
 	})
 
 	evalKafka2 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "dummyuser4"
 		kafkaRequest.Name = "dummy-kafka-11"
 		kafkaRequest.InstanceType = types.EVAL.String()
+		kafkaRequest.SizeId = "x1"
 	})
 
 	evalKafka3 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "dummyuser5"
 		kafkaRequest.Name = "dummy-kafka-12"
 		kafkaRequest.InstanceType = types.EVAL.String()
+		kafkaRequest.SizeId = "x1"
 	})
 
 	evalKafka4 := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 		kafkaRequest.Owner = "dummyuser6"
 		kafkaRequest.Name = "dummy-kafka-13"
 		kafkaRequest.InstanceType = types.EVAL.String()
+		kafkaRequest.SizeId = "x1"
 	})
 
 	evalKafkaIncorrectRegion := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -410,14 +463,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		kafkaRequest.Name = "dummy-kafka-14"
 		kafkaRequest.InstanceType = types.EVAL.String()
 		kafkaRequest.Region = unsupportedRegion
-	})
-
-	evalKafkaIncorrectSizeParams := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-		kafkaRequest.Owner = "testuser5@example.com"
-		kafkaRequest.Name = "dummy-kafka-14"
-		kafkaRequest.InstanceType = types.EVAL.String()
-		kafkaRequest.SizeId = "x0"
-		kafkaRequest.ProfileId = types.EVAL.String()
+		kafkaRequest.SizeId = "x1"
 	})
 
 	errorCheckWithError := errorCheck{
@@ -434,12 +480,6 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		wantErr:  true,
 		code:     errors.ErrorRegionNotSupported,
 		httpCode: http.StatusBadRequest,
-	}
-
-	errorCheckInvalidSizeParams := errorCheck{
-		wantErr:  true,
-		code:     errors.ErrorGeneral,
-		httpCode: http.StatusInternalServerError,
 	}
 
 	kafkaValidations := []kafkaValidation{
@@ -503,15 +543,11 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 			evalKafkaIncorrectRegion,
 			errorCheckUnsupportedRegion,
 		},
-		{
-			evalKafkaIncorrectSizeParams,
-			errorCheckInvalidSizeParams,
-		},
 	}
 
-	standardClusters := "test01,test02, test04"
+	standardClusters := "test01,test02,test04"
 
-	evalClusters := "test01,test03, test05"
+	evalClusters := "test01,test03,test05"
 
 	testValidations(standardClusters, evalClusters, t, kafkaValidations)
 }

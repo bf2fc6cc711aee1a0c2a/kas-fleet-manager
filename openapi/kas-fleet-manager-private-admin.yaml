@@ -280,8 +280,6 @@ components:
               type: string
             namespace:
               type: string
-            profile_id:
-              type: string
             size_id:
               type: string
     KafkaList:

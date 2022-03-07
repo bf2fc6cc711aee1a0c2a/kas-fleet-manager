@@ -352,3 +352,42 @@ func Test_contains(t *testing.T) {
 		})
 	}
 }
+
+func Test_ParseString(t *testing.T) {
+	type args struct {
+		size string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    int64
+		wantErr bool
+	}{
+		{
+			name: "should parse valid size ID and return an int value with no error",
+			args: args{
+				size: "x1",
+			},
+			want: 1,
+		},
+		{
+			name: "should throw an error when attempting to parse invalid size ID",
+			args: args{
+				size: "xx",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseSize(tt.args.size)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseSize() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ParseSize() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
