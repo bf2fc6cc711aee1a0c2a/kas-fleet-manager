@@ -35,4 +35,5 @@ type KafkaRequest struct {
 	InstanceType            string    `json:"instance_type,omitempty"`
 	ReauthenticationEnabled bool      `json:"reauthentication_enabled"`
 	KafkaStorageSize        string    `json:"kafka_storage_size,omitempty"`
+	BrowserUrl              string    `json:"browser_url,omitempty"`
 }

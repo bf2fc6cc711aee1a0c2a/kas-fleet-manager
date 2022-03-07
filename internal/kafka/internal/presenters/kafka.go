@@ -31,7 +31,7 @@ func ConvertKafkaRequest(kafkaRequestPayload public.KafkaRequestPayload, dbKafka
 }
 
 // PresentKafkaRequest - create KafkaRequest in an appropriate format ready to be returned by the API
-func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest) public.KafkaRequest {
+func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, browserUrl string) public.KafkaRequest {
 	reference := PresentReference(kafkaRequest.ID, kafkaRequest)
 
 	return public.KafkaRequest{
@@ -52,6 +52,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest) public.KafkaRequest {
 		InstanceType:            kafkaRequest.InstanceType,
 		ReauthenticationEnabled: kafkaRequest.ReauthenticationEnabled,
 		KafkaStorageSize:        kafkaRequest.KafkaStorageSize,
+		BrowserUrl:              fmt.Sprintf("%sapplication-services/streams/kafkas/%s/dashboard", browserUrl, reference.Id),
 	}
 }
 

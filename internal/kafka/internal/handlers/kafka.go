@@ -1,8 +1,9 @@
 package handlers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -21,13 +22,15 @@ type kafkaHandler struct {
 	service        services.KafkaService
 	providerConfig *config.ProviderConfig
 	authService    authorization.Authorization
+	kafkaConfig    *config.KafkaConfig
 }
 
-func NewKafkaHandler(service services.KafkaService, providerConfig *config.ProviderConfig, authService authorization.Authorization) *kafkaHandler {
+func NewKafkaHandler(service services.KafkaService, providerConfig *config.ProviderConfig, authService authorization.Authorization, kafkaConfig *config.KafkaConfig) *kafkaHandler {
 	return &kafkaHandler{
 		service:        service,
 		providerConfig: providerConfig,
 		authService:    authService,
+		kafkaConfig:    kafkaConfig,
 	}
 }
 
@@ -52,7 +55,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			return presenters.PresentKafkaRequest(convKafka), nil
+			return presenters.PresentKafkaRequest(convKafka, h.kafkaConfig.BrowserUrl), nil
 		},
 	}
 
@@ -69,7 +72,7 @@ func (h kafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentKafkaRequest(kafkaRequest), nil
+			return presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig.BrowserUrl), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -117,7 +120,7 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, kafkaRequest := range kafkaRequests {
-				converted := presenters.PresentKafkaRequest(kafkaRequest)
+				converted := presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig.BrowserUrl)
 				kafkaRequestList.Items = append(kafkaRequestList.Items, converted)
 			}
 
@@ -168,7 +171,7 @@ func (h kafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			return presenters.PresentKafkaRequest(kafkaRequest), nil
+			return presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig.BrowserUrl), nil
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
