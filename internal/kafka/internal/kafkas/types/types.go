@@ -9,6 +9,11 @@ const (
 	STANDARD KafkaInstanceType = "standard"
 )
 
+var ValidKafkaInstanceTypes = []string{
+	EVAL.String(),
+	STANDARD.String(),
+}
+
 func (t KafkaInstanceType) String() string {
 	return string(t)
 }
