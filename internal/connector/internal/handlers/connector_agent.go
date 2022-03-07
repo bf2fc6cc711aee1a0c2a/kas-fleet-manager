@@ -196,6 +196,10 @@ func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource db
 		Id:  pc.Kafka.Id,
 		Url: pc.Kafka.Url,
 	}
+	converted.Spec.SchemaRegistry = private.SchemaRegistryConnectionSettings{
+		Id:  pc.SchemaRegistry.Id,
+		Url: pc.SchemaRegistry.Url,
+	}
 	converted.Spec.ServiceAccount = private.ServiceAccount{
 		ClientId:     pc.ServiceAccount.ClientId,
 		ClientSecret: pc.ServiceAccount.ClientSecret,

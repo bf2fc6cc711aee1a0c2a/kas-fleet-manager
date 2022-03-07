@@ -25,12 +25,13 @@ Feature: connector agent API
       {}
       """
     Then the response code should be 202
-    And the ".status.state" selection from the response should match "unconnected"
+    And the ".status.state" selection from the response should match "disconnected"
     Given I store the ".id" selection from the response as ${connector_cluster_id}
 
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
     Then the response code should be 200
     And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
+    And I remember keycloak client for cleanup with clientID: ${clientID}
 
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
@@ -50,6 +51,10 @@ Feature: connector agent API
         "service_account": {
           "client_id": "myclient",
           "client_secret": "test"
+        },
+        "schema_registry": {
+          "id": "myregistry",
+          "url": "registry.hostname"
         },
         "connector": {
             "aws_queue_name_or_arn": "test",
@@ -72,7 +77,7 @@ Feature: connector agent API
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
 
-    # There should be no deployments assigned yet, since the cluster status is unconnected
+    # There should be no deployments assigned yet, since the cluster status is disconnected
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
     And the ".kind" selection from the response should match "ConnectorDeploymentList"
@@ -173,8 +178,8 @@ Feature: connector agent API
               "client_secret": "dGVzdA=="
             },
             "schema_registry": {
-              "id": "",
-              "url": ""
+              "id": "myregistry",
+              "url": "registry.hostname"
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -269,8 +274,8 @@ Feature: connector agent API
                 "client_secret": "dGVzdA=="
               },
               "schema_registry": {
-                "id": "",
-                "url": ""
+                "id": "myregistry",
+                "url": "registry.hostname"
               },
               "shard_metadata": {
                 "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -354,8 +359,8 @@ Feature: connector agent API
               "client_secret": "dGVzdA=="
             },
             "schema_registry": {
-              "id": "",
-              "url": ""
+              "id": "myregistry",
+              "url": "registry.hostname"
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -486,8 +491,8 @@ Feature: connector agent API
           "client_secret": ""
         },
         "schema_registry": {
-          "id": "",
-          "url": ""
+          "id": "myregistry",
+          "url": "registry.hostname"
         },
         "kind": "Connector",
         "name": "example 1",
@@ -534,8 +539,8 @@ Feature: connector agent API
               "client_secret": "dGVzdA=="
             },
             "schema_registry": {
-              "id": "",
-              "url": ""
+              "id": "myregistry",
+              "url": "registry.hostname"
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
@@ -624,7 +629,7 @@ Feature: connector agent API
         "owner": "${response.items[0].owner}",
         "modified_at": "${response.items[0].modified_at}",
         "status": {
-          "state": "ready"
+          "state": "${response.items[0].status.state}"
         }
       }
       """
@@ -871,10 +876,6 @@ Feature: connector agent API
       {"kind": "addon"}
       """
 
-    #cleanup
-    Then I delete keycloak client with clientID: ${clientID}
-
-
 
   Scenario: Bobby can stop and start and existing connector
     Given I am logged in as "Bobby"
@@ -887,12 +888,13 @@ Feature: connector agent API
       {}
       """
     Then the response code should be 202
-    And the ".status.state" selection from the response should match "unconnected"
+    And the ".status.state" selection from the response should match "disconnected"
     Given I store the ".id" selection from the response as ${connector_cluster_id}
 
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
     Then the response code should be 200
     And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
+    And I remember keycloak client for cleanup with clientID: ${clientID}
 
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
@@ -1028,4 +1030,3 @@ Feature: connector agent API
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204
     And the response should match ""
-    And I delete keycloak client with clientID: ${clientID}

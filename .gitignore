@@ -64,6 +64,9 @@ cmd/kas-fleet-manager/kas-fleet-manager
 /data/results/*
 !/data/results/.keep
 
+# unit test result files
+cover.out
+
 # Docker template
 Dockerfile_integration_tests
 

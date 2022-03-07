@@ -350,75 +350,6 @@ func Test_kafkaService_GetById(t *testing.T) {
 	}
 }
 
-func Test_kafkaService_HasAvailableCapacity(t *testing.T) {
-	type fields struct {
-		connectionFactory *db.ConnectionFactory
-		kafkaConfig       *config.KafkaConfig
-	}
-
-	tests := []struct {
-		name        string
-		fields      fields
-		setupFn     func()
-		wantErr     bool
-		hasCapacity bool
-	}{
-		{
-			name:        "capacity exhausted",
-			hasCapacity: false,
-			fields: fields{
-				kafkaConfig: &config.KafkaConfig{
-					KafkaCapacity: config.KafkaCapacityConfig{
-						MaxCapacity: MaxClusterCapacity,
-					},
-				},
-				connectionFactory: db.NewMockConnectionFactory(nil),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply([]map[string]interface{}{{"a": fmt.Sprintf("%d", MaxClusterCapacity)}})
-			},
-			wantErr: false,
-		},
-		{
-			name:        "capacity available",
-			hasCapacity: true,
-			fields: fields{
-				kafkaConfig: &config.KafkaConfig{
-					KafkaCapacity: config.KafkaCapacityConfig{
-						MaxCapacity: MaxClusterCapacity,
-					},
-				},
-				connectionFactory: db.NewMockConnectionFactory(nil),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply([]map[string]interface{}{{"a": "999"}})
-				// This is necessary otherwise if the query is wrong, the caller will receive a `0` result al `count`
-				mocket.Catcher.NewMock().WithExecException().WithQueryException() // With this, an expected query will throw an exception
-			},
-			wantErr: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.setupFn != nil {
-				tt.setupFn()
-			}
-
-			k := &kafkaService{
-				connectionFactory: tt.fields.connectionFactory,
-				kafkaConfig:       tt.fields.kafkaConfig,
-			}
-
-			if hasCapacity, err := k.HasAvailableCapacity(); (err != nil) != tt.wantErr {
-				t.Errorf("HasAvailableCapacity() error = %v, wantErr = %v", err, tt.wantErr)
-			} else if hasCapacity != tt.hasCapacity {
-				t.Errorf("HasAvailableCapacity() hasCapacity = %v, wanted = %v", hasCapacity, tt.hasCapacity)
-			}
-		})
-	}
-}
-
 func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
@@ -883,9 +814,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 	}
 }
 
-var supportedKafkaSizesConfig = config.KafkaSupportedSizesConfig{
-	SupportedKafkaSizesConfig: config.SupportedKafkaSizesConfig{
-		SupportedKafkaProfiles: []config.KafkaProfile{
+var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig{
+	Configuration: config.SupportedKafkaInstanceTypesConfig{
+		SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
 			{
 				Id: "standard",
 				Sizes: []config.KafkaInstanceSize{
@@ -898,7 +829,9 @@ var supportedKafkaSizesConfig = config.KafkaSupportedSizesConfig{
 						MaxPartitions:               1000,
 						MaxDataRetentionPeriod:      "P14D",
 						MaxConnectionAttemptsPerSec: 100,
-						Cost:                        1,
+						QuotaConsumed:               1,
+						QuotaType:                   "rhosak",
+						CapacityConsumed:            1,
 					},
 				},
 			},
@@ -906,15 +839,17 @@ var supportedKafkaSizesConfig = config.KafkaSupportedSizesConfig{
 				Id: "eval",
 				Sizes: []config.KafkaInstanceSize{
 					{
-						Id:                          "x1",
-						IngressThroughputPerSec:     "30Mi",
-						EgressThroughputPerSec:      "30Mi",
-						TotalMaxConnections:         1000,
-						MaxDataRetentionSize:        "100Gi",
-						MaxPartitions:               1000,
+						Id:                          "x2",
+						IngressThroughputPerSec:     "60Mi",
+						EgressThroughputPerSec:      "60Mi",
+						TotalMaxConnections:         2000,
+						MaxDataRetentionSize:        "200Gi",
+						MaxPartitions:               2000,
 						MaxDataRetentionPeriod:      "P14D",
-						MaxConnectionAttemptsPerSec: 100,
-						Cost:                        1,
+						MaxConnectionAttemptsPerSec: 200,
+						QuotaConsumed:               2,
+						QuotaType:                   "rhosak",
+						CapacityConsumed:            2,
 					},
 				},
 			},
@@ -926,8 +861,8 @@ var defaultKafkaConf = config.KafkaConfig{
 	KafkaCapacity: config.KafkaCapacityConfig{
 		MaxCapacity: MaxClusterCapacity,
 	},
-	Quota:               config.NewKafkaQuotaConfig(),
-	SupportedKafkaSizes: &supportedKafkaSizesConfig,
+	Quota:                  config.NewKafkaQuotaConfig(),
+	SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
 }
 
 func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
@@ -1160,14 +1095,12 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
 				kafkaConfig: config.KafkaConfig{
-					KafkaCapacity: config.KafkaCapacityConfig{
-						MaxCapacity: MaxClusterCapacity,
-					},
+					KafkaCapacity: config.KafkaCapacityConfig{},
 					Quota: &config.KafkaQuotaConfig{
 						Type:                   api.QuotaManagementListQuotaType.String(),
 						AllowEvaluatorInstance: false,
 					},
-					SupportedKafkaSizes: &supportedKafkaSizesConfig,
+					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
 				},
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
 					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {

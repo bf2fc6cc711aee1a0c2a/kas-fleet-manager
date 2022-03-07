@@ -418,7 +418,7 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 						return &gocloak.User{
 							ID: &fakeUserId,
 							Attributes: &map[string][]string{
-								clusterId: {"test-cluster-id"},
+								kasClusterId: {"test-cluster-id"},
 							},
 						}, nil
 					},
@@ -728,6 +728,112 @@ func TestKeycloakService_RegisterConnectorFleetshardOperatorServiceAccount(t *te
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("RegisterConnectorFleetshardOperatorServiceAccount() got = %+v, want %+v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestKeycloakService_DeRegisterConnectorFleetshardOperatorServiceAccount(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		clusterId string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "should receive an error when retrieving the token fails",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return "", fmt.Errorf("some errors")
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return fmt.Errorf("some error")
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should receive an error when service account deletion fails",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "testclietid", nil
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return fmt.Errorf("some error")
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should delete the service account",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "testclientid", nil
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+			},
+			wantErr: false,
+		},
+		{
+			name: "should not call delete if client doesn't exist",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return fmt.Errorf("this should not be called")
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			keycloakService := keycloakService{
+				tt.fields.kcClient,
+			}
+			err := keycloakService.DeRegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterId)
+			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
