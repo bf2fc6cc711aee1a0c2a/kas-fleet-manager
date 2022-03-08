@@ -92,7 +92,6 @@ Feature: connector namespaces API
       "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${response.id}",
       "name": "<user>_namespace",
       "owner": "${<user_id>}",
-      "version": ${response.version},
       "cluster_id": "${response.cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
@@ -103,6 +102,10 @@ Feature: connector namespaces API
           "value": "default-profile"
         }
       ],
+      "status": {
+        "state": "disconnected",
+        "connectors_deployed": 0
+      },
       "tenant": {
         "kind": "user",
         "id": "${<user_id>}"
@@ -124,7 +127,6 @@ Feature: connector namespaces API
            "kind": "ConnectorNamespace",
            "name": "<user>_namespace",
            "owner": "${<user_id>}",
-           "version": ${response.items[0].version}
            "created_at": "${response.items[0].created_at}",
            "modified_at": "${response.items[0].modified_at}",
            "expiration": "${response.expiration}",
@@ -138,6 +140,10 @@ Feature: connector namespaces API
                "value": "default-profile"
              }
            ],
+           "status": {
+             "state": "disconnected",
+             "connectors_deployed": 0
+           },
          }
        ],
        "kind": "ConnectorNamespaceList",
@@ -209,7 +215,10 @@ Feature: connector namespaces API
                "value": "default-profile"
              }
            ],
-           "version": ${response.items[0].version}
+           "status": {
+             "state": "disconnected",
+             "connectors_deployed": 0
+           }
          }
        ],
        "kind": "ConnectorNamespaceList",
@@ -244,7 +253,6 @@ Feature: connector namespaces API
       "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${response.id}",
       "name": "shared_namespace",
       "owner": "${lucky_user_id}",
-      "version": ${response.version},
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
@@ -257,6 +265,10 @@ Feature: connector namespaces API
       "tenant": {
         "kind": "organisation",
         "id": "13640230"
+      },
+      "status": {
+        "state": "disconnected",
+        "connectors_deployed": 0
       }
     }
     """
@@ -289,7 +301,10 @@ Feature: connector namespaces API
                "value": "default-profile"
              }
            ],
-           "version": ${response.items[0].version}
+           "status": {
+             "state": "disconnected",
+             "connectors_deployed": 0
+           }
          },
          {
            "id": "${namespace_id}",
@@ -297,19 +312,22 @@ Feature: connector namespaces API
            "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${namespace_id}",
            "name": "shared_namespace",
            "owner": "${lucky_user_id}",
-           "version": ${response.items[1].version},
            "cluster_id": "${connector_cluster_id}",
            "created_at": "${response.items[1].created_at}",
            "modified_at": "${response.items[1].modified_at}",
+           "tenant": {
+             "kind": "organisation",
+             "id": "13640230"
+           },
            "annotations": [
              {
                "name": "connector_mgmt.api.openshift.com/profile",
                "value": "default-profile"
              }
            ],
-           "tenant": {
-             "kind": "organisation",
-             "id": "13640230"
+           "status": {
+             "state": "disconnected",
+             "connectors_deployed": 0
            }
          }
        ],
@@ -349,7 +367,10 @@ Feature: connector namespaces API
                "value": "default-profile"
              }
            ],
-           "version": ${response.items[0].version}
+           "status": {
+             "state": "disconnected",
+             "connectors_deployed": 0
+           }
          }
        ],
        "kind": "ConnectorNamespaceList",
@@ -417,7 +438,10 @@ Feature: connector namespaces API
                "value": "default-profile"
              }
            ],
-           "version": ${response.items[0].version}
+           "status": {
+             "state": "disconnected",
+             "connectors_deployed": 0
+           }
          }
        ],
        "kind": "ConnectorNamespaceList",
@@ -455,19 +479,22 @@ Feature: connector namespaces API
       "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${response.id}",
       "name": "<user>_namespace",
       "owner": "${<user_id>}",
-      "version": ${response.version},
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
+      "tenant": {
+        "kind": "user",
+        "id": "${<user_id>}"
+      },
       "annotations": [
         {
           "name": "connector_mgmt.api.openshift.com/profile",
           "value": "default-profile"
         }
       ],
-      "tenant": {
-        "kind": "user",
-        "id": "${<user_id>}"
+      "status": {
+        "state": "disconnected",
+        "connectors_deployed": 0
       }
     }
     """
@@ -502,7 +529,10 @@ Feature: connector namespaces API
                "value": "default-profile"
              }
            ],
-           "version": ${response.items[0].version}
+           "status": {
+             "state": "disconnected",
+             "connectors_deployed": 0
+           }
          }
        ],
        "kind": "ConnectorNamespaceList",
@@ -576,7 +606,10 @@ Feature: connector namespaces API
                "value": "default-profile"
              }
            ],
-           "version": ${response.items[0].version}
+           "status": {
+             "state": "disconnected",
+             "connectors_deployed": 0
+           }
          }
        ],
        "kind": "ConnectorNamespaceList",
@@ -593,15 +626,19 @@ Feature: connector namespaces API
     {
       "name": "amigos_namespace",
       "cluster_id": "${connector_cluster_id}",
+      "tenant": {
+        "kind": "organisation",
+        "id": "13640231"
+      },
       "annotations": [
         {
           "name": "connector_mgmt.api.openshift.com/profile",
           "value": "default-profile"
         }
       ],
-      "tenant": {
-        "kind": "organisation",
-        "id": "13640231"
+      "status": {
+        "state": "disconnected",
+        "connectors_deployed": 0
       }
     }
     """
@@ -614,19 +651,22 @@ Feature: connector namespaces API
       "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${response.id}",
       "name": "amigos_namespace",
       "owner": "Ricky Bobby",
-      "version": ${response.version},
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
+      "tenant": {
+        "kind": "organisation",
+        "id": "13640231"
+      },
       "annotations": [
         {
           "name": "connector_mgmt.api.openshift.com/profile",
           "value": "default-profile"
         }
       ],
-      "tenant": {
-        "kind": "organisation",
-        "id": "13640231"
+      "status": {
+        "state": "disconnected",
+        "connectors_deployed": 0
       }
     }
     """
@@ -661,7 +701,10 @@ Feature: connector namespaces API
                "value": "default-profile"
              }
            ],
-           "version": ${response.items[0].version}
+           "status": {
+             "state": "disconnected",
+             "connectors_deployed": 0
+           }
          }
        ],
        "kind": "ConnectorNamespaceList",

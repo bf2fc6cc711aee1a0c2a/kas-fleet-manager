@@ -438,6 +438,46 @@ components:
         version:
           description: the version of the operator
           type: string
+    ConnectorNamespaceStatus:
+      description: Schema for the request to update a data plane namespaces' status
+      example:
+        phase: phase
+        connectors_deployed: 0
+        id: id
+        conditions:
+        - reason: reason
+          last_transition_time: last_transition_time
+          type: type
+          message: message
+          lastTransitionTime: lastTransitionTime
+          status: status
+        - reason: reason
+          last_transition_time: last_transition_time
+          type: type
+          message: message
+          lastTransitionTime: lastTransitionTime
+          status: status
+        version: version
+      properties:
+        id:
+          type: string
+        phase:
+          type: string
+        version:
+          type: string
+        connectors_deployed:
+          format: int32
+          type: integer
+        conditions:
+          items:
+            $ref: '#/components/schemas/MetaV1Condition'
+          type: array
+      required:
+      - connectors_deployed
+      - id
+      - phase
+      - version
+      type: object
     ConnectorClusterStatus:
       description: Schema for the request to update a data plane cluster's status
       example:
@@ -469,6 +509,41 @@ components:
           lastTransitionTime: lastTransitionTime
           status: status
         version: version
+        namespaces:
+        - phase: phase
+          connectors_deployed: 0
+          id: id
+          conditions:
+          - reason: reason
+            last_transition_time: last_transition_time
+            type: type
+            message: message
+            lastTransitionTime: lastTransitionTime
+            status: status
+          - reason: reason
+            last_transition_time: last_transition_time
+            type: type
+            message: message
+            lastTransitionTime: lastTransitionTime
+            status: status
+          version: version
+        - phase: phase
+          connectors_deployed: 0
+          id: id
+          conditions:
+          - reason: reason
+            last_transition_time: last_transition_time
+            type: type
+            message: message
+            lastTransitionTime: lastTransitionTime
+            status: status
+          - reason: reason
+            last_transition_time: last_transition_time
+            type: type
+            message: message
+            lastTransitionTime: lastTransitionTime
+            status: status
+          version: version
       properties:
         phase:
           type: string
@@ -482,6 +557,10 @@ components:
           description: the list of installed operators
           items:
             $ref: '#/components/schemas/ConnectorClusterStatus_operators'
+          type: array
+        namespaces:
+          items:
+            $ref: '#/components/schemas/ConnectorNamespaceStatus'
           type: array
       type: object
     Error:

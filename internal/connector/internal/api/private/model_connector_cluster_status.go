@@ -15,5 +15,6 @@ type ConnectorClusterStatus struct {
 	Version    string            `json:"version,omitempty"`
 	Conditions []MetaV1Condition `json:"conditions,omitempty"`
 	// the list of installed operators
-	Operators []ConnectorClusterStatusOperators `json:"operators,omitempty"`
+	Operators  []ConnectorClusterStatusOperators `json:"operators,omitempty"`
+	Namespaces []ConnectorNamespaceStatus        `json:"namespaces,omitempty"`
 }

@@ -36,7 +36,17 @@ func (h *ConnectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			convResource := presenters.ConvertConnectorClusterStatus(resource)
+			// TODO handle errors more gracefully
 			err := h.Service.UpdateConnectorClusterStatus(ctx, connectorClusterId, convResource)
+			if err == nil {
+				for _, namespaceStatus := range resource.Namespaces {
+					err = h.ConnectorNamespace.UpdateConnectorNamespaceStatus(ctx, namespaceStatus.Id,
+						presenters.ConvertConnectorNamespaceStatus(namespaceStatus))
+					if err != nil {
+						break
+					}
+				}
+			}
 			return nil, err
 		},
 	}

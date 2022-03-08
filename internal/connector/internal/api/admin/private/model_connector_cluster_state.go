@@ -14,6 +14,7 @@ type ConnectorClusterState string
 
 // List of ConnectorClusterState
 const (
-	DISCONNECTED ConnectorClusterState = "disconnected"
-	READY        ConnectorClusterState = "ready"
+	CONNECTORCLUSTERSTATE_DISCONNECTED ConnectorClusterState = "disconnected"
+	CONNECTORCLUSTERSTATE_READY        ConnectorClusterState = "ready"
+	CONNECTORCLUSTERSTATE_DELETING     ConnectorClusterState = "deleting"
 )

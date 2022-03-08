@@ -23,8 +23,8 @@ type ConnectorNamespace struct {
 	ModifiedAt  time.Time                                  `json:"modified_at,omitempty"`
 	Name        string                                     `json:"name"`
 	Annotations []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
-	Version     int64                                      `json:"version"`
 	ClusterId   string                                     `json:"cluster_id"`
 	Expiration  string                                     `json:"expiration,omitempty"`
 	Tenant      ConnectorNamespaceTenant                   `json:"tenant"`
+	Status      ConnectorNamespaceStatus                   `json:"status"`
 }
