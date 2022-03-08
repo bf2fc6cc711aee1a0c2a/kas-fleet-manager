@@ -434,7 +434,7 @@ openapi/generate/connector-private: go-bindata openapi-generator
 openapi/generate/connector-private-admin: go-bindata openapi-generator
 	rm -rf internal/connector/internal/api/admin/private
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private-admin.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private-admin.yaml -g go -o internal/connector/internal/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private-admin.yaml -g go -o internal/connector/internal/api/admin/private --package-name private  --additional-properties=enumClassPrefix=true -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/connector/internal/api/admin/private
 .PHONY: openapi/generate/connector-private-admin
 

@@ -387,6 +387,29 @@ components:
           description: the version of the operator
           type: string
 
+    ConnectorNamespaceStatus:
+      description: "Schema for the request to update a data plane namespaces' status"
+      type: object
+      required:
+        - id
+        - phase
+        - version
+        - connectors_deployed
+      properties:
+        id:
+          type: string
+        phase:
+          type: string
+        version:
+          type: string
+        connectors_deployed:
+          type: integer
+          format: int32
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetaV1Condition'
+
     ConnectorClusterStatus:
       description: "Schema for the request to update a data plane cluster's status"
       type: object
@@ -413,6 +436,10 @@ components:
               status:
                 description: the status of the operator
                 type: string
+        namespaces:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectorNamespaceStatus'
 
   securitySchemes:
     Bearer:

@@ -922,6 +922,7 @@ components:
       enum:
       - disconnected
       - ready
+      - deleting
       type: string
     Error:
       allOf:
@@ -965,6 +966,27 @@ components:
       enum:
       - user
       - organisation
+      type: string
+    ConnectorNamespaceStatus:
+      properties:
+        state:
+          $ref: '#/components/schemas/ConnectorNamespaceState'
+        version:
+          type: string
+        connectors_deployed:
+          format: int32
+          type: integer
+        error:
+          type: string
+      required:
+      - connectors_deployed
+      - state
+      type: object
+    ConnectorNamespaceState:
+      enum:
+      - disconnected
+      - ready
+      - deleting
       type: string
     ConnectorNamespaceEvalRequest:
       allOf:
@@ -1040,21 +1062,20 @@ components:
       properties:
         name:
           type: string
-        version:
-          format: int64
-          type: integer
         cluster_id:
           type: string
         expiration:
           type: string
         tenant:
           $ref: '#/components/schemas/ConnectorNamespaceTenant'
+        status:
+          $ref: '#/components/schemas/ConnectorNamespaceStatus'
       required:
       - cluster_id
       - id
       - name
+      - status
       - tenant
-      - version
     ConnectorNamespaceRequestMeta_annotations:
       properties:
         name:

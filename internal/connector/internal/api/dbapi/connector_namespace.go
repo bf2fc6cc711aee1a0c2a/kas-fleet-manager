@@ -5,6 +5,23 @@ import (
 	"time"
 )
 
+type ConnectorNamespacePhaseEnum = string
+
+const (
+	// ConnectorNamespacePhaseDisconnected - Namespace status when first created
+	ConnectorNamespacePhaseDisconnected ConnectorNamespacePhaseEnum = "disconnected"
+	// ConnectorNamespacePhaseReady- Namespace status when it operational
+	ConnectorNamespacePhaseReady ConnectorNamespacePhaseEnum = "ready"
+	// ConnectorNamespacePhaseDeleting- Namespace status when in the process of being deleted
+	ConnectorNamespacePhaseDeleting ConnectorNamespacePhaseEnum = "deleting"
+)
+
+var AllConnectorNamespaceStatus = []ConnectorNamespacePhaseEnum{
+	ConnectorNamespacePhaseDisconnected,
+	ConnectorNamespacePhaseReady,
+	ConnectorNamespacePhaseDeleting,
+}
+
 type ConnectorTenantUser struct {
 	db.Model // user id in Id, required for references and data consistency
 }
@@ -25,7 +42,6 @@ type ConnectorNamespace struct {
 	ClusterId string `gorm:"not null;uniqueIndex:idx_connector_namespaces_name_cluster_id;index"`
 
 	Owner      string `gorm:"not null;index"`
-	Version    int64  `gorm:"type:bigserial;index"`
 	Expiration *time.Time
 
 	// metadata
@@ -36,6 +52,16 @@ type ConnectorNamespace struct {
 	TenantOrganisationId *string                      `gorm:"index:connector_namespaces_user_organisation_idx;index:,where:tenant_organisation_id is not null"`
 	TenantUser           *ConnectorTenantUser         `gorm:"foreignKey:TenantUserId"`
 	TenantOrganisation   *ConnectorTenantOrganisation `gorm:"foreignKey:TenantOrganisationId"`
+
+	Status ConnectorNamespaceStatus `gorm:"embedded;embeddedPrefix:status_"`
+}
+
+type ConnectorNamespaceStatus struct {
+	Phase ConnectorNamespacePhaseEnum `gorm:"not null;index"`
+	// the version of the agent
+	Version            string
+	ConnectorsDeployed int32         `gorm:"not null"`
+	Conditions         ConditionList `gorm:"type:jsonb"`
 }
 
 type ConnectorNamespaceList []*ConnectorNamespace

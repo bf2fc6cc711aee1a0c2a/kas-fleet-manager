@@ -14,6 +14,6 @@ type ConnectorNamespaceTenantKind string
 
 // List of ConnectorNamespaceTenantKind
 const (
-	USER         ConnectorNamespaceTenantKind = "user"
-	ORGANISATION ConnectorNamespaceTenantKind = "organisation"
+	CONNECTORNAMESPACETENANTKIND_USER         ConnectorNamespaceTenantKind = "user"
+	CONNECTORNAMESPACETENANTKIND_ORGANISATION ConnectorNamespaceTenantKind = "organisation"
 )

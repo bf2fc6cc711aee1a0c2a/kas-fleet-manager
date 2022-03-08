@@ -226,7 +226,6 @@ paths:
       parameters:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/size"
-
       responses:
         "200":
           content:
@@ -1204,6 +1203,7 @@ components:
       enum:
         - disconnected
         - ready
+        - deleting
 
     ConnectorClusterRequestMeta:
       properties:
@@ -1211,7 +1211,7 @@ components:
           type: string
 
     ConnectorClusterRequest:
-      description: "Schema for the request to update a data plane cluster's status"
+      description: "Schema for the request to update a data plane cluster's name"
       allOf:
         - $ref: "#/components/schemas/ConnectorClusterRequestMeta"
 
@@ -1503,6 +1503,29 @@ components:
               items:
                 $ref: "#/components/schemas/ConnectorNamespace"
 
+    ConnectorNamespaceState:
+      type: string
+      enum:
+        - disconnected
+        - ready
+        - deleting
+
+    ConnectorNamespaceStatus:
+      type: object
+      required:
+        - state
+        - connectors_deployed
+      properties:
+        state:
+          $ref: "#/components/schemas/ConnectorNamespaceState"
+        version:
+          type: string
+        connectors_deployed:
+          type: integer
+          format: int32
+        error:
+          type: string
+
     ConnectorNamespace:
       description: A connector namespace
       allOf:
@@ -1512,9 +1535,6 @@ components:
           properties:
             name:
               type: string
-            version:
-              type: integer
-              format: int64
             cluster_id:
               type: string
             expiration:
@@ -1522,12 +1542,14 @@ components:
               type: string
             tenant:
               $ref: "#/components/schemas/ConnectorNamespaceTenant"
+            status:
+              $ref: "#/components/schemas/ConnectorNamespaceStatus"
           required:
             - id
             - name
-            - version
             - cluster_id
             - tenant
+            - status
 
   parameters:
     id:

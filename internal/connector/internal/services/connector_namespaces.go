@@ -28,6 +28,7 @@ type ConnectorNamespaceService interface {
 	GetOrgClusterIds(userId string, organisationId string, orgClusterIds *[]string) *errors.ServiceError
 	CreateDefaultNamespace(ctx context.Context, connectorCluster *dbapi.ConnectorCluster) *errors.ServiceError
 	GetExpiredNamespaces() (dbapi.ConnectorNamespaceList, *errors.ServiceError)
+	UpdateConnectorNamespaceStatus(ctx context.Context, namespaceID string, status *dbapi.ConnectorNamespaceStatus) *errors.ServiceError
 }
 
 var _ ConnectorNamespaceService = &connectorNamespaceService{}
@@ -102,10 +103,6 @@ func (k *connectorNamespaceService) Create(ctx context.Context, request *dbapi.C
 	dbConn := k.connectionFactory.New()
 	if err := dbConn.Create(request).Error; err != nil {
 		return errors.GeneralError("failed to create connector namespace: %v", err)
-	}
-	// reload namespace to get version update
-	if err := dbConn.Select("version").First(request).Error; err != nil {
-		return errors.GeneralError("failed to read new connector namespace: %v", err)
 	}
 
 	// TODO: increment connector namespace metrics
@@ -266,6 +263,18 @@ func (k *connectorNamespaceService) GetExpiredNamespaces() (dbapi.ConnectorNames
 		return nil, errors.GeneralError("Error retrieving expired namespaces: %s", err)
 	}
 	return result, nil
+}
+
+func (k *connectorNamespaceService) UpdateConnectorNamespaceStatus(ctx context.Context, namespaceID string, status *dbapi.ConnectorNamespaceStatus) *errors.ServiceError {
+	namespace := dbapi.ConnectorNamespace{
+		Model: db.Model{ID: namespaceID},
+		Status: *status,
+	}
+	dbConn := k.connectionFactory.New()
+	if err := dbConn.Updates(&namespace).Error; err != nil {
+		return services.HandleUpdateError("Connector namespace", err)
+	}
+	return nil
 }
 
 func removeConnectorsFromNamespace(dbConn *gorm.DB, query interface{}, values ...interface{}) error {

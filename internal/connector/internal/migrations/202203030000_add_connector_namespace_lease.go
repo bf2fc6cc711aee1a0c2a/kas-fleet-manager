@@ -22,7 +22,6 @@ func addConnectorNamespaceLease(migrationId string) *gormigrate.Migration {
 		Expires   *time.Time
 	}
 
-	// add missing deleted_at index caused by incorrectly using api.Meta instead of db.Model in dbapi.* structs
 	return db.CreateMigrationFromActions(migrationId,
 		db.FuncAction(func(tx *gorm.DB) error {
 			// We don't want to delete the leader lease table on rollback because it's shared with the kas-fleet-manager
