@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -501,34 +503,45 @@ func (c clusterService) GetExternalID(clusterID string) (string, *apiErrors.Serv
 }
 
 func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, *apiErrors.ServiceError) {
-	var res []ResKafkaInstanceCount
+	var kafkas []*dbapi.KafkaRequest
+
 	query := c.connectionFactory.New().
-		Model(&dbapi.KafkaRequest{}).
-		Select("cluster_id as Clusterid, count(1) as Count")
+		Model(&dbapi.KafkaRequest{})
 
 	if len(clusterIDs) > 0 {
 		query = query.Where("cluster_id in (?)", clusterIDs)
-	} else {
-		query = query.Where("cluster_id != ''") // make sure that we only include kafka having a cluster_id
 	}
 
-	query = query.Group("cluster_id").Order("cluster_id asc").Scan(&res)
+	query = query.Scan(&kafkas)
 
 	if err := query.Error; err != nil {
 		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to query by cluster info")
 	}
+
+	clusterIdCountMap := map[string]int{}
+
+	var res []ResKafkaInstanceCount
+
+	for _, k := range kafkas {
+		reqSize, e := strconv.Atoi(strings.TrimPrefix(k.SizeId, "x"))
+		if e != nil {
+			return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, e, "failed to query kafkas")
+		}
+		clusterIdCountMap[k.ClusterID] += reqSize
+	}
+
 	// the query above won't return a count for a clusterId if that cluster doesn't have any Kafkas,
 	// to keep things consistent and less confusing, we will identity these ids and set their count to 0
 	if len(clusterIDs) > 0 {
-		countersMap := map[string]int{}
-		for _, c := range res {
-			countersMap[c.Clusterid] = c.Count
-		}
 		for _, clusterId := range clusterIDs {
-			if _, ok := countersMap[clusterId]; !ok {
+			if _, ok := clusterIdCountMap[clusterId]; !ok {
 				res = append(res, ResKafkaInstanceCount{Clusterid: clusterId, Count: 0})
 			}
 		}
+	}
+
+	for k, v := range clusterIdCountMap {
+		res = append(res, ResKafkaInstanceCount{Clusterid: k, Count: v})
 	}
 
 	return res, nil

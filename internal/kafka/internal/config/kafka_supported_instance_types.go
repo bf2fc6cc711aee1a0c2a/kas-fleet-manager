@@ -128,3 +128,21 @@ func NewKafkaSupportedInstanceTypesConfig() *KafkaSupportedInstanceTypesConfig {
 		ConfigurationFile: "config/kafka-instance-types-configuration.yaml",
 	}
 }
+
+func (s *SupportedKafkaInstanceTypesConfig) GetKafkaInstanceTypeByID(instanceType string) (KafkaInstanceType, error) {
+	for _, t := range s.SupportedKafkaInstanceTypes {
+		if t.Id == instanceType {
+			return t, nil
+		}
+	}
+	return KafkaInstanceType{}, fmt.Errorf("Unable to find kafka instance type for '%s'", instanceType)
+}
+
+func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(instanceType, sizeId string) (KafkaInstanceSize, error) {
+	for _, size := range kp.Sizes {
+		if size.Id == sizeId {
+			return size, nil
+		}
+	}
+	return KafkaInstanceSize{}, fmt.Errorf("Kafka instance size id: '%s' not found for '%s' instance type", sizeId, instanceType)
+}

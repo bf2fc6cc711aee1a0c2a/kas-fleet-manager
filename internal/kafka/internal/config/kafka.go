@@ -86,3 +86,23 @@ func (c *KafkaConfig) ReadFiles() error {
 func (c *KafkaConfig) Validate(env *environments.Env) error {
 	return c.SupportedInstanceTypes.Configuration.validate()
 }
+
+func (c *KafkaConfig) GetFirstAvailableSize(instanceType string) (string, error) {
+	kafkaInstanceType, err := c.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
+	if err != nil {
+		return "", err
+	}
+	return kafkaInstanceType.Sizes[0].Id, nil
+}
+
+func (c *KafkaConfig) GetKafkaInstanceSize(instanceType, sizeId string) (KafkaInstanceSize, error) {
+	kafkaInstanceType, err := c.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
+	if err != nil {
+		return KafkaInstanceSize{}, err
+	}
+	kafkaInstanceSize, err := kafkaInstanceType.GetKafkaInstanceSizeByID(instanceType, sizeId)
+	if err != nil {
+		return KafkaInstanceSize{}, err
+	}
+	return kafkaInstanceSize, nil
+}

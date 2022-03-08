@@ -21,4 +21,6 @@ type KafkaRequestPayload struct {
 	Region string `json:"region,omitempty"`
 	// Whether connection reauthentication is enabled or not. If set to true, connection reauthentication on the Kafka instance will be required every 5 minutes. The default value is true
 	ReauthenticationEnabled *bool `json:"reauthentication_enabled,omitempty"`
+	// kafka plan in a format of <instance_type>.<size_id>
+	Plan string `json:"plan,omitempty"`
 }

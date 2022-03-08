@@ -449,6 +449,8 @@ components:
           type: string
         namespace:
           type: string
+        size_id:
+          type: string
     KafkaList_allOf:
       properties:
         items:
