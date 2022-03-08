@@ -31,7 +31,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"enable-deny-list":              "true",
 		"enable-instance-limit-control": "true",
 		"max-allowed-instances":         "1",
-		"mas-sso-base-url":              "https://identity.api.stage.openshift.com",
+		"mas-sso-base-url":              "http://127.0.0.1:8180",
 		"mas-sso-realm":                 "rhoas",
 	}
 }

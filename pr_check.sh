@@ -71,6 +71,9 @@ else
   -e  "s/<osd_idp_mas_sso_client_secret>/${OSD_IDP_MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
 fi
 
+sed -i -e 's/http:\/\/127.0.0.1:8180/https:\/\/identity.api.stage.openshift.com/g' internal/kafka/internal/environments/integration.go
+sed -i -e 's/http:\/\/127.0.0.1:8180/https:\/\/identity.api.stage.openshift.com/g' internal/connector/internal/environments/integration.go
+
 docker login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
 docker build -t "$IMAGE_NAME" -f Dockerfile_integration_tests .
 docker run -i "$IMAGE_NAME"
