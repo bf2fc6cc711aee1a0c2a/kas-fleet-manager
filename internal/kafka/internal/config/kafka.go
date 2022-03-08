@@ -86,3 +86,23 @@ func (c *KafkaConfig) ReadFiles() error {
 func (c *KafkaConfig) Validate(env *environments.Env) error {
 	return c.SupportedInstanceTypes.Configuration.validate()
 }
+
+func (c *KafkaConfig) GetFirstAvailableSize(instanceType string) (string, error) {
+	profile, err := c.SupportedInstanceTypes.Configuration.GetProfileByID(instanceType)
+	if err != nil {
+		return "", err
+	}
+	return profile.Sizes[0].Id, nil
+}
+
+func (c *KafkaConfig) CheckSizingCombinationExists(instanceType, sizeId string) (bool, error) {
+	profile, err := c.SupportedInstanceTypes.Configuration.GetProfileByID(instanceType)
+	if err != nil {
+		return false, err
+	}
+	_, err = profile.GetSizeByID(instanceType, sizeId)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}

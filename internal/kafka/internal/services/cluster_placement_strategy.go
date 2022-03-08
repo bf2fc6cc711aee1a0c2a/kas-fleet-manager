@@ -1,6 +1,9 @@
 package services
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -89,11 +92,16 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 		return nil, errf
 	}
 
+	reqSize, e := strconv.Atoi(strings.TrimPrefix(kafka.SizeId, "x"))
+	if e != nil {
+		return nil, nil
+	}
+
 	//#3 which schedulable cluster is also within the limit
 	//we want to make sure the order of the ids configuration is always respected: e.g the first cluster in the configuration that passes all the checks should be picked first
 	for _, schClusterid := range clusterSchIds {
 		cnt := clusterWithinLimit[schClusterid]
-		if dataplaneClusterConfig.IsNumberOfKafkaWithinClusterLimit(schClusterid, cnt+1) {
+		if dataplaneClusterConfig.IsNumberOfKafkaWithinClusterLimit(schClusterid, cnt+reqSize) {
 			return searchClusterObjInArray(clusterObj, schClusterid), nil
 		}
 	}

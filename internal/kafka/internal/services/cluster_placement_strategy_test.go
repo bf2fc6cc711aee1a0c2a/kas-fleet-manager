@@ -1,9 +1,10 @@
 package services
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"reflect"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
@@ -132,7 +133,9 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: &dbapi.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{
+					SizeId: "x1",
+				},
 			},
 			want:    &api.Cluster{ClusterID: "test01"},
 			wantErr: false,
@@ -187,7 +190,9 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: &dbapi.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{
+					SizeId: "x1",
+				},
 			},
 			want:    &api.Cluster{ClusterID: "test02"},
 			wantErr: false,

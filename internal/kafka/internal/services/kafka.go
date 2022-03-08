@@ -145,17 +145,38 @@ func (k *kafkaService) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaReq
 }
 
 func (k *kafkaService) capacityAvailableForRegionAndInstanceType(instTypeRegCapacity *int, kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
+	errMessage := fmt.Sprintf("Failed to check kafka capacity for region '%s' and instance type '%s'", kafkaRequest.Region, kafkaRequest.InstanceType)
+
 	dbConn := k.connectionFactory.New()
 
 	var count int64
+
+	var kafkas []*dbapi.KafkaRequest
+
 	if err := dbConn.Model(&dbapi.KafkaRequest{}).
 		Where("region = ?", kafkaRequest.Region).
 		Where("cloud_provider = ?", kafkaRequest.CloudProvider).
 		Where("instance_type = ?", kafkaRequest.InstanceType).
-		Count(&count).Error; err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka request")
+		Scan(&kafkas).Error; err != nil {
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, errMessage)
 	}
-	return instTypeRegCapacity == nil || count < int64(*instTypeRegCapacity), nil
+
+	for _, k := range kafkas {
+		i, err := ParseSize(k.SizeId)
+		if err != nil {
+			return false, errors.NewWithCause(errors.ErrorGeneral, err, errMessage)
+		}
+		count += i
+	}
+
+	kafkaSize, err := ParseSize(kafkaRequest.SizeId)
+	if err != nil {
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, errMessage)
+	}
+
+	count += kafkaSize
+
+	return instTypeRegCapacity == nil || count <= int64(*instTypeRegCapacity), nil
 }
 
 func (k *kafkaService) DetectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
@@ -213,13 +234,6 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	defer k.mu.Unlock()
 	// we need to pre-populate the ID to be able to reserve the quota
 	kafkaRequest.ID = api.NewID()
-
-	instanceType, err := k.DetectInstanceType(kafkaRequest)
-	if err != nil {
-		return err
-	}
-
-	kafkaRequest.InstanceType = instanceType.String()
 
 	hasCapacity, err := k.HasAvailableCapacityInRegion(kafkaRequest)
 	if err != nil {
