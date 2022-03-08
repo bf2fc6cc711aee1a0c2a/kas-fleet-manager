@@ -1,3 +1,15 @@
 # These owners will be the default owners for everything in the repo
 
-* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi
+# TODO use GH team
+# Kafka
+internal/kafka/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi
+
+# Github workflow
+.github/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi
+
+# connectors
+internal/connector/**/*  @valdar @dhirajsb
+
+# common
+pkg/**/*  @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @valdar @dhirajsb
+test/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @valdar @dhirajsb

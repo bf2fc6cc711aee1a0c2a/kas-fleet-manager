@@ -1,17 +1,17 @@
-# This sets labels and reviewers.
-name: Labels & reviewers.
-
+name: "Pull Request Labeler"
 on:
-  - pull_request
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
 
 jobs:
-  labels_and_reviewers:
+  triage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/labeler@v3
+      - uses: actions/labeler@v4
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
-      - uses: shufo/auto-assign-reviewer-by-files@v1.1.2
-        with:
-          config: ".github/owners.yaml"
-          token: ${{ secrets.GITHUB_TOKEN }}
+
