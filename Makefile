@@ -242,6 +242,9 @@ help:
 	@echo "make docs/generate/mermaid       generate mermaid diagrams"
 	@echo "make ocm/setup                   generate secrets specific to ocm authentication"
 	@echo "make ocm/login                   ocm login"
+	@echo "make sso/setup                   local keycloak instance"
+	@echo "make sso/config                  local configure realm"
+	@echo "make sso/teardown                teardown keycloak instance"
 	@echo "$(fake)"
 .PHONY: help
 
@@ -486,6 +489,18 @@ db/migrate:
 db/teardown:
 	./scripts/local_db_teardown.sh
 .PHONY: db/teardown
+
+sso/setup:
+	./scripts/mas_sso_setup.sh
+.PHONY: sso/setup
+
+sso/config:
+	./scripts/mas_sso_config.sh
+.PHONY: sso/config
+
+sso/teardown:
+	./scripts/mas_sso_teardown.sh
+.PHONY: sso/teardown
 
 db/login:
 	docker exec -u $(shell id -u) -it kas-fleet-manager-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"

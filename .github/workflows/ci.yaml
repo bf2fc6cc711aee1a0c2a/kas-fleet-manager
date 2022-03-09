@@ -46,10 +46,10 @@ env:
   GORM_SSLMODE: disable
   GORM_DEBUG: false
   # Dummy MAS SSO variables
-  MAS_SSO_CLIENT_ID: ${{ secrets.MAS_SSO_CLIENT_ID }}
-  MAS_SSO_CLIENT_SECRET: ${{ secrets.MAS_SSO_CLIENT_SECRET }}
-  OSD_IDP_MAS_SSO_CLIENT_ID: ${{ secrets.OSD_IDP_MAS_SSO_CLIENT_ID }}
-  OSD_IDP_MAS_SSO_CLIENT_SECRET: ${{ secrets.OSD_IDP_MAS_SSO_CLIENT_SECRET }}
+  MAS_SSO_CLIENT_ID: kas-fleet-manager
+  MAS_SSO_CLIENT_SECRET: kas-fleet-manager
+  OSD_IDP_MAS_SSO_CLIENT_ID: kas-fleet-manager
+  OSD_IDP_MAS_SSO_CLIENT_SECRET: kas-fleet-manager
   # Dummy AWS credentials 
   AWS_ACCOUNT_ID: aws_accountid
   AWS_ACCESS_KEY: aws_accesskey
@@ -82,7 +82,17 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-     
+
+      keycloak:
+        image: quay.io/keycloak/keycloak:17.0.0-legacy
+        env:
+          DB_VENDOR: h2
+          KEYCLOAK_USER: admin
+          KEYCLOAK_PASSWORD: admin
+        ports:
+          - 8180:8080
+        options: --health-cmd "curl -f http://localhost:8080/auth/realms/master" --health-interval 40s --health-retries 8 --health-timeout 60s
+
     steps:
       - name: Cancel Previous Runs
         uses: n1hility/cancel-previous-runs@v2
@@ -94,6 +104,8 @@ jobs:
           go-version: "1.16"
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+      - name: Setup Keycloak realm config
+        run: ./scripts/mas_sso_config.sh
       - name: Cache go module
         uses: actions/cache@v2
         with:
