@@ -33,7 +33,7 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 			name: "provision is finished successfully",
 			fields: fields{
 				ssoService: &services.KeycloakServiceMock{
-					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
@@ -53,7 +53,7 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 			name: "provision is failed",
 			fields: fields{
 				ssoService: &services.KeycloakServiceMock{
-					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 						return nil, errors.GeneralError("error")
 					},
 				},
@@ -155,7 +155,7 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 			name: "ReconcileParameters is finished successfully",
 			fields: fields{
 				ssoService: &services.KeycloakServiceMock{
-					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
@@ -173,7 +173,7 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 			name: "ReconcileParameters is failed because UpdateAddonParameters failed",
 			fields: fields{
 				ssoService: &services.KeycloakServiceMock{
-					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 						return &api.ServiceAccount{}, nil
 					},
 				},

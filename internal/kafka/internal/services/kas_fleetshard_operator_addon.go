@@ -133,7 +133,7 @@ func (o *kasFleetshardOperatorAddon) getAddonParams(cluster api.Cluster) ([]type
 
 func (o *kasFleetshardOperatorAddon) provisionServiceAccount(clusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	glog.V(5).Infof("Provisioning service account for cluster %s", clusterId)
-	return o.SsoService.RegisterKasFleetshardOperatorServiceAccount(clusterId, KasFleetshardOperatorRoleName)
+	return o.SsoService.RegisterKasFleetshardOperatorServiceAccount(clusterId)
 }
 
 func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []types.Parameter {

@@ -23,7 +23,6 @@ type KeycloakConfig struct {
 	OSDClusterIDPRealm          *KeycloakRealmConfig `json:"osd_cluster_idp_realm"`
 	MaxAllowedServiceAccounts   int                  `json:"max_allowed_service_accounts"`
 	MaxLimitForGetClients       int                  `json:"max_limit_for_get_clients"`
-	KeycloakClientExpire        bool                 `json:"keycloak_client_expire"`
 }
 
 type KeycloakRealmConfig struct {
@@ -65,7 +64,6 @@ func NewKeycloakConfig() *KeycloakConfig {
 		TLSTrustedCertificatesKey:  "keycloak.crt",
 		MaxAllowedServiceAccounts:  2,
 		MaxLimitForGetClients:      100,
-		KeycloakClientExpire:       false,
 	}
 	return kc
 }
@@ -86,7 +84,6 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&kc.MaxLimitForGetClients, "max-limit-for-sso-get-clients", kc.MaxLimitForGetClients, "Max limits for SSO get clients")
 	fs.StringVar(&kc.UserNameClaim, "user-name-claim", kc.UserNameClaim, "Human readable username token claim")
 	fs.StringVar(&kc.FallBackUserNameClaim, "fall-back-user-name-claim", kc.FallBackUserNameClaim, "Fall back username token claim")
-	fs.BoolVar(&kc.KeycloakClientExpire, "keycloak-client-expire", kc.KeycloakClientExpire, "Whether or not to tag Keycloak created Client to expire in 2 hours (useful for cleaning up after integrations tests)")
 }
 
 func (kc *KeycloakConfig) ReadFiles() error {

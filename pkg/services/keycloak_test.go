@@ -327,7 +327,6 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 	}
 	type args struct {
 		clusterId string
-		roleName  string
 	}
 	fakeRoleId := "1234"
 	fakeClientId := "test-client-id"
@@ -388,7 +387,6 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 			},
 			args: args{
 				clusterId: "test-cluster-id",
-				roleName:  "test-role-name",
 			},
 			want: &api.ServiceAccount{
 				ID:           fakeClientId,
@@ -445,7 +443,6 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 			},
 			args: args{
 				clusterId: "test-cluster-id",
-				roleName:  "test-role-name",
 			},
 			want: &api.ServiceAccount{
 				ID:           fakeClientId,
@@ -462,7 +459,7 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 			keycloakService := keycloakService{
 				tt.fields.kcClient,
 			}
-			got, err := keycloakService.RegisterKasFleetshardOperatorServiceAccount(tt.args.clusterId, tt.args.roleName)
+			got, err := keycloakService.RegisterKasFleetshardOperatorServiceAccount(tt.args.clusterId)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterKasFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -721,7 +718,7 @@ func TestKeycloakService_RegisterConnectorFleetshardOperatorServiceAccount(t *te
 			keycloakService := keycloakService{
 				tt.fields.kcClient,
 			}
-			got, err := keycloakService.RegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterId, tt.args.roleName)
+			got, err := keycloakService.RegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterId)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterConnectorFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}

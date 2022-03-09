@@ -43,11 +43,11 @@ type KeycloakService interface {
 	DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError
 	ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
 	ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError)
-	RegisterKasFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
+	RegisterKasFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError)
 	DeRegisterKasFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError
 	GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError)
 	GetServiceAccountByClientId(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
-	RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
+	RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError)
 	DeRegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError
 	GetKafkaClientSecret(clientId string) (string, *errors.ServiceError)
 	CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError)
@@ -528,44 +528,29 @@ func (kc *keycloakService) GetServiceAccountById(ctx context.Context, id string)
 	}, id)
 }
 
-func (kc *keycloakService) RegisterKasFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+func (kc *keycloakService) RegisterKasFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	serviceAccountId := buildAgentOperatorServiceAccountId(kasAgentServiceAccountPrefix, agentClusterId)
-	return kc.registerAgentServiceAccount(kasClusterId, serviceAccountId, agentClusterId, roleName)
+	return kc.registerAgentServiceAccount(kasClusterId, serviceAccountId, agentClusterId)
 }
 
 func (kc *keycloakService) DeRegisterKasFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
 	return kc.deregisterAgentServiceAccount(kasAgentServiceAccountPrefix, agentClusterId)
 }
 
-func (kc *keycloakService) RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) { // (agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+func (kc *keycloakService) RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) { // (agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
 	serviceAccountId := buildAgentOperatorServiceAccountId(connectorAgentServiceAccountPrefix, agentClusterId)
-	return kc.registerAgentServiceAccount(connectorClusterId, serviceAccountId, agentClusterId, roleName)
+	return kc.registerAgentServiceAccount(connectorClusterId, serviceAccountId, agentClusterId)
 }
 
 func (kc *keycloakService) DeRegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
 	return kc.deregisterAgentServiceAccount(connectorAgentServiceAccountPrefix, agentClusterId)
 }
 
-func (kc *keycloakService) registerAgentServiceAccount(clusterId string, serviceAccountId string, agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+func (kc *keycloakService) registerAgentServiceAccount(clusterId string, serviceAccountId string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	//get keycloak service client id token
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register agent service account")
-	}
-
-	role, err := kc.getRealmRole(accessToken, roleName)
-	if err != nil {
-		return nil, err
-	}
-
-	protocolMapper := kc.kcClient.CreateProtocolMapperConfig(clusterId)
-
-	attributes := map[string]string{
-		clusterId: agentClusterId,
-	}
-
-	if kc.GetConfig().KeycloakClientExpire {
-		attributes["expire_date"] = time.Now().Local().Add(time.Hour * time.Duration(2)).Format(time.RFC3339)
 	}
 
 	c := keycloak.ClientRepresentation{
@@ -574,8 +559,6 @@ func (kc *keycloakService) registerAgentServiceAccount(clusterId string, service
 		Description:            fmt.Sprintf("service account for agent on cluster %s", agentClusterId),
 		ServiceAccountsEnabled: true,
 		StandardFlowEnabled:    false,
-		ProtocolMappers:        protocolMapper,
-		Attributes:             attributes,
 	}
 	account, err := kc.createServiceAccountIfNotExists(accessToken, c)
 	if err != nil {
@@ -593,18 +576,6 @@ func (kc *keycloakService) registerAgentServiceAccount(clusterId string, service
 		updateErr := kc.kcClient.UpdateServiceAccountUser(accessToken, *serviceAccountUser)
 		if updateErr != nil {
 			return nil, errors.NewWithCause(errors.ErrorGeneral, updateErr, "failed to update agent service account")
-		}
-	}
-	glog.V(5).Infof("Attribute %s is added for client %s", clusterId, serviceAccountId)
-	hasRole, checkErr := kc.kcClient.UserHasRealmRole(accessToken, *serviceAccountUser.ID, roleName)
-	if checkErr != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, checkErr, "failed to update agent service account")
-	}
-	if hasRole == nil {
-		glog.V(10).Infof("Client %s has no role %s, adding", serviceAccountId, roleName)
-		addRoleErr := kc.kcClient.AddRealmRoleToUser(accessToken, *serviceAccountUser.ID, *role)
-		if addRoleErr != nil {
-			return nil, errors.NewWithCause(errors.ErrorGeneral, addRoleErr, "failed to add role to agent service account")
 		}
 	}
 	glog.V(5).Infof("Client %s created successfully with internal id = %s", serviceAccountId, account.ID)
@@ -631,19 +602,6 @@ func (kc *keycloakService) deregisterAgentServiceAccount(prefix string, agentClu
 	}
 	glog.V(5).Infof("deleted service account clientId = %s and internal id = %s", serviceAccountId, internalServiceAccountId)
 	return nil
-}
-
-func (kc *keycloakService) getRealmRole(token string, roleName string) (*gocloak.Role, *errors.ServiceError) {
-	glog.V(5).Infof("Fetching realm role %s", roleName)
-	role, err := kc.kcClient.GetRealmRole(token, roleName)
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get realm role")
-	}
-	if role == nil {
-		glog.V(10).Infof("No existing realm role %s found", roleName)
-	}
-	glog.V(5).Infof("Realm role %s found", roleName)
-	return role, nil
 }
 
 func (kc *keycloakService) createServiceAccountIfNotExists(token string, clientRep keycloak.ClientRepresentation) (*api.ServiceAccount, *errors.ServiceError) {
