@@ -1195,6 +1195,9 @@ components:
         capacity:
         - instance_type: standard
           max_capacity_reached: true
+          available_sizes:
+          - x1
+          - x2
     ServiceAccountRequestExample:
       value:
         name: my-app-sa
@@ -1718,7 +1721,15 @@ components:
           description: flag indicating whether the capacity for the instance type
             in the region is reached
           type: boolean
+        available_sizes:
+          description: list of available Kafka instance sizes that can be created
+            in this region when taking account current capacity and regional limits
+          items:
+            type: string
+          type: array
       required:
+      - available_sizes
+      - instance_type
       - max_capacity_reached
       type: object
     ServiceAccountListItem:
