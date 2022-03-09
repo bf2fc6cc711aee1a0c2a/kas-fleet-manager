@@ -39,7 +39,6 @@ func PresentConnectorDeployment(from dbapi.ConnectorDeployment) (private.Connect
 			ConnectorId:              from.ConnectorID,
 			OperatorId:               from.OperatorID,
 			NamespaceId:              from.NamespaceID,
-			NamespaceName:            from.NamespaceName,
 			ConnectorResourceVersion: from.ConnectorVersion,
 		},
 		Status: private.ConnectorDeploymentStatus{

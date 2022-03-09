@@ -256,6 +256,31 @@ func (h *ConnectorClusterHandler) GetDeployment(w http.ResponseWriter, r *http.R
 	handlers.HandleGet(w, r, cfg)
 }
 
+func (h *ConnectorClusterHandler) GetNamespace(w http.ResponseWriter, r *http.Request) {
+	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
+	namespaceId := mux.Vars(r)["namespace_id"]
+
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("namespace_id", &namespaceId, handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			var resource *dbapi.ConnectorNamespace
+			resource, err := h.ConnectorNamespace.Get(r.Context(), namespaceId)
+			if err != nil {
+				return nil, err
+			}
+			if resource.ClusterId != connectorClusterId {
+				return nil, errors.NotFound("Connector namespace not found")
+			}
+
+			return presenters.PresentConnectorNamespace(resource), nil
+		},
+	}
+	handlers.HandleGet(w, r, cfg)
+}
+
 func (h *ConnectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	deploymentId := mux.Vars(r)["deployment_id"]

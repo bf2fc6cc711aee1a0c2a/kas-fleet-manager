@@ -18,7 +18,6 @@ type ConnectorDeploymentSpec struct {
 	ConnectorResourceVersion int64                            `json:"connector_resource_version,omitempty"`
 	ConnectorTypeId          string                           `json:"connector_type_id,omitempty"`
 	NamespaceId              string                           `json:"namespace_id,omitempty"`
-	NamespaceName            string                           `json:"namespace_name,omitempty"`
 	ConnectorSpec            map[string]interface{}           `json:"connector_spec,omitempty"`
 	// allow the connector to upgrade to a new operator
 	// Deprecated
