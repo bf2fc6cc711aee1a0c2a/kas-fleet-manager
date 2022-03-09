@@ -172,7 +172,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "do not throw an error when default provider and region are picked",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
 				},
@@ -207,7 +207,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "do not throw an error when cloud provider and region matches",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
 				},
@@ -252,7 +252,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "throws an error when cloud provider and region do not match",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
 				},
@@ -285,7 +285,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "throws an error when instance type is not supported",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
 						return types.EVAL, nil
 					},
 				},

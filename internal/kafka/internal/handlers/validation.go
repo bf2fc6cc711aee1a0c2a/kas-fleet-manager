@@ -80,9 +80,9 @@ func ValidateCloudProvider(kafkaService *services.KafkaService, kafkaRequest *db
 		}
 
 		// Validate Region/InstanceType
-		instanceType, err := (*kafkaService).DetectInstanceType(kafkaRequest)
+		instanceType, err := (*kafkaService).AssignInstanceType(kafkaRequest)
 		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "error detecting instance type: %s", err.Error())
+			return errors.NewWithCause(errors.ErrorGeneral, err, "error assigning instance type: %s", err.Error())
 		}
 
 		region, _ := provider.Regions.GetByName(kafkaRequest.Region)

@@ -51,7 +51,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateCloudProvider(&h.service, convKafka, h.providerConfig, "creating kafka requests"),
 			handlers.ValidateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
 			func() *errors.ServiceError { // Validate plan
-				instanceType, err := h.service.DetectInstanceType(convKafka)
+				instanceType, err := h.service.AssignInstanceType(convKafka)
 				if err != nil {
 					return err
 				}

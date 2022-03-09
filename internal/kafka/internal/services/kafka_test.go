@@ -1245,7 +1245,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 	}
 }
 
-func Test_DetectInstanceType(t *testing.T) {
+func Test_AssignInstanceType(t *testing.T) {
 	type fields struct {
 		quotaService QuotaService
 		kafkaConfig  config.KafkaConfig
@@ -1306,18 +1306,18 @@ func Test_DetectInstanceType(t *testing.T) {
 				},
 			}
 
-			_, err := k.DetectInstanceType(tt.args.kafkaRequest)
+			_, err := k.AssignInstanceType(tt.args.kafkaRequest)
 
 			if (err != nil) != tt.error.wantErr {
-				t.Errorf("DetectInstanceType() error = %v, wantErr = %v", err, tt.error.wantErr)
+				t.Errorf("AssignInstanceType() error = %v, wantErr = %v", err, tt.error.wantErr)
 			}
 
 			if tt.error.wantErr {
 				if err.Code != tt.error.code {
-					t.Errorf("DetectInstanceType() received error code %v, expected error %v", err.Code, tt.error.code)
+					t.Errorf("AssignInstanceType() received error code %v, expected error %v", err.Code, tt.error.code)
 				}
 				if err.HttpCode != tt.error.httpCode {
-					t.Errorf("DetectInstanceType() received http code %v, expected %v", err.HttpCode, tt.error.httpCode)
+					t.Errorf("AssignInstanceType() received http code %v, expected %v", err.HttpCode, tt.error.httpCode)
 				}
 			}
 		})
