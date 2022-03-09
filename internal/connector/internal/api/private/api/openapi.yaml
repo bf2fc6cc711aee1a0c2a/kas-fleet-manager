@@ -261,6 +261,63 @@ paths:
       summary: update the connector deployment status
       tags:
       - Connector Clusters Agent
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/namespaces/{namespace_id}:
+    get:
+      description: Returns a connector namespace assigned to the cluster.
+      operationId: getClusterAsignedConnectorNamespaceById
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The id of the namespace
+        explode: false
+        in: path
+        name: namespace_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorNamespace'
+          description: A connector namespace
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "410":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: namespace has been deleted
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns a connector namespace assigned to the cluster.
+      tags:
+      - Connector Clusters Agent
 components:
   examples:
     "400InvalidIdExample":
@@ -352,8 +409,6 @@ components:
         connector_type_id:
           type: string
         namespace_id:
-          type: string
-        namespace_name:
           type: string
         connector_spec:
           type: object
@@ -576,6 +631,71 @@ components:
         href:
           type: string
       type: object
+    ConnectorNamespace:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/ConnectorNamespaceMeta'
+      - $ref: '#/components/schemas/ConnectorNamespace_allOf'
+      description: A connector namespace
+    ConnectorNamespaceMeta:
+      allOf:
+      - $ref: '#/components/schemas/ObjectMeta'
+      - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
+    ObjectMeta:
+      properties:
+        owner:
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        modified_at:
+          format: date-time
+          type: string
+      type: object
+    ConnectorNamespaceRequestMeta:
+      properties:
+        name:
+          type: string
+        annotations:
+          items:
+            $ref: '#/components/schemas/ConnectorNamespaceRequestMeta_annotations'
+          type: array
+      type: object
+    ConnectorNamespaceTenant:
+      properties:
+        kind:
+          $ref: '#/components/schemas/ConnectorNamespaceTenantKind'
+        id:
+          description: Either user or organisation id depending on the value of kind
+          type: string
+      required:
+      - id
+      - kind
+      type: object
+    ConnectorNamespaceTenantKind:
+      enum:
+      - user
+      - organisation
+      type: string
+    ConnectorNamespaceStatus_2:
+      properties:
+        state:
+          $ref: '#/components/schemas/ConnectorNamespaceState'
+        connectors_deployed:
+          format: int32
+          type: integer
+        error:
+          type: string
+      required:
+      - connectors_deployed
+      - state
+      type: object
+    ConnectorNamespaceState:
+      enum:
+      - disconnected
+      - ready
+      - deleting
+      type: string
     ServiceAccount:
       properties:
         client_id:
@@ -693,6 +813,33 @@ components:
           type: string
         operation_id:
           type: string
+    ConnectorNamespace_allOf:
+      properties:
+        name:
+          type: string
+        cluster_id:
+          type: string
+        expiration:
+          type: string
+        tenant:
+          $ref: '#/components/schemas/ConnectorNamespaceTenant'
+        status:
+          $ref: '#/components/schemas/ConnectorNamespaceStatus_2'
+      required:
+      - cluster_id
+      - id
+      - name
+      - status
+      - tenant
+    ConnectorNamespaceRequestMeta_annotations:
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+      required:
+      - name
+      - value
   securitySchemes:
     Bearer:
       bearerFormat: JWT

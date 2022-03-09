@@ -74,7 +74,6 @@ type ConnectorDeployment struct {
 	ConnectorTypeChannelId int64
 	ClusterID              string
 	NamespaceID            string
-	NamespaceName          string `gorm:"->"` // readonly field, used to join connector_namespaces
 	AllowUpgrade           bool
 	Status                 ConnectorDeploymentStatus `gorm:"foreignKey:ID"`
 }

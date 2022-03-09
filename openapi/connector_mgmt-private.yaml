@@ -238,6 +238,60 @@ paths:
               schema:
                 $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
 
+  '/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/namespaces/{namespace_id}':
+    parameters:
+      - name: connector_cluster_id
+        description: The id of the connector cluster
+        schema:
+          type: string
+        in: path
+        required: true
+      - name: namespace_id
+        description: The id of the namespace
+        schema:
+          type: string
+        in: path
+        required: true
+    get:
+      tags:
+        - Connector Clusters Agent
+      security:
+        - Bearer: [ ]
+      operationId: getClusterAsignedConnectorNamespaceById
+      summary: Returns a connector namespace assigned to the cluster.
+      description: Returns a connector namespace assigned to the cluster.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: 'connector_mgmt.yaml#/components/schemas/ConnectorNamespace'
+          description: A connector namespace
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+          description: Auth token is invalid
+        '410':
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+          description: namespace has been deleted
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+          description: Unexpected error occurred
+
 components:
   schemas:
 
@@ -314,8 +368,6 @@ components:
         connector_type_id:
           type: string
         namespace_id:
-          type: string
-        namespace_name:
           type: string
         connector_spec:
           type: object

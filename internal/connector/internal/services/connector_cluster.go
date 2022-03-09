@@ -61,19 +61,11 @@ type connectorClusterService struct {
 	keycloakService           sso.KafkaKeycloakService
 	connectorsService         ConnectorsService
 	connectorNamespaceService ConnectorNamespaceService
-	deploymentColumns         []string
 }
 
 func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService vault.VaultService,
 	connectorTypesService ConnectorTypesService, connectorsService ConnectorsService,
 	keycloakService sso.KafkaKeycloakService, connectorNamespaceService ConnectorNamespaceService) *connectorClusterService {
-	types, _ := connectionFactory.New().Migrator().ColumnTypes(&dbapi.ConnectorDeployment{})
-	nTypes := len(types)
-	columnNames := make([]string, nTypes+1)
-	for i, columnType := range types {
-		columnNames[i] = "connector_deployments." + columnType.Name()
-	}
-	columnNames[nTypes] = "connector_namespaces.name AS namespace_name"
 	return &connectorClusterService{
 		connectionFactory:         connectionFactory,
 		bus:                       bus,
@@ -82,7 +74,6 @@ func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus sig
 		connectorsService:         connectorsService,
 		keycloakService:           keycloakService,
 		connectorNamespaceService: connectorNamespaceService,
-		deploymentColumns:         columnNames,
 	}
 }
 
@@ -463,21 +454,12 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 	// default the order by version
 	dbConn = dbConn.Order("connector_deployments.version")
 
-	// add namespace_name column
-	dbConn = k.selectDeploymentColumns(dbConn)
-
 	// execute query
 	if err := dbConn.Find(&resourceList).Error; err != nil {
 		return resourceList, pagingMeta, errors.GeneralError("Unable to list connector deployments for cluster %s: %s", id, err)
 	}
 
 	return resourceList, pagingMeta, nil
-}
-
-func (k *connectorClusterService) selectDeploymentColumns(dbConn *gorm.DB) *gorm.DB {
-	// join connector_namespaces for namespace name
-	return dbConn.Select(k.deploymentColumns).
-		Joins("INNER JOIN connector_namespaces ON connector_namespaces.id = namespace_id")
 }
 
 func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Context, deploymentStatus dbapi.ConnectorDeploymentStatus) *errors.ServiceError {
@@ -665,8 +647,7 @@ func getSecretsFromVaultAsBase64(resource *dbapi.Connector, cts ConnectorTypesSe
 
 func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context, connectorID string) (resource dbapi.ConnectorDeployment, serr *errors.ServiceError) {
 
-	dbConn := k.connectionFactory.New()
-	dbConn = k.selectDeploymentColumns(dbConn).Where("connector_id = ?", connectorID)
+	dbConn := k.connectionFactory.New().Where("connector_id = ?", connectorID)
 	if err := dbConn.First(&resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector deployment", "connector_id", connectorID, err)
 	}
@@ -676,8 +657,7 @@ func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context
 func (k *connectorClusterService) GetDeployment(ctx context.Context, id string) (resource dbapi.ConnectorDeployment, serr *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
-	dbConn = dbConn.Unscoped().Where("connector_deployments.id = ?", id)
-	if err := k.selectDeploymentColumns(dbConn).First(&resource).Error; err != nil {
+	if err := dbConn.Unscoped().Where("connector_deployments.id = ?", id).First(&resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector deployment", "id", id, err)
 	}
 

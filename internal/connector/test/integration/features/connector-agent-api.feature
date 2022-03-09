@@ -30,8 +30,8 @@ Feature: connector agent API
 
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/namespaces"
     Then the response code should be 200
-    Given I store the ".items[0].id" selection from the response as ${connector_namespace_id}
 
+    Given I store the ".items[0].id" selection from the response as ${connector_namespace_id}
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
     Then the response code should be 200
     And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
@@ -77,6 +77,11 @@ Feature: connector agent API
     # Logs in as the agent..
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
+
+    # agent should be able to get namespace details for creating namespaces on data plane
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}"
+    Then the response code should be 200
+    And the ".id" selection from the response should match "${connector_namespace_id}"
 
     # There should be no deployments assigned yet, since the cluster status is disconnected
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
@@ -211,7 +216,6 @@ Feature: connector agent API
             },
             "connector_id": "${connector_id}",
             "namespace_id": "${connector_namespace_id}",
-            "namespace_name": "default-connector-namespace",
             "connector_resource_version": ${response.object.spec.connector_resource_version},
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "connector_spec": {
@@ -309,7 +313,6 @@ Feature: connector agent API
               },
               "connector_id": "${connector_id}",
               "namespace_id": "${connector_namespace_id}",
-              "namespace_name": "default-connector-namespace",
               "connector_resource_version": ${response.items[0].spec.connector_resource_version},
               "connector_type_id": "aws-sqs-source-v1alpha1",
               "connector_spec": {
@@ -396,7 +399,6 @@ Feature: connector agent API
             },
             "connector_id": "${connector_id}",
             "namespace_id": "${connector_namespace_id}",
-            "namespace_name": "default-connector-namespace",
             "connector_resource_version": ${response.spec.connector_resource_version},
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "connector_spec": {
@@ -575,7 +577,6 @@ Feature: connector agent API
             },
             "connector_id": "${connector_id}",
             "namespace_id": "${connector_namespace_id}",
-            "namespace_name": "default-connector-namespace",
             "connector_resource_version": ${response.object.spec.connector_resource_version},
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "connector_spec": {
