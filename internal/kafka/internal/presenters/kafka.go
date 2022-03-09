@@ -2,6 +2,7 @@ package presenters
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
@@ -52,8 +53,15 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, browserUrl string) pu
 		InstanceType:            kafkaRequest.InstanceType,
 		ReauthenticationEnabled: kafkaRequest.ReauthenticationEnabled,
 		KafkaStorageSize:        kafkaRequest.KafkaStorageSize,
-		BrowserUrl:              fmt.Sprintf("%sapplication-services/streams/kafkas/%s/dashboard", browserUrl, reference.Id),
+		BrowserUrl:              fmt.Sprintf("%sapplication-services/streams/kafkas/%s/dashboard", validateBrowserUrl(browserUrl), reference.Id),
 	}
+}
+
+func validateBrowserUrl(BrowserUrl string) string {
+	if strings.HasSuffix(BrowserUrl, "/") {
+		return BrowserUrl
+	}
+	return BrowserUrl + "/"
 }
 
 func setBootstrapServerHost(bootstrapServerHost string) string {
