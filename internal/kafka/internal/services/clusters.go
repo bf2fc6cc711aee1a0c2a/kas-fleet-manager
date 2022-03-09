@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/golang/glog"
@@ -76,13 +75,15 @@ type ClusterService interface {
 type clusterService struct {
 	connectionFactory *db.ConnectionFactory
 	providerFactory   clusters.ProviderFactory
+	kafkaConfig       *config.KafkaConfig
 }
 
 // NewClusterService creates a new client for the OSD Cluster Service
-func NewClusterService(connectionFactory *db.ConnectionFactory, providerFactory clusters.ProviderFactory) ClusterService {
+func NewClusterService(connectionFactory *db.ConnectionFactory, providerFactory clusters.ProviderFactory, kafkaConfig *config.KafkaConfig) ClusterService {
 	return &clusterService{
 		connectionFactory: connectionFactory,
 		providerFactory:   providerFactory,
+		kafkaConfig:       kafkaConfig,
 	}
 }
 
@@ -523,11 +524,11 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 	var res []ResKafkaInstanceCount
 
 	for _, k := range kafkas {
-		reqSize, e := strconv.Atoi(strings.TrimPrefix(k.SizeId, "x"))
+		kafkaInstanceSize, e := c.kafkaConfig.GetKafkaInstanceSize(k.InstanceType, k.SizeId)
 		if e != nil {
 			return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, e, "failed to query kafkas")
 		}
-		clusterIdCountMap[k.ClusterID] += reqSize
+		clusterIdCountMap[k.ClusterID] += kafkaInstanceSize.CapacityConsumed
 	}
 
 	// the query above won't return a count for a clusterId if that cluster doesn't have any Kafkas,

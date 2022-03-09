@@ -161,20 +161,20 @@ func (k *kafkaService) capacityAvailableForRegionAndInstanceType(instTypeRegCapa
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, errMessage)
 	}
 
-	for _, k := range kafkas {
-		i, err := ParseSize(k.SizeId)
-		if err != nil {
-			return false, errors.NewWithCause(errors.ErrorGeneral, err, errMessage)
+	for _, kafka := range kafkas {
+		kafkaInstanceSize, e := k.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+		if e != nil {
+			return false, errors.NewWithCause(errors.ErrorGeneral, e, errMessage)
 		}
-		count += i
+		count += int64(kafkaInstanceSize.CapacityConsumed)
 	}
 
-	kafkaSize, err := ParseSize(kafkaRequest.SizeId)
-	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, errMessage)
+	kafkaInstanceSize, e := k.kafkaConfig.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
+	if e != nil {
+		return false, errors.NewWithCause(errors.ErrorGeneral, e, errMessage)
 	}
 
-	count += kafkaSize
+	count += int64(kafkaInstanceSize.CapacityConsumed)
 
 	return instTypeRegCapacity == nil || count <= int64(*instTypeRegCapacity), nil
 }

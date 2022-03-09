@@ -3,12 +3,11 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	config "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -47,7 +46,6 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.ValidateAsyncEnabled(r, "creating kafka requests"),
 			handlers.ValidateLength(&kafkaRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxKafkaNameLength),
 			ValidKafkaClusterName(&kafkaRequest.Name, "name"),
-			// ValidatePlan(h.service, h.kafkaConfig, &kafkaRequest.Plan, convKafka),
 			ValidateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
 			ValidateKafkaClaims(ctx, &kafkaRequest, convKafka),
 			ValidateCloudProvider(&h.service, convKafka, h.providerConfig, "creating kafka requests"),
@@ -57,18 +55,26 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					return err
 				}
-				if !stringNotSet(&kafkaRequest.Plan) {
-					p := strings.Split(kafkaRequest.Plan, ".")
-					_, e := h.kafkaConfig.GetKafkaInstanceSize(instanceType.String(), p[1])
-
-					if e != nil || len(p) != 2 || p[0] != string(instanceType) {
-						return errors.NewWithCause(errors.ErrorGeneral, e, fmt.Sprintf("Unsupported plan provided: '%s'", kafkaRequest.Plan))
+				if stringSet(&kafkaRequest.Plan) {
+					plan := config.Plan(kafkaRequest.Plan)
+					instTypeFromPlan, e := plan.GetInstanceType()
+					if e != nil || instTypeFromPlan != string(instanceType) {
+						return errors.New(errors.ErrorGeneral, fmt.Sprintf("Unable to detect instance type in plan provided: '%s'", kafkaRequest.Plan))
 					}
-					convKafka.SizeId = p[1]
+					size, e1 := plan.GetSizeID()
+					if e1 != nil {
+						return errors.New(errors.ErrorGeneral, fmt.Sprintf("Unable to detect instance size in plan provided: '%s'", kafkaRequest.Plan))
+					}
+					_, e2 := h.kafkaConfig.GetKafkaInstanceSize(instTypeFromPlan, size)
+
+					if e2 != nil {
+						return errors.NewWithCause(errors.ErrorGeneral, e2, fmt.Sprintf("Unsupported plan provided: '%s'", kafkaRequest.Plan))
+					}
+					convKafka.SizeId = size
 				} else {
 					rSize, err := h.kafkaConfig.GetFirstAvailableSize(instanceType.String())
 					if err != nil {
-						return errors.NewWithCause(errors.ErrorGeneral, err, "unable to validate your request, please try again")
+						return errors.NewWithCause(errors.ErrorGeneral, err, "Unsupported kafka instance type: '%s' provided in the plan parameter: '%s'", instanceType.String(), kafkaRequest.Plan)
 					}
 					convKafka.SizeId = rSize
 				}

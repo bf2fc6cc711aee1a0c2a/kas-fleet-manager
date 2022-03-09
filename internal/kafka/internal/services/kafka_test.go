@@ -1126,8 +1126,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			error: errorCheck{
 				wantErr:  true,
-				code:     errors.ErrorForbidden,
-				httpCode: http.StatusForbidden,
+				code:     errors.ErrorGeneral,
+				httpCode: http.StatusInternalServerError,
 			},
 		},
 		{

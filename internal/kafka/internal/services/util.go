@@ -3,7 +3,6 @@ package services
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -72,12 +71,4 @@ func BuildKeycloakClientNameIdentifier(kafkaRequestID string) string {
 
 func BuildCustomClaimCheck(kafkaRequest *dbapi.KafkaRequest) string {
 	return fmt.Sprintf("@.rh-org-id == '%s'|| @.org_id == '%s'", kafkaRequest.OrganisationId, kafkaRequest.OrganisationId)
-}
-
-func ParseSize(sizeId string) (int64, error) {
-	size, err := strconv.ParseInt(strings.TrimPrefix(sizeId, "x"), 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	return size, nil
 }

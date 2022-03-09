@@ -95,18 +95,18 @@ func ValidateCloudProvider(kafkaService *services.KafkaService, kafkaRequest *db
 
 func ValidateKafkaUpdateFields(kafkaUpdateRequest *private.KafkaUpdateRequest) handlers.Validate {
 	return func() *errors.ServiceError {
-		if stringNotSet(&kafkaUpdateRequest.StrimziVersion) &&
-			stringNotSet(&kafkaUpdateRequest.KafkaVersion) &&
-			stringNotSet(&kafkaUpdateRequest.KafkaIbpVersion) &&
-			stringNotSet(&kafkaUpdateRequest.KafkaStorageSize) {
+		if !stringSet(&kafkaUpdateRequest.StrimziVersion) &&
+			!stringSet(&kafkaUpdateRequest.KafkaVersion) &&
+			!stringSet(&kafkaUpdateRequest.KafkaIbpVersion) &&
+			!stringSet(&kafkaUpdateRequest.KafkaStorageSize) {
 			return errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version or kafka_storage_size to be provided")
 		}
 		return nil
 	}
 }
 
-func stringNotSet(value *string) bool {
-	return value == nil || len(*value) < 1
+func stringSet(value *string) bool {
+	return value != nil && len(*value) > 0
 }
 
 func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService authorization.Authorization, kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *public.KafkaUpdateRequest) handlers.Validate {
@@ -161,7 +161,7 @@ func ValidateKafkaClaims(ctx context.Context, kafkaRequestPayload *public.KafkaR
 
 func ValidateKafkaStorageSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *private.KafkaUpdateRequest) handlers.Validate {
 	return func() *errors.ServiceError {
-		if !stringNotSet(&kafkaUpdateReq.KafkaStorageSize) {
+		if stringSet(&kafkaUpdateReq.KafkaStorageSize) {
 			currentSize, err := resource.ParseQuantity(kafkaRequest.KafkaStorageSize)
 			if err != nil {
 				return errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: '%s'", kafkaRequest.KafkaStorageSize)

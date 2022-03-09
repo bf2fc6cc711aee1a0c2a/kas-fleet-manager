@@ -324,7 +324,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 					Id: "eval",
 					Sizes: []config.KafkaInstanceSize{
 						{
-							Id:                          "x2",
+							Id:                          "x1",
 							IngressThroughputPerSec:     "60Mi",
 							EgressThroughputPerSec:      "60Mi",
 							TotalMaxConnections:         2000,
@@ -334,7 +334,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 							MaxConnectionAttemptsPerSec: 200,
 							QuotaConsumed:               2,
 							QuotaType:                   "rhosak",
-							CapacityConsumed:            2,
+							CapacityConsumed:            1,
 						},
 						{
 							Id:                          "x2",

@@ -80,7 +80,10 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 						maxCapacityReached := true
 						kafka.InstanceType = instType
 						kafka.Region = cloudRegion.Id
-						size, _ := h.kafkaConfig.GetFirstAvailableSize(instType)
+						size, e := h.kafkaConfig.GetFirstAvailableSize(instType)
+						if e != nil {
+							return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to list cloud provider regions")
+						}
 						kafka.SizeId = size
 						kafka.CloudProvider = cloudRegion.CloudProvider
 						hasCapacity, err := h.kafkaService.HasAvailableCapacityInRegion(kafka)
