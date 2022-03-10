@@ -74,7 +74,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 				} else {
 					rSize, err := h.kafkaConfig.GetFirstAvailableSize(instanceType.String())
 					if err != nil {
-						return errors.NewWithCause(errors.ErrorGeneral, err, "Unsupported kafka instance type: '%s' provided in the plan parameter: '%s'", instanceType.String(), kafkaRequest.Plan)
+						return errors.NewWithCause(errors.ErrorGeneral, err, "Unsupported kafka instance type: '%s' provided", instanceType.String())
 					}
 					convKafka.SizeId = rSize
 				}

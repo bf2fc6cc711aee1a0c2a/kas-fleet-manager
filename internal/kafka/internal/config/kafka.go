@@ -106,5 +106,5 @@ func (c *KafkaConfig) GetKafkaInstanceSize(instanceType, sizeId string) (*KafkaI
 	if err != nil {
 		return nil, err
 	}
-	return kafkaInstanceType.GetKafkaInstanceSizeByID(instanceType, sizeId)
+	return kafkaInstanceType.GetKafkaInstanceSizeByID(sizeId)
 }

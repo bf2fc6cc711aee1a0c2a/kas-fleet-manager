@@ -141,14 +141,14 @@ func (s *SupportedKafkaInstanceTypesConfig) GetKafkaInstanceTypeByID(instanceTyp
 	return nil, fmt.Errorf("Unable to find kafka instance type for '%s'", instanceType)
 }
 
-func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(instanceType, sizeId string) (*KafkaInstanceSize, error) {
+func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(sizeId string) (*KafkaInstanceSize, error) {
 	for _, size := range kp.Sizes {
 		if size.Id == sizeId {
 			ret := size
 			return &ret, nil
 		}
 	}
-	return nil, fmt.Errorf("Kafka instance size id: '%s' not found for '%s' instance type", sizeId, instanceType)
+	return nil, fmt.Errorf("Kafka instance size id: '%s' not found for '%s' instance type", sizeId, kp.Id)
 }
 
 type Plan string
