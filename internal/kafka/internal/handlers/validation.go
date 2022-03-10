@@ -96,10 +96,10 @@ func ValidateCloudProvider(kafkaService *services.KafkaService, kafkaRequest *db
 
 func ValidateKafkaUpdateFields(kafkaUpdateRequest *private.KafkaUpdateRequest) handlers.Validate {
 	return func() *errors.ServiceError {
-		if !stringSet(&kafkaUpdateRequest.StrimziVersion) &&
-			!stringSet(&kafkaUpdateRequest.KafkaVersion) &&
-			!stringSet(&kafkaUpdateRequest.KafkaIbpVersion) &&
-			!stringSet(&kafkaUpdateRequest.KafkaStorageSize) {
+		if !(stringSet(&kafkaUpdateRequest.StrimziVersion) ||
+			stringSet(&kafkaUpdateRequest.KafkaVersion) ||
+			stringSet(&kafkaUpdateRequest.KafkaIbpVersion) ||
+			stringSet(&kafkaUpdateRequest.KafkaStorageSize)) {
 			return errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version or kafka_storage_size to be provided")
 		}
 		return nil
