@@ -61,6 +61,7 @@ func buildKafkaRequest(modifyFn func(kafkaRequest *dbapi.KafkaRequest)) *dbapi.K
 		Name:          testKafkaRequestName,
 		MultiAZ:       false,
 		Owner:         testUser,
+		SizeId:        "x1",
 	}
 	if modifyFn != nil {
 		modifyFn(kafkaRequest)
@@ -791,6 +792,57 @@ func Test_kafkaService_Delete(t *testing.T) {
 	}
 }
 
+var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig{
+	Configuration: config.SupportedKafkaInstanceTypesConfig{
+		SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+			{
+				Id: "standard",
+				Sizes: []config.KafkaInstanceSize{
+					{
+						Id:                          "x1",
+						IngressThroughputPerSec:     "30Mi",
+						EgressThroughputPerSec:      "30Mi",
+						TotalMaxConnections:         1000,
+						MaxDataRetentionSize:        "100Gi",
+						MaxPartitions:               1000,
+						MaxDataRetentionPeriod:      "P14D",
+						MaxConnectionAttemptsPerSec: 100,
+						QuotaConsumed:               1,
+						QuotaType:                   "rhosak",
+						CapacityConsumed:            1,
+					},
+				},
+			},
+			{
+				Id: "eval",
+				Sizes: []config.KafkaInstanceSize{
+					{
+						Id:                          "x2",
+						IngressThroughputPerSec:     "60Mi",
+						EgressThroughputPerSec:      "60Mi",
+						TotalMaxConnections:         2000,
+						MaxDataRetentionSize:        "200Gi",
+						MaxPartitions:               2000,
+						MaxDataRetentionPeriod:      "P14D",
+						MaxConnectionAttemptsPerSec: 200,
+						QuotaConsumed:               2,
+						QuotaType:                   "rhosak",
+						CapacityConsumed:            2,
+					},
+				},
+			},
+		},
+	},
+}
+
+var defaultKafkaConf = config.KafkaConfig{
+	KafkaCapacity: config.KafkaCapacityConfig{
+		MaxCapacity: MaxClusterCapacity,
+	},
+	Quota:                  config.NewKafkaQuotaConfig(),
+	SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
+}
+
 func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 
 	type fields struct {
@@ -811,11 +863,6 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 
 	type args struct {
 		kafkaRequest *dbapi.KafkaRequest
-	}
-
-	defaultKafkaConf := config.KafkaConfig{
-		KafkaCapacity: config.KafkaCapacityConfig{},
-		Quota:         config.NewKafkaQuotaConfig(),
 	}
 
 	strimziOperatorVersion := "strimzi-cluster-operator.from-cluster"
@@ -893,12 +940,13 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.STANDARD.String()
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "0"}})
-				mocket.Catcher.NewMock().WithQuery("INSERT")
-				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 			},
 			error: errorCheck{
 				wantErr: false,
@@ -930,12 +978,13 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.STANDARD.String()
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "0"}})
-				mocket.Catcher.NewMock().WithQuery("INSERT")
-				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithExecException().WithQueryException()
 			},
 			error: errorCheck{
 				wantErr: false,
@@ -971,9 +1020,9 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "0"}})
-				mocket.Catcher.NewMock().WithQuery("INSERT")
-				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithExecException().WithQueryException()
 			},
 			error: errorCheck{
 				wantErr:  true,
@@ -1029,6 +1078,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 						Type:                   api.QuotaManagementListQuotaType.String(),
 						AllowEvaluatorInstance: false,
 					},
+					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
 				},
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
 					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
@@ -1049,12 +1099,13 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.EVAL.String()
 				}),
 			},
 			error: errorCheck{
 				wantErr:  true,
-				code:     errors.ErrorForbidden,
-				httpCode: http.StatusForbidden,
+				code:     errors.ErrorGeneral,
+				httpCode: http.StatusInternalServerError,
 			},
 		},
 		{
@@ -1080,7 +1131,11 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(nil),
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.STANDARD.String()
+				}),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).WithReply([]map[string]interface{}{})
@@ -1112,7 +1167,9 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.STANDARD.String()
 				}),
 			},
 			setupFn: func() {
@@ -1124,33 +1181,6 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				wantErr:  true,
 				code:     errors.ErrorGeneral,
 				httpCode: http.StatusInternalServerError,
-			},
-		},
-		{
-			name: "registering kafka job fails: quota error",
-			fields: fields{
-				connectionFactory:      db.NewMockConnectionFactory(nil),
-				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
-				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
-				kafkaConfig:            defaultKafkaConf,
-				clusterService:         nil,
-				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
-						return false, errors.InsufficientQuotaError("insufficient quota error")
-					},
-				},
-			},
-			args: args{
-				kafkaRequest: buildKafkaRequest(nil),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND "kafka_requests"."deleted_at" IS NULL`).WithReply([]map[string]interface{}{})
-				mocket.Catcher.NewMock().WithExecException().WithQueryException()
-			},
-			error: errorCheck{
-				wantErr:  true,
-				code:     errors.ErrorInsufficientQuota,
-				httpCode: http.StatusForbidden,
 			},
 		},
 	}
@@ -1187,6 +1217,85 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				}
 				if err.HttpCode != tt.error.httpCode {
 					t.Errorf("RegisterKafkaJob() received http code %v, expected %v", err.HttpCode, tt.error.httpCode)
+				}
+			}
+		})
+	}
+}
+
+func Test_AssignInstanceType(t *testing.T) {
+	type fields struct {
+		quotaService QuotaService
+		kafkaConfig  config.KafkaConfig
+	}
+
+	type errorCheck struct {
+		wantErr  bool
+		code     errors.ServiceErrorCode
+		httpCode int
+	}
+
+	type args struct {
+		kafkaRequest *dbapi.KafkaRequest
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		setupFn func()
+		error   errorCheck
+	}{
+		{
+			name: "registering kafka job fails: quota error",
+			fields: fields{
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return false, errors.InsufficientQuotaError("insufficient quota error")
+					},
+				},
+				kafkaConfig: defaultKafkaConf,
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.STANDARD.String()
+				}),
+			},
+			error: errorCheck{
+				wantErr:  true,
+				code:     errors.ErrorInsufficientQuota,
+				httpCode: http.StatusForbidden,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			k := &kafkaService{
+				kafkaConfig: &tt.fields.kafkaConfig,
+				quotaServiceFactory: &QuotaServiceFactoryMock{
+					GetQuotaServiceFunc: func(quotaType api.QuotaType) (QuotaService, *errors.ServiceError) {
+						return tt.fields.quotaService, nil
+					},
+				},
+			}
+
+			_, err := k.AssignInstanceType(tt.args.kafkaRequest)
+
+			if (err != nil) != tt.error.wantErr {
+				t.Errorf("AssignInstanceType() error = %v, wantErr = %v", err, tt.error.wantErr)
+			}
+
+			if tt.error.wantErr {
+				if err.Code != tt.error.code {
+					t.Errorf("AssignInstanceType() received error code %v, expected error %v", err.Code, tt.error.code)
+				}
+				if err.HttpCode != tt.error.httpCode {
+					t.Errorf("AssignInstanceType() received http code %v, expected %v", err.HttpCode, tt.error.httpCode)
 				}
 			}
 		})

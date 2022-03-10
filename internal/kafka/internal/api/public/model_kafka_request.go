@@ -36,4 +36,5 @@ type KafkaRequest struct {
 	ReauthenticationEnabled bool      `json:"reauthentication_enabled"`
 	KafkaStorageSize        string    `json:"kafka_storage_size,omitempty"`
 	BrowserUrl              string    `json:"browser_url,omitempty"`
+	SizeId                  string    `json:"size_id,omitempty"`
 }

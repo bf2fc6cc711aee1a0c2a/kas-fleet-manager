@@ -471,6 +471,13 @@ func TestAdminKafka_Update(t *testing.T) {
 		KafkaStorageSize: "70Gi",
 	}
 
+	allFieldsEmptyParams := adminprivate.KafkaUpdateRequest{
+		StrimziVersion:   " ",
+		KafkaVersion:     " ",
+		KafkaIbpVersion:  " ",
+		KafkaStorageSize: " ",
+	}
+
 	sameStorageSizeUpdateRequest := adminprivate.KafkaUpdateRequest{
 		KafkaStorageSize: "60Gi",
 	}
@@ -556,6 +563,19 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 				kafkaID:            sampleKafkaID1,
 				kafkaUpdateRequest: emptyKafkaUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when kafkaUpdateRequest request params contain only strings with whitespaces",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: allFieldsEmptyParams,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
