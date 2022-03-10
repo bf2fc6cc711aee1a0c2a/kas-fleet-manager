@@ -18,4 +18,5 @@ connector-api-change:
   - openapi/connector*
 documentation:
   - docs/**/*
-  - *.md
+  - "*.md"
+  
