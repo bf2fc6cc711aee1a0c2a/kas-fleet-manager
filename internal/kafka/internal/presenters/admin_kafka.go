@@ -57,6 +57,7 @@ func PresentKafkaRequestAdminEndpoint(kafkaRequest *dbapi.KafkaRequest, accountS
 		ClusterId:              kafkaRequest.ClusterID,
 		InstanceType:           kafkaRequest.InstanceType,
 		Namespace:              kafkaRequest.Namespace,
+		SizeId:                 kafkaRequest.SizeId,
 	}, nil
 }
 

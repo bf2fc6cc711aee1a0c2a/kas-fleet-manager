@@ -14,10 +14,10 @@ type ClusterPlacementStrategy interface {
 }
 
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the placement configuration
-func NewClusterPlacementStrategy(clusterService ClusterService, dataplaneClusterConfig *config.DataplaneClusterConfig) ClusterPlacementStrategy {
+func NewClusterPlacementStrategy(clusterService ClusterService, dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig) ClusterPlacementStrategy {
 	var clusterSelection ClusterPlacementStrategy
 	if dataplaneClusterConfig.IsDataPlaneManualScalingEnabled() {
-		clusterSelection = &FirstSchedulableWithinLimit{dataplaneClusterConfig, clusterService}
+		clusterSelection = &FirstSchedulableWithinLimit{dataplaneClusterConfig, clusterService, kafkaConfig}
 	} else {
 		clusterSelection = &FirstReadyCluster{clusterService}
 	}
@@ -51,6 +51,7 @@ func (f *FirstReadyCluster) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster
 type FirstSchedulableWithinLimit struct {
 	DataplaneClusterConfig *config.DataplaneClusterConfig
 	ClusterService         ClusterService
+	KafkaConfig            *config.KafkaConfig
 }
 
 func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
@@ -89,11 +90,16 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 		return nil, errf
 	}
 
+	kafkaInstanceSize, e := f.KafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+	if e != nil {
+		return nil, e
+	}
+
 	//#3 which schedulable cluster is also within the limit
 	//we want to make sure the order of the ids configuration is always respected: e.g the first cluster in the configuration that passes all the checks should be picked first
 	for _, schClusterid := range clusterSchIds {
 		cnt := clusterWithinLimit[schClusterid]
-		if dataplaneClusterConfig.IsNumberOfKafkaWithinClusterLimit(schClusterid, cnt+1) {
+		if dataplaneClusterConfig.IsNumberOfKafkaWithinClusterLimit(schClusterid, cnt+kafkaInstanceSize.CapacityConsumed) {
 			return searchClusterObjInArray(clusterObj, schClusterid), nil
 		}
 	}

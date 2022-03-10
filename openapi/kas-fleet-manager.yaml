@@ -266,6 +266,8 @@ paths:
                 $ref: '#/components/examples/USRegionExample'
               EURegion:
                 $ref: '#/components/examples/EURegionExample'
+              ExplicitSizeExample:
+                $ref: '#/components/examples/ExplicitSizeExample'
         required: true
       responses:
         "202":
@@ -892,6 +894,8 @@ components:
               type: boolean
             kafka_storage_size:
               type: string
+            size_id:
+              type: string
           example:
             $ref: "#/components/examples/KafkaRequestExample"
     KafkaRequestList:
@@ -951,6 +955,9 @@ components:
           description: Whether connection reauthentication is enabled or not. If set to true, connection reauthentication on the Kafka instance will be required every 5 minutes. The default value is true
           type: boolean
           nullable: true
+        plan:
+          description: kafka plan in a format of <instance_type>.<size_id>
+          type: string
     CloudProviderList:
       allOf:
         - $ref: "#/components/schemas/List"
@@ -1402,6 +1409,12 @@ components:
         region: "eu-west-1"
         cloud_provider: "aws"
         name: "serviceapitest"
+    ExplicitSizeExample:
+      value:
+        region: "us-east-1"
+        cloud_provider: "aws"
+        name: "test_kafka"
+        plan: "standard.x1"
     KafkaRequestExample:
       value:
         id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
@@ -1419,6 +1432,7 @@ components:
         version: "2.6.0"
         instance_type: standard
         reauthentication_enabled: true
+        size_id: x1
     KafkaRequestFailedCreationStatusExample:
       value:
         id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
