@@ -419,6 +419,7 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 		Status:         constants.KafkaRequestStatusReady.String(),
 		ClusterID:      mocks.MockCluster.ID(),
 		InstanceType:   types.STANDARD.String(),
+		SizeId:         "x1",
 	}
 
 	if err := db.Create(kafka).Error; err != nil {

@@ -26,15 +26,17 @@ type cloudProvidersHandler struct {
 	supportedProviders       config.ProviderList
 	kafkaService             services.KafkaService
 	clusterPlacementStrategy services.ClusterPlacementStrategy
+	kafkaConfig              *config.KafkaConfig
 }
 
-func NewCloudProviderHandler(service services.CloudProvidersService, providerConfig *config.ProviderConfig, kafkaService services.KafkaService, clusterPlacementStrategy services.ClusterPlacementStrategy) *cloudProvidersHandler {
+func NewCloudProviderHandler(service services.CloudProvidersService, providerConfig *config.ProviderConfig, kafkaService services.KafkaService, clusterPlacementStrategy services.ClusterPlacementStrategy, kafkaConfig *config.KafkaConfig) *cloudProvidersHandler {
 	return &cloudProvidersHandler{
 		service:                  service,
 		supportedProviders:       providerConfig.ProvidersConfig.SupportedProviders,
 		cache:                    cache.New(5*time.Minute, 10*time.Minute),
 		kafkaService:             kafkaService,
 		clusterPlacementStrategy: clusterPlacementStrategy,
+		kafkaConfig:              kafkaConfig,
 	}
 }
 
@@ -78,6 +80,11 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 						maxCapacityReached := true
 						kafka.InstanceType = instType
 						kafka.Region = cloudRegion.Id
+						size, e := h.kafkaConfig.GetFirstAvailableSize(instType)
+						if e != nil {
+							return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to list cloud provider regions")
+						}
+						kafka.SizeId = size
 						kafka.CloudProvider = cloudRegion.CloudProvider
 						hasCapacity, err := h.kafkaService.HasAvailableCapacityInRegion(kafka)
 						if err == nil && hasCapacity {
