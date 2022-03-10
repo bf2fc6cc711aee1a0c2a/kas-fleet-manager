@@ -13,3 +13,7 @@ internal/connector/**/*  @valdar @dhirajsb
 # common
 pkg/**/*  @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @valdar @dhirajsb
 test/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @valdar @dhirajsb
+
+# api
+openapi/ @bf2fc6cc711aee1a0c2a/devexp-sdks
+
