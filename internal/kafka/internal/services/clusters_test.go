@@ -1233,7 +1233,7 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				[]string{"test01", "test02"},
+				[]string{},
 			},
 			want: []ResKafkaInstanceCount{
 				{
