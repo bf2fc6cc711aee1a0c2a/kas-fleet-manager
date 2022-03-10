@@ -444,6 +444,8 @@ paths:
                 $ref: '#/components/examples/USRegionExample'
               EURegion:
                 $ref: '#/components/examples/EURegionExample'
+              ExplicitSizeExample:
+                $ref: '#/components/examples/ExplicitSizeExample'
             schema:
               $ref: '#/components/schemas/KafkaRequestPayload'
         description: Kafka data
@@ -1090,6 +1092,12 @@ components:
         region: eu-west-1
         cloud_provider: aws
         name: serviceapitest
+    ExplicitSizeExample:
+      value:
+        region: us-east-1
+        cloud_provider: aws
+        name: test_kafka
+        plan: standard.x1
     KafkaRequestExample:
       value:
         id: 1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
@@ -1107,6 +1115,7 @@ components:
         version: 2.6.0
         instance_type: standard
         reauthentication_enabled: true
+        size_id: x1
     KafkaRequestFailedCreationStatusExample:
       value:
         id: 1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
@@ -1545,6 +1554,7 @@ components:
         name: name
         cloud_provider: cloud_provider
         region: region
+        plan: plan
       properties:
         cloud_provider:
           description: The cloud provider where the Kafka cluster will be created
@@ -1567,6 +1577,9 @@ components:
             every 5 minutes. The default value is true
           nullable: true
           type: boolean
+        plan:
+          description: kafka plan in a format of <instance_type>.<size_id>
+          type: string
       required:
       - name
       type: object
@@ -1782,6 +1795,8 @@ components:
         reauthentication_enabled:
           type: boolean
         kafka_storage_size:
+          type: string
+        size_id:
           type: string
       required:
       - multi_az

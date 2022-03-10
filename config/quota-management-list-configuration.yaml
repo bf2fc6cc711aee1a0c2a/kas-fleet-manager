@@ -9,15 +9,15 @@
 #         Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
 registered_service_accounts:
   - username: testuser1@example.com
-    max_allowed_instances: 1
+    max_allowed_instances: 2
   - username: testuser2@example.com
-    max_allowed_instances: 1
+    max_allowed_instances: 2
   - username: testuser3@example.com
-    max_allowed_instances: 1
+    max_allowed_instances: 2
   - username: testuser4@example.com
-    max_allowed_instances: 1
+    max_allowed_instances: 2
   - username: testuser5@example.com
-    max_allowed_instances: 1
+    max_allowed_instances: 2
 
 # A list of registered users per organisation (see structure below). The list current contains known organisations - add yours if it is missing.
 # If a user is not in this or in the `registered_service_accounts` list, only EVAL kafka instances will be allowed.
