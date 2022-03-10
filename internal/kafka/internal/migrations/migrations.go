@@ -75,6 +75,7 @@ var migrations = []*gormigrate.Migration{
 	addKafkaStorageSize(),
 	addClusterServiceAccountId(),
 	addClusterServiceClientSecret(),
+	addKafkaSizeId(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
