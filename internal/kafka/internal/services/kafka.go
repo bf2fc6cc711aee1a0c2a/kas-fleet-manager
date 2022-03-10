@@ -92,6 +92,8 @@ type KafkaService interface {
 	VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
 	ListComponentVersions() ([]KafkaComponentVersions, error)
 	HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError)
+	// GetAvailableSizesInRegion returns a list of ids of the Kafka instance sizes that can still be created according to the specified criteria
+	GetAvailableSizesInRegion(criteria *FindClusterCriteria) ([]string, *errors.ServiceError)
 }
 
 var _ KafkaService = &kafkaService{}
@@ -166,19 +168,67 @@ func (k *kafkaService) capacityAvailableForRegionAndInstanceType(instTypeRegCapa
 	for _, kafka := range kafkas {
 		kafkaInstanceSize, e := k.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
 		if e != nil {
-			return false, errors.NewWithCause(errors.ErrorGeneral, e, errMessage)
+			return false, errors.NewWithCause(errors.ErrorInstancePlanNotSupported, e, errMessage)
 		}
 		count += int64(kafkaInstanceSize.CapacityConsumed)
 	}
 
 	kafkaInstanceSize, e := k.kafkaConfig.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
 	if e != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, e, errMessage)
+		return false, errors.NewWithCause(errors.ErrorInstancePlanNotSupported, e, errMessage)
 	}
 
 	count += int64(kafkaInstanceSize.CapacityConsumed)
 
 	return instTypeRegCapacity == nil || count <= int64(*instTypeRegCapacity), nil
+}
+
+func (k *kafkaService) GetAvailableSizesInRegion(criteria *FindClusterCriteria) ([]string, *errors.ServiceError) {
+	if criteria == nil {
+		return nil, errors.GeneralError("unable to get available sizes in region: criteria was not specified")
+	}
+
+	supportedInstanceTypes := k.kafkaConfig.SupportedInstanceTypes.Configuration
+	instanceType, err := supportedInstanceTypes.GetKafkaInstanceTypeByID(criteria.SupportedInstanceType)
+	if err != nil {
+		return nil, errors.InstanceTypeNotSupported("unable to get available sizes in region: %s", err.Error())
+	}
+
+	// The kafka size list configuration must always be ordered starting with the smallest unit.
+	// The following finds the largest Kafka size that is still available in this region. Anything smaller than this
+	// size will also be considered as available to create with the remaining capacity.
+	for i := len(instanceType.Sizes) - 1; i >= 0; i-- {
+		kafka := &dbapi.KafkaRequest{
+			CloudProvider: criteria.Provider,
+			Region:        criteria.Region,
+			InstanceType:  criteria.SupportedInstanceType,
+			MultiAZ:       criteria.MultiAZ,
+			SizeId:        instanceType.Sizes[i].Id,
+		}
+
+		// Check against region limits
+		hasCapacity, err := k.HasAvailableCapacityInRegion(kafka)
+		if err != nil {
+			return nil, err
+		}
+
+		if hasCapacity {
+			// Check if there is an available cluster in the region that can fit this Kafka instance type and size
+			cluster, err := k.clusterPlacementStrategy.FindCluster(kafka)
+			if err != nil {
+				return nil, err
+			}
+
+			if cluster != nil {
+				var availableSizes []string
+				for _, size := range instanceType.Sizes[0 : i+1] {
+					availableSizes = append(availableSizes, size.Id)
+				}
+				return availableSizes, nil
+			}
+		}
+	}
+	return nil, nil
 }
 
 func (k *kafkaService) AssignInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
