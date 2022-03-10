@@ -12,3 +12,11 @@ connector:
   - openapi/connector*
 github:
   - .github/**/*
+api-change:
+  - openapi/kas*
+connector-api-change:
+  - openapi/connector*
+documentation:
+  - docs/**/*
+  - "*.md"
+  

@@ -241,6 +241,13 @@ make db/setup
 make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
 ```
 
+To run a local keycloak container and setup realm configuration
+```
+make sso/setup
+make sso/config
+make keycloak/setup MAS_SSO_CLIENT_ID=kas-fleet-manager MAS_SSO_CLIENT_SECRET=kas-fleet-manager OSD_IDP_MAS_SSO_CLIENT_ID=kas-fleet-manager OSD_IDP_MAS_SSO_CLIENT_SECRET=kas-fleet-manager
+```
+
 To run integration tests with an "emulated" OCM environment, run:
 
 ```
@@ -256,6 +263,11 @@ make test/integration
 To stop and remove the database container when finished, run:
 ```
 make db/teardown
+```
+
+To stop and remove the keycloak container when finished, run:
+```
+make sso/teardown
 ```
 
 ### Connector Service
