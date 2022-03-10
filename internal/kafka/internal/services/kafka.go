@@ -81,7 +81,7 @@ type KafkaService interface {
 	Updates(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError
 	ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 	GetCNAMERecordStatus(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error)
-	DetectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError)
+	AssignInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError)
 	RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionKafkaForUsers registers all kafkas for deprovisioning given the list of owners
 	DeprovisionKafkaForUsers(users []string) *errors.ServiceError
@@ -147,20 +147,41 @@ func (k *kafkaService) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaReq
 }
 
 func (k *kafkaService) capacityAvailableForRegionAndInstanceType(instTypeRegCapacity *int, kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
+	errMessage := fmt.Sprintf("Failed to check kafka capacity for region '%s' and instance type '%s'", kafkaRequest.Region, kafkaRequest.InstanceType)
+
 	dbConn := k.connectionFactory.New()
 
 	var count int64
+
+	var kafkas []*dbapi.KafkaRequest
+
 	if err := dbConn.Model(&dbapi.KafkaRequest{}).
 		Where("region = ?", kafkaRequest.Region).
 		Where("cloud_provider = ?", kafkaRequest.CloudProvider).
 		Where("instance_type = ?", kafkaRequest.InstanceType).
-		Count(&count).Error; err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka request")
+		Scan(&kafkas).Error; err != nil {
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, errMessage)
 	}
-	return instTypeRegCapacity == nil || count < int64(*instTypeRegCapacity), nil
+
+	for _, kafka := range kafkas {
+		kafkaInstanceSize, e := k.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+		if e != nil {
+			return false, errors.NewWithCause(errors.ErrorGeneral, e, errMessage)
+		}
+		count += int64(kafkaInstanceSize.CapacityConsumed)
+	}
+
+	kafkaInstanceSize, e := k.kafkaConfig.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
+	if e != nil {
+		return false, errors.NewWithCause(errors.ErrorGeneral, e, errMessage)
+	}
+
+	count += int64(kafkaInstanceSize.CapacityConsumed)
+
+	return instTypeRegCapacity == nil || count <= int64(*instTypeRegCapacity), nil
 }
 
-func (k *kafkaService) DetectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+func (k *kafkaService) AssignInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
@@ -215,13 +236,6 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	defer k.mu.Unlock()
 	// we need to pre-populate the ID to be able to reserve the quota
 	kafkaRequest.ID = api.NewID()
-
-	instanceType, err := k.DetectInstanceType(kafkaRequest)
-	if err != nil {
-		return err
-	}
-
-	kafkaRequest.InstanceType = instanceType.String()
 
 	hasCapacity, err := k.HasAvailableCapacityInRegion(kafkaRequest)
 	if err != nil {
@@ -633,7 +647,10 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 	var res []managedkafka.ManagedKafka
 	// convert kafka requests to managed kafka
 	for _, kafkaRequest := range kafkaRequestList {
-		mk := buildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService)
+		mk, err := buildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService)
+		if err != nil {
+			return nil, err
+		}
 		res = append(res, *mk)
 	}
 
@@ -900,7 +917,11 @@ func (k *kafkaService) ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, 
 	return results, nil
 }
 
-func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakService sso.KeycloakService) *managedkafka.ManagedKafka {
+func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakService sso.KeycloakService) (*managedkafka.ManagedKafka, *errors.ServiceError) {
+	k, err := kafkaConfig.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka request")
+	}
 	managedKafkaCR := &managedkafka.ManagedKafka{
 		Id: kafkaRequest.ID,
 		TypeMeta: metav1.TypeMeta{
@@ -917,12 +938,12 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		},
 		Spec: managedkafka.ManagedKafkaSpec{
 			Capacity: managedkafka.Capacity{
-				IngressEgressThroughputPerSec: kafkaConfig.KafkaCapacity.IngressEgressThroughputPerSec,
-				TotalMaxConnections:           kafkaConfig.KafkaCapacity.TotalMaxConnections,
+				IngressEgressThroughputPerSec: k.IngressThroughputPerSec,
+				TotalMaxConnections:           k.TotalMaxConnections,
 				MaxDataRetentionSize:          kafkaRequest.KafkaStorageSize,
-				MaxPartitions:                 kafkaConfig.KafkaCapacity.MaxPartitions,
-				MaxDataRetentionPeriod:        kafkaConfig.KafkaCapacity.MaxDataRetentionPeriod,
-				MaxConnectionAttemptsPerSec:   kafkaConfig.KafkaCapacity.MaxConnectionAttemptsPerSec,
+				MaxPartitions:                 k.MaxPartitions,
+				MaxDataRetentionPeriod:        k.MaxDataRetentionPeriod,
+				MaxConnectionAttemptsPerSec:   k.MaxConnectionAttemptsPerSec,
 			},
 			Endpoint: managedkafka.EndpointSpec{
 				BootstrapServerHost: kafkaRequest.BootstrapServerHost,
@@ -980,7 +1001,7 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		}
 	}
 
-	return managedKafkaCR
+	return managedKafkaCR, nil
 }
 
 func buildKafkaClusterCNAMESRecordBatch(routes []dbapi.DataPlaneKafkaRoute, action string) *route53.ChangeBatch {

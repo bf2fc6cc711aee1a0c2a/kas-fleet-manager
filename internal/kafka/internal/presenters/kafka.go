@@ -54,6 +54,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, browserUrl string) pu
 		ReauthenticationEnabled: kafkaRequest.ReauthenticationEnabled,
 		KafkaStorageSize:        kafkaRequest.KafkaStorageSize,
 		BrowserUrl:              fmt.Sprintf("%s/%s/dashboard", strings.TrimSuffix(browserUrl, "/"), reference.Id),
+		SizeId:                  kafkaRequest.SizeId,
 	}
 }
 

@@ -280,6 +280,8 @@ components:
               type: string
             namespace:
               type: string
+            size_id:
+              type: string
     KafkaList:
       allOf:
         - $ref: "kas-fleet-manager.yaml#/components/schemas/List"

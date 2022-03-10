@@ -2,8 +2,10 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/senseyeio/duration"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -127,4 +129,46 @@ func NewKafkaSupportedInstanceTypesConfig() *KafkaSupportedInstanceTypesConfig {
 	return &KafkaSupportedInstanceTypesConfig{
 		ConfigurationFile: "config/kafka-instance-types-configuration.yaml",
 	}
+}
+
+func (s *SupportedKafkaInstanceTypesConfig) GetKafkaInstanceTypeByID(instanceType string) (*KafkaInstanceType, error) {
+	for _, t := range s.SupportedKafkaInstanceTypes {
+		if t.Id == instanceType {
+			ret := t
+			return &ret, nil
+		}
+	}
+	return nil, fmt.Errorf("Unable to find kafka instance type for '%s'", instanceType)
+}
+
+func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(sizeId string) (*KafkaInstanceSize, error) {
+	for _, size := range kp.Sizes {
+		if size.Id == sizeId {
+			ret := size
+			return &ret, nil
+		}
+	}
+	return nil, fmt.Errorf("Kafka instance size id: '%s' not found for '%s' instance type", sizeId, kp.Id)
+}
+
+type Plan string
+
+func (p Plan) String() string {
+	return string(p)
+}
+
+func (p Plan) GetInstanceType() (string, error) {
+	t := strings.Split(strings.TrimSpace(p.String()), ".")
+	if len(t) != 2 {
+		return "", errors.New(errors.ErrorGeneral, fmt.Sprintf("Unsupported plan provided: '%s'", p))
+	}
+	return t[0], nil
+}
+
+func (p Plan) GetSizeID() (string, error) {
+	t := strings.Split(strings.TrimSpace(p.String()), ".")
+	if len(t) != 2 {
+		return "", errors.New(errors.ErrorGeneral, fmt.Sprintf("Unsupported plan provided: '%s'", p))
+	}
+	return t[1], nil
 }
