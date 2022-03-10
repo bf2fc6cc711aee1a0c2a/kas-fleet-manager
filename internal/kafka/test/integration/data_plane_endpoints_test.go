@@ -231,6 +231,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	ssoSecret := "some-sso-secret"
 	storageSize := "60Gi"
 	updatedStorageSize := "70Gi"
+	sizeId := "x1"
 
 	biggerStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
 		KafkaStorageSize: updatedStorageSize,
@@ -253,6 +254,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -271,6 +273,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -289,6 +292,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.EVAL.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -307,6 +311,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -325,6 +330,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -343,6 +349,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 	}
@@ -582,6 +589,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		DesiredKafkaVersion:              "2.7.0",
 		DesiredKafkaIBPVersion:           "2.7",
 		InstanceType:                     types.EVAL.String(),
+		SizeId:                           "x1",
 	}
 
 	db := test.TestServices.DBFactory.New()
@@ -641,6 +649,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 		DesiredKafkaVersion:              "2.7.0",
 		DesiredKafkaIBPVersion:           "2.7",
 		InstanceType:                     types.STANDARD.String(),
+		SizeId:                           "x1",
 	}
 
 	db := test.TestServices.DBFactory.New()
@@ -699,6 +708,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		DesiredKafkaVersion:    "2.7.0",
 		DesiredKafkaIBPVersion: "2.7",
 		InstanceType:           types.STANDARD.String(),
+		SizeId:                 "x1",
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -756,6 +766,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 		DesiredKafkaIBPVersion:  "2.7",
 		InstanceType:            types.STANDARD.String(),
 		ReauthenticationEnabled: true, // enable session reauthentication
+		SizeId:                  "x1",
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -801,6 +812,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 		DesiredKafkaIBPVersion:  "2.7",
 		InstanceType:            types.STANDARD.String(),
 		ReauthenticationEnabled: true, // enable session reauthentication
+		SizeId:                  "x1",
 	}
 
 	if err := db.Create(anotherTestKafka).Error; err != nil {
@@ -866,6 +878,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			DesiredKafkaVersion:    "2.6.0",
 			DesiredKafkaIBPVersion: "2.6",
 			InstanceType:           types.EVAL.String(),
+			SizeId:                 "x1",
 		},
 	}
 
@@ -986,6 +999,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		DesiredKafkaVersion:    "2.7.0",
 		DesiredKafkaIBPVersion: "2.7",
 		InstanceType:           types.STANDARD.String(),
+		SizeId:                 "x1",
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -1046,6 +1060,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 		DesiredKafkaVersion:    "2.7.0",
 		DesiredKafkaIBPVersion: "2.7",
 		InstanceType:           types.STANDARD.String(),
+		SizeId:                 "x1",
 	}
 
 	// create dummy kafkas
@@ -1107,6 +1122,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 		FailedReason:           "test failed reason",
 		RoutesCreated:          true,
 		InstanceType:           types.STANDARD.String(),
+		SizeId:                 "x1",
 	}
 
 	// create dummy kafkas
