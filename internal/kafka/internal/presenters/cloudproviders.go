@@ -31,7 +31,16 @@ func PresentCloudRegion(cloudRegion *api.CloudRegion) public.CloudRegion {
 func GetRegionCapacityItems(capacityItems []api.RegionCapacityListItem) []public.RegionCapacityListItem {
 	items := make([]public.RegionCapacityListItem, 0)
 	for _, c := range capacityItems {
-		items = append(items, public.RegionCapacityListItem{InstanceType: c.InstanceType, DeprecatedMaxCapacityReached: c.DeprecatedMaxCapacityReached})
+		// ensure that available_sizes is always presented as an empty array if nil
+		if c.AvailableSizes == nil {
+			c.AvailableSizes = []string{}
+		}
+
+		items = append(items, public.RegionCapacityListItem{
+			InstanceType:                 c.InstanceType,
+			DeprecatedMaxCapacityReached: c.DeprecatedMaxCapacityReached,
+			AvailableSizes:               c.AvailableSizes,
+		})
 	}
 	return items
 }
