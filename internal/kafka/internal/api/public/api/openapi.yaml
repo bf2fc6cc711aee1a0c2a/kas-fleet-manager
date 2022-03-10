@@ -1798,6 +1798,18 @@ components:
           type: string
         size_id:
           type: string
+        ingress_throughput_per_sec:
+          type: string
+        egress_throughput_per_sec:
+          type: string
+        total_max_connections:
+          type: int
+        max_partitions:
+          type: int
+        max_data_retention_period:
+          type: string
+        max_connection_attempts_per_sec:
+          type: int
       required:
       - multi_az
       - reauthentication_enabled
