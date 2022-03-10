@@ -50,6 +50,9 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *serviceError.ServiceError) {
 // 				panic("mock out the Get method")
 // 			},
+// 			GetAvailableSizesInRegionFunc: func(criteria *FindClusterCriteria) ([]string, *serviceError.ServiceError) {
+// 				panic("mock out the GetAvailableSizesInRegion method")
+// 			},
 // 			GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *serviceError.ServiceError) {
 // 				panic("mock out the GetById method")
 // 			},
@@ -125,6 +128,9 @@ type KafkaServiceMock struct {
 
 	// GetFunc mocks the Get method.
 	GetFunc func(ctx context.Context, id string) (*dbapi.KafkaRequest, *serviceError.ServiceError)
+
+	// GetAvailableSizesInRegionFunc mocks the GetAvailableSizesInRegion method.
+	GetAvailableSizesInRegionFunc func(criteria *FindClusterCriteria) ([]string, *serviceError.ServiceError)
 
 	// GetByIdFunc mocks the GetById method.
 	GetByIdFunc func(id string) (*dbapi.KafkaRequest, *serviceError.ServiceError)
@@ -214,6 +220,11 @@ type KafkaServiceMock struct {
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+		}
+		// GetAvailableSizesInRegion holds details about calls to the GetAvailableSizesInRegion method.
+		GetAvailableSizesInRegion []struct {
+			// Criteria is the criteria argument value.
+			Criteria *FindClusterCriteria
 		}
 		// GetById holds details about calls to the GetById method.
 		GetById []struct {
@@ -305,6 +316,7 @@ type KafkaServiceMock struct {
 	lockDeprovisionExpiredKafkas       sync.RWMutex
 	lockDeprovisionKafkaForUsers       sync.RWMutex
 	lockGet                            sync.RWMutex
+	lockGetAvailableSizesInRegion      sync.RWMutex
 	lockGetById                        sync.RWMutex
 	lockGetCNAMERecordStatus           sync.RWMutex
 	lockGetManagedKafkaByClusterID     sync.RWMutex
@@ -570,6 +582,37 @@ func (mock *KafkaServiceMock) GetCalls() []struct {
 	mock.lockGet.RLock()
 	calls = mock.calls.Get
 	mock.lockGet.RUnlock()
+	return calls
+}
+
+// GetAvailableSizesInRegion calls GetAvailableSizesInRegionFunc.
+func (mock *KafkaServiceMock) GetAvailableSizesInRegion(criteria *FindClusterCriteria) ([]string, *serviceError.ServiceError) {
+	if mock.GetAvailableSizesInRegionFunc == nil {
+		panic("KafkaServiceMock.GetAvailableSizesInRegionFunc: method is nil but KafkaService.GetAvailableSizesInRegion was just called")
+	}
+	callInfo := struct {
+		Criteria *FindClusterCriteria
+	}{
+		Criteria: criteria,
+	}
+	mock.lockGetAvailableSizesInRegion.Lock()
+	mock.calls.GetAvailableSizesInRegion = append(mock.calls.GetAvailableSizesInRegion, callInfo)
+	mock.lockGetAvailableSizesInRegion.Unlock()
+	return mock.GetAvailableSizesInRegionFunc(criteria)
+}
+
+// GetAvailableSizesInRegionCalls gets all the calls that were made to GetAvailableSizesInRegion.
+// Check the length with:
+//     len(mockedKafkaService.GetAvailableSizesInRegionCalls())
+func (mock *KafkaServiceMock) GetAvailableSizesInRegionCalls() []struct {
+	Criteria *FindClusterCriteria
+} {
+	var calls []struct {
+		Criteria *FindClusterCriteria
+	}
+	mock.lockGetAvailableSizesInRegion.RLock()
+	calls = mock.calls.GetAvailableSizesInRegion
+	mock.lockGetAvailableSizesInRegion.RUnlock()
 	return calls
 }
 
