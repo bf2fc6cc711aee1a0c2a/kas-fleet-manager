@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	config "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -49,6 +50,37 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateKafkaClaims(ctx, &kafkaRequest, convKafka),
 			ValidateCloudProvider(&h.service, convKafka, h.providerConfig, "creating kafka requests"),
 			handlers.ValidateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
+			func() *errors.ServiceError { // Validate plan
+				instanceType, err := h.service.AssignInstanceType(convKafka)
+				if err != nil {
+					return err
+				}
+				if stringSet(&kafkaRequest.Plan) {
+					plan := config.Plan(kafkaRequest.Plan)
+					instTypeFromPlan, e := plan.GetInstanceType()
+					if e != nil || instTypeFromPlan != string(instanceType) {
+						return errors.New(errors.ErrorGeneral, fmt.Sprintf("Unable to detect instance type in plan provided: '%s'", kafkaRequest.Plan))
+					}
+					size, e1 := plan.GetSizeID()
+					if e1 != nil {
+						return errors.New(errors.ErrorGeneral, fmt.Sprintf("Unable to detect instance size in plan provided: '%s'", kafkaRequest.Plan))
+					}
+					_, e2 := h.kafkaConfig.GetKafkaInstanceSize(instTypeFromPlan, size)
+
+					if e2 != nil {
+						return errors.NewWithCause(errors.ErrorGeneral, e2, fmt.Sprintf("Unsupported plan provided: '%s'", kafkaRequest.Plan))
+					}
+					convKafka.SizeId = size
+				} else {
+					rSize, err := h.kafkaConfig.GetFirstAvailableSize(instanceType.String())
+					if err != nil {
+						return errors.NewWithCause(errors.ErrorGeneral, err, "Unsupported kafka instance type: '%s' provided", instanceType.String())
+					}
+					convKafka.SizeId = rSize
+				}
+				convKafka.InstanceType = instanceType.String()
+				return nil
+			},
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterKafkaJob(convKafka)

@@ -1,7 +1,10 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
@@ -88,4 +91,23 @@ func (c *KafkaConfig) ReadFiles() error {
 
 func (c *KafkaConfig) Validate(env *environments.Env) error {
 	return c.SupportedInstanceTypes.Configuration.validate()
+}
+
+func (c *KafkaConfig) GetFirstAvailableSize(instanceType string) (string, error) {
+	kafkaInstanceType, err := c.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
+	if err != nil {
+		return "", err
+	}
+	if len(kafkaInstanceType.Sizes) < 1 || kafkaInstanceType.Sizes[0].Id == "" {
+		return "", errors.New(errors.ErrorGeneral, fmt.Sprintf("Unable to get size for instance type: '%s'", instanceType))
+	}
+	return kafkaInstanceType.Sizes[0].Id, nil
+}
+
+func (c *KafkaConfig) GetKafkaInstanceSize(instanceType, sizeId string) (*KafkaInstanceSize, error) {
+	kafkaInstanceType, err := c.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
+	if err != nil {
+		return nil, err
+	}
+	return kafkaInstanceType.GetKafkaInstanceSizeByID(sizeId)
 }

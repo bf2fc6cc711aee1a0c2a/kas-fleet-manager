@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
@@ -103,6 +104,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 	type fields struct {
 		DataplaneClusterConfig *config.DataplaneClusterConfig
 		ClusterService         ClusterService
+		kafkaConfig            *config.KafkaConfig
 	}
 	type args struct {
 		kafka *dbapi.KafkaRequest
@@ -133,9 +135,13 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 						return res2, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			args: args{
-				kafka: &dbapi.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{
+					SizeId:       "x1",
+					InstanceType: types.STANDARD.String(),
+				},
 			},
 			want:    &api.Cluster{ClusterID: "test01"},
 			wantErr: false,
@@ -159,9 +165,13 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 						return res2, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			args: args{
-				kafka: &dbapi.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{
+					SizeId:       "x1",
+					InstanceType: types.STANDARD.String(),
+				},
 			},
 			want:    nil,
 			wantErr: false,
@@ -188,9 +198,13 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 						return res2, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			args: args{
-				kafka: &dbapi.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{
+					SizeId:       "x1",
+					InstanceType: types.STANDARD.String(),
+				},
 			},
 			want:    &api.Cluster{ClusterID: "test02"},
 			wantErr: false,
@@ -249,6 +263,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 			f := &FirstSchedulableWithinLimit{
 				DataplaneClusterConfig: tt.fields.DataplaneClusterConfig,
 				ClusterService:         tt.fields.ClusterService,
+				KafkaConfig:            tt.fields.kafkaConfig,
 			}
 			got, err := f.FindCluster(tt.args.kafka)
 			if (err != nil) != tt.wantErr {
