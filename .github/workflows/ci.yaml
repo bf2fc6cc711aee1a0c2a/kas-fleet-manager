@@ -65,6 +65,7 @@ env:
 
 jobs:
   lint-test:
+    if: "github.event_name != 'pull_request' || github.event.pull_request.draft == false"
     name: "Lint & Test"
     runs-on: ubuntu-latest
     services:
