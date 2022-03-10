@@ -173,7 +173,7 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 				return nil, err
 			}
 
-			acc, err := h.Keycloak.RegisterConnectorFleetshardOperatorServiceAccount(connectorClusterId, connectorFleetshardOperatorRoleName)
+			acc, err := h.Keycloak.RegisterConnectorFleetshardOperatorServiceAccount(connectorClusterId)
 			if err != nil {
 				return nil, errors.GeneralError("failed to create service account for connector cluster %s due to error: %v", connectorClusterId, err)
 			}
@@ -198,10 +198,6 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 	}
 	handlers.HandleGet(w, r, cfg)
 }
-
-const (
-	connectorFleetshardOperatorRoleName = "connector_fleetshard_operator"
-)
 
 func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string, authTokenURL string) []ocm.Parameter {
 	p := []ocm.Parameter{

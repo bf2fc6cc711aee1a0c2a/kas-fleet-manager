@@ -23,8 +23,6 @@ func TestMain(m *testing.M) {
 	h, teardown := test.NewHelperWithHooks(t, ocmServer,
 		func(c *config.ConnectorsConfig, kc *keycloak.KeycloakConfig) {
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
-
-			kc.KeycloakClientExpire = true
 		},
 		connector.ConfigProviders(false),
 	)
