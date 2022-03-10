@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 
@@ -106,7 +107,7 @@ func ValidateKafkaUpdateFields(kafkaUpdateRequest *private.KafkaUpdateRequest) h
 }
 
 func stringSet(value *string) bool {
-	return value != nil && len(*value) > 0
+	return value != nil && len(strings.Trim(*value, " ")) > 0
 }
 
 func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService authorization.Authorization, kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *public.KafkaUpdateRequest) handlers.Validate {
