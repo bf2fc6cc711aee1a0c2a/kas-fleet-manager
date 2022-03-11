@@ -3,10 +3,10 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"net/url"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
@@ -105,7 +105,7 @@ func (s *extender) deleteKeycloakClients(sc *godog.Scenario, err error) {
 
 	if clientIds, ok := s.Variables[clientIdList].([]string); ok {
 		env := s.Suite.Helper.Env
-		var keycloakService services.KafkaKeycloakService
+		var keycloakService sso.KafkaKeycloakService
 		env.MustResolve(&keycloakService)
 
 		for _, clientID := range clientIds {

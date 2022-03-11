@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"net/http"
 	"reflect"
 	"strings"
@@ -353,7 +354,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		clusterService    ClusterService
-		keycloakService   services.KeycloakService
+		keycloakService   sso.KeycloakService
 		kafkaConfig       *config.KafkaConfig
 	}
 	type args struct {
@@ -379,7 +380,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return "clusterDNS", nil
 					},
 				},
-				keycloakService: &services.KeycloakServiceMock{
+				keycloakService: &sso.KeycloakServiceMock{
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
@@ -390,7 +391,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 							},
 						}
 					},
-					CreateServiceAccountInternalFunc: func(request services.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
+					CreateServiceAccountInternalFunc: func(request sso.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
@@ -414,7 +415,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return "", errors.New(errors.ErrorBadRequest, "")
 					},
 				},
-				keycloakService: &services.KeycloakServiceMock{
+				keycloakService: &sso.KeycloakServiceMock{
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
@@ -442,7 +443,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return "clusterDNS", nil
 					},
 				},
-				keycloakService: &services.KeycloakServiceMock{
+				keycloakService: &sso.KeycloakServiceMock{
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
@@ -476,7 +477,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return "clusterDNS", nil
 					},
 				},
-				keycloakService: &services.KeycloakServiceMock{
+				keycloakService: &sso.KeycloakServiceMock{
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "", errors.FailedToCreateSSOClient("failed to create the sso client")
 					},
@@ -504,11 +505,11 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return "clusterDNS", nil
 					},
 				},
-				keycloakService: &services.KeycloakServiceMock{
+				keycloakService: &sso.KeycloakServiceMock{
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "dsd", nil
 					},
-					CreateServiceAccountInternalFunc: func(request services.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
+					CreateServiceAccountInternalFunc: func(request sso.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
 						return nil, errors.FailedToCreateSSOClient("failed to create the sso client")
 					},
 					GetConfigFunc: func() *keycloak.KeycloakConfig {
@@ -640,7 +641,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		clusterService    ClusterService
-		keycloakService   services.KeycloakService
+		keycloakService   sso.KeycloakService
 		kafkaConfig       *config.KafkaConfig
 	}
 	type args struct {
@@ -657,7 +658,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			name: "successfully deletes a Kafka request when it has not been assigned to an OSD cluster",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				keycloakService: &services.KeycloakServiceMock{
+				keycloakService: &sso.KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
@@ -686,7 +687,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			name: "successfully deletes a Kafka request and cleans up all of its dependencies",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				keycloakService: &services.KeycloakServiceMock{
+				keycloakService: &sso.KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
@@ -715,7 +716,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			name: "fail to delete kafka request: error when deleting sso client",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				keycloakService: &services.KeycloakServiceMock{
+				keycloakService: &sso.KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return errors.FailedToDeleteSSOClient("failed to delete sso client")
 					},
@@ -741,7 +742,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			name: "fail to delete kafka request: error when canary service account",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				keycloakService: &services.KeycloakServiceMock{
+				keycloakService: &sso.KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
@@ -768,7 +769,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			name: "should not delete internal service account when canary serverice account id is empty",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				keycloakService: &services.KeycloakServiceMock{
+				keycloakService: &sso.KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},

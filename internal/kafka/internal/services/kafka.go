@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"strings"
 	"sync"
 
@@ -97,7 +98,7 @@ var _ KafkaService = &kafkaService{}
 type kafkaService struct {
 	connectionFactory        *db.ConnectionFactory
 	clusterService           ClusterService
-	keycloakService          services.KeycloakService
+	keycloakService          sso.KeycloakService
 	kafkaConfig              *config.KafkaConfig
 	awsConfig                *config.AWSConfig
 	quotaServiceFactory      QuotaServiceFactory
@@ -109,7 +110,7 @@ type kafkaService struct {
 	clusterPlacementStrategy ClusterPlacementStrategy
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, providerConfig *config.ProviderConfig, clusterPlacementStrategy ClusterPlacementStrategy) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService sso.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, providerConfig *config.ProviderConfig, clusterPlacementStrategy ClusterPlacementStrategy) *kafkaService {
 	return &kafkaService{
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,
@@ -295,7 +296,7 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 			return errors.FailedToCreateSSOClient("failed to create sso client %s:%v", kafkaRequest.SsoClientID, err)
 		}
 		clientId := strings.ToLower(fmt.Sprintf("%s-%s", CanaryServiceAccountPrefix, kafkaRequest.ID))
-		serviceAccountRequest := services.CompleteServiceAccountRequest{
+		serviceAccountRequest := sso.CompleteServiceAccountRequest{
 			Owner:          kafkaRequest.Owner,
 			OwnerAccountId: kafkaRequest.OwnerAccountId,
 			ClientId:       clientId,

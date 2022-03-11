@@ -6,6 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"net/http"
 
@@ -25,7 +26,7 @@ type ConnectorAdminHandler struct {
 	di.Inject
 	Bus            signalbus.SignalBus
 	Service        services.ConnectorClusterService
-	Keycloak       coreservices.KafkaKeycloakService
+	Keycloak       sso.KafkaKeycloakService
 	ConnectorTypes services.ConnectorTypesService
 	Vault          vault.VaultService
 	KeycloakConfig *keycloak.KeycloakConfig

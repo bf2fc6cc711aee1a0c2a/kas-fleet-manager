@@ -9,7 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/goava/di"
 	"github.com/golang/glog"
 )
@@ -60,7 +60,7 @@ func NewKasFleetshardOperatorAddon(o kasFleetshardOperatorAddon) KasFleetshardOp
 
 type kasFleetshardOperatorAddon struct {
 	di.Inject
-	SsoService          services.KafkaKeycloakService
+	SsoService          sso.KafkaKeycloakService
 	ProviderFactory     clusters.ProviderFactory
 	ServerConfig        *server.ServerConfig
 	KasFleetShardConfig *config.KasFleetshardConfig

@@ -6,7 +6,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/redhatsso"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
 type redhatssoServiceProxy struct {
@@ -14,7 +13,7 @@ type redhatssoServiceProxy struct {
 	service redhatssoService
 }
 
-var _ services.KeycloakService = &redhatssoServiceProxy{}
+var _ KeycloakService = &redhatssoServiceProxy{}
 
 func (r *redhatssoServiceProxy) retrieveToken() (string, *errors.ServiceError) {
 	accessToken, tokenErr := r.client.GetToken()
@@ -149,7 +148,7 @@ func (r *redhatssoServiceProxy) GetKafkaClientSecret(clientId string) (string, *
 		return r.service.GetKafkaClientSecret(token, clientId)
 	}
 }
-func (r *redhatssoServiceProxy) CreateServiceAccountInternal(request services.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
+func (r *redhatssoServiceProxy) CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return nil, err
 	} else {

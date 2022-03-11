@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
 func TestReadyKafkaManager_reconcileCanaryServiceAccount(t *testing.T) {
@@ -21,7 +21,7 @@ func TestReadyKafkaManager_reconcileCanaryServiceAccount(t *testing.T) {
 
 	type fields struct {
 		kafkaService    services.KafkaService
-		keycloakService coreServices.KeycloakService
+		keycloakService sso.KeycloakService
 	}
 	type args struct {
 		kafka *dbapi.KafkaRequest
@@ -38,7 +38,7 @@ func TestReadyKafkaManager_reconcileCanaryServiceAccount(t *testing.T) {
 				kafkaService: &services.KafkaServiceMock{
 					UpdateFunc: nil, // set to nil as it should not be called
 				},
-				keycloakService: &coreServices.KeycloakServiceMock{
+				keycloakService: &sso.KeycloakServiceMock{
 					CreateServiceAccountInternalFunc: nil, // set to nil as it should not be called,
 				},
 			},
@@ -58,8 +58,8 @@ func TestReadyKafkaManager_reconcileCanaryServiceAccount(t *testing.T) {
 						return nil
 					},
 				},
-				keycloakService: &coreServices.KeycloakServiceMock{
-					CreateServiceAccountInternalFunc: func(request coreServices.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
+				keycloakService: &sso.KeycloakServiceMock{
+					CreateServiceAccountInternalFunc: func(request sso.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
 						return nil, &errors.ServiceError{}
 					},
 				},
@@ -77,8 +77,8 @@ func TestReadyKafkaManager_reconcileCanaryServiceAccount(t *testing.T) {
 						return nil
 					},
 				},
-				keycloakService: &coreServices.KeycloakServiceMock{
-					CreateServiceAccountInternalFunc: func(request coreServices.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
+				keycloakService: &sso.KeycloakServiceMock{
+					CreateServiceAccountInternalFunc: func(request sso.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
 						return serviceAccount, nil
 					},
 				},

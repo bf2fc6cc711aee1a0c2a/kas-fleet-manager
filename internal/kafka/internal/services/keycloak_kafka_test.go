@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"reflect"
 	"testing"
 	"time"
@@ -11,7 +12,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -165,8 +165,8 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 						}
 					},
 					GetClientsFunc: func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
-						testID2 := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "21222")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
+						testID2 := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "21222")
 						testID3 := fmt.Sprintf("internal-%s", "some-internal-id")
 						att := map[string]string{}
 						clients := []*gocloak.Client{
@@ -218,7 +218,7 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// max allowed: 2
 			tt.fields.kcClient.GetConfig().MaxAllowedServiceAccounts = 2
-			keycloakService := services.NewKeycloakServiceWithClient(tt.fields.kcClient)
+			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
 
 			got, err := keycloakService.CreateServiceAccount(tt.args.serviceAccountRequest, tt.args.ctx)
 			if (err != nil) != tt.wantErr {
@@ -286,7 +286,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return "", nil
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return gocloak.Client{
 							ClientID:   &testID,
@@ -297,7 +297,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return nil
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ClientID:   &testID,
@@ -331,7 +331,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return "", nil
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return gocloak.Client{
 							ClientID:   &testID,
@@ -342,7 +342,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return nil
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ClientID:   &testID,
@@ -376,7 +376,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return "", nil
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return gocloak.Client{
 							ClientID:   &testID,
@@ -387,7 +387,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return nil
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ClientID:   &testID,
@@ -421,7 +421,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return "", nil
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return gocloak.Client{
 							ClientID:   &testID,
@@ -432,7 +432,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return nil
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ClientID:   &testID,
@@ -456,7 +456,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := services.NewKeycloakServiceWithClient(tt.fields.kcClient)
+			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
 			err := keycloakService.DeleteServiceAccount(tt.args.ctx, testClientID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("failed to DeleteServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
@@ -540,7 +540,7 @@ func TestKeycloakService_ListServiceAcc(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := services.NewKeycloakServiceWithClient(tt.fields.kcClient)
+			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
 			got, err := keycloakService.ListServiceAcc(tt.args.ctx, 0, 10)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterKafkaClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
@@ -613,7 +613,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 						return true
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ID:         &testID,
@@ -636,8 +636,8 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
 			want: &api.ServiceAccount{
-				ID:           fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
-				ClientID:     fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
+				ID:           fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221"),
+				ClientID:     fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221"),
 				ClientSecret: secret,
 				Name:         "",
 				Description:  "",
@@ -673,7 +673,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 						return false
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ID:         &testID,
@@ -683,7 +683,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 					},
 					RegenerateClientSecretFunc: func(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
 						sec := "secret"
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						return &gocloak.CredentialRepresentation{
 							Value: &sec,
 							ID:    &testID,
@@ -696,8 +696,8 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
 			want: &api.ServiceAccount{
-				ID:           fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
-				ClientID:     fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
+				ID:           fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221"),
+				ClientID:     fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221"),
 				ClientSecret: secret,
 				Name:         "",
 				Description:  "",
@@ -733,7 +733,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 						return false
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ID:         &testID,
@@ -760,7 +760,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := services.NewKeycloakServiceWithClient(tt.fields.kcClient)
+			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
 			got, err := keycloakService.ResetServiceAccountCredentials(tt.args.ctx, testClientID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterKafkaClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
@@ -829,7 +829,7 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 						return true
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ID:         &testID,
@@ -843,8 +843,8 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
 			want: &api.ServiceAccount{
-				ID:          fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
-				ClientID:    fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
+				ID:          fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221"),
+				ClientID:    fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221"),
 				Name:        "",
 				Description: "",
 				CreatedAt:   time.Time{},
@@ -854,7 +854,7 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := services.NewKeycloakServiceWithClient(tt.fields.kcClient)
+			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
 			got, err := keycloakService.GetServiceAccountById(tt.args.ctx, testClientID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetServiceAccountById() error = %v, wantErr %v", err, tt.wantErr)
@@ -923,7 +923,7 @@ func TestKeycloakService_GetServiceAccountByClientId(t *testing.T) {
 						return true
 					},
 					GetClientFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID := fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ID:         &testID,
@@ -937,8 +937,8 @@ func TestKeycloakService_GetServiceAccountByClientId(t *testing.T) {
 				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
 			want: &api.ServiceAccount{
-				ID:          fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
-				ClientID:    fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
+				ID:          fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221"),
+				ClientID:    fmt.Sprintf("%s-%s", sso.UserServiceAccountPrefix, "12221"),
 				Name:        "",
 				Description: "",
 				CreatedAt:   time.Time{},
@@ -948,7 +948,7 @@ func TestKeycloakService_GetServiceAccountByClientId(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := services.NewKeycloakServiceWithClient(tt.fields.kcClient)
+			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
 			got, err := keycloakService.GetServiceAccountByClientId(tt.args.ctx, testClientID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetServiceAccountById() error = %v, wantErr %v", err, tt.wantErr)

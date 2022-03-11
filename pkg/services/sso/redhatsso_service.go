@@ -7,7 +7,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/redhatsso"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
@@ -135,7 +134,7 @@ func (r *redhatssoService) GetKafkaClientSecret(accessToken string, clientId str
 
 	return *serviceAccount.Secret, nil
 }
-func (r *redhatssoService) CreateServiceAccountInternal(accessToken string, request services.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
+func (r *redhatssoService) CreateServiceAccountInternal(accessToken string, request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
 	return nil, nil
 }
 func (r *redhatssoService) DeleteServiceAccountInternal(accessToken string, clientId string) *errors.ServiceError {

@@ -14,11 +14,11 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 )
@@ -80,11 +80,11 @@ func ServiceProviders() di.Option {
 
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),
-		di.Provide(func(c *keycloak.KeycloakConfig) services.KafkaKeycloakService {
-			return services.NewKeycloakService(c, c.KafkaRealm)
+		di.Provide(func(c *keycloak.KeycloakConfig) sso.KafkaKeycloakService {
+			return sso.NewKeycloakService(c, c.KafkaRealm)
 		}),
-		di.Provide(func(c *keycloak.KeycloakConfig) services.OsdKeycloakService {
-			return services.NewKeycloakService(c, c.OSDClusterIDPRealm)
+		di.Provide(func(c *keycloak.KeycloakConfig) sso.OsdKeycloakService {
+			return sso.NewKeycloakService(c, c.OSDClusterIDPRealm)
 		}),
 
 		// Types registered as a BootService are started when the env is started

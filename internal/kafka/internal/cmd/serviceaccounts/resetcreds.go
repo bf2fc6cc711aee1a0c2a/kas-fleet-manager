@@ -4,11 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
@@ -36,7 +35,7 @@ func runResetCreds(env *environments.Env, cmd *cobra.Command) {
 
 	keycloakConfig := KeycloakConfig(env)
 	// setup required services
-	keycloakService := services.NewKeycloakService(keycloakConfig, keycloakConfig.KafkaRealm)
+	keycloakService := sso.NewKeycloakService(keycloakConfig, keycloakConfig.KafkaRealm)
 
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{

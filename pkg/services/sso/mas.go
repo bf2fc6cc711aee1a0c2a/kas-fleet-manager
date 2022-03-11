@@ -8,7 +8,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
@@ -29,14 +28,14 @@ const (
 	connectorAgentServiceAccountPrefix = "connector-fleetshard"
 )
 
-type KafkaKeycloakService services.KeycloakService
-type OsdKeycloakService services.KeycloakService
+type KafkaKeycloakService KeycloakService
+type OsdKeycloakService KeycloakService
 
 type masService struct {
 	kcClient keycloak.KcClient
 }
 
-var _ services.KeycloakService = &masService{}
+var _ KeycloakService = &masService{}
 
 func (kc *masService) RegisterKafkaClientInSSO(kafkaClusterName string, orgId string) (string, *errors.ServiceError) {
 	accessToken, tokenErr := kc.kcClient.GetToken()
@@ -191,7 +190,7 @@ func (kc *masService) CreateServiceAccount(serviceAccountRequest *api.ServiceAcc
 	if !isAllowed { //4xx over requesters' limit
 		return nil, errors.Forbidden("Max allowed number:%d of service accounts for user:%s has reached", kc.GetConfig().MaxAllowedServiceAccounts, owner)
 	}
-	return kc.CreateServiceAccountInternal(services.CompleteServiceAccountRequest{
+	return kc.CreateServiceAccountInternal(CompleteServiceAccountRequest{
 		Owner:          owner,
 		OwnerAccountId: ownerAccountId,
 		OrgId:          orgId,
@@ -201,7 +200,7 @@ func (kc *masService) CreateServiceAccount(serviceAccountRequest *api.ServiceAcc
 	})
 }
 
-func (kc *masService) CreateServiceAccountInternal(request services.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
+func (kc *masService) CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to create service account")
