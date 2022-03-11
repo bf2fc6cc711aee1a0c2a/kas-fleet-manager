@@ -37,6 +37,61 @@ type masService struct {
 
 var _ keycloakServiceInternal = &masService{}
 
+//////////////////////////////////////////////////////
+// Builder
+
+var _ KeycloakServiceBuilder = &masClientBuilder{}
+var _ MasClientConfigurator = &masClientConfigurator{}
+
+type masClientBuilder struct {
+	client      *keycloak.KcClient
+	config      *keycloak.KeycloakConfig
+	realmConfig *keycloak.KeycloakRealmConfig
+}
+
+func (b masClientBuilder) Build() KeycloakService {
+	if b.client != nil {
+		return &keycloakServiceProxy{
+			accessTokenProvider: *b.client,
+			service: &masService{
+				kcClient: *b.client,
+			},
+		}
+	}
+
+	client := keycloak.NewClient(b.config, b.realmConfig)
+	return &keycloakServiceProxy{
+		accessTokenProvider: client,
+		service: &masService{
+			kcClient: client,
+		},
+	}
+}
+
+type MasClientConfigurator interface {
+	WithKeycloakClient(client *keycloak.KcClient) KeycloakServiceBuilder
+	WithConfiguration(config *keycloak.KeycloakConfig, realmConfig *keycloak.KeycloakRealmConfig) KeycloakServiceBuilder
+}
+
+type masClientConfigurator struct {
+}
+
+func (c masClientConfigurator) WithKeycloakClient(client *keycloak.KcClient) KeycloakServiceBuilder {
+	return masClientBuilder{
+		client: client,
+	}
+}
+
+func (c masClientConfigurator) WithConfiguration(config *keycloak.KeycloakConfig, realmConfig *keycloak.KeycloakRealmConfig) KeycloakServiceBuilder {
+	return masClientBuilder{
+		config:      config,
+		realmConfig: realmConfig,
+	}
+}
+
+// END Builder
+//////////////////////////////////////////////////////
+
 func (kc *masService) RegisterKafkaClientInSSO(accessToken string, kafkaClusterName string, orgId string) (string, *errors.ServiceError) {
 	internalClientId, err := kc.kcClient.IsClientExist(kafkaClusterName, accessToken)
 	if err != nil {

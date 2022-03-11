@@ -5,16 +5,10 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/redhatsso"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
 type Provider string
-
-const (
-	KeycloakProvider  Provider = "KEYCLOAK"
-	RedhatSSOProvider Provider = "REDHAT"
-)
 
 type CompleteServiceAccountRequest struct {
 	Owner          string
@@ -70,6 +64,28 @@ type keycloakServiceInternal interface {
 	DeleteServiceAccountInternal(accessToken string, clientId string) *errors.ServiceError
 }
 
+var _ KeycloakServiceBuilderSelector = &keycloakServiceBuilderSelector{}
+
+type KeycloakServiceBuilder interface {
+	Build() KeycloakService
+}
+
+type KeycloakServiceBuilderSelector interface {
+	ForKeycloak() MasClientConfigurator
+	ForRedhatSSO() RedhatSSOConfigurator
+}
+
+type keycloakServiceBuilderSelector struct {
+}
+
+func (selector keycloakServiceBuilderSelector) ForKeycloak() MasClientConfigurator {
+	return masClientConfigurator{}
+}
+
+func (selector keycloakServiceBuilderSelector) ForRedhatSSO() RedhatSSOConfigurator {
+	return redhatSSOConfigurator{}
+}
+
 func NewKeycloakServiceWithClient(client keycloak.KcClient) KeycloakService {
 	return &keycloakServiceProxy{
 		accessTokenProvider: client,
@@ -89,33 +105,26 @@ func NewKeycloakService(config *keycloak.KeycloakConfig, realmConfig *keycloak.K
 	}
 }
 
-// TODO: this should be refactored to a builder pattern so that the `interface{}` won't be needed anymore
-func NewKeycloakServiceByType(provider Provider, config interface{}, realmConfig *keycloak.KeycloakRealmConfig) (KeycloakService, error) {
-	if provider == KeycloakProvider {
-		if cfg, ok := config.(*keycloak.KeycloakConfig); ok {
-			client := keycloak.NewClient(cfg, realmConfig)
-			return &keycloakServiceProxy{
-				accessTokenProvider: client,
-				service: &masService{
-					kcClient: client,
-				},
-			}, nil
-		} else {
-			return nil, fmt.Errorf("invalid configuration for provider %s", provider)
-		}
-	}
-	if provider == RedhatSSOProvider {
-		if cfg, ok := config.(*redhatsso.RedhatSSOConfig); ok {
-			client := redhatsso.NewSSOClient(cfg)
-			return &keycloakServiceProxy{
-				accessTokenProvider: client,
-				service: &redhatssoService{
-					client: client,
-				},
-			}, nil
-		} else {
-			return nil, fmt.Errorf("invalid configuration for provider %s", provider)
-		}
-	}
-	return nil, fmt.Errorf("invalid provider %s", provider)
+func NewKeycloakServiceBuilder() KeycloakServiceBuilderSelector {
+	return keycloakServiceBuilderSelector{}
+}
+
+func BuilderUsageExample() {
+	// Explicitly declaring the type just for the example purpose. := assignment can be used too.
+	var keycloakClientExample KeycloakService = NewKeycloakServiceBuilder().
+		ForKeycloak().
+		WithKeycloakClient(nil). // here real kcClient shoud be passed
+		Build()
+
+	var keycloakClientExample1 KeycloakService = NewKeycloakServiceBuilder().
+		ForKeycloak().
+		WithConfiguration(nil, nil). // here real keycloak and realmconfig should be passed
+		Build()
+
+	var redhatsshExample KeycloakService = NewKeycloakServiceBuilder().
+		ForRedhatSSO().
+		WithRedhatSSOClient(nil). // here the real sso client configuration should be passed
+		Build()
+
+	fmt.Printf("Print so that I don't have compile errors: %v %v %v", keycloakClientExample, keycloakClientExample1, redhatsshExample)
 }

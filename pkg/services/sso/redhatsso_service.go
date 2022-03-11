@@ -15,9 +15,43 @@ import (
 
 var _ keycloakServiceInternal = &redhatssoService{}
 
+//////////////////////////////////////////////////////
+// Builder
+var _ KeycloakServiceBuilder = &redhatSSOServiceBuilder{}
+var _ RedhatSSOConfigurator = &redhatSSOConfigurator{}
+
 type redhatssoService struct {
 	client redhatsso.SSOClient
 }
+
+type RedhatSSOConfigurator interface {
+	WithRedhatSSOClient(client *redhatsso.SSOClient) KeycloakServiceBuilder
+}
+
+type redhatSSOServiceBuilder struct {
+	client *redhatsso.SSOClient
+}
+
+func (b redhatSSOServiceBuilder) Build() KeycloakService {
+	return &keycloakServiceProxy{
+		accessTokenProvider: *b.client,
+		service: &redhatssoService{
+			client: *b.client,
+		},
+	}
+}
+
+type redhatSSOConfigurator struct {
+}
+
+func (c redhatSSOConfigurator) WithRedhatSSOClient(client *redhatsso.SSOClient) KeycloakServiceBuilder {
+	return redhatSSOServiceBuilder{
+		client: client,
+	}
+}
+
+// END Builder
+//////////////////////////////////////////////////////
 
 func (r *redhatssoService) RegisterKafkaClientInSSO(accessToken string, kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 	svcData, err := r.client.CreateServiceAccount(accessToken, kafkaNamespace, fmt.Sprintf("%s:%s", orgId, kafkaNamespace))
