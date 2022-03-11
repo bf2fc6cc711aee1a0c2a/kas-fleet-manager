@@ -3,6 +3,7 @@ package presenters
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -41,6 +42,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 		kafkaConfig, err := config.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
 		if err != nil {
 			glog.Warning(err)
+			sentry.CaptureException(err)
 		} else {
 			ingressThroughputPerSec = kafkaConfig.IngressThroughputPerSec
 			egressThroughputPerSec = kafkaConfig.EgressThroughputPerSec
@@ -51,24 +53,24 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 		}
 	}
 	return public.KafkaRequest{
-		Id:                          reference.Id,
-		Kind:                        reference.Kind,
-		Href:                        reference.Href,
-		Region:                      kafkaRequest.Region,
-		Name:                        kafkaRequest.Name,
-		CloudProvider:               kafkaRequest.CloudProvider,
-		MultiAz:                     kafkaRequest.MultiAZ,
-		Owner:                       kafkaRequest.Owner,
-		BootstrapServerHost:         setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
-		Status:                      kafkaRequest.Status,
-		CreatedAt:                   kafkaRequest.CreatedAt,
-		UpdatedAt:                   kafkaRequest.UpdatedAt,
-		FailedReason:                kafkaRequest.FailedReason,
-		Version:                     kafkaRequest.ActualKafkaVersion,
-		InstanceType:                kafkaRequest.InstanceType,
-		ReauthenticationEnabled:     kafkaRequest.ReauthenticationEnabled,
-		KafkaStorageSize:            kafkaRequest.KafkaStorageSize,
-		SizeId:                      kafkaRequest.SizeId,
+		Id:                      reference.Id,
+		Kind:                    reference.Kind,
+		Href:                    reference.Href,
+		Region:                  kafkaRequest.Region,
+		Name:                    kafkaRequest.Name,
+		CloudProvider:           kafkaRequest.CloudProvider,
+		MultiAz:                 kafkaRequest.MultiAZ,
+		Owner:                   kafkaRequest.Owner,
+		BootstrapServerHost:     setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
+		Status:                  kafkaRequest.Status,
+		CreatedAt:               kafkaRequest.CreatedAt,
+		UpdatedAt:               kafkaRequest.UpdatedAt,
+		FailedReason:            kafkaRequest.FailedReason,
+		Version:                 kafkaRequest.ActualKafkaVersion,
+		InstanceType:            kafkaRequest.InstanceType,
+		ReauthenticationEnabled: kafkaRequest.ReauthenticationEnabled,
+		KafkaStorageSize:        kafkaRequest.KafkaStorageSize,
+		SizeId:                  kafkaRequest.SizeId,
 		IngressThroughputPerSec:     ingressThroughputPerSec,
 		EgressThroughputPerSec:      egressThroughputPerSec,
 		TotalMaxConnections:         totalMaxConnections,
