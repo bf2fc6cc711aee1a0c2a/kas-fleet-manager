@@ -35,13 +35,9 @@ type masService struct {
 	kcClient keycloak.KcClient
 }
 
-var _ KeycloakService = &masService{}
+var _ keycloakServiceInternal = &masService{}
 
-func (kc *masService) RegisterKafkaClientInSSO(kafkaClusterName string, orgId string) (string, *errors.ServiceError) {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register Kafka Client in SSO")
-	}
+func (kc *masService) RegisterKafkaClientInSSO(accessToken string, kafkaClusterName string, orgId string) (string, *errors.ServiceError) {
 	internalClientId, err := kc.kcClient.IsClientExist(kafkaClusterName, accessToken)
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", kafkaClusterName)
@@ -79,12 +75,7 @@ func (kc *masService) RegisterKafkaClientInSSO(kafkaClusterName string, orgId st
 	return secretValue, nil
 }
 
-func (kc *masService) RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register OSD cluster Client in SSO")
-	}
-
+func (kc *masService) RegisterOSDClusterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
 	internalClientId, err := kc.kcClient.IsClientExist(clusterId, accessToken)
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clusterId)
@@ -117,11 +108,7 @@ func (kc *masService) RegisterOSDClusterClientInSSO(clusterId string, clusterOat
 	return secretValue, nil
 }
 
-func (kc *masService) DeRegisterClientInSSO(clientId string) *errors.ServiceError {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to deregister OSD cluster client in SSO")
-	}
+func (kc *masService) DeRegisterClientInSSO(accessToken string, clientId string) *errors.ServiceError {
 	internalClientID, _ := kc.kcClient.IsClientExist(clientId, accessToken)
 	glog.V(5).Infof("Existing Kafka Client %s found", clientId)
 	if internalClientID == "" {
@@ -143,11 +130,7 @@ func (kc *masService) GetRealmConfig() *keycloak.KeycloakRealmConfig {
 	return kc.kcClient.GetRealmConfig()
 }
 
-func (kc masService) IsKafkaClientExist(clientId string) *errors.ServiceError {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to check Kafka client existence")
-	}
+func (kc masService) IsKafkaClientExist(accessToken string, clientId string) *errors.ServiceError {
 	_, err := kc.kcClient.IsClientExist(clientId, accessToken)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clientId)
@@ -155,11 +138,7 @@ func (kc masService) IsKafkaClientExist(clientId string) *errors.ServiceError {
 	return nil
 }
 
-func (kc masService) GetKafkaClientSecret(clientId string) (string, *errors.ServiceError) {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to get Kafka client secret")
-	}
+func (kc masService) GetKafkaClientSecret(accessToken string, clientId string) (string, *errors.ServiceError) {
 	internalClientID, err := kc.kcClient.IsClientExist(clientId, accessToken)
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clientId)
@@ -171,11 +150,7 @@ func (kc masService) GetKafkaClientSecret(clientId string) (string, *errors.Serv
 	return clientSecret, nil
 }
 
-func (kc *masService) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to create service account")
-	}
+func (kc *masService) CreateServiceAccount(accessToken string, serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
 	claims, err := auth.GetClaimsFromContext(ctx) //http requester's info
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
@@ -190,7 +165,7 @@ func (kc *masService) CreateServiceAccount(serviceAccountRequest *api.ServiceAcc
 	if !isAllowed { //4xx over requesters' limit
 		return nil, errors.Forbidden("Max allowed number:%d of service accounts for user:%s has reached", kc.GetConfig().MaxAllowedServiceAccounts, owner)
 	}
-	return kc.CreateServiceAccountInternal(CompleteServiceAccountRequest{
+	return kc.CreateServiceAccountInternal(accessToken, CompleteServiceAccountRequest{
 		Owner:          owner,
 		OwnerAccountId: ownerAccountId,
 		OrgId:          orgId,
@@ -200,11 +175,7 @@ func (kc *masService) CreateServiceAccount(serviceAccountRequest *api.ServiceAcc
 	})
 }
 
-func (kc *masService) CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to create service account")
-	}
+func (kc *masService) CreateServiceAccountInternal(accessToken string, request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
 	glog.V(5).Infof("creating service accounts: user = %s", request.Owner)
 	createdAt := time.Now().Format(time.RFC3339)
 	rhAccountID := map[string][]string{
@@ -263,11 +234,7 @@ func (kc *masService) buildServiceAccountIdentifier() string {
 	return UserServiceAccountPrefix + NewUUID()
 }
 
-func (kc *masService) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to collect service account")
-	}
+func (kc *masService) ListServiceAcc(accessToken string, ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil { //4xx
 		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
@@ -303,11 +270,7 @@ func (kc *masService) ListServiceAcc(ctx context.Context, first int, max int) ([
 	return sa, nil
 }
 
-func (kc *masService) DeleteServiceAccount(ctx context.Context, id string) *errors.ServiceError {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil { //5xx
-		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to delete service account")
-	}
+func (kc *masService) DeleteServiceAccount(accessToken string, ctx context.Context, id string) *errors.ServiceError {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil { //4xx
 		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
@@ -337,12 +300,7 @@ func (kc *masService) DeleteServiceAccount(ctx context.Context, id string) *erro
 	return errors.NewWithCause(errors.ErrorForbidden, nil, "failed to delete service account")
 }
 
-func (kc *masService) DeleteServiceAccountInternal(serviceAccountId string) *errors.ServiceError {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil { //5xx
-		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to delete service account")
-	}
-
+func (kc *masService) DeleteServiceAccountInternal(accessToken string, serviceAccountId string) *errors.ServiceError {
 	id, err := kc.kcClient.IsClientExist(serviceAccountId, accessToken)
 	if err != nil { //5xx ou 404
 		keyErr, _ := err.(gocloak.APIError)
@@ -364,11 +322,7 @@ func (kc *masService) DeleteServiceAccountInternal(serviceAccountId string) *err
 	return nil
 }
 
-func (kc *masService) ResetServiceAccountCredentials(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil { //5xx
-		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to reset service account credentials")
-	}
+func (kc *masService) ResetServiceAccountCredentials(accessToken string, ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil { //4xx
 		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
@@ -422,12 +376,7 @@ func handleKeyCloakGetClientError(err error, id string) *errors.ServiceError {
 	return errors.NewWithCause(errors.ErrorFailedToGetServiceAccount, err, "failed to get the service account %s", id)
 }
 
-func (kc *masService) getServiceAccount(ctx context.Context, getClientFunc func(client keycloak.KcClient, accessToken string) (*gocloak.Client, error), key string) (*api.ServiceAccount, *errors.ServiceError) {
-	accessToken, tokenErr := kc.kcClient.GetToken() //get keycloak service client id token
-	if tokenErr != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to get service account by id")
-
-	}
+func (kc *masService) getServiceAccount(accessToken string, ctx context.Context, getClientFunc func(client keycloak.KcClient, accessToken string) (*gocloak.Client, error), key string) (*api.ServiceAccount, *errors.ServiceError) {
 	claims, err := auth.GetClaimsFromContext(ctx) //gather http requester info.
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
@@ -468,43 +417,37 @@ func (kc *masService) getServiceAccount(ctx context.Context, getClientFunc func(
 	}
 }
 
-func (kc *masService) GetServiceAccountByClientId(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
-	return kc.getServiceAccount(ctx, func(client keycloak.KcClient, accessToken string) (*gocloak.Client, error) {
+func (kc *masService) GetServiceAccountByClientId(accessToken string, ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
+	return kc.getServiceAccount(accessToken, ctx, func(client keycloak.KcClient, accessToken string) (*gocloak.Client, error) {
 		return client.GetClient(clientId, accessToken)
 	}, clientId)
 }
 
-func (kc *masService) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
-	return kc.getServiceAccount(ctx, func(client keycloak.KcClient, accessToken string) (*gocloak.Client, error) {
+func (kc *masService) GetServiceAccountById(accessToken string, ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
+	return kc.getServiceAccount(accessToken, ctx, func(client keycloak.KcClient, accessToken string) (*gocloak.Client, error) {
 		return client.GetClientById(id, accessToken)
 	}, id)
 }
 
-func (kc *masService) RegisterKasFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
+func (kc *masService) RegisterKasFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	serviceAccountId := buildAgentOperatorServiceAccountId(kasAgentServiceAccountPrefix, agentClusterId)
-	return kc.registerAgentServiceAccount(kasClusterId, serviceAccountId, agentClusterId)
+	return kc.registerAgentServiceAccount(accessToken, kasClusterId, serviceAccountId, agentClusterId)
 }
 
-func (kc *masService) DeRegisterKasFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
-	return kc.deregisterAgentServiceAccount(kasAgentServiceAccountPrefix, agentClusterId)
+func (kc *masService) DeRegisterKasFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) *errors.ServiceError {
+	return kc.deregisterAgentServiceAccount(accessToken, kasAgentServiceAccountPrefix, agentClusterId)
 }
 
-func (kc *masService) RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) { // (agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+func (kc *masService) RegisterConnectorFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) { // (agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
 	serviceAccountId := buildAgentOperatorServiceAccountId(connectorAgentServiceAccountPrefix, agentClusterId)
-	return kc.registerAgentServiceAccount(connectorClusterId, serviceAccountId, agentClusterId)
+	return kc.registerAgentServiceAccount(accessToken, connectorClusterId, serviceAccountId, agentClusterId)
 }
 
-func (kc *masService) DeRegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
-	return kc.deregisterAgentServiceAccount(connectorAgentServiceAccountPrefix, agentClusterId)
+func (kc *masService) DeRegisterConnectorFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) *errors.ServiceError {
+	return kc.deregisterAgentServiceAccount(accessToken, connectorAgentServiceAccountPrefix, agentClusterId)
 }
 
-func (kc *masService) registerAgentServiceAccount(clusterId string, serviceAccountId string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
-	//get keycloak service client id token
-	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register agent service account")
-	}
-
+func (kc *masService) registerAgentServiceAccount(accessToken string, clusterId string, serviceAccountId string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	c := keycloak.ClientRepresentation{
 		ClientID:               serviceAccountId,
 		Name:                   serviceAccountId,
@@ -534,12 +477,7 @@ func (kc *masService) registerAgentServiceAccount(clusterId string, serviceAccou
 	return account, nil
 }
 
-func (kc *masService) deregisterAgentServiceAccount(prefix string, agentClusterId string) *errors.ServiceError {
-	accessToken, err := kc.kcClient.GetToken()
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to deregister service account")
-
-	}
+func (kc *masService) deregisterAgentServiceAccount(accessToken string, prefix string, agentClusterId string) *errors.ServiceError {
 	serviceAccountId := buildAgentOperatorServiceAccountId(prefix, agentClusterId)
 	internalServiceAccountId, err := kc.kcClient.IsClientExist(serviceAccountId, accessToken)
 	if err != nil { //5xx

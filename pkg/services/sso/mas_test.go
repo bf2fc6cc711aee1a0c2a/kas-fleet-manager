@@ -117,8 +117,12 @@ func TestKeycloakService_RegisterKafkaClientInSSO(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := masService{
-				tt.fields.kcClient,
+			//keycloakService := masService{
+			//	tt.fields.kcClient,
+			//}
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
 			got, err := keycloakService.RegisterKafkaClientInSSO("kafka-12212", "121212")
 			if (err != nil) != tt.wantErr {
@@ -155,7 +159,7 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 				},
 			},
 			want:    "",
-			wantErr: errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register OSD cluster Client in SSO"),
+			wantErr: errors.NewWithCause(errors.ErrorGeneral, tokenErr, "error getting access token"),
 		},
 		{
 			name: "fetch osd client secret from sso when client already exists",
@@ -243,8 +247,9 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			keycloakService := masService{
-				tt.fields.kcClient,
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
 			got, err := keycloakService.RegisterOSDClusterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
 			gomega.Expect(got).To(gomega.Equal(tt.want))
@@ -309,8 +314,9 @@ func TestNewKeycloakService_DeRegisterClientInSSO(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := masService{
-				tt.fields.kcClient,
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
 			err := keycloakService.DeRegisterClientInSSO(testClientID)
 			if (err != nil) != tt.wantErr {
@@ -456,8 +462,9 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := masService{
-				tt.fields.kcClient,
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
 			got, err := keycloakService.RegisterKasFleetshardOperatorServiceAccount(tt.args.clusterId)
 			if (err != nil) != tt.wantErr {
@@ -567,8 +574,9 @@ func TestKeycloakService_DeRegisterKasFleetshardOperatorServiceAccount(t *testin
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			keycloakService := masService{
-				tt.fields.kcClient,
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
 			err := keycloakService.DeRegisterKasFleetshardOperatorServiceAccount(tt.args.clusterId)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
@@ -715,8 +723,9 @@ func TestKeycloakService_RegisterConnectorFleetshardOperatorServiceAccount(t *te
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := masService{
-				tt.fields.kcClient,
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
 			got, err := keycloakService.RegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterId)
 			if (err != nil) != tt.wantErr {
@@ -826,8 +835,9 @@ func TestKeycloakService_DeRegisterConnectorFleetshardOperatorServiceAccount(t *
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			keycloakService := masService{
-				tt.fields.kcClient,
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
 			err := keycloakService.DeRegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterId)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
@@ -917,8 +927,9 @@ func TestKeycloakService_DeleteServiceAccountInternal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			keycloakService := masService{
-				tt.fields.kcClient,
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
 			err := keycloakService.DeleteServiceAccountInternal("account-id")
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
@@ -1020,8 +1031,9 @@ func TestKeycloakService_CreateServiceAccountInternal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			keycloakService := masService{
-				tt.fields.kcClient,
+			keycloakService := keycloakServiceProxy{
+				accessTokenProvider: tt.fields.kcClient,
+				service:             &masService{kcClient: tt.fields.kcClient},
 			}
 			serviceAccount, err := keycloakService.CreateServiceAccountInternal(request)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))

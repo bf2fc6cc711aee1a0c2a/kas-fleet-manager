@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+var _ keycloakServiceInternal = &redhatssoService{}
+
 type redhatssoService struct {
 	client redhatsso.SSOClient
 }

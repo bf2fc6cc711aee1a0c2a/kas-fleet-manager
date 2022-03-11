@@ -4,26 +4,29 @@ import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/redhatsso"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
-type redhatssoServiceProxy struct {
-	client  redhatsso.SSOClient
-	service redhatssoService
+type tokenProvider interface {
+	GetToken() (string, error)
 }
 
-var _ KeycloakService = &redhatssoServiceProxy{}
+type keycloakServiceProxy struct {
+	accessTokenProvider tokenProvider
+	service             keycloakServiceInternal
+}
 
-func (r *redhatssoServiceProxy) retrieveToken() (string, *errors.ServiceError) {
-	accessToken, tokenErr := r.client.GetToken()
+var _ KeycloakService = &keycloakServiceProxy{}
+
+func (r *keycloakServiceProxy) retrieveToken() (string, *errors.ServiceError) {
+	accessToken, tokenErr := r.accessTokenProvider.GetToken()
 	if tokenErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "error getting access token")
 	}
 	return accessToken, nil
 }
 
-func (r *redhatssoServiceProxy) RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
+func (r *keycloakServiceProxy) RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return "", err
 	} else {
@@ -31,7 +34,7 @@ func (r *redhatssoServiceProxy) RegisterKafkaClientInSSO(kafkaNamespace string, 
 	}
 }
 
-func (r *redhatssoServiceProxy) RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
+func (r *keycloakServiceProxy) RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return "", err
 	} else {
@@ -39,7 +42,7 @@ func (r *redhatssoServiceProxy) RegisterOSDClusterClientInSSO(clusterId string, 
 	}
 }
 
-func (r *redhatssoServiceProxy) DeRegisterClientInSSO(clientId string) *errors.ServiceError {
+func (r *keycloakServiceProxy) DeRegisterClientInSSO(clientId string) *errors.ServiceError {
 	if token, err := r.retrieveToken(); err != nil {
 		return err
 	} else {
@@ -47,15 +50,15 @@ func (r *redhatssoServiceProxy) DeRegisterClientInSSO(clientId string) *errors.S
 	}
 }
 
-func (r *redhatssoServiceProxy) GetConfig() *keycloak.KeycloakConfig {
+func (r *keycloakServiceProxy) GetConfig() *keycloak.KeycloakConfig {
 	return r.service.GetConfig()
 }
 
-func (r *redhatssoServiceProxy) GetRealmConfig() *keycloak.KeycloakRealmConfig {
+func (r *keycloakServiceProxy) GetRealmConfig() *keycloak.KeycloakRealmConfig {
 	return r.service.GetRealmConfig()
 }
 
-func (r *redhatssoServiceProxy) IsKafkaClientExist(clientId string) *errors.ServiceError {
+func (r *keycloakServiceProxy) IsKafkaClientExist(clientId string) *errors.ServiceError {
 	if token, err := r.retrieveToken(); err != nil {
 		return err
 	} else {
@@ -63,7 +66,7 @@ func (r *redhatssoServiceProxy) IsKafkaClientExist(clientId string) *errors.Serv
 	}
 }
 
-func (r *redhatssoServiceProxy) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
+func (r *keycloakServiceProxy) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return nil, err
 	} else {
@@ -71,7 +74,7 @@ func (r *redhatssoServiceProxy) CreateServiceAccount(serviceAccountRequest *api.
 	}
 }
 
-func (r *redhatssoServiceProxy) DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError {
+func (r *keycloakServiceProxy) DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError {
 	if token, err := r.retrieveToken(); err != nil {
 		return err
 	} else {
@@ -79,7 +82,7 @@ func (r *redhatssoServiceProxy) DeleteServiceAccount(ctx context.Context, client
 	}
 }
 
-func (r *redhatssoServiceProxy) ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
+func (r *keycloakServiceProxy) ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return nil, err
 	} else {
@@ -87,7 +90,7 @@ func (r *redhatssoServiceProxy) ResetServiceAccountCredentials(ctx context.Conte
 	}
 }
 
-func (r *redhatssoServiceProxy) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
+func (r *keycloakServiceProxy) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return nil, err
 	} else {
@@ -95,7 +98,7 @@ func (r *redhatssoServiceProxy) ListServiceAcc(ctx context.Context, first int, m
 	}
 }
 
-func (r *redhatssoServiceProxy) RegisterKasFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
+func (r *keycloakServiceProxy) RegisterKasFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return nil, err
 	} else {
@@ -103,7 +106,7 @@ func (r *redhatssoServiceProxy) RegisterKasFleetshardOperatorServiceAccount(agen
 	}
 }
 
-func (r *redhatssoServiceProxy) DeRegisterKasFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
+func (r *keycloakServiceProxy) DeRegisterKasFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
 	if token, err := r.retrieveToken(); err != nil {
 		return err
 	} else {
@@ -111,7 +114,7 @@ func (r *redhatssoServiceProxy) DeRegisterKasFleetshardOperatorServiceAccount(ag
 	}
 }
 
-func (r *redhatssoServiceProxy) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
+func (r *keycloakServiceProxy) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return nil, err
 	} else {
@@ -119,7 +122,7 @@ func (r *redhatssoServiceProxy) GetServiceAccountById(ctx context.Context, id st
 	}
 }
 
-func (r *redhatssoServiceProxy) GetServiceAccountByClientId(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
+func (r *keycloakServiceProxy) GetServiceAccountByClientId(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return nil, err
 	} else {
@@ -127,35 +130,35 @@ func (r *redhatssoServiceProxy) GetServiceAccountByClientId(ctx context.Context,
 	}
 }
 
-func (r *redhatssoServiceProxy) RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
+func (r *keycloakServiceProxy) RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return nil, err
 	} else {
 		return r.service.RegisterConnectorFleetshardOperatorServiceAccount(token, agentClusterId)
 	}
 }
-func (r *redhatssoServiceProxy) DeRegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
+func (r *keycloakServiceProxy) DeRegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
 	if token, err := r.retrieveToken(); err != nil {
 		return err
 	} else {
 		return r.service.DeRegisterConnectorFleetshardOperatorServiceAccount(token, agentClusterId)
 	}
 }
-func (r *redhatssoServiceProxy) GetKafkaClientSecret(clientId string) (string, *errors.ServiceError) {
+func (r *keycloakServiceProxy) GetKafkaClientSecret(clientId string) (string, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return "", err
 	} else {
 		return r.service.GetKafkaClientSecret(token, clientId)
 	}
 }
-func (r *redhatssoServiceProxy) CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
+func (r *keycloakServiceProxy) CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return nil, err
 	} else {
 		return r.service.CreateServiceAccountInternal(token, request)
 	}
 }
-func (r *redhatssoServiceProxy) DeleteServiceAccountInternal(clientId string) *errors.ServiceError {
+func (r *keycloakServiceProxy) DeleteServiceAccountInternal(clientId string) *errors.ServiceError {
 	if token, err := r.retrieveToken(); err != nil {
 		return err
 	} else {
