@@ -9,7 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/pkg/errors"
 
-	"github.com/Nerzal/gocloak/v8"
+	"github.com/Nerzal/gocloak/v11"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/onsi/gomega"
 	"github.com/patrickmn/go-cache"

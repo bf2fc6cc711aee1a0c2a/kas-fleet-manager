@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/Masterminds/squirrel v1.1.0
-	github.com/Nerzal/gocloak/v8 v8.5.0
+	github.com/Nerzal/gocloak/v11 v11.0.1
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware v0.0.0-20190805220309-36081240882b
 	github.com/aws/aws-sdk-go v1.36.5
@@ -14,14 +14,13 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/cucumber/godog v0.10.1-0.20210705192606-df8c6e49b40b
 	github.com/cucumber/messages-go/v10 v10.0.3
-	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
-	github.com/go-resty/resty/v2 v2.3.0
+	github.com/go-resty/resty/v2 v2.6.0
 	github.com/goava/di v1.11.0
 	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
