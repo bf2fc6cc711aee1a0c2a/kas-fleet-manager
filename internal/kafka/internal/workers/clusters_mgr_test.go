@@ -37,6 +37,100 @@ var (
 	clusterLoggingOperatorAddonID = "cluster-logging-operator-test"
 )
 
+func TestClusterManager_reconcileKasFleetshardOperator(t *testing.T) {
+	type fields struct {
+		clusterService             services.ClusterService
+		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		wantErr bool
+	}{
+		{
+			name: "no error when c.KasFleetshardOperatorAddon not set",
+			fields: fields{
+				clusterService:             &services.ClusterServiceMock{},
+				kasFleetshardOperatorAddon: nil,
+			},
+			wantErr: false,
+		},
+		{
+			name: "error when ReconcileParametersFunc returns error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *ocmErrors.ServiceError) {
+						return nil, &ocmErrors.ServiceError{}
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "no error when cluster ClientID is set",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *ocmErrors.ServiceError) {
+						return nil, nil
+					},
+				},
+			},
+			arg:     api.Cluster{ClientID: "Client ID"},
+			wantErr: false,
+		},
+		{
+			name: "error when UpdateFunc returns error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *ocmErrors.ServiceError {
+						return &ocmErrors.ServiceError{}
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *ocmErrors.ServiceError) {
+						return nil, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should not receive error when UpdateFunc does not return error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *ocmErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *ocmErrors.ServiceError) {
+						return nil, nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:             tt.fields.clusterService,
+					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
+				},
+			}
+
+			err := c.reconcileKasFleetshardOperator(tt.arg)
+			gomega.Expect(err != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
 func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 	type fields struct {
 		clusterService services.ClusterService
