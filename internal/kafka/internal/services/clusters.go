@@ -526,7 +526,7 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 	for _, k := range kafkas {
 		kafkaInstanceSize, e := c.kafkaConfig.GetKafkaInstanceSize(k.InstanceType, k.SizeId)
 		if e != nil {
-			return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, e, "failed to query kafkas")
+			return nil, apiErrors.NewWithCause(apiErrors.ErrorInstancePlanNotSupported, e, "failed to query kafkas")
 		}
 		clusterIdCountMap[k.ClusterID] += kafkaInstanceSize.CapacityConsumed
 	}
@@ -573,7 +573,7 @@ func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cl
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to find all clusters with criteria")
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to find all clusters with criteria: %v", clusterDetails)
 	}
 
 	return cluster, nil
