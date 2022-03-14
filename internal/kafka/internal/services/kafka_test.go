@@ -942,7 +942,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaConfig:            defaultKafkaConf,
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
 						return mockCluster, nil
 					},
 				},
@@ -980,7 +980,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaConfig:            defaultKafkaConf,
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
 						return mockCluster, nil
 					},
 				},
@@ -1018,7 +1018,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaConfig:            defaultKafkaConf,
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
 						return nil, nil
 					},
 				},
@@ -1059,7 +1059,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, 0, false),
 				kafkaConfig:            defaultKafkaConf,
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
 						return nil, nil
 					},
 				},
@@ -1102,7 +1102,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
 				},
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
 						return mockCluster, nil
 					},
 				},
@@ -1138,7 +1138,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaConfig:            defaultKafkaConf,
 				clusterService:         nil,
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
 						return nil, nil
 					},
 				},
