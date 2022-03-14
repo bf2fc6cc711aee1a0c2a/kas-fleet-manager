@@ -55,8 +55,9 @@ type errorCheck struct {
 }
 
 type kafkaValidation struct {
-	kafka  *dbapi.KafkaRequest
-	eCheck errorCheck
+	kafka        *dbapi.KafkaRequest
+	eCheck       errorCheck
+	capacityUsed string
 }
 
 // TestKafkaCreate_Success validates the happy path of the kafka post endpoint:
@@ -502,60 +503,74 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		{
 			tooLargeStandardKafka,
 			errorCheckWithError,
+			"",
 		},
 		{
 			tooLargeEvalKafka,
 			errorCheckWithError,
+			"",
 		},
 		{
 			x2StandardKafka,
 			errorCheckNoError,
+			"2",
 		},
 		{
 			x2EvalKafka,
 			errorCheckNoError,
+			"2",
 		},
 		{
 			standardKafka1,
 			errorCheckNoError,
+			"3",
 		},
 		{
 			standardKafka2,
 			errorCheckNoError,
+			"4",
 		},
 		{
 			standardKafka3,
 			errorCheckNoError,
+			"5",
 		},
 		{
 			evalKafka1,
 			errorCheckNoError,
+			"3",
 		},
 		{
 			evalKafka2,
 			errorCheckNoError,
+			"4",
 		},
 		// the "standard,eval" cluster should be filled up by standard instances, hence despite of
 		// global capacity being available for eval instances, there is no space on clusters supporting this type of instance
 		{
 			evalKafka3,
 			errorCheckWithError,
+			"",
 		},
 		{
 			evalKafka4,
 			errorCheckWithError,
+			"",
 		},
 		{
 			standardKafka4,
 			errorCheckWithError,
+			"",
 		},
 		{
 			standardKafkaIncorrectRegion,
 			errorCheckUnsupportedRegion,
+			"",
 		},
 		{
 			evalKafkaIncorrectRegion,
 			errorCheckUnsupportedRegion,
+			"",
 		},
 	}
 
@@ -563,22 +578,21 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 
 	evalClusters := "test01,test03,test05"
 
-	testValidations(standardClusters, evalClusters, t, kafkaValidations)
-
 	defer func() {
 		kasfFleetshardSync.Stop()
 		h.Env.Stop()
 
 		list, _ := test.TestServices.ClusterService.FindAllClusters(clusterCriteria)
 		for _, clusters := range list {
-			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil{
+			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil {
 				t.Fatalf("Failed to delete service account with client id: %v", clusters.ClientID)
 			}
-			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil{
+			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil {
 				t.Fatalf("Failed to delete service account with cluster id: %v", clusters.ID)
 			}
 		}
 	}()
+	testValidations(standardClusters, evalClusters, h, t, kafkaValidations)
 }
 
 // build a test kafka request
@@ -598,7 +612,7 @@ func buildKafkaRequest(modifyFn func(kafkaRequest *dbapi.KafkaRequest)) *dbapi.K
 	return kafkaRequest
 }
 
-func testValidations(standardClusters, evalClusters string, t *testing.T, kafkaValidations []kafkaValidation) {
+func testValidations(standardClusters, evalClusters string, h *coreTest.Helper, t *testing.T, kafkaValidations []kafkaValidation) {
 	for _, val := range kafkaValidations {
 		errK := test.TestServices.KafkaService.RegisterKafkaJob(val.kafka)
 		if (errK != nil) != val.eCheck.wantErr {
@@ -616,6 +630,9 @@ func testValidations(standardClusters, evalClusters string, t *testing.T, kafkaV
 					t.Errorf("RegisterKafkaJob() received http code %v, expected %v for kafka %s", errK.HttpCode, val.eCheck.httpCode, val.kafka.Name)
 				}
 			}
+		} else {
+			checkMetricsError := common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityUsed, val.capacityUsed, val.kafka.InstanceType)
+			Expect(checkMetricsError).NotTo(HaveOccurred())
 		}
 	}
 }
@@ -893,10 +910,10 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 
 		list, _ := test.TestServices.ClusterService.FindAllClusters(clusterCriteria)
 		for _, clusters := range list {
-			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil{
+			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil {
 				t.Fatalf("Failed to delete service account with client id: %v", clusters.ClientID)
 			}
-			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil{
+			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil {
 				t.Fatalf("Failed to delete service account with cluster id: %v", clusters.ID)
 			}
 		}
@@ -2219,7 +2236,7 @@ func TestKafka_RemovingExpiredKafkas_WithStandardInstances(t *testing.T) {
 	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
 }
 
-func getAndDeleteServiceAccounts(clientID string, env *environments.Env) error{
+func getAndDeleteServiceAccounts(clientID string, env *environments.Env) error {
 	var keycloakConfig *keycloak.KeycloakConfig
 	env.MustResolve(&keycloakConfig)
 	defer env.Cleanup()
@@ -2233,7 +2250,7 @@ func getAndDeleteServiceAccounts(clientID string, env *environments.Env) error{
 	}
 	if client != nil {
 		err = kcClientKafkaSre.DeleteClient(*client.ID, accessTokenKafkaSre)
-	}else {
+	} else {
 		kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.KafkaRealm)
 		accessToken, _ := kcClient.GetToken()
 		client, _ := kcClient.GetClient(clientID, accessToken)
