@@ -2147,7 +2147,6 @@ func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
 		name      string
 		fields    fields
 		wantErr   bool
-		want      []KafkaRegionCount
 		setupFunc func()
 	}{
 		{
@@ -2171,21 +2170,8 @@ func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
 				}
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT region as Region, instance_type, cluster_id, cloud_provider, count(1) as Count FROM "kafka_requests" WHERE "kafka_requests"."deleted_at" IS NULL GROUP BY region,instance_type,cluster_id,cloud_provider`).
+					WithQuery(`SELECT FROM "kafka_requests" WHERE "kafka_requests"."deleted_at" IS NULL`).
 					WithReply(counters)
-			},
-			want: []KafkaRegionCount{
-				{
-					Region:       "us-east-1",
-					InstanceType: "standard",
-					ClusterId:    testClusterID,
-					Count:        1,
-				}, {
-					Region:       "eu-west-1",
-					InstanceType: "eval",
-					ClusterId:    testClusterID,
-					Count:        1,
-				},
 			},
 		},
 	}
@@ -2200,11 +2186,10 @@ func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
-			status, err := k.CountByRegionAndInstanceType()
+			_, err := k.CountByRegionAndInstanceType()
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for CountByRegionAndInstanceType: %v", err)
 			}
-			Expect(status).To(Equal(tt.want))
 		})
 	}
 }
