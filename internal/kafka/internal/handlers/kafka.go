@@ -59,22 +59,22 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 					plan := config.Plan(kafkaRequest.Plan)
 					instTypeFromPlan, e := plan.GetInstanceType()
 					if e != nil || instTypeFromPlan != string(instanceType) {
-						return errors.New(errors.ErrorGeneral, fmt.Sprintf("Unable to detect instance type in plan provided: '%s'", kafkaRequest.Plan))
+						return errors.New(errors.ErrorBadRequest, fmt.Sprintf("Unable to detect instance type in plan provided: '%s'", kafkaRequest.Plan))
 					}
 					size, e1 := plan.GetSizeID()
 					if e1 != nil {
-						return errors.New(errors.ErrorGeneral, fmt.Sprintf("Unable to detect instance size in plan provided: '%s'", kafkaRequest.Plan))
+						return errors.New(errors.ErrorBadRequest, fmt.Sprintf("Unable to detect instance size in plan provided: '%s'", kafkaRequest.Plan))
 					}
 					_, e2 := h.kafkaConfig.GetKafkaInstanceSize(instTypeFromPlan, size)
 
 					if e2 != nil {
-						return errors.NewWithCause(errors.ErrorGeneral, e2, fmt.Sprintf("Unsupported plan provided: '%s'", kafkaRequest.Plan))
+						return errors.InstancePlanNotSupported("Unsupported plan provided: '%s'", kafkaRequest.Plan)
 					}
 					convKafka.SizeId = size
 				} else {
 					rSize, err := h.kafkaConfig.GetFirstAvailableSize(instanceType.String())
 					if err != nil {
-						return errors.NewWithCause(errors.ErrorGeneral, err, "Unsupported kafka instance type: '%s' provided", instanceType.String())
+						return errors.InstanceTypeNotSupported("Unsupported kafka instance type: '%s' provided", instanceType.String())
 					}
 					convKafka.SizeId = rSize.Id
 				}
