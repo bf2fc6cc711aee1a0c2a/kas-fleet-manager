@@ -251,7 +251,7 @@ var clusterStatusCapacityMaxMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: KasFleetManager,
 		Name:      ClusterStatusCapacityMax,
-		Help:      "number of allowed instances per region and instance type",
+		Help:      "number of allowed Streaming Units per region and kafka instance type",
 	},
 	clusterStatusCapacityLabels,
 )
@@ -261,7 +261,7 @@ var clusterStatusCapacityUsedMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: KasFleetManager,
 		Name:      ClusterStatusCapacityUsed,
-		Help:      "number of existing instances per region and instance type",
+		Help:      "number of Streaming Units consumed by existing instances per region and kafka instance type",
 	},
 	clusterStatusCapacityLabels,
 )
@@ -271,7 +271,7 @@ var clusterStatusCapacityAvailableMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: KasFleetManager,
 		Name:      ClusterStatusCapacityAvailable,
-		Help:      "number of available instances per region and instance type",
+		Help:      "number of available Streaming Units per region and kafka instance type",
 	},
 	clusterStatusCapacityLabels,
 )
