@@ -45,7 +45,7 @@ func (h *ConnectorNamespaceHandler) Create(w http.ResponseWriter, r *http.Reques
 			// validate tenant kind
 			if _, ok := presenters.AllNamespaceTenantKinds[string(resource.Kind)]; !ok {
 				return nil, coreservices.HandleCreateError("connector namespace",
-					errors.MinimumFieldLengthNotReached("%s is not valid. Must be one of: [%s, %s]", "namespace_id",
+					errors.MinimumFieldLengthNotReached("%s is not valid. Must be one of: [%s, %s]", "kind",
 						public.CONNECTORNAMESPACETENANTKIND_USER, public.CONNECTORNAMESPACETENANTKIND_ORGANISATION))
 			}
 			ctx := r.Context()
