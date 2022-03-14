@@ -1151,6 +1151,7 @@ components:
         max_capacity_reached:
           description: 'flag indicating whether the capacity for the instance type in the region is reached'
           type: boolean
+          deprecated: true
       required:
         - max_capacity_reached
     ServiceAccountListItem:
