@@ -1126,8 +1126,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			error: errorCheck{
 				wantErr:  true,
-				code:     errors.ErrorGeneral,
-				httpCode: http.StatusInternalServerError,
+				code:     errors.ErrorInstancePlanNotSupported,
+				httpCode: http.StatusBadRequest,
 			},
 		},
 		{
