@@ -55,25 +55,17 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Validate: []handlers.Validate{
 			handlers.ValidateAsyncEnabled(r, "creating connector"),
 			handlers.Validation("channel", (*string)(&resource.Channel), handlers.WithDefault("stable"), handlers.MaxLen(40)),
-			handlers.Validation("name", &resource.Name,
-				handlers.WithDefault("New Connector"), handlers.MinLen(1), handlers.MaxLen(100)),
+			handlers.Validation("name", &resource.Name, handlers.WithDefault("New Connector"), handlers.MinLen(1), handlers.MaxLen(100)),
 			handlers.Validation("kafka.id", &resource.Kafka.Id, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
 			handlers.Validation("kafka.url", &resource.Kafka.Url, handlers.MinLen(1)),
 			handlers.Validation("service_account.client_id", &resource.ServiceAccount.ClientId, handlers.MinLen(1)),
 			handlers.Validation("service_account.client_secret", &resource.ServiceAccount.ClientSecret, handlers.MinLen(1)),
 			handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
 			handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.WithDefault("ready"), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
-			handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
-			validateConnectorRequest(h.connectorTypesService, &resource, tid),
+			handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")), validateConnectorRequest(h.connectorTypesService, &resource, tid),
 		},
 
 		Action: func() (interface{}, *errors.ServiceError) {
-
-			//// Get the Kafka to assert the user can access that kafka instance.
-			//_, err := h.kafkaService.Get(r.Context(), resource.Metadata.KafkaId)
-			//if err != nil {
-			//	return nil, err
-			//}
 
 			convResource, err := presenters.ConvertConnectorRequest(resource)
 			if err != nil {
@@ -204,14 +196,6 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 					return nil, err
 				}
 			}
-
-			// did the kafka instance change? verify we can use it...
-			//if resource.Metadata.KafkaId != originalResource.Metadata.KafkaId {
-			//	_, err := h.kafkaService.Get(r.Context(), resource.Metadata.KafkaId)
-			//	if err != nil {
-			//		return nil, err
-			//	}
-			//}
 
 			p, svcErr := presenters.ConvertConnector(resource)
 			if svcErr != nil {
@@ -375,7 +359,7 @@ func (h ConnectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleGet(w, r, cfg)
 }
 
-// Delete is the handler for deleting a kafka request
+// Delete is the handler for deleting a connector
 func (h ConnectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	connectorId := mux.Vars(r)["connector_id"]
 	cfg := &handlers.HandlerConfig{

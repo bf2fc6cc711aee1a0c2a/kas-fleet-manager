@@ -1025,6 +1025,54 @@ Feature: connector agent API
     Then the ".total" selection from the response should match "1"
     And the ".items[0].spec.desired_state" selection from the response should match "ready"
 
+    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+      """
+      {
+        "phase":"ready",
+        "resource_version": 46
+      }
+      """
+    Then the response code should be 204
+
+    #-----------------------------------------------------------------------------------------------------------------
+    # Agent try to update status with a sale version and get 500
+    #-----------------------------------------------------------------------------------------------------------------
+    Given I am logged in as "Shard"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+      """
+      {
+        "phase":"stopped",
+        "resource_version": 1
+      }
+      """
+    Then the response code should be 500
+    
+    #-----------------------------------------------------------------------------------------------------------------
+    # Bobby sets desired state to deleted.. Agent sees deployment deleted, it updates status to deleted, Bobby can not see the connector anymore
+    #-----------------------------------------------------------------------------------------------------------------
+    Given I am logged in as "Bobby"
+    When I DELETE path "/v1/kafka_connectors/${connector_id}"
+    Then the response code should be 204
+
+    Given I am logged in as "Shard"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "deleted"
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
+    Then the ".spec.desired_state" selection from the response should match "deleted"
+    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+      """
+      {
+        "phase":"deleted",
+        "resource_version": 46
+      }
+      """
+    Then the response code should be 204
+
+    Given I am logged in as "Bobby"
+    When I GET path "/v1/kafka_connectors/${connector_id}"
+    Then the response code should be 404
+
     #cleanup
     Given I am logged in as "Bobby"
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"

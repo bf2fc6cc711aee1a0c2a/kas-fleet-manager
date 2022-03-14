@@ -7,8 +7,9 @@ import (
 	"encoding/json"
 	goerrors "errors"
 	"fmt"
-	"github.com/golang/glog"
 	"reflect"
+
+	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
@@ -477,8 +478,8 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 		return services.HandleGoneError("connector deployment", "id", deploymentStatus.ID)
 	}
 
-	if err := dbConn.Model(&deploymentStatus).Where("id = ?", deploymentStatus.ID).Save(&deploymentStatus).Error; err != nil {
-		return errors.GeneralError("failed to update deployment status: %s", err.Error())
+	if err := dbConn.Model(&deploymentStatus).Where("id = ? and version <= ?", deploymentStatus.ID, deploymentStatus.Version).Save(&deploymentStatus).Error; err != nil {
+		return errors.GeneralError("failed to update deployment status: %s, probably a stale deployment status version was used: %d", err.Error(), deploymentStatus.Version)
 	}
 
 	connector := dbapi.Connector{}
