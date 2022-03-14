@@ -93,7 +93,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 								maxCapacityReached = false
 							}
 						}
-						capacity := api.RegionCapacityListItem{InstanceType: instType, MaxCapacityReached: maxCapacityReached}
+						capacity := api.RegionCapacityListItem{InstanceType: instType, DeprecatedMaxCapacityReached: maxCapacityReached}
 						capacities = append(capacities, capacity)
 					}
 					cloudRegion.Capacity = capacities
