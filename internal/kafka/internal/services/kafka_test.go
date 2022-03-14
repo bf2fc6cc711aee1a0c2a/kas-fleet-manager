@@ -127,6 +127,55 @@ func buildProviderConfiguration(regionName string, standardLimit, evalLimit int,
 	}
 }
 
+var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig{
+	Configuration: config.SupportedKafkaInstanceTypesConfig{
+		SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+			{
+				Id: "standard",
+				Sizes: []config.KafkaInstanceSize{
+					{
+						Id:                          "x1",
+						IngressThroughputPerSec:     "30Mi",
+						EgressThroughputPerSec:      "30Mi",
+						TotalMaxConnections:         1000,
+						MaxDataRetentionSize:        "100Gi",
+						MaxPartitions:               1000,
+						MaxDataRetentionPeriod:      "P14D",
+						MaxConnectionAttemptsPerSec: 100,
+						QuotaConsumed:               1,
+						QuotaType:                   "rhosak",
+						CapacityConsumed:            1,
+					},
+				},
+			},
+			{
+				Id: "eval",
+				Sizes: []config.KafkaInstanceSize{
+					{
+						Id:                          "x2",
+						IngressThroughputPerSec:     "60Mi",
+						EgressThroughputPerSec:      "60Mi",
+						TotalMaxConnections:         2000,
+						MaxDataRetentionSize:        "200Gi",
+						MaxPartitions:               2000,
+						MaxDataRetentionPeriod:      "P14D",
+						MaxConnectionAttemptsPerSec: 200,
+						QuotaConsumed:               2,
+						QuotaType:                   "rhosak",
+						CapacityConsumed:            2,
+					},
+				},
+			},
+		},
+	},
+}
+
+var defaultKafkaConf = config.KafkaConfig{
+	KafkaCapacity:          config.KafkaCapacityConfig{},
+	Quota:                  config.NewKafkaQuotaConfig(),
+	SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
+}
+
 // This test should act as a "golden" test to describe the general testing approach taken in the service, for people
 // onboarding into development of the service.
 func Test_kafkaService_Get(t *testing.T) {
@@ -790,55 +839,6 @@ func Test_kafkaService_Delete(t *testing.T) {
 			}
 		})
 	}
-}
-
-var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig{
-	Configuration: config.SupportedKafkaInstanceTypesConfig{
-		SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
-			{
-				Id: "standard",
-				Sizes: []config.KafkaInstanceSize{
-					{
-						Id:                          "x1",
-						IngressThroughputPerSec:     "30Mi",
-						EgressThroughputPerSec:      "30Mi",
-						TotalMaxConnections:         1000,
-						MaxDataRetentionSize:        "100Gi",
-						MaxPartitions:               1000,
-						MaxDataRetentionPeriod:      "P14D",
-						MaxConnectionAttemptsPerSec: 100,
-						QuotaConsumed:               1,
-						QuotaType:                   "rhosak",
-						CapacityConsumed:            1,
-					},
-				},
-			},
-			{
-				Id: "eval",
-				Sizes: []config.KafkaInstanceSize{
-					{
-						Id:                          "x2",
-						IngressThroughputPerSec:     "60Mi",
-						EgressThroughputPerSec:      "60Mi",
-						TotalMaxConnections:         2000,
-						MaxDataRetentionSize:        "200Gi",
-						MaxPartitions:               2000,
-						MaxDataRetentionPeriod:      "P14D",
-						MaxConnectionAttemptsPerSec: 200,
-						QuotaConsumed:               2,
-						QuotaType:                   "rhosak",
-						CapacityConsumed:            2,
-					},
-				},
-			},
-		},
-	},
-}
-
-var defaultKafkaConf = config.KafkaConfig{
-	KafkaCapacity:          config.KafkaCapacityConfig{},
-	Quota:                  config.NewKafkaQuotaConfig(),
-	SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
 }
 
 func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
@@ -2394,6 +2394,210 @@ func TestKafkaService_ListComponentVersions(t *testing.T) {
 				t.Errorf("unexpected error for ListComponentVersions: %v", err)
 			}
 			Expect(result).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
+	type fields struct {
+		connectionFactory        *db.ConnectionFactory
+		kafkaConfig              *config.KafkaConfig
+		dataplaneClusterConfig   *config.DataplaneClusterConfig
+		providerConfig           *config.ProviderConfig
+		clusterPlacementStrategy ClusterPlacementStrategy
+	}
+	type args struct {
+		criteria *FindClusterCriteria
+	}
+
+	defaultCluster := buildManualCluster(1, api.AllInstanceTypeSupport.String(), testKafkaRequestRegion)
+	defaultDataplaneClusterConfig := []config.ManualCluster{defaultCluster}
+
+	testCriteria := &FindClusterCriteria{
+		Provider:              defaultCluster.CloudProvider,
+		Region:                defaultCluster.Region,
+		MultiAZ:               defaultCluster.MultiAZ,
+		SupportedInstanceType: "standard",
+	}
+
+	tests := []struct {
+		name        string
+		fields      fields
+		args        args
+		result      []string
+		wantErr     bool
+		expectedErr *errors.ServiceError
+		setupFn     func()
+	}{
+		{
+			name: "should return all available sizes in region if capacity and limit has not been reached",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				kafkaConfig:            &defaultKafkaConf,
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration("us-east-1", 1000, 1000, false),
+				clusterPlacementStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+						return buildCluster(nil), nil
+					},
+				},
+			},
+			args: args{
+				criteria: testCriteria,
+			},
+			result:  []string{"x1"},
+			wantErr: false,
+			setupFn: func() {
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
+					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
+					WithReply(nil)
+			},
+		},
+		{
+			name: "should return nil if no cluster capacity is left",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				kafkaConfig:            &defaultKafkaConf,
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration("us-east-1", 1000, 1000, false),
+				clusterPlacementStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+			},
+			args: args{
+				criteria: testCriteria,
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
+					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
+					WithReply(nil)
+			},
+			result:  nil,
+			wantErr: false,
+		},
+		{
+			name: "should return nil if region limit has been reached",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				kafkaConfig:            &defaultKafkaConf,
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration("us-east-1", 1, 1, false),
+				clusterPlacementStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+						return buildCluster(nil), nil
+					},
+				},
+			},
+			args: args{
+				criteria: testCriteria,
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
+					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
+					WithReply([]map[string]interface{}{
+						{
+							"region":         testCriteria.Region,
+							"cloud_provider": testCriteria.Provider,
+							"multi_az":       testCriteria.MultiAZ,
+							"name":           testKafkaRequestName,
+							"size_id":        "x1",
+							"instance_type":  testCriteria.SupportedInstanceType,
+						},
+					})
+			},
+			result:  nil,
+			wantErr: false,
+		},
+		{
+			name:    "should return an error if criteria was not defined",
+			fields:  fields{},
+			args:    args{},
+			result:  nil,
+			wantErr: true,
+			expectedErr: &errors.ServiceError{
+				Code: errors.ErrorGeneral,
+			},
+		},
+		{
+			name: "should return an error if instance type in criteria is not supported",
+			fields: fields{
+				kafkaConfig: &defaultKafkaConf,
+			},
+			args: args{
+				criteria: &FindClusterCriteria{
+					Provider:              defaultCluster.CloudProvider,
+					Region:                defaultCluster.Region,
+					MultiAZ:               defaultCluster.MultiAZ,
+					SupportedInstanceType: "unsupported",
+				},
+			},
+			result:  nil,
+			wantErr: true,
+			expectedErr: &errors.ServiceError{
+				Code: errors.ErrorInstanceTypeNotSupported,
+			},
+		},
+		{
+			name: "should return an error if db query failed",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				kafkaConfig:            &defaultKafkaConf,
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration("us-east-1", 1000, 1000, false),
+				clusterPlacementStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+			},
+			args: args{
+				criteria: testCriteria,
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
+					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
+					WithQueryException()
+			},
+			result:  nil,
+			wantErr: true,
+			expectedErr: &errors.ServiceError{
+				Code: errors.ErrorGeneral,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			k := &kafkaService{
+				connectionFactory:        tt.fields.connectionFactory,
+				kafkaConfig:              tt.fields.kafkaConfig,
+				dataplaneClusterConfig:   tt.fields.dataplaneClusterConfig,
+				providerConfig:           tt.fields.providerConfig,
+				clusterPlacementStrategy: tt.fields.clusterPlacementStrategy,
+			}
+
+			got, err := k.GetAvailableSizesInRegion(tt.args.criteria)
+
+			gomega.Expect(tt.result).To(gomega.Equal(got))
+			gomega.Expect(tt.wantErr).To(gomega.Equal(err != nil))
+			if tt.wantErr && tt.expectedErr != nil {
+				gomega.Expect(tt.expectedErr.Code).To(gomega.Equal(err.Code))
+			}
 		})
 	}
 }
