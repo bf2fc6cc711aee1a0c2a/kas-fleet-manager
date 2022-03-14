@@ -62,8 +62,9 @@ func Test_SSOClient_GetServiceAccount(t *testing.T) {
 		serviceAccountList = append(serviceAccountList, serviceAccount)
 	}
 
-	serviceAccount, err := client.GetServiceAccount(accessToken, serviceAccountList[5].GetClientId())
+	serviceAccount, found, err := client.GetServiceAccount(accessToken, serviceAccountList[5].GetClientId())
 	Expect(err).ToNot(HaveOccurred())
+	Expect(found).To(BeTrue())
 	Expect(serviceAccount).ToNot(BeNil())
 	Expect(serviceAccount.GetSecret()).To(Equal(serviceAccountList[5].GetSecret()))
 }
@@ -87,8 +88,9 @@ func Test_SSOClient_RegenerateSecret(t *testing.T) {
 		serviceAccountList = append(serviceAccountList, serviceAccount)
 	}
 
-	serviceAccount, err := client.GetServiceAccount(accessToken, serviceAccountList[5].GetClientId())
+	serviceAccount, found, err := client.GetServiceAccount(accessToken, serviceAccountList[5].GetClientId())
 	Expect(err).ToNot(HaveOccurred())
+	Expect(found).To(BeTrue())
 	Expect(serviceAccount).ToNot(BeNil())
 	Expect(serviceAccount.GetSecret()).To(Equal(serviceAccountList[5].GetSecret()))
 

@@ -10,8 +10,9 @@ const (
 )
 
 type RedhatSSOConfig struct {
-	BaseURL    string      `json:"base_url"`
-	KafkaRealm RealmConfig `json:"redhatsso_realm"`
+	EnableAuthenticationOnKafka bool        `json:"enable_auth"`
+	BaseURL                     string      `json:"base_url"`
+	KafkaRealm                  RealmConfig `json:"redhatsso_realm"`
 }
 
 type RealmConfig struct {

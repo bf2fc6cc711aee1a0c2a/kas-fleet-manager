@@ -26,6 +26,7 @@ type redhatssoService struct {
 
 type RedhatSSOConfigurator interface {
 	WithRedhatSSOClient(client *redhatsso.SSOClient) KeycloakServiceBuilder
+	WithRedhatSSOConfiguration(conf *redhatsso.RedhatSSOConfig) KeycloakServiceBuilder
 }
 
 type redhatSSOServiceBuilder struct {
@@ -50,6 +51,13 @@ func (c redhatSSOConfigurator) WithRedhatSSOClient(client *redhatsso.SSOClient) 
 	}
 }
 
+func (c redhatSSOConfigurator) WithRedhatSSOConfiguration(conf *redhatsso.RedhatSSOConfig) KeycloakServiceBuilder {
+	client := redhatsso.NewSSOClient(conf)
+	return redhatSSOServiceBuilder{
+		client: &client,
+	}
+}
+
 // END Builder
 //////////////////////////////////////////////////////
 
@@ -67,7 +75,7 @@ func (r *redhatssoService) RegisterKafkaClientInSSO(accessToken string, kafkaNam
 
 func (r *redhatssoService) RegisterOSDClusterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
 	// TODO
-	return "", errors.New(errors.ErrorGeneral, "Not implemented")
+	return "", errors.New(errors.ErrorGeneral, "RegisterOSDClusterClientInSSO Not implemented")
 }
 
 func (r *redhatssoService) DeRegisterClientInSSO(accessToken string, clientId string) *errors.ServiceError {
@@ -88,9 +96,13 @@ func (r *redhatssoService) GetRealmConfig() *keycloak.KeycloakRealmConfig {
 }
 
 func (r *redhatssoService) IsKafkaClientExist(accessToken string, clientId string) *errors.ServiceError {
-	_, err := r.client.GetServiceAccount(accessToken, clientId)
+	_, found, err := r.client.GetServiceAccount(accessToken, clientId)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clientId)
+	}
+
+	if !found {
+		return errors.New(errors.ErrorNotFound, "sso client with id: %s not found", clientId)
 	}
 	return nil
 }
@@ -122,12 +134,21 @@ func (r *redhatssoService) ResetServiceAccountCredentials(accessToken string, ct
 }
 
 func (r *redhatssoService) ListServiceAcc(accessToken string, ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
-	// TODO
-	return nil, errors.New(errors.ErrorGeneral, "Not implemented")
+	accounts, err := r.client.GetServiceAccounts(accessToken, first, max)
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to collect service accounts")
+	}
+	var res []api.ServiceAccount
+
+	for _, account := range accounts {
+		res = append(res, *convertServiceAccountDataToAPIServiceAccount(&account))
+	}
+
+	return res, nil
 }
 
 func (r *redhatssoService) RegisterKasFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
-	svcData, err := r.client.CreateServiceAccount(accessToken, agentClusterId, agentClusterId)
+	svcData, err := r.client.CreateServiceAccount(accessToken, agentClusterId, fmt.Sprintf("service account for agent on cluster %s", agentClusterId))
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to update agent service account")
 	}
@@ -135,6 +156,15 @@ func (r *redhatssoService) RegisterKasFleetshardOperatorServiceAccount(accessTok
 	return convertServiceAccountDataToAPIServiceAccount(&svcData), nil
 }
 func (r *redhatssoService) DeRegisterKasFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) *errors.ServiceError {
+	if _, found, err := r.client.GetServiceAccount(accessToken, agentClusterId); err != nil {
+		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
+	} else {
+		if !found {
+			// if the account to be deleted does not exists, we simply exit with no errors
+			return nil
+		}
+	}
+
 	err := r.client.DeleteServiceAccount(accessToken, agentClusterId)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
@@ -145,17 +175,34 @@ func (r *redhatssoService) GetServiceAccountById(accessToken string, ctx context
 	return r.GetServiceAccountByClientId(accessToken, ctx, id)
 }
 func (r *redhatssoService) GetServiceAccountByClientId(accessToken string, ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
-	serviceAccount, err := r.client.GetServiceAccount(accessToken, clientId)
+	serviceAccount, found, err := r.client.GetServiceAccount(accessToken, clientId)
 	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving service account with clientId %s", clientId)
+	}
+
+	if !found {
 		return nil, errors.NewWithCause(errors.ErrorServiceAccountNotFound, err, "service account not found clientId %s", clientId)
 	}
-	return convertServiceAccountDataToAPIServiceAccount(&serviceAccount), nil
+	return convertServiceAccountDataToAPIServiceAccount(serviceAccount), nil
 }
 func (r *redhatssoService) RegisterConnectorFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
-	// TODO
-	return nil, errors.GeneralError("not implemented")
+	svcData, err := r.client.CreateServiceAccount(accessToken, agentClusterId, fmt.Sprintf("service account for agent on cluster %s", agentClusterId))
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to update agent service account")
+	}
+
+	return convertServiceAccountDataToAPIServiceAccount(&svcData), nil
 }
 func (r *redhatssoService) DeRegisterConnectorFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) *errors.ServiceError {
+	if _, found, err := r.client.GetServiceAccount(accessToken, agentClusterId); err != nil {
+		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
+	} else {
+		if !found {
+			// If the account does not exists, simply exit without errors
+			return nil
+		}
+	}
+
 	err := r.client.DeleteServiceAccount(accessToken, agentClusterId)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
@@ -163,18 +210,23 @@ func (r *redhatssoService) DeRegisterConnectorFleetshardOperatorServiceAccount(a
 	return nil
 }
 func (r *redhatssoService) GetKafkaClientSecret(accessToken string, clientId string) (string, *errors.ServiceError) {
-	serviceAccount, err := r.client.GetServiceAccount(accessToken, clientId)
+	serviceAccount, found, err := r.client.GetServiceAccount(accessToken, clientId)
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
+	}
+	if !found {
+		return "", errors.New(errors.ErrorNotFound, "failed to get sso client secret")
 	}
 
 	return *serviceAccount.Secret, nil
 }
 func (r *redhatssoService) CreateServiceAccountInternal(accessToken string, request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
-	return nil, nil
+	// TODO
+	return nil, errors.New(errors.ErrorGeneral, "CreateServiceAccountInternal Not implemented")
 }
 func (r *redhatssoService) DeleteServiceAccountInternal(accessToken string, clientId string) *errors.ServiceError {
-	return nil
+	// TODO
+	return errors.New(errors.ErrorGeneral, "DeleteServiceAccountInternal Not implemented")
 }
 
 //// utility functions
@@ -186,6 +238,6 @@ func convertServiceAccountDataToAPIServiceAccount(data *serviceaccountsclient.Se
 		Name:         shared.SafeString(data.Name),
 		Owner:        shared.SafeString(data.OwnerId), // TODO: owner is deprecated. Check with SSM team about a new OPENAPI for createdBy
 		Description:  shared.SafeString(data.Description),
-		CreatedAt:    time.UnixMilli(shared.SafeInt64(data.CreatedAt)),
+		CreatedAt:    time.Unix(0, shared.SafeInt64(data.CreatedAt)*int64(time.Millisecond)),
 	}
 }

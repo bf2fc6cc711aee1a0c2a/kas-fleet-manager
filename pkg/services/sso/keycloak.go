@@ -2,7 +2,6 @@ package sso
 
 import (
 	"context"
-	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -107,24 +106,4 @@ func NewKeycloakService(config *keycloak.KeycloakConfig, realmConfig *keycloak.K
 
 func NewKeycloakServiceBuilder() KeycloakServiceBuilderSelector {
 	return keycloakServiceBuilderSelector{}
-}
-
-func BuilderUsageExample() {
-	// Explicitly declaring the type just for the example purpose. := assignment can be used too.
-	var keycloakClientExample KeycloakService = NewKeycloakServiceBuilder().
-		ForKeycloak().
-		WithKeycloakClient(nil). // here real kcClient shoud be passed
-		Build()
-
-	var keycloakClientExample1 KeycloakService = NewKeycloakServiceBuilder().
-		ForKeycloak().
-		WithConfiguration(nil, nil). // here real keycloak and realmconfig should be passed
-		Build()
-
-	var redhatsshExample KeycloakService = NewKeycloakServiceBuilder().
-		ForRedhatSSO().
-		WithRedhatSSOClient(nil). // here the real sso client configuration should be passed
-		Build()
-
-	fmt.Printf("Print so that I don't have compile errors: %v %v %v", keycloakClientExample, keycloakClientExample1, redhatsshExample)
 }
