@@ -234,6 +234,30 @@ func CheckMetricExposed(h *test.Helper, t *testing.T, metric string) {
 	Expect(strings.Contains(resp, metric)).To(Equal(true))
 }
 
+// IsMetricExposedWithValue - checks whether metric is exposed in the metrics URL and the metric value(s)
+// match values param
+func IsMetricExposedWithValue(h *test.Helper, t *testing.T, metric string, values ...string) bool {
+	resp := getMetrics(t)
+	metricLines := strings.Split(resp, "\n")
+	metricValuesFound := false
+	for _, l := range metricLines {
+		if strings.Contains(l, metric) {
+			valuesFound := 0
+			for _, v := range values {
+				if !strings.Contains(l, v) {
+					valuesFound++
+				} else {
+					break
+				}
+			}
+			if len(values) == valuesFound {
+				metricValuesFound = true
+			}
+		}
+	}
+	return strings.Contains(resp, metric) && metricValuesFound
+}
+
 // CheckMetric - check if the given metric exists in the metrics data
 func CheckMetric(h *test.Helper, t *testing.T, metric string, exist bool) {
 	resp := getMetrics(t)

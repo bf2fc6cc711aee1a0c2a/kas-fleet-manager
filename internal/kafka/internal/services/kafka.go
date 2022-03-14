@@ -852,10 +852,39 @@ type KafkaRegionCount struct {
 
 func (k *kafkaService) CountByRegionAndInstanceType() ([]KafkaRegionCount, error) {
 	dbConn := k.connectionFactory.New()
+
+	var kafkas []*dbapi.KafkaRequest
+
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).
+		Scan(&kafkas).Error; err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count kafkas when setting capacity metrics")
+	}
+
 	var results []KafkaRegionCount
 
-	if err := dbConn.Model(&dbapi.KafkaRequest{}).Select("region as Region, instance_type, cluster_id, cloud_provider, count(1) as Count").Group("region,instance_type,cluster_id,cloud_provider").Scan(&results).Error; err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count kafkas")
+	for _, kafka := range kafkas {
+		resultPresent := false
+		instSize, err := k.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+		if err != nil {
+			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count kafkas of '%s' instance type and '%s' size_id when setting capacity metrics", kafka.InstanceType, kafka.SizeId)
+		}
+
+		for i, result := range results {
+			if result.CloudProvider == kafka.CloudProvider && result.ClusterId == kafka.ClusterID &&
+				result.InstanceType == kafka.InstanceType && result.Region == kafka.Region {
+				results[i].Count = result.Count + float64(instSize.CapacityConsumed)
+				resultPresent = true
+			}
+		}
+		if !resultPresent {
+			results = append(results, KafkaRegionCount{
+				CloudProvider: kafka.CloudProvider,
+				ClusterId:     kafka.ClusterID,
+				InstanceType:  kafka.InstanceType,
+				Region:        kafka.Region,
+				Count:         float64(instSize.CapacityConsumed),
+			})
+		}
 	}
 
 	return results, nil
