@@ -86,6 +86,8 @@ Once the schema is valid, the remaining step is to generate the openapi modules 
 ```sh
 make openapi/generate
 ```
+## Adding a new ConfigModule
+See the [Adding a new Config Module](./docs/adding-a-new-ConfigModule.md) documentation for more information.
 
 ## Adding a new endpoint
 See the [adding-a-new-endpoint](./docs/adding-a-new-endpoint.md) documentation.
