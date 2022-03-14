@@ -395,7 +395,7 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 			Expect(cpr.Enabled).To(BeTrue())
 			if cpr.Id == "us-east-1" {
 				for _, capacity := range cpr.Capacity {
-					Expect(capacity.MaxCapacityReached).To(BeFalse())
+					Expect(capacity.DeprecatedMaxCapacityReached).To(BeFalse())
 				}
 			}
 		} else {
@@ -404,7 +404,7 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 	}
 
 	// create kafkas of supported instance types ("standard" and "eval") in the "us-east-1" region and confirm that
-	// MaxCapacityReached will be false (due to the limit being set to 1 instance of given type in this region)
+	// DeprecatedMaxCapacityReached will be false (due to the limit being set to 1 instance of given type in this region)
 	db := test.TestServices.DBFactory.New()
 	kafka := &dbapi.KafkaRequest{
 		Meta: api.Meta{
@@ -436,9 +436,9 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 		if cpr.Id == "us-east-1" {
 			for _, capacity := range cpr.Capacity {
 				if capacity.InstanceType == types.STANDARD.String() {
-					Expect(capacity.MaxCapacityReached).To(BeTrue())
+					Expect(capacity.DeprecatedMaxCapacityReached).To(BeTrue())
 				} else if capacity.InstanceType == types.EVAL.String() {
-					Expect(capacity.MaxCapacityReached).To(BeFalse())
+					Expect(capacity.DeprecatedMaxCapacityReached).To(BeFalse())
 				}
 			}
 		}
@@ -460,7 +460,7 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 	for _, cpr := range regions.Items {
 		if cpr.Id == "us-east-1" {
 			for _, capacity := range cpr.Capacity {
-				Expect(capacity.MaxCapacityReached).To(BeTrue())
+				Expect(capacity.DeprecatedMaxCapacityReached).To(BeTrue())
 			}
 		}
 	}

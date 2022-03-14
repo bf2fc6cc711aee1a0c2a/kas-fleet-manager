@@ -1707,6 +1707,7 @@ components:
           description: kafka instance type
           type: string
         max_capacity_reached:
+          deprecated: true
           description: flag indicating whether the capacity for the instance type
             in the region is reached
           type: boolean
