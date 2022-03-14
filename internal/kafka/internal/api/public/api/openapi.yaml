@@ -609,7 +609,8 @@ paths:
         schema:
           type: string
         style: form
-      - description: The Kafka instance type to filter the results by
+      - deprecated: true
+        description: DEPRECATION NOTICE - instance_type will be deprecated
         examples:
           eval_instance_type:
             value: eval
@@ -1473,7 +1474,8 @@ components:
         type: string
       style: form
     instance_type:
-      description: The Kafka instance type to filter the results by
+      deprecated: true
+      description: DEPRECATION NOTICE - instance_type will be deprecated
       examples:
         eval_instance_type:
           value: eval
@@ -1618,7 +1620,8 @@ components:
           description: Whether the region is enabled for deploying an OSD cluster.
           type: boolean
         supported_instance_types:
-          description: The Kafka instance types supported by this region.
+          deprecated: true
+          description: DEPRECATION NOTICE - instance_type will be deprecated
           items:
             type: string
           type: array
