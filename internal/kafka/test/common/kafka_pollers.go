@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"testing"
 	"time"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 )
@@ -17,6 +19,8 @@ import (
 const (
 	defaultKafkaReadyTimeout             = 30 * time.Minute
 	defaultKafkaClusterAssignmentTimeout = 2 * time.Minute
+	metricPollInterval                   = 1 * time.Second
+	metricPollTimeout                    = 10 * time.Second
 )
 
 // WaitForNumberOfKafkaToBeGivenCount - Awaits for the number of kafkas to be exactly X
@@ -137,4 +141,15 @@ func WaitForKafkaClusterIDToBeAssigned(dbFactory *db.ConnectionFactory, kafkaReq
 		}).Build().Poll()
 
 	return kafkaFound, kafkaErr
+}
+
+func WaitForMetricToBePresent(h *test.Helper, t *testing.T, metric string, values ...string) error {
+	dbConn := h.DBFactory()
+	return NewPollerBuilder(dbConn).
+		IntervalAndTimeout(metricPollInterval, metricPollTimeout).
+		RetryLogMessagef("Waiting for metric '%s' to contain values '%s", metric, values).
+		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
+			return IsMetricExposedWithValue(h, t, metric, values...), nil
+		}).
+		Build().Poll()
 }
