@@ -178,6 +178,7 @@ func (c *ClusterManager) Reconcile() []error {
 		c.processAcceptedClusters,
 		c.processProvisioningClusters,
 		c.processProvisionedClusters,
+		c.processWaitingForKasFleetshardOperatorClusters,
 		c.processReadyClusters,
 	}
 
@@ -346,6 +347,29 @@ func (c *ClusterManager) processReadyClusters() []error {
 	return errs
 }
 
+func (c *ClusterManager) processWaitingForKasFleetshardOperatorClusters() []error {
+	var errs []error
+	waitingClusters, listErr := c.ClusterService.ListByStatus(api.ClusterWaitingForKasFleetShardOperator)
+	if listErr != nil {
+		errs = append(errs, errors.Wrap(listErr, "failed to list waiting for Kas Fleetshard Operator clusters"))
+		return errs
+	} else {
+		glog.Infof("waiting for Kas Fleetshard Operator clusters count = %d", len(waitingClusters))
+	}
+
+	// process each local waiting cluster and apply necessary terraforming
+	for _, waitingCluster := range waitingClusters {
+		glog.V(10).Infof("waiting for Kas Fleetshard Operator cluster ClusterID = %s", waitingCluster.ClusterID)
+		metrics.UpdateClusterStatusSinceCreatedMetric(waitingCluster, api.ClusterWaitingForKasFleetShardOperator)
+		err := c.reconcileWaitingForKasFleetshardOperatorCluster(waitingCluster)
+		if err != nil {
+			errs = append(errs, errors.Wrapf(err, "failed to reconcile waiting for Kas Fleetshard Operator cluster %s", waitingCluster.ClusterID))
+		}
+	}
+
+	return errs
+}
+
 func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) error {
 	if c.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		siblingCluster, findClusterErr := c.ClusterService.FindCluster(services.FindClusterCriteria{
@@ -433,22 +457,9 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 		return errors.WithMessagef(err, "failed to reconcile cluster dns of ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 
-	if c.KasFleetshardOperatorAddon != nil {
-		if params, err := c.KasFleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
-			if err.IsBadRequest() {
-				glog.Infof("kas-fleetshard operator is not found on cluster %s", cluster.ClusterID)
-			} else {
-				return errors.WithMessagef(err, "failed to reconcile kas-fleet-shard parameters of ready cluster %s: %s", cluster.ClusterID, err.Error())
-			}
-		} else {
-			if cluster.ClientID == "" {
-				cluster.ClientID = params.GetParam(services.KasFleetshardOperatorParamServiceAccountId)
-
-				if err := c.ClusterService.Update(cluster); err != nil {
-					return errors.WithMessagef(err, "failed to reconcile clientID of ready cluster %s: %s", cluster.ClusterID, err.Error())
-				}
-			}
-		}
+	err = c.reconcileKasFleetshardOperator(cluster)
+	if err != nil {
+		return errors.WithMessagef(err, "failed to reconcile Kas Fleetshard Operator of ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 
 	return nil
@@ -518,6 +529,22 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 	return updateStatusErr == nil, updateStatusErr
 }
 
+func (c *ClusterManager) reconcileWaitingForKasFleetshardOperatorCluster(cluster api.Cluster) error {
+	if err := c.reconcileClusterResources(cluster); err != nil {
+		return errors.WithMessagef(err, "failed to reconcile  waiting for Kas Fleetshard Operator cluster resources '%s'", cluster.ClusterID)
+	}
+
+	if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
+		return errors.WithMessagef(err, "failed to reconcile identity provider of waiting for Kas Fleetshard Operator cluster %s: %s", cluster.ClusterID, err.Error())
+	}
+
+	if err := c.reconcileKasFleetshardOperator(cluster); err != nil {
+		return errors.WithMessagef(err, "failed to reconcile Kas Fleetshard Operator of waiting for Kas Fleetshard Operator cluster %s: %s", cluster.ClusterID, err.Error())
+	}
+
+	return nil
+}
+
 func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {
 	if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
 		return err
@@ -558,6 +585,23 @@ func (c *ClusterManager) reconcileClusterDNS(cluster api.Cluster) error {
 		return errors.WithMessagef(dnsErr, "failed to reconcile cluster %s: GetClusterDNS %s", cluster.ClusterID, dnsErr.Error())
 	}
 
+	return nil
+}
+
+func (c *ClusterManager) reconcileKasFleetshardOperator(cluster api.Cluster) error {
+	if c.KasFleetshardOperatorAddon != nil {
+		if params, err := c.KasFleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
+			return errors.WithMessagef(err, "failed to reconcile kas-fleet-shard parameters of %s cluster %s: %s", cluster.Status, cluster.ClusterID, err.Error())
+		} else {
+			if cluster.ClientID == "" {
+				cluster.ClientID = params.GetParam(services.KasFleetshardOperatorParamServiceAccountId)
+
+				if err := c.ClusterService.Update(cluster); err != nil {
+					return errors.WithMessagef(err, "failed to reconcile clientID of %s cluster %s: %s", cluster.Status, cluster.ClusterID, err.Error())
+				}
+			}
+		}
+	}
 	return nil
 }
 
