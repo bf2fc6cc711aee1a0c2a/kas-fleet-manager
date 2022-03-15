@@ -24,8 +24,10 @@ const (
 
 type SSOClient interface {
 	GetToken() (string, error)
+	GetConfig() *RedhatSSOConfig
+	GetRealmConfig() *RealmConfig
 	GetServiceAccounts(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error)
-	GetServiceAccount(accessToken string, clientId string) (serviceaccountsclient.ServiceAccountData, error)
+	GetServiceAccount(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error)
 	CreateServiceAccount(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error)
 	DeleteServiceAccount(accessToken string, clientId string) error
 	UpdateServiceAccount(accessToken string, clientId string, name string, description string) (serviceaccountsclient.ServiceAccountData, error)
@@ -129,6 +131,14 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	return tokenData.AccessToken, nil
 }
 
+func (c *rhSSOClient) GetConfig() *RedhatSSOConfig {
+	return c.config
+}
+
+func (c *rhSSOClient) GetRealmConfig() *RealmConfig {
+	return &c.config.KafkaRealm
+}
+
 func (c *rhSSOClient) GetServiceAccounts(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error) {
 	serviceAccounts, _, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
 		ServiceAccountsApi.GetServiceAccounts(context.Background()).
@@ -139,11 +149,15 @@ func (c *rhSSOClient) GetServiceAccounts(accessToken string, first int, max int)
 	return serviceAccounts, err
 }
 
-func (c *rhSSOClient) GetServiceAccount(accessToken string, clientId string) (serviceaccountsclient.ServiceAccountData, error) {
-	serviceAccount, _, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
+func (c *rhSSOClient) GetServiceAccount(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+	serviceAccount, resp, err := serviceaccountsclient.NewAPIClient(c.getConfiguration(accessToken)).
 		ServiceAccountsApi.GetServiceAccount(context.Background(), clientId).
 		Execute()
-	return serviceAccount, err
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, false, nil
+	}
+	return &serviceAccount, err == nil, err
 }
 
 func (c *rhSSOClient) CreateServiceAccount(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {

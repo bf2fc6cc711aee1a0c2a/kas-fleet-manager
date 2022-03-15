@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
@@ -14,7 +15,6 @@ import (
 	kerrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreHandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/goava/di"
 	gorillaHandlers "github.com/gorilla/handlers"
@@ -28,7 +28,7 @@ type options struct {
 	ServerConfig            *server.ServerConfig
 	ErrorsHandler           *coreHandlers.ErrorHandler
 	AuthorizeMiddleware     *acl.AccessControlListMiddleware
-	KeycloakService         services.KafkaKeycloakService
+	KeycloakService         sso.KafkaKeycloakService
 	AuthAgentService        auth.AuthAgentService
 	ConnectorAdminHandler   *handlers.ConnectorAdminHandler
 	ConnectorTypesHandler   *handlers.ConnectorTypesHandler

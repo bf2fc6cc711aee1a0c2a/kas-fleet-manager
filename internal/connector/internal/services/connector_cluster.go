@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	goerrors "errors"
 	"fmt"
-	"reflect"
-
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/golang/glog"
+	"reflect"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
@@ -57,12 +57,12 @@ type connectorClusterService struct {
 	bus                   signalbus.SignalBus
 	connectorTypesService ConnectorTypesService
 	vaultService          vault.VaultService
-	keycloakService       services.KafkaKeycloakService
+	keycloakService       sso.KafkaKeycloakService
 	connectorsService     ConnectorsService
 }
 
 func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService vault.VaultService,
-	connectorTypesService ConnectorTypesService, connectorsService ConnectorsService, keycloakService services.KafkaKeycloakService) *connectorClusterService {
+	connectorTypesService ConnectorTypesService, connectorsService ConnectorsService, keycloakService sso.KafkaKeycloakService) *connectorClusterService {
 	return &connectorClusterService{
 		connectionFactory:     connectionFactory,
 		bus:                   bus,

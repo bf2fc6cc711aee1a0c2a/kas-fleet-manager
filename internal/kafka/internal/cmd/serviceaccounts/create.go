@@ -2,6 +2,7 @@ package serviceaccounts
 
 import (
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
@@ -9,8 +10,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
@@ -40,7 +39,7 @@ func runCreate(env *environments.Env, cmd *cobra.Command, args []string) {
 
 	// setup required services
 	var keycloak = KeycloakConfig(env)
-	keycloakService := services.NewKeycloakService(keycloak, keycloak.KafkaRealm)
+	keycloakService := sso.NewKeycloakService(keycloak, keycloak.KafkaRealm)
 
 	sa := &api.ServiceAccountRequest{
 		Name:        name,

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -24,7 +25,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreHandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/goava/di"
 	gorillaHandlers "github.com/gorilla/handlers"
@@ -42,7 +42,7 @@ type options struct {
 	Kafka                    services.KafkaService
 	CloudProviders           services.CloudProvidersService
 	Observatorium            services.ObservatoriumService
-	Keycloak                 coreServices.KafkaKeycloakService
+	Keycloak                 sso.KafkaKeycloakService
 	DataPlaneCluster         services.DataPlaneClusterService
 	DataPlaneKafkaService    services.DataPlaneKafkaService
 	AccountService           account.AccountService

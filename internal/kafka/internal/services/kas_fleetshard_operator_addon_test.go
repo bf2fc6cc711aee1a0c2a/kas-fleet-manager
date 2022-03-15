@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 )
@@ -21,7 +21,7 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 	addonId := "test-id"
 	type fields struct {
 		providerFactory clusters.ProviderFactory
-		ssoService      services.KeycloakService
+		ssoService      sso.KeycloakService
 	}
 	tests := []struct {
 		name    string
@@ -32,7 +32,7 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 		{
 			name: "provision is finished successfully",
 			fields: fields{
-				ssoService: &services.KeycloakServiceMock{
+				ssoService: &sso.KeycloakServiceMock{
 					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 						return &api.ServiceAccount{}, nil
 					},
@@ -52,7 +52,7 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 		{
 			name: "provision is failed",
 			fields: fields{
-				ssoService: &services.KeycloakServiceMock{
+				ssoService: &sso.KeycloakServiceMock{
 					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 						return nil, errors.GeneralError("error")
 					},
@@ -96,7 +96,7 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 
 func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 	type fields struct {
-		ssoService services.KeycloakService
+		ssoService sso.KeycloakService
 	}
 	tests := []struct {
 		name    string
@@ -106,7 +106,7 @@ func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 		{
 			name: "receives error during removal of the service account fails when fleetshard operator is turned on",
 			fields: fields{
-				ssoService: &services.KeycloakServiceMock{
+				ssoService: &sso.KeycloakServiceMock{
 					DeRegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) *errors.ServiceError {
 						return &errors.ServiceError{} // an error is returned
 					},
@@ -117,7 +117,7 @@ func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 		{
 			name: "succesful removes the service account when fleetshard operator is turned on",
 			fields: fields{
-				ssoService: &services.KeycloakServiceMock{
+				ssoService: &sso.KeycloakServiceMock{
 					DeRegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) *errors.ServiceError {
 						return nil
 					},
@@ -144,7 +144,7 @@ func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 	type fields struct {
 		providerFactory clusters.ProviderFactory
-		ssoService      services.KeycloakService
+		ssoService      sso.KeycloakService
 	}
 	tests := []struct {
 		name    string
@@ -154,7 +154,7 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 		{
 			name: "ReconcileParameters is finished successfully",
 			fields: fields{
-				ssoService: &services.KeycloakServiceMock{
+				ssoService: &sso.KeycloakServiceMock{
 					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 						return &api.ServiceAccount{}, nil
 					},
@@ -172,7 +172,7 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 		{
 			name: "ReconcileParameters is failed because UpdateAddonParameters failed",
 			fields: fields{
-				ssoService: &services.KeycloakServiceMock{
+				ssoService: &sso.KeycloakServiceMock{
 					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 						return &api.ServiceAccount{}, nil
 					},

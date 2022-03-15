@@ -4,20 +4,20 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"net/http"
 	"net/url"
 	"strconv"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
 )
 
 type serviceAccountsHandler struct {
-	service services.KeycloakService
+	service sso.KeycloakService
 }
 
-func NewServiceAccountHandler(service services.KafkaKeycloakService) *serviceAccountsHandler {
+func NewServiceAccountHandler(service sso.KafkaKeycloakService) *serviceAccountsHandler {
 	return &serviceAccountsHandler{
 		service: service,
 	}
