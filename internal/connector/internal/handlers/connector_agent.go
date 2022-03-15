@@ -44,7 +44,6 @@ func (h *ConnectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 }
 
 func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http.Request) {
-	// h.service.ListConnectors()
 	ctx := r.Context()
 	query := r.URL.Query()
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]

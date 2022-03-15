@@ -103,7 +103,7 @@ func (cts *connectorTypesService) Create(resource *dbapi.ConnectorType) *errors.
 
 func (cts *connectorTypesService) Get(id string) (*dbapi.ConnectorType, *errors.ServiceError) {
 	if id == "" {
-		return nil, errors.Validation("XXX id is undefined")
+		return nil, errors.Validation("TypeId is empty.")
 	}
 
 	var resource dbapi.ConnectorType
