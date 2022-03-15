@@ -19,7 +19,7 @@ type CloudRegion struct {
 	DisplayName string `json:"display_name,omitempty"`
 	// Whether the region is enabled for deploying an OSD cluster.
 	Enabled bool `json:"enabled"`
-	// DEPRECATION NOTICE - instance_type will be deprecated
+	// The Kafka instance types supported by this region.  DEPRECATION NOTICE - instance_type will be deprecated
 	// Deprecated
 	DeprecatedSupportedInstanceTypes []string `json:"supported_instance_types"`
 	// Indicates whether there is capacity left per instance type

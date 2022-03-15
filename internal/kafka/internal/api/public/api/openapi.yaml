@@ -610,7 +610,10 @@ paths:
           type: string
         style: form
       - deprecated: true
-        description: DEPRECATION NOTICE - instance_type will be deprecated
+        description: |-
+          The Kafka instance type to filter the results by
+
+          DEPRECATION NOTICE - instance_type will be deprecated
         examples:
           eval_instance_type:
             value: eval
@@ -1475,7 +1478,10 @@ components:
       style: form
     instance_type:
       deprecated: true
-      description: DEPRECATION NOTICE - instance_type will be deprecated
+      description: |-
+        The Kafka instance type to filter the results by
+
+        DEPRECATION NOTICE - instance_type will be deprecated
       examples:
         eval_instance_type:
           value: eval
@@ -1621,7 +1627,10 @@ components:
           type: boolean
         supported_instance_types:
           deprecated: true
-          description: DEPRECATION NOTICE - instance_type will be deprecated
+          description: |-
+            The Kafka instance types supported by this region.
+
+            DEPRECATION NOTICE - instance_type will be deprecated
           items:
             type: string
           type: array
