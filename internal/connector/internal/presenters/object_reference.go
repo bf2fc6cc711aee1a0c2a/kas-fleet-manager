@@ -55,9 +55,9 @@ func objectPath(id string, obj interface{}) string {
 	case dbapi.ConnectorCluster, *dbapi.ConnectorCluster:
 		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_clusters/%s", id)
 	case dbapi.ConnectorDeployment:
-		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_clusters/%s/deployments/%s", obj.ClusterID, id)
+		return fmt.Sprintf("/api/connector_mgmt/v1/agent/kafka_connector_clusters/%s/deployments/%s", obj.ClusterID, id)
 	case *dbapi.ConnectorDeployment:
-		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_clusters/%s/deployments/%s", obj.ClusterID, id)
+		return fmt.Sprintf("/api/connector_mgmt/v1/agent/kafka_connector_clusters/%s/deployments/%s", obj.ClusterID, id)
 	case dbapi.ConnectorNamespace, *dbapi.ConnectorNamespace:
 		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_namespaces/%s", id)
 	default:

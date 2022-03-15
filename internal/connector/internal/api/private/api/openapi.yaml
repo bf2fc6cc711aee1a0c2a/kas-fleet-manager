@@ -261,7 +261,56 @@ paths:
       summary: update the connector deployment status
       tags:
       - Connector Clusters Agent
-  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/namespaces/{namespace_id}:
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/agent_namespaces:
+    get:
+      description: Returns all connector namespaces assigned to the cluster.
+      operationId: getClusterAsignedConnectorNamespaces
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorNamespaceList'
+          description: All connector namespaces in cluster
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "410":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: cluster has been deleted
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns all connector namespaces assigned to the cluster.
+      tags:
+      - Connector Clusters Agent
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/agent_namespaces/{namespace_id}:
     get:
       description: Returns a connector namespace assigned to the cluster.
       operationId: getClusterAsignedConnectorNamespaceById
@@ -330,25 +379,25 @@ components:
         operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
     "404Example":
       value:
-        id: "7"
+        id: "404"
         kind: Error
-        href: /api/kafkas_mgmt/v1/errors/7
-        code: KAFKAS-MGMT-7
+        href: /api/connector_mgmt/v1/errors/7
+        code: CONNECTOR-MGMT-7
         reason: The requested resource doesn't exist
     "401Example":
       value:
         id: "11"
         kind: Error
-        href: /api/kafkas_mgmt/v1/errors/11
-        code: KAFKAS-MGMT-11
+        href: /api/connector_mgmt/v1/errors/11
+        code: CONNECTOR-MGMT-11
         reason: 'Unable to verify JWT token: Required authorization token not found'
         operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
     "500Example":
       value:
         id: "9"
         kind: Error
-        href: /api/kafkas_mgmt/v1/errors/9
-        code: KAFKAS-MGMT-9
+        href: /api/connector_mgmt/v1/errors/9
+        code: CONNECTOR-MGMT-9
         reason: Unspecified error
         operation_id: 1ieELvF9jMQY6YghfM9gGRsHvEW
   schemas:
@@ -631,6 +680,27 @@ components:
         href:
           type: string
       type: object
+    ConnectorNamespaceList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ConnectorNamespaceList_allOf'
+    List:
+      properties:
+        kind:
+          type: string
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+      required:
+      - items
+      - kind
+      - page
+      - size
+      - total
+      type: object
     ConnectorNamespace:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -681,6 +751,8 @@ components:
       properties:
         state:
           $ref: '#/components/schemas/ConnectorNamespaceState'
+        version:
+          type: string
         connectors_deployed:
           format: int32
           type: integer
@@ -722,27 +794,6 @@ components:
       allOf:
       - $ref: '#/components/schemas/ServiceConnectionSettings'
       description: Holds the configuration to connect to a Schem Registry Instance.
-    List:
-      properties:
-        kind:
-          type: string
-        page:
-          type: integer
-        size:
-          type: integer
-        total:
-          type: integer
-        items:
-          items:
-            $ref: '#/components/schemas/ObjectReference'
-          type: array
-      required:
-      - items
-      - kind
-      - page
-      - size
-      - total
-      type: object
     ConnectorDeployment_allOf_metadata:
       properties:
         created_at:
@@ -813,6 +864,12 @@ components:
           type: string
         operation_id:
           type: string
+    ConnectorNamespaceList_allOf:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ConnectorNamespace'
+          type: array
     ConnectorNamespace_allOf:
       properties:
         name:

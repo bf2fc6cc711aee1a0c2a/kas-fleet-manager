@@ -131,10 +131,11 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	// This section adds the API's accessed by the connector agent...
 	{
 		//  /api/connector_mgmt/v1/kafka_connector_clusters/{id}
-		agentRouter := apiV1Router.PathPrefix("/{_:kafka[-_]connector[-_]clusters}/{connector_cluster_id}").Subrouter()
+		agentRouter := apiV1Router.PathPrefix("/agent/{_:kafka[-_]connector[-_]clusters}/{connector_cluster_id}").Subrouter()
 		agentRouter.HandleFunc("/status", s.ConnectorClusterHandler.UpdateConnectorClusterStatus).Methods(http.MethodPut)
 		agentRouter.HandleFunc("/deployments", s.ConnectorClusterHandler.ListDeployments).Methods(http.MethodGet)
 		agentRouter.HandleFunc("/deployments/{deployment_id}", s.ConnectorClusterHandler.GetDeployment).Methods(http.MethodGet)
+		agentRouter.HandleFunc("/namespaces", s.ConnectorClusterHandler.GetAgentNamespaces).Methods(http.MethodGet)
 		agentRouter.HandleFunc("/namespaces/{namespace_id}", s.ConnectorClusterHandler.GetNamespace).Methods(http.MethodGet)
 		agentRouter.HandleFunc("/deployments/{deployment_id}/status", s.ConnectorClusterHandler.UpdateDeploymentStatus).Methods(http.MethodPut)
 		auth.UseOperatorAuthorisationMiddleware(agentRouter, s.KeycloakService.GetConfig().KafkaRealm.ValidIssuerURI, "connector_cluster_id", s.AuthAgentService)
