@@ -1742,6 +1742,13 @@ Feature: create a connector
             "kind": "Error",
             "reason": "Failed to find service account"
           },
+           {
+             "code": "CONNECTOR-MGMT-115",
+              "href": "/api/connector_mgmt/v1/errors/115",
+              "id": "115",
+              "kind": "Error",
+              "reason": "Max limit for the service account creation has reached"
+           },
           {
             "code": "CONNECTOR-MGMT-120",
             "href": "/api/connector_mgmt/v1/errors/120",
@@ -1773,8 +1780,8 @@ Feature: create a connector
         ],
         "kind": "ErrorList",
         "page": 1,
-        "size": 40,
-        "total": 40
+        "size": 41,
+        "total": 41
       }
       """
 

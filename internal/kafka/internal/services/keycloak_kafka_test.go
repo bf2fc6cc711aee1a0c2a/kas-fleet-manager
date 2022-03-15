@@ -145,7 +145,9 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 						return token, nil
 					},
 					GetConfigFunc: func() *keycloak.KeycloakConfig {
-						return keycloak.NewKeycloakConfig()
+						config := keycloak.NewKeycloakConfig()
+						config.MaxAllowedServiceAccounts = 2
+						return config
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil

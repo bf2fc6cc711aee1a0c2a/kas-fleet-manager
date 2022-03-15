@@ -3,6 +3,10 @@ package sso
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -11,9 +15,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
-	"net/http"
-	"strings"
-	"time"
 )
 
 const (
@@ -213,12 +214,12 @@ func (kc *masService) CreateServiceAccount(accessToken string, serviceAccountReq
 	orgId := auth.GetOrgIdFromClaims(claims)
 	ownerAccountId := auth.GetAccountIdFromClaims(claims)
 	owner := auth.GetUsernameFromClaims(claims)
-	isAllowed, err := kc.checkAllowedServiceAccountsLimits(accessToken, kc.GetConfig().MaxAllowedServiceAccounts, ownerAccountId)
+	isAllowed, err := kc.checkAllowedServiceAccountsLimits(accessToken, kc.GetConfig().MaxAllowedServiceAccounts, orgId)
 	if err != nil { //5xx
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to create service account")
 	}
 	if !isAllowed { //4xx over requesters' limit
-		return nil, errors.Forbidden("Max allowed number:%d of service accounts for user:%s has reached", kc.GetConfig().MaxAllowedServiceAccounts, owner)
+		return nil, errors.MaxLimitForServiceAccountReached("Max allowed number:%d of service accounts for user in org:%s has reached", kc.GetConfig().MaxAllowedServiceAccounts, orgId)
 	}
 	return kc.CreateServiceAccountInternal(accessToken, CompleteServiceAccountRequest{
 		Owner:          owner,
@@ -586,9 +587,9 @@ func (kc *masService) createServiceAccountIfNotExists(token string, clientRep ke
 
 }
 
-func (kc *masService) checkAllowedServiceAccountsLimits(accessToken string, maxAllowed int, userId string) (bool, error) {
-	glog.V(5).Infof("Check if user is allowed to create service accounts: userId = %s", userId)
-	searchAtt := fmt.Sprintf("rh-user-id:%s", userId)
+func (kc *masService) checkAllowedServiceAccountsLimits(accessToken string, maxAllowed int, orgId string) (bool, error) {
+	glog.V(5).Infof("Check if user is allowed to create service accounts: orgId = %s", orgId)
+	searchAtt := fmt.Sprintf("rh-org-id:%s", orgId)
 	clients, err := kc.kcClient.GetClients(accessToken, 0, -1, searchAtt) // return all service accounts attached to the user
 	if err != nil {
 		return false, err
@@ -602,7 +603,7 @@ func (kc *masService) checkAllowedServiceAccountsLimits(accessToken string, maxA
 		serviceAccountCount++
 	}
 
-	glog.V(10).Infof("Existing number of clients found: %d & max allowed: %d, for the userId:%s", serviceAccountCount, maxAllowed, userId)
+	glog.V(10).Infof("Existing number of clients found: %d & max allowed: %d, for the orgId:%s", serviceAccountCount, maxAllowed, orgId)
 	if serviceAccountCount >= maxAllowed {
 		return false, nil //http requester's error
 	} else {
