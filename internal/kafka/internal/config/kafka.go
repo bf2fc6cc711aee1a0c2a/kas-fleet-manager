@@ -39,7 +39,7 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaCapacityConfigFile:        "config/kafka-capacity-config.yaml",
 		KafkaLifespan:                  NewKafkaLifespanConfig(),
 		Quota:                          NewKafkaQuotaConfig(),
-		BrowserUrl:                     "https://console.redhat.com/",
+		BrowserUrl:                     "http://localhost:8080/",
 	}
 }
 

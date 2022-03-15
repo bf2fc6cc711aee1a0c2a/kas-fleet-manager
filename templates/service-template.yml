@@ -448,7 +448,7 @@ parameters:
 
 - name: BROWSER_URL
   description: browser url pointing to qaprodauth.console.redhat.com
-  value: "https://console.redhat.com/"
+  value: "http://localhost:8080/"
 
 - name: STRIMZI_OPERATOR_ADDON_ID
   displayName: Strimzi operator addon ID

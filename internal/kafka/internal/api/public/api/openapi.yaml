@@ -1143,7 +1143,7 @@ components:
         updated_at: 2020-10-05T12:56:36.362208Z
         version: 2.6.0
         instance_type: standard
-        browser_url: https://console.redhat.com/
+        browser_url: http://localhost:8080/
         reauthentication_enabled: true
     KafkaRequestFailedCreationStatusExample:
       value:
