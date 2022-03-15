@@ -12,6 +12,7 @@ package private
 // ConnectorNamespaceStatus2 struct for ConnectorNamespaceStatus2
 type ConnectorNamespaceStatus2 struct {
 	State              ConnectorNamespaceState `json:"state"`
+	Version            string                  `json:"version,omitempty"`
 	ConnectorsDeployed int32                   `json:"connectors_deployed"`
 	Error              string                  `json:"error,omitempty"`
 }

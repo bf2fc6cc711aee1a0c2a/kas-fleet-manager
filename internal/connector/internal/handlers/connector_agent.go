@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"io"
 	"net/http"
 	"strconv"
@@ -256,6 +257,39 @@ func (h *ConnectorClusterHandler) GetDeployment(w http.ResponseWriter, r *http.R
 	handlers.HandleGet(w, r, cfg)
 }
 
+func (h *ConnectorClusterHandler) GetAgentNamespaces(writer http.ResponseWriter, request *http.Request) {
+	connectorClusterId := mux.Vars(request)["connector_cluster_id"]
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+			ctx := request.Context()
+			listArgs := services.NewListArguments(request.URL.Query())
+			resources, paging, err := h.ConnectorNamespace.List(ctx, []string{connectorClusterId}, listArgs)
+			if err != nil {
+				return nil, err
+			}
+
+			resourceList := public.ConnectorNamespaceList{
+				Kind:  "ConnectorNamespaceList",
+				Page:  int32(paging.Page),
+				Size:  int32(paging.Size),
+				Total: int32(paging.Total),
+			}
+
+			for _, resource := range resources {
+				converted := presenters.PresentConnectorNamespace(resource)
+				resourceList.Items = append(resourceList.Items, converted)
+			}
+
+			return resourceList, nil
+		},
+	}
+
+	handlers.HandleList(writer, request, cfg)
+}
+
 func (h *ConnectorClusterHandler) GetNamespace(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	namespaceId := mux.Vars(r)["namespace_id"]
@@ -272,7 +306,7 @@ func (h *ConnectorClusterHandler) GetNamespace(w http.ResponseWriter, r *http.Re
 				return nil, err
 			}
 			if resource.ClusterId != connectorClusterId {
-				return nil, errors.NotFound("Connector namespace not found")
+				return nil, errors.NotFound("Connector namespace %s not found", namespaceId)
 			}
 
 			return presenters.PresentConnectorNamespace(resource), nil
