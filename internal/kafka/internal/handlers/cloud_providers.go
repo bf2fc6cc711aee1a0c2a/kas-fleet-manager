@@ -102,6 +102,10 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 							SupportedInstanceType: instType,
 							MultiAZ:               true,
 						})
+
+						// ignore any non-general errors (unsupported instance types/sizes). In this case, we should return an empty size array
+						// unsupported instance type/sizes may occur due to misconfiguration of cloud provider/supported instance type config.
+						// any errors returned will be logged and captured in Sentry
 						if err != nil && err.Code == errors.ErrorGeneral {
 							return nil, errors.GeneralError("unable to list cloud provider regions at this time")
 						}
