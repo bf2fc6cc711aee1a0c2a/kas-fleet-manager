@@ -1,6 +1,7 @@
 package quota
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
@@ -11,19 +12,20 @@ import (
 
 // DefaultQuotaServiceFactory the default implementation for ProviderFactory
 type DefaultQuotaServiceFactory struct {
-	quoataServiceContainer map[api.QuotaType]services.QuotaService
+	quotaServiceContainer map[api.QuotaType]services.QuotaService
 }
 
 func NewDefaultQuotaServiceFactory(
 	amsClient ocm.AMSClient,
 	connectionFactory *db.ConnectionFactory,
 	quotaManagementListConfig *quota_management.QuotaManagementListConfig,
+	kafkaConfig *config.KafkaConfig,
 ) services.QuotaServiceFactory {
-	quoataServiceContainer := map[api.QuotaType]services.QuotaService{
-		api.AMSQuotaType:                 &amsQuotaService{amsClient: amsClient},
-		api.QuotaManagementListQuotaType: &QuotaManagementListService{connectionFactory: connectionFactory, quotaManagementList: quotaManagementListConfig},
+	quotaServiceContainer := map[api.QuotaType]services.QuotaService{
+		api.AMSQuotaType:                 &amsQuotaService{amsClient: amsClient, kafkaConfig: kafkaConfig},
+		api.QuotaManagementListQuotaType: &QuotaManagementListService{connectionFactory: connectionFactory, quotaManagementList: quotaManagementListConfig, kafkaConfig: kafkaConfig},
 	}
-	return &DefaultQuotaServiceFactory{quoataServiceContainer: quoataServiceContainer}
+	return &DefaultQuotaServiceFactory{quotaServiceContainer: quotaServiceContainer}
 }
 
 func (factory *DefaultQuotaServiceFactory) GetQuotaService(quoataType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
@@ -31,7 +33,7 @@ func (factory *DefaultQuotaServiceFactory) GetQuotaService(quoataType api.QuotaT
 		quoataType = api.QuotaManagementListQuotaType
 	}
 
-	quotaService, ok := factory.quoataServiceContainer[quoataType]
+	quotaService, ok := factory.quotaServiceContainer[quoataType]
 	if !ok {
 		return nil, errors.GeneralError("invalid quota service type: %v", quoataType)
 	}
