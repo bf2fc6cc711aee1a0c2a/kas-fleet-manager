@@ -418,6 +418,11 @@ parameters:
   description: The public HTTP host URL of the service
   value: "https://api.openshift.com"
 
+- name: KAFKA_CAPACITY_INGRESS_THROUGHPUT
+  displayName: Kafka ingress throughput
+  description: Ingress throughput configuration for the default Kafka instance type
+  value: "2Mi"
+
 - name: KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS
   displayName: Kafka total max connections
   description: Total max connections configuration for the default Kafka instance type
