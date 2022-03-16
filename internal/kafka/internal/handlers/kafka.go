@@ -76,7 +76,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 					if err != nil {
 						return errors.NewWithCause(errors.ErrorGeneral, err, "Unsupported kafka instance type: '%s' provided", instanceType.String())
 					}
-					convKafka.SizeId = rSize
+					convKafka.SizeId = rSize.Id
 				}
 				convKafka.InstanceType = instanceType.String()
 				return nil

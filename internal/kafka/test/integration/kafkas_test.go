@@ -333,7 +333,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 							MaxPartitions:               2000,
 							MaxDataRetentionPeriod:      "P14D",
 							MaxConnectionAttemptsPerSec: 200,
-							QuotaConsumed:               2,
+							QuotaConsumed:               1,
 							QuotaType:                   "rhosak",
 							CapacityConsumed:            1,
 						},
