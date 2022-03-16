@@ -185,13 +185,17 @@ func (k *kafkaService) capacityAvailableForRegionAndInstanceType(instTypeRegCapa
 
 func (k *kafkaService) GetAvailableSizesInRegion(criteria *FindClusterCriteria) ([]string, *errors.ServiceError) {
 	if criteria == nil {
-		return nil, errors.GeneralError("unable to get available sizes in region: criteria was not specified")
+		err := errors.GeneralError("unable to get available sizes in region: criteria was not specified")
+		logger.Logger.Error(err)
+		return nil, err
 	}
 
 	supportedInstanceTypes := k.kafkaConfig.SupportedInstanceTypes.Configuration
 	instanceType, err := supportedInstanceTypes.GetKafkaInstanceTypeByID(criteria.SupportedInstanceType)
 	if err != nil {
-		return nil, errors.InstanceTypeNotSupported("unable to get available sizes in region: %s", err.Error())
+		err := errors.InstanceTypeNotSupported("unable to get available sizes in region: %s", err.Error())
+		logger.Logger.Error(err)
+		return nil, err
 	}
 
 	// The kafka size list configuration must always be ordered starting with the smallest unit.
@@ -209,6 +213,7 @@ func (k *kafkaService) GetAvailableSizesInRegion(criteria *FindClusterCriteria) 
 		// Check against region limits
 		hasCapacity, err := k.HasAvailableCapacityInRegion(kafka)
 		if err != nil {
+			logger.Logger.Error(err)
 			return nil, err
 		}
 
@@ -216,6 +221,7 @@ func (k *kafkaService) GetAvailableSizesInRegion(criteria *FindClusterCriteria) 
 			// Check if there is an available cluster in the region that can fit this Kafka instance type and size
 			cluster, err := k.clusterPlacementStrategy.FindCluster(kafka)
 			if err != nil {
+				logger.Logger.Error(err)
 				return nil, err
 			}
 
