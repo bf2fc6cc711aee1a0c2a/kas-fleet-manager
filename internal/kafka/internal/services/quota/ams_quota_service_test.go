@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 
@@ -16,7 +17,8 @@ import (
 
 func Test_AMSCheckQuota(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient   ocm.Client
+		kafkaConfig *config.KafkaConfig
 	}
 	type args struct {
 		kafkaID           string
@@ -64,6 +66,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			wantErr: false,
 		},
@@ -102,6 +105,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -128,6 +132,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return []*v1.QuotaCost{}, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -161,6 +166,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -169,13 +175,15 @@ func Test_AMSCheckQuota(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, tt.fields.kafkaConfig)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Meta: api.Meta{
 					ID: tt.args.kafkaID,
 				},
-				Owner: tt.args.owner,
+				Owner:        tt.args.owner,
+				SizeId:       "x1",
+				InstanceType: string(tt.args.kafkaInstanceType),
 			}
 			sq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka, types.STANDARD)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
@@ -193,11 +201,13 @@ func Test_AMSCheckQuota(t *testing.T) {
 
 func Test_AMSReserveQuota(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient   ocm.Client
+		kafkaConfig *config.KafkaConfig
 	}
 	type args struct {
-		kafkaID string
-		owner   string
+		kafkaID           string
+		owner             string
+		kafkaInstanceType types.KafkaInstanceType
 	}
 	tests := []struct {
 		name             string
@@ -212,6 +222,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -234,6 +245,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			wantBillingModel: string(v1.BillingModelMarketplace),
 			want:             "1234",
@@ -244,6 +256,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -271,6 +284,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb1, qcb2}, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			wantBillingModel: string(v1.BillingModelStandard),
 			want:             "1234",
@@ -281,6 +295,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -308,6 +323,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb2, qcb1}, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			wantBillingModel: string(v1.BillingModelMarketplace),
 			want:             "1234",
@@ -318,6 +334,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -340,6 +357,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb1}, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			wantBillingModel: string(v1.BillingModelMarketplace),
 			want:             "1234",
@@ -350,6 +368,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -377,6 +396,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb2, qcb1}, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -385,6 +405,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -402,6 +423,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{}, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -410,6 +432,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -437,6 +460,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb1, qcb2}, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -445,6 +469,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			args: args{
 				"12231",
 				"testUser",
+				types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -464,6 +489,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -472,13 +498,15 @@ func Test_AMSReserveQuota(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, tt.fields.kafkaConfig)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Meta: api.Meta{
 					ID: tt.args.kafkaID,
 				},
-				Owner: tt.args.owner,
+				Owner:        tt.args.owner,
+				SizeId:       "x1",
+				InstanceType: string(tt.args.kafkaInstanceType),
 			}
 			subId, err := quotaService.ReserveQuota(kafka, types.STANDARD)
 			gomega.Expect(subId).To(gomega.Equal(tt.want))
@@ -547,7 +575,7 @@ func Test_Delete_Quota(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, &defaultKafkaConf)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			err := quotaService.DeleteQuota(tt.args.subscriptionId)
 			if (err != nil) != tt.wantErr {
@@ -725,7 +753,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.ocmClient, nil, nil)
+			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.ocmClient, nil, nil, &defaultKafkaConf)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
 			res, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(tt.args.kafkaRequest, tt.args.kafkaInstanceType)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))

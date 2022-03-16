@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -11,7 +12,8 @@ import (
 )
 
 type amsQuotaService struct {
-	amsClient ocm.AMSClient
+	amsClient   ocm.AMSClient
+	kafkaConfig *config.KafkaConfig
 }
 
 func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder {
@@ -85,7 +87,7 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 // RelatedResource with "cost" 0 are considered. Only
 // "standard" and "marketplace" billing models are considered. If both are
 // detected "standard" is returned.
-func (q amsQuotaService) getAvailableBillingModelFromKafkaInstanceType(externalID string, instanceType types.KafkaInstanceType) (string, error) {
+func (q amsQuotaService) getAvailableBillingModelFromKafkaInstanceType(externalID string, instanceType types.KafkaInstanceType, sizeRequired int) (string, error) {
 	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(externalID)
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", externalID))
@@ -99,7 +101,7 @@ func (q amsQuotaService) getAvailableBillingModelFromKafkaInstanceType(externalI
 	billingModel := ""
 	for _, qc := range quotaCosts {
 		for _, rr := range qc.RelatedResources() {
-			if qc.Consumed() < qc.Allowed() || rr.Cost() == 0 {
+			if qc.Consumed()+sizeRequired <= qc.Allowed() || rr.Cost() == 0 {
 				if rr.BillingModel() == string(amsv1.BillingModelStandard) {
 					return rr.BillingModel(), nil
 				} else if rr.BillingModel() == string(amsv1.BillingModelMarketplace) {
@@ -117,7 +119,12 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 
 	rr := newBaseQuotaReservedResourceResourceBuilder()
 
-	bm, err := q.getAvailableBillingModelFromKafkaInstanceType(kafka.OrganisationId, instanceType)
+	kafkaInstanceSize, e := q.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+	if e != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, e, "Error reserving quota")
+	}
+
+	bm, err := q.getAvailableBillingModelFromKafkaInstanceType(kafka.OrganisationId, instanceType, kafkaInstanceSize.CapacityConsumed)
 	if err != nil {
 		svcErr := errors.ToServiceError(err)
 		return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
@@ -126,6 +133,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		return "", errors.InsufficientQuotaError("Error getting billing model: No available billing model found")
 	}
 	rr.BillingModel(amsv1.BillingModel(bm))
+	rr.Count(kafkaInstanceSize.CapacityConsumed)
 
 	cb, _ := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(kafka.Owner).
