@@ -15,7 +15,6 @@ import (
 type QuotaManagementListService struct {
 	connectionFactory   *db.ConnectionFactory
 	quotaManagementList *quota_management.QuotaManagementListConfig
-	kafkaConfig         *config.KafkaConfig
 }
 
 func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
@@ -100,7 +99,7 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, inst
 	}
 
 	if instanceType == types.EVAL && quotaManagementListItem == nil {
-		if totalInstanceCount > quota_management.GetDefaultMaxAllowedInstances() {
+		if totalInstanceCount >= quota_management.GetDefaultMaxAllowedInstances() {
 			return "", errors.MaximumAllowedInstanceReached(message)
 		}
 		return "", nil

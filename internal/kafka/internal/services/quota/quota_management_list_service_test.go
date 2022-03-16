@@ -1,6 +1,8 @@
 package quota
 
 import (
+	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
@@ -8,6 +10,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
@@ -213,7 +216,6 @@ var (
 	testClusterID            = "test-cluster-id"
 	testID                   = "test"
 	testUser                 = "test-user"
-	kafkaRequestTableName    = "kafka_requests"
 )
 
 func buildKafkaRequest(modifyFn func(kafkaRequest *dbapi.KafkaRequest)) *dbapi.KafkaRequest {
@@ -255,19 +257,189 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 		setupFn func()
 	}{
 		{
-			name: "do not return an error when user who is not in the quota list can create eval instances",
+			name: "do not return an error when instance limit control is disabled ",
+			fields: fields{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
+					EnableInstanceLimitControl: false,
+				},
+			},
+			args: args{
+				instanceType: types.EVAL,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "return an error when the query db throws an error",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				QuotaManagementList: &quota_management.QuotaManagementListConfig{
-					EnableInstanceLimitControl: false,
+					EnableInstanceLimitControl: true,
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						ServiceAccounts: quota_management.AccountList{
+							quota_management.Account{
+								Username:            "username",
+								MaxAllowedInstances: 4,
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				instanceType: types.EVAL,
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			wantErr: errors.GeneralError(fmt.Sprintf("Failed to check kafka capacity for instance type '%s'", types.EVAL.String())),
+		},
+		{
+			name: "return an error when user in an organisation cannot create any more instances after exceeding allowed organisation limits",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
+					EnableInstanceLimitControl: true,
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						Organisations: quota_management.OrganisationList{
+							quota_management.Organisation{
+								Id:                  "org-id",
+								MaxAllowedInstances: 1,
+								AnyUser:             true,
+							},
+						},
+					},
 				},
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND (owner = $2) AND "kafka_requests"."deleted_at" IS NULL`).
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND (organisation_id = $2) AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.STANDARD.String(), "org-id").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			wantErr: &errors.ServiceError{
+				HttpCode: http.StatusForbidden,
+				Reason:   "Organization 'org-id' has reached a maximum number of 1 allowed streaming units.",
+				Code:     5,
+			},
+			args: args{
+				instanceType: types.STANDARD,
+			},
+		},
+		{
+			name: "return an error when user in the quota list attempts to create an eval instance",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
+					EnableInstanceLimitControl: true,
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						ServiceAccounts: quota_management.AccountList{
+							quota_management.Account{
+								Username:            "username",
+								MaxAllowedInstances: 4,
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				instanceType: types.EVAL,
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs(types.EVAL.String(), "username").
 					WithReply(nil)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			wantErr: errors.InsufficientQuotaError("Insufficient Quota"),
+		},
+		{
+			name: "return an error when user is not allowed in their org and they cannot create any more instances eval instances after exceeding default allowed user limits",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
+					EnableInstanceLimitControl: true,
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						Organisations: quota_management.OrganisationList{
+							quota_management.Organisation{
+								Id:                  "org-id",
+								MaxAllowedInstances: 2,
+								AnyUser:             false,
+							},
+						},
+					},
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.EVAL.String(), "username").
+					WithReply(converters.ConvertKafkaRequest(
+						buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+							kafkaRequest.Owner = "username"
+							kafkaRequest.InstanceType = types.EVAL.String()
+							kafkaRequest.OrganisationId = "org-id"
+						})))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			wantErr: &errors.ServiceError{
+				HttpCode: http.StatusForbidden,
+				Reason:   "User 'username' has reached a maximum number of 1 allowed streaming units.",
+				Code:     5,
+			},
+			args: args{
+				instanceType: types.EVAL,
+			},
+		},
+		{
+			name: "does not return an error if user is within limits for user creating a standard instance",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
+					EnableInstanceLimitControl: true,
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						Organisations: quota_management.OrganisationList{
+							quota_management.Organisation{
+								Id:                  "org-id",
+								MaxAllowedInstances: 4,
+								AnyUser:             true,
+							},
+						},
+					},
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND (organisation_id = $2) AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.STANDARD.String(), "org-id").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			args: args{
+				instanceType: types.STANDARD,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "do not return an error when user who's not in the quota list can eval instances",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
+					EnableInstanceLimitControl: true,
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.EVAL.String(), "username").
+					WithReply(nil)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			args: args{
 				instanceType: types.EVAL,
@@ -287,8 +459,8 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			kafka := &dbapi.KafkaRequest{
 				Owner:          "username",
 				OrganisationId: "org-id",
-				InstanceType:   tt.args.instanceType.String(),
 				SizeId:         "x1",
+				InstanceType:   tt.args.instanceType.String(),
 			}
 			_, err := quotaService.ReserveQuota(kafka, tt.args.instanceType, 1, &defaultKafkaConf)
 			gomega.Expect(tt.wantErr).To(gomega.Equal(err))
