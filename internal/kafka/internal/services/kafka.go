@@ -89,7 +89,7 @@ type KafkaService interface {
 	ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, *errors.ServiceError)
 	VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
 	ListComponentVersions() ([]KafkaComponentVersions, error)
-	HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest, sizeRequired int) (bool, *errors.ServiceError)
+	HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError)
 }
 
 var _ KafkaService = &kafkaService{}
@@ -125,7 +125,7 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService Clu
 	}
 }
 
-func (k *kafkaService) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest, sizeRequired int) (bool, *errors.ServiceError) {
+func (k *kafkaService) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
 	// get region limit for instance type
 	regInstTypeLimit, e := k.providerConfig.GetInstanceLimit(kafkaRequest.Region, kafkaRequest.CloudProvider, kafkaRequest.InstanceType)
 	if e != nil {
@@ -141,10 +141,10 @@ func (k *kafkaService) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaReq
 		return true, nil
 	}
 	// check capacity
-	return k.capacityAvailableForRegionAndInstanceType(regInstTypeLimit, sizeRequired, kafkaRequest)
+	return k.capacityAvailableForRegionAndInstanceType(regInstTypeLimit, kafkaRequest)
 }
 
-func (k *kafkaService) capacityAvailableForRegionAndInstanceType(instTypeRegCapacity *int, sizeRequired int, kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
+func (k *kafkaService) capacityAvailableForRegionAndInstanceType(instTypeRegCapacity *int, kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
 	errMessage := fmt.Sprintf("Failed to check kafka capacity for region '%s' and instance type '%s'", kafkaRequest.Region, kafkaRequest.InstanceType)
 
 	dbConn := k.connectionFactory.New()
@@ -169,7 +169,12 @@ func (k *kafkaService) capacityAvailableForRegionAndInstanceType(instTypeRegCapa
 		count += int64(kafkaInstanceSize.CapacityConsumed)
 	}
 
-	count += int64(sizeRequired)
+	kafkaInstanceSize, e := k.kafkaConfig.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
+	if e != nil {
+		return false, errors.NewWithCause(errors.ErrorGeneral, e, errMessage)
+	}
+
+	count += int64(kafkaInstanceSize.CapacityConsumed)
 
 	return instTypeRegCapacity == nil || count <= int64(*instTypeRegCapacity), nil
 }
@@ -219,7 +224,7 @@ func (k *kafkaService) reserveQuota(kafkaRequest *dbapi.KafkaRequest, sizeRequir
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
 	}
-	subscriptionId, err = quotaService.ReserveQuota(kafkaRequest, types.KafkaInstanceType(kafkaRequest.InstanceType), sizeRequired, k.kafkaConfig)
+	subscriptionId, err = quotaService.ReserveQuota(kafkaRequest, types.KafkaInstanceType(kafkaRequest.InstanceType))
 	return subscriptionId, err
 }
 
@@ -235,7 +240,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 		return errors.NewWithCause(errors.ErrorGeneral, e, fmt.Sprintf("Failed to check kafka capacity for region '%s' and instance type '%s'", kafkaRequest.Region, kafkaRequest.InstanceType))
 	}
 
-	hasCapacity, err := k.HasAvailableCapacityInRegion(kafkaRequest, kafkaInstanceSize.CapacityConsumed)
+	hasCapacity, err := k.HasAvailableCapacityInRegion(kafkaRequest)
 	if err != nil {
 		if err.Code == errors.ErrorGeneral {
 			err = errors.NewWithCause(errors.ErrorGeneral, err, "unable to validate your request, please try again")

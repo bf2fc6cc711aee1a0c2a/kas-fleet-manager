@@ -12,7 +12,8 @@ import (
 )
 
 type amsQuotaService struct {
-	amsClient ocm.AMSClient
+	amsClient   ocm.AMSClient
+	kafkaConfig *config.KafkaConfig
 }
 
 func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder {
@@ -113,12 +114,17 @@ func (q amsQuotaService) getAvailableBillingModelFromKafkaInstanceType(externalI
 	return billingModel, nil
 }
 
-func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType, sizeRequired int, kafkaConfig *config.KafkaConfig) (string, *errors.ServiceError) {
+func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
 	kafkaId := kafka.ID
 
 	rr := newBaseQuotaReservedResourceResourceBuilder()
 
-	bm, err := q.getAvailableBillingModelFromKafkaInstanceType(kafka.OrganisationId, instanceType, sizeRequired)
+	kafkaInstanceSize, e := q.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+	if e != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, e, "Error reserving quota")
+	}
+
+	bm, err := q.getAvailableBillingModelFromKafkaInstanceType(kafka.OrganisationId, instanceType, kafkaInstanceSize.CapacityConsumed)
 	if err != nil {
 		svcErr := errors.ToServiceError(err)
 		return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
@@ -127,7 +133,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		return "", errors.InsufficientQuotaError("Error getting billing model: No available billing model found")
 	}
 	rr.BillingModel(amsv1.BillingModel(bm))
-	rr.Count(sizeRequired)
+	rr.Count(kafkaInstanceSize.CapacityConsumed)
 
 	cb, _ := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(kafka.Owner).

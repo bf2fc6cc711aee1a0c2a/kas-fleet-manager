@@ -15,6 +15,7 @@ import (
 type QuotaManagementListService struct {
 	connectionFactory   *db.ConnectionFactory
 	quotaManagementList *quota_management.QuotaManagementListConfig
+	kafkaConfig         *config.KafkaConfig
 }
 
 func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
@@ -39,7 +40,7 @@ func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(kafka *
 	return false, nil
 }
 
-func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType, sizeRequired int, kafkaConfig *config.KafkaConfig) (string, *errors.ServiceError) {
+func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
 	if !q.quotaManagementList.EnableInstanceLimitControl {
 		return "", nil
 	}
@@ -83,7 +84,7 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, inst
 	}
 
 	for _, kafka := range kafkas {
-		kafkaInstanceSize, e := kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+		kafkaInstanceSize, e := q.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
 		if e != nil {
 			return "", errors.NewWithCause(errors.ErrorGeneral, e, errMessage)
 		}
@@ -91,7 +92,11 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, inst
 	}
 
 	if quotaManagementListItem != nil && instanceType == types.STANDARD {
-		if quotaManagementListItem.IsInstanceCountWithinLimit(totalInstanceCount + sizeRequired) {
+		kafkaInstanceSize, e := q.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+		if e != nil {
+			return "", errors.NewWithCause(errors.ErrorGeneral, e, "Error reserving quota")
+		}
+		if quotaManagementListItem.IsInstanceCountWithinLimit(totalInstanceCount + kafkaInstanceSize.CapacityConsumed) {
 			return "", nil
 		} else {
 			return "", errors.MaximumAllowedInstanceReached(message)

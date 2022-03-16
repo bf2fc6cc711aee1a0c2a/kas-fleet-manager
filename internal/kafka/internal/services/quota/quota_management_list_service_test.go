@@ -146,7 +146,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
 
-			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList)
+			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList, &defaultKafkaConf)
 			quotaService, _ := factory.GetQuotaService(api.QuotaManagementListQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Owner:          "username",
@@ -454,7 +454,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
-			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList)
+			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList, &defaultKafkaConf)
 			quotaService, _ := factory.GetQuotaService(api.QuotaManagementListQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Owner:          "username",
@@ -462,7 +462,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 				SizeId:         "x1",
 				InstanceType:   tt.args.instanceType.String(),
 			}
-			_, err := quotaService.ReserveQuota(kafka, tt.args.instanceType, 1, &defaultKafkaConf)
+			_, err := quotaService.ReserveQuota(kafka, tt.args.instanceType)
 			gomega.Expect(tt.wantErr).To(gomega.Equal(err))
 		})
 	}
