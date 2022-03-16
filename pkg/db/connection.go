@@ -3,7 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-
 	"github.com/golang/glog"
 	_ "github.com/lib/pq"
 	mocket "github.com/selvatico/go-mocket"

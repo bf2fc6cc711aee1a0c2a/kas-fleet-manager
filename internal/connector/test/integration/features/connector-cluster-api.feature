@@ -87,7 +87,7 @@ Feature: create a connector
       }
       """
 
-    # Before deleting the connector, lets make sure the access control works as expected for other users beside Greg
+    # Before deleting the cluster, lets make sure the access control works as expected for other users beside Greg
     Given I am logged in as "Coworker Sally"
     When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 200
@@ -101,6 +101,8 @@ Feature: create a connector
     Then the response code should be 204
     And the response should match ""
 
+    # wait for cluster namespaces to be deleted first
+    Given I sleep for 5 seconds
     When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 404
     And the response should match json:

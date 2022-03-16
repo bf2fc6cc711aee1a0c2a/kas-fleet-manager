@@ -148,6 +148,17 @@ Feature: connector agent API
           "status": "True",
           "lastTransitionTime": "2018-01-01T00:00:00Z"
         }],
+        "namespaces": [{
+          "id": "${connector_namespace_id}",
+          "phase": "ready",
+          "version": "0.0.1",
+          "connectors_deployed": 0,
+          "conditions": [{
+            "type": "Ready",
+            "status": "True",
+            "lastTransitionTime": "2018-01-01T00:00:00Z"
+          }]
+        }],
         "operators": [{
           "id":"camelk",
           "version": "1.0",
@@ -876,15 +887,36 @@ Feature: connector agent API
     Then the response code should be 204
     And the response should match ""
 
-    # Connector deployment should be be deleted...
+    # agent deletes deployment
+    Given I am logged in as "Shard"
+    And I set the "Authorization" header to "Bearer ${shard_token}"
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+      """
+      {
+        "phase":"deleted",
+        "resource_version": 45,
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }]
+        }
+      }
+      """
+    Then the response code should be 204
+    And the response should match ""
+
+    # Connector deployment should be deleted...
     And I run SQL "SELECT count(*) FROM connector_deployments WHERE connector_id='${connector_id}' AND deleted_at IS NULL" gives results:
       | count |
       | 0     |
 
     # Connectors that were assigning the cluster get updated to not refer to them.
+    Given I am logged in as "Jimmy"
+    And I sleep for 2 seconds
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
-    And the ".status.state" selection from the response should match "assigning"
+    And the ".desired_state" selection from the response should match "unassigned"
     And the ".namespace_id" selection from the response should match json:
       """
       null
@@ -925,6 +957,17 @@ Feature: connector agent API
           "type": "Ready",
           "status": "True",
           "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }],
+        "namespaces": [{
+          "id": "${connector_namespace_id}",
+          "phase": "ready",
+          "version": "0.0.1",
+          "connectors_deployed": 0,
+          "conditions": [{
+            "type": "Ready",
+            "status": "True",
+            "lastTransitionTime": "2018-01-01T00:00:00Z"
+          }]
         }],
         "operators": [{
           "id":"camelk",
@@ -1071,8 +1114,8 @@ Feature: connector agent API
     Then the response code should be 204
 
     Given I am logged in as "Shard"
-    Given I set the "Authorization" header to "Bearer ${shard_token}"
-    Given I wait up to "5" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "deleted"
+    And I set the "Authorization" header to "Bearer ${shard_token}"
+    And I wait up to "5" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "deleted"
     When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
     Then the ".spec.desired_state" selection from the response should match "deleted"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
@@ -1085,6 +1128,7 @@ Feature: connector agent API
     Then the response code should be 204
 
     Given I am logged in as "Bobby"
+    And I sleep for 5 seconds
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 404
 

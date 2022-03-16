@@ -4,28 +4,30 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
 	"gorm.io/gorm"
 )
 
-type ConnectorClusterPhaseEnum = string
+type ConnectorClusterPhaseEnum string
 
 const (
-	// ConnectorClusterPhaseUnconnected - cluster status when first created
-	ConnectorClusterPhaseUnconnected ConnectorClusterPhaseEnum = "disconnected"
-	// ConnectorClusterPhaseReady- cluster status when it operational
+	// ConnectorClusterPhaseDisconnected - cluster status when first created
+	ConnectorClusterPhaseDisconnected ConnectorClusterPhaseEnum = "disconnected"
+	// ConnectorClusterPhaseReady - cluster status when it operational
 	ConnectorClusterPhaseReady ConnectorClusterPhaseEnum = "ready"
+	// ConnectorClusterPhaseDeleting - cluster status when in the process of being deleted
+	ConnectorClusterPhaseDeleting ConnectorClusterPhaseEnum = "deleting"
 )
 
-var AllConnectorClusterStatus = []ConnectorClusterPhaseEnum{
-	ConnectorClusterPhaseUnconnected,
-	ConnectorClusterPhaseReady,
+var AgentRequestConnectorClusterStatus = []string{
+	string(ConnectorClusterPhaseReady),
 }
 
 type ConnectorCluster struct {
-	api.Meta
+	db.Model
 	Owner          string
 	OrganisationId string
 	Name           string

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type ConnectorNamespacePhaseEnum = string
+type ConnectorNamespacePhaseEnum string
 
 const (
 	// ConnectorNamespacePhaseDisconnected - Namespace status when first created

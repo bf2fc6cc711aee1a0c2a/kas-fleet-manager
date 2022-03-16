@@ -2,10 +2,10 @@ package presenters
 
 import (
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
@@ -21,7 +21,7 @@ func ConvertConnector(from public.Connector) (*dbapi.Connector, *errors.ServiceE
 		namespaceId = &from.NamespaceId
 	}
 	return &dbapi.Connector{
-		Meta: api.Meta{
+		Model: db.Model{
 			ID: from.Id,
 		},
 		NamespaceId:     namespaceId,
@@ -30,7 +30,7 @@ func ConvertConnector(from public.Connector) (*dbapi.Connector, *errors.ServiceE
 		Version:         from.ResourceVersion,
 		ConnectorTypeId: from.ConnectorTypeId,
 		ConnectorSpec:   spec,
-		DesiredState:    string(from.DesiredState),
+		DesiredState:    dbapi.ConnectorDesiredState(from.DesiredState),
 		Channel:         string(from.Channel),
 		Kafka: dbapi.KafkaConnectionSettings{
 			KafkaID:         from.Kafka.Id,
@@ -45,7 +45,7 @@ func ConvertConnector(from public.Connector) (*dbapi.Connector, *errors.ServiceE
 			ClientSecret: from.ServiceAccount.ClientSecret,
 		},
 		Status: dbapi.ConnectorStatus{
-			Phase: string(from.Status.State),
+			Phase: dbapi.ConnectorStatusPhase(from.Status.State),
 		},
 	}, nil
 }

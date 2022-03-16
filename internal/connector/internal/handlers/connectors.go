@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/phase"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -86,6 +88,10 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			convResource.Owner = auth.GetUsernameFromClaims(claims)
 			convResource.OrganisationId = auth.GetOrgIdFromClaims(claims)
 
+			// validate create operation if connector is assigned to a namespace
+			if err := h.validateConnectorOperation(r.Context(), convResource, phase.CreateConnector); err != nil {
+				return nil, err
+			}
 			ct, err := h.connectorTypesService.Get(resource.ConnectorTypeId)
 			if err != nil {
 				return nil, errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
@@ -133,6 +139,10 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			dbresource, serr := h.connectorsService.Get(r.Context(), connectorId, connectorTypeId)
 			if serr != nil {
 				return nil, serr
+			}
+
+			if err := h.validateConnectorOperation(r.Context(), dbresource, phase.UpdateConnector); err != nil {
+				return nil, err
 			}
 
 			resource, serr := presenters.PresentConnector(dbresource)
@@ -255,6 +265,17 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 	handlers.Handle(w, r, cfg, http.StatusAccepted)
 }
 
+func (h ConnectorsHandler) validateConnectorOperation(ctx context.Context, connector *dbapi.Connector,
+	operation phase.ConnectorOperation, updatePhase ...func(*dbapi.Connector) *errors.ServiceError) (err *errors.ServiceError) {
+	if connector.NamespaceId != nil {
+		var namespace *dbapi.ConnectorNamespace
+		if namespace, err = h.namespaceService.Get(ctx, *connector.NamespaceId); err == nil {
+			_, err = phase.PerformConnectorOperation(namespace, connector, operation, updatePhase...)
+		}
+	}
+	return err
+}
+
 func validateConnectorPatch(bytes []byte, ct *dbapi.ConnectorType) *errors.ServiceError {
 	type Connector struct {
 		ConnectorSpec api.JSON `json:"connector_spec,omitempty"`
@@ -371,32 +392,34 @@ func (h ConnectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		Validate: []handlers.Validate{
 			handlers.Validation("connector_id", &connectorId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
 		},
-		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+		Action: func() (interface{}, *errors.ServiceError) {
 
-			c, err := h.connectorsService.Get(r.Context(), connectorId, "")
+			ctx := r.Context()
+			c, err := h.connectorsService.Get(ctx, connectorId, "")
 			if err != nil {
 				return nil, err
 			}
-			if c.DesiredState != dbapi.ConnectorStatusPhaseDeleted {
 
-				switch c.Status.Phase {
-				case dbapi.ConnectorStatusPhaseAssigning: // don't change..
-				case dbapi.ConnectorStatusPhaseDeleted: // don't change..
-				default:
-					c.Status.Phase = dbapi.ConnectorStatusPhaseDeleting
-					err = h.connectorsService.SaveStatus(r.Context(), c.Status)
-					if err != nil {
-						return nil, err
+			// validate delete operation if connector is assigned to a namespace
+			if c.NamespaceId != nil {
+				err = h.validateConnectorOperation(ctx, c, phase.DeleteConnector, func(connector *dbapi.Connector) (err *errors.ServiceError) {
+					err = h.connectorsService.SaveStatus(ctx, connector.Status)
+					if err == nil {
+						err = h.connectorsService.Update(ctx, connector)
 					}
-				}
-
-				c.DesiredState = dbapi.ConnectorStatusPhaseDeleted
-				err := h.connectorsService.Update(r.Context(), c)
-				if err != nil {
-					return nil, err
+					return err
+				})
+			} else {
+				// connector not in namespace
+				c.Status.Phase = dbapi.ConnectorStatusPhaseDeleted
+				c.DesiredState = dbapi.ConnectorDeleted
+				err = h.connectorsService.SaveStatus(ctx, c.Status)
+				if err == nil {
+					err = h.connectorsService.Update(ctx, c)
 				}
 			}
-			return nil, nil
+
+			return nil, err
 		},
 	}
 	handlers.HandleDelete(w, r, cfg, http.StatusNoContent)

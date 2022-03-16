@@ -105,75 +105,67 @@ func (k *ConnectorManager) Reconcile() []error {
 		k.ctx = ctx
 	}
 
-	serviceErr := k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
+	// reconcile assigning connectors in "ready" desired state with "assigning" phase and a valid namespace id
+	if serviceErr := k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
 		return InDBTransaction(k.ctx, func(ctx context.Context) error {
-			switch connector.Status.Phase {
-			case dbapi.ConnectorStatusPhaseAssigning:
-				// since no deployment exists...
-				if connector.DesiredState == "deleted" {
-					// we can delete the connector now...
-					if err := k.reconcileDeleted(ctx, connector); err != nil {
-						errs = append(errs, err)
-						glog.Errorf("failed to reconcile assigning connector %s: %v", connector.ID, err)
-					}
-				} else {
-					if err := k.reconcileAssigning(ctx, connector); err != nil {
-						errs = append(errs, err)
-						glog.Errorf("failed to reconcile assigning connector %s: %v", connector.ID, err)
-					}
-
-				}
+			if err := k.reconcileAssigning(ctx, connector); err != nil {
+				errs = append(errs, err)
+				glog.Errorf("failed to reconcile assigning connector %s: %v", connector.ID, err)
 			}
 			return nil
 		})
-	}, "phase = ?", dbapi.ConnectorStatusPhaseAssigning)
-	if serviceErr != nil {
+	}, "desired_state = ? AND phase = ? AND connectors.namespace_id IS NOT NULL",
+		dbapi.ConnectorReady, dbapi.ConnectorStatusPhaseAssigning); serviceErr != nil {
+		errs = append(errs, serviceErr)
+	}
+
+	// reconcile unassigned connectors in "unassigned" desired state and "deleted" phase
+	if serviceErr := k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
+		return InDBTransaction(k.ctx, func(ctx context.Context) error {
+			// we can remove the connector from the namespace and set phase to "assigning" now...
+			if err := k.reconcileUnassigned(ctx, connector); err != nil {
+				errs = append(errs, err)
+				glog.Errorf("failed to reconcile unassigned connector %s: %v", connector.ID, err)
+			}
+			return nil
+		})
+	}, "desired_state = ? AND phase = ?", dbapi.ConnectorUnassigned, dbapi.ConnectorStatusPhaseDeleted); serviceErr != nil {
+		errs = append(errs, serviceErr)
+	}
+
+	// reconcile deleted connectors with no deployments
+	if serviceErr := k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
+		return InDBTransaction(k.ctx, func(ctx context.Context) error {
+			// ok to delete the connector without deployment
+			if err := k.reconcileDeleted(ctx, connector); err != nil {
+				errs = append(errs, err)
+				glog.Errorf("failed to reconcile deleted connector %s: %v", connector.ID, err)
+			}
+			return nil
+		})
+	}, "desired_state = ? AND phase IN ?", dbapi.ConnectorDeleted,
+		[]string{string(dbapi.ConnectorStatusPhaseAssigning), string(dbapi.ConnectorStatusPhaseDeleted)}); serviceErr != nil {
 		errs = append(errs, serviceErr)
 	}
 
 	// Process any connector updates...
-	serviceErr = k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
+	if serviceErr := k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
 		return InDBTransaction(k.ctx, func(ctx context.Context) error {
 			if err := k.reconcileConnectorUpdate(ctx, connector); err != nil {
-				errs = append(errs, err)
-				glog.Errorf("failed to reconcile assigned connector %s: %v", connector.ID, err.Error())
+				return serviceError.GeneralError("failed to reconcile assigned connector %s: %v", connector.ID, err.Error())
 			}
 			if err := db.AddPostCommitAction(ctx, func() {
 				k.lastVersion = connector.Version
 			}); err != nil {
-				errs = append(errs, err)
-				glog.Errorf("failed to AddPostCommitAction to save lastVersion %d: %v", connector.Version, err.Error())
+				return err
 			}
 			return nil
 		})
-	}, "version > ? AND phase != ? ", k.lastVersion, dbapi.ConnectorStatusPhaseAssigning)
-	if serviceErr != nil {
+	}, "version > ? AND desired_state != ? AND phase != ?", k.lastVersion, dbapi.ConnectorUnassigned, dbapi.ConnectorStatusPhaseAssigning); serviceErr != nil {
 		errs = append(errs, errors.Wrap(serviceErr, "connector manager"))
 	}
 
 	return errs
-}
-
-func InDBTransaction(ctx context.Context, f func(ctx context.Context) error) (rerr *serviceError.ServiceError) {
-	err := db.Begin(ctx)
-	if err != nil {
-		return serviceError.GeneralError("failed to create tx: %v", err)
-	}
-	defer func() {
-		err = db.Resolve(ctx)
-		if err != nil {
-			rerr = serviceError.GeneralError("failed to resolve tx: %v", err)
-		}
-	}()
-	err = f(ctx)
-	if err != nil {
-		db.MarkForRollback(ctx, rerr)
-		if err, ok := err.(*serviceError.ServiceError); ok {
-			return err
-		}
-		return serviceError.GeneralError("%v", err)
-	}
-	return nil
 }
 
 func (k *ConnectorManager) ReconcileConnectorCatalogEntry(id string, channel string, ccc *config.ConnectorChannelConfig) *serviceError.ServiceError {
@@ -201,12 +193,12 @@ func (k *ConnectorManager) ReconcileConnectorCatalogEntry(id string, channel str
 //goland:noinspection VacuumSwitchStatement
 func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *dbapi.Connector) error {
 	var namespace *dbapi.ConnectorNamespace
-	namespace, err := k.connectorClusterService.FindReadyNamespace(connector.Owner, connector.OrganisationId, connector.NamespaceId)
+	namespace, err := k.connectorClusterService.FindAvailableNamespace(connector.Owner, connector.OrganisationId, connector.NamespaceId)
 	if err != nil {
 		return errors.Wrapf(err, "failed to find namespace for connector request %s", connector.ID)
 	}
 	if namespace == nil {
-		// we will try to find a namespace cluster again in the next reconcile
+		// we will try to find a ready namespace again in the next reconcile
 		return nil
 	}
 
@@ -224,7 +216,7 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *db
 	}
 
 	deployment := dbapi.ConnectorDeployment{
-		Meta: api.Meta{
+		Model: db.Model{
 			ID: api.NewID(),
 		},
 		ConnectorID:            connector.ID,
@@ -237,6 +229,23 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *db
 
 	if err = k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {
 		return errors.Wrapf(err, "failed to create connector deployment for connector %s", connector.ID)
+	}
+
+	return nil
+}
+
+func (k *ConnectorManager) reconcileUnassigned(ctx context.Context, connector *dbapi.Connector) error {
+	// set phase to "assigning" and namespace_id to nil
+	connector.Status.Phase = dbapi.ConnectorStatusPhaseAssigning
+	connector.Status.NamespaceID = nil
+	connector.NamespaceId = nil
+
+	if err := k.db.New().Model(&connector).Where("id = ?", connector.ID).
+		Update("namespace_id", nil).Error; err != nil {
+		return errors.Wrapf(err, "failed to update namespace_id for connector %s", connector.ID)
+	}
+	if err := k.connectorService.SaveStatus(ctx, connector.Status); err != nil {
+		return errors.Wrapf(err, "failed to update phase to assigning for connector %s", connector.ID)
 	}
 
 	return nil
@@ -264,6 +273,28 @@ func (k *ConnectorManager) reconcileConnectorUpdate(ctx context.Context, connect
 func (k *ConnectorManager) reconcileDeleted(ctx context.Context, connector *dbapi.Connector) error {
 	if err := k.connectorService.Delete(ctx, connector.ID); err != nil {
 		return errors.Wrapf(err, "failed to delete connector %s", connector.ID)
+	}
+	return nil
+}
+
+func InDBTransaction(ctx context.Context, f func(ctx context.Context) error) (rerr *serviceError.ServiceError) {
+	err := db.Begin(ctx)
+	if err != nil {
+		return serviceError.GeneralError("failed to create tx: %v", err)
+	}
+	defer func() {
+		err = db.Resolve(ctx)
+		if err != nil {
+			rerr = serviceError.GeneralError("failed to resolve tx: %v", err)
+		}
+	}()
+	err = f(ctx)
+	if err != nil {
+		db.MarkForRollback(ctx, rerr)
+		if err, ok := err.(*serviceError.ServiceError); ok {
+			return err
+		}
+		return serviceError.GeneralError("%v", err)
 	}
 	return nil
 }

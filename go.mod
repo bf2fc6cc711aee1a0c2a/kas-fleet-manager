@@ -27,6 +27,8 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/itchyny/gojq v0.12.5
 	github.com/lib/pq v1.10.4
+	github.com/looplab/fsm v0.3.0
+	github.com/mattn/go-sqlite3 v1.14.3 // indirect
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/gomega v1.17.0
@@ -102,7 +104,6 @@ require (
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
-	github.com/mattn/go-sqlite3 v1.14.3 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.16 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

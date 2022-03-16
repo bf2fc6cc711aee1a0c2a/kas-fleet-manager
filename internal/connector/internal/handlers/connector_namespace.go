@@ -214,7 +214,7 @@ func (h *ConnectorNamespaceHandler) Delete(w http.ResponseWriter, r *http.Reques
 				handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			err := h.Service.Delete(connectorNamespaceId)
+			err := h.Service.Delete(r.Context(), connectorNamespaceId)
 			return nil, err
 		},
 	}

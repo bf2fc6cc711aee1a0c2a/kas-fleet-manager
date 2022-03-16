@@ -130,7 +130,7 @@ func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *admin.Connecto
 
 func ConvertConnectorNamespaceStatus(from private.ConnectorNamespaceStatus) *dbapi.ConnectorNamespaceStatus {
 	return &dbapi.ConnectorNamespaceStatus{
-		Phase:              from.Phase,
+		Phase:              dbapi.ConnectorNamespacePhaseEnum(from.Phase),
 		Version:            from.Version,
 		ConnectorsDeployed: from.ConnectorsDeployed,
 		Conditions:         ConvertConditions(from.Conditions),
