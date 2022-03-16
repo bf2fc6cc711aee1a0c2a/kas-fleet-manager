@@ -17,7 +17,6 @@ type KafkaCapacityConfig struct {
 	MaxPartitions                 int    `yaml:"maxPartitions"`
 	MaxDataRetentionPeriod        string `yaml:"maxDataRetentionPeriod"`
 	MaxConnectionAttemptsPerSec   int    `yaml:"maxConnectionAttemptsPerSec"`
-	MaxCapacity                   int64  `yaml:"maxCapacity"`
 }
 
 type KafkaConfig struct {
