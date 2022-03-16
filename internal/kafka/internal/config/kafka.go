@@ -90,15 +90,15 @@ func (c *KafkaConfig) Validate(env *environments.Env) error {
 	return c.SupportedInstanceTypes.Configuration.validate()
 }
 
-func (c *KafkaConfig) GetFirstAvailableSize(instanceType string) (string, error) {
+func (c *KafkaConfig) GetFirstAvailableSize(instanceType string) (*KafkaInstanceSize, error) {
 	kafkaInstanceType, err := c.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if len(kafkaInstanceType.Sizes) < 1 || kafkaInstanceType.Sizes[0].Id == "" {
-		return "", errors.New(errors.ErrorGeneral, fmt.Sprintf("Unable to get size for instance type: '%s'", instanceType))
+		return nil, errors.New(errors.ErrorGeneral, fmt.Sprintf("Unable to get size for instance type: '%s'", instanceType))
 	}
-	return kafkaInstanceType.Sizes[0].Id, nil
+	return &kafkaInstanceType.Sizes[0], nil
 }
 
 func (c *KafkaConfig) GetKafkaInstanceSize(instanceType, sizeId string) (*KafkaInstanceSize, error) {

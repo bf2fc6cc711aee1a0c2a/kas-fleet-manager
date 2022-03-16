@@ -20,6 +20,7 @@ func ConvertKafkaRequest(request *dbapi.KafkaRequest) []map[string]interface{} {
 			"updated_at":            request.Meta.UpdatedAt,
 			"deleted_at":            request.Meta.DeletedAt.Time,
 			"size_id":               request.SizeId,
+			"instance_type":         request.InstanceType,
 		},
 	}
 }

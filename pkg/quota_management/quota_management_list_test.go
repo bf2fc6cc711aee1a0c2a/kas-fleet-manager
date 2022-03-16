@@ -1,8 +1,9 @@
 package quota_management
 
 import (
-	. "github.com/onsi/gomega"
 	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 func Test_OrganisationList_GetById(t *testing.T) {
@@ -253,10 +254,10 @@ func Test_AllowedAccount_IsInstanceCountWithinLimit(t *testing.T) {
 			want:  true,
 		},
 		{
-			name:  "return 'false' when count is above or equal default value (1) of max allowed instances for the given organisation without max allowed instances set",
+			name:  "return 'true' when count is above or equal default value (1) of max allowed instances for the given organisation without max allowed instances set",
 			count: 1,
 			item:  Organisation{},
-			want:  false,
+			want:  true,
 		},
 		{
 			name:  "return 'true' when count is below the default value (1) of max allowed instances for the given organisation without max allowed instances set",
@@ -280,7 +281,7 @@ func Test_AllowedAccount_IsInstanceCountWithinLimit(t *testing.T) {
 			name:  "return 'false' when count is above or equal default value (1) of max allowed instances for the given account without max allowed instances set",
 			count: 1,
 			item:  Account{},
-			want:  false,
+			want:  true,
 		},
 		{
 			name:  "return 'true' when count is below the default value (1) of max allowed instances for the given account without max allowed instances set",
