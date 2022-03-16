@@ -589,16 +589,14 @@ func (c *ClusterManager) reconcileClusterDNS(cluster api.Cluster) error {
 }
 
 func (c *ClusterManager) reconcileKasFleetshardOperator(cluster api.Cluster) error {
-	if c.KasFleetshardOperatorAddon != nil {
-		if params, err := c.KasFleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
-			return errors.WithMessagef(err, "failed to reconcile kas-fleet-shard parameters of %s cluster %s: %s", cluster.Status, cluster.ClusterID, err.Error())
-		} else {
-			if cluster.ClientID == "" {
-				cluster.ClientID = params.GetParam(services.KasFleetshardOperatorParamServiceAccountId)
+	if params, err := c.KasFleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
+		return errors.WithMessagef(err, "failed to reconcile kas-fleet-shard parameters of %s cluster %s: %s", cluster.Status, cluster.ClusterID, err.Error())
+	} else {
+		if cluster.ClientID == "" {
+			cluster.ClientID = params.GetParam(services.KasFleetshardOperatorParamServiceAccountId)
 
-				if err := c.ClusterService.Update(cluster); err != nil {
-					return errors.WithMessagef(err, "failed to reconcile clientID of %s cluster %s: %s", cluster.Status, cluster.ClusterID, err.Error())
-				}
+			if err := c.ClusterService.Update(cluster); err != nil {
+				return errors.WithMessagef(err, "failed to reconcile clientID of %s cluster %s: %s", cluster.Status, cluster.ClusterID, err.Error())
 			}
 		}
 	}

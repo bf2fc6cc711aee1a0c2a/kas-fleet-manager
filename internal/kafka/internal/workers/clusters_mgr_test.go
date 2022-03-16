@@ -48,14 +48,6 @@ func TestClusterManager_reconcileKasFleetshardOperator(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "no error when c.KasFleetshardOperatorAddon not set",
-			fields: fields{
-				clusterService:             &services.ClusterServiceMock{},
-				kasFleetshardOperatorAddon: nil,
-			},
-			wantErr: false,
-		},
-		{
 			name: "error when ReconcileParametersFunc returns error",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{},
