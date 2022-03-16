@@ -1669,7 +1669,7 @@ components:
         kind: "Error"
         href: "/api/kafkas_mgmt/v1/errors/5"
         code: "KAFKAS-MGMT-5"
-        reason: "User 'foo-bar' has reached a maximum number of 6 allowed instances."
+        reason: "User 'foo-bar' has reached a maximum number of 6 allowed streaming units."
         operation_id: "1lY3UiEkxnXBpVPeI2oNejd3XB"
     403TermsNotAcceptedExample:
       value:
