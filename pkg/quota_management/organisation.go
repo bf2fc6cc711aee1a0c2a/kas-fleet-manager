@@ -20,7 +20,7 @@ func (org Organisation) HasUsersRegistered() bool {
 }
 
 func (org Organisation) IsInstanceCountWithinLimit(count int) bool {
-	return count < org.GetMaxAllowedInstances()
+	return count <= org.GetMaxAllowedInstances()
 }
 
 func (org Organisation) GetMaxAllowedInstances() int {
