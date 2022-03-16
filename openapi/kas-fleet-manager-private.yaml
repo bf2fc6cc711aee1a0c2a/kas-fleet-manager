@@ -366,14 +366,11 @@ components:
           type: object
           nullable: true
           properties:
-            ingressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
-              nullable: true
-            egressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+            ingressEgressThroughputPerSec:
+              type: string #an example is "40Gi", a k8s quantity.
               nullable: true
             connections:
-              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+              type: integer # an example is 10000.
               nullable: true
             dataRetentionSize:
               type: string
@@ -405,14 +402,11 @@ components:
         total:
           type: object
           properties:
-            ingressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
-              nullable: true
-            egressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+            ingressEgressThroughputPerSec:
+              type: string #an example is "40Gi", a k8s quantity.
               nullable: true
             connections:
-              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+              type: integer # an example is 10000.
               nullable: true
             dataRetentionSize:
               type: string
@@ -424,14 +418,11 @@ components:
           type: object
           properties:
             # TODO 'total', 'remaining' attributes share the same properties so should we refactor it to a common schema?
-            ingressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
-              nullable: true
-            egressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+            ingressEgressThroughputPerSec:
+              type: string #an example is "40Gi", a k8s quantity.
               nullable: true
             connections:
-              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+              type: integer # an example is 10000.
               nullable: true
             dataRetentionSize:
               type: string
@@ -485,10 +476,7 @@ components:
           description: "Capacity information of the data plane cluster"
           type: object
           properties:
-            ingressThroughputPerSec:
-              type: string #example: 4Mi
-              nullable: true
-            egressThroughputPerSec:
+            ingressEgressThroughputPerSec:
               type: string #example: 4Mi
               nullable: true
             totalMaxConnections:
@@ -630,8 +618,7 @@ components:
             status: "False"
             lastTransitionTime: "2018-01-01T00:00:00Z"
         capacity:
-          ingressThroughputPerSec: 4Mi
-          egressThroughputPerSec: 4Mi
+          ingressEgressThroughputPerSec: 4Mi
           totalMaxConnections: 500
           maxDataRetentionSize: 100Gi
           maxPartitions: 100

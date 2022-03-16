@@ -139,11 +139,8 @@ func (h *dataPlaneClusterHandler) validateResizeInfo(request *private.DataPlaneC
 		if resizeInfo.Delta.DataRetentionSize == nil {
 			return errors.FieldValidationError("resizeInfo delta data retention size must be set")
 		}
-		if resizeInfo.Delta.IngressThroughputPerSec == nil {
-			return errors.FieldValidationError("resizeInfo delta ingress throughput per second must be set")
-		}
-		if resizeInfo.Delta.EgressThroughputPerSec == nil {
-			return errors.FieldValidationError("resizeInfo delta egress throughput per second must be set")
+		if resizeInfo.Delta.IngressEgressThroughputPerSec == nil {
+			return errors.FieldValidationError("resizeInfo delta ingressEgress throughput per second must be set")
 		}
 
 		if resizeInfo.Delta.Partitions == nil {
@@ -161,11 +158,8 @@ func (h *dataPlaneClusterHandler) validateTotal(request *private.DataPlaneCluste
 	if total.DataRetentionSize == nil {
 		return errors.FieldValidationError("total data retention size must be set")
 	}
-	if total.IngressThroughputPerSec == nil {
-		return errors.FieldValidationError("total ingress throughput per second must be set")
-	}
-	if total.EgressThroughputPerSec == nil {
-		return errors.FieldValidationError("total egress throughput per second must be set")
+	if total.IngressEgressThroughputPerSec == nil {
+		return errors.FieldValidationError("total ingressEgress throughput per second must be set")
 	}
 	if total.Partitions == nil {
 		return errors.FieldValidationError("total partitions must be set")
@@ -183,11 +177,8 @@ func (h *dataPlaneClusterHandler) validateRemaining(request *private.DataPlaneCl
 	if remaining.DataRetentionSize == nil {
 		return errors.FieldValidationError("remaining data retention size must be set")
 	}
-	if remaining.IngressThroughputPerSec == nil {
-		return errors.FieldValidationError("remaining ingress throughput per second must be set")
-	}
-	if remaining.EgressThroughputPerSec == nil {
-		return errors.FieldValidationError("remaining egress throughput per second must be set")
+	if remaining.IngressEgressThroughputPerSec == nil {
+		return errors.FieldValidationError("remaining ingressEgress throughput per second must be set")
 	}
 	if remaining.Partitions == nil {
 		return errors.FieldValidationError("remaining partitions must be set")

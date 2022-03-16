@@ -11,11 +11,10 @@ package private
 
 // DataPlaneKafkaStatusCapacity Capacity information of the data plane cluster
 type DataPlaneKafkaStatusCapacity struct {
-	IngressThroughputPerSec     *string `json:"ingressThroughputPerSec,omitempty"`
-	EgressThroughputPerSec      *string `json:"egressThroughputPerSec,omitempty"`
-	TotalMaxConnections         *int32  `json:"totalMaxConnections,omitempty"`
-	MaxDataRetentionSize        *string `json:"maxDataRetentionSize,omitempty"`
-	MaxPartitions               *int32  `json:"maxPartitions,omitempty"`
-	MaxDataRetentionPeriod      *string `json:"maxDataRetentionPeriod,omitempty"`
-	MaxConnectionAttemptsPerSec *int32  `json:"maxConnectionAttemptsPerSec,omitempty"`
+	IngressEgressThroughputPerSec *string `json:"ingressEgressThroughputPerSec,omitempty"`
+	TotalMaxConnections           *int32  `json:"totalMaxConnections,omitempty"`
+	MaxDataRetentionSize          *string `json:"maxDataRetentionSize,omitempty"`
+	MaxPartitions                 *int32  `json:"maxPartitions,omitempty"`
+	MaxDataRetentionPeriod        *string `json:"maxDataRetentionPeriod,omitempty"`
+	MaxConnectionAttemptsPerSec   *int32  `json:"maxConnectionAttemptsPerSec,omitempty"`
 }
