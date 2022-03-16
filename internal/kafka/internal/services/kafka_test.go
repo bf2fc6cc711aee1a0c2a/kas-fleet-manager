@@ -1057,6 +1057,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
 					kafkaRequest.InstanceType = types.EVAL.String()
+					kafkaRequest.SizeId = "x2"
 				}),
 			},
 			error: errorCheck{

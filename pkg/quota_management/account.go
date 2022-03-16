@@ -6,7 +6,7 @@ type Account struct {
 }
 
 func (account Account) IsInstanceCountWithinLimit(count int) bool {
-	return count < account.GetMaxAllowedInstances()
+	return count <= account.GetMaxAllowedInstances()
 }
 
 func (account Account) GetMaxAllowedInstances() int {
