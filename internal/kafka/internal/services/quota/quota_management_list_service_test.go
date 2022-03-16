@@ -202,9 +202,7 @@ var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig
 }
 
 var defaultKafkaConf = config.KafkaConfig{
-	KafkaCapacity: config.KafkaCapacityConfig{
-		MaxCapacity: 100,
-	},
+	KafkaCapacity:          config.KafkaCapacityConfig{},
 	Quota:                  config.NewKafkaQuotaConfig(),
 	SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
 }
