@@ -108,7 +108,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			name: "should return an error when finding cluster fails",
 			fields: fields{
 				quotaService: &services.QuotaServiceMock{
-					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType, sizeRequired int, kafkaConfig *config.KafkaConfig) (string, *errors.ServiceError) {
 						return "", nil
 					},
 				},
@@ -143,7 +143,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 					},
 				},
 				quotaService: &services.QuotaServiceMock{
-					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType, sizeRequired int, kafkaConfig *config.KafkaConfig) (string, *errors.ServiceError) {
 						return "some-subscription", nil
 					},
 				},
@@ -178,7 +178,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 					},
 				},
 				quotaService: &services.QuotaServiceMock{
-					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType, sizeRequired int, kafkaConfig *config.KafkaConfig) (string, *errors.ServiceError) {
 						return "sub-scription", nil
 					},
 				},
@@ -213,7 +213,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 					},
 				},
 				quotaService: &services.QuotaServiceMock{
-					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType, sizeRequired int, kafkaConfig *config.KafkaConfig) (string, *errors.ServiceError) {
 						return "sub-scription", nil
 					},
 				},
@@ -246,7 +246,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 					},
 				},
 				quotaService: &services.QuotaServiceMock{
-					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType, sizeRequired int, kafkaConfig *config.KafkaConfig) (string, *errors.ServiceError) {
 						return "sub-scription", nil
 					},
 				},

@@ -84,9 +84,9 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 						if e != nil {
 							return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to list cloud provider regions")
 						}
-						kafka.SizeId = size
+						kafka.SizeId = size.Id
 						kafka.CloudProvider = cloudRegion.CloudProvider
-						hasCapacity, err := h.kafkaService.HasAvailableCapacityInRegion(kafka)
+						hasCapacity, err := h.kafkaService.HasAvailableCapacityInRegion(kafka, size.CapacityConsumed)
 						if err == nil && hasCapacity {
 							cluster, err := h.clusterPlacementStrategy.FindCluster(kafka)
 							if err == nil && cluster != nil {

@@ -59,7 +59,7 @@ var _ KafkaService = &KafkaServiceMock{}
 //             GetManagedKafkaByClusterIDFunc: func(clusterID string) ([]v1.ManagedKafka, *errors.ServiceError) {
 // 	               panic("mock out the GetManagedKafkaByClusterID method")
 //             },
-//             HasAvailableCapacityInRegionFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
+//             HasAvailableCapacityInRegionFunc: func(kafkaRequest *dbapi.KafkaRequest, sizeRequired int) (bool, *errors.ServiceError) {
 // 	               panic("mock out the HasAvailableCapacityInRegion method")
 //             },
 //             ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError) {
@@ -136,7 +136,7 @@ type KafkaServiceMock struct {
 	GetManagedKafkaByClusterIDFunc func(clusterID string) ([]v1.ManagedKafka, *errors.ServiceError)
 
 	// HasAvailableCapacityInRegionFunc mocks the HasAvailableCapacityInRegion method.
-	HasAvailableCapacityInRegionFunc func(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError)
+	HasAvailableCapacityInRegionFunc func(kafkaRequest *dbapi.KafkaRequest, sizeRequired int) (bool, *errors.ServiceError)
 
 	// ListFunc mocks the List method.
 	ListFunc func(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError)
@@ -234,6 +234,8 @@ type KafkaServiceMock struct {
 		HasAvailableCapacityInRegion []struct {
 			// KafkaRequest is the kafkaRequest argument value.
 			KafkaRequest *dbapi.KafkaRequest
+			// SizeRequired is the sizeRequired argument value.
+			SizeRequired int
 		}
 		// List holds details about calls to the List method.
 		List []struct {
@@ -667,19 +669,21 @@ func (mock *KafkaServiceMock) GetManagedKafkaByClusterIDCalls() []struct {
 }
 
 // HasAvailableCapacityInRegion calls HasAvailableCapacityInRegionFunc.
-func (mock *KafkaServiceMock) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
+func (mock *KafkaServiceMock) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest, sizeRequired int) (bool, *errors.ServiceError) {
 	if mock.HasAvailableCapacityInRegionFunc == nil {
 		panic("KafkaServiceMock.HasAvailableCapacityInRegionFunc: method is nil but KafkaService.HasAvailableCapacityInRegion was just called")
 	}
 	callInfo := struct {
 		KafkaRequest *dbapi.KafkaRequest
+		SizeRequired int
 	}{
 		KafkaRequest: kafkaRequest,
+		SizeRequired: sizeRequired,
 	}
 	mock.lockHasAvailableCapacityInRegion.Lock()
 	mock.calls.HasAvailableCapacityInRegion = append(mock.calls.HasAvailableCapacityInRegion, callInfo)
 	mock.lockHasAvailableCapacityInRegion.Unlock()
-	return mock.HasAvailableCapacityInRegionFunc(kafkaRequest)
+	return mock.HasAvailableCapacityInRegionFunc(kafkaRequest, sizeRequired)
 }
 
 // HasAvailableCapacityInRegionCalls gets all the calls that were made to HasAvailableCapacityInRegion.
@@ -687,9 +691,11 @@ func (mock *KafkaServiceMock) HasAvailableCapacityInRegion(kafkaRequest *dbapi.K
 //     len(mockedKafkaService.HasAvailableCapacityInRegionCalls())
 func (mock *KafkaServiceMock) HasAvailableCapacityInRegionCalls() []struct {
 	KafkaRequest *dbapi.KafkaRequest
+	SizeRequired int
 } {
 	var calls []struct {
 		KafkaRequest *dbapi.KafkaRequest
+		SizeRequired int
 	}
 	mock.lockHasAvailableCapacityInRegion.RLock()
 	calls = mock.calls.HasAvailableCapacityInRegion

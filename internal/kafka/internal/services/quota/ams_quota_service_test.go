@@ -185,7 +185,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 			fmt.Printf("eq is %v\n", eq)
 			gomega.Expect(eq).To(gomega.Equal(tt.args.hasEvalQuota))
 
-			_, err = quotaService.ReserveQuota(kafka, tt.args.kafkaInstanceType)
+			_, err = quotaService.ReserveQuota(kafka, tt.args.kafkaInstanceType, 1, &defaultKafkaConf)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
@@ -480,7 +480,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				},
 				Owner: tt.args.owner,
 			}
-			subId, err := quotaService.ReserveQuota(kafka, types.STANDARD)
+			subId, err := quotaService.ReserveQuota(kafka, types.STANDARD, 1, &defaultKafkaConf)
 			gomega.Expect(subId).To(gomega.Equal(tt.want))
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 

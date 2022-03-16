@@ -5,8 +5,9 @@ package services
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
-	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -16,34 +17,34 @@ var _ QuotaService = &QuotaServiceMock{}
 
 // QuotaServiceMock is a mock implementation of QuotaService.
 //
-// 	func TestSomethingThatUsesQuotaService(t *testing.T) {
+//     func TestSomethingThatUsesQuotaService(t *testing.T) {
 //
-// 		// make and configure a mocked QuotaService
-// 		mockedQuotaService := &QuotaServiceMock{
-// 			CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *serviceError.ServiceError) {
-// 				panic("mock out the CheckIfQuotaIsDefinedForInstanceType method")
-// 			},
-// 			DeleteQuotaFunc: func(subscriptionId string) *serviceError.ServiceError {
-// 				panic("mock out the DeleteQuota method")
-// 			},
-// 			ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *serviceError.ServiceError) {
-// 				panic("mock out the ReserveQuota method")
-// 			},
-// 		}
+//         // make and configure a mocked QuotaService
+//         mockedQuotaService := &QuotaServiceMock{
+//             CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+// 	               panic("mock out the CheckIfQuotaIsDefinedForInstanceType method")
+//             },
+//             DeleteQuotaFunc: func(subscriptionId string) *errors.ServiceError {
+// 	               panic("mock out the DeleteQuota method")
+//             },
+//             ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType, sizeRequired int, kafkaConfig *config.KafkaConfig) (string, *errors.ServiceError) {
+// 	               panic("mock out the ReserveQuota method")
+//             },
+//         }
 //
-// 		// use mockedQuotaService in code that requires QuotaService
-// 		// and then make assertions.
+//         // use mockedQuotaService in code that requires QuotaService
+//         // and then make assertions.
 //
-// 	}
+//     }
 type QuotaServiceMock struct {
 	// CheckIfQuotaIsDefinedForInstanceTypeFunc mocks the CheckIfQuotaIsDefinedForInstanceType method.
-	CheckIfQuotaIsDefinedForInstanceTypeFunc func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *serviceError.ServiceError)
+	CheckIfQuotaIsDefinedForInstanceTypeFunc func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError)
 
 	// DeleteQuotaFunc mocks the DeleteQuota method.
-	DeleteQuotaFunc func(subscriptionId string) *serviceError.ServiceError
+	DeleteQuotaFunc func(subscriptionId string) *errors.ServiceError
 
 	// ReserveQuotaFunc mocks the ReserveQuota method.
-	ReserveQuotaFunc func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *serviceError.ServiceError)
+	ReserveQuotaFunc func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType, sizeRequired int, kafkaConfig *config.KafkaConfig) (string, *errors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -65,6 +66,10 @@ type QuotaServiceMock struct {
 			Kafka *dbapi.KafkaRequest
 			// InstanceType is the instanceType argument value.
 			InstanceType types.KafkaInstanceType
+			// SizeRequired is the sizeRequired argument value.
+			SizeRequired int
+			// KafkaConfig is the kafkaConfig argument value.
+			KafkaConfig *config.KafkaConfig
 		}
 	}
 	lockCheckIfQuotaIsDefinedForInstanceType sync.RWMutex
@@ -73,7 +78,7 @@ type QuotaServiceMock struct {
 }
 
 // CheckIfQuotaIsDefinedForInstanceType calls CheckIfQuotaIsDefinedForInstanceTypeFunc.
-func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *serviceError.ServiceError) {
+func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 	if mock.CheckIfQuotaIsDefinedForInstanceTypeFunc == nil {
 		panic("QuotaServiceMock.CheckIfQuotaIsDefinedForInstanceTypeFunc: method is nil but QuotaService.CheckIfQuotaIsDefinedForInstanceType was just called")
 	}
@@ -108,7 +113,7 @@ func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceTypeCalls() []stru
 }
 
 // DeleteQuota calls DeleteQuotaFunc.
-func (mock *QuotaServiceMock) DeleteQuota(subscriptionId string) *serviceError.ServiceError {
+func (mock *QuotaServiceMock) DeleteQuota(subscriptionId string) *errors.ServiceError {
 	if mock.DeleteQuotaFunc == nil {
 		panic("QuotaServiceMock.DeleteQuotaFunc: method is nil but QuotaService.DeleteQuota was just called")
 	}
@@ -139,21 +144,25 @@ func (mock *QuotaServiceMock) DeleteQuotaCalls() []struct {
 }
 
 // ReserveQuota calls ReserveQuotaFunc.
-func (mock *QuotaServiceMock) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *serviceError.ServiceError) {
+func (mock *QuotaServiceMock) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType, sizeRequired int, kafkaConfig *config.KafkaConfig) (string, *errors.ServiceError) {
 	if mock.ReserveQuotaFunc == nil {
 		panic("QuotaServiceMock.ReserveQuotaFunc: method is nil but QuotaService.ReserveQuota was just called")
 	}
 	callInfo := struct {
 		Kafka        *dbapi.KafkaRequest
 		InstanceType types.KafkaInstanceType
+		SizeRequired int
+		KafkaConfig  *config.KafkaConfig
 	}{
 		Kafka:        kafka,
 		InstanceType: instanceType,
+		SizeRequired: sizeRequired,
+		KafkaConfig:  kafkaConfig,
 	}
 	mock.lockReserveQuota.Lock()
 	mock.calls.ReserveQuota = append(mock.calls.ReserveQuota, callInfo)
 	mock.lockReserveQuota.Unlock()
-	return mock.ReserveQuotaFunc(kafka, instanceType)
+	return mock.ReserveQuotaFunc(kafka, instanceType, sizeRequired, kafkaConfig)
 }
 
 // ReserveQuotaCalls gets all the calls that were made to ReserveQuota.
@@ -162,10 +171,14 @@ func (mock *QuotaServiceMock) ReserveQuota(kafka *dbapi.KafkaRequest, instanceTy
 func (mock *QuotaServiceMock) ReserveQuotaCalls() []struct {
 	Kafka        *dbapi.KafkaRequest
 	InstanceType types.KafkaInstanceType
+	SizeRequired int
+	KafkaConfig  *config.KafkaConfig
 } {
 	var calls []struct {
 		Kafka        *dbapi.KafkaRequest
 		InstanceType types.KafkaInstanceType
+		SizeRequired int
+		KafkaConfig  *config.KafkaConfig
 	}
 	mock.lockReserveQuota.RLock()
 	calls = mock.calls.ReserveQuota
