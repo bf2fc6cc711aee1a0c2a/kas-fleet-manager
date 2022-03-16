@@ -42,7 +42,7 @@ func PresentConnectorDeployment(from dbapi.ConnectorDeployment) (private.Connect
 			ConnectorResourceVersion: from.ConnectorVersion,
 		},
 		Status: private.ConnectorDeploymentStatus{
-			Phase:           from.Status.Phase,
+			Phase:           string(from.Status.Phase),
 			ResourceVersion: from.Status.Version,
 			Conditions:      conditions,
 			Operators:       operators,
@@ -60,7 +60,7 @@ func ConvertConnectorDeploymentStatus(from private.ConnectorDeploymentStatus) (d
 		return dbapi.ConnectorDeploymentStatus{}, errors.BadRequest("invalid operators: %v", err)
 	}
 	return dbapi.ConnectorDeploymentStatus{
-		Phase:            from.Phase,
+		Phase:            dbapi.ConnectorStatusPhase(from.Phase),
 		Version:          from.ResourceVersion,
 		Conditions:       conditions,
 		Operators:        operators,

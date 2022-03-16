@@ -3,7 +3,7 @@ package presenters
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 )
 
 func toStringSlice(channels []public.Channel) []string {
@@ -33,7 +33,7 @@ func toChannelSlice(strings []string) []public.Channel {
 func ConvertConnectorType(from public.ConnectorType) (*dbapi.ConnectorType, error) {
 
 	ct := &dbapi.ConnectorType{
-		Meta: api.Meta{
+		Model: db.Model{
 			ID: from.Id,
 		},
 		Name:        from.Name,

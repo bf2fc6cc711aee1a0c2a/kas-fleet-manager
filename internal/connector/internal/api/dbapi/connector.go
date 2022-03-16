@@ -1,10 +1,19 @@
 package dbapi
 
-import "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+)
 
-type ConnectorStatusPhase = string
+type ConnectorDesiredState string
+type ConnectorStatusPhase string
 
 const (
+	ConnectorUnassigned ConnectorDesiredState = "unassigned"
+	ConnectorReady      ConnectorDesiredState = "ready"
+	ConnectorStopped    ConnectorDesiredState = "stopped"
+	ConnectorDeleted    ConnectorDesiredState = "deleted"
+
 	ConnectorStatusPhaseAssigning      ConnectorStatusPhase = "assigning"      // set by kas-fleet-manager - user request
 	ConnectorStatusPhaseAssigned       ConnectorStatusPhase = "assigned"       // set by kas-fleet-manager - worker
 	ConnectorStatusPhaseUpdating       ConnectorStatusPhase = "updating"       // set by kas-fleet-manager - user request
@@ -17,23 +26,24 @@ const (
 	ConnectorStatusPhaseDeleted        ConnectorStatusPhase = "deleted"        // set by the agent
 )
 
-var ValidDesiredStates = []ConnectorStatusPhase{
-	ConnectorStatusPhaseReady,
-	ConnectorStatusPhaseStopped,
-	ConnectorStatusPhaseDeleted,
+var ValidDesiredStates = []string{
+	string(ConnectorUnassigned),
+	string(ConnectorReady),
+	string(ConnectorStopped),
+	string(ConnectorDeleted),
 }
 
-var AgentSetConnectorStatusPhase = []ConnectorStatusPhase{
-	ConnectorStatusPhaseProvisioning,
-	ConnectorStatusPhaseDeprovisioning,
-	ConnectorStatusPhaseStopped,
-	ConnectorStatusPhaseReady,
-	ConnectorStatusPhaseFailed,
-	ConnectorStatusPhaseDeleted,
+var AgentConnectorStatusPhase = []string{
+	string(ConnectorStatusPhaseProvisioning),
+	string(ConnectorStatusPhaseDeprovisioning),
+	string(ConnectorStatusPhaseStopped),
+	string(ConnectorStatusPhaseReady),
+	string(ConnectorStatusPhaseFailed),
+	string(ConnectorStatusPhaseDeleted),
 }
 
 type Connector struct {
-	api.Meta
+	db.Model
 
 	NamespaceId   *string
 	CloudProvider string
@@ -47,7 +57,7 @@ type Connector struct {
 
 	ConnectorTypeId string
 	ConnectorSpec   api.JSON `gorm:"type:jsonb"`
-	DesiredState    string
+	DesiredState    ConnectorDesiredState
 	Channel         string
 	Kafka           KafkaConnectionSettings          `gorm:"embedded;embeddedPrefix:kafka_"`
 	SchemaRegistry  SchemaRegistryConnectionSettings `gorm:"embedded;embeddedPrefix:schema_registry_"`
@@ -57,16 +67,16 @@ type Connector struct {
 }
 
 type ConnectorStatus struct {
-	api.Meta
+	db.Model
 	NamespaceID *string
-	Phase       string
+	Phase       ConnectorStatusPhase
 }
 
 type ConnectorList []*Connector
 
 // ConnectorDeployment Holds the deployment configuration of a connector
 type ConnectorDeployment struct {
-	api.Meta
+	db.Model
 	Version                int64
 	ConnectorID            string
 	OperatorID             string
@@ -81,8 +91,8 @@ type ConnectorDeployment struct {
 type ConnectorDeploymentList []ConnectorDeployment
 
 type ConnectorDeploymentStatus struct {
-	api.Meta
-	Phase            string
+	db.Model
+	Phase            ConnectorStatusPhase
 	Version          int64
 	Conditions       api.JSON `gorm:"type:jsonb"`
 	Operators        api.JSON `gorm:"type:jsonb"`

@@ -2,6 +2,7 @@ package dbapi
 
 import (
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -10,7 +11,7 @@ import (
 )
 
 type ConnectorType struct {
-	api.Meta
+	db.Model
 	Version     string
 	Name        string `gorm:"index"`
 	Description string

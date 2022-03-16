@@ -300,7 +300,7 @@ func (h *ConnectorAdminHandler) DeleteConnectorNamespace(writer http.ResponseWri
 				return nil, serviceError
 			}
 
-			serviceError = h.NamespaceService.Delete(namespaceId)
+			serviceError = h.NamespaceService.Delete(request.Context(), namespaceId)
 			return nil, serviceError
 		},
 	}

@@ -14,7 +14,8 @@ type ConnectorDesiredState string
 
 // List of ConnectorDesiredState
 const (
-	CONNECTORDESIREDSTATE_READY   ConnectorDesiredState = "ready"
-	CONNECTORDESIREDSTATE_STOPPED ConnectorDesiredState = "stopped"
-	CONNECTORDESIREDSTATE_DELETED ConnectorDesiredState = "deleted"
+	CONNECTORDESIREDSTATE_UNASSIGNED ConnectorDesiredState = "unassigned"
+	CONNECTORDESIREDSTATE_READY      ConnectorDesiredState = "ready"
+	CONNECTORDESIREDSTATE_STOPPED    ConnectorDesiredState = "stopped"
+	CONNECTORDESIREDSTATE_DELETED    ConnectorDesiredState = "deleted"
 )

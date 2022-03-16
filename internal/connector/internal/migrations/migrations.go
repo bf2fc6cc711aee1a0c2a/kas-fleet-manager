@@ -35,6 +35,7 @@ var migrations = []*gormigrate.Migration{
 	addConnectorNamespaceLease("202203030000"),
 	addConnectorNamespaceStatus("202203040000"),
 	fixNamespaceNameConstraint("202203150000"),
+	addConnectorClusterLease("202203160000"),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

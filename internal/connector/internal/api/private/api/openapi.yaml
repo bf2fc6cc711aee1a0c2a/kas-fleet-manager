@@ -16,7 +16,7 @@ tags:
 - description: only accessible by connector fleet shard agents
   name: Connector Clusters Agent
 paths:
-  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/status:
+  /api/connector_mgmt/v1/agent/kafka_connector_clusters/{connector_cluster_id}/status:
     put:
       description: Update the status of a connector cluster
       operationId: updateKafkaConnectorClusterStatus
@@ -62,7 +62,7 @@ paths:
       summary: Update the status of a connector cluster
       tags:
       - Connector Clusters Agent
-  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments:
+  /api/connector_mgmt/v1/agent/kafka_connector_clusters/{connector_cluster_id}/deployments:
     get:
       description: Returns a list of connector deployments assigned to the cluster.
       operationId: getClusterAsignedConnectorDeployments
@@ -145,7 +145,7 @@ paths:
       summary: Returns a list of connector deployments assigned to the cluster.
       tags:
       - Connector Clusters Agent
-  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}:
+  /api/connector_mgmt/v1/agent/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}:
     get:
       description: Returns a list of connector deployments assigned to the cluster.
       operationId: getClusterAsignedConnectorDeploymentById
@@ -202,7 +202,7 @@ paths:
       summary: Returns a list of connector deployments assigned to the cluster.
       tags:
       - Connector Clusters Agent
-  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}/status:
+  /api/connector_mgmt/v1/agent/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}/status:
     put:
       description: update the connector deployment status
       operationId: updateConnectorDeploymentStatus
@@ -261,7 +261,7 @@ paths:
       summary: update the connector deployment status
       tags:
       - Connector Clusters Agent
-  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/agent_namespaces:
+  /api/connector_mgmt/v1/agent/kafka_connector_clusters/{connector_cluster_id}/namespaces:
     get:
       description: Returns all connector namespaces assigned to the cluster.
       operationId: getClusterAsignedConnectorNamespaces
@@ -310,7 +310,7 @@ paths:
       summary: Returns all connector namespaces assigned to the cluster.
       tags:
       - Connector Clusters Agent
-  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/agent_namespaces/{namespace_id}:
+  /api/connector_mgmt/v1/agent/kafka_connector_clusters/{connector_cluster_id}/namespaces/{namespace_id}:
     get:
       description: Returns a connector namespace assigned to the cluster.
       operationId: getClusterAsignedConnectorNamespaceById

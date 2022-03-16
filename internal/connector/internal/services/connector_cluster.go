@@ -5,11 +5,10 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
-	goerrors "errors"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/phase"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/golang/glog"
-	"math/rand"
 	"reflect"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
@@ -39,7 +38,7 @@ type ConnectorClusterService interface {
 	GetConnectorWithBase64Secrets(ctx context.Context, resource dbapi.ConnectorDeployment) (dbapi.Connector, *errors.ServiceError)
 	ListConnectorDeployments(ctx context.Context, id string, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError)
 	UpdateConnectorDeploymentStatus(ctx context.Context, status dbapi.ConnectorDeploymentStatus) *errors.ServiceError
-	FindReadyNamespace(owner string, orgId string, namespaceId *string) (*dbapi.ConnectorNamespace, *errors.ServiceError)
+	FindAvailableNamespace(owner string, orgId string, namespaceId *string) (*dbapi.ConnectorNamespace, *errors.ServiceError)
 	GetDeploymentByConnectorId(ctx context.Context, connectorID string) (dbapi.ConnectorDeployment, *errors.ServiceError)
 	GetDeployment(ctx context.Context, id string) (dbapi.ConnectorDeployment, *errors.ServiceError)
 	GetAvailableDeploymentTypeUpgrades(listArgs *services.ListArguments) (dbapi.ConnectorDeploymentTypeUpgradeList, *api.PagingMeta, *errors.ServiceError)
@@ -48,6 +47,7 @@ type ConnectorClusterService interface {
 	UpgradeConnectorsByOperator(ctx context.Context, clusterId string, upgrades dbapi.ConnectorDeploymentOperatorUpgradeList) *errors.ServiceError
 	CleanupDeployments() *errors.ServiceError
 	UpdateClientId(clusterId string, clientID string) *errors.ServiceError
+	ReconcileDeletingClusters() (int, []*errors.ServiceError)
 }
 
 var _ ConnectorClusterService = &connectorClusterService{}
@@ -99,14 +99,14 @@ func (k *connectorClusterService) CleanupDeployments() *errors.ServiceError {
 	for _, result := range results {
 		// delete those deployments and associated status
 		if err := dbConn.Delete(&dbapi.ConnectorDeploymentStatus{
-			Meta: api.Meta{
+			Model: db.Model{
 				ID: result.DeploymentID,
 			},
 		}).Error; err != nil {
 			return errors.GeneralError("Unable to delete connector deployment status who's connectors have been deleted: %s", err)
 		}
 		if err := dbConn.Delete(&dbapi.ConnectorDeployment{
-			Meta: api.Meta{
+			Model: db.Model{
 				ID: result.DeploymentID,
 			},
 		}).Error; err != nil {
@@ -187,34 +187,34 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 		return errors.Unauthenticated("user not authenticated")
 	}
 
+	var clusterDeleted, namespacesDeleted, connectorsDeleted bool
 	if err := k.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
 
 		var resource dbapi.ConnectorCluster
-		if err := dbConn.Where("owner = ? AND id = ?", owner, id).First(&resource).Error; err != nil {
+		if err := dbConn.Where("owner = ? AND id = ?", owner, id).Select("id", "status_phase").
+			First(&resource).Error; err != nil {
 			return services.HandleGetError("Connector cluster", "id", id, err)
 		}
 
-		// delete cluster
-		if err := dbConn.Delete(&dbapi.ConnectorCluster{}, "id = ?", id).Error; err != nil {
-			return services.HandleDeleteError("Connector cluster", "id", id, err)
-		}
+		if _, err := phase.PerformClusterOperation(&resource, phase.DeleteCluster,
+			func(cluster *dbapi.ConnectorCluster) *errors.ServiceError {
 
-		// Delete all deployments assigned to the cluster..
-		if err := dbConn.Delete(&dbapi.ConnectorDeploymentStatus{}, "id IN (?)",
-			dbConn.Table("connector_deployments").Select("id").Where("cluster_id = ?", id)).Error; err != nil {
-			return services.HandleDeleteError("Connector deployment status", "cluster_id", id, err)
-		}
-		if err := dbConn.Delete(&dbapi.ConnectorDeployment{}, "cluster_id = ?", id).Error; err != nil {
-			return services.HandleDeleteError("Connector deployment", "cluster_id", id, err)
-		}
+				// cascade delete namespaces and deployments, first
+				var serr *errors.ServiceError
+				namespacesDeleted, connectorsDeleted, serr = k.connectorNamespaceService.DeleteNamespaceAndConnectorDeployments(ctx, dbConn,
+					"connector_namespaces.cluster_id = ?", id)
+				if serr != nil {
+					return serr
+				}
 
-		// Delete all namespaces assigned to the cluster..
-		if err := dbConn.Delete(&dbapi.ConnectorNamespace{}, "cluster_id = ?", id).Error; err != nil {
-			return services.HandleDeleteError("Connector namespace", "cluster_id", id, err)
-		}
+				if err := dbConn.Model(cluster).Update("status_phase", cluster.Status.Phase).Error; err != nil {
+					return services.HandleUpdateError("Connector cluster", err)
+				}
 
-		// Clear the cluster from any connectors that were using it.
-		if err := removeConnectorsFromNamespace(dbConn, "connector_namespaces.cluster_id = ?", id); err != nil {
+				clusterDeleted = true
+				return nil
+
+			}); err != nil {
 			return err
 		}
 
@@ -223,50 +223,23 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 		return services.HandleDeleteError("Connector cluster", "id", id, err)
 	}
 
-	glog.V(5).Infof("Removing agent service account for connector cluster %s", id)
-	if err := k.keycloakService.DeRegisterConnectorFleetshardOperatorServiceAccount(id); err != nil {
-		return errors.GeneralError("failed to remove connector service account for cluster %s: %s", id, err)
-	}
-
-	return nil
-}
-
-func (k connectorClusterService) ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) *errors.ServiceError {
-	dbConn := k.connectionFactory.New()
-	rows, err := dbConn.
-		Model(&dbapi.Connector{}).
-		Where(query, args...).
-		Joins("left join connector_statuses on connector_statuses.id = connectors.id").
-		Order("version").Rows()
-
-	if err != nil {
-		if goerrors.Is(err, gorm.ErrRecordNotFound) {
-			return nil
+	// reconcile deleting clusters, namespaces and connectors
+	defer func() {
+		if clusterDeleted {
+			k.bus.Notify("reconcile:connector_cluster")
 		}
-		return errors.GeneralError("Unable to list connectors: %s", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		resource := dbapi.Connector{}
-
-		// ScanRows is a method of `gorm.DB`, it can be used to scan a row into a struct
-		err := dbConn.ScanRows(rows, &resource)
-		if err != nil {
-			return errors.GeneralError("Unable to scan connector: %s", err)
+	}()
+	defer func() {
+		if namespacesDeleted {
+			k.bus.Notify("reconcile:connector_namespace")
 		}
-
-		resource.Status.ID = resource.ID
-		err = dbConn.Model(&dbapi.ConnectorStatus{}).First(&resource.Status).Error
-		if err != nil {
-			return errors.GeneralError("Unable to load connector status: %s", err)
+	}()
+	defer func() {
+		if connectorsDeleted {
+			k.bus.Notify("reconcile:connector")
 		}
+	}()
 
-		if serr := f(&resource); serr != nil {
-			return serr
-		}
-
-	}
 	return nil
 }
 
@@ -347,9 +320,18 @@ func (k *connectorClusterService) UpdateConnectorClusterStatus(ctx context.Conte
 		return services.HandleGetError("Connector cluster status", "id", id, err)
 	}
 
-	if !reflect.DeepEqual(resource.Status, status) {
+	// compare current and requested cluster phases to validate that agent can connect
+	updated, err := phase.PerformClusterOperation(&resource, phase.ConnectCluster)
+	if err != nil {
+		return err
+	}
 
-		if resource.Status.Phase != status.Phase {
+	// agent doesn't directly modify cluster phase, that's done in PerformClusterOperation()
+	status.Phase = resource.Status.Phase
+
+	if updated || !reflect.DeepEqual(resource.Status, status) {
+
+		if updated {
 			// The phase should not be changing that often.. but when it does,
 			// kick off a reconcile to get connectors deployed to the cluster.
 			_ = db.AddPostCommitAction(ctx, func() {
@@ -358,8 +340,14 @@ func (k *connectorClusterService) UpdateConnectorClusterStatus(ctx context.Conte
 			})
 		}
 
-		resource.Status = status
-		if err := dbConn.Save(&resource).Error; err != nil {
+		if err := dbConn.Updates(&dbapi.ConnectorCluster{
+			Model: db.Model{ID: id},
+			Status: dbapi.ConnectorClusterStatus{
+				Phase:      resource.Status.Phase,
+				Version:    status.Version,
+				Conditions: status.Conditions,
+				Operators:  status.Operators,
+			}}).Error; err != nil {
 			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update status")
 		}
 	}
@@ -395,7 +383,7 @@ func (k *connectorClusterService) GetClientId(clusterID string) (string, error) 
 func (k *connectorClusterService) UpdateClientId(clusterId string, clientID string) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
-	cluster := dbapi.ConnectorCluster{Meta: api.Meta{ID: clusterId}, ClientId: clientID}
+	cluster := dbapi.ConnectorCluster{Model: db.Model{ID: clusterId}, ClientId: clientID}
 	if err := dbConn.Updates(cluster).Error; err != nil {
 		return services.HandleGetError("Connector cluster client_id", "id", clusterId, err)
 	}
@@ -484,80 +472,52 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 	if err := dbConn.Select("desired_state").
 		Where("id = ?", deployment.ConnectorID).
 		First(&connector).Error; err != nil {
-		return services.HandleGetError("connector", "id", deployment.ConnectorID, err)
+		return services.HandleGetError("Connector", "id", deployment.ConnectorID, err)
+	}
+
+	connectorStatus := dbapi.ConnectorStatus{}
+	if err := dbConn.Select("phase").
+		Where("id = ?", deployment.ConnectorID).
+		First(&connectorStatus).Error; err != nil {
+		return services.HandleGetError("Connector", "id", deployment.ConnectorID, err)
 	}
 
 	// TODO: use post the deployment status to the type service to simplify the connector status.
-	c := dbapi.ConnectorStatus{
-		Phase: deploymentStatus.Phase,
-	}
+	connectorStatus.Phase = deploymentStatus.Phase
 
 	if deploymentStatus.Phase == dbapi.ConnectorStatusPhaseDeleted {
 		// we don't need the deployment anymore...
 		if err := deleteConnectorDeployment(dbConn, deploymentStatus.ID); err != nil {
 			return err
 		}
-
-		// we might need to also delete the connector...
-		if connector.DesiredState == dbapi.ConnectorStatusPhaseDeleted {
-			if err := k.connectorsService.Delete(ctx, deployment.ConnectorID); err != nil {
-				return err
-			}
-			return nil // return now since we don't need to update the status of the connector
-		}
 	}
 
 	// update the connector status
-	if err := dbConn.Model(&c).Where("id = ?", deployment.ConnectorID).Updates(&c).Error; err != nil {
+	if err := dbConn.Model(&connectorStatus).Where("id = ?", deployment.ConnectorID).Updates(&connectorStatus).Error; err != nil {
 		return errors.GeneralError("failed to update connector status: %s", err.Error())
 	}
 
 	return nil
 }
 
-func (k *connectorClusterService) FindReadyNamespace(owner string, orgID string, namespaceID *string) (*dbapi.ConnectorNamespace, *errors.ServiceError) {
+func (k *connectorClusterService) FindAvailableNamespace(owner string, orgID string, namespaceID *string) (*dbapi.ConnectorNamespace, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 	var namespaces dbapi.ConnectorNamespaceList
 
-	if namespaceID != nil {
-		dbConn = dbConn.Where("connector_namespaces.id = ?", namespaceID)
-	}
-	dbConn = dbConn.Joins("INNER JOIN connector_clusters"+
-		" ON cluster_id = connector_clusters.id and connector_clusters.status_phase = ?", dbapi.ConnectorClusterPhaseReady)
-
 	if orgID != "" {
-		dbConn = dbConn.Where("tenant_organisation_id = ? or tenant_user_id = ?", orgID, owner)
+		dbConn = dbConn.Where("id = ? AND (tenant_organisation_id = ? OR tenant_user_id = ?) AND status_phase = ?",
+			namespaceID, orgID, owner, dbapi.ConnectorNamespacePhaseReady)
 	} else {
-		dbConn = dbConn.Where("tenant_owner_id = ?", owner)
+		dbConn = dbConn.Where("id = ? AND tenant_owner_id = ? AND status_phase = ?",
+			namespaceID, owner, dbapi.ConnectorNamespacePhaseReady)
 	}
 
-	if err := dbConn.Find(&namespaces).Error; err != nil {
+	if err := dbConn.Limit(1).Find(&namespaces).Error; err != nil {
 		return nil, errors.GeneralError("failed to query ready connector namespace: %v", err.Error())
 	}
 
-	n := len(namespaces)
-	if n == 1 {
+	if len(namespaces) > 0 {
 		return namespaces[0], nil
-	} else if n > 1 {
-		// prioritise and select from multiple namespaces
-		ownerNamespaces := dbapi.ConnectorNamespaceList{}
-		orgNamespaces := dbapi.ConnectorNamespaceList{}
-		for _, namespace := range namespaces {
-			if namespace.TenantUserId != nil {
-				ownerNamespaces = append(ownerNamespaces, namespace)
-			} else {
-				orgNamespaces = append(orgNamespaces, namespace)
-			}
-		}
-
-		// TODO replace with more sophisticated load balancing logic in the future
-		// prefer owner tenant
-		n := len(ownerNamespaces)
-		if n > 0 {
-			return ownerNamespaces[rand.Intn(n)], nil
-		} else {
-			return orgNamespaces[rand.Intn(len(orgNamespaces))], nil
-		}
 	}
 
 	return nil, nil
@@ -927,4 +887,54 @@ func toOperatorMap(arr []dbapi.ConnectorDeploymentOperatorUpgrade) map[string]db
 		m[upgrade.ConnectorID] = upgrade
 	}
 	return m
+}
+
+// ReconcileDeletingClusters deletes empty clusters with no namespaces that are in phase deleting,
+// it also deletes their service accounts to disconnect from the agent gracefully
+func (k *connectorClusterService) ReconcileDeletingClusters() (int, []*errors.ServiceError) {
+	count := 0
+	var errs []*errors.ServiceError
+	if err := k.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
+
+		// get ids of all clusters in deleting phase that have no namespaces
+		var clusterIds []string
+		if err := dbConn.Table("connector_clusters").Select("connector_clusters.id").
+			Joins("LEFT JOIN connector_namespaces ON connector_namespaces.cluster_id = connector_clusters.id AND "+
+				"connector_namespaces.deleted_at IS NULL").
+			Group("connector_clusters.id").
+			Having("connector_clusters.status_phase = ? AND "+
+				"connector_clusters.deleted_at IS NULL AND count(cluster_id) = 0", dbapi.ConnectorClusterPhaseDeleting).
+			Find(&clusterIds).Error; err != nil {
+			return services.HandleGetError("Connector cluster",
+				"status_phase", dbapi.ConnectorClusterPhaseDeleting, err)
+		}
+
+		count = len(clusterIds)
+		if count == 0 {
+			return nil
+		}
+
+		// remove service account for clusters first, so agents are blocked from connecting
+		for _, id := range clusterIds {
+			glog.V(5).Infof("Removing agent service account for connector cluster %s", id)
+			if err := k.keycloakService.DeRegisterConnectorFleetshardOperatorServiceAccount(id); err != nil {
+				errs = append(errs, errors.GeneralError(
+					"failed to remove connector service account for cluster %s: %s", id, err))
+			}
+		}
+
+		// delete all the empty deleting clusters
+		if err := dbConn.Where("id IN ?", clusterIds).
+			Delete(&dbapi.ConnectorCluster{}).Error; err != nil {
+			return services.HandleDeleteError("Connector cluster", "id", clusterIds, err)
+		}
+
+		return nil
+
+	}); err != nil {
+		errs = append(errs, services.HandleDeleteError("Connector cluster", "status_phase",
+			dbapi.ConnectorClusterPhaseDeleting, err))
+	}
+
+	return count, errs
 }

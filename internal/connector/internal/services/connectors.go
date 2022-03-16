@@ -2,14 +2,13 @@ package services
 
 import (
 	"context"
-	goerrors "errors"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
+	goerrors "github.com/pkg/errors"
 	"github.com/spyzhov/ajson"
 
 	"gorm.io/gorm"
@@ -127,7 +126,7 @@ func filterConnectorsToOwnerOrOrg(ctx context.Context, dbConn *gorm.DB, factory 
 	if filterByOrganisationId {
 		// unassigned connectors with no namespace_id use owner and org
 		// assigned connectors use tenant user or organisation
-		dbConn = dbConn.Where("(namespace_id is null AND (owner = ? or organisation_id = ?)) OR (namespace_id is not null AND namespace_id IN (?))",
+		dbConn = dbConn.Where("(namespace_id is null AND (owner = ? OR organisation_id = ?)) OR (namespace_id IS NOT NULL AND namespace_id IN (?))",
 			owner,
 			orgId,
 			factory.New().Table("connector_namespaces").Select("id").

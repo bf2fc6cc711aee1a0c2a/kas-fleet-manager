@@ -57,6 +57,7 @@ func serviceProviders() di.Option {
 		di.Provide(handlers.NewConnectorsHandler),
 		di.Provide(handlers.NewConnectorClusterHandler),
 		di.Provide(routes.NewRouteLoader),
+		di.Provide(workers.NewClusterManager, di.As(new(coreWorkers.Worker))),
 		di.Provide(workers.NewConnectorManager, di.As(new(coreWorkers.Worker))),
 		di.Provide(workers.NewNamespaceManager, di.As(new(coreWorkers.Worker))),
 		di.Provide(workers.NewApiServerReadyCondition),

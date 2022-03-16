@@ -24,7 +24,7 @@ func ConvertConnectorRequest(from public.ConnectorRequest) (*dbapi.Connector, *e
 		Name:            from.Name,
 		ConnectorTypeId: from.ConnectorTypeId,
 		ConnectorSpec:   spec,
-		DesiredState:    string(from.DesiredState),
+		DesiredState:    dbapi.ConnectorDesiredState(from.DesiredState),
 		Channel:         string(from.Channel),
 		Kafka: dbapi.KafkaConnectionSettings{
 			KafkaID:         from.Kafka.Id,

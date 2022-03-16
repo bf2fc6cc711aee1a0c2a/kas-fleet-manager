@@ -342,6 +342,7 @@ Feature: connector namespaces API
     Given I am logged in as "Lucky"
     When I DELETE path "/v1/kafka_connector_namespaces/${namespace_id}"
     Then the response code should be 204
+    And I sleep for 5 seconds
     And I GET path "/v1/kafka_connector_namespaces"
     And the response code should be 200
     And the response should match json:
@@ -504,6 +505,7 @@ Feature: connector namespaces API
     Given I am logged in as "Ricky Bobby"
     When I DELETE path "/v1/admin/kafka_connector_namespaces/${namespace_id}"
     Then the response code should be 204
+    And I sleep for 5 seconds
     And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/namespaces"
     And the response code should be 200
     And the response should match json:
@@ -676,6 +678,7 @@ Feature: connector namespaces API
     Given I am logged in as "Ricky Bobby"
     When I DELETE path "/v1/admin/kafka_connector_namespaces/${namespace_id}"
     Then the response code should be 204
+    And I sleep for 5 seconds
     And I GET path "/v1/admin/kafka_connector_namespaces?search=cluster_id=${connector_cluster_id}"
     And the response code should be 200
     And the response should match json:

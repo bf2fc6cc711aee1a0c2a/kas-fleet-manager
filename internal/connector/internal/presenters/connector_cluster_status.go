@@ -8,7 +8,7 @@ import (
 func ConvertConnectorClusterStatus(from private.ConnectorClusterStatus) dbapi.ConnectorClusterStatus {
 	return dbapi.ConnectorClusterStatus{
 		Conditions: ConvertConditions(from.Conditions),
-		Phase:      from.Phase,
+		Phase:      dbapi.ConnectorClusterPhaseEnum(from.Phase),
 		Operators:  ConvertOperatorStatus(from.Operators),
 	}
 }
@@ -16,7 +16,7 @@ func ConvertConnectorClusterStatus(from private.ConnectorClusterStatus) dbapi.Co
 func PresentConnectorClusterStatus(from dbapi.ConnectorClusterStatus) private.ConnectorClusterStatus {
 	return private.ConnectorClusterStatus{
 		Conditions: PresentConditions(from.Conditions),
-		Phase:      from.Phase,
+		Phase:      string(from.Phase),
 		Operators:  PresentOperators(from.Operators),
 	}
 }

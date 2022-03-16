@@ -1823,6 +1823,7 @@ components:
       type: string
     ConnectorDesiredState:
       enum:
+      - unassigned
       - ready
       - stopped
       - deleted
