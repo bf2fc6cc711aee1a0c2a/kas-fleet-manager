@@ -11,13 +11,12 @@ import (
 )
 
 type KafkaCapacityConfig struct {
-	IngressThroughputPerSec     string `yaml:"ingressThroughputPerSec"`
-	EgressThroughputPerSec      string `yaml:"egressThroughputPerSec"`
-	TotalMaxConnections         int    `yaml:"totalMaxConnections"`
-	MaxDataRetentionSize        string `yaml:"maxDataRetentionSize"`
-	MaxPartitions               int    `yaml:"maxPartitions"`
-	MaxDataRetentionPeriod      string `yaml:"maxDataRetentionPeriod"`
-	MaxConnectionAttemptsPerSec int    `yaml:"maxConnectionAttemptsPerSec"`
+	IngressEgressThroughputPerSec string `yaml:"ingressEgressThroughputPerSec"`
+	TotalMaxConnections           int    `yaml:"totalMaxConnections"`
+	MaxDataRetentionSize          string `yaml:"maxDataRetentionSize"`
+	MaxPartitions                 int    `yaml:"maxPartitions"`
+	MaxDataRetentionPeriod        string `yaml:"maxDataRetentionPeriod"`
+	MaxConnectionAttemptsPerSec   int    `yaml:"maxConnectionAttemptsPerSec"`
 }
 
 type KafkaConfig struct {

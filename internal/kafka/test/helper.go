@@ -61,6 +61,8 @@ func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, kafka.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
 		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, kasFleetshardConfig *config.KasFleetshardConfig) {
 			kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
+			kafkaConfig.KafkaCapacity.TotalMaxConnections = 1 // define a minimum capacity
+			kafkaConfig.KafkaCapacity.MaxPartitions = 1       // define a minimum capacity
 			observabilityConfiguration.EnableMock = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
 			dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
