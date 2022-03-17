@@ -26,7 +26,7 @@ type ConnectorsService interface {
 	Update(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError
 	SaveStatus(ctx context.Context, resource dbapi.ConnectorStatus) *errors.ServiceError
 	Delete(ctx context.Context, id string) *errors.ServiceError
-	ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) *errors.ServiceError
+	ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) []error
 }
 
 var _ ConnectorsService = &connectorsService{}
@@ -277,7 +277,7 @@ func (k connectorsService) SaveStatus(ctx context.Context, resource dbapi.Connec
 	return nil
 }
 
-func (k connectorsService) ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) *errors.ServiceError {
+func (k connectorsService) ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) []error {
 	dbConn := k.connectionFactory.New()
 	rows, err := dbConn.
 		Model(&dbapi.Connector{}).
@@ -289,29 +289,30 @@ func (k connectorsService) ForEach(f func(*dbapi.Connector) *errors.ServiceError
 		if goerrors.Is(err, gorm.ErrRecordNotFound) {
 			return nil
 		}
-		return errors.GeneralError("Unable to list connectors: %s", err)
+		return []error{errors.GeneralError("Unable to list connectors: %s", err)}
 	}
 	defer rows.Close()
 
+	var errs []error
 	for rows.Next() {
 		resource := dbapi.Connector{}
 
 		// ScanRows is a method of `gorm.DB`, it can be used to scan a row into a struct
 		err := dbConn.ScanRows(rows, &resource)
 		if err != nil {
-			return errors.GeneralError("Unable to scan connector: %s", err)
+			errs = append(errs, errors.GeneralError("Unable to scan connector: %s", err))
 		}
 
 		resource.Status.ID = resource.ID
 		err = dbConn.Model(&dbapi.ConnectorStatus{}).First(&resource.Status).Error
 		if err != nil {
-			return errors.GeneralError("Unable to load connector status: %s", err)
+			errs = append(errs, errors.GeneralError("Unable to load connector status: %s", err))
 		}
 
 		if serr := f(&resource); serr != nil {
-			return serr
+			errs = append(errs, serr)
 		}
 
 	}
-	return nil
+	return errs
 }
