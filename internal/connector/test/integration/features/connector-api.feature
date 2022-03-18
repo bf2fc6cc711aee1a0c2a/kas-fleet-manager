@@ -1360,7 +1360,7 @@ Feature: create a connector
       And the response should match ""
 
       # The delete occurs async in a worker, so we have to wait a little for the counters to update.
-      Given I sleep for 2 seconds
+      Given I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
       Then the vault delete counter should be 3
     Given UNLOCK--------------------------------------------------------------
 
@@ -1902,7 +1902,7 @@ Feature: create a connector
       And the response should match ""
 
       # The delete occurs async in a worker, so we have to wait a little for the counters to update.
-      Given I sleep for 3 seconds
+      Given I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
       # Notice that only 1 key is the deleted.. since we don't have the schema,
       # we can't tell which connector fields are secrets, so we can't clean those up.
       And the vault delete counter should be 1

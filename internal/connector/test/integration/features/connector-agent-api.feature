@@ -914,7 +914,7 @@ Feature: connector agent API
 
     # Connectors that were assigning the cluster get updated to not refer to them.
     Given I am logged in as "Jimmy"
-    And I sleep for 2 seconds
+    And I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".namespace_id" selection to match "null"
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
     And the ".desired_state" selection from the response should match "unassigned"
@@ -1129,7 +1129,7 @@ Feature: connector agent API
     Then the response code should be 204
 
     Given I am logged in as "Bobby"
-    And I sleep for 5 seconds
+    And I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 404
 
