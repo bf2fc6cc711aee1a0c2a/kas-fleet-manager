@@ -6,8 +6,9 @@ Feature: connector agent API
 
   Background:
     Given the path prefix is "/api/connector_mgmt"
-    Given a user named "Jimmy"
-    Given a user named "Bobby"
+    Given an org admin user named "Jimmy"
+    Given I store orgid for "Jimmy" as ${jimmy_org_id}
+    Given an org admin user named "Bobby" in organization "${jimmy_org_id}"
     Given a user named "Shard"
     Given a user named "Shard2"
     Given an admin user named "Ricky Bobby" with roles "connector-fleet-manager-admin-full"

@@ -6,13 +6,13 @@ Feature: create a connector
   Background:
     Given the path prefix is "/api/connector_mgmt"
     # Greg and Coworker Sally will end up in the same org
-    Given a user named "Greg" in organization "13640203"
+    Given a user named "Gary" in organization "13640203"
     Given a user named "Coworker Sally" in organization "13640203"
     Given a user named "Evil Bob"
     Given a user named "Jim"
 
   Scenario: Greg lists all connector types
-    Given I am logged in as "Greg"
+    Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types"
     Then the response code should be 200
     And the response should match json:
@@ -448,7 +448,7 @@ Feature: create a connector
       """
 
   Scenario: Greg searches for sink connector types
-    Given I am logged in as "Greg"
+    Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types?search=label=sink"
     Then the response code should be 200
     And the response should match json:
@@ -644,7 +644,7 @@ Feature: create a connector
       """
 
   Scenario: Greg searches for connector types on beta channel, ordered by version
-    Given I am logged in as "Greg"
+    Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types?search=channel=beta&orderBy=version"
     Then the response code should be 200
     And the response should match json:
@@ -900,7 +900,7 @@ Feature: create a connector
       """
 
   Scenario: Greg uses paging to list connector types
-    Given I am logged in as "Greg"
+    Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types?orderBy=name%20asc&page=2&size=1"
     Then the response code should be 200
     And the response should match json:
@@ -1096,7 +1096,7 @@ Feature: create a connector
       """
 
   Scenario: Greg tries to create a connector with an invalid configuration spec
-    Given I am logged in as "Greg"
+    Given I am logged in as "Gary"
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
@@ -1133,7 +1133,7 @@ Feature: create a connector
       """
 
   Scenario: Greg tries to create a connector with an invalid namespace_id
-    Given I am logged in as "Greg"
+    Given I am logged in as "Gary"
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
@@ -1173,7 +1173,7 @@ Feature: create a connector
 
   Scenario: Greg creates lists and deletes a connector verifying that Evil Bob can't access Gregs Connectors
   but Coworker Sally can.
-    Given I am logged in as "Greg"
+    Given I am logged in as "Gary"
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
@@ -1354,7 +1354,7 @@ Feature: create a connector
     # We are going to delete the connector...
     Given LOCK--------------------------------------------------------------
       Given I reset the vault counters
-      Given I am logged in as "Greg"
+      Given I am logged in as "Gary"
       When I DELETE path "/v1/kafka_connectors/${connector_id}"
       Then the response code should be 204
       And the response should match ""
@@ -1369,7 +1369,7 @@ Feature: create a connector
     Then the response code should be 404
 
   Scenario: Greg can discover the API endpoints
-    Given I am logged in as "Greg"
+    Given I am logged in as "Gary"
     When I GET path ""
     Then the response code should be 200
     And the response should match json:
@@ -1475,7 +1475,7 @@ Feature: create a connector
       """
 
   Scenario: Greg can inspect errors codes
-    Given I am logged in as "Greg"
+    Given I am logged in as "Gary"
     When I GET path "/v1/errors"
     Then the response code should be 200
     And the response should match json:

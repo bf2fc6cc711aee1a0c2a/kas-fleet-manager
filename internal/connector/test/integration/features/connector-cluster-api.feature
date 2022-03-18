@@ -5,7 +5,7 @@ Feature: create a connector
 
   Background:
     Given the path prefix is "/api/connector_mgmt"
-    Given a user named "Greg" in organization "13640203"
+    Given an org admin user named "Greg" in organization "13640203"
     Given a user named "Coworker Sally" in organization "13640203"
     Given a user named "Evil Bob"
 

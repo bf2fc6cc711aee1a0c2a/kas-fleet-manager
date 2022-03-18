@@ -26,13 +26,12 @@ type ConnectorNamespaceService interface {
 	List(ctx context.Context, clusterIDs []string, listArguments *services.ListArguments) (dbapi.ConnectorNamespaceList, *api.PagingMeta, *errors.ServiceError)
 	Delete(ctx context.Context, namespaceId string) *errors.ServiceError
 	SetEvalClusterId(request *dbapi.ConnectorNamespace) *errors.ServiceError
-	GetOwnerClusterIds(userId string, ownerClusterIds *[]string) *errors.ServiceError
-	GetOrgClusterIds(userId string, organisationId string, orgClusterIds *[]string) *errors.ServiceError
 	CreateDefaultNamespace(ctx context.Context, connectorCluster *dbapi.ConnectorCluster) *errors.ServiceError
 	GetExpiredNamespaceIds() ([]string, *errors.ServiceError)
 	UpdateConnectorNamespaceStatus(ctx context.Context, namespaceID string, status *dbapi.ConnectorNamespaceStatus) *errors.ServiceError
 	DeleteNamespaceAndConnectorDeployments(ctx context.Context, dbConn *gorm.DB, query interface{}, values ...interface{}) (bool, bool, *errors.ServiceError)
 	ReconcileDeletingNamespaces() (int, []*errors.ServiceError)
+	GetNamespaceTenant(namespaceId string) (*dbapi.ConnectorNamespace, *errors.ServiceError)
 }
 
 var _ ConnectorNamespaceService = &connectorNamespaceService{}
@@ -54,24 +53,6 @@ func NewConnectorNamespaceService(factory *db.ConnectionFactory, config *config.
 		connectorsConfig:  config,
 		bus:               bus,
 	}
-}
-
-func (k *connectorNamespaceService) GetOrgClusterIds(userId, organisationId string, orgClusterIds *[]string) *errors.ServiceError {
-	dbConn := k.connectionFactory.New()
-	if err := dbConn.Raw("SELECT id FROM connector_clusters WHERE deleted_at is null AND owner <> ? AND organisation_id = ?", userId, organisationId).
-		Scan(orgClusterIds).Error; err != nil {
-		return errors.Unauthorized("failed to get cluster id for organisation %v: %v", organisationId, err)
-	}
-	return nil
-}
-
-func (k *connectorNamespaceService) GetOwnerClusterIds(userId string, ownerClusterIds *[]string) *errors.ServiceError {
-	dbConn := k.connectionFactory.New()
-	if err := dbConn.Raw("SELECT id FROM connector_clusters WHERE deleted_at is null AND owner = ?", userId).
-		Scan(ownerClusterIds).Error; err != nil {
-		return errors.Unauthorized("failed to get cluster id for user %v: %v", userId, err)
-	}
-	return nil
 }
 
 func (k *connectorNamespaceService) SetEvalClusterId(request *dbapi.ConnectorNamespace) *errors.ServiceError {
@@ -444,4 +425,14 @@ func (k *connectorNamespaceService) ReconcileDeletingNamespaces() (int, []*error
 	}
 
 	return count, errs
+}
+
+func (k *connectorNamespaceService) GetNamespaceTenant(namespaceId string) (*dbapi.ConnectorNamespace, *errors.ServiceError) {
+	dbConn := k.connectionFactory.New()
+	var namespace dbapi.ConnectorNamespace
+	if err := dbConn.Where("id = ?", namespaceId).
+		Select(`id`, `tenant_user_id`, `tenant_organisation_id`).First(&namespace).Error; err != nil {
+			return nil, services.HandleGetError("Connector namespace", "id", namespaceId, err)
+	}
+	return &namespace, nil
 }

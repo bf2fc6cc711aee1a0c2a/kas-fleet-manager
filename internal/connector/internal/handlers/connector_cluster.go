@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
@@ -21,7 +22,6 @@ import (
 	"github.com/goava/di"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreservices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
@@ -41,6 +41,7 @@ type ConnectorClusterHandler struct {
 	Vault              vault.VaultService
 	KeycloakConfig     *keycloak.KeycloakConfig
 	ServerConfig       *server.ServerConfig
+	AuthZ              authz.AuthZService
 }
 
 func NewConnectorClusterHandler(handler ConnectorClusterHandler) *ConnectorClusterHandler {
@@ -48,23 +49,23 @@ func NewConnectorClusterHandler(handler ConnectorClusterHandler) *ConnectorClust
 }
 
 func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request) {
+
+	user := h.AuthZ.GetValidationUser(r.Context())
+
 	var resource public.ConnectorClusterRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
 			handlers.Validation("name", &resource.Name, handlers.WithDefault("New Cluster"),
 				handlers.MinLen(1), handlers.MaxLen(100)),
+			user.AuthorizedOrgAdmin(),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
 			convResource := presenters.ConvertConnectorClusterRequest(resource)
 
-			claims, err := auth.GetClaimsFromContext(r.Context())
-			if err != nil {
-				return nil, errors.Unauthenticated("user not authenticated")
-			}
-			convResource.Owner = auth.GetUsernameFromClaims(claims)
-			convResource.OrganisationId = auth.GetOrgIdFromClaims(claims)
+			convResource.Owner = user.UserId()
+			convResource.OrganisationId = user.OrgId()
 			convResource.Status.Phase = dbapi.ConnectorClusterPhaseDisconnected
 
 			if err := h.Service.Create(r.Context(), &convResource); err != nil {
@@ -79,13 +80,18 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *ConnectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+	user := h.AuthZ.GetValidationUser(ctx)
+
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("connector_cluster_id", &connectorClusterId,
+				handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), user.AuthorizedClusterUser()),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			resource, err := h.Service.Get(r.Context(), connectorClusterId)
+			resource, err := h.Service.Get(ctx, connectorClusterId)
 			if err != nil {
 				return nil, err
 			}
@@ -96,16 +102,20 @@ func (h *ConnectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ConnectorClusterHandler) Update(w http.ResponseWriter, r *http.Request) {
-	var resource public.ConnectorClusterRequest
 
+	ctx := r.Context()
+	user := h.AuthZ.GetValidationUser(ctx)
+
+	var resource public.ConnectorClusterRequest
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("connector_cluster_id", &connectorClusterId,
+				handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), user.AuthorizedClusterAdmin()),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			existing, err := h.Service.Get(r.Context(), connectorClusterId)
+			existing, err := h.Service.Get(ctx, connectorClusterId)
 			if err != nil {
 				return nil, err
 			}
@@ -113,16 +123,22 @@ func (h *ConnectorClusterHandler) Update(w http.ResponseWriter, r *http.Request)
 			// Copy over the fields that support being updated...
 			existing.Name = resource.Name
 
-			return nil, h.Service.Update(r.Context(), &existing)
+			return nil, h.Service.Update(ctx, &existing)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusNoContent)
 }
+
 func (h *ConnectorClusterHandler) Delete(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+	user := h.AuthZ.GetValidationUser(ctx)
+
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("connector_cluster_id", &connectorClusterId,
+				handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), user.AuthorizedClusterAdmin()),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			err := h.Service.Delete(r.Context(), connectorClusterId)
@@ -162,6 +178,7 @@ func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *http.Request) {
+
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
@@ -245,13 +262,17 @@ func (o *ConnectorClusterHandler) buildTokenURL(serviceAccount *api.ServiceAccou
 }
 
 func (h *ConnectorClusterHandler) GetNamespaces(writer http.ResponseWriter, request *http.Request) {
+
+	ctx := request.Context()
+	user := h.AuthZ.GetValidationUser(ctx)
+
 	connectorClusterId := mux.Vars(request)["connector_cluster_id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("connector_cluster_id", &connectorClusterId,
+				handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), user.AuthorizedClusterUser()),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			ctx := request.Context()
 			listArgs := coreservices.NewListArguments(request.URL.Query())
 			resources, paging, err := h.ConnectorNamespace.List(ctx, []string{connectorClusterId}, listArgs)
 			if err != nil {
