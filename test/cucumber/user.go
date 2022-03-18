@@ -24,10 +24,13 @@ func init() {
 	StepModules = append(StepModules, func(ctx *godog.ScenarioContext, s *TestScenario) {
 		ctx.Step(`^a user named "([^"]*)"$`, s.Suite.createUserNamed)
 		ctx.Step(`^a user named "([^"]*)" in organization "([^"]*)"$`, s.Suite.createUserNamedInOrganization)
+		ctx.Step(`^an org admin user named "([^"]*)"$`, s.Suite.createOrgAdminUserNamed)
+		ctx.Step(`^an org admin user named "([^"]*)" in organization "([^"]*)"$`, s.Suite.createOrgAdminUserNamedInOrganization)
 		ctx.Step(`^I am logged in as "([^"]*)"$`, s.iAmLoggedInAs)
 		ctx.Step(`^I set the "([^"]*)" header to "([^"]*)"$`, s.iSetTheHeaderTo)
 		ctx.Step(`^an admin user named "([^"]+)" with roles "([^"]+)"$`, s.Suite.createAdminUserNamed)
-		ctx.Step(`^I store userid for "([^"]+)" as \${([^"]*)}$`, s.storeUserId)
+		ctx.Step(`^I store userid for "([^"]+)" as \${([^}]*)}$`, s.storeUserId)
+		ctx.Step(`^I store orgid for "([^"]+)" as \${([^}]*)}$`, s.storeOrgId)
 	})
 }
 
@@ -57,10 +60,71 @@ func (s *TestSuite) createUserNamedInOrganization(name string, orgid string) err
 	}
 
 	s.users[name] = &TestUser{
-		Name:  name,
-		Token: token,
+		Name:     name,
+		OrgId:    orgid,
+		Token:    token,
 		UserName: account.Username(),
-		Ctx:   context.WithValue(context.Background(), compat.ContextAccessToken, token),
+		Ctx:      context.WithValue(context.Background(), compat.ContextAccessToken, token),
+	}
+	return nil
+}
+
+func (s *TestSuite) createOrgAdminUserNamed(name string) error {
+	// users are shared concurrently across scenarios.. so lock while we create the user...
+	s.Mu.Lock()
+	orgId := fmt.Sprint(s.nextOrgId)
+	s.nextOrgId++
+	defer s.Mu.Unlock()
+
+	if s.users[name] != nil {
+		return nil
+	}
+
+	// setup pre-requisites to performing requests
+	account := s.Helper.NewAccountWithNameAndOrg(name, orgId)
+	// add org admin claim
+	claims := jwt.MapClaims{}
+	claims["is_org_admin"] = true
+	token, err := s.Helper.AuthHelper.CreateSignedJWT(account, claims)
+	if err != nil {
+		return err
+	}
+
+	s.users[name] = &TestUser{
+		Name:     name,
+		OrgId:    orgId,
+		Token:    token,
+		UserName: account.Username(),
+		Ctx:      context.WithValue(context.Background(), compat.ContextAccessToken, token),
+	}
+	return nil
+}
+
+func (s *TestSuite) createOrgAdminUserNamedInOrganization(name string, orgid string) error {
+	// users are shared concurrently across scenarios.. so lock while we create the user...
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+
+	if s.users[name] != nil {
+		return nil
+	}
+
+	// setup pre-requisites to performing requests
+	account := s.Helper.NewAccountWithNameAndOrg(name, orgid)
+	// add org admin claim
+	claims := jwt.MapClaims{}
+	claims["is_org_admin"] = true
+	token, err := s.Helper.AuthHelper.CreateSignedJWT(account, claims)
+	if err != nil {
+		return err
+	}
+
+	s.users[name] = &TestUser{
+		Name:     name,
+		OrgId:    orgid,
+		Token:    token,
+		UserName: account.Username(),
+		Ctx:      context.WithValue(context.Background(), compat.ContextAccessToken, token),
 	}
 	return nil
 }
@@ -92,10 +156,10 @@ func (s *TestSuite) createAdminUserNamed(name, roles string) error {
 	}
 
 	s.users[name] = &TestUser{
-		Name:  name,
-		Token: token,
+		Name:     name,
+		Token:    token,
 		UserName: account.Username(),
-		Ctx:   context.WithValue(context.Background(), compat.ContextAccessToken, token),
+		Ctx:      context.WithValue(context.Background(), compat.ContextAccessToken, token),
 	}
 	return nil
 }
@@ -107,6 +171,18 @@ func (s *TestScenario) storeUserId(name, varName string) error {
 	user := s.Suite.users[name]
 	if user != nil {
 		s.Variables[varName] = user.UserName
+	}
+
+	return nil
+}
+
+func (s *TestScenario) storeOrgId(name, varName string) error {
+	s.Suite.Mu.Lock()
+	defer s.Suite.Mu.Unlock()
+
+	user := s.Suite.users[name]
+	if user != nil {
+		s.Variables[varName] = user.OrgId
 	}
 
 	return nil
