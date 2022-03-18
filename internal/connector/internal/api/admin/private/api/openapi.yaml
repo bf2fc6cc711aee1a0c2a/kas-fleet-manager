@@ -1078,12 +1078,12 @@ components:
       - tenant
     ConnectorNamespaceRequestMeta_annotations:
       properties:
-        name:
+        key:
           type: string
         value:
           type: string
       required:
-      - name
+      - key
       - value
   securitySchemes:
     Bearer:

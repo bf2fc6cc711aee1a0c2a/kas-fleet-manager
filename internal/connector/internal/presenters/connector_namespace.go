@@ -34,7 +34,7 @@ func ConvertConnectorNamespaceRequest(namespaceRequest *public.ConnectorNamespac
 	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
 	for i, annotation := range namespaceRequest.Annotations {
 		result.Annotations[i].NamespaceId = result.ID
-		result.Annotations[i].Name = annotation.Name
+		result.Annotations[i].Key = annotation.Key
 		result.Annotations[i].Value = annotation.Value
 	}
 	switch namespaceRequest.Kind {
@@ -76,7 +76,7 @@ func ConvertConnectorNamespaceEvalRequest(namespaceRequest *public.ConnectorName
 	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
 	for i, annotation := range namespaceRequest.Annotations {
 		result.Annotations[i].NamespaceId = result.ID
-		result.Annotations[i].Name = annotation.Name
+		result.Annotations[i].Key = annotation.Key
 		result.Annotations[i].Value = annotation.Value
 	}
 	result.TenantUserId = &result.Owner
@@ -121,7 +121,7 @@ func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *admin.Connecto
 	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
 	for i, annotation := range namespaceRequest.Annotations {
 		result.Annotations[i].NamespaceId = result.ID
-		result.Annotations[i].Name = annotation.Name
+		result.Annotations[i].Key = annotation.Key
 		result.Annotations[i].Value = annotation.Value
 	}
 
@@ -140,7 +140,7 @@ func ConvertConnectorNamespaceStatus(from private.ConnectorNamespaceStatus) *dba
 func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace) public.ConnectorNamespace {
 	annotations := make([]public.ConnectorNamespaceRequestMetaAnnotations, len(namespace.Annotations))
 	for i, anno := range namespace.Annotations {
-		annotations[i].Name = anno.Name
+		annotations[i].Key = anno.Key
 		annotations[i].Value = anno.Value
 	}
 
@@ -184,7 +184,7 @@ func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace) public.Conne
 func PresentPrivateConnectorNamespace(namespace *dbapi.ConnectorNamespace) admin.ConnectorNamespace {
 	annotations := make([]admin.ConnectorNamespaceRequestMetaAnnotations, len(namespace.Annotations))
 	for i, anno := range namespace.Annotations {
-		annotations[i].Name = anno.Name
+		annotations[i].Key = anno.Key
 		annotations[i].Value = anno.Value
 	}
 

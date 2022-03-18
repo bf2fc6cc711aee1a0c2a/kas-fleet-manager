@@ -1519,13 +1519,13 @@ components:
         name: MyNamespace
         cluster_id: 9bsv0s7tne7g02gh5g4g
         annotations:
-        - name: connector_mgmt.api.openshift.com/profile
+        - key: connector_mgmt.api.openshift.com/profile
           value: default-profile
     ConnectorNamespaceEvalCreateExample:
       value:
         name: MyEvalNamespace
         annotations:
-        - name: connector_mgmt.api.openshift.com/profile
+        - key: connector_mgmt.api.openshift.com/profile
           value: default-profile
     "400CreationExample":
       value:
@@ -2082,12 +2082,12 @@ components:
           type: array
     ConnectorNamespaceRequestMeta_annotations:
       properties:
-        name:
+        key:
           type: string
         value:
           type: string
       required:
-      - name
+      - key
       - value
     ConnectorNamespaceRequest_allOf:
       properties:
