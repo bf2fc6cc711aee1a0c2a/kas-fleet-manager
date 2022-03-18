@@ -970,15 +970,51 @@ Feature: connector agent API
       """
     Then the response code should be 204
 
+    #-----------------------------------------------------------------------------------------------------------------
+    # We simulate a misalignment of states by forcefully deleting the deployment on the DB that recovers after a connector update
+    #-----------------------------------------------------------------------------------------------------------------
     Given I am logged in as "Bobby"
     Given I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".status" selection to match "ready"
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the ".status.state" selection from the response should match "ready"
 
+    Given I run SQL "DELETE FROM connector_deployment_statuses WHERE id = (SELECT id from connector_deployments WHERE connector_id = '${connector_id}');" expect 1 row to be affected.
+    Given I run SQL "DELETE FROM connector_deployments WHERE connector_id = '${connector_id}';" expect 1 row to be affected.
+    Given I am logged in as "Shard"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "0"
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    Then the ".total" selection from the response should match "0"
+
+    Given I am logged in as "Bobby"
+    Given I PATCH path "/v1/kafka-connectors/${connector_id}" with json body:
+      """
+      {
+          "connector": {
+            "log_multi_line": false
+          }
+      }
+      """
+    Given I am logged in as "Shard"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    Then the ".total" selection from the response should match "1"
+    Given I store the ".items[0].id" selection from the response as ${connector_deployment_id}
+    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+      """
+      {
+        "phase":"ready",
+        "resource_version": 45
+      }
+      """
+    Then the response code should be 204
+
     #-----------------------------------------------------------------------------------------------------------------
     # Bobby sets desired state to stopped.. Agent sees deployment stopped, it updates status to stopped,, Bobby then see stopped status
     #-----------------------------------------------------------------------------------------------------------------
     # Updating the connector config should update the deployment.
+    Given I am logged in as "Bobby"
     Given I set the "Content-Type" header to "application/merge-patch+json"
     When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
       """
@@ -1035,7 +1071,7 @@ Feature: connector agent API
     Then the response code should be 204
 
     #-----------------------------------------------------------------------------------------------------------------
-    # Agent try to update status with a sale version and get 500
+    # Agent try to update status with a stale version and get 500
     #-----------------------------------------------------------------------------------------------------------------
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"

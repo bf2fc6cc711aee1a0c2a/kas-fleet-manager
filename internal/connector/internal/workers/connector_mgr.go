@@ -138,12 +138,14 @@ func (k *ConnectorManager) Reconcile() []error {
 	serviceErr = k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
 		return InDBTransaction(k.ctx, func(ctx context.Context) error {
 			if err := k.reconcileConnectorUpdate(ctx, connector); err != nil {
-				return serviceError.GeneralError("failed to reconcile assigned connector %s: %v", connector.ID, err.Error())
+				errs = append(errs, err)
+				glog.Errorf("failed to reconcile assigned connector %s: %v", connector.ID, err.Error())
 			}
 			if err := db.AddPostCommitAction(ctx, func() {
 				k.lastVersion = connector.Version
 			}); err != nil {
-				return err
+				errs = append(errs, err)
+				glog.Errorf("failed to AddPostCommitAction to save lastVersion %d: %v", connector.Version, err.Error())
 			}
 			return nil
 		})
@@ -251,6 +253,9 @@ func (k *ConnectorManager) reconcileConnectorUpdate(ctx context.Context, connect
 	// Get the deployment for the connector...
 	deployment, serr := k.connectorClusterService.GetDeploymentByConnectorId(ctx, connector.ID)
 	if serr != nil {
+		if derr := k.recoverMissingDeployment(ctx, connector); derr != nil {
+			return derr
+		}
 		return serr
 	}
 
@@ -262,6 +267,65 @@ func (k *ConnectorManager) reconcileConnectorUpdate(ctx context.Context, connect
 		}
 	}
 
+	return nil
+}
+
+func (k *ConnectorManager) recoverMissingDeployment(ctx context.Context, connector *dbapi.Connector) error {
+	switch connector.TargetKind {
+	case dbapi.AddonTargetKind:
+
+		cluster, err := k.connectorClusterService.FindReadyCluster(connector.Owner, connector.OrganisationId, connector.AddonClusterId)
+		if err != nil {
+			return errors.Wrapf(err, "failed to find cluster for connector request %s during missing deployment recovery", connector.ID)
+		}
+		if cluster == nil {
+			// if we are recovering a missing deployment and there is no cluster ready we put the connector back in assigning phase.
+			err := k.assignConnectorToAssigningStatus(ctx, connector)
+			if err != nil {
+				return errors.Wrapf(err, "failed to update connector %s to status %s during missing deployment recovery", connector.ID, dbapi.ConnectorStatusPhaseAssigning)
+			}
+			return nil
+		}
+
+		channelVersion, err := k.connectorTypesService.GetLatestConnectorShardMetadataID(connector.ConnectorTypeId, connector.Channel)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get latest channel version for connector request %s during missing deployment recovery", connector.ID)
+		}
+
+		deployment := dbapi.ConnectorDeployment{
+			Meta: api.Meta{
+				ID: api.NewID(),
+			},
+			ConnectorID:            connector.ID,
+			ClusterID:              cluster.ID,
+			ConnectorVersion:       connector.Version,
+			ConnectorTypeChannelId: channelVersion,
+			Status:                 dbapi.ConnectorDeploymentStatus{},
+		}
+
+		if err = k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {
+			return errors.Wrapf(err, "failed to create connector deployment for connector %s during missing deployment recovery", connector.ID)
+		}
+
+	default:
+		// if we are recovering a missing deployment and the addon kind is not supported we put the connector back in assigning phase.
+		err := k.assignConnectorToAssigningStatus(ctx, connector)
+		if err != nil {
+			return errors.Wrapf(err, "failed to update connector %s to status %s during missing deployment recovery", connector.ID, dbapi.ConnectorStatusPhaseAssigning)
+		}
+		return errors.Errorf("target kind not supported: %s during missing deployment recovery", connector.TargetKind)
+	}
+	return nil
+}
+
+func (k *ConnectorManager) assignConnectorToAssigningStatus(ctx context.Context, connector *dbapi.Connector) error {
+	var status = dbapi.ConnectorStatus{}
+	status.ID = connector.ID
+	status.ClusterID = connector.ID
+	status.Phase = dbapi.ConnectorStatusPhaseAssigning
+	if err := k.connectorService.SaveStatus(ctx, status); err != nil {
+		return err
+	}
 	return nil
 }
 
