@@ -255,7 +255,7 @@ func (k *connectorNamespaceService) CreateDefaultNamespace(ctx context.Context, 
 		Name: defaultNamespaceName,
 		Annotations: []public.ConnectorNamespaceRequestMetaAnnotations{
 			{
-				Name:  "connector_mgmt.api.openshift.com/profile",
+				Key:  "connector_mgmt.api.openshift.com/profile",
 				Value: "default-profile",
 			},
 		},

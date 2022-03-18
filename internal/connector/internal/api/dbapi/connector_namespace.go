@@ -32,7 +32,7 @@ type ConnectorTenantOrganisation struct {
 
 type ConnectorNamespaceAnnotation struct {
 	NamespaceId string `gorm:"primaryKey;index"`
-	Name        string `gorm:"primaryKey;not null"`
+	Key         string `gorm:"primaryKey;not null"`
 	Value       string `gorm:"not null"`
 }
 

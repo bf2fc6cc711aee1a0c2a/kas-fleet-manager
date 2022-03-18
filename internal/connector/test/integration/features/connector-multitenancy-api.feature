@@ -82,7 +82,7 @@ Feature: connector namespaces API
       "name": "<user>_namespace",
       "annotations": [
         {
-          "name": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.api.openshift.com/profile",
           "value": "default-profile"
         }
       ]
@@ -103,7 +103,7 @@ Feature: connector namespaces API
       "expiration": "${response.expiration}",
       "annotations": [
         {
-          "name": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.api.openshift.com/profile",
           "value": "default-profile"
         }
       ],
@@ -141,7 +141,7 @@ Feature: connector namespaces API
            },
            "annotations": [
              {
-               "name": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.api.openshift.com/profile",
                "value": "default-profile"
              }
            ],
@@ -216,7 +216,7 @@ Feature: connector namespaces API
            },
            "annotations": [
              {
-               "name": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.api.openshift.com/profile",
                "value": "default-profile"
              }
            ],
@@ -243,7 +243,7 @@ Feature: connector namespaces API
       "kind": "organisation",
       "annotations": [
         {
-          "name": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.api.openshift.com/profile",
           "value": "default-profile"
         }
       ]
@@ -263,7 +263,7 @@ Feature: connector namespaces API
       "modified_at": "${response.modified_at}",
       "annotations": [
         {
-          "name": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.api.openshift.com/profile",
           "value": "default-profile"
         }
       ],
@@ -289,7 +289,7 @@ Feature: connector namespaces API
       "kind": "user",
       "annotations": [
         {
-          "name": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.api.openshift.com/profile",
           "value": "default-profile"
         }
       ]
@@ -309,7 +309,7 @@ Feature: connector namespaces API
       "modified_at": "${response.modified_at}",
       "annotations": [
         {
-          "name": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.api.openshift.com/profile",
           "value": "default-profile"
         }
       ],
@@ -348,7 +348,7 @@ Feature: connector namespaces API
            },
            "annotations": [
              {
-               "name": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.api.openshift.com/profile",
                "value": "default-profile"
              }
            ],
@@ -372,7 +372,7 @@ Feature: connector namespaces API
            },
            "annotations": [
              {
-               "name": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.api.openshift.com/profile",
                "value": "default-profile"
              }
            ],
@@ -457,7 +457,7 @@ Feature: connector namespaces API
            },
            "annotations": [
              {
-               "name": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.api.openshift.com/profile",
                "value": "default-profile"
              }
            ],
@@ -483,7 +483,7 @@ Feature: connector namespaces API
       "cluster_id": "${connector_cluster_id}",
       "annotations": [
         {
-          "name": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.api.openshift.com/profile",
           "value": "default-profile"
         }
       ],
@@ -511,7 +511,7 @@ Feature: connector namespaces API
       },
       "annotations": [
         {
-          "name": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.api.openshift.com/profile",
           "value": "default-profile"
         }
       ],
@@ -549,7 +549,7 @@ Feature: connector namespaces API
            },
            "annotations": [
              {
-               "name": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.api.openshift.com/profile",
                "value": "default-profile"
              }
            ],
@@ -626,7 +626,7 @@ Feature: connector namespaces API
            },
            "annotations": [
              {
-               "name": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.api.openshift.com/profile",
                "value": "default-profile"
              }
            ],
@@ -656,7 +656,7 @@ Feature: connector namespaces API
       },
       "annotations": [
         {
-          "name": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.api.openshift.com/profile",
           "value": "default-profile"
         }
       ],
@@ -684,7 +684,7 @@ Feature: connector namespaces API
       },
       "annotations": [
         {
-          "name": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.api.openshift.com/profile",
           "value": "default-profile"
         }
       ],
@@ -722,7 +722,7 @@ Feature: connector namespaces API
            },
            "annotations": [
              {
-               "name": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.api.openshift.com/profile",
                "value": "default-profile"
              }
            ],
