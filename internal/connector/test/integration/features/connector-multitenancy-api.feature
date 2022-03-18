@@ -18,6 +18,10 @@ Feature: connector namespaces API
     Given a user named "Carl" in organization "13640223"
     Given I store userid for "Carl" as ${carl_user_id}
 
+    # org admin user used in admin API
+    Given an org admin user named "Dr. Nefario" in organization "13640211"
+    Given I store userid for "Dr. Nefario" as ${drnefario_user_id}
+
     # eval users used in admin API
     Given a user named "Dave" in organization "13640224"
     Given I store userid for "Dave" as ${dave_user_id}
@@ -155,7 +159,7 @@ Feature: connector namespaces API
      """
 
     # Eval namespace should expire and get deleted after 2 seconds as configured in internal/connector/test/integration/feature_test.go:27
-    Given I sleep for 3 seconds
+    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connector_namespaces/" response ".total" selection to match "0"
     And I GET path "/v1/kafka_connector_namespaces/"
     Then the response code should be 200
     And the ".total" selection from the response should match "0"
@@ -394,7 +398,7 @@ Feature: connector namespaces API
     When I DELETE path "/v1/kafka_connector_namespaces/${user_namespace_id}"
     Then the response code should be 204
 
-    And I sleep for 5 seconds
+    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connector_namespaces/" response ".total" selection to match "1"
     And I GET path "/v1/kafka_connector_namespaces"
     And the response code should be 200
     And the ".total" selection from the response should match "1"
@@ -406,7 +410,7 @@ Feature: connector namespaces API
     And the response should match ""
 
   Scenario Outline: Use Admin API to create namespaces for end users
-    Given I am logged in as "Gru"
+    Given I am logged in as "Dr. Nefario"
 
    #-----------------------------------------------------------------------------------
    # Create a target cluster, and get the shard access token.
@@ -446,7 +450,7 @@ Feature: connector namespaces API
            "kind": "ConnectorNamespace",
            "modified_at": "${response.items[0].modified_at}",
            "name": "default-connector-namespace",
-           "owner": "${gru_user_id}",
+           "owner": "${drnefario_user_id}",
            "tenant": {
              "kind": "organisation",
              "id": "${response.items[0].tenant.id}"
@@ -523,7 +527,7 @@ Feature: connector namespaces API
     Given I am logged in as "Ricky Bobby"
     When I DELETE path "/v1/admin/kafka_connector_namespaces/${namespace_id}"
     Then the response code should be 204
-    And I sleep for 5 seconds
+    Given I wait up to "5" seconds for a GET on path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/namespaces" response ".total" selection to match "1"
     And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/namespaces"
     And the response code should be 200
     And the response should match json:
@@ -538,7 +542,7 @@ Feature: connector namespaces API
            "kind": "ConnectorNamespace",
            "modified_at": "${response.items[0].modified_at}",
            "name": "default-connector-namespace",
-           "owner": "${gru_user_id}",
+           "owner": "${drnefario_user_id}",
            "tenant": {
              "kind": "organisation",
              "id": "${response.items[0].tenant.id}"
@@ -563,7 +567,7 @@ Feature: connector namespaces API
      """
 
    #cleanup
-    Given I am logged in as "Gru"
+    Given I am logged in as "Dr. Nefario"
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204
     And the response should match ""
@@ -696,7 +700,7 @@ Feature: connector namespaces API
     Given I am logged in as "Ricky Bobby"
     When I DELETE path "/v1/admin/kafka_connector_namespaces/${namespace_id}"
     Then the response code should be 204
-    And I sleep for 5 seconds
+    Given I wait up to "5" seconds for a GET on path "/v1/admin/kafka_connector_namespaces?search=cluster_id=${connector_cluster_id}" response ".total" selection to match "1"
     And I GET path "/v1/admin/kafka_connector_namespaces?search=cluster_id=${connector_cluster_id}"
     And the response code should be 200
     And the response should match json:
