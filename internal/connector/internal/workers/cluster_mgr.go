@@ -46,6 +46,10 @@ func (m *ClusterManager) Reconcile() []error {
 			errs = append(errs, serr)
 		}
 	}
-	glog.V(5).Infof("Removed %d empty deleting clusters", count)
+	if count == 0 {
+		glog.V(5).Infof("No empty deleting clusters")
+	} else {
+		glog.V(5).Infof("Removed %d empty deleting clusters", count)
+	}
 	return errs
 }

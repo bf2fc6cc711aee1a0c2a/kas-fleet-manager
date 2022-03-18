@@ -48,6 +48,7 @@ type ConnectorClusterService interface {
 	CleanupDeployments() *errors.ServiceError
 	UpdateClientId(clusterId string, clientID string) *errors.ServiceError
 	ReconcileDeletingClusters() (int, []*errors.ServiceError)
+	GetClusterOrg(id string) (string, *errors.ServiceError)
 }
 
 var _ ConnectorClusterService = &connectorClusterService{}
@@ -937,4 +938,13 @@ func (k *connectorClusterService) ReconcileDeletingClusters() (int, []*errors.Se
 	}
 
 	return count, errs
+}
+
+func (k *connectorClusterService) GetClusterOrg(id string) (string, *errors.ServiceError) {
+	dbConn := k.connectionFactory.New()
+	cluster := dbapi.ConnectorCluster{}
+	if err := dbConn.Select("organisation_id").Where("id = ?", id).Find(&cluster).Error; err != nil {
+			return "", services.HandleGetError("Connector cluster", "id", id, err)
+	}
+	return cluster.OrganisationId, nil
 }

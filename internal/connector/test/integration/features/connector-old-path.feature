@@ -3,7 +3,7 @@ Feature: the old connectors path are still valid
 
   Background:
     Given the path prefix is "/api/connector_mgmt"
-    Given a user named "Bob"
+    Given an org admin user named "Bob"
     Given a user named "Agent"
 
   Scenario: Bob lists all connector types

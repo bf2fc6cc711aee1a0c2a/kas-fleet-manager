@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/migrations"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -51,6 +52,7 @@ func serviceProviders() di.Option {
 		di.Provide(services.NewConnectorTypesService, di.As(new(services.ConnectorTypesService))),
 		di.Provide(services.NewConnectorClusterService, di.As(new(services.ConnectorClusterService)), di.As(new(auth.AuthAgentService))),
 		di.Provide(services.NewConnectorNamespaceService, di.As(new(services.ConnectorNamespaceService))),
+		di.Provide(authz.NewAuthZService, di.As(new(authz.AuthZService))),
 		di.Provide(handlers.NewConnectorNamespaceHandler),
 		di.Provide(handlers.NewConnectorAdminHandler),
 		di.Provide(handlers.NewConnectorTypesHandler),

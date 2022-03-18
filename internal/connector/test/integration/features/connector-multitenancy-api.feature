@@ -7,7 +7,8 @@ Feature: connector namespaces API
     Given the path prefix is "/api/connector_mgmt"
 
     # User for eval organization id 13640210 configured in internal/connector/test/integration/feature_test.go:27
-    Given a user named "Gru" in organization "13640210"
+    Given an org admin user named "Gru" in organization "13640210"
+    Given I store userid for "Gru" as ${gru_user_id}
 
     # eval users used in public API
     Given a user named "Stuart" in organization "13640221"
@@ -26,7 +27,7 @@ Feature: connector namespaces API
     Given I store userid for "Tim" as ${tim_user_id}
 
     # users in organization 13640230
-    Given a user named "Dusty" in organization "13640230"
+    Given an org admin user named "Dusty" in organization "13640230"
     Given I store userid for "Dusty" as ${dusty_user_id}
     Given a user named "Lucky" in organization "13640230"
     Given I store userid for "Lucky" as ${lucky_user_id}
@@ -34,7 +35,7 @@ Feature: connector namespaces API
     Given I store userid for "Ned" as ${ned_user_id}
 
     # users in organization 13640231
-    Given a user named "El Guapo" in organization "13640231"
+    Given an org admin user named "El Guapo" in organization "13640231"
     Given I store userid for "El Guapo" as ${guapo_user_id}
 
   Scenario Outline: Create eval namespace
@@ -228,8 +229,8 @@ Feature: connector namespaces API
      }
      """
 
-   # Create a namespace
-    Given I am logged in as "Lucky"
+   # Create an organisation namespace
+    Given I am logged in as "Dusty"
     When I POST path "/v1/kafka_connector_namespaces/" with json body:
     """
     {
@@ -252,7 +253,7 @@ Feature: connector namespaces API
       "kind": "ConnectorNamespace",
       "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${response.id}",
       "name": "shared_namespace",
-      "owner": "${lucky_user_id}",
+      "owner": "${dusty_user_id}",
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
@@ -272,9 +273,55 @@ Feature: connector namespaces API
       }
     }
     """
-    And I store the ".id" selection from the response as ${namespace_id}
+    And I store the ".id" selection from the response as ${org_namespace_id}
 
-   # All organization members MUST be able to see the org tenant namespace
+   # Create a user namespace
+    Given I am logged in as "Lucky"
+    When I POST path "/v1/kafka_connector_namespaces/" with json body:
+    """
+    {
+      "name": "Lucky_namespace",
+      "cluster_id": "${connector_cluster_id}",
+      "kind": "user",
+      "annotations": [
+        {
+          "name": "connector_mgmt.api.openshift.com/profile",
+          "value": "default-profile"
+        }
+      ]
+    }
+    """
+    Then the response code should be 201
+    And the response should match json:
+    """
+    {
+      "id": "${response.id}",
+      "kind": "ConnectorNamespace",
+      "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${response.id}",
+      "name": "Lucky_namespace",
+      "owner": "${lucky_user_id}",
+      "cluster_id": "${connector_cluster_id}",
+      "created_at": "${response.created_at}",
+      "modified_at": "${response.modified_at}",
+      "annotations": [
+        {
+          "name": "connector_mgmt.api.openshift.com/profile",
+          "value": "default-profile"
+        }
+      ],
+      "tenant": {
+        "kind": "user",
+        "id": "${lucky_user_id}"
+      },
+      "status": {
+        "state": "disconnected",
+        "connectors_deployed": 0
+      }
+    }
+    """
+    And I store the ".id" selection from the response as ${user_namespace_id}
+
+   # All organization members MUST be able to see the org tenant namespaces
     Given I am logged in as "Ned"
     When I GET path "/v1/kafka_connector_namespaces/?orderBy=name"
     Then the response code should be 200
@@ -307,11 +354,11 @@ Feature: connector namespaces API
            }
          },
          {
-           "id": "${namespace_id}",
+           "id": "${org_namespace_id}",
            "kind": "ConnectorNamespace",
-           "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${namespace_id}",
+           "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${org_namespace_id}",
            "name": "shared_namespace",
-           "owner": "${lucky_user_id}",
+           "owner": "${dusty_user_id}",
            "cluster_id": "${connector_cluster_id}",
            "created_at": "${response.items[1].created_at}",
            "modified_at": "${response.items[1].modified_at}",
@@ -338,48 +385,19 @@ Feature: connector namespaces API
      }
      """
 
-   # Delete namespace
-    Given I am logged in as "Lucky"
-    When I DELETE path "/v1/kafka_connector_namespaces/${namespace_id}"
+   # Delete namespaces
+    Given I am logged in as "Dusty"
+    When I DELETE path "/v1/kafka_connector_namespaces/${org_namespace_id}"
     Then the response code should be 204
+
+    Given I am logged in as "Lucky"
+    When I DELETE path "/v1/kafka_connector_namespaces/${user_namespace_id}"
+    Then the response code should be 204
+
     And I sleep for 5 seconds
     And I GET path "/v1/kafka_connector_namespaces"
     And the response code should be 200
-    And the response should match json:
-     """
-     {
-       "items": [
-         {
-           "cluster_id": "${connector_cluster_id}",
-           "created_at": "${response.items[0].created_at}",
-           "href": "${response.items[0].href}",
-           "id": "${response.items[0].id}",
-           "kind": "ConnectorNamespace",
-           "modified_at": "${response.items[0].modified_at}",
-           "name": "default-connector-namespace",
-           "owner": "${dusty_user_id}",
-           "tenant": {
-             "kind": "organisation",
-             "id": "13640230"
-           },
-           "annotations": [
-             {
-               "name": "connector_mgmt.api.openshift.com/profile",
-               "value": "default-profile"
-             }
-           ],
-           "status": {
-             "state": "disconnected",
-             "connectors_deployed": 0
-           }
-         }
-       ],
-       "kind": "ConnectorNamespaceList",
-       "page": 1,
-       "size": 1,
-       "total": 1
-     }
-     """
+    And the ".total" selection from the response should match "1"
 
     # cleanup cluster
     Given I am logged in as "Dusty"
@@ -388,7 +406,7 @@ Feature: connector namespaces API
     And the response should match ""
 
   Scenario Outline: Use Admin API to create namespaces for end users
-    Given I am logged in as "<user>"
+    Given I am logged in as "Gru"
 
    #-----------------------------------------------------------------------------------
    # Create a target cluster, and get the shard access token.
@@ -428,7 +446,7 @@ Feature: connector namespaces API
            "kind": "ConnectorNamespace",
            "modified_at": "${response.items[0].modified_at}",
            "name": "default-connector-namespace",
-           "owner": "${<user_id>}",
+           "owner": "${gru_user_id}",
            "tenant": {
              "kind": "organisation",
              "id": "${response.items[0].tenant.id}"
@@ -520,7 +538,7 @@ Feature: connector namespaces API
            "kind": "ConnectorNamespace",
            "modified_at": "${response.items[0].modified_at}",
            "name": "default-connector-namespace",
-           "owner": "${<user_id>}",
+           "owner": "${gru_user_id}",
            "tenant": {
              "kind": "organisation",
              "id": "${response.items[0].tenant.id}"
@@ -545,7 +563,7 @@ Feature: connector namespaces API
      """
 
    #cleanup
-    Given I am logged in as "<user>"
+    Given I am logged in as "Gru"
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204
     And the response should match ""
