@@ -44,6 +44,9 @@ func NewRouteLoader(s options) environments.RouteLoader {
 
 func (s *options) AddRoutes(mainRouter *mux.Router) error {
 
+	authorizeMiddleware := s.AuthorizeMiddleware.Authorize
+	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(kerrors.ErrorUnauthenticated)
+
 	openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, "connector_mgmt.yaml")
 	if err != nil {
 		return errors.Wrap(err, "Can't load OpenAPI specification")
@@ -73,7 +76,8 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	apiV1ConnectorTypesRouter := apiV1Router.PathPrefix("/{_:kafka[-_]connector[-_]types}").Subrouter()
 	apiV1ConnectorTypesRouter.HandleFunc("/{connector_type_id}", s.ConnectorTypesHandler.Get).Methods(http.MethodGet)
 	apiV1ConnectorTypesRouter.HandleFunc("", s.ConnectorTypesHandler.List).Methods(http.MethodGet)
-	apiV1ConnectorTypesRouter.Use(s.AuthorizeMiddleware.Authorize)
+	apiV1ConnectorTypesRouter.Use(authorizeMiddleware)
+	apiV1ConnectorTypesRouter.Use(requireOrgID)
 
 	//  /api/connector_mgmt/v1/kafka_connectors
 	v1Collections = append(v1Collections, api.CollectionMetadata{
@@ -87,7 +91,8 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	apiV1ConnectorsRouter.HandleFunc("/{connector_id}", s.ConnectorsHandler.Get).Methods(http.MethodGet)
 	apiV1ConnectorsRouter.HandleFunc("/{connector_id}", s.ConnectorsHandler.Patch).Methods(http.MethodPatch)
 	apiV1ConnectorsRouter.HandleFunc("/{connector_id}", s.ConnectorsHandler.Delete).Methods(http.MethodDelete)
-	apiV1ConnectorsRouter.Use(s.AuthorizeMiddleware.Authorize)
+	apiV1ConnectorsRouter.Use(authorizeMiddleware)
+	apiV1ConnectorsRouter.Use(requireOrgID)
 
 	//  /api/connector_mgmt/v1/kafka_connectors_of/{connector_type_id}
 	apiV1ConnectorsTypedRouter := apiV1Router.PathPrefix("/{_:kafka[-_]connectors[-_]of}/{connector_type_id}").Subrouter()
@@ -95,7 +100,8 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	apiV1ConnectorsTypedRouter.HandleFunc("", s.ConnectorsHandler.List).Methods(http.MethodGet)
 	apiV1ConnectorsTypedRouter.HandleFunc("/{connector_id}", s.ConnectorsHandler.Get).Methods(http.MethodGet)
 	apiV1ConnectorsTypedRouter.HandleFunc("/{connector_id}", s.ConnectorsHandler.Patch).Methods(http.MethodPatch)
-	apiV1ConnectorsTypedRouter.Use(s.AuthorizeMiddleware.Authorize)
+	apiV1ConnectorsTypedRouter.Use(authorizeMiddleware)
+	apiV1ConnectorsTypedRouter.Use(requireOrgID)
 
 	//  /api/connector_mgmt/v1/kafka_connector_clusters
 	v1Collections = append(v1Collections, api.CollectionMetadata{
@@ -111,7 +117,8 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}", s.ConnectorClusterHandler.Delete).Methods(http.MethodDelete)
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/{_:addon[-_]parameters}", s.ConnectorClusterHandler.GetAddonParameters).Methods(http.MethodGet)
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/namespaces", s.ConnectorClusterHandler.GetNamespaces).Methods(http.MethodGet)
-	apiV1ConnectorClustersRouter.Use(s.AuthorizeMiddleware.Authorize)
+	apiV1ConnectorClustersRouter.Use(authorizeMiddleware)
+	apiV1ConnectorClustersRouter.Use(requireOrgID)
 
 	//  /api/connector_mgmt/v1/kafka_connector_namespaces
 	v1Collections = append(v1Collections, api.CollectionMetadata{
@@ -126,7 +133,8 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	apiV1ConnectorNamespacesRouter.HandleFunc("/{connector_namespace_id}", s.ConnectorNamespaceHandler.Get).Methods(http.MethodGet)
 	apiV1ConnectorNamespacesRouter.HandleFunc("/{connector_namespace_id}", s.ConnectorNamespaceHandler.Update).Methods(http.MethodPatch)
 	apiV1ConnectorNamespacesRouter.HandleFunc("/{connector_namespace_id}", s.ConnectorNamespaceHandler.Delete).Methods(http.MethodDelete)
-	apiV1ConnectorNamespacesRouter.Use(s.AuthorizeMiddleware.Authorize)
+	apiV1ConnectorNamespacesRouter.Use(authorizeMiddleware)
+	apiV1ConnectorNamespacesRouter.Use(requireOrgID)
 
 	// This section adds the API's accessed by the connector agent...
 	{
