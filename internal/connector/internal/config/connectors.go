@@ -17,10 +17,11 @@ import (
 )
 
 type ConnectorsConfig struct {
-	ConnectorEvalDuration      time.Duration           `json:"connector_eval_duration"`
-	ConnectorEvalOrganizations []string                `json:"connector_eval_organizations"`
-	ConnectorCatalogDirs       []string                `json:"connector_types"`
-	CatalogEntries             []ConnectorCatalogEntry `json:"connector_type_urls"`
+	ConnectorEvalDuration          time.Duration           `json:"connector_eval_duration"`
+	ConnectorEvalOrganizations     []string                `json:"connector_eval_organizations"`
+	ConnectorNamespaceLifecycleAPI bool                    `json:"connector_namespace_lifecycle_api"`
+	ConnectorCatalogDirs           []string                `json:"connector_types"`
+	CatalogEntries                 []ConnectorCatalogEntry `json:"connector_type_urls"`
 }
 
 var _ environments.ConfigModule = &ConnectorsConfig{}
@@ -43,6 +44,7 @@ func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringArrayVar(&c.ConnectorCatalogDirs, "connector-catalog", c.ConnectorCatalogDirs, "Directory containing connector catalog entries")
 	fs.DurationVar(&c.ConnectorEvalDuration, "connector-eval-duration", c.ConnectorEvalDuration, "Connector eval duration in golang duration format")
 	fs.StringArrayVar(&c.ConnectorEvalOrganizations, "connector-eval-organizations", c.ConnectorEvalOrganizations, "Connector eval organization IDs")
+	fs.BoolVar(&c.ConnectorNamespaceLifecycleAPI, "connector-namespace-lifecycle-api", c.ConnectorNamespaceLifecycleAPI, "Enable APIs to create, update, delete non-eval Namespaces")
 }
 
 func (c *ConnectorsConfig) ReadFiles() error {
