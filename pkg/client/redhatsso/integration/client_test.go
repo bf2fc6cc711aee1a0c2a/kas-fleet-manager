@@ -2,6 +2,7 @@ package integration
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/redhatsso"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
@@ -10,9 +11,9 @@ import (
 )
 
 func getClient(baseURL string) redhatsso.SSOClient {
-	config := redhatsso.RedhatSSOConfig{
-		BaseURL: baseURL,
-		KafkaRealm: redhatsso.RealmConfig{
+	config := keycloak.KeycloakConfig{
+		SsoBaseUrl: baseURL,
+		RedhatSSORealm: &keycloak.KeycloakRealmConfig{
 			Realm:            "redhat-external",
 			APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", baseURL),
 			TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", baseURL),
@@ -181,9 +182,9 @@ func Test_SSOClient_GetToken(t *testing.T) {
 
 	defer server.Stop()
 
-	config := redhatsso.RedhatSSOConfig{
-		BaseURL: server.BaseURL(),
-		KafkaRealm: redhatsso.RealmConfig{
+	config := keycloak.KeycloakConfig{
+		SsoBaseUrl: server.BaseURL(),
+		RedhatSSORealm: &keycloak.KeycloakRealmConfig{
 			Realm:            "redhat-external",
 			APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 			TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
@@ -195,8 +196,8 @@ func Test_SSOClient_GetToken(t *testing.T) {
 	serviceAccount, err := client.CreateServiceAccount(accessToken, "test", "test desc")
 	Expect(err).ToNot(HaveOccurred())
 
-	config.KafkaRealm.ClientID = *serviceAccount.ClientId
-	config.KafkaRealm.ClientSecret = *serviceAccount.Secret
+	config.RedhatSSORealm.ClientID = *serviceAccount.ClientId
+	config.RedhatSSORealm.ClientSecret = *serviceAccount.Secret
 
 	client = redhatsso.NewSSOClient(&config)
 	token, err := client.GetToken()

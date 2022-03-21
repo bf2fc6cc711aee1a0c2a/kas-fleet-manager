@@ -245,6 +245,7 @@ help:
 	@echo "make sso/setup                   local keycloak instance"
 	@echo "make sso/config                  local configure realm"
 	@echo "make sso/teardown                teardown keycloak instance"
+	@echo "make redhatsso/setup             setup mas sso clientId & clientSecret "
 	@echo "$(fake)"
 .PHONY: help
 
@@ -574,6 +575,11 @@ keycloak/setup:
 	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_ID)" > secrets/osd-idp-keycloak-service.clientId
 	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
 .PHONY:keycloak/setup
+
+redhatsso/setup:
+	@echo -n "$(SSO_CLIENT_ID)" > secrets/redhatsso-service.clientId
+	@echo -n "$(SSO_CLIENT_SECRET)" > secrets/redhatsso-service.clientSecret
+.PHONY:redhatsso/setup
 
 # Setup for the kafka broker certificate
 kafkacert/setup:

@@ -9,9 +9,18 @@ import (
 	"github.com/spf13/pflag"
 )
 
+type SSOProvider string
+
+const (
+	MAS_SSO    SSOProvider = "mas_sso"
+	REDHAT_SSO SSOProvider = "redhat_sso"
+	//AUTH_SSO SSOProvider ="auth_sso"
+)
+
 type KeycloakConfig struct {
 	EnableAuthenticationOnKafka bool                 `json:"enable_auth"`
 	BaseURL                     string               `json:"base_url"`
+	SsoBaseUrl                  string               `json:"sso_base_url"`
 	Debug                       bool                 `json:"debug"`
 	InsecureSkipVerify          bool                 `json:"insecure-skip-verify"`
 	UserNameClaim               string               `json:"user_name_claim"`
@@ -21,8 +30,10 @@ type KeycloakConfig struct {
 	TLSTrustedCertificatesFile  string               `json:"tls_trusted_certificates_file"`
 	KafkaRealm                  *KeycloakRealmConfig `json:"kafka_realm"`
 	OSDClusterIDPRealm          *KeycloakRealmConfig `json:"osd_cluster_idp_realm"`
+	RedhatSSORealm              *KeycloakRealmConfig `json:"redhat_sso_config"`
 	MaxAllowedServiceAccounts   int                  `json:"max_allowed_service_accounts"`
 	MaxLimitForGetClients       int                  `json:"max_limit_for_get_clients"`
+	SelectSSOProvider           SSOProvider          `json:"select_sso_provider"`
 }
 
 type KeycloakRealmConfig struct {
@@ -35,6 +46,7 @@ type KeycloakRealmConfig struct {
 	TokenEndpointURI string `json:"token_endpoint_uri"`
 	JwksEndpointURI  string `json:"jwks_endpoint_uri"`
 	ValidIssuerURI   string `json:"valid_issuer_uri"`
+	APIEndpointURI   string `json:"api_endpoint_uri"`
 }
 
 func (c *KeycloakRealmConfig) setDefaultURIs(baseURL string) {
@@ -45,6 +57,7 @@ func (c *KeycloakRealmConfig) setDefaultURIs(baseURL string) {
 
 func NewKeycloakConfig() *KeycloakConfig {
 	kc := &KeycloakConfig{
+		SsoBaseUrl:"https://sso.redhat.com",
 		EnableAuthenticationOnKafka: true,
 		KafkaRealm: &KeycloakRealmConfig{
 			ClientIDFile:     "secrets/keycloak-service.clientId",
@@ -56,6 +69,13 @@ func NewKeycloakConfig() *KeycloakConfig {
 			ClientSecretFile: "secrets/osd-idp-keycloak-service.clientSecret",
 			GrantType:        "client_credentials",
 		},
+		RedhatSSORealm: &KeycloakRealmConfig{
+			APIEndpointURI:   "https://sso.redhat.com/auth/realms/redhat-external",
+			Realm:            "redhat-external",
+			ClientIDFile:     "secrets/redhatsso-service.clientId",
+			ClientSecretFile: "secrets/redhatsso-service.clientSecret",
+			GrantType:        "client_credentials",
+		},
 		TLSTrustedCertificatesFile: "secrets/keycloak-service.crt",
 		Debug:                      false,
 		InsecureSkipVerify:         false,
@@ -64,6 +84,7 @@ func NewKeycloakConfig() *KeycloakConfig {
 		TLSTrustedCertificatesKey:  "keycloak.crt",
 		MaxAllowedServiceAccounts:  2,
 		MaxLimitForGetClients:      100,
+		SelectSSOProvider:          MAS_SSO,
 	}
 	return kc
 }
@@ -84,6 +105,9 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&kc.MaxLimitForGetClients, "max-limit-for-sso-get-clients", kc.MaxLimitForGetClients, "Max limits for SSO get clients")
 	fs.StringVar(&kc.UserNameClaim, "user-name-claim", kc.UserNameClaim, "Human readable username token claim")
 	fs.StringVar(&kc.FallBackUserNameClaim, "fall-back-user-name-claim", kc.FallBackUserNameClaim, "Fall back username token claim")
+	fs.StringVar(&kc.RedhatSSORealm.ClientIDFile, "redhat-sso-client-id-file", kc.RedhatSSORealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm")
+	fs.StringVar(&kc.RedhatSSORealm.ClientSecretFile, "redhat-sso-client-secret-file", kc.RedhatSSORealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
+	fs.StringVar(&kc.SsoBaseUrl, "redhat-sso-base-url", kc.SsoBaseUrl, "The base URL of the mas-sso, integration by default")
 }
 
 func (kc *KeycloakConfig) ReadFiles() error {
@@ -103,7 +127,20 @@ func (kc *KeycloakConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-
+	err = shared.ReadFileValueString(kc.OSDClusterIDPRealm.ClientSecretFile, &kc.OSDClusterIDPRealm.ClientSecret)
+	if err != nil {
+		return err
+	}
+	if kc.SelectSSOProvider == REDHAT_SSO {
+		err = shared.ReadFileValueString(kc.RedhatSSORealm.ClientIDFile, &kc.RedhatSSORealm.ClientID)
+		if err != nil {
+			return err
+		}
+		err = shared.ReadFileValueString(kc.RedhatSSORealm.ClientSecretFile, &kc.RedhatSSORealm.ClientSecret)
+		if err != nil {
+			return err
+		}
+	}
 	// We read the MAS SSO TLS certificate file. If it does not exist we
 	// intentionally continue as if it was not provided
 	err = shared.ReadFileValueString(kc.TLSTrustedCertificatesFile, &kc.TLSTrustedCertificatesValue)
@@ -117,5 +154,6 @@ func (kc *KeycloakConfig) ReadFiles() error {
 
 	kc.KafkaRealm.setDefaultURIs(kc.BaseURL)
 	kc.OSDClusterIDPRealm.setDefaultURIs(kc.BaseURL)
+	kc.RedhatSSORealm.setDefaultURIs(kc.SsoBaseUrl)
 	return nil
 }

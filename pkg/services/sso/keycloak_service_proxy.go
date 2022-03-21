@@ -5,6 +5,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/openshift-online/ocm-sdk-go/authentication"
 )
 
 type tokenProvider interface {
@@ -24,6 +25,29 @@ func (r *keycloakServiceProxy) retrieveToken() (string, *errors.ServiceError) {
 		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "error getting access token")
 	}
 	return accessToken, nil
+}
+
+func retrieveUserToken(ctx context.Context) (string, *errors.ServiceError) {
+	userToken, err := authentication.TokenFromContext(ctx)
+	if err != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, err, "error getting access token")
+	}
+	token := userToken.Raw
+	return token, nil
+}
+
+func tokenForServiceAPIHandler(ctx context.Context, r *keycloakServiceProxy) (string, *errors.ServiceError) {
+	var token string
+	var err *errors.ServiceError
+	if r.GetConfig().SelectSSOProvider == keycloak.REDHAT_SSO {
+		token, err = retrieveUserToken(ctx)
+	} else {
+		token, err = r.retrieveToken()
+	}
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
 func (r *keycloakServiceProxy) RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
@@ -67,7 +91,7 @@ func (r *keycloakServiceProxy) IsKafkaClientExist(clientId string) *errors.Servi
 }
 
 func (r *keycloakServiceProxy) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
-	if token, err := r.retrieveToken(); err != nil {
+	if token, err := tokenForServiceAPIHandler(ctx, r); err!= nil {
 		return nil, err
 	} else {
 		return r.service.CreateServiceAccount(token, serviceAccountRequest, ctx)
@@ -75,7 +99,7 @@ func (r *keycloakServiceProxy) CreateServiceAccount(serviceAccountRequest *api.S
 }
 
 func (r *keycloakServiceProxy) DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError {
-	if token, err := r.retrieveToken(); err != nil {
+	if token, err := tokenForServiceAPIHandler(ctx, r); err!= nil {
 		return err
 	} else {
 		return r.service.DeleteServiceAccount(token, ctx, clientId)
@@ -83,7 +107,7 @@ func (r *keycloakServiceProxy) DeleteServiceAccount(ctx context.Context, clientI
 }
 
 func (r *keycloakServiceProxy) ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
-	if token, err := r.retrieveToken(); err != nil {
+	if token, err := tokenForServiceAPIHandler(ctx, r); err!= nil {
 		return nil, err
 	} else {
 		return r.service.ResetServiceAccountCredentials(token, ctx, clientId)
@@ -91,11 +115,11 @@ func (r *keycloakServiceProxy) ResetServiceAccountCredentials(ctx context.Contex
 }
 
 func (r *keycloakServiceProxy) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
-	if token, err := r.retrieveToken(); err != nil {
-		return nil, err
-	} else {
-		return r.service.ListServiceAcc(token, ctx, first, max)
-	}
+	 if token, err := tokenForServiceAPIHandler(ctx, r); err!= nil {
+		 return nil, err
+	 }else {
+		 return r.service.ListServiceAcc(token, ctx, first, max)
+	 }
 }
 
 func (r *keycloakServiceProxy) RegisterKasFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
@@ -115,7 +139,7 @@ func (r *keycloakServiceProxy) DeRegisterKasFleetshardOperatorServiceAccount(age
 }
 
 func (r *keycloakServiceProxy) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
-	if token, err := r.retrieveToken(); err != nil {
+	if token, err := tokenForServiceAPIHandler(ctx, r); err!= nil {
 		return nil, err
 	} else {
 		return r.service.GetServiceAccountById(token, ctx, id)
@@ -123,7 +147,7 @@ func (r *keycloakServiceProxy) GetServiceAccountById(ctx context.Context, id str
 }
 
 func (r *keycloakServiceProxy) GetServiceAccountByClientId(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
-	if token, err := r.retrieveToken(); err != nil {
+	if token, err := tokenForServiceAPIHandler(ctx, r); err!= nil {
 		return nil, err
 	} else {
 		return r.service.GetServiceAccountByClientId(token, ctx, clientId)

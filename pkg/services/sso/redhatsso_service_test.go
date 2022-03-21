@@ -3,6 +3,7 @@ package sso
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/redhatsso"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -33,8 +34,8 @@ func TestRedhatSSO_RegisterKafkaClientInSSO(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *redhatsso.RedhatSSOConfig {
-						return redhatsso.NewRedhatSSOConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					CreateServiceAccountFunc: func(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
 						id := uuid.New().String()
@@ -63,8 +64,8 @@ func TestRedhatSSO_RegisterKafkaClientInSSO(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *redhatsso.RedhatSSOConfig {
-						return redhatsso.NewRedhatSSOConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					CreateServiceAccountFunc: func(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
 						id := uuid.New().String()
@@ -93,8 +94,8 @@ func TestRedhatSSO_RegisterKafkaClientInSSO(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *redhatsso.RedhatSSOConfig {
-						return redhatsso.NewRedhatSSOConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					CreateServiceAccountFunc: func(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
 						return serviceaccountsclient.ServiceAccountData{}, errors.GeneralError("failed to create the sso client")
@@ -159,7 +160,7 @@ func TestRedhatSSO_RegisterOSDClusterClientInSSO(t *testing.T) {
 		//			GetTokenFunc: func() (string, error) {
 		//				return token, nil
 		//			},
-		//			GetConfigFunc: func() *redhatsso.RedhatSSOConfig {
+		//			GetConfigFunc: func() *redhatsso.RedhatSSORealm {
 		//				return redhatsso.NewRedhatSSOConfig()
 		//			},
 		//		},
@@ -174,7 +175,7 @@ func TestRedhatSSO_RegisterOSDClusterClientInSSO(t *testing.T) {
 		//			GetTokenFunc: func() (string, error) {
 		//				return token, nil
 		//			},
-		//			GetConfigFunc: func() *redhatsso.RedhatSSOConfig {
+		//			GetConfigFunc: func() *redhatsso.RedhatSSORealm {
 		//				return redhatsso.NewRedhatSSOConfig()
 		//			},
 		//			//IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
@@ -204,7 +205,7 @@ func TestRedhatSSO_RegisterOSDClusterClientInSSO(t *testing.T) {
 		//			GetTokenFunc: func() (string, error) {
 		//				return token, nil
 		//			},
-		//			GetConfigFunc: func() *redhatsso.RedhatSSOConfig {
+		//			GetConfigFunc: func() *redhatsso.RedhatSSORealm {
 		//				return redhatsso.NewRedhatSSOConfig()
 		//			},
 		//			//IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
@@ -262,8 +263,8 @@ func TestRedhatSSO_DeRegisterClientInSSO(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *redhatsso.RedhatSSOConfig {
-						return redhatsso.NewRedhatSSOConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
 						return nil
@@ -279,8 +280,8 @@ func TestRedhatSSO_DeRegisterClientInSSO(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *redhatsso.RedhatSSOConfig {
-						return redhatsso.NewRedhatSSOConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
 						return errors.GeneralError("failed to delete")
@@ -344,8 +345,8 @@ func TestRedhatSSOService_RegisterKasFleetshardOperatorServiceAccount(t *testing
 							CreatedAt:   &createdAt,
 						}, nil
 					},
-					GetConfigFunc: func() *redhatsso.RedhatSSOConfig {
-						return redhatsso.NewRedhatSSOConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 				},
 			},
@@ -380,8 +381,8 @@ func TestRedhatSSOService_RegisterKasFleetshardOperatorServiceAccount(t *testing
 							CreatedAt:   &createdAt,
 						}, nil
 					},
-					GetConfigFunc: func() *redhatsso.RedhatSSOConfig {
-						return redhatsso.NewRedhatSSOConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 				},
 			},
@@ -560,8 +561,8 @@ func TestRedhatSSOService_RegisterConnectorFleetshardOperatorServiceAccount(t *t
 							CreatedAt:   &createdAt,
 						}, nil
 					},
-					GetConfigFunc: func() *redhatsso.RedhatSSOConfig {
-						return redhatsso.NewRedhatSSOConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 				},
 			},
@@ -588,8 +589,8 @@ func TestRedhatSSOService_RegisterConnectorFleetshardOperatorServiceAccount(t *t
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *redhatsso.RedhatSSOConfig {
-						return redhatsso.NewRedhatSSOConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 				},
 			},

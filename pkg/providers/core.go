@@ -81,7 +81,16 @@ func ServiceProviders() di.Option {
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),
 		di.Provide(func(c *keycloak.KeycloakConfig) sso.KafkaKeycloakService {
-			return sso.NewKeycloakService(c, c.KafkaRealm)
+			var keycloakService sso.KeycloakService
+			if c.SelectSSOProvider == keycloak.MAS_SSO {
+				keycloakService = sso.NewKeycloakService(c, c.KafkaRealm)
+			} else {
+				keycloakService = sso.NewKeycloakServiceBuilder().
+					ForRedhatSSO().
+					WithRedhatSSOConfiguration(c).
+					Build()
+			}
+			return keycloakService
 		}),
 		di.Provide(func(c *keycloak.KeycloakConfig) sso.OsdKeycloakService {
 			return sso.NewKeycloakService(c, c.OSDClusterIDPRealm)
