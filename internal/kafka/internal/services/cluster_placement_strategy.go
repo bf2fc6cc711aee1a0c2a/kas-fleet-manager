@@ -63,6 +63,11 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 		SupportedInstanceType: kafka.InstanceType,
 	}
 
+	kafkaInstanceSize, e := f.KafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+	if e != nil {
+		return nil, errors.NewWithCause(errors.ErrorInstancePlanNotSupported, e, "failed to find cluster with criteria '%v'", criteria)
+	}
+
 	//#1
 	clusterObj, err := f.ClusterService.FindAllClusters(criteria)
 	if err != nil {
@@ -88,11 +93,6 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 	clusterWithinLimit, errf := f.findClusterKafkaInstanceCount(clusterSchIds)
 	if errf != nil {
 		return nil, errf
-	}
-
-	kafkaInstanceSize, e := f.KafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
-	if e != nil {
-		return nil, errors.NewWithCause(errors.ErrorInstancePlanNotSupported, err, "failed to find cluster with criteria '%v'", criteria)
 	}
 
 	//#3 which schedulable cluster is also within the limit
