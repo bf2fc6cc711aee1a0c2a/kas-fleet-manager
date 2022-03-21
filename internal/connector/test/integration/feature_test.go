@@ -26,6 +26,7 @@ func TestMain(m *testing.M) {
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
 			c.ConnectorEvalDuration, _ = time.ParseDuration("2s")
 			c.ConnectorEvalOrganizations = []string{"13640210"}
+			c.ConnectorNamespaceLifecycleAPI = true
 		},
 		connector.ConfigProviders(false),
 	)
