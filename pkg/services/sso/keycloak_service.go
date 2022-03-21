@@ -590,7 +590,7 @@ func (kc *masService) createServiceAccountIfNotExists(token string, clientRep ke
 func (kc *masService) checkAllowedServiceAccountsLimits(accessToken string, maxAllowed int, orgId string) (bool, error) {
 	glog.V(5).Infof("Check if user is allowed to create service accounts: orgId = %s", orgId)
 	searchAtt := fmt.Sprintf("rh-org-id:%s", orgId)
-	clients, err := kc.kcClient.GetClients(accessToken, 0, -1, searchAtt) // return all service accounts attached to the user
+	clients, err := kc.kcClient.GetClients(accessToken, 0, -1, searchAtt) // return all service accounts attached to the org
 	if err != nil {
 		return false, err
 	}
@@ -603,7 +603,7 @@ func (kc *masService) checkAllowedServiceAccountsLimits(accessToken string, maxA
 		serviceAccountCount++
 	}
 
-	glog.V(10).Infof("Existing number of clients found: %d & max allowed: %d, for the orgId:%s", serviceAccountCount, maxAllowed, orgId)
+	glog.V(10).Infof("Existing number of clients found: %d & max allowed: %d, for the orgId: %s", serviceAccountCount, maxAllowed, orgId)
 	if serviceAccountCount >= maxAllowed {
 		return false, nil //http requester's error
 	} else {
