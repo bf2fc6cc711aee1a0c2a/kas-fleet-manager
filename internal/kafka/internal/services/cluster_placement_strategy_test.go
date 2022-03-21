@@ -226,9 +226,13 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 						return nil, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			args: args{
-				kafka: &dbapi.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{
+					InstanceType: types.STANDARD.String(),
+					SizeId:       "x1",
+				},
 			},
 			want:    nil,
 			wantErr: false,
@@ -247,9 +251,13 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 						return nil, nil
 					},
 				},
+				kafkaConfig: &defaultKafkaConf,
 			},
 			args: args{
-				kafka: &dbapi.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{
+					InstanceType: types.STANDARD.String(),
+					SizeId:       "x1",
+				},
 			},
 			want:    nil,
 			wantErr: true,
