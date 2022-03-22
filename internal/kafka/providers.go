@@ -67,6 +67,7 @@ func ServiceProviders() di.Option {
 		di.Provide(services.NewClusterService),
 		di.Provide(services.NewKafkaService, di.As(new(services.KafkaService))),
 		di.Provide(services.NewCloudProvidersService),
+		di.Provide(services.NewSupportedKafkaInstanceTypesService),
 		di.Provide(services.NewObservatoriumService),
 		di.Provide(services.NewKasFleetshardOperatorAddon),
 		di.Provide(services.NewClusterPlacementStrategy),
