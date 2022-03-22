@@ -140,8 +140,9 @@ func (h *dataPlaneClusterHandler) validateResizeInfo(request *private.DataPlaneC
 			return errors.FieldValidationError("resizeInfo delta data retention size must be set")
 		}
 		if resizeInfo.Delta.IngressEgressThroughputPerSec == nil {
-			return errors.FieldValidationError("resizeInfo delta ingressegress throughput per second must be set")
+			return errors.FieldValidationError("resizeInfo delta ingressEgress throughput per second must be set")
 		}
+
 		if resizeInfo.Delta.Partitions == nil {
 			return errors.FieldValidationError("resieInfo delta partitions must be set")
 		}
@@ -158,7 +159,7 @@ func (h *dataPlaneClusterHandler) validateTotal(request *private.DataPlaneCluste
 		return errors.FieldValidationError("total data retention size must be set")
 	}
 	if total.IngressEgressThroughputPerSec == nil {
-		return errors.FieldValidationError("total ingressegress throughput per second must be set")
+		return errors.FieldValidationError("total ingressEgress throughput per second must be set")
 	}
 	if total.Partitions == nil {
 		return errors.FieldValidationError("total partitions must be set")
@@ -177,7 +178,7 @@ func (h *dataPlaneClusterHandler) validateRemaining(request *private.DataPlaneCl
 		return errors.FieldValidationError("remaining data retention size must be set")
 	}
 	if remaining.IngressEgressThroughputPerSec == nil {
-		return errors.FieldValidationError("remaining ingressegress throughput per second must be set")
+		return errors.FieldValidationError("remaining ingressEgress throughput per second must be set")
 	}
 	if remaining.Partitions == nil {
 		return errors.FieldValidationError("remaining partitions must be set")
