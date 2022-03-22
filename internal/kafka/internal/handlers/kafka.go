@@ -87,7 +87,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			return presenters.PresentKafkaRequest(convKafka, h.kafkaConfig.BrowserUrl), nil
+			return presenters.PresentKafkaRequest(convKafka, h.kafkaConfig), nil
 		},
 	}
 
@@ -104,7 +104,7 @@ func (h kafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig.BrowserUrl), nil
+			return presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -152,7 +152,7 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, kafkaRequest := range kafkaRequests {
-				converted := presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig.BrowserUrl)
+				converted := presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig)
 				kafkaRequestList.Items = append(kafkaRequestList.Items, converted)
 			}
 
@@ -203,7 +203,7 @@ func (h kafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			return presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig.BrowserUrl), nil
+			return presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig), nil
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)

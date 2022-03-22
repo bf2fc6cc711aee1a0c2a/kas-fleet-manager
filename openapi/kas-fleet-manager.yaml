@@ -947,6 +947,18 @@ components:
               type: string
             size_id:
               type: string
+            ingress_throughput_per_sec:
+              type: string
+            egress_throughput_per_sec:
+              type: string
+            total_max_connections:
+              type: int
+            max_partitions:
+              type: int
+            max_data_retention_period:
+              type: string
+            max_connection_attempts_per_sec:
+              type: int
           example:
             $ref: "#/components/examples/KafkaRequestExample"
     KafkaRequestList:
@@ -1496,6 +1508,12 @@ components:
         browser_url: "https://console.redhat.com/application-services/streams/kafkas/1isy6rq3jki8q0otmjqfd3ocfrg/dashboard"
         reauthentication_enabled: true
         size_id: x1
+        ingress_throughput_per_sec: "2Mi"
+        egress_throughput_per_sec: "2Mi"
+        total_max_connections: 100
+        max_partitions: 100
+        max_data_retention_period: "P14D"
+        max_connection_attempts_per_sec: 100
     KafkaRequestFailedCreationStatusExample:
       value:
         id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"

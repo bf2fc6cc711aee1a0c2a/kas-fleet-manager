@@ -24,17 +24,23 @@ type KafkaRequest struct {
 	CloudProvider string `json:"cloud_provider,omitempty"`
 	MultiAz       bool   `json:"multi_az"`
 	// Values will be regions of specific cloud provider. For example: us-east-1 for AWS
-	Region                  string    `json:"region,omitempty"`
-	Owner                   string    `json:"owner,omitempty"`
-	Name                    string    `json:"name,omitempty"`
-	BootstrapServerHost     string    `json:"bootstrap_server_host,omitempty"`
-	CreatedAt               time.Time `json:"created_at,omitempty"`
-	UpdatedAt               time.Time `json:"updated_at,omitempty"`
-	FailedReason            string    `json:"failed_reason,omitempty"`
-	Version                 string    `json:"version,omitempty"`
-	InstanceType            string    `json:"instance_type,omitempty"`
-	ReauthenticationEnabled bool      `json:"reauthentication_enabled"`
-	KafkaStorageSize        string    `json:"kafka_storage_size,omitempty"`
-	BrowserUrl              string    `json:"browser_url,omitempty"`
-	SizeId                  string    `json:"size_id,omitempty"`
+	Region                      string    `json:"region,omitempty"`
+	Owner                       string    `json:"owner,omitempty"`
+	Name                        string    `json:"name,omitempty"`
+	BootstrapServerHost         string    `json:"bootstrap_server_host,omitempty"`
+	CreatedAt                   time.Time `json:"created_at,omitempty"`
+	UpdatedAt                   time.Time `json:"updated_at,omitempty"`
+	FailedReason                string    `json:"failed_reason,omitempty"`
+	Version                     string    `json:"version,omitempty"`
+	InstanceType                string    `json:"instance_type,omitempty"`
+	ReauthenticationEnabled     bool      `json:"reauthentication_enabled"`
+	KafkaStorageSize            string    `json:"kafka_storage_size,omitempty"`
+	BrowserUrl                  string    `json:"browser_url,omitempty"`
+	SizeId                      string    `json:"size_id,omitempty"`
+	IngressThroughputPerSec     string    `json:"ingress_throughput_per_sec,omitempty"`
+	EgressThroughputPerSec      string    `json:"egress_throughput_per_sec,omitempty"`
+	TotalMaxConnections         int       `json:"total_max_connections,omitempty"`
+	MaxPartitions               int       `json:"max_partitions,omitempty"`
+	MaxDataRetentionPeriod      string    `json:"max_data_retention_period,omitempty"`
+	MaxConnectionAttemptsPerSec int       `json:"max_connection_attempts_per_sec,omitempty"`
 }
