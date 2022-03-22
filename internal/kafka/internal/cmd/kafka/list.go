@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
@@ -48,6 +49,9 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	var kafkaService services.KafkaService
 	env.MustResolveAll(&kafkaService)
 
+	var kafkaConfig config.KafkaConfig
+	env.MustResolveAll(&kafkaConfig)
+
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"username": owner,
@@ -76,7 +80,7 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	}
 
 	for _, kafkaRequest := range kafkaList {
-		converted := presenters.PresentKafkaRequest(kafkaRequest)
+		converted := presenters.PresentKafkaRequest(kafkaRequest, &kafkaConfig)
 		kafkaRequestList.Items = append(kafkaRequestList.Items, converted)
 	}
 
