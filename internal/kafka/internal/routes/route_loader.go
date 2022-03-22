@@ -2,8 +2,9 @@ package routes
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 
@@ -39,18 +40,19 @@ type options struct {
 	ProviderConfig *config.ProviderConfig
 	KafkaConfig    *config.KafkaConfig
 
-	AMSClient                ocm.AMSClient
-	Kafka                    services.KafkaService
-	CloudProviders           services.CloudProvidersService
-	Observatorium            services.ObservatoriumService
-	Keycloak                 sso.KafkaKeycloakService
-	DataPlaneCluster         services.DataPlaneClusterService
-	DataPlaneKafkaService    services.DataPlaneKafkaService
-	AccountService           account.AccountService
-	AuthService              authorization.Authorization
-	DB                       *db.ConnectionFactory
-	ClusterPlacementStrategy services.ClusterPlacementStrategy
-	ClusterService           services.ClusterService
+	AMSClient                   ocm.AMSClient
+	Kafka                       services.KafkaService
+	CloudProviders              services.CloudProvidersService
+	Observatorium               services.ObservatoriumService
+	Keycloak                    coreServices.KafkaKeycloakService
+	DataPlaneCluster            services.DataPlaneClusterService
+	DataPlaneKafkaService       services.DataPlaneKafkaService
+	AccountService              account.AccountService
+	AuthService                 authorization.Authorization
+	DB                          *db.ConnectionFactory
+	ClusterPlacementStrategy    services.ClusterPlacementStrategy
+	ClusterService              services.ClusterService
+	SupportedKafkaInstanceTypes services.SupportedKafkaInstanceTypesService
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
 	AccessControlListConfig     *acl.AccessControlListConfig
@@ -81,6 +83,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
+	supportedKafkaInstanceTypesHandler := handlers.NewSupportedKafkaInstanceTypesHandler(s.SupportedKafkaInstanceTypes, s.CloudProviders, s.Kafka, s.KafkaConfig)
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
@@ -215,6 +218,15 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiRouter.Use(gorillaHandlers.CompressHandler)
 
 	apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
+
+	// /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region}
+	apiV1SupportedKafkaInstanceTypesRouter := apiV1Router.PathPrefix("/instance_types/{cloud_provider}/{cloud_region}").Subrouter()
+	apiV1SupportedKafkaInstanceTypesRouter.HandleFunc("", supportedKafkaInstanceTypesHandler.ListSupportedKafkaInstanceTypes).
+		Name(logger.NewLogEvent("list-supported-kafka-instance-types-by cloud-region", "list supported kafka instance types by cloud region").ToString()).
+		Methods(http.MethodGet)
+	apiV1SupportedKafkaInstanceTypesRouter.Use(requireIssuer)
+	apiV1SupportedKafkaInstanceTypesRouter.Use(requireOrgID)
+	apiV1SupportedKafkaInstanceTypesRouter.Use(authorizeMiddleware)
 
 	// /agent-clusters/{id}
 	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
