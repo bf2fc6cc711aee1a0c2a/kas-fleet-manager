@@ -27,6 +27,7 @@ func TestMain(m *testing.M) {
 			c.ConnectorEvalDuration, _ = time.ParseDuration("2s")
 			c.ConnectorEvalOrganizations = []string{"13640210"}
 			c.ConnectorNamespaceLifecycleAPI = true
+			c.ConnectorDisableCascadeDelete = true
 		},
 		connector.ConfigProviders(false),
 	)

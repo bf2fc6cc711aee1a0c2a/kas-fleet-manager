@@ -14,6 +14,7 @@ require (
 	github.com/cucumber/godog v0.10.1-0.20210705192606-df8c6e49b40b
 	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/docker/go-healthcheck v0.1.0
+	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
