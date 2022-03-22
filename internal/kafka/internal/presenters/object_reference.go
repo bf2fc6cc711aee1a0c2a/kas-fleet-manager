@@ -2,6 +2,7 @@ package presenters
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -16,6 +17,8 @@ const (
 	KindCloudRegion = "CloudRegion"
 	// KindCloudProvider is a string identifier for the type api.CloudProvider
 	KindCloudProvider = "CloudProvider"
+	//KindSupportedKafkaInstanceType is a string identifier for the type api.SupportedKafkaInstanceType
+	KindSupportedKafkaInstanceType = "SupportedKafkaInstanceType"
 	// KindError is a string identifier for the type api.ServiceError
 	KindError = "Error"
 
@@ -34,6 +37,8 @@ func objectKind(i interface{}) string {
 		return KindCloudRegion
 	case api.CloudProvider, *api.CloudProvider:
 		return KindCloudProvider
+	case api.SupportedKafkaInstanceType, *api.SupportedKafkaInstanceType:
+		return KindSupportedKafkaInstanceType
 	case errors.ServiceError, *errors.ServiceError:
 		return KindError
 	default:
