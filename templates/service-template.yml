@@ -167,6 +167,21 @@ parameters:
   description: Enable the Kafka TLS certificate
   value: "false"
 
+- name: RECONCILER_REPEAT_INTERVAL
+  displayName: Repeat Interval
+  description: The interval between cluster reconciliations.
+  value: "30s"
+
+- name: LEADER_ELECTION_RECONCILER_REPEAT_INTERVAL
+  displayName: Leader Election Repeat Interval
+  description: The interval between Leader Elections.
+  value: "15s"
+
+- name: LEADER_LEASE_EXPIRATION_TIME
+  displayName: Leaser Lease expiration time
+  description: This is the amount of time before a leader lease expires.
+  value: "1m"
+
 - name: DEX_URL
   displayName: Dex url
   description: A URL to dex that will be used by the observability stack for authentication.
@@ -870,6 +885,9 @@ objects:
             - --kas-fleetshard-addon-id=${KAS_FLEETSHARD_ADDON_ID}
             - --cluster-logging-operator-addon-id=${CLUSTER_LOGGING_OPERATOR_ADDON_ID}
             - --alsologtostderr
+            - --reconciler-repeat-interval=${RECONCILER_REPEAT_INTERVAL}
+            - --leader-election-reconciler-repeat-interval=${LEADER_ELECTION_RECONCILER_REPEAT_INTERVAL}
+            - --leader-lease-expiration-time=${LEADER_LEASE_EXPIRATION_TIME}
             - -v=${GLOG_V}
             resources:
               requests:

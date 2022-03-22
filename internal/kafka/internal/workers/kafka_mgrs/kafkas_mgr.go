@@ -1,19 +1,19 @@
 package kafka_mgrs
 
 import (
+	"math"
+	"strings"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	serviceErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"math"
-	"strings"
 )
 
 // we do not add "deleted" status to the list as the kafkas are soft deleted once the status is set to "deleted", so no need to count them here.
@@ -37,15 +37,13 @@ type KafkaManager struct {
 	cloudProviders          *config.ProviderConfig
 }
 
-// NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, accessControlList *acl.AccessControlListConfig, kafka *config.KafkaConfig, bus signalbus.SignalBus, clusters *config.DataplaneClusterConfig, providers *config.ProviderConfig) *KafkaManager {
+// NewKafkaManager creates a new kafka manager to reconcile kafkas
+func NewKafkaManager(kafkaService services.KafkaService, accessControlList *acl.AccessControlListConfig, kafka *config.KafkaConfig, clusters *config.DataplaneClusterConfig, providers *config.ProviderConfig, reconciler workers.Reconciler) *KafkaManager {
 	return &KafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "general_kafka_worker",
-			Reconciler: workers.Reconciler{
-				SignalBus: bus,
-			},
+			Reconciler: reconciler,
 		},
 		kafkaService:            kafkaService,
 		accessControlListConfig: accessControlList,

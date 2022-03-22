@@ -103,8 +103,9 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	var ocmConfig *ocm.OCMConfig
 	var serverConfig *server.ServerConfig
 	var keycloakConfig *keycloak.KeycloakConfig
+	var reconcilerConfig *workers.ReconcilerConfig
 
-	env.MustResolveAll(&ocmConfig, &serverConfig, &keycloakConfig)
+	env.MustResolveAll(&ocmConfig, &serverConfig, &keycloakConfig, &reconcilerConfig)
 
 	db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
 
@@ -119,7 +120,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 	// Set server if provided
 	if httpServer != nil && ocmConfig.MockMode == ocm.MockModeEmulateServer {
-		workers.RepeatInterval = 1 * time.Second
+		reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Second
 		fmt.Printf("Setting OCM base URL to %s\n", httpServer.URL)
 		ocmConfig.BaseURL = httpServer.URL
 		ocmConfig.AmsUrl = httpServer.URL

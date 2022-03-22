@@ -1309,11 +1309,11 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(ocmConfig *ocm.OCMConfig, c *config.DataplaneClusterConfig) {
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(ocmConfig *ocm.OCMConfig, c *config.DataplaneClusterConfig, reconcilerConfig *workers.ReconcilerConfig) {
 		if ocmConfig.MockMode == ocm.MockModeEmulateServer {
 			// increase repeat interval to allow time to delete the kafka instance before moving onto the next state
 			// no need to reset this on teardown as it is always set at the start of each test within the registerIntegrationWithHooks setup for emulated servers.
-			workers.RepeatInterval = 10 * time.Second
+			reconcilerConfig.ReconcilerRepeatInterval = 10 * time.Second
 		}
 		c.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 10)})
 	})

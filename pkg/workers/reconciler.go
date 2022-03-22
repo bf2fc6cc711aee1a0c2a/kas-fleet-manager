@@ -2,10 +2,11 @@ package workers
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
-	"github.com/goava/di"
 	"sync"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
+	"github.com/goava/di"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -13,12 +14,11 @@ import (
 	"github.com/golang/glog"
 )
 
-var RepeatInterval time.Duration = 30 * time.Second
-
 type Reconciler struct {
 	di.Inject
-	wakeup    chan *sync.WaitGroup
-	SignalBus signalbus.SignalBus
+	wakeup           chan *sync.WaitGroup
+	SignalBus        signalbus.SignalBus
+	ReconcilerConfig *ReconcilerConfig
 }
 
 // Wakeup causes the worker reconcile to be performed as soon as possible.  If wait is true, the this
@@ -46,7 +46,8 @@ func (r *Reconciler) Start(worker Worker) {
 	worker.SetIsRunning(true)
 
 	sub := r.SignalBus.Subscribe("reconcile:" + worker.GetWorkerType())
-	ticker := time.NewTicker(RepeatInterval)
+	ticker := time.NewTicker(r.ReconcilerConfig.ReconcilerRepeatInterval)
+
 	go func() {
 		defer sub.Close()
 		//starts reconcile immediately and then on every repeat interval

@@ -165,7 +165,7 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
-			s := &LeaderElectionManager{leaseRenewTime: 3 * time.Minute}
+			s := &LeaderElectionManager{leaderLeaseExpirationTime: 3 * time.Minute}
 			got, err := s.acquireLeaderLease(tt.args.workerId, tt.args.workerType, tt.args.dbConn)
 			if (err != nil) != tt.errorCheck.wantErr {
 				t.Errorf("acquireLeaderLease() error = %v, wantErr %v", err, tt.errorCheck.wantErr)

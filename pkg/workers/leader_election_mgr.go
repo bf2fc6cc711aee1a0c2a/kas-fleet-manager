@@ -12,18 +12,13 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	mgrRepeatInterval = 15 * time.Second
-	leaseRenewTime    = 1 * time.Minute
-)
-
 type LeaderElectionManager struct {
-	workers           []Worker
-	connectionFactory *db.ConnectionFactory
-	tearDown          chan struct{}
-	mgrRepeatInterval time.Duration
-	leaseRenewTime    time.Duration
-	workerGrp         sync.WaitGroup
+	workers                                []Worker
+	connectionFactory                      *db.ConnectionFactory
+	tearDown                               chan struct{}
+	leaderElectionReconcilerRepeatInterval time.Duration
+	leaderLeaseExpirationTime              time.Duration
+	workerGrp                              sync.WaitGroup
 }
 
 // leaderLeaseAcquisition a wrapper for a lease and whether it's been acquired/is owned by another worker
@@ -34,12 +29,12 @@ type leaderLeaseAcquisition struct {
 	currentLease *api.LeaderLease
 }
 
-func NewLeaderElectionManager(workers []Worker, connectionFactory *db.ConnectionFactory) *LeaderElectionManager {
+func NewLeaderElectionManager(workers []Worker, connectionFactory *db.ConnectionFactory, reconcilerConfig *ReconcilerConfig) *LeaderElectionManager {
 	return &LeaderElectionManager{
-		workers:           workers,
-		connectionFactory: connectionFactory,
-		mgrRepeatInterval: mgrRepeatInterval,
-		leaseRenewTime:    leaseRenewTime,
+		workers:                                workers,
+		connectionFactory:                      connectionFactory,
+		leaderElectionReconcilerRepeatInterval: reconcilerConfig.LeaderElectionReconcilerRepeatInterval,
+		leaderLeaseExpirationTime:              reconcilerConfig.LeaderLeaseExpirationTime,
 	}
 }
 
@@ -52,7 +47,7 @@ func (s *LeaderElectionManager) Start() {
 		// Starts once immediately
 		s.startWorkers()
 		close(waitWorkersStart) //let Start() to proceed
-		ticker := time.NewTicker(s.mgrRepeatInterval)
+		ticker := time.NewTicker(s.leaderElectionReconcilerRepeatInterval)
 		for {
 			select {
 			case <-ticker.C:
@@ -144,7 +139,7 @@ func (s *LeaderElectionManager) acquireLeaderLease(workerId string, workerType s
 	// the lease will be the first entry returned
 	lease := leaseList[0]
 	// if we get the opportunity to acquire or extend the lease, use this expiry time
-	newExpiryTime := time.Now().Add(s.leaseRenewTime)
+	newExpiryTime := time.Now().Add(s.leaderLeaseExpirationTime)
 	// assume we're not the leader by default
 	isLeader := false
 

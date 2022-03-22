@@ -1,10 +1,11 @@
 package kafka_mgrs
 
 import (
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
-	"testing"
 
 	"github.com/onsi/gomega"
 

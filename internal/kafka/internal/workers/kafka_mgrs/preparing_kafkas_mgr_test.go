@@ -1,11 +1,12 @@
 package kafka_mgrs
 
 import (
+	"testing"
+	"time"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"testing"
-	"time"
 
 	"github.com/onsi/gomega"
 

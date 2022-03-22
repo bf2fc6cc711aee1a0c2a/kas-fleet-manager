@@ -9,7 +9,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -29,15 +28,13 @@ type AcceptedKafkaManager struct {
 	clusterService         services.ClusterService
 }
 
-// NewAcceptedKafkaManager creates a new kafka manager
-func NewAcceptedKafkaManager(kafkaService services.KafkaService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus, dataPlaneClusterConfig *config.DataplaneClusterConfig, clusterService services.ClusterService) *AcceptedKafkaManager {
+// NewAcceptedKafkaManager creates a new kafka manager to reconcile accepted kafkas
+func NewAcceptedKafkaManager(kafkaService services.KafkaService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, dataPlaneClusterConfig *config.DataplaneClusterConfig, clusterService services.ClusterService, reconciler workers.Reconciler) *AcceptedKafkaManager {
 	return &AcceptedKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "accepted_kafka",
-			Reconciler: workers.Reconciler{
-				SignalBus: bus,
-			},
+			Reconciler: reconciler,
 		},
 		kafkaService:           kafkaService,
 		quotaServiceFactory:    quotaServiceFactory,

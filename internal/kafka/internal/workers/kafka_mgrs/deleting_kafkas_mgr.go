@@ -5,7 +5,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -23,15 +22,13 @@ type DeletingKafkaManager struct {
 	quotaServiceFactory services.QuotaServiceFactory
 }
 
-// NewDeletingKafkaManager creates a new kafka manager
-func NewDeletingKafkaManager(kafkaService services.KafkaService, keycloakConfig *keycloak.KeycloakConfig, quotaServiceFactory services.QuotaServiceFactory, bus signalbus.SignalBus) *DeletingKafkaManager {
+// NewDeletingKafkaManager creates a new kafka manager to reconcile deleting and deprovision kafkas
+func NewDeletingKafkaManager(kafkaService services.KafkaService, keycloakConfig *keycloak.KeycloakConfig, quotaServiceFactory services.QuotaServiceFactory, reconciler workers.Reconciler) *DeletingKafkaManager {
 	return &DeletingKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "deleting_kafka",
-			Reconciler: workers.Reconciler{
-				SignalBus: bus,
-			},
+			Reconciler: reconciler,
 		},
 		kafkaService:        kafkaService,
 		keycloakConfig:      keycloakConfig,

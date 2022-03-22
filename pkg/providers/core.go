@@ -38,6 +38,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(acl.NewAccessControlListConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(quota_management.NewQuotaManagementListConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(server.NewMetricsConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(workers.NewReconcilerConfig, di.As(new(environments.ConfigModule))),
 
 		// Add common CLI sub commands
 		di.Provide(serve.NewServeCommand),

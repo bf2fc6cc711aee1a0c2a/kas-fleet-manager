@@ -10,7 +10,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
@@ -48,16 +47,14 @@ func NewConnectorManager(
 	connectorService services.ConnectorsService,
 	connectorClusterService services.ConnectorClusterService,
 	vaultService vault.VaultService,
-	bus signalbus.SignalBus,
 	db *db.ConnectionFactory,
+	reconciler workers.Reconciler,
 ) *ConnectorManager {
 	result := &ConnectorManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "connector",
-			Reconciler: workers.Reconciler{
-				SignalBus: bus,
-			},
+			Reconciler: reconciler,
 		},
 		connectorService:        connectorService,
 		connectorClusterService: connectorClusterService,
