@@ -87,17 +87,17 @@ parameters:
 
 - name: API_SERVER_BINDADDRESS
   displayName: API Server Bindaddress
-  description: API server bind adddress
+  description: API server bind address
   value: :8000
 
 - name: METRICS_SERVER_BINDADDRESS
   displayName: Metrics Server Bindaddress
-  description: Metrics server bind adddress
+  description: Metrics server bind address
   value: :8080
 
 - name: HEALTH_CHECK_SERVER_BINDADDRESS
   displayName: Health check Server Bindaddress
-  description: Health check server bind adddress
+  description: Health check server bind address
   value: :8083
 
 - name: DB_MAX_OPEN_CONNS

@@ -17,7 +17,7 @@ func NewHealthCheckConfig() *HealthCheckConfig {
 }
 
 func (c *HealthCheckConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.BindAddress, "health-check-server-bindaddress", c.BindAddress, "Health check server bind adddress")
+	fs.StringVar(&c.BindAddress, "health-check-server-bindaddress", c.BindAddress, "Health check server bind address")
 	fs.BoolVar(&c.EnableHTTPS, "enable-health-check-https", c.EnableHTTPS, "Enable HTTPS for health check server")
 }
 

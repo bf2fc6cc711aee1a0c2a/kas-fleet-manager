@@ -17,7 +17,7 @@ func NewMetricsConfig() *MetricsConfig {
 }
 
 func (s *MetricsConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&s.BindAddress, "metrics-server-bindaddress", s.BindAddress, "Metrics server bind adddress")
+	fs.StringVar(&s.BindAddress, "metrics-server-bindaddress", s.BindAddress, "Metrics server bind address")
 	fs.BoolVar(&s.EnableHTTPS, "enable-metrics-https", s.EnableHTTPS, "Enable HTTPS for metrics server")
 }
 
