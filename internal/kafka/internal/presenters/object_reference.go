@@ -17,6 +17,8 @@ const (
 	KindCloudRegion = "CloudRegion"
 	// KindCloudProvider is a string identifier for the type api.CloudProvider
 	KindCloudProvider = "CloudProvider"
+	//KindSupportedKafkaInstanceType is a string identifier for the type api.SupportedKafkaInstanceType
+	KindSupportedKafkaInstanceType = "SupportedKafkaInstanceType"
 	// KindError is a string identifier for the type api.ServiceError
 	KindError = "Error"
 	// KindServiceAccount is a string identifier for the type api.ServiceAccount
@@ -37,6 +39,8 @@ func objectKind(i interface{}) string {
 		return KindCloudRegion
 	case api.CloudProvider, *api.CloudProvider:
 		return KindCloudProvider
+	case api.SupportedKafkaInstanceType, *api.SupportedKafkaInstanceType:
+		return KindSupportedKafkaInstanceType
 	case errors.ServiceError, *errors.ServiceError:
 		return KindError
 	case api.ServiceAccount, *api.ServiceAccount:
