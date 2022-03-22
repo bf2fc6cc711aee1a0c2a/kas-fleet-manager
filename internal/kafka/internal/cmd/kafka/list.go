@@ -79,7 +79,7 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	}
 
 	for _, kafkaRequest := range kafkaList {
-		converted := presenters.PresentKafkaRequest(kafkaRequest, kafkaConfig.BrowserUrl)
+		converted := presenters.PresentKafkaRequest(kafkaRequest, kafkaConfig)
 		kafkaRequestList.Items = append(kafkaRequestList.Items, converted)
 	}
 
