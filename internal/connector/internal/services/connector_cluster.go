@@ -405,7 +405,7 @@ func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *
 
 	if resource.ClusterID != "" {
 		_ = db.AddPostCommitAction(ctx, func() {
-			k.bus.Notify(fmt.Sprintf("/kafka-connector-clusters/%s/deployments", resource.ClusterID))
+			k.bus.Notify(fmt.Sprintf("/kafka_connector_clusters/%s/deployments", resource.ClusterID))
 		})
 	}
 
@@ -730,7 +730,7 @@ func (k *connectorClusterService) UpgradeConnectorsByType(ctx context.Context, c
 		} else {
 			if !notificationAdded {
 				_ = db.AddPostCommitAction(ctx, func() {
-					k.bus.Notify(fmt.Sprintf("/kafka-connector-clusters/%s/deployments", clusterId))
+					k.bus.Notify(fmt.Sprintf("/kafka_connector_clusters/%s/deployments", clusterId))
 				})
 				notificationAdded = true
 			}
@@ -868,7 +868,7 @@ func (k *connectorClusterService) UpgradeConnectorsByOperator(ctx context.Contex
 		} else {
 			if !notificationAdded {
 				_ = db.AddPostCommitAction(ctx, func() {
-					k.bus.Notify(fmt.Sprintf("/kafka-connector-clusters/%s/deployments", clusterId))
+					k.bus.Notify(fmt.Sprintf("/kafka_connector_clusters/%s/deployments", clusterId))
 				})
 				notificationAdded = true
 			}
@@ -944,7 +944,7 @@ func (k *connectorClusterService) GetClusterOrg(id string) (string, *errors.Serv
 	dbConn := k.connectionFactory.New()
 	cluster := dbapi.ConnectorCluster{}
 	if err := dbConn.Select("organisation_id").Where("id = ?", id).Find(&cluster).Error; err != nil {
-			return "", services.HandleGetError("Connector cluster", "id", id, err)
+		return "", services.HandleGetError("Connector cluster", "id", id, err)
 	}
 	return cluster.OrganisationId, nil
 }

@@ -255,7 +255,7 @@ func (k *connectorNamespaceService) CreateDefaultNamespace(ctx context.Context, 
 		Name: defaultNamespaceName,
 		Annotations: []public.ConnectorNamespaceRequestMetaAnnotations{
 			{
-				Key:  "connector_mgmt.api.openshift.com/profile",
+				Key:   "connector_mgmt.api.openshift.com/profile",
 				Value: "default-profile",
 			},
 		},
@@ -385,7 +385,7 @@ func (k *connectorNamespaceService) DeleteNamespaceAndConnectorDeployments(ctx c
 	// notify deployment status update
 	_ = db.AddPostCommitAction(ctx, func() {
 		for cid := range clusterIds {
-			k.bus.Notify(fmt.Sprintf("/kafka-connector-clusters/%s/deployments", cid))
+			k.bus.Notify(fmt.Sprintf("/kafka_connector_clusters/%s/deployments", cid))
 		}
 	})
 
@@ -438,7 +438,7 @@ func (k *connectorNamespaceService) GetNamespaceTenant(namespaceId string) (*dba
 	var namespace dbapi.ConnectorNamespace
 	if err := dbConn.Where("id = ?", namespaceId).
 		Select(`id`, `tenant_user_id`, `tenant_organisation_id`).First(&namespace).Error; err != nil {
-			return nil, services.HandleGetError("Connector namespace", "id", namespaceId, err)
+		return nil, services.HandleGetError("Connector namespace", "id", namespaceId, err)
 	}
 	return &namespace, nil
 }

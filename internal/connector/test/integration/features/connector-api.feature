@@ -1299,7 +1299,7 @@ Feature: create a connector
       """
 
     Given I set the "Content-Type" header to "application/merge-patch+json"
-    When I PATCH path "/v1/kafka-connectors/${connector_id}" with json body:
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
       """
       {
           "connector_spec": {
@@ -1326,7 +1326,7 @@ Feature: create a connector
     Given LOCK--------------------------------------------------------------
       Given I reset the vault counters
       Given I set the "Content-Type" header to "application/merge-patch+json"
-      When I PATCH path "/v1/kafka-connectors/${connector_id}" with json body:
+      When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
         """
         {
             "service_account": {
