@@ -73,7 +73,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		ID:   "kafka_connector_types",
 		Kind: "ConnectorTypeList",
 	})
-	apiV1ConnectorTypesRouter := apiV1Router.PathPrefix("/{_:kafka[-_]connector[-_]types}").Subrouter()
+	apiV1ConnectorTypesRouter := apiV1Router.PathPrefix("/kafka_connector_types").Subrouter()
 	apiV1ConnectorTypesRouter.HandleFunc("/{connector_type_id}", s.ConnectorTypesHandler.Get).Methods(http.MethodGet)
 	apiV1ConnectorTypesRouter.HandleFunc("", s.ConnectorTypesHandler.List).Methods(http.MethodGet)
 	apiV1ConnectorTypesRouter.Use(authorizeMiddleware)
@@ -85,7 +85,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		Kind: "ConnectorList",
 	})
 
-	apiV1ConnectorsRouter := apiV1Router.PathPrefix("/{_:kafka[-_]connectors}").Subrouter()
+	apiV1ConnectorsRouter := apiV1Router.PathPrefix("/kafka_connectors").Subrouter()
 	apiV1ConnectorsRouter.HandleFunc("", s.ConnectorsHandler.Create).Methods(http.MethodPost)
 	apiV1ConnectorsRouter.HandleFunc("", s.ConnectorsHandler.List).Methods(http.MethodGet)
 	apiV1ConnectorsRouter.HandleFunc("/{connector_id}", s.ConnectorsHandler.Get).Methods(http.MethodGet)
@@ -94,28 +94,19 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	apiV1ConnectorsRouter.Use(authorizeMiddleware)
 	apiV1ConnectorsRouter.Use(requireOrgID)
 
-	//  /api/connector_mgmt/v1/kafka_connectors_of/{connector_type_id}
-	apiV1ConnectorsTypedRouter := apiV1Router.PathPrefix("/{_:kafka[-_]connectors[-_]of}/{connector_type_id}").Subrouter()
-	apiV1ConnectorsTypedRouter.HandleFunc("", s.ConnectorsHandler.Create).Methods(http.MethodPost)
-	apiV1ConnectorsTypedRouter.HandleFunc("", s.ConnectorsHandler.List).Methods(http.MethodGet)
-	apiV1ConnectorsTypedRouter.HandleFunc("/{connector_id}", s.ConnectorsHandler.Get).Methods(http.MethodGet)
-	apiV1ConnectorsTypedRouter.HandleFunc("/{connector_id}", s.ConnectorsHandler.Patch).Methods(http.MethodPatch)
-	apiV1ConnectorsTypedRouter.Use(authorizeMiddleware)
-	apiV1ConnectorsTypedRouter.Use(requireOrgID)
-
 	//  /api/connector_mgmt/v1/kafka_connector_clusters
 	v1Collections = append(v1Collections, api.CollectionMetadata{
 		ID:   "kafka_connector_clusters",
 		Kind: "ConnectorClusterList",
 	})
 
-	apiV1ConnectorClustersRouter := apiV1Router.PathPrefix("/{_:kafka[-_]connector[-_]clusters}").Subrouter()
+	apiV1ConnectorClustersRouter := apiV1Router.PathPrefix("/kafka_connector_clusters").Subrouter()
 	apiV1ConnectorClustersRouter.HandleFunc("", s.ConnectorClusterHandler.Create).Methods(http.MethodPost)
 	apiV1ConnectorClustersRouter.HandleFunc("", s.ConnectorClusterHandler.List).Methods(http.MethodGet)
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}", s.ConnectorClusterHandler.Get).Methods(http.MethodGet)
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}", s.ConnectorClusterHandler.Update).Methods(http.MethodPut)
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}", s.ConnectorClusterHandler.Delete).Methods(http.MethodDelete)
-	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/{_:addon[-_]parameters}", s.ConnectorClusterHandler.GetAddonParameters).Methods(http.MethodGet)
+	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/addon_parameters", s.ConnectorClusterHandler.GetAddonParameters).Methods(http.MethodGet)
 	apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/namespaces", s.ConnectorClusterHandler.GetNamespaces).Methods(http.MethodGet)
 	apiV1ConnectorClustersRouter.Use(authorizeMiddleware)
 	apiV1ConnectorClustersRouter.Use(requireOrgID)
@@ -126,7 +117,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		Kind: "ConnectorNamespaceList",
 	})
 
-	apiV1ConnectorNamespacesRouter := apiV1Router.PathPrefix("/{_:kafka[-_]connector[-_]namespaces}").Subrouter()
+	apiV1ConnectorNamespacesRouter := apiV1Router.PathPrefix("/kafka_connector_namespaces").Subrouter()
 	apiV1ConnectorNamespacesRouter.HandleFunc("", s.ConnectorNamespaceHandler.List).Methods(http.MethodGet)
 	apiV1ConnectorNamespacesRouter.HandleFunc("/eval", s.ConnectorNamespaceHandler.CreateEvaluation).Methods(http.MethodPost)
 	apiV1ConnectorNamespacesRouter.HandleFunc("/{connector_namespace_id}", s.ConnectorNamespaceHandler.Get).Methods(http.MethodGet)
@@ -145,7 +136,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	// This section adds the API's accessed by the connector agent...
 	{
 		//  /api/connector_mgmt/v1/kafka_connector_clusters/{id}
-		agentRouter := apiV1Router.PathPrefix("/agent/{_:kafka[-_]connector[-_]clusters}/{connector_cluster_id}").Subrouter()
+		agentRouter := apiV1Router.PathPrefix("/agent/kafka_connector_clusters/{connector_cluster_id}").Subrouter()
 		agentRouter.HandleFunc("/status", s.ConnectorClusterHandler.UpdateConnectorClusterStatus).Methods(http.MethodPut)
 		agentRouter.HandleFunc("/deployments", s.ConnectorClusterHandler.ListDeployments).Methods(http.MethodGet)
 		agentRouter.HandleFunc("/deployments/{deployment_id}", s.ConnectorClusterHandler.GetDeployment).Methods(http.MethodGet)
@@ -166,15 +157,15 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.KeycloakService.GetConfig().OSDClusterIDPRealm.ValidIssuerURI}, kerrors.ErrorNotFound))
 	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, kerrors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(kerrors.ErrorNotFound))
-	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]clusters}", s.ConnectorAdminHandler.ListConnectorClusters).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]clusters}/{connector_cluster_id}/namespaces", s.ConnectorAdminHandler.GetClusterNamespaces).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]clusters}/{connector_cluster_id}/upgrades/type", s.ConnectorAdminHandler.GetConnectorUpgradesByType).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]clusters}/{connector_cluster_id}/upgrades/type", s.ConnectorAdminHandler.UpgradeConnectorsByType).Methods(http.MethodPut)
-	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]clusters}/{connector_cluster_id}/upgrades/operator", s.ConnectorAdminHandler.GetConnectorUpgradesByOperator).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]clusters}/{connector_cluster_id}/upgrades/operator", s.ConnectorAdminHandler.UpgradeConnectorsByOperator).Methods(http.MethodPut)
-	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]namespaces}", s.ConnectorAdminHandler.GetConnectorNamespaces).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]namespaces}", s.ConnectorAdminHandler.CreateConnectorNamespace).Methods(http.MethodPost)
-	adminRouter.HandleFunc("/{_:kafka[-_]connector[-_]namespaces}/{namespace_id}", s.ConnectorAdminHandler.DeleteConnectorNamespace).Methods(http.MethodDelete)
+	adminRouter.HandleFunc("/kafka_connector_clusters", s.ConnectorAdminHandler.ListConnectorClusters).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/namespaces", s.ConnectorAdminHandler.GetClusterNamespaces).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/upgrades/type", s.ConnectorAdminHandler.GetConnectorUpgradesByType).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/upgrades/type", s.ConnectorAdminHandler.UpgradeConnectorsByType).Methods(http.MethodPut)
+	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/upgrades/operator", s.ConnectorAdminHandler.GetConnectorUpgradesByOperator).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/upgrades/operator", s.ConnectorAdminHandler.UpgradeConnectorsByOperator).Methods(http.MethodPut)
+	adminRouter.HandleFunc("/kafka_connector_namespaces", s.ConnectorAdminHandler.GetConnectorNamespaces).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafka_connector_namespaces", s.ConnectorAdminHandler.CreateConnectorNamespace).Methods(http.MethodPost)
+	adminRouter.HandleFunc("/kafka_connector_namespaces/{namespace_id}", s.ConnectorAdminHandler.DeleteConnectorNamespace).Methods(http.MethodDelete)
 
 	v1Metadata := api.VersionMetadata{
 		ID:          "v1",

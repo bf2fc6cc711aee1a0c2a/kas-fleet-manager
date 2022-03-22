@@ -103,7 +103,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 				list, err := getList()
 				bookmarkSent := false
 
-				sub := h.Bus.Subscribe(fmt.Sprintf("/kafka-connector-clusters/%s/deployments", connectorClusterId))
+				sub := h.Bus.Subscribe(fmt.Sprintf("/kafka_connector_clusters/%s/deployments", connectorClusterId))
 				return handlers.EventStream{
 					ContentType: "application/json;stream=watch",
 					Close:       sub.Close,
