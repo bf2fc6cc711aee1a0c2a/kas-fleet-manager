@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
+	"github.com/dustinkirkland/golang-petname"
 	"github.com/goava/di"
 	"net/http"
 
@@ -20,6 +21,11 @@ import (
 var (
 	maxConnectorNamespaceIdLength = 32
 )
+
+func init() {
+	// make generated namespace names random
+	petname.NonDeterministicMode()
+}
 
 type ConnectorNamespaceHandler struct {
 	di.Inject
@@ -84,7 +90,7 @@ func (h *ConnectorNamespaceHandler) CreateEvaluation(w http.ResponseWriter, r *h
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
-			handlers.Validation("name", &resource.Name, handlers.MinLen(1)),
+			handlers.Validation("name", &resource.Name, handlers.WithDefault(generateEvalNamespaceName()), handlers.MinLen(1)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
@@ -108,6 +114,10 @@ func (h *ConnectorNamespaceHandler) CreateEvaluation(w http.ResponseWriter, r *h
 
 	// return 201 status created
 	handlers.Handle(w, r, cfg, http.StatusCreated)
+}
+
+func generateEvalNamespaceName() string {
+	return fmt.Sprintf("%s-namespace", petname.Generate(2, "-"))
 }
 
 func (h *ConnectorNamespaceHandler) Get(w http.ResponseWriter, r *http.Request) {

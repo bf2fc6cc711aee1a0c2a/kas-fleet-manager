@@ -361,16 +361,22 @@ func (k *connectorNamespaceService) DeleteNamespaceAndConnectorDeployments(ctx c
 		return true, false, nil
 	}
 
-	// set connector desired state to "unassigned" and status to "deleting" to remove from namespaces
+	// set connectors' desired state to 'deleted' by default
+	connectorDesiredState := dbapi.ConnectorDeleted
+	if k.connectorsConfig.ConnectorDisableCascadeDelete {
+		// set connectors' state to 'unassigned' if cascade delete is disabled
+		connectorDesiredState = dbapi.ConnectorUnassigned
+	}
+	// set connector desired state to connectorDesiredState and status to "deleting" to remove from namespaces
 	if err := dbConn.Where("deleted_at IS NULL AND id IN ?", connectorIds).
-		Updates(&dbapi.Connector{DesiredState: dbapi.ConnectorUnassigned}).Error; err != nil {
+		Updates(&dbapi.Connector{DesiredState: connectorDesiredState}).Error; err != nil {
 		return false, false, services.HandleUpdateError("Connector", err)
 	}
 	if err := dbConn.Where("deleted_at IS NULL AND id IN ?", connectorIds).
 		Updates(&dbapi.ConnectorStatus{Phase: dbapi.ConnectorStatusPhaseDeleting}).Error; err != nil {
 		return false, false, services.HandleUpdateError("Connector", err)
 	}
-	// mark all deployment statuses as "assigning"
+	// mark all deployment statuses as "deleting"
 	if err := dbConn.Where("deleted_at IS NULL AND id IN ?", connectorIds).
 		Updates(&dbapi.ConnectorDeploymentStatus{Phase: dbapi.ConnectorStatusPhaseDeleting}).Error; err != nil {
 		return false, false, services.HandleUpdateError("Connector", err)
