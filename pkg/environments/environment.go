@@ -26,9 +26,9 @@ const (
 )
 
 // Env is a modular application built with dependency injection and manages
-// applying lifecycle events of types injected  into the application.
+// applying lifecycle events of types injected into the application.
 //
-// An Env uses two dependency injection containers.  The first one
+// An Env uses two dependency injection containers. The first one
 // it constructs is the ConfigContainer
 //
 type Env struct {
@@ -38,7 +38,7 @@ type Env struct {
 }
 
 // New creates and initializes an Env with the provided name and injection
-// options.  After initialization, types in the Env.ConfigContainer can
+// options. After initialization, types in the Env.ConfigContainer can
 // be resolved using dependency injection.
 func New(name string, options ...di.Option) (env *Env, err error) {
 	env = &Env{
@@ -62,8 +62,8 @@ func GetEnvironmentStrFromEnv() string {
 	return envStr
 }
 
-// AddFlags is used allow command command line flags to modify the values of types in
-// the Env.ConfigContainer.  All types in Env.ConfigContainer that implement the ConfigModule
+// AddFlags is used to allow command line flags to modify the values of types in
+// the Env.ConfigContainer. All types in Env.ConfigContainer that implement the ConfigModule
 // interface invoked with ConfigModule.AddFlags.
 //
 // Then flag defaults will set by getting defaults for the Env.Name by looking up a EnvLoader
@@ -226,7 +226,7 @@ func (env *Env) MustResolveAll(ptrs ...di.Pointer) {
 	}
 }
 
-// Run starts the Env waits for the context to be canceled and then stops the Env.
+// Run starts the Env, waits for the context to be canceled and then stops the Env.
 func (env *Env) Run(ctx context.Context) {
 	env.Start()
 	<-ctx.Done()
@@ -242,7 +242,7 @@ func (env *Env) Start() {
 	})
 }
 
-// Stop calls all the BootService.Stop functions found in the dependency injection containers.
+// Stop calls all the BootService. Stop functions found in the dependency injection containers.
 func (env *Env) Stop() {
 	env.MustInvoke(func(services []BootService) {
 		for i := range services {
@@ -252,7 +252,7 @@ func (env *Env) Stop() {
 	})
 }
 
-// Cleanup calls all the cleanup functions registered with the dependency injection  containers.
+// Cleanup calls all the cleanup functions registered with the dependency injection containers.
 func (env *Env) Cleanup() {
 	if env.ServiceContainer != nil {
 		env.ServiceContainer.Cleanup()
