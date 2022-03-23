@@ -1069,13 +1069,14 @@ components:
           type: string
     SupportedKafkaInstanceTypesList:
       allOf:
-        - $ref: '#/components/schemas/List'
         - type: object
           example:
             kind: 'SupportedKafkaInstanceTypesList'
             item:
               $ref: '#/components/examples/SupportedKafkaInstanceTypeExample'
           properties:
+            kind:
+              type: string
             items:
               type: array
               items:
@@ -1083,6 +1084,7 @@ components:
                   - $ref: '#/components/schemas/SupportedKafkaInstanceType'
     SupportedKafkaInstanceType:
       description: 'Supported Kafka instance type'
+      type: object
       properties:
         kind:
           description: "Indicates the type of this object. Will be 'SupportedKafkaInstanceType' link."
