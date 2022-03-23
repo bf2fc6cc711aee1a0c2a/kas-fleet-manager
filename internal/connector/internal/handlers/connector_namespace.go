@@ -86,11 +86,14 @@ func (h *ConnectorNamespaceHandler) Create(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *ConnectorNamespaceHandler) CreateEvaluation(w http.ResponseWriter, r *http.Request) {
+	user := h.AuthZService.GetValidationUser(r.Context())
+
 	var resource public.ConnectorNamespaceEvalRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
 			handlers.Validation("name", &resource.Name, handlers.WithDefault(generateEvalNamespaceName()), handlers.MinLen(1)),
+			user.AuthorizedCreateEvalNamespace(),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 

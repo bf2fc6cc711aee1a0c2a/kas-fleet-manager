@@ -163,6 +163,17 @@ func (u *ValidationUser) AuthorizedNamespaceUser() handlers.ValidateOption {
 	}
 }
 
+func (u *ValidationUser) AuthorizedCreateEvalNamespace() handlers.Validate {
+	return func() (err *errors.ServiceError) {
+		if u.err != nil {
+			err = u.err
+		} else {
+			err = u.service.namespaceService.CanCreateEvalNamespace(u.UserId())
+		}
+		return err
+	}
+}
+
 func (u *User) IsOrgAdmin() bool {
 	return auth.GetIsOrgAdminFromClaims(u.claims)
 }

@@ -119,14 +119,41 @@ Feature: connector namespaces API
     """
     And I store the ".id" selection from the response as ${namespace_id}
 
+    # can't create more than one eval namespace at a time
+    Given I POST path "/v1/kafka_connector_namespaces/eval" with json body:
+    """
+    {
+      "name": "<user>_namespace",
+      "annotations": [
+        {
+          "key": "connector_mgmt.api.openshift.com/profile",
+          "value": "default-profile"
+        }
+      ]
+    }
+    """
+    Then the response code should be 403
+    And the response should match json:
+    """
+    {
+      "id":"11",
+      "kind":"Error",
+      "href":"/api/connector_mgmt/v1/errors/11",
+      "code":"CONNECTOR-MGMT-11",
+      "reason":"Evaluation Connector Namespace already exists for user ${<user_id>}",
+      "operation_id":"${response.operation_id}"
+    }
+    """
+
     # eval namespace MUST be in list of user's namespaces
     Given I GET path "/v1/kafka_connector_namespaces/"
     Then the response code should be 200
+    And the response should match json:
      """
      {
        "items": [
          {
-           "cluster_id": "${connector_cluster_id}",
+           "cluster_id": "${response.items[0].cluster_id}",
            "href": "${response.items[0].href}",
            "id": "${namespace_id}",
            "kind": "ConnectorNamespace",
@@ -134,7 +161,7 @@ Feature: connector namespaces API
            "owner": "${<user_id>}",
            "created_at": "${response.items[0].created_at}",
            "modified_at": "${response.items[0].modified_at}",
-           "expiration": "${response.expiration}",
+           "expiration": "${response.items[0].expiration}",
            "tenant": {
              "kind": "user",
              "id": "${<user_id>}"
@@ -148,7 +175,7 @@ Feature: connector namespaces API
            "status": {
              "state": "disconnected",
              "connectors_deployed": 0
-           },
+           }
          }
        ],
        "kind": "ConnectorNamespaceList",
