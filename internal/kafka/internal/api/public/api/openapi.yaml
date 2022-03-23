@@ -1662,7 +1662,6 @@ components:
       type: object
     SupportedKafkaInstanceTypesList:
       allOf:
-      - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/SupportedKafkaInstanceTypesList_allOf'
     SupportedKafkaInstanceType:
       description: Supported Kafka instance type
@@ -1681,6 +1680,7 @@ components:
             allOf:
             - $ref: '#/components/schemas/SupportedKafkaSize'
           type: array
+      type: object
     SupportedKafkaSize:
       description: Supported Kafka Size
       properties:
@@ -1988,6 +1988,8 @@ components:
     SupportedKafkaInstanceTypesList_allOf:
       example: '{"kind":"SupportedKafkaInstanceTypesList","item":{"$ref":"#/components/examples/SupportedKafkaInstanceTypeExample"}}'
       properties:
+        kind:
+          type: string
         items:
           items:
             allOf:
