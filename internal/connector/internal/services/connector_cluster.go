@@ -483,9 +483,7 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 		return services.HandleGetError("Connector", "id", deployment.ConnectorID, err)
 	}
 
-	// TODO: use post the deployment status to the type service to simplify the connector status.
 	connectorStatus.Phase = deploymentStatus.Phase
-
 	if deploymentStatus.Phase == dbapi.ConnectorStatusPhaseDeleted {
 		// we don't need the deployment anymore...
 		if err := deleteConnectorDeployment(dbConn, deploymentStatus.ID); err != nil {
