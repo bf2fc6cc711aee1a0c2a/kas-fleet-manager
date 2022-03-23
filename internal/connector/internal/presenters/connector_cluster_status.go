@@ -16,7 +16,7 @@ func ConvertConnectorClusterStatus(from private.ConnectorClusterStatus) dbapi.Co
 func PresentConnectorClusterStatus(from dbapi.ConnectorClusterStatus) private.ConnectorClusterStatus {
 	return private.ConnectorClusterStatus{
 		Conditions: PresentConditions(from.Conditions),
-		Phase:      string(from.Phase),
+		Phase:      private.ConnectorClusterState(from.Phase),
 		Operators:  PresentOperators(from.Operators),
 	}
 }

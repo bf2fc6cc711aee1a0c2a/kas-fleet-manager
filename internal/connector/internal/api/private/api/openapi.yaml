@@ -469,14 +469,13 @@ components:
           description: an optional operator id that the connector should be run under.
           type: string
         desired_state:
-          type: string
+          $ref: '#/components/schemas/ConnectorDesiredState'
         shard_metadata:
           type: object
       type: object
     ConnectorDeploymentStatus:
       description: The status of connector deployment
       example:
-        phase: phase
         operators:
           available:
             id: id
@@ -503,7 +502,7 @@ components:
         available_upgrades: available_upgrades
       properties:
         phase:
-          type: string
+          $ref: '#/components/schemas/ConnectorState'
         resource_version:
           format: int64
           type: integer
@@ -545,7 +544,6 @@ components:
     ConnectorNamespaceStatus:
       description: Schema for the request to update a data plane namespaces' status
       example:
-        phase: phase
         connectors_deployed: 0
         id: id
         conditions:
@@ -566,7 +564,7 @@ components:
         id:
           type: string
         phase:
-          type: string
+          $ref: '#/components/schemas/ConnectorNamespaceState'
         version:
           type: string
         connectors_deployed:
@@ -585,7 +583,6 @@ components:
     ConnectorClusterStatus:
       description: Schema for the request to update a data plane cluster's status
       example:
-        phase: phase
         operators:
         - namespace: namespace
           operator:
@@ -614,8 +611,7 @@ components:
           status: status
         version: version
         namespaces:
-        - phase: phase
-          connectors_deployed: 0
+        - connectors_deployed: 0
           id: id
           conditions:
           - reason: reason
@@ -631,8 +627,7 @@ components:
             lastTransitionTime: lastTransitionTime
             status: status
           version: version
-        - phase: phase
-          connectors_deployed: 0
+        - connectors_deployed: 0
           id: id
           conditions:
           - reason: reason
@@ -650,7 +645,7 @@ components:
           version: version
       properties:
         phase:
-          type: string
+          $ref: '#/components/schemas/ConnectorClusterState'
         version:
           type: string
         conditions:
@@ -794,6 +789,32 @@ components:
       allOf:
       - $ref: '#/components/schemas/ServiceConnectionSettings'
       description: Holds the configuration to connect to a Schem Registry Instance.
+    ConnectorDesiredState:
+      enum:
+      - unassigned
+      - ready
+      - stopped
+      - deleted
+      type: string
+    ConnectorState:
+      enum:
+      - assigning
+      - assigned
+      - updating
+      - ready
+      - stopped
+      - failed
+      - deleting
+      - deleted
+      - provisioning
+      - deprovisioning
+      type: string
+    ConnectorClusterState:
+      enum:
+      - disconnected
+      - ready
+      - deleting
+      type: string
     ConnectorDeployment_allOf_metadata:
       properties:
         created_at:

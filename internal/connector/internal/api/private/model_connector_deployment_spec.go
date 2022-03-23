@@ -24,6 +24,6 @@ type ConnectorDeploymentSpec struct {
 	DeprecatedAllowUpgrade bool `json:"allow_upgrade,omitempty"`
 	// an optional operator id that the connector should be run under.
 	OperatorId    string                 `json:"operator_id,omitempty"`
-	DesiredState  string                 `json:"desired_state,omitempty"`
+	DesiredState  ConnectorDesiredState  `json:"desired_state,omitempty"`
 	ShardMetadata map[string]interface{} `json:"shard_metadata,omitempty"`
 }
