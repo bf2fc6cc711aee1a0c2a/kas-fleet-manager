@@ -37,6 +37,7 @@ type KeycloakConfig struct {
 }
 
 type KeycloakRealmConfig struct {
+	BaseURL          string `json:"base_url"`
 	Realm            string `json:"realm"`
 	ClientID         string `json:"client-id"`
 	ClientIDFile     string `json:"client-id_file"`
@@ -50,6 +51,7 @@ type KeycloakRealmConfig struct {
 }
 
 func (c *KeycloakRealmConfig) setDefaultURIs(baseURL string) {
+	c.BaseURL = baseURL
 	c.ValidIssuerURI = baseURL + "/auth/realms/" + c.Realm
 	c.JwksEndpointURI = baseURL + "/auth/realms/" + c.Realm + "/protocol/openid-connect/certs"
 	c.TokenEndpointURI = baseURL + "/auth/realms/" + c.Realm + "/protocol/openid-connect/token"

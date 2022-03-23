@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"net/http"
@@ -166,6 +167,24 @@ func (s serviceAccountsHandler) GetServiceAccountById(w http.ResponseWriter, r *
 				return nil, err
 			}
 			return presenters.PresentServiceAccount(sa), nil
+		},
+	}
+
+	handlers.HandleGet(w, r, cfg)
+}
+
+func (s serviceAccountsHandler) GetSsoProvider(w http.ResponseWriter, r *http.Request){
+	cfg := &handlers.HandlerConfig{
+		Action: func() (interface{}, *errors.ServiceError) {
+			config := s.service.GetRealmConfig()
+			provider := api.SsoProvider{
+				BaseUrl:config.BaseURL,
+				Jwks: config.JwksEndpointURI,
+				TokenUrl: config.TokenEndpointURI,
+				ValidIssuer: config.ValidIssuerURI,
+			}
+
+			return presenters.PresentSsoProvider(&provider), nil
 		},
 	}
 
