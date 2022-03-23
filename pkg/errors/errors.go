@@ -123,6 +123,10 @@ const (
 	ErrorServiceAccountNotFound       ServiceErrorCode = 113
 	ErrorServiceAccountNotFoundReason string           = "Failed to find service account"
 
+	ErrorMaxLimitForServiceAccountsReached  ServiceErrorCode = 115
+	ErrorMaxLimitForServiceAccountsReachedReason string        = "Max limit for the service account creation has reached"
+
+
 	// Insufficient quota
 	ErrorInsufficientQuota       ServiceErrorCode = 120
 	ErrorInsufficientQuotaReason string           = "Insufficient quota"
@@ -253,6 +257,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMalformedServiceAccountName, ErrorMalformedServiceAccountNameReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMalformedServiceAccountDesc, ErrorMalformedServiceAccountDescReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil},
 	}
 }
 
@@ -422,6 +427,10 @@ func (e *ServiceError) IsServiceAccountNotFound() bool {
 	return e.Code == ServiceAccountNotFound("").Code
 }
 
+func (e *ServiceError) IsMaxLimitForServiceAccountReached() bool  {
+	return e.Code == ErrorMaxLimitForServiceAccountsReached
+}
+
 func (e *ServiceError) IsBadRequest() bool {
 	return e.Code == BadRequest("").Code
 }
@@ -548,6 +557,10 @@ func FailedToCreateServiceAccount(reason string, values ...interface{}) *Service
 
 func FailedToDeleteServiceAccount(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToDeleteServiceAccount, reason, values...)
+}
+
+func MaxLimitForServiceAccountReached(reason string, values ...interface{}) *ServiceError  {
+	return New(ErrorMaxLimitForServiceAccountsReached, reason, values...)
 }
 
 func FailedToGetServiceAccount(reason string, values ...interface{}) *ServiceError {
