@@ -32,6 +32,7 @@ type ConnectorNamespaceService interface {
 	DeleteNamespaceAndConnectorDeployments(ctx context.Context, dbConn *gorm.DB, query interface{}, values ...interface{}) (bool, bool, *errors.ServiceError)
 	ReconcileDeletingNamespaces() (int, []*errors.ServiceError)
 	GetNamespaceTenant(namespaceId string) (*dbapi.ConnectorNamespace, *errors.ServiceError)
+	CanCreateEvalNamespace(userId string) *errors.ServiceError
 }
 
 var _ ConnectorNamespaceService = &connectorNamespaceService{}
@@ -441,4 +442,22 @@ func (k *connectorNamespaceService) GetNamespaceTenant(namespaceId string) (*dba
 		return nil, services.HandleGetError("Connector namespace", "id", namespaceId, err)
 	}
 	return &namespace, nil
+}
+
+func (k *connectorNamespaceService) CanCreateEvalNamespace(userId string) *errors.ServiceError {
+	dbConn := k.connectionFactory.New()
+	var count int64
+	if err := dbConn.Debug().Table("connector_namespaces").
+		Where("tenant_user_id = ? AND expiration IS NOT NULL " +
+			"AND connector_namespaces.deleted_at IS NULL AND connector_clusters.deleted_at IS NULL", userId).
+		Joins("JOIN connector_clusters ON connector_clusters.id = connector_namespaces.cluster_id AND connector_clusters.organisation_id IN ?",
+			k.connectorsConfig.ConnectorEvalOrganizations).
+		Count(&count).Error; err != nil {
+		return services.HandleGetError("Connector namespace", "tenant_user_id", userId, err)
+	}
+
+	if count > 0 {
+		return errors.Unauthorized("Evaluation Connector Namespace already exists for user %s", userId)
+	}
+	return nil
 }

@@ -246,8 +246,18 @@ func (h *ConnectorAdminHandler) CreateConnectorNamespace(writer http.ResponseWri
 			if serviceError != nil {
 				return nil, serviceError
 			}
+
 			if connectorNamespace.TenantUser != nil {
 				connectorNamespace.Owner = connectorNamespace.TenantUser.ID
+
+				// is eval namespace??
+				// TODO add checks for eval org id as well??
+				if connectorNamespace.Expiration != nil {
+					// check for single evaluation namespace
+					if err := h.NamespaceService.CanCreateEvalNamespace(connectorNamespace.Owner); err != nil {
+						return nil, err
+					}
+				}
 			} else {
 				// NOTE: admin user is owner
 				user, err := h.AuthZService.GetUser(ctx)
