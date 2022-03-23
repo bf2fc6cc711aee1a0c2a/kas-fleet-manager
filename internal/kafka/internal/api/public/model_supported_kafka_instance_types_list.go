@@ -11,9 +11,6 @@ package public
 
 // SupportedKafkaInstanceTypesList struct for SupportedKafkaInstanceTypesList
 type SupportedKafkaInstanceTypesList struct {
-	Kind  string                       `json:"kind"`
-	Page  int32                        `json:"page"`
-	Size  int32                        `json:"size"`
-	Total int32                        `json:"total"`
-	Items []SupportedKafkaInstanceType `json:"items"`
+	Kind  string                       `json:"kind,omitempty"`
+	Items []SupportedKafkaInstanceType `json:"items,omitempty"`
 }
