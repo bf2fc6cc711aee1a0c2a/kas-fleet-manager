@@ -32,7 +32,7 @@ func (h *ConnectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
 			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
-			handlers.Validation("phase", &resource.Phase, handlers.IsOneOf(dbapi.AgentRequestConnectorClusterStatus...)),
+			handlers.Validation("phase", (*string)(&resource.Phase), handlers.IsOneOf(dbapi.AgentRequestConnectorClusterStatus...)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -200,7 +200,7 @@ func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource db
 
 	converted.Spec.ShardMetadata = shardMetadata
 	converted.Spec.ConnectorSpec = pc.Connector
-	converted.Spec.DesiredState = string(pc.DesiredState)
+	converted.Spec.DesiredState = private.ConnectorDesiredState(pc.DesiredState)
 	converted.Spec.ConnectorId = pc.Id
 	converted.Spec.Kafka = private.KafkaConnectionSettings{
 		Id:  pc.Kafka.Id,
@@ -325,7 +325,7 @@ func (h *ConnectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, 
 		Validate: []handlers.Validate{
 			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
 			handlers.Validation("deployment_id", &deploymentId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
-			handlers.Validation("phase", &resource.Phase, handlers.IsOneOf(dbapi.AgentConnectorStatusPhase...)),
+			handlers.Validation("phase", (*string)(&resource.Phase), handlers.IsOneOf(dbapi.AgentConnectorStatusPhase...)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()

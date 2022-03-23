@@ -11,9 +11,9 @@ package private
 
 // ConnectorNamespaceStatus Schema for the request to update a data plane namespaces' status
 type ConnectorNamespaceStatus struct {
-	Id                 string            `json:"id"`
-	Phase              string            `json:"phase"`
-	Version            string            `json:"version"`
-	ConnectorsDeployed int32             `json:"connectors_deployed"`
-	Conditions         []MetaV1Condition `json:"conditions,omitempty"`
+	Id                 string                  `json:"id"`
+	Phase              ConnectorNamespaceState `json:"phase"`
+	Version            string                  `json:"version"`
+	ConnectorsDeployed int32                   `json:"connectors_deployed"`
+	Conditions         []MetaV1Condition       `json:"conditions,omitempty"`
 }

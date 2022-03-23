@@ -42,7 +42,7 @@ func PresentConnectorDeployment(from dbapi.ConnectorDeployment) (private.Connect
 			ConnectorResourceVersion: from.ConnectorVersion,
 		},
 		Status: private.ConnectorDeploymentStatus{
-			Phase:           string(from.Status.Phase),
+			Phase:           private.ConnectorState(from.Status.Phase),
 			ResourceVersion: from.Status.Version,
 			Conditions:      conditions,
 			Operators:       operators,
