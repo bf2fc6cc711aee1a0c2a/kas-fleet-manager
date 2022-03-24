@@ -40,7 +40,7 @@ paths:
       tags:
         - errors
       parameters:
-        - $ref: '#/components/parameters/id'
+        - $ref: "#/components/parameters/id"
 
   /api/kafkas_mgmt/v1/errors:
     get:
@@ -244,7 +244,7 @@ paths:
                 500Example:
                   $ref: '#/components/examples/500Example'
     parameters:
-      - $ref: '#/components/parameters/id'
+      - $ref: "#/components/parameters/id"
   /api/kafkas_mgmt/v1/kafkas:
     post:
       operationId: createKafka
@@ -459,7 +459,7 @@ paths:
                 500Example:
                   $ref: '#/components/examples/500Example'
       parameters:
-        - $ref: '#/components/parameters/id'
+        - $ref: "#/components/parameters/id"
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/size'
         - in: query
@@ -628,7 +628,7 @@ paths:
   /api/kafkas_mgmt/v1/service_accounts/{id}:
     get:
       parameters:
-        - $ref: '#/components/parameters/id'
+        - $ref: "#/components/parameters/id"
       responses:
         '200':
           content:
@@ -649,7 +649,7 @@ paths:
     description: Get the service account with the given id
     delete:
       parameters:
-        - $ref: '#/components/parameters/id'
+        - $ref: "#/components/parameters/id"
       responses:
         '204':
           content:
@@ -678,7 +678,7 @@ paths:
         '500':
           content:
             application/json:
-              schema: {}
+              schema: { }
               examples:
                 500Example:
                   $ref: '#/components/examples/500Example'
@@ -692,7 +692,7 @@ paths:
   /api/kafkas_mgmt/v1/service_accounts/{id}/reset_credentials:
     post:
       parameters:
-        - $ref: '#/components/parameters/id'
+        - $ref: "#/components/parameters/id"
       responses:
         '200':
           content:
@@ -804,10 +804,10 @@ paths:
                 500Example:
                   $ref: '#/components/examples/500Example'
       parameters:
-        - $ref: '#/components/parameters/id'
-        - $ref: '#/components/parameters/duration'
-        - $ref: '#/components/parameters/interval'
-        - $ref: '#/components/parameters/filters'
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/duration"
+        - $ref: "#/components/parameters/interval"
+        - $ref: "#/components/parameters/filters"
   /api/kafkas_mgmt/v1/kafkas/{id}/metrics/query:
     get:
       summary: Returns metrics with instant query by Kafka ID
@@ -840,8 +840,8 @@ paths:
                 500Example:
                   $ref: '#/components/examples/500Example'
       parameters:
-        - $ref: '#/components/parameters/id'
-        - $ref: '#/components/parameters/filters'
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/filters"
   /api/kafkas_mgmt/v1/kafkas/{id}/metrics/federate:
     get:
       summary: Returns all metrics in scrapeable format for a given kafka id
@@ -892,7 +892,7 @@ paths:
                 500Example:
                   $ref: '#/components/examples/500Example'
       parameters:
-        - $ref: '#/components/parameters/id'
+        - $ref: "#/components/parameters/id"
 
 components:
   schemas:
@@ -925,10 +925,10 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/ObjectReference'
+            $ref: "#/components/schemas/ObjectReference"
     Error:
       allOf:
-        - $ref: '#/components/schemas/ObjectReference'
+        - $ref: "#/components/schemas/ObjectReference"
         - type: object
           properties:
             code:
@@ -939,31 +939,31 @@ components:
               type: string
     ErrorList:
       allOf:
-        - $ref: '#/components/schemas/List'
+        - $ref: "#/components/schemas/List"
         - type: object
           properties:
             items:
               type: array
               items:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     KafkaRequest:
       allOf:
-        - $ref: '#/components/schemas/ObjectReference'
+        - $ref: "#/components/schemas/ObjectReference"
         - type: object
           required:
             - reauthentication_enabled
             - multi_az
           properties:
             status:
-              description: 'Values: [accepted, preparing, provisioning, ready, failed, deprovision, deleting] '
+              description: "Values: [accepted, preparing, provisioning, ready, failed, deprovision, deleting] "
               type: string
             cloud_provider:
-              description: 'Name of Cloud used to deploy. For example AWS'
+              description: "Name of Cloud used to deploy. For example AWS"
               type: string
             multi_az:
               type: boolean
             region:
-              description: 'Values will be regions of specific cloud provider. For example: us-east-1 for AWS'
+              description: "Values will be regions of specific cloud provider. For example: us-east-1 for AWS"
               type: string
             owner:
               type: string
@@ -1006,16 +1006,16 @@ components:
             max_connection_attempts_per_sec:
               type: int
           example:
-            $ref: '#/components/examples/KafkaRequestExample'
+            $ref: "#/components/examples/KafkaRequestExample"
     KafkaRequestList:
       allOf:
-        - $ref: '#/components/schemas/List'
+        - $ref: "#/components/schemas/List"
         - type: object
           example:
-            kind: 'KafkaRequestList'
-            page: '1'
-            size: '1'
-            total: '1'
+            kind: "KafkaRequestList"
+            page: "1"
+            size: "1"
+            total: "1"
             item:
               $ref: '#/components/examples/KafkaRequestExample'
           properties:
@@ -1023,25 +1023,25 @@ components:
               type: array
               items:
                 allOf:
-                  - $ref: '#/components/schemas/KafkaRequest'
+                  - $ref: "#/components/schemas/KafkaRequest"
     VersionMetadata:
       allOf:
-        - $ref: '#/components/schemas/ObjectReference'
+        - $ref: "#/components/schemas/ObjectReference"
         - type: object
           example:
-            kind: 'APIVersion'
-            id: 'v1'
-            href: '/api/kafkas_mgmt/v1'
+            kind: "APIVersion"
+            id: "v1"
+            href: "/api/kafkas_mgmt/v1"
             collections:
-              - id: 'kafkas'
-                href: '/api/kafkas_mgmt/v1/kafkas'
-                kind: 'KafkaList'
+              - id: "kafkas"
+                href: "/api/kafkas_mgmt/v1/kafkas"
+                kind: "KafkaList"
           properties:
             collections:
               type: array
               items:
                 allOf:
-                  - $ref: '#/components/schemas/ObjectReference'
+                  - $ref: "#/components/schemas/ObjectReference"
     KafkaRequestPayload:
       description: Schema for the request body sent to /kafkas POST
       required:
@@ -1055,7 +1055,7 @@ components:
           description: Set this to true to configure the Kafka cluster to be multiAZ
           type: boolean
         name:
-          description: "The name of the Kafka cluster. It must consist of lower-case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character, and can not be longer than 32 characters."
+          description: 'The name of the Kafka cluster. It must consist of lower-case alphanumeric characters or ''-'', start with an alphabetic character, and end with an alphanumeric character, and can not be longer than 32 characters.'
           type: string
         region:
           description: The region where the Kafka cluster will be created in
@@ -1071,13 +1071,10 @@ components:
       allOf:
         - type: object
           example:
-            kind: 'SupportedKafkaInstanceTypesList'
-            item:
-              $ref: '#/components/examples/SupportedKafkaInstanceTypeExample'
+            instance_types:
+              $ref: '#/components/examples/SupportedKafkaInstanceTypeListExample'
           properties:
-            kind:
-              type: string
-            items:
+            instance_types:
               type: array
               items:
                 allOf:
@@ -1086,9 +1083,6 @@ components:
       description: 'Supported Kafka instance type'
       type: object
       properties:
-        kind:
-          description: "Indicates the type of this object. Will be 'SupportedKafkaInstanceType' link."
-          type: string
         id:
           description: 'Unique identifier of the Kafka instance type.'
           type: string
@@ -1102,9 +1096,6 @@ components:
       description: 'Supported Kafka Size'
       type: object
       properties:
-        kind:
-          description: "Indicates the type of this object. Will be 'SupportedKafkaSize' link."
-          type: string
         id:
           description: 'Unique identifier of this Kafka instance size.'
           type: string
@@ -1140,13 +1131,13 @@ components:
           type: integer
     CloudProviderList:
       allOf:
-        - $ref: '#/components/schemas/List'
+        - $ref: "#/components/schemas/List"
         - type: object
           example:
-            kind: 'CloudProviderList'
-            page: '1'
-            size: '1'
-            total: '1'
+            kind: "CloudProviderList"
+            page: "1"
+            size: "1"
+            total: "1"
             item:
               $ref: '#/components/examples/CloudProviderExample'
           properties:
@@ -1154,16 +1145,16 @@ components:
               type: array
               items:
                 allOf:
-                  - $ref: '#/components/schemas/CloudProvider'
+                  - $ref: "#/components/schemas/CloudProvider"
     CloudRegionList:
       allOf:
-        - $ref: '#/components/schemas/List'
+        - $ref: "#/components/schemas/List"
         - type: object
           example:
-            kind: 'CloudRegionList'
-            page: '1'
-            size: '1'
-            total: '1'
+            kind: "CloudRegionList"
+            page: "1"
+            size: "1"
+            total: "1"
             item:
               $ref: '#/components/examples/CloudRegionExample'
           properties:
@@ -1171,12 +1162,12 @@ components:
               type: array
               items:
                 allOf:
-                  - $ref: '#/components/schemas/CloudRegion'
+                  - $ref: "#/components/schemas/CloudRegion"
     CloudProvider:
       description: 'Cloud provider.'
       properties:
         kind:
-          description: "Indicates the type of this object. Will be 'CloudProvider' link."
+          description: 'Indicates the type of this object. Will be ''CloudProvider'' link.'
           type: string
         id:
           description: 'Unique identifier of the object.'
@@ -1196,7 +1187,7 @@ components:
       description: 'Description of a region of a cloud provider.'
       properties:
         kind:
-          description: "Indicates the type of this object. Will be 'CloudRegion'."
+          description: 'Indicates the type of this object. Will be ''CloudRegion''.'
           type: string
         id:
           description: 'Unique identifier of the object.'
@@ -1222,7 +1213,7 @@ components:
           type: array
           items:
             allOf:
-              - $ref: '#/components/schemas/RegionCapacityListItem'
+              - $ref: "#/components/schemas/RegionCapacityListItem"
       required:
         - enabled
         - supported_instance_types
@@ -1230,7 +1221,7 @@ components:
     ServiceAccount:
       description: 'Service Account created in MAS-SSO for the Kafka Cluster for authentication'
       allOf:
-        - $ref: '#/components/schemas/ObjectReference'
+        - $ref: "#/components/schemas/ObjectReference"
         - type: object
           properties:
             id:
@@ -1255,7 +1246,7 @@ components:
               format: date-time
               type: string
           example:
-            $ref: '#/components/examples/ServiceAccountExample'
+            $ref: "#/components/examples/ServiceAccountExample"
     ServiceAccountRequest:
       description: 'Schema for the request to create a service account'
       required:
@@ -1269,7 +1260,7 @@ components:
           description: 'A description for the service account'
           type: string
       example:
-        $ref: '#/components/examples/ServiceAccountRequestExample'
+        $ref: "#/components/examples/ServiceAccountRequestExample"
     RegionCapacityListItem:
       description: 'schema for a kafka instance type capacity in region'
       type: object
@@ -1322,7 +1313,7 @@ components:
       allOf:
         - type: object
           example:
-            kind: 'ServiceAccountList'
+            kind: "ServiceAccountList"
             items:
               - $ref: '#/components/examples/ServiceAccountListItemExample'
           properties:
@@ -1332,7 +1323,7 @@ components:
               type: array
               items:
                 allOf:
-                  - $ref: '#/components/schemas/ServiceAccountListItem'
+                  - $ref: "#/components/schemas/ServiceAccountListItem"
           required:
             - kind
             - items
@@ -1358,8 +1349,8 @@ components:
       allOf:
         - type: object
           example:
-            kind: 'MetricsRangeQueryList'
-            id: '1nbpS70HduPe4l0to8jSg2CLzfu'
+            kind: "MetricsRangeQueryList"
+            id: "1nbpS70HduPe4l0to8jSg2CLzfu"
             items:
               $ref: '#/components/examples/MetricsRangeQueryExample'
           properties:
@@ -1371,7 +1362,7 @@ components:
               type: array
               items:
                 allOf:
-                  - $ref: '#/components/schemas/RangeQuery'
+                  - $ref: "#/components/schemas/RangeQuery"
     RangeQuery:
       type: object
       properties:
@@ -1398,8 +1389,8 @@ components:
       allOf:
         - type: object
           example:
-            kind: 'MetricsInstantQueryList'
-            id: '1nbpS70HduPe4l0to8jSg2CLzfu'
+            kind: "MetricsInstantQueryList"
+            id: "1nbpS70HduPe4l0to8jSg2CLzfu"
             items:
               $ref: '#/components/examples/MetricsInstantQueryExample'
           properties:
@@ -1411,7 +1402,7 @@ components:
               type: array
               items:
                 allOf:
-                  - $ref: '#/components/schemas/InstantQuery'
+                  - $ref: "#/components/schemas/InstantQuery"
     MetricsFederationResult:
       type: string
     InstantQuery:
@@ -1485,7 +1476,7 @@ components:
         type: array
         items:
           type: string
-        default: []
+        default: [ ]
     page:
       name: page
       in: query
@@ -1653,14 +1644,12 @@ components:
         failed_reason: "a reason the Kafka request creation failed"
         instance_type: standard
         reauthentication_enabled: true
-    SupportedKafkaInstanceTypeExample:
+    SupportedKafkaInstanceTypeListExample:
       value:
-        kind: "SupportedKafkaInstanceType"
         id: eval
         sizes:
           [
             {
-              kind: "SupportedKafkaSize",
               id: x1,
               ingress_throughput_per_sec: "30Mi",
               egress_throughput_per_sec: "30Mi",
