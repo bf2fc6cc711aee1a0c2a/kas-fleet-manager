@@ -1227,13 +1227,11 @@ components:
         failed_reason: a reason the Kafka request creation failed
         instance_type: standard
         reauthentication_enabled: true
-    SupportedKafkaInstanceTypeExample:
+    SupportedKafkaInstanceTypeListExample:
       value:
-        kind: SupportedKafkaInstanceType
         id: eval
         sizes:
-        - kind: SupportedKafkaSize
-          id: x1
+        - id: x1
           ingress_throughput_per_sec: 30Mi
           egress_throughput_per_sec: 30Mi
           total_max_connections: 3000
@@ -1698,10 +1696,6 @@ components:
     SupportedKafkaInstanceType:
       description: Supported Kafka instance type
       properties:
-        kind:
-          description: Indicates the type of this object. Will be 'SupportedKafkaInstanceType'
-            link.
-          type: string
         id:
           description: Unique identifier of the Kafka instance type.
           type: string
@@ -1716,10 +1710,6 @@ components:
     SupportedKafkaSize:
       description: Supported Kafka Size
       properties:
-        kind:
-          description: Indicates the type of this object. Will be 'SupportedKafkaSize'
-            link.
-          type: string
         id:
           description: Unique identifier of this Kafka instance size.
           type: string
@@ -2029,11 +2019,9 @@ components:
             - $ref: '#/components/schemas/ObjectReference'
           type: array
     SupportedKafkaInstanceTypesList_allOf:
-      example: '{"kind":"SupportedKafkaInstanceTypesList","item":{"$ref":"#/components/examples/SupportedKafkaInstanceTypeExample"}}'
+      example: '{"instance_types":{"$ref":"#/components/examples/SupportedKafkaInstanceTypeListExample"}}'
       properties:
-        kind:
-          type: string
-        items:
+        instance_types:
           items:
             allOf:
             - $ref: '#/components/schemas/SupportedKafkaInstanceType'
