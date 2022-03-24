@@ -13,18 +13,12 @@ import (
 )
 
 type supportedKafkaInstanceTypesHandler struct {
-	service              services.SupportedKafkaInstanceTypesService
-	cloudProviderService services.CloudProvidersService
-	kafkaService         services.KafkaService
-	kafkaConfig          *config.KafkaConfig
+	service services.SupportedKafkaInstanceTypesService
 }
 
 func NewSupportedKafkaInstanceTypesHandler(service services.SupportedKafkaInstanceTypesService, cloudProviderService services.CloudProvidersService, kafkaService services.KafkaService, kafkaConfig *config.KafkaConfig) *supportedKafkaInstanceTypesHandler {
 	return &supportedKafkaInstanceTypesHandler{
-		service:              service,
-		cloudProviderService: cloudProviderService,
-		kafkaService:         kafkaService,
-		kafkaConfig:          kafkaConfig,
+		service: service,
 	}
 }
 
@@ -39,8 +33,7 @@ func (h supportedKafkaInstanceTypesHandler) ListSupportedKafkaInstanceTypes(w ht
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			supportedKafkaInstanceTypeList := public.SupportedKafkaInstanceTypesList{
-				Kind:  "SupportedKafkaInstanceTypesList",
-				Items: []public.SupportedKafkaInstanceType{},
+				InstanceTypes: []public.SupportedKafkaInstanceType{},
 			}
 
 			regionInstanceTypeList, err := h.service.GetSupportedKafkaInstanceTypesByRegion(cloudProvider, cloudRegion)
@@ -50,7 +43,7 @@ func (h supportedKafkaInstanceTypesHandler) ListSupportedKafkaInstanceTypes(w ht
 
 			for _, regionInstanceType := range regionInstanceTypeList {
 				converted := presenters.PresentSupportedKafkaInstanceType(&regionInstanceType)
-				supportedKafkaInstanceTypeList.Items = append(supportedKafkaInstanceTypeList.Items, converted)
+				supportedKafkaInstanceTypeList.InstanceTypes = append(supportedKafkaInstanceTypeList.InstanceTypes, converted)
 			}
 
 			return supportedKafkaInstanceTypeList, nil
