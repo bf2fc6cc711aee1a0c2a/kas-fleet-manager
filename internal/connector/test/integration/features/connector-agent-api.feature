@@ -441,6 +441,48 @@ Feature: connector agent API
           }
       }
       """
+
+    # Simulate an error condition when deploying the connector to the data plane
+    Given I am logged in as "Shard2"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+      """
+      {
+        "phase":"failed",
+        "resource_version": 45,
+        "operators": {
+          "assigned": {
+            "id": "camel-k-1.0.0",
+            "type": "camel-k",
+            "version": "1.0.0"
+          }
+        },
+        "conditions": [{
+          "type": "Ready",
+          "status": "False",
+          "lastTransitionTime": "2018-01-01T00:00:00Z",
+          "reason": "BadDeploy",
+          "message": "error authenticating against kafka"
+        }]
+      }
+      """
+    Then the response code should be 204
+    And the response should match ""
+
+    # Verify the connector deployment status is updated.
+    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    Then the response code should be 200
+    And the ".items[0].status.phase" selection from the response should match "failed"
+
+    # Jimmy should now see his connector's error status
+    Given I am logged in as "Jimmy"
+    When I GET path "/v1/kafka_connectors/${connector_id}"
+    Then the response code should be 200
+    And the ".status.error" selection from the response should match "BadDeploy: error authenticating against kafka"
+
+    # Move on with a working connector
+    Given I am logged in as "Shard2"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
       {
@@ -473,7 +515,6 @@ Feature: connector agent API
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
     And the ".status.state" selection from the response should match "ready"
-
 
     #-----------------------------------------------------------------------------------------------------------------
     # In this part of the Scenario we test having an user update a connector configuration

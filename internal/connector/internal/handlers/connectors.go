@@ -141,11 +141,11 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, serr
 			}
 
-			if err := h.validateConnectorOperation(r.Context(), dbresource, phase.UpdateConnector); err != nil {
+			if err := h.validateConnectorOperation(r.Context(), &dbresource.Connector, phase.UpdateConnector); err != nil {
 				return nil, err
 			}
 
-			resource, serr := presenters.PresentConnector(dbresource)
+			resource, serr := presenters.PresentConnector(&dbresource.Connector)
 			if serr != nil {
 				return nil, serr
 			}
@@ -155,7 +155,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
 			}
 
-			originalSecrets, err := getSecretRefs(dbresource, ct)
+			originalSecrets, err := getSecretRefs(&dbresource.Connector, ct)
 			if err != nil {
 				return nil, errors.GeneralError("could not get existing secrets: %v", err)
 			}
@@ -189,7 +189,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			resource.NamespaceId = patch.NamespaceId
 
 			// If we didn't change anything, then just skip the update...
-			originalResource, _ := presenters.PresentConnector(dbresource)
+			originalResource, _ := presenters.PresentConnector(&dbresource.Connector)
 			if reflect.DeepEqual(originalResource, resource) {
 				return originalResource, nil
 			}
@@ -374,12 +374,12 @@ func (h ConnectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 				resource.ConnectorSpec = api.JSON("{}")
 				resource.Status.Phase = "bad-connector-type"
 			} else {
-				if err := stripSecretReferences(resource, ct); err != nil {
+				if err := stripSecretReferences(&resource.Connector, ct); err != nil {
 					return nil, err
 				}
 			}
 
-			return presenters.PresentConnector(resource)
+			return presenters.PresentConnectorWithError(resource)
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -402,7 +402,7 @@ func (h ConnectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 			// validate delete operation if connector is assigned to a namespace
 			if c.NamespaceId != nil {
-				err = h.validateConnectorOperation(ctx, c, phase.DeleteConnector, func(connector *dbapi.Connector) (err *errors.ServiceError) {
+				err = h.validateConnectorOperation(ctx, &c.Connector, phase.DeleteConnector, func(connector *dbapi.Connector) (err *errors.ServiceError) {
 					err = h.connectorsService.SaveStatus(ctx, connector.Status)
 					if err == nil {
 						err = h.connectorsService.Update(ctx, connector)
@@ -415,7 +415,7 @@ func (h ConnectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 				c.DesiredState = dbapi.ConnectorDeleted
 				err = h.connectorsService.SaveStatus(ctx, c.Status)
 				if err == nil {
-					err = h.connectorsService.Update(ctx, c)
+					err = h.connectorsService.Update(ctx, &c.Connector)
 				}
 			}
 
@@ -457,12 +457,12 @@ func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 					resource.ConnectorSpec = api.JSON("{}")
 					resource.Status.Phase = "bad-connector-type"
 				} else {
-					if err := stripSecretReferences(resource, ct); err != nil {
+					if err := stripSecretReferences(&resource.Connector, ct); err != nil {
 						return nil, err
 					}
 				}
 
-				converted, err := presenters.PresentConnector(resource)
+				converted, err := presenters.PresentConnectorWithError(resource)
 				if err != nil {
 					glog.Errorf("connector id='%s' presentation failed: %v", resource.ID, err)
 					return nil, errors.GeneralError("internal error")

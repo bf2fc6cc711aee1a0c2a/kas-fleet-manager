@@ -3,8 +3,10 @@ package presenters
 import (
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
@@ -48,6 +50,37 @@ func ConvertConnector(from public.Connector) (*dbapi.Connector, *errors.ServiceE
 			Phase: dbapi.ConnectorStatusPhase(from.Status.State),
 		},
 	}, nil
+}
+
+func PresentConnectorWithError(from *dbapi.ConnectorWithConditions) (public.Connector, *errors.ServiceError) {
+	connector, err := PresentConnector(&from.Connector)
+	if err != nil {
+		return connector, err
+	}
+
+	var conditions []private.MetaV1Condition
+	if from.Conditions != nil {
+		err := json.Unmarshal([]byte(from.Conditions), &conditions)
+		if err != nil {
+			return public.Connector{}, errors.GeneralError("invalid conditions: %v", err)
+		}
+	}
+	for _, c := range conditions {
+		if c.Type == "Ready" {
+			if c.Status == "False" {
+				finalError := c.Message
+				start := strings.Index(c.Message, "error.message")
+				end := strings.Index(c.Message, "failure.count")
+				if start > -1 && end > -1 {
+					finalError = c.Message[start+14 : end]
+				}
+				connector.Status.Error = c.Reason + ": " + finalError
+			}
+		}
+		break
+	}
+
+	return connector, nil
 }
 
 func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceError) {

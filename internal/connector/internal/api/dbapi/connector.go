@@ -74,6 +74,13 @@ type ConnectorStatus struct {
 
 type ConnectorList []*Connector
 
+type ConnectorWithConditions struct {
+	Connector
+	Conditions api.JSON `gorm:"type:jsonb"`
+}
+
+type ConnectorWithConditionsList []*ConnectorWithConditions
+
 // ConnectorDeployment Holds the deployment configuration of a connector
 type ConnectorDeployment struct {
 	db.Model
