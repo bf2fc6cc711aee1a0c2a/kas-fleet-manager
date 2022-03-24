@@ -487,7 +487,7 @@ func (kc *masService) GetServiceAccountById(accessToken string, ctx context.Cont
 
 func (kc *masService) RegisterKasFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	serviceAccountId := buildAgentOperatorServiceAccountId(kasAgentServiceAccountPrefix, agentClusterId)
-	return kc.registerAgentServiceAccount(accessToken, kasClusterId, serviceAccountId, agentClusterId)
+	return kc.registerAgentServiceAccount(accessToken, serviceAccountId, agentClusterId)
 }
 
 func (kc *masService) DeRegisterKasFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) *errors.ServiceError {
@@ -496,14 +496,14 @@ func (kc *masService) DeRegisterKasFleetshardOperatorServiceAccount(accessToken 
 
 func (kc *masService) RegisterConnectorFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) { // (agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
 	serviceAccountId := buildAgentOperatorServiceAccountId(connectorAgentServiceAccountPrefix, agentClusterId)
-	return kc.registerAgentServiceAccount(accessToken, connectorClusterId, serviceAccountId, agentClusterId)
+	return kc.registerAgentServiceAccount(accessToken, serviceAccountId, agentClusterId)
 }
 
 func (kc *masService) DeRegisterConnectorFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) *errors.ServiceError {
 	return kc.deregisterAgentServiceAccount(accessToken, connectorAgentServiceAccountPrefix, agentClusterId)
 }
 
-func (kc *masService) registerAgentServiceAccount(accessToken string, clusterId string, serviceAccountId string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
+func (kc *masService) registerAgentServiceAccount(accessToken string, serviceAccountId string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	c := keycloak.ClientRepresentation{
 		ClientID:               serviceAccountId,
 		Name:                   serviceAccountId,
@@ -514,20 +514,6 @@ func (kc *masService) registerAgentServiceAccount(accessToken string, clusterId 
 	account, err := kc.createServiceAccountIfNotExists(accessToken, c)
 	if err != nil {
 		return nil, err
-	}
-	serviceAccountUser, getErr := kc.kcClient.GetClientServiceAccount(accessToken, account.ID)
-	if getErr != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, getErr, "failed to get agent service account")
-	}
-	if serviceAccountUser.Attributes == nil || !gocloak.UserAttributeContains(*serviceAccountUser.Attributes, clusterId, agentClusterId) {
-		glog.V(10).Infof("Client %s has no attribute %s, set it", serviceAccountId, clusterId)
-		serviceAccountUser.Attributes = &map[string][]string{
-			clusterId: {agentClusterId},
-		}
-		updateErr := kc.kcClient.UpdateServiceAccountUser(accessToken, *serviceAccountUser)
-		if updateErr != nil {
-			return nil, errors.NewWithCause(errors.ErrorGeneral, updateErr, "failed to update agent service account")
-		}
 	}
 	glog.V(5).Infof("Client %s created successfully with internal id = %s", serviceAccountId, account.ID)
 	return account, nil

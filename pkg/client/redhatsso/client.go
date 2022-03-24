@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
@@ -21,11 +22,11 @@ const (
 	tokenLifeDuration    = 5 * time.Minute
 	cacheCleanupInterval = 5 * time.Minute
 )
-
+//go:generate moq -out client_moq.go . SSOClient
 type SSOClient interface {
 	GetToken() (string, error)
-	GetConfig() *RedhatSSOConfig
-	GetRealmConfig() *RealmConfig
+	GetConfig() *keycloak.KeycloakConfig
+	GetRealmConfig() *keycloak.KeycloakRealmConfig
 	GetServiceAccounts(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error)
 	GetServiceAccount(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error)
 	CreateServiceAccount(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error)
@@ -34,7 +35,7 @@ type SSOClient interface {
 	RegenerateClientSecret(accessToken string, id string) (serviceaccountsclient.ServiceAccountData, error)
 }
 
-func NewSSOClient(config *RedhatSSOConfig) SSOClient {
+func NewSSOClient(config *keycloak.KeycloakConfig) SSOClient {
 	return &rhSSOClient{
 		config: config,
 		cache:  cache.New(tokenLifeDuration, cacheCleanupInterval),
@@ -44,7 +45,7 @@ func NewSSOClient(config *RedhatSSOConfig) SSOClient {
 var _ SSOClient = &rhSSOClient{}
 
 type rhSSOClient struct {
-	config        *RedhatSSOConfig
+	config        *keycloak.KeycloakConfig
 	configuration *serviceaccountsclient.Configuration
 	cache         *cache.Cache
 }
@@ -69,7 +70,7 @@ func (c *rhSSOClient) getConfiguration(accessToken string) *serviceaccountsclien
 			Debug:     false,
 			Servers: serviceaccountsclient.ServerConfigurations{
 				{
-					URL: c.config.KafkaRealm.APIEndpointURI,
+					URL: c.config.RedhatSSORealm.APIEndpointURI,
 				},
 			},
 		}
@@ -87,7 +88,7 @@ func (c *rhSSOClient) getCachedToken(tokenKey string) (string, error) {
 }
 
 func (c *rhSSOClient) GetToken() (string, error) {
-	cachedTokenKey := fmt.Sprintf("%s%s", c.config.KafkaRealm.Realm, c.config.KafkaRealm.ClientID)
+	cachedTokenKey := fmt.Sprintf("%s%s", c.config.RedhatSSORealm.Realm, c.config.RedhatSSORealm.ClientID)
 	cachedToken, _ := c.getCachedToken(cachedTokenKey)
 
 	if cachedToken != "" && !shared.IsJWTTokenExpired(cachedToken) {
@@ -97,9 +98,9 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	client := &http.Client{}
 	parameters := url.Values{}
 	parameters.Set("grant_type", "client_credentials")
-	parameters.Set("client_id", c.config.KafkaRealm.ClientID)
-	parameters.Set("client_secret", c.config.KafkaRealm.ClientSecret)
-	req, err := http.NewRequest("POST", c.config.KafkaRealm.TokenEndpointURI, strings.NewReader(parameters.Encode()))
+	parameters.Set("client_id", c.config.RedhatSSORealm.ClientID)
+	parameters.Set("client_secret", c.config.RedhatSSORealm.ClientSecret)
+	req, err := http.NewRequest("POST", c.config.RedhatSSORealm.TokenEndpointURI, strings.NewReader(parameters.Encode()))
 	if err != nil {
 		return "", err
 	}
@@ -131,12 +132,12 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	return tokenData.AccessToken, nil
 }
 
-func (c *rhSSOClient) GetConfig() *RedhatSSOConfig {
+func (c *rhSSOClient) GetConfig() *keycloak.KeycloakConfig {
 	return c.config
 }
 
-func (c *rhSSOClient) GetRealmConfig() *RealmConfig {
-	return &c.config.KafkaRealm
+func (c *rhSSOClient) GetRealmConfig() *keycloak.KeycloakRealmConfig {
+	return c.config.RedhatSSORealm
 }
 
 func (c *rhSSOClient) GetServiceAccounts(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error) {

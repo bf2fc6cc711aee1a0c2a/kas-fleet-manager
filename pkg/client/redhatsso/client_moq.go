@@ -4,6 +4,7 @@
 package redhatsso
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 	"sync"
 )
@@ -24,10 +25,10 @@ var _ SSOClient = &SSOClientMock{}
 // 			DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
 // 				panic("mock out the DeleteServiceAccount method")
 // 			},
-// 			GetConfigFunc: func() *RedhatSSOConfig {
+// 			GetConfigFunc: func() *keycloak.KeycloakConfig {
 // 				panic("mock out the GetConfig method")
 // 			},
-// 			GetRealmConfigFunc: func() *RealmConfig {
+// 			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
 // 				panic("mock out the GetRealmConfig method")
 // 			},
 // 			GetServiceAccountFunc: func(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
@@ -59,10 +60,10 @@ type SSOClientMock struct {
 	DeleteServiceAccountFunc func(accessToken string, clientId string) error
 
 	// GetConfigFunc mocks the GetConfig method.
-	GetConfigFunc func() *RedhatSSOConfig
+	GetConfigFunc func() *keycloak.KeycloakConfig
 
 	// GetRealmConfigFunc mocks the GetRealmConfig method.
-	GetRealmConfigFunc func() *RealmConfig
+	GetRealmConfigFunc func() *keycloak.KeycloakRealmConfig
 
 	// GetServiceAccountFunc mocks the GetServiceAccount method.
 	GetServiceAccountFunc func(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error)
@@ -227,7 +228,7 @@ func (mock *SSOClientMock) DeleteServiceAccountCalls() []struct {
 }
 
 // GetConfig calls GetConfigFunc.
-func (mock *SSOClientMock) GetConfig() *RedhatSSOConfig {
+func (mock *SSOClientMock) GetConfig() *keycloak.KeycloakConfig {
 	if mock.GetConfigFunc == nil {
 		panic("SSOClientMock.GetConfigFunc: method is nil but SSOClient.GetConfig was just called")
 	}
@@ -253,7 +254,7 @@ func (mock *SSOClientMock) GetConfigCalls() []struct {
 }
 
 // GetRealmConfig calls GetRealmConfigFunc.
-func (mock *SSOClientMock) GetRealmConfig() *RealmConfig {
+func (mock *SSOClientMock) GetRealmConfig() *keycloak.KeycloakRealmConfig {
 	if mock.GetRealmConfigFunc == nil {
 		panic("SSOClientMock.GetRealmConfigFunc: method is nil but SSOClient.GetRealmConfig was just called")
 	}
