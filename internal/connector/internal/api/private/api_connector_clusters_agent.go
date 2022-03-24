@@ -368,14 +368,25 @@ func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorNamespaceBy
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+// GetClusterAsignedConnectorNamespacesOpts Optional parameters for the method 'GetClusterAsignedConnectorNamespaces'
+type GetClusterAsignedConnectorNamespacesOpts struct {
+	Page      optional.String
+	Size      optional.String
+	GtVersion optional.Int64
+}
+
 /*
 GetClusterAsignedConnectorNamespaces Returns all connector namespaces assigned to the cluster.
 Returns all connector namespaces assigned to the cluster.
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param connectorClusterId The id of the connector cluster
+ * @param optional nil or *GetClusterAsignedConnectorNamespacesOpts - Optional Parameters:
+ * @param "Page" (optional.String) -  Page index
+ * @param "Size" (optional.String) -  Number of items in each page
+ * @param "GtVersion" (optional.Int64) -  filters the connectors to those with a version greater than the given value
 @return ConnectorNamespaceList
 */
-func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorNamespaces(ctx _context.Context, connectorClusterId string) (ConnectorNamespaceList, *_nethttp.Response, error) {
+func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorNamespaces(ctx _context.Context, connectorClusterId string, localVarOptionals *GetClusterAsignedConnectorNamespacesOpts) (ConnectorNamespaceList, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -393,6 +404,15 @@ func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorNamespaces(
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
+	if localVarOptionals != nil && localVarOptionals.Page.IsSet() {
+		localVarQueryParams.Add("page", parameterToString(localVarOptionals.Page.Value(), ""))
+	}
+	if localVarOptionals != nil && localVarOptionals.Size.IsSet() {
+		localVarQueryParams.Add("size", parameterToString(localVarOptionals.Size.Value(), ""))
+	}
+	if localVarOptionals != nil && localVarOptionals.GtVersion.IsSet() {
+		localVarQueryParams.Add("gt_version", parameterToString(localVarOptionals.GtVersion.Value(), ""))
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 

@@ -265,8 +265,16 @@ func (h *ConnectorClusterHandler) GetAgentNamespaces(writer http.ResponseWriter,
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := request.Context()
-			listArgs := services.NewListArguments(request.URL.Query())
-			resources, paging, err := h.ConnectorNamespace.List(ctx, []string{connectorClusterId}, listArgs)
+
+			query := request.URL.Query()
+			listArgs := services.NewListArguments(query)
+
+			gtVersion := int64(0)
+			if v := query.Get("gt_version"); v != "" {
+				gtVersion, _ = strconv.ParseInt(v, 10, 0)
+			}
+
+			resources, paging, err := h.ConnectorNamespace.List(ctx, []string{connectorClusterId}, listArgs, gtVersion)
 			if err != nil {
 				return nil, err
 			}

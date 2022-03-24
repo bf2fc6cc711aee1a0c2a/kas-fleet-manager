@@ -80,7 +80,7 @@ Feature: connector agent API
     Given I set the "Authorization" header to "Bearer ${shard_token}"
 
     # agent should be able to get namespace details for creating K8s namespaces on data plane
-    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces"
+    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces?gt_version=0"
     Then the response code should be 200
     And the ".total" selection from the response should match "1"
     And the ".items[0].id" selection from the response should match "${connector_namespace_id}"

@@ -150,9 +150,10 @@ func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace) public.Conne
 		Kind: reference.Kind,
 		Href: reference.Href,
 
-		CreatedAt:  namespace.CreatedAt,
-		ModifiedAt: namespace.UpdatedAt,
-		Owner:      namespace.Owner,
+		CreatedAt:       namespace.CreatedAt,
+		ModifiedAt:      namespace.UpdatedAt,
+		Owner:           namespace.Owner,
+		ResourceVersion: namespace.Version,
 
 		Name:        namespace.Name,
 		ClusterId:   namespace.ClusterId,
@@ -194,9 +195,10 @@ func PresentPrivateConnectorNamespace(namespace *dbapi.ConnectorNamespace) admin
 		Kind: reference.Kind,
 		Href: reference.Href,
 
-		CreatedAt:  namespace.CreatedAt,
-		ModifiedAt: namespace.UpdatedAt,
-		Owner:      namespace.Owner,
+		CreatedAt:       namespace.CreatedAt,
+		ModifiedAt:      namespace.UpdatedAt,
+		Owner:           namespace.Owner,
+		ResourceVersion: namespace.Version,
 
 		Name:        namespace.Name,
 		ClusterId:   namespace.ClusterId,

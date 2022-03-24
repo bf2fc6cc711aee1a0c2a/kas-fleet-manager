@@ -274,7 +274,7 @@ func (h *ConnectorClusterHandler) GetNamespaces(writer http.ResponseWriter, requ
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			listArgs := coreservices.NewListArguments(request.URL.Query())
-			resources, paging, err := h.ConnectorNamespace.List(ctx, []string{connectorClusterId}, listArgs)
+			resources, paging, err := h.ConnectorNamespace.List(ctx, []string{connectorClusterId}, listArgs, 0)
 			if err != nil {
 				return nil, err
 			}

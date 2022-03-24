@@ -15,16 +15,17 @@ import (
 
 // ConnectorNamespace A connector namespace
 type ConnectorNamespace struct {
-	Id          string                                     `json:"id"`
-	Kind        string                                     `json:"kind,omitempty"`
-	Href        string                                     `json:"href,omitempty"`
-	Owner       string                                     `json:"owner,omitempty"`
-	CreatedAt   time.Time                                  `json:"created_at,omitempty"`
-	ModifiedAt  time.Time                                  `json:"modified_at,omitempty"`
-	Name        string                                     `json:"name"`
-	Annotations []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
-	ClusterId   string                                     `json:"cluster_id"`
-	Expiration  string                                     `json:"expiration,omitempty"`
-	Tenant      ConnectorNamespaceTenant                   `json:"tenant"`
-	Status      ConnectorNamespaceStatus2                  `json:"status"`
+	Id              string                                     `json:"id"`
+	Kind            string                                     `json:"kind,omitempty"`
+	Href            string                                     `json:"href,omitempty"`
+	Owner           string                                     `json:"owner,omitempty"`
+	CreatedAt       time.Time                                  `json:"created_at,omitempty"`
+	ModifiedAt      time.Time                                  `json:"modified_at,omitempty"`
+	Name            string                                     `json:"name"`
+	Annotations     []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
+	ResourceVersion int64                                      `json:"resource_version"`
+	ClusterId       string                                     `json:"cluster_id"`
+	Expiration      string                                     `json:"expiration,omitempty"`
+	Tenant          ConnectorNamespaceTenant                   `json:"tenant"`
+	Status          ConnectorNamespaceStatus2                  `json:"status"`
 }

@@ -217,7 +217,7 @@ func (h *ConnectorNamespaceHandler) List(w http.ResponseWriter, r *http.Request)
 				listArgs.Search = fmt.Sprintf("%s AND (%s)", listArgs.Search, userQuery)
 			}
 
-			resources, paging, serviceError := h.Service.List(ctx, nil, listArgs)
+			resources, paging, serviceError := h.Service.List(ctx, nil, listArgs, 0)
 			if serviceError != nil {
 				return nil, serviceError
 			}

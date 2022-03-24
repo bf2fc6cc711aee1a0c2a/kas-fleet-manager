@@ -97,6 +97,7 @@ Feature: connector namespaces API
       "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${response.id}",
       "name": "<user>_namespace",
       "owner": "${<user_id>}",
+      "resource_version": ${response.resource_version},
       "cluster_id": "${response.cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
@@ -159,6 +160,7 @@ Feature: connector namespaces API
            "kind": "ConnectorNamespace",
            "name": "<user>_namespace",
            "owner": "${<user_id>}",
+           "resource_version": ${response.items[0].resource_version},
            "created_at": "${response.items[0].created_at}",
            "modified_at": "${response.items[0].modified_at}",
            "expiration": "${response.items[0].expiration}",
@@ -237,6 +239,7 @@ Feature: connector namespaces API
            "modified_at": "${response.items[0].modified_at}",
            "name": "default-connector-namespace",
            "owner": "${dusty_user_id}",
+           "resource_version": ${response.items[0].resource_version},
            "tenant": {
              "kind": "organisation",
              "id": "13640230"
@@ -285,6 +288,7 @@ Feature: connector namespaces API
       "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${response.id}",
       "name": "shared_namespace",
       "owner": "${dusty_user_id}",
+      "resource_version": ${response.resource_version},
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
@@ -331,6 +335,7 @@ Feature: connector namespaces API
       "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${response.id}",
       "name": "Lucky_namespace",
       "owner": "${lucky_user_id}",
+      "resource_version": ${response.resource_version},
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
@@ -369,6 +374,7 @@ Feature: connector namespaces API
            "modified_at": "${response.items[0].modified_at}",
            "name": "default-connector-namespace",
            "owner": "${dusty_user_id}",
+           "resource_version": ${response.items[0].resource_version},
            "tenant": {
              "kind": "organisation",
              "id": "13640230"
@@ -390,6 +396,7 @@ Feature: connector namespaces API
            "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${org_namespace_id}",
            "name": "shared_namespace",
            "owner": "${dusty_user_id}",
+           "resource_version": ${response.items[1].resource_version},
            "cluster_id": "${connector_cluster_id}",
            "created_at": "${response.items[1].created_at}",
            "modified_at": "${response.items[1].modified_at}",
@@ -478,6 +485,7 @@ Feature: connector namespaces API
            "modified_at": "${response.items[0].modified_at}",
            "name": "default-connector-namespace",
            "owner": "${drnefario_user_id}",
+           "resource_version": ${response.items[0].resource_version},
            "tenant": {
              "kind": "organisation",
              "id": "${response.items[0].tenant.id}"
@@ -529,6 +537,7 @@ Feature: connector namespaces API
       "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${response.id}",
       "name": "<user>_namespace",
       "owner": "${<user_id>}",
+      "resource_version": ${response.resource_version},
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
@@ -570,6 +579,7 @@ Feature: connector namespaces API
            "modified_at": "${response.items[0].modified_at}",
            "name": "default-connector-namespace",
            "owner": "${drnefario_user_id}",
+           "resource_version": ${response.items[0].resource_version},
            "tenant": {
              "kind": "organisation",
              "id": "${response.items[0].tenant.id}"
@@ -647,6 +657,7 @@ Feature: connector namespaces API
            "modified_at": "${response.items[0].modified_at}",
            "name": "default-connector-namespace",
            "owner": "${guapo_user_id}",
+           "resource_version": ${response.items[0].resource_version},
            "tenant": {
              "kind": "organisation",
              "id": "13640231"
@@ -702,6 +713,7 @@ Feature: connector namespaces API
       "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${response.id}",
       "name": "amigos_namespace",
       "owner": "Ricky Bobby",
+      "resource_version": ${response.resource_version},
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
@@ -743,6 +755,7 @@ Feature: connector namespaces API
            "modified_at": "${response.items[0].modified_at}",
            "name": "default-connector-namespace",
            "owner": "${guapo_user_id}",
+           "resource_version": ${response.items[0].resource_version},
            "tenant": {
              "kind": "organisation",
              "id": "13640231"

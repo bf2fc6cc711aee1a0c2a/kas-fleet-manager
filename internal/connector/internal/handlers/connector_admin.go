@@ -182,7 +182,7 @@ func (h *ConnectorAdminHandler) GetClusterNamespaces(writer http.ResponseWriter,
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			namespaces, paging, err := h.NamespaceService.List(request.Context(), []string{id}, listArgs)
+			namespaces, paging, err := h.NamespaceService.List(request.Context(), []string{id}, listArgs, 0)
 			if err != nil {
 				return nil, err
 			}
@@ -211,7 +211,7 @@ func (h *ConnectorAdminHandler) GetConnectorNamespaces(writer http.ResponseWrite
 	cfg := handlers.HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			namespaces, paging, err := h.NamespaceService.List(request.Context(), []string{}, listArgs)
+			namespaces, paging, err := h.NamespaceService.List(request.Context(), []string{}, listArgs, 0)
 			if err != nil {
 				return nil, err
 			}
