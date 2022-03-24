@@ -23,7 +23,7 @@ type ConnectorNamespaceService interface {
 	Create(ctx context.Context, request *dbapi.ConnectorNamespace) *errors.ServiceError
 	Update(ctx context.Context, request *dbapi.ConnectorNamespace) *errors.ServiceError
 	Get(ctx context.Context, namespaceID string) (*dbapi.ConnectorNamespace, *errors.ServiceError)
-	List(ctx context.Context, clusterIDs []string, listArguments *services.ListArguments) (dbapi.ConnectorNamespaceList, *api.PagingMeta, *errors.ServiceError)
+	List(ctx context.Context, clusterIDs []string, listArguments *services.ListArguments, gtVersion int64) (dbapi.ConnectorNamespaceList, *api.PagingMeta, *errors.ServiceError)
 	Delete(ctx context.Context, namespaceId string) *errors.ServiceError
 	SetEvalClusterId(request *dbapi.ConnectorNamespace) *errors.ServiceError
 	CreateDefaultNamespace(ctx context.Context, connectorCluster *dbapi.ConnectorCluster) *errors.ServiceError
@@ -130,8 +130,7 @@ func (k *connectorNamespaceService) Get(ctx context.Context, namespaceID string)
 
 var validNamespaceColumns = []string{"name", "cluster_id", "owner", "expiration", "tenant_user_id", "tenant_organisation_id"}
 
-func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []string,
-	listArguments *services.ListArguments) (dbapi.ConnectorNamespaceList, *api.PagingMeta, *errors.ServiceError) {
+func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []string, listArguments *services.ListArguments, gtVersion int64) (dbapi.ConnectorNamespaceList, *api.PagingMeta, *errors.ServiceError) {
 	var resourceList dbapi.ConnectorNamespaceList
 	pagingMeta := api.PagingMeta{
 		Page:  listArguments.Page,
@@ -151,6 +150,11 @@ func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []strin
 			return resourceList, &pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector namespace requests: %s", err.Error())
 		}
 		dbConn = dbConn.Where(searchDbQuery.Query, searchDbQuery.Values...)
+	}
+
+	// check if a minimum resource version is provided
+	if gtVersion != 0 {
+		dbConn = dbConn.Where("connector_namespaces.version > ?", gtVersion)
 	}
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)

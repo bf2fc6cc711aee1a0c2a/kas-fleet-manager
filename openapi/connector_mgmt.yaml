@@ -1447,6 +1447,11 @@ components:
       allOf:
         - $ref: "#/components/schemas/ObjectMeta"
         - $ref: "#/components/schemas/ConnectorNamespaceRequestMeta"
+        - type: object
+          properties:
+            resource_version:
+              type: integer
+              format: int64
 
     ConnectorNamespaceTenantKind:
       type: string
@@ -1548,6 +1553,7 @@ components:
           required:
             - id
             - name
+            - resource_version
             - cluster_id
             - tenant
             - status

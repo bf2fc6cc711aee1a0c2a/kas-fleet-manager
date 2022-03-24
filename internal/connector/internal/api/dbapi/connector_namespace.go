@@ -42,6 +42,7 @@ type ConnectorNamespace struct {
 	ClusterId string `gorm:"not null;uniqueIndex:idx_connector_namespaces_name_cluster_id;index"`
 
 	Owner      string `gorm:"not null;index"`
+	Version    int64  `gorm:"type:bigserial;index"`
 	Expiration *time.Time
 
 	// metadata

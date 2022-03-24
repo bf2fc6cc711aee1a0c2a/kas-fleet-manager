@@ -15,9 +15,10 @@ import (
 
 // ConnectorNamespaceMeta struct for ConnectorNamespaceMeta
 type ConnectorNamespaceMeta struct {
-	Owner       string                                     `json:"owner,omitempty"`
-	CreatedAt   time.Time                                  `json:"created_at,omitempty"`
-	ModifiedAt  time.Time                                  `json:"modified_at,omitempty"`
-	Name        string                                     `json:"name,omitempty"`
-	Annotations []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
+	Owner           string                                     `json:"owner,omitempty"`
+	CreatedAt       time.Time                                  `json:"created_at,omitempty"`
+	ModifiedAt      time.Time                                  `json:"modified_at,omitempty"`
+	Name            string                                     `json:"name,omitempty"`
+	Annotations     []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
+	ResourceVersion int64                                      `json:"resource_version,omitempty"`
 }

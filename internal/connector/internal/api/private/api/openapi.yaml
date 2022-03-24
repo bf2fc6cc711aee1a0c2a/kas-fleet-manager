@@ -274,6 +274,34 @@ paths:
         schema:
           type: string
         style: simple
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+      - description: filters the connectors to those with a version greater than the
+          given value
+        explode: true
+        in: query
+        name: gt_version
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
       responses:
         "200":
           content:
@@ -706,6 +734,7 @@ components:
       allOf:
       - $ref: '#/components/schemas/ObjectMeta'
       - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
+      - $ref: '#/components/schemas/ConnectorNamespaceMeta_allOf'
     ObjectMeta:
       properties:
         owner:
@@ -907,8 +936,14 @@ components:
       - cluster_id
       - id
       - name
+      - resource_version
       - status
       - tenant
+    ConnectorNamespaceMeta_allOf:
+      properties:
+        resource_version:
+          format: int64
+          type: integer
     ConnectorNamespaceRequestMeta_annotations:
       properties:
         key:

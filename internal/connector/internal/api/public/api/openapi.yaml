@@ -1925,6 +1925,7 @@ components:
       allOf:
       - $ref: '#/components/schemas/ObjectMeta'
       - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
+      - $ref: '#/components/schemas/ConnectorMeta_allOf'
     ConnectorNamespaceTenantKind:
       enum:
       - user
@@ -2117,6 +2118,7 @@ components:
       - cluster_id
       - id
       - name
+      - resource_version
       - status
       - tenant
   securitySchemes:
