@@ -1,13 +1,11 @@
 package api
 
 type SupportedKafkaInstanceType struct {
-	Kind                string               `json:"kind"`
 	Id                  string               `json:"id"`
 	SupportedKafkaSizes []SupportedKafkaSize `json:"sizes"`
 }
 
 type SupportedKafkaSize struct {
-	Kind                        string `json:"kind"`
 	Id                          string `json:"id"`
 	IngressThroughputPerSec     string `json:"ingress_throughput_per_sec"`
 	EgressThroughputPerSec      string `json:"egress_throughput_per_sec"`

@@ -14,16 +14,14 @@ type SupportedKafkaInstanceTypesService interface {
 }
 
 type supportedKafkaInstanceTypesService struct {
-	providerService CloudProvidersService
-	providerConfig  *config.ProviderConfig
-	kafkaConfig     *config.KafkaConfig
+	providerConfig *config.ProviderConfig
+	kafkaConfig    *config.KafkaConfig
 }
 
-func NewSupportedKafkaInstanceTypesService(providerService CloudProvidersService, providerConfig *config.ProviderConfig, kafkaConfig *config.KafkaConfig) SupportedKafkaInstanceTypesService {
+func NewSupportedKafkaInstanceTypesService(providerConfig *config.ProviderConfig, kafkaConfig *config.KafkaConfig) SupportedKafkaInstanceTypesService {
 	return &supportedKafkaInstanceTypesService{
-		providerService: providerService,
-		providerConfig:  providerConfig,
-		kafkaConfig:     kafkaConfig,
+		providerConfig: providerConfig,
+		kafkaConfig:    kafkaConfig,
 	}
 }
 
@@ -54,7 +52,6 @@ func (t supportedKafkaInstanceTypesService) GetSupportedKafkaInstanceTypesByRegi
 				continue
 			}
 			supportedSizesList = append(supportedSizesList, api.SupportedKafkaSize{
-				Kind:                        "SupportedKafkaSize",
 				Id:                          size.Id,
 				IngressThroughputPerSec:     size.IngressThroughputPerSec,
 				EgressThroughputPerSec:      size.EgressThroughputPerSec,
@@ -68,7 +65,6 @@ func (t supportedKafkaInstanceTypesService) GetSupportedKafkaInstanceTypesByRegi
 			})
 		}
 		instanceTypeList = append(instanceTypeList, api.SupportedKafkaInstanceType{
-			Kind:                "SupportedKafkaInstanceType",
 			Id:                  k,
 			SupportedKafkaSizes: supportedSizesList,
 		})
