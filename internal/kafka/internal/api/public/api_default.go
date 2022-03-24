@@ -423,7 +423,7 @@ GetCloudProviderRegions Returns the list of supported regions of the supported c
  * @param optional nil or *GetCloudProviderRegionsOpts - Optional Parameters:
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
- * @param "InstanceType" (optional.String) -  The Kafka instance type to filter the results by
+ * @param "InstanceType" (optional.String) -  The Kafka instance type to filter the results by  DEPRECATION NOTICE - instance_type will be deprecated
 @return CloudRegionList
 */
 func (a *DefaultApiService) GetCloudProviderRegions(ctx _context.Context, id string, localVarOptionals *GetCloudProviderRegionsOpts) (CloudRegionList, *_nethttp.Response, error) {
