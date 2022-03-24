@@ -4,20 +4,52 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
+
+var supportedKafkaSizeStandard = []api.SupportedKafkaSize{
+	{
+		Id:                          "x1",
+		IngressThroughputPerSec:     "30Mi",
+		EgressThroughputPerSec:      "30Mi",
+		TotalMaxConnections:         1000,
+		MaxDataRetentionSize:        "100Gi",
+		MaxPartitions:               1000,
+		MaxDataRetentionPeriod:      "P14D",
+		MaxConnectionAttemptsPerSec: 100,
+		QuotaConsumed:               1,
+		QuotaType:                   "rhosak",
+		CapacityConsumed:            1,
+	},
+}
+
+var supportedKafkaSizeEval = []api.SupportedKafkaSize{
+	{
+		Id:                          "x2",
+		IngressThroughputPerSec:     "60Mi",
+		EgressThroughputPerSec:      "60Mi",
+		TotalMaxConnections:         2000,
+		MaxDataRetentionSize:        "200Gi",
+		MaxPartitions:               2000,
+		MaxDataRetentionPeriod:      "P14D",
+		MaxConnectionAttemptsPerSec: 200,
+		QuotaConsumed:               2,
+		QuotaType:                   "rhosak",
+		CapacityConsumed:            2,
+	},
+}
 
 func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T) {
 	type fields struct {
-		cloudProvidersService CloudProvidersService
+		providerConfig *config.ProviderConfig
+		kafkaConfig    *config.KafkaConfig
 	}
 
 	type args struct {
 		cloudProvider string
 		cloudRegion   string
 	}
-
 	tests := []struct {
 		name    string
 		fields  fields
@@ -28,17 +60,8 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 		{
 			name: "success when instance type list",
 			fields: fields{
-				cloudProvidersService: &CloudProvidersServiceMock{
-					ListCachedCloudProviderRegionsFunc: func(id string) ([]api.CloudRegion, *errors.ServiceError) {
-						return []api.CloudRegion{
-							{
-								Id:                     "us-east-1",
-								CloudProvider:          "aws",
-								SupportedInstanceTypes: []string{"standard", "eval"},
-							},
-						}, nil
-					},
-				},
+				providerConfig: buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
+				kafkaConfig:    &defaultKafkaConf,
 			},
 			args: args{
 				cloudProvider: "aws",
@@ -47,47 +70,24 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 			wantErr: false,
 			want: []api.SupportedKafkaInstanceType{
 				{
-					Id: "standard",
+					Id:                  "standard",
+					SupportedKafkaSizes: supportedKafkaSizeStandard,
 				},
 				{
-					Id: "eval",
+					Id:                  "eval",
+					SupportedKafkaSizes: supportedKafkaSizeEval,
 				},
 			},
 		},
 		{
-			name: "successfully return an empty list if region not available",
+			name: "fail when cloud region not supported",
 			fields: fields{
-				cloudProvidersService: &CloudProvidersServiceMock{
-					ListCachedCloudProviderRegionsFunc: func(id string) ([]api.CloudRegion, *errors.ServiceError) {
-						return []api.CloudRegion{
-							{
-								Id:                     "eu-west-1",
-								CloudProvider:          "aws",
-								SupportedInstanceTypes: []string{"standard", "eval"},
-							},
-						}, nil
-					},
-				},
+				providerConfig: buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
+				kafkaConfig:    &defaultKafkaConf,
 			},
 			args: args{
 				cloudProvider: "aws",
-				cloudRegion:   "us-east-1",
-			},
-			wantErr: false,
-			want:    []api.SupportedKafkaInstanceType{},
-		},
-		{
-			name: "fail when failure to get cloud regions",
-			fields: fields{
-				cloudProvidersService: &CloudProvidersServiceMock{
-					ListCachedCloudProviderRegionsFunc: func(id string) ([]api.CloudRegion, *errors.ServiceError) {
-						return nil, errors.GeneralError("failed to get cloud regions")
-					},
-				},
-			},
-			args: args{
-				cloudProvider: "aws",
-				cloudRegion:   "us-east-1",
+				cloudRegion:   "us-east-2",
 			},
 			wantErr: true,
 		},
@@ -95,7 +95,8 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			k := supportedKafkaInstanceTypesService{
-				providerService: tt.fields.cloudProvidersService,
+				providerConfig: tt.fields.providerConfig,
+				kafkaConfig:    tt.fields.kafkaConfig,
 			}
 			got, err := k.GetSupportedKafkaInstanceTypesByRegion(tt.args.cloudProvider, tt.args.cloudRegion)
 			if err != nil && !tt.wantErr {
