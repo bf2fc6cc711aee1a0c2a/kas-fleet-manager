@@ -11,8 +11,6 @@ package public
 
 // SupportedKafkaInstanceType Supported Kafka instance type
 type SupportedKafkaInstanceType struct {
-	// Indicates the type of this object. Will be 'SupportedKafkaInstanceType' link.
-	Kind string `json:"kind,omitempty"`
 	// Unique identifier of the Kafka instance type.
 	Id string `json:"id,omitempty"`
 	//  A list of Kafka instance sizes available for this instance type

@@ -11,8 +11,6 @@ package public
 
 // SupportedKafkaSize Supported Kafka Size
 type SupportedKafkaSize struct {
-	// Indicates the type of this object. Will be 'SupportedKafkaSize' link.
-	Kind string `json:"kind,omitempty"`
 	// Unique identifier of this Kafka instance size.
 	Id string `json:"id,omitempty"`
 	// Ingress throughput per second available to this Kafka instance size.
