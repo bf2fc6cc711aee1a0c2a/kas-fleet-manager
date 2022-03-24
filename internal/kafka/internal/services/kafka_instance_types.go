@@ -62,6 +62,7 @@ func (t supportedKafkaInstanceTypesService) GetSupportedKafkaInstanceTypesByRegi
 				MaxConnectionAttemptsPerSec: int32(size.MaxConnectionAttemptsPerSec),
 				QuotaConsumed:               int32(size.QuotaConsumed),
 				QuotaType:                   size.QuotaType,
+				CapacityConsumed:            int32(size.CapacityConsumed),
 			})
 		}
 		instanceTypeList = append(instanceTypeList, api.SupportedKafkaInstanceType{
