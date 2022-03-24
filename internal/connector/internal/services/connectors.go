@@ -21,8 +21,8 @@ import (
 
 type ConnectorsService interface {
 	Create(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError
-	Get(ctx context.Context, id string, tid string) (*dbapi.Connector, *errors.ServiceError)
-	List(ctx context.Context, kid string, listArgs *services.ListArguments, tid string) (dbapi.ConnectorList, *api.PagingMeta, *errors.ServiceError)
+	Get(ctx context.Context, id string, tid string) (*dbapi.ConnectorWithConditions, *errors.ServiceError)
+	List(ctx context.Context, kid string, listArgs *services.ListArguments, tid string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError)
 	Update(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError
 	SaveStatus(ctx context.Context, resource dbapi.ConnectorStatus) *errors.ServiceError
 	Delete(ctx context.Context, id string) *errors.ServiceError
@@ -82,15 +82,16 @@ func (k *connectorsService) Create(ctx context.Context, resource *dbapi.Connecto
 }
 
 // Get gets a connector by id from the database
-func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*dbapi.Connector, *errors.ServiceError) {
+func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*dbapi.ConnectorWithConditions, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("connector id is undefined")
 	}
 
 	dbConn := k.connectionFactory.New()
-	var resource dbapi.Connector
-	dbConn = dbConn.Where("id = ?", id)
-	dbConn = dbConn.Preload("Status")
+	var resource dbapi.ConnectorWithConditions
+	dbConn = dbConn.Model(&dbapi.Connector{})
+	dbConn = selectConnectorWithConditions(dbConn)
+	dbConn = dbConn.Where("connectors.id = ?", id)
 
 	var err *errors.ServiceError
 	dbConn, err = filterConnectorsToOwnerOrOrg(ctx, dbConn, k.connectionFactory)
@@ -99,8 +100,10 @@ func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*db
 	}
 
 	if tid != "" {
-		dbConn = dbConn.Where("connector_type_id = ?", tid)
+		dbConn = dbConn.Where("connectors.connector_type_id = ?", tid)
 	}
+
+	dbConn = dbConn.Limit(1)
 
 	if err := dbConn.First(&resource).Error; err != nil {
 		return nil, services.HandleGetError("Connector", "id", id, err)
@@ -126,7 +129,7 @@ func filterConnectorsToOwnerOrOrg(ctx context.Context, dbConn *gorm.DB, factory 
 	if filterByOrganisationId {
 		// unassigned connectors with no namespace_id use owner and org
 		// assigned connectors use tenant user or organisation
-		dbConn = dbConn.Where("(namespace_id is null AND (owner = ? OR organisation_id = ?)) OR (namespace_id IS NOT NULL AND namespace_id IN (?))",
+		dbConn = dbConn.Where("(connectors.namespace_id is null AND (owner = ? OR organisation_id = ?)) OR (connectors.namespace_id IS NOT NULL AND connectors.namespace_id IN (?))",
 			owner,
 			orgId,
 			factory.New().Table("connector_namespaces").Select("id").
@@ -195,10 +198,8 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 }
 
 // List returns all connectors visible to the user within the requested paging window.
-func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *services.ListArguments, tid string) (dbapi.ConnectorList, *api.PagingMeta, *errors.ServiceError) {
-	var resourceList dbapi.ConnectorList
+func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *services.ListArguments, tid string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
-	dbConn = dbConn.Preload("Status")
 	pagingMeta := &api.PagingMeta{
 		Page: listArgs.Page,
 		Size: listArgs.Size,
@@ -220,7 +221,7 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
 	total := int64(pagingMeta.Total)
-	dbConn.Model(&resourceList).Count(&total)
+	dbConn.Model(&dbapi.ConnectorList{}).Count(&total)
 	pagingMeta.Total = int(total)
 	if pagingMeta.Size > pagingMeta.Total {
 		pagingMeta.Size = pagingMeta.Total
@@ -230,12 +231,24 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 	// default the order by name
 	dbConn = dbConn.Order("name")
 
+	var resourcesWithConditions dbapi.ConnectorWithConditionsList
 	// execute query
-	if err := dbConn.Find(&resourceList).Error; err != nil {
-		return resourceList, pagingMeta, errors.GeneralError("Unable to list connectors: %s", err)
+	dbConn = selectConnectorWithConditions(dbConn)
+
+	if err := dbConn.Find(&resourcesWithConditions).Error; err != nil {
+		return resourcesWithConditions, pagingMeta, errors.GeneralError("Unable to list connectors: %s", err)
 	}
 
-	return resourceList, pagingMeta, nil
+	return resourcesWithConditions, pagingMeta, nil
+}
+
+func selectConnectorWithConditions(dbConn *gorm.DB) *gorm.DB {
+	return dbConn.Select("connectors.*, connector_deployment_statuses.conditions").
+		Joins("Status").
+		Joins("left join connector_deployments on connector_deployments.connector_id = connectors.id " +
+			"and connector_deployments.deleted_at IS NULL").
+		Joins("left join connector_deployment_statuses on connector_deployment_statuses.id = connector_deployments.id " +
+			"and connector_deployment_statuses.deleted_at IS NULL")
 }
 
 func (k connectorsService) Update(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError {
