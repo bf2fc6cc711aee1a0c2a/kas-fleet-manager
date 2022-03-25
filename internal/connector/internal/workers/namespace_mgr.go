@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
@@ -15,8 +14,8 @@ var _ workers.Worker = &NamespaceManager{}
 type NamespaceManager struct {
 	workers.BaseWorker
 	namespaceService services.ConnectorNamespaceService
-	db                      *db.ConnectionFactory
-	ctx                     context.Context
+	db               *db.ConnectionFactory
+	ctx              context.Context
 }
 
 func (m *NamespaceManager) Start() {
@@ -27,17 +26,16 @@ func (m *NamespaceManager) Stop() {
 	m.StopWorker(m)
 }
 
-func NewNamespaceManager(bus signalbus.SignalBus, namespaceService services.ConnectorNamespaceService, db *db.ConnectionFactory) *NamespaceManager {
+func NewNamespaceManager(namespaceService services.ConnectorNamespaceService, db *db.ConnectionFactory,
+	reconciler workers.Reconciler) *NamespaceManager {
 	return &NamespaceManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "connector_namespace",
-			Reconciler: workers.Reconciler{
-				SignalBus: bus,
-			},
+			Reconciler: reconciler,
 		},
 		namespaceService: namespaceService,
-		db: db,
+		db:               db,
 	}
 }
 
