@@ -24,6 +24,7 @@ type ConnectorNamespace struct {
 	Name            string                                     `json:"name"`
 	Annotations     []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
 	ResourceVersion int64                                      `json:"resource_version"`
+	Quota           ConnectorNamespaceQuota                    `json:"quota,omitempty"`
 	ClusterId       string                                     `json:"cluster_id"`
 	Expiration      string                                     `json:"expiration,omitempty"`
 	Tenant          ConnectorNamespaceTenant                   `json:"tenant"`

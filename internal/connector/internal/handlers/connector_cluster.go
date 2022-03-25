@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
@@ -42,6 +43,7 @@ type ConnectorClusterHandler struct {
 	KeycloakConfig     *keycloak.KeycloakConfig
 	ServerConfig       *server.ServerConfig
 	AuthZ              authz.AuthZService
+	QuotaConfig        *config.ConnectorsQuotaConfig
 }
 
 func NewConnectorClusterHandler(handler ConnectorClusterHandler) *ConnectorClusterHandler {
@@ -287,7 +289,7 @@ func (h *ConnectorClusterHandler) GetNamespaces(writer http.ResponseWriter, requ
 			}
 
 			for _, resource := range resources {
-				converted := presenters.PresentConnectorNamespace(resource)
+				converted := presenters.PresentConnectorNamespace(resource, h.QuotaConfig)
 				resourceList.Items = append(resourceList.Items, converted)
 			}
 

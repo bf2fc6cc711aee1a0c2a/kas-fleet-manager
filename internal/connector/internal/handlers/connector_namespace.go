@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
@@ -32,6 +33,7 @@ type ConnectorNamespaceHandler struct {
 	Bus          signalbus.SignalBus
 	Service      services.ConnectorNamespaceService
 	AuthZService authz.AuthZService
+	QuotaConfig  *config.ConnectorsQuotaConfig
 }
 
 func NewConnectorNamespaceHandler(handler ConnectorNamespaceHandler) *ConnectorNamespaceHandler {
@@ -77,7 +79,7 @@ func (h *ConnectorNamespaceHandler) Create(w http.ResponseWriter, r *http.Reques
 			if err := h.Service.Create(ctx, convResource); err != nil {
 				return nil, err
 			}
-			return presenters.PresentConnectorNamespace(convResource), nil
+			return presenters.PresentConnectorNamespace(convResource, h.QuotaConfig), nil
 		},
 	}
 
@@ -111,7 +113,7 @@ func (h *ConnectorNamespaceHandler) CreateEvaluation(w http.ResponseWriter, r *h
 			if err := h.Service.Create(r.Context(), convResource); err != nil {
 				return nil, err
 			}
-			return presenters.PresentConnectorNamespace(convResource), nil
+			return presenters.PresentConnectorNamespace(convResource, h.QuotaConfig), nil
 		},
 	}
 
@@ -139,7 +141,7 @@ func (h *ConnectorNamespaceHandler) Get(w http.ResponseWriter, r *http.Request) 
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentConnectorNamespace(resource), nil
+			return presenters.PresentConnectorNamespace(resource, h.QuotaConfig), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -224,7 +226,7 @@ func (h *ConnectorNamespaceHandler) List(w http.ResponseWriter, r *http.Request)
 
 			items := make([]public.ConnectorNamespace, len(resources))
 			for j, resource := range resources {
-				items[j] = presenters.PresentConnectorNamespace(resource)
+				items[j] = presenters.PresentConnectorNamespace(resource, h.QuotaConfig)
 			}
 			resourceList := public.ConnectorNamespaceList{
 				Kind:  "ConnectorNamespaceList",

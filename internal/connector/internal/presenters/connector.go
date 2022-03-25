@@ -76,8 +76,8 @@ func PresentConnectorWithError(from *dbapi.ConnectorWithConditions) (public.Conn
 				}
 				connector.Status.Error = c.Reason + ": " + finalError
 			}
+			break
 		}
-		break
 	}
 
 	return connector, nil
