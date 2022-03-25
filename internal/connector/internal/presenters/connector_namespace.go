@@ -1,6 +1,7 @@
 package presenters
 
 import (
+	"fmt"
 	admin "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
@@ -259,6 +260,12 @@ func getTimestamp(expiration time.Time) string {
 }
 
 func getError(conditions dbapi.ConditionList) string {
-	// TODO convert conditions to error message
-	return ""
+	var err []string
+	for _, condition := range conditions {
+		// look for *Failure type conditions
+		if strings.HasSuffix(condition.Type, "Failure") {
+			err = append(err, fmt.Sprintf("%s: %s", condition.Reason, condition.Message))
+		}
+	}
+	return strings.Join(err, "; ")
 }
