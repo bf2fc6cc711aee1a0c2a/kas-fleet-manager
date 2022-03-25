@@ -1447,7 +1447,8 @@ components:
       type: object
       properties:
         connectors:
-          type: int32
+          type: integer
+          format: int32
         memory_requests:
           $ref: "#/components/schemas/MemoryQuota"
         memory_limits:

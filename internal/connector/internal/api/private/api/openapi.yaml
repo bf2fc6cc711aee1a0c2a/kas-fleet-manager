@@ -758,7 +758,8 @@ components:
     ConnectorNamespaceQuota:
       properties:
         connectors:
-          type: int32
+          format: int32
+          type: integer
         memory_requests:
           description: Memory quota for limits or requests
           pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
