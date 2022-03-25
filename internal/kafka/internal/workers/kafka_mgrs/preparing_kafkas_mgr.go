@@ -6,7 +6,6 @@ import (
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -24,15 +23,13 @@ type PreparingKafkaManager struct {
 	kafkaService services.KafkaService
 }
 
-// NewPreparingKafkaManager creates a new kafka manager
-func NewPreparingKafkaManager(kafkaService services.KafkaService, bus signalbus.SignalBus) *PreparingKafkaManager {
+// NewPreparingKafkaManager creates a new kafka manager to reconcile preparing kafkas
+func NewPreparingKafkaManager(kafkaService services.KafkaService, reconciler workers.Reconciler) *PreparingKafkaManager {
 	return &PreparingKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "preparing_kafka",
-			Reconciler: workers.Reconciler{
-				SignalBus: bus,
-			},
+			Reconciler: reconciler,
 		},
 		kafkaService: kafkaService,
 	}

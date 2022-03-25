@@ -1,11 +1,11 @@
 package kafka_mgrs
 
 import (
+	"time"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
-	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -21,15 +21,13 @@ type ProvisioningKafkaManager struct {
 	observatoriumService services.ObservatoriumService
 }
 
-// NewProvisioningKafkaManager creates a new kafka manager
-func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatoriumService services.ObservatoriumService, bus signalbus.SignalBus) *ProvisioningKafkaManager {
+// NewProvisioningKafkaManager creates a new kafka manager to reconcile provisioning kafkas
+func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatoriumService services.ObservatoriumService, reconciler workers.Reconciler) *ProvisioningKafkaManager {
 	return &ProvisioningKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "provisioning_kafka",
-			Reconciler: workers.Reconciler{
-				SignalBus: bus,
-			},
+			Reconciler: reconciler,
 		},
 		kafkaService:         kafkaService,
 		observatoriumService: observatoriumService,
