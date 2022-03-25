@@ -154,11 +154,27 @@ Feature: connector agent API
           "phase": "ready",
           "version": "0.0.1",
           "connectors_deployed": 0,
-          "conditions": [{
-            "type": "Ready",
-            "status": "True",
-            "lastTransitionTime": "2018-01-01T00:00:00Z"
-          }]
+          "conditions": [
+            {
+              "type": "Ready",
+              "status": "True",
+              "lastTransitionTime": "2018-01-01T00:00:00Z"
+            },
+            {
+              "type": "NamespaceDeletionContentFailure",
+              "status": "True",
+              "lastTransitionTime": "2018-01-01T00:00:00Z",
+              "reason": "Testing",
+              "message": "This is a test failure message"
+            },
+            {
+              "type": "NamespaceDeletionDiscoveryFailure",
+              "status": "True",
+              "lastTransitionTime": "2018-01-01T00:00:00Z",
+              "reason": "Testing2",
+              "message": "This is another test failure message"
+            }
+          ]
         }],
         "operators": [{
           "id":"camelk",
@@ -170,6 +186,12 @@ Feature: connector agent API
       """
     Then the response code should be 204
     And the response should match ""
+
+    # check that the test failure condition is reported in namespace status error
+    Given I am logged in as "Jimmy"
+    When I GET path "/v1/kafka_connector_namespaces/${connector_namespace_id}"
+    Then the response code should be 200
+    And the ".status.error" selection from the response should match "Testing: This is a test failure message; Testing2: This is another test failure message"
 
     # switch back to the previous session
     Given I am logged in as "Shard"
