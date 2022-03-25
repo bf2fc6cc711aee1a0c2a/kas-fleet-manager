@@ -12,7 +12,7 @@ func renameEvalKafkaInstanceType() *gormigrate.Migration {
 			return tx.Unscoped().Exec("UPDATE kafka_requests SET instance_type='developer' where instance_type='eval';").Error
 		},
 		Rollback: func(tx *gorm.DB) error {
-			return nil
+			return tx.Unscoped().Exec("UPDATE kafka_requests SET instance_type='eval' where instance_type='developer';").Error
 		},
 	}
 }
