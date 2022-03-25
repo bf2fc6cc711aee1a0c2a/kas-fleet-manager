@@ -1790,8 +1790,8 @@ Feature: create a connector
         ],
         "kind": "ErrorList",
         "page": 1,
-        "size": 41,
-        "total": 41
+        "size": 42,
+        "total": 42
       }
       """
 
