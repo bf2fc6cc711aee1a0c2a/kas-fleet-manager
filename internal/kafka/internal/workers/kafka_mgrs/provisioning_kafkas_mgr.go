@@ -14,14 +14,14 @@ import (
 	"github.com/golang/glog"
 )
 
-// ProvisioningKafkaManager represents a kafka manager that periodically reconciles kafka requests
+// ProvisioningKafkaManager represents a kafka manager that periodically reconciles provisioning kafka requests.
 type ProvisioningKafkaManager struct {
 	workers.BaseWorker
 	kafkaService         services.KafkaService
 	observatoriumService services.ObservatoriumService
 }
 
-// NewProvisioningKafkaManager creates a new kafka manager to reconcile provisioning kafkas
+// NewProvisioningKafkaManager creates a new kafka manager to reconcile provisioning kafkas.
 func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatoriumService services.ObservatoriumService, reconciler workers.Reconciler) *ProvisioningKafkaManager {
 	return &ProvisioningKafkaManager{
 		BaseWorker: workers.BaseWorker{
@@ -34,12 +34,12 @@ func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatori
 	}
 }
 
-// Start initializes the kafka manager to reconcile kafka requests
+// Start initializes the kafka manager to reconcile provisioning kafka requests.
 func (k *ProvisioningKafkaManager) Start() {
 	k.StartWorker(k)
 }
 
-// Stop causes the process for reconciling kafka requests to stop.
+// Stop causes the process for reconciling provisioning kafka requests to stop.
 func (k *ProvisioningKafkaManager) Stop() {
 	k.StopWorker(k)
 }
@@ -48,7 +48,7 @@ func (k *ProvisioningKafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling kafkas")
 	var encounteredErrors []error
 
-	// handle provisioning kafkas state
+	// handle provisioning kafkas state.
 	// Kafkas in a "provisioning" state means that it is ready to be sent to the KAS Fleetshard Operator for Kafka creation in the data plane cluster.
 	// The update of the Kafka request status from 'provisioning' to another state will be handled by the KAS Fleetshard Operator.
 	// We only need to update the metrics here.

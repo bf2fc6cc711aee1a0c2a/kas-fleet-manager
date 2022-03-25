@@ -93,13 +93,13 @@ var clusterLoggingOperatorAddonParams = []types.Parameter{
 	},
 }
 
-// ClusterManager represents a cluster manager that periodically reconciles osd clusters
+// ClusterManager represents a cluster manager that periodically reconciles osd clusters.
 
 type ClusterManager struct {
 	id           string
 	workerType   string
 	isRunning    bool
-	imStop       chan struct{} //a chan used only for cancellation
+	imStop       chan struct{} //a chan used only for cancellation.
 	syncTeardown sync.WaitGroup
 	ClusterManagerOptions
 }
@@ -119,7 +119,7 @@ type ClusterManagerOptions struct {
 
 type processor func() []error
 
-// NewClusterManager creates a new cluster manager
+// NewClusterManager creates a new cluster manager.
 func NewClusterManager(o ClusterManagerOptions) *ClusterManager {
 	return &ClusterManager{
 		id:                    uuid.New().String(),
@@ -136,7 +136,7 @@ func (c *ClusterManager) GetSyncGroup() *sync.WaitGroup {
 	return &c.syncTeardown
 }
 
-// GetID returns the ID that represents this worker
+// GetID returns the ID that represents this worker.
 func (c *ClusterManager) GetID() string {
 	return c.id
 }
@@ -145,7 +145,7 @@ func (c *ClusterManager) GetWorkerType() string {
 	return c.workerType
 }
 
-// Start initializes the cluster manager to reconcile osd clusters
+// Start initializes the cluster manager to reconcile osd clusters.
 func (c *ClusterManager) Start() {
 	metrics.SetLeaderWorkerMetric(c.workerType, true)
 	c.Reconciler.Start(c)
@@ -304,7 +304,7 @@ func (c *ClusterManager) processProvisionedClusters() []error {
 		glog.Infof("provisioned clusters count = %d", len(provisionedClusters))
 	}
 
-	// process each local provisioned cluster and apply necessary terraforming
+	// process each local provisioned cluster and apply necessary terraforming.
 	for _, provisionedCluster := range provisionedClusters {
 		glog.V(10).Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterProvisioned)
@@ -320,7 +320,7 @@ func (c *ClusterManager) processProvisionedClusters() []error {
 
 func (c *ClusterManager) processReadyClusters() []error {
 	var errs []error
-	// Keep SyncSet up to date for clusters that are ready
+	// Keep SyncSet up to date for clusters that are ready.
 	readyClusters, listErr := c.ClusterService.ListByStatus(api.ClusterReady)
 	if listErr != nil {
 		errs = append(errs, errors.Wrap(listErr, "failed to list ready clusters"))
@@ -358,7 +358,7 @@ func (c *ClusterManager) processWaitingForKasFleetshardOperatorClusters() []erro
 		glog.Infof("waiting for Kas Fleetshard Operator clusters count = %d", len(waitingClusters))
 	}
 
-	// process each local waiting cluster and apply necessary terraforming
+	// process each local waiting cluster and apply necessary terraforming.
 	for _, waitingCluster := range waitingClusters {
 		glog.V(10).Infof("waiting for Kas Fleetshard Operator cluster ClusterID = %s", waitingCluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(waitingCluster, api.ClusterWaitingForKasFleetShardOperator)
@@ -399,7 +399,7 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) er
 		return nil
 	}
 
-	// cluster has been removed from cluster service. Mark it for cleanup
+	// cluster has been removed from cluster service. Mark it for cleanup.
 	glog.Infof("Cluster %s  has been removed from cluster service.", cluster.ClusterID)
 	updateStatusErr := c.ClusterService.UpdateStatus(*cluster, api.ClusterCleanup)
 	if updateStatusErr != nil {
@@ -466,8 +466,8 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 	return nil
 }
 
-// reconcileClusterInstanceType checks wether a cluster has an instance type, if not, set to the instance type provided in the manual cluster configuration
-// If the cluster does not exists, assume the cluster supports both instance types
+// reconcileClusterInstanceType checks wether a cluster has an instance type, if not, set to the instance type provided in the manual cluster configuration.
+// If the cluster does not exists, assume the cluster supports both instance types.
 func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error {
 	logger.Logger.Infof("reconciling cluster = %s instance type", cluster.ClusterID)
 	supportedInstanceType := api.AllInstanceTypeSupport.String()
@@ -499,7 +499,7 @@ func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error
 	return nil
 }
 
-// reconcileEmptyCluster checks wether a cluster is empty and mark it for deletion
+// reconcileEmptyCluster checks wether a cluster is empty and mark it for deletion.
 func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error) {
 	glog.V(10).Infof("check if cluster is empty, ClusterID = %s", cluster.ClusterID)
 	clusterFromDb, err := c.ClusterService.FindNonEmptyClusterById(cluster.ClusterID)
@@ -521,7 +521,7 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 	}
 
 	siblingClusterCount := clustersByRegionAndCloudProvider[0]
-	if siblingClusterCount.Count <= 1 { // sibling cluster not found
+	if siblingClusterCount.Count <= 1 { // sibling cluster not found.
 		glog.V(10).Infof("no valid sibling found for cluster ClusterID = %s", cluster.ClusterID)
 		return false, nil
 	}
@@ -566,7 +566,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	// and it is setting it to a different value depending on the addon being
 	// installed. The logic to set the status of the cluster should probably done
 	// independently of the installation of the addon, and it should use the
-	// result of the addon/s reconciliation to set the status of the cluster
+	// result of the addon/s reconciliation to set the status of the cluster.
 	addOnErr := c.reconcileAddonOperator(cluster)
 	if addOnErr != nil {
 		return errors.WithMessagef(addOnErr, "failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
@@ -576,7 +576,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 }
 
 func (c *ClusterManager) reconcileClusterDNS(cluster api.Cluster) error {
-	// Return if the clusterDNS is already set
+	// Return if the clusterDNS is already set.
 	if cluster.ClusterDNS != "" {
 		return nil
 	}
@@ -622,7 +622,7 @@ func (c *ClusterManager) reconcileAcceptedCluster(cluster *api.Cluster) error {
 	return nil
 }
 
-// reconcileClusterStatus updates the provided clusters stored status to reflect it's current state
+// reconcileClusterStatus updates the provided clusters stored status to reflect it's current state.
 func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Cluster, error) {
 	updatedCluster, err := c.ClusterService.CheckClusterStatus(cluster)
 	if err != nil {
@@ -726,7 +726,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		}
 	}
 
-	// Remove all clusters that are not in the config file
+	// Remove all clusters that are not in the config file.
 	excessClusterIds := c.DataplaneClusterConfig.ClusterConfig.ExcessClusters(clusterIdsMap)
 	if len(excessClusterIds) == 0 {
 		return nil
@@ -780,7 +780,7 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 		}
 	}
 
-	//get a list of clusters in Map group by their provider and region
+	// get a list of clusters in Map group by their provider and region.
 	grpResult, err := c.ClusterService.ListGroupByProviderAndRegion(providers, regions, status)
 	if err != nil {
 		errs = append(errs, errors.Wrapf(err, "failed to find cluster with criteria"))
@@ -792,7 +792,7 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 		grpResultMap[v.Provider+"."+v.Region] = v
 	}
 
-	//create all the missing clusters in the supported provider and regions.
+	// create all the missing clusters in the supported provider and regions.
 	for _, p := range providerList {
 		for _, v := range p.Regions {
 			if _, exist := grpResultMap[p.Name+"."+v.Name]; !exist {
@@ -1074,7 +1074,7 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 		return nil
 	}
 
-	// identity provider not yet created, let's create a new one
+	// identity provider not yet created, let's create a new one.
 	glog.Infof("Setting up the identity provider for cluster %s", cluster.ClusterID)
 	clusterDNS, dnsErr := c.ClusterService.GetClusterDNS(cluster.ClusterID)
 	if dnsErr != nil {
