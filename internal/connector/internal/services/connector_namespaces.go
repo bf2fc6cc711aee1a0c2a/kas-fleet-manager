@@ -486,7 +486,7 @@ func (k *connectorNamespaceService) CheckConnectorQuota(namespaceId string) *err
 	if err := dbConn.Model(&dbapi.ConnectorNamespaceAnnotation{}).
 		Where("namespace_id = ? AND key = ?", namespaceId, config.AnnotationProfileKey).
 		Select(`value`).First(&profileName).Error; err != nil {
-		return services.HandleGetError("Connector namespace annotation", "id", namespaceId, err)
+		return errors.FailedToCheckQuota("Error reading Connector namespace annotation with namespace id %s: %s", namespaceId, err)
 	}
 	quota, _ = k.quotaConfig.GetNamespaceQuota(profileName)
 	if quota.Connectors > 0 {
@@ -497,7 +497,7 @@ func (k *connectorNamespaceService) CheckConnectorQuota(namespaceId string) *err
 			return services.HandleGetError("Connector", "namespace_id", namespaceId, err)
 		}
 		if count >= int64(quota.Connectors) {
-			return errors.TooManyKafkaInstancesReached("The maximum number of allowed connectors has been reached")
+			return errors.InsufficientQuotaError("The maximum number of allowed connectors has been reached")
 		}
 	}
 	return nil
@@ -512,11 +512,11 @@ func (k *connectorNamespaceService) CanCreateEvalNamespace(userId string) *error
 		Joins("JOIN connector_clusters ON connector_clusters.id = connector_namespaces.cluster_id AND connector_clusters.organisation_id IN ?",
 			k.connectorsConfig.ConnectorEvalOrganizations).
 		Count(&count).Error; err != nil {
-		return services.HandleGetError("Connector namespace", "tenant_user_id", userId, err)
+		return errors.FailedToCheckQuota("Error reading connector namespace with tenant user id %s: %s", userId, err)
 	}
 
 	if count > 0 {
-		return errors.Unauthorized("Evaluation Connector Namespace already exists for user %s", userId)
+		return errors.InsufficientQuotaError("Evaluation Connector Namespace already exists for user %s", userId)
 	}
 	return nil
 }

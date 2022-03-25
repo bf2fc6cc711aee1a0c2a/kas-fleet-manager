@@ -2,6 +2,7 @@ package presenters
 
 import (
 	"encoding/json"
+	admin "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"strings"
 
@@ -60,11 +61,57 @@ func PresentConnectorWithError(from *dbapi.ConnectorWithConditions) (public.Conn
 
 	var conditions []private.MetaV1Condition
 	if from.Conditions != nil {
-		err := json.Unmarshal([]byte(from.Conditions), &conditions)
+		err := json.Unmarshal(from.Conditions, &conditions)
 		if err != nil {
 			return public.Connector{}, errors.GeneralError("invalid conditions: %v", err)
 		}
+		connector.Status.Error = getStatusError(conditions)
 	}
+
+	return connector, nil
+}
+
+func PresentConnectorAdminView(from *dbapi.ConnectorWithConditions) (admin.ConnectorAdminView, *errors.ServiceError) {
+
+	namespaceId := ""
+	if from.NamespaceId != nil {
+		namespaceId = *from.NamespaceId
+	}
+
+	reference := PresentReference(from.ID, from)
+	connector := admin.ConnectorAdminView{
+		Id:   reference.Id,
+		Kind: reference.Kind,
+		Href: reference.Href,
+
+		Owner:           from.Owner,
+		Name:            from.Name,
+		CreatedAt:       from.CreatedAt,
+		ModifiedAt:      from.UpdatedAt,
+		ResourceVersion: from.Version,
+		NamespaceId:     namespaceId,
+		ConnectorTypeId: from.ConnectorTypeId,
+		Status: admin.ConnectorStatusStatus{
+			State: admin.ConnectorState(from.Status.Phase),
+		},
+		DesiredState: admin.ConnectorDesiredState(from.DesiredState),
+		Channel:      admin.Channel(from.Channel),
+	}
+
+	var conditions []private.MetaV1Condition
+	if from.Conditions != nil {
+		err := json.Unmarshal(from.Conditions, &conditions)
+		if err != nil {
+			return admin.ConnectorAdminView{}, errors.GeneralError("invalid conditions: %v", err)
+		}
+		connector.Status.Error = getStatusError(conditions)
+	}
+
+	return connector, nil
+}
+
+func getStatusError(conditions []private.MetaV1Condition) string {
+	var result string
 	for _, c := range conditions {
 		if c.Type == "Ready" {
 			if c.Status == "False" {
@@ -74,13 +121,12 @@ func PresentConnectorWithError(from *dbapi.ConnectorWithConditions) (public.Conn
 				if start > -1 && end > -1 {
 					finalError = c.Message[start+14 : end]
 				}
-				connector.Status.Error = c.Reason + ": " + finalError
+				result = c.Reason + ": " + finalError
 			}
 			break
 		}
 	}
-
-	return connector, nil
+	return result
 }
 
 func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceError) {

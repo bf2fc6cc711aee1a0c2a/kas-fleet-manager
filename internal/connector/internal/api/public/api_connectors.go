@@ -361,8 +361,10 @@ func (a *ConnectorsApiService) GetConnector(ctx _context.Context, id string) (Co
 
 // ListConnectorsOpts Optional parameters for the method 'ListConnectors'
 type ListConnectorsOpts struct {
-	Page optional.String
-	Size optional.String
+	Page    optional.String
+	Size    optional.String
+	OrderBy optional.String
+	Search  optional.String
 }
 
 /*
@@ -372,6 +374,8 @@ Returns a list of connector types
  * @param optional nil or *ListConnectorsOpts - Optional Parameters:
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
+ * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the `ConnectorType` fields. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
+ * @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of a SQL statement. Allowed fields in the search are `name`, `description`, `version`, `label`, and `channel`. Allowed operators are `<>`, `=`, or `LIKE`. Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.  Examples:  To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:  ``` name = aws-sqs-source and channel = stable ```[p-]  To return a Kafka instance with a name that starts with `aws`, use the following syntax:  ``` name like aws%25 ```  If the parameter isn't provided, or if the value is empty, then all the Connector Type that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
 @return ConnectorList
 */
 func (a *ConnectorsApiService) ListConnectors(ctx _context.Context, localVarOptionals *ListConnectorsOpts) (ConnectorList, *_nethttp.Response, error) {
@@ -395,6 +399,12 @@ func (a *ConnectorsApiService) ListConnectors(ctx _context.Context, localVarOpti
 	}
 	if localVarOptionals != nil && localVarOptionals.Size.IsSet() {
 		localVarQueryParams.Add("size", parameterToString(localVarOptionals.Size.Value(), ""))
+	}
+	if localVarOptionals != nil && localVarOptionals.OrderBy.IsSet() {
+		localVarQueryParams.Add("orderBy", parameterToString(localVarOptionals.OrderBy.Value(), ""))
+	}
+	if localVarOptionals != nil && localVarOptionals.Search.IsSet() {
+		localVarQueryParams.Add("search", parameterToString(localVarOptionals.Search.Value(), ""))
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
