@@ -31,7 +31,6 @@ func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig 
 			Service(errors.CONNECTOR_MGMT_ERROR_CODE_PREFIX).
 			Public("^/api/connector_mgmt/?$").
 			Public("^/api/connector_mgmt/v1/?$").
-			Public("^/api/connector_mgmt/v1/openapi/?$").
-			Public("^/api/connector_mgmt/v1/graphiql/?$"),
+			Public("^/api/connector_mgmt/v1/openapi/?$"),
 		nil
 }
