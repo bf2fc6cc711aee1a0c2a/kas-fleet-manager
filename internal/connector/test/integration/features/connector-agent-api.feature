@@ -698,6 +698,57 @@ Feature: connector agent API
       """
 
     #-----------------------------------------------------------------------------------------------------------------
+    # In this part of the Scenario we test out getting connectors using the admin API
+    #-----------------------------------------------------------------------------------------------------------------
+    Given I am logged in as "Ricky Bobby"
+    And I GET path "/v1/admin/kafka_connector_namespaces/${connector_namespace_id}/connectors"
+    And the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items":[{
+          "id":"${connector_id}",
+          "owner":"${response.items[0].owner}",
+          "created_at":"${response.items[0].created_at}",
+          "modified_at":"${response.items[0].modified_at}",
+          "name":"example 1",
+          "connector_type_id":"aws-sqs-source-v1alpha1",
+          "namespace_id":"${connector_namespace_id}",
+          "channel":"stable",
+          "desired_state":"ready",
+          "resource_version":${response.items[0].resource_version},
+          "status":{
+            "state":"updating"
+          }
+        }],
+        "kind":"ConnectorAdminViewList",
+        "page":1,
+        "size":1,
+        "total":1
+      }
+      """
+    Given I GET path "/v1/admin/kafka_connectors/${connector_id}"
+    And the response code should be 200
+    And the response should match json:
+    """
+    {
+      "id":"${connector_id}",
+      "owner":"${response.owner}",
+      "created_at":"${response.created_at}",
+      "modified_at":"${response.modified_at}",
+      "name":"example 1",
+      "connector_type_id":"aws-sqs-source-v1alpha1",
+      "namespace_id":"${connector_namespace_id}",
+      "channel":"stable",
+      "desired_state":"ready",
+      "resource_version":${response.resource_version},
+      "status":{
+        "state":"updating"
+      }
+    }
+    """
+
+    #-----------------------------------------------------------------------------------------------------------------
     # In this part of the Scenario we test out getting connector updates using the admin API
     #-----------------------------------------------------------------------------------------------------------------
 
@@ -985,6 +1036,11 @@ Feature: connector agent API
       """
       null
       """
+
+    # delete connector using admin API
+    Given I am logged in as "Ricky Bobby"
+    And I DELETE path "/v1/admin/kafka_connectors/${connector_id}"
+    And the response code should be 204
 
 
   Scenario: Bobby can stop and start and existing connector

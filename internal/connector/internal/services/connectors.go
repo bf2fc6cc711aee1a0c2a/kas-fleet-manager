@@ -6,10 +6,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
 	goerrors "github.com/pkg/errors"
 	"github.com/spyzhov/ajson"
+	"strings"
 
 	"gorm.io/gorm"
 
@@ -94,9 +96,15 @@ func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*db
 	dbConn = dbConn.Where("connectors.id = ?", id)
 
 	var err *errors.ServiceError
-	dbConn, err = filterConnectorsToOwnerOrOrg(ctx, dbConn, k.connectionFactory)
+	admin, err := isAdmin(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if !admin {
+		dbConn, err = filterConnectorsToOwnerOrOrg(ctx, dbConn, k.connectionFactory)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if tid != "" {
@@ -197,6 +205,8 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 	return nil
 }
 
+var validConnectorColumns = []string{"name", "owner", "kafka_id", "connector_type_id", "desired_state", "channel", "namespace_id"}
+
 // List returns all connectors visible to the user within the requested paging window.
 func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *services.ListArguments, tid string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
@@ -210,13 +220,31 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 	}
 
 	var err *errors.ServiceError
-	dbConn, err = filterConnectorsToOwnerOrOrg(ctx, dbConn, k.connectionFactory)
+	admin, err := isAdmin(ctx)
 	if err != nil {
 		return nil, nil, err
+	}
+	if !admin {
+		dbConn, err = filterConnectorsToOwnerOrOrg(ctx, dbConn, k.connectionFactory)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	if tid != "" {
 		dbConn = dbConn.Where("connector_type_id = ?", tid)
+	}
+
+	// Apply search query
+	if len(listArgs.Search) > 0 {
+		queryParser := coreServices.NewQueryParser(validConnectorColumns...)
+		searchDbQuery, err := queryParser.Parse(listArgs.Search)
+		if err != nil {
+			return nil, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector requests: %s", err.Error())
+		}
+		// add connectors. prefix to namespace_id
+		searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "namespace_id", "connectors.namespace_id")
+		dbConn = dbConn.Where(searchDbQuery.Query, searchDbQuery.Values...)
 	}
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
@@ -230,6 +258,11 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 
 	// default the order by name
 	dbConn = dbConn.Order("name")
+
+	// Set the order by arguments if any
+	for _, orderByArg := range listArgs.OrderBy {
+		dbConn = dbConn.Order(orderByArg)
+	}
 
 	var resourcesWithConditions dbapi.ConnectorWithConditionsList
 	// execute query

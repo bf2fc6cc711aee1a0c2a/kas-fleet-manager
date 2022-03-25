@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
@@ -25,16 +26,17 @@ import (
 
 type ConnectorAdminHandler struct {
 	di.Inject
-	Bus              signalbus.SignalBus
-	AuthZService     authz.AuthZService
-	Service          services.ConnectorClusterService
-	NamespaceService services.ConnectorNamespaceService
-	Keycloak         sso.KafkaKeycloakService
-	ConnectorTypes   services.ConnectorTypesService
-	Vault            vault.VaultService
-	KeycloakConfig   *keycloak.KeycloakConfig
-	ServerConfig     *server.ServerConfig
-	QuotaConfig      *config.ConnectorsQuotaConfig
+	Bus               signalbus.SignalBus
+	AuthZService      authz.AuthZService
+	Service           services.ConnectorClusterService
+	ConnectorsService services.ConnectorsService
+	NamespaceService  services.ConnectorNamespaceService
+	Keycloak          sso.KafkaKeycloakService
+	ConnectorTypes    services.ConnectorTypesService
+	Vault             vault.VaultService
+	KeycloakConfig    *keycloak.KeycloakConfig
+	ServerConfig      *server.ServerConfig
+	QuotaConfig       *config.ConnectorsQuotaConfig
 }
 
 func NewConnectorAdminHandler(handler ConnectorAdminHandler) *ConnectorAdminHandler {
@@ -293,6 +295,83 @@ func (h *ConnectorAdminHandler) DeleteConnectorNamespace(writer http.ResponseWri
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
 			serviceError = h.NamespaceService.Delete(request.Context(), namespaceId)
+			return nil, serviceError
+		},
+	}
+
+	handlers.HandleDelete(writer, request, &cfg, http.StatusNoContent)
+}
+
+func (h *ConnectorAdminHandler) GetNamespaceConnectors(writer http.ResponseWriter, request *http.Request) {
+	id := mux.Vars(request)["namespace_id"]
+	listArgs := coreservices.NewListArguments(request.URL.Query())
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("namespace_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+
+			if len(listArgs.Search) == 0 {
+				listArgs.Search = fmt.Sprintf("namespace_id = %s", id)
+			} else {
+				listArgs.Search = fmt.Sprintf("namespace_id = %s AND (%s)", id, listArgs.Search)
+			}
+			connectors, paging, err := h.ConnectorsService.List(request.Context(), "", listArgs, "")
+			if err != nil {
+				return nil, err
+			}
+
+			result := private.ConnectorAdminViewList{
+				Kind:  "ConnectorAdminViewList",
+				Page:  int32(paging.Page),
+				Size:  int32(paging.Size),
+				Total: int32(paging.Total),
+			}
+
+			result.Items = make([]private.ConnectorAdminView, len(connectors))
+			for i, namespace := range connectors {
+				result.Items[i], err = presenters.PresentConnectorAdminView(namespace)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			return result, nil
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorAdminHandler) GetConnector(writer http.ResponseWriter, request *http.Request) {
+	connectorId := mux.Vars(request)["connector_id"]
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_id", &connectorId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+
+			connector, serviceError := h.ConnectorsService.Get(request.Context(), connectorId, "")
+			if serviceError != nil {
+				return nil, serviceError
+			}
+			return presenters.PresentConnectorAdminView(connector)
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorAdminHandler) DeleteConnector(writer http.ResponseWriter, request *http.Request) {
+	connectorId := mux.Vars(request)["connector_id"]
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_id", &connectorId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+
+			// TODO add flag to force deletion of connector and deployments
+			serviceError = h.ConnectorsService.Delete(request.Context(), connectorId)
 			return nil, serviceError
 		},
 	}

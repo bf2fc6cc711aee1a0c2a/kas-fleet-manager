@@ -144,11 +144,11 @@ Feature: connector namespaces API
     And the response should match json:
     """
     {
-      "id":"11",
+      "code": "CONNECTOR-MGMT-120",
+      "href": "/api/connector_mgmt/v1/errors/120",
+      "id": "120",
       "kind":"Error",
-      "href":"/api/connector_mgmt/v1/errors/11",
-      "code":"CONNECTOR-MGMT-11",
-      "reason":"Evaluation Connector Namespace already exists for user ${<user_id>}",
+      "reason":"Insufficient quota: Evaluation Connector Namespace already exists for user ${<user_id>}",
       "operation_id":"${response.operation_id}"
     }
     """
