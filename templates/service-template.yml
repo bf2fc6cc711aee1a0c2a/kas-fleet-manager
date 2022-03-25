@@ -447,7 +447,7 @@ parameters:
   value: kafka.bf2.dev
 
 - name: BROWSER_URL
-  description: browser url pointing to qaprodauth.console.redhat.com
+  description: browser url pointing to the kafka admin console
   value: "http://localhost:8080/"
 
 - name: STRIMZI_OPERATOR_ADDON_ID
