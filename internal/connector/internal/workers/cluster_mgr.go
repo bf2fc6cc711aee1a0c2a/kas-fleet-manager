@@ -2,7 +2,6 @@ package workers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
@@ -23,14 +22,12 @@ func (m *ClusterManager) Stop() {
 	m.StopWorker(m)
 }
 
-func NewClusterManager(bus signalbus.SignalBus, clusterService services.ConnectorClusterService) *ClusterManager {
+func NewClusterManager(clusterService services.ConnectorClusterService, reconciler workers.Reconciler) *ClusterManager {
 	return &ClusterManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "connector_cluster",
-			Reconciler: workers.Reconciler{
-				SignalBus: bus,
-			},
+			Reconciler: reconciler,
 		},
 		clusterService: clusterService,
 	}
