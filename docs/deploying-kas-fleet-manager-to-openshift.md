@@ -2,7 +2,7 @@
 
 - [Deploying KAS Fleet Manager to OpenShift](#deploying-kas-fleet-manager-to-openshift)
   - [Create a Namespace](#create-a-namespace)
-  - [Build and Push KAS Fleet Manager Image to the OpenShift Internal Registry](#build-and-push-kas-fleet-manager-image-to-the-openshift-internal-registry)
+  - [Build and Push the KAS Fleet Manager Image to a Registry](#build-and-push-the-kas-fleet-manager-image-to-a-registry)
   - [Deploy the Database](#deploy-the-database)
   - [Create the secrets](#create-the-secrets)
   - [(Optional) Deploy the Observatorium Token Refresher](#optional-deploy-the-observatorium-token-refresher)
@@ -19,7 +19,8 @@ make deploy/project <OPTIONAL_PARAMETERS>
 **Optional parameters**:
 - `NAMESPACE`: The namespace where the image will be pushed to. Defaults to 'kas-fleet-manager-$USER.'
 
-## Build and Push KAS Fleet Manager Image to the OpenShift Internal Registry
+## Build and Push the KAS Fleet Manager Image to a Registry
+### Build and Push to the OpenShift Internal Registry
 Login to the OpenShift cluster
 
 >**NOTE**: Ensure that the user used has the correct permissions to push to the OpenShift image registry. For more information, see the [accessing the registry](https://docs.openshift.com/container-platform/4.5/registry/accessing-the-registry.html#prerequisites) guide.
@@ -36,6 +37,25 @@ GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal <OPTIONAL_P
 **Optional parameters**:
 - `NAMESPACE`: The namespace where the image will be pushed to. Defaults to 'kas-fleet-manager-$USER.'
 - `IMAGE_TAG`: Tag for the image. Defaults to a timestamp captured when the command is run (i.e. 1603447837).
+
+### Build and Push to your own Repository
+Login to Docker or Quay
+
+* A make target is available for logging into Quay.io
+  ```
+  make docker/login QUAY_USER="<username>" QUAY_TOKEN="<password>" <OPTIONAL_PARAMETERS>
+  ```
+
+  **Optional parameters**:
+  - `DOCKER_CONFIG`: The path to your docker config. Defaults to {current_directory}/.docker
+
+Build and push the KAS Fleet Manager image to your own repository
+```
+make image/push external_image_registry="<your-image-registry>" image_repository="<your-image-repository>" <OPTIONAL_PARAMETERS>
+```
+
+**Optional parameters**:
+- `image_tag`: Tag for the image. Defaults to a timestamp captured when the command is run (i.e. 1603447837).
 
 ## Deploy the Database
 ```
@@ -146,6 +166,27 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `CLUSTER_LOGGING_OPERATOR_ADDON_ID`: The id of the cluster logging operator addon. Defaults to `''`.
 - `STRIMZI_OPERATOR_ADDON_ID`: The id of the Strimzi operator addon. Defaults to `managed-kafka-qe`.
 - `KAS_FLEETSHARD_ADDON_ID`: The id of the kas-fleetshard operator addon. Defaults to `kas-fleetshard-operator-qe`.
+
+### Using an Image from a Private External Registry
+If you are using a private external registry, a docker pull secret must be created in the namespace where KAS Fleet Manager is deployed and linked to the service account that KAS Fleet Manager uses.
+
+Create a docker pull secret with credentials that has access to pull the KAS Fleet Manager image from the private external registry.
+```
+oc create secret generic kas-fleet-manager-pull-secret \
+  --from-file=.dockerconfigjson=<path-to-docker-config-json> \
+  --type=kubernetes.io/dockerconfigjson
+```
+
+Link the pull secret to the KAS Fleet Manager service account
+```
+oc secrets link kas-fleet-manager kas-fleet-manager-pull-secret --for=pull
+```
+
+Delete the KAS Fleet Manager pod(s) to restart the deployment
+```
+oc get pods -n <namespace>
+oc delete pod <kas-fleet-manager-pod>
+```
 
 ## Access the service
 The service can be accessed by via the host of the route created by the service deployment.
