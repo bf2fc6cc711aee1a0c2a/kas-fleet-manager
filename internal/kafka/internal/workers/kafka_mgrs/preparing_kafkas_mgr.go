@@ -17,13 +17,13 @@ import (
 	serviceErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
-// PreparingKafkaManager represents a kafka manager that periodically reconciles kafka requests
+// PreparingKafkaManager represents a kafka manager that periodically reconciles preparing kafka requests.
 type PreparingKafkaManager struct {
 	workers.BaseWorker
 	kafkaService services.KafkaService
 }
 
-// NewPreparingKafkaManager creates a new kafka manager to reconcile preparing kafkas
+// NewPreparingKafkaManager creates a new kafka manager to reconcile preparing kafkas.
 func NewPreparingKafkaManager(kafkaService services.KafkaService, reconciler workers.Reconciler) *PreparingKafkaManager {
 	return &PreparingKafkaManager{
 		BaseWorker: workers.BaseWorker{
@@ -35,12 +35,12 @@ func NewPreparingKafkaManager(kafkaService services.KafkaService, reconciler wor
 	}
 }
 
-// Start initializes the kafka manager to reconcile kafka requests
+// Start initializes the kafka manager to reconcile preparing kafka requests.
 func (k *PreparingKafkaManager) Start() {
 	k.StartWorker(k)
 }
 
-// Stop causes the process for reconciling kafka requests to stop.
+// Stop causes the process for reconciling preparing kafka requests to stop.
 func (k *PreparingKafkaManager) Stop() {
 	k.StopWorker(k)
 }

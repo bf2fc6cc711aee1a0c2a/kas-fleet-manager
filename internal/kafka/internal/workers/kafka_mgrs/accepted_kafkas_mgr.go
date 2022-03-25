@@ -18,7 +18,7 @@ import (
 	"github.com/golang/glog"
 )
 
-// AcceptedKafkaManager represents a kafka manager that periodically reconciles kafka requests
+// AcceptedKafkaManager represents a kafka manager that periodically reconciles accepted kafka requests.
 type AcceptedKafkaManager struct {
 	workers.BaseWorker
 	kafkaService           services.KafkaService
@@ -28,7 +28,7 @@ type AcceptedKafkaManager struct {
 	clusterService         services.ClusterService
 }
 
-// NewAcceptedKafkaManager creates a new kafka manager to reconcile accepted kafkas
+// NewAcceptedKafkaManager creates a new kafka manager to reconcile accepted kafkas.
 func NewAcceptedKafkaManager(kafkaService services.KafkaService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, dataPlaneClusterConfig *config.DataplaneClusterConfig, clusterService services.ClusterService, reconciler workers.Reconciler) *AcceptedKafkaManager {
 	return &AcceptedKafkaManager{
 		BaseWorker: workers.BaseWorker{
@@ -44,12 +44,12 @@ func NewAcceptedKafkaManager(kafkaService services.KafkaService, quotaServiceFac
 	}
 }
 
-// Start initializes the kafka manager to reconcile kafka requests
+// Start initializes the kafka manager to reconcile accepted kafka requests.
 func (k *AcceptedKafkaManager) Start() {
 	k.StartWorker(k)
 }
 
-// Stop causes the process for reconciling kafka requests to stop.
+// Stop causes the process for reconciling accepted kafka requests to stop.
 func (k *AcceptedKafkaManager) Stop() {
 	k.StopWorker(k)
 }

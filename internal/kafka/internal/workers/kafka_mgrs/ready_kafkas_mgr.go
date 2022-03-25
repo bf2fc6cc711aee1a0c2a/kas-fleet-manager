@@ -16,7 +16,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ReadyKafkaManager represents a kafka manager that periodically reconciles kafka requests
+// ReadyKafkaManager represents a kafka manager that periodically reconciles ready kafka requests.
 type ReadyKafkaManager struct {
 	workers.BaseWorker
 	kafkaService    services.KafkaService
@@ -24,7 +24,7 @@ type ReadyKafkaManager struct {
 	keycloakConfig  *keycloak.KeycloakConfig
 }
 
-// NewReadyKafkaManager creates a new kafka manager to reconcile ready kafkas
+// NewReadyKafkaManager creates a new kafka manager to reconcile ready kafkas.
 func NewReadyKafkaManager(kafkaService services.KafkaService, keycloakService sso.KafkaKeycloakService, keycloakConfig *keycloak.KeycloakConfig, reconciler workers.Reconciler) *ReadyKafkaManager {
 	return &ReadyKafkaManager{
 		BaseWorker: workers.BaseWorker{
@@ -38,12 +38,12 @@ func NewReadyKafkaManager(kafkaService services.KafkaService, keycloakService ss
 	}
 }
 
-// Start initializes the kafka manager to reconcile kafka requests
+// Start initializes the kafka manager to reconcile ready kafka requests.
 func (k *ReadyKafkaManager) Start() {
 	k.StartWorker(k)
 }
 
-// Stop causes the process for reconciling kafka requests to stop.
+// Stop causes the process for reconciling ready kafka requests to stop.
 func (k *ReadyKafkaManager) Stop() {
 	k.StopWorker(k)
 }
@@ -93,7 +93,7 @@ func (k *ReadyKafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *dbapi.Ka
 }
 
 // reconcileCanaryServiceAccount migrates all existing kafkas so that they will have the canary service account created.
-// This is only meant to be a temporary code, in the future it can be replaced with the service account rotation logic
+// This is only meant to be a temporary code, in the future it can be replaced with the service account rotation logic.
 func (k *ReadyKafkaManager) reconcileCanaryServiceAccount(kafkaRequest *dbapi.KafkaRequest) error {
 	if kafkaRequest.CanaryServiceAccountClientID == "" && kafkaRequest.CanaryServiceAccountClientSecret == "" {
 		clientId := strings.ToLower(fmt.Sprintf("%s-%s", services.CanaryServiceAccountPrefix, kafkaRequest.ID))

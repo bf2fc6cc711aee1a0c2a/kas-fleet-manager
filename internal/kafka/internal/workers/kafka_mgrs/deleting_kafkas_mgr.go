@@ -14,7 +14,7 @@ import (
 	"github.com/golang/glog"
 )
 
-// DeletingKafkaManager represents a kafka manager that periodically reconciles kafka requests
+// DeletingKafkaManager represents a kafka manager that periodically reconciles deleting and deprovision kafka requests.
 type DeletingKafkaManager struct {
 	workers.BaseWorker
 	kafkaService        services.KafkaService
@@ -22,7 +22,7 @@ type DeletingKafkaManager struct {
 	quotaServiceFactory services.QuotaServiceFactory
 }
 
-// NewDeletingKafkaManager creates a new kafka manager to reconcile deleting and deprovision kafkas
+// NewDeletingKafkaManager creates a new kafka manager to reconcile deleting and deprovision kafkas.
 func NewDeletingKafkaManager(kafkaService services.KafkaService, keycloakConfig *keycloak.KeycloakConfig, quotaServiceFactory services.QuotaServiceFactory, reconciler workers.Reconciler) *DeletingKafkaManager {
 	return &DeletingKafkaManager{
 		BaseWorker: workers.BaseWorker{
@@ -36,12 +36,12 @@ func NewDeletingKafkaManager(kafkaService services.KafkaService, keycloakConfig 
 	}
 }
 
-// Start initializes the kafka manager to reconcile kafka requests
+// Start initializes the kafka manager to reconcile deleting and deprovision kafka requests.
 func (k *DeletingKafkaManager) Start() {
 	k.StartWorker(k)
 }
 
-// Stop causes the process for reconciling kafka requests to stop.
+// Stop causes the process for reconciling deleting and deprovision kafka requests to stop.
 func (k *DeletingKafkaManager) Stop() {
 	k.StopWorker(k)
 }
@@ -50,7 +50,7 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling deleting kafkas")
 	var encounteredErrors []error
 
-	// handle deleting kafka requests
+	// handle deleting kafka requests.
 	// Kafkas in a "deleting" state have been removed, along with all their resources (i.e. ManagedKafka, Kafka CRs),
 	// from the data plane cluster by the KAS Fleetshard operator. This reconcile phase ensures that any other
 	// dependencies (i.e. SSO clients, CNAME records) are cleaned up for these Kafkas and their records soft deleted from the database.
@@ -63,7 +63,7 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 		glog.Infof("%s kafkas count = %d", constants2.KafkaRequestStatusDeleting.String(), originalTotalKafkaInDeleting)
 	}
 
-	// We also want to remove Kafkas that are set to deprovisioning but have not been provisioned on a data plane cluster
+	// We also want to remove Kafkas that are set to deprovisioning but have not been provisioned on a data plane cluster.
 	deprovisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants2.KafkaRequestStatusDeprovision)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list kafka deprovisioning requests"))
@@ -72,13 +72,13 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 	}
 
 	for _, deprovisioningKafka := range deprovisioningKafkas {
-		// As long as one of the three fields checked below are empty, the Kafka wouldn't have been provisioned to an OSD cluster and should be deleted immediately
+		// As long as one of the three fields checked below are empty, the Kafka wouldn't have been provisioned to an OSD cluster and should be deleted immediately.
 		if deprovisioningKafka.BootstrapServerHost == "" {
 			deletingKafkas = append(deletingKafkas, deprovisioningKafka)
 			continue
 		}
 
-		// If EnableAuthenticationOnKafka is not set, these fields would also be empty even when provisioned to an OSD cluster
+		// If EnableAuthenticationOnKafka is not set, these fields would also be empty even when provisioned to an OSD cluster.
 		if k.keycloakConfig.EnableAuthenticationOnKafka && (deprovisioningKafka.SsoClientID == "" || deprovisioningKafka.SsoClientSecret == "") {
 			deletingKafkas = append(deletingKafkas, deprovisioningKafka)
 		}
