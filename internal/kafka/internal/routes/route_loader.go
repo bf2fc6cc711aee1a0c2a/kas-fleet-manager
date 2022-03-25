@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 
@@ -44,7 +43,7 @@ type options struct {
 	Kafka                       services.KafkaService
 	CloudProviders              services.CloudProvidersService
 	Observatorium               services.ObservatoriumService
-	Keycloak                    coreServices.KafkaKeycloakService
+	Keycloak                    sso.KafkaKeycloakService
 	DataPlaneCluster            services.DataPlaneClusterService
 	DataPlaneKafkaService       services.DataPlaneKafkaService
 	AccountService              account.AccountService
