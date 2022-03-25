@@ -22,6 +22,7 @@ const (
 	tokenLifeDuration    = 5 * time.Minute
 	cacheCleanupInterval = 5 * time.Minute
 )
+
 //go:generate moq -out client_moq.go . SSOClient
 type SSOClient interface {
 	GetToken() (string, error)

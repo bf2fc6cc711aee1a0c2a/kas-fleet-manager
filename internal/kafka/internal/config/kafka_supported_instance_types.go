@@ -12,8 +12,9 @@ import (
 )
 
 type KafkaInstanceType struct {
-	Id    string              `yaml:"id"`
-	Sizes []KafkaInstanceSize `yaml:"sizes"`
+	Id          string              `yaml:"id"`
+	DisplayName string              `yaml:"display_name"`
+	Sizes       []KafkaInstanceSize `yaml:"sizes"`
 }
 
 // validates kafka instance type config to ensure the following:

@@ -33,7 +33,7 @@ func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(kafka *
 	// allow user defined in quota list to create standard instances
 	if userIsRegistered && instanceType == types.STANDARD {
 		return true, nil
-	} else if !userIsRegistered && instanceType == types.EVAL { // allow user who are not in quota list to create eval instances
+	} else if !userIsRegistered && instanceType == types.DEVELOPER { // allow user who are not in quota list to create developer instances
 		return true, nil
 	}
 
@@ -103,7 +103,7 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, inst
 		}
 	}
 
-	if instanceType == types.EVAL && quotaManagementListItem == nil {
+	if instanceType == types.DEVELOPER && quotaManagementListItem == nil {
 		if totalInstanceCount >= quota_management.GetDefaultMaxAllowedInstances() {
 			return "", errors.MaximumAllowedInstanceReached(message)
 		}
