@@ -10,7 +10,9 @@ const (
 	KafkaControllerKafkacontrollerGlobalPartitionCountDesc   = "Attribute exposed for management (kafka.controller<type=KafkaController, name=GlobalPartitionCount><>Value)"
 	KafkaTopicKafkaLogLogSizeSumDesc                         = "Attribute exposed for management (kafka.log<type=Log, name=Size, topic=__consumer_offsets, partition=18><>Value)"
 	KafkaBrokerQuotaSoftlimitbytesDesc                       = "Attribute exposed for management (io.strimzi.kafka.quotas<type=StorageChecker, name=SoftLimitBytes><>Value)"
+	KafkaBrokerQuotaHardlimitbytesDesc                       = "Attribute exposed for management (io.strimzi.kafka.quotas<type=StorageChecker, name=HardLimitBytes><>Value)"
 	KafkaBrokerQuotaTotalstorageusedbytesDesc                = "Attribute exposed for management (io.strimzi.kafka.quotas<type=StorageChecker, name=TotalStorageUsedBytes><>Value)"
+	KafkaBrokerClientQuotaLimitDesc                          = "Produce/fetch/request client quota limits imposed by broker quota-plugin"
 	KubeletVolumeStatsAvailableBytesDesc                     = "Number of available bytes in the volume"
 	KubeletVolumeStatsUsedBytesDesc                          = "Number of used bytes in the volume"
 	HaproxyServerBytesInTotalDesc                            = "Current total of incoming bytes"
@@ -23,6 +25,11 @@ const (
 	KafkaTopicIncomingMessagesRateDesc                       = "Current rate of incoming messages over the last 5 minutes"
 	KafkaTopicTotalIncomingBytesRateDesc                     = "Current total rate of incoming bytes over the last 5 minutes"
 	KafkaTopicTotalOutgoingBytesRateDesc                     = "Current total rate of outgoing bytes over the last 5 minutes"
+	KafkaInstanceSpecBrokersDesiredCountDesc                 = "Desired number of brokers for this Kafka"
+	KafkaInstanceMaxMessageSizeLimitDesc                     = "Maximum message size for this Kafka"
+	KafkaInstancePartitionLimitDesc                          = "Maximum number of partitions for this Kafka"
+	KafkaInstanceConnectionLimitDesc                         = "Maximum number of connections for this Kafka"
+	KafkaInstanceConnectionCreationRateLimitDesc             = "Maximum rate of new connections for this Kafka"
 )
 
 type MetricsMetadata struct {
@@ -85,9 +92,23 @@ func GetMetricsMetaData() map[string]MetricsMetadata {
 			TypeName:       "GAUGE",
 			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
 		},
+		"kafka_broker_quota_hardlimitbytes": {
+			Name:           "kafka_broker_quota_hardlimitbytes",
+			Help:           KafkaBrokerQuotaHardlimitbytesDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+		},
 		"kafka_broker_quota_totalstorageusedbytes": {
 			Name:           "kafka_broker_quota_totalstorageusedbytes",
 			Help:           KafkaBrokerQuotaTotalstorageusedbytesDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+		},
+		"kafka_broker_client_quota_limit": {
+			Name:           "kafka_broker_client_quota_limit",
+			Help:           KafkaBrokerClientQuotaLimitDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
 			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
@@ -175,6 +196,41 @@ func GetMetricsMetaData() map[string]MetricsMetadata {
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
 			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster", "topic"},
+		},
+		"kafka_instance_spec_brokers_desired_count": {
+			Name:           "kafka_instance_spec_brokers_desired_count",
+			Help:           KafkaInstanceSpecBrokersDesiredCountDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{"instance_name"},
+		},
+		"kafka_instance_max_message_size_limit": {
+			Name:           "kafka_instance_max_message_size_limit",
+			Help:           KafkaInstanceMaxMessageSizeLimitDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{"instance_name"},
+		},
+		"kafka_instance_partition_limit": {
+			Name:           "kafka_instance_partition_limit",
+			Help:           KafkaInstancePartitionLimitDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{"instance_name"},
+		},
+		"kafka_instance_connection_limit": {
+			Name:           "kafka_instance_connection_limit",
+			Help:           KafkaInstanceConnectionLimitDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{"instance_name"},
+		},
+		"kafka_instance_connection_creation_rate_limit": {
+			Name:           "kafka_instance_connection_creation_rate_limit",
+			Help:           KafkaInstanceConnectionCreationRateLimitDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       "GAUGE",
+			VariableLabels: []string{"instance_name"},
 		},
 	}
 }

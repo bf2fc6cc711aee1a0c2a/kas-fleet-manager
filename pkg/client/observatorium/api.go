@@ -73,9 +73,25 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 				*metrics = append(*metrics, m)
 			},
 		},
+		//Check metrics for hard limit quota for cluster
+		"kafka_broker_quota_hardlimitbytes": {
+			`kafka_broker_quota_hardlimitbytes{%s}`,
+			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
 		//Check metrics for used space across the cluster
 		"kafka_broker_quota_totalstorageusedbytes": {
 			`kafka_broker_quota_totalstorageusedbytes{%s}`,
+			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+		//Check metrics for broker client quota limit
+		"kafka_broker_client_quota_limit": {
+			`kafka_broker_client_quota_limit{%s}`,
 			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
@@ -194,6 +210,42 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 		},
 		"kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m": {
 			`kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+
+		"kafka_instance_spec_brokers_desired_count": {
+			`kafka_instance_spec_brokers_desired_count{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+		"kafka_instance_max_message_size_limit": {
+			`kafka_instance_max_message_size_limit{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+		"kafka_instance_partition_limit": {
+			`kafka_instance_partition_limit{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+		"kafka_instance_connection_limit": {
+			`kafka_instance_connection_limit{%s}`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+		"kafka_instance_connection_creation_rate_limit": {
+			`kafka_instance_connection_creation_rate_limit{%s}`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
