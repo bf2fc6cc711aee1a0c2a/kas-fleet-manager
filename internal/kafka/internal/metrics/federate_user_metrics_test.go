@@ -85,6 +85,15 @@ func TestFederateMetrics_Collect(t *testing.T) {
 					Vector: []*pModel.Sample{
 						{
 							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "kafka_broker_quota_hardlimitbytes",
+							},
+						},
+					},
+				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
 								"__name__": "kafka_broker_quota_totalstorageusedbytes",
 							},
 						},
@@ -194,6 +203,51 @@ func TestFederateMetrics_Collect(t *testing.T) {
 						{
 							Metric: map[pModel.LabelName]pModel.LabelValue{
 								"__name__": "kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m",
+							},
+						},
+					},
+				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "kafka_instance_spec_brokers_desired_count",
+							},
+						},
+					},
+				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "kafka_instance_max_message_size_limit",
+							},
+						},
+					},
+				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "kafka_instance_partition_limit",
+							},
+						},
+					},
+				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "kafka_instance_connection_limit",
+							},
+						},
+					},
+				},
+				{
+					Vector: []*pModel.Sample{
+						{
+							Metric: map[pModel.LabelName]pModel.LabelValue{
+								"__name__": "kafka_instance_connection_creation_rate_limit",
 							},
 						},
 					},
