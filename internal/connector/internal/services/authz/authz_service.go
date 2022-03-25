@@ -174,6 +174,19 @@ func (u *ValidationUser) AuthorizedCreateEvalNamespace() handlers.Validate {
 	}
 }
 
+func (u *ValidationUser) ValidateNamespaceConnectorQuota() handlers.ValidateOption {
+	return func(field string, value *string) (err *errors.ServiceError) {
+		if u.err != nil {
+			err = u.err
+		} else {
+			if value != nil && len(*value) > 0 {
+				err = u.service.namespaceService.CheckConnectorQuota(*value)
+			}
+		}
+		return err
+	}
+}
+
 func (u *User) IsOrgAdmin() bool {
 	return auth.GetIsOrgAdminFromClaims(u.claims)
 }

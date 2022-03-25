@@ -1519,14 +1519,14 @@ components:
         name: MyNamespace
         cluster_id: 9bsv0s7tne7g02gh5g4g
         annotations:
-        - key: connector_mgmt.api.openshift.com/profile
+        - key: connector_mgmt.bf2.org/profile
           value: default-profile
     ConnectorNamespaceEvalCreateExample:
       value:
         name: MyEvalNamespace
         annotations:
-        - key: connector_mgmt.api.openshift.com/profile
-          value: default-profile
+        - key: connector_mgmt.bf2.org/profile
+          value: evaluation-profile
     "400CreationExample":
       value:
         id: "103"
@@ -1921,11 +1921,32 @@ components:
             $ref: '#/components/schemas/ConnectorNamespaceRequestMeta_annotations'
           type: array
       type: object
+    ConnectorNamespaceQuota:
+      properties:
+        connectors:
+          type: int32
+        memory_requests:
+          description: Memory quota for limits or requests
+          pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+          type: string
+        memory_limits:
+          description: Memory quota for limits or requests
+          pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+          type: string
+        cpu_requests:
+          description: CPU quota for limits or requests
+          pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+          type: string
+        cpu_limits:
+          description: CPU quota for limits or requests
+          pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+          type: string
+      type: object
     ConnectorNamespaceMeta:
       allOf:
       - $ref: '#/components/schemas/ObjectMeta'
       - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
-      - $ref: '#/components/schemas/ConnectorMeta_allOf'
+      - $ref: '#/components/schemas/ConnectorNamespaceMeta_allOf'
     ConnectorNamespaceTenantKind:
       enum:
       - user
@@ -1993,6 +2014,14 @@ components:
       - $ref: '#/components/schemas/ConnectorNamespaceMeta'
       - $ref: '#/components/schemas/ConnectorNamespace_allOf'
       description: A connector namespace
+    MemoryQuota:
+      description: Memory quota for limits or requests
+      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+      type: string
+    CpuQuota:
+      description: CPU quota for limits or requests
+      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+      type: string
     Error_allOf:
       properties:
         code:
@@ -2090,6 +2119,13 @@ components:
       required:
       - key
       - value
+    ConnectorNamespaceMeta_allOf:
+      properties:
+        resource_version:
+          format: int64
+          type: integer
+        quota:
+          $ref: '#/components/schemas/ConnectorNamespaceQuota'
     ConnectorNamespaceRequest_allOf:
       properties:
         cluster_id:

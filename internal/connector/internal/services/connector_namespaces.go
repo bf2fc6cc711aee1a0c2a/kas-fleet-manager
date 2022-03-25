@@ -32,6 +32,7 @@ type ConnectorNamespaceService interface {
 	DeleteNamespaceAndConnectorDeployments(ctx context.Context, dbConn *gorm.DB, query interface{}, values ...interface{}) (bool, bool, *errors.ServiceError)
 	ReconcileDeletingNamespaces() (int, []*errors.ServiceError)
 	GetNamespaceTenant(namespaceId string) (*dbapi.ConnectorNamespace, *errors.ServiceError)
+	CheckConnectorQuota(namespaceId string) *errors.ServiceError
 	CanCreateEvalNamespace(userId string) *errors.ServiceError
 }
 
@@ -40,6 +41,7 @@ var _ ConnectorNamespaceService = &connectorNamespaceService{}
 type connectorNamespaceService struct {
 	connectionFactory *db.ConnectionFactory
 	connectorsConfig  *config.ConnectorsConfig
+	quotaConfig       *config.ConnectorsQuotaConfig
 	bus               signalbus.SignalBus
 }
 
@@ -48,10 +50,12 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func NewConnectorNamespaceService(factory *db.ConnectionFactory, config *config.ConnectorsConfig, bus signalbus.SignalBus) *connectorNamespaceService {
+func NewConnectorNamespaceService(factory *db.ConnectionFactory, config *config.ConnectorsConfig,
+	quotaConfig *config.ConnectorsQuotaConfig, bus signalbus.SignalBus) *connectorNamespaceService {
 	return &connectorNamespaceService{
 		connectionFactory: factory,
 		connectorsConfig:  config,
+		quotaConfig:       quotaConfig,
 		bus:               bus,
 	}
 }
@@ -81,6 +85,27 @@ func (k *connectorNamespaceService) SetEvalClusterId(request *dbapi.ConnectorNam
 	// also set expiration duration
 	expiry := time.Now().Add(k.connectorsConfig.ConnectorEvalDuration)
 	request.Expiration = &expiry
+
+	// also set profile in annotations to ConnectorsQuotaConfig.EvalNamespaceQuotaProfile
+	found := false
+	for i := 0; i < len(request.Annotations); i++ {
+		ann := &request.Annotations[i]
+		if ann.Key == config.AnnotationProfileKey {
+			if ann.Value != k.quotaConfig.EvalNamespaceQuotaProfile {
+				ann.Value = k.quotaConfig.EvalNamespaceQuotaProfile
+			}
+			found = true
+			break
+		}
+	}
+	if !found {
+		request.Annotations = append(request.Annotations, dbapi.ConnectorNamespaceAnnotation{
+			NamespaceId: request.ID,
+			Key:         config.AnnotationProfileKey,
+			Value:       k.quotaConfig.EvalNamespaceQuotaProfile,
+		})
+	}
+
 	return nil
 }
 
@@ -88,7 +113,13 @@ func (k *connectorNamespaceService) Create(ctx context.Context, request *dbapi.C
 
 	dbConn := k.connectionFactory.New()
 	if err := dbConn.Create(request).Error; err != nil {
-		return errors.GeneralError("failed to create connector namespace: %v", err)
+		return services.HandleCreateError("Connector namespace", err)
+	}
+
+	// reload namespace to get version
+	if err := dbConn.Preload("Annotations").Preload("TenantUser").Preload("TenantOrganisation").
+		First(request, "id = ?", request.ID).Error; err != nil {
+		return services.HandleGetError("Connector namespace", "id", request.ID, err)
 	}
 
 	// TODO: increment connector namespace metrics
@@ -260,7 +291,7 @@ func (k *connectorNamespaceService) CreateDefaultNamespace(ctx context.Context, 
 		Name: defaultNamespaceName,
 		Annotations: []public.ConnectorNamespaceRequestMetaAnnotations{
 			{
-				Key:   "connector_mgmt.api.openshift.com/profile",
+				Key:   config.AnnotationProfileKey,
 				Value: "default-profile",
 			},
 		},
@@ -448,11 +479,35 @@ func (k *connectorNamespaceService) GetNamespaceTenant(namespaceId string) (*dba
 	return &namespace, nil
 }
 
+func (k *connectorNamespaceService) CheckConnectorQuota(namespaceId string) *errors.ServiceError {
+	dbConn := k.connectionFactory.New()
+	var profileName string
+	var quota config.NamespaceQuota
+	if err := dbConn.Model(&dbapi.ConnectorNamespaceAnnotation{}).
+		Where("namespace_id = ? AND key = ?", namespaceId, config.AnnotationProfileKey).
+		Select(`value`).First(&profileName).Error; err != nil {
+		return services.HandleGetError("Connector namespace annotation", "id", namespaceId, err)
+	}
+	quota, _ = k.quotaConfig.GetNamespaceQuota(profileName)
+	if quota.Connectors > 0 {
+		// get number of connectors using this namespace
+		var count int64
+		if err := dbConn.Model(&dbapi.Connector{}).Where("namespace_id = ?", namespaceId).
+			Count(&count).Error; err != nil {
+			return services.HandleGetError("Connector", "namespace_id", namespaceId, err)
+		}
+		if count >= int64(quota.Connectors) {
+			return errors.TooManyKafkaInstancesReached("The maximum number of allowed connectors has been reached")
+		}
+	}
+	return nil
+}
+
 func (k *connectorNamespaceService) CanCreateEvalNamespace(userId string) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 	var count int64
 	if err := dbConn.Debug().Table("connector_namespaces").
-		Where("tenant_user_id = ? AND expiration IS NOT NULL " +
+		Where("tenant_user_id = ? AND expiration IS NOT NULL "+
 			"AND connector_namespaces.deleted_at IS NULL AND connector_clusters.deleted_at IS NULL", userId).
 		Joins("JOIN connector_clusters ON connector_clusters.id = connector_namespaces.cluster_id AND connector_clusters.organisation_id IN ?",
 			k.connectorsConfig.ConnectorEvalOrganizations).

@@ -5,6 +5,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -137,11 +138,17 @@ func ConvertConnectorNamespaceStatus(from private.ConnectorNamespaceStatus) *dba
 	}
 }
 
-func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace) public.ConnectorNamespace {
+func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace, quotaConfig *config.ConnectorsQuotaConfig) public.ConnectorNamespace {
+
+	var quota config.NamespaceQuota
 	annotations := make([]public.ConnectorNamespaceRequestMetaAnnotations, len(namespace.Annotations))
 	for i, anno := range namespace.Annotations {
 		annotations[i].Key = anno.Key
 		annotations[i].Value = anno.Value
+		if anno.Key == config.AnnotationProfileKey {
+			// TODO handle unknown profiles instead of using defaults
+			quota, _ = quotaConfig.GetNamespaceQuota(anno.Value)
+		}
 	}
 
 	reference := PresentReference(namespace.ID, namespace)
@@ -154,6 +161,13 @@ func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace) public.Conne
 		ModifiedAt:      namespace.UpdatedAt,
 		Owner:           namespace.Owner,
 		ResourceVersion: namespace.Version,
+		Quota: public.ConnectorNamespaceQuota{
+			Connectors:     quota.Connectors,
+			MemoryRequests: quota.MemoryRequests,
+			MemoryLimits:   quota.MemoryLimits,
+			CpuRequests:    quota.CPURequests,
+			CpuLimits:      quota.CPULimits,
+		},
 
 		Name:        namespace.Name,
 		ClusterId:   namespace.ClusterId,
@@ -182,11 +196,16 @@ func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace) public.Conne
 	return result
 }
 
-func PresentPrivateConnectorNamespace(namespace *dbapi.ConnectorNamespace) admin.ConnectorNamespace {
+func PresentPrivateConnectorNamespace(namespace *dbapi.ConnectorNamespace, quotaConfig *config.ConnectorsQuotaConfig) admin.ConnectorNamespace {
+
+	var quota config.NamespaceQuota
 	annotations := make([]admin.ConnectorNamespaceRequestMetaAnnotations, len(namespace.Annotations))
 	for i, anno := range namespace.Annotations {
 		annotations[i].Key = anno.Key
 		annotations[i].Value = anno.Value
+		if anno.Key == config.AnnotationProfileKey {
+			quota, _ = quotaConfig.GetNamespaceQuota(anno.Value)
+		}
 	}
 
 	reference := PresentReference(namespace.ID, namespace)
@@ -199,6 +218,13 @@ func PresentPrivateConnectorNamespace(namespace *dbapi.ConnectorNamespace) admin
 		ModifiedAt:      namespace.UpdatedAt,
 		Owner:           namespace.Owner,
 		ResourceVersion: namespace.Version,
+		Quota: admin.ConnectorNamespaceQuota{
+			Connectors:     quota.Connectors,
+			MemoryRequests: quota.MemoryRequests,
+			MemoryLimits:   quota.MemoryLimits,
+			CpuRequests:    quota.CPURequests,
+			CpuLimits:      quota.CPULimits,
+		},
 
 		Name:        namespace.Name,
 		ClusterId:   namespace.ClusterId,

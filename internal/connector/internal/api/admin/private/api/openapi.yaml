@@ -952,6 +952,35 @@ components:
             $ref: '#/components/schemas/ConnectorNamespaceRequestMeta_annotations'
           type: array
       type: object
+    ConnectorNamespaceQuota:
+      properties:
+        connectors:
+          type: int32
+        memory_requests:
+          description: Memory quota for limits or requests
+          pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+          type: string
+        memory_limits:
+          description: Memory quota for limits or requests
+          pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+          type: string
+        cpu_requests:
+          description: CPU quota for limits or requests
+          pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+          type: string
+        cpu_limits:
+          description: CPU quota for limits or requests
+          pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+          type: string
+      type: object
+    MemoryQuota:
+      description: Memory quota for limits or requests
+      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+      type: string
+    CpuQuota:
+      description: CPU quota for limits or requests
+      pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+      type: string
     ConnectorNamespaceTenant:
       properties:
         kind:
@@ -1083,6 +1112,8 @@ components:
         resource_version:
           format: int64
           type: integer
+        quota:
+          $ref: '#/components/schemas/ConnectorNamespaceQuota'
     ConnectorNamespaceRequestMeta_annotations:
       properties:
         key:

@@ -21,4 +21,5 @@ type ConnectorNamespaceMeta struct {
 	Name            string                                     `json:"name,omitempty"`
 	Annotations     []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
 	ResourceVersion int64                                      `json:"resource_version,omitempty"`
+	Quota           ConnectorNamespaceQuota                    `json:"quota,omitempty"`
 }

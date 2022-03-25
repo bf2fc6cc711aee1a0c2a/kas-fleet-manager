@@ -1,0 +1,24 @@
+---
+# A list of quota profiles to limit resource usage for Connectors.
+# The list must include a profile with the name specified in the configurable option 'connectors-eval-namespace-quota-profile'.
+# The default value of the eval namespace profile is 'evaluation-profile'
+# The structure of quota profiles is:
+#     - profile-name: is the name of the profile
+#       quotas: limits for various resource types
+#         namespace-quota: limits for namespaces using this profile
+#           connectors: maximum number of connectors
+#           memory-requests: sum of memory requests across all pods in a non-terminal state
+#           memory-limits: sum of memory limits across all pods in a non-terminal state
+#           cpu-requests: sum of CPU requests across all pods in a non-terminal state
+#           cpu-limits: sum of CPU limits across all pods in a non-terminal state
+# default-profile has no limits
+- profile-name: default-profile
+# evaluation-profile is limited to 4 connectors, and has constraints on memory and CPU request and limit
+- profile-name: evaluation-profile
+  quotas:
+    namespace-quota:
+      connectors: 4
+      memory-requests: "1Gi"
+      memory-limits: "2Gi"
+      cpu-requests: "1"
+      cpu-limits: "2"

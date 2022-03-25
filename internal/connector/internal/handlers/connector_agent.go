@@ -287,7 +287,7 @@ func (h *ConnectorClusterHandler) GetAgentNamespaces(writer http.ResponseWriter,
 			}
 
 			for _, resource := range resources {
-				converted := presenters.PresentConnectorNamespace(resource)
+				converted := presenters.PresentConnectorNamespace(resource, h.QuotaConfig)
 				resourceList.Items = append(resourceList.Items, converted)
 			}
 
@@ -317,7 +317,7 @@ func (h *ConnectorClusterHandler) GetNamespace(w http.ResponseWriter, r *http.Re
 				return nil, errors.NotFound("Connector namespace %s not found", namespaceId)
 			}
 
-			return presenters.PresentConnectorNamespace(resource), nil
+			return presenters.PresentConnectorNamespace(resource, h.QuotaConfig), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)

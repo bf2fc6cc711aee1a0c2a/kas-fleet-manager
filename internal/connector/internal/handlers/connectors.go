@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/phase"
 	"io/ioutil"
 	"net/http"
@@ -21,7 +22,6 @@ import (
 	"github.com/spyzhov/ajson"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	jsonpatch "github.com/evanphx/json-patch"
@@ -39,19 +39,24 @@ type ConnectorsHandler struct {
 	connectorTypesService services.ConnectorTypesService
 	namespaceService      services.ConnectorNamespaceService
 	vaultService          vault.VaultService
+	authZService          authz.AuthZService
 }
 
 func NewConnectorsHandler(connectorsService services.ConnectorsService, connectorTypesService services.ConnectorTypesService,
-	namespaceService services.ConnectorNamespaceService, vaultService vault.VaultService) *ConnectorsHandler {
+	namespaceService services.ConnectorNamespaceService, vaultService vault.VaultService, authZService authz.AuthZService) *ConnectorsHandler {
 	return &ConnectorsHandler{
 		connectorsService:     connectorsService,
 		connectorTypesService: connectorTypesService,
 		namespaceService:      namespaceService,
 		vaultService:          vaultService,
+		authZService:          authZService,
 	}
 }
 
 func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
+
+	user := h.authZService.GetValidationUser(r.Context())
+
 	var resource public.ConnectorRequest
 	tid := mux.Vars(r)["tid"]
 	cfg := &handlers.HandlerConfig{
@@ -69,7 +74,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.WithDefault("ready"), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
 			validateConnectorRequest(h.connectorTypesService, &resource, tid),
 			handlers.Validation("namespace_id", &resource.NamespaceId,
-				handlers.MaxLen(maxConnectorNamespaceIdLength), validateNamespaceID(h.namespaceService, r.Context())),
+				handlers.MaxLen(maxConnectorNamespaceIdLength), validateNamespaceID(h.namespaceService, r.Context()), user.ValidateNamespaceConnectorQuota()),
 		},
 
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -79,14 +84,9 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			claims, goerr := auth.GetClaimsFromContext(r.Context())
-			if goerr != nil {
-				return nil, errors.Unauthenticated("user not authenticated")
-			}
-
 			convResource.ID = api.NewID()
-			convResource.Owner = auth.GetUsernameFromClaims(claims)
-			convResource.OrganisationId = auth.GetOrgIdFromClaims(claims)
+			convResource.Owner = user.UserId()
+			convResource.OrganisationId = user.OrgId()
 
 			// validate create operation if connector is assigned to a namespace
 			if err := h.validateConnectorOperation(r.Context(), convResource, phase.CreateConnector); err != nil {

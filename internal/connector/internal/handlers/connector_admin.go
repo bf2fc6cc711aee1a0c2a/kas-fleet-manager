@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -33,6 +34,7 @@ type ConnectorAdminHandler struct {
 	Vault            vault.VaultService
 	KeycloakConfig   *keycloak.KeycloakConfig
 	ServerConfig     *server.ServerConfig
+	QuotaConfig      *config.ConnectorsQuotaConfig
 }
 
 func NewConnectorAdminHandler(handler ConnectorAdminHandler) *ConnectorAdminHandler {
@@ -196,7 +198,7 @@ func (h *ConnectorAdminHandler) GetClusterNamespaces(writer http.ResponseWriter,
 
 			result.Items = make([]private.ConnectorNamespace, len(namespaces))
 			for i, namespace := range namespaces {
-				result.Items[i] = presenters.PresentPrivateConnectorNamespace(namespace)
+				result.Items[i] = presenters.PresentPrivateConnectorNamespace(namespace, h.QuotaConfig)
 			}
 
 			return result, nil
@@ -225,7 +227,7 @@ func (h *ConnectorAdminHandler) GetConnectorNamespaces(writer http.ResponseWrite
 
 			result.Items = make([]private.ConnectorNamespace, len(namespaces))
 			for i, namespace := range namespaces {
-				result.Items[i] = presenters.PresentPrivateConnectorNamespace(namespace)
+				result.Items[i] = presenters.PresentPrivateConnectorNamespace(namespace, h.QuotaConfig)
 			}
 
 			return result, nil
@@ -257,6 +259,11 @@ func (h *ConnectorAdminHandler) CreateConnectorNamespace(writer http.ResponseWri
 					if err := h.NamespaceService.CanCreateEvalNamespace(connectorNamespace.Owner); err != nil {
 						return nil, err
 					}
+
+					// set evaluation cluster id for namespaces with expiration
+					if err := h.NamespaceService.SetEvalClusterId(connectorNamespace); err != nil {
+						return nil, err
+					}
 				}
 			} else {
 				// NOTE: admin user is owner
@@ -269,7 +276,7 @@ func (h *ConnectorAdminHandler) CreateConnectorNamespace(writer http.ResponseWri
 			if err := h.NamespaceService.Create(ctx, connectorNamespace); err != nil {
 				return nil, err
 			}
-			i = presenters.PresentPrivateConnectorNamespace(connectorNamespace)
+			i = presenters.PresentPrivateConnectorNamespace(connectorNamespace, h.QuotaConfig)
 			return
 		},
 	}

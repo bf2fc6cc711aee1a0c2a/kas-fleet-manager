@@ -82,8 +82,8 @@ Feature: connector namespaces API
       "name": "<user>_namespace",
       "annotations": [
         {
-          "key": "connector_mgmt.api.openshift.com/profile",
-          "value": "default-profile"
+          "key": "connector_mgmt.bf2.org/profile",
+          "value": "evaluation-profile"
         }
       ]
     }
@@ -102,10 +102,17 @@ Feature: connector namespaces API
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
       "expiration": "${response.expiration}",
+      "quota": {
+        "connectors": 4,
+        "cpu_limits": "2",
+        "cpu_requests": "1",
+        "memory_limits": "2Gi",
+        "memory_requests": "1Gi"
+      },
       "annotations": [
         {
-          "key": "connector_mgmt.api.openshift.com/profile",
-          "value": "default-profile"
+          "key": "connector_mgmt.bf2.org/profile",
+          "value": "evaluation-profile"
         }
       ],
       "status": {
@@ -127,7 +134,7 @@ Feature: connector namespaces API
       "name": "<user>_namespace",
       "annotations": [
         {
-          "key": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.bf2.org/profile",
           "value": "default-profile"
         }
       ]
@@ -161,6 +168,13 @@ Feature: connector namespaces API
            "name": "<user>_namespace",
            "owner": "${<user_id>}",
            "resource_version": ${response.items[0].resource_version},
+           "quota": {
+             "connectors": 4,
+             "cpu_limits": "2",
+             "cpu_requests": "1",
+             "memory_limits": "2Gi",
+             "memory_requests": "1Gi"
+           },
            "created_at": "${response.items[0].created_at}",
            "modified_at": "${response.items[0].modified_at}",
            "expiration": "${response.items[0].expiration}",
@@ -170,8 +184,8 @@ Feature: connector namespaces API
            },
            "annotations": [
              {
-               "key": "connector_mgmt.api.openshift.com/profile",
-               "value": "default-profile"
+               "key": "connector_mgmt.bf2.org/profile",
+               "value": "evaluation-profile"
              }
            ],
            "status": {
@@ -240,13 +254,14 @@ Feature: connector namespaces API
            "name": "default-connector-namespace",
            "owner": "${dusty_user_id}",
            "resource_version": ${response.items[0].resource_version},
+           "quota": {},
            "tenant": {
              "kind": "organisation",
              "id": "13640230"
            },
            "annotations": [
              {
-               "key": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.bf2.org/profile",
                "value": "default-profile"
              }
            ],
@@ -273,7 +288,7 @@ Feature: connector namespaces API
       "kind": "organisation",
       "annotations": [
         {
-          "key": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.bf2.org/profile",
           "value": "default-profile"
         }
       ]
@@ -289,12 +304,13 @@ Feature: connector namespaces API
       "name": "shared_namespace",
       "owner": "${dusty_user_id}",
       "resource_version": ${response.resource_version},
+      "quota": {},
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
       "annotations": [
         {
-          "key": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.bf2.org/profile",
           "value": "default-profile"
         }
       ],
@@ -320,7 +336,7 @@ Feature: connector namespaces API
       "kind": "user",
       "annotations": [
         {
-          "key": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.bf2.org/profile",
           "value": "default-profile"
         }
       ]
@@ -336,12 +352,13 @@ Feature: connector namespaces API
       "name": "Lucky_namespace",
       "owner": "${lucky_user_id}",
       "resource_version": ${response.resource_version},
+      "quota": {},
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
       "annotations": [
         {
-          "key": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.bf2.org/profile",
           "value": "default-profile"
         }
       ],
@@ -375,13 +392,14 @@ Feature: connector namespaces API
            "name": "default-connector-namespace",
            "owner": "${dusty_user_id}",
            "resource_version": ${response.items[0].resource_version},
+           "quota": {},
            "tenant": {
              "kind": "organisation",
              "id": "13640230"
            },
            "annotations": [
              {
-               "key": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.bf2.org/profile",
                "value": "default-profile"
              }
            ],
@@ -397,6 +415,7 @@ Feature: connector namespaces API
            "name": "shared_namespace",
            "owner": "${dusty_user_id}",
            "resource_version": ${response.items[1].resource_version},
+           "quota": {},
            "cluster_id": "${connector_cluster_id}",
            "created_at": "${response.items[1].created_at}",
            "modified_at": "${response.items[1].modified_at}",
@@ -406,7 +425,7 @@ Feature: connector namespaces API
            },
            "annotations": [
              {
-               "key": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.bf2.org/profile",
                "value": "default-profile"
              }
            ],
@@ -486,13 +505,14 @@ Feature: connector namespaces API
            "name": "default-connector-namespace",
            "owner": "${drnefario_user_id}",
            "resource_version": ${response.items[0].resource_version},
+           "quota": {},
            "tenant": {
              "kind": "organisation",
              "id": "${response.items[0].tenant.id}"
            },
            "annotations": [
              {
-               "key": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.bf2.org/profile",
                "value": "default-profile"
              }
            ],
@@ -518,7 +538,7 @@ Feature: connector namespaces API
       "cluster_id": "${connector_cluster_id}",
       "annotations": [
         {
-          "key": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.bf2.org/profile",
           "value": "default-profile"
         }
       ],
@@ -538,6 +558,7 @@ Feature: connector namespaces API
       "name": "<user>_namespace",
       "owner": "${<user_id>}",
       "resource_version": ${response.resource_version},
+      "quota": {},
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
@@ -547,7 +568,7 @@ Feature: connector namespaces API
       },
       "annotations": [
         {
-          "key": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.bf2.org/profile",
           "value": "default-profile"
         }
       ],
@@ -580,13 +601,14 @@ Feature: connector namespaces API
            "name": "default-connector-namespace",
            "owner": "${drnefario_user_id}",
            "resource_version": ${response.items[0].resource_version},
+           "quota": {},
            "tenant": {
              "kind": "organisation",
              "id": "${response.items[0].tenant.id}"
            },
            "annotations": [
              {
-               "key": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.bf2.org/profile",
                "value": "default-profile"
              }
            ],
@@ -658,13 +680,14 @@ Feature: connector namespaces API
            "name": "default-connector-namespace",
            "owner": "${guapo_user_id}",
            "resource_version": ${response.items[0].resource_version},
+           "quota": {},
            "tenant": {
              "kind": "organisation",
              "id": "13640231"
            },
            "annotations": [
              {
-               "key": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.bf2.org/profile",
                "value": "default-profile"
              }
            ],
@@ -694,7 +717,7 @@ Feature: connector namespaces API
       },
       "annotations": [
         {
-          "key": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.bf2.org/profile",
           "value": "default-profile"
         }
       ],
@@ -714,6 +737,7 @@ Feature: connector namespaces API
       "name": "amigos_namespace",
       "owner": "Ricky Bobby",
       "resource_version": ${response.resource_version},
+      "quota": {},
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
@@ -723,7 +747,7 @@ Feature: connector namespaces API
       },
       "annotations": [
         {
-          "key": "connector_mgmt.api.openshift.com/profile",
+          "key": "connector_mgmt.bf2.org/profile",
           "value": "default-profile"
         }
       ],
@@ -756,13 +780,14 @@ Feature: connector namespaces API
            "name": "default-connector-namespace",
            "owner": "${guapo_user_id}",
            "resource_version": ${response.items[0].resource_version},
+           "quota": {},
            "tenant": {
              "kind": "organisation",
              "id": "13640231"
            },
            "annotations": [
              {
-               "key": "connector_mgmt.api.openshift.com/profile",
+               "key": "connector_mgmt.bf2.org/profile",
                "value": "default-profile"
              }
            ],
