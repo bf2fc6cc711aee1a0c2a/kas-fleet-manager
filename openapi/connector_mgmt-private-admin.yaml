@@ -222,6 +222,19 @@ paths:
     delete:
       tags:
         - Connector Clusters Admin
+      parameters:
+        - name: connector_id
+          description: The id of the connector to delete
+          schema:
+            type: string
+          in: path
+          required: true
+        - name: force
+          description: Flag to force deletion of connector in Fleet manager if true
+          schema:
+            type: string
+          in: query
+          required: false
       responses:
         "204":
           content:
