@@ -26,13 +26,20 @@ var (
 // ConnectorClustersAdminApiService ConnectorClustersAdminApi service
 type ConnectorClustersAdminApiService service
 
+// DeleteConnectorOpts Optional parameters for the method 'DeleteConnector'
+type DeleteConnectorOpts struct {
+	Force optional.String
+}
+
 /*
 DeleteConnector Delete a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param connectorId The id of the connector to delete
+ * @param optional nil or *DeleteConnectorOpts - Optional Parameters:
+ * @param "Force" (optional.String) -  Flag to force deletion of connector in Fleet manager if true
 @return Error
 */
-func (a *ConnectorClustersAdminApiService) DeleteConnector(ctx _context.Context, connectorId string) (Error, *_nethttp.Response, error) {
+func (a *ConnectorClustersAdminApiService) DeleteConnector(ctx _context.Context, connectorId string, localVarOptionals *DeleteConnectorOpts) (Error, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodDelete
 		localVarPostBody     interface{}
@@ -50,6 +57,9 @@ func (a *ConnectorClustersAdminApiService) DeleteConnector(ctx _context.Context,
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
+	if localVarOptionals != nil && localVarOptionals.Force.IsSet() {
+		localVarQueryParams.Add("force", parameterToString(localVarOptionals.Force.Value(), ""))
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 

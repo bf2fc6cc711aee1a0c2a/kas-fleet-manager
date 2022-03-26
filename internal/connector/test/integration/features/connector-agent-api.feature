@@ -1039,7 +1039,7 @@ Feature: connector agent API
 
     # delete connector using admin API
     Given I am logged in as "Ricky Bobby"
-    And I DELETE path "/v1/admin/kafka_connectors/${connector_id}"
+    And I DELETE path "/v1/admin/kafka_connectors/${connector_id}?force=true"
     And the response code should be 204
 
 

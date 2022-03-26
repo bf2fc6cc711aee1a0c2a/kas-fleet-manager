@@ -29,6 +29,7 @@ type ConnectorsService interface {
 	SaveStatus(ctx context.Context, resource dbapi.ConnectorStatus) *errors.ServiceError
 	Delete(ctx context.Context, id string) *errors.ServiceError
 	ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) []error
+	ForceDelete(ctx context.Context, id string) *errors.ServiceError
 }
 
 var _ ConnectorsService = &connectorsService{}
@@ -361,4 +362,40 @@ func (k connectorsService) ForEach(f func(*dbapi.Connector) *errors.ServiceError
 
 	}
 	return errs
+}
+
+func (k *connectorsService) ForceDelete(ctx context.Context, id string) *errors.ServiceError {
+	if err := k.connectionFactory.New().Transaction(func(tx *gorm.DB) error {
+		// delete deployment status, deployment, connector status and connector
+		var deploymentId string
+		if err := tx.Model(&dbapi.ConnectorDeployment{}).Where("connector_id = ?", id).
+			Select("id").First(&deploymentId).Error; err != nil {
+			if !services.IsRecordNotFoundError(err) {
+				return services.HandleGetError("Connector deployment", "connector_id", id, err)
+			}
+		}
+		if deploymentId != "" {
+			if err := tx.Where("id = ?", deploymentId).
+				Delete(&dbapi.ConnectorDeploymentStatus{}).Error; err != nil {
+				return services.HandleDeleteError("Connector deployment status", "id", deploymentId, err)
+			}
+			if err := tx.Where("id = ?", deploymentId).
+				Delete(&dbapi.ConnectorDeployment{}).Error; err != nil {
+				return services.HandleDeleteError("Connector deployment", "id", deploymentId, err)
+			}
+		}
+		if err := tx.Where("id = ?", id).
+			Delete(&dbapi.ConnectorStatus{}).Error; err != nil {
+			return services.HandleDeleteError("Connector status", "id", id, err)
+		}
+		if err := tx.Where("id = ?", id).
+			Delete(&dbapi.Connector{}).Error; err != nil {
+			return services.HandleDeleteError("Connector", "id", id, err)
+		}
+
+		return nil
+	}); err != nil {
+		return services.HandleDeleteError("Connector", "id", id, err)
+	}
+	return nil
 }

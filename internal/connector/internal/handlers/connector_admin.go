@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
+	"strconv"
 
 	"net/http"
 
@@ -370,8 +371,21 @@ func (h *ConnectorAdminHandler) DeleteConnector(writer http.ResponseWriter, requ
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
-			// TODO add flag to force deletion of connector and deployments
-			serviceError = h.ConnectorsService.Delete(request.Context(), connectorId)
+			// check force flag to force deletion of connector and deployments
+			force := false
+			forceFlag := request.URL.Query().Get("force")
+			if forceFlag != "" {
+				var err error
+				force, err = strconv.ParseBool(forceFlag)
+				if err != nil {
+					return nil, errors.BadRequest("Invalid force query param %s", forceFlag)
+				}
+			}
+			if force {
+				serviceError = h.ConnectorsService.ForceDelete(request.Context(), connectorId)
+			} else {
+				serviceError = h.ConnectorsService.Delete(request.Context(), connectorId)
+			}
 			return nil, serviceError
 		},
 	}

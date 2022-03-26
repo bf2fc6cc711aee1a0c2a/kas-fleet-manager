@@ -411,6 +411,14 @@ paths:
         schema:
           type: string
         style: simple
+      - description: Flag to force deletion of connector in Fleet manager if true
+        explode: true
+        in: query
+        name: force
+        required: false
+        schema:
+          type: string
+        style: form
       responses:
         "204":
           content:
