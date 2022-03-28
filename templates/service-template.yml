@@ -440,7 +440,7 @@ parameters:
 
 - name: ENVOY_IMAGE
   description: Envoy image
-  value: envoyproxy/envoy:v1.16.1
+  value: envoyproxy/envoy:v1.20.2
 
 - name: KAFKA_DOMAIN_NAME
   description: The domain name to use for Kafka instances
