@@ -204,6 +204,8 @@ help:
 	@echo "make run/docs                    run swagger and host the api spec"
 	@echo "make run/docs/teardown           remove the swagger container"
 	@echo "make test                        run unit tests"
+	@echo "make test/output/coverage/report generate test coverage report in the terminal"
+	@echo "make test/html/coverage/report   generate test coverage html report and see it in browser"
 	@echo "make test/integration            run integration tests"
 	@echo "make test/cluster/cleanup        remove OSD cluster after running tests against real OCM"
 	@echo "make test/prepare                Precompile everything required for development/test"
@@ -305,7 +307,18 @@ install: verify lint
 test: gotestsum
 	OCM_ENV=testing $(GOTESTSUM) --junitfile data/results/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 -coverprofile cover.out $(TESTFLAGS) \
 		$(shell go list ./... | grep -v /test)
+
+# filter out mocked and generated files from the coverage results
+	cat cover.out | grep -v "_moq.go" | grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/" > coverage.out
 .PHONY: test
+
+test/output/coverage/report:
+	@if [ -f coverage.out ]; then $(GO) tool cover -func=coverage.out; else echo "coverage.out file not found"; fi;
+.PHONY: test/output/coverage/report
+
+test/html/coverage/report:
+	@if [ -f coverage.out ]; then $(GO) tool cover -html=coverage.out; else echo "coverage.out file not found"; fi;
+.PHONY: test/html/coverage/report
 
 # Precompile everything required for development/test.
 test/prepare:
