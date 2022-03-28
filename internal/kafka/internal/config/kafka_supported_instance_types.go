@@ -19,9 +19,10 @@ type KafkaInstanceType struct {
 
 // validates kafka instance type config to ensure the following:
 // - id must be defined and included in the valid instance type id list
+// - display_name must be defined and included in the valid instance type list
 // - sizes cannot be an empty list and each size id must be unique
 func (kp *KafkaInstanceType) validate() error {
-	if kp.Id == "" || len(kp.Sizes) == 0 {
+	if kp.Id == "" || kp.DisplayName == "" || len(kp.Sizes) == 0 {
 		return fmt.Errorf("Kafka instance type '%s' is missing required parameters.", kp.Id)
 	}
 

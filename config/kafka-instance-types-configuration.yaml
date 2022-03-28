@@ -3,6 +3,7 @@
 # 
 # The following properties must be defined for each Kafka instance type:
 #   - id: Identifier for the Kafka instance type. Each instance type name should be unique.
+#   - display_name: human readable value of an instance type
 #   - sizes: A list of sizes available for this instance type (should not be an empty list)
 #
 # The following properties must be defined for each size (all values must be larger than '0'):
