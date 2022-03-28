@@ -694,15 +694,21 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with strimzi version: %s", kafkaRequest.ID, kafkaRequest.DesiredStrimziVersion))
 	}
 
-	vCompOldNewIbp, eIbp := api.CompareBuildAwareSemanticVersions(kafkaRequest.ActualKafkaIBPVersion, kafkaRequest.DesiredKafkaIBPVersion)
+	currentIBPVersion := kafkaRequest.ActualKafkaIBPVersion
+
+	if currentIBPVersion == "" { // the ibp version could be empty is the Kafka have not yet been successful provisioned at first place
+		currentIBPVersion = kafkaRequest.DesiredKafkaIBPVersion // use the desired version for checks as eventually the actual version will be this one for new Kafkas
+	}
+
+	vCompOldNewIbp, eIbp := api.CompareBuildAwareSemanticVersions(currentIBPVersion, kafkaRequest.DesiredKafkaIBPVersion)
 
 	if eIbp != nil {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare actual ibp version: %s with desired ibp version: %s", kafkaRequest.ActualKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
+		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare actual ibp version: %s with desired ibp version: %s", currentIBPVersion, kafkaRequest.DesiredKafkaVersion))
 	}
 
 	// actual ibp version cannot be greater than desired ibp version (no downgrade allowed)
 	if vCompOldNewIbp > 0 {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s ibp version: %s to a lower version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.ActualKafkaIBPVersion))
+		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s ibp version: %s to a lower version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaIBPVersion, currentIBPVersion))
 	}
 
 	vCompIbpKafka, eIbpK := api.CompareBuildAwareSemanticVersions(kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion)
@@ -716,15 +722,20 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s ibp version: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
 	}
 
-	vCompKafka, ek := api.CompareSemanticVersionsMajorAndMinor(kafkaRequest.ActualKafkaVersion, kafkaRequest.DesiredKafkaVersion)
+	currentKafkaVersion := kafkaRequest.ActualKafkaVersion
+	if currentKafkaVersion == "" { // the kafka version could be empty is the Kafka that have not yet been successful provisioned at first place
+		currentKafkaVersion = kafkaRequest.DesiredKafkaVersion // use the desired version for checks as eventually the actual version will be this one for new Kafkas
+	}
+
+	vCompKafka, ek := api.CompareSemanticVersionsMajorAndMinor(currentKafkaVersion, kafkaRequest.DesiredKafkaVersion)
 
 	if ek != nil {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare desired kafka version: %s with actual kafka version: %s", kafkaRequest.DesiredKafkaVersion, kafkaRequest.ActualKafkaVersion))
+		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare desired kafka version: %s with actual kafka version: %s", kafkaRequest.DesiredKafkaVersion, currentKafkaVersion))
 	}
 
 	// no minor/ major version downgrades allowed for kafka version
 	if vCompKafka > 0 {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s version: %s to the following kafka version: %s", kafkaRequest.ID, kafkaRequest.ActualKafkaVersion, kafkaRequest.DesiredKafkaVersion))
+		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s version: %s to the following kafka version: %s", kafkaRequest.ID, currentKafkaVersion, kafkaRequest.DesiredKafkaVersion))
 	}
 
 	// only updated specified columns to avoid changing other columns e.g Status
