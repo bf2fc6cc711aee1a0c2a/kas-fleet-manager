@@ -102,7 +102,7 @@ Feature: create a connector
     And the response should match ""
 
     # wait for cluster namespaces to be deleted first
-    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connector_clusters/${cluster_id}" response code to match "404"
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${cluster_id}" response code to match "404"
     When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 404
     And the response should match json:

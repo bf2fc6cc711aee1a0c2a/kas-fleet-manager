@@ -202,7 +202,7 @@ Feature: connector namespaces API
      """
 
     # Eval namespace should expire and get deleted after 2 seconds as configured in internal/connector/test/integration/feature_test.go:27
-    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connector_namespaces/" response ".total" selection to match "0"
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_namespaces/" response ".total" selection to match "0"
     And I GET path "/v1/kafka_connector_namespaces/"
     Then the response code should be 200
     And the ".total" selection from the response should match "0"
@@ -451,7 +451,7 @@ Feature: connector namespaces API
     When I DELETE path "/v1/kafka_connector_namespaces/${user_namespace_id}"
     Then the response code should be 204
 
-    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connector_namespaces/" response ".total" selection to match "1"
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_namespaces/" response ".total" selection to match "1"
     And I GET path "/v1/kafka_connector_namespaces"
     And the response code should be 200
     And the ".total" selection from the response should match "1"
@@ -584,7 +584,7 @@ Feature: connector namespaces API
     Given I am logged in as "Ricky Bobby"
     When I DELETE path "/v1/admin/kafka_connector_namespaces/${namespace_id}"
     Then the response code should be 204
-    Given I wait up to "5" seconds for a GET on path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/namespaces" response ".total" selection to match "1"
+    Given I wait up to "10" seconds for a GET on path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/namespaces" response ".total" selection to match "1"
     And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/namespaces"
     And the response code should be 200
     And the response should match json:
@@ -763,7 +763,7 @@ Feature: connector namespaces API
     Given I am logged in as "Ricky Bobby"
     When I DELETE path "/v1/admin/kafka_connector_namespaces/${namespace_id}"
     Then the response code should be 204
-    Given I wait up to "5" seconds for a GET on path "/v1/admin/kafka_connector_namespaces?search=cluster_id=${connector_cluster_id}" response ".total" selection to match "1"
+    Given I wait up to "10" seconds for a GET on path "/v1/admin/kafka_connector_namespaces?search=cluster_id=${connector_cluster_id}" response ".total" selection to match "1"
     And I GET path "/v1/admin/kafka_connector_namespaces?search=cluster_id=${connector_cluster_id}"
     And the response code should be 200
     And the response should match json:
