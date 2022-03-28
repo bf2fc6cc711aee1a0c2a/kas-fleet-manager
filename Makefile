@@ -309,7 +309,12 @@ test: gotestsum
 		$(shell go list ./... | grep -v /test)
 
 # filter out mocked and generated files from the coverage results
-	cat cover.out | grep -v "_moq.go" | grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/" > coverage.out
+	cat cover.out | grep -v "_moq.go" | \
+	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/main.go" | \
+	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/" | \
+	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/migrations/" | \
+	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/" \
+	> coverage.out
 .PHONY: test
 
 test/output/coverage/report:
