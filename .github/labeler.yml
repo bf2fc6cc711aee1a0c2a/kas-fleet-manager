@@ -7,6 +7,10 @@ kafka:
   - internal/kafka/**/*
   - openapi/kas*
   - cmd/kas*
+  - templates/**/*
+  - Dockerfile
+  - config/**/*
+  - docker/**/*
 connector:
   - internal/connector/**/*
   - openapi/connector*
@@ -19,4 +23,6 @@ connector-api-change:
 documentation:
   - docs/**/*
   - "*.md"
-  
+service-template:
+  - templates/**/*
+  - Dockerfile

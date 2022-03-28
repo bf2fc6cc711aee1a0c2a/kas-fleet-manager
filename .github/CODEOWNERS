@@ -1,6 +1,10 @@
 # These owners will be the default owners for everything in the repo
 
 # TODO use GH team
+
+# Global reviewers
+* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi
+
 # Kafka
 internal/kafka/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi
 
@@ -8,7 +12,7 @@ internal/kafka/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @Jame
 .github/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi
 
 # connectors
-internal/connector/**/*  @valdar @dhirajsb
+internal/connector/**/*  @valdar @dhirajsb @lburgazzoli
 
 # common
 pkg/**/*  @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @valdar @dhirajsb
@@ -16,4 +20,3 @@ test/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @migue
 
 # api
 openapi/ @bf2fc6cc711aee1a0c2a/devexp-sdks
-
