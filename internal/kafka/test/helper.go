@@ -2,10 +2,11 @@ package test
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	adminprivate "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
@@ -113,6 +114,6 @@ func NewMockDataplaneCluster(name string, capacity int) config.ManualCluster {
 		Schedulable:           true,
 		KafkaInstanceLimit:    capacity,
 		Status:                api.ClusterReady,
-		SupportedInstanceType: "eval,standard",
+		SupportedInstanceType: "developer,standard",
 	}
 }

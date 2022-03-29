@@ -141,8 +141,8 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 
 func Test_Validation_validateCloudProvider(t *testing.T) {
 	limit := int(5)
-	evalMap := config.InstanceTypeMap{
-		"eval": {
+	developerMap := config.InstanceTypeMap{
+		"developer": {
 			Limit: &limit,
 		},
 	}
@@ -173,7 +173,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
 					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
-						return types.EVAL, nil
+						return types.DEVELOPER, nil
 					},
 				},
 				kafkaRequest: dbapi.KafkaRequest{},
@@ -187,7 +187,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 									config.Region{
 										Name:                   "us-east-1",
 										Default:                true,
-										SupportedInstanceTypes: evalMap,
+										SupportedInstanceTypes: developerMap,
 									},
 								},
 							},
@@ -208,7 +208,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
 					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
-						return types.EVAL, nil
+						return types.DEVELOPER, nil
 					},
 				},
 				kafkaRequest: dbapi.KafkaRequest{
@@ -223,7 +223,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Regions: config.RegionList{
 									config.Region{
 										Name:                   "eu-east-1",
-										SupportedInstanceTypes: evalMap,
+										SupportedInstanceTypes: developerMap,
 									},
 								},
 							},
@@ -232,7 +232,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Regions: config.RegionList{
 									config.Region{
 										Name:                   "us-east-1",
-										SupportedInstanceTypes: evalMap,
+										SupportedInstanceTypes: developerMap,
 									},
 								},
 							},
@@ -253,7 +253,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
 					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
-						return types.EVAL, nil
+						return types.DEVELOPER, nil
 					},
 				},
 				kafkaRequest: dbapi.KafkaRequest{
@@ -268,7 +268,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Regions: config.RegionList{
 									config.Region{
 										Name:                   "us-east-1",
-										SupportedInstanceTypes: evalMap,
+										SupportedInstanceTypes: developerMap,
 									},
 								},
 							},
@@ -286,7 +286,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
 					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
-						return types.EVAL, nil
+						return types.DEVELOPER, nil
 					},
 				},
 				kafkaRequest: dbapi.KafkaRequest{
@@ -311,7 +311,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			},
 			want: result{
 				wantErr: true,
-				reason:  "instance type 'eval' not supported for region 'us-east'",
+				reason:  "instance type 'developer' not supported for region 'us-east'",
 			},
 		},
 	}

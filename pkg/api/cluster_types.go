@@ -106,9 +106,9 @@ const (
 	ClusterProviderAwsEKS     ClusterProviderType = "aws_eks"
 	ClusterProviderStandalone ClusterProviderType = "standalone"
 
-	EvalTypeSupport        ClusterInstanceTypeSupport = "eval"
+	DeveloperTypeSupport   ClusterInstanceTypeSupport = "developer"
 	StandardTypeSupport    ClusterInstanceTypeSupport = "standard"
-	AllInstanceTypeSupport ClusterInstanceTypeSupport = "standard,eval"
+	AllInstanceTypeSupport ClusterInstanceTypeSupport = "standard,developer"
 )
 
 // ordinals - Used to decide if a status comes after or before a given state
@@ -158,7 +158,7 @@ type Cluster struct {
 	// Latest position in the list is considered the newest available version.
 	AvailableStrimziVersions JSON `json:"available_strimzi_versions"`
 	// SupportedInstanceType holds information on what kind of instances types can be provisioned on this cluster.
-	// A cluster can support two kinds of instance types: 'eval', 'standard' or both in this case it will be a comma separated list of instance types e.g 'standard,eval'.
+	// A cluster can support two kinds of instance types: 'developer', 'standard' or both in this case it will be a comma separated list of instance types e.g 'standard,developer'.
 	SupportedInstanceType string `json:"supported_instance_type"`
 }
 

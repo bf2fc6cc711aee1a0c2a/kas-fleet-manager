@@ -522,7 +522,7 @@ schedulable: true
 kafka_instance_limit: 1
 status: "ready"
 provider_type: "aws_eks"
-supported_instance_type: "eval"
+supported_instance_type: "developer"
 `,
 			output: ManualCluster{
 				Name:                  "test",
@@ -534,7 +534,7 @@ supported_instance_type: "eval"
 				KafkaInstanceLimit:    1,
 				Status:                api.ClusterReady,
 				ProviderType:          api.ClusterProviderAwsEKS,
-				SupportedInstanceType: api.EvalTypeSupport.String(),
+				SupportedInstanceType: api.DeveloperTypeSupport.String(),
 			},
 			wantErr: false,
 		},
