@@ -2,6 +2,7 @@ package integration
 
 import (
 	"github.com/antihax/optional"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"net/http"
 	"testing"
 	"time"
@@ -268,6 +269,43 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	_, resp, err = client.SecurityApi.GetServiceAccountById(ctx, id)
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 	Expect(err).Should(HaveOccurred())
+}
+
+func TestServiceAccounts_SsoProvider_MAS_SSO(t *testing.T)  {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *keycloak.KeycloakConfig) {
+		c.SelectSSOProvider = keycloak.MAS_SSO
+	})
+	defer teardown()
+
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account, nil)
+	sp,resp, err := client.SecurityApi.GetSsoProvider(ctx)
+	Expect(err).ShouldNot(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(sp.BaseUrl).To(Equal(test.TestServices.KeycloakConfig.BaseURL))
+	Expect(sp.TokenUrl).To(Equal(test.TestServices.KeycloakConfig.BaseURL +"/auth/realms/rhoas/protocol/openid-connect/token"))
+}
+
+func TestServiceAccounts_SsoProvider_SSO(t *testing.T)  {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *keycloak.KeycloakConfig) {
+		c.SelectSSOProvider = keycloak.REDHAT_SSO
+	})
+	defer teardown()
+
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account, nil)
+
+	sp,resp, err := client.SecurityApi.GetSsoProvider(ctx)
+	Expect(err).ShouldNot(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(sp.BaseUrl).To(Equal("https://sso.redhat.com"))
+	Expect(sp.TokenUrl).To(Equal("https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"))
 }
 
 //Todo Temporary commenting out the test

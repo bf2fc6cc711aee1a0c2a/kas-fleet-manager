@@ -100,6 +100,10 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1ErrorsRouter.HandleFunc("", errorsHandler.List).Methods(http.MethodGet)
 	apiV1ErrorsRouter.HandleFunc("/{id}", errorsHandler.Get).Methods(http.MethodGet)
 
+	apiV1SsoProvider := apiV1Router.Path("/sso_providers").Subrouter()
+	apiV1SsoProvider.HandleFunc("", serviceAccountsHandler.GetSsoProvider).Methods(http.MethodGet)
+	apiV1SsoProvider.Use(authorizeMiddleware)
+
 	v1Collections := []api.CollectionMetadata{}
 
 	//  /kafkas
@@ -176,6 +180,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).
 		Name(logger.NewLogEvent("get-service-accounts", "get a service account by id").ToString()).
 		Methods(http.MethodGet)
+
 
 	apiV1ServiceAccountsRouter.Use(requireIssuer)
 	apiV1ServiceAccountsRouter.Use(requireOrgID)
