@@ -249,6 +249,16 @@ components:
                       type: string
                     bf2.org/placementId:
                       type: string
+                labels:
+                  type: object
+                  required:
+                    - bf2.org/kafkaInstanceProfileType
+                    - bf2.org/kafkaInstanceProfileQuotaConsumed
+                  properties:
+                    bf2.org/kafkaInstanceProfileType:
+                      type: string
+                    bf2.org/kafkaInstanceProfileQuotaConsumed:
+                      type: string 
 
             spec:
               type: object
@@ -579,6 +589,9 @@ components:
           annotations:
             bf2.org/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
             bf2.org/placementId: ""
+          labels:
+            bf2.org/kafkaInstanceProfileType: "standard"
+            bf2.org/kafkaInstanceProfileQuotaConsumed: "1"
         spec:
           capacity:
             ingressThroughputPerSec: 4Mi
