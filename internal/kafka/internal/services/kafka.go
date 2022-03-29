@@ -19,6 +19,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 
+	"strconv"
 	"time"
 
 	"github.com/golang/glog"
@@ -1026,6 +1027,10 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 			Annotations: map[string]string{
 				"bf2.org/id":          kafkaRequest.ID,
 				"bf2.org/placementId": kafkaRequest.PlacementId,
+			},
+			Labels: map[string]string{
+				"bf2.org/kafkaInstanceProfileType":          kafkaRequest.InstanceType,
+				"bf2.org/kafkaInstanceProfileQuotaConsumed": strconv.Itoa(k.QuotaConsumed),
 			},
 		},
 		Spec: managedkafka.ManagedKafkaSpec{

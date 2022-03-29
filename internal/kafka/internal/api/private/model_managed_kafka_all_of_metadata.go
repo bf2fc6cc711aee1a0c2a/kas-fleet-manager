@@ -14,4 +14,5 @@ type ManagedKafkaAllOfMetadata struct {
 	Name        string                               `json:"name,omitempty"`
 	Namespace   string                               `json:"namespace,omitempty"`
 	Annotations ManagedKafkaAllOfMetadataAnnotations `json:"annotations,omitempty"`
+	Labels      ManagedKafkaAllOfMetadataLabels      `json:"labels,omitempty"`
 }
