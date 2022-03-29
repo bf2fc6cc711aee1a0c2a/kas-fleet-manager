@@ -890,6 +890,8 @@ components:
               type: string
             instance_type:
               type: string
+            instance_type_name:
+              type: string
             reauthentication_enabled:
               type: boolean
             kafka_storage_size:
@@ -1409,8 +1411,8 @@ components:
         type: string
       required: false
       examples:
-        eval_instance_type:
-          value: "eval"
+        developer_instance_type:
+          value: "developer"
         standard_instance_type:
           value: "standard"
   securitySchemes:

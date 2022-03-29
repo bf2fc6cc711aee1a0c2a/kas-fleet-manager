@@ -26,7 +26,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 		owner             string
 		kafkaInstanceType types.KafkaInstanceType
 		hasStandardQuota  bool
-		hasEvalQuota      bool
+		hasDeveloperQuota bool
 	}
 	tests := []struct {
 		name    string
@@ -76,7 +76,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"",
 				false,
 				"testUser",
-				types.EVAL,
+				types.DEVELOPER,
 				true,
 				false,
 			},
@@ -187,11 +187,11 @@ func Test_AMSCheckQuota(t *testing.T) {
 			}
 			sq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka, types.STANDARD)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
-			eq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka, types.EVAL)
+			eq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka, types.DEVELOPER)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			gomega.Expect(sq).To(gomega.Equal(tt.args.hasStandardQuota))
 			fmt.Printf("eq is %v\n", eq)
-			gomega.Expect(eq).To(gomega.Equal(tt.args.hasEvalQuota))
+			gomega.Expect(eq).To(gomega.Equal(tt.args.hasDeveloperQuota))
 
 			_, err = quotaService.ReserveQuota(kafka, tt.args.kafkaInstanceType)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))

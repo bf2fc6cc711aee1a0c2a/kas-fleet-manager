@@ -15,7 +15,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -54,7 +55,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -93,7 +95,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -118,7 +121,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -143,7 +147,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                      "x1",
@@ -168,7 +173,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -193,7 +199,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -218,7 +225,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -243,7 +251,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -268,7 +277,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								EgressThroughputPerSec:      "30Mi",
@@ -293,7 +303,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -319,7 +330,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -345,7 +357,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -371,7 +384,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -397,7 +411,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -448,8 +463,9 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id:    "standard",
-						Sizes: []KafkaInstanceSize{},
+						Id:          "standard",
+						DisplayName: "Standard",
+						Sizes:       []KafkaInstanceSize{},
 					},
 				},
 			},
@@ -460,7 +476,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -504,7 +521,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -530,7 +548,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -555,7 +574,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -580,7 +600,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -604,7 +625,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "standard",
+						Id:          "standard",
+						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
@@ -629,7 +651,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
-						Id: "invalid",
+						Id:          "invalid",
+						DisplayName: "Invalid",
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",

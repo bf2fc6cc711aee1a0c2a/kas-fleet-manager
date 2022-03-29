@@ -11,11 +11,11 @@
 #       supported_instance_type:
 #           standard:
 #             limit: 5
-#           eval: {}
+#           developer: {}
 #     ...
 #     
-#     With the above configuration, up to 5 'standard' Kafka instances can be created in the us-east-1 region. Since there is no region limit set for 'eval',
-#     KAS Fleet Manager will allow creation of 'eval' Kafka instances in the us-east-1 region as long as a data plane cluster is available in this region 
+#     With the above configuration, up to 5 'standard' Kafka instances can be created in the us-east-1 region. Since there is no region limit set for 'developer',
+#     KAS Fleet Manager will allow creation of 'developer' Kafka instances in the us-east-1 region as long as a data plane cluster is available in this region 
 #     (i.e. is schedulable, has remaining capacity and supports this Kafka instance type)
 #     
 #     Note: If manual scaling is enabled, please ensure that the limits you configure here matches/must not exceed the kafka_instance_limits of your data
@@ -30,4 +30,4 @@ supported_providers:
         default: true # only one default region is allowed per cloud provider
         supported_instance_type:
           standard: {}
-          eval: {}
+          developer: {}

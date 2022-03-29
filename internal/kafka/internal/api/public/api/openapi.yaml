@@ -613,8 +613,8 @@ paths:
         style: form
       - description: The Kafka instance type to filter the results by
         examples:
-          eval_instance_type:
-            value: eval
+          developer_instance_type:
+            value: developer
           standard_instance_type:
             value: standard
         explode: true
@@ -1494,8 +1494,8 @@ components:
     instance_type:
       description: The Kafka instance type to filter the results by
       examples:
-        eval_instance_type:
-          value: eval
+        developer_instance_type:
+          value: developer
         standard_instance_type:
           value: standard
       explode: true
@@ -1810,6 +1810,8 @@ components:
         version:
           type: string
         instance_type:
+          type: string
+        instance_type_name:
           type: string
         reauthentication_enabled:
           type: boolean

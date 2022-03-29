@@ -1,10 +1,11 @@
 package kafka_mgrs
 
 import (
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
-	"testing"
 
 	"github.com/onsi/gomega"
 
@@ -146,7 +147,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 			},
 			// 10 total capacity
 			// no cloud provider limits
-			// 5 standard instances used, 3 eval instances used
+			// 5 standard instances used, 3 developer instances used
 			// ==> expect 5 more standard instances to be available
 			expected: map[string]map[string]float64{
 				"us-east-1": {
@@ -155,7 +156,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 			},
 		},
 		{
-			name: "expected available capacity with no cloud provider limit and existing eval instances",
+			name: "expected available capacity with no cloud provider limit and existing developer instances",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					DeprovisionKafkaForUsersFunc: nil,
@@ -171,7 +172,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 							Schedulable:           true,
 							KafkaInstanceLimit:    10,
 							Status:                "ready",
-							SupportedInstanceType: "standard,eval",
+							SupportedInstanceType: "standard,developer",
 						},
 					}),
 				},
@@ -186,8 +187,8 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 										Name:    "us-east-1",
 										Default: true,
 										SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
-											"standard": {Limit: nil},
-											"eval":     {Limit: nil},
+											"standard":  {Limit: nil},
+											"developer": {Limit: nil},
 										},
 									},
 								},
@@ -205,7 +206,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 					},
 					{
 						Region:        "us-east-1",
-						InstanceType:  "eval",
+						InstanceType:  "developer",
 						ClusterId:     "a",
 						Count:         3,
 						CloudProvider: "aws",
@@ -215,13 +216,13 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 			// 10 total capacity
 			// no cloud provider limits
 			// 5 standard instances used
-			// 3 eval instances used
+			// 3 developer instances used
 			// ==> expect 2 more standard instances to be available
-			// ==> expect 2 more eval instances to be available
+			// ==> expect 2 more developer instances to be available
 			expected: map[string]map[string]float64{
 				"us-east-1": {
-					"standard": 2,
-					"eval":     2,
+					"standard":  2,
+					"developer": 2,
 				},
 			},
 		},
@@ -302,7 +303,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 							Schedulable:           true,
 							KafkaInstanceLimit:    10,
 							Status:                "ready",
-							SupportedInstanceType: "eval,standard",
+							SupportedInstanceType: "developer,standard",
 						},
 					}),
 				},
@@ -317,8 +318,8 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 										Name:    "us-east-1",
 										Default: true,
 										SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
-											"standard": {Limit: &cloudProviderStandardLimit},
-											"eval":     {Limit: nil},
+											"standard":  {Limit: &cloudProviderStandardLimit},
+											"developer": {Limit: nil},
 										},
 									},
 								},
@@ -336,7 +337,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 					},
 					{
 						Region:        "us-east-1",
-						InstanceType:  "eval",
+						InstanceType:  "developer",
 						ClusterId:     "a",
 						Count:         4,
 						CloudProvider: "aws",
@@ -346,13 +347,13 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 			// 10 total capacity
 			// cloud provider limit of 5 standard instances
 			// 4 standard instances used
-			// 4 eval instances used
+			// 4 developer instances used
 			// ==> expect 1 more standard instance to be available
-			// ==> expect 2 more eval instance to be available
+			// ==> expect 2 more developer instance to be available
 			expected: map[string]map[string]float64{
 				"us-east-1": {
-					"standard": 1,
-					"eval":     2,
+					"standard":  1,
+					"developer": 2,
 				},
 			},
 		},

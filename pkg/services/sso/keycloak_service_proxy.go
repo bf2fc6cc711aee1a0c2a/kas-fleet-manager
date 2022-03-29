@@ -91,7 +91,7 @@ func (r *keycloakServiceProxy) IsKafkaClientExist(clientId string) *errors.Servi
 }
 
 func (r *keycloakServiceProxy) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
-	if token, err := tokenForServiceAPIHandler(ctx, r); err!= nil {
+	if token, err := tokenForServiceAPIHandler(ctx, r); err != nil {
 		return nil, err
 	} else {
 		return r.service.CreateServiceAccount(token, serviceAccountRequest, ctx)
@@ -99,7 +99,7 @@ func (r *keycloakServiceProxy) CreateServiceAccount(serviceAccountRequest *api.S
 }
 
 func (r *keycloakServiceProxy) DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError {
-	if token, err := tokenForServiceAPIHandler(ctx, r); err!= nil {
+	if token, err := tokenForServiceAPIHandler(ctx, r); err != nil {
 		return err
 	} else {
 		return r.service.DeleteServiceAccount(token, ctx, clientId)
@@ -107,7 +107,7 @@ func (r *keycloakServiceProxy) DeleteServiceAccount(ctx context.Context, clientI
 }
 
 func (r *keycloakServiceProxy) ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
-	if token, err := tokenForServiceAPIHandler(ctx, r); err!= nil {
+	if token, err := tokenForServiceAPIHandler(ctx, r); err != nil {
 		return nil, err
 	} else {
 		return r.service.ResetServiceAccountCredentials(token, ctx, clientId)
@@ -115,11 +115,11 @@ func (r *keycloakServiceProxy) ResetServiceAccountCredentials(ctx context.Contex
 }
 
 func (r *keycloakServiceProxy) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
-	 if token, err := tokenForServiceAPIHandler(ctx, r); err!= nil {
-		 return nil, err
-	 }else {
-		 return r.service.ListServiceAcc(token, ctx, first, max)
-	 }
+	if token, err := tokenForServiceAPIHandler(ctx, r); err != nil {
+		return nil, err
+	} else {
+		return r.service.ListServiceAcc(token, ctx, first, max)
+	}
 }
 
 func (r *keycloakServiceProxy) RegisterKasFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
@@ -139,7 +139,7 @@ func (r *keycloakServiceProxy) DeRegisterKasFleetshardOperatorServiceAccount(age
 }
 
 func (r *keycloakServiceProxy) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
-	if token, err := tokenForServiceAPIHandler(ctx, r); err!= nil {
+	if token, err := tokenForServiceAPIHandler(ctx, r); err != nil {
 		return nil, err
 	} else {
 		return r.service.GetServiceAccountById(token, ctx, id)
@@ -147,7 +147,7 @@ func (r *keycloakServiceProxy) GetServiceAccountById(ctx context.Context, id str
 }
 
 func (r *keycloakServiceProxy) GetServiceAccountByClientId(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
-	if token, err := tokenForServiceAPIHandler(ctx, r); err!= nil {
+	if token, err := tokenForServiceAPIHandler(ctx, r); err != nil {
 		return nil, err
 	} else {
 		return r.service.GetServiceAccountByClientId(token, ctx, clientId)

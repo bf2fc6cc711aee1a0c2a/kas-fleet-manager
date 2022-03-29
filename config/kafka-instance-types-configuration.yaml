@@ -1,8 +1,9 @@
-# This configuration defines a list of supported Kafka instance types and their available sizes for KAS Fleet Manager.
+# This configuration defines a list of supported Kafka instance types and their available sizes for KAS Fleet Manager. 
 # Modify this file to add additional Kafka instance types and sizes or change the default values listed below.
-#
+# 
 # The following properties must be defined for each Kafka instance type:
 #   - id: Identifier for the Kafka instance type. Each instance type name should be unique.
+#   - display_name: human readable value of an instance type
 #   - sizes: A list of sizes available for this instance type (should not be an empty list)
 #
 # The following properties must be defined for each size (all values must be larger than '0'):
@@ -20,6 +21,7 @@
 ---
 supported_instance_types:
   - id: standard
+    display_name: Standard
     sizes:
     - id: x1
       ingressThroughputPerSec: "50Mi"
@@ -32,7 +34,8 @@ supported_instance_types:
       quotaConsumed: 1
       quotaType: "rhosak"
       capacityConsumed: 1
-  - id: eval
+  - id: developer
+    display_name: Trial
     sizes:
     - id: x1
       ingressThroughputPerSec: "30Mi"
