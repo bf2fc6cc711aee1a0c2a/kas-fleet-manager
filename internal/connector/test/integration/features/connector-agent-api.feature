@@ -1028,7 +1028,7 @@ Feature: connector agent API
 
     # Connectors that were assigning the cluster get updated to not refer to them.
     Given I am logged in as "Jimmy"
-    And I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".namespace_id" selection to match "null"
+    And I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".namespace_id" selection to match "null"
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
     And the ".desired_state" selection from the response should match "unassigned"
@@ -1135,7 +1135,7 @@ Feature: connector agent API
     #-----------------------------------------------------------------------------------------------------------------
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
-    Given I wait up to "5" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
+    Given I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
     When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments"
     Then the ".total" selection from the response should match "1"
     Given I store the ".items[0].id" selection from the response as ${connector_deployment_id}
@@ -1149,7 +1149,7 @@ Feature: connector agent API
     Then the response code should be 204
 
     Given I am logged in as "Bobby"
-    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".status" selection to match "ready"
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".status" selection to match "ready"
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the ".status.state" selection from the response should match "ready"
 
@@ -1168,7 +1168,7 @@ Feature: connector agent API
 
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
-    Given I wait up to "5" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "stopped"
+    Given I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "stopped"
     When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
     Then the ".spec.desired_state" selection from the response should match "stopped"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
@@ -1198,7 +1198,7 @@ Feature: connector agent API
 
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
-    Given I wait up to "5" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
+    Given I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
     When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments"
     Then the ".total" selection from the response should match "1"
     And the ".items[0].spec.desired_state" selection from the response should match "ready"
@@ -1235,7 +1235,7 @@ Feature: connector agent API
 
     Given I am logged in as "Shard"
     And I set the "Authorization" header to "Bearer ${shard_token}"
-    And I wait up to "5" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "deleted"
+    And I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "deleted"
     When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
     Then the ".spec.desired_state" selection from the response should match "deleted"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
@@ -1248,7 +1248,7 @@ Feature: connector agent API
     Then the response code should be 204
 
     Given I am logged in as "Bobby"
-    And I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
+    And I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 404
 
