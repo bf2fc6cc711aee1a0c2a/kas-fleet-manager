@@ -11,10 +11,11 @@ import (
 
 func TestCapacityLimitReports(t *testing.T) {
 	tests := []struct {
-		name     string
-		request  dbapi.KafkaRequest
-		config   config.KafkaConfig
-		negative bool
+		name        string
+		request     dbapi.KafkaRequest
+		config      config.KafkaConfig
+		negative    bool
+		errExpected bool
 	}{
 		{
 			name: "Size exists for the instance type",
@@ -36,7 +37,8 @@ func TestCapacityLimitReports(t *testing.T) {
 					Configuration: config.SupportedKafkaInstanceTypesConfig{
 						SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
 							{
-								Id: "standard",
+								Id:          "standard",
+								DisplayName: "Standard",
 								Sizes: []config.KafkaInstanceSize{
 									{
 										Id:                          "x1",
@@ -56,7 +58,8 @@ func TestCapacityLimitReports(t *testing.T) {
 					},
 				},
 			},
-			negative: false,
+			negative:    false,
+			errExpected: false,
 		},
 		{
 			name: "Size doesn't exist for the instance type",
@@ -69,7 +72,7 @@ func TestCapacityLimitReports(t *testing.T) {
 				Name:             "test-cluster",
 				Status:           "ready",
 				KafkaStorageSize: "60GB",
-				InstanceType:     "eval",
+				InstanceType:     "developer",
 				QuotaType:        "rhosak",
 				SizeId:           "x1",
 			},
@@ -78,7 +81,8 @@ func TestCapacityLimitReports(t *testing.T) {
 					Configuration: config.SupportedKafkaInstanceTypesConfig{
 						SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
 							{
-								Id: "standard",
+								Id:          "standard",
+								DisplayName: "Standard",
 								Sizes: []config.KafkaInstanceSize{
 									{
 										Id:                          "x1",
@@ -98,7 +102,8 @@ func TestCapacityLimitReports(t *testing.T) {
 					},
 				},
 			},
-			negative: true,
+			negative:    true,
+			errExpected: true,
 		},
 		{
 			name: "Size doesn't exist for the instance type",
@@ -120,7 +125,8 @@ func TestCapacityLimitReports(t *testing.T) {
 					Configuration: config.SupportedKafkaInstanceTypesConfig{
 						SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
 							{
-								Id: "standard",
+								Id:          "standard",
+								DisplayName: "Standard",
 								Sizes: []config.KafkaInstanceSize{
 									{
 										Id:                          "x2",
@@ -146,21 +152,25 @@ func TestCapacityLimitReports(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			kafkaRequest := PresentKafkaRequest(&test.request, test.config.BrowserUrl, &test.config)
-			if !test.negative {
-				gomega.Expect(kafkaRequest.IngressThroughputPerSec).ToNot(gomega.BeNil())
-				gomega.Expect(kafkaRequest.EgressThroughputPerSec).ToNot(gomega.BeNil())
-				gomega.Expect(kafkaRequest.TotalMaxConnections).ToNot(gomega.BeNil())
-				gomega.Expect(kafkaRequest.MaxConnectionAttemptsPerSec).ToNot(gomega.BeNil())
-				gomega.Expect(kafkaRequest.MaxDataRetentionPeriod).ToNot(gomega.BeNil())
-				gomega.Expect(kafkaRequest.MaxPartitions).ToNot(gomega.BeNil())
+			kafkaRequest, err := PresentKafkaRequest(&test.request, test.config.BrowserUrl, &test.config)
+			if !test.errExpected {
+				if !test.negative {
+					gomega.Expect(kafkaRequest.IngressThroughputPerSec).ToNot(gomega.BeNil())
+					gomega.Expect(kafkaRequest.EgressThroughputPerSec).ToNot(gomega.BeNil())
+					gomega.Expect(kafkaRequest.TotalMaxConnections).ToNot(gomega.BeNil())
+					gomega.Expect(kafkaRequest.MaxConnectionAttemptsPerSec).ToNot(gomega.BeNil())
+					gomega.Expect(kafkaRequest.MaxDataRetentionPeriod).ToNot(gomega.BeNil())
+					gomega.Expect(kafkaRequest.MaxPartitions).ToNot(gomega.BeNil())
+				} else {
+					gomega.Expect(kafkaRequest.IngressThroughputPerSec).To(gomega.BeEmpty())
+					gomega.Expect(kafkaRequest.EgressThroughputPerSec).To(gomega.BeEmpty())
+					gomega.Expect(kafkaRequest.TotalMaxConnections).To(gomega.BeZero())
+					gomega.Expect(kafkaRequest.MaxConnectionAttemptsPerSec).To(gomega.BeZero())
+					gomega.Expect(kafkaRequest.MaxDataRetentionPeriod).To(gomega.BeEmpty())
+					gomega.Expect(kafkaRequest.MaxPartitions).To(gomega.BeZero())
+				}
 			} else {
-				gomega.Expect(kafkaRequest.IngressThroughputPerSec).To(gomega.BeEmpty())
-				gomega.Expect(kafkaRequest.EgressThroughputPerSec).To(gomega.BeEmpty())
-				gomega.Expect(kafkaRequest.TotalMaxConnections).To(gomega.BeZero())
-				gomega.Expect(kafkaRequest.MaxConnectionAttemptsPerSec).To(gomega.BeZero())
-				gomega.Expect(kafkaRequest.MaxDataRetentionPeriod).To(gomega.BeEmpty())
-				gomega.Expect(kafkaRequest.MaxPartitions).To(gomega.BeZero())
+				gomega.Expect(err).ToNot(gomega.BeNil())
 			}
 		})
 	}
