@@ -36,19 +36,19 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "do not throw an error when instance limit control is disabled when checking eval instances",
+			name: "do not throw an error when instance limit control is disabled when checking developer instances",
 			fields: fields{
 				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: false,
 				},
 			},
 			args: args{
-				instanceType: types.EVAL,
+				instanceType: types.DEVELOPER,
 			},
 			want: true,
 		},
 		{
-			name: "return true when user is not part of the quota list and instance type is eval",
+			name: "return true when user is not part of the quota list and instance type is developer",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				QuotaManagementList: &quota_management.QuotaManagementListConfig{
@@ -57,7 +57,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 				},
 			},
 			args: args{
-				instanceType: types.EVAL,
+				instanceType: types.DEVELOPER,
 			},
 			want: true,
 		},
@@ -119,7 +119,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "return false when user is part of the quota list under an organisation and instance type is eval",
+			name: "return false when user is part of the quota list under an organisation and instance type is developer",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				QuotaManagementList: &quota_management.QuotaManagementListConfig{
@@ -136,7 +136,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 				},
 			},
 			args: args{
-				instanceType: types.EVAL,
+				instanceType: types.DEVELOPER,
 			},
 			want: false,
 		},
@@ -162,7 +162,8 @@ var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig
 	Configuration: config.SupportedKafkaInstanceTypesConfig{
 		SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
 			{
-				Id: "standard",
+				Id:          "standard",
+				DisplayName: "Standard",
 				Sizes: []config.KafkaInstanceSize{
 					{
 						Id:                          "x1",
@@ -180,7 +181,8 @@ var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig
 				},
 			},
 			{
-				Id: "eval",
+				Id:          "developer",
+				DisplayName: "Trial",
 				Sizes: []config.KafkaInstanceSize{
 					{
 						Id:                          "x1",
@@ -262,7 +264,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 				},
 			},
 			args: args{
-				instanceType: types.EVAL,
+				instanceType: types.DEVELOPER,
 			},
 			wantErr: nil,
 		},
@@ -283,13 +285,13 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 				},
 			},
 			args: args{
-				instanceType: types.EVAL,
+				instanceType: types.DEVELOPER,
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
-			wantErr: errors.GeneralError(fmt.Sprintf("Failed to check kafka capacity for instance type '%s'", types.EVAL.String())),
+			wantErr: errors.GeneralError(fmt.Sprintf("Failed to check kafka capacity for instance type '%s'", types.DEVELOPER.String())),
 		},
 		{
 			name: "return an error when user in an organisation cannot create any more instances after exceeding allowed organisation limits",
@@ -326,7 +328,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			},
 		},
 		{
-			name: "return an error when user in the quota list attempts to create an eval instance",
+			name: "return an error when user in the quota list attempts to create an developer instance",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				QuotaManagementList: &quota_management.QuotaManagementListConfig{
@@ -342,20 +344,20 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 				},
 			},
 			args: args{
-				instanceType: types.EVAL,
+				instanceType: types.DEVELOPER,
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs(types.EVAL.String(), "username").
+					WithArgs(types.DEVELOPER.String(), "username").
 					WithReply(nil)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			wantErr: errors.InsufficientQuotaError("Insufficient Quota"),
 		},
 		{
-			name: "return an error when user is not allowed in their org and they cannot create any more instances eval instances after exceeding default allowed user limits",
+			name: "return an error when user is not allowed in their org and they cannot create any more instances developer instances after exceeding default allowed user limits",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				QuotaManagementList: &quota_management.QuotaManagementListConfig{
@@ -375,11 +377,11 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs(types.EVAL.String(), "username").
+					WithArgs(types.DEVELOPER.String(), "username").
 					WithReply(converters.ConvertKafkaRequest(
 						buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 							kafkaRequest.Owner = "username"
-							kafkaRequest.InstanceType = types.EVAL.String()
+							kafkaRequest.InstanceType = types.DEVELOPER.String()
 							kafkaRequest.OrganisationId = "org-id"
 						})))
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -390,7 +392,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 				Code:     5,
 			},
 			args: args{
-				instanceType: types.EVAL,
+				instanceType: types.DEVELOPER,
 			},
 		},
 		{
@@ -424,7 +426,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "do not return an error when user who's not in the quota list can eval instances",
+			name: "do not return an error when user who's not in the quota list can developer instances",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				QuotaManagementList: &quota_management.QuotaManagementListConfig{
@@ -435,12 +437,12 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs(types.EVAL.String(), "username").
+					WithArgs(types.DEVELOPER.String(), "username").
 					WithReply(nil)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			args: args{
-				instanceType: types.EVAL,
+				instanceType: types.DEVELOPER,
 			},
 			wantErr: nil,
 		},

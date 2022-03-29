@@ -90,21 +90,21 @@ func buildManualCluster(kafkaInstanceLimit int, supportedInstanceType, region st
 	}
 }
 
-func buildProviderConfiguration(regionName string, standardLimit, evalLimit int, noLimit bool) *config.ProviderConfig {
+func buildProviderConfiguration(regionName string, standardLimit, developerLimit int, noLimit bool) *config.ProviderConfig {
 
 	instanceTypeLimits := config.InstanceTypeMap{
 		"standard": config.InstanceTypeConfig{
 			Limit: &standardLimit,
 		},
-		"eval": config.InstanceTypeConfig{
-			Limit: &evalLimit,
+		"developer": config.InstanceTypeConfig{
+			Limit: &developerLimit,
 		},
 	}
 
 	if noLimit {
 		instanceTypeLimits = config.InstanceTypeMap{
-			"standard": config.InstanceTypeConfig{},
-			"eval":     config.InstanceTypeConfig{},
+			"standard":  config.InstanceTypeConfig{},
+			"developer": config.InstanceTypeConfig{},
 		}
 	}
 
@@ -131,7 +131,8 @@ var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig
 	Configuration: config.SupportedKafkaInstanceTypesConfig{
 		SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
 			{
-				Id: "standard",
+				Id:          "standard",
+				DisplayName: "Standard",
 				Sizes: []config.KafkaInstanceSize{
 					{
 						Id:                          "x1",
@@ -149,7 +150,8 @@ var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig
 				},
 			},
 			{
-				Id: "eval",
+				Id:          "developer",
+				DisplayName: "Trial",
 				Sizes: []config.KafkaInstanceSize{
 					{
 						Id:                          "x2",
@@ -1029,7 +1031,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 		{
-			name: "unsuccessful registering kafka job with limit set to zero for eval instance",
+			name: "unsuccessful registering kafka job with limit set to zero for developer instance",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				clusterService:         nil,
@@ -1054,7 +1056,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
-					kafkaRequest.InstanceType = types.EVAL.String()
+					kafkaRequest.InstanceType = types.DEVELOPER.String()
 					kafkaRequest.SizeId = "x2"
 				}),
 			},
@@ -1065,7 +1067,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 		{
-			name: "registering kafka job eval disabled",
+			name: "registering kafka job developer disabled",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				clusterService:         nil,
@@ -1075,7 +1077,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					KafkaCapacity: config.KafkaCapacityConfig{},
 					Quota: &config.KafkaQuotaConfig{
 						Type:                   api.QuotaManagementListQuotaType.String(),
-						AllowEvaluatorInstance: false,
+						AllowDeveloperInstance: false,
 					},
 					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
 				},
@@ -1098,7 +1100,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
-					kafkaRequest.InstanceType = types.EVAL.String()
+					kafkaRequest.InstanceType = types.DEVELOPER.String()
 				}),
 			},
 			error: errorCheck{
@@ -2034,7 +2036,7 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests" SET "status"=$1,"updated_at"=$2 WHERE instance_type = $3 AND created_at  <=  $4 AND status NOT IN ($5,$6)`)
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests" SET "status"=$1,"updated_at"=$2 WHERE instance_type = $3 AND created_at <= $4 AND status NOT IN ($5,$6)`)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
@@ -2162,7 +2164,7 @@ func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
 					},
 					{
 						"region":        "eu-west-1",
-						"instance_type": "eval",
+						"instance_type": "developer",
 						"cluster_id":    testClusterID,
 						"Count":         1,
 					},
