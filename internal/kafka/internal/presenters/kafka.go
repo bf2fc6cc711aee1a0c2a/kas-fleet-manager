@@ -7,6 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 )
 
@@ -34,7 +35,7 @@ func ConvertKafkaRequest(kafkaRequestPayload public.KafkaRequestPayload, dbKafka
 }
 
 // PresentKafkaRequest - create KafkaRequest in an appropriate format ready to be returned by the API
-func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaConfig) public.KafkaRequest {
+func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaConfig) (public.KafkaRequest, *errors.ServiceError) {
 	reference := PresentReference(kafkaRequest.ID, kafkaRequest)
 
 	var ingressThroughputPerSec, egressThroughputPerSec, maxDataRetentionPeriod string
@@ -51,6 +52,12 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 			maxDataRetentionPeriod = kafkaConfig.MaxDataRetentionPeriod
 			maxConnectionAttemptsPerSec = kafkaConfig.MaxConnectionAttemptsPerSec
 		}
+	}
+
+	displayName, err := getDisplayName(kafkaRequest.InstanceType, config)
+
+	if err != nil {
+		return public.KafkaRequest{}, err
 	}
 
 	return public.KafkaRequest{
@@ -73,13 +80,14 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 		KafkaStorageSize:            kafkaRequest.KafkaStorageSize,
 		BrowserUrl:                  fmt.Sprintf("%s/%s/dashboard", strings.TrimSuffix(config.BrowserUrl, "/"), reference.Id),
 		SizeId:                      kafkaRequest.SizeId,
+		InstanceTypeName:            displayName,
 		IngressThroughputPerSec:     ingressThroughputPerSec,
 		EgressThroughputPerSec:      egressThroughputPerSec,
 		TotalMaxConnections:         totalMaxConnections,
 		MaxPartitions:               maxPartitions,
 		MaxDataRetentionPeriod:      maxDataRetentionPeriod,
 		MaxConnectionAttemptsPerSec: maxConnectionAttemptsPerSec,
-	}
+	}, nil
 }
 
 func setBootstrapServerHost(bootstrapServerHost string) string {
@@ -87,4 +95,15 @@ func setBootstrapServerHost(bootstrapServerHost string) string {
 		return fmt.Sprintf("%s:443", bootstrapServerHost)
 	}
 	return bootstrapServerHost
+}
+
+func getDisplayName(instanceType string, config *config.KafkaConfig) (string, *errors.ServiceError) {
+	if config != nil && strings.Trim(instanceType, " ") != "" {
+		kafkaInstanceType, err := config.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
+		if err != nil {
+			return "", errors.NewWithCause(errors.ErrorGeneral, err, "Unable to get kafka display name for '%s' instance type", instanceType)
+		}
+		return kafkaInstanceType.DisplayName, nil
+	}
+	return "", nil
 }

@@ -155,12 +155,12 @@ parameters:
 - name: SUPPORTED_CLOUD_PROVIDERS
   displayName: Supported Cloud Providers
   description: A list of supported cloud providers in a yaml format.
-  value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, eval: {}}}]}]"
+  value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, developer: {}}}]}]"
 
 - name: SUPPORTED_INSTANCE_TYPES
   displayName: Supported Kafka instance types
   description: A list of supported Kafka instance types in a yaml format.
-  value: "[{id: eval, sizes: [{id: x1, ingressThroughputPerSec: 30Mi, egressThroughputPerSec: 30Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1000, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, capacityConsumed: 1, quotaType: rhosak, quotaConsumed: 1}]}, {id: standard, sizes: [{id: x1, ingressThroughputPerSec: 50Mi, egressThroughputPerSec: 100Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1500, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, capacityConsumed: 1, quotaType: rhosak, quotaConsumed: 1}]}]"
+  value: "[{id: developer, display_name: Trial, sizes: [{id: x1, ingressThroughputPerSec: 30Mi, egressThroughputPerSec: 30Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1000, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, capacityConsumed: 1, quotaType: rhosak, quotaConsumed: 1}]}, {id: standard, display_name: Standard, sizes: [{id: x1, ingressThroughputPerSec: 50Mi, egressThroughputPerSec: 100Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1500, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, capacityConsumed: 1, quotaType: rhosak, quotaConsumed: 1}]}]"
 
 - name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
   displayName: Enable Kafka TLS
@@ -378,9 +378,9 @@ parameters:
   description: The compute machine type of each node on a new created cluster.
   value: "m5.2xlarge"
 
-- name: ALLOW_EVALUATOR_INSTANCE
-  displayName: Allow Evaluator Instance
-  description: Allow the creation of one kafka evaluator instance per user
+- name: ALLOW_DEVELOPER_INSTANCE
+  displayName: Allow Developer Instance
+  description: Allow the creation of one kafka developer instance per user
   value: "true"
 
 - name: QUOTA_TYPE
@@ -926,7 +926,7 @@ objects:
             - --kubeconfig=/secrets/service/kubeconfig
             - --kas-fleetshard-poll-interval=${KAS_FLEETSHARD_POLL_INTERVAL}
             - --kas-fleetshard-resync-interval=${KAS_FLEETSHARD_RESYNC_INTERVAL}
-            - --allow-evaluator-instance=${ALLOW_EVALUATOR_INSTANCE}
+            - --allow-developer-instance=${ALLOW_DEVELOPER_INSTANCE}
             - --quota-type=${QUOTA_TYPE}
             - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
             - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}

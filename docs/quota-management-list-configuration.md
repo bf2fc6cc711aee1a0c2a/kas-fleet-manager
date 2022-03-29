@@ -3,9 +3,9 @@
 
 The type and the quantity of kafka instances a user can create is controlled via the 
 [Quota Management List](../config/quota-management-list-configuration.yaml).
-If a user is not in the _Quota Management List_, only EVAL kafka instances will be allowed.
+If a user is not in the _Quota Management List_, only DEVELOPER kafka instances will be allowed.
 
-The difference between STANDARD and EVAL instance is its lifespan: EVAL instance will be deleted automatically after 
+The difference between STANDARD and DEVELOPER instance is its lifespan: DEVELOPER instance will be deleted automatically after 
 48 hours.
 
 ### Adding organisations and users to the Quota Management List

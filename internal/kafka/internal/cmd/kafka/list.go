@@ -79,7 +79,10 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	}
 
 	for _, kafkaRequest := range kafkaList {
-		converted := presenters.PresentKafkaRequest(kafkaRequest, kafkaConfig)
+		converted, err := presenters.PresentKafkaRequest(kafkaRequest, kafkaConfig)
+		if err != nil {
+			glog.Fatalf("Failed to format kafka request: %s", err.Error())
+		}
 		kafkaRequestList.Items = append(kafkaRequestList.Items, converted)
 	}
 
