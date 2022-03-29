@@ -470,10 +470,20 @@ parameters:
   description: Strimzi operator OLM index image
   value: "quay.io/osd-addons/managed-kafka:production-82b42db"
 
+- name: STRIMZI_OLM_PACKAGE_NAME
+  displayName: Strimzi operator OLM package name
+  description: Strimzi operator OLM package name
+  value: "managed-kafka"
+
 - name: KAS_FLEETSHARD_OLM_INDEX_IMAGE
   displayName: kas-fleetshard operator OLM index image
   description: kas-fleetshard operator OLM index image
   value: "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
+
+- name: KAS_FLEETSHARD_OLM_PACKAGE_NAME
+  displayName: kas-fleetshard operator OLM package name
+  description: kas-fleetshard operator OLM package name
+  value: "kas-fleetshard-operator"
 
 - name: IMAGE_PULL_POLICY
   displayName: image pull policy
@@ -888,6 +898,8 @@ objects:
             - --reconciler-repeat-interval=${RECONCILER_REPEAT_INTERVAL}
             - --leader-election-reconciler-repeat-interval=${LEADER_ELECTION_RECONCILER_REPEAT_INTERVAL}
             - --leader-lease-expiration-time=${LEADER_LEASE_EXPIRATION_TIME}
+            - --strimzi-operator-package=${STRIMZI_OLM_PACKAGE_NAME}
+            - --kas-fleetshard-operator-package=${KAS_FLEETSHARD_OLM_PACKAGE_NAME}
             - -v=${GLOG_V}
             resources:
               requests:

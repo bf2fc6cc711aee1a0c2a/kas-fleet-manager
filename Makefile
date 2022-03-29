@@ -741,6 +741,9 @@ deploy/service: OBSERVABILITY_CONFIG_TAG ?= "main"
 deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
 deploy/service: STRIMZI_OPERATOR_ADDON_ID ?= "managed-kafka-qe"
 deploy/service: KAS_FLEETSHARD_ADDON_ID ?= "kas-fleetshard-operator-qe"
+deploy/service: STRIMZI_OLM_PACKAGE_NAME ?= "managed-kafka"
+deploy/service: KAS_FLEETSHARD_OLM_PACKAGE_NAME ?= "kas-fleetshard-operator"
+deploy/service: CLUSTER_LIST ?= "[]"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
@@ -791,6 +794,9 @@ deploy/service: deploy/envoy deploy/route
 		-p KAS_FLEETSHARD_ADDON_ID="${KAS_FLEETSHARD_ADDON_ID}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
 		-p CLUSTER_LOGGING_OPERATOR_ADDON_ID="${CLUSTER_LOGGING_OPERATOR_ADDON_ID}" \
+		-p STRIMZI_OLM_PACKAGE_NAME="${STRIMZI_OLM_PACKAGE_NAME}" \
+		-p KAS_FLEETSHARD_OLM_PACKAGE_NAME="${KAS_FLEETSHARD_OLM_PACKAGE_NAME}" \
+		-p CLUSTER_LIST="${CLUSTER_LIST}" \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 

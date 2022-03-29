@@ -3,10 +3,13 @@
 - [Deploying KAS Fleet Manager to OpenShift](#deploying-kas-fleet-manager-to-openshift)
   - [Create a Namespace](#create-a-namespace)
   - [Build and Push the KAS Fleet Manager Image to a Registry](#build-and-push-the-kas-fleet-manager-image-to-a-registry)
+    - [Build and Push to the OpenShift Internal Registry](#build-and-push-to-the-openshift-internal-registry)
+    - [Build and Push to your own Repository](#build-and-push-to-your-own-repository)
   - [Deploy the Database](#deploy-the-database)
   - [Create the secrets](#create-the-secrets)
   - [(Optional) Deploy the Observatorium Token Refresher](#optional-deploy-the-observatorium-token-refresher)
   - [Deploy KAS Fleet Manager](#deploy-kas-fleet-manager)
+    - [Using an Image from a Private External Registry](#using-an-image-from-a-private-external-registry)
   - [Access the service](#access-the-service)
   - [Removing KAS Fleet Manager from OpenShift](#removing-kas-fleet-manager-from-openshift)
 
@@ -166,6 +169,9 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `CLUSTER_LOGGING_OPERATOR_ADDON_ID`: The id of the cluster logging operator addon. Defaults to `''`.
 - `STRIMZI_OPERATOR_ADDON_ID`: The id of the Strimzi operator addon. Defaults to `managed-kafka-qe`.
 - `KAS_FLEETSHARD_ADDON_ID`: The id of the kas-fleetshard operator addon. Defaults to `kas-fleetshard-operator-qe`.
+- `CLUSTER_LIST`: The list of data plane cluster configuration to be used. This is to be used when scaling type is `manual`. Defaults to empty list.
+- `STRIMZI_OLM_PACKAGE_NAME`: Strimzi operator OLM package name. This is optional and to be defined when interacting with standalone data plane clusters. Defaults to `managed-kafka`.
+- `KAS_FLEETSHARD_OLM_PACKAGE_NAME`: kas-fleetshard operator OLM package name. This is optional and to be defined when interacting with standalone data plane clusters. Defaults to `kas-fleetshard-operator`.
 
 ### Using an Image from a Private External Registry
 If you are using a private external registry, a docker pull secret must be created in the namespace where KAS Fleet Manager is deployed and linked to the service account that KAS Fleet Manager uses.
