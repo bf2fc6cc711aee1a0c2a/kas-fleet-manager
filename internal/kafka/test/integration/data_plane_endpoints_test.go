@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -214,6 +215,21 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 }
 
 func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
+	kafkaInstancesizes := []config.KafkaInstanceSize{
+		{
+			Id:                          "x1",
+			QuotaConsumed:               2,
+			IngressThroughputPerSec:     "50Mi",
+			EgressThroughputPerSec:      "100Mi",
+			TotalMaxConnections:         3000,
+			MaxConnectionAttemptsPerSec: 100,
+			MaxDataRetentionSize:        "1000Gi",
+			MaxDataRetentionPeriod:      "P14D",
+			MaxPartitions:               1500,
+			QuotaType:                   "rhosak",
+			CapacityConsumed:            1,
+		},
+	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
@@ -224,7 +240,20 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			},
 			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
 		}
-	}, nil)
+	}, func(kafkaConfig *config.KafkaConfig) {
+		kafkaConfig.SupportedInstanceTypes.Configuration.SupportedKafkaInstanceTypes = []config.KafkaInstanceType{
+			{
+				Id:          types.STANDARD.String(),
+				DisplayName: "standard",
+				Sizes:       kafkaInstancesizes,
+			},
+			{
+				Id:          types.DEVELOPER.String(),
+				DisplayName: "developer",
+				Sizes:       kafkaInstancesizes,
+			},
+		}
+	})
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
 	ssoClientID := "some-sso-client-id"
@@ -354,6 +383,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	if err := db.Create(&testKafkas).Error; err != nil {
 		Expect(err).NotTo(HaveOccurred())
 		return
+
 	}
 
 	// updating KafkaStorageSize, so that later it can be validated against "PrivateClient.AgentClustersApi.GetKafkas()"
@@ -396,6 +426,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 				Expect(mk.Metadata.Name).To(Equal(k.Name))
 				Expect(mk.Metadata.Annotations.Bf2OrgPlacementId).To(Equal(k.PlacementId))
 				Expect(mk.Metadata.Annotations.Bf2OrgId).To(Equal(k.ID))
+				Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileType).To(Equal(k.InstanceType))
+				Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileQuotaConsumed).To(Equal(strconv.Itoa(kafkaInstancesizes[0].QuotaConsumed)))
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
 				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
 				Expect(mk.Spec.Versions.Kafka).To(Equal(k.DesiredKafkaVersion))
