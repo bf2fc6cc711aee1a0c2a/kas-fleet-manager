@@ -723,7 +723,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 				Region:                "us-east-1",
 				Schedulable:           true,
 				KafkaInstanceLimit:    10,
-				SupportedInstanceType: "standard,eval",
+				SupportedInstanceType: "standard,developer",
 			},
 			{
 				Name:                  "cluster2",
@@ -731,7 +731,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 				Region:                "us-east-1",
 				Schedulable:           true,
 				KafkaInstanceLimit:    5,
-				SupportedInstanceType: "eval,someOtherInstanceType",
+				SupportedInstanceType: "developer,someOtherInstanceType",
 			},
 			{
 				Name:                  "cluster3",
@@ -739,7 +739,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 				Region:                "us-east-1",
 				Schedulable:           true,
 				KafkaInstanceLimit:    15,
-				SupportedInstanceType: "standard,eval,someOtherInstanceType",
+				SupportedInstanceType: "standard,developer,someOtherInstanceType",
 			},
 			{
 				Name:                  "cluster4",
@@ -747,7 +747,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 				Region:                "us-east-1",
 				Schedulable:           true,
 				KafkaInstanceLimit:    6,
-				SupportedInstanceType: "eval",
+				SupportedInstanceType: "developer",
 			},
 			{
 				Name:                  "cluster5",
@@ -779,7 +779,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 				Region:                "eu-west-1",
 				Schedulable:           true,
 				KafkaInstanceLimit:    8,
-				SupportedInstanceType: "eval",
+				SupportedInstanceType: "developer",
 			},
 			{
 				Name:                  "cluster9",
@@ -787,7 +787,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 				Region:                "af-south-1",
 				Schedulable:           true,
 				KafkaInstanceLimit:    20,
-				SupportedInstanceType: "standard,eval",
+				SupportedInstanceType: "standard,developer",
 			},
 		},
 	}
@@ -795,20 +795,20 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		t.Errorf("failed to set data plane cluster configuration")
 	}
 
-	usEast1EvalMaxLimit := 36
-	usEast1EvalLimit := 18
+	usEast1DeveloperMaxLimit := 36
+	usEast1DeveloperLimit := 18
 	usEast1StandardLimit := 17
 	usEast1StandardLessThanMinimum := 5
 	usEast1StandardMoreThanMax := 50
 	usEast1SomeOtherInstanceTypeLimit := 12
 
 	euWest1StandardLimit := 4
-	euWest1EvalLimit := 8
+	euWest1DeveloperLimit := 8
 	euWest1StandardLessThanCapacity := 1
-	euWest1EvalMoreThanCapacity := 10
+	euWest1DeveloperMoreThanCapacity := 10
 
 	afSouth1StandardLimit := 15
-	afSouth1EvalLimit := 5
+	afSouth1DeveloperLimit := 5
 
 	zeroLimit := 0
 
@@ -828,8 +828,8 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 						Name:    "us-east-1",
 						Default: true,
 						SupportedInstanceTypes: InstanceTypeMap{
-							"standard": InstanceTypeConfig{},
-							"eval":     InstanceTypeConfig{},
+							"standard":  InstanceTypeConfig{},
+							"developer": InstanceTypeConfig{},
 						},
 					},
 				}),
@@ -847,7 +847,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 							"standard": InstanceTypeConfig{
 								Limit: &zeroLimit,
 							},
-							"eval": InstanceTypeConfig{
+							"developer": InstanceTypeConfig{
 								Limit: &zeroLimit,
 							},
 						},
@@ -857,7 +857,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "valid: standard limit set to 0 and eval has no limits",
+			name: "valid: standard limit set to 0 and developer has no limits",
 			fields: fields{
 				providersConfig: buildProviderConfig("aws", RegionList{
 					Region{
@@ -867,7 +867,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 							"standard": InstanceTypeConfig{
 								Limit: &zeroLimit,
 							},
-							"eval": InstanceTypeConfig{},
+							"developer": InstanceTypeConfig{},
 						},
 					},
 				}),
@@ -885,8 +885,8 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 							"standard": InstanceTypeConfig{
 								Limit: &euWest1StandardLimit,
 							},
-							"eval": InstanceTypeConfig{
-								Limit: &euWest1EvalLimit,
+							"developer": InstanceTypeConfig{
+								Limit: &euWest1DeveloperLimit,
 							},
 						},
 					},
@@ -905,8 +905,8 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 							"standard": InstanceTypeConfig{
 								Limit: &euWest1StandardLessThanCapacity,
 							},
-							"eval": InstanceTypeConfig{
-								Limit: &euWest1EvalMoreThanCapacity,
+							"developer": InstanceTypeConfig{
+								Limit: &euWest1DeveloperMoreThanCapacity,
 							},
 						},
 					},
@@ -925,8 +925,8 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 							"standard": InstanceTypeConfig{
 								Limit: &afSouth1StandardLimit,
 							},
-							"eval": InstanceTypeConfig{
-								Limit: &afSouth1EvalLimit,
+							"developer": InstanceTypeConfig{
+								Limit: &afSouth1DeveloperLimit,
 							},
 						},
 					},
@@ -945,8 +945,8 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 							"standard": InstanceTypeConfig{
 								Limit: &usEast1StandardLimit,
 							},
-							"eval": InstanceTypeConfig{
-								Limit: &usEast1EvalLimit,
+							"developer": InstanceTypeConfig{
+								Limit: &usEast1DeveloperLimit,
 							},
 							"someOtherInstanceType": InstanceTypeConfig{
 								Limit: &usEast1SomeOtherInstanceTypeLimit,
@@ -968,8 +968,8 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 							"standard": InstanceTypeConfig{
 								Limit: &usEast1StandardLimit,
 							},
-							"eval": InstanceTypeConfig{
-								Limit: &usEast1EvalMaxLimit,
+							"developer": InstanceTypeConfig{
+								Limit: &usEast1DeveloperMaxLimit,
 							},
 						},
 					},
@@ -988,8 +988,8 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 							"standard": InstanceTypeConfig{
 								Limit: &usEast1StandardMoreThanMax,
 							},
-							"eval": InstanceTypeConfig{
-								Limit: &usEast1EvalLimit,
+							"developer": InstanceTypeConfig{
+								Limit: &usEast1DeveloperLimit,
 							},
 							"someOtherInstanceType": InstanceTypeConfig{
 								Limit: &usEast1SomeOtherInstanceTypeLimit,
@@ -1001,7 +1001,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "valid: eval has no limit and standard limit is within the region min and max capacity for that instance type",
+			name: "valid: developer has no limit and standard limit is within the region min and max capacity for that instance type",
 			fields: fields{
 				providersConfig: buildProviderConfig("aws", RegionList{
 					Region{
@@ -1011,7 +1011,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 							"standard": InstanceTypeConfig{
 								Limit: &usEast1StandardLimit,
 							},
-							"eval": {},
+							"developer": {},
 						},
 					},
 				}),
@@ -1019,7 +1019,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "invalid: eval has no limit and standard limit is less than the region min capacity for that instance type",
+			name: "invalid: developer has no limit and standard limit is less than the region min capacity for that instance type",
 			fields: fields{
 				providersConfig: buildProviderConfig("aws", RegionList{
 					Region{
@@ -1029,7 +1029,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 							"standard": InstanceTypeConfig{
 								Limit: &usEast1StandardLessThanMinimum,
 							},
-							"eval": {},
+							"developer": {},
 						},
 					},
 				}),
@@ -1037,7 +1037,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid: eval has no limit and standard limit is more than the region max capacity for that instance type",
+			name: "invalid: developer has no limit and standard limit is more than the region max capacity for that instance type",
 			fields: fields{
 				providersConfig: buildProviderConfig("aws", RegionList{
 					Region{
@@ -1047,7 +1047,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 							"standard": InstanceTypeConfig{
 								Limit: &usEast1StandardMoreThanMax,
 							},
-							"eval": {},
+							"developer": {},
 						},
 					},
 				}),

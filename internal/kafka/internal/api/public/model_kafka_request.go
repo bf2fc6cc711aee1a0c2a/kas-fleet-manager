@@ -33,6 +33,7 @@ type KafkaRequest struct {
 	FailedReason                string    `json:"failed_reason,omitempty"`
 	Version                     string    `json:"version,omitempty"`
 	InstanceType                string    `json:"instance_type,omitempty"`
+	InstanceTypeName            string    `json:"instance_type_name,omitempty"`
 	ReauthenticationEnabled     bool      `json:"reauthentication_enabled"`
 	KafkaStorageSize            string    `json:"kafka_storage_size,omitempty"`
 	BrowserUrl                  string    `json:"browser_url,omitempty"`
