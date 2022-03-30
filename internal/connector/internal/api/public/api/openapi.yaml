@@ -2046,8 +2046,6 @@ components:
       allOf:
       - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
       description: An evaluation connector namespace create request
-      required:
-      - name
     ConnectorNamespaceList:
       allOf:
       - $ref: '#/components/schemas/List'
