@@ -215,7 +215,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               examples:
                 401Example:
-                  $ref: '#/components/examples/401Example'
+                  $ref : '#/components/examples/401Example'
         "403":
           description: User is not authorised to access the service
           content:
@@ -724,7 +724,7 @@ paths:
         '500':
           content:
             application/json:
-              schema: {}
+              schema: { }
               examples:
                 500Example:
                   $ref: '#/components/examples/500Example'
@@ -1291,7 +1291,7 @@ components:
     ServiceAccountListItem:
       description: ''
       allOf:
-        - $ref: '#/components/schemas/ObjectReference'
+        - $ref: "#/components/schemas/ObjectReference"
         - type: object
           properties:
             id:
@@ -1860,8 +1860,7 @@ components:
         kind: "Error"
         href: "/api/kafkas_mgmt/v1/errors/9"
         code: "KAFKAS-MGMT-9"
-        reason:
-          "error deleting syncset: OCM-EX-9: failed to delete syncset: ext-serviceapi-1ix03lndlmq0qfc7sita5sljv8e
+        reason: "error deleting syncset: OCM-EX-9: failed to delete syncset: ext-serviceapi-1ix03lndlmq0qfc7sita5sljv8e
           for cluster id: 1g5d88q0lrcdv4g7alb7slfgnj3dhbsj%!(EXTRA *errors.Error=identifier
           is '404', code is 'CLUSTERS-MGMT-404' and operation identifier is '1g5or50viu07oealuehrkc26dgftj1ac':
           Cluster '1g5d88q0lrcdv4g7alb7slfgnj3dhbsj' not found)"

@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/gorilla/mux"
 )
 
@@ -38,7 +39,8 @@ func (h supportedKafkaInstanceTypesHandler) ListSupportedKafkaInstanceTypes(w ht
 
 			regionInstanceTypeList, err := h.service.GetSupportedKafkaInstanceTypesByRegion(cloudProvider, cloudRegion)
 			if err != nil {
-				return nil, err
+				logger.Logger.Error(err)
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get supported Kafka instance types")
 			}
 
 			for _, regionInstanceType := range regionInstanceTypeList {
