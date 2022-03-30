@@ -17,12 +17,12 @@ import (
 )
 
 type ConnectorsConfig struct {
-	ConnectorEvalDuration          time.Duration           `json:"connector_eval_duration"`
-	ConnectorEvalOrganizations     []string                `json:"connector_eval_organizations"`
-	ConnectorNamespaceLifecycleAPI bool                    `json:"connector_namespace_lifecycle_api"`
-	ConnectorDisableCascadeDelete  bool                    `json:"connector_disable_cascade_delete"`
-	ConnectorCatalogDirs           []string                `json:"connector_types"`
-	CatalogEntries                 []ConnectorCatalogEntry `json:"connector_type_urls"`
+	ConnectorEvalDuration               time.Duration           `json:"connector_eval_duration"`
+	ConnectorEvalOrganizations          []string                `json:"connector_eval_organizations"`
+	ConnectorNamespaceLifecycleAPI      bool                    `json:"connector_namespace_lifecycle_api"`
+	ConnectorEnableUnassignedConnectors bool                    `json:"connector_enable_unassigned_connectors"`
+	ConnectorCatalogDirs                []string                `json:"connector_types"`
+	CatalogEntries                      []ConnectorCatalogEntry `json:"connector_type_urls"`
 }
 
 var _ environments.ConfigModule = &ConnectorsConfig{}
@@ -46,7 +46,7 @@ func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.DurationVar(&c.ConnectorEvalDuration, "connector-eval-duration", c.ConnectorEvalDuration, "Connector eval duration in golang duration format")
 	fs.StringArrayVar(&c.ConnectorEvalOrganizations, "connector-eval-organizations", c.ConnectorEvalOrganizations, "Connector eval organization IDs")
 	fs.BoolVar(&c.ConnectorNamespaceLifecycleAPI, "connector-namespace-lifecycle-api", c.ConnectorNamespaceLifecycleAPI, "Enable APIs to create, update, delete non-eval Namespaces")
-	fs.BoolVar(&c.ConnectorDisableCascadeDelete, "connector-disable-cascade-delete", c.ConnectorDisableCascadeDelete, "Disable Connectors cascade delete when deleting Namespaces, sets Connectors to 'unassigned' state instead")
+	fs.BoolVar(&c.ConnectorEnableUnassignedConnectors, "connector-enable-unassigned-connectors", c.ConnectorEnableUnassignedConnectors, "Enable support for 'unassigned' state for Connectors")
 }
 
 func (c *ConnectorsConfig) ReadFiles() error {

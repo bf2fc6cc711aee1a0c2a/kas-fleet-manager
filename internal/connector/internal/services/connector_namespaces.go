@@ -150,7 +150,8 @@ func (k *connectorNamespaceService) Get(ctx context.Context, namespaceID string)
 			ID: namespaceID,
 		},
 	}
-	if err := dbConn.First(result).Error; err != nil {
+	if err := dbConn.Preload("Annotations").Preload("TenantUser").Preload("TenantOrganisation").
+		First(result).Error; err != nil {
 		return nil, errors.GeneralError("failed to get connector namespace: %v", err)
 	}
 
@@ -208,13 +209,9 @@ func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []strin
 	}
 
 	// execute query
-	result := dbConn.
-		Preload("Annotations").
-		Preload("TenantUser").
-		Preload("TenantOrganisation").
-		Find(&resourceList)
-	if result.Error != nil {
-		return nil, nil, errors.GeneralError("failed to get connector namespaces: %v", result.Error)
+	if err := dbConn.Preload("Annotations").Preload("TenantUser").Preload("TenantOrganisation").
+		Find(&resourceList).Error; err != nil {
+		return nil, nil, errors.GeneralError("failed to get connector namespaces: %v", err)
 	}
 
 	// TODO: increment connector namespace metrics
@@ -399,8 +396,8 @@ func (k *connectorNamespaceService) DeleteNamespaceAndConnectorDeployments(ctx c
 
 	// set connectors' desired state to 'deleted' by default
 	connectorDesiredState := dbapi.ConnectorDeleted
-	if k.connectorsConfig.ConnectorDisableCascadeDelete {
-		// set connectors' state to 'unassigned' if cascade delete is disabled
+	if k.connectorsConfig.ConnectorEnableUnassignedConnectors {
+		// set connectors' state to 'unassigned' if it's supported, i.e. cascade delete is disabled
 		connectorDesiredState = dbapi.ConnectorUnassigned
 	}
 	// set connector desired state to connectorDesiredState and status to "deleting" to remove from namespaces
