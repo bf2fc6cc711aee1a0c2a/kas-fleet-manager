@@ -1,20 +1,26 @@
 package services
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/onsi/gomega"
 )
 
 var supportedKafkaSizeStandard = []api.SupportedKafkaSize{
 	{
-		Id:                          "x1",
-		IngressThroughputPerSec:     "30Mi",
-		EgressThroughputPerSec:      "30Mi",
-		TotalMaxConnections:         1000,
-		MaxDataRetentionSize:        "100Gi",
+		Id: "x1",
+		IngressThroughputPerSec: api.SupportedKafkaSizeBytesValueItem{
+			Bytes: 31457280,
+		},
+		EgressThroughputPerSec: api.SupportedKafkaSizeBytesValueItem{
+			Bytes: 31457280,
+		},
+		TotalMaxConnections: 1000,
+		MaxDataRetentionSize: api.SupportedKafkaSizeBytesValueItem{
+			Bytes: 107374180000,
+		},
 		MaxPartitions:               1000,
 		MaxDataRetentionPeriod:      "P14D",
 		MaxConnectionAttemptsPerSec: 100,
@@ -26,11 +32,17 @@ var supportedKafkaSizeStandard = []api.SupportedKafkaSize{
 
 var supportedKafkaSizeEval = []api.SupportedKafkaSize{
 	{
-		Id:                          "x2",
-		IngressThroughputPerSec:     "60Mi",
-		EgressThroughputPerSec:      "60Mi",
-		TotalMaxConnections:         2000,
-		MaxDataRetentionSize:        "200Gi",
+		Id: "x2",
+		IngressThroughputPerSec: api.SupportedKafkaSizeBytesValueItem{
+			Bytes: 62914560,
+		},
+		EgressThroughputPerSec: api.SupportedKafkaSizeBytesValueItem{
+			Bytes: 62914560,
+		},
+		TotalMaxConnections: 2000,
+		MaxDataRetentionSize: api.SupportedKafkaSizeBytesValueItem{
+			Bytes: 2.1474836e+11,
+		},
 		MaxPartitions:               2000,
 		MaxDataRetentionPeriod:      "P14D",
 		MaxConnectionAttemptsPerSec: 200,
@@ -94,17 +106,14 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
 			k := supportedKafkaInstanceTypesService{
 				providerConfig: tt.fields.providerConfig,
 				kafkaConfig:    tt.fields.kafkaConfig,
 			}
 			got, err := k.GetSupportedKafkaInstanceTypesByRegion(tt.args.cloudProvider, tt.args.cloudRegion)
-			if err != nil && !tt.wantErr {
-				t.Errorf("unexpected error %v", err)
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("supported Kafka instance type lists dont match. want: %v got: %v", tt.want, got)
-			}
+			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			gomega.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
