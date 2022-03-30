@@ -12,16 +12,13 @@ package public
 // SupportedKafkaSize Supported Kafka Size
 type SupportedKafkaSize struct {
 	// Unique identifier of this Kafka instance size.
-	Id string `json:"id,omitempty"`
-	// Ingress throughput per second available to this Kafka instance size.
-	IngressThroughputPerSec string `json:"ingress_throughput_per_sec,omitempty"`
-	// Egress throughput per second available to this Kafka instance size.
-	EgressThroughputPerSec string `json:"egress_throughput_per_sec,omitempty"`
-	// Total amount of connections available to this Kafka instance size.
-	TotalMaxConnections int32 `json:"total_max_connections,omitempty"`
-	// Maximum data storage available to this Kafka instance size.
-	MaxDataRetentionSize string `json:"max_data_retention_size,omitempty"`
-	// Total amount of partitions available to this Kafka instance size.
+	Id                      string                           `json:"id,omitempty"`
+	IngressThroughputPerSec SupportedKafkaSizeBytesValueItem `json:"ingress_throughput_per_sec,omitempty"`
+	EgressThroughputPerSec  SupportedKafkaSizeBytesValueItem `json:"egress_throughput_per_sec,omitempty"`
+	// Maximum amount of total connections available to this Kafka instance size.
+	TotalMaxConnections  int32                            `json:"total_max_connections,omitempty"`
+	MaxDataRetentionSize SupportedKafkaSizeBytesValueItem `json:"max_data_retention_size,omitempty"`
+	// Maximum amount of total partitions available to this Kafka instance size.
 	MaxPartitions int32 `json:"max_partitions,omitempty"`
 	// Maximum data retention period available to this Kafka instance size.
 	MaxDataRetentionPeriod string `json:"max_data_retention_period,omitempty"`
