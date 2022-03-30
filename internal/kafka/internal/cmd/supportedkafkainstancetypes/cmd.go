@@ -12,8 +12,7 @@ func NewSupportedKafkaInstanceTypesCommand(env *environments.Env) *cobra.Command
 		Short: "Perform supported Kafka instance types actions directly",
 		Long:  "Perform supported Kafka instance types actions directly",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			err := env.CreateServices()
-			if err != nil {
+			if err := env.CreateServices(); err != nil {
 				glog.Fatalf("Unable to initialize environment: %s", err.Error())
 			}
 		},
