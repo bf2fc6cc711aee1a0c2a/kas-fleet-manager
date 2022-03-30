@@ -94,7 +94,7 @@ func (h *ConnectorNamespaceHandler) CreateEvaluation(w http.ResponseWriter, r *h
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
-			handlers.Validation("name", &resource.Name, handlers.WithDefault(generateEvalNamespaceName()), handlers.MinLen(1)),
+			handlers.Validation("name", &resource.Name, handlers.WithDefault(generateEvalNamespaceName())),
 			user.AuthorizedCreateEvalNamespace(),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
