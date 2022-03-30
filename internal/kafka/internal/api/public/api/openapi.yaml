@@ -1232,10 +1232,13 @@ components:
         id: eval
         sizes:
         - id: x1
-          ingress_throughput_per_sec: 30Mi
-          egress_throughput_per_sec: 30Mi
+          ingress_throughput_per_sec:
+            bytes: 31457280
+          egress_throughput_per_sec:
+            bytes: 31457280
           total_max_connections: 3000
-          max_data_retention_size: 1000Gi
+          max_data_retention_size:
+            bytes: 1073741800000
           max_partitions: 1000
           max_data_retention_period: P14D
           max_connection_attempts_per_sec: 100
@@ -1714,23 +1717,18 @@ components:
           description: Unique identifier of this Kafka instance size.
           type: string
         ingress_throughput_per_sec:
-          description: Ingress throughput per second available to this Kafka instance
-            size.
-          type: string
+          $ref: '#/components/schemas/SupportedKafkaSizeBytesValueItem'
         egress_throughput_per_sec:
-          description: Egress throughput per second available to this Kafka instance
-            size.
-          type: string
+          $ref: '#/components/schemas/SupportedKafkaSizeBytesValueItem'
         total_max_connections:
-          description: Total amount of connections available to this Kafka instance
-            size.
+          description: Maximum amount of total connections available to this Kafka
+            instance size.
           type: integer
         max_data_retention_size:
-          description: Maximum data storage available to this Kafka instance size.
-          type: string
+          $ref: '#/components/schemas/SupportedKafkaSizeBytesValueItem'
         max_partitions:
-          description: Total amount of partitions available to this Kafka instance
-            size.
+          description: Maximum amount of total partitions available to this Kafka
+            instance size.
           type: integer
         max_data_retention_period:
           description: Maximum data retention period available to this Kafka instance
@@ -1750,6 +1748,11 @@ components:
           description: Data plane cluster capacity consumed by this Kafka instance
             size.
           type: integer
+      type: object
+    SupportedKafkaSizeBytesValueItem:
+      properties:
+        bytes:
+          type: number
       type: object
     CloudProviderList:
       allOf:
