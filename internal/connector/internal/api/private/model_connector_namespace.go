@@ -26,7 +26,8 @@ type ConnectorNamespace struct {
 	ResourceVersion int64                                      `json:"resource_version"`
 	Quota           ConnectorNamespaceQuota                    `json:"quota,omitempty"`
 	ClusterId       string                                     `json:"cluster_id"`
-	Expiration      string                                     `json:"expiration,omitempty"`
-	Tenant          ConnectorNamespaceTenant                   `json:"tenant"`
-	Status          ConnectorNamespaceStatus2                  `json:"status"`
+	// Namespace expiration timestamp in RFC 3339 format
+	Expiration string                    `json:"expiration,omitempty"`
+	Tenant     ConnectorNamespaceTenant  `json:"tenant"`
+	Status     ConnectorNamespaceStatus2 `json:"status"`
 }
