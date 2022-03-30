@@ -109,6 +109,11 @@ func (s *TestSuite) createOrgAdminUserNamedInOrganization(name string, orgid str
 		return nil
 	}
 
+	// check if org id is referencing another user's org id
+	if strings.HasPrefix(orgid, "${") && strings.HasSuffix(orgid, ".OrgId}") {
+		orgid = s.users[strings.TrimSuffix(strings.TrimPrefix(orgid, "${"), ".OrgId}")].OrgId
+	}
+
 	// setup pre-requisites to performing requests
 	account := s.Helper.NewAccountWithNameAndOrg(name, orgid)
 	// add org admin claim
