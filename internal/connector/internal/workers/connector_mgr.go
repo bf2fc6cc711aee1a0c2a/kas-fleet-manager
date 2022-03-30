@@ -120,10 +120,10 @@ func (k *ConnectorManager) Reconcile() []error {
 		"desired_state = ? AND phase IN ?", dbapi.ConnectorDeleted,
 		[]string{string(dbapi.ConnectorStatusPhaseAssigning), string(dbapi.ConnectorStatusPhaseDeleted)})
 
-	// reconcile connector updates...
+	// reconcile connector updates for assigned connectors that aren't being deleted...
 	k.doReconcile(errs, "updated", k.reconcileConnectorUpdate,
-		"version > ? AND desired_state != ? AND phase != ?", k.lastVersion,
-		dbapi.ConnectorUnassigned, dbapi.ConnectorStatusPhaseAssigning)
+		"version > ? AND phase NOT IN ?", k.lastVersion,
+		[]string{string(dbapi.ConnectorStatusPhaseAssigning), string(dbapi.ConnectorStatusPhaseDeleting), string(dbapi.ConnectorStatusPhaseDeleted)})
 
 	return errs
 }
@@ -229,7 +229,7 @@ func (k *ConnectorManager) reconcileConnectorUpdate(ctx context.Context, connect
 	if deployment.ConnectorVersion != connector.Version {
 		deployment.ConnectorVersion = connector.Version
 		if err := k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {
-			return errors.Wrapf(err, "failed to create connector deployment for connector %s", connector.ID)
+			return errors.Wrapf(err, "failed to update connector version in deployment for connector %s", connector.ID)
 		}
 	}
 
@@ -243,7 +243,8 @@ func (k *ConnectorManager) doReconcile(errs []error, reconcilePhase string, reco
 	if serviceErrs = k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
 		return InDBTransaction(k.ctx, func(ctx context.Context) error {
 			if err := reconcileFunc(ctx, connector); err != nil {
-				glog.Errorf("failed to reconcile %s connector %s: %v", reconcilePhase, connector.ID, err)
+				glog.Errorf("failed to reconcile %s connector %s in phase %s: %v", reconcilePhase,
+					connector.ID, connector.Status.Phase, err)
 				return err
 			}
 			count++
@@ -252,7 +253,7 @@ func (k *ConnectorManager) doReconcile(errs []error, reconcilePhase string, reco
 	}, query, args...); len(serviceErrs) > 0 {
 		errs = append(errs, serviceErrs...)
 	}
-	if count == 0 && len(errs) == 0{
+	if count == 0 && len(errs) == 0 {
 		glog.V(5).Infof("No %s connectors", reconcilePhase)
 	} else {
 		glog.V(5).Infof("Reconciled %d %s connectors with %d errors", count, reconcilePhase, len(serviceErrs))

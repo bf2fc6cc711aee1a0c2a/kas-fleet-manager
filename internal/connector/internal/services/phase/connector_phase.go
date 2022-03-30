@@ -14,6 +14,7 @@ const (
 	UnassignConnector ConnectorOperation = "unassign"
 	UpdateConnector   ConnectorOperation = "update"
 	StopConnector     ConnectorOperation = "stop"
+	RestartConnector  ConnectorOperation = "restart"
 	DeleteConnector   ConnectorOperation = "delete"
 )
 
@@ -26,8 +27,8 @@ type ConnectorFSM struct {
 
 var connectorEvents = map[dbapi.ConnectorNamespacePhaseEnum][]fsm.EventDesc{
 	dbapi.ConnectorNamespacePhaseDisconnected: {
-		{Name: string(CreateConnector), Src: []string{string(dbapi.ConnectorUnassigned),string(dbapi.ConnectorReady)}, Dst: string(dbapi.ConnectorReady)},
-		{Name: string(AssignConnector), Src: []string{string(dbapi.ConnectorUnassigned)}, Dst: string(dbapi.ConnectorReady)},
+		{Name: string(CreateConnector), Src: []string{string(dbapi.ConnectorUnassigned), string(dbapi.ConnectorReady)}, Dst: string(dbapi.ConnectorReady)},
+		{Name: string(AssignConnector), Src: []string{string(dbapi.ConnectorUnassigned), string(dbapi.ConnectorReady)}, Dst: string(dbapi.ConnectorReady)},
 		{Name: string(UnassignConnector), Src: []string{string(dbapi.ConnectorUnassigned), string(dbapi.ConnectorReady), string(dbapi.ConnectorStopped)}, Dst: string(dbapi.ConnectorUnassigned)},
 		{Name: string(UpdateConnector), Src: []string{string(dbapi.ConnectorUnassigned)}, Dst: string(dbapi.ConnectorUnassigned)},
 		{Name: string(UpdateConnector), Src: []string{string(dbapi.ConnectorReady)}, Dst: string(dbapi.ConnectorReady)},
@@ -35,13 +36,14 @@ var connectorEvents = map[dbapi.ConnectorNamespacePhaseEnum][]fsm.EventDesc{
 		{Name: string(StopConnector), Src: []string{string(dbapi.ConnectorStopped), string(dbapi.ConnectorReady)}, Dst: string(dbapi.ConnectorStopped)},
 		{Name: string(DeleteConnector), Src: []string{string(dbapi.ConnectorUnassigned), string(dbapi.ConnectorReady), string(dbapi.ConnectorStopped), string(dbapi.ConnectorDeleted)}, Dst: string(dbapi.ConnectorDeleted)},
 	},
-	dbapi.ConnectorNamespacePhaseReady:    {
-		{Name: string(CreateConnector), Src: []string{string(dbapi.ConnectorUnassigned),string(dbapi.ConnectorReady)}, Dst: string(dbapi.ConnectorReady)},
+	dbapi.ConnectorNamespacePhaseReady: {
+		{Name: string(CreateConnector), Src: []string{string(dbapi.ConnectorUnassigned), string(dbapi.ConnectorReady)}, Dst: string(dbapi.ConnectorReady)},
 		{Name: string(AssignConnector), Src: []string{string(dbapi.ConnectorUnassigned)}, Dst: string(dbapi.ConnectorReady)},
 		{Name: string(UnassignConnector), Src: []string{string(dbapi.ConnectorUnassigned), string(dbapi.ConnectorReady), string(dbapi.ConnectorStopped)}, Dst: string(dbapi.ConnectorUnassigned)},
 		{Name: string(UpdateConnector), Src: []string{string(dbapi.ConnectorUnassigned)}, Dst: string(dbapi.ConnectorUnassigned)},
 		{Name: string(UpdateConnector), Src: []string{string(dbapi.ConnectorReady)}, Dst: string(dbapi.ConnectorReady)},
 		{Name: string(UpdateConnector), Src: []string{string(dbapi.ConnectorStopped)}, Dst: string(dbapi.ConnectorStopped)},
+		{Name: string(RestartConnector), Src: []string{string(dbapi.ConnectorStopped), string(dbapi.ConnectorReady)}, Dst: string(dbapi.ConnectorReady)},
 		{Name: string(StopConnector), Src: []string{string(dbapi.ConnectorStopped), string(dbapi.ConnectorReady)}, Dst: string(dbapi.ConnectorStopped)},
 		{Name: string(DeleteConnector), Src: []string{string(dbapi.ConnectorUnassigned), string(dbapi.ConnectorReady), string(dbapi.ConnectorStopped), string(dbapi.ConnectorDeleted)}, Dst: string(dbapi.ConnectorDeleted)},
 	},
@@ -51,9 +53,14 @@ var connectorEvents = map[dbapi.ConnectorNamespacePhaseEnum][]fsm.EventDesc{
 	},
 }
 
-var startingPhase = map[dbapi.ConnectorDesiredState]dbapi.ConnectorStatusPhase{
-	dbapi.ConnectorUnassigned: dbapi.ConnectorStatusPhaseAssigning,
-	dbapi.ConnectorDeleted:    dbapi.ConnectorStatusPhaseDeleting,
+var ConnectorStartingPhase = map[ConnectorOperation]dbapi.ConnectorStatusPhase{
+	CreateConnector:   dbapi.ConnectorStatusPhaseAssigning,
+	AssignConnector:   dbapi.ConnectorStatusPhaseAssigning,
+	UnassignConnector: dbapi.ConnectorStatusPhaseDeleting,
+	RestartConnector:  dbapi.ConnectorStatusPhaseAssigned,
+	StopConnector:     dbapi.ConnectorStatusPhaseAssigned,
+	UpdateConnector:   dbapi.ConnectorStatusPhaseUpdating,
+	DeleteConnector:   dbapi.ConnectorStatusPhaseDeleting,
 }
 
 func NewConnectorFSM(namespace *dbapi.ConnectorNamespace, connector *dbapi.Connector) *ConnectorFSM {
@@ -79,7 +86,7 @@ func (c *ConnectorFSM) Perform(operation ConnectorOperation) (bool, *errors.Serv
 	}
 
 	c.Connector.DesiredState = dbapi.ConnectorDesiredState(c.fsm.Current())
-	if phase, ok := startingPhase[c.Connector.DesiredState]; ok {
+	if phase, ok := ConnectorStartingPhase[operation]; ok {
 		c.Connector.Status.Phase = phase
 	}
 	return true, nil

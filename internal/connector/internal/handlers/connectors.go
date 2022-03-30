@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/phase"
 	"io/ioutil"
@@ -40,16 +41,26 @@ type ConnectorsHandler struct {
 	namespaceService      services.ConnectorNamespaceService
 	vaultService          vault.VaultService
 	authZService          authz.AuthZService
+	connectorsConfig      *config.ConnectorsConfig
+}
+
+// this is an initial guess at what operation is being performed in update
+var stateToOperationsMap = map[public.ConnectorDesiredState]phase.ConnectorOperation{
+	public.CONNECTORDESIREDSTATE_UNASSIGNED: phase.UnassignConnector,
+	public.CONNECTORDESIREDSTATE_READY:      phase.AssignConnector,
+	public.CONNECTORDESIREDSTATE_STOPPED:    phase.StopConnector,
 }
 
 func NewConnectorsHandler(connectorsService services.ConnectorsService, connectorTypesService services.ConnectorTypesService,
-	namespaceService services.ConnectorNamespaceService, vaultService vault.VaultService, authZService authz.AuthZService) *ConnectorsHandler {
+	namespaceService services.ConnectorNamespaceService, vaultService vault.VaultService, authZService authz.AuthZService,
+	connectorsConfig *config.ConnectorsConfig) *ConnectorsHandler {
 	return &ConnectorsHandler{
 		connectorsService:     connectorsService,
 		connectorTypesService: connectorTypesService,
 		namespaceService:      namespaceService,
 		vaultService:          vaultService,
 		authZService:          authZService,
+		connectorsConfig:      connectorsConfig,
 	}
 }
 
@@ -88,7 +99,10 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			convResource.Owner = user.UserId()
 			convResource.OrganisationId = user.OrgId()
 
-			// validate create operation if connector is assigned to a namespace
+			// namespace id is a required field if unassigned connectors are not supported
+			if !h.connectorsConfig.ConnectorEnableUnassignedConnectors && (convResource.NamespaceId == nil || *convResource.NamespaceId == "") {
+				return nil, errors.MinimumFieldLengthNotReached("namespace_id is not valid. Minimum length 1 is required.")
+			}
 			if err := h.validateConnectorOperation(r.Context(), convResource, phase.CreateConnector); err != nil {
 				return nil, err
 			}
@@ -141,10 +155,6 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, serr
 			}
 
-			if err := h.validateConnectorOperation(r.Context(), &dbresource.Connector, phase.UpdateConnector); err != nil {
-				return nil, err
-			}
-
 			resource, serr := presenters.PresentConnector(&dbresource.Connector)
 			if serr != nil {
 				return nil, serr
@@ -178,15 +188,39 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, serr
 			}
 
+			// get and validate patch operation type
+			var operation phase.ConnectorOperation
+			if operation, serr = h.getOperation(resource, patch); err != nil {
+				return nil, serr
+			}
+			if operation == phase.UnassignConnector && !h.connectorsConfig.ConnectorEnableUnassignedConnectors {
+				return nil, errors.FieldValidationError("Unsupported connector state %s", patch.DesiredState)
+			}
+			if serr = h.validateConnectorOperation(r.Context(), &dbresource.Connector, operation,
+				func(connector *dbapi.Connector) *errors.ServiceError {
+					resource.DesiredState = public.ConnectorDesiredState(dbresource.DesiredState)
+					return nil
+				}); serr != nil {
+				return nil, serr
+			}
+
 			// But we don't want to allow the user to update ALL fields.. so copy
 			// over the fields that they are allowed to modify..
 			resource.Name = patch.Name
 			resource.Connector = patch.Connector
-			resource.DesiredState = patch.DesiredState
 			resource.Kafka = patch.Kafka
 			resource.ServiceAccount = patch.ServiceAccount
 			resource.SchemaRegistry = patch.SchemaRegistry
-			resource.NamespaceId = patch.NamespaceId
+
+			if h.connectorsConfig.ConnectorEnableUnassignedConnectors {
+				// check namespace id change, from unassigned to assigned and vice versa
+				if operation == phase.AssignConnector && patch.NamespaceId != "" && resource.NamespaceId == "" {
+					resource.NamespaceId = patch.NamespaceId
+				}
+				if operation == phase.UnassignConnector && patch.NamespaceId == "" && resource.NamespaceId != "" {
+					resource.NamespaceId = patch.NamespaceId
+				}
+			}
 
 			// If we didn't change anything, then just skip the update...
 			originalResource, _ := presenters.PresentConnector(&dbresource.Connector)
@@ -222,18 +256,19 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, svcErr
 			}
 
-			serr = h.connectorsService.Update(r.Context(), p)
-			if serr != nil {
-				return nil, serr
-			}
-
+			// update connector phase before desired state
 			if originalResource.Status.State != public.ConnectorState(dbapi.ConnectorStatusPhaseAssigning) {
-				dbresource.Status.Phase = dbapi.ConnectorStatusPhaseUpdating
-				p.Status.Phase = dbapi.ConnectorStatusPhaseUpdating
+				dbresource.Status.Phase = phase.ConnectorStartingPhase[operation]
+				p.Status.Phase = dbresource.Status.Phase
 				serr = h.connectorsService.SaveStatus(r.Context(), dbresource.Status)
 				if serr != nil {
 					return nil, serr
 				}
+			}
+			// update modified connector including desired state
+			serr = h.connectorsService.Update(r.Context(), p)
+			if serr != nil {
+				return nil, serr
 			}
 
 			newSecrets, err := getSecretRefs(p, ct)
@@ -265,12 +300,38 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 	handlers.Handle(w, r, cfg, http.StatusAccepted)
 }
 
+func (h ConnectorsHandler) getOperation(resource public.Connector, patch public.ConnectorRequest) (phase.ConnectorOperation, *errors.ServiceError) {
+	operation, ok := stateToOperationsMap[patch.DesiredState]
+	if !ok {
+		return operation, errors.BadRequest("Unsupported patch desired state %s", patch.DesiredState)
+	}
+	if patch.DesiredState == resource.DesiredState {
+		// desired state not changing, it's an update
+		operation = phase.UpdateConnector
+	} else {
+		// assigning a stopped connector is a restart
+		if operation == phase.AssignConnector && resource.DesiredState == public.CONNECTORDESIREDSTATE_STOPPED {
+			operation = phase.RestartConnector
+		}
+	}
+	return operation, nil
+}
+
 func (h ConnectorsHandler) validateConnectorOperation(ctx context.Context, connector *dbapi.Connector,
 	operation phase.ConnectorOperation, updatePhase ...func(*dbapi.Connector) *errors.ServiceError) (err *errors.ServiceError) {
 	if connector.NamespaceId != nil {
 		var namespace *dbapi.ConnectorNamespace
 		if namespace, err = h.namespaceService.Get(ctx, *connector.NamespaceId); err == nil {
 			_, err = phase.PerformConnectorOperation(namespace, connector, operation, updatePhase...)
+		}
+	} else {
+		// create, update and delete are the only operations allowed for connectors without a namespace id
+		switch operation {
+		case phase.CreateConnector, phase.UpdateConnector, phase.DeleteConnector:
+			// valid operations
+		default:
+			return errors.Validation("Invalid operation %s for connector with id %s in state %s",
+				operation, connector.ID, connector.DesiredState)
 		}
 	}
 	return err
