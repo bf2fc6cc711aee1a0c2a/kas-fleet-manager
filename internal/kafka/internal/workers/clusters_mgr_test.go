@@ -69,7 +69,7 @@ func TestClusterManager_reconcileKasFleetshardOperator(t *testing.T) {
 					},
 				},
 			},
-			arg:     api.Cluster{ClientID: "Client ID"},
+			arg:     api.Cluster{ClientID: "Client ID", ClientSecret: "secret"},
 			wantErr: false,
 		},
 		{

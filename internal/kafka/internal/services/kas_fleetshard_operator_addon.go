@@ -20,7 +20,7 @@ const (
 	//parameter names for the kas-fleetshard-operator service account
 	kasFleetshardOperatorParamMasSSOBaseUrl        = "sso-auth-server-url"
 	KasFleetshardOperatorParamServiceAccountId     = "sso-client-id"
-	kasFleetshardOperatorParamServiceAccountSecret = "sso-secret"
+	KasFleetshardOperatorParamServiceAccountSecret = "sso-secret"
 	// parameter names for the cluster id
 	kasFleetshardOperatorParamClusterId = "cluster-id"
 	// parameter names for the control plane url
@@ -70,7 +70,7 @@ type kasFleetshardOperatorAddon struct {
 
 func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, ParameterList, *errors.ServiceError) {
 	kasFleetshardAddonID := o.OCMConfig.KasFleetshardAddonID
-	params, paramsErr := o.getAddonParams(cluster)
+	params, paramsErr := o.getAddonParams(&cluster)
 	if paramsErr != nil {
 		return false, nil, paramsErr
 	}
@@ -95,7 +95,7 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, Param
 
 func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) (ParameterList, *errors.ServiceError) {
 	kasFleetshardAddonID := o.OCMConfig.KasFleetshardAddonID
-	params, paramsErr := o.getAddonParams(cluster)
+	params, paramsErr := o.getAddonParams(&cluster)
 	if paramsErr != nil {
 		return nil, paramsErr
 	}
@@ -122,12 +122,16 @@ func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) (P
 	}
 }
 
-func (o *kasFleetshardOperatorAddon) getAddonParams(cluster api.Cluster) ([]types.Parameter, *errors.ServiceError) {
-	acc, pErr := o.provisionServiceAccount(cluster.ClusterID)
-	if pErr != nil {
-		return nil, errors.GeneralError("failed to create service account for cluster %s due to error: %v", cluster.ClusterID, pErr)
+func (o *kasFleetshardOperatorAddon) getAddonParams(cluster *api.Cluster) ([]types.Parameter, *errors.ServiceError) {
+	var acc *api.ServiceAccount
+	if cluster.ClientID == "" || cluster.ClientSecret == "" {
+		var pErr *errors.ServiceError
+		acc, pErr = o.provisionServiceAccount(cluster.ClusterID)
+		if pErr != nil {
+			return nil, errors.GeneralError("failed to create service account for cluster %s due to error: %v", cluster.ClusterID, pErr)
+		}
 	}
-	params := o.buildAddonParams(acc, cluster.ClusterID)
+	params := o.buildAddonParams(cluster, acc)
 	return params, nil
 }
 
@@ -136,7 +140,19 @@ func (o *kasFleetshardOperatorAddon) provisionServiceAccount(clusterId string) (
 	return o.SsoService.RegisterKasFleetshardOperatorServiceAccount(clusterId)
 }
 
-func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []types.Parameter {
+func (o *kasFleetshardOperatorAddon) buildAddonParams(cluster *api.Cluster, serviceAccount *api.ServiceAccount) []types.Parameter {
+
+	var clientId string
+	var clientSecret string
+
+	if cluster.ClientID != "" && cluster.ClientSecret != "" {
+		clientId = cluster.ClientID
+		clientSecret = cluster.ClientSecret
+	} else {
+		clientId = serviceAccount.ClientID
+		clientSecret = serviceAccount.ClientSecret
+	}
+
 	p := []types.Parameter{
 
 		{
@@ -145,11 +161,11 @@ func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.Servic
 		},
 		{
 			Id:    KasFleetshardOperatorParamServiceAccountId,
-			Value: serviceAccount.ClientID,
+			Value: clientId,
 		},
 		{
-			Id:    kasFleetshardOperatorParamServiceAccountSecret,
-			Value: serviceAccount.ClientSecret,
+			Id:    KasFleetshardOperatorParamServiceAccountSecret,
+			Value: clientSecret,
 		},
 		{
 			Id:    kasFleetshardOperatorParamControlPlaneBaseURL,
@@ -157,7 +173,7 @@ func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.Servic
 		},
 		{
 			Id:    kasFleetshardOperatorParamClusterId,
-			Value: clusterId,
+			Value: cluster.ClusterID,
 		},
 		{
 			Id:    kasFleetshardOperatorParamPollinterval,

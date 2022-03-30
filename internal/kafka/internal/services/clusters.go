@@ -27,7 +27,7 @@ type ClusterService interface {
 	GetExternalID(clusterID string) (string, *apiErrors.ServiceError)
 	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
 	UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error
-	UpdateStatusAndClientId(cluster api.Cluster, status api.ClusterStatus, serviceClientId string) error
+	UpdateStatusAndClient(cluster api.Cluster, status api.ClusterStatus, serviceClientId string, serviceClientSecret string) error
 	// Update updates a Cluster. Only fields whose value is different than the
 	// zero-value of their corresponding type will be updated
 	Update(cluster api.Cluster) *apiErrors.ServiceError
@@ -192,10 +192,10 @@ func (c clusterService) Update(cluster api.Cluster) *apiErrors.ServiceError {
 }
 
 func (c clusterService) UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error {
-	return c.UpdateStatusAndClientId(cluster, status, "")
+	return c.UpdateStatusAndClient(cluster, status, "", "")
 }
 
-func (c clusterService) UpdateStatusAndClientId(cluster api.Cluster, status api.ClusterStatus, clientId string) error {
+func (c clusterService) UpdateStatusAndClient(cluster api.Cluster, status api.ClusterStatus, clientId string, secret string) error {
 	if status.String() == "" {
 		return apiErrors.Validation("status is undefined")
 	}
@@ -218,7 +218,7 @@ func (c clusterService) UpdateStatusAndClientId(cluster api.Cluster, status api.
 	}
 
 	if clientId != "" {
-		if err := dbConn.Model(&api.Cluster{}).Where(query, arg).Updates(map[string]interface{}{"status": status, "client_id": clientId}).Error; err != nil {
+		if err := dbConn.Model(&api.Cluster{}).Where(query, arg).Updates(map[string]interface{}{"status": status, "client_id": clientId, "client_secret": secret}).Error; err != nil {
 			return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster status")
 		}
 	} else {
