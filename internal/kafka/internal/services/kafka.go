@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"strings"
 	"sync"
 
@@ -694,12 +695,7 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with strimzi version: %s", kafkaRequest.ID, kafkaRequest.DesiredStrimziVersion))
 	}
 
-	currentIBPVersion := kafkaRequest.ActualKafkaIBPVersion
-
-	if currentIBPVersion == "" { // the ibp version could be empty is the Kafka have not yet been successful provisioned at first place
-		currentIBPVersion = kafkaRequest.DesiredKafkaIBPVersion // use the desired version for checks as eventually the actual version will be this one for new Kafkas
-	}
-
+	currentIBPVersion, _ := arrays.FirstNonEmpty(kafkaRequest.ActualKafkaIBPVersion, kafkaRequest.DesiredKafkaIBPVersion)
 	vCompOldNewIbp, eIbp := api.CompareBuildAwareSemanticVersions(currentIBPVersion, kafkaRequest.DesiredKafkaIBPVersion)
 
 	if eIbp != nil {
@@ -722,10 +718,7 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s ibp version: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
 	}
 
-	currentKafkaVersion := kafkaRequest.ActualKafkaVersion
-	if currentKafkaVersion == "" { // the kafka version could be empty is the Kafka that have not yet been successful provisioned at first place
-		currentKafkaVersion = kafkaRequest.DesiredKafkaVersion // use the desired version for checks as eventually the actual version will be this one for new Kafkas
-	}
+	currentKafkaVersion, _ := arrays.FirstNonEmpty(kafkaRequest.ActualKafkaVersion, kafkaRequest.DesiredKafkaVersion)
 
 	vCompKafka, ek := api.CompareSemanticVersionsMajorAndMinor(currentKafkaVersion, kafkaRequest.DesiredKafkaVersion)
 

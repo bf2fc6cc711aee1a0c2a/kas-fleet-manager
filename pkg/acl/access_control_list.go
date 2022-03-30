@@ -2,6 +2,7 @@ package acl
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 )
@@ -9,13 +10,9 @@ import (
 type DeniedUsers []string
 
 func (deniedAccounts DeniedUsers) IsUserDenied(username string) bool {
-	for _, user := range deniedAccounts {
-		if username == user {
-			return true
-		}
-	}
-
-	return false
+	return arrays.FindFirstString(deniedAccounts, func(user string) bool {
+		return username == user
+	}) != -1
 }
 
 type AccessControlListConfig struct {
