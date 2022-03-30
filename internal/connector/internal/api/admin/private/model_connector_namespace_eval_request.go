@@ -11,6 +11,6 @@ package private
 
 // ConnectorNamespaceEvalRequest An evaluation connector namespace create request
 type ConnectorNamespaceEvalRequest struct {
-	Name        string                                     `json:"name"`
+	Name        string                                     `json:"name,omitempty"`
 	Annotations []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
 }

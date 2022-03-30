@@ -1513,8 +1513,6 @@ components:
 
     ConnectorNamespaceEvalRequest:
       description: An evaluation connector namespace create request
-      required:
-        - name
       allOf:
         - $ref: "#/components/schemas/ConnectorNamespaceRequestMeta"
 
