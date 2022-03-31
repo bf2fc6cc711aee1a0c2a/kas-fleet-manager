@@ -141,7 +141,7 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `ENABLE_OCM_MOCK`: Enables use of a mocked ocm client. Defaults to `false`.
 - `OCM_MOCK_MODE`: The type of mock to use when ocm mock is enabled.Options: `emulate-server` and `stub-server`. Defaults to `emulate-server`.
 - `OCM_URL`: OCM API base URL. Defaults to `https://api.stage.openshift.com`.
-- `AMS_URL`: AMS API base URL. Defaults to `''`.
+- `AMS_URL`: AMS API base URL. Defaults to `https://api.stage.openshift.com`.
 - `JWKS_URL`: JWK Token Certificate URL. Defaults to `''`.
 - `MAS_SSO_ENABLE_AUTH`: Enables MAS SSO authentication for the Data Plane. Defaults to `true`.
 - `MAS_SSO_BASE_URL`: MAS SSO base url. Defaults to `https://identity.api.stage.openshift.com`.
