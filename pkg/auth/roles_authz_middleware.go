@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 	"strings"
 
@@ -108,10 +109,7 @@ func getRealmRolesClaim(claims jwt.MapClaims) []string {
 }
 
 func hasRole(roles []string, roleName string) bool {
-	for _, role := range roles {
-		if strings.EqualFold(role, roleName) {
-			return true
-		}
-	}
-	return false
+	return arrays.FindFirstString(roles, func(role string) bool {
+		return strings.EqualFold(role, roleName)
+	}) != -1
 }
