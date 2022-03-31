@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -72,6 +73,9 @@ func (t supportedKafkaInstanceTypesService) GetSupportedKafkaInstanceTypesByRegi
 			SupportedKafkaSizes: supportedSizesList,
 		})
 	}
+	sort.Slice(instanceTypeList, func(i, j int) bool {
+		return instanceTypeList[i].Id < instanceTypeList[j].Id
+	})
 
 	return instanceTypeList, nil
 }
