@@ -30,7 +30,7 @@ var supportedKafkaSizeStandard = []api.SupportedKafkaSize{
 	},
 }
 
-var supportedKafkaSizeEval = []api.SupportedKafkaSize{
+var supportedKafkaSizeDeveloper = []api.SupportedKafkaSize{
 	{
 		Id: "x2",
 		IngressThroughputPerSec: api.SupportedKafkaSizeBytesValueItem{
@@ -86,8 +86,8 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 					SupportedKafkaSizes: supportedKafkaSizeStandard,
 				},
 				{
-					Id:                  "eval",
-					SupportedKafkaSizes: supportedKafkaSizeEval,
+					Id:                  "developer",
+					SupportedKafkaSizes: supportedKafkaSizeDeveloper,
 				},
 			},
 		},
