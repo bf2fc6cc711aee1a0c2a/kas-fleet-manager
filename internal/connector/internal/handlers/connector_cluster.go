@@ -3,12 +3,12 @@ package handlers
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/golang/glog"
-
 	"net/http"
 	"net/url"
 
@@ -22,7 +22,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/goava/di"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreservices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
@@ -66,11 +65,24 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 
 			convResource := presenters.ConvertConnectorClusterRequest(resource)
 
+			convResource.ID = api.NewID()
 			convResource.Owner = user.UserId()
 			convResource.OrganisationId = user.OrgId()
 			convResource.Status.Phase = dbapi.ConnectorClusterPhaseDisconnected
 
-			if err := h.Service.Create(r.Context(), &convResource); err != nil {
+			acc, err := h.Keycloak.RegisterConnectorFleetshardOperatorServiceAccount(convResource.ID)
+			if err != nil {
+				return nil, errors.GeneralError("failed to create service account for connector cluster %s due to error: %v", convResource.ID, err)
+			}
+			convResource.ClientId = acc.ClientID
+			convResource.ClientSecret = acc.ClientSecret
+
+			if err = h.Service.Create(r.Context(), &convResource); err != nil {
+				// deregister service account on creation error
+				if derr := h.Keycloak.DeRegisterConnectorFleetshardOperatorServiceAccount(convResource.ID); derr != nil {
+					// just log the error
+					glog.Errorf("Error de-registering unused service account %s: %v", convResource.ClientId, derr)
+				}
 				return nil, err
 			}
 			return presenters.PresentConnectorCluster(convResource), nil
@@ -189,27 +201,16 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
 			// To make sure the user can access the cluster....
-			_, err := h.Service.Get(r.Context(), connectorClusterId)
+			cluster, err := h.Service.Get(r.Context(), connectorClusterId)
 			if err != nil {
 				return nil, err
 			}
 
-			acc, err := h.Keycloak.RegisterConnectorFleetshardOperatorServiceAccount(connectorClusterId)
-			if err != nil {
-				return nil, errors.GeneralError("failed to create service account for connector cluster %s due to error: %v", connectorClusterId, err)
-			}
-			u, eerr := h.buildTokenURL(acc)
+			u, eerr := h.buildTokenURL(cluster)
 			if eerr != nil {
 				return false, errors.GeneralError("failed creating auth token url")
 			}
-			params := h.buildAddonParams(acc, connectorClusterId, u)
-			if serviceError = h.Service.UpdateClientId(connectorClusterId, acc.ClientID); serviceError != nil {
-				// deregister account in case the cluster is abandoned
-				if err := h.Keycloak.DeRegisterConnectorFleetshardOperatorServiceAccount(connectorClusterId); err != nil {
-					glog.Errorf("Error de-registering service account for cluster '%s': %v", connectorClusterId, err)
-				}
-				return nil, errors.GeneralError("failed to update client id for connector cluster %s: %v", connectorClusterId, serviceError)
-			}
+			params := h.buildAddonParams(cluster, u)
 			result := make([]public.AddonParameter, len(params))
 			for i, p := range params {
 				result[i] = presenters.PresentAddonParameter(p)
@@ -220,7 +221,7 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 	handlers.HandleGet(w, r, cfg)
 }
 
-func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string, authTokenURL string) []ocm.Parameter {
+func (o *ConnectorClusterHandler) buildAddonParams(cluster dbapi.ConnectorCluster, authTokenURL string) []ocm.Parameter {
 	p := []ocm.Parameter{
 		{
 			Id:    "control-plane-base-url",
@@ -228,7 +229,7 @@ func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAc
 		},
 		{
 			Id:    "cluster-id",
-			Value: clusterId,
+			Value: cluster.ID,
 		},
 		{
 			Id:    "auth-token-url",
@@ -244,22 +245,22 @@ func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAc
 		},
 		{
 			Id:    "client-id",
-			Value: serviceAccount.ClientID,
+			Value: cluster.ClientId,
 		},
 		{
 			Id:    "client-secret",
-			Value: serviceAccount.ClientSecret,
+			Value: cluster.ClientSecret,
 		},
 	}
 	return p
 }
 
-func (o *ConnectorClusterHandler) buildTokenURL(serviceAccount *api.ServiceAccount) (string, error) {
+func (o *ConnectorClusterHandler) buildTokenURL(cluster dbapi.ConnectorCluster) (string, error) {
 	u, err := url.Parse(o.KeycloakConfig.KafkaRealm.TokenEndpointURI)
 	if err != nil {
 		return "", err
 	}
-	u.User = url.UserPassword(serviceAccount.ClientID, serviceAccount.ClientSecret)
+	u.User = url.UserPassword(cluster.ClientId, cluster.ClientSecret)
 	return u.String(), nil
 }
 
