@@ -133,7 +133,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		return "", errors.InsufficientQuotaError("Error getting billing model: No available billing model found")
 	}
 	rr.BillingModel(amsv1.BillingModel(bm))
-	rr.Count(kafkaInstanceSize.CapacityConsumed)
+	rr.Count(kafkaInstanceSize.QuotaConsumed)
 
 	cb, _ := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(kafka.Owner).
