@@ -383,7 +383,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	if err := db.Create(&testKafkas).Error; err != nil {
 		Expect(err).NotTo(HaveOccurred())
 		return
-
 	}
 
 	// updating KafkaStorageSize, so that later it can be validated against "PrivateClient.AgentClustersApi.GetKafkas()"
@@ -434,6 +433,12 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 				Expect(mk.Spec.Versions.KafkaIbp).To(Equal(k.DesiredKafkaIBPVersion))
 				Expect(mk.Spec.Endpoint.Tls).To(BeNil())
 				Expect(mk.Spec.Capacity.MaxDataRetentionSize).To(Equal(biggerStorageUpdateRequest.KafkaStorageSize))
+				Expect(mk.Spec.Capacity.IngressThroughputPerSec).To(Equal(kafkaInstancesizes[0].IngressThroughputPerSec))
+				Expect(mk.Spec.Capacity.EgressThroughputPerSec).To(Equal(kafkaInstancesizes[0].EgressThroughputPerSec))
+				Expect(mk.Spec.Capacity.TotalMaxConnections).To(Equal(int32(kafkaInstancesizes[0].TotalMaxConnections)))
+				Expect(mk.Spec.Capacity.MaxConnectionAttemptsPerSec).To(Equal(int32(kafkaInstancesizes[0].MaxConnectionAttemptsPerSec)))
+				Expect(mk.Spec.Capacity.MaxDataRetentionPeriod).To(Equal(kafkaInstancesizes[0].MaxDataRetentionPeriod))
+				Expect(mk.Spec.Capacity.MaxPartitions).To(Equal(int32(kafkaInstancesizes[0].MaxPartitions)))
 			} else {
 				t.Error("failed matching managedkafka id with kafkarequest id")
 				break
