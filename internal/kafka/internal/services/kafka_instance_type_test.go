@@ -82,12 +82,12 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 			wantErr: false,
 			want: []api.SupportedKafkaInstanceType{
 				{
-					Id:                  "standard",
-					SupportedKafkaSizes: supportedKafkaSizeStandard,
-				},
-				{
 					Id:                  "developer",
 					SupportedKafkaSizes: supportedKafkaSizeDeveloper,
+				},
+				{
+					Id:                  "standard",
+					SupportedKafkaSizes: supportedKafkaSizeStandard,
 				},
 			},
 		},
