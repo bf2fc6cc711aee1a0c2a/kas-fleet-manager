@@ -46,7 +46,6 @@ type ConnectorClusterService interface {
 	GetAvailableDeploymentOperatorUpgrades(listArgs *services.ListArguments) (dbapi.ConnectorDeploymentOperatorUpgradeList, *api.PagingMeta, *errors.ServiceError)
 	UpgradeConnectorsByOperator(ctx context.Context, clusterId string, upgrades dbapi.ConnectorDeploymentOperatorUpgradeList) *errors.ServiceError
 	CleanupDeployments() *errors.ServiceError
-	UpdateClientId(clusterId string, clientID string) *errors.ServiceError
 	ReconcileDeletingClusters() (int, []*errors.ServiceError)
 	GetClusterOrg(id string) (string, *errors.ServiceError)
 }
@@ -381,17 +380,7 @@ func (k *connectorClusterService) GetClientId(clusterID string) (string, error) 
 	return resource.ClientId, nil
 }
 
-func (k *connectorClusterService) UpdateClientId(clusterId string, clientID string) *errors.ServiceError {
-	dbConn := k.connectionFactory.New()
-
-	cluster := dbapi.ConnectorCluster{Model: db.Model{ID: clusterId}, ClientId: clientID}
-	if err := dbConn.Updates(cluster).Error; err != nil {
-		return services.HandleGetError("Connector cluster client_id", "id", clusterId, err)
-	}
-	return nil
-}
-
-// Create creates a connector deployment in the database
+// SaveDeployment creates a connector deployment in the database
 func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *dbapi.ConnectorDeployment) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 

@@ -5,10 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-
-	"gorm.io/gorm"
 )
 
 type ConnectorClusterPhaseEnum string
@@ -31,7 +27,8 @@ type ConnectorCluster struct {
 	Owner          string
 	OrganisationId string
 	Name           string
-	ClientId       string
+	ClientId       string `gorm:"not null"`
+	ClientSecret   string `gorm:"not null"`
 	Status         ConnectorClusterStatus `gorm:"embedded;embeddedPrefix:status_"`
 }
 
@@ -98,11 +95,6 @@ type OperatorStatus struct {
 	Namespace string
 	// the status of the operator
 	Status string
-}
-
-func (org *ConnectorCluster) BeforeCreate(tx *gorm.DB) error {
-	org.ID = api.NewID()
-	return nil
 }
 
 type ConnectorClusterList []ConnectorCluster
