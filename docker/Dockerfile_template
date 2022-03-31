@@ -73,7 +73,7 @@ COPY . /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
 WORKDIR /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
 RUN make aws/setup
 RUN make ocm/setup
-RUN make keycloak/setup
+RUN make keycloak/setup redhatsso/setup
 RUN make kafkacert/setup
 RUN make observatorium/setup
 
