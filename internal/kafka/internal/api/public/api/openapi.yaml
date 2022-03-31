@@ -1191,7 +1191,7 @@ components:
         reauthentication_enabled: true
     SupportedKafkaInstanceTypeListExample:
       value:
-        id: eval
+        id: developer
         sizes:
         - id: x1
           ingress_throughput_per_sec:

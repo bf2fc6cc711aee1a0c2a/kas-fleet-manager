@@ -1593,7 +1593,7 @@ components:
         reauthentication_enabled: true
     SupportedKafkaInstanceTypeListExample:
       value:
-        id: eval
+        id: developer
         sizes:
           [
             {
