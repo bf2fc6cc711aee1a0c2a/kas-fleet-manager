@@ -217,23 +217,34 @@ func (k *ConnectorManager) reconcileDeleted(ctx context.Context, connector *dbap
 	return nil
 }
 
-func (k *ConnectorManager) reconcileConnectorUpdate(ctx context.Context, connector *dbapi.Connector) error {
+func (k *ConnectorManager) reconcileConnectorUpdate(ctx context.Context, connector *dbapi.Connector) (err error) {
 
 	// Get the deployment for the connector...
 	deployment, serr := k.connectorClusterService.GetDeploymentByConnectorId(ctx, connector.ID)
 	if serr != nil {
-		return serr
-	}
-
-	// we may need to update the deployment due to connector change.
-	if deployment.ConnectorVersion != connector.Version {
-		deployment.ConnectorVersion = connector.Version
-		if err := k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {
-			return errors.Wrapf(err, "failed to update connector version in deployment for connector %s", connector.ID)
+		err = serr
+	} else {
+		// we may need to update the deployment due to connector change.
+		if deployment.ConnectorVersion != connector.Version {
+			deployment.ConnectorVersion = connector.Version
+			if serr = k.connectorClusterService.SaveDeployment(ctx, &deployment); serr != nil {
+				err = errors.Wrapf(serr, "failed to update connector version in deployment for connector %s", connector.ID)
+			}
 		}
 	}
 
-	return nil
+	if cerr := db.AddPostCommitAction(ctx, func() {
+		k.lastVersion = connector.Version
+	}); cerr != nil {
+		glog.Errorf("failed to AddPostCommitAction to save lastVersion %d: %v", connector.Version, cerr.Error())
+		if err == nil {
+			err = cerr
+		} else {
+			err = errors.Errorf("Multiple errors in reconciling connector %s: %s; %s", connector.ID, err, cerr)
+		}
+	}
+
+	return err
 }
 
 func (k *ConnectorManager) doReconcile(errs []error, reconcilePhase string, reconcileFunc func(ctx context.Context, connector *dbapi.Connector) error, query string, args ...interface{}) {
