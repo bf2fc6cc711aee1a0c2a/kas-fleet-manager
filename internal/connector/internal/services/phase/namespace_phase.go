@@ -24,14 +24,14 @@ type NamespaceFSM struct {
 
 var namespaceEvents = map[dbapi.ConnectorClusterPhaseEnum][]fsm.EventDesc{
 	dbapi.ConnectorClusterPhaseDisconnected: {
-		{Name: string(CreateNamespace),Src: []string{""},Dst: string(dbapi.ConnectorNamespacePhaseDisconnected)},
-		{Name: string(DisconnectNamespace),Src: []string{string(dbapi.ConnectorNamespacePhaseDisconnected), string(dbapi.ConnectorNamespacePhaseReady)},Dst: string(dbapi.ConnectorNamespacePhaseDisconnected)},
-		{Name: string(DeleteNamespace),Src: []string{string(dbapi.ConnectorNamespacePhaseDisconnected), string(dbapi.ConnectorNamespacePhaseDeleting)},Dst: string(dbapi.ConnectorNamespacePhaseDeleting)},
+		{Name: string(CreateNamespace), Src: []string{""}, Dst: string(dbapi.ConnectorNamespacePhaseDisconnected)},
+		{Name: string(DisconnectNamespace), Src: []string{string(dbapi.ConnectorNamespacePhaseDisconnected), string(dbapi.ConnectorNamespacePhaseReady)}, Dst: string(dbapi.ConnectorNamespacePhaseDisconnected)},
+		{Name: string(DeleteNamespace), Src: []string{string(dbapi.ConnectorNamespacePhaseDisconnected), string(dbapi.ConnectorNamespacePhaseDeleting)}, Dst: string(dbapi.ConnectorNamespacePhaseDeleting)},
 	},
 	dbapi.ConnectorClusterPhaseReady: {
-		{Name: string(CreateNamespace),Src: []string{""},Dst: string(dbapi.ConnectorNamespacePhaseDisconnected)},
-		{Name: string(ConnectNamespace),Src: []string{string(dbapi.ConnectorNamespacePhaseDisconnected), string(dbapi.ConnectorNamespacePhaseReady)},Dst: string(dbapi.ConnectorNamespacePhaseReady)},
-		{Name: string(ConnectNamespace),Src: []string{string(dbapi.ConnectorNamespacePhaseDeleting)}, Dst: string(dbapi.ConnectorNamespacePhaseDeleting)},
+		{Name: string(CreateNamespace), Src: []string{""}, Dst: string(dbapi.ConnectorNamespacePhaseDisconnected)},
+		{Name: string(ConnectNamespace), Src: []string{string(dbapi.ConnectorNamespacePhaseDisconnected), string(dbapi.ConnectorNamespacePhaseReady)}, Dst: string(dbapi.ConnectorNamespacePhaseReady)},
+		{Name: string(ConnectNamespace), Src: []string{string(dbapi.ConnectorNamespacePhaseDeleting)}, Dst: string(dbapi.ConnectorNamespacePhaseDeleting)},
 		{Name: string(DisconnectNamespace), Src: []string{string(dbapi.ConnectorNamespacePhaseDisconnected), string(dbapi.ConnectorNamespacePhaseReady)}, Dst: string(dbapi.ConnectorNamespacePhaseDisconnected)},
 		{Name: string(DeleteNamespace), Src: []string{string(dbapi.ConnectorNamespacePhaseDisconnected), string(dbapi.ConnectorNamespacePhaseReady), string(dbapi.ConnectorNamespacePhaseDeleting)}, Dst: string(dbapi.ConnectorNamespacePhaseDeleting)},
 	},

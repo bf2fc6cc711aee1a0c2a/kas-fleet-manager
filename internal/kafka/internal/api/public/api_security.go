@@ -429,11 +429,11 @@ func (a *SecurityApiService) GetServiceAccounts(ctx _context.Context, localVarOp
 }
 
 /*
-GetSsoProvider Return sso provider info
+GetSsoProviders Return sso provider info
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 @return SsoProvider
 */
-func (a *SecurityApiService) GetSsoProvider(ctx _context.Context) (SsoProvider, *_nethttp.Response, error) {
+func (a *SecurityApiService) GetSsoProviders(ctx _context.Context) (SsoProvider, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}

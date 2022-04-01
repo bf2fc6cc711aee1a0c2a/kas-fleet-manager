@@ -173,14 +173,14 @@ func (s serviceAccountsHandler) GetServiceAccountById(w http.ResponseWriter, r *
 	handlers.HandleGet(w, r, cfg)
 }
 
-func (s serviceAccountsHandler) GetSsoProvider(w http.ResponseWriter, r *http.Request){
+func (s serviceAccountsHandler) GetSsoProviders(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			config := s.service.GetRealmConfig()
 			provider := api.SsoProvider{
-				BaseUrl:config.BaseURL,
-				Jwks: config.JwksEndpointURI,
-				TokenUrl: config.TokenEndpointURI,
+				BaseUrl:     config.BaseURL,
+				Jwks:        config.JwksEndpointURI,
+				TokenUrl:    config.TokenEndpointURI,
 				ValidIssuer: config.ValidIssuerURI,
 			}
 

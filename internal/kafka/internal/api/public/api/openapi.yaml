@@ -892,7 +892,7 @@ paths:
       - security
   /api/kafkas_mgmt/v1/sso_providers:
     get:
-      operationId: getSsoProvider
+      operationId: getSsoProviders
       responses:
         "200":
           content:

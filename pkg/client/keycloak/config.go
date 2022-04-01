@@ -59,7 +59,7 @@ func (c *KeycloakRealmConfig) setDefaultURIs(baseURL string) {
 
 func NewKeycloakConfig() *KeycloakConfig {
 	kc := &KeycloakConfig{
-		SsoBaseUrl:"https://sso.redhat.com",
+		SsoBaseUrl:                  "https://sso.redhat.com",
 		EnableAuthenticationOnKafka: true,
 		KafkaRealm: &KeycloakRealmConfig{
 			ClientIDFile:     "secrets/keycloak-service.clientId",
