@@ -13,15 +13,11 @@ import (
 func addConnectorClusterClientSecret(migrationId string) *gormigrate.Migration {
 
 	type ConnectorCluster struct {
-		ClientSecret   string `gorm:"not null"`
+		ClientSecret string
 	}
 
 	return db.CreateMigrationFromActions(migrationId,
-		// add client id and secret
+		// add client secret
 		db.AddTableColumnsAction(&ConnectorCluster{}),
-
-		// make client_id not null
-		db.ExecAction(`ALTER TABLE connector_clusters ALTER COLUMN client_id SET NOT NULL`,
-			`ALTER TABLE connector_clusters ALTER COLUMN client_id DROP NOT NULL`),
 	)
 }

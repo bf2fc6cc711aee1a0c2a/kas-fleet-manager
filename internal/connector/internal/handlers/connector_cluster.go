@@ -4,7 +4,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
@@ -39,7 +38,6 @@ type ConnectorClusterHandler struct {
 	ConnectorTypes     services.ConnectorTypesService
 	ConnectorNamespace services.ConnectorNamespaceService
 	Vault              vault.VaultService
-	KeycloakConfig     *keycloak.KeycloakConfig
 	ServerConfig       *server.ServerConfig
 	AuthZ              authz.AuthZService
 	QuotaConfig        *config.ConnectorsQuotaConfig
@@ -237,11 +235,11 @@ func (o *ConnectorClusterHandler) buildAddonParams(cluster dbapi.ConnectorCluste
 		},
 		{
 			Id:    "mas-sso-base-url",
-			Value: o.KeycloakConfig.BaseURL,
+			Value: o.Keycloak.GetRealmConfig().BaseURL,
 		},
 		{
 			Id:    "mas-sso-realm",
-			Value: o.KeycloakConfig.KafkaRealm.Realm,
+			Value: o.Keycloak.GetRealmConfig().Realm,
 		},
 		{
 			Id:    "client-id",
@@ -256,7 +254,7 @@ func (o *ConnectorClusterHandler) buildAddonParams(cluster dbapi.ConnectorCluste
 }
 
 func (o *ConnectorClusterHandler) buildTokenURL(cluster dbapi.ConnectorCluster) (string, error) {
-	u, err := url.Parse(o.KeycloakConfig.KafkaRealm.TokenEndpointURI)
+	u, err := url.Parse(o.Keycloak.GetRealmConfig().TokenEndpointURI)
 	if err != nil {
 		return "", err
 	}
