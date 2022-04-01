@@ -39,8 +39,9 @@ func runCreate(env *environments.Env, cmd *cobra.Command, args []string) {
 
 	// setup required services
 	var keycloak = KeycloakConfig(env)
-	keycloakService := sso.NewKeycloakService(keycloak, keycloak.KafkaRealm)
-
+	keycloakService := sso.NewKeycloakServiceBuilder().
+		WithConfiguration(keycloak).
+		Build()
 	sa := &api.ServiceAccountRequest{
 		Name:        name,
 		Description: description,

@@ -63,47 +63,6 @@ type keycloakServiceInternal interface {
 	DeleteServiceAccountInternal(accessToken string, clientId string) *errors.ServiceError
 }
 
-var _ KeycloakServiceBuilderSelector = &keycloakServiceBuilderSelector{}
-
-type KeycloakServiceBuilder interface {
-	Build() KeycloakService
-}
-
-type KeycloakServiceBuilderSelector interface {
-	ForKeycloak() MasClientConfigurator
-	ForRedhatSSO() RedhatSSOConfigurator
-}
-
-type keycloakServiceBuilderSelector struct {
-}
-
-func (selector keycloakServiceBuilderSelector) ForKeycloak() MasClientConfigurator {
-	return masClientConfigurator{}
-}
-
-func (selector keycloakServiceBuilderSelector) ForRedhatSSO() RedhatSSOConfigurator {
-	return redhatSSOConfigurator{}
-}
-
-func NewKeycloakServiceWithClient(client keycloak.KcClient) KeycloakService {
-	return &keycloakServiceProxy{
-		accessTokenProvider: client,
-		service: &masService{
-			kcClient: client,
-		},
-	}
-}
-
-func NewKeycloakService(config *keycloak.KeycloakConfig, realmConfig *keycloak.KeycloakRealmConfig) KeycloakService {
-	client := keycloak.NewClient(config, realmConfig)
-	return &keycloakServiceProxy{
-		accessTokenProvider: client,
-		service: &masService{
-			kcClient: client,
-		},
-	}
-}
-
 func NewKeycloakServiceBuilder() KeycloakServiceBuilderSelector {
-	return keycloakServiceBuilderSelector{}
+	return &keycloakServiceBuilderSelector{}
 }
