@@ -444,7 +444,7 @@ func (a *SecurityApiService) GetSsoProvider(ctx _context.Context) (SsoProvider, 
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/kafkas_mgmt/v1/sso_providers"
+	localVarPath := a.client.cfg.BasePath + "/api/kafkas_mgmt/v1/sso_provider"
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}

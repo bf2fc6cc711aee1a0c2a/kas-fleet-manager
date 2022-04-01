@@ -674,10 +674,10 @@ paths:
       tags:
         - security
       summary: Resets the credentials for a service account by ID
-  /api/kafkas_mgmt/v1/sso_providers:
+  /api/kafkas_mgmt/v1/sso_provider:
     get:
       summary: Return sso provider info
-      operationId: getSsoProviders
+      operationId: getSsoProvider
       security:
         - Bearer: [ ]
       tags:

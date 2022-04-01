@@ -890,7 +890,7 @@ paths:
       summary: Resets the credentials for a service account by ID
       tags:
       - security
-  /api/kafkas_mgmt/v1/sso_providers:
+  /api/kafkas_mgmt/v1/sso_provider:
     get:
       operationId: getSsoProvider
       responses:
