@@ -193,6 +193,9 @@ components:
           annotations:
             bf2.org/id: 1rfpsqbvq1em2u9u0z54ymjcwac
             bf2.org/placementId: ""
+          labels:
+            bf2.org/kafkaInstanceProfileType: standard
+            bf2.org/kafkaInstanceProfileQuotaConsumed: "1"
         spec:
           capacity:
             ingressThroughputPerSec: 4Mi
@@ -492,6 +495,15 @@ components:
       required:
       - bf2.org/id
       - bf2.org/placementId
+    ManagedKafka_allOf_metadata_labels:
+      properties:
+        bf2.org/kafkaInstanceProfileType:
+          type: string
+        bf2.org/kafkaInstanceProfileQuotaConsumed:
+          type: string
+      required:
+      - bf2.org/kafkaInstanceProfileQuotaConsumed
+      - bf2.org/kafkaInstanceProfileType
     ManagedKafka_allOf_metadata:
       properties:
         name:
@@ -500,6 +512,8 @@ components:
           type: string
         annotations:
           $ref: '#/components/schemas/ManagedKafka_allOf_metadata_annotations'
+        labels:
+          $ref: '#/components/schemas/ManagedKafka_allOf_metadata_labels'
     ManagedKafka_allOf_spec_serviceAccounts:
       properties:
         name:
