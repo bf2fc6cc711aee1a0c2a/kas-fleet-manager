@@ -57,9 +57,21 @@ func (c *KeycloakRealmConfig) setDefaultURIs(baseURL string) {
 	c.TokenEndpointURI = baseURL + "/auth/realms/" + c.Realm + "/protocol/openid-connect/token"
 }
 
+func (kc *KeycloakConfig) GetSSOProviderRealm() *KeycloakRealmConfig {
+	provider := kc.SelectSSOProvider
+	switch provider {
+	case MAS_SSO:
+		return kc.KafkaRealm
+	case REDHAT_SSO:
+		return kc.RedhatSSORealm
+	default:
+		return kc.KafkaRealm
+	}
+}
+
 func NewKeycloakConfig() *KeycloakConfig {
 	kc := &KeycloakConfig{
-		SsoBaseUrl:"https://sso.redhat.com",
+		SsoBaseUrl:                  "https://sso.redhat.com",
 		EnableAuthenticationOnKafka: true,
 		KafkaRealm: &KeycloakRealmConfig{
 			ClientIDFile:     "secrets/keycloak-service.clientId",
