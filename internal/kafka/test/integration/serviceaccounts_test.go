@@ -271,7 +271,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(err).Should(HaveOccurred())
 }
 
-func TestServiceAccounts_SsoProvider_MAS_SSO(t *testing.T)  {
+func TestServiceAccounts_SsoProvider_MAS_SSO(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -282,14 +282,14 @@ func TestServiceAccounts_SsoProvider_MAS_SSO(t *testing.T)  {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	sp,resp, err := client.SecurityApi.GetSsoProvider(ctx)
+	sp, resp, err := client.SecurityApi.GetSsoProviders(ctx)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(sp.BaseUrl).To(Equal(test.TestServices.KeycloakConfig.BaseURL))
-	Expect(sp.TokenUrl).To(Equal(test.TestServices.KeycloakConfig.BaseURL +"/auth/realms/rhoas/protocol/openid-connect/token"))
+	Expect(sp.TokenUrl).To(Equal(test.TestServices.KeycloakConfig.BaseURL + "/auth/realms/rhoas/protocol/openid-connect/token"))
 }
 
-func TestServiceAccounts_SsoProvider_SSO(t *testing.T)  {
+func TestServiceAccounts_SsoProvider_SSO(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -301,7 +301,7 @@ func TestServiceAccounts_SsoProvider_SSO(t *testing.T)  {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	sp,resp, err := client.SecurityApi.GetSsoProvider(ctx)
+	sp, resp, err := client.SecurityApi.GetSsoProviders(ctx)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(sp.BaseUrl).To(Equal("https://sso.redhat.com"))

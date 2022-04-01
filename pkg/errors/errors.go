@@ -123,9 +123,8 @@ const (
 	ErrorServiceAccountNotFound       ServiceErrorCode = 113
 	ErrorServiceAccountNotFoundReason string           = "Failed to find service account"
 
-	ErrorMaxLimitForServiceAccountsReached  ServiceErrorCode = 115
-	ErrorMaxLimitForServiceAccountsReachedReason string        = "Max limit for the service account creation has reached"
-
+	ErrorMaxLimitForServiceAccountsReached       ServiceErrorCode = 115
+	ErrorMaxLimitForServiceAccountsReachedReason string           = "Max limit for the service account creation has reached"
 
 	// Insufficient quota
 	ErrorInsufficientQuota       ServiceErrorCode = 120
@@ -427,7 +426,7 @@ func (e *ServiceError) IsServiceAccountNotFound() bool {
 	return e.Code == ServiceAccountNotFound("").Code
 }
 
-func (e *ServiceError) IsMaxLimitForServiceAccountReached() bool  {
+func (e *ServiceError) IsMaxLimitForServiceAccountReached() bool {
 	return e.Code == ErrorMaxLimitForServiceAccountsReached
 }
 
@@ -559,7 +558,7 @@ func FailedToDeleteServiceAccount(reason string, values ...interface{}) *Service
 	return New(ErrorFailedToDeleteServiceAccount, reason, values...)
 }
 
-func MaxLimitForServiceAccountReached(reason string, values ...interface{}) *ServiceError  {
+func MaxLimitForServiceAccountReached(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMaxLimitForServiceAccountsReached, reason, values...)
 }
 

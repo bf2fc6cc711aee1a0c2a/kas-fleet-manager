@@ -18,7 +18,7 @@ type ConnectorsQuotaConfig struct {
 
 func NewConnectorsQuotaConfig() *ConnectorsQuotaConfig {
 	return &ConnectorsQuotaConfig{
-		ConnectorsQuotaMap: make(ConnectorsQuotaProfileMap),
+		ConnectorsQuotaMap:        make(ConnectorsQuotaProfileMap),
 		ConnectorsQuotaConfigFile: "config/connectors-quota-configuration.yaml",
 		EvalNamespaceQuotaProfile: "evaluation-profile",
 	}

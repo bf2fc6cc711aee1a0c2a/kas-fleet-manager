@@ -60,7 +60,7 @@ type TestSuite struct {
 // the different test scenarios.
 type TestUser struct {
 	Name     string
-	OrgId     string
+	OrgId    string
 	Token    string
 	UserName string
 	Ctx      context.Context
