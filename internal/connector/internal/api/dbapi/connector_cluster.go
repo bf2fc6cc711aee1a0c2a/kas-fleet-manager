@@ -27,8 +27,8 @@ type ConnectorCluster struct {
 	Owner          string
 	OrganisationId string
 	Name           string
-	ClientId       string `gorm:"not null"`
-	ClientSecret   string `gorm:"not null"`
+	ClientId       string
+	ClientSecret   string
 	Status         ConnectorClusterStatus `gorm:"embedded;embeddedPrefix:status_"`
 }
 
