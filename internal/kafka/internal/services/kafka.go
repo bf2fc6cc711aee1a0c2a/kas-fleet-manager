@@ -253,7 +253,14 @@ func (k *kafkaService) AssignInstanceType(kafkaRequest *dbapi.KafkaRequest) (typ
 		return types.STANDARD, nil
 	}
 
-	return types.DEVELOPER, nil
+	// if the instance type provided in the plan is developer or eval, then return it
+	if kafkaRequest.InstanceType == string(types.DEVELOPER) || kafkaRequest.InstanceType == string(types.EVAL) {
+		return types.KafkaInstanceType(kafkaRequest.InstanceType), nil
+	}
+
+	// if no plan was provided, then return eval. This is to accommodate old UI/CLI clients that doesn't have the ability to
+	// include plan in the Kafka request payload.
+	return types.EVAL, nil
 }
 
 // reserveQuota - reserves quota for the given kafka request. If a RHOSAK quota has been assigned, it will try to reserve RHOSAK quota, otherwise it will try with RHOSAKTrial

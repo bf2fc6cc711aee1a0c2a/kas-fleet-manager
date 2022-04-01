@@ -51,13 +51,19 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateCloudProvider(&h.service, convKafka, h.providerConfig, "creating kafka requests"),
 			handlers.ValidateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
 			func() *errors.ServiceError { // Validate plan
+				// assign default value for instance type using the plan provided
+				plan := config.Plan(kafkaRequest.Plan)
+				convKafka.InstanceType, _ = plan.GetInstanceType()
+
+				// get instance type according to user quota and plan provided
 				instanceType, err := h.service.AssignInstanceType(convKafka)
 				if err != nil {
 					return err
 				}
 				if stringSet(&kafkaRequest.Plan) {
-					plan := config.Plan(kafkaRequest.Plan)
 					instTypeFromPlan, e := plan.GetInstanceType()
+					// the check below ensures that the user's quota matches the instance type they provided in the plan.
+					// if they specify 'developer' but actually have 'standard' quota (and vice versa), the error below will be returned.
 					if e != nil || instTypeFromPlan != string(instanceType) {
 						return errors.New(errors.ErrorBadRequest, fmt.Sprintf("Unable to detect instance type in plan provided: '%s'", kafkaRequest.Plan))
 					}
