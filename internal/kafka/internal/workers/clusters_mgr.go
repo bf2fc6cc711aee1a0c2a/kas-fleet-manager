@@ -593,9 +593,9 @@ func (c *ClusterManager) reconcileKasFleetshardOperator(cluster api.Cluster) err
 	if params, err := c.KasFleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
 		return errors.WithMessagef(err, "failed to reconcile kas-fleet-shard parameters of %s cluster %s: %s", cluster.Status, cluster.ClusterID, err.Error())
 	} else {
-		if cluster.ClientID == "" {
+		if cluster.ClientID == "" || cluster.ClientSecret == "" {
 			cluster.ClientID = params.GetParam(services.KasFleetshardOperatorParamServiceAccountId)
-
+			cluster.ClientSecret = params.GetParam(services.KasFleetshardOperatorParamServiceAccountSecret)
 			if err := c.ClusterService.Update(cluster); err != nil {
 				return errors.WithMessagef(err, "failed to reconcile clientID of %s cluster %s: %s", cluster.Status, cluster.ClusterID, err.Error())
 			}
@@ -659,7 +659,11 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 
 	if strimziOperatorIsReady && kasFleetshardOperatorIsReady && (clusterLoggingOperatorIsReady || c.OCMConfig.ClusterLoggingOperatorAddonID == "") {
 		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForKasFleetShardOperator, provisionedCluster.ClusterID)
-		if err := c.ClusterService.UpdateStatusAndClientId(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator, params.GetParam(services.KasFleetshardOperatorParamServiceAccountId)); err != nil {
+		if err := c.ClusterService.
+			UpdateStatusAndClient(provisionedCluster,
+				api.ClusterWaitingForKasFleetShardOperator,
+				params.GetParam(services.KasFleetshardOperatorParamServiceAccountId),
+				params.GetParam(services.KasFleetshardOperatorParamServiceAccountSecret)); err != nil {
 			return errors.Wrapf(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
 		}
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator)

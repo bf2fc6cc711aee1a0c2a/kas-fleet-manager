@@ -111,8 +111,8 @@ var _ ClusterService = &ClusterServiceMock{}
 // 			UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 // 				panic("mock out the UpdateStatus method")
 // 			},
-// 			UpdateStatusAndClientIdFunc: func(cluster api.Cluster, status api.ClusterStatus, serviceClientId string) error {
-// 				panic("mock out the UpdateStatusAndClientId method")
+// 			UpdateStatusAndClientFunc: func(cluster api.Cluster, status api.ClusterStatus, serviceClientId string, serviceClientSecret string) error {
+// 				panic("mock out the UpdateStatusAndClient method")
 // 			},
 // 		}
 //
@@ -211,8 +211,8 @@ type ClusterServiceMock struct {
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(cluster api.Cluster, status api.ClusterStatus) error
 
-	// UpdateStatusAndClientIdFunc mocks the UpdateStatusAndClientId method.
-	UpdateStatusAndClientIdFunc func(cluster api.Cluster, status api.ClusterStatus, serviceClientId string) error
+	// UpdateStatusAndClientFunc mocks the UpdateStatusAndClient method.
+	UpdateStatusAndClientFunc func(cluster api.Cluster, status api.ClusterStatus, serviceClientId string, serviceClientSecret string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -392,14 +392,16 @@ type ClusterServiceMock struct {
 			// Status is the status argument value.
 			Status api.ClusterStatus
 		}
-		// UpdateStatusAndClientId holds details about calls to the UpdateStatusAndClientId method.
-		UpdateStatusAndClientId []struct {
+		// UpdateStatusAndClient holds details about calls to the UpdateStatusAndClient method.
+		UpdateStatusAndClient []struct {
 			// Cluster is the cluster argument value.
 			Cluster api.Cluster
 			// Status is the status argument value.
 			Status api.ClusterStatus
 			// ServiceClientId is the serviceClientId argument value.
 			ServiceClientId string
+			// ServiceClientSecret is the serviceClientSecret argument value.
+			ServiceClientSecret string
 		}
 	}
 	lockApplyResources                          sync.RWMutex
@@ -432,7 +434,7 @@ type ClusterServiceMock struct {
 	lockUpdate                                  sync.RWMutex
 	lockUpdateMultiClusterStatus                sync.RWMutex
 	lockUpdateStatus                            sync.RWMutex
-	lockUpdateStatusAndClientId                 sync.RWMutex
+	lockUpdateStatusAndClient                   sync.RWMutex
 }
 
 // ApplyResources calls ApplyResourcesFunc.
@@ -1416,41 +1418,45 @@ func (mock *ClusterServiceMock) UpdateStatusCalls() []struct {
 	return calls
 }
 
-// UpdateStatusAndClientId calls UpdateStatusAndClientIdFunc.
-func (mock *ClusterServiceMock) UpdateStatusAndClientId(cluster api.Cluster, status api.ClusterStatus, serviceClientId string) error {
-	if mock.UpdateStatusAndClientIdFunc == nil {
-		panic("ClusterServiceMock.UpdateStatusAndClientIdFunc: method is nil but ClusterService.UpdateStatusAndClientId was just called")
+// UpdateStatusAndClient calls UpdateStatusAndClientFunc.
+func (mock *ClusterServiceMock) UpdateStatusAndClient(cluster api.Cluster, status api.ClusterStatus, serviceClientId string, serviceClientSecret string) error {
+	if mock.UpdateStatusAndClientFunc == nil {
+		panic("ClusterServiceMock.UpdateStatusAndClientFunc: method is nil but ClusterService.UpdateStatusAndClient was just called")
 	}
 	callInfo := struct {
-		Cluster         api.Cluster
-		Status          api.ClusterStatus
-		ServiceClientId string
+		Cluster             api.Cluster
+		Status              api.ClusterStatus
+		ServiceClientId     string
+		ServiceClientSecret string
 	}{
-		Cluster:         cluster,
-		Status:          status,
-		ServiceClientId: serviceClientId,
+		Cluster:             cluster,
+		Status:              status,
+		ServiceClientId:     serviceClientId,
+		ServiceClientSecret: serviceClientSecret,
 	}
-	mock.lockUpdateStatusAndClientId.Lock()
-	mock.calls.UpdateStatusAndClientId = append(mock.calls.UpdateStatusAndClientId, callInfo)
-	mock.lockUpdateStatusAndClientId.Unlock()
-	return mock.UpdateStatusAndClientIdFunc(cluster, status, serviceClientId)
+	mock.lockUpdateStatusAndClient.Lock()
+	mock.calls.UpdateStatusAndClient = append(mock.calls.UpdateStatusAndClient, callInfo)
+	mock.lockUpdateStatusAndClient.Unlock()
+	return mock.UpdateStatusAndClientFunc(cluster, status, serviceClientId, serviceClientSecret)
 }
 
-// UpdateStatusAndClientIdCalls gets all the calls that were made to UpdateStatusAndClientId.
+// UpdateStatusAndClientCalls gets all the calls that were made to UpdateStatusAndClient.
 // Check the length with:
-//     len(mockedClusterService.UpdateStatusAndClientIdCalls())
-func (mock *ClusterServiceMock) UpdateStatusAndClientIdCalls() []struct {
-	Cluster         api.Cluster
-	Status          api.ClusterStatus
-	ServiceClientId string
+//     len(mockedClusterService.UpdateStatusAndClientCalls())
+func (mock *ClusterServiceMock) UpdateStatusAndClientCalls() []struct {
+	Cluster             api.Cluster
+	Status              api.ClusterStatus
+	ServiceClientId     string
+	ServiceClientSecret string
 } {
 	var calls []struct {
-		Cluster         api.Cluster
-		Status          api.ClusterStatus
-		ServiceClientId string
+		Cluster             api.Cluster
+		Status              api.ClusterStatus
+		ServiceClientId     string
+		ServiceClientSecret string
 	}
-	mock.lockUpdateStatusAndClientId.RLock()
-	calls = mock.calls.UpdateStatusAndClientId
-	mock.lockUpdateStatusAndClientId.RUnlock()
+	mock.lockUpdateStatusAndClient.RLock()
+	calls = mock.calls.UpdateStatusAndClient
+	mock.lockUpdateStatusAndClient.RUnlock()
 	return calls
 }
