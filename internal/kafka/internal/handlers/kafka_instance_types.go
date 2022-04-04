@@ -4,8 +4,6 @@ import (
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -17,7 +15,7 @@ type supportedKafkaInstanceTypesHandler struct {
 	service services.SupportedKafkaInstanceTypesService
 }
 
-func NewSupportedKafkaInstanceTypesHandler(service services.SupportedKafkaInstanceTypesService, cloudProviderService services.CloudProvidersService, kafkaService services.KafkaService, kafkaConfig *config.KafkaConfig) *supportedKafkaInstanceTypesHandler {
+func NewSupportedKafkaInstanceTypesHandler(service services.SupportedKafkaInstanceTypesService) *supportedKafkaInstanceTypesHandler {
 	return &supportedKafkaInstanceTypesHandler{
 		service: service,
 	}
@@ -39,13 +37,15 @@ func (h supportedKafkaInstanceTypesHandler) ListSupportedKafkaInstanceTypes(w ht
 
 			regionInstanceTypeList, err := h.service.GetSupportedKafkaInstanceTypesByRegion(cloudProvider, cloudRegion)
 			if err != nil {
-				logger.Logger.Error(err)
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get supported Kafka instance types")
+				if err.IsInstanceTypeNotSupported() {
+					logger.Logger.Error(err)
+					return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get supported Kafka instance types")
+				}
+				return nil, err
 			}
 
 			for _, regionInstanceType := range regionInstanceTypeList {
-				converted := presenters.PresentSupportedKafkaInstanceType(&regionInstanceType)
-				supportedKafkaInstanceTypeList.InstanceTypes = append(supportedKafkaInstanceTypeList.InstanceTypes, converted)
+				supportedKafkaInstanceTypeList.InstanceTypes = append(supportedKafkaInstanceTypeList.InstanceTypes, regionInstanceType)
 			}
 
 			return supportedKafkaInstanceTypeList, nil

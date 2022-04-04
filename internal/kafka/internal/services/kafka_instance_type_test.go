@@ -3,22 +3,22 @@ package services
 import (
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/onsi/gomega"
 )
 
-var supportedKafkaSizeStandard = []api.SupportedKafkaSize{
+var supportedKafkaSizeStandard = []public.SupportedKafkaSize{
 	{
 		Id: "x1",
-		IngressThroughputPerSec: api.SupportedKafkaSizeBytesValueItem{
+		IngressThroughputPerSec: public.SupportedKafkaSizeBytesValueItem{
 			Bytes: 31457280,
 		},
-		EgressThroughputPerSec: api.SupportedKafkaSizeBytesValueItem{
+		EgressThroughputPerSec: public.SupportedKafkaSizeBytesValueItem{
 			Bytes: 31457280,
 		},
 		TotalMaxConnections: 1000,
-		MaxDataRetentionSize: api.SupportedKafkaSizeBytesValueItem{
+		MaxDataRetentionSize: public.SupportedKafkaSizeBytesValueItem{
 			Bytes: 107374180000,
 		},
 		MaxPartitions:               1000,
@@ -30,17 +30,17 @@ var supportedKafkaSizeStandard = []api.SupportedKafkaSize{
 	},
 }
 
-var supportedKafkaSizeDeveloper = []api.SupportedKafkaSize{
+var supportedKafkaSizeDeveloper = []public.SupportedKafkaSize{
 	{
 		Id: "x2",
-		IngressThroughputPerSec: api.SupportedKafkaSizeBytesValueItem{
+		IngressThroughputPerSec: public.SupportedKafkaSizeBytesValueItem{
 			Bytes: 62914560,
 		},
-		EgressThroughputPerSec: api.SupportedKafkaSizeBytesValueItem{
+		EgressThroughputPerSec: public.SupportedKafkaSizeBytesValueItem{
 			Bytes: 62914560,
 		},
 		TotalMaxConnections: 2000,
-		MaxDataRetentionSize: api.SupportedKafkaSizeBytesValueItem{
+		MaxDataRetentionSize: public.SupportedKafkaSizeBytesValueItem{
 			Bytes: 2.1474836e+11,
 		},
 		MaxPartitions:               2000,
@@ -67,7 +67,7 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 		fields  fields
 		args    args
 		wantErr bool
-		want    []api.SupportedKafkaInstanceType
+		want    []public.SupportedKafkaInstanceType
 	}{
 		{
 			name: "success when instance type list",
@@ -80,14 +80,14 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 				cloudRegion:   "us-east-1",
 			},
 			wantErr: false,
-			want: []api.SupportedKafkaInstanceType{
+			want: []public.SupportedKafkaInstanceType{
 				{
-					Id:                  "developer",
-					SupportedKafkaSizes: supportedKafkaSizeDeveloper,
+					Id:    "developer",
+					Sizes: supportedKafkaSizeDeveloper,
 				},
 				{
-					Id:                  "standard",
-					SupportedKafkaSizes: supportedKafkaSizeStandard,
+					Id:    "standard",
+					Sizes: supportedKafkaSizeStandard,
 				},
 			},
 		},
@@ -100,6 +100,28 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 			args: args{
 				cloudProvider: "aws",
 				cloudRegion:   "us-east-2",
+			},
+			wantErr: true,
+		},
+		{
+			name: "fail when instance type not supported",
+			fields: fields{
+				providerConfig: buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: "unsupported",
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				cloudProvider: "aws",
+				cloudRegion:   "us-east-1",
 			},
 			wantErr: true,
 		},

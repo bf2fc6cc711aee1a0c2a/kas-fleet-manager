@@ -446,6 +446,10 @@ func (e *ServiceError) IsFailedToCheckQuota() bool {
 	return e.Code == FailedToCheckQuota("").Code
 }
 
+func (e *ServiceError) IsInstanceTypeNotSupported() bool {
+	return e.Code == InstanceTypeNotSupported("").Code
+}
+
 func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compat.Error {
 	href := Href(e.Code)
 	code := CodeStr(e.Code)
