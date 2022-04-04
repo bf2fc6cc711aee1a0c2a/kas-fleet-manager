@@ -82,7 +82,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
-	supportedKafkaInstanceTypesHandler := handlers.NewSupportedKafkaInstanceTypesHandler(s.SupportedKafkaInstanceTypes, s.CloudProviders, s.Kafka, s.KafkaConfig)
+	supportedKafkaInstanceTypesHandler := handlers.NewSupportedKafkaInstanceTypesHandler(s.SupportedKafkaInstanceTypes)
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
@@ -221,7 +221,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	// /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region}
 	apiV1SupportedKafkaInstanceTypesRouter := apiV1Router.PathPrefix("/instance_types/{cloud_provider}/{cloud_region}").Subrouter()
 	apiV1SupportedKafkaInstanceTypesRouter.HandleFunc("", supportedKafkaInstanceTypesHandler.ListSupportedKafkaInstanceTypes).
-		Name(logger.NewLogEvent("list-supported-kafka-instance-types-by cloud-region", "list supported kafka instance types by cloud region").ToString()).
+		Name(logger.NewLogEvent("list-supported-kafka-instance-types-by-cloud-region", "list supported kafka instance types by cloud region").ToString()).
 		Methods(http.MethodGet)
 	apiV1SupportedKafkaInstanceTypesRouter.Use(requireIssuer)
 	apiV1SupportedKafkaInstanceTypesRouter.Use(requireOrgID)
