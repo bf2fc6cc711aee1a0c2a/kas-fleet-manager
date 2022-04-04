@@ -41,10 +41,7 @@ func runGet(env *environments.Env, cmd *cobra.Command, _ []string) {
 		InstanceTypes: []public.SupportedKafkaInstanceType{},
 	}
 
-	for _, regionInstanceType := range regionInstanceTypeList {
-		supportedKafkaInstanceTypeList.InstanceTypes = append(supportedKafkaInstanceTypeList.InstanceTypes, regionInstanceType)
-	}
-
+	supportedKafkaInstanceTypeList.InstanceTypes = append(supportedKafkaInstanceTypeList.InstanceTypes, regionInstanceTypeList...)
 	output, marshalErr := json.MarshalIndent(supportedKafkaInstanceTypeList, "", "    ")
 	if marshalErr != nil {
 		glog.Fatalf("Failed to format supported Kafka instance type list: %s", marshalErr.Error())

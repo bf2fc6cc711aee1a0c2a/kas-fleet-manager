@@ -13,7 +13,7 @@ func PresentSupportedKafkaInstanceType(supportedInstanceType *public.SupportedKa
 }
 
 func GetSupportedKafkaSizes(supportedKafkaSizes []public.SupportedKafkaSize) []public.SupportedKafkaSize {
-	sizes := make([]public.SupportedKafkaSize, 0)
+	sizes := make([]public.SupportedKafkaSize, len(supportedKafkaSizes))
 	for _, c := range supportedKafkaSizes {
 		sizes = append(sizes, public.SupportedKafkaSize{Id: c.Id, IngressThroughputPerSec: public.SupportedKafkaSizeBytesValueItem(c.IngressThroughputPerSec), EgressThroughputPerSec: public.SupportedKafkaSizeBytesValueItem(c.EgressThroughputPerSec),
 			TotalMaxConnections: c.TotalMaxConnections, MaxDataRetentionSize: public.SupportedKafkaSizeBytesValueItem(c.MaxDataRetentionSize), MaxPartitions: c.MaxPartitions, MaxDataRetentionPeriod: c.MaxDataRetentionPeriod,
