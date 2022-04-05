@@ -79,8 +79,6 @@ func (k *connectorsService) Create(ctx context.Context, resource *dbapi.Connecto
 		k.bus.Notify("reconcile:connector")
 	})
 
-	// TODO: increment connector metrics
-	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
 	return nil
 }
 
