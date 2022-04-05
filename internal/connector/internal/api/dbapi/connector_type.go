@@ -26,6 +26,7 @@ type ConnectorType struct {
 	Labels []ConnectorTypeLabel `gorm:"foreignKey:ConnectorTypeID"`
 	// connector capabilities used to understand what features a connector support
 	Capabilities []ConnectorTypeCapability `gorm:"foreignKey:ConnectorTypeID"`
+	Checksum     *string
 }
 
 type ConnectorTypeList []*ConnectorType

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
@@ -20,6 +21,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
+
+const checkCatalogEntriesDuration = 5 * time.Second
 
 // ConnectorManager represents a connector manager that periodically reconciles connector requests
 type ConnectorManager struct {
@@ -63,7 +66,12 @@ func NewConnectorManager(
 		startupReconcileDone:    false,
 		db:                      db,
 	}
+
 	result.startupReconcileWG.Add(1)
+
+	// mark startupReconcileWG as done in a background thread instead of in worker reconcile
+	// this is required to allow multiple instances of fleetmanager to startup
+	result.runStartupReconcileCheckWorker()
 	return result
 }
 
@@ -95,7 +103,6 @@ func (k *ConnectorManager) Reconcile() []error {
 		}
 
 		k.startupReconcileDone = true
-		k.startupReconcileWG.Done()
 		glog.V(5).Infoln("Catalog updates processed")
 	}
 
@@ -269,6 +276,25 @@ func (k *ConnectorManager) doReconcile(errs []error, reconcilePhase string, reco
 	} else {
 		glog.V(5).Infof("Reconciled %d %s connectors with %d errors", count, reconcilePhase, len(serviceErrs))
 	}
+}
+
+func (k *ConnectorManager) runStartupReconcileCheckWorker() {
+	go func() {
+		for !k.startupReconcileDone {
+			glog.V(5).Infoln("Waiting for startup connector catalog updates...")
+			done, err := k.connectorTypesService.CatalogEntriesReconciled()
+			if err != nil {
+				glog.Errorf("Error checking catalog entry checksums: %s", err)
+			} else if done {
+				k.startupReconcileDone = true
+			} else {
+				// wait another 5 seconds to check
+				time.Sleep(checkCatalogEntriesDuration)
+			}
+		}
+		glog.V(5).Infoln("Wait for connector catalog updates done!")
+		k.startupReconcileWG.Done()
+	}()
 }
 
 func InDBTransaction(ctx context.Context, f func(ctx context.Context) error) (rerr *serviceError.ServiceError) {

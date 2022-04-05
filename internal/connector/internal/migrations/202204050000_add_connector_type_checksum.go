@@ -10,14 +10,13 @@ import (
 	"github.com/go-gormigrate/gormigrate/v2"
 )
 
-func addConnectorClusterClientSecret(migrationId string) *gormigrate.Migration {
+func addConnectorTypeChecksum(migrationId string) *gormigrate.Migration {
 
-	type ConnectorCluster struct {
-		ClientSecret string
+	type ConnectorType struct {
+		Checksum *string
 	}
 
 	return db.CreateMigrationFromActions(migrationId,
-		// add client secret
-		db.AddTableColumnsAction(&ConnectorCluster{}),
+		db.AddTableColumnsAction(&ConnectorType{}),
 	)
 }
