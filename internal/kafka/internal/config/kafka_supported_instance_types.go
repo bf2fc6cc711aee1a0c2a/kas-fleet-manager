@@ -183,7 +183,7 @@ func (q *Quantity) String() string {
 
 func (q *Quantity) ToFloat32() (float32, error) {
 	var output float32
-	p, err := resource.ParseQuantity(q.String())
+	p, err := resource.ParseQuantity(string(*q))
 	if err != nil {
 		return 0, err
 	}
