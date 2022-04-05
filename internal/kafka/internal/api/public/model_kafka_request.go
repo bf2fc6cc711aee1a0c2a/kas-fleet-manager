@@ -40,8 +40,8 @@ type KafkaRequest struct {
 	SizeId                      string    `json:"size_id,omitempty"`
 	IngressThroughputPerSec     string    `json:"ingress_throughput_per_sec,omitempty"`
 	EgressThroughputPerSec      string    `json:"egress_throughput_per_sec,omitempty"`
-	TotalMaxConnections         int       `json:"total_max_connections,omitempty"`
-	MaxPartitions               int       `json:"max_partitions,omitempty"`
+	TotalMaxConnections         int32     `json:"total_max_connections,omitempty"`
+	MaxPartitions               int32     `json:"max_partitions,omitempty"`
 	MaxDataRetentionPeriod      string    `json:"max_data_retention_period,omitempty"`
-	MaxConnectionAttemptsPerSec int       `json:"max_connection_attempts_per_sec,omitempty"`
+	MaxConnectionAttemptsPerSec int32     `json:"max_connection_attempts_per_sec,omitempty"`
 }
