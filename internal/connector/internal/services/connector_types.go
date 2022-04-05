@@ -28,6 +28,7 @@ type ConnectorTypesService interface {
 	PutConnectorShardMetadata(ctc *dbapi.ConnectorShardMetadata) (int64, *errors.ServiceError)
 	GetConnectorShardMetadata(id int64) (*dbapi.ConnectorShardMetadata, *errors.ServiceError)
 	GetLatestConnectorShardMetadataID(tid, channel string) (int64, *errors.ServiceError)
+	CatalogEntriesReconciled() (bool, *errors.ServiceError)
 }
 
 var _ ConnectorTypesService = &connectorTypesService{}
@@ -96,8 +97,7 @@ func (cts *connectorTypesService) Create(resource *dbapi.ConnectorType) *errors.
 			cts.bus.Notify("reconcile:connectortype")
 		})
 	*/
-	// TODO: increment connector type metrics
-	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
+
 	return nil
 }
 
@@ -206,6 +206,13 @@ func (cts *connectorTypesService) ForEachConnectorCatalogEntry(f func(id string,
 				return err
 			}
 		}
+
+		// update type checksum for latest catalog shard metadata
+		dbConn := cts.connectionFactory.New()
+		if err = dbConn.Model(connectorType).Where(`id = ?`, connectorType.ID).
+			UpdateColumn(`checksum`, cts.connectorsConfig.CatalogChecksums[connectorType.ID]).Error; err != nil {
+			return errors.GeneralError("failed to update connector type %s checksum: %v", entry.ConnectorType.Id, err.Error())
+		}
 	}
 	return nil
 }
@@ -295,4 +302,29 @@ func (cts *connectorTypesService) GetLatestConnectorShardMetadataID(tid, channel
 		return 0, errors.GeneralError("Unable to get connector type channel: %s", err)
 	}
 	return resource.ID, nil
+}
+
+func (cts *connectorTypesService) CatalogEntriesReconciled() (bool, *errors.ServiceError) {
+	var typeIds []string
+	catalogChecksums := cts.connectorsConfig.CatalogChecksums
+	for id := range catalogChecksums {
+		typeIds = append(typeIds, id)
+	}
+
+	var connectorTypes dbapi.ConnectorTypeList
+	dbConn := cts.connectionFactory.New()
+	if err := dbConn.Select(`id, checksum`).Where(`id in ?`, typeIds).
+		Find(&connectorTypes).Error; err != nil {
+		return false, services.HandleGetError("Connector type", "id", typeIds, err)
+	}
+
+	done := len(catalogChecksums) == len(connectorTypes)
+	if done {
+		for _, ct := range connectorTypes {
+			if ct.Checksum == nil || *ct.Checksum != catalogChecksums[ct.ID] {
+				done = false
+			}
+		}
+	}
+	return done, nil
 }

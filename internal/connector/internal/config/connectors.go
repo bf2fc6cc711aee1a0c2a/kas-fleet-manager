@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -23,6 +24,7 @@ type ConnectorsConfig struct {
 	ConnectorEnableUnassignedConnectors bool                    `json:"connector_enable_unassigned_connectors"`
 	ConnectorCatalogDirs                []string                `json:"connector_types"`
 	CatalogEntries                      []ConnectorCatalogEntry `json:"connector_type_urls"`
+	CatalogChecksums                    map[string]string       `json:"connector_catalog_checksums"`
 }
 
 var _ environments.ConfigModule = &ConnectorsConfig{}
@@ -38,7 +40,9 @@ type ConnectorCatalogEntry struct {
 }
 
 func NewConnectorsConfig() *ConnectorsConfig {
-	return &ConnectorsConfig{}
+	return &ConnectorsConfig{
+		CatalogChecksums: make(map[string]string),
+	}
 }
 
 func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
@@ -80,6 +84,13 @@ func (c *ConnectorsConfig) ReadFiles() error {
 				return err
 			}
 
+			// compute checksum for catalog entry to look for updates
+			sum, err := checksum(entry)
+			if err != nil {
+				return err
+			}
+			c.CatalogChecksums[entry.ConnectorType.Id] = sum
+
 			if prev, found := typesLoaded[entry.ConnectorType.Id]; found {
 				return fmt.Errorf("connector type '%s' defined in '%s' and '%s'", entry.ConnectorType.Id, file, prev)
 			}
@@ -93,4 +104,13 @@ func (c *ConnectorsConfig) ReadFiles() error {
 	glog.Infof("loaded %d connector types", len(values))
 	c.CatalogEntries = values
 	return nil
+}
+
+func checksum(spec interface{}) (string, error) {
+	h := sha1.New()
+	err := json.NewEncoder(h).Encode(spec)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
