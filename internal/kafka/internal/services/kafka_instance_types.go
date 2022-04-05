@@ -71,8 +71,9 @@ func (t supportedKafkaInstanceTypesService) GetSupportedKafkaInstanceTypesByRegi
 			})
 		}
 		instanceTypeList = append(instanceTypeList, public.SupportedKafkaInstanceType{
-			Id:    k,
-			Sizes: supportedSizesList,
+			Id:          k,
+			DisplayName: instanceType.DisplayName,
+			Sizes:       supportedSizesList,
 		})
 	}
 	sort.Slice(instanceTypeList, func(i, j int) bool {
