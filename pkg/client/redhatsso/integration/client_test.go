@@ -20,7 +20,7 @@ func getClient(baseURL string) redhatsso.SSOClient {
 		},
 	}
 
-	return redhatsso.NewSSOClient(&config)
+	return redhatsso.NewSSOClient(&config, config.RedhatSSORealm)
 }
 
 func Test_SSOClient_GetServiceAccounts(t *testing.T) {
@@ -191,7 +191,7 @@ func Test_SSOClient_GetToken(t *testing.T) {
 		},
 	}
 
-	client := redhatsso.NewSSOClient(&config)
+	client := redhatsso.NewSSOClient(&config, config.RedhatSSORealm)
 	accessToken := server.GenerateNewAuthToken()
 	serviceAccount, err := client.CreateServiceAccount(accessToken, "test", "test desc")
 	Expect(err).ToNot(HaveOccurred())
@@ -199,7 +199,7 @@ func Test_SSOClient_GetToken(t *testing.T) {
 	config.RedhatSSORealm.ClientID = *serviceAccount.ClientId
 	config.RedhatSSORealm.ClientSecret = *serviceAccount.Secret
 
-	client = redhatsso.NewSSOClient(&config)
+	client = redhatsso.NewSSOClient(&config, config.RedhatSSORealm)
 	token, err := client.GetToken()
 	Expect(err).ToNot(HaveOccurred())
 	fmt.Printf("TOKEN: %s\n", token)

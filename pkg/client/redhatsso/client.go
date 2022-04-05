@@ -36,10 +36,11 @@ type SSOClient interface {
 	RegenerateClientSecret(accessToken string, id string) (serviceaccountsclient.ServiceAccountData, error)
 }
 
-func NewSSOClient(config *keycloak.KeycloakConfig) SSOClient {
+func NewSSOClient(config *keycloak.KeycloakConfig, realmConfig *keycloak.KeycloakRealmConfig) SSOClient {
 	return &rhSSOClient{
-		config: config,
-		cache:  cache.New(tokenLifeDuration, cacheCleanupInterval),
+		config:      config,
+		realmConfig: realmConfig,
+		cache:       cache.New(tokenLifeDuration, cacheCleanupInterval),
 	}
 }
 
@@ -47,6 +48,7 @@ var _ SSOClient = &rhSSOClient{}
 
 type rhSSOClient struct {
 	config        *keycloak.KeycloakConfig
+	realmConfig   *keycloak.KeycloakRealmConfig
 	configuration *serviceaccountsclient.Configuration
 	cache         *cache.Cache
 }
@@ -71,7 +73,7 @@ func (c *rhSSOClient) getConfiguration(accessToken string) *serviceaccountsclien
 			Debug:     false,
 			Servers: serviceaccountsclient.ServerConfigurations{
 				{
-					URL: c.config.RedhatSSORealm.APIEndpointURI,
+					URL: c.realmConfig.APIEndpointURI,
 				},
 			},
 		}
@@ -89,7 +91,7 @@ func (c *rhSSOClient) getCachedToken(tokenKey string) (string, error) {
 }
 
 func (c *rhSSOClient) GetToken() (string, error) {
-	cachedTokenKey := fmt.Sprintf("%s%s", c.config.RedhatSSORealm.Realm, c.config.RedhatSSORealm.ClientID)
+	cachedTokenKey := fmt.Sprintf("%s%s", c.realmConfig.Realm, c.realmConfig.ClientID)
 	cachedToken, _ := c.getCachedToken(cachedTokenKey)
 
 	if cachedToken != "" && !shared.IsJWTTokenExpired(cachedToken) {
@@ -99,9 +101,9 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	client := &http.Client{}
 	parameters := url.Values{}
 	parameters.Set("grant_type", "client_credentials")
-	parameters.Set("client_id", c.config.RedhatSSORealm.ClientID)
-	parameters.Set("client_secret", c.config.RedhatSSORealm.ClientSecret)
-	req, err := http.NewRequest("POST", c.config.RedhatSSORealm.TokenEndpointURI, strings.NewReader(parameters.Encode()))
+	parameters.Set("client_id", c.realmConfig.ClientID)
+	parameters.Set("client_secret", c.realmConfig.ClientSecret)
+	req, err := http.NewRequest("POST", c.realmConfig.TokenEndpointURI, strings.NewReader(parameters.Encode()))
 	if err != nil {
 		return "", err
 	}
@@ -138,7 +140,7 @@ func (c *rhSSOClient) GetConfig() *keycloak.KeycloakConfig {
 }
 
 func (c *rhSSOClient) GetRealmConfig() *keycloak.KeycloakRealmConfig {
-	return c.config.RedhatSSORealm
+	return c.realmConfig
 }
 
 func (c *rhSSOClient) GetServiceAccounts(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error) {

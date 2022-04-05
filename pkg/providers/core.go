@@ -82,19 +82,15 @@ func ServiceProviders() di.Option {
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),
 		di.Provide(func(c *keycloak.KeycloakConfig) sso.KafkaKeycloakService {
-			var keycloakService sso.KeycloakService
-			if c.SelectSSOProvider == keycloak.MAS_SSO {
-				keycloakService = sso.NewKeycloakService(c, c.KafkaRealm)
-			} else {
-				keycloakService = sso.NewKeycloakServiceBuilder().
-					ForRedhatSSO().
-					WithRedhatSSOConfiguration(c).
-					Build()
-			}
-			return keycloakService
+			return sso.NewKeycloakServiceBuilder().
+				WithConfiguration(c).
+				Build()
 		}),
 		di.Provide(func(c *keycloak.KeycloakConfig) sso.OsdKeycloakService {
-			return sso.NewKeycloakService(c, c.OSDClusterIDPRealm)
+			return sso.NewKeycloakServiceBuilder().
+				WithConfiguration(c).
+				WithRealmConfig(c.OSDClusterIDPRealm).
+				Build()
 		}),
 
 		// Types registered as a BootService are started when the env is started

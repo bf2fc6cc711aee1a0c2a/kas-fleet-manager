@@ -35,7 +35,9 @@ func runResetCreds(env *environments.Env, cmd *cobra.Command) {
 
 	keycloakConfig := KeycloakConfig(env)
 	// setup required services
-	keycloakService := sso.NewKeycloakService(keycloakConfig, keycloakConfig.KafkaRealm)
+	keycloakService := sso.NewKeycloakServiceBuilder().
+		WithConfiguration(keycloakConfig).
+		Build()
 
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
