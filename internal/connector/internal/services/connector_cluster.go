@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -128,8 +127,7 @@ func (k *connectorClusterService) Create(ctx context.Context, resource *dbapi.Co
 	if err := k.connectorNamespaceService.CreateDefaultNamespace(ctx, resource); err != nil {
 		return err
 	}
-	// TODO: increment connector cluster metrics
-	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
+
 	return nil
 }
 
@@ -398,8 +396,6 @@ func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *
 		})
 	}
 
-	// TODO: increment connector deployment metrics
-	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
 	return nil
 }
 
@@ -509,15 +505,6 @@ func (k *connectorClusterService) FindAvailableNamespace(owner string, orgID str
 	}
 
 	return nil, nil
-}
-
-func Checksum(spec interface{}) (string, error) {
-	h := sha1.New()
-	err := json.NewEncoder(h).Encode(spec)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
 func (k *connectorClusterService) GetConnectorWithBase64Secrets(ctx context.Context, resource dbapi.ConnectorDeployment) (dbapi.Connector, *errors.ServiceError) {

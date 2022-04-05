@@ -122,8 +122,6 @@ func (k *connectorNamespaceService) Create(ctx context.Context, request *dbapi.C
 		return services.HandleGetError("Connector namespace", "id", request.ID, err)
 	}
 
-	// TODO: increment connector namespace metrics
-	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
 	return nil
 }
 
@@ -138,8 +136,6 @@ func (k *connectorNamespaceService) Update(ctx context.Context, request *dbapi.C
 		return errors.GeneralError("failed to read updated connector namespace: %v", err)
 	}
 
-	// TODO: increment connector namespace metrics
-	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
 	return nil
 }
 
@@ -155,8 +151,6 @@ func (k *connectorNamespaceService) Get(ctx context.Context, namespaceID string)
 		return nil, errors.GeneralError("failed to get connector namespace: %v", err)
 	}
 
-	// TODO: increment connector namespace metrics
-	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
 	return result, nil
 }
 
@@ -214,8 +208,6 @@ func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []strin
 		return nil, nil, errors.GeneralError("failed to get connector namespaces: %v", err)
 	}
 
-	// TODO: increment connector namespace metrics
-	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
 	return resourceList, &pagingMeta, nil
 }
 
@@ -267,8 +259,6 @@ func (k *connectorNamespaceService) Delete(ctx context.Context, namespaceId stri
 		}
 	}()
 
-	// TODO: increment connector namespace metrics
-	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
 	return nil
 }
 
