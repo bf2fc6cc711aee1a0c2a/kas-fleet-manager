@@ -11,6 +11,15 @@ Feature: create a connector
     Given a user named "Evil Bob"
     Given a user named "Jim"
 
+  Scenario: check that the connector types have been reconciled
+    Given I am logged in as "Gary"
+    When I GET path "/v1/kafka_connector_types"
+    Then the response code should be 200
+    And the ".total" selection from the response should match "2"
+    And I run SQL "SELECT count(*) FROM connector_types WHERE checksum IS NULL AND deleted_at IS NULL" gives results:
+      | count |
+      | 0     |
+
   Scenario: Greg lists all connector types
     Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types"
