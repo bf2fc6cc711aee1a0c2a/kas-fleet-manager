@@ -998,13 +998,13 @@ components:
             egress_throughput_per_sec:
               type: string
             total_max_connections:
-              type: int
+              type: integer
             max_partitions:
-              type: int
+              type: integer
             max_data_retention_period:
               type: string
             max_connection_attempts_per_sec:
-              type: int
+              type: integer
           example:
             $ref: "#/components/examples/KafkaRequestExample"
     KafkaRequestList:
@@ -1085,6 +1085,9 @@ components:
       properties:
         id:
           description: 'Unique identifier of the Kafka instance type.'
+          type: string
+        display_name:
+          description: 'Human readable name of the supported Kafka instance type'
           type: string
         sizes:
           description: ' A list of Kafka instance sizes available for this instance type'
@@ -1655,6 +1658,7 @@ components:
     SupportedKafkaInstanceTypeListExample:
       value:
         id: developer
+        display_name: Trial
         sizes:
           [
             {
