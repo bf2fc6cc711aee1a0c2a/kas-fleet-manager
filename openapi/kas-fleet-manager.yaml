@@ -1118,7 +1118,6 @@ components:
             type: string
       required:
         - instance_type
-        - max_capacity_reached
         - available_sizes
     ServiceAccountListItem:
       description: ''

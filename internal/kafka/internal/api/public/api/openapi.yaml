@@ -1694,7 +1694,6 @@ components:
       required:
       - available_sizes
       - instance_type
-      - max_capacity_reached
       type: object
     ServiceAccountListItem:
       allOf:
