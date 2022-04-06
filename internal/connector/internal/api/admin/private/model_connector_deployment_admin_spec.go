@@ -9,8 +9,8 @@
 
 package private
 
-// ConnectorDeploymentSpec Holds the deployment specification of a connector
-type ConnectorDeploymentSpec struct {
+// ConnectorDeploymentAdminSpec Holds the deployment specification of a connector
+type ConnectorDeploymentAdminSpec struct {
 	ConnectorId              string `json:"connector_id,omitempty"`
 	ConnectorResourceVersion int64  `json:"connector_resource_version,omitempty"`
 	ConnectorTypeId          string `json:"connector_type_id,omitempty"`

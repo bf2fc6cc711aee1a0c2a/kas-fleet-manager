@@ -15,7 +15,8 @@ import (
 
 // ConnectorDeploymentAllOfMetadata struct for ConnectorDeploymentAllOfMetadata
 type ConnectorDeploymentAllOfMetadata struct {
-	CreatedAt       time.Time `json:"created_at,omitempty"`
-	UpdatedAt       time.Time `json:"updated_at,omitempty"`
-	ResourceVersion int64     `json:"resource_version,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+	ResourceVersion int64     `json:"resource_version"`
+	ResolvedSecrets bool      `json:"resolved_secrets"`
 }

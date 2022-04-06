@@ -926,6 +926,13 @@ components:
         resource_version:
           format: int64
           type: integer
+        resolved_secrets:
+          type: boolean
+      required:
+      - created_at
+      - resolved_secrets
+      - resource_version
+      - updated_at
     ConnectorDeployment_allOf:
       properties:
         metadata:

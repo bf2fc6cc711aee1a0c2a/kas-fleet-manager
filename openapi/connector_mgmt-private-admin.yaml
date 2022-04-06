@@ -985,6 +985,11 @@ components:
           properties:
             metadata:
               type: object
+              required:
+                - created_at
+                - updated_at
+                - resource_version
+                - resolved_secrets
               properties:
                 created_at:
                   format: date-time
@@ -995,12 +1000,14 @@ components:
                 resource_version:
                   type: integer
                   format: int64
+                resolved_secrets:
+                  type: boolean
             spec:
-              $ref: '#/components/schemas/ConnectorDeploymentSpec'
+              $ref: '#/components/schemas/ConnectorDeploymentAdminSpec'
             status:
               $ref: 'connector_mgmt-private.yaml#/components/schemas/ConnectorDeploymentStatus'
 
-    ConnectorDeploymentSpec:
+    ConnectorDeploymentAdminSpec:
       description: Holds the deployment specification of a connector
       type: object
       properties:

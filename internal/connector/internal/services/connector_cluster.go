@@ -36,7 +36,7 @@ type ConnectorClusterService interface {
 	GetConnectorClusterStatus(ctx context.Context, id string) (dbapi.ConnectorClusterStatus, *errors.ServiceError)
 
 	SaveDeployment(ctx context.Context, resource *dbapi.ConnectorDeployment) *errors.ServiceError
-	GetConnectorWithBase64Secrets(ctx context.Context, resource dbapi.ConnectorDeployment) (dbapi.Connector, *errors.ServiceError)
+	GetConnectorWithBase64Secrets(ctx context.Context, resource dbapi.ConnectorDeployment) (dbapi.Connector, bool, *errors.ServiceError)
 	ListConnectorDeployments(ctx context.Context, id string, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError)
 	UpdateConnectorDeploymentStatus(ctx context.Context, status dbapi.ConnectorDeploymentStatus) *errors.ServiceError
 	FindAvailableNamespace(owner string, orgId string, namespaceId *string) (*dbapi.ConnectorNamespace, *errors.ServiceError)
@@ -502,22 +502,22 @@ func (k *connectorClusterService) FindAvailableNamespace(owner string, orgID str
 	return nil, nil
 }
 
-func (k *connectorClusterService) GetConnectorWithBase64Secrets(ctx context.Context, resource dbapi.ConnectorDeployment) (dbapi.Connector, *errors.ServiceError) {
+func (k *connectorClusterService) GetConnectorWithBase64Secrets(ctx context.Context, resource dbapi.ConnectorDeployment) (dbapi.Connector, bool, *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
 
 	var connector dbapi.Connector
 	err := dbConn.Where("id = ?", resource.ConnectorID).First(&connector).Error
 	if err != nil {
-		return connector, services.HandleGetError("Connector", "id", resource.ConnectorID, err)
+		return connector, false, services.HandleGetError("Connector", "id", resource.ConnectorID, err)
 	}
 
 	serr := getSecretsFromVaultAsBase64(&connector, k.connectorTypesService, k.vaultService)
 	if serr != nil {
-		return connector, serr
+		return connector, serr.Code == errors.ErrorGeneral, serr
 	}
 
-	return connector, nil
+	return connector, false, nil
 }
 
 func getSecretsFromVaultAsBase64(resource *dbapi.Connector, cts ConnectorTypesService, vault vault.VaultService) *errors.ServiceError {

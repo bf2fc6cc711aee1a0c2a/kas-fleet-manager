@@ -445,6 +445,11 @@ components:
           properties:
             metadata:
               type: object
+              required:
+                - created_at
+                - updated_at
+                - resource_version
+                - resolved_secrets
               properties:
                 created_at:
                   format: date-time
@@ -455,6 +460,8 @@ components:
                 resource_version:
                   type: integer
                   format: int64
+                resolved_secrets:
+                  type: boolean
             spec:
               $ref: '#/components/schemas/ConnectorDeploymentSpec'
             status:

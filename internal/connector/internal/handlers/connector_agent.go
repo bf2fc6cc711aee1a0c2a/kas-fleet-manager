@@ -222,10 +222,19 @@ func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource db
 		return private.ConnectorDeployment{}, err
 	}
 
-	apiSpec, err := h.Service.GetConnectorWithBase64Secrets(r.Context(), resource)
+	// avoid ignoring this deployment altogether if there is an issue in getting secrets from the vault
+	ctx := r.Context()
+	apiSpec, invalidSecrets, err := h.Service.GetConnectorWithBase64Secrets(ctx, resource)
 	if err != nil {
-		return private.ConnectorDeployment{}, err
+		if invalidSecrets {
+			// log error in getting secrets and signal that connector spec doesn't have secrets
+			glog.Errorf("Error getting connector %s with base64 secrets: %s", apiSpec.ID, err)
+			apiSpec.ConnectorSpec = []byte("{}")
+		} else {
+			return private.ConnectorDeployment{}, err
+		}
 	}
+	converted.Metadata.ResolvedSecrets = !invalidSecrets
 
 	pc, err := presenters.PresentConnector(&apiSpec)
 	if err != nil {
