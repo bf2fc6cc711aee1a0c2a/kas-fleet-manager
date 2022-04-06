@@ -157,7 +157,7 @@ func (o *kasFleetshardOperatorAddon) buildAddonParams(cluster *api.Cluster, serv
 
 		{
 			Id:    kasFleetshardOperatorParamMasSSOBaseUrl,
-			Value: o.KeycloakConfig.KafkaRealm.ValidIssuerURI,
+			Value: o.SsoService.GetRealmConfig().ValidIssuerURI,
 		},
 		{
 			Id:    KasFleetshardOperatorParamServiceAccountId,
