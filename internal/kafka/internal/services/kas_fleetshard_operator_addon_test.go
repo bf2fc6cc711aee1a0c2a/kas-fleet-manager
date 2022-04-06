@@ -36,6 +36,9 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 						return &api.ServiceAccount{}, nil
 					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloak.KeycloakRealmConfig{}
+					},
 				},
 				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 					return &clusters.ProviderMock{
@@ -158,6 +161,9 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 						return &api.ServiceAccount{}, nil
 					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloak.KeycloakRealmConfig{}
+					},
 				},
 				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 					return &clusters.ProviderMock{
@@ -175,6 +181,9 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 				ssoService: &sso.KeycloakServiceMock{
 					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 						return &api.ServiceAccount{}, nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloak.KeycloakRealmConfig{}
 					},
 				},
 				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {

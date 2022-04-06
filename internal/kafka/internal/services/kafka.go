@@ -12,7 +12,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
@@ -633,7 +632,7 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 	var res []managedkafka.ManagedKafka
 	// convert kafka requests to managed kafka
 	for _, kafkaRequest := range kafkaRequestList {
-		mk := BuildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig())
+		mk := buildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService)
 		res = append(res, *mk)
 	}
 
@@ -900,7 +899,7 @@ func (k *kafkaService) ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, 
 	return results, nil
 }
 
-func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *keycloak.KeycloakConfig) *managedkafka.ManagedKafka {
+func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakService sso.KeycloakService) *managedkafka.ManagedKafka {
 	managedKafkaCR := &managedkafka.ManagedKafka{
 		Id: kafkaRequest.ID,
 		TypeMeta: metav1.TypeMeta{
@@ -940,13 +939,16 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		Status: managedkafka.ManagedKafkaStatus{},
 	}
 
+	keycloakConfig := keycloakService.GetConfig()
+	keycloakRealmConfig := keycloakService.GetRealmConfig()
+
 	if keycloakConfig.EnableAuthenticationOnKafka {
 		managedKafkaCR.Spec.OAuth = managedkafka.OAuthSpec{
 			ClientId:               kafkaRequest.SsoClientID,
 			ClientSecret:           kafkaRequest.SsoClientSecret,
-			TokenEndpointURI:       keycloakConfig.KafkaRealm.TokenEndpointURI,
-			JwksEndpointURI:        keycloakConfig.KafkaRealm.JwksEndpointURI,
-			ValidIssuerEndpointURI: keycloakConfig.KafkaRealm.ValidIssuerURI,
+			TokenEndpointURI:       keycloakRealmConfig.TokenEndpointURI,
+			JwksEndpointURI:        keycloakRealmConfig.JwksEndpointURI,
+			ValidIssuerEndpointURI: keycloakRealmConfig.ValidIssuerURI,
 			UserNameClaim:          keycloakConfig.UserNameClaim,
 			FallBackUserNameClaim:  keycloakConfig.FallBackUserNameClaim,
 			CustomClaimCheck:       BuildCustomClaimCheck(kafkaRequest),
