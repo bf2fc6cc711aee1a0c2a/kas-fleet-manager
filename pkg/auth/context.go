@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 )
@@ -17,50 +18,47 @@ const (
 	// FilterByOrganisation is used to determine whether resources are filtered by a user's organisation or as an individual owner
 	contextFilterByOrganisation contextKey = "filter-by-organisation"
 	contextIsAdmin              contextKey = "is_admin"
+)
 
+var (
 	// ocm token claim keys
-	ocmUsernameKey string = "username"
-	ocmOrgIdKey    string = "org_id"
-	isOrgAdmin     string = "is_org_admin" // same key used in mas-sso tokens
+	tenantUsernameClaim string = "username"
+	tenantIdClaim       string = "org_id"
+	tenantOrgAdminClaim string = "is_org_admin" // same key used in mas-sso tokens
 
 	// sso.redhat.com token claim keys
-	ssoRHUsernameKey  string = "preferred_username" // same key used in mas-sso tokens
-	ssoRhAccountIdKey string = "account_id"
+	alternateTenantUsernameClaim string = "preferred_username" // same key used in mas-sso tokens
+	tenantUserIdClaim            string = "account_id"
 
 	// mas-sso token claim keys
 	// NOTE: This should be removed once we migrate to sso.redhat.com as it will no longer be needed (TODO: to be removed as part of MGDSTRM-6159)
-	masSsoOrgIdKey = "rh-org-id"
+	alternateTenantIdClaim = "rh-org-id"
 )
 
 func GetUsernameFromClaims(claims jwt.MapClaims) string {
-	if claims[ocmUsernameKey] != nil {
-		return claims[ocmUsernameKey].(string)
+	if idx, val := arrays.FindFirst(func(x interface{}) bool { return x != nil }, claims[tenantUsernameClaim], claims[alternateTenantUsernameClaim]); idx != -1 {
+		return val.(string)
 	}
-
-	if claims[ssoRHUsernameKey] != nil {
-		return claims[ssoRHUsernameKey].(string)
-	}
-
 	return ""
 }
 
 func GetAccountIdFromClaims(claims jwt.MapClaims) string {
-	if claims[ssoRhAccountIdKey] != nil {
-		return claims[ssoRhAccountIdKey].(string)
+	if claims[tenantUserIdClaim] != nil {
+		return claims[tenantUserIdClaim].(string)
 	}
 	return ""
 }
 
 func GetOrgIdFromClaims(claims jwt.MapClaims) string {
-	if claims[ocmOrgIdKey] != nil {
-		if orgId, ok := claims[ocmOrgIdKey].(string); ok {
+	if claims[tenantIdClaim] != nil {
+		if orgId, ok := claims[tenantIdClaim].(string); ok {
 			return orgId
 		}
 	}
 
 	// NOTE: This should be removed once we migrate to sso.redhat.com as it will no longer be needed (TODO: to be removed as part of MGDSTRM-6159)
-	if claims[masSsoOrgIdKey] != nil {
-		if orgId, ok := claims[masSsoOrgIdKey].(string); ok {
+	if claims[alternateTenantIdClaim] != nil {
+		if orgId, ok := claims[alternateTenantIdClaim].(string); ok {
 			return orgId
 		}
 	}
@@ -69,8 +67,8 @@ func GetOrgIdFromClaims(claims jwt.MapClaims) string {
 }
 
 func GetIsOrgAdminFromClaims(claims jwt.MapClaims) bool {
-	if claims[isOrgAdmin] != nil {
-		return claims[isOrgAdmin].(bool)
+	if claims[tenantOrgAdminClaim] != nil {
+		return claims[tenantOrgAdminClaim].(bool)
 	}
 	return false
 }

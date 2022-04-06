@@ -100,14 +100,14 @@ func (authHelper *AuthHelper) CreateJWTWithClaims(account *amv1.Account, jwtClai
 	if jwtClaims == nil || jwtClaims["iss"] == nil || jwtClaims["iss"] == "" || jwtClaims["iss"] == authHelper.ocmTokenIssuer {
 		// Set default claim values for ocm tokens
 		claims["iss"] = authHelper.ocmTokenIssuer
-		claims[ocmUsernameKey] = account.Username()
+		claims[tenantUsernameClaim] = account.Username()
 		claims["first_name"] = account.FirstName()
 		claims["last_name"] = account.LastName()
 		claims["account_id"] = account.ID()
 		claims["rh-user-id"] = account.ID()
 		org, ok := account.GetOrganization()
 		if ok {
-			claims[ocmOrgIdKey] = org.ExternalID()
+			claims[tenantIdClaim] = org.ExternalID()
 		}
 
 		if account.Email() != "" {
