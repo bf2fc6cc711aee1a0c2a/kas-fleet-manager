@@ -22,7 +22,7 @@ func NewSupportedKafkaInstanceTypesHandler(service services.SupportedKafkaInstan
 	}
 }
 
-func (h supportedKafkaInstanceTypesHandler) ListSupportedKafkaInstanceTypes(w http.ResponseWriter, r *http.Request) {
+func (h *supportedKafkaInstanceTypesHandler) ListSupportedKafkaInstanceTypes(w http.ResponseWriter, r *http.Request) {
 	cloudProvider := mux.Vars(r)["cloud_provider"]
 	cloudRegion := mux.Vars(r)["cloud_region"]
 

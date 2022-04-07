@@ -447,7 +447,7 @@ func (e *ServiceError) IsFailedToCheckQuota() bool {
 }
 
 func (e *ServiceError) IsInstanceTypeNotSupported() bool {
-	return e.Code == InstanceTypeNotSupported("").Code
+	return e.Code == ErrorInstanceTypeNotSupported
 }
 
 func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compat.Error {
