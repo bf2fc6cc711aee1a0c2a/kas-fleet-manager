@@ -1296,6 +1296,7 @@ components:
       - connector_type_id
       - desired_state
       - name
+      - namespace_id
     Channel:
       default: stable
       enum:
