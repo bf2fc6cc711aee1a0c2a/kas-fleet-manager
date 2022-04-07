@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -43,8 +44,10 @@ func (h supportedKafkaInstanceTypesHandler) ListSupportedKafkaInstanceTypes(w ht
 				}
 				return nil, err
 			}
-
-			supportedKafkaInstanceTypeList.InstanceTypes = append(supportedKafkaInstanceTypeList.InstanceTypes, regionInstanceTypeList...)
+			for _, instanceType := range regionInstanceTypeList {
+				converted := presenters.PresentSupportedKafkaInstanceTypes(&instanceType)
+				supportedKafkaInstanceTypeList.InstanceTypes = append(supportedKafkaInstanceTypeList.InstanceTypes, converted)
+			}
 
 			return supportedKafkaInstanceTypeList, nil
 		},
