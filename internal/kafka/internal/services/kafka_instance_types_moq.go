@@ -4,7 +4,7 @@
 package services
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
@@ -19,7 +19,7 @@ var _ SupportedKafkaInstanceTypesService = &SupportedKafkaInstanceTypesServiceMo
 //
 // 		// make and configure a mocked SupportedKafkaInstanceTypesService
 // 		mockedSupportedKafkaInstanceTypesService := &SupportedKafkaInstanceTypesServiceMock{
-// 			GetSupportedKafkaInstanceTypesByRegionFunc: func(providerId string, regionId string) ([]public.SupportedKafkaInstanceType, *serviceError.ServiceError) {
+// 			GetSupportedKafkaInstanceTypesByRegionFunc: func(providerId string, regionId string) ([]config.KafkaInstanceType, *serviceError.ServiceError) {
 // 				panic("mock out the GetSupportedKafkaInstanceTypesByRegion method")
 // 			},
 // 		}
@@ -30,7 +30,7 @@ var _ SupportedKafkaInstanceTypesService = &SupportedKafkaInstanceTypesServiceMo
 // 	}
 type SupportedKafkaInstanceTypesServiceMock struct {
 	// GetSupportedKafkaInstanceTypesByRegionFunc mocks the GetSupportedKafkaInstanceTypesByRegion method.
-	GetSupportedKafkaInstanceTypesByRegionFunc func(providerId string, regionId string) ([]public.SupportedKafkaInstanceType, *serviceError.ServiceError)
+	GetSupportedKafkaInstanceTypesByRegionFunc func(providerId string, regionId string) ([]config.KafkaInstanceType, *serviceError.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -46,7 +46,7 @@ type SupportedKafkaInstanceTypesServiceMock struct {
 }
 
 // GetSupportedKafkaInstanceTypesByRegion calls GetSupportedKafkaInstanceTypesByRegionFunc.
-func (mock *SupportedKafkaInstanceTypesServiceMock) GetSupportedKafkaInstanceTypesByRegion(providerId string, regionId string) ([]public.SupportedKafkaInstanceType, *serviceError.ServiceError) {
+func (mock *SupportedKafkaInstanceTypesServiceMock) GetSupportedKafkaInstanceTypesByRegion(providerId string, regionId string) ([]config.KafkaInstanceType, *serviceError.ServiceError) {
 	if mock.GetSupportedKafkaInstanceTypesByRegionFunc == nil {
 		panic("SupportedKafkaInstanceTypesServiceMock.GetSupportedKafkaInstanceTypesByRegionFunc: method is nil but SupportedKafkaInstanceTypesService.GetSupportedKafkaInstanceTypesByRegion was just called")
 	}
