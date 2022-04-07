@@ -25,7 +25,7 @@ func NewSupportedKafkaInstanceTypesService(providerConfig *config.ProviderConfig
 	}
 }
 
-func (t supportedKafkaInstanceTypesService) GetSupportedKafkaInstanceTypesByRegion(providerId string, regionId string) ([]config.KafkaInstanceType, *errors.ServiceError) {
+func (t *supportedKafkaInstanceTypesService) GetSupportedKafkaInstanceTypesByRegion(providerId string, regionId string) ([]config.KafkaInstanceType, *errors.ServiceError) {
 	instanceTypeList := []config.KafkaInstanceType{}
 	provider, providerFound := t.providerConfig.ProvidersConfig.SupportedProviders.GetByName(providerId)
 	if !providerFound {

@@ -491,6 +491,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SupportedKafkaInstanceTypesList'
+        "400":
+          description: Cloud provider or region is not supported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                400UnsupportedRegionExample:
+                  $ref: '#/components/examples/400UnsupportedRegionExample'
+                400UnsupportedProviderExample:
+                  $ref: '#/components/examples/400UnsupportedProviderExample'
         "401":
           description: Auth token is invalid
           content:
@@ -1787,6 +1798,22 @@ components:
         code: "KAFKAS-MGMT-23"
         reason: "Failed to parse search query: Unable to list Kafka requests for api_kafka_service: KAFKAS-MGMT-23: Failed to parse search query: Unsupported column name for search: 'id'. Supported column names are: region, name, cloud_provider, name, status. Query invalid: id = 123"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
+    400UnsupportedProviderExample:
+      value:
+        id: "30"
+        kind: "Error"
+        href: "/api/kafkas_mgmt/v1/errors/30"
+        code: "KAFKAS-MGMT-30"
+        reason: "Provider not supported"
+        operation_id: "c980htvgvcn9kf51d0n0"
+    400UnsupportedRegionExample:
+      value:
+        id: "31"
+        kind: "Error"
+        href: "/api/kafkas_mgmt/v1/errors/31"
+        code: "KAFKAS-MGMT-31"
+        reason: "Region not supported"
+        operation_id: "c980htvgvcn9kf51d0n0"
     400MissingParameterExample:
       value:
         id: "21"
