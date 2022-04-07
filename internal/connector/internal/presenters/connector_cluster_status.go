@@ -27,18 +27,12 @@ func ConvertConditions(in []private.MetaV1Condition) []dbapi.Condition {
 	}
 	out := make([]dbapi.Condition, len(in))
 	for i, v := range in {
-		var t string
-		if v.LastTransitionTime != "" {
-			t = v.LastTransitionTime
-		} else {
-			t = v.DeprecatedLastTransitionTime
-		}
 		out[i] = dbapi.Condition{
 			Type:               v.Type,
 			Reason:             v.Reason,
 			Message:            v.Message,
 			Status:             v.Status,
-			LastTransitionTime: t,
+			LastTransitionTime: v.LastTransitionTime,
 		}
 	}
 	return out
@@ -47,12 +41,11 @@ func PresentConditions(in []dbapi.Condition) []private.MetaV1Condition {
 	out := make([]private.MetaV1Condition, len(in))
 	for i, v := range in {
 		out[i] = private.MetaV1Condition{
-			Type:                         v.Type,
-			Reason:                       v.Reason,
-			Message:                      v.Message,
-			Status:                       v.Status,
-			LastTransitionTime:           v.LastTransitionTime,
-			DeprecatedLastTransitionTime: v.LastTransitionTime,
+			Type:               v.Type,
+			Reason:             v.Reason,
+			Message:            v.Message,
+			Status:             v.Status,
+			LastTransitionTime: v.LastTransitionTime,
 		}
 	}
 	return out

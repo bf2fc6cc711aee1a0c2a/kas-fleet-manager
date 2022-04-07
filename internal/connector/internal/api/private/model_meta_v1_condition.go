@@ -11,11 +11,9 @@ package private
 
 // MetaV1Condition struct for MetaV1Condition
 type MetaV1Condition struct {
-	Type    string `json:"type,omitempty"`
-	Reason  string `json:"reason,omitempty"`
-	Message string `json:"message,omitempty"`
-	Status  string `json:"status,omitempty"`
-	// Deprecated
-	DeprecatedLastTransitionTime string `json:"lastTransitionTime,omitempty"`
-	LastTransitionTime           string `json:"last_transition_time,omitempty"`
+	Type               string `json:"type,omitempty"`
+	Reason             string `json:"reason,omitempty"`
+	Message            string `json:"message,omitempty"`
+	Status             string `json:"status,omitempty"`
+	LastTransitionTime string `json:"last_transition_time,omitempty"`
 }
