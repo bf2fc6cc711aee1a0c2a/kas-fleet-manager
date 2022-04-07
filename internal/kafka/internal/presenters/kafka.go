@@ -2,6 +2,7 @@ package presenters
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
@@ -31,7 +32,7 @@ func ConvertKafkaRequest(kafkaRequestPayload public.KafkaRequestPayload, dbKafka
 }
 
 // PresentKafkaRequest - create KafkaRequest in an appropriate format ready to be returned by the API
-func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest) public.KafkaRequest {
+func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, browserUrl string) public.KafkaRequest {
 	reference := PresentReference(kafkaRequest.ID, kafkaRequest)
 
 	return public.KafkaRequest{
@@ -52,6 +53,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest) public.KafkaRequest {
 		InstanceType:            kafkaRequest.InstanceType,
 		ReauthenticationEnabled: kafkaRequest.ReauthenticationEnabled,
 		KafkaStorageSize:        kafkaRequest.KafkaStorageSize,
+		BrowserUrl:              fmt.Sprintf("%s/%s/dashboard", strings.TrimSuffix(browserUrl, "/"), reference.Id),
 	}
 }
 

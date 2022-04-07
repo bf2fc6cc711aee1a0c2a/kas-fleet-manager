@@ -446,6 +446,10 @@ parameters:
   description: The domain name to use for Kafka instances
   value: kafka.bf2.dev
 
+- name: BROWSER_URL
+  description: browser url pointing to the kafka admin console
+  value: "http://localhost:8080/"
+
 - name: STRIMZI_OPERATOR_ADDON_ID
   displayName: Strimzi operator addon ID
   description: ID of the Strimzi operator addon
@@ -891,6 +895,7 @@ objects:
             - --kas-fleetshard-operator-index-image=${KAS_FLEETSHARD_OLM_INDEX_IMAGE}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --kafka-domain-name=${KAFKA_DOMAIN_NAME}
+            - --browser-url=${BROWSER_URL}
             - --strimzi-operator-addon-id=${STRIMZI_OPERATOR_ADDON_ID}
             - --kas-fleetshard-addon-id=${KAS_FLEETSHARD_ADDON_ID}
             - --cluster-logging-operator-addon-id=${CLUSTER_LOGGING_OPERATOR_ADDON_ID}
