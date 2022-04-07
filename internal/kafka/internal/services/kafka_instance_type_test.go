@@ -3,24 +3,17 @@ package services
 import (
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/onsi/gomega"
 )
 
-var supportedKafkaSizeStandard = []public.SupportedKafkaSize{
+var supportedKafkaSizeStandard = []config.KafkaInstanceSize{
 	{
-		Id: "x1",
-		IngressThroughputPerSec: public.SupportedKafkaSizeBytesValueItem{
-			Bytes: 31457280,
-		},
-		EgressThroughputPerSec: public.SupportedKafkaSizeBytesValueItem{
-			Bytes: 31457280,
-		},
-		TotalMaxConnections: 1000,
-		MaxDataRetentionSize: public.SupportedKafkaSizeBytesValueItem{
-			Bytes: 107374180000,
-		},
+		Id:                          "x1",
+		IngressThroughputPerSec:     "30Mi",
+		EgressThroughputPerSec:      "30Mi",
+		TotalMaxConnections:         1000,
+		MaxDataRetentionSize:        "100Gi",
 		MaxPartitions:               1000,
 		MaxDataRetentionPeriod:      "P14D",
 		MaxConnectionAttemptsPerSec: 100,
@@ -30,19 +23,13 @@ var supportedKafkaSizeStandard = []public.SupportedKafkaSize{
 	},
 }
 
-var supportedKafkaSizeDeveloper = []public.SupportedKafkaSize{
+var supportedKafkaSizeDeveloper = []config.KafkaInstanceSize{
 	{
-		Id: "x2",
-		IngressThroughputPerSec: public.SupportedKafkaSizeBytesValueItem{
-			Bytes: 62914560,
-		},
-		EgressThroughputPerSec: public.SupportedKafkaSizeBytesValueItem{
-			Bytes: 62914560,
-		},
-		TotalMaxConnections: 2000,
-		MaxDataRetentionSize: public.SupportedKafkaSizeBytesValueItem{
-			Bytes: 2.1474836e+11,
-		},
+		Id:                          "x2",
+		IngressThroughputPerSec:     "60Mi",
+		EgressThroughputPerSec:      "60Mi",
+		TotalMaxConnections:         2000,
+		MaxDataRetentionSize:        "200Gi",
 		MaxPartitions:               2000,
 		MaxDataRetentionPeriod:      "P14D",
 		MaxConnectionAttemptsPerSec: 200,
@@ -67,7 +54,7 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 		fields  fields
 		args    args
 		wantErr bool
-		want    []public.SupportedKafkaInstanceType
+		want    []config.KafkaInstanceType
 	}{
 		{
 			name: "success when instance type list",
@@ -80,7 +67,7 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 				cloudRegion:   "us-east-1",
 			},
 			wantErr: false,
-			want: []public.SupportedKafkaInstanceType{
+			want: []config.KafkaInstanceType{
 				{
 					Id:          "developer",
 					DisplayName: "Trial",
