@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 )
 
 var supportedKafkaSizeStandard = []config.KafkaInstanceSize{
@@ -117,14 +117,14 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
+			RegisterTestingT(t)
 			k := supportedKafkaInstanceTypesService{
 				providerConfig: tt.fields.providerConfig,
 				kafkaConfig:    tt.fields.kafkaConfig,
 			}
 			got, err := k.GetSupportedKafkaInstanceTypesByRegion(tt.args.cloudProvider, tt.args.cloudRegion)
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
-			gomega.Expect(got).To(gomega.Equal(tt.want))
+			Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
