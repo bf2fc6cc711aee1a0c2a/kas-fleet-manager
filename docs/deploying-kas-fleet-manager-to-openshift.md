@@ -99,8 +99,8 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `MAS_SSO_INSECURE`: Skip TLS insecure verification for the connection to a MAS SSO instance. Defaults to value false.
 - `OSD_IDP_MAS_SSO_CLIENT_ID`: The client id for a MAS SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientId_
 - `OSD_IDP_MAS_SSO_CLIENT_SECRET`: The client secret for a MAS SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientSecret_
-- `IMAGE_PULL_DOCKER_CONFIG`: Docker config content for pulling private images. Defaults to value read from _./secrets/image-pull.dockerconfigjson_
-- `KUBE_CONFIG`: Kubeconfig content for standalone dataplane clusters communication. Defaults to `''`
+- `IMAGE_PULL_DOCKER_CONFIG`: Base64 encoded Docker config content for pulling private images. Defaults to value read from _./secrets/image-pull.dockerconfigjson_
+- `KUBE_CONFIG`: Base64 encoded Kubeconfig content for standalone dataplane clusters communication. Defaults to `''`
 - `OBSERVABILITY_RHSSO_LOGS_CLIENT_ID`: The client id for a RHSSO service account that has read logs permission. Defaults to vaue read from _./secrets/rhsso-logs.clientId_
 - `OBSERVABILITY_RHSSO_LOGS_SECRET`: The client secret for a RHSSO service account that has read logs permission. Defaults to vaue read from _./secrets/rhsso-logs.clientSecret_
 - `OBSERVABILITY_RHSSO_METRICS_CLIENT_ID`: The client id for a RHSSO service account that has remote-write metrics permission. Defaults to vaue read from _./secrets/rhsso-metrics.clientId_
@@ -170,6 +170,7 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `STRIMZI_OPERATOR_ADDON_ID`: The id of the Strimzi operator addon. Defaults to `managed-kafka-qe`.
 - `KAS_FLEETSHARD_ADDON_ID`: The id of the kas-fleetshard operator addon. Defaults to `kas-fleetshard-operator-qe`.
 - `CLUSTER_LIST`: The list of data plane cluster configuration to be used. This is to be used when scaling type is `manual`. Defaults to empty list.
+- `SUPPORTED_CLOUD_PROVIDERS`: A list of supported cloud providers in a yaml format. Defaults to `[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, eval: {}}}]}]`.
 - `STRIMZI_OLM_PACKAGE_NAME`: Strimzi operator OLM package name. This is optional and to be defined when interacting with standalone data plane clusters. Defaults to `managed-kafka`.
 - `KAS_FLEETSHARD_OLM_PACKAGE_NAME`: kas-fleetshard operator OLM package name. This is optional and to be defined when interacting with standalone data plane clusters. Defaults to `kas-fleetshard-operator`.
 

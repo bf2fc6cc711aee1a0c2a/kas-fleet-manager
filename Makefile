@@ -684,7 +684,7 @@ deploy/secrets:
 		-p KAFKA_TLS_CERT="$(shell ([ -s './secrets/kafka-tls.crt' ] && [ -z '${KAFKA_TLS_CERT}' ]) && cat ./secrets/kafka-tls.crt || echo '${KAFKA_TLS_CERT}')" \
 		-p KAFKA_TLS_KEY="$(shell ([ -s './secrets/kafka-tls.key' ] && [ -z '${KAFKA_TLS_KEY}' ]) && cat ./secrets/kafka-tls.key || echo '${KAFKA_TLS_KEY}')" \
 		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
-		-p IMAGE_PULL_DOCKER_CONFIG="$(shell ([ -s './secrets/image-pull.dockerconfigjson' ] && [ -z '${IMAGE_PULL_DOCKER_CONFIG}' ]) && cat ./secrets/image-pull.dockerconfigjson || echo '${IMAGE_PULL_DOCKER_CONFIG}')" \
+		-p IMAGE_PULL_DOCKER_CONFIG="$(shell ([ -s './secrets/image-pull.dockerconfigjson' ] && [ -z '${IMAGE_PULL_DOCKER_CONFIG}' ]) && cat ./secrets/image-pull.dockerconfigjson | base64 || echo '${IMAGE_PULL_DOCKER_CONFIG}')" \
 		-p KUBE_CONFIG="${KUBE_CONFIG}" \
 		-p OBSERVABILITY_RHSSO_LOGS_CLIENT_ID="$(shell ([ -s './secrets/rhsso-logs.clientId' ] && [ -z '${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}' ]) && cat ./secrets/rhsso-logs.clientId || echo '${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}')" \
 		-p OBSERVABILITY_RHSSO_LOGS_SECRET="$(shell ([ -s './secrets/rhsso-logs.clientSecret' ] && [ -z '${OBSERVABILITY_RHSSO_LOGS_SECRET}' ]) && cat ./secrets/rhsso-logs.clientSecret || echo '${OBSERVABILITY_RHSSO_LOGS_SECRET}')" \
@@ -745,6 +745,7 @@ deploy/service: KAS_FLEETSHARD_ADDON_ID ?= "kas-fleetshard-operator-qe"
 deploy/service: STRIMZI_OLM_PACKAGE_NAME ?= "managed-kafka"
 deploy/service: KAS_FLEETSHARD_OLM_PACKAGE_NAME ?= "kas-fleetshard-operator"
 deploy/service: CLUSTER_LIST ?= "[]"
+deploy/service: SUPPORTED_CLOUD_PROVIDERS ?= "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, eval: {}}}]}]"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
@@ -798,6 +799,7 @@ deploy/service: deploy/envoy deploy/route
 		-p STRIMZI_OLM_PACKAGE_NAME="${STRIMZI_OLM_PACKAGE_NAME}" \
 		-p KAS_FLEETSHARD_OLM_PACKAGE_NAME="${KAS_FLEETSHARD_OLM_PACKAGE_NAME}" \
 		-p CLUSTER_LIST="${CLUSTER_LIST}" \
+		-p SUPPORTED_CLOUD_PROVIDERS="${SUPPORTED_CLOUD_PROVIDERS}" \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 
