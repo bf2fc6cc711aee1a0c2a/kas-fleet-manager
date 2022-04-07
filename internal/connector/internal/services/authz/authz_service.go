@@ -145,17 +145,19 @@ func (u *ValidationUser) AuthorizedNamespaceAdmin() handlers.ValidateOption {
 	}
 }
 
-func (u *ValidationUser) AuthorizedNamespaceUser() handlers.ValidateOption {
+func (u *ValidationUser) AuthorizedNamespaceUser(errorCode errors.ServiceErrorCode) handlers.ValidateOption {
 	return func(field string, value *string) (err *errors.ServiceError) {
 		if u.err != nil {
 			err = u.err
 		} else {
-			if namespace, serr := u.service.namespaceService.GetNamespaceTenant(*value); serr != nil {
-				err = serr
-			} else {
-				if (namespace.TenantUserId != nil && u.UserId() != *namespace.TenantUserId) ||
-					(namespace.TenantOrganisationId != nil && u.OrgId() != *namespace.TenantOrganisationId) {
-					err = errors.NotFound("Connector namespace with id='%s' not found", *value)
+			if value != nil && len(*value) > 0 {
+				if namespace, serr := u.service.namespaceService.GetNamespaceTenant(*value); serr != nil {
+					err = errors.New(errorCode, serr.Reason)
+				} else {
+					if (namespace.TenantUserId != nil && u.UserId() != *namespace.TenantUserId) ||
+						(namespace.TenantOrganisationId != nil && u.OrgId() != *namespace.TenantOrganisationId) {
+						err = errors.New(errorCode, "Connector namespace with id='%s' not found", *value)
+					}
 				}
 			}
 		}

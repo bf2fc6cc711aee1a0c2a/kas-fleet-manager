@@ -85,7 +85,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.WithDefault("ready"), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
 			validateConnectorRequest(h.connectorTypesService, &resource, tid),
 			handlers.Validation("namespace_id", &resource.NamespaceId,
-				handlers.MaxLen(maxConnectorNamespaceIdLength), validateNamespaceID(h.namespaceService, r.Context()), user.ValidateNamespaceConnectorQuota()),
+				handlers.MaxLen(maxConnectorNamespaceIdLength), user.AuthorizedNamespaceUser(errors.ErrorBadRequest), user.ValidateNamespaceConnectorQuota()),
 		},
 
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -229,6 +229,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// revalidate
+			user := h.authZService.GetValidationUser(r.Context())
 			validates := []handlers.Validate{
 				handlers.Validation("name", &resource.Name, handlers.MinLen(1), handlers.MaxLen(100)),
 				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
@@ -236,7 +237,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				handlers.Validation("service_account.client_id", &resource.ServiceAccount.ClientId, handlers.MinLen(1)),
 				handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
 				validateConnector(h.connectorTypesService, &resource, connectorTypeId),
-				handlers.Validation("namespace_id", &resource.NamespaceId, handlers.MaxLen(maxConnectorNamespaceIdLength)),
+				handlers.Validation("namespace_id", &resource.NamespaceId, handlers.MaxLen(maxConnectorNamespaceIdLength), user.AuthorizedNamespaceUser(errors.ErrorBadRequest)),
 			}
 
 			for _, v := range validates {
