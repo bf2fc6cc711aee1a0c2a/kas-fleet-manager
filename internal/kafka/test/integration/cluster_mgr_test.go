@@ -31,7 +31,6 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	// start servers
 	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *ocm.OCMConfig, d *config.DataplaneClusterConfig) {
-		c.ClusterLoggingOperatorAddonID = ocm.ClusterLoggingOperatorAddonID
 		d.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
 	})
 	defer teardown()
@@ -105,13 +104,6 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		t.Fatalf("failed to get the strimzi operator addon for cluster %s", cluster.ClusterID)
 	}
 	Expect(strimziOperatorAddonInstallation.State()).To(Equal(clustersmgmtv1.AddOnInstallationStateReady))
-
-	// check the state of the cluster logging operator addon on ocm to ensure it was installed successfully
-	clusterLoggingOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, test.TestServices.OCMConfig.ClusterLoggingOperatorAddonID)
-	if err != nil {
-		t.Fatalf("failed to get the cluster logging addon installation for cluster %s", cluster.ClusterID)
-	}
-	Expect(clusterLoggingOperatorAddonInstallation.State()).To(Equal(clustersmgmtv1.AddOnInstallationStateReady))
 
 	// The cluster DNS should have been persisted
 	ocmClusterDNS, err := ocmClient.GetClusterDNS(cluster.ClusterID)
