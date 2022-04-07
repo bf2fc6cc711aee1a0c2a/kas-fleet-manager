@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
@@ -41,7 +42,10 @@ func runGet(env *environments.Env, cmd *cobra.Command, _ []string) {
 		InstanceTypes: []public.SupportedKafkaInstanceType{},
 	}
 
-	supportedKafkaInstanceTypeList.InstanceTypes = append(supportedKafkaInstanceTypeList.InstanceTypes, regionInstanceTypeList...)
+	for _, instanceType := range regionInstanceTypeList {
+		converted := presenters.PresentSupportedKafkaInstanceTypes(&instanceType)
+		supportedKafkaInstanceTypeList.InstanceTypes = append(supportedKafkaInstanceTypeList.InstanceTypes, converted)
+	}
 	output, marshalErr := json.MarshalIndent(supportedKafkaInstanceTypeList, "", "    ")
 	if marshalErr != nil {
 		glog.Fatalf("Failed to format supported Kafka instance type list: %s", marshalErr.Error())
