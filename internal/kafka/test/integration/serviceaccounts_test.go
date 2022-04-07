@@ -56,6 +56,8 @@ func TestServiceAccounts_GetByClientID(t *testing.T) {
 	Expect(list.Items[0].ClientId == sa.ClientId)
 	Expect(list.Items[0].Id == sa.Id)
 	Expect(list.Items[0].Name == sa.Name)
+	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
+	Expect(err).ShouldNot(HaveOccurred())
 }
 
 func TestServiceAccounts_Success(t *testing.T) {

@@ -926,6 +926,16 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 		}
 		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 	}
+
+	db = test.TestServices.DBFactory.New()
+	clusterDetails := &api.Cluster{
+		ClusterID: testServer.ClusterID,
+	}
+	if err := db.Unscoped().Where(clusterDetails).First(clusterDetails).Error; err != nil {
+		t.Error("failed to find kafka request")
+	}
+
+	getAndDeleteServiceAccounts(clusterDetails.ClientID, testServer.Helper.Env)
 }
 
 func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {

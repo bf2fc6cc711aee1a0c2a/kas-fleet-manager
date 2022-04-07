@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
@@ -36,9 +37,6 @@ func main() {
 	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.KafkaRealm)
 	accessToken, _ := kcClient.GetToken()
 
-	kcClientKafkaSre := keycloak.NewClient(keycloakConfig, keycloakConfig.OSDClusterIDPRealm)
-	accessTokenKafkaSre, _ := kcClientKafkaSre.GetToken()
-
 	if len(os.Args) > 1 {
 		argsWithoutProg := os.Args[1:]
 		for _, clientIdToDelete := range argsWithoutProg {
@@ -65,28 +63,24 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		clientsKafkaSre, err := kcClientKafkaSre.GetClients(accessTokenKafkaSre, last, 100, "")
-		if err != nil {
-			panic(err)
-		}
 		last += 100
 		if len(clients) == 0 {
 			thereAreMoreClients = false
 		}
-		allClients := append(clients, clientsKafkaSre...)
-		for _, client := range allClients {
+		for _, client := range clients {
 			attributes := *client.Attributes
-			if len(attributes) > 0 && strings.HasPrefix(*client.ClientID, "kas-fleetshard-agent-") || strings.HasPrefix(*client.ClientID, "srvc-acct-") {
-				fmt.Println("Found client with id:", *client.ID, "and clientID:", *client.ClientID)
-				fmt.Println("    Deleting client with id:", *client.ID, "and clientID:", *client.ClientID)
-				deleteErr := kcClient.DeleteClient(*client.ID, accessToken)
-				if deleteErr != nil {
-					panic(deleteErr)
+			if len(attributes) > 0 && (attributes["expire_date"] != "") {
+				fmt.Println("Found client with id:", *client.ID, "and clientID:", *client.ClientID, "and expire_date:", attributes["expire_date"])
+				expirationTime, parseErr := time.Parse(time.RFC3339, attributes["expire_date"])
+				if parseErr != nil {
+					fmt.Println("    Skipping client with id:", *client.ID, "and clientID:", *client.ClientID, "since its expiration time", attributes["expire_date"], "did not time.Parse correctly in time.RFC3339 format:", parseErr.Error())
 				}
-			} else if strings.HasPrefix(*client.ClientID, "c8") {
-				deleteKafkaSreErr := kcClientKafkaSre.DeleteClient(*client.ID, accessTokenKafkaSre)
-				if deleteKafkaSreErr != nil {
-					panic(deleteKafkaSreErr)
+				if time.Now().Local().After(expirationTime) {
+					fmt.Println("    Deleting client with id:", *client.ID, "and clientID:", *client.ClientID, "since it expired at", attributes["expire_date"])
+					deleteErr := kcClient.DeleteClient(*client.ID, accessToken)
+					if deleteErr != nil {
+						panic(deleteErr)
+					}
 				}
 			}
 		}

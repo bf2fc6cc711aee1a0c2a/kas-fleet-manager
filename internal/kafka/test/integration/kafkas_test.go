@@ -25,6 +25,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
 
@@ -188,7 +189,6 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
 	kasfFleetshardSync.Start()
-	defer kasfFleetshardSync.Stop()
 
 	unsupportedRegion := "eu-west-1"
 
@@ -361,6 +361,16 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 	evalClusters := "test01,test03"
 
 	testValidations(standardClusters, evalClusters, t, kafkaValidations)
+
+	kasfFleetshardSync.Stop()
+	h.Env.Stop()
+
+	list, _ := test.TestServices.ClusterService.FindAllClusters(clusterCriteria)
+	for _, clusters := range list {
+		getAndDeleteServiceAccounts(clusters.ClientID, h.Env)
+		getAndDeleteServiceAccounts(clusters.ID, h.Env)
+	}
+
 }
 
 // build a test kafka request
@@ -662,6 +672,24 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 
 	Expect(err).To(HaveOccurred(), "Expecting error to be thrown when creating more kafkas than allowed by the cluster limit:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
+
+	clusterCriteria := services.FindClusterCriteria{
+		Provider: "aws",
+		Region:   "us-east-1",
+		MultiAZ:  true,
+	}
+
+	cluster, _ := test.TestServices.ClusterService.FindAllClusters(clusterCriteria)
+	db := test.TestServices.DBFactory.New()
+
+	clusterDetails := &api.Cluster{
+		ClusterID: cluster[0].ClusterID,
+	}
+	if err := db.Unscoped().Where(clusterDetails).First(clusterDetails).Error; err != nil {
+		t.Error("failed to find kafka request")
+	}
+
+	getAndDeleteServiceAccounts(fmt.Sprintf("kas-fleetshard-agent-%v", clusterDetails.ClusterID), h.Env)
 }
 
 // TestKafkaPost_Validations tests the API validations performed by the kafka creation endpoint
@@ -1967,4 +1995,40 @@ func TestKafka_RemovingExpiredKafkas_WithStandardInstances(t *testing.T) {
 
 	kafkaDeletionErr := common.WaitForNumberOfKafkaToBeGivenCount(ctx, test.TestServices.DBFactory, client, 2)
 	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
+}
+
+func getAndDeleteServiceAccounts(clientID string, env *environments.Env) {
+	var keycloakConfig *keycloak.KeycloakConfig
+	env.MustResolve(&keycloakConfig)
+	defer env.Cleanup()
+
+	kcClientKafkaSre := keycloak.NewClient(keycloakConfig, keycloakConfig.OSDClusterIDPRealm)
+	accessTokenKafkaSre, _ := kcClientKafkaSre.GetToken()
+
+	client, err := kcClientKafkaSre.GetClient(clientID, accessTokenKafkaSre)
+	if client == nil {
+		kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.KafkaRealm)
+		accessToken, _ := kcClient.GetToken()
+
+		client, _ := kcClient.GetClient(clientID, accessToken)
+		if client != nil {
+			value := *client.ID
+
+			deleteErr := kcClient.DeleteClient(value, accessToken)
+			if deleteErr != nil {
+				panic(deleteErr)
+			}
+		}
+	}
+	if err != nil {
+		fmt.Println("err")
+	}
+	if client != nil {
+		value := *client.ID
+		deleteErr := kcClientKafkaSre.DeleteClient(value, accessTokenKafkaSre)
+		if deleteErr != nil {
+			panic(deleteErr)
+		}
+	}
+
 }
