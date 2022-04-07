@@ -684,6 +684,17 @@ paths:
                 $ref: '#/components/schemas/SupportedKafkaInstanceTypesList'
           description: Returned list of supported Kafka instance types and sizes filtered
             by cloud provider and region
+        "400":
+          content:
+            application/json:
+              examples:
+                "400UnsupportedRegionExample":
+                  $ref: '#/components/examples/400UnsupportedRegionExample'
+                "400UnsupportedProviderExample":
+                  $ref: '#/components/examples/400UnsupportedProviderExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Cloud provider or region is not supported
         "401":
           content:
             application/json:
@@ -1361,6 +1372,22 @@ components:
           search: ''id''. Supported column names are: region, name, cloud_provider,
           name, status. Query invalid: id = 123'
         operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
+    "400UnsupportedProviderExample":
+      value:
+        id: "30"
+        kind: Error
+        href: /api/kafkas_mgmt/v1/errors/30
+        code: KAFKAS-MGMT-30
+        reason: Provider not supported
+        operation_id: c980htvgvcn9kf51d0n0
+    "400UnsupportedRegionExample":
+      value:
+        id: "31"
+        kind: Error
+        href: /api/kafkas_mgmt/v1/errors/31
+        code: KAFKAS-MGMT-31
+        reason: Region not supported
+        operation_id: c980htvgvcn9kf51d0n0
     "400MissingParameterExample":
       value:
         id: "21"

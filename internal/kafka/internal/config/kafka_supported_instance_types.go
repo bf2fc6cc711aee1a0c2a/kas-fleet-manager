@@ -66,22 +66,22 @@ type KafkaInstanceSize struct {
 // - any non-id string values must be parseable
 // - any int values must not be less than or equal to zero
 func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
-	if k.EgressThroughputPerSec.String() == "" || k.IngressThroughputPerSec.String() == "" ||
-		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize.String() == "" || k.Id == "" || k.QuotaType == "" {
+	if k.EgressThroughputPerSec.IsEmpty() || k.IngressThroughputPerSec.IsEmpty() ||
+		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize.IsEmpty() || k.Id == "" || k.QuotaType == "" {
 		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' is missing required parameters.", k.Id, instanceTypeId)
 	}
 
-	egressThroughputQuantity, err := resource.ParseQuantity(k.EgressThroughputPerSec.String())
+	egressThroughputQuantity, err := k.EgressThroughputPerSec.ToK8Quantity()
 	if err != nil {
 		return fmt.Errorf("egressThroughputPerSec for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
 	}
 
-	ingressThroughputQuantity, err := resource.ParseQuantity(k.IngressThroughputPerSec.String())
+	ingressThroughputQuantity, err := k.IngressThroughputPerSec.ToK8Quantity()
 	if err != nil {
 		return fmt.Errorf("ingressThroughputPerSec for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
 	}
 
-	maxDataRetentionSize, err := resource.ParseQuantity(k.MaxDataRetentionSize.String())
+	maxDataRetentionSize, err := k.MaxDataRetentionSize.ToK8Quantity()
 	if err != nil {
 		return fmt.Errorf("maxDataRetentionSize for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
 	}
@@ -182,11 +182,21 @@ func (q *Quantity) String() string {
 }
 
 func (q *Quantity) ToFloat32() (float32, error) {
-	var output float32
-	p, err := resource.ParseQuantity(string(*q))
-	if err != nil {
+	if p, err := resource.ParseQuantity(string(*q)); err != nil {
 		return 0, err
+	} else {
+		return float32(p.Value()), nil
 	}
-	output = float32(p.Value())
-	return output, nil
+}
+
+func (q *Quantity) ToK8Quantity() (*resource.Quantity, error) {
+	if p, err := resource.ParseQuantity(string(*q)); err != nil {
+		return nil, err
+	} else {
+		return &p, nil
+	}
+}
+
+func (q *Quantity) IsEmpty() bool {
+	return q == nil
 }
