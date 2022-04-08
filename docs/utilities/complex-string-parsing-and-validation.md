@@ -1,29 +1,30 @@
 # Parsing and validating complex strings
 ## Overview
-To parse and validate a string, the first thing that should be done would be to understand **what** are the *tokens* that
-compose our syntax.
-After we have a full list of tokens, there is one more step that must be performed: understand what are the valid transitions
-between the tokens.
+To parse and validate a string, the first thing that should be done would be to understand **what** are the *tokens* that compose our syntax.
+After we have a full list of tokens, there is one more step that must be performed: understand what are the valid transitions between the tokens.
 
 By using a list of tokens and all the valid transitions between the tokens, validating a string according to a syntax/grammar will be possible
 
 ## Implementation
-Implementing a state machine to parse and validate a string according to a specific grammar/syntax can be time-consuming and
-error prone. For that reason, we provided some objects that simplifies the process:
-* `Scanner`: this is the object responsible for splitting a string into a list of tokens
-* `StateMachine`: this moves from one state to another according to the received token and the valid transitions from the current state
+Implementing a state machine to parse and validate a string according to a specific grammar/syntax can be time-consuming and error prone. For that reason, we provided some objects that simplify the process:
+* `Scanner`: this is the object responsible for splitting a string into a list of tokens. Currently supported scanners are:
+  * `Simple Scanner`: with this scanner, each character of the string is a `TOKEN`. Produced tokens will be:
+    * ALPHA
+    * DIGIT
+    * DECIMAL POINT
+    * SYMBOL
+  * `SQL Scanner`: this scanner will produce a `TOKEN` for each valid SQL piece. Produced tokens will be:
+    * OP - Any operator: `+-=><`
+    * BRACE - Open and close round brace
+    * LITERAL - Anything else
+* `StateMachine`: this moves from one state to another according to the received input and the valid transitions from the current state
 * `StateMachineBuilder`: receives a `Grammar` object and configure a `StateMachine` accordingly
 * `QueryParser`: this is the only ad-hoc object. This configures the `StateMachine` to make it ready to be used
 to parse the SQL subset we use in the kafka list endpoint
 
 ### The `Scanner`
-The scanner object is the lowest level object of the parser.
+The scanner object is the lowest level object involved.
 Takes a string as input and splits it into tokens.
-Recognized tokens are:
-* **Braces**: open and closed round braces
-* **Operator**. Recognized operator tokens are ‘=’,’<’,’>’ and any string composed by only operators, for example: ‘==’, ‘>=’, ‘>>><<<===’. The scanner doesn’t perform any validation: it simply recognises the token.
-* **Quoted String**: any string surrounded by single quotes. Escaped single quotes are supported too and included into the quoted string (ie: ‘I\’m Massimiliano’ is a valid quoted string)
-* **Literal**: a sequence of non spaces, non brace characters
 
 Three public methods are provided:
 * `Next`: move the internal index to the next available token and return `true` if EOF has not been reached
@@ -146,7 +147,7 @@ grammar := Grammar{
         {Name:"MUL", AcceptPattern:"x"},
         {Name:"DIV", AcceptPattern:`\/`},
     },
-    Transitions: []TransitionDefinition[]{
+    Transitions: []TransitionDefinition{
         {TokenName: StartState, ValidTransitions: []string{"FIRST_OPERAND"}},
         {TokenName: "FIRST_OPERAND", ValidTransitions: []string{"MUL","DIV"}},
         {TokenName: "MUL", ValidTransitions: []string{"SECOND_OPERAND"}},

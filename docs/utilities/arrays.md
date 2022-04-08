@@ -1,5 +1,5 @@
-# Utilities
-This document describes how to use all the utilities in `pkg/shared/utils` folder
+# Array Utilities
+This document describes how to use array utilities in `pkg/shared/utils` folder
 
 ## Generic Array
 
