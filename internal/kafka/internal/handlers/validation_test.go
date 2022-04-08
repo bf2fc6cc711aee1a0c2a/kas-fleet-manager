@@ -17,7 +17,7 @@ import (
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 )
 
 func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
@@ -77,12 +77,13 @@ func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			validateFn := ValidateKafkaClusterNameIsUnique(&tt.arg.name, tt.arg.kafkaService, tt.arg.context)
 			err := validateFn()
-			gomega.Expect(tt.want).To(gomega.Equal(err))
+			Expect(err).To(Equal(tt.want))
 		})
 	}
 }
@@ -125,15 +126,16 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			validateFn := ValidKafkaClusterName(&tt.name, "name")
 			err := validateFn()
 			if tt.expectError {
-				gomega.Expect(err).Should(gomega.HaveOccurred())
+				Expect(err).Should(HaveOccurred())
 			} else {
-				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
+				Expect(err).ShouldNot(HaveOccurred())
 			}
 		})
 	}
@@ -316,27 +318,111 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			validateFn := ValidateCloudProvider(&tt.arg.kafkaService, &tt.arg.kafkaRequest, tt.arg.ProviderConfig, "creating-kafka")
 			err := validateFn()
 			if !tt.want.wantErr && err != nil {
 				t.Errorf("validatedCloudProvider() expected not to throw error but threw %v", err)
 			} else if tt.want.wantErr {
-				gomega.Expect(err.Reason).To(gomega.Equal(tt.want.reason))
+				Expect(err.Reason).To(Equal(tt.want.reason))
 				return
 			}
 
-			gomega.Expect(tt.want.wantErr).To(gomega.Equal(err != nil))
+			Expect(err != nil).To(Equal(tt.want.wantErr))
 
 			if !tt.want.wantErr {
-				gomega.Expect(tt.arg.kafkaRequest.CloudProvider).To(gomega.Equal(tt.want.kafkaRequest.CloudProvider))
-				gomega.Expect(tt.arg.kafkaRequest.Region).To(gomega.Equal(tt.want.kafkaRequest.Region))
+				Expect(tt.arg.kafkaRequest.CloudProvider).To(Equal(tt.want.kafkaRequest.CloudProvider))
+				Expect(tt.arg.kafkaRequest.Region).To(Equal(tt.want.kafkaRequest.Region))
 			}
 
 		})
 	}
+}
+
+func Test_Validation_ValidateAZOption(t *testing.T) {
+	type args struct {
+		kafkaRequest dbapi.KafkaRequest
+	}
+	type result struct {
+		wantErr bool
+		reason  string
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want result
+	}{
+		{
+			name: "success when standard type and mulit-AZ",
+			args: args{
+				kafkaRequest: dbapi.KafkaRequest{
+					InstanceType: types.STANDARD.String(),
+					MultiAZ:      true,
+				},
+			},
+			want: result{
+				wantErr: false,
+			},
+		},
+		{
+			name: "success when developer/trial type and single-AZ",
+			args: args{
+				kafkaRequest: dbapi.KafkaRequest{
+					InstanceType: types.DEVELOPER.String(),
+					MultiAZ:      false,
+				},
+			},
+			want: result{
+				wantErr: false,
+			},
+		},
+		{
+			name: "fail when developer/trial type and multi-AZ",
+			args: args{
+				kafkaRequest: dbapi.KafkaRequest{
+					InstanceType: types.DEVELOPER.String(),
+					MultiAZ:      true,
+				},
+			},
+			want: result{
+				wantErr: true,
+				reason:  "Only Single-AZ Kafkas of this type are supported, use multi_az=false",
+			},
+		},
+		{
+			name: "fail when standard type and single-AZ",
+			args: args{
+				kafkaRequest: dbapi.KafkaRequest{
+					InstanceType: types.STANDARD.String(),
+					MultiAZ:      false,
+				},
+			},
+			want: result{
+				wantErr: true,
+				reason:  "Only multiAZ Kafkas are supported, use multi_az=true",
+			},
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			validateFn := ValidateAZOption(&tt.args.kafkaRequest)
+			err := validateFn()
+			Expect(err != nil).To(Equal(tt.want.wantErr), "ValidateAZOption() expected not to throw error but threw %v", err)
+			if tt.want.wantErr {
+				Expect(err.Reason).To(Equal(tt.want.reason))
+				return
+			}
+
+		})
+	}
+
 }
 
 func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
@@ -497,16 +583,15 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			validateFn := ValidateKafkaUserFacingUpdateFields(tt.arg.ctx, tt.arg.authService, tt.arg.kafka, &tt.arg.kafkaUpdateRequest)
 			err := validateFn()
-			gomega.Expect(tt.want.wantErr).To(gomega.Equal(err != nil))
-			if !tt.want.wantErr && err != nil {
-				t.Errorf("ValidateKafkaUserFacingUpdateFields() expected not to throw error but threw %v", err)
-			} else if tt.want.wantErr {
-				gomega.Expect(err.Reason).To(gomega.Equal(tt.want.reason))
+			Expect(err != nil).To(Equal(tt.want.wantErr), "ValidateKafkaUserFacingUpdateFields() expected not to throw error but threw %v", err)
+			if tt.want.wantErr {
+				Expect(err.Reason).To(Equal(tt.want.reason))
 				return
 			}
 		})
