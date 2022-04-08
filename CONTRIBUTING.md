@@ -1,5 +1,12 @@
 # Contributing
 
+## Legal
+
+All original contributions to kas-fleet-manager are licensed under the
+[AL 2.0 - Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0),
+or later, or, if another license is specified as governing the file
+or directory being modified, such other license.
+
 ## Definition of Done
 * All acceptance criteria specified in JIRA are met
     * Acceptance criteria to include:
