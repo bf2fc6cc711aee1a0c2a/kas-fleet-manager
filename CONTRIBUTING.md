@@ -1,5 +1,19 @@
 # Contributing
 
+## Legal
+
+All original contributions to kas-fleet-manager are licensed under the
+[AL 2.0 - Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0),
+or later, or, if another license is specified as governing the file
+or directory being modified, such other license.
+
+By contributing to this project you agree to the
+[Developer Certificate of Origin (DCO)](https://developercertificate.org/).
+This document was created by the Linux Kernel community and is a
+simple statement that you, as a contributor, have the legal right to make the
+contribution. The DCO text is also included verbatim in the [DCO](DCO)
+file in the root directory of the repository.
+
 ## Definition of Done
 * All acceptance criteria specified in JIRA are met
     * Acceptance criteria to include:
