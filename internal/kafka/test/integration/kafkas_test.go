@@ -1291,12 +1291,26 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 		Name:          "test-kafka-2",
 		MultiAz:       testMultiAZ,
 	}
-
+	//MultiAZ: false for developer/trial instances
 	kafka3 := public.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          "test-kafka-3",
-		MultiAz:       testMultiAZ,
+		MultiAz:       false,
+	}
+	//MultiAZ: false for developer/trial instances
+	kafka4 := public.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          "test-kafka-4",
+		MultiAz:       false,
+	}
+	//MultiAZ: false for developer/trial instances
+	kafka5 := public.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          "test-kafka-5",
+		MultiAz:       false,
 	}
 
 	// create the first kafka
@@ -1335,8 +1349,8 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	externalUserAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "ext-org-id")
 	externalUserCtx := h.NewAuthenticatedContext(externalUserAccount, nil)
 
-	resp5Body, resp5, _ := client.DefaultApi.CreateKafka(externalUserCtx, true, kafka1)
-	_, resp6, _ := client.DefaultApi.CreateKafka(externalUserCtx, true, kafka2)
+	resp5Body, resp5, _ := client.DefaultApi.CreateKafka(externalUserCtx, true, kafka3)
+	_, resp6, _ := client.DefaultApi.CreateKafka(externalUserCtx, true, kafka4)
 
 	// verify that the first request was accepted for an developer type
 	Expect(resp5.StatusCode).To(Equal(http.StatusAccepted))
@@ -1350,8 +1364,8 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	externalUserSameOrgAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "ext-org-id")
 	externalUserSameOrgCtx := h.NewAuthenticatedContext(externalUserSameOrgAccount, nil)
 
-	_, resp7, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka3)
-	_, resp8, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka2)
+	_, resp7, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka5)
+	_, resp8, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka4)
 
 	// verify that the first request was accepted
 	Expect(resp7.StatusCode).To(Equal(http.StatusAccepted))

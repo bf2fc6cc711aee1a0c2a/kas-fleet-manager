@@ -49,7 +49,6 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
 			ValidateKafkaClaims(ctx, &kafkaRequest, convKafka),
 			ValidateCloudProvider(&h.service, convKafka, h.providerConfig, "creating kafka requests"),
-			handlers.ValidateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
 			func() *errors.ServiceError { // Validate plan
 				instanceType, err := h.service.AssignInstanceType(convKafka)
 				if err != nil {
@@ -81,6 +80,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 				convKafka.InstanceType = instanceType.String()
 				return nil
 			},
+			ValidateAZOption(convKafka),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterKafkaJob(convKafka)

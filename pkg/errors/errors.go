@@ -191,6 +191,10 @@ const (
 	// Too Many requests error. Used by rate limiting
 	ErrorTooManyRequests       ServiceErrorCode = 429
 	ErrorTooManyRequestsReason string           = "Too Many requests"
+
+	//Only SingleAZ supported for Developer/Trial requests
+	ErrorOnlySingleAZSupported       ServiceErrorCode = 43
+	ErrorOnlySingleAZSupportedReason string           = "Only Single-AZ Kafkas of this type are supported, use multi_az=false"
 )
 
 type ErrorList []error
@@ -262,6 +266,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil},
 		ServiceError{ErrorInstancePlanNotSupported, ErrorInstancePlanNotSupportedReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorOnlySingleAZSupported, ErrorOnlySingleAZSupportedReason, http.StatusBadRequest, nil},
 	}
 }
 
@@ -541,6 +546,10 @@ func SyncActionNotSupported() *ServiceError {
 
 func NotMultiAzActionNotSupported() *ServiceError {
 	return New(ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason)
+}
+
+func NotSingleAzActionNotSupported() *ServiceError {
+	return New(ErrorOnlySingleAZSupported, ErrorOnlySingleAZSupportedReason)
 }
 
 func FailedToCreateSSOClient(reason string, values ...interface{}) *ServiceError {
