@@ -47,17 +47,17 @@ func (kp *KafkaInstanceType) validate() error {
 }
 
 type KafkaInstanceSize struct {
-	Id                          string `yaml:"id"`
-	IngressThroughputPerSec     string `yaml:"ingressThroughputPerSec"`
-	EgressThroughputPerSec      string `yaml:"egressThroughputPerSec"`
-	TotalMaxConnections         int    `yaml:"totalMaxConnections"`
-	MaxDataRetentionSize        string `yaml:"maxDataRetentionSize"`
-	MaxPartitions               int    `yaml:"maxPartitions"`
-	MaxDataRetentionPeriod      string `yaml:"maxDataRetentionPeriod"`
-	MaxConnectionAttemptsPerSec int    `yaml:"maxConnectionAttemptsPerSec"`
-	QuotaConsumed               int    `yaml:"quotaConsumed"`
-	QuotaType                   string `yaml:"quotaType"`
-	CapacityConsumed            int    `yaml:"capacityConsumed"`
+	Id                          string   `yaml:"id"`
+	IngressThroughputPerSec     Quantity `yaml:"ingressThroughputPerSec"`
+	EgressThroughputPerSec      Quantity `yaml:"egressThroughputPerSec"`
+	TotalMaxConnections         int      `yaml:"totalMaxConnections"`
+	MaxDataRetentionSize        Quantity `yaml:"maxDataRetentionSize"`
+	MaxPartitions               int      `yaml:"maxPartitions"`
+	MaxDataRetentionPeriod      string   `yaml:"maxDataRetentionPeriod"`
+	MaxConnectionAttemptsPerSec int      `yaml:"maxConnectionAttemptsPerSec"`
+	QuotaConsumed               int      `yaml:"quotaConsumed"`
+	QuotaType                   string   `yaml:"quotaType"`
+	CapacityConsumed            int      `yaml:"capacityConsumed"`
 }
 
 // validates Kafka instance size configuration to ensure the following:
@@ -66,22 +66,22 @@ type KafkaInstanceSize struct {
 // - any non-id string values must be parseable
 // - any int values must not be less than or equal to zero
 func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
-	if k.EgressThroughputPerSec == "" || k.IngressThroughputPerSec == "" ||
-		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize == "" || k.Id == "" || k.QuotaType == "" {
+	if k.EgressThroughputPerSec.IsEmpty() || k.IngressThroughputPerSec.IsEmpty() ||
+		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize.IsEmpty() || k.Id == "" || k.QuotaType == "" {
 		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' is missing required parameters.", k.Id, instanceTypeId)
 	}
 
-	egressThroughputQuantity, err := resource.ParseQuantity(k.EgressThroughputPerSec)
+	egressThroughputQuantity, err := k.EgressThroughputPerSec.ToK8Quantity()
 	if err != nil {
 		return fmt.Errorf("egressThroughputPerSec for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
 	}
 
-	ingressThroughputQuantity, err := resource.ParseQuantity(k.IngressThroughputPerSec)
+	ingressThroughputQuantity, err := k.IngressThroughputPerSec.ToK8Quantity()
 	if err != nil {
 		return fmt.Errorf("ingressThroughputPerSec for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
 	}
 
-	maxDataRetentionSize, err := resource.ParseQuantity(k.MaxDataRetentionSize)
+	maxDataRetentionSize, err := k.MaxDataRetentionSize.ToK8Quantity()
 	if err != nil {
 		return fmt.Errorf("maxDataRetentionSize for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
 	}
@@ -173,4 +173,30 @@ func (p Plan) GetSizeID() (string, error) {
 		return "", errors.New(errors.ErrorGeneral, fmt.Sprintf("Unsupported plan provided: '%s'", p))
 	}
 	return t[1], nil
+}
+
+type Quantity string
+
+func (q *Quantity) String() string {
+	return string(*q)
+}
+
+func (q *Quantity) ToFloat32() (float32, error) {
+	if p, err := resource.ParseQuantity(string(*q)); err != nil {
+		return 0, err
+	} else {
+		return float32(p.Value()), nil
+	}
+}
+
+func (q *Quantity) ToK8Quantity() (*resource.Quantity, error) {
+	if p, err := resource.ParseQuantity(string(*q)); err != nil {
+		return nil, err
+	} else {
+		return &p, nil
+	}
+}
+
+func (q *Quantity) IsEmpty() bool {
+	return q == nil
 }

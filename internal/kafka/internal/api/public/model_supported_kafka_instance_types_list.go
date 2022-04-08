@@ -9,8 +9,7 @@
 
 package public
 
-// Values struct for Values
-type Values struct {
-	Timestamp int64   `json:"timestamp,omitempty"`
-	Value     float64 `json:"value"`
+// SupportedKafkaInstanceTypesList struct for SupportedKafkaInstanceTypesList
+type SupportedKafkaInstanceTypesList struct {
+	InstanceTypes []SupportedKafkaInstanceType `json:"instance_types,omitempty"`
 }

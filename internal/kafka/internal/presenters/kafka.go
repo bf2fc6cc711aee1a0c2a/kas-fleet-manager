@@ -45,8 +45,8 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 		if err != nil {
 			logger.Logger.Error(err)
 		} else {
-			ingressThroughputPerSec = kafkaConfig.IngressThroughputPerSec
-			egressThroughputPerSec = kafkaConfig.EgressThroughputPerSec
+			ingressThroughputPerSec = kafkaConfig.IngressThroughputPerSec.String()
+			egressThroughputPerSec = kafkaConfig.EgressThroughputPerSec.String()
 			totalMaxConnections = kafkaConfig.TotalMaxConnections
 			maxPartitions = kafkaConfig.MaxPartitions
 			maxDataRetentionPeriod = kafkaConfig.MaxDataRetentionPeriod
@@ -82,10 +82,10 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 		InstanceTypeName:            displayName,
 		IngressThroughputPerSec:     ingressThroughputPerSec,
 		EgressThroughputPerSec:      egressThroughputPerSec,
-		TotalMaxConnections:         totalMaxConnections,
-		MaxPartitions:               maxPartitions,
+		TotalMaxConnections:         int32(totalMaxConnections),
+		MaxPartitions:               int32(maxPartitions),
 		MaxDataRetentionPeriod:      maxDataRetentionPeriod,
-		MaxConnectionAttemptsPerSec: maxConnectionAttemptsPerSec,
+		MaxConnectionAttemptsPerSec: int32(maxConnectionAttemptsPerSec),
 	}, nil
 }
 
