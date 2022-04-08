@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
@@ -89,6 +90,19 @@ func ValidateCloudProvider(kafkaService *services.KafkaService, kafkaRequest *db
 		region, _ := provider.Regions.GetByName(kafkaRequest.Region)
 		if !region.IsInstanceTypeSupported(config.InstanceType(instanceType)) {
 			return errors.InstanceTypeNotSupported("instance type '%s' not supported for region '%s'", instanceType.String(), region.Name)
+		}
+		return nil
+	}
+}
+
+//ValidateAZOption returns a validator that returns error if incorrect multiAZ value is used
+func ValidateAZOption(kafkaRequest *dbapi.KafkaRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		if kafkaRequest.InstanceType == types.STANDARD.String() && !kafkaRequest.MultiAZ {
+			return errors.NotMultiAzActionNotSupported()
+		}
+		if kafkaRequest.InstanceType == types.DEVELOPER.String() && kafkaRequest.MultiAZ {
+			return errors.NotSingleAzActionNotSupported()
 		}
 		return nil
 	}
