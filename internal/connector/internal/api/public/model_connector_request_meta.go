@@ -13,7 +13,7 @@ package public
 type ConnectorRequestMeta struct {
 	Name            string                `json:"name"`
 	ConnectorTypeId string                `json:"connector_type_id"`
-	NamespaceId     string                `json:"namespace_id,omitempty"`
+	NamespaceId     string                `json:"namespace_id"`
 	Channel         Channel               `json:"channel,omitempty"`
 	DesiredState    ConnectorDesiredState `json:"desired_state"`
 }

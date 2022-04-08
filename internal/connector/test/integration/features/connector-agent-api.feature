@@ -8,6 +8,7 @@ Feature: connector agent API
     Given the path prefix is "/api/connector_mgmt"
     Given an org admin user named "Jimmy"
     Given an org admin user named "Bobby" in organization "${Jimmy.OrgId}"
+    Given a user named "Dr. Evil"
     Given a user named "Shard"
     Given a user named "Shard2"
     Given an admin user named "Ricky Bobby" with roles "connector-fleet-manager-admin-full"
@@ -68,7 +69,53 @@ Feature: connector agent API
       """
     Then the response code should be 202
     And the ".status.state" selection from the response should match "assigning"
-    Given I store the ".id" selection from the response as ${connector_id}
+    And I store the ".id" selection from the response as ${connector_id}
+
+    #-----------------------------------------------------------------------------------------------------------------
+    # In this part of the Scenario we test that Dr. Evil is not allowed to create a connector in Jimmy's namespace
+    #-----------------------------------------------------------------------------------------------------------------
+    Given I am logged in as "Dr. Evil"
+    When I POST path "/v1/kafka_connectors?async=true" with json body:
+      """
+      {
+        "kind": "Connector",
+        "name": "example 1",
+        "namespace_id": "${connector_namespace_id}",
+        "channel":"stable",
+        "connector_type_id": "aws-sqs-source-v1alpha1",
+        "kafka": {
+          "id": "mykafka",
+          "url": "kafka.hostname"
+        },
+        "service_account": {
+          "client_id": "myclient",
+          "client_secret": "test"
+        },
+        "schema_registry": {
+          "id": "myregistry",
+          "url": "registry.hostname"
+        },
+        "connector": {
+            "aws_queue_name_or_arn": "test",
+            "aws_secret_key": "test",
+            "aws_access_key": "test",
+            "aws_region": "east",
+            "kafka_topic": "test"
+        }
+      }
+      """
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "Connector namespace with id='${connector_namespace_id}' not found"
+      }
+      """
 
     #-----------------------------------------------------------------------------------------------------------------
     # In this part of the Scenario we test listing/watching connector deployments
@@ -1031,10 +1078,7 @@ Feature: connector agent API
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
     And the ".desired_state" selection from the response should match "unassigned"
-    And the ".namespace_id" selection from the response should match json:
-      """
-      null
-      """
+    And the ".namespace_id" selection from the response should match ""
 
     # delete connector using admin API
     Given I am logged in as "Ricky Bobby"

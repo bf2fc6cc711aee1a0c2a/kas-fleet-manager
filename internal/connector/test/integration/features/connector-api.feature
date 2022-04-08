@@ -1176,7 +1176,7 @@ Feature: create a connector
         "id": "21",
         "kind": "Error",
         "operation_id": "${response.operation_id}",
-        "reason": "namespace_id is not valid: KAFKAS-MGMT-9: failed to get connector namespace: record not found"
+        "reason": "Connector namespace with id='default' not found"
       }
       """
 
@@ -1244,6 +1244,7 @@ Feature: create a connector
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
             "id": "${connector_id}",
+            "namespace_id": "",
             "kind": "Connector",
             "created_at": "${response.items[0].created_at}",
             "name": "example 1",
@@ -1271,6 +1272,7 @@ Feature: create a connector
       """
       {
           "id": "${connector_id}",
+          "namespace_id": "",
           "kind": "Connector",
           "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
           "owner": "${response.owner}",
@@ -1846,6 +1848,7 @@ Feature: create a connector
             "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
             "id": "${connector_id}",
             "kind": "Connector",
+            "namespace_id": "",
             "created_at": "${response.items[0].created_at}",
             "name": "example 1",
             "owner": "${response.items[0].owner}",
@@ -1875,6 +1878,7 @@ Feature: create a connector
       {
           "id": "${connector_id}",
           "kind": "Connector",
+          "namespace_id": "",
           "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
           "owner": "${response.owner}",
           "name": "example 1",

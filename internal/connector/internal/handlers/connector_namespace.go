@@ -134,7 +134,7 @@ func (h *ConnectorNamespaceHandler) Get(w http.ResponseWriter, r *http.Request) 
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
 			handlers.Validation("connector_namespace_id", &connectorNamespaceId,
-				handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength), user.AuthorizedNamespaceUser()),
+				handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength), user.AuthorizedNamespaceUser(errors.ErrorNotFound)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			resource, err := h.Service.Get(r.Context(), connectorNamespaceId)
