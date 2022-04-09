@@ -1,4 +1,4 @@
-package services
+package queryparser
 
 import (
 	. "github.com/onsi/gomega"
