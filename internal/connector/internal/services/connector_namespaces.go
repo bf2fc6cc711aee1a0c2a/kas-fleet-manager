@@ -128,12 +128,18 @@ func (k *connectorNamespaceService) Create(ctx context.Context, request *dbapi.C
 func (k *connectorNamespaceService) Update(ctx context.Context, request *dbapi.ConnectorNamespace) *errors.ServiceError {
 
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Save(request).Error; err != nil {
-		return errors.GeneralError("failed to update connector namespace: %v", err)
+	updates := dbConn.Where(`id = ? AND version = ?`, request.ID, request.Version).
+		Updates(request)
+	if err := updates.Error; err != nil {
+		return services.HandleUpdateError(`Connector namespace`, err)
 	}
+	if updates.RowsAffected == 0 {
+		return errors.BadRequest(`resource version changed`)
+	}
+
 	// reload namespace to get version update
-	if err := dbConn.Select("version").First(request).Error; err != nil {
-		return errors.GeneralError("failed to read updated connector namespace: %v", err)
+	if err := dbConn.Select(`version`).First(request).Error; err != nil {
+		return services.HandleGetError(`Connector namespace`, `id`, request.ID, err)
 	}
 
 	return nil
@@ -313,11 +319,13 @@ func (k *connectorNamespaceService) UpdateConnectorNamespaceStatus(ctx context.C
 
 	if err := k.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
 		var namespace dbapi.ConnectorNamespace
-		if err := dbConn.Select("id", "cluster_id", "status_phase").Where("id = ?", namespaceID).First(&namespace).Error; err != nil {
+		if err := dbConn.Select(`id`, `cluster_id`, `status_phase`, `version`).
+			Where(`id = ?`, namespaceID).First(&namespace).Error; err != nil {
 			return services.HandleGetError("Connector namespace", "id", namespaceID, err)
 		}
 		var cluster dbapi.ConnectorCluster
-		if err := dbConn.Select("id", "status_phase").Where("id = ?", namespace.ClusterId).First(&cluster).Error; err != nil {
+		if err := dbConn.Select(`id`, `status_phase`).Where(`id = ?`, namespace.ClusterId).
+			First(&cluster).Error; err != nil {
 			return services.HandleGetError("Connector namespace", "id", namespaceID, err)
 		}
 
@@ -329,8 +337,8 @@ func (k *connectorNamespaceService) UpdateConnectorNamespaceStatus(ctx context.C
 				namespace.Status.ConnectorsDeployed = status.ConnectorsDeployed
 				namespace.Status.Conditions = status.Conditions
 
-				if err := dbConn.Updates(namespace).Error; err != nil {
-					return services.HandleUpdateError("Connector namespace", err)
+				if err := k.Update(ctx, namespace); err != nil {
+					return err
 				}
 				return nil
 			}); err != nil {
