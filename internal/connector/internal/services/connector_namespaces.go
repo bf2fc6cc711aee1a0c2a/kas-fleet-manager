@@ -127,6 +127,10 @@ func (k *connectorNamespaceService) Create(ctx context.Context, request *dbapi.C
 
 func (k *connectorNamespaceService) Update(ctx context.Context, request *dbapi.ConnectorNamespace) *errors.ServiceError {
 
+	if request.Version == 0 {
+		return errors.BadRequest("resource version is required")
+	}
+
 	dbConn := k.connectionFactory.New()
 	updates := dbConn.Where(`id = ? AND version = ?`, request.ID, request.Version).
 		Updates(request)
@@ -134,7 +138,7 @@ func (k *connectorNamespaceService) Update(ctx context.Context, request *dbapi.C
 		return services.HandleUpdateError(`Connector namespace`, err)
 	}
 	if updates.RowsAffected == 0 {
-		return errors.BadRequest(`resource version changed`)
+		return errors.Conflict(`resource version changed`)
 	}
 
 	// reload namespace to get version update
