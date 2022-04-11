@@ -1,7 +1,9 @@
-package services
+package queryparser
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/state_machine"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/stringscanner"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -10,23 +12,23 @@ import (
 var validColumns = []string{"region", "name", "cloud_provider", "status", "owner"}
 
 const (
-	BraceTokenFamily       = "BRACE"
-	OpTokenFamily          = "OP"
-	LogicalOpTokenFamily   = "LOGICAL"
-	ColumnTokenFamily      = "COLUMN"
-	ValueTokenFamily       = "VALUE"
-	QuotedValueTokenFamily = "QUOTED"
+	braceTokenFamily       = "BRACE"
+	opTokenFamily          = "OP"
+	logicalOpTokenFamily   = "LOGICAL"
+	columnTokenFamily      = "COLUMN"
+	valueTokenFamily       = "VALUE"
+	quotedValueTokenFamily = "QUOTED"
 
-	OpenBrace   = "OPEN_BRACE"
-	ClosedBrace = "CLOSED_BRACE"
-	Column      = "COLUMN"
-	Value       = "VALUE"
-	QuotedValue = "QUOTED_VALUE"
-	Eq          = "EQ"
-	NotEq       = "NOT_EQ"
-	LikeState   = "LIKE"
-	AndState    = "AND"
-	OrState     = "OR"
+	openBrace   = "OPEN_BRACE"
+	closedBrace = "CLOSED_BRACE"
+	column      = "COLUMN"
+	value       = "VALUE"
+	quotedValue = "QUOTED_VALUE"
+	eq          = "EQ"
+	notEq       = "NOT_EQ"
+	like        = "LIKE"
+	and         = "AND"
+	or          = "OR"
 )
 const MaximumComplexity = 10
 
@@ -38,6 +40,7 @@ type DBQuery struct {
 	ValidColumns []string
 }
 
+// QueryParser - This object is to be used to parse and validate WHERE clauses (only portion after the `WHERE` is supported)
 type QueryParser interface {
 	Parse(sql string) (*DBQuery, error)
 }
@@ -74,7 +77,7 @@ var _ QueryParser = &queryParser{}
 // CLOSED_BRACE -> OR | AND | CLOSED_BRACE | [END]
 // AND          -> COLUMN | OPEN_BRACE
 // OR           -> COLUMN | OPEN_BRACE
-func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
+func (p *queryParser) initStateMachine() (*state_machine.State, checkUnbalancedBraces) {
 
 	// counts the number of joins
 	complexity := 0
@@ -103,78 +106,79 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 		return nil
 	}
 
-	onNewToken := func(token *ParsedToken) error {
-		switch token.family {
-		case BraceTokenFamily:
-			if err := countOpenBraces(token.value); err != nil {
+	onNewToken := func(token *state_machine.ParsedToken) error {
+		switch token.Family {
+		case braceTokenFamily:
+			if err := countOpenBraces(token.Value); err != nil {
 				return err
 			}
-			p.dbqry.Query += token.value
+			p.dbqry.Query += token.Value
 			return nil
-		case ValueTokenFamily:
+		case valueTokenFamily:
 			p.dbqry.Query += " ?"
-			p.dbqry.Values = append(p.dbqry.Values, token.value)
+			p.dbqry.Values = append(p.dbqry.Values, token.Value)
 			return nil
-		case QuotedValueTokenFamily:
+		case quotedValueTokenFamily:
 			p.dbqry.Query += " ?"
 			// unescape
-			tmp := strings.ReplaceAll(token.value, `\'`, "'")
+			tmp := strings.ReplaceAll(token.Value, `\'`, "'")
 			// remove quotes:
 			if len(tmp) > 1 {
 				tmp = string([]rune(tmp)[1 : len(tmp)-1])
 			}
 			p.dbqry.Values = append(p.dbqry.Values, tmp)
 			return nil
-		case LogicalOpTokenFamily:
+		case logicalOpTokenFamily:
 			complexity++
 			if complexity > MaximumComplexity {
 				return errors.Errorf("maximum number of permitted joins (%d) exceeded", MaximumComplexity)
 			}
-			p.dbqry.Query += " " + token.value + " "
+			p.dbqry.Query += " " + token.Value + " "
 			return nil
-		case ColumnTokenFamily:
+		case columnTokenFamily:
 			// we want column names to be lowercase
-			columnName := strings.ToLower(token.value)
+			columnName := strings.ToLower(token.Value)
 			if !contains(p.dbqry.ValidColumns, columnName) {
-				return fmt.Errorf("invalid column name: '%s'", token.value)
+				return fmt.Errorf("invalid column name: '%s'", token.Value)
 			}
 			p.dbqry.Query += columnName
 			return nil
 		default:
-			p.dbqry.Query += " " + token.value
+			p.dbqry.Query += " " + token.Value
 			return nil
 		}
 	}
 
-	grammar := Grammar{
-		Tokens: []TokenDefinition{
-			{Name: OpenBrace, Family: BraceTokenFamily, AcceptPattern: `\(`},
-			{Name: ClosedBrace, Family: BraceTokenFamily, AcceptPattern: `\)`},
-			{Name: Column, Family: ColumnTokenFamily, AcceptPattern: `[A-Za-z][A-Za-z0-9_]*`},
-			{Name: Value, Family: ValueTokenFamily, AcceptPattern: `[^'][^ ^(^)]*`},
-			{Name: QuotedValue, Family: QuotedValueTokenFamily, AcceptPattern: `'([^']|\\')*'`},
-			{Name: Eq, Family: OpTokenFamily, AcceptPattern: `=`},
-			{Name: NotEq, Family: OpTokenFamily, AcceptPattern: `<>`},
-			{Name: LikeState, Family: OpTokenFamily, AcceptPattern: `[Ll][Ii][Kk][Ee]`},
-			{Name: AndState, Family: LogicalOpTokenFamily, AcceptPattern: `[Aa][Nn][Dd]`},
-			{Name: OrState, Family: LogicalOpTokenFamily, AcceptPattern: `[Oo][Rr]`},
+	grammar := state_machine.Grammar{
+		Tokens: []state_machine.TokenDefinition{
+			{Name: openBrace, Family: braceTokenFamily, AcceptPattern: `\(`},
+			{Name: closedBrace, Family: braceTokenFamily, AcceptPattern: `\)`},
+			{Name: column, Family: columnTokenFamily, AcceptPattern: `[A-Za-z][A-Za-z0-9_]*`},
+			{Name: value, Family: valueTokenFamily, AcceptPattern: `[^'][^ ^(^)]*`},
+			{Name: quotedValue, Family: quotedValueTokenFamily, AcceptPattern: `'([^']|\\')*'`},
+			{Name: eq, Family: opTokenFamily, AcceptPattern: `=`},
+			{Name: notEq, Family: opTokenFamily, AcceptPattern: `<>`},
+			{Name: like, Family: opTokenFamily, AcceptPattern: `[Ll][Ii][Kk][Ee]`},
+			{Name: and, Family: logicalOpTokenFamily, AcceptPattern: `[Aa][Nn][Dd]`},
+			{Name: or, Family: logicalOpTokenFamily, AcceptPattern: `[Oo][Rr]`},
 		},
-		Transitions: []TransitionDefinition{
-			{TokenName: StartState, ValidTransitions: []string{Column, OpenBrace}},
-			{TokenName: OpenBrace, ValidTransitions: []string{Column, OpenBrace}},
-			{TokenName: Column, ValidTransitions: []string{Eq, NotEq, LikeState}},
-			{TokenName: Eq, ValidTransitions: []string{QuotedValue, Value}},
-			{TokenName: NotEq, ValidTransitions: []string{QuotedValue, Value}},
-			{TokenName: LikeState, ValidTransitions: []string{QuotedValue, Value}},
-			{TokenName: QuotedValue, ValidTransitions: []string{OrState, AndState, ClosedBrace, EndState}},
-			{TokenName: Value, ValidTransitions: []string{OrState, AndState, ClosedBrace, EndState}},
-			{TokenName: ClosedBrace, ValidTransitions: []string{OrState, AndState, ClosedBrace, EndState}},
-			{TokenName: AndState, ValidTransitions: []string{Column, OpenBrace}},
-			{TokenName: OrState, ValidTransitions: []string{Column, OpenBrace}},
+		Transitions: []state_machine.TokenTransitions{
+			{TokenName: state_machine.StartState, ValidTransitions: []string{column, openBrace}},
+			{TokenName: openBrace, ValidTransitions: []string{column, openBrace}},
+			{TokenName: column, ValidTransitions: []string{eq, notEq, like}},
+			{TokenName: eq, ValidTransitions: []string{quotedValue, value}},
+			{TokenName: notEq, ValidTransitions: []string{quotedValue, value}},
+			{TokenName: like, ValidTransitions: []string{quotedValue, value}},
+			{TokenName: quotedValue, ValidTransitions: []string{or, and, closedBrace, state_machine.EndState}},
+			{TokenName: value, ValidTransitions: []string{or, and, closedBrace, state_machine.EndState}},
+			{TokenName: closedBrace, ValidTransitions: []string{or, and, closedBrace, state_machine.EndState}},
+			{TokenName: and, ValidTransitions: []string{column, openBrace}},
+			{TokenName: or, ValidTransitions: []string{column, openBrace}},
 		},
 	}
 
-	start := NewStateMachineBuilder(&grammar).
+	start := state_machine.NewStateMachineBuilder().
+		WithGrammar(&grammar).
 		OnNewToken(onNewToken).
 		Build()
 
@@ -190,19 +194,19 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 func (p *queryParser) Parse(sql string) (*DBQuery, error) {
 	state, checkBalancedBraces := p.initStateMachine()
 
-	scanner := NewScanner()
+	scanner := stringscanner.NewSQLScanner()
 	scanner.Init(sql)
 
 	for scanner.Next() {
-		if next, err := state.parse(scanner.Token().Value); err != nil {
+		if next, err := state.Move(scanner.Token().Value); err != nil {
 			return nil, errors.Errorf("[%d] error parsing the filter: %v", scanner.Token().Position+1, err)
 		} else {
 			state = next
 		}
 	}
 
-	if err := state.eof(); err != nil {
-		return nil, err
+	if !state.Eof() {
+		return nil, errors.Errorf(`EOF encountered while parsing string`)
 	}
 
 	if err := checkBalancedBraces(); err != nil {

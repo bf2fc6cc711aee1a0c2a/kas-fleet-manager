@@ -12,7 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"gorm.io/gorm"
 	"math/rand"
@@ -170,7 +170,7 @@ func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []strin
 
 	// Apply search query
 	if len(listArguments.Search) > 0 {
-		queryParser := coreServices.NewQueryParser(validNamespaceColumns...)
+		queryParser := queryparser.NewQueryParser(validNamespaceColumns...)
 		searchDbQuery, err := queryParser.Parse(listArguments.Search)
 		if err != nil {
 			return resourceList, &pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector namespace requests: %s", err.Error())
