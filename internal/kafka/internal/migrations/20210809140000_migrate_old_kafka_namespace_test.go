@@ -2,12 +2,13 @@ package migrations
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+
+	. "github.com/onsi/gomega"
 )
 
 const mockKafkaRequestID = "1ilzo99dVkVAoQNJeovhP8pFIzS"
@@ -40,6 +41,9 @@ func Test_buildOldKafkaNamespace(t *testing.T) {
 			want:    mockKafkaNamespace,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := buildOldKafkaNamespace(tt.args.kafkaRequest)
@@ -47,10 +51,7 @@ func Test_buildOldKafkaNamespace(t *testing.T) {
 				t.Errorf("buildOldKafkaNamespace() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("buildOldKafkaNamespace() got = %+v, want %+v", got, tt.want)
-			}
-
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }

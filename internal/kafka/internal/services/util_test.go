@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -14,6 +13,8 @@ import (
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	pkgErr "github.com/pkg/errors"
 	"gorm.io/gorm"
+
+	. "github.com/onsi/gomega"
 )
 
 const (
@@ -66,11 +67,13 @@ func Test_HandleGetError(t *testing.T) {
 			want: serviceError.NotFound("%s with email='<redacted>' not found", resourceType),
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := services.HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("HandleGetError() = %v, want %v", got, tt.want)
-			}
+			got := services.HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err)
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -104,9 +107,8 @@ func Test_handleCreateError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := services.HandleCreateError(tt.args.resourceType, tt.args.err); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("handleCreateError() = %v, want %v", got, tt.want)
-			}
+			got := services.HandleCreateError(tt.args.resourceType, tt.args.err)
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -140,9 +142,8 @@ func Test_handleUpdateError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := services.HandleUpdateError(tt.args.resourceType, tt.args.err); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("handleUpdateError() = %v, want %v", got, tt.want)
-			}
+			got := services.HandleUpdateError(tt.args.resourceType, tt.args.err)
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }

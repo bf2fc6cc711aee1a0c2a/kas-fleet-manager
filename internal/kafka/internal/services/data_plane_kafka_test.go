@@ -13,6 +13,8 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+
+	. "github.com/onsi/gomega"
 )
 
 func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
@@ -462,6 +464,8 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			counter := map[string]int{
@@ -475,9 +479,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			if err != nil && !tt.wantErr {
 				t.Errorf("unexpected error %v", err)
 			}
-			if !reflect.DeepEqual(counter, tt.expectCounters) {
-				t.Errorf("counters dont match. want: %v got: %v", tt.expectCounters, counter)
-			}
+			Expect(counter).To(Equal(tt.expectCounters))
 		})
 	}
 }
@@ -747,6 +749,8 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := versions{}
@@ -755,9 +759,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 			if err != nil && !tt.wantErr {
 				t.Errorf("unexpected error %v", err)
 			}
-			if !reflect.DeepEqual(v, tt.expectedVersions) {
-				t.Errorf("versions dont match. want: %v got: %v", tt.expectedVersions, v)
-			}
+			Expect(v).To(Equal(tt.expectedVersions))
 		})
 	}
 }

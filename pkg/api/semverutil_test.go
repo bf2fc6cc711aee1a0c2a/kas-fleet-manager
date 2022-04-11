@@ -1,8 +1,9 @@
 package api
 
 import (
-	"reflect"
 	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 func Test_buildAwareSemanticVersioningCompare(t *testing.T) {
@@ -88,16 +89,17 @@ func Test_buildAwareSemanticVersioningCompare(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := buildAwareSemanticVersioningCompare(tt.args.v1, tt.args.v2)
 			gotErr := err != nil
-			if !reflect.DeepEqual(gotErr, tt.wantErr) {
+			if gotErr != tt.wantErr {
 				t.Errorf("wantErr: %v got: %v", tt.wantErr, err)
+				return
 			}
-			if !reflect.DeepEqual(res, tt.want) {
-				t.Errorf("want: %v got: %v", tt.want, res)
-			}
+			Expect(res).To(Equal(tt.want))
 		})
 	}
 

@@ -3,16 +3,18 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/golang-jwt/jwt/v4"
+
+	. "github.com/onsi/gomega"
 )
 
 const (
@@ -216,6 +218,8 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// max allowed: 2
@@ -226,15 +230,13 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CreateServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			//over-riding the random generate id
+			//overriding the random generate id
 			if got != nil {
 				got.ClientID = "srvc-acct-cca1a262-9465-4878-9f76-c3bb59d4b4b5"
 				got.CreatedAt = createdAt
 			}
 
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("CreateServiceAccount() got = %+v, want %+v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 
@@ -540,6 +542,8 @@ func TestKeycloakService_ListServiceAcc(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
@@ -547,9 +551,7 @@ func TestKeycloakService_ListServiceAcc(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterKafkaClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RegisterKafkaClientInSSO() got = %+v, want %+v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -760,6 +762,9 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
@@ -767,9 +772,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterKafkaClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RegisterKafkaClientInSSO() got = %+v, want %+v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -854,6 +857,9 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
@@ -861,9 +867,7 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetServiceAccountById() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetServiceAccountById() got = %+v, want %+v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -948,6 +952,9 @@ func TestKeycloakService_GetServiceAccountByClientId(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
@@ -955,9 +962,7 @@ func TestKeycloakService_GetServiceAccountByClientId(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetServiceAccountById() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetServiceAccountById() got = %+v, want %+v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }

@@ -1,14 +1,16 @@
 package clusters
 
 import (
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
-	"reflect"
-	"testing"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+
+	. "github.com/onsi/gomega"
 )
 
 const openshiftVersion = "openshift-v4.6.1"
@@ -129,6 +131,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		if tt.wantFn == nil {
 			tt.wantFn = func() *clustersmgmtv1.Cluster {
@@ -146,9 +151,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 				t.Errorf("NewOCMClusterFromCluster() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.wantFn()) {
-				t.Errorf("NewOCMClusterFromCluster() got = %+v, want %+v", got, tt.wantFn())
-			}
+			Expect(got).To(Equal(tt.wantFn()))
 		})
 	}
 }

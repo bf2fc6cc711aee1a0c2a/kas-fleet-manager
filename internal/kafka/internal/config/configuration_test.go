@@ -1,7 +1,6 @@
 package config
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
@@ -75,6 +74,9 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 			},
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := tt.fields.providersConfig
@@ -83,9 +85,7 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 				t.Errorf("GetDefaultProvider() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetDefaultProvider() got = %v, want %v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -149,6 +149,9 @@ func Test_configService_GetDefaultRegionForProvider(t *testing.T) {
 			},
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.args.provider.GetDefaultRegion()
@@ -156,9 +159,7 @@ func Test_configService_GetDefaultRegionForProvider(t *testing.T) {
 				t.Errorf("GetDefaultRegionForProvider() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetDefaultRegionForProvider() got = %v, want %v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -192,12 +193,13 @@ func Test_configService_GetSupportedProviders(t *testing.T) {
 			},
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := tt.fields.providersConfig
-			if got := c.ProvidersConfig.SupportedProviders; !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetSupportedProviders() = %v, want %v", got, tt.want)
-			}
+			Expect(c.ProvidersConfig.SupportedProviders).To(Equal(tt.want))
 		})
 	}
 }

@@ -1,8 +1,9 @@
 package dbapi
 
 import (
-	"reflect"
 	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 func TestDataPlaneKafkastatus_GetReadyCondition(t *testing.T) {
@@ -31,16 +32,14 @@ func TestDataPlaneKafkastatus_GetReadyCondition(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			input := DataPlaneKafkaStatus{Conditions: tt.statusConds}
 			res, ok := input.GetReadyCondition()
-			if !reflect.DeepEqual(ok, tt.wantOK) {
-				t.Errorf("want: %v got: %v", tt.wantOK, ok)
-			}
-			if !reflect.DeepEqual(res.Type, tt.wantCondType) {
-				t.Errorf("want: %v got: %v", tt.wantCondType, res.Type)
-			}
+			Expect(ok).To(Equal(tt.wantOK))
+			Expect(res.Type).To(Equal(tt.wantCondType))
 		})
 	}
 }

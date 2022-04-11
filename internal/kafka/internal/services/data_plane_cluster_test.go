@@ -2,15 +2,17 @@ package services
 
 import (
 	"context"
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
-	"reflect"
-	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+
+	. "github.com/onsi/gomega"
 )
 
 func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
@@ -82,7 +84,7 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 			dataPlaneClusterService := tt.dataPlaneClusterServiceFactory()
 			svcErr := dataPlaneClusterService.UpdateDataPlaneClusterStatus(context.Background(), tt.clusterID, tt.clusterStatus)
 			gotErr := svcErr != nil
-			if !reflect.DeepEqual(gotErr, tt.wantErr) {
+			if gotErr != tt.wantErr {
 				t.Errorf("UpdateDataPlaneClusterStatus() error = %v, wantErr = %v", svcErr, tt.wantErr)
 			}
 		})
@@ -382,6 +384,8 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			input := tt.inputFactory()
@@ -392,12 +396,11 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 			dataPlaneClusterService := input.dataPlaneClusterService
 			nodesAfterScaling, err := dataPlaneClusterService.updateDataPlaneClusterNodes(input.cluster, input.status)
 
-			if !reflect.DeepEqual(nodesAfterScaling, tt.expectedResult) {
-				t.Errorf("updateDataPlaneClusterNodes() got = %+v, expected %+v", nodesAfterScaling, tt.expectedResult)
-			}
-			if !reflect.DeepEqual(err != nil, tt.wantErr) {
+			if err != nil != tt.wantErr {
 				t.Errorf("updateDataPlaneClusterNodes() error = %v, wantErr = %v", err, tt.wantErr)
+				return
 			}
+			Expect(nodesAfterScaling).To(Equal(tt.expectedResult))
 		})
 	}
 }
@@ -475,12 +478,11 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 				ClusterID: testClusterID,
 			}
 			res, err := f.computeNodeScalingActionInProgress(testAPICluster, nil)
-			if !reflect.DeepEqual(res, tt.want) {
-				t.Errorf("computeNodeScalingActionInProgress() got = %+v, expected %+v", res, tt.want)
-			}
-			if !reflect.DeepEqual(err != nil, tt.wantErr) {
+			if err != nil != tt.wantErr {
 				t.Errorf("computeNodeScalingActionInProgress() error = %v, wantErr = %v", err, tt.wantErr)
+				return
 			}
+			Expect(res).To(Equal(tt.want))
 		})
 	}
 }
@@ -558,6 +560,8 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := tt.dataPlaneClusterServiceFactory()
@@ -566,12 +570,11 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 			}
 
 			res, err := f.isFleetShardOperatorReady(tt.clusterStatus)
-			if !reflect.DeepEqual(res, tt.want) {
-				t.Errorf("isFleetShardOperatorReady() got = %+v, expected %+v", res, tt.want)
-			}
-			if !reflect.DeepEqual(err != nil, tt.wantErr) {
+			if err != nil != tt.wantErr {
 				t.Errorf("isFleetShardOperatorReady() error = %v, wantErr = %v", err, tt.wantErr)
+				return
 			}
+			Expect(res).To(Equal(tt.want))
 		})
 	}
 }
@@ -673,6 +676,8 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := tt.dataPlaneClusterServiceFactory()
@@ -681,9 +686,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 			}
 
 			res := f.clusterCanProcessStatusReports(tt.apiCluster)
-			if !reflect.DeepEqual(res, tt.want) {
-				t.Errorf("clusterCanProcessStatusReports() got = %+v, expected %+v", res, tt.want)
-			}
+			Expect(res).To(Equal(tt.want))
 
 		})
 	}
@@ -747,6 +750,8 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewDataPlaneClusterService(dataPlaneClusterService{
@@ -758,9 +763,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 			if err != nil && !tt.wantErr {
 				t.Fatalf("unexpected error %v", err)
 			}
-			if !reflect.DeepEqual(config, tt.want) {
-				t.Fatalf("result doesn't match. want: %v got: %v", tt.want, config)
-			}
+			Expect(config).To(Equal(tt.want))
 		})
 	}
 }
@@ -953,6 +956,8 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			f, spyReceivedStatus := tt.inputFactory()
@@ -961,15 +966,13 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 			}
 
 			res := f.dataPlaneClusterService.setClusterStatus(f.cluster, f.status)
-			if !reflect.DeepEqual(res != nil, tt.wantErr) {
+			if res != nil != tt.wantErr {
 				t.Errorf("setClusterStatus() got = %+v, expected %+v", res, tt.wantErr)
 			}
 			if spyReceivedStatus == nil {
 				t.Fatalf("spyStatus is nil")
 			}
-			if !reflect.DeepEqual(*spyReceivedStatus, tt.want) {
-				t.Errorf("setClusterStatus() got = %+v, expected %+v", spyReceivedStatus, tt.want)
-			}
+			Expect(*spyReceivedStatus).To(Equal(tt.want))
 		})
 	}
 }

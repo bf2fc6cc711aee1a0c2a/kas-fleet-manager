@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"net/http"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/aws/aws-sdk-go/service/route53"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -28,6 +28,8 @@ import (
 	goerrors "github.com/pkg/errors"
 	mocket "github.com/selvatico/go-mocket"
 	"gorm.io/gorm"
+
+	. "github.com/onsi/gomega"
 )
 
 const (
@@ -217,6 +219,7 @@ func Test_kafkaService_Get(t *testing.T) {
 			},
 		},
 	}
+	RegisterTestingT(t)
 	// we loop through each test case defined in the list above and start a new test invocation, using the testing
 	// t.Run function
 	for _, tt := range tests {
@@ -240,44 +243,28 @@ func Test_kafkaService_Get(t *testing.T) {
 				return
 			}
 			// in our test case we used 'want' to define the output api.KafkaRequest that we expect to be returned, we
-			// can use reflect.DeepEqual to compare the actual struct with the expected struct
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Get() got = %v, want %v", got, tt.want)
-			}
+			// can use Equal function to compare expected and received result
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
 
 func Test_kafkaService_GetById(t *testing.T) {
-	// fields are the variables on the struct that we're testing, in this case kafkaService
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
-	// args are the variables that will be provided to the function we're testing, in this case it's just the id we
-	// pass to kafkaService.PrepareKafkaRequest
 	type args struct {
 		id string
 	}
 
-	// we define tests as list of structs that contain inputs and expected outputs
-	// this means we can execute the same logic on each test struct, and makes adding new tests simple as we only need
-	// to provide a new struct to the list instead of defining an entirely new test
 	tests := []struct {
-		// name is just a description of the test
-		name   string
-		fields fields
-		args   args
-		// want (there can be more than one) is the outputs that we expect, they can be compared after the test
-		// function has been executed
-		want *dbapi.KafkaRequest
-		// wantErr is similar to want, but instead of testing the actual returned error, we're just testing than any
-		// error has been returned
+		name    string
+		fields  fields
+		args    args
+		want    *dbapi.KafkaRequest
 		wantErr bool
-		// setupFn will be called before each test and allows mocket setup to be performed
 		setupFn func()
 	}{
-		// below is a single test case, we define each of the fields that we care about from the anonymous test struct
-		// above
 		{
 			name: "error when id is undefined",
 			fields: fields{
@@ -319,33 +306,23 @@ func Test_kafkaService_GetById(t *testing.T) {
 			},
 		},
 	}
-	// we loop through each test case defined in the list above and start a new test invocation, using the testing
-	// t.Run function
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
-		// tt now contains our test case, we can use the 'fields' to construct the struct that we want to test and the
-		// 'args' to pass to the function we want to test
 		t.Run(tt.name, func(t *testing.T) {
-			// invoke any pre-req logic if needed
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
-			// we're testing the kafkaService struct, so use the 'fields' to create one
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
-			// we're testing the kafkaService.Get function so use the 'args' to provide arguments to the function
 			got, err := k.GetById(tt.args.id)
-			// in our test case we used 'wantErr' to define if we expect and error to be returned from the function or
-			// not, now we test that expectation
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			// in our test case we used 'want' to define the output api.KafkaRequest that we expect to be returned, we
-			// can use reflect.DeepEqual to compare the actual struct with the expected struct
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Get() got = %v, want %v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -1529,6 +1506,9 @@ func Test_kafkaService_List(t *testing.T) {
 			},
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn(tt.want.kafkaList)
@@ -1547,9 +1527,7 @@ func Test_kafkaService_List(t *testing.T) {
 			}
 
 			// compare wanted vs actual pagingMeta result
-			if !reflect.DeepEqual(pagingMeta, tt.want.pagingMeta) {
-				t.Errorf("kafka.Service.List(): Paging meta returned is not correct:\n\tgot: %+v\n\twant: %+v", pagingMeta, tt.want.pagingMeta)
-			}
+			Expect(pagingMeta).To(Equal(tt.want.pagingMeta))
 
 			// compare wanted vs actual results
 			if len(result) != len(tt.want.kafkaList) {
@@ -1557,9 +1535,7 @@ func Test_kafkaService_List(t *testing.T) {
 			}
 
 			for i, got := range result {
-				if !reflect.DeepEqual(got, tt.want.kafkaList[i]) {
-					t.Errorf("kafkaService.List():\ngot = %+v\nwant = %+v", got, tt.want.kafkaList[i])
-				}
+				Expect(got).To(Equal(tt.want.kafkaList[i]))
 			}
 		})
 	}
@@ -1606,6 +1582,9 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 			},
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
@@ -1616,14 +1595,11 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 				awsConfig:         config.NewAWSConfig(),
 			}
 			got, err := k.ListByStatus(tt.args.status)
-			// check errors
 			if (err != nil) != tt.wantErr {
 				t.Errorf("kafkaService.ListByStatus() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ListByStatus() got = %v, want %v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -2035,6 +2011,8 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFunc != nil {
@@ -2047,9 +2025,7 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for CountByStatus: %v", err)
 			}
-			if !reflect.DeepEqual(status, tt.want) {
-				t.Errorf("CountByStatus want = %v, got = %v", tt.want, status)
-			}
+			Expect(status).To(Equal(tt.want))
 		})
 	}
 }
@@ -2105,6 +2081,8 @@ func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFunc != nil {
@@ -2117,9 +2095,7 @@ func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for CountByRegionAndInstanceType: %v", err)
 			}
-			if !reflect.DeepEqual(status, tt.want) {
-				t.Errorf("CountByRegionAndInstanceType want = %v, got = %v", tt.want, status)
-			}
+			Expect(status).To(Equal(tt.want))
 		})
 	}
 }
@@ -2310,6 +2286,8 @@ func TestKafkaService_ListComponentVersions(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFunc != nil {
@@ -2322,9 +2300,7 @@ func TestKafkaService_ListComponentVersions(t *testing.T) {
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for ListComponentVersions: %v", err)
 			}
-			if !reflect.DeepEqual(result, tt.want) {
-				t.Errorf("ListComponentVersions want = %v, got = %v", tt.want, result)
-			}
+			Expect(result).To(Equal(tt.want))
 		})
 	}
 }

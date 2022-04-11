@@ -2,18 +2,19 @@ package sso
 
 import (
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/redhatsso"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/google/uuid"
-	"github.com/onsi/gomega"
 	pkgErr "github.com/pkg/errors"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
-	"reflect"
-	"testing"
-	"time"
+
+	. "github.com/onsi/gomega"
 )
 
 func TestRedhatSSO_RegisterKafkaClientInSSO(t *testing.T) {
@@ -106,11 +107,11 @@ func TestRedhatSSO_RegisterKafkaClientInSSO(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			//keycloakService := masService{
-			//	tt.fields.kcClient,
-			//}
 
 			keycloakService := keycloakServiceProxy{
 				accessTokenProvider: tt.fields.kcClient,
@@ -120,9 +121,7 @@ func TestRedhatSSO_RegisterKafkaClientInSSO(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterKafkaClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RegisterKafkaClientInSSO() got = %+v, want %+v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 
@@ -233,14 +232,14 @@ func TestRedhatSSO_RegisterOSDClusterClientInSSO(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
+			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
 				accessTokenProvider: tt.fields.kcClient,
 				service:             &redhatssoService{client: tt.fields.kcClient},
 			}
 			got, err := keycloakService.RegisterOSDClusterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
-			gomega.Expect(err).To(gomega.Equal(tt.wantErr))
-			gomega.Expect(got).To(gomega.Equal(tt.want))
+			Expect(err).To(Equal(tt.wantErr))
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 
@@ -401,6 +400,9 @@ func TestRedhatSSOService_RegisterKasFleetshardOperatorServiceAccount(t *testing
 			wantErr: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := keycloakServiceProxy{
@@ -411,9 +413,7 @@ func TestRedhatSSOService_RegisterKasFleetshardOperatorServiceAccount(t *testing
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterKasFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RegisterKasFleetshardOperatorServiceAccount() got = %+v, want %+v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -511,13 +511,13 @@ func TestRedhatSSOService_DeRegisterKasFleetshardOperatorServiceAccount(t *testi
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
+			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
 				accessTokenProvider: tt.fields.kcClient,
 				service:             &redhatssoService{client: tt.fields.kcClient},
 			}
 			err := keycloakService.DeRegisterKasFleetshardOperatorServiceAccount(tt.args.clusterId)
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -609,6 +609,9 @@ func TestRedhatSSOService_RegisterConnectorFleetshardOperatorServiceAccount(t *t
 			wantErr: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.disabled {
@@ -622,9 +625,7 @@ func TestRedhatSSOService_RegisterConnectorFleetshardOperatorServiceAccount(t *t
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterConnectorFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RegisterConnectorFleetshardOperatorServiceAccount() got = %+v, want %+v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -723,13 +724,13 @@ func TestRedhatSSOService__DeRegisterConnectorFleetshardOperatorServiceAccount(t
 			if tt.disabled {
 				t.Skip(tt.skipReason)
 			}
-			gomega.RegisterTestingT(t)
+			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
 				accessTokenProvider: tt.fields.kcClient,
 				service:             &redhatssoService{client: tt.fields.kcClient},
 			}
 			err := keycloakService.DeRegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterId)
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -804,13 +805,13 @@ func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
+			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
 				accessTokenProvider: tt.fields.kcClient,
 				service:             &redhatssoService{client: tt.fields.kcClient},
 			}
 			err := keycloakService.DeleteServiceAccountInternal("account-id")
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 
@@ -909,18 +910,18 @@ func TestRedhatSSOService_CreateServiceAccountInternal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
+			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
 				accessTokenProvider: tt.fields.kcClient,
 				service:             &redhatssoService{client: tt.fields.kcClient},
 			}
 			serviceAccount, err := keycloakService.CreateServiceAccountInternal(request)
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
-			gomega.Expect(serviceAccount != nil).To(gomega.Equal(tt.serviceAccountCreated))
+			Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(serviceAccount != nil).To(Equal(tt.serviceAccountCreated))
 			if tt.serviceAccountCreated {
-				gomega.Expect(serviceAccount.ClientSecret).To(gomega.Equal("secret"))
-				gomega.Expect(serviceAccount.ClientID).To(gomega.Equal(request.ClientId))
-				gomega.Expect(serviceAccount.ID).To(gomega.Equal("dsd"))
+				Expect(serviceAccount.ClientSecret).To(Equal("secret"))
+				Expect(serviceAccount.ClientID).To(Equal(request.ClientId))
+				Expect(serviceAccount.ID).To(Equal("dsd"))
 			}
 		})
 	}

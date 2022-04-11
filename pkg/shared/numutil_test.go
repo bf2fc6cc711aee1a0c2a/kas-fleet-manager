@@ -1,8 +1,9 @@
 package shared
 
 import (
-	"reflect"
 	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 func TestRoundUp(t *testing.T) {
@@ -38,12 +39,11 @@ func TestRoundUp(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			res := RoundUp(tt.number, tt.multiple)
-			if !reflect.DeepEqual(res, tt.expected) {
-				t.Errorf("RoundUp() got = %+v, expected %+v", res, tt.expected)
-			}
+			Expect(RoundUp(tt.number, tt.multiple)).To(Equal(tt.expected))
 		})
 	}
 }
@@ -81,12 +81,11 @@ func TestRoundDown(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			res := RoundDown(tt.number, tt.multiple)
-			if !reflect.DeepEqual(res, tt.expected) {
-				t.Errorf("RoundDown() got = %+v, expected %+v", res, tt.expected)
-			}
+			Expect(RoundDown(tt.number, tt.multiple)).To(Equal(tt.expected))
 		})
 	}
 }

@@ -2,6 +2,7 @@ package presenters
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -18,6 +19,8 @@ const (
 	KindCloudProvider = "CloudProvider"
 	// KindError is a string identifier for the type api.ServiceError
 	KindError = "Error"
+	// KindServiceAccount is a string identifier for the type api.ServiceAccount
+	KindServiceAccount = "ServiceAccount"
 
 	BasePath = "/api/kafkas_mgmt/v1"
 )
@@ -36,6 +39,8 @@ func objectKind(i interface{}) string {
 		return KindCloudProvider
 	case errors.ServiceError, *errors.ServiceError:
 		return KindError
+	case api.ServiceAccount, *api.ServiceAccount:
+		return KindServiceAccount
 	default:
 		return ""
 	}
