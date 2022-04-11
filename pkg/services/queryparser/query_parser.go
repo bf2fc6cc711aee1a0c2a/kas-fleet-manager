@@ -77,7 +77,7 @@ var _ QueryParser = &queryParser{}
 // CLOSED_BRACE -> OR | AND | CLOSED_BRACE | [END]
 // AND          -> COLUMN | OPEN_BRACE
 // OR           -> COLUMN | OPEN_BRACE
-func (p *queryParser) initStateMachine() (state_machine.State, checkUnbalancedBraces) {
+func (p *queryParser) initStateMachine() (*state_machine.State, checkUnbalancedBraces) {
 
 	// counts the number of joins
 	complexity := 0

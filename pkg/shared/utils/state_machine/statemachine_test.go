@@ -6,7 +6,7 @@ import (
 )
 
 // createStateMachine - creates a simple StateMachine that validates transitions for an issue state
-func createStateMachine() State {
+func createStateMachine() *State {
 	definition := StateMachineDefinition{
 		States: []StateDefinition{
 			{Name: "NEW", AcceptPattern: "NEW"},

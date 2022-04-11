@@ -7,16 +7,6 @@ import (
 	"strings"
 )
 
-// State - represent a single state in the current state machine
-type State interface {
-	// Move - Analysing the passed in value, decides what will be the next state. Returns the next state or error received value is invalid
-	Move(tok string) (State, error)
-	// Eof - returns whether the current state is a valid END STATE
-	Eof() bool
-}
-
-var _ State = &state{}
-
 // ParsedToken - Structure sent to the callback everytime a new ParsedToken is parsed
 type ParsedToken struct {
 	// Name - the name of this Token
@@ -27,8 +17,8 @@ type ParsedToken struct {
 	Value string
 }
 
-// state - internal structure defining a state
-type state struct {
+// State - a StateMachine state
+type State struct {
 	// tokenName - name of the token managed by this state
 	tokenName string
 
@@ -44,39 +34,39 @@ type state struct {
 	isEof bool
 
 	// next - the list of valid transitions from this state
-	next []State
+	next []*State
 
 	// onNewToken - sets the handler to be invoked when a Token has been successfully parsed
 	onNewToken func(token *ParsedToken) error
 }
 
-func newStartState() State {
-	return &state{
+func newStartState() *State {
+	return &State{
 		tokenName:     "START",
 		acceptPattern: `^$`,
 	}
 }
 
-func newEndState() State {
-	return &state{
+func newEndState() *State {
+	return &State{
 		tokenName: "END",
 		isEof:     true,
 	}
 }
 
-func (s *state) accept(value string) bool {
+func (s *State) accept(value string) bool {
 	matched, _ := regexp.Match(s.acceptPattern, []byte(value))
 	return matched
 }
 
-func (s *state) Move(value string) (State, error) {
+func (s *State) Move(value string) (*State, error) {
 	for _, next := range s.next {
-		if next.(*state).accept(value) {
+		if next.accept(value) {
 			// valid Value
-			if next.(*state).onNewToken != nil {
-				if err := next.(*state).onNewToken(&ParsedToken{
-					Name:   next.(*state).tokenName,
-					Family: next.(*state).family,
+			if next.onNewToken != nil {
+				if err := next.onNewToken(&ParsedToken{
+					Name:   next.tokenName,
+					Family: next.family,
 					Value:  value,
 				}); err != nil {
 					return nil, err
@@ -90,13 +80,13 @@ func (s *state) Move(value string) (State, error) {
 }
 
 // Eof - this function must be called when the whole string has been parsed to check if the current state is a valid eof state
-func (s *state) Eof() bool {
+func (s *State) Eof() bool {
 	// EOF has been reached. Check if the current Token can be the last one
 	return s.last
 }
 
-func (s *state) addNextState(next State) {
-	n := next.(*state)
+func (s *State) addNextState(next *State) {
+	n := next
 	if n.isEof {
 		// if the passed in next state is an Eof state, means this is a valid 'last' state
 		// Just save the info and discard the 'next' state
@@ -111,11 +101,11 @@ type StateBuilder interface {
 	Family(family string) StateBuilder
 	AcceptPattern(acceptRegex string) StateBuilder
 	OnNewToken(handler func(token *ParsedToken) error) StateBuilder
-	Build() State
+	Build() *State
 }
 
 type stateBuilder struct {
-	s *state
+	s *State
 }
 
 var _ StateBuilder = &stateBuilder{}
@@ -135,7 +125,7 @@ func (sb *stateBuilder) OnNewToken(handler func(token *ParsedToken) error) State
 	return sb
 }
 
-func (sb *stateBuilder) Build() State {
+func (sb *stateBuilder) Build() *State {
 	if !strings.HasPrefix(sb.s.acceptPattern, `^`) {
 		sb.s.acceptPattern = fmt.Sprintf(`^%s`, sb.s.acceptPattern)
 	}
@@ -146,7 +136,7 @@ func (sb *stateBuilder) Build() State {
 }
 
 func NewStateBuilder(tokenName string) StateBuilder {
-	return &stateBuilder{s: &state{
+	return &stateBuilder{s: &State{
 		last:      false,
 		tokenName: tokenName,
 	}}

@@ -29,7 +29,7 @@ var _ StateMachineConfigurator = &stateMachineBuilder{}
 
 type StateMachineBuilder interface {
 	OnNewToken(handler NewTokenHandler) StateMachineBuilder
-	Build() State
+	Build() *State
 }
 
 type StateMachineConfigurator interface {
@@ -57,16 +57,16 @@ func (smb *stateMachineBuilder) OnNewToken(handler NewTokenHandler) StateMachine
 	return smb
 }
 
-func (smb *stateMachineBuilder) Build() State {
+func (smb *stateMachineBuilder) Build() *State {
 
-	tokenMap := make(map[string]State)
+	stateMap := make(map[string]*State)
 
-	tokenMap[StartState] = newStartState()
-	tokenMap[EndState] = newEndState()
+	stateMap[StartState] = newStartState()
+	stateMap[EndState] = newEndState()
 
 	// build all the tokens
 	for _, t := range smb.definition.States {
-		tokenMap[t.Name] = NewStateBuilder(t.Name).
+		stateMap[t.Name] = NewStateBuilder(t.Name).
 			Family(t.Family).
 			AcceptPattern(t.AcceptPattern).
 			OnNewToken(smb.onNewToken).
@@ -75,14 +75,14 @@ func (smb *stateMachineBuilder) Build() State {
 
 	// add all the transitions
 	for _, transition := range smb.definition.Transitions {
-		token := tokenMap[transition.StateName]
-		for _, targetTokenName := range transition.ValidTransitions {
-			targetToken := tokenMap[targetTokenName]
-			token.(*state).addNextState(targetToken)
+		currentState := stateMap[transition.StateName]
+		for _, targetStateName := range transition.ValidTransitions {
+			targetState := stateMap[targetStateName]
+			currentState.addNextState(targetState)
 		}
 	}
 
-	return tokenMap[StartState]
+	return stateMap[StartState]
 }
 
 func NewStateMachineBuilder() StateMachineConfigurator {
