@@ -1,11 +1,12 @@
 package secrets
 
 import (
-	. "github.com/onsi/gomega"
+	"testing"
+
 	"github.com/spyzhov/ajson"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"reflect"
-	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 const exampleSchema1 = `
@@ -73,6 +74,9 @@ func Test_getSecretPaths(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := getPathsToPasswordFields([]byte(tt.args.schemaText))
@@ -81,9 +85,7 @@ func Test_getSecretPaths(t *testing.T) {
 				return
 			}
 
-			if !reflect.DeepEqual(sets.NewString(got...), sets.NewString(tt.want...)) {
-				t.Errorf("getPathsToPasswordFields() got = %v, want %v", got, tt.want)
-			}
+			Expect(sets.NewString(got...)).To(Equal(sets.NewString(tt.want...)))
 		})
 	}
 }

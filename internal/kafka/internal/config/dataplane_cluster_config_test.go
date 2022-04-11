@@ -1,14 +1,15 @@
 package config
 
 import (
-	"reflect"
 	"testing"
 
 	"gopkg.in/yaml.v2"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+
 	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 )
 
 func TestDataplaneClusterConfig_IsDataPlaneAutoScalingEnabled(t *testing.T) {
@@ -36,14 +37,15 @@ func TestDataplaneClusterConfig_IsDataPlaneAutoScalingEnabled(t *testing.T) {
 			want: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			conf := DataplaneClusterConfig{
 				DataPlaneClusterScalingType: tt.fields.DataPlaneClusterScalingType,
 			}
-			got := conf.IsDataPlaneAutoScalingEnabled()
-			gomega.Expect(got).To(gomega.Equal(tt.want))
+			Expect(conf.IsDataPlaneAutoScalingEnabled()).To(Equal(tt.want))
 		})
 	}
 }
@@ -73,14 +75,16 @@ func TestDataplaneClusterConfig_IsDataPlaneManualScalingEnabled(t *testing.T) {
 			want: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			conf := DataplaneClusterConfig{
 				DataPlaneClusterScalingType: tt.fields.DataPlaneClusterScalingType,
 			}
 			got := conf.IsDataPlaneManualScalingEnabled()
-			gomega.Expect(got).To(gomega.Equal(tt.want))
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -130,12 +134,13 @@ func TestDataplaneClusterConfig_IsWithinClusterLimit(t *testing.T) {
 			want: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			conf := NewClusterConfig(tt.fields.ClusterList)
-			if got := conf.IsNumberOfKafkaWithinClusterLimit(tt.args.clusterId, tt.args.count); got != tt.want {
-				t.Errorf("IsWithinClusterLimit() = %v, want %v", got, tt.want)
-			}
+			Expect(conf.IsNumberOfKafkaWithinClusterLimit(tt.args.clusterId, tt.args.count)).To(Equal(tt.want))
 		})
 	}
 }
@@ -237,12 +242,13 @@ func TestDataplaneClusterConfig_MissingClusters(t *testing.T) {
 			want: emptyResult,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			conf := NewClusterConfig(tt.fields.ClusterList)
-			if got := conf.MissingClusters(tt.args.clusterList); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("MissingClusters() = %v, want %v", got, tt.want)
-			}
+			Expect(conf.MissingClusters(tt.args.clusterList)).To(Equal(tt.want))
 		})
 	}
 }
@@ -292,12 +298,13 @@ func TestDataplaneClusterConfig_ExcessClusters(t *testing.T) {
 			want: emptyResult,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			conf := NewClusterConfig(tt.fields.ClusterList)
-			if got := conf.ExcessClusters(tt.args.clusterList); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ExcessClusters() = %v, want %v", got, tt.want)
-			}
+			Expect(conf.ExcessClusters(tt.args.clusterList)).To(Equal(tt.want))
 		})
 	}
 }
@@ -399,6 +406,9 @@ provider_type: "invalid"
 			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var v ManualCluster
@@ -406,9 +416,7 @@ provider_type: "invalid"
 			if err != nil && !tt.wantErr {
 				t.Errorf("unexpected error %v", err)
 			}
-			if !reflect.DeepEqual(v, tt.output) {
-				t.Errorf("want %v but got %v", tt.output, v)
-			}
+			Expect(v).To(Equal(tt.output))
 		})
 	}
 }

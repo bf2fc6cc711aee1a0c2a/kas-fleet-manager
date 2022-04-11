@@ -2,10 +2,11 @@ package services
 
 import (
 	"errors"
-	"reflect"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
+
+	. "github.com/onsi/gomega"
 )
 
 func Test_ObservatoriumService_GetKafkaState(t *testing.T) {
@@ -57,6 +58,9 @@ func Test_ObservatoriumService_GetKafkaState(t *testing.T) {
 			want:    observatorium.KafkaState{},
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
@@ -66,9 +70,7 @@ func Test_ObservatoriumService_GetKafkaState(t *testing.T) {
 				t.Errorf("GetKafkaState() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetKafkaState() got = %+v, want %+v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }

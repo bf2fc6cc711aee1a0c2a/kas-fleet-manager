@@ -2,8 +2,9 @@ package api
 
 import (
 	"encoding/json"
-	"reflect"
 	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 func TestGetAvailableStrimziVersions(t *testing.T) {
@@ -68,16 +69,16 @@ func TestGetAvailableStrimziVersions(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := tt.cluster().GetAvailableStrimziVersions()
 			gotErr := err != nil
-			if !reflect.DeepEqual(gotErr, tt.wantErr) {
+			if gotErr != tt.wantErr {
 				t.Errorf("wantErr: %v got: %v", tt.wantErr, err)
 			}
-			if !reflect.DeepEqual(res, tt.want) {
-				t.Errorf("want: %v got: %v", tt.want, res)
-			}
+			Expect(res).To(Equal(tt.want))
 		})
 	}
 }
@@ -147,12 +148,10 @@ func TestGetAvailableAndReadyStrimziVersions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := tt.cluster().GetAvailableAndReadyStrimziVersions()
 			gotErr := err != nil
-			if !reflect.DeepEqual(gotErr, tt.wantErr) {
+			if gotErr != tt.wantErr {
 				t.Errorf("wantErr: %v got: %v", tt.wantErr, err)
 			}
-			if !reflect.DeepEqual(res, tt.want) {
-				t.Errorf("want: %v got: %v", tt.want, res)
-			}
+			Expect(res).To(Equal(tt.want))
 		})
 	}
 }
@@ -300,28 +299,26 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cluster := &Cluster{}
 			err := cluster.SetAvailableStrimziVersions(tt.inputStrimziVersions)
 			gotErr := err != nil
-			errResultTestFailed := false
-			if !reflect.DeepEqual(gotErr, tt.wantErr) {
-				errResultTestFailed = true
+
+			if gotErr != tt.wantErr {
 				t.Errorf("wantErr: %v got: %v", tt.wantErr, gotErr)
+				return
 			}
 
-			if !errResultTestFailed {
-				var got []StrimziVersion
-				err := json.Unmarshal(cluster.AvailableStrimziVersions, &got)
-				if err != nil {
-					panic(err)
-				}
-
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("want: %v got: %v", tt.want, got)
-				}
+			var got []StrimziVersion
+			err = json.Unmarshal(cluster.AvailableStrimziVersions, &got)
+			if err != nil {
+				panic(err)
 			}
+
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -400,21 +397,17 @@ func TestCompare(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.inputStrimziVersion1.Compare(tt.inputStrimziVersion2)
 			gotErr := err != nil
-			errResultTestFailed := false
-			if !reflect.DeepEqual(gotErr, tt.wantErr) {
-				errResultTestFailed = true
+			if gotErr != tt.wantErr {
 				t.Errorf("wantErr: %v got: %v", tt.wantErr, gotErr)
+				return
 			}
-
-			if !errResultTestFailed {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("want: %v got: %v", tt.want, got)
-				}
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -545,17 +538,11 @@ func Test_StrimziVersionsDeepSort(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := StrimziVersionsDeepSort(tt.args.versions)
 			gotErr := err != nil
-			errResultTestFailed := false
-			if !reflect.DeepEqual(gotErr, tt.wantErr) {
-				errResultTestFailed = true
+			if gotErr != tt.wantErr {
 				t.Errorf("wantErr: %v got: %v", tt.wantErr, gotErr)
+				return
 			}
-
-			if !errResultTestFailed {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("want: %v got: %v", tt.want, got)
-				}
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -648,17 +635,10 @@ func TestCompareSemanticVersionsMajorAndMinor(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := CompareSemanticVersionsMajorAndMinor(tt.current, tt.desired)
 			gotErr := err != nil
-			errResultTestFailed := false
-			if !reflect.DeepEqual(gotErr, tt.wantErr) {
-				errResultTestFailed = true
+			if gotErr != tt.wantErr {
 				t.Errorf("wantErr: %v got: %v", tt.wantErr, gotErr)
 			}
-
-			if !errResultTestFailed {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("want: %v got: %v", tt.want, got)
-				}
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }

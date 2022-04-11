@@ -1,14 +1,16 @@
 package services
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	"reflect"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+
+	. "github.com/onsi/gomega"
 )
 
 func TestFirstReadyCluster_FindCluster(t *testing.T) {
@@ -79,6 +81,9 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := &FirstReadyCluster{
@@ -89,9 +94,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 				t.Errorf("FindReadyCluster() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FindReadyCluster() got = %v, want %v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -238,6 +241,9 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := &FirstSchedulableWithinLimit{
@@ -249,9 +255,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				t.Errorf("FindAvailableCluster() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FindAvailableCluster() got = %v, want %v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }

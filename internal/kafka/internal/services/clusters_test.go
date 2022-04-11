@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -21,6 +20,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	mocket "github.com/selvatico/go-mocket"
+
+	. "github.com/onsi/gomega"
 )
 
 var (
@@ -334,6 +335,9 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 			},
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -347,9 +351,7 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 				t.Errorf("FindClusterByID() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FindClusterByID() got = %v, want %v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -425,6 +427,9 @@ func Test_FindCluster(t *testing.T) {
 			},
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -440,9 +445,7 @@ func Test_FindCluster(t *testing.T) {
 				t.Errorf("FindCluster() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FindCluster() got = %+v, want %+v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -534,9 +537,12 @@ func Test_ListByStatus(t *testing.T) {
 			},
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
+
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -548,10 +554,7 @@ func Test_ListByStatus(t *testing.T) {
 				t.Errorf("ListByStatus() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			gomega.Expect(got).To(gomega.Equal(tt.want))
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ListByStatus() got = %v, want %v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -993,6 +996,8 @@ func TestClusterService_ListGroupByProviderAndRegion(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
@@ -1002,10 +1007,9 @@ func TestClusterService_ListGroupByProviderAndRegion(t *testing.T) {
 			got, err := k.ListGroupByProviderAndRegion(tt.fields.providers, tt.fields.regions, tt.fields.status)
 			if err != nil && !tt.wantErr {
 				t.Errorf("ListGroupByProviderAndRegion err = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ListGroupByProviderAndRegion got = %v, want %v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -1156,7 +1160,7 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 		fields  fields
 		want    []api.Cluster
 		setupFn func()
-		want1   *apiErrors.ServiceError
+		wantErr *apiErrors.ServiceError
 	}{
 		{
 			name: "Empty cluster Ids",
@@ -1167,8 +1171,8 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT "cluster_id" FROM "clusters"`)
 				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
-			want:  nil,
-			want1: nil,
+			want:    nil,
+			wantErr: nil,
 		},
 		{
 			name: "List All cluster id",
@@ -1182,10 +1186,13 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 					},
 				})
 			},
-			want:  clusters,
-			want1: nil,
+			want:    clusters,
+			wantErr: nil,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1194,13 +1201,12 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 			c := clusterService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
-			got, got1 := c.ListAllClusterIds()
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ListAllClusterIds() got = %v, want %v", got, tt.want)
+			got, err := c.ListAllClusterIds()
+			if err != nil && err != tt.wantErr {
+				t.Errorf("ListAllClusterIds() got1 = %v, want %v", err, tt.wantErr)
+				return
 			}
-			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("ListAllClusterIds() got1 = %v, want %v", got1, tt.want1)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -1265,6 +1271,9 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 			},
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1279,9 +1288,7 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 				return
 			}
 			for i, res := range got {
-				if !reflect.DeepEqual(res, tt.want[i]) {
-					t.Errorf("FindKafkaInstanceCount() got = %v, want %v", res, tt.want[i])
-				}
+				Expect(res).To(Equal(tt.want[i]))
 			}
 		})
 	}
@@ -1359,11 +1366,8 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 				return
 			}
 			for i, res := range got {
-				if !reflect.DeepEqual(*res, *tt.want[i]) {
-					t.Errorf("FindAllClusters() got = %v, want %v", *res, *tt.want[i])
-				}
+				Expect(*res).To(Equal(*tt.want[i]))
 			}
-
 		})
 	}
 }
@@ -1510,6 +1514,8 @@ func TestClusterService_CountByStatus(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFunc != nil {
@@ -1522,9 +1528,7 @@ func TestClusterService_CountByStatus(t *testing.T) {
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for CountByStatus: %v", err)
 			}
-			if !reflect.DeepEqual(status, tt.want) {
-				t.Errorf("CountByStatus want = %v, got = %v", tt.want, status)
-			}
+			Expect(status).To(Equal(tt.want))
 		})
 	}
 }
@@ -1597,6 +1601,9 @@ func TestClusterService_GetComputeNodes(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1613,9 +1620,7 @@ func TestClusterService_GetComputeNodes(t *testing.T) {
 				t.Errorf("GetComputeNodes() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetComputeNodes() want %v but got %v", tt.want, got)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -1703,6 +1708,9 @@ func TestClusterService_CheckClusterStatus(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1719,9 +1727,7 @@ func TestClusterService_CheckClusterStatus(t *testing.T) {
 				t.Errorf("CheckClusterStatus() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("CheckClusterStatus() want %v but got %v", tt.want, got)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -1792,6 +1798,9 @@ func TestClusterService_RemoveClusterFromProvider(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1808,9 +1817,7 @@ func TestClusterService_RemoveClusterFromProvider(t *testing.T) {
 				t.Errorf("Delete() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Delete() want %v but got %v", tt.want, got)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -1916,6 +1923,9 @@ func TestClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1932,9 +1942,7 @@ func TestClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 				t.Errorf("ConfigureAndSaveIdentityProvider() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ConfigureAndSaveIdentityProvider() want %v but got %v", tt.want, got)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -2099,6 +2107,9 @@ func TestClusterService_InstallStrimzi(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -2115,9 +2126,7 @@ func TestClusterService_InstallStrimzi(t *testing.T) {
 				t.Errorf("InstallStrimzi() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("InstallStrimzi want %v, but got %v", tt.want, got)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -2195,6 +2204,9 @@ func TestClusterService_ClusterLogging(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -2211,9 +2223,7 @@ func TestClusterService_ClusterLogging(t *testing.T) {
 				t.Errorf("InstallClusterLogging() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("InstallClusterLogging want %v, but got %v", tt.want, got)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -2308,6 +2318,8 @@ func Test_ClusterService_GetExternalID(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -2324,9 +2336,7 @@ func Test_ClusterService_GetExternalID(t *testing.T) {
 				t.Errorf("GetExternalID() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetExternalID() got = %+v, want %+v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }

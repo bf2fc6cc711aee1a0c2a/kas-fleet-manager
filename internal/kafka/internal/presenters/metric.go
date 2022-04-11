@@ -88,16 +88,15 @@ func PresentMetricsByInstantQuery(metrics *observatorium.KafkaMetrics) ([]public
 	return out, nil
 }
 
-func isAllowedLabel(lable string) bool {
-	for _, labelName := range getSupportedLables() {
-		if lable == labelName {
+func isAllowedLabel(label string) bool {
+	for _, labelName := range getSupportedLabels() {
+		if label == labelName {
 			return true
 		}
 	}
-
 	return false
 }
 
-func getSupportedLables() []string {
+func getSupportedLabels() []string {
 	return []string{"__name__", "strimzi_io_cluster", "topic", "persistentvolumeclaim", "statefulset_kubernetes_io_pod_name", "exported_service", "exported_pod", "route"}
 }
