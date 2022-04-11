@@ -308,12 +308,13 @@ test: gotestsum
 	OCM_ENV=testing $(GOTESTSUM) --junitfile data/results/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 -coverprofile cover.out $(TESTFLAGS) \
 		$(shell go list ./... | grep -v /test)
 
-# filter out mocked and generated files from the coverage results
+# filter out mocked, generated, and other files which do not need to be tested from the coverage results
 	cat cover.out | grep -v "_moq.go" | \
 	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/main.go" | \
 	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/" | \
 	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/migrations/" | \
-	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/" \
+	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/" | \
+	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/metrics/providers.go"  \
 	> coverage.out
 .PHONY: test
 
