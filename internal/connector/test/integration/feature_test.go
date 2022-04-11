@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"os"
 	"testing"
 	"time"
@@ -22,12 +23,14 @@ func TestMain(m *testing.M) {
 	defer ocmServer.Close()
 
 	h, teardown := test.NewHelperWithHooks(t, ocmServer,
-		func(c *config.ConnectorsConfig, kc *keycloak.KeycloakConfig) {
+		func(c *config.ConnectorsConfig, kc *keycloak.KeycloakConfig, reconcilerConfig *workers.ReconcilerConfig) {
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
 			c.ConnectorEvalDuration, _ = time.ParseDuration("2s")
 			c.ConnectorEvalOrganizations = []string{"13640210"}
 			c.ConnectorNamespaceLifecycleAPI = true
 			c.ConnectorEnableUnassignedConnectors = true
+			// always set reconciler config to 1 second for connector tests
+			reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Second
 		},
 		connector.ConfigProviders(false),
 	)
