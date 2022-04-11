@@ -351,7 +351,7 @@ test/integration/connector: test/prepare gotestsum
 .PHONY: test/integration/connector
 
 test/integration/connector/cleanup:
-# delete expired keycloak test clients
+	#delete expired keycloak test clients
 	$(GO) run ./internal/connector/test/integration/cleanup/main.go
 .PHONY: test/integration/connector/cleanup
 

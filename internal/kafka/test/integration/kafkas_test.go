@@ -362,6 +362,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 
 	testValidations(standardClusters, evalClusters, t, kafkaValidations)
 
+	defer func ()  {
 	kasfFleetshardSync.Stop()
 	h.Env.Stop()
 
@@ -369,8 +370,8 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 	for _, clusters := range list {
 		getAndDeleteServiceAccounts(clusters.ClientID, h.Env)
 		getAndDeleteServiceAccounts(clusters.ID, h.Env)
-	}
-
+		}
+	}()
 }
 
 // build a test kafka request
