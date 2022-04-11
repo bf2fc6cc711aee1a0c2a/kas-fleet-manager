@@ -362,9 +362,6 @@ components:
           type: string
         status:
           type: string
-        lastTransitionTime:
-          type: string
-          deprecated: true
         last_transition_time:
           type: string
           #format: date-time # enable this?? or just set it as pure plain string?
@@ -427,10 +424,6 @@ components:
           type: string
         connector_spec:
           type: object
-        allow_upgrade:
-          description: allow the connector to upgrade to a new operator
-          type: boolean
-          deprecated: true
         operator_id:
           description: an optional operator id that the connector should be run under.
           type: string
@@ -448,9 +441,6 @@ components:
         resource_version:
           type: integer
           format: int64
-        available_upgrades:
-          type: string
-          deprecated: true
         operators:
           type: object
           properties:

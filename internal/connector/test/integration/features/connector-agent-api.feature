@@ -566,7 +566,7 @@ Feature: connector agent API
         "conditions": [{
           "type": "Ready",
           "status": "True",
-          "lastTransitionTime": "2018-01-01T00:00:00Z"
+          "last_transition_time": "2018-01-01T00:00:00Z"
         }]
       }
       """
@@ -723,7 +723,7 @@ Feature: connector agent API
           "status": {
             "conditions": [
               {
-                "lastTransitionTime": "2018-01-01T00:00:00Z",
+                "last_transition_time": "2018-01-01T00:00:00Z",
                 "status": "True",
                 "type": "Ready"
               }

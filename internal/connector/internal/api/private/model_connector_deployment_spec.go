@@ -19,9 +19,6 @@ type ConnectorDeploymentSpec struct {
 	ConnectorTypeId          string                           `json:"connector_type_id,omitempty"`
 	NamespaceId              string                           `json:"namespace_id,omitempty"`
 	ConnectorSpec            map[string]interface{}           `json:"connector_spec,omitempty"`
-	// allow the connector to upgrade to a new operator
-	// Deprecated
-	DeprecatedAllowUpgrade bool `json:"allow_upgrade,omitempty"`
 	// an optional operator id that the connector should be run under.
 	OperatorId    string                 `json:"operator_id,omitempty"`
 	DesiredState  ConnectorDesiredState  `json:"desired_state,omitempty"`

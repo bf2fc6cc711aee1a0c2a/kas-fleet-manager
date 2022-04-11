@@ -435,7 +435,6 @@ components:
         last_transition_time: last_transition_time
         type: type
         message: message
-        lastTransitionTime: lastTransitionTime
         status: status
       properties:
         type:
@@ -445,9 +444,6 @@ components:
         message:
           type: string
         status:
-          type: string
-        lastTransitionTime:
-          deprecated: true
           type: string
         last_transition_time:
           type: string
@@ -489,10 +485,6 @@ components:
           type: string
         connector_spec:
           type: object
-        allow_upgrade:
-          deprecated: true
-          description: allow the connector to upgrade to a new operator
-          type: boolean
         operator_id:
           description: an optional operator id that the connector should be run under.
           type: string
@@ -518,25 +510,19 @@ components:
           last_transition_time: last_transition_time
           type: type
           message: message
-          lastTransitionTime: lastTransitionTime
           status: status
         - reason: reason
           last_transition_time: last_transition_time
           type: type
           message: message
-          lastTransitionTime: lastTransitionTime
           status: status
         resource_version: 0
-        available_upgrades: available_upgrades
       properties:
         phase:
           $ref: '#/components/schemas/ConnectorState'
         resource_version:
           format: int64
           type: integer
-        available_upgrades:
-          deprecated: true
-          type: string
         operators:
           $ref: '#/components/schemas/ConnectorDeploymentStatus_operators'
         conditions:
@@ -579,13 +565,11 @@ components:
           last_transition_time: last_transition_time
           type: type
           message: message
-          lastTransitionTime: lastTransitionTime
           status: status
         - reason: reason
           last_transition_time: last_transition_time
           type: type
           message: message
-          lastTransitionTime: lastTransitionTime
           status: status
         version: version
       properties:
@@ -629,13 +613,11 @@ components:
           last_transition_time: last_transition_time
           type: type
           message: message
-          lastTransitionTime: lastTransitionTime
           status: status
         - reason: reason
           last_transition_time: last_transition_time
           type: type
           message: message
-          lastTransitionTime: lastTransitionTime
           status: status
         version: version
         namespaces:
@@ -646,13 +628,11 @@ components:
             last_transition_time: last_transition_time
             type: type
             message: message
-            lastTransitionTime: lastTransitionTime
             status: status
           - reason: reason
             last_transition_time: last_transition_time
             type: type
             message: message
-            lastTransitionTime: lastTransitionTime
             status: status
           version: version
         - connectors_deployed: 0
@@ -662,13 +642,11 @@ components:
             last_transition_time: last_transition_time
             type: type
             message: message
-            lastTransitionTime: lastTransitionTime
             status: status
           - reason: reason
             last_transition_time: last_transition_time
             type: type
             message: message
-            lastTransitionTime: lastTransitionTime
             status: status
           version: version
       properties:
