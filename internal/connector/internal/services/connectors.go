@@ -286,18 +286,17 @@ func selectConnectorWithConditions(dbConn *gorm.DB) *gorm.DB {
 func (k connectorsService) Update(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError {
 
 	// If the version is set, then lets verify that the version has not changed...
-	if resource.Version != 0 {
-		dbConn := k.connectionFactory.New()
-		dbConn = dbConn.Where("id = ? AND version = ?", resource.ID, resource.Version)
-		t := dbapi.Connector{}
-		if err := dbConn.First(&t).Error; err != nil {
-			return errors.BadRequest("resource version changed")
-		}
+	if resource.Version == 0 {
+		return errors.BadRequest("resource version is required")
 	}
 
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Model(resource).Updates(resource).Error; err != nil {
+	update := dbConn.Model(resource).Where("id = ? AND version = ?", resource.ID, resource.Version).Updates(resource)
+	if err := update.Error; err != nil {
 		return errors.GeneralError("failed to update: %s", err.Error())
+	}
+	if update.RowsAffected == 0 {
+		return errors.BadRequest("resource version changed")
 	}
 
 	// read it back.... to get the updated version...
