@@ -73,16 +73,28 @@ func (m *NamespaceManager) Reconcile() []error {
 		}
 	}
 
-	// delete "deleting" namespaces with no connectors
-	glog.V(5).Infof("Removing empty deleting namespaces...")
-	count, serrs := m.namespaceService.ReconcileDeletingNamespaces()
+	// reconcile unused "deleting" namespaces that never had connectors
+	glog.V(5).Infof("Reconciling unused deleting namespaces...")
+	count, serrs := m.namespaceService.ReconcileUnusedDeletingNamespaces()
 	for _, serr := range serrs {
 		errs = append(errs, serr)
 	}
 	if count == 0 {
-		glog.V(5).Infof("No empty deleting namespaces")
+		glog.V(5).Infof("No unused deleting namespaces")
 	} else {
-		glog.V(5).Infof("Removed %d empty deleting namespaces with %d errors", count, len(serrs))
+		glog.V(5).Infof("Removed %d unused deleting namespaces with %d errors", count, len(serrs))
+	}
+
+	// delete "deleted" namespaces with no connectors
+	glog.V(5).Infof("Removing empty deleted namespaces...")
+	count, serrs = m.namespaceService.ReconcileDeletedNamespaces()
+	for _, serr := range serrs {
+		errs = append(errs, serr)
+	}
+	if count == 0 {
+		glog.V(5).Infof("No empty deleted namespaces")
+	} else {
+		glog.V(5).Infof("Removed %d empty deleted namespaces with %d errors", count, len(serrs))
 	}
 
 	return errs
