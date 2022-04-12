@@ -50,6 +50,18 @@ type KeycloakRealmConfig struct {
 	APIEndpointURI   string `json:"api_endpoint_uri"`
 }
 
+func (kc *KeycloakConfig) SSOProviderRealm() *KeycloakRealmConfig {
+	provider := kc.SelectSSOProvider
+	switch provider {
+	case MAS_SSO:
+		return kc.KafkaRealm
+	case REDHAT_SSO:
+		return kc.RedhatSSORealm
+	default:
+		return kc.KafkaRealm
+	}
+}
+
 func (c *KeycloakRealmConfig) setDefaultURIs(baseURL string) {
 	c.BaseURL = baseURL
 	c.ValidIssuerURI = baseURL + "/auth/realms/" + c.Realm
