@@ -17,4 +17,5 @@ const (
 	CONNECTORNAMESPACESTATE_DISCONNECTED ConnectorNamespaceState = "disconnected"
 	CONNECTORNAMESPACESTATE_READY        ConnectorNamespaceState = "ready"
 	CONNECTORNAMESPACESTATE_DELETING     ConnectorNamespaceState = "deleting"
+	CONNECTORNAMESPACESTATE_DELETED      ConnectorNamespaceState = "deleted"
 )

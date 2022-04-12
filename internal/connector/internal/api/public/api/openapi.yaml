@@ -1890,6 +1890,7 @@ components:
       - disconnected
       - ready
       - deleting
+      - deleted
       type: string
     ConnectorNamespaceStatus:
       properties:

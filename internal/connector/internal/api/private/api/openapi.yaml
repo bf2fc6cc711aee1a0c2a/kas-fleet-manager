@@ -799,6 +799,7 @@ components:
       - disconnected
       - ready
       - deleting
+      - deleted
       type: string
     ServiceAccount:
       properties:
