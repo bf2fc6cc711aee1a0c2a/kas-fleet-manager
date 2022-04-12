@@ -69,6 +69,14 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 			wantErr:        false,
 			wantHttpStatus: http.StatusOK,
 		},
+		{
+			name: "returns 200 status if denyList is enabled and deny list is empty",
+			arg: &acl.AccessControlListConfig{
+				EnableDenyList: true,
+			},
+			wantErr:        false,
+			wantHttpStatus: http.StatusOK,
+		},
 	}
 
 	RegisterTestingT(t)

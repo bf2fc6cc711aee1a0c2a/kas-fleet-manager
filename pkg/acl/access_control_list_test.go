@@ -97,7 +97,7 @@ func Test_ReadFiles(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "should not return an error when deny list is enabled and config file path is valid",
+			name: "should not return an error when deny list is enabled and deny list config file path is valid",
 			args: args{
 				file:           "config/deny-list-configuration.yaml",
 				deniedUsers:    &DeniedUsers{},
@@ -106,7 +106,25 @@ func Test_ReadFiles(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "should return an error when deny list is enabled and config file path is invalid",
+			args: args{
+				file:           "invalid-path",
+				deniedUsers:    &DeniedUsers{},
+				enableDenyList: true,
+			},
+			wantErr: true,
+		},
+		{
 			name: "should not return an error when deny list is disabled",
+			args: args{
+				file:           "config/deny-list-configuration.yaml",
+				deniedUsers:    &DeniedUsers{},
+				enableDenyList: false,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should not return an error when deny list is disabled and deny list config file path is invalid",
 			args: args{
 				file:           "config/deny-list-configuration.yaml",
 				deniedUsers:    &DeniedUsers{},
@@ -123,6 +141,7 @@ func Test_ReadFiles(t *testing.T) {
 			aclConfig := NewAccessControlListConfig()
 			aclConfig.DenyList = *tt.args.deniedUsers
 			aclConfig.EnableDenyList = tt.args.enableDenyList
+			aclConfig.DenyListConfigFile = tt.args.file
 			err := aclConfig.ReadFiles()
 			Expect(err != nil).To(Equal(tt.wantErr))
 		})
