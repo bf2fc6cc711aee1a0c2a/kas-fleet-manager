@@ -50,7 +50,7 @@ type KeycloakRealmConfig struct {
 	APIEndpointURI   string `json:"api_endpoint_uri"`
 }
 
-func (kc *KeycloakConfig) GetSSOProviderRealm() *KeycloakRealmConfig {
+func (kc *KeycloakConfig) SSOProviderRealm() *KeycloakRealmConfig {
 	provider := kc.SelectSSOProvider
 	switch provider {
 	case MAS_SSO:
