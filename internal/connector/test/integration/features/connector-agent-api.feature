@@ -1085,7 +1085,6 @@ Feature: connector agent API
     And I DELETE path "/v1/admin/kafka_connectors/${connector_id}?force=true"
     And the response code should be 204
 
-
   Scenario: Bobby can stop and start and existing connector
     Given I am logged in as "Bobby"
 
@@ -1295,8 +1294,62 @@ Feature: connector agent API
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 404
 
-    #cleanup
+
+    #---------------------------------------------------------------------------------------------
+    # Validate cluster delete completes with empty namespace removed after agent ack
+    # --------------------------------------------------------------------------------------------
     Given I am logged in as "Bobby"
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204
     And the response should match ""
+
+    # validate namespace processing can handle namespace status update errors and removes deleting namespace
+    Given I am logged in as "Shard"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
+      """
+      {
+        "phase":"ready",
+        "version": "0.0.1",
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }],
+        "namespaces": [{
+          "id": "invalid_namespace_id",
+          "phase": "ready",
+          "version": "0.0.1",
+          "connectors_deployed": 0,
+          "conditions": [{
+            "type": "Ready",
+            "status": "True",
+            "lastTransitionTime": "2018-01-01T00:00:00Z"
+          }]
+        }],
+        "operators": [{
+          "id":"camelk",
+          "version": "1.0",
+          "namespace": "openshift-mcs-camelk-1.0",
+          "status": "ready"
+        }]
+      }
+      """
+    Then the response code should be 500
+    And the response should match json:
+    """
+    {
+      "code": "CONNECTOR-MGMT-9",
+      "href": "/api/connector_mgmt/v1/errors/9",
+      "id": "9",
+      "kind": "Error",
+      "operation_id": "${response.operation_id}",
+      "reason": "CONNECTOR-MGMT-9: Unable to update Connector namespace: CONNECTOR-MGMT-7: Connector namespace with id='invalid_namespace_id' not found"
+    }
+    """
+
+    # wait for cluster to be deleted
+    Given I am logged in as "Bobby"
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "404"
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
+    Then the response code should be 404

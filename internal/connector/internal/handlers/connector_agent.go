@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
@@ -37,17 +38,59 @@ func (h *ConnectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			convResource := presenters.ConvertConnectorClusterStatus(resource)
-			// TODO handle errors more gracefully
 			err := h.Service.UpdateConnectorClusterStatus(ctx, connectorClusterId, convResource)
 			if err == nil {
-				for _, namespaceStatus := range resource.Namespaces {
-					err = h.ConnectorNamespace.UpdateConnectorNamespaceStatus(ctx, namespaceStatus.Id,
-						presenters.ConvertConnectorNamespaceStatus(namespaceStatus))
-					if err != nil {
-						break
+
+				// get empty deleting cluster namespaces
+				var namespaceList dbapi.ConnectorNamespaceList
+				namespaceList, err = h.ConnectorNamespace.GetEmptyDeletingNamespaces(connectorClusterId)
+				if err == nil {
+
+					// convert namespace errors to a single error
+					var errorList []*errors.ServiceError
+
+					deletingNamespaces := make(map[string]*dbapi.ConnectorNamespace)
+					for _, ns := range namespaceList {
+						deletingNamespaces[ns.ID] = ns
+					}
+
+					for _, namespaceStatus := range resource.Namespaces {
+						// physical namespace hasn't been deleted yet
+						delete(deletingNamespaces, namespaceStatus.Id)
+
+						err := h.ConnectorNamespace.UpdateConnectorNamespaceStatus(ctx, namespaceStatus.Id,
+							presenters.ConvertConnectorNamespaceStatus(namespaceStatus))
+						if err != nil {
+							errorList = append(errorList, err)
+						}
+					}
+
+					// process deleted namespaces
+					if len(deletingNamespaces) > 0 {
+						for _, namespace := range deletingNamespaces {
+							// set namespace phase to deleted
+							namespace.Status.Phase = dbapi.ConnectorNamespacePhaseDeleted
+							if err := h.ConnectorNamespace.Update(ctx, namespace); err != nil {
+								errorList = append(errorList, err)
+							}
+						}
+
+						h.Bus.Notify("reconcile:connector_namespace")
+					}
+
+					// consolidate namespace update errors
+					if len(errorList) > 0 {
+						var msg []string
+						for _, e := range errorList {
+							msg = append(msg, e.Error())
+						}
+						reason := strings.Join(msg, ";")
+						reason = strings.Replace(reason, errors.ERROR_CODE_PREFIX, errors.CONNECTOR_MGMT_ERROR_CODE_PREFIX, -1)
+						err = errors.GeneralError(reason)
 					}
 				}
 			}
+
 			return nil, err
 		},
 	}
