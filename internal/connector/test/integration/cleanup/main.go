@@ -34,7 +34,7 @@ func main() {
 
 	var keycloakConfig *keycloak.KeycloakConfig
 	env.MustResolve(&keycloakConfig)
-	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.GetSSOProviderRealm())
+	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.SSOProviderRealm())
 	accessToken, _ := kcClient.GetToken()
 
 	if len(os.Args) > 1 {

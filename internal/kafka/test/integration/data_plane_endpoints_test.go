@@ -112,7 +112,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 	clusterId := "test-cluster-id"
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss": test.TestServices.KeycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
+			"iss": test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -148,7 +148,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss":                                test.TestServices.KeycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
+			"iss":                                test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
 			"kas-fleetshard-operator-cluster-id": "test-cluster-id",
 		}
 	}, nil)
@@ -181,7 +181,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss": test.TestServices.KeycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
+			"iss": test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -218,7 +218,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test.TestServices.KeycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -530,7 +530,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test.TestServices.KeycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -589,7 +589,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test.TestServices.KeycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -651,7 +651,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test.TestServices.KeycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -707,7 +707,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test.TestServices.KeycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -811,7 +811,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test.TestServices.KeycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -938,7 +938,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test.TestServices.KeycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -997,7 +997,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test.TestServices.KeycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -1056,7 +1056,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test.TestServices.KeycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},

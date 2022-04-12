@@ -136,7 +136,7 @@ func TestFederation_GetFederatedMetricsUsingMasSsoToken(t *testing.T) {
 	var keycloakConfig *keycloak.KeycloakConfig
 	h.Env.MustResolveAll(&keycloakConfig)
 	claims := jwt.MapClaims{
-		"iss":                keycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
+		"iss":                keycloakConfig.SSOProviderRealm().ValidIssuerURI,
 		"rh-org-id":          org.ExternalID(),
 		"rh-user-id":         masSsoSA.ID(),
 		"preferred_username": masSsoSA.Username(),
