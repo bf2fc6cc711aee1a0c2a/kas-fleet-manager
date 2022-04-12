@@ -249,7 +249,7 @@ func TestAuthFailure_usingMasSsoTokenOnKafkasGet(t *testing.T) {
 	var keycloakConfig *keycloak.KeycloakConfig
 	h.Env.MustResolveAll(&keycloakConfig)
 	claims := jwt.MapClaims{
-		"iss":                keycloakConfig.KafkaRealm.ValidIssuerURI,
+		"iss":                keycloakConfig.GetSSOProviderRealm().ValidIssuerURI,
 		"rh-org-id":          orgId,
 		"rh-user-id":         masSsoSA.ID(),
 		"preferred_username": masSsoSA.Username(),

@@ -143,7 +143,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		agentRouter.HandleFunc("/namespaces", s.ConnectorClusterHandler.GetAgentNamespaces).Methods(http.MethodGet)
 		agentRouter.HandleFunc("/namespaces/{namespace_id}", s.ConnectorClusterHandler.GetNamespace).Methods(http.MethodGet)
 		agentRouter.HandleFunc("/deployments/{deployment_id}/status", s.ConnectorClusterHandler.UpdateDeploymentStatus).Methods(http.MethodPut)
-		auth.UseOperatorAuthorisationMiddleware(agentRouter, s.KeycloakService.GetConfig().KafkaRealm.ValidIssuerURI, "connector_cluster_id", s.AuthAgentService)
+		auth.UseOperatorAuthorisationMiddleware(agentRouter, s.KeycloakService.GetConfig().GetSSOProviderRealm().ValidIssuerURI, "connector_cluster_id", s.AuthAgentService)
 	}
 
 	// This section adds APIs accessed by connector admins
