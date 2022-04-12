@@ -11,7 +11,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/golang/glog"
 
@@ -48,9 +47,10 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 	}
 
 	tests := []struct {
-		name string
-		arg  *acl.AccessControlListConfig
-		want *errors.ServiceError
+		name           string
+		arg            *acl.AccessControlListConfig
+		wantErr        bool
+		wantHttpStatus int
 	}{
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service",
@@ -58,12 +58,23 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 				EnableDenyList: true,
 				DenyList:       acl.DeniedUsers{"username"},
 			},
+			wantErr:        true,
+			wantHttpStatus: http.StatusForbidden,
+		},
+		{
+			name: "returns 200 status if denyList is disabled",
+			arg: &acl.AccessControlListConfig{
+				EnableDenyList: false,
+			},
+			wantErr:        false,
+			wantHttpStatus: http.StatusOK,
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 
 			req, err := http.NewRequest("GET", "/api/kafkas_mgmt/kafkas", nil)
 			if err != nil {
@@ -95,20 +106,21 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			Expect(rr.Code).To(Equal(tt.wantHttpStatus))
 
-			Expect(rr.Code).To(Equal(http.StatusForbidden))
-			Expect(rr.Header().Get("Content-Type")).To(Equal("application/json"))
-
-			var data map[string]string
-			err = json.Unmarshal(body, &data)
-			if err != nil {
-				t.Fatal(err)
+			if tt.wantErr {
+				Expect(rr.Header().Get("Content-Type")).To(Equal("application/json"))
+				var data map[string]string
+				err = json.Unmarshal(body, &data)
+				if err != nil {
+					t.Fatal(err)
+				}
+				Expect(data["kind"]).To(Equal("Error"))
+				Expect(data["reason"]).To(Equal("User 'username' is not authorized to access the service."))
+				// verify that context about user being allowed as service account is set to false always
+				ctxAfterMiddleware := req.Context()
+				Expect(auth.GetFilterByOrganisationFromContext(ctxAfterMiddleware)).To(Equal(false))
 			}
-			Expect(data["kind"]).To(Equal("Error"))
-			Expect(data["reason"]).To(Equal("User 'username' is not authorized to access the service."))
-			// verify that context about user being allowed as service account is set to false always
-			ctxAfterMiddleware := req.Context()
-			Expect(auth.GetFilterByOrganisationFromContext(ctxAfterMiddleware)).To(Equal(false))
 		})
 	}
 }

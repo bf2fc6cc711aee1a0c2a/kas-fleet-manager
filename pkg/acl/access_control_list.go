@@ -35,10 +35,10 @@ func (c *AccessControlListConfig) AddFlags(fs *pflag.FlagSet) {
 
 func (c *AccessControlListConfig) ReadFiles() (err error) {
 	if c.EnableDenyList {
-		err = readDenyListConfigFile(c.DenyListConfigFile, &c.DenyList)
+		return readDenyListConfigFile(c.DenyListConfigFile, &c.DenyList)
 	}
 
-	return err
+	return nil
 }
 
 // Read the contents of file into the deny list config
