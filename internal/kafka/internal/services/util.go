@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 
 	"k8s.io/apimachinery/pkg/util/validation"
 )
@@ -69,6 +70,10 @@ func BuildKeycloakClientNameIdentifier(kafkaRequestID string) string {
 	return fmt.Sprintf("%s-%s", "kafka", strings.ToLower(kafkaRequestID))
 }
 
-func BuildCustomClaimCheck(kafkaRequest *dbapi.KafkaRequest) string {
-	return fmt.Sprintf("@.rh-org-id == '%s'|| @.org_id == '%s'", kafkaRequest.OrganisationId, kafkaRequest.OrganisationId)
+func BuildCustomClaimCheck(kafkaRequest *dbapi.KafkaRequest, ssoconfigProvider keycloak.SSOProvider) string {
+	if ssoconfigProvider == keycloak.REDHAT_SSO {
+		return fmt.Sprintf("@.rh-org-id == '%s'|| @.org_id == '%s' || @.clientId == '%s'", kafkaRequest.OrganisationId, kafkaRequest.OrganisationId, kafkaRequest.CanaryServiceAccountClientID)
+	} else {
+		return fmt.Sprintf("@.rh-org-id == '%s'|| @.org_id == '%s'", kafkaRequest.OrganisationId, kafkaRequest.OrganisationId)
+	}
 }

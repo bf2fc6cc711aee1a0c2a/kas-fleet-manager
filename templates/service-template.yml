@@ -499,6 +499,11 @@ parameters:
   description: A token issuer url used to validate if JWT token used are coming from the given issuer
   value: "https://sso.redhat.com/auth/realms/redhat-external"
 
+- name: SSO_SPECIAL_MANAGEMENT_ORG_ID
+  displayName: Speical Management Organization ID
+  description: Special Management Organization ID used for creating internal Service accounts
+  value: "13640203"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -839,6 +844,7 @@ objects:
             - --mas-sso-client-secret-file=/secrets/service/keycloak-service.clientSecret
             - --mas-sso-base-url=${MAS_SSO_BASE_URL}
             - --mas-sso-realm=${MAS_SSO_REALM}
+            - --sso-special-management-org-id=${SSO_SPECIAL_MANAGEMENT_ORG_ID}
             - --user-name-claim=${USER_NAME_CLAIM}
             - --fall-back-user-name-claim=${FALL_BACK_USER_NAME_CLAIM}
             - --max-allowed-service-accounts=${MAX_ALLOWED_SERVICE_ACCOUNTS}

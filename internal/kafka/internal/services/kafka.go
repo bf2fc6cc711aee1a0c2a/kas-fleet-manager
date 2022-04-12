@@ -3,10 +3,11 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"strings"
 	"sync"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -951,7 +952,7 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 			ValidIssuerEndpointURI: keycloakRealmConfig.ValidIssuerURI,
 			UserNameClaim:          keycloakConfig.UserNameClaim,
 			FallBackUserNameClaim:  keycloakConfig.FallBackUserNameClaim,
-			CustomClaimCheck:       BuildCustomClaimCheck(kafkaRequest),
+			CustomClaimCheck:       BuildCustomClaimCheck(kafkaRequest, keycloakConfig.SelectSSOProvider),
 			MaximumSessionLifetime: 0,
 		}
 

@@ -57,6 +57,7 @@ cmd/kas-fleet-manager/kas-fleet-manager
 /secrets/rhsso-logs.*
 /secrets/rhsso-metrics.*
 /secrets/redhatsso-service.*
+/secrets/image-pull.dockerconfigjson
 
 # cluster details (used for testing)
 /internal/kafka/test/integration/test_cluster.json
