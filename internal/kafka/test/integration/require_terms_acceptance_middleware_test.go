@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 
@@ -123,4 +124,20 @@ func TestTermsRequired_ListKafkaTermsRequired(t *testing.T) {
 
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(env.helper, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	Expect(clusterID).ToNot(Equal(""))
+
+	db := test.TestServices.DBFactory.New()
+	clusterDetails := &api.Cluster{
+		ClusterID: clusterID,
+	}
+	err = db.Unscoped().Where(clusterDetails).First(clusterDetails).Error
+	Expect(err).NotTo(HaveOccurred(), "failed to find kafka request")
+	if err := getAndDeleteServiceAccounts(clusterDetails.ClientID, env.helper.Env); err != nil{
+		t.Fatalf("Failed to delete service account with client id: %v", clusterDetails.ClientID)
+	}
 }
