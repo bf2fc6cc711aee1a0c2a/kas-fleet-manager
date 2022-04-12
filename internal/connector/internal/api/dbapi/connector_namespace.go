@@ -14,12 +14,15 @@ const (
 	ConnectorNamespacePhaseReady ConnectorNamespacePhaseEnum = "ready"
 	// ConnectorNamespacePhaseDeleting- Namespace status when in the process of being deleted
 	ConnectorNamespacePhaseDeleting ConnectorNamespacePhaseEnum = "deleting"
+	// ConnectorNamespacePhaseDeleted- Namespace status after agent acknowledges namespace delete
+	ConnectorNamespacePhaseDeleted ConnectorNamespacePhaseEnum = "deleted"
 )
 
 var AllConnectorNamespaceStatus = []ConnectorNamespacePhaseEnum{
 	ConnectorNamespacePhaseDisconnected,
 	ConnectorNamespacePhaseReady,
 	ConnectorNamespacePhaseDeleting,
+	ConnectorNamespacePhaseDeleted,
 }
 
 type ConnectorTenantUser struct {

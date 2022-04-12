@@ -1270,6 +1270,7 @@ components:
       - disconnected
       - ready
       - deleting
+      - deleted
       type: string
     ConnectorNamespaceEvalRequest:
       allOf:
