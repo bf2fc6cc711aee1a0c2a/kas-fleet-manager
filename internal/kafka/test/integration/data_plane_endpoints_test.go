@@ -931,11 +931,11 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 	clusterDetails := &api.Cluster{
 		ClusterID: testServer.ClusterID,
 	}
-	if err := db.Unscoped().Where(clusterDetails).First(clusterDetails).Error; err != nil {
-		t.Error("failed to find kafka request")
+	err = db.Unscoped().Where(clusterDetails).First(clusterDetails).Error
+	Expect(err).NotTo(HaveOccurred(), "failed to find kafka request")
+	if err := getAndDeleteServiceAccounts(clusterDetails.ClientID, testServer.Helper.Env); err != nil{
+		t.Fatalf("Failed to delete service account with client id: %v", clusterDetails.ClientID)
 	}
-
-	getAndDeleteServiceAccounts(clusterDetails.ClientID, testServer.Helper.Env)
 }
 
 func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {

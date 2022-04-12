@@ -129,17 +129,15 @@ func TestTermsRequired_ListKafkaTermsRequired(t *testing.T) {
 	if getClusterErr != nil {
 		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
+	Expect(clusterID).ToNot(Equal(""))
 
 	db := test.TestServices.DBFactory.New()
 	clusterDetails := &api.Cluster{
 		ClusterID: clusterID,
 	}
-	if err := db.Unscoped().Where(clusterDetails).First(clusterDetails).Error; err != nil {
-		t.Error("failed to find kafka request")
+	err = db.Unscoped().Where(clusterDetails).First(clusterDetails).Error
+	Expect(err).NotTo(HaveOccurred(), "failed to find kafka request")
+	if err := getAndDeleteServiceAccounts(clusterDetails.ClientID, env.helper.Env); err != nil{
+		t.Fatalf("Failed to delete service account with client id: %v", clusterDetails.ClientID)
 	}
-
-	getAndDeleteServiceAccounts(clusterDetails.ClientID, env.helper.Env)
 }
