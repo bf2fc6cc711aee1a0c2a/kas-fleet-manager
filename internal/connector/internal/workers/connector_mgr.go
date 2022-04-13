@@ -122,6 +122,10 @@ func (k *ConnectorManager) Reconcile() []error {
 	k.doReconcile(errs, "unassigned", k.reconcileUnassigned,
 		"desired_state = ? AND phase = ?", dbapi.ConnectorUnassigned, dbapi.ConnectorStatusPhaseDeleted)
 
+	// reconcile deleting connectors with no deployments
+	k.doReconcile(errs, "deleting", k.reconcileDeleting,
+		"desired_state = ? AND phase = ?", dbapi.ConnectorDeleted, string(dbapi.ConnectorStatusPhaseDeleting))
+
 	// reconcile deleted connectors with no deployments
 	k.doReconcile(errs, "deleted", k.reconcileDeleted,
 		"desired_state = ? AND phase IN ?", dbapi.ConnectorDeleted,
@@ -214,6 +218,21 @@ func (k *ConnectorManager) reconcileUnassigned(ctx context.Context, connector *d
 		return errors.Wrapf(err, "failed to update phase to assigning for connector %s", connector.ID)
 	}
 
+	return nil
+}
+
+func (k *ConnectorManager) reconcileDeleting(ctx context.Context, connector *dbapi.Connector) error {
+	_, err := k.connectorClusterService.GetDeploymentByConnectorId(ctx, connector.ID)
+	if err != nil {
+		if err.Is404() {
+			connector.Status.Phase = dbapi.ConnectorStatusPhaseDeleted
+			if err = k.connectorService.SaveStatus(ctx, connector.Status); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
 	return nil
 }
 

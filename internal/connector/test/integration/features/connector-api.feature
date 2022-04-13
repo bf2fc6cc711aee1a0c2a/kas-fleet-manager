@@ -5,11 +5,12 @@ Feature: create a connector
 
   Background:
     Given the path prefix is "/api/connector_mgmt"
-    # Greg and Coworker Sally will end up in the same org
+    # Gary and Coworker Sally will end up in the same org
     Given a user named "Gary" in organization "13640203"
     Given a user named "Coworker Sally" in organization "13640203"
     Given a user named "Evil Bob"
     Given a user named "Jim"
+    Given a user named "Tommy"
 
   Scenario: check that the connector types have been reconciled
     Given I am logged in as "Gary"
@@ -20,7 +21,7 @@ Feature: create a connector
       | count |
       | 0     |
 
-  Scenario: Greg lists all connector types
+  Scenario: Gary lists all connector types
     Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types"
     Then the response code should be 200
@@ -456,7 +457,7 @@ Feature: create a connector
       }
       """
 
-  Scenario: Greg searches for sink connector types
+  Scenario: Gary searches for sink connector types
     Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types?search=label=sink"
     Then the response code should be 200
@@ -652,7 +653,7 @@ Feature: create a connector
       }
       """
 
-  Scenario: Greg searches for connector types on beta channel, ordered by version
+  Scenario: Gary searches for connector types on beta channel, ordered by version
     Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types?search=channel=beta&orderBy=version"
     Then the response code should be 200
@@ -908,7 +909,7 @@ Feature: create a connector
       }
       """
 
-  Scenario: Greg uses paging to list connector types
+  Scenario: Gary uses paging to list connector types
     Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types?orderBy=name%20asc&page=2&size=1"
     Then the response code should be 200
@@ -1104,7 +1105,7 @@ Feature: create a connector
       }
       """
 
-  Scenario: Greg tries to create a connector with an invalid configuration spec
+  Scenario: Gary tries to create a connector with an invalid configuration spec
     Given I am logged in as "Gary"
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
@@ -1141,7 +1142,7 @@ Feature: create a connector
       }
       """
 
-  Scenario: Greg tries to create a connector with an invalid namespace_id
+  Scenario: Gary tries to create a connector with an invalid namespace_id
     Given I am logged in as "Gary"
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
@@ -1180,7 +1181,7 @@ Feature: create a connector
       }
       """
 
-  Scenario: Greg creates lists and deletes a connector verifying that Evil Bob can't access Gregs Connectors
+  Scenario: Gary creates lists and deletes a connector verifying that Evil Bob can't access Garys Connectors
   but Coworker Sally can.
     Given I am logged in as "Gary"
     When I POST path "/v1/kafka_connectors?async=true" with json body:
@@ -1353,7 +1354,7 @@ Feature: create a connector
     And UNLOCK---------------------------------------------------------------
 
 
-    # Before deleting the connector, lets make sure the access control work as expected for other users beside Greg
+    # Before deleting the connector, lets make sure the access control work as expected for other users beside Gary
     Given I am logged in as "Coworker Sally"
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
@@ -1379,7 +1380,7 @@ Feature: create a connector
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 404
 
-  Scenario: Greg can discover the API endpoints
+  Scenario: Gary can discover the API endpoints
     Given I am logged in as "Gary"
     When I GET path ""
     Then the response code should be 200
@@ -1485,7 +1486,7 @@ Feature: create a connector
       }
       """
 
-  Scenario: Greg can inspect errors codes
+  Scenario: Gary can inspect errors codes
     Given I am logged in as "Gary"
     When I GET path "/v1/errors"
     Then the response code should be 200
@@ -1920,3 +1921,42 @@ Feature: create a connector
       # we can't tell which connector fields are secrets, so we can't clean those up.
       And the vault delete counter should be 1
     And UNLOCK--------------------------------------------------------------
+
+  Scenario: Tommy can delete a connector that was not deployed, but is waiting to be deleted
+    Given I am logged in as "Tommy"
+    When I POST path "/v1/kafka_connectors?async=true" with json body:
+      """
+      {
+        "kind": "Connector",
+        "name": "Tommy's deleting connector",
+        "connector_type_id": "aws-sqs-source-v1alpha1",
+        "kafka": {
+          "id":"mykafka",
+          "url": "kafka.hostname"
+        },
+        "schema_registry": {
+          "id":"myregistry",
+          "url": "registry.hostname"
+        },
+        "service_account": {
+          "client_secret": "test",
+          "client_id": "myclient"
+        },
+        "connector": {
+            "aws_queue_name_or_arn": "test",
+            "aws_access_key": "test",
+            "aws_secret_key": "test",
+            "aws_region": "east",
+            "kafka_topic": "test"
+        }
+      }
+      """
+    Then the response code should be 202
+    And the ".status.state" selection from the response should match "assigning"
+    And I store the ".id" selection from the response as ${connector_id}
+
+    Given I run SQL "update connector_statuses SET phase = 'deleting' WHERE id = '${connector_id}'" expect 1 row to be affected.
+    And I run SQL "update connectors SET desired_state = 'deleted' WHERE id = '${connector_id}'" expect 1 row to be affected.
+    When I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
+    Then I GET path "/v1/kafka_connectors/${connector_id}"
+    And the response code should be 404
