@@ -1,8 +1,9 @@
 package sentry
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/spf13/pflag"
 )
@@ -39,5 +40,8 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *Config) ReadFiles() error {
+	if !c.Enabled {
+		return nil
+	}
 	return shared.ReadFileValueString(c.KeyFile, &c.Key)
 }
