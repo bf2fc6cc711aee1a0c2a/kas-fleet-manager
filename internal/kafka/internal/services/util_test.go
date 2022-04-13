@@ -6,8 +6,10 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/google/uuid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -22,6 +24,46 @@ const (
 	mockKafkaRequestID     = "9bsv0s3fd06g02i2be9g" // sample kafka request ID
 	mockIDWithInvalidChars = "vp&xG^nl9MStC@SI*#c$6V^TKq0"
 )
+
+func buildKafkaDBApiRequest() dbapi.KafkaRequest {
+	route := []byte("unitesthost.com/v1/test-route")
+	return dbapi.KafkaRequest{
+		Region:                           "us-east-1",
+		ClusterID:                        uuid.NewString(),
+		CloudProvider:                    "AWS",
+		MultiAZ:                          false,
+		Name:                             "test-cluster",
+		Status:                           "Creating",
+		SsoClientID:                      uuid.NewString(),
+		SsoClientSecret:                  uuid.NewString(),
+		CanaryServiceAccountClientID:     uuid.NewString(),
+		CanaryServiceAccountClientSecret: uuid.NewString(),
+		SubscriptionId:                   "test",
+		Owner:                            "unit=test-user",
+		OwnerAccountId:                   uuid.NewString(),
+		BootstrapServerHost:              "unittesthost.com",
+		OrganisationId:                   "unit-test-org",
+		FailedReason:                     "",
+		PlacementId:                      "unit-test",
+		DesiredKafkaVersion:              "3",
+		ActualKafkaVersion:               "3",
+		DesiredStrimziVersion:            "0.27",
+		ActualStrimziVersion:             "0.27",
+		DesiredKafkaIBPVersion:           "v1",
+		ActualKafkaIBPVersion:            "v1",
+		KafkaUpgrading:                   false,
+		StrimziUpgrading:                 false,
+		KafkaIBPUpgrading:                false,
+		KafkaStorageSize:                 "5gi",
+		InstanceType:                     "developer",
+		QuotaType:                        "ams",
+		Routes:                           route,
+		RoutesCreated:                    true,
+		Namespace:                        "unit-test",
+		ReauthenticationEnabled:          true,
+		RoutesCreationId:                 uuid.NewString(),
+	}
+}
 
 func Test_HandleGetError(t *testing.T) {
 	cause := pkgErr.WithStack(gorm.ErrInvalidData)
@@ -176,11 +218,11 @@ func Test_TruncateString(t *testing.T) {
 			want: exampleString,
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := TruncateString(tt.args.str, tt.args.num); got != tt.want {
-				t.Errorf("TruncateString() = %v, want %v", got, tt.want)
-			}
+			got := TruncateString(tt.args.str, tt.args.num)
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -216,12 +258,12 @@ func Test_buildTruncateKafkaIdentifier(t *testing.T) {
 			want: fmt.Sprintf("%s-%s", mockLongKafkaName[0:truncatedNameLen], strings.ToLower(mockKafkaRequestID)),
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.args.kafkaRequest.ID = mockKafkaRequestID
-			if got := buildTruncateKafkaIdentifier(tt.args.kafkaRequest); got != tt.want {
-				t.Errorf("buildTruncateKafkaIdentifier() = %v, want %v", got, tt.want)
-			}
+			got := buildTruncateKafkaIdentifier(tt.args.kafkaRequest)
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -250,11 +292,11 @@ func Test_MaskProceedingandTrailingDash(t *testing.T) {
 			want: "example-name",
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := MaskProceedingandTrailingDash(tt.args.name); got != tt.want {
-				t.Errorf("MaskProceedingandTrailingDash() = %v, want %v", got, tt.want)
-			}
+			got := MaskProceedingandTrailingDash(tt.args.name)
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -291,6 +333,7 @@ func Test_replaceHostSpecialChar(t *testing.T) {
 			wantErr: true,
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := replaceHostSpecialChar(tt.args.name)
@@ -298,9 +341,7 @@ func Test_replaceHostSpecialChar(t *testing.T) {
 				t.Errorf("replaceHostSpecialChar() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
-				t.Errorf("replaceHostSpecialChar() = %v, want %v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -344,12 +385,48 @@ func Test_contains(t *testing.T) {
 			want: true,
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := shared.Contains(tt.args.slice, tt.args.s)
-			if got != tt.want {
-				t.Errorf("contains() = %v, want %v", got, tt.want)
-			}
+			Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_BuildCustomClaimCheck(t *testing.T) {
+	type args struct {
+		kafkaRequest      *dbapi.KafkaRequest
+		ssoconfigProvider keycloak.SSOProvider
+	}
+	kafkaRequest := buildKafkaDBApiRequest()
+	tests := []struct {
+		name                string
+		args                args
+		expectedCustomClaim string
+	}{
+		{
+			name: "Customclaimcheck without canary service account client ID - uses MAS SSO",
+			args: args{
+				kafkaRequest:      &kafkaRequest,
+				ssoconfigProvider: keycloak.MAS_SSO,
+			},
+			expectedCustomClaim: fmt.Sprintf("@.rh-org-id == '%s'|| @.org_id == '%s'", kafkaRequest.OrganisationId, kafkaRequest.OrganisationId),
+		},
+		{
+			name: "Customclaimcheck with canary service account client ID - uses REDHAT SSO",
+			args: args{
+				kafkaRequest:      &kafkaRequest,
+				ssoconfigProvider: keycloak.REDHAT_SSO,
+			},
+			expectedCustomClaim: fmt.Sprintf("@.rh-org-id == '%s'|| @.org_id == '%s' || @.clientId == '%s'", kafkaRequest.OrganisationId, kafkaRequest.OrganisationId, kafkaRequest.CanaryServiceAccountClientID),
+		},
+	}
+	RegisterTestingT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			receivedBuiltCustomClaimCheck := BuildCustomClaimCheck(tt.args.kafkaRequest, tt.args.ssoconfigProvider)
+			Expect(receivedBuiltCustomClaimCheck).To(Equal(tt.expectedCustomClaim))
 		})
 	}
 }

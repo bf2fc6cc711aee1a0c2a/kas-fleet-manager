@@ -718,6 +718,7 @@ deploy/service: MAS_SSO_ENABLE_AUTH ?= "true"
 deploy/service: MAS_SSO_INSECURE ?= "false"
 deploy/service: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy/service: MAS_SSO_REALM ?= "rhoas"
+deploy/service: SSO_SPECIAL_MANAGEMENT_ORG_ID ?= "13640203"
 deploy/service: USER_NAME_CLAIM ?= "clientId"
 deploy/service: FALL_BACK_USER_NAME_CLAIM ?= "preferred_username"
 deploy/service: MAX_ALLOWED_SERVICE_ACCOUNTS ?= "2"
@@ -769,6 +770,7 @@ deploy/service: deploy/envoy deploy/route
 		-p MAS_SSO_ENABLE_AUTH="${MAS_SSO_ENABLE_AUTH}" \
 		-p MAS_SSO_BASE_URL="$(MAS_SSO_BASE_URL)" \
 		-p MAS_SSO_REALM="$(MAS_SSO_REALM)" \
+		-p SSO_SPECIAL_MANAGEMENT_ORG_ID="${SSO_SPECIAL_MANAGEMENT_ORG_ID}" \
 		-p USER_NAME_CLAIM="$(USER_NAME_CLAIM)" \
 		-p FALL_BACK_USER_NAME_CLAIM="$(FALL_BACK_USER_NAME_CLAIM)" \
 		-p MAX_ALLOWED_SERVICE_ACCOUNTS="${MAX_ALLOWED_SERVICE_ACCOUNTS}" \

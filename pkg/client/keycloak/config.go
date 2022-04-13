@@ -12,8 +12,9 @@ import (
 type SSOProvider string
 
 const (
-	MAS_SSO    SSOProvider = "mas_sso"
-	REDHAT_SSO SSOProvider = "redhat_sso"
+	MAS_SSO                       SSOProvider = "mas_sso"
+	REDHAT_SSO                    SSOProvider = "redhat_sso"
+	SSO_SPEICAL_MGMT_ORG_ID_STAGE string      = "13640203"
 	//AUTH_SSO SSOProvider ="auth_sso"
 )
 
@@ -34,6 +35,7 @@ type KeycloakConfig struct {
 	MaxAllowedServiceAccounts   int                  `json:"max_allowed_service_accounts"`
 	MaxLimitForGetClients       int                  `json:"max_limit_for_get_clients"`
 	SelectSSOProvider           SSOProvider          `json:"select_sso_provider"`
+	SSOSpecialManagementOrgID   string               `json:"-"`
 }
 
 type KeycloakRealmConfig struct {
@@ -99,6 +101,7 @@ func NewKeycloakConfig() *KeycloakConfig {
 		MaxAllowedServiceAccounts:  50,
 		MaxLimitForGetClients:      100,
 		SelectSSOProvider:          MAS_SSO,
+		SSOSpecialManagementOrgID:  SSO_SPEICAL_MGMT_ORG_ID_STAGE,
 	}
 	return kc
 }
@@ -122,6 +125,7 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.RedhatSSORealm.ClientIDFile, "redhat-sso-client-id-file", kc.RedhatSSORealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm")
 	fs.StringVar(&kc.RedhatSSORealm.ClientSecretFile, "redhat-sso-client-secret-file", kc.RedhatSSORealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
 	fs.StringVar(&kc.SsoBaseUrl, "redhat-sso-base-url", kc.SsoBaseUrl, "The base URL of the mas-sso, integration by default")
+	fs.StringVar(&kc.SSOSpecialManagementOrgID, "sso-special-management-org-id", SSO_SPEICAL_MGMT_ORG_ID_STAGE, "The Special Management Organization ID used for creating internal Service accounts")
 }
 
 func (kc *KeycloakConfig) ReadFiles() error {
