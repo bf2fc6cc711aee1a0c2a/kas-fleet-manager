@@ -20,7 +20,18 @@ func TestAuditLogMiddleware_AuditLog(t *testing.T) {
 		wantCode int
 	}{
 		{
-			name: "should success",
+			name: "should pass for tenant Username",
+			token: &jwt.Token{Claims: jwt.MapClaims{
+				"username": "test user",
+			}},
+			errCode: errors.ErrorBadRequest,
+			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				shared.WriteJSONResponse(writer, http.StatusOK, "")
+			}),
+			wantCode: http.StatusOK,
+		},
+		{
+			name: "should pass for ssoUsernameKey",
 			token: &jwt.Token{Claims: jwt.MapClaims{
 				"preferred_username": "test user",
 			}},

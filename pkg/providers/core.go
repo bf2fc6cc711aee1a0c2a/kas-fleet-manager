@@ -2,6 +2,7 @@ package providers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
@@ -39,6 +40,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(quota_management.NewQuotaManagementListConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(server.NewMetricsConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(workers.NewReconcilerConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(auth.NewContextConfig, di.As(new(environments.ConfigModule))),
 
 		// Add common CLI sub commands
 		di.Provide(serve.NewServeCommand),
