@@ -13,6 +13,7 @@ const (
 var ValidKafkaInstanceTypes = []string{
 	DEVELOPER.String(),
 	STANDARD.String(),
+	EVAL.String(),
 }
 
 func (t KafkaInstanceType) String() string {
