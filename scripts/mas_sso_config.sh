@@ -11,10 +11,13 @@ PASS=admin
 FLEET_OPERATOR_ROLE=kas_fleetshard_operator
 CONNECTOR_OPERATOR_ROLE=connector_fleetshard_operator
 
+# wait for keycloak container to be up or timeout after 2 minutes
+ERR_MESSAGE="Keycloak server not running at localhost:8180. No realm configuration will be applied"
+timeout 120 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8180/auth/realms/master)" != "200" ]]; do echo "Waiting for keycloak server at localhost:8180"; sleep 10; done' || echo $ERR_MESSAGE
+
 RESULT=`curl -sk --data "grant_type=password&client_id=$CLIENT_ID&username=$USERNAME&password=$PASS" $KEYCLOAK_URL$TOKEN_PATH`
 TOKEN=$(jq -r '.access_token' <<< $RESULT)
 echo $TOKEN
-
 
 CREATE_REALM_RHOAS=`curl -sk --data-raw '{"enabled":true,"id":"rhoas","realm":"rhoas"}' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms`
 echo $CREATE_REALM_RHOAS
@@ -31,7 +34,6 @@ echo "Realm role fleet"
 R=`curl -sk --data-raw '{"name": "'${CONNECTOR_OPERATOR_ROLE}'"}' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" $KEYCLOAK_URL/auth/admin/realms/rhoas/roles`
 echo $R
 echo "Realm role connector fleet"
-
 
 CREATE=`curl -sk --data-raw '{
    "authorizationServicesEnabled": false,
