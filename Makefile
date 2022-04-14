@@ -309,13 +309,15 @@ test: gotestsum
 		$(shell go list ./... | grep -v /test)
 
 # filter out mocked, generated, and other files which do not need to be tested from the coverage results
-	cat cover.out | grep -v "_moq.go" | \
-	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/main.go" | \
-	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/" | \
-	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/migrations/" | \
-	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/" | \
-	grep -v "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/metrics/providers.go"  \
-	> coverage.out
+	grep -v -e "_moq.go" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/main.go" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/migrations/" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/"  \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/metrics/providers.go" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/error.go" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/metadata.go" \
+	cover.out > coverage.out
 .PHONY: test
 
 test/output/coverage/report:
