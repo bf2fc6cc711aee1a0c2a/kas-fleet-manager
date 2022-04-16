@@ -28,6 +28,7 @@ type KafkaConfig struct {
 	KafkaDomainName                string              `json:"kafka_domain_name"`
 	KafkaCapacity                  KafkaCapacityConfig `yaml:"kafka_capacity_config"`
 	KafkaCapacityConfigFile        string              `yaml:"kafka_capacity_config_file"`
+	BrowserUrl                     string              `json:"browser_url"`
 
 	KafkaLifespan          *KafkaLifespanConfig               `json:"kafka_lifespan"`
 	Quota                  *KafkaQuotaConfig                  `json:"kafka_quota"`
