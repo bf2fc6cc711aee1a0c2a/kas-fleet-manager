@@ -368,10 +368,10 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 
 		list, _ := test.TestServices.ClusterService.FindAllClusters(clusterCriteria)
 		for _, clusters := range list {
-			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil{
+			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil {
 				t.Fatalf("Failed to delete service account with client id: %v", clusters.ClientID)
 			}
-			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil{
+			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil {
 				t.Fatalf("Failed to delete service account with cluster id: %v", clusters.ID)
 			}
 		}
@@ -690,10 +690,10 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 
 		list, _ := test.TestServices.ClusterService.FindAllClusters(clusterCriteria)
 		for _, clusters := range list {
-			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil{
+			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil {
 				t.Fatalf("Failed to delete service account with client id: %v", clusters.ClientID)
 			}
-			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil{
+			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil {
 				t.Fatalf("Failed to delete service account with cluster id: %v", clusters.ID)
 			}
 		}
@@ -2005,7 +2005,7 @@ func TestKafka_RemovingExpiredKafkas_WithStandardInstances(t *testing.T) {
 	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
 }
 
-func getAndDeleteServiceAccounts(clientID string, env *environments.Env) error{
+func getAndDeleteServiceAccounts(clientID string, env *environments.Env) error {
 	var keycloakConfig *keycloak.KeycloakConfig
 	env.MustResolve(&keycloakConfig)
 	defer env.Cleanup()
@@ -2019,11 +2019,12 @@ func getAndDeleteServiceAccounts(clientID string, env *environments.Env) error{
 	}
 	if client != nil {
 		err = kcClientKafkaSre.DeleteClient(*client.ID, accessTokenKafkaSre)
-	}else {
+	} else {
 		kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.KafkaRealm)
 		accessToken, _ := kcClient.GetToken()
-		client, _ := kcClient.GetClient(clientID, accessToken)
-		err = kcClient.DeleteClient(*client.ID, accessToken)
+		if client, _ := kcClient.GetClient(clientID, accessToken); client != nil {
+			err = kcClient.DeleteClient(*client.ID, accessToken)
+		}
 	}
 	return err
 }

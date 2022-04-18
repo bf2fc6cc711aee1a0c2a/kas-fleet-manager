@@ -137,7 +137,7 @@ func TestTermsRequired_ListKafkaTermsRequired(t *testing.T) {
 	}
 	err = db.Unscoped().Where(clusterDetails).First(clusterDetails).Error
 	Expect(err).NotTo(HaveOccurred(), "failed to find kafka request")
-	if err := getAndDeleteServiceAccounts(clusterDetails.ClientID, env.helper.Env); err != nil{
+	if err := getAndDeleteServiceAccounts(clusterDetails.ClientID, env.helper.Env); err != nil {
 		t.Fatalf("Failed to delete service account with client id: %v", clusterDetails.ClientID)
 	}
 }
