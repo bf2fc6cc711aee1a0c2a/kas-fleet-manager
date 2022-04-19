@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
+	"regexp"
 	"strings"
 )
 
@@ -37,6 +38,7 @@ func MinLen(min int) ValidateOption {
 		return nil
 	}
 }
+
 func MaxLen(min int) ValidateOption {
 	return func(field string, value *string) *errors.ServiceError {
 		if value != nil && len(*value) > min {
@@ -53,5 +55,17 @@ func IsOneOf(options ...string) ValidateOption {
 			return nil
 		}
 		return errors.BadRequest("%s is not valid. Must be one of: %s", field, strings.Join(options, ", "))
+	}
+}
+
+func Matches(regex *regexp.Regexp) ValidateOption {
+	return func(field string, value *string) *errors.ServiceError {
+		if value == nil || len(*value) == 0 {
+			return errors.MinimumFieldLengthNotReached("%s is not valid. Minimum length %d is required.", field, 1)
+		}
+		if value != nil && !regex.MatchString(*value) {
+			return errors.BadRequest("%s is not valid. Must match regex: %s", field, regex.String())
+		}
+		return nil
 	}
 }

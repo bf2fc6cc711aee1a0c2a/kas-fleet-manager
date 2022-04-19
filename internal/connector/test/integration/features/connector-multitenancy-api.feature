@@ -456,6 +456,57 @@ Feature: connector namespaces API
     And the response code should be 200
     And the ".total" selection from the response should match "1"
 
+    # check that namespace name is generated
+    Given I am logged in as "Dusty"
+    When I POST path "/v1/kafka_connector_namespaces/" with json body:
+    """
+    {
+      "cluster_id": "${connector_cluster_id}",
+      "kind": "organisation",
+      "annotations": [
+        {
+          "key": "connector_mgmt.bf2.org/profile",
+          "value": "default-profile"
+        }
+      ]
+    }
+    """
+    Then the response code should be 201
+
+    # cleanup namespace
+    Given I store the ".id" selection from the response as ${user_namespace_id}
+    When I DELETE path "/v1/kafka_connector_namespaces/${user_namespace_id}"
+    Then the response code should be 204
+
+    # Namespace name must be validated
+    Given I am logged in as "Dusty"
+    When I POST path "/v1/kafka_connector_namespaces/" with json body:
+    """
+    {
+      "name": "--eval-namespace",
+      "cluster_id": "${connector_cluster_id}",
+      "kind": "organisation",
+      "annotations": [
+        {
+          "key": "connector_mgmt.bf2.org/profile",
+          "value": "default-profile"
+        }
+      ]
+    }
+    """
+    Then the response code should be 400
+    And the response should match json:
+    """
+    {
+      "code": "CONNECTOR-MGMT-21",
+      "href": "/api/connector_mgmt/v1/errors/21",
+      "id": "21",
+      "kind":"Error",
+      "reason":"name is not valid. Must match regex: ^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$",
+      "operation_id":"${response.operation_id}"
+    }
+    """
+
     # cleanup cluster
     Given I am logged in as "Dusty"
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"

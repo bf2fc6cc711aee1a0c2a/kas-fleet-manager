@@ -244,6 +244,10 @@ func (h *ConnectorAdminHandler) CreateConnectorNamespace(writer http.ResponseWri
 	var resource private.ConnectorNamespaceWithTenantRequest
 	cfg := handlers.HandlerConfig{
 		MarshalInto: &resource,
+		Validate: []handlers.Validate{
+			handlers.Validation("name", &resource.Name, handlers.WithDefault(generateNamespaceName()), handlers.MaxLen(maxConnectorNamespaceNameLength), handlers.Matches(namespaceNamePattern)),
+			handlers.Validation("cluster_id", &resource.ClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
 			ctx := request.Context()
