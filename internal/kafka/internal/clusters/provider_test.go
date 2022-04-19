@@ -1,13 +1,13 @@
 package clusters
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	. "github.com/onsi/gomega"
 )
 
 func TestNewDefaultProviderFactory(t *testing.T) {
@@ -29,7 +29,7 @@ func TestNewDefaultProviderFactory(t *testing.T) {
 			want: &DefaultProviderFactory{
 				providerContainer: map[api.ClusterProviderType]Provider{
 					api.ClusterProviderStandalone: &StandaloneProvider{},
-					api.ClusterProviderOCM:        &OCMProvider{
+					api.ClusterProviderOCM: &OCMProvider{
 						clusterBuilder: &clusterBuilder{
 							idGenerator: ocm.NewIDGenerator("mk-"),
 						},
@@ -38,11 +38,11 @@ func TestNewDefaultProviderFactory(t *testing.T) {
 			},
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewDefaultProviderFactory(tt.args.ocmClient, tt.args.connectionFactory, tt.args.ocmConfig, tt.args.awsConfig, tt.args.dataplaneClusterConfig); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewDefaultProviderFactory() = %v, want %v", got, tt.want)
-			}
+			got := NewDefaultProviderFactory(tt.args.ocmClient, tt.args.connectionFactory, tt.args.ocmConfig, tt.args.awsConfig, tt.args.dataplaneClusterConfig)
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -98,22 +98,20 @@ func TestDefaultProviderFactory_GetProvider(t *testing.T) {
 			args: args{
 				providerType: "invalid-provider-type",
 			},
-			want:    nil,
 			wantErr: true,
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &DefaultProviderFactory{
 				providerContainer: tt.fields.providerContainer,
 			}
 			got, err := d.GetProvider(tt.args.providerType)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("DefaultProviderFactory.GetProvider() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DefaultProviderFactory.GetProvider() = %v, want %v", got, tt.want)
+			Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(got == nil).To(Equal(tt.want == nil))
+			if got != nil {
+				Expect(got).To(Equal(tt.want))
 			}
 		})
 	}

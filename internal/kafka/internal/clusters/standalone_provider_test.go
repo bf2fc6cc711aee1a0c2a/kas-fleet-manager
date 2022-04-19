@@ -1052,6 +1052,7 @@ func TestStandaloneProvider_InstallStrimzi(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
+		want	bool
 		wantErr bool
 	}{
 		{
@@ -1063,6 +1064,8 @@ func TestStandaloneProvider_InstallStrimzi(t *testing.T) {
 			args: args{
 				clusterSpec: &types.ClusterSpec{},
 			},
+			want: true,
+			wantErr: false,
 		},
 	}
 	RegisterTestingT(t)
@@ -1071,7 +1074,7 @@ func TestStandaloneProvider_InstallStrimzi(t *testing.T) {
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			ok, err := provider.InstallStrimzi(test.args.clusterSpec)
 			Expect(err != nil).To(Equal(test.wantErr))
-			Expect(ok).To(Equal(true))
+			Expect(ok).To(Equal(test.want))
 		})
 	}
 }
@@ -1107,6 +1110,8 @@ func TestStandaloneProvider_InstallKasFleetshard(t *testing.T) {
 					},
 				},
 			},
+			want: true,
+			wantErr: false,
 		},
 	}
 	RegisterTestingT(t)
@@ -1115,7 +1120,7 @@ func TestStandaloneProvider_InstallKasFleetshard(t *testing.T) {
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			ok, err := provider.InstallKasFleetshard(test.args.clusterSpec, test.args.params)
 			Expect(err != nil).To(Equal(test.wantErr))
-			Expect(ok).To(Equal(true))
+			Expect(ok).To(Equal(test.want))
 		})
 	}
 }
@@ -1231,11 +1236,11 @@ func Test_shouldApplyChanges(t *testing.T) {
 			want: false,
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := shouldApplyChanges(tt.args.dynamicClient, tt.args.existingObj, tt.args.newConfiguration); got != tt.want {
-				t.Errorf("shouldApplyChanges() = %v, want %v", got, tt.want)
-			}
+			 got := shouldApplyChanges(tt.args.dynamicClient, tt.args.existingObj, tt.args.newConfiguration)
+			 Expect(got).To(Equal(tt.want))
 		})
 	}
 }
