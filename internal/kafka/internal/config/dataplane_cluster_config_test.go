@@ -237,7 +237,7 @@ func TestDataplaneClusterConfig_MissingClusters(t *testing.T) {
 		want   []ManualCluster
 	}{
 		{
-			name: "Missing clusters find",
+			name: "Missing clusters found",
 			fields: fields{
 				ClusterList: ClusterList{
 					ManualCluster{ClusterId: "test02", Region: "us-east", MultiAZ: true, CloudProvider: "aws"},
@@ -253,7 +253,7 @@ func TestDataplaneClusterConfig_MissingClusters(t *testing.T) {
 			want: result,
 		},
 		{
-			name: "No Missing clusters find",
+			name: "No Missing clusters found",
 			fields: fields{
 				ClusterList: ClusterList{
 					ManualCluster{ClusterId: "test02", Region: "us-east", MultiAZ: true, CloudProvider: "aws"},
