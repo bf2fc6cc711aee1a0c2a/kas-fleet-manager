@@ -5,15 +5,17 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	operatorsv1alpha2 "github.com/operator-framework/api/pkg/operators/v1alpha2"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	. "github.com/onsi/gomega"
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	operatorsv1alpha2 "github.com/operator-framework/api/pkg/operators/v1alpha2"
 	"github.com/pkg/errors"
 	mocket "github.com/selvatico/go-mocket"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 )
 
 func TestStandaloneProvider_GetCloudProviders(t *testing.T) {
@@ -974,16 +976,8 @@ func TestStandaloneProvider_buildKasFleetshardOperatorSubscription(t *testing.T)
 		{
 			name: "buids a operator subscription with a given parameters",
 			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					KasFleetshardOperatorOLMConfig: config.OperatorInstallationConfig{
-						Namespace:              "namespace-name",
-						CatalogSourceNamespace: "catalog-namespace",
-						IndexImage:             "index-image-1",
-						SubscriptionChannel:    "alpha",
-						Package:                "package-1",
-					},
-				},
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				dataplaneClusterConfig: mock.BuildValidDataPlaneClusterConfigKasFleetshardOperatorOLMConfig(),
 			},
 			want: &operatorsv1alpha1.Subscription{
 				TypeMeta: metav1.TypeMeta{
@@ -1043,6 +1037,205 @@ func TestStandaloneProvider_buildKasFleetshardOperatorSubscription(t *testing.T)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			subscription := provider.buildKASFleetShardOperatorSubscription()
 			Expect(subscription).To(Equal(test.want))
+		})
+	}
+}
+func TestStandaloneProvider_InstallStrimzi(t *testing.T) {
+	type fields struct {
+		connectionFactory      *db.ConnectionFactory
+		dataplaneClusterConfig *config.DataplaneClusterConfig
+	}
+	type args struct {
+		clusterSpec *types.ClusterSpec
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "should InstallStrimzi without error",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				dataplaneClusterConfig: mock.BuildValidDataPlaneClusterConfigKasFleetshardOperatorOLMConfig(),
+			},
+			args: args{
+				clusterSpec: &types.ClusterSpec{},
+			},
+		},
+	}
+	RegisterTestingT(t)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
+			ok, err := provider.InstallStrimzi(test.args.clusterSpec)
+			Expect(err != nil).To(Equal(test.wantErr))
+			Expect(ok).To(Equal(true))
+		})
+	}
+}
+
+func TestStandaloneProvider_InstallKasFleetshard(t *testing.T) {
+	type fields struct {
+		connectionFactory      *db.ConnectionFactory
+		dataplaneClusterConfig *config.DataplaneClusterConfig
+	}
+	type args struct {
+		clusterSpec *types.ClusterSpec
+		params      []types.Parameter
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    bool
+		wantErr bool
+	}{
+		{
+			name: "should Install Kas Fleet Shard without error",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				dataplaneClusterConfig: mock.BuildValidDataPlaneClusterConfigKasFleetshardOperatorOLMConfig(),
+			},
+			args: args{
+				clusterSpec: &types.ClusterSpec{},
+				params: []types.Parameter{
+					{
+						Id:    "param1",
+						Value: "param-value-1",
+					},
+				},
+			},
+		},
+	}
+	RegisterTestingT(t)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
+			ok, err := provider.InstallKasFleetshard(test.args.clusterSpec, test.args.params)
+			Expect(err != nil).To(Equal(test.wantErr))
+			Expect(ok).To(Equal(true))
+		})
+	}
+}
+
+func TestStandaloneProvider_AddIdentityProvider(t *testing.T) {
+	type fields struct {
+		connectionFactory      *db.ConnectionFactory
+		dataplaneClusterConfig *config.DataplaneClusterConfig
+	}
+	type args struct {
+		clusterSpec      *types.ClusterSpec
+		identityProvider types.IdentityProviderInfo
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *types.IdentityProviderInfo
+		wantErr bool
+	}{
+		{
+			name: "should Add Identity Provider without issue",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				dataplaneClusterConfig: mock.BuildValidDataPlaneClusterConfigKasFleetshardOperatorOLMConfig(),
+			},
+			args: args{
+				clusterSpec: &types.ClusterSpec{},
+				identityProvider: types.IdentityProviderInfo{
+					OpenID: &types.OpenIDIdentityProviderInfo{
+						Name:         "test-name",
+						ClientID:     "test-client-id",
+						ClientSecret: "test-client-secret",
+						Issuer:       "test-issuer",
+					},
+				},
+			},
+			want: &types.IdentityProviderInfo{
+				OpenID: &types.OpenIDIdentityProviderInfo{
+					Name:         "test-name",
+					ClientID:     "test-client-id",
+					ClientSecret: "test-client-secret",
+					Issuer:       "test-issuer",
+				},
+			},
+		},
+	}
+
+	RegisterTestingT(t)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
+			ok, err := provider.AddIdentityProvider(test.args.clusterSpec, test.args.identityProvider)
+			Expect(err != nil).To(Equal(test.wantErr))
+			Expect(ok).To(Equal(test.want))
+		})
+	}
+}
+
+func Test_shouldApplyChanges(t *testing.T) {
+	type args struct {
+		dynamicClient    dynamic.ResourceInterface
+		existingObj      *unstructured.Unstructured
+		newConfiguration string
+	}
+	var obj unstructured.Unstructured
+	newAnnotations := obj.GetAnnotations()
+	obj.SetAnnotations(newAnnotations)
+
+	var newObj unstructured.Unstructured
+	newAnnotations = map[string]string{
+		lastAppliedConfigurationAnnotation: "lastAppliedConfigurationAnnotation",
+	}
+	newObj.SetAnnotations(newAnnotations)
+
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Should return true if exsistingObj is nil",
+			args: args{
+				existingObj: nil,
+			},
+			want: true,
+		},
+		{
+			name: "Should return true if existingObj.GetAnnotations() == nil",
+			args: args{
+				dynamicClient:    nil,
+				existingObj:      &unstructured.Unstructured{},
+				newConfiguration: "",
+			},
+			want: true,
+		},
+		{
+			name: "Should return true if changes are applied",
+			args: args{
+				dynamicClient:    nil,
+				existingObj:      &obj,
+				newConfiguration: "",
+			},
+			want: true,
+		},
+		{
+			name: "Should return false if changes are not applied",
+			args: args{
+				dynamicClient:    nil,
+				existingObj:      &newObj,
+				newConfiguration: "lastAppliedConfigurationAnnotation",
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := shouldApplyChanges(tt.args.dynamicClient, tt.args.existingObj, tt.args.newConfiguration); got != tt.want {
+				t.Errorf("shouldApplyChanges() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
