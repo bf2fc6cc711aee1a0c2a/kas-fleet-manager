@@ -11,6 +11,7 @@ package public
 
 // ConnectorNamespacePatchRequest A connector namespace patch request
 type ConnectorNamespacePatchRequest struct {
+	// Namespace name must match pattern `^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$`, or it may be empty to be auto-generated.
 	Name        string                                     `json:"name,omitempty"`
 	Annotations []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
 }
