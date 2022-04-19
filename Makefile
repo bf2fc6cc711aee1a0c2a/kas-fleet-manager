@@ -664,7 +664,6 @@ deploy/db:
 deploy/secrets:
 	@oc get service/kas-fleet-manager-db -n $(NAMESPACE) || (echo "Database is not deployed, please run 'make deploy/db'"; exit 1)
 	@oc process -f ./templates/secrets-template.yml \
-		-p DATABASE_HOST="$(shell oc get service/kas-fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
 		-p OCM_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-service.clientId' ] && [ -z '${OCM_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-service.clientId || echo '${OCM_SERVICE_CLIENT_ID}')" \
 		-p OCM_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-service.clientSecret' ] && [ -z '${OCM_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-service.clientSecret || echo '${OCM_SERVICE_CLIENT_SECRET}')" \
 		-p OCM_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-service.token' ] && [ -z '${OCM_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-service.token || echo '${OCM_SERVICE_TOKEN}')" \
@@ -802,7 +801,7 @@ deploy/service: deploy/envoy deploy/route
 		-p STRIMZI_OLM_PACKAGE_NAME="${STRIMZI_OLM_PACKAGE_NAME}" \
 		-p KAS_FLEETSHARD_OLM_PACKAGE_NAME="${KAS_FLEETSHARD_OLM_PACKAGE_NAME}" \
 		-p CLUSTER_LIST="${CLUSTER_LIST}" \
-		-p SUPPORTED_CLOUD_PROVIDERS="${SUPPORTED_CLOUD_PROVIDERS}" \
+		-p SUPPORTED_CLOUD_PROVIDERS=${SUPPORTED_CLOUD_PROVIDERS} \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 
