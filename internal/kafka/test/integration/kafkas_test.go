@@ -110,7 +110,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 	Expect(kafka.InstanceType).To(Equal(types.STANDARD.String()))
 	Expect(kafka.ReauthenticationEnabled).To(BeTrue())
-	Expect(kafka.BrowserUrl).To(Equal(fmt.Sprintf("%s%s/dashboard", test.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
+	Expect(kafka.BrowserUrl).To(Equal(fmt.Sprintf("/%s%s/dashboard", test.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
 	Expect(kafka.InstanceTypeName).To(Equal("Standard"))
 
 	// wait until the kafka goes into a ready state
@@ -1416,7 +1416,7 @@ func TestKafkaGet(t *testing.T) {
 	// yet any status, so the version attribute (actual version) at this point
 	// should still be empty
 	Expect(kafka.Version).To(Equal(""))
-	Expect(kafka.BrowserUrl).To(Equal(fmt.Sprintf("%s%s/dashboard", test.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
+	Expect(kafka.BrowserUrl).To(Equal(fmt.Sprintf("/%s%s/dashboard", test.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
@@ -1919,7 +1919,7 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.Name).To(Equal(mockKafkaName))
 	Expect(listItem.Status).To(Equal(constants2.KafkaRequestStatusAccepted.String()))
 	Expect(listItem.ReauthenticationEnabled).To(BeTrue())
-	Expect(listItem.BrowserUrl).To(Equal(fmt.Sprintf("%s%s/dashboard", test.TestServices.KafkaConfig.BrowserUrl, listItem.Id)))
+	Expect(listItem.BrowserUrl).To(Equal(fmt.Sprintf("/%s%s/dashboard", test.TestServices.KafkaConfig.BrowserUrl, listItem.Id)))
 
 	// new account setup to prove that users can list kafkas instances created by a member of their org
 	account = h.NewRandAccount()

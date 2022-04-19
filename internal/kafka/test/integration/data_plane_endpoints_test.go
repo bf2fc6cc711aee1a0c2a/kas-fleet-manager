@@ -356,25 +356,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
-		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Namespace:              "mk-5",
-			Name:                   mockKafkaName5,
-			Status:                 constants2.KafkaRequestStatusDeprovision.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
-			ActualKafkaVersion:     "2.8.1",
-			DesiredKafkaVersion:    "2.8.1",
-			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
-			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
-			ActualKafkaIBPVersion:  "2.7.0",
-			DesiredKafkaIBPVersion: "2.7.0",
-			InstanceType:           types.STANDARD.String(),
-			SizeId:                 sizeId,
-			KafkaStorageSize:       storageSize,
-		},
 	}
 
 	db := test.TestServices.DBFactory.New()
