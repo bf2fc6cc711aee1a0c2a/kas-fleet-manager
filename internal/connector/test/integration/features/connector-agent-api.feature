@@ -1291,9 +1291,9 @@ Feature: connector agent API
     Then the response code should be 204
 
     Given I am logged in as "Bobby"
-    And I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
+    And I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "410"
     When I GET path "/v1/kafka_connectors/${connector_id}"
-    Then the response code should be 404
+    Then the response code should be 410
 
 
     #---------------------------------------------------------------------------------------------
@@ -1351,6 +1351,6 @@ Feature: connector agent API
 
     # wait for cluster to be deleted
     Given I am logged in as "Bobby"
-    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "404"
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "410"
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
-    Then the response code should be 404
+    Then the response code should be 410

@@ -155,15 +155,18 @@ func filterClusterToOwnerOrOrg(ctx context.Context, dbConn *gorm.DB) (*gorm.DB, 
 	return dbConn, nil
 }
 
-// Get gets a connector by id from the database
+// Get gets a connector cluster by id from the database
 func (k *connectorClusterService) Get(ctx context.Context, id string) (dbapi.ConnectorCluster, *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
 	var resource dbapi.ConnectorCluster
 	dbConn = dbConn.Where("id = ?", id)
 
-	if err := dbConn.First(&resource).Error; err != nil {
+	if err := dbConn.Unscoped().First(&resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector cluster", "id", id, err)
+	}
+	if resource.DeletedAt.Valid {
+		return resource, services.HandleGoneError("Connector cluster", "id", id)
 	}
 	return resource, nil
 }
@@ -292,7 +295,7 @@ func (k *connectorClusterService) UpdateConnectorClusterStatus(ctx context.Conte
 	var resource dbapi.ConnectorCluster
 
 	if err := dbConn.Where("id = ?", id).First(&resource).Error; err != nil {
-		return services.HandleGetError("Connector cluster status", "id", id, err)
+		return services.HandleGetError("Connector cluster", "id", id, err)
 	}
 
 	// compare current and requested cluster phases to validate that agent can connect
@@ -421,10 +424,10 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 	if err := dbConn.Unscoped().Select("connector_id", "deleted_at").
 		Where("id = ?", deploymentStatus.ID).
 		First(&deployment).Error; err != nil {
-		return services.HandleGetError("connector deployment", "id", deploymentStatus.ID, err)
+		return services.HandleGetError("Connector deployment", "id", deploymentStatus.ID, err)
 	}
 	if deployment.DeletedAt.Valid {
-		return services.HandleGoneError("connector deployment", "id", deploymentStatus.ID)
+		return services.HandleGoneError("Connector deployment", "id", deploymentStatus.ID)
 	}
 
 	if err := dbConn.Model(&deploymentStatus).Where("id = ? and version <= ?", deploymentStatus.ID, deploymentStatus.Version).Save(&deploymentStatus).Error; err != nil {
@@ -894,8 +897,11 @@ func (k *connectorClusterService) ReconcileDeletingClusters() (int, []*errors.Se
 func (k *connectorClusterService) GetClusterOrg(id string) (string, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 	cluster := dbapi.ConnectorCluster{}
-	if err := dbConn.Select("organisation_id").Where("id = ?", id).Find(&cluster).Error; err != nil {
+	if err := dbConn.Unscoped().Select("organisation_id").Where("id = ?", id).Find(&cluster).Error; err != nil {
 		return "", services.HandleGetError("Connector cluster", "id", id, err)
+	}
+	if cluster.DeletedAt.Valid {
+		return "", services.HandleGoneError("Connector cluster", "id", id)
 	}
 	return cluster.OrganisationId, nil
 }

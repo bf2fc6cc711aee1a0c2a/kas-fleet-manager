@@ -159,8 +159,11 @@ func (k *connectorNamespaceService) Get(ctx context.Context, namespaceID string)
 		},
 	}
 	if err := dbConn.Preload("Annotations").Preload("TenantUser").Preload("TenantOrganisation").
-		First(result).Error; err != nil {
-		return nil, errors.GeneralError("failed to get connector namespace: %v", err)
+		Unscoped().First(result).Error; err != nil {
+		return nil, services.HandleGetError(`Connector namespace`, `id`, namespaceID, err)
+	}
+	if result.DeletedAt.Valid {
+		return nil, services.HandleGoneError("Connector namespace", "id", namespaceID)
 	}
 
 	return result, nil
@@ -513,9 +516,12 @@ func (k *connectorNamespaceService) ReconcileDeletedNamespaces() (int, []*errors
 func (k *connectorNamespaceService) GetNamespaceTenant(namespaceId string) (*dbapi.ConnectorNamespace, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 	var namespace dbapi.ConnectorNamespace
-	if err := dbConn.Where("id = ?", namespaceId).
+	if err := dbConn.Unscoped().Where("id = ?", namespaceId).
 		Select(`id`, `tenant_user_id`, `tenant_organisation_id`).First(&namespace).Error; err != nil {
 		return nil, services.HandleGetError("Connector namespace", "id", namespaceId, err)
+	}
+	if namespace.DeletedAt.Valid {
+		return nil, services.HandleGoneError("Connector cluster", "id", namespaceId)
 	}
 	return &namespace, nil
 }
