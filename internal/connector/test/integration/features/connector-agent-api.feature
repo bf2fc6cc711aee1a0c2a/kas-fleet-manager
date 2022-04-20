@@ -1354,3 +1354,48 @@ Feature: connector agent API
     Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "410"
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 410
+
+    # agent should get 410 for deleted cluster
+    Given I am logged in as "Shard"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
+      """
+      {
+        "phase":"ready",
+        "version": "0.0.1",
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }],
+        "namespaces": [{
+          "id": "${connector_namespace_id}",
+          "phase": "ready",
+          "version": "0.0.1",
+          "connectors_deployed": 0,
+          "conditions": [{
+            "type": "Ready",
+            "status": "True",
+            "lastTransitionTime": "2018-01-01T00:00:00Z"
+          }]
+        }],
+        "operators": [{
+          "id":"camelk",
+          "version": "1.0",
+          "namespace": "openshift-mcs-camelk-1.0",
+          "status": "ready"
+        }]
+      }
+      """
+    Then the response code should be 410
+    And the response should match json:
+    """
+    {
+      "code": "CONNECTOR-MGMT-25",
+      "href": "/api/connector_mgmt/v1/errors/25",
+      "id": "25",
+      "kind": "Error",
+      "operation_id": "${response.operation_id}",
+      "reason": "Connector cluster with id='${connector_cluster_id}' has been deleted"
+    }
+    """

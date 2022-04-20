@@ -349,7 +349,7 @@ func (k *connectorClusterService) GetConnectorClusterStatus(ctx context.Context,
 func (k *connectorClusterService) GetClientId(clusterID string) (string, error) {
 	dbConn := k.connectionFactory.New()
 	var resource dbapi.ConnectorCluster
-	dbConn = dbConn.Select("client_id").Where("id = ?", clusterID)
+	dbConn = dbConn.Unscoped().Select("client_id").Where("id = ?", clusterID)
 
 	// use Limit(1) and Find() to avoid ErrRecordNotFound
 	if err := dbConn.Limit(1).Find(&resource).Error; err != nil {
