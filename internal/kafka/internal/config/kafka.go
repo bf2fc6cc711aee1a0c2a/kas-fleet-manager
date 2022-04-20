@@ -59,6 +59,7 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
 	fs.BoolVar(&c.Quota.AllowDeveloperInstance, "allow-developer-instance", c.Quota.AllowDeveloperInstance, "Allow the creation of kafka developer instances")
 	fs.StringVar(&c.SupportedInstanceTypes.ConfigurationFile, "supported-kafka-instance-types-config-file", c.SupportedInstanceTypes.ConfigurationFile, "File containing the supported instance types configuration")
+	fs.StringVar(&c.BrowserUrl, "browser-url", c.BrowserUrl, "Browser url to kafka admin UI")
 }
 
 func (c *KafkaConfig) ReadFiles() error {
