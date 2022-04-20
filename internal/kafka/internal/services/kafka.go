@@ -1015,6 +1015,12 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka request")
 	}
+	labels := map[string]string{
+		"bf2.org/kafkaInstanceProfileQuotaConsumed": strconv.Itoa(k.QuotaConsumed),
+	}
+	if kafkaRequest.InstanceType != types.EVAL.String() {
+		labels["bf2.org/kafkaInstanceProfileType"] = kafkaRequest.InstanceType
+	}
 	managedKafkaCR := &managedkafka.ManagedKafka{
 		Id: kafkaRequest.ID,
 		TypeMeta: metav1.TypeMeta{
@@ -1028,10 +1034,7 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 				"bf2.org/id":          kafkaRequest.ID,
 				"bf2.org/placementId": kafkaRequest.PlacementId,
 			},
-			Labels: map[string]string{
-				"bf2.org/kafkaInstanceProfileType":          kafkaRequest.InstanceType,
-				"bf2.org/kafkaInstanceProfileQuotaConsumed": strconv.Itoa(k.QuotaConsumed),
-			},
+			Labels: labels,
 		},
 		Spec: managedkafka.ManagedKafkaSpec{
 			Capacity: managedkafka.Capacity{
