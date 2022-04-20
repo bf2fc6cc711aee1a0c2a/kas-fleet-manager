@@ -11,6 +11,7 @@ package public
 
 // ConnectorNamespaceRequest A connector namespace create request
 type ConnectorNamespaceRequest struct {
+	// Namespace name must match pattern `^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$`, or it may be empty to be auto-generated.
 	Name        string                                     `json:"name"`
 	Annotations []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
 	ClusterId   string                                     `json:"cluster_id"`

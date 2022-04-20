@@ -1043,7 +1043,8 @@ Feature: connector agent API
       | count |
       | 1     |
 
-    Given I am logged in as "Jimmy"
+    # Bobby should be able to delete cluster as an org admin
+    Given I am logged in as "Bobby"
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204
     And the response should match ""
@@ -1266,7 +1267,7 @@ Feature: connector agent API
         "resource_version": 1
       }
       """
-    Then the response code should be 500
+    Then the response code should be 409
     
     #-----------------------------------------------------------------------------------------------------------------
     # Bobby sets desired state to deleted.. Agent sees deployment deleted, it updates status to deleted, Bobby can not see the connector anymore
@@ -1290,9 +1291,9 @@ Feature: connector agent API
     Then the response code should be 204
 
     Given I am logged in as "Bobby"
-    And I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
+    And I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "410"
     When I GET path "/v1/kafka_connectors/${connector_id}"
-    Then the response code should be 404
+    Then the response code should be 410
 
 
     #---------------------------------------------------------------------------------------------
@@ -1350,6 +1351,51 @@ Feature: connector agent API
 
     # wait for cluster to be deleted
     Given I am logged in as "Bobby"
-    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "404"
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "410"
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
-    Then the response code should be 404
+    Then the response code should be 410
+
+    # agent should get 410 for deleted cluster
+    Given I am logged in as "Shard"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
+      """
+      {
+        "phase":"ready",
+        "version": "0.0.1",
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }],
+        "namespaces": [{
+          "id": "${connector_namespace_id}",
+          "phase": "ready",
+          "version": "0.0.1",
+          "connectors_deployed": 0,
+          "conditions": [{
+            "type": "Ready",
+            "status": "True",
+            "lastTransitionTime": "2018-01-01T00:00:00Z"
+          }]
+        }],
+        "operators": [{
+          "id":"camelk",
+          "version": "1.0",
+          "namespace": "openshift-mcs-camelk-1.0",
+          "status": "ready"
+        }]
+      }
+      """
+    Then the response code should be 410
+    And the response should match json:
+    """
+    {
+      "code": "CONNECTOR-MGMT-25",
+      "href": "/api/connector_mgmt/v1/errors/25",
+      "id": "25",
+      "kind": "Error",
+      "operation_id": "${response.operation_id}",
+      "reason": "Connector cluster with id='${connector_cluster_id}' has been deleted"
+    }
+    """

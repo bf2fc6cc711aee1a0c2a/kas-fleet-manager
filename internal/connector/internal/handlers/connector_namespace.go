@@ -7,20 +7,22 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	coreservices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/dustinkirkland/golang-petname"
 	"github.com/goava/di"
-	"net/http"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	coreservices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
+	"net/http"
+	"regexp"
 )
 
 var (
-	maxConnectorNamespaceIdLength = 32
+	maxConnectorNamespaceIdLength   = 32
+	maxConnectorNamespaceNameLength = 63
+	namespaceNamePattern            = regexp.MustCompile(`^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$`)
 )
 
 func init() {
@@ -49,7 +51,7 @@ func (h *ConnectorNamespaceHandler) Create(w http.ResponseWriter, r *http.Reques
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
-			handlers.Validation("name", &resource.Name, handlers.MinLen(1)),
+			handlers.Validation("name", &resource.Name, handlers.WithDefault(generateNamespaceName()), handlers.MaxLen(maxConnectorNamespaceNameLength), handlers.Matches(namespaceNamePattern)),
 			handlers.Validation("cluster_id", &resource.ClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), user.AuthorizedClusterUser()),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -94,7 +96,7 @@ func (h *ConnectorNamespaceHandler) CreateEvaluation(w http.ResponseWriter, r *h
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
-			handlers.Validation("name", &resource.Name, handlers.WithDefault(generateEvalNamespaceName())),
+			handlers.Validation("name", &resource.Name, handlers.WithDefault(generateNamespaceName()), handlers.MaxLen(maxConnectorNamespaceNameLength), handlers.Matches(namespaceNamePattern)),
 			user.AuthorizedCreateEvalNamespace(),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -121,7 +123,7 @@ func (h *ConnectorNamespaceHandler) CreateEvaluation(w http.ResponseWriter, r *h
 	handlers.Handle(w, r, cfg, http.StatusCreated)
 }
 
-func generateEvalNamespaceName() string {
+func generateNamespaceName() string {
 	return fmt.Sprintf("%s-namespace", petname.Generate(2, "-"))
 }
 

@@ -26,17 +26,18 @@ import (
 )
 
 func (h *ConnectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	var resource private.ConnectorClusterStatus
 
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), validateConnectorClusterId(ctx, h.Service)),
 			handlers.Validation("phase", (*string)(&resource.Phase), handlers.IsOneOf(dbapi.AgentRequestConnectorClusterStatus...)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			ctx := r.Context()
 			convResource := presenters.ConvertConnectorClusterStatus(resource)
 			err := h.Service.UpdateConnectorClusterStatus(ctx, connectorClusterId, convResource)
 			if err == nil {
@@ -104,7 +105,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), validateConnectorClusterId(ctx, h.Service)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
@@ -279,9 +280,10 @@ func (h *ConnectorClusterHandler) GetDeployment(w http.ResponseWriter, r *http.R
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	deploymentId := mux.Vars(r)["deployment_id"]
 
+	ctx := r.Context()
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), validateConnectorClusterId(ctx, h.Service)),
 			handlers.Validation("deployment_id", &deploymentId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
@@ -302,9 +304,10 @@ func (h *ConnectorClusterHandler) GetDeployment(w http.ResponseWriter, r *http.R
 
 func (h *ConnectorClusterHandler) GetAgentNamespaces(writer http.ResponseWriter, request *http.Request) {
 	connectorClusterId := mux.Vars(request)["connector_cluster_id"]
+	ctx := request.Context()
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), validateConnectorClusterId(ctx, h.Service)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := request.Context()
@@ -345,9 +348,10 @@ func (h *ConnectorClusterHandler) GetNamespace(w http.ResponseWriter, r *http.Re
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	namespaceId := mux.Vars(r)["namespace_id"]
 
+	ctx := r.Context()
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), validateConnectorClusterId(ctx, h.Service)),
 			handlers.Validation("namespace_id", &namespaceId, handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
@@ -371,10 +375,11 @@ func (h *ConnectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, 
 	deploymentId := mux.Vars(r)["deployment_id"]
 	var resource private.ConnectorDeploymentStatus
 
+	ctx := r.Context()
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), validateConnectorClusterId(ctx, h.Service)),
 			handlers.Validation("deployment_id", &deploymentId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
 			handlers.Validation("phase", (*string)(&resource.Phase), handlers.IsOneOf(dbapi.AgentConnectorStatusPhase...)),
 		},

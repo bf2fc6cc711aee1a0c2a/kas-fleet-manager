@@ -18,9 +18,9 @@ func TestGetAvailableStrimziVersions(t *testing.T) {
 			name: "When cluster has a non empty list of available strimzi versions those are returned",
 			cluster: func() *Cluster {
 				inputStrimziVersions := []StrimziVersion{
-					StrimziVersion{Version: "v3", Ready: true},
-					StrimziVersion{Version: "v6", Ready: false},
-					StrimziVersion{Version: "v7", Ready: true},
+					{Version: "v3", Ready: true},
+					{Version: "v6", Ready: false},
+					{Version: "v7", Ready: true},
 				}
 				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersions)
 				if err != nil {
@@ -30,9 +30,9 @@ func TestGetAvailableStrimziVersions(t *testing.T) {
 				return &res
 			},
 			want: []StrimziVersion{
-				StrimziVersion{Version: "v3", Ready: true},
-				StrimziVersion{Version: "v6", Ready: false},
-				StrimziVersion{Version: "v7", Ready: true},
+				{Version: "v3", Ready: true},
+				{Version: "v6", Ready: false},
+				{Version: "v7", Ready: true},
 			},
 			wantErr: false,
 		},
@@ -94,9 +94,9 @@ func TestGetAvailableAndReadyStrimziVersions(t *testing.T) {
 			name: "When cluster has a non empty list of available strimzi versions those ready returned",
 			cluster: func() *Cluster {
 				inputStrimziVersions := []StrimziVersion{
-					StrimziVersion{Version: "v3", Ready: true},
-					StrimziVersion{Version: "v6", Ready: false},
-					StrimziVersion{Version: "v7", Ready: true},
+					{Version: "v3", Ready: true},
+					{Version: "v6", Ready: false},
+					{Version: "v7", Ready: true},
 				}
 				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersions)
 				if err != nil {
@@ -106,8 +106,8 @@ func TestGetAvailableAndReadyStrimziVersions(t *testing.T) {
 				return &res
 			},
 			want: []StrimziVersion{
-				StrimziVersion{Version: "v3", Ready: true},
-				StrimziVersion{Version: "v7", Ready: true},
+				{Version: "v3", Ready: true},
+				{Version: "v7", Ready: true},
 			},
 			wantErr: false,
 		},
@@ -144,13 +144,12 @@ func TestGetAvailableAndReadyStrimziVersions(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := tt.cluster().GetAvailableAndReadyStrimziVersions()
-			gotErr := err != nil
-			if gotErr != tt.wantErr {
-				t.Errorf("wantErr: %v got: %v", tt.wantErr, err)
-			}
+			Expect(err != nil).To(Equal(tt.wantErr))
 			Expect(res).To(Equal(tt.want))
 		})
 	}
@@ -166,42 +165,42 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 		{
 			name: "When setting a non empty ordered list of strimzi versions that list is stored as is",
 			inputStrimziVersions: []StrimziVersion{
-				StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: true},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: false},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: true},
+				{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: true},
+				{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: false},
+				{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: true},
 			},
 			want: []StrimziVersion{
-				StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: true},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: false},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: true},
+				{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: true},
+				{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: false},
+				{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: true},
 			},
 			wantErr: false,
 		},
 		{
 			name: "When setting a non empty unordered list of strimzi versions that list is stored in semver ascending order",
 			inputStrimziVersions: []StrimziVersion{
-				StrimziVersion{Version: "strimzi-cluster-operator-v.5.0.0-0", Ready: true},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
+				{Version: "strimzi-cluster-operator-v.5.0.0-0", Ready: true},
+				{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
+				{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
 			},
 			want: []StrimziVersion{
-				StrimziVersion{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.5.0.0-0", Ready: true},
+				{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
+				{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
+				{Version: "strimzi-cluster-operator-v.5.0.0-0", Ready: true},
 			},
 			wantErr: false,
 		},
 		{
 			name: "When setting a non empty unordered list of strimzi versions that list is stored in semver ascending order (case 2)",
 			inputStrimziVersions: []StrimziVersion{
-				StrimziVersion{Version: "strimzi-cluster-operator-v.5.10.0-3", Ready: true},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.5.8.0-9", Ready: false},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
+				{Version: "strimzi-cluster-operator-v.5.10.0-3", Ready: true},
+				{Version: "strimzi-cluster-operator-v.5.8.0-9", Ready: false},
+				{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
 			},
 			want: []StrimziVersion{
-				StrimziVersion{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.5.8.0-9", Ready: false},
-				StrimziVersion{Version: "strimzi-cluster-operator-v.5.10.0-3", Ready: true},
+				{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
+				{Version: "strimzi-cluster-operator-v.5.8.0-9", Ready: false},
+				{Version: "strimzi-cluster-operator-v.5.10.0-3", Ready: true},
 			},
 			wantErr: false,
 		},
@@ -220,78 +219,78 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 		{
 			name: "Kafka and Kafka IBP versions are stored and in sorted order",
 			inputStrimziVersions: []StrimziVersion{
-				StrimziVersion{
+				{
 					Version: "strimzi-cluster-operator-v.5.10.0-3",
 					Ready:   true,
 					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "2.7.5"},
-						KafkaVersion{Version: "2.7.3"},
+						{Version: "2.7.5"},
+						{Version: "2.7.3"},
 					},
 					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.8"},
-						KafkaIBPVersion{Version: "2.7"},
+						{Version: "2.8"},
+						{Version: "2.7"},
 					},
 				},
-				StrimziVersion{
+				{
 					Version: "strimzi-cluster-operator-v.5.8.0-9",
 					Ready:   false,
 					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "2.9.4"},
-						KafkaVersion{Version: "2.2.1"},
+						{Version: "2.9.4"},
+						{Version: "2.2.1"},
 					},
 					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.5"},
-						KafkaIBPVersion{Version: "2.6"},
+						{Version: "2.5"},
+						{Version: "2.6"},
 					},
 				},
-				StrimziVersion{
+				{
 					Version: "strimzi-cluster-operator-v.2.0.0-0",
 					Ready:   true,
 					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "4.5.6"},
-						KafkaVersion{Version: "1.2.3"},
+						{Version: "4.5.6"},
+						{Version: "1.2.3"},
 					},
 					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.3"},
-						KafkaIBPVersion{Version: "2.2"},
+						{Version: "2.3"},
+						{Version: "2.2"},
 					},
 				},
 			},
 			want: []StrimziVersion{
-				StrimziVersion{
+				{
 					Version: "strimzi-cluster-operator-v.2.0.0-0",
 					Ready:   true,
 					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "1.2.3"},
-						KafkaVersion{Version: "4.5.6"},
+						{Version: "1.2.3"},
+						{Version: "4.5.6"},
 					},
 					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.2"},
-						KafkaIBPVersion{Version: "2.3"},
+						{Version: "2.2"},
+						{Version: "2.3"},
 					},
 				},
-				StrimziVersion{
+				{
 					Version: "strimzi-cluster-operator-v.5.8.0-9",
 					Ready:   false,
 					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "2.2.1"},
-						KafkaVersion{Version: "2.9.4"},
+						{Version: "2.2.1"},
+						{Version: "2.9.4"},
 					},
 					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.5"},
-						KafkaIBPVersion{Version: "2.6"},
+						{Version: "2.5"},
+						{Version: "2.6"},
 					},
 				},
-				StrimziVersion{
+				{
 					Version: "strimzi-cluster-operator-v.5.10.0-3",
 					Ready:   true,
 					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "2.7.3"},
-						KafkaVersion{Version: "2.7.5"},
+						{Version: "2.7.3"},
+						{Version: "2.7.5"},
 					},
 					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.7"},
-						KafkaIBPVersion{Version: "2.8"},
+						{Version: "2.7"},
+						{Version: "2.8"},
 					},
 				},
 			},
@@ -402,11 +401,7 @@ func TestCompare(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.inputStrimziVersion1.Compare(tt.inputStrimziVersion2)
-			gotErr := err != nil
-			if gotErr != tt.wantErr {
-				t.Errorf("wantErr: %v got: %v", tt.wantErr, gotErr)
-				return
-			}
+			Expect(err != nil).To(Equal(tt.wantErr))
 			Expect(got).To(Equal(tt.want))
 		})
 	}
@@ -441,7 +436,7 @@ func Test_StrimziVersionsDeepSort(t *testing.T) {
 		{
 			name: "When one of the strimzi versions does not follow semver an error is returned",
 			args: args{
-				[]StrimziVersion{StrimziVersion{Version: "strimzi-cluster-operator-v.nonsemver243-0"}, StrimziVersion{Version: "strimzi-cluster-operator-v.2.5.6-0"}},
+				[]StrimziVersion{{Version: "strimzi-cluster-operator-v.nonsemver243-0"}, {Version: "strimzi-cluster-operator-v.2.5.6-0"}},
 			},
 			wantErr: true,
 		},
@@ -449,105 +444,130 @@ func Test_StrimziVersionsDeepSort(t *testing.T) {
 			name: "All different versions are deeply sorted",
 			args: args{
 				versions: []StrimziVersion{
-					StrimziVersion{
+					{
 						Version: "strimzi-cluster-operator-v.2.7.5-0",
 						KafkaVersions: []KafkaVersion{
-							KafkaVersion{Version: "1.5.8"},
-							KafkaVersion{Version: "0.7.1"},
-							KafkaVersion{Version: "1.5.1"},
+							{Version: "1.5.8"},
+							{Version: "0.7.1"},
+							{Version: "1.5.1"},
 						},
 						KafkaIBPVersions: []KafkaIBPVersion{
-							KafkaIBPVersion{Version: "2.8"},
-							KafkaIBPVersion{Version: "1.2"},
-							KafkaIBPVersion{Version: "2.4"},
+							{Version: "2.8"},
+							{Version: "1.2"},
+							{Version: "2.4"},
 						},
 					},
-					StrimziVersion{
+					{
 						Version: "strimzi-cluster-operator-v.2.7.3-0",
 						KafkaVersions: []KafkaVersion{
-							KafkaVersion{Version: "1.0.0"},
-							KafkaVersion{Version: "2.0.0"},
-							KafkaVersion{Version: "5.0.0"},
+							{Version: "1.0.0"},
+							{Version: "2.0.0"},
+							{Version: "5.0.0"},
 						},
 						KafkaIBPVersions: []KafkaIBPVersion{
-							KafkaIBPVersion{Version: "4.0"},
-							KafkaIBPVersion{Version: "2.0"},
-							KafkaIBPVersion{Version: "3.5"},
+							{Version: "4.0"},
+							{Version: "2.0"},
+							{Version: "3.5"},
 						},
 					},
-					StrimziVersion{
+					{
 						Version: "strimzi-cluster-operator-v.2.5.2-0",
 						KafkaVersions: []KafkaVersion{
-							KafkaVersion{Version: "2.6.1"},
-							KafkaVersion{Version: "5.7.2"},
-							KafkaVersion{Version: "2.3.5"},
+							{Version: "2.6.1"},
+							{Version: "5.7.2"},
+							{Version: "2.3.5"},
 						},
 						KafkaIBPVersions: []KafkaIBPVersion{
-							KafkaIBPVersion{Version: "1.2"},
-							KafkaIBPVersion{Version: "1.1"},
-							KafkaIBPVersion{Version: "5.1"},
+							{Version: "1.2"},
+							{Version: "1.1"},
+							{Version: "5.1"},
 						},
 					},
 				},
 			},
 			want: []StrimziVersion{
-				StrimziVersion{
+				{
 					Version: "strimzi-cluster-operator-v.2.5.2-0",
 					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "2.3.5"},
-						KafkaVersion{Version: "2.6.1"},
-						KafkaVersion{Version: "5.7.2"},
+						{Version: "2.3.5"},
+						{Version: "2.6.1"},
+						{Version: "5.7.2"},
 					},
 					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "1.1"},
-						KafkaIBPVersion{Version: "1.2"},
-						KafkaIBPVersion{Version: "5.1"},
+						{Version: "1.1"},
+						{Version: "1.2"},
+						{Version: "5.1"},
 					},
 				},
-				StrimziVersion{
+				{
 					Version: "strimzi-cluster-operator-v.2.7.3-0",
 					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "1.0.0"},
-						KafkaVersion{Version: "2.0.0"},
-						KafkaVersion{Version: "5.0.0"},
+						{Version: "1.0.0"},
+						{Version: "2.0.0"},
+						{Version: "5.0.0"},
 					},
 					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "2.0"},
-						KafkaIBPVersion{Version: "3.5"},
-						KafkaIBPVersion{Version: "4.0"},
+						{Version: "2.0"},
+						{Version: "3.5"},
+						{Version: "4.0"},
 					},
 				},
-				StrimziVersion{
+				{
 					Version: "strimzi-cluster-operator-v.2.7.5-0",
 					KafkaVersions: []KafkaVersion{
-						KafkaVersion{Version: "0.7.1"},
-						KafkaVersion{Version: "1.5.1"},
-						KafkaVersion{Version: "1.5.8"},
+						{Version: "0.7.1"},
+						{Version: "1.5.1"},
+						{Version: "1.5.8"},
 					},
 					KafkaIBPVersions: []KafkaIBPVersion{
-						KafkaIBPVersion{Version: "1.2"},
-						KafkaIBPVersion{Version: "2.4"},
-						KafkaIBPVersion{Version: "2.8"},
+						{Version: "1.2"},
+						{Version: "2.4"},
+						{Version: "2.8"},
 					},
 				},
 			},
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := StrimziVersionsDeepSort(tt.args.versions)
-			gotErr := err != nil
-			if gotErr != tt.wantErr {
-				t.Errorf("wantErr: %v got: %v", tt.wantErr, gotErr)
-				return
-			}
+			Expect(err != nil).To(Equal(tt.wantErr))
 			Expect(got).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestCompareSemanticVersionsMajorAndMinor(t *testing.T) {
+func Test_CompareBuildAwareSemanticVersions(t *testing.T) {
+	tests := []struct {
+		name     string
+		version1 string
+		version2 string
+		want     int
+		wantErr  bool
+	}{
+		{
+			name:     "when v1 is greater than v2 1 is returned",
+			version1: "1.0.1",
+			version2: "1.0.0",
+			want:     1,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := CompareBuildAwareSemanticVersions(tt.version1, tt.version2)
+			Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_CompareSemanticVersionsMajorAndMinor(t *testing.T) {
 	tests := []struct {
 		name    string
 		current string
@@ -556,89 +576,197 @@ func TestCompareSemanticVersionsMajorAndMinor(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "When desired major is smaller than current major, 1 is returned",
-			current: "3.6.0",
-			desired: "2.6.0",
-			want:    1,
-			wantErr: false,
-		},
-		{
-			name:    "When desired major is greater than current major -1, is returned",
-			current: "2.7.0",
-			desired: "3.7.0",
-			want:    -1,
-			wantErr: false,
-		},
-		{
-			name:    "When major versions are equal and desired minor is greater than current minor, -1 is returned",
-			current: "2.7.0",
-			desired: "2.8.0",
-			want:    -1,
-			wantErr: false,
-		},
-		{
-			name:    "When major versions are equal and desired minor is smaller than current minor, 1 is returned",
-			current: "2.8.0",
-			desired: "2.7.0",
-			want:    1,
-			wantErr: false,
-		},
-		{
-			name:    "When major versions are equal and desired minor is equal to current minor, 0 is returned",
+			name:    "when major and minor version are equal 0 is returned",
 			current: "2.7.0",
 			desired: "2.7.0",
 			want:    0,
-			wantErr: false,
-		},
-		{
-			name:    "When major and minor versions are equal and desired patch is equal to current patch, 0 is returned",
-			current: "2.7.0",
-			desired: "2.7.0",
-			want:    0,
-			wantErr: false,
-		},
-		{
-			name:    "When major and minor versions are equal and desired patch is greater than current patch, 0 is returned",
-			current: "2.7.0",
-			desired: "2.7.1",
-			want:    0,
-			wantErr: false,
-		},
-		{
-			name:    "When major and minor versions are equal and desired patch is smaller than current patch, 0 is returned",
-			current: "2.7.2",
-			desired: "2.7.1",
-			want:    0,
-			wantErr: false,
-		},
-		{
-			name:    "When current is empty an error is returned",
-			current: "",
-			desired: "2.7.1",
-			wantErr: true,
-		},
-		{
-			name:    "When desired is empty an error is returned",
-			current: "2.7.1",
-			desired: "",
-			wantErr: true,
-		},
-		{
-			name:    "When current has an invalid semver version format an error is returned",
-			current: "2invalid.6.0",
-			desired: "2.7.1",
-			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := CompareSemanticVersionsMajorAndMinor(tt.current, tt.desired)
-			gotErr := err != nil
-			if gotErr != tt.wantErr {
-				t.Errorf("wantErr: %v got: %v", tt.wantErr, gotErr)
-			}
+			Expect(err != nil).To(Equal(tt.wantErr))
 			Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_ClusterTypes_Index(t *testing.T) {
+	cluster := &Cluster{
+		Meta: Meta{
+			ID: "test-id",
+		},
+		CloudProvider:            "",
+		ClusterID:                "",
+		ExternalID:               "",
+		MultiAZ:                  true,
+		Region:                   "",
+		Status:                   "accepted",
+		StatusDetails:            "",
+		IdentityProviderID:       "",
+		ClusterDNS:               "",
+		ClientID:                 "",
+		ClientSecret:             "",
+		ProviderType:             "",
+		ProviderSpec:             JSON{},
+		ClusterSpec:              JSON{},
+		AvailableStrimziVersions: JSON{},
+		SupportedInstanceType:    "",
+	}
+
+	tests := []struct {
+		name    string
+		cluster ClusterList
+		want    ClusterIndex
+	}{
+		{
+			name:    "returns an empty index map when leader lease list is empty",
+			cluster: ClusterList{},
+			want:    ClusterIndex{},
+		},
+		{
+			name: "returns an index where a cluster id point to cluster represented by this ID",
+			cluster: ClusterList{
+				cluster,
+			},
+			want: ClusterIndex{
+				cluster.ID: cluster,
+			},
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			index := tt.cluster.Index()
+			Expect(index).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_ClusterTypes_BeforeCreate(t *testing.T) {
+	RegisterTestingT(t)
+
+	id := "some-id"
+	status := ClusterCleanup
+	supportedInstanceType := "standard"
+	clusterWithFieldsSet := &Cluster{
+		Status:                status,
+		SupportedInstanceType: supportedInstanceType,
+		Meta: Meta{
+			ID: id,
+		},
+	}
+
+	t.Run("do not modify the values if they are set", func(t *testing.T) {
+		err := clusterWithFieldsSet.BeforeCreate(nil)
+		Expect(clusterWithFieldsSet.ID).To(Equal(id))
+		Expect(clusterWithFieldsSet.Status).To(Equal(status))
+		Expect(clusterWithFieldsSet.SupportedInstanceType).To(Equal(supportedInstanceType))
+		Expect(err).ToNot(HaveOccurred())
+	})
+
+	clusterWithEmptyValue := &Cluster{
+		SupportedInstanceType: "",
+		Status:                "",
+		Meta: Meta{
+			ID: "",
+		},
+	}
+
+	t.Run("set the default values if empty", func(t *testing.T) {
+		err := clusterWithEmptyValue.BeforeCreate(nil)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(clusterWithEmptyValue.ID).ToNot(BeEmpty())
+		Expect(clusterWithEmptyValue.Status).To(Equal(ClusterAccepted))
+		Expect(clusterWithEmptyValue.SupportedInstanceType).To(Equal(AllInstanceTypeSupport.String()))
+	})
+}
+
+func Test_CompareTo(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr bool
+		k1      ClusterStatus
+		k       ClusterStatus
+		want    int
+	}{
+		{
+			name: "cluster has a non empty list of available strimzi versions those are returned",
+			k:    ClusterAccepted,
+			k1:   ClusterAccepted,
+			want: 0,
+		},
+		{
+			name: " cluster has a non empty list of available strimzi versions those are returned",
+			k:    ClusterReady,
+			k1:   ClusterAccepted,
+			want: 1,
+		},
+		{
+			name: " cluster has a non empty list of available strimzi versions those are returned",
+			k:    ClusterAccepted,
+			k1:   ClusterReady,
+			want: -1,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res := tt.k.CompareTo(tt.k1)
+			Expect(res).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_ClusterProviderType_String(t *testing.T) {
+	tests := []struct {
+		name         string
+		providerType ClusterProviderType
+		want         string
+	}{
+		{
+			name:         "returns cluster provider type string",
+			providerType: ClusterProviderOCM,
+			want:         "ocm",
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res := tt.providerType.String()
+			Expect(res).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_ClusterStatus_String(t *testing.T) {
+	tests := []struct {
+		name   string
+		status ClusterStatus
+		want   string
+	}{
+		{
+			name:   "return cluster status string",
+			status: ClusterAccepted,
+			want:   "cluster_accepted",
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res := tt.status.String()
+			Expect(res).To(Equal(tt.want))
 		})
 	}
 }

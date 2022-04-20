@@ -102,17 +102,17 @@ Feature: create a connector
     And the response should match ""
 
     # wait for cluster namespaces to be deleted first
-    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${cluster_id}" response code to match "404"
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${cluster_id}" response code to match "410"
     When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
-    Then the response code should be 404
+    Then the response code should be 410
     And the response should match json:
       """
       {
-        "code": "CONNECTOR-MGMT-7",
-        "href": "/api/connector_mgmt/v1/errors/7",
-        "id": "7",
+        "code": "CONNECTOR-MGMT-25",
+        "href": "/api/connector_mgmt/v1/errors/25",
+        "id": "25",
         "kind": "Error",
         "operation_id": "${response.operation_id}",
-        "reason": "Connector cluster with id='${cluster_id}' not found"
+        "reason": "Connector cluster with id='${cluster_id}' has been deleted"
       }
       """

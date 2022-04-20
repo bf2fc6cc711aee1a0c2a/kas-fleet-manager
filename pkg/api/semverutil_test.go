@@ -19,6 +19,22 @@ func Test_buildAwareSemanticVersioningCompare(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "When v1 is empty an error is returned",
+			args: args{
+				v1: "",
+				v2: "1.0.0",
+			},
+			wantErr: true,
+		},
+		{
+			name: "When v2 is empty an error is returned",
+			args: args{
+				v1: "1.0.1",
+				v2: "",
+			},
+			wantErr: true,
+		},
+		{
 			name: "when v1 is greater than v2 1 is returned",
 			args: args{
 				v1: "1.0.1",
@@ -94,13 +110,128 @@ func Test_buildAwareSemanticVersioningCompare(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := buildAwareSemanticVersioningCompare(tt.args.v1, tt.args.v2)
-			gotErr := err != nil
-			if gotErr != tt.wantErr {
-				t.Errorf("wantErr: %v got: %v", tt.wantErr, err)
-				return
-			}
+			Expect(err != nil).To(Equal(tt.wantErr))
 			Expect(res).To(Equal(tt.want))
 		})
 	}
 
+}
+
+func Test_checkIfMinorDowngrade(t *testing.T) {
+	type args struct {
+		current string
+		desired string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    int
+		wantErr bool
+	}{
+		{
+			name: "When desired major is smaller than current major, 1 is returned",
+			args: args{
+				current: "3.6.0",
+				desired: "2.6.0",
+			},
+			want:    1,
+			wantErr: false,
+		},
+		{
+			name: "When desired major is greater than current major -1, is returned",
+			args: args{
+				current: "2.7.0",
+				desired: "3.7.0",
+			},
+			want:    -1,
+			wantErr: false,
+		},
+		{
+			name: "When major versions are equal and desired minor is greater than current minor, -1 is returned",
+			args: args{
+				current: "2.7.0",
+				desired: "2.8.0",
+			},
+			want:    -1,
+			wantErr: false,
+		},
+		{
+			name: "When major versions are equal and desired minor is smaller than current minor, 1 is returned",
+			args: args{
+				current: "2.8.0",
+				desired: "2.7.0",
+			},
+			want:    1,
+			wantErr: false,
+		},
+		{
+			name: "When major versions are equal and desired minor is equal to current minor, 0 is returned",
+			args: args{
+				current: "2.7.0",
+				desired: "2.7.0",
+			},
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name: "When major and minor versions are equal and desired patch is equal to current patch, 0 is returned",
+			args: args{
+				current: "2.7.0",
+				desired: "2.7.0",
+			},
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name: "When major and minor versions are equal and desired patch is greater than current patch, 0 is returned",
+			args: args{
+				current: "2.7.0",
+				desired: "2.7.1",
+			},
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name: "When major and minor versions are equal and desired patch is smaller than current patch, 0 is returned",
+			args: args{
+				current: "2.7.2",
+				desired: "2.7.1",
+			},
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name: "When current is empty an error is returned",
+			args: args{
+				current: "",
+				desired: "2.7.1",
+			},
+			wantErr: true,
+		},
+		{
+			name: "When desired is empty an error is returned",
+			args: args{
+				current: "2.7.1",
+				desired: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "When current has an invalid semver version format an error is returned",
+			args: args{
+				current: "2invalid.6.0",
+				desired: "2.7.1",
+			},
+			wantErr: true,
+		},
+	}
+
+	RegisterTestingT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := checkIfMinorDowngrade(tt.args.current, tt.args.desired)
+			Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(res).To(Equal(tt.want))
+		})
+	}
 }
