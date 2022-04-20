@@ -1,8 +1,9 @@
 package quota_management
 
 import (
-	. "github.com/onsi/gomega"
 	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 func Test_OrganisationList_GetById(t *testing.T) {
@@ -330,3 +331,25 @@ func Test_AllowedAccount_GetMaxAllowedInstances(t *testing.T) {
 		})
 	}
 }
+
+func TestGetDefaultMaxAllowedInstances(t *testing.T) {
+	tests := []struct {
+		name string
+		want int
+	}{
+		{
+			name: "Should return the default value for MaxAllowedInstances",
+			want: 1,
+		},
+	}
+	RegisterTestingT(t)
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			got := GetDefaultMaxAllowedInstances()
+			Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
