@@ -1691,6 +1691,13 @@ Feature: create a connector
              "reason": "Instance plan not supported"
           },
           {
+            "code": "CONNECTOR-MGMT-43",
+            "href": "/api/connector_mgmt/v1/errors/43",
+            "id": "43",
+            "kind": "Error",
+            "reason": "Only Single-AZ Kafkas of this type are supported, use multi_az=false"
+          },
+          {
             "code": "CONNECTOR-MGMT-103",
             "href": "/api/connector_mgmt/v1/errors/103",
             "id": "103",
@@ -1791,8 +1798,8 @@ Feature: create a connector
         ],
         "kind": "ErrorList",
         "page": 1,
-        "size": 42,
-        "total": 42
+        "size": 43,
+        "total": 43
       }
       """
 
