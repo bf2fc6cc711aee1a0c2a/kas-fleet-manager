@@ -1043,7 +1043,8 @@ Feature: connector agent API
       | count |
       | 1     |
 
-    Given I am logged in as "Jimmy"
+    # Bobby should be able to delete cluster as an org admin
+    Given I am logged in as "Bobby"
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204
     And the response should match ""
@@ -1266,7 +1267,7 @@ Feature: connector agent API
         "resource_version": 1
       }
       """
-    Then the response code should be 500
+    Then the response code should be 409
     
     #-----------------------------------------------------------------------------------------------------------------
     # Bobby sets desired state to deleted.. Agent sees deployment deleted, it updates status to deleted, Bobby can not see the connector anymore

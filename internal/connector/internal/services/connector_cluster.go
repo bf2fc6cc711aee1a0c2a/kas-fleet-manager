@@ -120,7 +120,7 @@ func (k *connectorClusterService) CleanupDeployments() *errors.ServiceError {
 func (k *connectorClusterService) Create(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 	if err := dbConn.Save(resource).Error; err != nil {
-		return errors.GeneralError("failed to create connector: %v", err)
+		return services.HandleCreateError("Connector", err)
 	}
 
 	// create a default namespace for the new cluster
@@ -162,12 +162,6 @@ func (k *connectorClusterService) Get(ctx context.Context, id string) (dbapi.Con
 	var resource dbapi.ConnectorCluster
 	dbConn = dbConn.Where("id = ?", id)
 
-	var err *errors.ServiceError
-	dbConn, err = filterClusterToOwnerOrOrg(ctx, dbConn)
-	if err != nil {
-		return resource, err
-	}
-
 	if err := dbConn.First(&resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector cluster", "id", id, err)
 	}
@@ -176,20 +170,12 @@ func (k *connectorClusterService) Get(ctx context.Context, id string) (dbapi.Con
 
 // Delete deletes a connector cluster from the database.
 func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors.ServiceError {
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return errors.Unauthenticated("user not authenticated")
-	}
-	owner := auth.GetUsernameFromClaims(claims)
-	if owner == "" {
-		return errors.Unauthenticated("user not authenticated")
-	}
 
 	var clusterDeleted, namespacesDeleted, connectorsDeleted bool
 	if err := k.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
 
 		var resource dbapi.ConnectorCluster
-		if err := dbConn.Where("owner = ? AND id = ?", owner, id).Select("id", "status_phase").
+		if err := dbConn.Where("id = ?", id).Select("id", "status_phase").
 			First(&resource).Error; err != nil {
 			return services.HandleGetError("Connector cluster", "id", id, err)
 		}
@@ -278,7 +264,7 @@ func (k *connectorClusterService) List(ctx context.Context, listArgs *services.L
 
 	// execute query
 	if err := dbConn.Find(&resourceList).Error; err != nil {
-		return resourceList, pagingMeta, errors.GeneralError("Unable to list connectors: %s", err)
+		return resourceList, pagingMeta, services.HandleGetError(`Connector cluster`, `query`, listArgs.Search, err)
 	}
 
 	return resourceList, pagingMeta, nil
@@ -294,18 +280,9 @@ func isAdmin(ctx context.Context) (bool, *errors.ServiceError) {
 }
 
 func (k connectorClusterService) Update(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError {
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return errors.Unauthenticated("user not authenticated")
-	}
-	owner := auth.GetUsernameFromClaims(claims)
-	if owner == "" {
-		return errors.Unauthenticated("user not authenticated")
-	}
-
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Where("owner = ? AND id = ?", owner, resource.ID).Model(resource).Updates(resource).Error; err != nil {
-		return errors.GeneralError("failed to update: %s", err.Error())
+	if err := dbConn.Where("id = ?", resource.ID).Model(resource).Updates(resource).Error; err != nil {
+		return services.HandleUpdateError("Connector", err)
 	}
 	return nil
 }
@@ -383,11 +360,11 @@ func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *
 	dbConn := k.connectionFactory.New()
 
 	if err := dbConn.Save(resource).Error; err != nil {
-		return errors.GeneralError("failed to create the connector deployment: %v", err)
+		return services.HandleCreateError(`Connector deployment`, err)
 	}
 
 	if err := dbConn.Where("id = ?", resource.ID).Select("version").First(&resource).Error; err != nil {
-		return services.HandleGetError("Connector Deployment", "id", resource.ID, err)
+		return services.HandleGetError(`Connector deployment`, "id", resource.ID, err)
 	}
 
 	if resource.ClusterID != "" {
@@ -430,7 +407,7 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 
 	// execute query
 	if err := dbConn.Find(&resourceList).Error; err != nil {
-		return resourceList, pagingMeta, errors.GeneralError("Unable to list connector deployments for cluster %s: %s", id, err)
+		return resourceList, pagingMeta, services.HandleGetError("Connector deployment", `cluster_id`, id, err)
 	}
 
 	return resourceList, pagingMeta, nil
@@ -451,7 +428,7 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 	}
 
 	if err := dbConn.Model(&deploymentStatus).Where("id = ? and version <= ?", deploymentStatus.ID, deploymentStatus.Version).Save(&deploymentStatus).Error; err != nil {
-		return errors.GeneralError("failed to update deployment status: %s, probably a stale deployment status version was used: %d", err.Error(), deploymentStatus.Version)
+		return errors.Conflict("failed to update deployment status: %s, probably a stale deployment status version was used: %d", err.Error(), deploymentStatus.Version)
 	}
 
 	connector := dbapi.Connector{}
@@ -478,7 +455,7 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 
 	// update the connector status
 	if err := dbConn.Model(&connectorStatus).Where("id = ?", deployment.ConnectorID).Updates(&connectorStatus).Error; err != nil {
-		return errors.GeneralError("failed to update connector status: %s", err.Error())
+		return services.HandleUpdateError("Connector status", err)
 	}
 
 	return nil
@@ -497,7 +474,7 @@ func (k *connectorClusterService) FindAvailableNamespace(owner string, orgID str
 	}
 
 	if err := dbConn.Limit(1).Find(&namespaces).Error; err != nil {
-		return nil, errors.GeneralError("failed to query ready connector namespace: %v", err.Error())
+		return nil, services.HandleGetError(`Connector namespace`, `id`, *namespaceID, err)
 	}
 
 	if len(namespaces) > 0 {
@@ -633,7 +610,7 @@ func (k *connectorClusterService) GetAvailableDeploymentTypeUpgrades(listArgs *s
 	dbConn = dbConn.Or("connector_deployment_statuses.upgrade_available")
 
 	if err := dbConn.Scan(&results).Error; err != nil {
-		return upgrades, paging, errors.GeneralError("Unable to list connector deployment upgrades: %s", err)
+		return upgrades, paging, services.HandleGetError(`Connector deployment status`, `latest_id is not null or upgrade_available`, true, err)
 	}
 
 	// TODO support paging
@@ -674,20 +651,20 @@ func (k *connectorClusterService) UpgradeConnectorsByType(ctx context.Context, c
 	reqConnectors := toTypeMap(upgrades)
 
 	// validate reqConnectors
-	errorList := errors.ErrorList{}
+	var errorList errors.ErrorList
 	for cid, upgrade := range reqConnectors {
 		availableUpgrade, ok := availableConnectors[cid]
 		if !ok {
-			errorList = append(errorList, errors.GeneralError("Type upgrade not available for connector %v", cid))
+			errorList = append(errorList, errors.Conflict("Type upgrade not available for connector %v", cid))
 		}
 		// make sure other bits match
 		upgrade.DeploymentID = availableUpgrade.DeploymentID
 		if !reflect.DeepEqual(upgrade, availableUpgrade) {
-			errorList = append(errorList, errors.GeneralError("Type upgrade is outdated for connector %v", cid))
+			errorList = append(errorList, errors.Conflict("Type upgrade is outdated for connector %v", cid))
 		}
 	}
 	if len(errorList) != 0 {
-		return errors.GeneralError(errorList.Error())
+		return errors.Conflict(errorList.Error())
 	}
 
 	// upgrade connector type channels
@@ -700,7 +677,7 @@ func (k *connectorClusterService) UpgradeConnectorsByType(ctx context.Context, c
 			Where("id = ?", upgrade.DeploymentID).
 			Update("ConnectorTypeChannelId", upgrade.ShardMetadata.AvailableId).Error; err != nil {
 			errorList = append(errorList,
-				errors.GeneralError("Error updating deployment for connector %s", cid))
+				services.HandleUpdateError(`Connector deployment id=`+cid, err))
 		} else {
 			if !notificationAdded {
 				_ = db.AddPostCommitAction(ctx, func() {
@@ -712,7 +689,7 @@ func (k *connectorClusterService) UpgradeConnectorsByType(ctx context.Context, c
 	}
 
 	if len(errorList) != 0 {
-		return errors.GeneralError(errorList.Error())
+		return services.HandleUpdateError(`Connector deployment`, errorList)
 	}
 	return nil
 }
@@ -752,7 +729,7 @@ func (k *connectorClusterService) GetAvailableDeploymentOperatorUpgrades(listArg
 	dbConn = dbConn.Where("connector_deployment_statuses.upgrade_available")
 
 	if err := dbConn.Scan(&results).Error; err != nil {
-		return upgrades, paging, errors.GeneralError("Unable to list connector deployment upgrades: %s", err)
+		return upgrades, paging, services.HandleGetError(`Connector deployment`, `upgrade_available`, true, err)
 	}
 
 	// TODO support paging
@@ -806,11 +783,11 @@ func (k *connectorClusterService) UpgradeConnectorsByOperator(ctx context.Contex
 	reqConnectors := toOperatorMap(upgrades)
 
 	// validate reqConnectors
-	errorList := errors.ErrorList{}
+	var errorList errors.ErrorList
 	for cid, upgrade := range reqConnectors {
 		availableUpgrade, ok := availableConnectors[cid]
 		if !ok {
-			errorList = append(errorList, errors.GeneralError("Operator upgrade not available for connector %s", cid))
+			errorList = append(errorList, errors.Conflict("Operator upgrade not available for connector %s", cid))
 		}
 
 		// make sure other bits match
@@ -821,11 +798,11 @@ func (k *connectorClusterService) UpgradeConnectorsByOperator(ctx context.Contex
 		upgrade.Operator.Available.Version = availableUpgrade.Operator.Available.Version
 
 		if !reflect.DeepEqual(upgrade, availableUpgrade) {
-			errorList = append(errorList, errors.GeneralError("Operator upgrade is outdated for connector %s", cid))
+			errorList = append(errorList, errors.Conflict("Operator upgrade is outdated for connector %s", cid))
 		}
 	}
 	if len(errorList) != 0 {
-		return errors.GeneralError(errorList.Error())
+		return errors.Conflict(errorList.Error())
 	}
 
 	// update deployments by setting operator_id to available_id
@@ -838,7 +815,7 @@ func (k *connectorClusterService) UpgradeConnectorsByOperator(ctx context.Contex
 			Where("id = ?", upgrade.DeploymentID).
 			Update("OperatorID", upgrade.Operator.Available.Id).Error; err != nil {
 			errorList = append(errorList,
-				errors.GeneralError("Error upgrading deployment for connector %s: %v", cid, serr))
+				services.HandleUpdateError("Connector deployment id="+cid, serr))
 		} else {
 			if !notificationAdded {
 				_ = db.AddPostCommitAction(ctx, func() {
@@ -850,7 +827,7 @@ func (k *connectorClusterService) UpgradeConnectorsByOperator(ctx context.Contex
 	}
 
 	if len(errorList) != 0 {
-		return errors.GeneralError(errorList.Error())
+		return services.HandleUpdateError(`Connector deployment`, errorList)
 	}
 
 	return nil
