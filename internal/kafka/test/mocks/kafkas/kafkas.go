@@ -39,6 +39,29 @@ func BuildKafkaRequest(modifyFn func(kafkaRequest *dbapi.KafkaRequest)) *dbapi.K
 	return kafkaRequest
 }
 
+func BuildKafkaRequestMap(modifyFn func(m []map[string]interface{})) []map[string]interface{} {
+	m := []map[string]interface{}{
+		{
+			"region":                kafkaRequestRegion,
+			"cloud_provider":        kafkaRequestProvider,
+			"multi_az":              multiAz,
+			"name":                  kafkaRequestName,
+			"status":                constants.KafkaRequestStatusReady.String(),
+			"owner":                 user,
+			"cluster_id":            clusterID,
+			"id":                    "",
+			"bootstrap_server_host": "",
+			"created_at":            time.Time{},
+			"deleted_at":            time.Time{},
+			"updated_at":            time.Time{},
+		},
+	}
+	if modifyFn != nil {
+		modifyFn(m)
+	}
+	return m
+}
+
 func GetSampleKafkaAllRoutes() []private.KafkaAllOfRoutes {
 	return []private.KafkaAllOfRoutes{{Domain: "test.example.com", Router: "test.example.com"}}
 }
