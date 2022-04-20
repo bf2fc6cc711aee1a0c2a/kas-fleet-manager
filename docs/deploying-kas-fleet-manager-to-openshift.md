@@ -148,6 +148,7 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `MAS_SSO_REALM`: MAS SSO realm url. Defaults to `rhoas`.
 - `SSO_SPECIAL_MANAGEMENT_ORG_ID`: Special Management Organization ID used for creating internal Service accounts. Defaults to `13640203` which is the special management organisation id  organisation id for Stage environment.
 - `MAX_ALLOWED_SERVICE_ACCOUNTS`: The default value of maximum number of service accounts that can be created by users. Defaults to `2`.
+- `SERVICE_ACCOUNT_LIMIT_CHECK_SKIP_ORG_ID_LIST`: A list of Org Ids for which service account limit checks dont apply. Defaults to empty list.
 - `MAX_LIMIT_FOR_SSO_GET_CLIENTS`: The default value of maximum number of clients fetch from mas-sso. Defaults to `100`.
 - `OSD_IDP_MAS_SSO_REALM`: MAS SSO realm for configuring OpenShift Cluster Identity Provider Clients. Defaults to `rhoas-kafka-sre`.
 - `TOKEN_ISSUER_URL`: A token issuer url used to validate if JWT token used are coming from the given issuer. Defaults to `https://sso.redhat.com/auth/realms/redhat-external`.

@@ -1047,3 +1047,136 @@ func TestKeycloakService_CreateServiceAccountInternal(t *testing.T) {
 	}
 
 }
+
+func TestKeycloakService_checkAllowedServiceAccountsLimits(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		accessToken string
+		maxAllowed  int
+		orgId       string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    bool
+		wantErr bool
+	}{
+		{
+			name: "Org ID present in the skip list, so no limits apply",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						config := keycloak.NewKeycloakConfig()
+						config.ServiceAccounttLimitCheckSkipOrgIdList = []string{"01234", "56789"}
+						return config
+					},
+					GetClientsFunc: func(accesstoken string, first int, max int, searchAttr string) ([]*gocloak.Client, error) {
+						var clientArr []*gocloak.Client
+
+						for i := 0; i < 2; i++ {
+							client := gocloak.Client{}
+							idStr := fmt.Sprintf("srvc-acct-%d", i)
+							client.ClientID = &idStr
+							clientArr = append(clientArr, &client)
+						}
+						return clientArr, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: "bearer: some-random-token",
+				maxAllowed:  2,
+				orgId:       "01234",
+			},
+
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "Org ID not present in the skip list, limit allows creation of service account",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						config := keycloak.NewKeycloakConfig()
+						config.ServiceAccounttLimitCheckSkipOrgIdList = []string{"01234", "56789"}
+						return config
+					},
+					GetClientsFunc: func(accesstoken string, first int, max int, searchAttr string) ([]*gocloak.Client, error) {
+						var clientArr []*gocloak.Client
+
+						for i := 0; i < 2; i++ {
+							client := gocloak.Client{}
+							idStr := fmt.Sprintf("srvc-acct-%d", i)
+							client.ClientID = &idStr
+							clientArr = append(clientArr, &client)
+						}
+						return clientArr, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: "bearer: some-random-token",
+				maxAllowed:  3,
+				orgId:       "012345",
+			},
+
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "Org ID not present in the skip list, limit disallows creation of service account",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						config := keycloak.NewKeycloakConfig()
+						config.ServiceAccounttLimitCheckSkipOrgIdList = []string{"01234", "56789"}
+						return config
+					},
+					GetClientsFunc: func(accesstoken string, first int, max int, searchAttr string) ([]*gocloak.Client, error) {
+						var clientArr []*gocloak.Client
+
+						for i := 0; i < 2; i++ {
+							client := gocloak.Client{}
+							idStr := fmt.Sprintf("srvc-acct-%d", i)
+							client.ClientID = &idStr
+							clientArr = append(clientArr, &client)
+						}
+						return clientArr, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: "bearer: some-random-token",
+				maxAllowed:  2,
+				orgId:       "012345",
+			},
+			want:    false,
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := masService{
+				kcClient: tt.fields.kcClient,
+			}
+			got, err := service.checkAllowedServiceAccountsLimits(tt.args.accessToken, tt.args.maxAllowed, tt.args.orgId)
+			Expect(err != nil).To(Equal(tt.wantErr), "checkAllowedServiceAccountsLimits() error = %v, wantErr %v", err, tt.wantErr)
+			Expect(tt.want).To(Equal(got))
+		})
+	}
+}

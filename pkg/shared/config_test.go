@@ -86,3 +86,32 @@ func createConfigFile(namePrefix, contents string) (*os.File, error) {
 	err = configFile.Close()
 	return configFile, err
 }
+
+func createYamlFilefromStringData(namePrefix string, contents string) (*os.File, error) {
+	configFile, err := ioutil.TempFile("", namePrefix)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = configFile.Write([]byte(contents)); err != nil {
+		return configFile, err
+	}
+	err = configFile.Close()
+	return configFile, err
+}
+
+func TestReadYamlFile(t *testing.T) {
+	RegisterTestingT(t)
+
+	yamlFile, err := createYamlFilefromStringData("skiplist.yaml", "---\n- 01234\n- 56789")
+	defer os.Remove(yamlFile.Name())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var skiplist []string
+	expectedSkipList := []string{"01234", "56789"}
+	quotedFileName := "\"" + yamlFile.Name() + "\""
+	err = ReadYamlFile(quotedFileName, &skiplist)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(expectedSkipList).To(Equal(skiplist))
+}

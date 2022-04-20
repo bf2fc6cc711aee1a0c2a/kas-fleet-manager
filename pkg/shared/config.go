@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
 var projectRootDirectory = GetProjectRootDir()
@@ -77,4 +79,12 @@ func BuildFullFilePath(filename string) string {
 		absFilePath = filepath.Join(projectRootDirectory, unquotedFile)
 	}
 	return absFilePath
+}
+
+func ReadYamlFile(filename string, out interface{}) (err error) {
+	fileContents, err := ReadFile(filename)
+	if err != nil {
+		return err
+	}
+	return yaml.UnmarshalStrict([]byte(fileContents), out)
 }
