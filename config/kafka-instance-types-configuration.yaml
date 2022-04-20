@@ -32,7 +32,7 @@ supported_instance_types:
       maxDataRetentionPeriod: "P14D"
       maxPartitions: 1500
       quotaConsumed: 1
-      quotaType: "rhosak"
+      quotaType: "RHOSAK"
       capacityConsumed: 1
   - id: developer
     display_name: Trial
@@ -46,7 +46,7 @@ supported_instance_types:
       maxDataRetentionPeriod: "P14D"
       maxPartitions: 1000
       quotaConsumed: 1
-      quotaType: "rhosak"
+      quotaType: "RHOSAKTrial"
       capacityConsumed: 1
   - id: eval
     display_name: Eval
