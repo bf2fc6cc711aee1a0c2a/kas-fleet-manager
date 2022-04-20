@@ -1376,9 +1376,9 @@ Feature: create a connector
       Then the vault delete counter should be 3
     Given UNLOCK--------------------------------------------------------------
 
-    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "410"
     When I GET path "/v1/kafka_connectors/${connector_id}"
-    Then the response code should be 404
+    Then the response code should be 410
 
   Scenario: Gary can discover the API endpoints
     Given I am logged in as "Gary"
@@ -1957,6 +1957,6 @@ Feature: create a connector
 
     Given I run SQL "update connector_statuses SET phase = 'deleting' WHERE id = '${connector_id}'" expect 1 row to be affected.
     And I run SQL "update connectors SET desired_state = 'deleted' WHERE id = '${connector_id}'" expect 1 row to be affected.
-    When I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
+    When I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "410"
     Then I GET path "/v1/kafka_connectors/${connector_id}"
-    And the response code should be 404
+    And the response code should be 410

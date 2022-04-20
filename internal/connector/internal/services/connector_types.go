@@ -109,18 +109,16 @@ func (cts *connectorTypesService) Get(id string) (*dbapi.ConnectorType, *errors.
 	var resource dbapi.ConnectorType
 	dbConn := cts.connectionFactory.New()
 
-	err := dbConn.
+	if err := dbConn.Unscoped().
 		Preload("Channels").
 		Preload("Labels").
 		Preload("Capabilities").
 		Where("connector_types.id = ?", id).
-		First(&resource).Error
-
-	if err != nil {
-		if services.IsRecordNotFoundError(err) {
-			return nil, errors.NotFound("ConnectorType with id='%s' not found", id)
-		}
-		return nil, errors.GeneralError("Unable to get connector type: %s", err)
+		First(&resource).Error; err != nil {
+		return nil, services.HandleGetError(`Connector type`, `id`, id, err)
+	}
+	if resource.DeletedAt.Valid {
+		return nil, services.HandleGoneError("Connector type", "id", id)
 	}
 	return &resource, nil
 }

@@ -112,8 +112,11 @@ func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*db
 
 	dbConn = dbConn.Limit(1)
 
-	if err := dbConn.First(&resource).Error; err != nil {
+	if err := dbConn.Unscoped().First(&resource).Error; err != nil {
 		return nil, services.HandleGetError("Connector", "id", id, err)
+	}
+	if resource.DeletedAt.Valid {
+		return nil, services.HandleGoneError("Connector", "id", id)
 	}
 	return &resource, nil
 }

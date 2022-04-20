@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
@@ -10,6 +11,15 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/xeipuuv/gojsonschema"
 )
+
+func validateConnectorClusterId(ctx context.Context, clusterService services.ConnectorClusterService) handlers.ValidateOption {
+	return func(field string, value *string) *errors.ServiceError {
+		if _, err := clusterService.Get(ctx, *value); err != nil {
+			return err
+		}
+		return nil
+	}
+}
 
 func validateConnectorRequest(connectorTypesService services.ConnectorTypesService, resource *public.ConnectorRequest, tid string) handlers.Validate {
 	return connectorValidationFunction(connectorTypesService, &resource.ConnectorTypeId, &resource.Channel, &resource.Connector, tid)
