@@ -74,16 +74,6 @@ func ValidateServiceAccountClientId(value *string, field string) Validate {
 	}
 }
 
-// ValidateMultiAZEnabled returns a validator that returns an error if the multiAZ is not true
-func ValidateMultiAZEnabled(value *bool, action string) Validate {
-	return func() *errors.ServiceError {
-		if !*value {
-			return errors.NotMultiAzActionNotSupported()
-		}
-		return nil
-	}
-}
-
 func ValidateMaxLength(value *string, field string, maxVal *int) Validate {
 	return func() *errors.ServiceError {
 		if maxVal != nil && len(*value) > *maxVal {
