@@ -332,14 +332,16 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	dbConn := k.connectionFactory.New()
 	kafkaRequest.SubscriptionId = subscriptionId
 	kafkaRequest.Status = constants2.KafkaRequestStatusAccepted.String()
+
 	// when creating new kafka - default storage size is assigned
-	instanceType, err := k.kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafkaRequest.InstanceType)
-	if err != nil {
-		return err
+	instanceType, instanceTypeErr := k.kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafkaRequest.InstanceType)
+	if instanceTypeErr != nil {
+		return errors.InstanceTypeNotSupported(instanceTypeErr.Error())
 	}
+
 	size, sizeErr := instanceType.GetKafkaInstanceSizeByID(kafkaRequest.SizeId)
 	if sizeErr != nil {
-		return err
+		return errors.InstancePlanNotSupported(sizeErr.Error())
 	}
 
 	kafkaRequest.KafkaStorageSize = size.MaxDataRetentionSize.String()

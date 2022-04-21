@@ -143,7 +143,13 @@ func TestKafkaCreate_Success(t *testing.T) {
 	// this is set by the mockKasfFleetshardSync
 	Expect(kafkaRequest.DesiredStrimziVersion).To(Equal("strimzi-cluster-operator.v0.23.0-0"))
 	// default kafka_storage_size should be set on creation
-	Expect(kafkaRequest.KafkaStorageSize).To(Equal(test.TestServices.KafkaConfig.KafkaCapacity.MaxDataRetentionSize))
+	instanceType, err := test.TestServices.KafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafka.InstanceType)
+	Expect(err).ToNot(HaveOccurred())
+
+	instanceSize, err := instanceType.GetKafkaInstanceSizeByID(kafka.SizeId)
+	Expect(err).ToNot(HaveOccurred())
+
+	Expect(kafka.KafkaStorageSize).To(Equal(instanceSize.MaxDataRetentionSize.String()))
 
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
 	common.CheckMetricExposed(h, t, metrics.ClusterStatusCapacityUsed)
@@ -1424,7 +1430,15 @@ func TestKafkaGet(t *testing.T) {
 	Expect(kafka.Name).To(Equal(mockKafkaName))
 	Expect(kafka.Status).To(Equal(constants2.KafkaRequestStatusAccepted.String()))
 	Expect(kafka.ReauthenticationEnabled).To(BeFalse())
-	Expect(kafka.KafkaStorageSize).To(Equal(test.TestServices.KafkaConfig.KafkaCapacity.MaxDataRetentionSize))
+
+	instanceType, err := test.TestServices.KafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafka.InstanceType)
+	Expect(err).ToNot(HaveOccurred())
+
+	instanceSize, err := instanceType.GetKafkaInstanceSizeByID(kafka.SizeId)
+	Expect(err).ToNot(HaveOccurred())
+	
+	Expect(kafka.KafkaStorageSize).To(Equal(instanceSize.MaxDataRetentionSize.String()))
+
 	// When kafka is in 'Accepted' state it means that it still has not been
 	// allocated to a cluster, which means that kas fleetshard-sync has not reported
 	// yet any status, so the version attribute (actual version) at this point

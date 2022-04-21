@@ -173,7 +173,6 @@ var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig
 }
 
 var defaultKafkaConf = config.KafkaConfig{
-	KafkaCapacity:          config.KafkaCapacityConfig{},
 	Quota:                  config.NewKafkaQuotaConfig(),
 	SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
 }
@@ -1074,7 +1073,6 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
 				kafkaConfig: config.KafkaConfig{
-					KafkaCapacity: config.KafkaCapacityConfig{},
 					Quota: &config.KafkaQuotaConfig{
 						Type:                   api.QuotaManagementListQuotaType.String(),
 						AllowDeveloperInstance: false,
