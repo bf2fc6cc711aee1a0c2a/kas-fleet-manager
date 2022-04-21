@@ -278,9 +278,9 @@ components:
       type: object
     ManagedKafkaCapacity:
       properties:
-        ingressThroughputPerSec:
+        ingressPerSec:
           type: string
-        egressThroughputPerSec:
+        egressPerSec:
           type: string
         totalMaxConnections:
           format: int
