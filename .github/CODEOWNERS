@@ -1,22 +1,20 @@
 # These owners will be the default owners for everything in the repo
 
-# TODO use GH team
-
 # Global reviewers
-* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @Rajagopalan-Ranganathan 
+* @bf2fc6cc711aee1a0c2a/kas-fleet-manager-reviewers 
 
 # Kafka
-internal/kafka/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @Rajagopalan-Ranganathan 
+internal/kafka/**/* @bf2fc6cc711aee1a0c2a/kas-fleet-manager-reviewers 
 
 # Github workflow
-.github/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @Rajagopalan-Ranganathan 
+.github/**/* @bf2fc6cc711aee1a0c2a/kas-fleet-manager-reviewers 
 
 # connectors
 internal/connector/**/*  @valdar @dhirajsb @lburgazzoli
 
 # common
-pkg/**/*  @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @valdar @dhirajsb @Rajagopalan-Ranganathan 
-test/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @valdar @dhirajsb @Rajagopalan-Ranganathan 
+pkg/**/*  @bf2fc6cc711aee1a0c2a/kas-fleet-manager-reviewers @valdar @dhirajsb
+test/**/* @bf2fc6cc711aee1a0c2a/kas-fleet-manager-reviewers @valdar @dhirajsb
 
 # api
 openapi/ @bf2fc6cc711aee1a0c2a/devexp-sdks
