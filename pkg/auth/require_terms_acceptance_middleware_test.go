@@ -1,12 +1,13 @@
 package auth
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/onsi/gomega"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+
+	. "github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -61,15 +62,16 @@ func TestRequireTermsAcceptanceMiddleware(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			requireTermsAcceptanceHandler := NewRequireTermsAcceptanceMiddleware()
 			toTest := requireTermsAcceptanceHandler.RequireTermsAcceptance(tt.enabled, tt.client, errors.ErrorTermsNotAccepted)(tt.next)
 			req := httptest.NewRequest("GET", "http://example.com", nil)
 			recorder := httptest.NewRecorder()
 			toTest.ServeHTTP(recorder, req)
-			gomega.Expect(recorder.Result().StatusCode).To(gomega.Equal(tt.wantCode))
+			Expect(recorder.Result().StatusCode).To(Equal(tt.wantCode))
 		})
 	}
 }

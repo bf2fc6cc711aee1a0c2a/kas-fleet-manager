@@ -8,7 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 )
 
 func TestRequireIssuerMiddleware(t *testing.T) {
@@ -90,15 +90,16 @@ func TestRequireIssuerMiddleware(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			requireIssuerHandler := NewRequireIssuerMiddleware()
 			toTest := setContextToken(requireIssuerHandler.RequireIssuer(tt.wantIssuer, tt.errCode)(tt.next), tt.token)
 			req := httptest.NewRequest("GET", "http://example.com", nil)
 			recorder := httptest.NewRecorder()
 			toTest.ServeHTTP(recorder, req)
-			gomega.Expect(recorder.Result().StatusCode).To(gomega.Equal(tt.wantCode))
+			Expect(recorder.Result().StatusCode).To(Equal(tt.wantCode))
 		})
 	}
 }

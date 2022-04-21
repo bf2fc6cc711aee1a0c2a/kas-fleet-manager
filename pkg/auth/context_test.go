@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"testing"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -28,10 +29,10 @@ func TestContext_GetAccountIdFromClaims(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			accountId := GetAccountIdFromClaims(tt.claims)
-			Expect(tt.want).To(Equal(accountId))
+			Expect(GetAccountIdFromClaims(tt.claims)).To(Equal(tt.want))
 		})
 	}
 }
@@ -64,10 +65,10 @@ func TestContext_GetIsOrgAdminFromClaims(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			isAdmin := GetIsOrgAdminFromClaims(tt.claims)
-			Expect(tt.want).To(Equal(isAdmin))
+			Expect(GetIsOrgAdminFromClaims(tt.claims)).To(Equal(tt.want))
 		})
 	}
 }
@@ -100,10 +101,10 @@ func TestContext_GetUsernameFromClaims(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			username := GetUsernameFromClaims(tt.claims)
-			Expect(tt.want).To(Equal(username))
+			Expect(GetUsernameFromClaims(tt.claims)).To(Equal(tt.want))
 		})
 	}
 }
@@ -120,21 +121,14 @@ func TestContext_GetOrgIdFromClaims(t *testing.T) {
 			want:   "",
 		},
 		{
-			name: "Should return when tenantIdClaim",
+			name: "Should return tenantIdClaim when tenantIdClaim is not empty",
 			claims: jwt.MapClaims{
 				tenantIdClaim: "Test Tenant ID",
 			},
 			want: "Test Tenant ID",
 		},
 		{
-			name: "Should return empty when orgId != tenantIdClaim",
-			claims: jwt.MapClaims{
-				tenantIdClaim: "Test Tenant ID",
-			},
-			want: "Test Tenant ID",
-		},
-		{
-			name: "Should return when alternateTenantIdClaim",
+			name: "Should return alternateTenantIdClaim when alternateTenantIdClaim is not empty",
 			claims: jwt.MapClaims{
 				alternateTenantIdClaim: "Test alternate Tenant ID",
 			},
@@ -143,10 +137,74 @@ func TestContext_GetOrgIdFromClaims(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tenantId := GetOrgIdFromClaims(tt.claims)
-			Expect(tt.want).To(Equal(tenantId))
+			Expect(GetOrgIdFromClaims(tt.claims)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestContext_GetIsAdminFromContext(t *testing.T) {
+	tests := []struct {
+		name string
+		ctx  context.Context
+		want bool
+	}{
+		{
+			name: "return false if isAdmin is false",
+			ctx:  SetIsAdminContext(context.TODO(), false),
+			want: false,
+		},
+		{
+			name: "return true if isAdmin is true",
+			ctx:  SetIsAdminContext(context.TODO(), true),
+			want: true,
+		},
+		{
+			name: "return false if isAdmin is nil",
+			ctx:  SetFilterByOrganisationContext(context.TODO(), false),
+			want: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Expect(GetIsAdminFromContext(tt.ctx)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestContext_GetFilterByOrganisationFromContext(t *testing.T) {
+	tests := []struct {
+		name string
+		ctx  context.Context
+		want bool
+	}{
+		{
+			name: "return false if filterByOrganisation is false",
+			ctx:  SetFilterByOrganisationContext(context.TODO(), false),
+			want: false,
+		},
+		{
+			name: "return true if filterByOrganisation is true",
+			ctx:  SetFilterByOrganisationContext(context.TODO(), true),
+			want: true,
+		},
+		{
+			name: "return false if filterByOrganisaiton is nil",
+			ctx:  SetIsAdminContext(context.TODO(), true),
+			want: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Expect(GetFilterByOrganisationFromContext(tt.ctx)).To(Equal(tt.want))
 		})
 	}
 }
