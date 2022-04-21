@@ -3,20 +3,20 @@
 # TODO use GH team
 
 # Global reviewers
-* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi
+* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @Rajagopalan-Ranganathan 
 
 # Kafka
-internal/kafka/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi
+internal/kafka/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @Rajagopalan-Ranganathan 
 
 # Github workflow
-.github/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi
+.github/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @Rajagopalan-Ranganathan 
 
 # connectors
 internal/connector/**/*  @valdar @dhirajsb @lburgazzoli
 
 # common
-pkg/**/*  @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @valdar @dhirajsb
-test/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @valdar @dhirajsb
+pkg/**/*  @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @valdar @dhirajsb @Rajagopalan-Ranganathan 
+test/**/* @pb82 @davidffrench @machi1990 @akoserwal @pawelpaszki @JameelB @miguelsorianod @ziccardi @valdar @dhirajsb @Rajagopalan-Ranganathan 
 
 # api
 openapi/ @bf2fc6cc711aee1a0c2a/devexp-sdks
