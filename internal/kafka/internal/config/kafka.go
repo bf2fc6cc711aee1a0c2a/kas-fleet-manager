@@ -20,15 +20,14 @@ type KafkaCapacityConfig struct {
 }
 
 type KafkaConfig struct {
-	KafkaTLSCert                   string              `json:"kafka_tls_cert"`
-	KafkaTLSCertFile               string              `json:"kafka_tls_cert_file"`
-	KafkaTLSKey                    string              `json:"kafka_tls_key"`
-	KafkaTLSKeyFile                string              `json:"kafka_tls_key_file"`
-	EnableKafkaExternalCertificate bool                `json:"enable_kafka_external_certificate"`
-	KafkaDomainName                string              `json:"kafka_domain_name"`
-	KafkaCapacity                  KafkaCapacityConfig `yaml:"kafka_capacity_config"`
-	KafkaCapacityConfigFile        string              `yaml:"kafka_capacity_config_file"`
-	BrowserUrl                     string              `json:"browser_url"`
+	KafkaTLSCert                   string `json:"kafka_tls_cert"`
+	KafkaTLSCertFile               string `json:"kafka_tls_cert_file"`
+	KafkaTLSKey                    string `json:"kafka_tls_key"`
+	KafkaTLSKeyFile                string `json:"kafka_tls_key_file"`
+	EnableKafkaExternalCertificate bool   `json:"enable_kafka_external_certificate"`
+	KafkaDomainName                string `json:"kafka_domain_name"`
+	KafkaCapacityConfigFile        string `yaml:"kafka_capacity_config_file"`
+	BrowserUrl                     string `json:"browser_url"`
 
 	KafkaLifespan          *KafkaLifespanConfig               `json:"kafka_lifespan"`
 	Quota                  *KafkaQuotaConfig                  `json:"kafka_quota"`
@@ -68,14 +67,6 @@ func (c *KafkaConfig) ReadFiles() error {
 		return err
 	}
 	err = shared.ReadFileValueString(c.KafkaTLSKeyFile, &c.KafkaTLSKey)
-	if err != nil {
-		return err
-	}
-	content, err := shared.ReadFile(c.KafkaCapacityConfigFile)
-	if err != nil {
-		return err
-	}
-	err = yaml.Unmarshal([]byte(content), &c.KafkaCapacity)
 	if err != nil {
 		return err
 	}
