@@ -9,6 +9,7 @@ import (
 	"github.com/onsi/gomega"
 
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
@@ -129,8 +130,8 @@ func TestPresentKafkaRequest(t *testing.T) {
 								Sizes: []config.KafkaInstanceSize{
 									{
 										Id:                          "x1",
-										IngressThroughputPerSec:     "30Mi",
-										EgressThroughputPerSec:      "30Mi",
+										IngressPerSec:               "30Mi",
+										EgressPerSec:                "30Mi",
 										TotalMaxConnections:         1000,
 										MaxDataRetentionSize:        "100Gi",
 										MaxPartitions:               1000,
@@ -226,8 +227,8 @@ func TestCapacityLimitReports(t *testing.T) {
 								Sizes: []config.KafkaInstanceSize{
 									{
 										Id:                          "x1",
-										IngressThroughputPerSec:     "30Mi",
-										EgressThroughputPerSec:      "30Mi",
+										IngressPerSec:               "30Mi",
+										EgressPerSec:                "30Mi",
 										TotalMaxConnections:         1000,
 										MaxDataRetentionSize:        "100Gi",
 										MaxPartitions:               1000,
@@ -270,8 +271,8 @@ func TestCapacityLimitReports(t *testing.T) {
 								Sizes: []config.KafkaInstanceSize{
 									{
 										Id:                          "x1",
-										IngressThroughputPerSec:     "30Mi",
-										EgressThroughputPerSec:      "30Mi",
+										IngressPerSec:               "30Mi",
+										EgressPerSec:                "30Mi",
 										TotalMaxConnections:         1000,
 										MaxDataRetentionSize:        "100Gi",
 										MaxPartitions:               1000,
@@ -314,8 +315,8 @@ func TestCapacityLimitReports(t *testing.T) {
 								Sizes: []config.KafkaInstanceSize{
 									{
 										Id:                          "x2",
-										IngressThroughputPerSec:     "30Mi",
-										EgressThroughputPerSec:      "30Mi",
+										IngressPerSec:               "30Mi",
+										EgressPerSec:                "30Mi",
 										TotalMaxConnections:         1000,
 										MaxDataRetentionSize:        "100Gi",
 										MaxPartitions:               1000,
@@ -339,15 +340,15 @@ func TestCapacityLimitReports(t *testing.T) {
 			kafkaRequest, err := PresentKafkaRequest(&test.request, &test.config)
 			if !test.errExpected {
 				if !test.negative {
-					gomega.Expect(kafkaRequest.IngressThroughputPerSec).ToNot(gomega.BeNil())
-					gomega.Expect(kafkaRequest.EgressThroughputPerSec).ToNot(gomega.BeNil())
+					gomega.Expect(kafkaRequest.IngressPerSec).ToNot(gomega.BeNil())
+					gomega.Expect(kafkaRequest.EgressPerSec).ToNot(gomega.BeNil())
 					gomega.Expect(kafkaRequest.TotalMaxConnections).ToNot(gomega.BeNil())
 					gomega.Expect(kafkaRequest.MaxConnectionAttemptsPerSec).ToNot(gomega.BeNil())
 					gomega.Expect(kafkaRequest.MaxDataRetentionPeriod).ToNot(gomega.BeNil())
 					gomega.Expect(kafkaRequest.MaxPartitions).ToNot(gomega.BeNil())
 				} else {
-					gomega.Expect(kafkaRequest.IngressThroughputPerSec).To(gomega.BeEmpty())
-					gomega.Expect(kafkaRequest.EgressThroughputPerSec).To(gomega.BeEmpty())
+					gomega.Expect(kafkaRequest.IngressPerSec).To(gomega.BeEmpty())
+					gomega.Expect(kafkaRequest.EgressPerSec).To(gomega.BeEmpty())
 					gomega.Expect(kafkaRequest.TotalMaxConnections).To(gomega.BeZero())
 					gomega.Expect(kafkaRequest.MaxConnectionAttemptsPerSec).To(gomega.BeZero())
 					gomega.Expect(kafkaRequest.MaxDataRetentionPeriod).To(gomega.BeEmpty())

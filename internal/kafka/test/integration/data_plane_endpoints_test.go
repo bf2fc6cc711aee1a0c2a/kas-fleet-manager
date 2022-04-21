@@ -219,8 +219,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		{
 			Id:                          "x1",
 			QuotaConsumed:               2,
-			IngressThroughputPerSec:     "50Mi",
-			EgressThroughputPerSec:      "100Mi",
+			IngressPerSec:               "50Mi",
+			EgressPerSec:                "100Mi",
 			TotalMaxConnections:         3000,
 			MaxConnectionAttemptsPerSec: 100,
 			MaxDataRetentionSize:        "1000Gi",
@@ -414,8 +414,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 				Expect(mk.Spec.Versions.KafkaIbp).To(Equal(k.DesiredKafkaIBPVersion))
 				Expect(mk.Spec.Endpoint.Tls).To(BeNil())
 				Expect(mk.Spec.Capacity.MaxDataRetentionSize).To(Equal(biggerStorageUpdateRequest.KafkaStorageSize))
-				Expect(mk.Spec.Capacity.IngressThroughputPerSec).To(Equal(kafkaInstancesizes[0].IngressThroughputPerSec.String()))
-				Expect(mk.Spec.Capacity.EgressThroughputPerSec).To(Equal(kafkaInstancesizes[0].EgressThroughputPerSec.String()))
+				Expect(mk.Spec.Capacity.IngressPerSec).To(Equal(kafkaInstancesizes[0].IngressPerSec.String()))
+				Expect(mk.Spec.Capacity.EgressPerSec).To(Equal(kafkaInstancesizes[0].EgressPerSec.String()))
 				Expect(mk.Spec.Capacity.TotalMaxConnections).To(Equal(int32(kafkaInstancesizes[0].TotalMaxConnections)))
 				Expect(mk.Spec.Capacity.MaxConnectionAttemptsPerSec).To(Equal(int32(kafkaInstancesizes[0].MaxConnectionAttemptsPerSec)))
 				Expect(mk.Spec.Capacity.MaxDataRetentionPeriod).To(Equal(kafkaInstancesizes[0].MaxDataRetentionPeriod))

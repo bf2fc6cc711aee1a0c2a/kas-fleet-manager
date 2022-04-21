@@ -1004,9 +1004,9 @@ components:
               type: string
             size_id:
               type: string
-            ingress_throughput_per_sec:
+            ingress_per_sec:
               type: string
-            egress_throughput_per_sec:
+            egress_per_sec:
               type: string
             total_max_connections:
               type: integer
@@ -1113,11 +1113,11 @@ components:
         id:
           description: 'Unique identifier of this Kafka instance size.'
           type: string
-        ingress_throughput_per_sec:
+        ingress_per_sec:
           description: 'Maximum ingress throughput per second available to this Kafka instance size.'
           type: object
           $ref: '#/components/schemas/SupportedKafkaSizeBytesValueItem'
-        egress_throughput_per_sec:
+        egress_per_sec:
           description: 'Maximum egress throughput per second available to this Kafka instance size.'
           type: object
           $ref: '#/components/schemas/SupportedKafkaSizeBytesValueItem'
@@ -1643,8 +1643,8 @@ components:
         browser_url: "https://console.redhat.com/application-services/streams/kafkas/1isy6rq3jki8q0otmjqfd3ocfrg/dashboard"
         reauthentication_enabled: true
         size_id: x1
-        ingress_throughput_per_sec: "2Mi"
-        egress_throughput_per_sec: "2Mi"
+        ingress_per_sec: "2Mi"
+        egress_per_sec: "2Mi"
         total_max_connections: 100
         max_partitions: 100
         max_data_retention_period: "P14D"
@@ -1674,8 +1674,8 @@ components:
           [
             {
               id: x1,
-              ingress_throughput_per_sec: {"bytes": 31457280},
-              egress_throughput_per_sec: {"bytes": 31457280},
+              ingress_per_sec: {"bytes": 31457280},
+              egress_per_sec: {"bytes": 31457280},
               total_max_connections: 3000,
               max_data_retention_size: {"bytes": 1073741800000},
               max_partitions: 1000,

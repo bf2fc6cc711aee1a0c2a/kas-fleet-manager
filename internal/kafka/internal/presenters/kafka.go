@@ -38,15 +38,15 @@ func ConvertKafkaRequest(kafkaRequestPayload public.KafkaRequestPayload, dbKafka
 func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaConfig) (public.KafkaRequest, *errors.ServiceError) {
 	reference := PresentReference(kafkaRequest.ID, kafkaRequest)
 
-	var ingressThroughputPerSec, egressThroughputPerSec, maxDataRetentionPeriod string
+	var ingressPerSec, egressPerSec, maxDataRetentionPeriod string
 	var totalMaxConnections, maxPartitions, maxConnectionAttemptsPerSec int
 	if config != nil {
 		kafkaConfig, err := config.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
 		if err != nil {
 			logger.Logger.Error(err)
 		} else {
-			ingressThroughputPerSec = kafkaConfig.IngressThroughputPerSec.String()
-			egressThroughputPerSec = kafkaConfig.EgressThroughputPerSec.String()
+			ingressPerSec = kafkaConfig.IngressPerSec.String()
+			egressPerSec = kafkaConfig.EgressPerSec.String()
 			totalMaxConnections = kafkaConfig.TotalMaxConnections
 			maxPartitions = kafkaConfig.MaxPartitions
 			maxDataRetentionPeriod = kafkaConfig.MaxDataRetentionPeriod
@@ -81,8 +81,8 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 		BrowserUrl:                  fmt.Sprintf("%s/%s/dashboard", strings.TrimSuffix(config.BrowserUrl, "/"), reference.Id),
 		SizeId:                      kafkaRequest.SizeId,
 		InstanceTypeName:            displayName,
-		IngressThroughputPerSec:     ingressThroughputPerSec,
-		EgressThroughputPerSec:      egressThroughputPerSec,
+		IngressPerSec:               ingressPerSec,
+		EgressPerSec:                egressPerSec,
 		TotalMaxConnections:         int32(totalMaxConnections),
 		MaxPartitions:               int32(maxPartitions),
 		MaxDataRetentionPeriod:      maxDataRetentionPeriod,

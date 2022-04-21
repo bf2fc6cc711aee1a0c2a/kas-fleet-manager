@@ -20,8 +20,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -33,8 +33,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							},
 							{
 								Id:                          "x2",
-								IngressThroughputPerSec:     "60Mi",
-								EgressThroughputPerSec:      "60Mi",
+								IngressPerSec:               "60Mi",
+								EgressPerSec:                "60Mi",
 								TotalMaxConnections:         2000,
 								MaxDataRetentionSize:        "200Gi",
 								MaxPartitions:               2000,
@@ -60,8 +60,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -73,8 +73,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							},
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -100,8 +100,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
 								MaxDataRetentionPeriod:      "P14D",
@@ -126,8 +126,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxDataRetentionPeriod:      "P14D",
@@ -151,16 +151,16 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
-								Id:                      "x1",
-								IngressThroughputPerSec: "30Mi",
-								EgressThroughputPerSec:  "30Mi",
-								TotalMaxConnections:     1000,
-								MaxDataRetentionSize:    "100Gi",
-								MaxDataRetentionPeriod:  "P14D",
-								MaxPartitions:           1000,
-								QuotaConsumed:           1,
-								QuotaType:               "rhosak",
-								CapacityConsumed:        1,
+								Id:                     "x1",
+								IngressPerSec:          "30Mi",
+								EgressPerSec:           "30Mi",
+								TotalMaxConnections:    1000,
+								MaxDataRetentionSize:   "100Gi",
+								MaxDataRetentionPeriod: "P14D",
+								MaxPartitions:          1000,
+								QuotaConsumed:          1,
+								QuotaType:              "rhosak",
+								CapacityConsumed:       1,
 							},
 						},
 					},
@@ -169,7 +169,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Should return error when property IngressThroughputPerSec is undefined",
+			name: "Should return error when property IngressPerSec is undefined",
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
@@ -178,7 +178,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								EgressThroughputPerSec:      "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -195,7 +195,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Should return error when property EgressThroughputPerSec is undefined",
+			name: "Should return error when property EgressPerSec is undefined",
 			config: SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []KafkaInstanceType{
 					{
@@ -204,7 +204,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
+								IngressPerSec:               "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -230,8 +230,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								EgressThroughputPerSec:      "30Mi",
-								IngressThroughputPerSec:     "30Mi",
+								EgressPerSec:                "30Mi",
+								IngressPerSec:               "30Mi",
 								TotalMaxConnections:         1000,
 								MaxPartitions:               1000,
 								MaxDataRetentionPeriod:      "P14D",
@@ -256,8 +256,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								EgressThroughputPerSec:      "30Mi",
-								IngressThroughputPerSec:     "30Mi",
+								EgressPerSec:                "30Mi",
+								IngressPerSec:               "30Mi",
 								TotalMaxConnections:         1000,
 								MaxPartitions:               1000,
 								MaxConnectionAttemptsPerSec: 100,
@@ -281,8 +281,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						DisplayName: "Standard",
 						Sizes: []KafkaInstanceSize{
 							{
-								EgressThroughputPerSec:      "30Mi",
-								IngressThroughputPerSec:     "30Mi",
+								EgressPerSec:                "30Mi",
+								IngressPerSec:               "30Mi",
 								TotalMaxConnections:         1000,
 								MaxPartitions:               1000,
 								MaxConnectionAttemptsPerSec: 100,
@@ -308,8 +308,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Midk",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Midk",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -335,8 +335,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "0Gi",
 								MaxPartitions:               1000,
@@ -362,8 +362,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "-30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "-30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -389,8 +389,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -416,8 +416,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -441,8 +441,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -481,8 +481,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -499,8 +499,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -526,8 +526,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -553,8 +553,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -579,8 +579,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -605,8 +605,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -630,8 +630,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,
@@ -656,8 +656,8 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 						Sizes: []KafkaInstanceSize{
 							{
 								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
+								IngressPerSec:               "30Mi",
+								EgressPerSec:                "30Mi",
 								TotalMaxConnections:         1000,
 								MaxDataRetentionSize:        "100Gi",
 								MaxPartitions:               1000,

@@ -48,8 +48,8 @@ func (kp *KafkaInstanceType) validate() error {
 
 type KafkaInstanceSize struct {
 	Id                          string   `yaml:"id"`
-	IngressThroughputPerSec     Quantity `yaml:"ingressThroughputPerSec"`
-	EgressThroughputPerSec      Quantity `yaml:"egressThroughputPerSec"`
+	IngressPerSec               Quantity `yaml:"ingressPerSec"`
+	EgressPerSec                Quantity `yaml:"egressPerSec"`
 	TotalMaxConnections         int      `yaml:"totalMaxConnections"`
 	MaxDataRetentionSize        Quantity `yaml:"maxDataRetentionSize"`
 	MaxPartitions               int      `yaml:"maxPartitions"`
@@ -66,19 +66,19 @@ type KafkaInstanceSize struct {
 // - any non-id string values must be parseable
 // - any int values must not be less than or equal to zero
 func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
-	if k.EgressThroughputPerSec.IsEmpty() || k.IngressThroughputPerSec.IsEmpty() ||
+	if k.EgressPerSec.IsEmpty() || k.IngressPerSec.IsEmpty() ||
 		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize.IsEmpty() || k.Id == "" || k.QuotaType == "" {
 		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' is missing required parameters.", k.Id, instanceTypeId)
 	}
 
-	egressThroughputQuantity, err := k.EgressThroughputPerSec.ToK8Quantity()
+	egressThroughputQuantity, err := k.EgressPerSec.ToK8Quantity()
 	if err != nil {
-		return fmt.Errorf("egressThroughputPerSec for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
+		return fmt.Errorf("egressPerSec for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
 	}
 
-	ingressThroughputQuantity, err := k.IngressThroughputPerSec.ToK8Quantity()
+	ingressThroughputQuantity, err := k.IngressPerSec.ToK8Quantity()
 	if err != nil {
-		return fmt.Errorf("ingressThroughputPerSec for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
+		return fmt.Errorf("ingressPerSec for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
 	}
 
 	maxDataRetentionSize, err := k.MaxDataRetentionSize.ToK8Quantity()

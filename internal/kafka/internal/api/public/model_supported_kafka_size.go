@@ -12,9 +12,9 @@ package public
 // SupportedKafkaSize Supported Kafka Size
 type SupportedKafkaSize struct {
 	// Unique identifier of this Kafka instance size.
-	Id                      string                           `json:"id,omitempty"`
-	IngressThroughputPerSec SupportedKafkaSizeBytesValueItem `json:"ingress_throughput_per_sec,omitempty"`
-	EgressThroughputPerSec  SupportedKafkaSizeBytesValueItem `json:"egress_throughput_per_sec,omitempty"`
+	Id            string                           `json:"id,omitempty"`
+	IngressPerSec SupportedKafkaSizeBytesValueItem `json:"ingress_per_sec,omitempty"`
+	EgressPerSec  SupportedKafkaSizeBytesValueItem `json:"egress_per_sec,omitempty"`
 	// Maximum amount of total connections available to this Kafka instance size.
 	TotalMaxConnections  int32                            `json:"total_max_connections,omitempty"`
 	MaxDataRetentionSize SupportedKafkaSizeBytesValueItem `json:"max_data_retention_size,omitempty"`

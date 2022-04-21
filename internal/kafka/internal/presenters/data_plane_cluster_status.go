@@ -49,10 +49,11 @@ func getResizeInfo(status private.DataPlaneClusterUpdateStatusRequest) dbapi.Dat
 		resizeInfo = dbapi.DataPlaneClusterStatusResizeInfo{
 			NodeDelta: int(*status.ResizeInfo.NodeDelta),
 			Delta: dbapi.DataPlaneClusterStatusCapacity{
-				IngressEgressThroughputPerSec: *status.ResizeInfo.Delta.IngressEgressThroughputPerSec,
-				Connections:                   int(*status.ResizeInfo.Delta.Connections),
-				DataRetentionSize:             *status.ResizeInfo.Delta.DataRetentionSize,
-				Partitions:                    int(*status.ResizeInfo.Delta.Partitions),
+				IngressPerSec:     *status.ResizeInfo.Delta.IngressPerSec,
+				EgressPerSec:      *status.ResizeInfo.Delta.EgressPerSec,
+				Connections:       int(*status.ResizeInfo.Delta.Connections),
+				DataRetentionSize: *status.ResizeInfo.Delta.DataRetentionSize,
+				Partitions:        int(*status.ResizeInfo.Delta.Partitions),
 			},
 		}
 	}
@@ -64,8 +65,11 @@ func getRemaining(status private.DataPlaneClusterUpdateStatusRequest) dbapi.Data
 		Connections: int(*status.Remaining.Connections),
 		Partitions:  int(*status.Remaining.Partitions),
 	}
-	if status.Remaining.IngressEgressThroughputPerSec != nil {
-		remaining.IngressEgressThroughputPerSec = *status.Remaining.IngressEgressThroughputPerSec
+	if status.Remaining.IngressPerSec != nil {
+		remaining.IngressPerSec = *status.Remaining.IngressPerSec
+	}
+	if status.Remaining.EgressPerSec != nil {
+		remaining.EgressPerSec = *status.Remaining.EgressPerSec
 	}
 	if status.Remaining.DataRetentionSize != nil {
 		remaining.DataRetentionSize = *status.Remaining.DataRetentionSize

@@ -199,9 +199,9 @@ components:
     ManagedKafkaCapacity:
       type: object
       properties:
-        ingressThroughputPerSec:
+        ingressPerSec:
           type: string
-        egressThroughputPerSec:
+        egressPerSec:
           type: string
         totalMaxConnections:
           type: integer
@@ -376,7 +376,10 @@ components:
           type: object
           nullable: true
           properties:
-            ingressEgressThroughputPerSec:
+            ingressPerSec:
+              type: string #an example is "40Gi", a k8s quantity.
+              nullable: true
+            egressPerSec:
               type: string #an example is "40Gi", a k8s quantity.
               nullable: true
             connections:
@@ -412,7 +415,10 @@ components:
         total:
           type: object
           properties:
-            ingressEgressThroughputPerSec:
+            ingressPerSec:
+              type: string #an example is "40Gi", a k8s quantity.
+              nullable: true
+            egressPerSec:
               type: string #an example is "40Gi", a k8s quantity.
               nullable: true
             connections:
@@ -428,7 +434,10 @@ components:
           type: object
           properties:
             # TODO 'total', 'remaining' attributes share the same properties so should we refactor it to a common schema?
-            ingressEgressThroughputPerSec:
+            ingressPerSec:
+              type: string #an example is "40Gi", a k8s quantity.
+              nullable: true
+            egressPerSec:
               type: string #an example is "40Gi", a k8s quantity.
               nullable: true
             connections:
@@ -486,8 +495,11 @@ components:
           description: "Capacity information of the data plane cluster"
           type: object
           properties:
-            ingressEgressThroughputPerSec:
+            ingressPerSec:
               type: string #example: 4Mi
+              nullable: true
+            egressPerSec:
+              type: string #an example is "40Gi", a k8s quantity.
               nullable: true
             totalMaxConnections:
               type: integer #example: 500
@@ -594,8 +606,8 @@ components:
             bf2.org/kafkaInstanceProfileQuotaConsumed: "1"
         spec:
           capacity:
-            ingressThroughputPerSec: 4Mi
-            egressThroughputPerSec: 4Mi
+            ingressPerSec: 4Mi
+            egressPerSec: 4Mi
             totalMaxConnections: 500
             maxDataRetentionSize: 100Gi
             maxPartitions: 100
@@ -631,7 +643,8 @@ components:
             status: "False"
             lastTransitionTime: "2018-01-01T00:00:00Z"
         capacity:
-          ingressEgressThroughputPerSec: 4Mi
+          ingressPerSec: 4Mi
+          egressPerSec: 4Mi
           totalMaxConnections: 500
           maxDataRetentionSize: 100Gi
           maxPartitions: 100

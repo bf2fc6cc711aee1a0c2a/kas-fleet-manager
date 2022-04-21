@@ -160,7 +160,7 @@ parameters:
 - name: SUPPORTED_INSTANCE_TYPES
   displayName: Supported Kafka instance types
   description: A list of supported Kafka instance types in a yaml format.
-  value: "[{id: developer, display_name: Trial, sizes: [{id: x1, ingressThroughputPerSec: 30Mi, egressThroughputPerSec: 30Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1000, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, capacityConsumed: 1, quotaType: rhosak, quotaConsumed: 1}]}, {id: standard, display_name: Standard, sizes: [{id: x1, ingressThroughputPerSec: 50Mi, egressThroughputPerSec: 100Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1500, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, capacityConsumed: 1, quotaType: rhosak, quotaConsumed: 1}]}]"
+  value: "[{id: developer, display_name: Trial, sizes: [{id: x1, ingressPerSec: 30Mi, egressPerSec: 30Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1000, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, capacityConsumed: 1, quotaType: rhosak, quotaConsumed: 1}]}, {id: standard, display_name: Standard, sizes: [{id: x1, ingressPerSec: 50Mi, egressPerSec: 100Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1500, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, capacityConsumed: 1, quotaType: rhosak, quotaConsumed: 1}]}]"
 
 - name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
   displayName: Enable Kafka TLS
@@ -423,6 +423,11 @@ parameters:
   description: Ingress throughput configuration for the default Kafka instance type
   value: "2Mi"
 
+- name: KAFKA_CAPACITY_EGRESS_THROUGHPUT
+  displayName: Kafka egress throughput
+  description: Egress throughput configuration for the default Kafka instance type
+  value: "2Mi"
+
 - name: KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS
   displayName: Kafka total max connections
   description: Total max connections configuration for the default Kafka instance type
@@ -598,7 +603,8 @@ objects:
         qontract.recycle: "true"
     data:
       kafka-capacity-config.yaml: |-
-        ingressEgressThroughputPerSec: ${KAFKA_CAPACITY_INGRESS_THROUGHPUT}
+        ingressPerSec: ${KAFKA_CAPACITY_INGRESS_THROUGHPUT}
+        egressPerSec: ${KAFKA_CAPACITY_EGRESS_THROUGHPUT}
         totalMaxConnections: ${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}
         maxDataRetentionSize: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE}
         maxPartitions: ${KAFKA_CAPACITY_MAX_PARTITIONS}

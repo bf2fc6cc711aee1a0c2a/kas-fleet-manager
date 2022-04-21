@@ -198,8 +198,8 @@ components:
             bf2.org/kafkaInstanceProfileQuotaConsumed: "1"
         spec:
           capacity:
-            ingressThroughputPerSec: 4Mi
-            egressThroughputPerSec: 4Mi
+            ingressPerSec: 4Mi
+            egressPerSec: 4Mi
             totalMaxConnections: 500
             maxDataRetentionSize: 100Gi
             maxPartitions: 100
@@ -235,7 +235,8 @@ components:
           status: "False"
           lastTransitionTime: 2018-01-01T00:00:00Z
         capacity:
-          ingressEgressThroughputPerSec: 4Mi
+          ingressPerSec: 4Mi
+          egressPerSec: 4Mi
           totalMaxConnections: 500
           maxDataRetentionSize: 100Gi
           maxPartitions: 100
@@ -278,9 +279,9 @@ components:
       type: object
     ManagedKafkaCapacity:
       properties:
-        ingressThroughputPerSec:
+        ingressPerSec:
           type: string
-        egressThroughputPerSec:
+        egressPerSec:
           type: string
         totalMaxConnections:
           format: int
@@ -340,9 +341,10 @@ components:
         nodeDelta: 7
         delta:
           partitions: 3
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+          egressPerSec: egressPerSec
           connections: 9
           dataRetentionSize: dataRetentionSize
+          ingressPerSec: ingressPerSec
       nullable: true
       properties:
         nodeDelta:
@@ -356,9 +358,10 @@ components:
       example:
         total:
           partitions: 6
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+          egressPerSec: egressPerSec
           connections: 0
           dataRetentionSize: dataRetentionSize
+          ingressPerSec: ingressPerSec
         strimzi:
         - ready: true
           kafkaIbpVersions:
@@ -380,9 +383,10 @@ components:
           nodeDelta: 7
           delta:
             partitions: 3
-            ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+            egressPerSec: egressPerSec
             connections: 9
             dataRetentionSize: dataRetentionSize
+            ingressPerSec: ingressPerSec
         nodeInfo:
           ceiling: 1
           current: 5
@@ -399,9 +403,10 @@ components:
           status: status
         remaining:
           partitions: 6
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+          egressPerSec: egressPerSec
           connections: 0
           dataRetentionSize: dataRetentionSize
+          ingressPerSec: ingressPerSec
       properties:
         conditions:
           description: The cluster data plane conditions
@@ -603,12 +608,16 @@ components:
     DatePlaneClusterUpdateStatusRequestResizeInfo_delta:
       example:
         partitions: 3
-        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+        egressPerSec: egressPerSec
         connections: 9
         dataRetentionSize: dataRetentionSize
+        ingressPerSec: ingressPerSec
       nullable: true
       properties:
-        ingressEgressThroughputPerSec:
+        ingressPerSec:
+          nullable: true
+          type: string
+        egressPerSec:
           nullable: true
           type: string
         connections:
@@ -638,11 +647,15 @@ components:
     DataPlaneClusterUpdateStatusRequest_total:
       example:
         partitions: 6
-        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+        egressPerSec: egressPerSec
         connections: 0
         dataRetentionSize: dataRetentionSize
+        ingressPerSec: ingressPerSec
       properties:
-        ingressEgressThroughputPerSec:
+        ingressPerSec:
+          nullable: true
+          type: string
+        egressPerSec:
           nullable: true
           type: string
         connections:
@@ -683,7 +696,10 @@ components:
     DataPlaneKafkaStatus_capacity:
       description: Capacity information of the data plane cluster
       properties:
-        ingressEgressThroughputPerSec:
+        ingressPerSec:
+          nullable: true
+          type: string
+        egressPerSec:
           nullable: true
           type: string
         totalMaxConnections:

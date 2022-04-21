@@ -10,8 +10,8 @@ import (
 var supportedKafkaSizeStandard = []config.KafkaInstanceSize{
 	{
 		Id:                          "x1",
-		IngressThroughputPerSec:     "30Mi",
-		EgressThroughputPerSec:      "30Mi",
+		IngressPerSec:               "30Mi",
+		EgressPerSec:                "30Mi",
 		TotalMaxConnections:         1000,
 		MaxDataRetentionSize:        "100Gi",
 		MaxPartitions:               1000,
@@ -26,8 +26,8 @@ var supportedKafkaSizeStandard = []config.KafkaInstanceSize{
 var supportedKafkaSizeDeveloper = []config.KafkaInstanceSize{
 	{
 		Id:                          "x2",
-		IngressThroughputPerSec:     "60Mi",
-		EgressThroughputPerSec:      "60Mi",
+		IngressPerSec:               "60Mi",
+		EgressPerSec:                "60Mi",
 		TotalMaxConnections:         2000,
 		MaxDataRetentionSize:        "200Gi",
 		MaxPartitions:               2000,

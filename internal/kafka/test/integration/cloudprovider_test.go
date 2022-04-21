@@ -82,8 +82,8 @@ var mockSupportedInstanceTypes = &config.KafkaSupportedInstanceTypesConfig{
 				Sizes: []config.KafkaInstanceSize{
 					{
 						Id:                          "x1",
-						IngressThroughputPerSec:     "30Mi",
-						EgressThroughputPerSec:      "30Mi",
+						IngressPerSec:               "30Mi",
+						EgressPerSec:                "30Mi",
 						TotalMaxConnections:         1000,
 						MaxDataRetentionSize:        "100Gi",
 						MaxPartitions:               1000,
@@ -101,8 +101,8 @@ var mockSupportedInstanceTypes = &config.KafkaSupportedInstanceTypesConfig{
 				Sizes: []config.KafkaInstanceSize{
 					{
 						Id:                          "x1",
-						IngressThroughputPerSec:     "30Mi",
-						EgressThroughputPerSec:      "30Mi",
+						IngressPerSec:               "30Mi",
+						EgressPerSec:                "30Mi",
 						TotalMaxConnections:         1000,
 						MaxDataRetentionSize:        "100Gi",
 						MaxPartitions:               1000,

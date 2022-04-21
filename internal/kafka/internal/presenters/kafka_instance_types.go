@@ -18,15 +18,15 @@ func GetSupportedSizes(supportedInstanceType *config.KafkaInstanceType) []public
 	supportedSizes := make([]public.SupportedKafkaSize, len(supportedInstanceType.Sizes))
 	for i, size := range supportedInstanceType.Sizes {
 		//errors from Quantity.ToFloat32() ignored. Strings already validated as resource.Quantity
-		ingressBytes, _ := size.IngressThroughputPerSec.ToFloat32()
-		egressBytes, _ := size.EgressThroughputPerSec.ToFloat32()
+		ingressBytes, _ := size.IngressPerSec.ToFloat32()
+		egressBytes, _ := size.EgressPerSec.ToFloat32()
 		retentionSizeBytes, _ := size.MaxDataRetentionSize.ToFloat32()
 		supportedSizes[i] = public.SupportedKafkaSize{
 			Id: size.Id,
-			IngressThroughputPerSec: public.SupportedKafkaSizeBytesValueItem{
+			IngressPerSec: public.SupportedKafkaSizeBytesValueItem{
 				Bytes: ingressBytes,
 			},
-			EgressThroughputPerSec: public.SupportedKafkaSizeBytesValueItem{
+			EgressPerSec: public.SupportedKafkaSizeBytesValueItem{
 				Bytes: egressBytes,
 			},
 			TotalMaxConnections: int32(size.TotalMaxConnections),

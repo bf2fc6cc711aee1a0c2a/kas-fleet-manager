@@ -8,8 +8,8 @@
 #
 # The following properties must be defined for each size (all values must be larger than '0'):
 #   - id: The size identifier. Each size id should be unique.
-#   - ingressThroughputPerSec: Maximum limit for ingress throughput per second (MB/s).
-#   - egressThroughputPerSec: Maximum limit for egress throughput per second (MB/s).
+#   - ingressPerSec: Maximum limit for ingress throughput per second (MB/s).
+#   - egressPerSec: Maximum limit for egress throughput per second (MB/s).
 #   - totalMaxConnections: Maximum client connections allowed.
 #   - maxConnectionAttemptsPerSec: Maximum client connection attempts per second.
 #   - maxDataRetentionSize: Maximum storage (GB).
@@ -24,8 +24,8 @@ supported_instance_types:
     display_name: Standard
     sizes:
     - id: x1
-      ingressThroughputPerSec: "50Mi"
-      egressThroughputPerSec: "100Mi"
+      ingressPerSec: "50Mi"
+      egressPerSec: "100Mi"
       totalMaxConnections: 3000
       maxConnectionAttemptsPerSec: 100
       maxDataRetentionSize: "1000Gi"
@@ -38,8 +38,8 @@ supported_instance_types:
     display_name: Trial
     sizes:
     - id: x1
-      ingressThroughputPerSec: "30Mi"
-      egressThroughputPerSec: "30Mi"
+      ingressPerSec: "30Mi"
+      egressPerSec: "30Mi"
       totalMaxConnections: 3000
       maxConnectionAttemptsPerSec: 100
       maxDataRetentionSize: "1000Gi"
