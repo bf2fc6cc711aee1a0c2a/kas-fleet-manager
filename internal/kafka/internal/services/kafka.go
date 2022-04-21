@@ -333,7 +333,16 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	kafkaRequest.SubscriptionId = subscriptionId
 	kafkaRequest.Status = constants2.KafkaRequestStatusAccepted.String()
 	// when creating new kafka - default storage size is assigned
-	kafkaRequest.KafkaStorageSize = k.kafkaConfig.KafkaCapacity.MaxDataRetentionSize
+	instanceType, err := k.kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafkaRequest.InstanceType)
+	if err != nil {
+		return err
+	}
+	size, sizeErr := instanceType.GetKafkaInstanceSizeByID(kafkaRequest.SizeId)
+	if sizeErr != nil {
+		return err
+	}
+
+	kafkaRequest.KafkaStorageSize = size.MaxDataRetentionSize.String()
 
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a kafka A is created, at the time of creation the quota-type was ams. At some point in the future
