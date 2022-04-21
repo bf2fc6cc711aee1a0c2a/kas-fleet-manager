@@ -423,36 +423,6 @@ parameters:
   description: The public HTTP host URL of the service
   value: "https://api.openshift.com"
 
-- name: KAFKA_CAPACITY_INGRESS_THROUGHPUT
-  displayName: Kafka ingress throughput
-  description: Ingress throughput configuration for the default Kafka instance type
-  value: "2Mi"
-
-- name: KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS
-  displayName: Kafka total max connections
-  description: Total max connections configuration for the default Kafka instance type
-  value: "100"
-
-- name: KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE
-  displayName: Kafka max data retention size
-  description: Data retention size configuration for the default Kafka instance type
-  value: "60Gi"
-
-- name: KAFKA_CAPACITY_MAX_PARTITIONS
-  displayName: Kafka max partitions
-  description: Max partitions configuration for the default Kafka instance type
-  value: "100"
-
-- name: KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD
-  displayName: Kafka max data retention period
-  description: Data retention period configuration for the default Kafka instance type
-  value: "P14D"
-
-- name: KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC
-  displayName: Kafka max connection attempts per second
-  description: Max connection attempts per second configuration for the default Kafka instance type
-  value: "100"
-
 - name: KAFKA_LIFE_SPAN
   displayName: Kafka life span expiration in hours
   description: Time period in hours after which kafka instances are deleted. This value must be a positive value
@@ -598,20 +568,6 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-kafka-capacity-config
-      annotations:
-        qontract.recycle: "true"
-    data:
-      kafka-capacity-config.yaml: |-
-        ingressEgressThroughputPerSec: ${KAFKA_CAPACITY_INGRESS_THROUGHPUT}
-        totalMaxConnections: ${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}
-        maxDataRetentionSize: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE}
-        maxPartitions: ${KAFKA_CAPACITY_MAX_PARTITIONS}
-        maxDataRetentionPeriod: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}
-        maxConnectionAttemptsPerSec: ${KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC}
-  - kind: ConfigMap
-    apiVersion: v1
-    metadata:
       name: kas-fleet-manager-authentication
       annotations:
         qontract.recycle: "true"
@@ -744,9 +700,6 @@ objects:
           - name: kas-fleet-manager-kafka-sre-user-list
             configMap:
               name: kas-fleet-manager-kafka-sre-user-list
-          - name: kas-fleet-manager-kafka-capacity-config
-            configMap:
-              name: kas-fleet-manager-kafka-capacity-config
           - name: kas-fleet-manager-authentication
             configMap:
               name: kas-fleet-manager-authentication
@@ -824,9 +777,6 @@ objects:
             - name: kas-fleet-manager-kafka-sre-user-list
               mountPath: /config/kafka-sre-user-list.yaml
               subPath: kafka-sre-user-list.yaml
-            - name: kas-fleet-manager-kafka-capacity-config
-              mountPath: /config/kafka-capacity-config.yaml
-              subPath: kafka-capacity-config.yaml
             - name: kas-fleet-manager-authentication
               mountPath: /config/authentication
             - name: kas-fleet-manager-dataplane-cluster-scaling-config
@@ -849,7 +799,6 @@ objects:
             - --deny-list-config-file=/config/deny-list-configuration.yaml
             - --read-only-user-list-file=/config/read-only-user-list.yaml
             - --kafka-sre-user-list-file=/config/kafka-sre-user-list.yaml
-            - --kafka-capacity-config-file=/config/kafka-capacity-config.yaml
             - --supported-kafka-instance-types-config-file=/config/kafka-instance-types-configuration.yaml
             - --kafka-lifespan=${KAFKA_LIFE_SPAN}
             - --enable-deletion-of-expired-kafka=${ENABLE_KAFKA_LIFE_SPAN}
