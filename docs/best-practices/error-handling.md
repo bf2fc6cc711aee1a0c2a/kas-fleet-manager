@@ -1,3 +1,22 @@
+# Table of Contents
+
+<!-- toc -->
+
+- [Error Handling in kas-fleet-manager](#error-handling-in-kas-fleet-manager)
+  * [Overview](#overview)
+  * [Best Practices](#best-practices)
+    + [Use `github.com/pkg/errors` library to create errors](#use-githubcompkgerrors-library-to-create-errors)
+      - [Do](#do)
+      - [Don't](#dont)
+    + [Capture the original error when creating a new ServiceError](#capture-the-original-error-when-creating-a-new-serviceerror)
+      - [Do](#do-1)
+      - [Don't](#dont-1)
+    + [Errors should be logged and forward to Sentry in central places](#errors-should-be-logged-and-forward-to-sentry-in-central-places)
+      - [Do](#do-2)
+      - [Don't](#dont-2)
+
+<!-- tocstop -->
+
 # Error Handling in kas-fleet-manager
 
 ## Overview

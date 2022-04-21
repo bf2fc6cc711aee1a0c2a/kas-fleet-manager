@@ -1,4 +1,28 @@
+# Table of Contents
+
+<!-- toc -->
+
+- [Testing best practices](#testing-best-practices)
+  * [Assertions](#assertions)
+    + [Examples](#examples)
+      - [Checking for equality](#checking-for-equality)
+      - [Checking array size](#checking-array-size)
+  * [Polling](#polling)
+
+<!-- tocstop -->
+
 # Testing best practices
+
+## Importing the package
+
+Import the package using
+```go
+import (
+  . "github.com/onsi/gomega"
+)
+```
+
+This way you won't need to specify the package name when making an assertion.
 
 ## Assertions
 In Kas Fleet Manager, we make extensive usage of the [gomega](https://onsi.github.io/gomega/) framework.

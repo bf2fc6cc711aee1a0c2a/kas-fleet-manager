@@ -1,3 +1,17 @@
+# Table of Contents
+
+<!-- toc -->
+
+- [Coding best practices](#coding-best-practices)
+  * [Method receivers: if unsure, use pointers](#method-receivers-if-unsure-use-pointers)
+    + [Explanation](#explanation)
+  * [Use the utility functions](#use-the-utility-functions)
+    + [Getting first non-empty string](#getting-first-non-empty-string)
+  * [Avoid exposing mutable internal state of objects](#avoid-exposing-mutable-internal-state-of-objects)
+    + [Explanation](#explanation-1)
+
+<!-- tocstop -->
+
 # Coding best practices
 This document covers the best practices to be used when writing code for Kas Fleet Manager
 

@@ -1,5 +1,17 @@
+# Table of Contents
+
+<!-- toc -->
+
+- [Validating strings and grammars](#validating-strings-and-grammars)
+  * [Configure the grammar](#configure-the-grammar)
+  * [Validate the string](#validate-the-string)
+  * [Creating a parser object](#creating-a-parser-object)
+  * [Provided Scanners](#provided-scanners)
+
+<!-- tocstop -->
+
 # Validating strings and grammars
-If you need to validate complex string, instead of writing custom, code, try using the provided state machine utility.
+If you need to validate complex string, instead of writing custom code, try using the provided state machine utility.
 
 Suppose you need to validate a size, and the size can be expressed by a number followed by the unit of measure.
 The unit of measure can be one of (case insensitive):
