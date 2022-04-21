@@ -38,7 +38,7 @@ import (
 
 var kafkaDeletionStatuses = []string{constants2.KafkaRequestStatusDeleting.String(), constants2.KafkaRequestStatusDeprovision.String()}
 var kafkaManagedCRStatuses = []string{constants2.KafkaRequestStatusProvisioning.String(), constants2.KafkaRequestStatusDeprovision.String(), constants2.KafkaRequestStatusReady.String(), constants2.KafkaRequestStatusFailed.String()}
-var kafkaDeletionInstanceType = types.DEVELOPER.String()
+var kafkaDeletionInstanceTypes = []string{types.DEVELOPER.String(), types.EVAL.String()}
 
 type KafkaRoutesAction string
 
@@ -555,7 +555,7 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
 		Model(&dbapi.KafkaRequest{}).
-		Where("instance_type = ?", kafkaDeletionInstanceType).
+		Where("instance_type IN (?)", kafkaDeletionInstanceTypes).
 		Where("created_at <= ?", time.Now().Add(-1*time.Duration(kafkaAgeInHours)*time.Hour)).
 		Where("status NOT IN (?)", kafkaDeletionStatuses)
 
