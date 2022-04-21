@@ -52,8 +52,8 @@ supported_instance_types:
     display_name: Eval
     sizes:
     - id: x1
-      ingressThroughputPerSec: "30Mi"
-      egressThroughputPerSec: "30Mi"
+      ingressPerSec: "30Mi"
+      egressPerSec: "30Mi"
       totalMaxConnections: 3000
       maxConnectionAttemptsPerSec: 100
       maxDataRetentionSize: "1000Gi"
