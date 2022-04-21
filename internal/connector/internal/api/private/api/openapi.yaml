@@ -395,6 +395,65 @@ paths:
       summary: Returns a connector namespace assigned to the cluster.
       tags:
       - Connector Clusters Agent
+  /api/connector_mgmt/v1/agent/kafka_connector_clusters/{connector_cluster_id}/namespaces/{namespace_id}/status:
+    put:
+      description: update the connector namespace status
+      operationId: updateConnectorNamespaceStatus
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The id of the namespace
+        explode: false
+        in: path
+        name: namespace_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectorNamespaceStatus'
+        required: true
+      responses:
+        "200":
+          description: Cluster status is updated
+        "400":
+          content:
+            application/json:
+              examples:
+                "400InvalidIdExample":
+                  $ref: '#/components/examples/400InvalidIdExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: id value is not valid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is not valid.
+        "410":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: namespace has been deleted
+      security:
+      - Bearer: []
+      summary: update the connector namespace status
+      tags:
+      - Connector Clusters Agent
 components:
   examples:
     "400InvalidIdExample":

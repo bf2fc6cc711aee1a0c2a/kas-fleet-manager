@@ -396,3 +396,26 @@ func (h *ConnectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, 
 	}
 	handlers.Handle(w, r, cfg, http.StatusNoContent)
 }
+
+func (h *ConnectorClusterHandler) UpdateNamespaceStatus(w http.ResponseWriter, r *http.Request) {
+	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
+	namespaceId := mux.Vars(r)["namespace_id"]
+	var resource private.ConnectorNamespaceStatus
+
+	ctx := r.Context()
+	cfg := &handlers.HandlerConfig{
+		MarshalInto: &resource,
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), validateConnectorClusterId(ctx, h.Service)),
+			handlers.Validation("namespace_id", &namespaceId, handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+			ctx := r.Context()
+			// validate namespace
+			converted := presenters.ConvertConnectorNamespaceStatus(resource)
+			err := h.ConnectorNamespace.UpdateConnectorNamespaceStatus(ctx, namespaceId, converted)
+			return nil, err
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusNoContent)
+}
