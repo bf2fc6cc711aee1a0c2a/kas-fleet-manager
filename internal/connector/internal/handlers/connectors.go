@@ -498,7 +498,7 @@ func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			listArgs := coreServices.NewListArguments(r.URL.Query())
-			resources, paging, err := h.connectorsService.List(ctx, kafkaId, listArgs, connectorTypeId)
+			resources, paging, err := h.connectorsService.List(ctx, kafkaId, listArgs, connectorTypeId, "")
 			if err != nil {
 				return nil, err
 			}

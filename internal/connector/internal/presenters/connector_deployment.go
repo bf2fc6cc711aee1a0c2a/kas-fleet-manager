@@ -2,7 +2,7 @@ package presenters
 
 import (
 	"encoding/json"
-
+	admin "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -48,6 +48,64 @@ func PresentConnectorDeployment(from dbapi.ConnectorDeployment) (private.Connect
 			Operators:       operators,
 		},
 	}, nil
+}
+
+func PresentConnectorDeploymentAdminView(from private.ConnectorDeployment, clusterId string) (admin.ConnectorDeploymentAdminView, *errors.ServiceError) {
+	var conditions []admin.MetaV1Condition
+	if len(from.Status.Conditions) > 0 {
+		for _, condition := range from.Status.Conditions {
+			conditions = append(conditions, admin.MetaV1Condition{
+				Type:               condition.Type,
+				Reason:             condition.Reason,
+				Message:            condition.Message,
+				LastTransitionTime: condition.LastTransitionTime,
+			})
+		}
+	}
+
+	view := admin.ConnectorDeploymentAdminView{
+		Id: from.Id,
+
+		Metadata: admin.ConnectorDeploymentAdminViewAllOfMetadata{
+			CreatedAt:       from.Metadata.CreatedAt,
+			UpdatedAt:       from.Metadata.UpdatedAt,
+			ResourceVersion: from.Metadata.ResourceVersion,
+		},
+
+		Spec: admin.ConnectorDeploymentSpec{
+			ConnectorId:              from.Spec.ConnectorId,
+			ConnectorResourceVersion: from.Spec.ConnectorResourceVersion,
+			ConnectorTypeId:          from.Spec.ConnectorTypeId,
+			ClusterId:                clusterId,
+			NamespaceId:              from.Spec.NamespaceId,
+			OperatorId:               from.Spec.OperatorId,
+			DesiredState:             admin.ConnectorDesiredState(from.Spec.DesiredState),
+			ShardMetadata:            from.Spec.ShardMetadata,
+		},
+
+		Status: admin.ConnectorDeploymentStatus{
+			Phase:           admin.ConnectorState(from.Status.Phase),
+			ResourceVersion: from.Status.ResourceVersion,
+			Operators: admin.ConnectorDeploymentStatusOperators{
+				Assigned: admin.ConnectorOperator{
+					Id:      from.Status.Operators.Assigned.Id,
+					Type:    from.Status.Operators.Assigned.Type,
+					Version: from.Status.Operators.Assigned.Version,
+				},
+				Available: admin.ConnectorOperator{
+					Id:      from.Status.Operators.Available.Id,
+					Type:    from.Status.Operators.Available.Type,
+					Version: from.Status.Operators.Available.Version,
+				},
+			},
+			Conditions: conditions,
+		},
+	}
+
+	reference := PresentReference(view.Id, view)
+	view.Kind = reference.Kind
+	view.Href = reference.Href
+	return view, nil
 }
 
 func ConvertConnectorDeploymentStatus(from private.ConnectorDeploymentStatus) (dbapi.ConnectorDeploymentStatus, *errors.ServiceError) {

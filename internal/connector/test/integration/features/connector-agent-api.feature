@@ -746,39 +746,146 @@ Feature: connector agent API
     #-----------------------------------------------------------------------------------------------------------------
     # In this part of the Scenario we test out getting connectors using the admin API
     #-----------------------------------------------------------------------------------------------------------------
+    # get cluster
     Given I am logged in as "Ricky Bobby"
-    And I GET path "/v1/admin/kafka_connector_namespaces/${connector_namespace_id}/connectors"
-    And the response code should be 200
-    And the response should match json:
+    When I GET path "/v1/admin/kafka_connector_clusters"
+    Then the response code should be 200
+    And the ".items[0]" selection from the response should match json:
       """
       {
-        "items":[{
-          "id":"${connector_id}",
-          "owner":"${response.items[0].owner}",
-          "created_at":"${response.items[0].created_at}",
-          "modified_at":"${response.items[0].modified_at}",
-          "name":"example 1",
-          "connector_type_id":"aws-sqs-source-v1alpha1",
-          "namespace_id":"${connector_namespace_id}",
-          "channel":"stable",
-          "desired_state":"ready",
-          "resource_version":${response.items[0].resource_version},
-          "status":{
-            "state":"updating"
-          }
-        }],
-        "kind":"ConnectorAdminViewList",
-        "page":1,
-        "size":1,
-        "total":1
+        "created_at": "${response.items[0].created_at}",
+        "href": "${response.items[0].href}",
+        "id": "${response.items[0].id}",
+        "kind": "ConnectorCluster",
+        "modified_at": "${response.items[0].modified_at}",
+        "name": "${response.items[0].name}",
+        "owner": "${response.items[0].owner}",
+        "status": {
+          "state": "${response.items[0].status.state}"
+        }
       }
       """
-    Given I GET path "/v1/admin/kafka_connectors/${connector_id}"
+
+    # get cluster namespaces
+    When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/namespaces"
+    Then the response code should be 200
+    And the ".items[0].id" selection from the response should match "${connector_namespace_id}"
+
+    # get cluster connectors
+    When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/connectors"
+    Then the response code should be 200
+    And the ".kind" selection from the response should match "ConnectorAdminViewList"
+    And the ".items[0].kind" selection from the response should match "ConnectorAdminView"
+    And the ".items[0].kafka" selection from the response should match "null"
+    And the ".items[0].service_account" selection from the response should match "null"
+    And the ".items[0].schema_registry" selection from the response should match "null"
+    And the ".items[0].connector" selection from the response should match "null"
+
+    # get cluster deployments
+    When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    And the response code should be 200
+    And the ".kind" selection from the response should match "ConnectorDeploymentAdminViewList"
+    And the ".items[0].kind" selection from the response should match "ConnectorDeploymentAdminView"
+    And the ".items[0].spec.cluster_id" selection from the response should match "${connector_cluster_id}"
+    And the ".items[0].kafka" selection from the response should match "null"
+    And the ".items[0].service_account" selection from the response should match "null"
+    And the ".items[0].schema_registry" selection from the response should match "null"
+    And the ".items[0].connector_spec" selection from the response should match "null"
+
+    # get cluster deployment by id
+    When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
     And the response code should be 200
     And the response should match json:
     """
     {
+      "href": "/api/connector_mgmt/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
+      "id": "${connector_deployment_id}",
+      "kind": "ConnectorDeploymentAdminView",
+      "metadata": {
+        "created_at": "${response.metadata.created_at}",
+        "resource_version": ${response.metadata.resource_version},
+        "updated_at": "${response.metadata.updated_at}"
+      },
+      "spec": {
+        "cluster_id": "${connector_cluster_id}",
+        "connector_id": "${connector_id}",
+        "connector_resource_version": ${response.spec.connector_resource_version},
+        "connector_type_id": "aws-sqs-source-v1alpha1",
+        "desired_state": "ready",
+        "namespace_id": "${connector_namespace_id}",
+        "shard_metadata": {
+          "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
+          "connector_revision": "5",
+          "connector_type": "source",
+          "kamelets": {
+            "adapter": {
+              "name": "aws-sqs-source",
+              "prefix": "aws"
+            },
+            "kafka": {
+              "name": "managed-kafka-sink",
+              "prefix": "kafka"
+            },
+            "processors": {
+              "extract_field": "extract-field-action",
+              "has_header_filter": "has-header-filter-action",
+              "insert_field": "insert-field-action",
+              "throttle": "throttle-action"
+            }
+          },
+          "operators": [
+            {
+              "type": "camel-k",
+              "version": "[1.0.0,2.0.0)"
+            }
+          ]
+        }
+      },
+      "status": {
+        "operators": {
+          "assigned": {},
+          "available": {}
+        }
+      }
+    }
+    """
+
+    # get namespaces
+    When I GET path "/v1/admin/kafka_connector_namespaces"
+    Then the response code should be 200
+    And the ".kind" selection from the response should match "ConnectorNamespaceList"
+    And the ".items[0].kind" selection from the response should match "ConnectorNamespace"
+
+    # namespace connectors
+    And I GET path "/v1/admin/kafka_connector_namespaces/${connector_namespace_id}/connectors"
+    And the response code should be 200
+    And the ".kind" selection from the response should match "ConnectorAdminViewList"
+    And the ".items[0].kind" selection from the response should match "ConnectorAdminView"
+    And the ".items[0].kafka" selection from the response should match "null"
+    And the ".items[0].service_account" selection from the response should match "null"
+    And the ".items[0].schema_registry" selection from the response should match "null"
+    And the ".items[0].connector" selection from the response should match "null"
+
+    # namespace deployments
+    When I GET path "/v1/admin/kafka_connector_namespaces/${connector_namespace_id}/deployments"
+    Then the response code should be 200
+    And the ".kind" selection from the response should match "ConnectorDeploymentAdminViewList"
+    And the ".items[0].kind" selection from the response should match "ConnectorDeploymentAdminView"
+    And the ".items[0].spec.cluster_id" selection from the response should match "${connector_cluster_id}"
+    And the ".items[0].kafka" selection from the response should match "null"
+    And the ".items[0].service_account" selection from the response should match "null"
+    And the ".items[0].schema_registry" selection from the response should match "null"
+    And the ".items[0].connector_spec" selection from the response should match "null"
+
+    # connector by id
+    When I GET path "/v1/admin/kafka_connectors/${connector_id}"
+    Then the response code should be 200
+    And the response should match json:
+    """
+    {
       "id":"${connector_id}",
+      "kind":"ConnectorAdminView",
+      "href":"/api/connector_mgmt/v1/admin/kafka_connectors/${connector_id}",
       "owner":"${response.owner}",
       "created_at":"${response.created_at}",
       "modified_at":"${response.modified_at}",
@@ -800,23 +907,6 @@ Feature: connector agent API
 
     # Now lets verify connector upgrades due to catalog updates
     Given I am logged in as "Ricky Bobby"
-    And I GET path "/v1/admin/kafka_connector_clusters"
-    And the response code should be 200
-    And the ".items[0]" selection from the response should match json:
-      """
-      {
-        "href": "${response.items[0].href}",
-        "id": "${response.items[0].id}",
-        "kind": "ConnectorCluster",
-        "created_at": "${response.items[0].created_at}",
-        "name": "${response.items[0].name}",
-        "owner": "${response.items[0].owner}",
-        "modified_at": "${response.items[0].modified_at}",
-        "status": {
-          "state": "${response.items[0].status.state}"
-        }
-      }
-      """
     And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
     And the response code should be 200
     And the response should match json:
@@ -1075,7 +1165,7 @@ Feature: connector agent API
 
     # Connectors that were assigning the cluster get updated to not refer to them.
     Given I am logged in as "Jimmy"
-    And I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".namespace_id" selection to match "null"
+    And I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".namespace_id" selection to match ""
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
     And the ".desired_state" selection from the response should match "unassigned"
@@ -1086,7 +1176,7 @@ Feature: connector agent API
     And I DELETE path "/v1/admin/kafka_connectors/${connector_id}?force=true"
     And the response code should be 204
 
-  Scenario: Bobby can stop and start and existing connector
+  Scenario: Bobby can stop and start an existing connector
     Given I am logged in as "Bobby"
 
     #---------------------------------------------------------------------------------------------

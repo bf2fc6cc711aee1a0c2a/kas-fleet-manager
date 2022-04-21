@@ -78,12 +78,8 @@ func PresentConnectorAdminView(from *dbapi.ConnectorWithConditions) (admin.Conne
 		namespaceId = *from.NamespaceId
 	}
 
-	reference := PresentReference(from.ID, from)
 	connector := admin.ConnectorAdminView{
-		Id:   reference.Id,
-		Kind: reference.Kind,
-		Href: reference.Href,
-
+		Id:              from.ID,
 		Owner:           from.Owner,
 		Name:            from.Name,
 		CreatedAt:       from.CreatedAt,
@@ -97,6 +93,9 @@ func PresentConnectorAdminView(from *dbapi.ConnectorWithConditions) (admin.Conne
 		DesiredState: admin.ConnectorDesiredState(from.DesiredState),
 		Channel:      admin.Channel(from.Channel),
 	}
+	reference := PresentReference(connector.Id, connector)
+	connector.Kind = reference.Kind
+	connector.Href = reference.Href
 
 	var conditions []private.MetaV1Condition
 	if from.Conditions != nil {

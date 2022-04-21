@@ -67,6 +67,7 @@ func (s *TestScenario) theResponseCodeShouldBe(expected int) error {
 	}
 	return nil
 }
+
 func (s *TestScenario) TheResponseShouldMatchJsonDoc(expected *godog.DocString) error {
 	return s.theResponseShouldMatchJson(expected.Content)
 }
@@ -183,7 +184,11 @@ func (s *TestScenario) theSelectionFromTheResponseShouldMatch(selector string, e
 
 	iter := query.Run(doc)
 	if actual, found := iter.Next(); found {
-		actual := fmt.Sprintf("%v", actual)
+		if actual == nil {
+			actual = "null" // use null to represent missing value
+		} else {
+			actual = fmt.Sprintf("%v", actual)
+		}
 		if actual != expected {
 			return fmt.Errorf("selected JSON does not match. expected: %v, actual: %v", expected, actual)
 		}

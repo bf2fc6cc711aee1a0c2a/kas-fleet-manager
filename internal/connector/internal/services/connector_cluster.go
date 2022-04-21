@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/phase"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/golang/glog"
 	"reflect"
@@ -379,7 +380,9 @@ func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *
 	return nil
 }
 
-// List returns all connectors assigned to the cluster
+var validDeploymentColumns = []string{"connector_id", "connector_version", "connector_type_channel_id", "cluster_id", "operator_id", "namespace_id"}
+
+// ListConnectorDeployments returns all deployments assigned to the cluster
 func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, id string, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError) {
 	var resourceList dbapi.ConnectorDeploymentList
 	dbConn := k.connectionFactory.New()
@@ -389,10 +392,21 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 		Size: listArgs.Size,
 	}
 
-	dbConn = dbConn.
-		Where("connector_deployments.cluster_id = ?", id)
+	if id != "" {
+		dbConn = dbConn.Where("connector_deployments.cluster_id = ?", id)
+	}
 	if gtVersion != 0 {
 		dbConn = dbConn.Where("connector_deployments.version > ?", gtVersion)
+	}
+
+	// Apply search query
+	if len(listArgs.Search) > 0 {
+		queryParser := coreServices.NewQueryParser(validDeploymentColumns...)
+		searchDbQuery, err := queryParser.Parse(listArgs.Search)
+		if err != nil {
+			return resourceList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector deployments requests: %s", err.Error())
+		}
+		dbConn = dbConn.Where(searchDbQuery.Query, searchDbQuery.Values...)
 	}
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)

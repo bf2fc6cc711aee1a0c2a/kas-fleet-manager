@@ -159,6 +159,9 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(kerrors.ErrorNotFound))
 	adminRouter.HandleFunc("/kafka_connector_clusters", s.ConnectorAdminHandler.ListConnectorClusters).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/namespaces", s.ConnectorAdminHandler.GetClusterNamespaces).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/connectors", s.ConnectorAdminHandler.GetClusterConnectors).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/deployments", s.ConnectorAdminHandler.GetClusterDeployments).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}", s.ConnectorAdminHandler.GetConnectorDeployment).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/upgrades/type", s.ConnectorAdminHandler.GetConnectorUpgradesByType).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/upgrades/type", s.ConnectorAdminHandler.UpgradeConnectorsByType).Methods(http.MethodPut)
 	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/upgrades/operator", s.ConnectorAdminHandler.GetConnectorUpgradesByOperator).Methods(http.MethodGet)
@@ -167,6 +170,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	adminRouter.HandleFunc("/kafka_connector_namespaces", s.ConnectorAdminHandler.CreateConnectorNamespace).Methods(http.MethodPost)
 	adminRouter.HandleFunc("/kafka_connector_namespaces/{namespace_id}", s.ConnectorAdminHandler.DeleteConnectorNamespace).Methods(http.MethodDelete)
 	adminRouter.HandleFunc("/kafka_connector_namespaces/{namespace_id}/connectors", s.ConnectorAdminHandler.GetNamespaceConnectors).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafka_connector_namespaces/{namespace_id}/deployments", s.ConnectorAdminHandler.GetNamespaceDeployments).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafka_connectors/{connector_id}", s.ConnectorAdminHandler.GetConnector).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafka_connectors/{connector_id}", s.ConnectorAdminHandler.DeleteConnector).Methods(http.MethodDelete)
 

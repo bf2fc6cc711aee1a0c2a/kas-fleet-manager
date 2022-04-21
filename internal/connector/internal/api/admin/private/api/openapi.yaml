@@ -266,6 +266,520 @@ paths:
       summary: Get a list of available connector namespaces in cluster
       tags:
       - Connector Clusters Admin
+  /api/connector_mgmt/v1/admin/kafka_connector_clusters/${connector_cluster_id}/connectors:
+    get:
+      operationId: getClusterConnectors
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+      - description: |-
+          Specifies the order by criteria. The syntax of this parameter is
+          similar to the syntax of the `order by` clause of an SQL statement.
+          Each query can be ordered by any of the `ConnectorType` fields.
+          For example, to return all Connector types ordered by their name, use the following syntax:
+
+          ```sql
+          name asc
+          ```
+
+          To return all Connector types ordered by their name _and_ version, use the following syntax:
+
+          ```sql
+          name asc, version asc
+          ```
+
+          If the parameter isn't provided, or if the value is empty, then
+          the results are ordered by name.
+        examples:
+          orderBy:
+            value: name asc
+        explode: true
+        in: query
+        name: orderBy
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: |
+          Search criteria.
+
+          The syntax of this parameter is similar to the syntax of the `where` clause of a
+          SQL statement. Allowed fields in the search are `name`, `description`, `version`, `label`, and `channel`.
+          Allowed operators are `<>`, `=`, or `LIKE`.
+          Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
+
+          Examples:
+
+          To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:
+
+          ```
+          name = aws-sqs-source and channel = stable
+          ```[p-]
+
+          To return a Kafka instance with a name that starts with `aws`, use the following syntax:
+
+          ```
+          name like aws%25
+          ```
+
+          If the parameter isn't provided, or if the value is empty, then all the Connector Type
+          that the user has permission to see are returned.
+
+          Note. If the query is invalid, an error is returned.
+        examples:
+          search:
+            value: name = aws-sqs-source and channel = stable
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorAdminViewList'
+          description: Connectors in cluster
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector cluster exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Get a list of available connectors in a cluster
+      tags:
+      - Connector Clusters Admin
+  /api/connector_mgmt/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments:
+    get:
+      operationId: getClusterDeployments
+      parameters:
+      - description: The id of the cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+      - description: |-
+          Specifies the order by criteria. The syntax of this parameter is
+          similar to the syntax of the `order by` clause of an SQL statement.
+          Each query can be ordered by any of the `ConnectorType` fields.
+          For example, to return all Connector types ordered by their name, use the following syntax:
+
+          ```sql
+          name asc
+          ```
+
+          To return all Connector types ordered by their name _and_ version, use the following syntax:
+
+          ```sql
+          name asc, version asc
+          ```
+
+          If the parameter isn't provided, or if the value is empty, then
+          the results are ordered by name.
+        examples:
+          orderBy:
+            value: name asc
+        explode: true
+        in: query
+        name: orderBy
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorDeploymentAdminViewList'
+          description: Connector deployments in cluster
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector cluster exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Get a list of available deployments in a cluster
+      tags:
+      - Connector Clusters Admin
+  /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}:
+    get:
+      description: Get a connector deployment
+      operationId: getConnectorDeployment
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The id of the connector deployment
+        explode: false
+        in: path
+        name: deployment_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorDeploymentAdminView'
+          description: The connector deployment matching the request
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector deployment exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Get a connector deployment
+      tags:
+      - Connector Clusters Admin
+  /api/connector_mgmt/v1/admin/kafka_connector_namespaces:
+    get:
+      operationId: getConnectorNamespaces
+      parameters:
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+      - description: |-
+          Specifies the order by criteria. The syntax of this parameter is
+          similar to the syntax of the `order by` clause of an SQL statement.
+          Each query can be ordered by any of the `ConnectorType` fields.
+          For example, to return all Connector types ordered by their name, use the following syntax:
+
+          ```sql
+          name asc
+          ```
+
+          To return all Connector types ordered by their name _and_ version, use the following syntax:
+
+          ```sql
+          name asc, version asc
+          ```
+
+          If the parameter isn't provided, or if the value is empty, then
+          the results are ordered by name.
+        examples:
+          orderBy:
+            value: name asc
+        explode: true
+        in: query
+        name: orderBy
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: |
+          Search criteria.
+
+          The syntax of this parameter is similar to the syntax of the `where` clause of a
+          SQL statement. Allowed fields in the search are `name`, `description`, `version`, `label`, and `channel`.
+          Allowed operators are `<>`, `=`, or `LIKE`.
+          Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
+
+          Examples:
+
+          To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:
+
+          ```
+          name = aws-sqs-source and channel = stable
+          ```[p-]
+
+          To return a Kafka instance with a name that starts with `aws`, use the following syntax:
+
+          ```
+          name like aws%25
+          ```
+
+          If the parameter isn't provided, or if the value is empty, then all the Connector Type
+          that the user has permission to see are returned.
+
+          Note. If the query is invalid, an error is returned.
+        examples:
+          search:
+            value: name = aws-sqs-source and channel = stable
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorNamespaceList'
+          description: Connector namespaces
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector namespace exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Get a list of available connector namespaces
+      tags:
+      - Connector Namespaces Admin
+    post:
+      operationId: createConnectorNamespace
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectorNamespaceWithTenantRequest'
+        description: Namespace to create
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorNamespace'
+          description: Accepted
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector namespace exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Create a connector namespace
+      tags:
+      - Connector Namespaces Admin
+  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/${namespace_id}:
+    delete:
+      operationId: deleteConnectorNamespace
+      parameters:
+      - description: The id of the namespace to delete
+        explode: false
+        in: path
+        name: namespace_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Deleted
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector cluster exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Delete a connector namespace
+      tags:
+      - Connector Clusters Admin
   /api/connector_mgmt/v1/admin/kafka_connector_namespaces/${namespace_id}/connectors:
     get:
       operationId: getNamespaceConnectors
@@ -396,7 +910,140 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-      summary: Get a list of available connectors in a namespace in a cluster
+      summary: Get a list of available connectors in a namespace
+      tags:
+      - Connector Clusters Admin
+  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/${namespace_id}/deployments:
+    get:
+      operationId: getNamespaceDeployments
+      parameters:
+      - description: The id of the namespace
+        explode: false
+        in: path
+        name: namespace_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+      - description: |-
+          Specifies the order by criteria. The syntax of this parameter is
+          similar to the syntax of the `order by` clause of an SQL statement.
+          Each query can be ordered by any of the `ConnectorType` fields.
+          For example, to return all Connector types ordered by their name, use the following syntax:
+
+          ```sql
+          name asc
+          ```
+
+          To return all Connector types ordered by their name _and_ version, use the following syntax:
+
+          ```sql
+          name asc, version asc
+          ```
+
+          If the parameter isn't provided, or if the value is empty, then
+          the results are ordered by name.
+        examples:
+          orderBy:
+            value: name asc
+        explode: true
+        in: query
+        name: orderBy
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: |
+          Search criteria.
+
+          The syntax of this parameter is similar to the syntax of the `where` clause of a
+          SQL statement. Allowed fields in the search are `name`, `description`, `version`, `label`, and `channel`.
+          Allowed operators are `<>`, `=`, or `LIKE`.
+          Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
+
+          Examples:
+
+          To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:
+
+          ```
+          name = aws-sqs-source and channel = stable
+          ```[p-]
+
+          To return a Kafka instance with a name that starts with `aws`, use the following syntax:
+
+          ```
+          name like aws%25
+          ```
+
+          If the parameter isn't provided, or if the value is empty, then all the Connector Type
+          that the user has permission to see are returned.
+
+          Note. If the query is invalid, an error is returned.
+        examples:
+          search:
+            value: name = aws-sqs-source and channel = stable
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorDeploymentAdminViewList'
+          description: Connector deployments in namespace
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector namespace exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Get a list of available deployments in a namespace
       tags:
       - Connector Clusters Admin
   /api/connector_mgmt/v1/admin/kafka_connectors/${connector_id}:
@@ -793,230 +1440,6 @@ paths:
       summary: upgrade a connector cluster
       tags:
       - Connector Clusters Admin
-  /api/connector_mgmt/v1/admin/kafka_connector_namespaces:
-    get:
-      operationId: getConnectorNamespaces
-      parameters:
-      - description: Page index
-        examples:
-          page:
-            value: "1"
-        in: query
-        name: page
-        required: false
-        schema:
-          type: string
-      - description: Number of items in each page
-        examples:
-          size:
-            value: "100"
-        in: query
-        name: size
-        required: false
-        schema:
-          type: string
-      - description: |-
-          Specifies the order by criteria. The syntax of this parameter is
-          similar to the syntax of the `order by` clause of an SQL statement.
-          Each query can be ordered by any of the `ConnectorType` fields.
-          For example, to return all Connector types ordered by their name, use the following syntax:
-
-          ```sql
-          name asc
-          ```
-
-          To return all Connector types ordered by their name _and_ version, use the following syntax:
-
-          ```sql
-          name asc, version asc
-          ```
-
-          If the parameter isn't provided, or if the value is empty, then
-          the results are ordered by name.
-        examples:
-          orderBy:
-            value: name asc
-        explode: true
-        in: query
-        name: orderBy
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: |
-          Search criteria.
-
-          The syntax of this parameter is similar to the syntax of the `where` clause of a
-          SQL statement. Allowed fields in the search are `name`, `description`, `version`, `label`, and `channel`.
-          Allowed operators are `<>`, `=`, or `LIKE`.
-          Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
-
-          Examples:
-
-          To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:
-
-          ```
-          name = aws-sqs-source and channel = stable
-          ```[p-]
-
-          To return a Kafka instance with a name that starts with `aws`, use the following syntax:
-
-          ```
-          name like aws%25
-          ```
-
-          If the parameter isn't provided, or if the value is empty, then all the Connector Type
-          that the user has permission to see are returned.
-
-          Note. If the query is invalid, an error is returned.
-        examples:
-          search:
-            value: name = aws-sqs-source and channel = stable
-        explode: true
-        in: query
-        name: search
-        required: false
-        schema:
-          type: string
-        style: form
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConnectorNamespaceList'
-          description: Connector namespaces
-        "401":
-          content:
-            application/json:
-              examples:
-                "401Example":
-                  $ref: '#/components/examples/401Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Auth token is invalid
-        "404":
-          content:
-            application/json:
-              examples:
-                "404Example":
-                  $ref: '#/components/examples/404Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: No matching connector namespace exists
-        "500":
-          content:
-            application/json:
-              examples:
-                "500Example":
-                  $ref: '#/components/examples/500Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error occurred
-      security:
-      - Bearer: []
-      summary: Get a list of available connector namespaces
-      tags:
-      - Connector Namespaces Admin
-    post:
-      operationId: createConnectorNamespace
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ConnectorNamespaceWithTenantRequest'
-        description: Namespace to create
-        required: true
-      responses:
-        "202":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConnectorNamespace'
-          description: Accepted
-        "401":
-          content:
-            application/json:
-              examples:
-                "401Example":
-                  $ref: '#/components/examples/401Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Auth token is invalid
-        "404":
-          content:
-            application/json:
-              examples:
-                "404Example":
-                  $ref: '#/components/examples/404Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: No matching connector namespace exists
-        "500":
-          content:
-            application/json:
-              examples:
-                "500Example":
-                  $ref: '#/components/examples/500Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error occurred
-      security:
-      - Bearer: []
-      summary: Create a connector namespace
-      tags:
-      - Connector Namespaces Admin
-  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/${namespace_id}:
-    delete:
-      operationId: deleteConnectorNamespace
-      parameters:
-      - description: The id of the namespace to delete
-        explode: false
-        in: path
-        name: namespace_id
-        required: true
-        schema:
-          type: string
-        style: simple
-      responses:
-        "204":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Deleted
-        "401":
-          content:
-            application/json:
-              examples:
-                "401Example":
-                  $ref: '#/components/examples/401Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Auth token is invalid
-        "404":
-          content:
-            application/json:
-              examples:
-                "404Example":
-                  $ref: '#/components/examples/404Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: No matching connector cluster exists
-        "500":
-          content:
-            application/json:
-              examples:
-                "500Example":
-                  $ref: '#/components/examples/500Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error occurred
-      security:
-      - Bearer: []
-      summary: Delete a connector namespace
-      tags:
-      - Connector Clusters Admin
 components:
   examples:
     "401Example":
@@ -1112,6 +1535,41 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorAdminViewList_allOf'
+    ConnectorDeploymentAdminView:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/ConnectorDeploymentAdminView_allOf'
+      description: Holds the deployment configuration of a connector
+    ConnectorDeploymentSpec:
+      description: Holds the deployment specification of a connector
+      properties:
+        connector_id:
+          type: string
+        connector_resource_version:
+          format: int64
+          type: integer
+        connector_type_id:
+          type: string
+        cluster_id:
+          type: string
+        namespace_id:
+          type: string
+        allow_upgrade:
+          deprecated: true
+          description: allow the connector to upgrade to a new operator
+          type: boolean
+        operator_id:
+          description: an optional operator id that the connector should be run under.
+          type: string
+        desired_state:
+          $ref: '#/components/schemas/ConnectorDesiredState'
+        shard_metadata:
+          type: object
+      type: object
+    ConnectorDeploymentAdminViewList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ConnectorDeploymentAdminViewList_allOf'
     ConnectorClusterList:
       allOf:
       - $ref: '#/components/schemas/List'
@@ -1330,6 +1788,47 @@ components:
       - provisioning
       - deprovisioning
       type: string
+    ConnectorDeploymentStatus:
+      description: The status of connector deployment
+      properties:
+        phase:
+          $ref: '#/components/schemas/ConnectorState'
+        resource_version:
+          format: int64
+          type: integer
+        operators:
+          $ref: '#/components/schemas/ConnectorDeploymentStatus_operators'
+        conditions:
+          items:
+            $ref: '#/components/schemas/MetaV1Condition'
+          type: array
+      type: object
+    ConnectorOperator:
+      description: identifies an operator that runs on the fleet shards used to manage
+        connectors.
+      properties:
+        id:
+          description: the id of the operator
+          type: string
+        type:
+          description: the type of the operator
+          type: string
+        version:
+          description: the version of the operator
+          type: string
+    MetaV1Condition:
+      properties:
+        type:
+          type: string
+        reason:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+        last_transition_time:
+          type: string
+      type: object
     ConnectorAvailableTypeUpgradeList_allOf:
       properties:
         items:
@@ -1373,6 +1872,32 @@ components:
         items:
           items:
             $ref: '#/components/schemas/ConnectorAdminView'
+          type: array
+    ConnectorDeploymentAdminView_allOf_metadata:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        resource_version:
+          format: int64
+          type: integer
+    ConnectorDeploymentAdminView_allOf:
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ConnectorDeploymentAdminView_allOf_metadata'
+        spec:
+          $ref: '#/components/schemas/ConnectorDeploymentSpec'
+        status:
+          $ref: '#/components/schemas/ConnectorDeploymentStatus'
+    ConnectorDeploymentAdminViewList_allOf:
+      properties:
+        items:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/ConnectorDeploymentAdminView'
           type: array
     ConnectorClusterList_allOf:
       properties:
@@ -1447,6 +1972,12 @@ components:
           $ref: '#/components/schemas/ConnectorState'
         error:
           type: string
+    ConnectorDeploymentStatus_operators:
+      properties:
+        assigned:
+          $ref: '#/components/schemas/ConnectorOperator'
+        available:
+          $ref: '#/components/schemas/ConnectorOperator'
   securitySchemes:
     Bearer:
       bearerFormat: JWT
