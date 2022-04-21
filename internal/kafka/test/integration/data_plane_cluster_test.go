@@ -389,13 +389,8 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	expectedNodesAfterScaleUp := initialComputeNodes + 3
 
-	kafkaCapacityConfig := KafkaConfig(h).KafkaCapacity
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.ResizeInfo.NodeDelta = &[]int32{3}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) * 30}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.Partitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) * 30}[0]
-	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) - 1}[0]
-	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) - 1}[0]
 	clusterStatusUpdateRequest.NodeInfo.Ceiling = &[]int32{int32(expectedNodesAfterScaleUp)}[0]
 	clusterStatusUpdateRequest.NodeInfo.Current = &[]int32{int32(initialComputeNodes)}[0]
 	clusterStatusUpdateRequest.NodeInfo.CurrentWorkLoadMinimum = &[]int32{3}[0]
@@ -518,11 +513,8 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	// Simulate there's no capacity and we've already reached ceiling to
 	// set status as full and force the cluster mgr reconciler to create a new
 	// OSD cluster
-	kafkaCapacityConfig := KafkaConfig(h).KafkaCapacity
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.ResizeInfo.NodeDelta = &[]int32{3}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) * 30}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.Partitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) * 30}[0]
 	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{0}[0]
 	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{0}[0]
 	clusterStatusUpdateRequest.NodeInfo.Ceiling = &[]int32{int32(initialComputeNodes)}[0]
