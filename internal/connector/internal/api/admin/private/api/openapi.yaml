@@ -1867,6 +1867,9 @@ components:
           type: string
         tenant:
           $ref: '#/components/schemas/ConnectorNamespaceTenant'
+        expiration:
+          description: Namespace expiration timestamp in RFC 3339 format
+          type: string
     ConnectorAdminViewList_allOf:
       properties:
         items:

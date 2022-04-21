@@ -914,6 +914,10 @@ components:
               type: string
             tenant:
               $ref: "connector_mgmt.yaml#/components/schemas/ConnectorNamespaceTenant"
+            expiration:
+              description: Namespace expiration timestamp in RFC 3339 format
+              type: string
+              #format: date-time
 
     ConnectorAdminView:
       allOf:

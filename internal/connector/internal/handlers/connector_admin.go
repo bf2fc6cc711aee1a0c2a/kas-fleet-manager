@@ -5,10 +5,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"gorm.io/gorm"
 	"strconv"
 
@@ -18,7 +14,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/goava/di"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -28,16 +23,11 @@ import (
 
 type ConnectorAdminHandler struct {
 	di.Inject
-	Bus               signalbus.SignalBus
+	ConnectorsConfig  *config.ConnectorsConfig
 	AuthZService      authz.AuthZService
 	Service           services.ConnectorClusterService
 	ConnectorsService services.ConnectorsService
 	NamespaceService  services.ConnectorNamespaceService
-	Keycloak          sso.KafkaKeycloakService
-	ConnectorTypes    services.ConnectorTypesService
-	Vault             vault.VaultService
-	KeycloakConfig    *keycloak.KeycloakConfig
-	ServerConfig      *server.ServerConfig
 	QuotaConfig       *config.ConnectorsQuotaConfig
 	ConnectorCluster  *ConnectorClusterHandler // TODO eventually move deployent handling into a deployment service
 }
@@ -262,16 +252,19 @@ func (h *ConnectorAdminHandler) CreateConnectorNamespace(writer http.ResponseWri
 				connectorNamespace.Owner = connectorNamespace.TenantUser.ID
 
 				// is eval namespace??
-				// TODO add checks for eval org id as well??
-				if connectorNamespace.Expiration != nil {
+				clusterOrgId, err := h.Service.GetClusterOrg(connectorNamespace.ClusterId)
+				if err != nil {
+					return nil, err
+				}
+				if connectorNamespace.Expiration != nil && h.isEvalOrg(clusterOrgId) {
 					// check for single evaluation namespace
 					if err := h.NamespaceService.CanCreateEvalNamespace(connectorNamespace.Owner); err != nil {
 						return nil, err
 					}
-
-					// set evaluation cluster id for namespaces with expiration
-					if err := h.NamespaceService.SetEvalClusterId(connectorNamespace); err != nil {
-						return nil, err
+					if connectorNamespace.ClusterId == "" {
+						if err := h.NamespaceService.SetEvalClusterId(connectorNamespace); err != nil {
+							return nil, err
+						}
 					}
 				}
 			} else {
@@ -551,4 +544,13 @@ func (h *ConnectorAdminHandler) GetNamespaceDeployments(writer http.ResponseWrit
 	}
 
 	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorAdminHandler) isEvalOrg(id string) bool {
+	for _, eid := range h.ConnectorsConfig.ConnectorEvalOrganizations {
+		if id == eid {
+			return true
+		}
+	}
+	return false
 }

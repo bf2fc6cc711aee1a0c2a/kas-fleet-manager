@@ -102,6 +102,13 @@ func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *admin.Connecto
 			Phase: dbapi.ConnectorNamespacePhaseDisconnected,
 		},
 	}
+	if namespaceRequest.Expiration != "" {
+		time, err := time.Parse(time.RFC3339, namespaceRequest.Expiration)
+		if err != nil {
+			return nil, errors.BadRequest("invalid namespace expiration '%s': %s", namespaceRequest.Expiration, err)
+		}
+		result.Expiration = &time
+	}
 	switch namespaceRequest.Tenant.Kind {
 	case admin.CONNECTORNAMESPACETENANTKIND_USER:
 		result.TenantUserId = &namespaceRequest.Tenant.Id

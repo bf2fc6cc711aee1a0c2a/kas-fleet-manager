@@ -810,7 +810,33 @@ Feature: connector namespaces API
     """
     And I store the ".id" selection from the response as ${namespace_id}
 
-   # Delete namespace
+   # Create an expired empty namespace
+    Given I am logged in as "Ricky Bobby"
+    When I POST path "/v1/admin/kafka_connector_namespaces/" with json body:
+    """
+    {
+      "name": "amigos_expired_namespace",
+      "cluster_id": "${connector_cluster_id}",
+      "tenant": {
+        "kind": "organisation",
+        "id": "13640231"
+      },
+      "annotations": [
+        {
+          "key": "connector_mgmt.bf2.org/profile",
+          "value": "default-profile"
+        }
+      ],
+      "status": {
+        "state": "disconnected",
+        "connectors_deployed": 0
+      },
+      "expiration": "1000-01-01T10:10:10.00Z"
+    }
+    """
+    Then the response code should be 201
+
+   # Delete namespaces
     Given I am logged in as "Ricky Bobby"
     When I DELETE path "/v1/admin/kafka_connector_namespaces/${namespace_id}"
     Then the response code should be 204
