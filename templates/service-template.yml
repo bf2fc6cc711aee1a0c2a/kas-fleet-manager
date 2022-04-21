@@ -270,6 +270,11 @@ parameters:
   description: The default value of maximum number of service accounts that can be created by users.
   value: "2"
 
+- name: SERVICE_ACCOUNT_LIMIT_CHECK_SKIP_ORG_ID_LIST
+  displayName: A list of Org Ids for which service account limit checks dont apply.
+  description: A list of Org Ids for which service account limit checks dont apply.
+  value: "[]"
+
 - name: MAX_LIMIT_FOR_SSO_GET_CLIENTS
   displayName: Max clients fetch by get clients
   description: The default value of maximum number of clients fetch from mas-sso.
@@ -658,6 +663,15 @@ objects:
     data:
       dataplane-cluster-configuration.yaml: |-
         clusters: ${CLUSTER_LIST}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: service-account-limits-check-skip-org-id-list
+      annotations:
+        qontract.recycle: "true"
+    data:
+      service-account-limits-check-skip-org-id-list.yaml: |-
+        ${SERVICE_ACCOUNT_LIMIT_CHECK_SKIP_ORG_ID_LIST}
   - kind: ServiceAccount
     apiVersion: v1
     metadata:
@@ -739,6 +753,9 @@ objects:
           - name: kas-fleet-manager-dataplane-cluster-scaling-config
             configMap:
               name: kas-fleet-manager-dataplane-cluster-scaling-config
+          - name: service-account-limits-check-skip-org-id-list
+            configMap:
+              name: service-account-limits-check-skip-org-id-list
           - name: envoy-config
             configMap:
               name: kas-fleet-manager-envoy-config
@@ -815,6 +832,9 @@ objects:
             - name: kas-fleet-manager-dataplane-cluster-scaling-config
               mountPath: /config/dataplane-cluster-configuration.yaml
               subPath: dataplane-cluster-configuration.yaml
+            - name: service-account-limits-check-skip-org-id-list
+              mountPath: /config/service-account-limits-check-skip-org-id-list.yaml
+              subPath: service-account-limits-check-skip-org-id-list.yaml
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
@@ -879,6 +899,7 @@ objects:
             - --fall-back-user-name-claim=${FALL_BACK_USER_NAME_CLAIM}
             - --max-allowed-service-accounts=${MAX_ALLOWED_SERVICE_ACCOUNTS}
             - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
+            - --service-account-limits-check-skip-org-id-list-file=/config/service-account-limits-check-skip-org-id-list.yaml
             - --osd-idp-mas-sso-realm=${OSD_IDP_MAS_SSO_REALM}
             - --osd-idp-mas-sso-client-id-file=/secrets/service/osd-idp-keycloak-service.clientId
             - --osd-idp-mas-sso-client-secret-file=/secrets/service/osd-idp-keycloak-service.clientSecret

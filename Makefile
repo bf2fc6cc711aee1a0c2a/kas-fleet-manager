@@ -721,6 +721,7 @@ deploy/service: MAS_SSO_INSECURE ?= "false"
 deploy/service: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy/service: MAS_SSO_REALM ?= "rhoas"
 deploy/service: SSO_SPECIAL_MANAGEMENT_ORG_ID ?= "13640203"
+deploy/service: SERVICE_ACCOUNT_LIMIT_CHECK_SKIP_ORG_ID_LIST ?= "[]"
 deploy/service: USER_NAME_CLAIM ?= "clientId"
 deploy/service: FALL_BACK_USER_NAME_CLAIM ?= "preferred_username"
 deploy/service: MAX_ALLOWED_SERVICE_ACCOUNTS ?= "2"
@@ -776,6 +777,7 @@ deploy/service: deploy/envoy deploy/route
 		-p USER_NAME_CLAIM="$(USER_NAME_CLAIM)" \
 		-p FALL_BACK_USER_NAME_CLAIM="$(FALL_BACK_USER_NAME_CLAIM)" \
 		-p MAX_ALLOWED_SERVICE_ACCOUNTS="${MAX_ALLOWED_SERVICE_ACCOUNTS}" \
+		-p SERVICE_ACCOUNT_LIMIT_CHECK_SKIP_ORG_ID_LIST="$(SERVICE_ACCOUNT_LIMIT_CHECK_SKIP_ORG_ID_LIST)"\
 		-p MAX_LIMIT_FOR_SSO_GET_CLIENTS="${MAX_LIMIT_FOR_SSO_GET_CLIENTS}" \
 		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
 		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \

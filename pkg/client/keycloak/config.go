@@ -19,23 +19,25 @@ const (
 )
 
 type KeycloakConfig struct {
-	EnableAuthenticationOnKafka bool                 `json:"enable_auth"`
-	BaseURL                     string               `json:"base_url"`
-	SsoBaseUrl                  string               `json:"sso_base_url"`
-	Debug                       bool                 `json:"debug"`
-	InsecureSkipVerify          bool                 `json:"insecure-skip-verify"`
-	UserNameClaim               string               `json:"user_name_claim"`
-	FallBackUserNameClaim       string               `json:"fall_back_user_name_claim"`
-	TLSTrustedCertificatesKey   string               `json:"tls_trusted_certificates_key"`
-	TLSTrustedCertificatesValue string               `json:"tls_trusted_certificates_value"`
-	TLSTrustedCertificatesFile  string               `json:"tls_trusted_certificates_file"`
-	KafkaRealm                  *KeycloakRealmConfig `json:"kafka_realm"`
-	OSDClusterIDPRealm          *KeycloakRealmConfig `json:"osd_cluster_idp_realm"`
-	RedhatSSORealm              *KeycloakRealmConfig `json:"redhat_sso_config"`
-	MaxAllowedServiceAccounts   int                  `json:"max_allowed_service_accounts"`
-	MaxLimitForGetClients       int                  `json:"max_limit_for_get_clients"`
-	SelectSSOProvider           SSOProvider          `json:"select_sso_provider"`
-	SSOSpecialManagementOrgID   string               `json:"-"`
+	EnableAuthenticationOnKafka                bool                 `json:"enable_auth"`
+	BaseURL                                    string               `json:"base_url"`
+	SsoBaseUrl                                 string               `json:"sso_base_url"`
+	Debug                                      bool                 `json:"debug"`
+	InsecureSkipVerify                         bool                 `json:"insecure-skip-verify"`
+	UserNameClaim                              string               `json:"user_name_claim"`
+	FallBackUserNameClaim                      string               `json:"fall_back_user_name_claim"`
+	TLSTrustedCertificatesKey                  string               `json:"tls_trusted_certificates_key"`
+	TLSTrustedCertificatesValue                string               `json:"tls_trusted_certificates_value"`
+	TLSTrustedCertificatesFile                 string               `json:"tls_trusted_certificates_file"`
+	KafkaRealm                                 *KeycloakRealmConfig `json:"kafka_realm"`
+	OSDClusterIDPRealm                         *KeycloakRealmConfig `json:"osd_cluster_idp_realm"`
+	RedhatSSORealm                             *KeycloakRealmConfig `json:"redhat_sso_config"`
+	MaxAllowedServiceAccounts                  int                  `json:"max_allowed_service_accounts"`
+	MaxLimitForGetClients                      int                  `json:"max_limit_for_get_clients"`
+	SelectSSOProvider                          SSOProvider          `json:"select_sso_provider"`
+	SSOSpecialManagementOrgID                  string               `json:"-"`
+	ServiceAccounttLimitCheckSkipOrgIdListFile string               `json:"-"`
+	ServiceAccounttLimitCheckSkipOrgIdList     []string             `json:"-"`
 }
 
 type KeycloakRealmConfig struct {
@@ -92,16 +94,17 @@ func NewKeycloakConfig() *KeycloakConfig {
 			ClientSecretFile: "secrets/redhatsso-service.clientSecret",
 			GrantType:        "client_credentials",
 		},
-		TLSTrustedCertificatesFile: "secrets/keycloak-service.crt",
-		Debug:                      false,
-		InsecureSkipVerify:         false,
-		UserNameClaim:              "clientId",
-		FallBackUserNameClaim:      "preferred_username",
-		TLSTrustedCertificatesKey:  "keycloak.crt",
-		MaxAllowedServiceAccounts:  50,
-		MaxLimitForGetClients:      100,
-		SelectSSOProvider:          MAS_SSO,
-		SSOSpecialManagementOrgID:  SSO_SPEICAL_MGMT_ORG_ID_STAGE,
+		TLSTrustedCertificatesFile:                 "secrets/keycloak-service.crt",
+		Debug:                                      false,
+		InsecureSkipVerify:                         false,
+		UserNameClaim:                              "clientId",
+		FallBackUserNameClaim:                      "preferred_username",
+		TLSTrustedCertificatesKey:                  "keycloak.crt",
+		MaxAllowedServiceAccounts:                  50,
+		MaxLimitForGetClients:                      100,
+		SelectSSOProvider:                          MAS_SSO,
+		SSOSpecialManagementOrgID:                  SSO_SPEICAL_MGMT_ORG_ID_STAGE,
+		ServiceAccounttLimitCheckSkipOrgIdListFile: "config/service-account-limits-check-skip-org-id-list.yaml",
 	}
 	return kc
 }
@@ -126,6 +129,7 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.RedhatSSORealm.ClientSecretFile, "redhat-sso-client-secret-file", kc.RedhatSSORealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
 	fs.StringVar(&kc.SsoBaseUrl, "redhat-sso-base-url", kc.SsoBaseUrl, "The base URL of the mas-sso, integration by default")
 	fs.StringVar(&kc.SSOSpecialManagementOrgID, "sso-special-management-org-id", SSO_SPEICAL_MGMT_ORG_ID_STAGE, "The Special Management Organization ID used for creating internal Service accounts")
+	fs.StringVar(&kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "service-account-limits-check-skip-org-id-list-file", kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "File containing a list of Org IDs for which service account limits check will be skipped")
 }
 
 func (kc *KeycloakConfig) ReadFiles() error {
@@ -165,6 +169,16 @@ func (kc *KeycloakConfig) ReadFiles() error {
 	if err != nil {
 		if os.IsNotExist(err) {
 			glog.V(10).Infof("Specified MAS SSO TLS certificate file '%s' does not exist. Proceeding as if MAS SSO TLS certificate was not provided", kc.TLSTrustedCertificatesFile)
+		} else {
+			return err
+		}
+	}
+
+	//Read the service account limits check skip org ID yaml file
+	err = shared.ReadYamlFile(kc.ServiceAccounttLimitCheckSkipOrgIdListFile, &kc.ServiceAccounttLimitCheckSkipOrgIdList)
+	if err != nil {
+		if os.IsNotExist(err) {
+			glog.V(10).Infof("Specified service account limits skip org IDs  file '%s' does not exist. Proceeding as if no service account org ID skip list was provided", kc.ServiceAccounttLimitCheckSkipOrgIdListFile)
 		} else {
 			return err
 		}
