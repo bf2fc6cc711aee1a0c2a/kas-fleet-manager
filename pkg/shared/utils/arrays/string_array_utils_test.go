@@ -8,10 +8,42 @@ import (
 
 func TestStringFindFirst(t *testing.T) {
 	RegisterTestingT(t)
-	slice := []string{"This", "Is", "Red", "Hat"}
-	idx := FindFirstString(slice, func(x string) bool { return x == "Red" })
-	Expect(idx).To(Equal(2))
-	Expect(slice[idx]).To(Equal("Red"))
+	type args struct {
+		ary       []string
+		val       string
+		predicate func(x string) bool
+	}
+	tests := []struct {
+		name  string
+		args  args
+		wants int
+	}{
+		{
+			name: "FindFirst success",
+			args: args{
+				ary:       []string{"This", "Is", "Red", "Hat"},
+				val:       "Red",
+				predicate: func(x string) bool { return x == "Red" },
+			},
+			wants: 2,
+		},
+		{
+			name: "FindFirst Not Found",
+			args: args{
+				ary:       []string{"This", "Is", "Red", "Hat"},
+				val:       "Red",
+				predicate: func(x string) bool { return x == "Blue" },
+			},
+			wants: -1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			idx := FindFirstString(tt.args.ary, tt.args.predicate)
+			Expect(idx).To(Equal(tt.wants))
+		})
+	}
 }
 
 func TestFilterStringSlice(t *testing.T) {
@@ -21,42 +53,137 @@ func TestFilterStringSlice(t *testing.T) {
 	Expect(res).To(Equal([]string{"Red", "Hat"}))
 }
 
-func TestStringFindFirst_NotFound(t *testing.T) {
-	RegisterTestingT(t)
-	slice := []string{"This", "Is", "Red", "Hat"}
-	idx := FindFirstString(slice, func(x string) bool { return x == "Blue" })
-	Expect(idx).To(Equal(-1))
-}
-
 func TestStringFirstNonEmpty(t *testing.T) {
 	RegisterTestingT(t)
-	val, err := FirstNonEmpty("", "", "", "Red", "Hat")
-	Expect(val).To(Equal("Red"))
-	Expect(err).ToNot(HaveOccurred())
-}
+	type args struct {
+		ary []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wants   string
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			args: args{
+				ary: []string{"", "", "", "Red", "Hat"},
+			},
+			wants:   "Red",
+			wantErr: false,
+		},
+		{
+			name: "Not Found",
+			args: args{
+				ary: []string{"", "", "", "", ""},
+			},
+			wants:   "",
+			wantErr: true,
+		},
+		{
+			name: "No Values",
+			args: args{
+				ary: []string{},
+			},
+			wants:   "",
+			wantErr: true,
+		},
+	}
 
-func TestStringFirstNonEmpty_NotFound(t *testing.T) {
-	RegisterTestingT(t)
-	val, err := FirstNonEmpty("", "", "", "", "")
-	Expect(val).To(Equal(""))
-	Expect(err).To(HaveOccurred())
-}
-
-func TestStringFirstNonEmpty_NoValues(t *testing.T) {
-	RegisterTestingT(t)
-	val, err := FirstNonEmpty()
-	Expect(val).To(Equal(""))
-	Expect(err).To(HaveOccurred())
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val, err := FirstNonEmpty(tt.args.ary...)
+			Expect(val).To(Equal(tt.wants))
+			Expect(err != nil).To(Equal(tt.wantErr))
+		})
+	}
 }
 
 func TestStringFirstNonEmptyOrDefault(t *testing.T) {
 	RegisterTestingT(t)
-	val := FirstNonEmptyOrDefault("Red Hat", "", "", "Red", "Hat")
-	Expect(val).To(Equal("Red"))
+	type args struct {
+		ary          []string
+		defaultValue string
+	}
+	tests := []struct {
+		name  string
+		args  args
+		wants string
+	}{
+		{
+			name: "Value found: Red",
+			args: args{
+				ary:          []string{"", "", "Red", "Hat"},
+				defaultValue: "Red Hat",
+			},
+			wants: "Red",
+		},
+		{
+			name: "Value not found: default: 'Red Hat'",
+			args: args{
+				ary:          []string{"", "", "", ""},
+				defaultValue: "Red Hat",
+			},
+			wants: "Red Hat",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val := FirstNonEmptyOrDefault(tt.args.defaultValue, tt.args.ary...)
+			Expect(val).To(Equal(tt.wants))
+		})
+	}
 }
 
-func TestStringFirstNonEmptyOrDefault_Notfound(t *testing.T) {
+func TestContains(t *testing.T) {
 	RegisterTestingT(t)
-	val := FirstNonEmptyOrDefault("Red Hat", "", "", "", "")
-	Expect(val).To(Equal("Red Hat"))
+	type args struct {
+		ary   []string
+		value string
+	}
+	tests := []struct {
+		name  string
+		args  args
+		wants bool
+	}{
+		{
+			name: "Value found",
+			args: args{
+				ary:   []string{"yellow", "green", "blue"},
+				value: "green",
+			},
+			wants: true,
+		},
+		{
+			name: "Value not found",
+			args: args{
+				ary:   []string{"yellow", "green", "blue"},
+				value: "red",
+			},
+			wants: false,
+		},
+		{
+			name: "Value not found - Empty Array",
+			args: args{
+				ary:   []string{},
+				value: "red",
+			},
+			wants: false,
+		},
+		{
+			name: "Value not found - Nil Array",
+			args: args{
+				ary:   nil,
+				value: "red",
+			},
+			wants: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ret := Contains(tt.args.ary, tt.args.value)
+			Expect(ret).To(Equal(tt.wants))
+		})
+	}
 }

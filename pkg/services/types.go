@@ -1,12 +1,12 @@
 package services
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/pkg/errors"
 )
 
@@ -75,7 +75,7 @@ func (la *ListArguments) Validate() error {
 				return errors.Errorf("invalid order by clause '%s'", orderByClause)
 			}
 
-			if !shared.Contains(GetAcceptedOrderByParams(), keywords[0]) {
+			if !arrays.Contains(GetAcceptedOrderByParams(), keywords[0]) {
 				return errors.Errorf("unknown order by field '%s'", keywords[0])
 			}
 

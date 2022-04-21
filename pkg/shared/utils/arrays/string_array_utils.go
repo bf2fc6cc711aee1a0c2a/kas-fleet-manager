@@ -43,3 +43,7 @@ func FirstNonEmptyOrDefault(defaultValue string, values ...string) string {
 		return values[idx]
 	}
 }
+
+func Contains(values []string, s string) bool {
+	return FindFirstString(values, func(x string) bool { return x == s }) != -1
+}
