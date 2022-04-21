@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
@@ -14,7 +15,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/gorilla/mux"
 )
 
@@ -128,7 +128,7 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 			ValidateKafkaStorageSize(kafkaRequest, &kafkaUpdateReq),
 			func() *errors.ServiceError { // Validate status
 				kafkaStatus := kafkaRequest.Status
-				if !shared.Contains(constants.GetUpdateableStatuses(), kafkaStatus) {
+				if !arrays.Contains(constants.GetUpdateableStatuses(), kafkaStatus) {
 					return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka in %s status. Supported statuses for update are: %v", kafkaStatus, constants.GetUpdateableStatuses()))
 				}
 				return nil

@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"context"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -41,7 +41,7 @@ func connectorValidationFunction(connectorTypesService services.ConnectorTypesSe
 			return errors.BadRequest("YYY invalid connector type id %v : %s", connectorTypeId, err)
 		}
 
-		if !shared.Contains(ct.ChannelNames(), string(*channel)) {
+		if !arrays.Contains(ct.ChannelNames(), string(*channel)) {
 			return errors.BadRequest("channel is not valid. Must be one of: %s", strings.Join(ct.ChannelNames(), ", "))
 		}
 

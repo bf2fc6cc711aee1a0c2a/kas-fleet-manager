@@ -3,6 +3,7 @@ package sso
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 	"strings"
 	"time"
@@ -540,7 +541,7 @@ func (kc *masService) createServiceAccountIfNotExists(token string, clientRep ke
 func (kc *masService) checkAllowedServiceAccountsLimits(accessToken string, maxAllowed int, orgId string) (bool, error) {
 	glog.V(5).Infof("Check if user is allowed to create service accounts: orgId = %s", orgId)
 
-	if shared.Contains(kc.GetConfig().ServiceAccounttLimitCheckSkipOrgIdList, orgId) {
+	if arrays.Contains(kc.GetConfig().ServiceAccounttLimitCheckSkipOrgIdList, orgId) {
 		glog.V(5).Infof("orgId = %s , present in service account limits check skip list. No limits on the number of service accounts", orgId)
 		return true, nil
 	}
