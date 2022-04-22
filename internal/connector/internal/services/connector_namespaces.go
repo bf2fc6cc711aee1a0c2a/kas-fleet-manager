@@ -388,7 +388,9 @@ func (k *connectorNamespaceService) DeleteNamespaceAndConnectorDeployments(ctx c
 	}
 
 	// Set namespace phase to "deleting"
-	if err := dbConn.Model(&dbapi.ConnectorNamespace{}).Where("id IN ?", namespaceIds).
+	if err := dbConn.Model(&dbapi.ConnectorNamespace{}).
+		Where("id IN ? AND status_phase NOT IN ?", namespaceIds,
+			[]string{string(dbapi.ConnectorNamespacePhaseDeleting), string(dbapi.ConnectorNamespacePhaseDeleted)}).
 		Update("status_phase", dbapi.ConnectorNamespacePhaseDeleting).Error; err != nil {
 		return false, false, services.HandleUpdateError("Connector namespace", err)
 	}
