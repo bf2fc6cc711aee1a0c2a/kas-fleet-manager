@@ -98,6 +98,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 		CloudProvider:     mocks.MockCluster.CloudProvider().ID(),
 		Name:              mockKafkaName,
 		DeprecatedMultiAz: testMultiAZ,
+		Plan:              fmt.Sprintf("%s.x1", types.STANDARD.String()),
 	}
 
 	kafka, resp, err := common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
@@ -187,11 +188,29 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 
 	kafka, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
 
-	// successful creation of kafka with valid "plan" format
+	// successful creation of kafka with a valid "standard" plan format
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(kafka.InstanceType).To(Equal(types.STANDARD.String()))
+	Expect(kafka.MultiAz).To(BeTrue())
+
+	// successful creation of kafka with valid "developer plan format
+	k2 := public.KafkaRequestPayload{
+		Region:            mocks.MockCluster.Region().ID(),
+		CloudProvider:     mocks.MockCluster.CloudProvider().ID(),
+		Name:              "test-kafka-2",
+		DeprecatedMultiAz: true, // also test that the AZ parameter is ignored
+		Plan:              fmt.Sprintf("%s.x1", types.DEVELOPER.String()),
+	}
+	accountWithoutStandardInstances := h.NewAccountWithNameAndOrg("test-nameacc-2", "123456")
+	ctx2 := h.NewAuthenticatedContext(accountWithoutStandardInstances, nil)
+	kafka, resp, err = client.DefaultApi.CreateKafka(ctx2, true, k2)
+	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
+	Expect(kafka.InstanceType).To(Equal(types.DEVELOPER.String()))
+	Expect(kafka.MultiAz).To(BeFalse())
 
 	// unsuccessful creation of kafka with invalid instance type provided in the "plan" parameter
 	k.Plan = "invalid.x1"
@@ -964,16 +983,6 @@ func TestKafkaPost_Validations(t *testing.T) {
 			wantCode: http.StatusBadRequest,
 		},
 		{
-			name: "HTTP 400 when MultiAZ false provided",
-			body: public.KafkaRequestPayload{
-				DeprecatedMultiAz: false,
-				CloudProvider:     mocks.MockCluster.CloudProvider().ID(),
-				Region:            mocks.MockCluster.Region().ID(),
-				Name:              mockKafkaName,
-			},
-			wantCode: http.StatusBadRequest,
-		},
-		{
 			name: "HTTP 400 when name not provided",
 			body: public.KafkaRequestPayload{
 				CloudProvider:     mocks.MockCluster.CloudProvider().ID(),
@@ -999,28 +1008,6 @@ func TestKafkaPost_Validations(t *testing.T) {
 				DeprecatedMultiAz: mocks.MockCluster.MultiAZ(),
 				Region:            mocks.MockCluster.Region().ID(),
 				Name:              longKafkaName,
-			},
-			wantCode: http.StatusBadRequest,
-		},
-		{
-			name: "HTTP 400 when multi_az is true and plan is developer",
-			body: public.KafkaRequestPayload{
-				CloudProvider:     mocks.MockCluster.CloudProvider().ID(),
-				DeprecatedMultiAz: true,
-				Region:            mocks.MockCluster.Region().ID(),
-				Name:              longKafkaName,
-				Plan:              fmt.Sprintf("%s.x1", types.DEVELOPER.String()),
-			},
-			wantCode: http.StatusBadRequest,
-		},
-		{
-			name: "HTTP 400 when multi_az is false and plan is standard",
-			body: public.KafkaRequestPayload{
-				CloudProvider:     mocks.MockCluster.CloudProvider().ID(),
-				DeprecatedMultiAz: false,
-				Region:            mocks.MockCluster.Region().ID(),
-				Name:              longKafkaName,
-				Plan:              fmt.Sprintf("%s.x1", types.STANDARD.String()),
 			},
 			wantCode: http.StatusBadRequest,
 		},
