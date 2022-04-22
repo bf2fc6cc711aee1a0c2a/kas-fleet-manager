@@ -384,6 +384,48 @@ paths:
           type: string
         in: path
         required: true
+    get:
+      description: Get a connector namespace
+      tags:
+        - Connector Clusters Admin
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/ConnectorNamespace"
+          description: The connector namespace matching the request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
+          description: No matching connector deployment exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+      security:
+        - Bearer: [ ]
+      operationId: getConnectorNamespace
+      summary: Get a connector namespace
     delete:
       tags:
         - Connector Clusters Admin

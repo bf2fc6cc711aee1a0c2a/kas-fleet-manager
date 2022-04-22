@@ -286,6 +286,25 @@ func (h *ConnectorAdminHandler) CreateConnectorNamespace(writer http.ResponseWri
 	handlers.Handle(writer, request, &cfg, http.StatusCreated)
 }
 
+func (h *ConnectorAdminHandler) GetConnectorNamespace(writer http.ResponseWriter, request *http.Request) {
+	namespaceId := mux.Vars(request)["namespace_id"]
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("namespace_id", &namespaceId, handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+
+			namespace, serviceError := h.NamespaceService.Get(request.Context(), namespaceId)
+			if serviceError != nil {
+				return nil, serviceError
+			}
+			return presenters.PresentPrivateConnectorNamespace(namespace, h.QuotaConfig), nil
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
 func (h *ConnectorAdminHandler) DeleteConnectorNamespace(writer http.ResponseWriter, request *http.Request) {
 	namespaceId := mux.Vars(request)["namespace_id"]
 	cfg := handlers.HandlerConfig{

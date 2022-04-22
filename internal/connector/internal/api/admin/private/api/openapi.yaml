@@ -266,7 +266,7 @@ paths:
       summary: Get a list of available connector namespaces in cluster
       tags:
       - Connector Clusters Admin
-  /api/connector_mgmt/v1/admin/kafka_connector_clusters/${connector_cluster_id}/connectors:
+  /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/connectors:
     get:
       operationId: getClusterConnectors
       parameters:
@@ -399,7 +399,7 @@ paths:
       summary: Get a list of available connectors in a cluster
       tags:
       - Connector Clusters Admin
-  /api/connector_mgmt/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments:
+  /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/deployments:
     get:
       operationId: getClusterDeployments
       parameters:
@@ -729,7 +729,7 @@ paths:
       summary: Create a connector namespace
       tags:
       - Connector Namespaces Admin
-  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/${namespace_id}:
+  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/{namespace_id}:
     delete:
       operationId: deleteConnectorNamespace
       parameters:
@@ -780,7 +780,58 @@ paths:
       summary: Delete a connector namespace
       tags:
       - Connector Clusters Admin
-  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/${namespace_id}/connectors:
+    get:
+      description: Get a connector namespace
+      operationId: getConnectorNamespace
+      parameters:
+      - description: The id of the namespace to delete
+        explode: false
+        in: path
+        name: namespace_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorNamespace'
+          description: The connector namespace matching the request
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector deployment exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Get a connector namespace
+      tags:
+      - Connector Clusters Admin
+  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/{namespace_id}/connectors:
     get:
       operationId: getNamespaceConnectors
       parameters:
@@ -913,7 +964,7 @@ paths:
       summary: Get a list of available connectors in a namespace
       tags:
       - Connector Clusters Admin
-  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/${namespace_id}/deployments:
+  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/{namespace_id}/deployments:
     get:
       operationId: getNamespaceDeployments
       parameters:
@@ -1046,7 +1097,7 @@ paths:
       summary: Get a list of available deployments in a namespace
       tags:
       - Connector Clusters Admin
-  /api/connector_mgmt/v1/admin/kafka_connectors/${connector_id}:
+  /api/connector_mgmt/v1/admin/kafka_connectors/{connector_id}:
     delete:
       operationId: deleteConnector
       parameters:

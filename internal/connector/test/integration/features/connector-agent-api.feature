@@ -856,6 +856,40 @@ Feature: connector agent API
     And the ".kind" selection from the response should match "ConnectorNamespaceList"
     And the ".items[0].kind" selection from the response should match "ConnectorNamespace"
 
+    # get cluster namespace
+    When I GET path "/v1/admin/kafka_connector_namespaces/${connector_namespace_id}"
+    Then the response code should be 200
+    And the response should match json:
+    """
+    {
+      "annotations": [
+        {
+          "key": "connector_mgmt.bf2.org/profile",
+          "value": "default-profile"
+        }
+      ],
+      "cluster_id": "${connector_cluster_id}",
+      "created_at": "${response.created_at}",
+      "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${connector_namespace_id}",
+      "id": "${connector_namespace_id}",
+      "kind": "ConnectorNamespace",
+      "modified_at": "${response.modified_at}",
+      "name": "default-connector-namespace",
+      "owner": "${response.owner}",
+      "quota": {},
+      "resource_version": ${response.resource_version},
+      "status": {
+        "connectors_deployed": 0,
+        "error": "Testing: This is a test failure message; Testing2: This is another test failure message",
+        "state": "ready"
+      },
+      "tenant": {
+        "id": "${response.tenant.id}",
+        "kind": "organisation"
+      }
+    }
+    """
+
     # namespace connectors
     And I GET path "/v1/admin/kafka_connector_namespaces/${connector_namespace_id}/connectors"
     And the response code should be 200
