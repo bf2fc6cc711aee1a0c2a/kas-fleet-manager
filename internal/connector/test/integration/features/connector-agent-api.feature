@@ -881,7 +881,8 @@ Feature: connector agent API
       "status": {
         "connectors_deployed": 0,
         "error": "Testing: This is a test failure message; Testing2: This is another test failure message",
-        "state": "ready"
+        "state": "ready",
+        "version": "0.0.1"
       },
       "tenant": {
         "id": "${response.tenant.id}",

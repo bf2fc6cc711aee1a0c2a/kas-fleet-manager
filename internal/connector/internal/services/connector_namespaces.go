@@ -489,9 +489,8 @@ func (k *connectorNamespaceService) ReconcileDeletedNamespaces() (int, []*errors
 		if err := dbConn.Table("connector_namespaces").Select("connector_namespaces.id").
 			Joins("LEFT JOIN connector_statuses ON connector_statuses.namespace_id = connector_namespaces.id AND "+
 				"connector_statuses.deleted_at IS NULL").
-			Group("connector_namespaces.id").
-			Having("connector_namespaces.status_phase = ? AND "+
-				"connector_namespaces.deleted_at IS NULL AND count(namespace_id) = 0", dbapi.ConnectorNamespacePhaseDeleted).
+			Where("connector_namespaces.status_phase = ? AND "+
+				"connector_namespaces.deleted_at IS NULL AND namespace_id IS NULL", dbapi.ConnectorNamespacePhaseDeleted).
 			Find(&namespaceIds).Error; err != nil {
 			return services.HandleGetError("Connector namespace",
 				"status_phase", dbapi.ConnectorNamespacePhaseDeleted, err)
@@ -580,9 +579,8 @@ func (k *connectorNamespaceService) GetEmptyDeletingNamespaces(clusterId string)
 	if err := dbConn.Table("connector_namespaces").Select("connector_namespaces.id", "connector_namespaces.version").
 		Joins("LEFT JOIN connector_statuses ON connector_statuses.namespace_id = connector_namespaces.id AND "+
 			"connector_statuses.deleted_at IS NULL").
-		Group("connector_namespaces.id").
-		Having("connector_namespaces.cluster_id = ? AND connector_namespaces.status_phase = ? AND "+
-			"connector_namespaces.deleted_at IS NULL AND count(namespace_id) = 0",
+		Where("connector_namespaces.cluster_id = ? AND connector_namespaces.status_phase = ? AND "+
+			"connector_namespaces.deleted_at IS NULL AND namespace_id IS NULL",
 			clusterId, dbapi.ConnectorNamespacePhaseDeleting).
 		Find(&namespaces).Error; err != nil {
 		return namespaces, services.HandleGetError("Connector namespace",

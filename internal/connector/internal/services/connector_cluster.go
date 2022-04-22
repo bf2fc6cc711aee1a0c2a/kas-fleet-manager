@@ -5,11 +5,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"reflect"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/phase"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/golang/glog"
-	"reflect"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
@@ -870,9 +871,8 @@ func (k *connectorClusterService) ReconcileDeletingClusters() (int, []*errors.Se
 		if err := dbConn.Table("connector_clusters").Select("connector_clusters.id").
 			Joins("LEFT JOIN connector_namespaces ON connector_namespaces.cluster_id = connector_clusters.id AND "+
 				"connector_namespaces.deleted_at IS NULL").
-			Group("connector_clusters.id").
-			Having("connector_clusters.status_phase = ? AND "+
-				"connector_clusters.deleted_at IS NULL AND count(cluster_id) = 0", dbapi.ConnectorClusterPhaseDeleting).
+			Where("connector_clusters.status_phase = ? AND "+
+				"connector_clusters.deleted_at IS NULL AND cluster_id IS NULL", dbapi.ConnectorClusterPhaseDeleting).
 			Find(&clusterIds).Error; err != nil {
 			return services.HandleGetError("Connector cluster",
 				"status_phase", dbapi.ConnectorClusterPhaseDeleting, err)
