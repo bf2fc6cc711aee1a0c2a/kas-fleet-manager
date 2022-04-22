@@ -236,7 +236,7 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 		dbConn = dbConn.Where("connector_type_id = ?", tid)
 	}
 
-	if clusterId != ""{
+	if clusterId != "" {
 		dbConn.Joins("JOIN connector_namespaces ON connectors.namespace_id = connector_namespaces.id and connector_namespaces.cluster_id = ?", clusterId)
 	}
 

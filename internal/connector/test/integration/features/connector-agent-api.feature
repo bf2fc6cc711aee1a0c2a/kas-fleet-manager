@@ -1445,10 +1445,25 @@ Feature: connector agent API
     #---------------------------------------------------------------------------------------------
     # Validate cluster delete completes with empty namespace removed after agent ack
     # --------------------------------------------------------------------------------------------
+    # expire the existing namespace
+    Given I run SQL "UPDATE connector_namespaces SET expiration='1000-01-01 10:10:10+00' WHERE id = '${connector_namespace_id}';" expect 1 row to be affected.
+    # check that the namespace state is now deleting
     Given I am logged in as "Bobby"
-    When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
+    When I wait up to "10" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response ".status.state" selection to match "deleting"
+    Then I GET path "/v1/kafka_connector_namespaces/${connector_namespace_id}"
+    And the response code should be 200
+    And the ".status.state" selection from the response should match "deleting"
+
+    # delete the cluster
+    Given I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204
     And the response should match ""
+
+    # check that the cluster state is now `deleting`
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response ".status.state" selection to match "deleting"
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
+    Then the response code should be 200
+    And the ".status.state" selection from the response should match "deleting"
 
     # validate namespace processing can handle namespace status update errors and removes deleting namespace
     Given I am logged in as "Shard"

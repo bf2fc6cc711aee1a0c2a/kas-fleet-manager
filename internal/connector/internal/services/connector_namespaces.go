@@ -3,6 +3,11 @@ package services
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"time"
+
+	"reflect"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
@@ -15,9 +20,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"gorm.io/gorm"
-	"math/rand"
-	"reflect"
-	"time"
 )
 
 type ConnectorNamespaceService interface {
@@ -313,7 +315,7 @@ func (k *connectorNamespaceService) GetExpiredNamespaceIds() ([]string, *errors.
 	dbConn := k.connectionFactory.New()
 	now := time.Now()
 	if err := dbConn.Model(&dbapi.ConnectorNamespace{}).Select("id").
-		Where("expiration < ?", now).Find(&result).Error; err != nil {
+		Where("expiration < ? AND status_phase NOT IN ?", now, []string{string(dbapi.ConnectorNamespacePhaseDeleting), string(dbapi.ConnectorNamespacePhaseDeleted)}).Find(&result).Error; err != nil {
 		return nil, services.HandleGetError("Connector namespace", "expiration", now, err)
 	}
 	// update phase to 'deleting' for all expired namespaces
@@ -386,7 +388,9 @@ func (k *connectorNamespaceService) DeleteNamespaceAndConnectorDeployments(ctx c
 	}
 
 	// Set namespace phase to "deleting"
-	if err := dbConn.Model(&dbapi.ConnectorNamespace{}).Where("id IN ?", namespaceIds).
+	if err := dbConn.Model(&dbapi.ConnectorNamespace{}).
+		Where("id IN ? AND status_phase NOT IN ?", namespaceIds,
+			[]string{string(dbapi.ConnectorNamespacePhaseDeleting), string(dbapi.ConnectorNamespacePhaseDeleted)}).
 		Update("status_phase", dbapi.ConnectorNamespacePhaseDeleting).Error; err != nil {
 		return false, false, services.HandleUpdateError("Connector namespace", err)
 	}
@@ -487,9 +491,8 @@ func (k *connectorNamespaceService) ReconcileDeletedNamespaces() (int, []*errors
 		if err := dbConn.Table("connector_namespaces").Select("connector_namespaces.id").
 			Joins("LEFT JOIN connector_statuses ON connector_statuses.namespace_id = connector_namespaces.id AND "+
 				"connector_statuses.deleted_at IS NULL").
-			Group("connector_namespaces.id").
-			Having("connector_namespaces.status_phase = ? AND "+
-				"connector_namespaces.deleted_at IS NULL AND count(namespace_id) = 0", dbapi.ConnectorNamespacePhaseDeleted).
+			Where("connector_namespaces.status_phase = ? AND "+
+				"connector_namespaces.deleted_at IS NULL AND namespace_id IS NULL", dbapi.ConnectorNamespacePhaseDeleted).
 			Find(&namespaceIds).Error; err != nil {
 			return services.HandleGetError("Connector namespace",
 				"status_phase", dbapi.ConnectorNamespacePhaseDeleted, err)
@@ -578,9 +581,8 @@ func (k *connectorNamespaceService) GetEmptyDeletingNamespaces(clusterId string)
 	if err := dbConn.Table("connector_namespaces").Select("connector_namespaces.id", "connector_namespaces.version").
 		Joins("LEFT JOIN connector_statuses ON connector_statuses.namespace_id = connector_namespaces.id AND "+
 			"connector_statuses.deleted_at IS NULL").
-		Group("connector_namespaces.id").
-		Having("connector_namespaces.cluster_id = ? AND connector_namespaces.status_phase = ? AND "+
-			"connector_namespaces.deleted_at IS NULL AND count(namespace_id) = 0",
+		Where("connector_namespaces.cluster_id = ? AND connector_namespaces.status_phase = ? AND "+
+			"connector_namespaces.deleted_at IS NULL AND namespace_id IS NULL",
 			clusterId, dbapi.ConnectorNamespacePhaseDeleting).
 		Find(&namespaces).Error; err != nil {
 		return namespaces, services.HandleGetError("Connector namespace",
