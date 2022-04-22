@@ -1063,8 +1063,9 @@ components:
           description: The cloud provider where the Kafka cluster will be created in
           type: string
         multi_az:
-          description: Set this to true to configure the Kafka cluster to be multiAZ
+          description: Deprecated. If it is specified, the value will be ignored. The API automatically determines this value from the 'plan' attribute"
           type: boolean
+          deprecated: true
         name:
           description: 'The name of the Kafka cluster. It must consist of lower-case alphanumeric characters or ''-'', start with an alphabetic character, and end with an alphanumeric character, and can not be longer than 32 characters.'
           type: string

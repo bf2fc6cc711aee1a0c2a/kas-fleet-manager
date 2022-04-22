@@ -39,10 +39,10 @@ func (s *extender) iHaveCreatedAKafkaClusterAs(id string) error {
 		kafkaId = kafkas.Items[0].Id
 	} else {
 		kafka, _, err := apiClient.DefaultApi.CreateKafka(session.TestUser.Ctx, true, public.KafkaRequestPayload{
-			Name:          "mykafka",
-			CloudProvider: "aws",
-			Region:        "us-east-1",
-			MultiAz:       true,
+			Name:              "mykafka",
+			CloudProvider:     "aws",
+			Region:            "us-east-1",
+			DeprecatedMultiAz: true,
 		})
 		if err != nil {
 			return err
