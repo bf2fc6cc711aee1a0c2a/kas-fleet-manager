@@ -1699,7 +1699,9 @@ components:
             in
           type: string
         multi_az:
-          description: Set this to true to configure the Kafka cluster to be multiAZ
+          deprecated: true
+          description: Deprecated. If it is specified, the value will be ignored.
+            The API automatically determines this value from the 'plan' attribute"
           type: boolean
         name:
           description: The name of the Kafka cluster. It must consist of lower-case
