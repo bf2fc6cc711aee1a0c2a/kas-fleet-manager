@@ -23,7 +23,7 @@ func ConvertKafkaRequest(kafkaRequestPayload public.KafkaRequestPayload, dbKafka
 	kafka.Region = kafkaRequestPayload.Region
 	kafka.Name = kafkaRequestPayload.Name
 	kafka.CloudProvider = kafkaRequestPayload.CloudProvider
-	kafka.MultiAZ = kafkaRequestPayload.MultiAz
+	kafka.MultiAZ = kafkaRequestPayload.DeprecatedMultiAz
 
 	if kafkaRequestPayload.ReauthenticationEnabled != nil {
 		kafka.ReauthenticationEnabled = *kafkaRequestPayload.ReauthenticationEnabled
