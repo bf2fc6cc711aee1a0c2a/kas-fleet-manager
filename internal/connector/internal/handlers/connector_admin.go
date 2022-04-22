@@ -5,10 +5,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
+	"gorm.io/gorm"
 	"strconv"
 
 	"net/http"
@@ -17,7 +14,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/goava/di"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -27,17 +23,13 @@ import (
 
 type ConnectorAdminHandler struct {
 	di.Inject
-	Bus               signalbus.SignalBus
+	ConnectorsConfig  *config.ConnectorsConfig
 	AuthZService      authz.AuthZService
 	Service           services.ConnectorClusterService
 	ConnectorsService services.ConnectorsService
 	NamespaceService  services.ConnectorNamespaceService
-	Keycloak          sso.KafkaKeycloakService
-	ConnectorTypes    services.ConnectorTypesService
-	Vault             vault.VaultService
-	KeycloakConfig    *keycloak.KeycloakConfig
-	ServerConfig      *server.ServerConfig
 	QuotaConfig       *config.ConnectorsQuotaConfig
+	ConnectorCluster  *ConnectorClusterHandler // TODO eventually move deployent handling into a deployment service
 }
 
 func NewConnectorAdminHandler(handler ConnectorAdminHandler) *ConnectorAdminHandler {
@@ -260,16 +252,19 @@ func (h *ConnectorAdminHandler) CreateConnectorNamespace(writer http.ResponseWri
 				connectorNamespace.Owner = connectorNamespace.TenantUser.ID
 
 				// is eval namespace??
-				// TODO add checks for eval org id as well??
-				if connectorNamespace.Expiration != nil {
+				clusterOrgId, err := h.Service.GetClusterOrg(connectorNamespace.ClusterId)
+				if err != nil {
+					return nil, err
+				}
+				if connectorNamespace.Expiration != nil && h.isEvalOrg(clusterOrgId) {
 					// check for single evaluation namespace
 					if err := h.NamespaceService.CanCreateEvalNamespace(connectorNamespace.Owner); err != nil {
 						return nil, err
 					}
-
-					// set evaluation cluster id for namespaces with expiration
-					if err := h.NamespaceService.SetEvalClusterId(connectorNamespace); err != nil {
-						return nil, err
+					if connectorNamespace.ClusterId == "" {
+						if err := h.NamespaceService.SetEvalClusterId(connectorNamespace); err != nil {
+							return nil, err
+						}
 					}
 				}
 			} else {
@@ -291,6 +286,25 @@ func (h *ConnectorAdminHandler) CreateConnectorNamespace(writer http.ResponseWri
 	handlers.Handle(writer, request, &cfg, http.StatusCreated)
 }
 
+func (h *ConnectorAdminHandler) GetConnectorNamespace(writer http.ResponseWriter, request *http.Request) {
+	namespaceId := mux.Vars(request)["namespace_id"]
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("namespace_id", &namespaceId, handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+
+			namespace, serviceError := h.NamespaceService.Get(request.Context(), namespaceId)
+			if serviceError != nil {
+				return nil, serviceError
+			}
+			return presenters.PresentPrivateConnectorNamespace(namespace, h.QuotaConfig), nil
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
 func (h *ConnectorAdminHandler) DeleteConnectorNamespace(writer http.ResponseWriter, request *http.Request) {
 	namespaceId := mux.Vars(request)["namespace_id"]
 	cfg := handlers.HandlerConfig{
@@ -307,6 +321,42 @@ func (h *ConnectorAdminHandler) DeleteConnectorNamespace(writer http.ResponseWri
 	handlers.HandleDelete(writer, request, &cfg, http.StatusNoContent)
 }
 
+func (h *ConnectorAdminHandler) GetClusterConnectors(writer http.ResponseWriter, request *http.Request) {
+	id := mux.Vars(request)["connector_cluster_id"]
+	listArgs := coreservices.NewListArguments(request.URL.Query())
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+
+			connectors, paging, err := h.ConnectorsService.List(request.Context(), "", listArgs, "", id)
+			if err != nil {
+				return nil, err
+			}
+
+			result := private.ConnectorAdminViewList{
+				Kind:  "ConnectorAdminViewList",
+				Page:  int32(paging.Page),
+				Size:  int32(paging.Size),
+				Total: int32(paging.Total),
+			}
+
+			result.Items = make([]private.ConnectorAdminView, len(connectors))
+			for i, namespace := range connectors {
+				result.Items[i], err = presenters.PresentConnectorAdminView(namespace)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			return result, nil
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
 func (h *ConnectorAdminHandler) GetNamespaceConnectors(writer http.ResponseWriter, request *http.Request) {
 	id := mux.Vars(request)["namespace_id"]
 	listArgs := coreservices.NewListArguments(request.URL.Query())
@@ -321,7 +371,7 @@ func (h *ConnectorAdminHandler) GetNamespaceConnectors(writer http.ResponseWrite
 			} else {
 				listArgs.Search = fmt.Sprintf("namespace_id = %s AND (%s)", id, listArgs.Search)
 			}
-			connectors, paging, err := h.ConnectorsService.List(request.Context(), "", listArgs, "")
+			connectors, paging, err := h.ConnectorsService.List(request.Context(), "", listArgs, "", "")
 			if err != nil {
 				return nil, err
 			}
@@ -395,4 +445,131 @@ func (h *ConnectorAdminHandler) DeleteConnector(writer http.ResponseWriter, requ
 	}
 
 	handlers.HandleDelete(writer, request, &cfg, http.StatusNoContent)
+}
+
+func (h *ConnectorAdminHandler) GetClusterDeployments(writer http.ResponseWriter, request *http.Request) {
+	id := mux.Vars(request)["connector_cluster_id"]
+	listArgs := coreservices.NewListArguments(request.URL.Query())
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+
+			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), id, listArgs, 0)
+			if err != nil {
+				return nil, err
+			}
+
+			result := private.ConnectorDeploymentAdminViewList{
+				Kind:  "ConnectorDeploymentAdminViewList",
+				Page:  int32(paging.Page),
+				Size:  int32(paging.Size),
+				Total: int32(paging.Total),
+			}
+
+			result.Items = make([]private.ConnectorDeploymentAdminView, len(deployments))
+			for i, deployment := range deployments {
+				pd, err := h.ConnectorCluster.presentDeployment(request, deployment)
+				if err != nil {
+					return nil, err
+				}
+				result.Items[i], err = presenters.PresentConnectorDeploymentAdminView(pd, deployment.ClusterID)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			return result, nil
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorAdminHandler) GetConnectorDeployment(writer http.ResponseWriter, request *http.Request) {
+	clusterId := mux.Vars(request)["connector_cluster_id"]
+	deploymentId := mux.Vars(request)["deployment_id"]
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &clusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("deployment_id", &deploymentId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+
+			deployment, serviceError := h.Service.GetDeployment(request.Context(), deploymentId)
+			if serviceError != nil {
+				return nil, serviceError
+			}
+			// check if the cluster ids match
+			if deployment.ClusterID != clusterId {
+				return nil, coreservices.HandleGetError(`Connector deployment`, `id`, deploymentId, gorm.ErrRecordNotFound)
+			}
+			pd, err := h.ConnectorCluster.presentDeployment(request, deployment)
+			if err != nil {
+				return nil, err
+			}
+			result, err := presenters.PresentConnectorDeploymentAdminView(pd, deployment.ClusterID)
+			if err != nil {
+				return nil, err
+			}
+			return result, nil
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorAdminHandler) GetNamespaceDeployments(writer http.ResponseWriter, request *http.Request) {
+	id := mux.Vars(request)["namespace_id"]
+	listArgs := coreservices.NewListArguments(request.URL.Query())
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("namespace_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+
+			if len(listArgs.Search) == 0 {
+				listArgs.Search = fmt.Sprintf("namespace_id = %s", id)
+			} else {
+				listArgs.Search = fmt.Sprintf("namespace_id = %s AND (%s)", id, listArgs.Search)
+			}
+			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), "", listArgs, 0)
+			if err != nil {
+				return nil, err
+			}
+
+			result := private.ConnectorDeploymentAdminViewList{
+				Kind:  "ConnectorDeploymentAdminViewList",
+				Page:  int32(paging.Page),
+				Size:  int32(paging.Size),
+				Total: int32(paging.Total),
+			}
+
+			result.Items = make([]private.ConnectorDeploymentAdminView, len(deployments))
+			for i, deployment := range deployments {
+				pd, err := h.ConnectorCluster.presentDeployment(request, deployment)
+				if err != nil {
+					return nil, err
+				}
+				result.Items[i], err = presenters.PresentConnectorDeploymentAdminView(pd, deployment.ClusterID)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			return result, nil
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorAdminHandler) isEvalOrg(id string) bool {
+	for _, eid := range h.ConnectorsConfig.ConnectorEvalOrganizations {
+		if id == eid {
+			return true
+		}
+	}
+	return false
 }

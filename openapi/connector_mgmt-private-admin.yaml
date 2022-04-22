@@ -115,7 +115,360 @@ paths:
       operationId: getClusterNamespaces
       summary: Get a list of available connector namespaces in cluster
 
-  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/${namespace_id}/connectors:
+  /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/connectors:
+    get:
+      tags:
+        - Connector Clusters Admin
+      parameters:
+        - name: connector_cluster_id
+          description: The id of the connector cluster
+          schema:
+            type: string
+          in: path
+          required: true
+        - $ref: "connector_mgmt.yaml#/components/parameters/page"
+        - $ref: "connector_mgmt.yaml#/components/parameters/size"
+        - $ref: "connector_mgmt.yaml#/components/parameters/orderBy"
+        - $ref: "connector_mgmt.yaml#/components/parameters/search"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectorAdminViewList"
+          description: Connectors in cluster
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
+          description: No matching connector cluster exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+      security:
+        - Bearer: [ ]
+      operationId: getClusterConnectors
+      summary: Get a list of available connectors in a cluster
+
+  /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/deployments:
+    get:
+      tags:
+        - Connector Clusters Admin
+      parameters:
+        - name: connector_cluster_id
+          description: The id of the cluster
+          schema:
+            type: string
+          in: path
+          required: true
+        - $ref: "connector_mgmt.yaml#/components/parameters/page"
+        - $ref: "connector_mgmt.yaml#/components/parameters/size"
+        - $ref: "connector_mgmt.yaml#/components/parameters/orderBy"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectorDeploymentAdminViewList"
+          description: Connector deployments in cluster
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
+          description: No matching connector cluster exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+      security:
+        - Bearer: [ ]
+      operationId: getClusterDeployments
+      summary: Get a list of available deployments in a cluster
+
+  '/api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}':
+    parameters:
+      - name: connector_cluster_id
+        description: The id of the connector cluster
+        schema:
+          type: string
+        in: path
+        required: true
+      - name: deployment_id
+        description: The id of the connector deployment
+        schema:
+          type: string
+        in: path
+        required: true
+    get:
+      description: Get a connector deployment
+      tags:
+        - Connector Clusters Admin
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectorDeploymentAdminView"
+          description: The connector deployment matching the request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
+          description: No matching connector deployment exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+      security:
+        - Bearer: [ ]
+      operationId: getConnectorDeployment
+      summary: Get a connector deployment
+
+  /api/connector_mgmt/v1/admin/kafka_connector_namespaces:
+    get:
+      tags:
+        - Connector Namespaces Admin
+      parameters:
+        - $ref: "connector_mgmt.yaml#/components/parameters/page"
+        - $ref: "connector_mgmt.yaml#/components/parameters/size"
+        - $ref: "connector_mgmt.yaml#/components/parameters/orderBy"
+        - $ref: "connector_mgmt.yaml#/components/parameters/search"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/ConnectorNamespaceList"
+          description: Connector namespaces
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
+          description: No matching connector namespace exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+      security:
+        - Bearer: [ ]
+      operationId: getConnectorNamespaces
+      summary: Get a list of available connector namespaces
+
+    post:
+      tags:
+        - Connector Namespaces Admin
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/ConnectorNamespace"
+          description: Accepted
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
+          description: No matching connector namespace exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+      security:
+        - Bearer: [ ]
+      operationId: createConnectorNamespace
+      summary: Create a connector namespace
+      requestBody:
+        description: Namespace to create
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectorNamespaceWithTenantRequest"
+        required: true
+
+  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/{namespace_id}:
+    parameters:
+      - name: namespace_id
+        description: The id of the namespace to delete
+        schema:
+          type: string
+        in: path
+        required: true
+    get:
+      description: Get a connector namespace
+      tags:
+        - Connector Clusters Admin
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/ConnectorNamespace"
+          description: The connector namespace matching the request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
+          description: No matching connector deployment exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+      security:
+        - Bearer: [ ]
+      operationId: getConnectorNamespace
+      summary: Get a connector namespace
+    delete:
+      tags:
+        - Connector Clusters Admin
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+          description: Deleted
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
+          description: No matching connector cluster exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+      security:
+        - Bearer: [ ]
+      operationId: deleteConnectorNamespace
+      summary: Delete a connector namespace
+
+  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/{namespace_id}/connectors:
     get:
       tags:
         - Connector Clusters Admin
@@ -167,9 +520,63 @@ paths:
       security:
         - Bearer: [ ]
       operationId: getNamespaceConnectors
-      summary: Get a list of available connectors in a namespace in a cluster
+      summary: Get a list of available connectors in a namespace
 
-  /api/connector_mgmt/v1/admin/kafka_connectors/${connector_id}:
+  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/{namespace_id}/deployments:
+    get:
+      tags:
+        - Connector Clusters Admin
+      parameters:
+        - name: namespace_id
+          description: The id of the namespace
+          schema:
+            type: string
+          in: path
+          required: true
+        - $ref: "connector_mgmt.yaml#/components/parameters/page"
+        - $ref: "connector_mgmt.yaml#/components/parameters/size"
+        - $ref: "connector_mgmt.yaml#/components/parameters/orderBy"
+        - $ref: "connector_mgmt.yaml#/components/parameters/search"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectorDeploymentAdminViewList"
+          description: Connector deployments in namespace
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
+          description: No matching connector namespace exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+      security:
+        - Bearer: [ ]
+      operationId: getNamespaceDeployments
+      summary: Get a list of available deployments in a namespace
+
+  /api/connector_mgmt/v1/admin/kafka_connectors/{connector_id}:
     parameters:
       - name: connector_id
         description: The id of the connector to delete
@@ -472,153 +879,6 @@ paths:
                 $ref: "#/components/schemas/ConnectorAvailableOperatorUpgrade"
         required: true
 
-  /api/connector_mgmt/v1/admin/kafka_connector_namespaces:
-    get:
-      tags:
-        - Connector Namespaces Admin
-      parameters:
-        - $ref: "connector_mgmt.yaml#/components/parameters/page"
-        - $ref: "connector_mgmt.yaml#/components/parameters/size"
-        - $ref: "connector_mgmt.yaml#/components/parameters/orderBy"
-        - $ref: "connector_mgmt.yaml#/components/parameters/search"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/ConnectorNamespaceList"
-          description: Connector namespaces
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/Error"
-              examples:
-                401Example:
-                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
-          description: Auth token is invalid
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/Error"
-              examples:
-                404Example:
-                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
-          description: No matching connector namespace exists
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/Error"
-              examples:
-                500Example:
-                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
-          description: Unexpected error occurred
-      security:
-        - Bearer: [ ]
-      operationId: getConnectorNamespaces
-      summary: Get a list of available connector namespaces
-
-    post:
-      tags:
-        - Connector Namespaces Admin
-      responses:
-        "202":
-          content:
-            application/json:
-              schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/ConnectorNamespace"
-          description: Accepted
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/Error"
-              examples:
-                401Example:
-                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
-          description: Auth token is invalid
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/Error"
-              examples:
-                404Example:
-                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
-          description: No matching connector namespace exists
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/Error"
-              examples:
-                500Example:
-                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
-          description: Unexpected error occurred
-      security:
-        - Bearer: [ ]
-      operationId: createConnectorNamespace
-      summary: Create a connector namespace
-      requestBody:
-        description: Namespace to create
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ConnectorNamespaceWithTenantRequest"
-        required: true
-
-  /api/connector_mgmt/v1/admin/kafka_connector_namespaces/${namespace_id}:
-    parameters:
-      - name: namespace_id
-        description: The id of the namespace to delete
-        schema:
-          type: string
-        in: path
-        required: true
-    delete:
-      tags:
-        - Connector Clusters Admin
-      responses:
-        "204":
-          content:
-            application/json:
-              schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/Error"
-          description: Deleted
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/Error"
-              examples:
-                401Example:
-                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
-          description: Auth token is invalid
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/Error"
-              examples:
-                404Example:
-                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
-          description: No matching connector cluster exists
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/Error"
-              examples:
-                500Example:
-                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
-          description: Unexpected error occurred
-      security:
-        - Bearer: [ ]
-      operationId: deleteConnectorNamespace
-      summary: Delete a connector namespace
-
 components:
   schemas:
     ConnectorAvailableTypeUpgradeList:
@@ -696,6 +956,10 @@ components:
               type: string
             tenant:
               $ref: "connector_mgmt.yaml#/components/schemas/ConnectorNamespaceTenant"
+            expiration:
+              description: Namespace expiration timestamp in RFC 3339 format
+              type: string
+              #format: date-time
 
     ConnectorAdminView:
       allOf:
@@ -712,6 +976,67 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/ConnectorAdminView"
+
+    ConnectorDeploymentAdminView:
+      description: Holds the deployment configuration of a connector
+      allOf:
+        - $ref: 'connector_mgmt.yaml#/components/schemas/ObjectReference'
+        - type: object
+          properties:
+            metadata:
+              type: object
+              properties:
+                created_at:
+                  format: date-time
+                  type: string
+                updated_at:
+                  format: date-time
+                  type: string
+                resource_version:
+                  type: integer
+                  format: int64
+            spec:
+              $ref: '#/components/schemas/ConnectorDeploymentSpec'
+            status:
+              $ref: 'connector_mgmt-private.yaml#/components/schemas/ConnectorDeploymentStatus'
+
+    ConnectorDeploymentSpec:
+      description: Holds the deployment specification of a connector
+      type: object
+      properties:
+        connector_id:
+          type: string
+        connector_resource_version:
+          type: integer
+          format: int64
+        connector_type_id:
+          type: string
+        cluster_id:
+          type: string
+        namespace_id:
+          type: string
+        allow_upgrade:
+          description: allow the connector to upgrade to a new operator
+          type: boolean
+          deprecated: true
+        operator_id:
+          description: an optional operator id that the connector should be run under.
+          type: string
+        desired_state:
+          $ref: 'connector_mgmt.yaml#/components/schemas/ConnectorDesiredState'
+        shard_metadata:
+          type: object
+
+    ConnectorDeploymentAdminViewList:
+      allOf:
+        - $ref: 'connector_mgmt.yaml#/components/schemas/List'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/ConnectorDeploymentAdminView'
 
   securitySchemes:
     Bearer:

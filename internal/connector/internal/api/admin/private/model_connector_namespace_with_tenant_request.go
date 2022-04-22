@@ -16,4 +16,6 @@ type ConnectorNamespaceWithTenantRequest struct {
 	Annotations []ConnectorNamespaceRequestMetaAnnotations `json:"annotations,omitempty"`
 	ClusterId   string                                     `json:"cluster_id"`
 	Tenant      ConnectorNamespaceTenant                   `json:"tenant"`
+	// Namespace expiration timestamp in RFC 3339 format
+	Expiration string `json:"expiration,omitempty"`
 }

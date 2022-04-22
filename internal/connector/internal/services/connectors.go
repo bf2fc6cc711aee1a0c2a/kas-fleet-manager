@@ -24,7 +24,7 @@ import (
 type ConnectorsService interface {
 	Create(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError
 	Get(ctx context.Context, id string, tid string) (*dbapi.ConnectorWithConditions, *errors.ServiceError)
-	List(ctx context.Context, kid string, listArgs *services.ListArguments, tid string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError)
+	List(ctx context.Context, kid string, listArgs *services.ListArguments, tid string, clusterId string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError)
 	Update(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError
 	SaveStatus(ctx context.Context, resource dbapi.ConnectorStatus) *errors.ServiceError
 	Delete(ctx context.Context, id string) *errors.ServiceError
@@ -90,7 +90,6 @@ func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*db
 
 	dbConn := k.connectionFactory.New()
 	var resource dbapi.ConnectorWithConditions
-	dbConn = dbConn.Model(&dbapi.Connector{})
 	dbConn = selectConnectorWithConditions(dbConn)
 	dbConn = dbConn.Where("connectors.id = ?", id)
 
@@ -207,10 +206,10 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 	return nil
 }
 
-var validConnectorColumns = []string{"name", "owner", "kafka_id", "connector_type_id", "desired_state", "channel", "namespace_id"}
+var validConnectorColumns = []string{"name", "owner", "kafka_id", "connector_type_id", "desired_state", "channel", "namespace_id", "cluster_id"}
 
 // List returns all connectors visible to the user within the requested paging window.
-func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *services.ListArguments, tid string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
+func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *services.ListArguments, tid string, clusterId string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 	pagingMeta := &api.PagingMeta{
 		Page: listArgs.Page,
@@ -235,6 +234,10 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 
 	if tid != "" {
 		dbConn = dbConn.Where("connector_type_id = ?", tid)
+	}
+
+	if clusterId != ""{
+		dbConn.Joins("JOIN connector_namespaces ON connectors.namespace_id = connector_namespaces.id and connector_namespaces.cluster_id = ?", clusterId)
 	}
 
 	// Apply search query
@@ -278,7 +281,7 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 }
 
 func selectConnectorWithConditions(dbConn *gorm.DB) *gorm.DB {
-	return dbConn.Select("connectors.*, connector_deployment_statuses.conditions").
+	return dbConn.Model(&dbapi.Connector{}).Select("connectors.*, connector_deployment_statuses.conditions").
 		Joins("Status").
 		Joins("left join connector_deployments on connector_deployments.connector_id = connectors.id " +
 			"and connector_deployments.deleted_at IS NULL").
