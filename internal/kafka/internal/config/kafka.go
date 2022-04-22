@@ -20,15 +20,13 @@ type KafkaCapacityConfig struct {
 }
 
 type KafkaConfig struct {
-	KafkaTLSCert                   string              `json:"kafka_tls_cert"`
-	KafkaTLSCertFile               string              `json:"kafka_tls_cert_file"`
-	KafkaTLSKey                    string              `json:"kafka_tls_key"`
-	KafkaTLSKeyFile                string              `json:"kafka_tls_key_file"`
-	EnableKafkaExternalCertificate bool                `json:"enable_kafka_external_certificate"`
-	KafkaDomainName                string              `json:"kafka_domain_name"`
-	KafkaCapacity                  KafkaCapacityConfig `yaml:"kafka_capacity_config"`
-	KafkaCapacityConfigFile        string              `yaml:"kafka_capacity_config_file"`
-	BrowserUrl                     string              `json:"browser_url"`
+	KafkaTLSCert                   string `json:"kafka_tls_cert"`
+	KafkaTLSCertFile               string `json:"kafka_tls_cert_file"`
+	KafkaTLSKey                    string `json:"kafka_tls_key"`
+	KafkaTLSKeyFile                string `json:"kafka_tls_key_file"`
+	EnableKafkaExternalCertificate bool   `json:"enable_kafka_external_certificate"`
+	KafkaDomainName                string `json:"kafka_domain_name"`
+	BrowserUrl                     string `json:"browser_url"`
 
 	KafkaLifespan          *KafkaLifespanConfig               `json:"kafka_lifespan"`
 	Quota                  *KafkaQuotaConfig                  `json:"kafka_quota"`
@@ -41,7 +39,6 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaTLSKeyFile:                "secrets/kafka-tls.key",
 		EnableKafkaExternalCertificate: false,
 		KafkaDomainName:                "kafka.bf2.dev",
-		KafkaCapacityConfigFile:        "config/kafka-capacity-config.yaml",
 		KafkaLifespan:                  NewKafkaLifespanConfig(),
 		Quota:                          NewKafkaQuotaConfig(),
 		SupportedInstanceTypes:         NewKafkaSupportedInstanceTypesConfig(),
@@ -52,7 +49,6 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KafkaTLSCertFile, "kafka-tls-cert-file", c.KafkaTLSCertFile, "File containing kafka certificate")
 	fs.StringVar(&c.KafkaTLSKeyFile, "kafka-tls-key-file", c.KafkaTLSKeyFile, "File containing kafka certificate private key")
 	fs.BoolVar(&c.EnableKafkaExternalCertificate, "enable-kafka-external-certificate", c.EnableKafkaExternalCertificate, "Enable custom certificate for Kafka TLS")
-	fs.StringVar(&c.KafkaCapacityConfigFile, "kafka-capacity-config-file", c.KafkaCapacityConfigFile, "File containing kafka capacity configurations")
 	fs.BoolVar(&c.KafkaLifespan.EnableDeletionOfExpiredKafka, "enable-deletion-of-expired-kafka", c.KafkaLifespan.EnableDeletionOfExpiredKafka, "Enable the deletion of kafkas when its life span has expired")
 	fs.IntVar(&c.KafkaLifespan.KafkaLifespanInHours, "kafka-lifespan", c.KafkaLifespan.KafkaLifespanInHours, "The desired lifespan of a Kafka instance")
 	fs.StringVar(&c.KafkaDomainName, "kafka-domain-name", c.KafkaDomainName, "The domain name to use for Kafka instances")
@@ -68,14 +64,6 @@ func (c *KafkaConfig) ReadFiles() error {
 		return err
 	}
 	err = shared.ReadFileValueString(c.KafkaTLSKeyFile, &c.KafkaTLSKey)
-	if err != nil {
-		return err
-	}
-	content, err := shared.ReadFile(c.KafkaCapacityConfigFile)
-	if err != nil {
-		return err
-	}
-	err = yaml.Unmarshal([]byte(content), &c.KafkaCapacity)
 	if err != nil {
 		return err
 	}
