@@ -1267,6 +1267,27 @@ Feature: connector agent API
     Then the response code should be 204
     And the response should match ""
 
+    # agent should be able to post individual namespace status
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}/status" with json body:
+      """
+      {
+        "id": "${connector_namespace_id}",
+        "phase": "ready",
+        "version": "0.0.1",
+        "connectors_deployed": 3,
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }]
+      }
+      """
+    Then the response code should be 204
+    And the response should match ""
+    And I run SQL "SELECT status_connectors_deployed FROM connector_namespaces WHERE id='${connector_namespace_id}'" gives results:
+      | status_connectors_deployed |
+      | 3                          |
+
     #---------------------------------------------------------------------------------------------
     # Create a connector
     # --------------------------------------------------------------------------------------------

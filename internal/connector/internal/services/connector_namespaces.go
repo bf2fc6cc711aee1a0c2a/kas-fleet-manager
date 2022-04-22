@@ -16,6 +16,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"gorm.io/gorm"
 	"math/rand"
+	"reflect"
 	"time"
 )
 
@@ -328,9 +329,11 @@ func (k *connectorNamespaceService) UpdateConnectorNamespaceStatus(ctx context.C
 
 	if err := k.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
 		var namespace dbapi.ConnectorNamespace
-		if err := dbConn.Select(`id`, `cluster_id`, `status_phase`, `version`).
-			Where(`id = ?`, namespaceID).First(&namespace).Error; err != nil {
+		if err := dbConn.Unscoped().Where(`id = ?`, namespaceID).First(&namespace).Error; err != nil {
 			return services.HandleGetError("Connector namespace", "id", namespaceID, err)
+		}
+		if namespace.DeletedAt.Valid {
+			return services.HandleGoneError(`Connector namespace`, `id`, namespaceID)
 		}
 		var cluster dbapi.ConnectorCluster
 		if err := dbConn.Select(`id`, `status_phase`).Where(`id = ?`, namespace.ClusterId).
@@ -338,20 +341,20 @@ func (k *connectorNamespaceService) UpdateConnectorNamespaceStatus(ctx context.C
 			return services.HandleGetError("Connector namespace", "id", namespaceID, err)
 		}
 
-		if _, err := phase.PerformNamespaceOperation(&cluster, &namespace, phase.ConnectNamespace,
-			func(namespace *dbapi.ConnectorNamespace) *errors.ServiceError {
+		updated, serr := phase.PerformNamespaceOperation(&cluster, &namespace, phase.ConnectNamespace)
+		if serr != nil {
+			return serr
+		}
 
-				// copy updated values from agent provided status
-				namespace.ID = namespaceID
-				namespace.Status.ConnectorsDeployed = status.ConnectorsDeployed
-				namespace.Status.Conditions = status.Conditions
-
-				if err := k.Update(ctx, namespace); err != nil {
-					return err
-				}
-				return nil
-			}); err != nil {
-			return err
+		// take new phase from fsm operation above
+		status.Phase = namespace.Status.Phase
+		if updated || !reflect.DeepEqual(namespace.Status, *status) {
+			namespace.Status.Version = status.Version
+			namespace.Status.ConnectorsDeployed = status.ConnectorsDeployed
+			namespace.Status.Conditions = status.Conditions
+			if err := k.Update(ctx, &namespace); err != nil {
+				return err
+			}
 		}
 
 		return nil
