@@ -3,6 +3,11 @@ package services
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"time"
+
+	"reflect"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
@@ -15,9 +20,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"gorm.io/gorm"
-	"math/rand"
-	"reflect"
-	"time"
 )
 
 type ConnectorNamespaceService interface {
@@ -313,7 +315,7 @@ func (k *connectorNamespaceService) GetExpiredNamespaceIds() ([]string, *errors.
 	dbConn := k.connectionFactory.New()
 	now := time.Now()
 	if err := dbConn.Model(&dbapi.ConnectorNamespace{}).Select("id").
-		Where("expiration < ?", now).Find(&result).Error; err != nil {
+		Where("expiration < ? AND status_phase NOT IN ?", now, []string{string(dbapi.ConnectorNamespacePhaseDeleting), string(dbapi.ConnectorNamespacePhaseDeleted)}).Find(&result).Error; err != nil {
 		return nil, services.HandleGetError("Connector namespace", "expiration", now, err)
 	}
 	// update phase to 'deleting' for all expired namespaces
