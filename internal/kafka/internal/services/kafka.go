@@ -301,6 +301,16 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	// we need to pre-populate the ID to be able to reserve the quota
 	kafkaRequest.ID = api.NewID()
 
+	// The Instance Type determines the MultiAZ attribute. The previously value
+	// set for the MultiAZ attribute in the request (if any) is ignored.
+	// TODO improve this
+	switch kafkaRequest.InstanceType {
+	case types.STANDARD.String():
+		kafkaRequest.MultiAZ = true
+	case types.DEVELOPER.String():
+		kafkaRequest.MultiAZ = false
+	}
+
 	hasCapacity, err := k.HasAvailableCapacityInRegion(kafkaRequest)
 	if err != nil {
 		if err.Code == errors.ErrorGeneral {
@@ -354,6 +364,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	if err := dbConn.Create(kafkaRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create kafka request") //hide the db error to http caller
 	}
+
 	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 	return nil
 }
