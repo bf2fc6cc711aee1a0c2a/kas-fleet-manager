@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
@@ -58,9 +59,13 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 	criteria := FindClusterCriteria{
 		Provider:              kafka.CloudProvider,
 		Region:                kafka.Region,
-		MultiAZ:               kafka.MultiAZ,
 		Status:                api.ClusterReady,
 		SupportedInstanceType: kafka.InstanceType,
+	}
+
+	// check the multi-az value of a cluster only for standard instances, so that developer instances can be scheduled to multi-az clusters
+	if kafka.InstanceType == string(types.STANDARD) {
+		criteria.MultiAZ = kafka.MultiAZ
 	}
 
 	kafkaInstanceSize, e := f.KafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
