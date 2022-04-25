@@ -438,7 +438,8 @@ func (h *ConnectorAdminHandler) DeleteConnector(writer http.ResponseWriter, requ
 			if force {
 				serviceError = h.ConnectorsService.ForceDelete(request.Context(), connectorId)
 			} else {
-				serviceError = h.ConnectorsService.Delete(request.Context(), connectorId)
+				ctx := request.Context()
+				return nil, HandleConnectorDelete(ctx, h.ConnectorsService, h.NamespaceService, connectorId)
 			}
 			return nil, serviceError
 		},
