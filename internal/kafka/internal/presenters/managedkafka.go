@@ -23,8 +23,8 @@ func PresentManagedKafka(from *v1.ManagedKafka) private.ManagedKafka {
 		},
 		Spec: private.ManagedKafkaAllOfSpec{
 			Capacity: private.ManagedKafkaCapacity{
-				IngressThroughputPerSec:     from.Spec.Capacity.IngressThroughputPerSec,
-				EgressThroughputPerSec:      from.Spec.Capacity.EgressThroughputPerSec,
+				IngressPerSec:               from.Spec.Capacity.IngressPerSec,
+				EgressPerSec:                from.Spec.Capacity.EgressPerSec,
 				TotalMaxConnections:         int32(from.Spec.Capacity.TotalMaxConnections),
 				MaxDataRetentionSize:        from.Spec.Capacity.MaxDataRetentionSize,
 				MaxPartitions:               int32(from.Spec.Capacity.MaxPartitions),
