@@ -65,11 +65,10 @@ func Test_OrganisationList_GetById(t *testing.T) {
 			},
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			RegisterTestingT(t)
 			organisation, ok := tt.orgs.GetById(tt.arg)
 			Expect(organisation).To(Equal(tt.want.organisation))
 			Expect(ok).To(Equal(tt.want.ok))
@@ -128,13 +127,13 @@ func Test_Organisation_IsUserAllowed(t *testing.T) {
 				AnyUser:         false,
 			},
 			want: false,
+	
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			RegisterTestingT(t)
 			ok := tt.org.IsUserRegistered(tt.arg)
 			Expect(ok).To(Equal(tt.want))
 		})
@@ -166,11 +165,10 @@ func Test_Organisation_HasAllowedAccounts(t *testing.T) {
 			want: true,
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			RegisterTestingT(t)
 			ok := tt.org.HasUsersRegistered()
 			Expect(ok).To(Equal(tt.want))
 		})
@@ -221,11 +219,10 @@ func Test_AllowedAccounts_GetByUsername(t *testing.T) {
 			},
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			RegisterTestingT(t)
 			user, found := tt.allowedAccounts.GetByUsername(tt.arg)
 			Expect(user).To(Equal(tt.want.allowedAccount))
 			Expect(found).To(Equal(tt.want.found))
@@ -291,11 +288,10 @@ func Test_AllowedAccount_IsInstanceCountWithinLimit(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			RegisterTestingT(t)
 			ok := tt.item.IsInstanceCountWithinLimit(tt.count)
 			Expect(ok).To(Equal(tt.want))
 		})
@@ -321,34 +317,31 @@ func Test_AllowedAccount_GetMaxAllowedInstances(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			RegisterTestingT(t)
 			ok := tt.allowedAccount.GetMaxAllowedInstances()
 			Expect(ok).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestGetDefaultMaxAllowedInstances(t *testing.T) {
+func Test_GetDefaultMaxAllowedInstances(t *testing.T) {
 	tests := []struct {
 		name string
 		want int
 	}{
 		{
-			name: "Should return the default value for MaxAllowedInstances",
+			name: "Should return the value for MaxAllowedInstances",
 			want: 1,
+	
 		},
 	}
-	RegisterTestingT(t)
+	RegisterTestingT(t)	
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
-			got := GetDefaultMaxAllowedInstances()
-			Expect(got).To(Equal(tt.want))
+			Expect(GetDefaultMaxAllowedInstances()).To(Equal(tt.want))
 		})
 	}
 }

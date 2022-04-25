@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestNewQuotaManagementListConfig(t *testing.T) {
+func Test_NewQuotaManagementListConfig(t *testing.T) {
 	tests := []struct {
 		name string
 		want *QuotaManagementListConfig
@@ -23,16 +23,15 @@ func TestNewQuotaManagementListConfig(t *testing.T) {
 			},
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
-		RegisterTestingT(t)
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewQuotaManagementListConfig()
-			Expect(got).To(Equal(tt.want))
+			Expect(NewQuotaManagementListConfig()).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestQuotaManagementListConfig_ReadFiles(t *testing.T) {
+func Test_QuotaManagementListConfig_ReadFiles(t *testing.T) {
 	type fields struct {
 		QuotaList                  RegisteredUsersListConfiguration
 		QuotaListConfigFile        string
@@ -65,23 +64,23 @@ func TestQuotaManagementListConfig_ReadFiles(t *testing.T) {
 				QuotaListConfigFile:        "fake-file-path",
 				EnableInstanceLimitControl: false,
 			},
+			wantErr: false,
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
-		RegisterTestingT(t)
 		t.Run(tt.name, func(t *testing.T) {
 			c := &QuotaManagementListConfig{
 				QuotaList:                  tt.fields.QuotaList,
 				QuotaListConfigFile:        tt.fields.QuotaListConfigFile,
 				EnableInstanceLimitControl: tt.fields.EnableInstanceLimitControl,
 			}
-			 err := c.ReadFiles()
-			 Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(c.ReadFiles() != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
 
-func TestQuotaManagementListConfig_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
+func Test_QuotaManagementListConfig_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 	type fields struct {
 		QuotaList                  RegisteredUsersListConfiguration
 		QuotaListConfigFile        string
@@ -132,8 +131,8 @@ func TestQuotaManagementListConfig_GetAllowedAccountByUsernameAndOrgId(t *testin
 			found: true,
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
-		RegisterTestingT(t)
 		t.Run(tt.name, func(t *testing.T) {
 			c := &QuotaManagementListConfig{
 				QuotaList:                  tt.fields.QuotaList,
