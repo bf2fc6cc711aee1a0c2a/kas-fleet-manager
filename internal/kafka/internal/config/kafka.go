@@ -42,6 +42,7 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaLifespan:                  NewKafkaLifespanConfig(),
 		Quota:                          NewKafkaQuotaConfig(),
 		SupportedInstanceTypes:         NewKafkaSupportedInstanceTypesConfig(),
+		BrowserUrl:                     "http://localhost:8080/",
 	}
 }
 

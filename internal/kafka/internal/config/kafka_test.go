@@ -18,10 +18,10 @@ func Test_NewKafkaConfig(t *testing.T) {
 				KafkaTLSKeyFile:                "secrets/kafka-tls.key",
 				EnableKafkaExternalCertificate: false,
 				KafkaDomainName:                "kafka.bf2.dev",
-				KafkaCapacityConfigFile:        "config/kafka-capacity-config.yaml",
 				KafkaLifespan:                  NewKafkaLifespanConfig(),
 				Quota:                          NewKafkaQuotaConfig(),
 				BrowserUrl:                     "http://localhost:8080/",
+				SupportedInstanceTypes:         NewKafkaSupportedInstanceTypesConfig(),
 			},
 		},
 	}
@@ -74,12 +74,12 @@ func Test_ReadFilesKafkaConfig(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should return an error with misconfigured KafkaCapacityConfigFile",
+			name: "should return an error with misconfigured SupportedInstanceTypes",
 			fields: fields{
 				config: NewKafkaConfig(),
 			},
 			modifyFn: func(config *KafkaConfig) {
-				config.KafkaCapacityConfigFile = "invalid"
+				config.SupportedInstanceTypes.ConfigurationFile = "invalid"
 			},
 			wantErr: true,
 		},
