@@ -14,19 +14,22 @@ type customLoggerWithMetricsCollector struct {
 
 // LogMode sets the log level
 func (l customLoggerWithMetricsCollector) LogMode(level logger.LogLevel) logger.Interface {
-	return l
+	return logger.Default.LogMode(level)
 }
 
 // Info print information
 func (l customLoggerWithMetricsCollector) Info(ctx context.Context, msg string, data ...interface{}) {
+	logger.Default.Info(ctx, msg, data...)
 }
 
 // Warn print warning message
 func (l customLoggerWithMetricsCollector) Warn(ctx context.Context, msg string, data ...interface{}) {
+	logger.Default.Warn(ctx, msg, data...)
 }
 
 // Error print error message
 func (l customLoggerWithMetricsCollector) Error(ctx context.Context, msg string, data ...interface{}) {
+	logger.Default.Error(ctx, msg, data...)
 }
 
 // Trace trace the sql query and its execution time.
