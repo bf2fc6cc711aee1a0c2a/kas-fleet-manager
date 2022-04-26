@@ -2,8 +2,9 @@ package workers
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -566,8 +567,14 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 	const ingressDNS = "foo.bar.example.com"
 	observabilityConfig := buildObservabilityConfig()
-	clusterCreateConfig := config.DataplaneClusterConfig{
+	clusterConfig := config.DataplaneClusterConfig{
 		ImagePullDockerConfigContent: "image-pull-secret-test",
+		StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
+			Namespace: "strimzi-namespace",
+		},
+		KasFleetshardOperatorOLMConfig: config.OperatorInstallationConfig{
+			Namespace: "kas-fleet-shard-namespace",
+		},
 	}
 	type fields struct {
 		clusterService services.ClusterService
@@ -575,19 +582,34 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 	tests := []struct {
 		name    string
 		fields  fields
+		arg     api.Cluster
 		wantErr bool
 	}{
 		{
-			name: "test should pass and resourceset should be created",
+			name: "test should pass and resourceset should be created for ocm clusters",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
-						want, _ := buildResourceSet(observabilityConfig, clusterCreateConfig, ingressDNS)
+						want, _ := buildResourceSet(observabilityConfig, clusterConfig, ingressDNS, cluster)
 						Expect(resources).To(Equal(want))
 						return nil
 					},
 				},
 			},
+			arg: api.Cluster{ClusterID: "test-cluster-id", ProviderType: "ocm"},
+		},
+		{
+			name: "test should pass and resourceset should be created for standalone clusters",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						want, _ := buildResourceSet(observabilityConfig, clusterConfig, ingressDNS, cluster)
+						Expect(resources).To(Equal(want))
+						return nil
+					},
+				},
+			},
+			arg: api.Cluster{ClusterID: "test-cluster-id", ProviderType: "standalone"},
 		},
 		{
 			name: "should receive error when ApplyResources returns error",
@@ -610,12 +632,12 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 					ClusterService:             tt.fields.clusterService,
 					SupportedProviders:         &config.ProviderConfig{},
 					ObservabilityConfiguration: &observabilityConfig,
-					DataplaneClusterConfig:     &clusterCreateConfig,
+					DataplaneClusterConfig:     &clusterConfig,
 					OCMConfig:                  &ocm.OCMConfig{},
 				},
 			}
 
-			err := c.reconcileClusterResources(api.Cluster{ClusterID: "test-cluster-id"})
+			err := c.reconcileClusterResources(tt.arg)
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -1196,7 +1218,10 @@ func buildObservabilityConfig() observatorium.ObservabilityConfiguration {
 	return observabilityConfig
 }
 
-func buildResourceSet(observabilityConfig observatorium.ObservabilityConfiguration, clusterCreateConfig config.DataplaneClusterConfig, ingressDNS string) (types.ResourceSet, error) {
+func buildResourceSet(observabilityConfig observatorium.ObservabilityConfiguration, clusterConfig config.DataplaneClusterConfig, ingressDNS string, cluster *api.Cluster) (types.ResourceSet, error) {
+	strimziNamespace := strimziAddonNamespace
+	kasFleetshardNamespace := kasFleetshardAddonNamespace
+
 	resources := []interface{}{
 		&userv1.Group{
 			TypeMeta: metav1.TypeMeta{
@@ -1355,7 +1380,29 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 			},
 		},
 	}
-	if clusterCreateConfig.ImagePullDockerConfigContent != "" {
+	if cluster.ProviderType == api.ClusterProviderStandalone {
+		strimziNamespace = clusterConfig.StrimziOperatorOLMConfig.Namespace
+		kasFleetshardNamespace = clusterConfig.KasFleetshardOperatorOLMConfig.Namespace
+		resources = append(resources, &k8sCoreV1.Namespace{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
+				Kind:       "Namespace",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: strimziNamespace,
+			},
+		}, &k8sCoreV1.Namespace{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
+				Kind:       "Namespace",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: kasFleetshardNamespace,
+			},
+		})
+	}
+
+	if clusterConfig.ImagePullDockerConfigContent != "" {
 		resources = append(resources, &k8sCoreV1.Secret{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: metav1.SchemeGroupVersion.Version,
@@ -1363,11 +1410,11 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      imagePullSecretName,
-				Namespace: strimziAddonNamespace,
+				Namespace: strimziNamespace,
 			},
 			Type: k8sCoreV1.SecretTypeDockercfg,
 			Data: map[string][]byte{
-				k8sCoreV1.DockerConfigKey: []byte(clusterCreateConfig.ImagePullDockerConfigContent),
+				k8sCoreV1.DockerConfigKey: []byte(clusterConfig.ImagePullDockerConfigContent),
 			},
 		},
 			&k8sCoreV1.Secret{
@@ -1377,11 +1424,11 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      imagePullSecretName,
-					Namespace: kasFleetshardAddonNamespace,
+					Namespace: kasFleetshardNamespace,
 				},
 				Type: k8sCoreV1.SecretTypeDockercfg,
 				Data: map[string][]byte{
-					k8sCoreV1.DockerConfigKey: []byte(clusterCreateConfig.ImagePullDockerConfigContent),
+					k8sCoreV1.DockerConfigKey: []byte(clusterConfig.ImagePullDockerConfigContent),
 				},
 			})
 	}
