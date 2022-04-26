@@ -1,0 +1,42 @@
+# This is a noop flow that runs only when only non-code files are changed.
+name: Lint & Test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '*.md'
+      - '*.sh'
+      - '.github/*.md'
+      - '.github/workflows/openapi_update.yaml'
+      - '.github/CODEOWNERS'
+      - 'templates/**'
+      - '.openapi-generator-ignore'
+      - 'openapi/**'
+      - 'docs/**'
+      - 'pkg/api/openapi/docs/**'
+      - 'pkg/api/openapi/.openapi-generator-ignore'
+
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - '*.md'
+      - '*.sh'
+      - '.github/*.md'
+      - '.github/workflows/openapi_update.yaml'
+      - '.github/CODEOWNERS'
+      - 'templates/**'
+      - '.openapi-generator-ignore'
+      - 'openapi/**'
+      - 'docs/**'
+      - 'pkg/api/openapi/docs/**'
+      - 'pkg/api/openapi/.openapi-generator-ignore'
+
+jobs:
+  lint-test:
+    name: "Lint & Test"
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: 'echo "No build required"'
