@@ -27,9 +27,6 @@ var _ KeycloakService = &KeycloakServiceMock{}
 // 			CreateServiceAccountInternalFunc: func(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
 // 				panic("mock out the CreateServiceAccountInternal method")
 // 			},
-// 			DeRegisterClientInSSOFunc: func(kafkaNamespace string) *errors.ServiceError {
-// 				panic("mock out the DeRegisterClientInSSO method")
-// 			},
 // 			DeRegisterConnectorFleetshardOperatorServiceAccountFunc: func(agentClusterId string) *errors.ServiceError {
 // 				panic("mock out the DeRegisterConnectorFleetshardOperatorServiceAccount method")
 // 			},
@@ -66,9 +63,6 @@ var _ KeycloakService = &KeycloakServiceMock{}
 // 			RegisterConnectorFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 // 				panic("mock out the RegisterConnectorFleetshardOperatorServiceAccount method")
 // 			},
-// 			RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
-// 				panic("mock out the RegisterKafkaClientInSSO method")
-// 			},
 // 			RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 // 				panic("mock out the RegisterKasFleetshardOperatorServiceAccount method")
 // 			},
@@ -90,9 +84,6 @@ type KeycloakServiceMock struct {
 
 	// CreateServiceAccountInternalFunc mocks the CreateServiceAccountInternal method.
 	CreateServiceAccountInternalFunc func(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError)
-
-	// DeRegisterClientInSSOFunc mocks the DeRegisterClientInSSO method.
-	DeRegisterClientInSSOFunc func(kafkaNamespace string) *errors.ServiceError
 
 	// DeRegisterConnectorFleetshardOperatorServiceAccountFunc mocks the DeRegisterConnectorFleetshardOperatorServiceAccount method.
 	DeRegisterConnectorFleetshardOperatorServiceAccountFunc func(agentClusterId string) *errors.ServiceError
@@ -130,9 +121,6 @@ type KeycloakServiceMock struct {
 	// RegisterConnectorFleetshardOperatorServiceAccountFunc mocks the RegisterConnectorFleetshardOperatorServiceAccount method.
 	RegisterConnectorFleetshardOperatorServiceAccountFunc func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError)
 
-	// RegisterKafkaClientInSSOFunc mocks the RegisterKafkaClientInSSO method.
-	RegisterKafkaClientInSSOFunc func(kafkaNamespace string, orgId string) (string, *errors.ServiceError)
-
 	// RegisterKasFleetshardOperatorServiceAccountFunc mocks the RegisterKasFleetshardOperatorServiceAccount method.
 	RegisterKasFleetshardOperatorServiceAccountFunc func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError)
 
@@ -155,11 +143,6 @@ type KeycloakServiceMock struct {
 		CreateServiceAccountInternal []struct {
 			// Request is the request argument value.
 			Request CompleteServiceAccountRequest
-		}
-		// DeRegisterClientInSSO holds details about calls to the DeRegisterClientInSSO method.
-		DeRegisterClientInSSO []struct {
-			// KafkaNamespace is the kafkaNamespace argument value.
-			KafkaNamespace string
 		}
 		// DeRegisterConnectorFleetshardOperatorServiceAccount holds details about calls to the DeRegisterConnectorFleetshardOperatorServiceAccount method.
 		DeRegisterConnectorFleetshardOperatorServiceAccount []struct {
@@ -227,13 +210,6 @@ type KeycloakServiceMock struct {
 			// AgentClusterId is the agentClusterId argument value.
 			AgentClusterId string
 		}
-		// RegisterKafkaClientInSSO holds details about calls to the RegisterKafkaClientInSSO method.
-		RegisterKafkaClientInSSO []struct {
-			// KafkaNamespace is the kafkaNamespace argument value.
-			KafkaNamespace string
-			// OrgId is the orgId argument value.
-			OrgId string
-		}
 		// RegisterKasFleetshardOperatorServiceAccount holds details about calls to the RegisterKasFleetshardOperatorServiceAccount method.
 		RegisterKasFleetshardOperatorServiceAccount []struct {
 			// AgentClusterId is the agentClusterId argument value.
@@ -256,7 +232,6 @@ type KeycloakServiceMock struct {
 	}
 	lockCreateServiceAccount                                sync.RWMutex
 	lockCreateServiceAccountInternal                        sync.RWMutex
-	lockDeRegisterClientInSSO                               sync.RWMutex
 	lockDeRegisterConnectorFleetshardOperatorServiceAccount sync.RWMutex
 	lockDeRegisterKasFleetshardOperatorServiceAccount       sync.RWMutex
 	lockDeleteServiceAccount                                sync.RWMutex
@@ -269,7 +244,6 @@ type KeycloakServiceMock struct {
 	lockIsKafkaClientExist                                  sync.RWMutex
 	lockListServiceAcc                                      sync.RWMutex
 	lockRegisterConnectorFleetshardOperatorServiceAccount   sync.RWMutex
-	lockRegisterKafkaClientInSSO                            sync.RWMutex
 	lockRegisterKasFleetshardOperatorServiceAccount         sync.RWMutex
 	lockRegisterOSDClusterClientInSSO                       sync.RWMutex
 	lockResetServiceAccountCredentials                      sync.RWMutex
@@ -338,37 +312,6 @@ func (mock *KeycloakServiceMock) CreateServiceAccountInternalCalls() []struct {
 	mock.lockCreateServiceAccountInternal.RLock()
 	calls = mock.calls.CreateServiceAccountInternal
 	mock.lockCreateServiceAccountInternal.RUnlock()
-	return calls
-}
-
-// DeRegisterClientInSSO calls DeRegisterClientInSSOFunc.
-func (mock *KeycloakServiceMock) DeRegisterClientInSSO(kafkaNamespace string) *errors.ServiceError {
-	if mock.DeRegisterClientInSSOFunc == nil {
-		panic("KeycloakServiceMock.DeRegisterClientInSSOFunc: method is nil but KeycloakService.DeRegisterClientInSSO was just called")
-	}
-	callInfo := struct {
-		KafkaNamespace string
-	}{
-		KafkaNamespace: kafkaNamespace,
-	}
-	mock.lockDeRegisterClientInSSO.Lock()
-	mock.calls.DeRegisterClientInSSO = append(mock.calls.DeRegisterClientInSSO, callInfo)
-	mock.lockDeRegisterClientInSSO.Unlock()
-	return mock.DeRegisterClientInSSOFunc(kafkaNamespace)
-}
-
-// DeRegisterClientInSSOCalls gets all the calls that were made to DeRegisterClientInSSO.
-// Check the length with:
-//     len(mockedKeycloakService.DeRegisterClientInSSOCalls())
-func (mock *KeycloakServiceMock) DeRegisterClientInSSOCalls() []struct {
-	KafkaNamespace string
-} {
-	var calls []struct {
-		KafkaNamespace string
-	}
-	mock.lockDeRegisterClientInSSO.RLock()
-	calls = mock.calls.DeRegisterClientInSSO
-	mock.lockDeRegisterClientInSSO.RUnlock()
 	return calls
 }
 
@@ -751,41 +694,6 @@ func (mock *KeycloakServiceMock) RegisterConnectorFleetshardOperatorServiceAccou
 	mock.lockRegisterConnectorFleetshardOperatorServiceAccount.RLock()
 	calls = mock.calls.RegisterConnectorFleetshardOperatorServiceAccount
 	mock.lockRegisterConnectorFleetshardOperatorServiceAccount.RUnlock()
-	return calls
-}
-
-// RegisterKafkaClientInSSO calls RegisterKafkaClientInSSOFunc.
-func (mock *KeycloakServiceMock) RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
-	if mock.RegisterKafkaClientInSSOFunc == nil {
-		panic("KeycloakServiceMock.RegisterKafkaClientInSSOFunc: method is nil but KeycloakService.RegisterKafkaClientInSSO was just called")
-	}
-	callInfo := struct {
-		KafkaNamespace string
-		OrgId          string
-	}{
-		KafkaNamespace: kafkaNamespace,
-		OrgId:          orgId,
-	}
-	mock.lockRegisterKafkaClientInSSO.Lock()
-	mock.calls.RegisterKafkaClientInSSO = append(mock.calls.RegisterKafkaClientInSSO, callInfo)
-	mock.lockRegisterKafkaClientInSSO.Unlock()
-	return mock.RegisterKafkaClientInSSOFunc(kafkaNamespace, orgId)
-}
-
-// RegisterKafkaClientInSSOCalls gets all the calls that were made to RegisterKafkaClientInSSO.
-// Check the length with:
-//     len(mockedKeycloakService.RegisterKafkaClientInSSOCalls())
-func (mock *KeycloakServiceMock) RegisterKafkaClientInSSOCalls() []struct {
-	KafkaNamespace string
-	OrgId          string
-} {
-	var calls []struct {
-		KafkaNamespace string
-		OrgId          string
-	}
-	mock.lockRegisterKafkaClientInSSO.RLock()
-	calls = mock.calls.RegisterKafkaClientInSSO
-	mock.lockRegisterKafkaClientInSSO.RUnlock()
 	return calls
 }
 

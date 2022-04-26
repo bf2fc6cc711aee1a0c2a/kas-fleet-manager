@@ -65,31 +65,12 @@ func (k *ReadyKafkaManager) Reconcile() []error {
 
 	for _, kafka := range readyKafkas {
 		glog.V(10).Infof("ready kafka id = %s", kafka.ID)
-		if err := k.reconcileSsoClientIDAndSecret(kafka); err != nil {
-			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to get ready kafkas sso client: %s", kafka.ID))
-		}
-
 		if err := k.reconcileCanaryServiceAccount(kafka); err != nil {
 			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to create ready kafka canary service account: %s", kafka.ID))
 		}
 	}
 
 	return encounteredErrors
-}
-
-func (k *ReadyKafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *dbapi.KafkaRequest) error {
-	if kafkaRequest.SsoClientID == "" && kafkaRequest.SsoClientSecret == "" {
-		kafkaRequest.SsoClientID = services.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-		secret, err := k.keycloakService.GetKafkaClientSecret(kafkaRequest.SsoClientID)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get sso client id & secret for kafka cluster: %s", kafkaRequest.SsoClientID)
-		}
-		kafkaRequest.SsoClientSecret = secret
-		if err = k.kafkaService.Update(kafkaRequest); err != nil {
-			return errors.Wrapf(err, "failed to update kafka %s with cluster details", kafkaRequest.ID)
-		}
-	}
-	return nil
 }
 
 // reconcileCanaryServiceAccount migrates all existing kafkas so that they will have the canary service account created.
@@ -108,7 +89,7 @@ func (k *ReadyKafkaManager) reconcileCanaryServiceAccount(kafkaRequest *dbapi.Ka
 
 		serviceAccount, err := k.keycloakService.CreateServiceAccountInternal(serviceAccountRequest)
 		if err != nil {
-			return errors.Wrapf(err, "failed to create canary service account: %s", kafkaRequest.SsoClientID)
+			return errors.Wrapf(err, "failed to create canary service account: %s", err.Error())
 		}
 		kafkaRequest.CanaryServiceAccountClientID = serviceAccount.ClientID
 		kafkaRequest.CanaryServiceAccountClientSecret = serviceAccount.ClientSecret

@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
@@ -418,10 +417,14 @@ func TestClusterManager_processCleanupClusters(t *testing.T) {
 							deprovisionCluster,
 						}, nil
 					},
+					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return nil
+					},
 				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return apiErrors.GeneralError("failed to deregister client in sso")
+				osdIDPKeycloakService: &sso.KeycloakServiceMock{},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to remove service account client in sso")
 					},
 				},
 			},
@@ -440,11 +443,7 @@ func TestClusterManager_processCleanupClusters(t *testing.T) {
 						return nil
 					},
 				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
+				osdIDPKeycloakService: &sso.KeycloakServiceMock{},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
 					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
@@ -2859,23 +2858,6 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 		arg     api.Cluster
 		wantErr bool
 	}{
-
-		{
-			name: "receives an error when deregistering the OSD IDP from keycloak fails",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return &apiErrors.ServiceError{}
-					},
-				},
-			},
-			wantErr: true,
-		},
 		{
 			name: "receives an error when remove kas-fleetshard-operator service account fails",
 			fields: fields{
@@ -2884,11 +2866,7 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 						return nil
 					},
 				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
+				osdIDPKeycloakService: &sso.KeycloakServiceMock{},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
 					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return &apiErrors.ServiceError{}
@@ -2905,11 +2883,7 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 						return &apiErrors.ServiceError{}
 					},
 				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
+				osdIDPKeycloakService: &sso.KeycloakServiceMock{},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
 					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
@@ -2926,11 +2900,7 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 						return nil
 					},
 				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
+				osdIDPKeycloakService: &sso.KeycloakServiceMock{},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
 					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil

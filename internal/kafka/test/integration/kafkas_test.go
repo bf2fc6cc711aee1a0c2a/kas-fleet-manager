@@ -136,8 +136,6 @@ func TestKafkaCreate_Success(t *testing.T) {
 		t.Error("failed to find kafka request")
 	}
 
-	Expect(kafkaRequest.SsoClientID).To(BeEmpty())
-	Expect(kafkaRequest.SsoClientSecret).To(BeEmpty())
 	Expect(kafkaRequest.QuotaType).To(Equal(KafkaConfig(h).Quota.Type))
 	Expect(kafkaRequest.PlacementId).To(Not(BeEmpty()))
 	Expect(kafkaRequest.Owner).To(Not(BeEmpty()))
@@ -1274,8 +1272,6 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			ClusterID:           clusterID,
 			BootstrapServerHost: "dummy-bootstrap-server-host",
 			Name:                "dummy-kafka-to-deprovision",
-			SsoClientID:         "dummy-sso-client-id",
-			SsoClientSecret:     "dummy-sso-client-secret",
 			OrganisationId:      orgId,
 			Status:              constants2.KafkaRequestStatusProvisioning.String(),
 			InstanceType:        types.STANDARD.String(),
@@ -2188,8 +2184,6 @@ func TestKafka_RemovingExpiredKafkas_NoStandardInstances(t *testing.T) {
 			Name:                "dummy-kafka-2",
 			OrganisationId:      orgId,
 			BootstrapServerHost: "dummy-bootstrap-host",
-			SsoClientID:         "dummy-sso-client-id",
-			SsoClientSecret:     "dummy-sso-client-secret",
 			Status:              constants2.KafkaRequestStatusProvisioning.String(),
 			InstanceType:        types.DEVELOPER.String(),
 			SizeId:              "x1",
@@ -2206,8 +2200,6 @@ func TestKafka_RemovingExpiredKafkas_NoStandardInstances(t *testing.T) {
 			Name:                "dummy-kafka-3",
 			OrganisationId:      orgId,
 			BootstrapServerHost: "dummy-bootstrap-host",
-			SsoClientID:         "dummy-sso-client-id",
-			SsoClientSecret:     "dummy-sso-client-secret",
 			Status:              constants2.KafkaRequestStatusReady.String(),
 			InstanceType:        types.DEVELOPER.String(),
 			SizeId:              "x1",
@@ -2282,8 +2274,6 @@ func TestKafka_RemovingExpiredKafkas_WithStandardInstances(t *testing.T) {
 			Name:                "dummy-kafka-to-remove",
 			OrganisationId:      orgId,
 			BootstrapServerHost: "dummy-bootstrap-host",
-			SsoClientID:         "dummy-sso-client-id",
-			SsoClientSecret:     "dummy-sso-client-secret",
 			Status:              constants2.KafkaRequestStatusReady.String(),
 			InstanceType:        types.DEVELOPER.String(),
 			SizeId:              "x1",
@@ -2300,8 +2290,6 @@ func TestKafka_RemovingExpiredKafkas_WithStandardInstances(t *testing.T) {
 			Name:                "dummy-kafka-long-lived",
 			OrganisationId:      orgId,
 			BootstrapServerHost: "dummy-bootstrap-host",
-			SsoClientID:         "dummy-sso-client-id",
-			SsoClientSecret:     "dummy-sso-client-secret",
 			Status:              constants2.KafkaRequestStatusReady.String(),
 			InstanceType:        types.STANDARD.String(),
 			SizeId:              "x1",

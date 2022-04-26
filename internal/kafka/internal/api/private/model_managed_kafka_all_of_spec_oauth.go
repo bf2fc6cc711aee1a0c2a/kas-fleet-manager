@@ -11,8 +11,6 @@ package private
 
 // ManagedKafkaAllOfSpecOauth struct for ManagedKafkaAllOfSpecOauth
 type ManagedKafkaAllOfSpecOauth struct {
-	ClientId               string  `json:"clientId,omitempty"`
-	ClientSecret           string  `json:"clientSecret,omitempty"`
 	TokenEndpointURI       string  `json:"tokenEndpointURI,omitempty"`
 	JwksEndpointURI        string  `json:"jwksEndpointURI,omitempty"`
 	ValidIssuerEndpointURI string  `json:"validIssuerEndpointURI,omitempty"`

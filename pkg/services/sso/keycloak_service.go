@@ -58,44 +58,6 @@ func NewKeycloakServiceWithClient(client keycloak.KcClient) KeycloakService {
 	}
 }
 
-func (kc *masService) RegisterKafkaClientInSSO(accessToken string, kafkaClusterName string, orgId string) (string, *errors.ServiceError) {
-	internalClientId, err := kc.kcClient.IsClientExist(kafkaClusterName, accessToken)
-	if err != nil {
-		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", kafkaClusterName)
-
-	}
-	if internalClientId != "" {
-		glog.V(5).Infof("Existing Kafka Client %s found with internal id = %s", kafkaClusterName, internalClientId)
-		secretValue, secretErr := kc.kcClient.GetClientSecret(internalClientId, accessToken)
-		if secretErr != nil {
-			return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, secretErr, "failed to get sso client secret")
-		}
-		return secretValue, nil
-	}
-	rhOrgIdAttributes := map[string]string{
-		"owner-rh-org-id": orgId,
-	}
-	c := keycloak.ClientRepresentation{
-		ClientID:                     kafkaClusterName,
-		Name:                         kafkaClusterName,
-		ServiceAccountsEnabled:       true,
-		AuthorizationServicesEnabled: false,
-		StandardFlowEnabled:          false,
-		Attributes:                   rhOrgIdAttributes,
-	}
-	clientConfig := kc.kcClient.ClientConfig(c)
-	internalClient, err := kc.kcClient.CreateClient(clientConfig, accessToken)
-	if err != nil {
-		return "", errors.NewWithCause(errors.ErrorFailedToCreateSSOClient, err, "failed to create sso client")
-	}
-	secretValue, err := kc.kcClient.GetClientSecret(internalClient, accessToken)
-	if err != nil {
-		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
-	}
-	glog.V(5).Infof("Kafka Client %s created successfully with internal id = %s", kafkaClusterName, internalClient)
-	return secretValue, nil
-}
-
 func (kc *masService) RegisterOSDClusterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
 	internalClientId, err := kc.kcClient.IsClientExist(clusterId, accessToken)
 	if err != nil {
@@ -127,20 +89,6 @@ func (kc *masService) RegisterOSDClusterClientInSSO(accessToken string, clusterI
 	}
 	glog.V(5).Infof("Kafka Client %s created successfully with internal id = %s", clusterId, internalClient)
 	return secretValue, nil
-}
-
-func (kc *masService) DeRegisterClientInSSO(accessToken string, clientId string) *errors.ServiceError {
-	internalClientID, _ := kc.kcClient.IsClientExist(clientId, accessToken)
-	glog.V(5).Infof("Existing Kafka Client %s found", clientId)
-	if internalClientID == "" {
-		return nil
-	}
-	err := kc.kcClient.DeleteClient(internalClientID, accessToken)
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorFailedToDeleteSSOClient, err, "failed to delete the sso client")
-	}
-	glog.V(5).Infof("Kafka Client %s with internal id of %s deleted successfully", clientId, internalClientID)
-	return nil
 }
 
 func (kc *masService) GetConfig() *keycloak.KeycloakConfig {

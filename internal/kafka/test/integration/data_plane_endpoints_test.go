@@ -265,8 +265,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	})
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
-	ssoClientID := "some-sso-client-id"
-	ssoSecret := "some-sso-secret"
 	storageSize := "60Gi"
 	updatedStorageSize := "70Gi"
 	sizeId := "x1"
@@ -283,8 +281,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			Namespace:              "mk-1",
 			Status:                 constants2.KafkaRequestStatusDeprovision.String(),
 			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
 			DesiredKafkaVersion:    "2.8.1",
 			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
 			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
@@ -300,8 +296,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			Namespace:              "mk-2",
 			Status:                 constants2.KafkaRequestStatusProvisioning.String(),
 			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
 			DesiredKafkaVersion:    "2.8.1",
 			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
 			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
@@ -317,8 +311,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			Namespace:              "mk-3",
 			Status:                 constants2.KafkaRequestStatusPreparing.String(),
 			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
 			DesiredKafkaVersion:    "2.8.1",
 			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
 			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
@@ -334,8 +326,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			Namespace:              "mk-4",
 			Status:                 constants2.KafkaRequestStatusReady.String(),
 			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
 			ActualKafkaVersion:     "2.8.1",
 			DesiredKafkaVersion:    "2.8.1",
 			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
@@ -353,8 +343,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			Name:                   mockKafkaName5,
 			Status:                 constants2.KafkaRequestStatusFailed.String(),
 			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
 			ActualKafkaVersion:     "2.8.1",
 			DesiredKafkaVersion:    "2.8.1",
 			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
@@ -591,8 +579,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 	}, startHook)
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
-	ssoClientID := "some-sso-client-id"
-	ssoSecret := "some-sso-secret"
 	canaryServiceAccountClientId := "canary-servie-account-client-id"
 	canaryServiceAccountClientSecret := "canary-service-account-client-secret"
 
@@ -602,8 +588,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		Name:                             mockKafkaName1,
 		Status:                           constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:              bootstrapServerHost,
-		SsoClientID:                      ssoClientID,
-		SsoClientSecret:                  ssoSecret,
 		CanaryServiceAccountClientID:     canaryServiceAccountClientId,
 		CanaryServiceAccountClientSecret: canaryServiceAccountClientSecret,
 		PlacementId:                      "some-placement-id",
@@ -651,8 +635,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 	}, startHook)
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
-	ssoClientID := "some-sso-client-id"
-	ssoSecret := "some-sso-secret"
 	canaryServiceAccountClientId := "canary-servie-account-client-id"
 	canaryServiceAccountClientSecret := "canary-service-account-client-secret"
 
@@ -662,8 +644,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 		Name:                             mockKafkaName1,
 		Status:                           constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:              bootstrapServerHost,
-		SsoClientID:                      ssoClientID,
-		SsoClientSecret:                  ssoSecret,
 		CanaryServiceAccountClientID:     canaryServiceAccountClientId,
 		CanaryServiceAccountClientSecret: canaryServiceAccountClientSecret,
 		PlacementId:                      "some-placement-id",
@@ -714,8 +694,6 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 	}, startHook)
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
-	ssoClientID := "some-sso-client-id"
-	ssoSecret := "some-sso-secret"
 
 	testKafka := &dbapi.KafkaRequest{
 		ClusterID:              testServer.ClusterID,
@@ -723,8 +701,6 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		Name:                   mockKafkaName1,
 		Status:                 constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:    bootstrapServerHost,
-		SsoClientID:            ssoClientID,
-		SsoClientSecret:        ssoSecret,
 		PlacementId:            "some-placement-id",
 		DesiredKafkaVersion:    "2.7.0",
 		DesiredKafkaIBPVersion: "2.7",
@@ -771,8 +747,6 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 	}, startHook)
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
-	ssoClientID := "some-sso-client-id"
-	ssoSecret := "some-sso-secret"
 
 	testKafka := &dbapi.KafkaRequest{
 		ClusterID:               testServer.ClusterID,
@@ -780,8 +754,6 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 		Name:                    mockKafkaName1,
 		Status:                  constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:     bootstrapServerHost,
-		SsoClientID:             ssoClientID,
-		SsoClientSecret:         ssoSecret,
 		PlacementId:             "some-placement-id",
 		DesiredKafkaVersion:     "2.7.0",
 		DesiredKafkaIBPVersion:  "2.7",
@@ -826,8 +798,6 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 		Name:                    "another-kafka",
 		Status:                  constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:     bootstrapServerHost,
-		SsoClientID:             ssoClientID,
-		SsoClientSecret:         ssoSecret,
 		PlacementId:             "some-placement-id",
 		DesiredKafkaVersion:     "2.7.0",
 		DesiredKafkaIBPVersion:  "2.7",
@@ -884,8 +854,6 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 	}
 
 	bootstrapServerHost := "prefix.some-bootstrap⁻host"
-	ssoClientID := "some-sso-client-id"
-	ssoSecret := "some-sso-secret"
 
 	var testKafkas = []*dbapi.KafkaRequest{
 		{
@@ -894,8 +862,6 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			Name:                   mockKafkaName2,
 			Status:                 constants2.KafkaRequestStatusProvisioning.String(),
 			BootstrapServerHost:    bootstrapServerHost,
-			SsoClientID:            ssoClientID,
-			SsoClientSecret:        ssoSecret,
 			DesiredKafkaVersion:    "2.6.0",
 			DesiredKafkaIBPVersion: "2.6",
 			InstanceType:           types.DEVELOPER.String(),
@@ -1015,8 +981,6 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 	}, startHook)
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
-	ssoClientID := "some-sso-client-id"
-	ssoSecret := "some-sso-secret"
 
 	testKafka := &dbapi.KafkaRequest{
 		ClusterID:              testServer.ClusterID,
@@ -1024,8 +988,6 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		Name:                   mockKafkaName1,
 		Status:                 constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:    bootstrapServerHost,
-		SsoClientID:            ssoClientID,
-		SsoClientSecret:        ssoSecret,
 		PlacementId:            "some-placement-id",
 		DesiredKafkaVersion:    "2.7.0",
 		DesiredKafkaIBPVersion: "2.7",
@@ -1075,8 +1037,6 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	}, nil)
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
-	ssoClientID := "some-sso-client-id"
-	ssoSecret := "some-sso-secret"
 
 	db := test.TestServices.DBFactory.New()
 
@@ -1086,8 +1046,6 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 		Name:                   mockKafkaName1,
 		Status:                 constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:    bootstrapServerHost,
-		SsoClientID:            ssoClientID,
-		SsoClientSecret:        ssoSecret,
 		DesiredKafkaVersion:    "2.7.0",
 		DesiredKafkaIBPVersion: "2.7",
 		InstanceType:           types.STANDARD.String(),
@@ -1135,8 +1093,6 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 	}, nil)
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
-	ssoClientID := "some-sso-client-id"
-	ssoSecret := "some-sso-secret"
 
 	db := test.TestServices.DBFactory.New()
 
@@ -1146,8 +1102,6 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 		Name:                   mockKafkaName1,
 		Status:                 constants2.KafkaRequestStatusFailed.String(),
 		BootstrapServerHost:    bootstrapServerHost,
-		SsoClientID:            ssoClientID,
-		SsoClientSecret:        ssoSecret,
 		DesiredKafkaVersion:    "2.7.0",
 		DesiredKafkaIBPVersion: "2.7",
 		FailedReason:           "test failed reason",

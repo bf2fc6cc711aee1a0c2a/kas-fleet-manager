@@ -79,7 +79,7 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 		}
 
 		// If EnableAuthenticationOnKafka is not set, these fields would also be empty even when provisioned to an OSD cluster.
-		if k.keycloakConfig.EnableAuthenticationOnKafka && (deprovisioningKafka.SsoClientID == "" || deprovisioningKafka.SsoClientSecret == "") {
+		if k.keycloakConfig.EnableAuthenticationOnKafka {
 			deletingKafkas = append(deletingKafkas, deprovisioningKafka)
 		}
 	}

@@ -34,8 +34,6 @@ func buildKafkaDBApiRequest() dbapi.KafkaRequest {
 		MultiAZ:                          false,
 		Name:                             "test-cluster",
 		Status:                           "Creating",
-		SsoClientID:                      uuid.NewString(),
-		SsoClientSecret:                  uuid.NewString(),
 		CanaryServiceAccountClientID:     uuid.NewString(),
 		CanaryServiceAccountClientSecret: uuid.NewString(),
 		SubscriptionId:                   "test",

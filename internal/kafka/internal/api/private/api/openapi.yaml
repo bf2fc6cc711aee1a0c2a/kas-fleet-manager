@@ -527,10 +527,6 @@ components:
       - principal
     ManagedKafka_allOf_spec_oauth:
       properties:
-        clientId:
-          type: string
-        clientSecret:
-          type: string
         tokenEndpointURI:
           type: string
         jwksEndpointURI:

@@ -15,8 +15,6 @@ type KafkaRequest struct {
 	MultiAZ                          bool   `json:"multi_az"`
 	Name                             string `json:"name" gorm:"index"`
 	Status                           string `json:"status" gorm:"index"`
-	SsoClientID                      string `json:"sso_client_id"`
-	SsoClientSecret                  string `json:"sso_client_secret"`
 	CanaryServiceAccountClientID     string `json:"canary_service_account_client_id"`
 	CanaryServiceAccountClientSecret string `json:"canary_service_account_client_secret"`
 	SubscriptionId                   string `json:"subscription_id"`

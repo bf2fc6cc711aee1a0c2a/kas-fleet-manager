@@ -257,7 +257,7 @@ components:
                     bf2.org/kafkaInstanceProfileType:
                       type: string
                     bf2.org/kafkaInstanceProfileQuotaConsumed:
-                      type: string 
+                      type: string
 
             spec:
               type: object
@@ -266,7 +266,7 @@ components:
                   type: array
                   items:
                     type: object
-                    required: 
+                    required:
                       - name
                       - principal
                       - password
@@ -275,8 +275,8 @@ components:
                         type: string
                       principal:
                         type: string
-                      password: 
-                        type: string     
+                      password:
+                        type: string
                 capacity:
                   $ref: "#/components/schemas/ManagedKafkaCapacity"
                 oauth:
@@ -284,10 +284,6 @@ components:
                   required:
                     - maximumSessionLifetime
                   properties:
-                    clientId:
-                      type: string
-                    clientSecret:
-                      type: string
                     tokenEndpointURI:
                       type: string
                     jwksEndpointURI:

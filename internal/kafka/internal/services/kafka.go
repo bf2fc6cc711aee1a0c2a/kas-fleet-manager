@@ -391,11 +391,6 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 	}
 
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-		kafkaRequest.SsoClientID = BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-		kafkaRequest.SsoClientSecret, err = k.keycloakService.RegisterKafkaClientInSSO(kafkaRequest.SsoClientID, kafkaRequest.OrganisationId)
-		if err != nil {
-			return errors.FailedToCreateSSOClient("failed to create sso client %s:%v", kafkaRequest.SsoClientID, err)
-		}
 		clientId := strings.ToLower(fmt.Sprintf("%s-%s", CanaryServiceAccountPrefix, kafkaRequest.ID))
 		serviceAccountRequest := sso.CompleteServiceAccountRequest{
 			Owner:          kafkaRequest.Owner,
@@ -423,8 +418,6 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 			ID: kafkaRequest.ID,
 		},
 		BootstrapServerHost:              kafkaRequest.BootstrapServerHost,
-		SsoClientID:                      kafkaRequest.SsoClientID,
-		SsoClientSecret:                  kafkaRequest.SsoClientSecret,
 		CanaryServiceAccountClientID:     kafkaRequest.CanaryServiceAccountClientID,
 		CanaryServiceAccountClientSecret: kafkaRequest.CanaryServiceAccountClientSecret,
 		PlacementId:                      api.NewID(),
@@ -606,14 +599,8 @@ func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 	if kafkaRequest.ClusterID != "" {
 		// delete the kafka client in mas sso
 		if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-			clientId := BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-			keycloakErr := k.keycloakService.DeRegisterClientInSSO(clientId)
-			if keycloakErr != nil {
-				return errors.NewWithCause(errors.ErrorGeneral, keycloakErr, "error deleting sso client")
-			}
-
 			if kafkaRequest.CanaryServiceAccountClientID != "" {
-				keycloakErr = k.keycloakService.DeleteServiceAccountInternal(kafkaRequest.CanaryServiceAccountClientID)
+				keycloakErr := k.keycloakService.DeleteServiceAccountInternal(kafkaRequest.CanaryServiceAccountClientID)
 				if keycloakErr != nil {
 					return errors.NewWithCause(errors.ErrorGeneral, keycloakErr, "error deleting canary service account")
 				}
@@ -718,12 +705,6 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 		Where("cluster_id = ?", clusterID).
 		Where("status IN (?)", kafkaManagedCRStatuses).
 		Where("bootstrap_server_host != ''")
-
-	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-		dbConn = dbConn.
-			Where("sso_client_id != ''").
-			Where("sso_client_secret != ''")
-	}
 
 	var kafkaRequestList dbapi.KafkaList
 	if err := dbConn.Find(&kafkaRequestList).Error; err != nil {
@@ -1085,8 +1066,6 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 
 	if keycloakConfig.EnableAuthenticationOnKafka {
 		managedKafkaCR.Spec.OAuth = managedkafka.OAuthSpec{
-			ClientId:               kafkaRequest.SsoClientID,
-			ClientSecret:           kafkaRequest.SsoClientSecret,
 			TokenEndpointURI:       keycloakRealmConfig.TokenEndpointURI,
 			JwksEndpointURI:        keycloakRealmConfig.JwksEndpointURI,
 			ValidIssuerEndpointURI: keycloakRealmConfig.ValidIssuerURI,

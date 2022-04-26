@@ -32,8 +32,6 @@ func PresentManagedKafka(from *v1.ManagedKafka) private.ManagedKafka {
 				MaxConnectionAttemptsPerSec: int32(from.Spec.Capacity.MaxConnectionAttemptsPerSec),
 			},
 			Oauth: private.ManagedKafkaAllOfSpecOauth{
-				ClientId:               from.Spec.OAuth.ClientId,
-				ClientSecret:           from.Spec.OAuth.ClientSecret,
 				TokenEndpointURI:       from.Spec.OAuth.TokenEndpointURI,
 				JwksEndpointURI:        from.Spec.OAuth.JwksEndpointURI,
 				ValidIssuerEndpointURI: from.Spec.OAuth.ValidIssuerEndpointURI,

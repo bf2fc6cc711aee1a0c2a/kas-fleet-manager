@@ -50,27 +50,11 @@ func tokenForServiceAPIHandler(ctx context.Context, r *keycloakServiceProxy) (st
 	return token, nil
 }
 
-func (r *keycloakServiceProxy) RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
-	if token, err := r.retrieveToken(); err != nil {
-		return "", err
-	} else {
-		return r.service.RegisterKafkaClientInSSO(token, kafkaNamespace, orgId)
-	}
-}
-
 func (r *keycloakServiceProxy) RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return "", err
 	} else {
 		return r.service.RegisterOSDClusterClientInSSO(token, clusterId, clusterOathCallbackURI)
-	}
-}
-
-func (r *keycloakServiceProxy) DeRegisterClientInSSO(clientId string) *errors.ServiceError {
-	if token, err := r.retrieveToken(); err != nil {
-		return err
-	} else {
-		return r.service.DeRegisterClientInSSO(token, clientId)
 	}
 }
 

@@ -43,7 +43,6 @@ type Kafka struct {
 	KafkaStorageSize       string             `json:"kafka_storage_size,omitempty"`
 	OrganisationId         string             `json:"organisation_id,omitempty"`
 	SubscriptionId         string             `json:"subscription_id,omitempty"`
-	SsoClientId            string             `json:"sso_client_id,omitempty"`
 	OwnerAccountId         string             `json:"owner_account_id,omitempty"`
 	AccountNumber          string             `json:"account_number,omitempty"`
 	InstanceType           string             `json:"instance_type,omitempty"`

@@ -19,30 +19,9 @@ type redhatssoService struct {
 	client redhatsso.SSOClient
 }
 
-func (r *redhatssoService) RegisterKafkaClientInSSO(accessToken string, kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
-	svcData, err := r.client.CreateServiceAccount(accessToken, kafkaNamespace, fmt.Sprintf("%s:%s", orgId, kafkaNamespace))
-	if err != nil {
-		return "", errors.NewWithCause(errors.ErrorFailedToCreateSSOClient, err, "failed to register Kafka Client in SSO")
-	}
-	if svcData.Secret != nil {
-		return *svcData.Secret, nil
-	} else {
-		return "", errors.NewWithCause(errors.ErrorGeneral, err, "failed to retrieve secret while registering Kafka Client in SSO")
-	}
-}
-
 func (r *redhatssoService) RegisterOSDClusterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
 	// TODO
 	return "", errors.New(errors.ErrorGeneral, "RegisterOSDClusterClientInSSO Not implemented")
-}
-
-func (r *redhatssoService) DeRegisterClientInSSO(accessToken string, clientId string) *errors.ServiceError {
-	err := r.client.DeleteServiceAccount(accessToken, clientId)
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorFailedToDeleteSSOClient, err, "failed to delete the sso client")
-	}
-	glog.V(5).Infof("Kafka Client %s deleted successfully", clientId)
-	return nil
 }
 
 func (r *redhatssoService) GetConfig() *keycloak.KeycloakConfig {

@@ -48,7 +48,6 @@ func PresentKafkaRequestAdminEndpoint(kafkaRequest *dbapi.KafkaRequest, accountS
 		KafkaStorageSize:       kafkaRequest.KafkaStorageSize,
 		OrganisationId:         kafkaRequest.OrganisationId,
 		SubscriptionId:         kafkaRequest.SubscriptionId,
-		SsoClientId:            kafkaRequest.SsoClientID,
 		OwnerAccountId:         kafkaRequest.OwnerAccountId,
 		AccountNumber:          org.AccountNumber,
 		QuotaType:              kafkaRequest.QuotaType,
