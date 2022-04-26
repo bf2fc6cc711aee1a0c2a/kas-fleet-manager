@@ -103,7 +103,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			if !h.connectorsConfig.ConnectorEnableUnassignedConnectors && (convResource.NamespaceId == nil || *convResource.NamespaceId == "") {
 				return nil, errors.MinimumFieldLengthNotReached("namespace_id is not valid. Minimum length 1 is required.")
 			}
-			if err := h.validateConnectorOperation(r.Context(), convResource, phase.CreateConnector); err != nil {
+			if err := ValidateConnectorOperation(r.Context(), h.namespaceService, convResource, phase.CreateConnector); err != nil {
 				return nil, err
 			}
 			ct, err := h.connectorTypesService.Get(resource.ConnectorTypeId)
@@ -196,7 +196,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			if operation == phase.UnassignConnector && !h.connectorsConfig.ConnectorEnableUnassignedConnectors {
 				return nil, errors.FieldValidationError("Unsupported connector state %s", patch.DesiredState)
 			}
-			if serr = h.validateConnectorOperation(r.Context(), &dbresource.Connector, operation,
+			if serr = ValidateConnectorOperation(r.Context(), h.namespaceService, &dbresource.Connector, operation,
 				func(connector *dbapi.Connector) *errors.ServiceError {
 					resource.DesiredState = public.ConnectorDesiredState(dbresource.DesiredState)
 					return nil
@@ -318,11 +318,11 @@ func (h ConnectorsHandler) getOperation(resource public.Connector, patch public.
 	return operation, nil
 }
 
-func (h ConnectorsHandler) validateConnectorOperation(ctx context.Context, connector *dbapi.Connector,
+func ValidateConnectorOperation(ctx context.Context, namespaceService services.ConnectorNamespaceService, connector *dbapi.Connector,
 	operation phase.ConnectorOperation, updatePhase ...func(*dbapi.Connector) *errors.ServiceError) (err *errors.ServiceError) {
 	if connector.NamespaceId != nil {
 		var namespace *dbapi.ConnectorNamespace
-		if namespace, err = h.namespaceService.Get(ctx, *connector.NamespaceId); err == nil {
+		if namespace, err = namespaceService.Get(ctx, *connector.NamespaceId); err == nil {
 			_, err = phase.PerformConnectorOperation(namespace, connector, operation, updatePhase...)
 		}
 	} else {
@@ -457,34 +457,40 @@ func (h ConnectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		Action: func() (interface{}, *errors.ServiceError) {
 
 			ctx := r.Context()
-			c, err := h.connectorsService.Get(ctx, connectorId, "")
-			if err != nil {
-				return nil, err
-			}
-
-			// validate delete operation if connector is assigned to a namespace
-			if c.NamespaceId != nil {
-				err = h.validateConnectorOperation(ctx, &c.Connector, phase.DeleteConnector, func(connector *dbapi.Connector) (err *errors.ServiceError) {
-					err = h.connectorsService.SaveStatus(ctx, connector.Status)
-					if err == nil {
-						err = h.connectorsService.Update(ctx, connector)
-					}
-					return err
-				})
-			} else {
-				// connector not in namespace
-				c.Status.Phase = dbapi.ConnectorStatusPhaseDeleted
-				c.DesiredState = dbapi.ConnectorDeleted
-				err = h.connectorsService.SaveStatus(ctx, c.Status)
-				if err == nil {
-					err = h.connectorsService.Update(ctx, &c.Connector)
-				}
-			}
-
-			return nil, err
+			return nil, HandleConnectorDelete(ctx, h.connectorsService, h.namespaceService, connectorId)
 		},
 	}
 	handlers.HandleDelete(w, r, cfg, http.StatusNoContent)
+}
+
+func HandleConnectorDelete(ctx context.Context, connectorsService services.ConnectorsService,
+	namespaceService services.ConnectorNamespaceService, connectorId string) *errors.ServiceError {
+
+	c, err := connectorsService.Get(ctx, connectorId, "")
+	if err != nil {
+		return err
+	}
+
+	// validate delete operation if connector is assigned to a namespace
+	if c.NamespaceId != nil {
+		err = ValidateConnectorOperation(ctx, namespaceService, &c.Connector, phase.DeleteConnector,
+			func(connector *dbapi.Connector) (err *errors.ServiceError) {
+				err = connectorsService.SaveStatus(ctx, connector.Status)
+				if err == nil {
+					err = connectorsService.Update(ctx, connector)
+				}
+				return err
+			})
+	} else {
+		// connector not in namespace
+		c.Status.Phase = dbapi.ConnectorStatusPhaseDeleted
+		c.DesiredState = dbapi.ConnectorDeleted
+		err = connectorsService.SaveStatus(ctx, c.Status)
+		if err == nil {
+			err = connectorsService.Update(ctx, &c.Connector)
+		}
+	}
+	return err
 }
 
 func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {

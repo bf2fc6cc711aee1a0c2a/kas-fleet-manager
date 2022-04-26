@@ -559,7 +559,7 @@ func (k *connectorNamespaceService) CheckConnectorQuota(namespaceId string) *err
 func (k *connectorNamespaceService) CanCreateEvalNamespace(userId string) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 	var count int64
-	if err := dbConn.Debug().Table("connector_namespaces").
+	if err := dbConn.Table("connector_namespaces").
 		Where("tenant_user_id = ? AND expiration IS NOT NULL "+
 			"AND connector_namespaces.deleted_at IS NULL AND connector_clusters.deleted_at IS NULL", userId).
 		Joins("JOIN connector_clusters ON connector_clusters.id = connector_namespaces.cluster_id AND connector_clusters.organisation_id IN ?",

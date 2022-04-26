@@ -377,24 +377,13 @@ func (k *connectorsService) ForceDelete(ctx context.Context, id string) *errors.
 			}
 		}
 		if deploymentId != "" {
-			if err := tx.Where("id = ?", deploymentId).
-				Delete(&dbapi.ConnectorDeploymentStatus{}).Error; err != nil {
-				return services.HandleDeleteError("Connector deployment status", "id", deploymentId, err)
-			}
-			if err := tx.Where("id = ?", deploymentId).
-				Delete(&dbapi.ConnectorDeployment{}).Error; err != nil {
-				return services.HandleDeleteError("Connector deployment", "id", deploymentId, err)
+			if err := deleteConnectorDeployment(tx, deploymentId); err != nil {
+				return err
 			}
 		}
-		if err := tx.Where("id = ?", id).
-			Delete(&dbapi.ConnectorStatus{}).Error; err != nil {
-			return services.HandleDeleteError("Connector status", "id", id, err)
+		if err := k.Delete(ctx, id); err != nil {
+			return err
 		}
-		if err := tx.Where("id = ?", id).
-			Delete(&dbapi.Connector{}).Error; err != nil {
-			return services.HandleDeleteError("Connector", "id", id, err)
-		}
-
 		return nil
 	}); err != nil {
 		return services.HandleDeleteError("Connector", "id", id, err)

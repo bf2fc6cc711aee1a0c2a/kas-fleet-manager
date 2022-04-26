@@ -1160,9 +1160,73 @@ Feature: connector agent API
       }
       """
 
-    #-----------------------------------------------------------------------------------------------------------------
-    # In this part of the Scenario we test out what happens when you have a connector with an invalid connector type
-    #-----------------------------------------------------------------------------------------------------------------
+    #--------------------------------------------------------------
+    # In this part of the Scenario we test admin connector deletion
+    #--------------------------------------------------------------
+    # create connector to test force delete
+    Given I am logged in as "Jimmy"
+    When I POST path "/v1/kafka_connectors?async=true" with json body:
+      """
+      {
+        "kind": "Connector",
+        "name": "example 2",
+        "namespace_id": "${connector_namespace_id}",
+        "channel":"stable",
+        "connector_type_id": "aws-sqs-source-v1alpha1",
+        "kafka": {
+          "id": "mykafka",
+          "url": "kafka.hostname"
+        },
+        "service_account": {
+          "client_id": "myclient",
+          "client_secret": "test"
+        },
+        "schema_registry": {
+          "id": "myregistry",
+          "url": "registry.hostname"
+        },
+        "connector": {
+            "aws_queue_name_or_arn": "test",
+            "aws_secret_key": "test",
+            "aws_access_key": "test",
+            "aws_region": "east",
+            "kafka_topic": "test"
+        }
+      }
+      """
+    Then the response code should be 202
+    And the ".status.state" selection from the response should match "assigning"
+    And I store the ".id" selection from the response as ${forced_connector_id}
+
+    # api admin should be able to see new connector deployment
+    Given I am logged in as "Ricky Bobby"
+    When I wait up to "10" seconds for a GET on path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "2"
+    Then I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    And the ".total" selection from the response should match "2"
+
+    # soft delete connector using admin API
+    When I DELETE path "/v1/admin/kafka_connectors/${forced_connector_id}"
+    Then the response code should be 204
+
+    # assigned connector and deployment should get marked for deletion
+    When I GET path "/v1/admin/kafka_connectors/${forced_connector_id}"
+    Then the ".desired_state" selection from the response should match "deleted"
+    When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    Then the response code should be 200
+    And the ".total" selection from the response should match "2"
+
+    # force delete connector using admin API
+    When I DELETE path "/v1/admin/kafka_connectors/${forced_connector_id}?force=true"
+    Then the response code should be 204
+
+    # assigned connector and deployment should get deleted immediately
+    When I GET path "/v1/admin/kafka_connectors/${forced_connector_id}"
+    Then the response code should be 410
+    When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    Then the response code should be 200
+    And the ".total" selection from the response should match "1"
+    And the ".items[0].id" selection from the response should match "${connector_deployment_id}"
+
     # Validate that there exists 1 connector deployment in the DB...
     Given I run SQL "SELECT count(*) FROM connector_deployments WHERE connector_id='${connector_id}' AND deleted_at IS NULL" gives results:
       | count |
@@ -1200,16 +1264,21 @@ Feature: connector agent API
 
     # Connectors that were assigning the cluster get updated to not refer to them.
     Given I am logged in as "Jimmy"
-    And I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".namespace_id" selection to match ""
-    When I GET path "/v1/kafka_connectors/${connector_id}"
-    Then the response code should be 200
+    When I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".namespace_id" selection to match ""
+    Then I GET path "/v1/kafka_connectors/${connector_id}"
+    And the response code should be 200
     And the ".desired_state" selection from the response should match "unassigned"
     And the ".namespace_id" selection from the response should match ""
 
     # delete connector using admin API
     Given I am logged in as "Ricky Bobby"
-    And I DELETE path "/v1/admin/kafka_connectors/${connector_id}?force=true"
-    And the response code should be 204
+    When I DELETE path "/v1/admin/kafka_connectors/${connector_id}"
+    Then the response code should be 204
+    # unassigned connector should get reconciled and deleted
+    When I wait up to "10" seconds for a GET on path "/v1/admin/kafka_connectors/${connector_id}" response code to match "410"
+    Then I GET path "/v1/admin/kafka_connectors/${connector_id}"
+    And the response code should be 410
+
 
   Scenario: Bobby can stop and start an existing connector
     Given I am logged in as "Bobby"
