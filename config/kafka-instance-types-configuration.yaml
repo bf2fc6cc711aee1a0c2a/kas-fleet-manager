@@ -34,17 +34,28 @@ supported_instance_types:
       quotaConsumed: 1
       quotaType: "RHOSAK"
       capacityConsumed: 1
+    - id: x2
+      ingressThroughputPerSec: "100Mi"
+      egressThroughputPerSec: "200Mi"
+      totalMaxConnections: 6000
+      maxDataRetentionSize: "2000Gi"
+      maxPartitions: 3000
+      maxDataRetentionPeriod: "P14D"
+      maxConnectionAttemptsPerSec: 200
+      quotaConsumed: 2
+      quotaType: "RHOSAK"
+      capacityConsumed: 2
   - id: developer
     display_name: Trial
     sizes:
     - id: x1
-      ingressThroughputPerSec: "30Mi"
-      egressThroughputPerSec: "30Mi"
-      totalMaxConnections: 3000
-      maxConnectionAttemptsPerSec: 100
-      maxDataRetentionSize: "1000Gi"
+      ingressThroughputPerSec: "1Mi"
+      egressThroughputPerSec: "1Mi"
+      totalMaxConnections: 100
+      maxConnectionAttemptsPerSec: 50
+      maxDataRetentionSize: "10Gi"
       maxDataRetentionPeriod: "P14D"
-      maxPartitions: 1000
+      maxPartitions: 100
       quotaConsumed: 1
       quotaType: "RHOSAKTrial"
       capacityConsumed: 1
