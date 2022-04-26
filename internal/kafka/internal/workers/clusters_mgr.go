@@ -45,7 +45,6 @@ const (
 	observatoriumDexSecretName      = "observatorium-configuration-dex"
 	observatoriumSSOSecretName      = "observatorium-configuration-red-hat-sso"
 	syncsetName                     = "ext-managedservice-cluster-mgr"
-	imagePullSecretName             = "rhoas-image-pull-secret"
 	strimziAddonNamespace           = constants.StrimziOperatorNamespace
 	strimziQEAddonNamespace         = "redhat-managed-kafka-operator-qe"
 	kasFleetshardAddonNamespace     = constants.KASFleetShardOperatorNamespace
@@ -1011,7 +1010,7 @@ func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secre
 			Kind:       "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      imagePullSecretName,
+			Name:      kafkaConstants.ImagePullSecretName,
 			Namespace: namespace,
 		},
 		Type: k8sCoreV1.SecretTypeDockercfg,

@@ -13,6 +13,9 @@ const (
 	// The DNS prefixes used for traffic ingress
 	ManagedKafkaIngressDnsNamePrefix = "kas"
 	DefaultIngressDnsNamePrefix      = "apps"
+
+	//ImagePullSecretName is the name of the secret used to pull images
+	ImagePullSecretName = "rhoas-image-pull-secret"
 )
 
 func (c ClusterOperation) String() string {
