@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 
@@ -99,6 +100,10 @@ func (s *StandaloneProvider) buildStrimziOperatorNamespace() *v1.Namespace {
 
 func (s *StandaloneProvider) buildStrimziOperatorCatalogSource() *operatorsv1alpha1.CatalogSource {
 	strimziOLMConfig := s.dataplaneClusterConfig.StrimziOperatorOLMConfig
+	var secrets []string
+	if s.dataplaneClusterConfig.ImagePullDockerConfigContent != "" {
+		secrets = append(secrets, constants.ImagePullSecretName)
+	}
 	return &operatorsv1alpha1.CatalogSource{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
@@ -111,6 +116,7 @@ func (s *StandaloneProvider) buildStrimziOperatorCatalogSource() *operatorsv1alp
 		Spec: operatorsv1alpha1.CatalogSourceSpec{
 			SourceType: operatorsv1alpha1.SourceTypeGrpc,
 			Image:      strimziOLMConfig.IndexImage,
+			Secrets:    secrets,
 		},
 	}
 }
@@ -181,6 +187,11 @@ func (s *StandaloneProvider) buildKASFleetShardOperatorNamespace() *v1.Namespace
 
 func (s *StandaloneProvider) buildKASFleetShardOperatorCatalogSource() *operatorsv1alpha1.CatalogSource {
 	kasFleetshardOLMConfig := s.dataplaneClusterConfig.KasFleetshardOperatorOLMConfig
+	var secrets []string
+	if s.dataplaneClusterConfig.ImagePullDockerConfigContent != "" {
+		secrets = append(secrets, constants.ImagePullSecretName)
+	}
+
 	return &operatorsv1alpha1.CatalogSource{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
@@ -193,6 +204,7 @@ func (s *StandaloneProvider) buildKASFleetShardOperatorCatalogSource() *operator
 		Spec: v1alpha1.CatalogSourceSpec{
 			SourceType: v1alpha1.SourceTypeGrpc,
 			Image:      kasFleetshardOLMConfig.IndexImage,
+			Secrets:    secrets,
 		},
 	}
 }

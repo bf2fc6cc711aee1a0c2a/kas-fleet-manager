@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
-
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
@@ -1409,7 +1409,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				Kind:       "Secret",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      imagePullSecretName,
+				Name:      constants.ImagePullSecretName,
 				Namespace: strimziNamespace,
 			},
 			Type: k8sCoreV1.SecretTypeDockercfg,
@@ -1423,7 +1423,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 					Kind:       "Secret",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      imagePullSecretName,
+					Name:      constants.ImagePullSecretName,
 					Namespace: kasFleetshardNamespace,
 				},
 				Type: k8sCoreV1.SecretTypeDockercfg,
