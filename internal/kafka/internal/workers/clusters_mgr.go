@@ -605,7 +605,7 @@ func (c *ClusterManager) reconcileKasFleetshardOperator(cluster api.Cluster) err
 }
 
 func (c *ClusterManager) reconcileClusterResources(cluster api.Cluster) error {
-	resourceSet := c.buildResourceSet()
+	resourceSet := c.buildResourceSet(cluster)
 	if err := c.ClusterService.ApplyResources(&cluster, resourceSet); err != nil {
 		return errors.Wrapf(err, "failed to apply resources for cluster %s", cluster.ClusterID)
 	}
@@ -820,7 +820,7 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 	return errs
 }
 
-func (c *ClusterManager) buildResourceSet() types.ResourceSet {
+func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet {
 	r := []interface{}{
 		c.buildReadOnlyGroupResource(),
 		c.buildDedicatedReaderClusterRoleBindingResource(),
@@ -840,6 +840,30 @@ func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 	kasFleetshardNamespace := kasFleetshardAddonNamespace
 	if c.OCMConfig.KasFleetshardAddonID == "kas-fleetshard-operator-qe" {
 		kasFleetshardNamespace = kasFleetshardQEAddonNamespace
+	}
+
+	// For standalone clusters, make sure that the namespaces is read from the config
+	// and that they are created before the pull secrets that references them
+	if cluster.ProviderType == api.ClusterProviderStandalone {
+		strimziNamespace = c.DataplaneClusterConfig.StrimziOperatorOLMConfig.Namespace
+		kasFleetshardNamespace = c.DataplaneClusterConfig.KasFleetshardOperatorOLMConfig.Namespace
+		r = append(r, &k8sCoreV1.Namespace{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
+				Kind:       "Namespace",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: strimziNamespace,
+			},
+		}, &k8sCoreV1.Namespace{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
+				Kind:       "Namespace",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: kasFleetshardNamespace,
+			},
+		})
 	}
 
 	if s := c.buildImagePullSecret(strimziNamespace); s != nil {
