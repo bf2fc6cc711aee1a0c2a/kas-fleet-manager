@@ -1225,6 +1225,7 @@ Feature: connector agent API
     When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
     And the ".total" selection from the response should match "1"
+    And the ".items[0].id" selection from the response should match "${connector_deployment_id}"
 
     # Validate that there exists 1 connector deployment in the DB...
     Given I run SQL "SELECT count(*) FROM connector_deployments WHERE connector_id='${connector_id}' AND deleted_at IS NULL" gives results:
