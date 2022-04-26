@@ -89,14 +89,29 @@ Feature: create a connector
 
     # Before deleting the cluster, lets make sure the access control works as expected for other users beside Greg
     Given I am logged in as "Coworker Sally"
+    # a user who is part of the org should be able to get cluster details
     When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 200
 
+    # a user who is not org admin should not be able to get addon parameters even if it is part of the org
+    When I GET path "/v1/kafka_connector_clusters/${cluster_id}/addon_parameters"
+    Then the response code should be 403
+
+    # a user who is not org admin should not be able to delete a cluster even if it is part of the org
+    When I DELETE path "/v1/kafka_connector_clusters/${cluster_id}"
+    Then the response code should be 403
+
     Given I am logged in as "Evil Bob"
+    # a user who is not part of the org should not be able to get cluster details
     When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 404
 
     Given I am logged in as "Greg"
+    # a user who is org admin should be able to get addon parameters
+    When I GET path "/v1/kafka_connector_clusters/${cluster_id}/addon_parameters"
+    Then the response code should be 200
+
+    # a user who is org admin should be able to delete a cluster
     When I DELETE path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 204
     And the response should match ""
