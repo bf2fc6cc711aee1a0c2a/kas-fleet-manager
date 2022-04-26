@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"net/http"
+	"net/url"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -8,8 +11,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/golang/glog"
-	"net/http"
-	"net/url"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 
@@ -192,9 +193,12 @@ func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *http.Request) {
 
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
+
+	user := h.AuthZ.GetValidationUser(r.Context())
+
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), user.AuthorizedClusterAdmin()),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
