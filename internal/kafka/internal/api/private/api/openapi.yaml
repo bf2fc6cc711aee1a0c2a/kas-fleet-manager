@@ -503,7 +503,6 @@ components:
           type: string
       required:
       - bf2.org/kafkaInstanceProfileQuotaConsumed
-      - bf2.org/kafkaInstanceProfileType
     ManagedKafka_allOf_metadata:
       properties:
         name:

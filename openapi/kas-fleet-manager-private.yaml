@@ -252,7 +252,6 @@ components:
                 labels:
                   type: object
                   required:
-                    - bf2.org/kafkaInstanceProfileType
                     - bf2.org/kafkaInstanceProfileQuotaConsumed
                   properties:
                     bf2.org/kafkaInstanceProfileType:
