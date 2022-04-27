@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -159,9 +160,11 @@ func (p Plan) String() string {
 	return string(p)
 }
 
+const numComponentsInPlanFormat = 2
+
 func (p Plan) GetInstanceType() (string, error) {
 	t := strings.Split(strings.TrimSpace(p.String()), ".")
-	if len(t) != 2 {
+	if len(t) != numComponentsInPlanFormat {
 		return "", errors.New(errors.ErrorGeneral, fmt.Sprintf("Unsupported plan provided: '%s'", p))
 	}
 	return t[0], nil
@@ -169,7 +172,7 @@ func (p Plan) GetInstanceType() (string, error) {
 
 func (p Plan) GetSizeID() (string, error) {
 	t := strings.Split(strings.TrimSpace(p.String()), ".")
-	if len(t) != 2 {
+	if len(t) != numComponentsInPlanFormat {
 		return "", errors.New(errors.ErrorGeneral, fmt.Sprintf("Unsupported plan provided: '%s'", p))
 	}
 	return t[1], nil
