@@ -64,7 +64,7 @@ type ConnectorNamespaceStatus struct {
 	Phase ConnectorNamespacePhaseEnum `gorm:"not null;index"`
 	// the version of the agent
 	Version            string
-	ConnectorsDeployed int32         `gorm:"not null"`
+	ConnectorsDeployed int32         `gorm:"-:all"` // gorm ignored field set using query from connector_deployments table
 	Conditions         ConditionList `gorm:"type:jsonb"`
 }
 

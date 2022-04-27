@@ -278,6 +278,35 @@ Feature: connector namespaces API
      }
      """
 
+   # test invalid namespace profile
+    Given I am logged in as "Dusty"
+    When I POST path "/v1/kafka_connector_namespaces/" with json body:
+    """
+    {
+      "name": "shared_namespace",
+      "cluster_id": "${connector_cluster_id}",
+      "kind": "organisation",
+      "annotations": [
+        {
+          "key": "connector_mgmt.bf2.org/profile",
+          "value": "invalid-profile"
+        }
+      ]
+    }
+    """
+    Then the response code should be 400
+    And the response should match json:
+    """
+    {
+      "code": "CONNECTOR-MGMT-21",
+      "href": "/api/connector_mgmt/v1/errors/21",
+      "id": "21",
+      "kind":"Error",
+      "reason":"invalid profile invalid-profile",
+      "operation_id":"${response.operation_id}"
+    }
+    """
+
    # Create an organisation namespace
     Given I am logged in as "Dusty"
     When I POST path "/v1/kafka_connector_namespaces/" with json body:

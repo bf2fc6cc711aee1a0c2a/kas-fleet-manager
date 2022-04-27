@@ -116,6 +116,10 @@ func (k *connectorNamespaceService) SetEvalClusterId(request *dbapi.ConnectorNam
 
 func (k *connectorNamespaceService) Create(ctx context.Context, request *dbapi.ConnectorNamespace) *errors.ServiceError {
 
+	if err := k.validateAnnotations(request); err != nil {
+		return err
+	}
+
 	dbConn := k.connectionFactory.New()
 	if err := dbConn.Create(request).Error; err != nil {
 		return services.HandleCreateError("Connector namespace", err)
@@ -127,6 +131,17 @@ func (k *connectorNamespaceService) Create(ctx context.Context, request *dbapi.C
 		return services.HandleGetError("Connector namespace", "id", request.ID, err)
 	}
 
+	return nil
+}
+
+func (k *connectorNamespaceService) validateAnnotations(request *dbapi.ConnectorNamespace) *errors.ServiceError {
+	for _, a := range request.Annotations {
+		if a.Key == config.AnnotationProfileKey {
+			if _, ok := k.quotaConfig.GetNamespaceQuota(a.Value); !ok {
+				return errors.BadRequest(`invalid profile %s`, a.Value)
+			}
+		}
+	}
 	return nil
 }
 
@@ -168,8 +183,51 @@ func (k *connectorNamespaceService) Get(ctx context.Context, namespaceID string)
 	if result.DeletedAt.Valid {
 		return nil, services.HandleGoneError("Connector namespace", "id", namespaceID)
 	}
+	if err := k.setConnectorsDeployed(dbapi.ConnectorNamespaceList{result}); err != nil {
+		return result, err
+	}
 
 	return result, nil
+}
+
+func (k *connectorNamespaceService) setConnectorsDeployed(namespaces dbapi.ConnectorNamespaceList) *errors.ServiceError {
+	if len(namespaces) == 0 {
+		return nil
+	}
+
+	idMap := make(map[string]*dbapi.ConnectorNamespace)
+	ids := make([]string, len(namespaces))
+	i := 0
+	for _, ns := range namespaces {
+		idMap[ns.ID] = ns
+		ids[i] = ns.ID
+		i++
+	}
+
+	result := make([]struct {
+		Id    string
+		Count int32
+	}, 0)
+	if err := k.connectionFactory.New().Model(&dbapi.ConnectorDeployment{}).
+		Select("namespace_id as id, count(*) as count").
+		Group("namespace_id").
+		Having("namespace_id in ?", ids).
+		Find(&result).Error; err != nil {
+		return services.HandleGetError(`Connector namespace`, `id`, ids, err)
+	}
+
+	// set counts for non-empty ns
+	for _, row := range result {
+		ns := idMap[row.Id]
+		ns.Status.ConnectorsDeployed = row.Count
+		delete(idMap, ns.ID)
+	}
+	// set remaining ns to 0
+	for _, ns := range idMap {
+		ns.Status.ConnectorsDeployed = 0
+	}
+
+	return nil
 }
 
 var validNamespaceColumns = []string{`name`, `cluster_id`, `owner`, `expiration`, `tenant_user_id`, `tenant_organisation_id`, `status_phase`}
@@ -226,6 +284,9 @@ func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []strin
 		return nil, nil, errors.GeneralError("failed to get connector namespaces: %v", err)
 	}
 
+	if err := k.setConnectorsDeployed(resourceList); err != nil {
+		return resourceList, &pagingMeta, err
+	}
 	return resourceList, &pagingMeta, nil
 }
 

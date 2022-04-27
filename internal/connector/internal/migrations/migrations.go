@@ -40,6 +40,7 @@ var migrations = []*gormigrate.Migration{
 	addConnectorNamespaceVersion("202203240000"),
 	addConnectorClusterClientSecret("202203310000"),
 	addConnectorTypeChecksum("202204050000"),
+	removeConnectorsDeployedColumn("202204270000"),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
