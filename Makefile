@@ -315,9 +315,12 @@ test: gotestsum
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/migrations/" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/"  \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters/"  \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments/"  \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/metrics/providers.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/error.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/metadata.go" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth/helper.go" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth/context_config.go" \
 	cover.out > coverage.out
 .PHONY: test
 
