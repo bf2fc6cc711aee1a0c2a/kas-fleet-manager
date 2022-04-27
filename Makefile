@@ -750,7 +750,7 @@ deploy/service: KAS_FLEETSHARD_ADDON_ID ?= "kas-fleetshard-operator-qe"
 deploy/service: STRIMZI_OLM_PACKAGE_NAME ?= "managed-kafka"
 deploy/service: KAS_FLEETSHARD_OLM_PACKAGE_NAME ?= "kas-fleetshard-operator"
 deploy/service: CLUSTER_LIST ?= "[]"
-deploy/service: SUPPORTED_CLOUD_PROVIDERS ?= "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, eval: {}}}]}]"
+deploy/service: SUPPORTED_CLOUD_PROVIDERS ?= "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, developer: {}}}]}]"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"

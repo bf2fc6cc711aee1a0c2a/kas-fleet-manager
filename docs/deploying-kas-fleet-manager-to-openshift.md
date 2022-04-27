@@ -172,7 +172,7 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `STRIMZI_OPERATOR_ADDON_ID`: The id of the Strimzi operator addon. Defaults to `managed-kafka-qe`.
 - `KAS_FLEETSHARD_ADDON_ID`: The id of the kas-fleetshard operator addon. Defaults to `kas-fleetshard-operator-qe`.
 - `CLUSTER_LIST`: The list of data plane cluster configuration to be used. This is to be used when scaling type is `manual`. Defaults to empty list.
-- `SUPPORTED_CLOUD_PROVIDERS`: A list of supported cloud providers in a yaml format. Defaults to `[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, eval: {}}}]}]`.
+- `SUPPORTED_CLOUD_PROVIDERS`: A list of supported cloud providers in a yaml format. Defaults to `[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, developer: {}}}]}]`.
 - `STRIMZI_OLM_PACKAGE_NAME`: Strimzi operator OLM package name. This is optional and to be defined when interacting with standalone data plane clusters. Defaults to `managed-kafka`.
 - `KAS_FLEETSHARD_OLM_PACKAGE_NAME`: kas-fleetshard operator OLM package name. This is optional and to be defined when interacting with standalone data plane clusters. Defaults to `kas-fleetshard-operator`.
 
