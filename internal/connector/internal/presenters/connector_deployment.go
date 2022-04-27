@@ -70,9 +70,10 @@ func PresentConnectorDeploymentAdminView(from private.ConnectorDeployment, clust
 			CreatedAt:       from.Metadata.CreatedAt,
 			UpdatedAt:       from.Metadata.UpdatedAt,
 			ResourceVersion: from.Metadata.ResourceVersion,
+			ResolvedSecrets: from.Metadata.ResolvedSecrets,
 		},
 
-		Spec: admin.ConnectorDeploymentSpec{
+		Spec: admin.ConnectorDeploymentAdminSpec{
 			ConnectorId:              from.Spec.ConnectorId,
 			ConnectorResourceVersion: from.Spec.ConnectorResourceVersion,
 			ConnectorTypeId:          from.Spec.ConnectorTypeId,

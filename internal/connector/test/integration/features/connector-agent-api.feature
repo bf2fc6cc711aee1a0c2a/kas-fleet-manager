@@ -154,6 +154,8 @@ Feature: connector agent API
         "object": {
           "metadata": {
             "created_at": "0001-01-01T00:00:00Z",
+            "resolved_secrets": false,
+            "resource_version": 0,
             "updated_at": "0001-01-01T00:00:00Z"
           },
           "spec": {
@@ -256,6 +258,7 @@ Feature: connector agent API
           "kind": "ConnectorDeployment",
           "metadata": {
             "created_at": "${response.object.metadata.created_at}",
+            "resolved_secrets": true,
             "resource_version": ${response.object.metadata.resource_version},
             "updated_at": "${response.object.metadata.updated_at}"
           },
@@ -353,6 +356,7 @@ Feature: connector agent API
             "id": "${response.items[0].id}",
             "metadata": {
               "created_at": "${response.items[0].metadata.created_at}",
+              "resolved_secrets": true,
               "resource_version": ${response.items[0].metadata.resource_version},
               "updated_at": "${response.items[0].metadata.updated_at}"
             },
@@ -439,6 +443,7 @@ Feature: connector agent API
           "id": "${response.id}",
           "metadata": {
             "created_at": "${response.metadata.created_at}",
+            "resolved_secrets": true,
             "resource_version": ${response.metadata.resource_version},
             "updated_at": "${response.metadata.updated_at}"
           },
@@ -585,10 +590,45 @@ Feature: connector agent API
     And the ".status.state" selection from the response should match "ready"
 
     #-----------------------------------------------------------------------------------------------------------------
+    # In this part of the Scenario we test whether agent gets deployments even when missing secrets in the vault
+    #-----------------------------------------------------------------------------------------------------------------
+    # save the service account secret in the client id and set the secret to an invalid value
+    When I run SQL "UPDATE connectors SET service_account_client_id=service_account_client_secret, service_account_client_secret='missing-secret' WHERE id = '${connector_id}';" expect 1 row to be affected.
+    # check that the deployment update is still sent to the agent without a spec and has flag 'secrets-unavailable'
+    And I am logged in as "Shard"
+    And I set the "Authorization" header to "Bearer ${shard_token}"
+    And I wait up to "5" seconds for a response event
+    Then the ".object.spec.connector_spec" selection from the response should match "null"
+    And the ".object.metadata.resolved_secrets" selection from the response should match "false"
+
+    # set the service account secret ref back to valid value
+    When I run SQL "UPDATE connectors SET service_account_client_secret=service_account_client_id, service_account_client_id='myclient' WHERE id = '${connector_id}';" expect 1 row to be affected.
+    # check that the deployment update has spec and flag`secrets_unavailable` is not set
+    And I wait up to "5" seconds for a response event
+    Then the ".object.metadata.resolved_secrets" selection from the response should match "true"
+    And the ".object.spec.connector_spec" selection from the response should match json:
+    """
+    {
+      "aws_access_key": {
+        "kind": "base64",
+        "value": "dGVzdA=="
+      },
+      "aws_queue_name_or_arn": "test",
+      "aws_region": "east",
+      "aws_secret_key": {
+        "kind": "base64",
+        "value": "dGVzdA=="
+      },
+      "kafka_topic": "test"
+    }
+    """
+
+    #-----------------------------------------------------------------------------------------------------------------
     # In this part of the Scenario we test having an user update a connector configuration
     #-----------------------------------------------------------------------------------------------------------------
 
     # Updating the connector config should update the deployment.
+    Given I am logged in as "Jimmy"
     Given I set the "Content-Type" header to "application/merge-patch+json"
     When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
       """
@@ -645,7 +685,6 @@ Feature: connector agent API
     And I set the "Authorization" header to "Bearer ${shard_token}"
 
     And I wait up to "5" seconds for a response event
-    And I store the ".object.metadata.spec_checksum" selection from the response as ${deployment_spec_checksum}
     And I store the ".object.id" selection from the response as ${connector_deployment_id}
     Then the response should match json:
       """
@@ -658,6 +697,7 @@ Feature: connector agent API
           "kind": "ConnectorDeployment",
           "metadata": {
             "created_at": "${response.object.metadata.created_at}",
+            "resolved_secrets": true,
             "resource_version": ${response.object.metadata.resource_version},
             "updated_at": "${response.object.metadata.updated_at}"
           },
@@ -803,6 +843,7 @@ Feature: connector agent API
       "kind": "ConnectorDeploymentAdminView",
       "metadata": {
         "created_at": "${response.metadata.created_at}",
+        "resolved_secrets": true,
         "resource_version": ${response.metadata.resource_version},
         "updated_at": "${response.metadata.updated_at}"
       },

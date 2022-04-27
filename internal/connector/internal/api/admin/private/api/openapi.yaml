@@ -1591,7 +1591,7 @@ components:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/ConnectorDeploymentAdminView_allOf'
       description: Holds the deployment configuration of a connector
-    ConnectorDeploymentSpec:
+    ConnectorDeploymentAdminSpec:
       description: Holds the deployment specification of a connector
       properties:
         connector_id:
@@ -1938,12 +1938,19 @@ components:
         resource_version:
           format: int64
           type: integer
+        resolved_secrets:
+          type: boolean
+      required:
+      - created_at
+      - resolved_secrets
+      - resource_version
+      - updated_at
     ConnectorDeploymentAdminView_allOf:
       properties:
         metadata:
           $ref: '#/components/schemas/ConnectorDeploymentAdminView_allOf_metadata'
         spec:
-          $ref: '#/components/schemas/ConnectorDeploymentSpec'
+          $ref: '#/components/schemas/ConnectorDeploymentAdminSpec'
         status:
           $ref: '#/components/schemas/ConnectorDeploymentStatus'
     ConnectorDeploymentAdminViewList_allOf:
