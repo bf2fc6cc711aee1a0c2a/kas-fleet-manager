@@ -509,6 +509,16 @@ parameters:
   description: Special Management Organization ID used for creating internal Service accounts
   value: "13640203"
 
+- name: STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG
+  displayName: Strimzi operator subscription config
+  description: Strimzi operator subscription config. This is applied for standalone clusters only. The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig
+  value: "{}"
+
+- name: KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG
+  displayName: Kas-fleetshard operator subscription config
+  description: kas-fleetshard operator subscription config. This is applied for standalone clusters only. The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig
+  value: "{}"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -565,6 +575,24 @@ objects:
     data:
       kafka-sre-user-list.yaml: |-
         ${KAFKA_SRE_USERS}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: kas-fleet-manager-fleetshard-operator-subscription-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      kas-fleetshard-operator-subscription-spec-config.yaml: |-
+        ${KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: kas-fleet-manager-strimzi-operator-subscription-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      strimzi-operator-subscription-spec-config.yaml: |-
+        ${STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG}
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -709,6 +737,12 @@ objects:
           - name: service-account-limits-check-skip-org-id-list
             configMap:
               name: service-account-limits-check-skip-org-id-list
+          - name: kas-fleet-manager-fleetshard-operator-subscription-config
+            configMap:
+              name: kas-fleet-manager-fleetshard-operator-subscription-config
+          - name: kas-fleet-manager-strimzi-operator-subscription-config
+            configMap:
+              name: kas-fleet-manager-strimzi-operator-subscription-config
           - name: envoy-config
             configMap:
               name: kas-fleet-manager-envoy-config
@@ -785,6 +819,12 @@ objects:
             - name: service-account-limits-check-skip-org-id-list
               mountPath: /config/service-account-limits-check-skip-org-id-list.yaml
               subPath: service-account-limits-check-skip-org-id-list.yaml
+            - name: kas-fleet-manager-fleetshard-operator-subscription-config
+              mountPath: /config/kas-fleetshard-operator-subscription-spec-config.yaml
+              subPath: kas-fleetshard-operator-subscription-spec-config.yaml
+            - name: kas-fleet-manager-strimzi-operator-subscription-config
+              mountPath: /config/strimzi-operator-subscription-spec-config.yaml
+              subPath: strimzi-operator-subscription-spec-config.yaml
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
@@ -917,7 +957,9 @@ objects:
             - --leader-election-reconciler-repeat-interval=${LEADER_ELECTION_RECONCILER_REPEAT_INTERVAL}
             - --leader-lease-expiration-time=${LEADER_LEASE_EXPIRATION_TIME}
             - --strimzi-operator-package=${STRIMZI_OLM_PACKAGE_NAME}
+            - --strimzi-operator-subscription-config-file=/config/strimzi-operator-subscription-spec-config.yaml
             - --kas-fleetshard-operator-package=${KAS_FLEETSHARD_OLM_PACKAGE_NAME}
+            - --kas-fleetshard-operator-subscription-config-file=/config/kas-fleetshard-operator-subscription-spec-config.yaml
             - -v=${GLOG_V}
             resources:
               requests:

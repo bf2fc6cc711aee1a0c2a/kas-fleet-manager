@@ -154,6 +154,7 @@ func (s *StandaloneProvider) buildStrimziOperatorSubscription() *operatorsv1alph
 			CatalogSourceNamespace: strimziOLMConfig.CatalogSourceNamespace,
 			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
 			Package:                strimziOLMConfig.Package,
+			Config:                 strimziOLMConfig.SubscriptionConfig,
 		},
 	}
 }
@@ -242,6 +243,7 @@ func (s *StandaloneProvider) buildKASFleetShardOperatorSubscription() *operators
 			CatalogSourceNamespace: kasFleetshardOLMConfig.CatalogSourceNamespace,
 			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
 			Package:                kasFleetshardOLMConfig.Package,
+			Config:                 kasFleetshardOLMConfig.SubscriptionConfig,
 		},
 	}
 }
