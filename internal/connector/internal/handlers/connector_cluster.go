@@ -1,9 +1,6 @@
 package handlers
 
 import (
-	"net/http"
-	"net/url"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -11,6 +8,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/golang/glog"
+	"net/http"
+	"net/url"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 
@@ -194,7 +193,8 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 
-	user := h.AuthZ.GetValidationUser(r.Context())
+	ctx := r.Context()
+	user := h.AuthZ.GetValidationUser(ctx)
 
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
@@ -203,9 +203,15 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
 			// To make sure the user can access the cluster....
-			cluster, err := h.Service.Get(r.Context(), connectorClusterId)
+			cluster, err := h.Service.Get(ctx, connectorClusterId)
 			if err != nil {
 				return nil, err
+			}
+
+			if r.URL.Query().Get("reset_credentials") == "true" {
+				if serviceError = h.Service.ResetServiceAccount(ctx, &cluster); serviceError != nil {
+					return nil, serviceError
+				}
 			}
 
 			u, eerr := h.buildTokenURL(cluster)
