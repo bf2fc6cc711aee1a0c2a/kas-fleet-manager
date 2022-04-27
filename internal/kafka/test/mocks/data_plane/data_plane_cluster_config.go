@@ -7,11 +7,10 @@ import (
 func BuildValidDataPlaneClusterConfigKasFleetshardOperatorOLMConfig() *config.DataplaneClusterConfig {
 	dataplaneClusterConfig := config.DataplaneClusterConfig{
 		KasFleetshardOperatorOLMConfig: config.OperatorInstallationConfig{
-			Namespace:              "namespace-name",
-			CatalogSourceNamespace: "catalog-namespace",
-			IndexImage:             "index-image-1",
-			SubscriptionChannel:    "alpha",
-			Package:                "package-1",
+			Namespace:           "namespace-name",
+			IndexImage:          "index-image-1",
+			SubscriptionChannel: "alpha",
+			Package:             "package-1",
 		},
 	}
 	return &dataplaneClusterConfig
