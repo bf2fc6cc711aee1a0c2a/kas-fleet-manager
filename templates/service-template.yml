@@ -519,6 +519,14 @@ parameters:
   description: kas-fleetshard operator subscription config. This is applied for standalone clusters only. The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig
   value: "{}"
 
+- name: STRIMZI_OPERATOR_STARTING_CSV
+  displayName: Strimzi operator subscription starting csv
+  description: Strimzi operator subscription starting csv
+
+- name: KAS_FLEETSHARD_OPERATOR_STARTING_CSV
+  displayName: Kas-fleetshard operator subscription starting config
+  description: Kas-fleetshard operator subscription starting config
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -958,8 +966,10 @@ objects:
             - --leader-lease-expiration-time=${LEADER_LEASE_EXPIRATION_TIME}
             - --strimzi-operator-package=${STRIMZI_OLM_PACKAGE_NAME}
             - --strimzi-operator-subscription-config-file=/config/strimzi-operator-subscription-spec-config.yaml
+            - --strimzi-operator-starting-csv=${STRIMZI_OPERATOR_STARTING_CSV}
             - --kas-fleetshard-operator-package=${KAS_FLEETSHARD_OLM_PACKAGE_NAME}
             - --kas-fleetshard-operator-subscription-config-file=/config/kas-fleetshard-operator-subscription-spec-config.yaml
+            - --kas-fleetshard-operator-starting-csv=${KAS_FLEETSHARD_OPERATOR_STARTING_CSV}
             - -v=${GLOG_V}
             resources:
               requests:

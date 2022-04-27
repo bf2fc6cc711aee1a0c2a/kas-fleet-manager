@@ -49,13 +49,14 @@ type DataplaneClusterConfig struct {
 }
 
 type OperatorInstallationConfig struct {
-	Namespace              string `json:"namespace"`
-	IndexImage             string `json:"index_image"`
-	CatalogSourceNamespace string `json:"catalog_source_namespace"`
-	Package                string `json:"package"`
-	SubscriptionChannel    string `json:"subscription_channel"`
-	SubscriptionConfig     operatorsv1alpha1.SubscriptionConfig
-	SubscriptionConfigFile string
+	Namespace               string `json:"namespace"`
+	IndexImage              string `json:"index_image"`
+	CatalogSourceNamespace  string `json:"catalog_source_namespace"`
+	Package                 string `json:"package"`
+	SubscriptionChannel     string `json:"subscription_channel"`
+	SubscriptionConfig      operatorsv1alpha1.SubscriptionConfig
+	SubscriptionConfigFile  string
+	SubscriptionStartingCSV string
 }
 
 const (
@@ -302,12 +303,14 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.StrimziOperatorOLMConfig.IndexImage, "strimzi-operator-index-image", c.StrimziOperatorOLMConfig.IndexImage, "Strimzi operator index image")
 	fs.StringVar(&c.StrimziOperatorOLMConfig.Namespace, "strimzi-operator-namespace", c.StrimziOperatorOLMConfig.Namespace, "Strimzi operator namespace")
 	fs.StringVar(&c.StrimziOperatorOLMConfig.Package, "strimzi-operator-package", c.StrimziOperatorOLMConfig.Package, "Strimzi operator package")
+	fs.StringVar(&c.StrimziOperatorOLMConfig.SubscriptionStartingCSV, "strimzi-operator-starting-csv", c.StrimziOperatorOLMConfig.SubscriptionStartingCSV, "Strimzi operator subscription starting CSV")
 	fs.StringVar(&c.StrimziOperatorOLMConfig.SubscriptionChannel, "strimzi-operator-sub-channel", c.StrimziOperatorOLMConfig.SubscriptionChannel, "Strimzi operator subscription channel")
 	fs.StringVar(&c.StrimziOperatorOLMConfig.SubscriptionConfigFile, "strimzi-operator-subscription-config-file", c.StrimziOperatorOLMConfig.SubscriptionConfigFile, "Strimzi operator subscription config. This is applied for standalone clusters only. The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig")
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.CatalogSourceNamespace, "kas-fleetshard-operator-cs-namespace", c.KasFleetshardOperatorOLMConfig.CatalogSourceNamespace, "kas-fleetshard operator catalog source namespace.")
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.IndexImage, "kas-fleetshard-operator-index-image", c.KasFleetshardOperatorOLMConfig.IndexImage, "kas-fleetshard operator index image")
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.Namespace, "kas-fleetshard-operator-namespace", c.KasFleetshardOperatorOLMConfig.Namespace, "kas-fleetshard operator namespace")
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.Package, "kas-fleetshard-operator-package", c.KasFleetshardOperatorOLMConfig.Package, "kas-fleetshard operator package")
+	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionStartingCSV, "kas-fleetshard-operator-starting-csv", c.KasFleetshardOperatorOLMConfig.SubscriptionStartingCSV, "kas-fleetshard operator subscription starting CSV")
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionChannel, "kas-fleetshard-operator-sub-channel", c.KasFleetshardOperatorOLMConfig.SubscriptionChannel, "kas-fleetshard operator subscription channel")
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile, "kas-fleetshard-operator-subscription-config-file", c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile, "kas-fleetshard operator subscription config. This is applied for standalone clusters only. The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig")
 }

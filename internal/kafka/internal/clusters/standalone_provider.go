@@ -155,6 +155,7 @@ func (s *StandaloneProvider) buildStrimziOperatorSubscription() *operatorsv1alph
 			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
 			Package:                strimziOLMConfig.Package,
 			Config:                 strimziOLMConfig.SubscriptionConfig,
+			StartingCSV:            strimziOLMConfig.SubscriptionStartingCSV,
 		},
 	}
 }
@@ -244,6 +245,7 @@ func (s *StandaloneProvider) buildKASFleetShardOperatorSubscription() *operators
 			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
 			Package:                kasFleetshardOLMConfig.Package,
 			Config:                 kasFleetshardOLMConfig.SubscriptionConfig,
+			StartingCSV:            kasFleetshardOLMConfig.SubscriptionStartingCSV,
 		},
 	}
 }
