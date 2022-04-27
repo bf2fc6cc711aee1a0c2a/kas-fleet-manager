@@ -7,7 +7,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
-	"gopkg.in/yaml.v2"
 )
 
 type KafkaCapacityConfig struct {
@@ -69,11 +68,12 @@ func (c *KafkaConfig) ReadFiles() error {
 		return err
 	}
 
-	SupportedInstanceTypesFileContent, err := shared.ReadFile(c.SupportedInstanceTypes.ConfigurationFile)
+	err = shared.ReadYamlFile(c.SupportedInstanceTypes.ConfigurationFile, &c.SupportedInstanceTypes.Configuration)
 	if err != nil {
 		return err
 	}
-	return yaml.UnmarshalStrict([]byte(SupportedInstanceTypesFileContent), &c.SupportedInstanceTypes.Configuration)
+
+	return nil
 }
 
 func (c *KafkaConfig) Validate(env *environments.Env) error {
