@@ -111,7 +111,7 @@ func (s *StandaloneProvider) buildStrimziOperatorCatalogSource() *operatorsv1alp
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strimziOperatorCatalogSourceName,
-			Namespace: strimziOLMConfig.CatalogSourceNamespace,
+			Namespace: strimziOLMConfig.Namespace,
 		},
 		Spec: operatorsv1alpha1.CatalogSourceSpec{
 			SourceType: operatorsv1alpha1.SourceTypeGrpc,
@@ -151,9 +151,11 @@ func (s *StandaloneProvider) buildStrimziOperatorSubscription() *operatorsv1alph
 		Spec: &operatorsv1alpha1.SubscriptionSpec{
 			CatalogSource:          strimziOperatorCatalogSourceName,
 			Channel:                strimziOLMConfig.SubscriptionChannel,
-			CatalogSourceNamespace: strimziOLMConfig.CatalogSourceNamespace,
+			CatalogSourceNamespace: strimziOLMConfig.Namespace,
 			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
 			Package:                strimziOLMConfig.Package,
+			Config:                 strimziOLMConfig.SubscriptionConfig,
+			StartingCSV:            strimziOLMConfig.SubscriptionStartingCSV,
 		},
 	}
 }
@@ -199,7 +201,7 @@ func (s *StandaloneProvider) buildKASFleetShardOperatorCatalogSource() *operator
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kasFleetShardOperatorCatalogSourceName,
-			Namespace: kasFleetshardOLMConfig.CatalogSourceNamespace,
+			Namespace: kasFleetshardOLMConfig.Namespace,
 		},
 		Spec: v1alpha1.CatalogSourceSpec{
 			SourceType: v1alpha1.SourceTypeGrpc,
@@ -239,9 +241,11 @@ func (s *StandaloneProvider) buildKASFleetShardOperatorSubscription() *operators
 		Spec: &operatorsv1alpha1.SubscriptionSpec{
 			CatalogSource:          kasFleetShardOperatorCatalogSourceName,
 			Channel:                kasFleetshardOLMConfig.SubscriptionChannel,
-			CatalogSourceNamespace: kasFleetshardOLMConfig.CatalogSourceNamespace,
+			CatalogSourceNamespace: kasFleetshardOLMConfig.Namespace,
 			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
 			Package:                kasFleetshardOLMConfig.Package,
+			Config:                 kasFleetshardOLMConfig.SubscriptionConfig,
+			StartingCSV:            kasFleetshardOLMConfig.SubscriptionStartingCSV,
 		},
 	}
 }

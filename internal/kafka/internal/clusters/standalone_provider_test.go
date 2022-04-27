@@ -436,9 +436,8 @@ func TestStandaloneProvider_buildStrimziCatalogSource(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
-						Namespace:              "namespace-name",
-						CatalogSourceNamespace: "catalog-namespace",
-						IndexImage:             "index-image-1",
+						Namespace:  "namespace-name",
+						IndexImage: "index-image-1",
 					},
 				},
 			},
@@ -449,38 +448,11 @@ func TestStandaloneProvider_buildStrimziCatalogSource(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      strimziOperatorCatalogSourceName,
-					Namespace: "catalog-namespace",
+					Namespace: "namespace-name",
 				},
 				Spec: operatorsv1alpha1.CatalogSourceSpec{
 					SourceType: operatorsv1alpha1.SourceTypeGrpc,
 					Image:      "index-image-1",
-				},
-			},
-		},
-		{
-			name: "buids a namespace with another given parameters",
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
-						Namespace:              "another-namespace-name",
-						CatalogSourceNamespace: "another-catalog-namespace",
-						IndexImage:             "index-image-2",
-					},
-				},
-			},
-			want: &operatorsv1alpha1.CatalogSource{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
-					Kind:       operatorsv1alpha1.CatalogSourceKind,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      strimziOperatorCatalogSourceName,
-					Namespace: "another-catalog-namespace",
-				},
-				Spec: operatorsv1alpha1.CatalogSourceSpec{
-					SourceType: operatorsv1alpha1.SourceTypeGrpc,
-					Image:      "index-image-2",
 				},
 			},
 		},
@@ -513,9 +485,8 @@ func TestStandaloneProvider_buildStrimziOperatorGroup(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
-						Namespace:              "namespace-name",
-						CatalogSourceNamespace: "catalog-namespace",
-						IndexImage:             "index-image-1",
+						Namespace:  "namespace-name",
+						IndexImage: "index-image-1",
 					},
 				},
 			},
@@ -537,9 +508,8 @@ func TestStandaloneProvider_buildStrimziOperatorGroup(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
-						Namespace:              "another-namespace-name",
-						CatalogSourceNamespace: "another-catalog-namespace",
-						IndexImage:             "index-image-2",
+						Namespace:  "another-namespace-name",
+						IndexImage: "index-image-2",
 					},
 				},
 			},
@@ -584,11 +554,10 @@ func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
-						Namespace:              "namespace-name",
-						CatalogSourceNamespace: "catalog-namespace",
-						IndexImage:             "index-image-1",
-						SubscriptionChannel:    "alpha",
-						Package:                "package-1",
+						Namespace:           "namespace-name",
+						IndexImage:          "index-image-1",
+						SubscriptionChannel: "alpha",
+						Package:             "package-1",
 					},
 				},
 			},
@@ -604,7 +573,7 @@ func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
 				Spec: &operatorsv1alpha1.SubscriptionSpec{
 					CatalogSource:          strimziOperatorCatalogSourceName,
 					Channel:                "alpha",
-					CatalogSourceNamespace: "catalog-namespace",
+					CatalogSourceNamespace: "namespace-name",
 					InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
 					Package:                "package-1",
 				},
@@ -616,11 +585,10 @@ func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
-						Namespace:              "another-namespace-name",
-						CatalogSourceNamespace: "another-catalog-namespace",
-						IndexImage:             "index-image-2",
-						SubscriptionChannel:    "beta",
-						Package:                "package-2",
+						Namespace:           "another-namespace-name",
+						IndexImage:          "index-image-2",
+						SubscriptionChannel: "beta",
+						Package:             "package-2",
 					},
 				},
 			},
@@ -636,7 +604,7 @@ func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
 				Spec: &operatorsv1alpha1.SubscriptionSpec{
 					CatalogSource:          strimziOperatorCatalogSourceName,
 					Channel:                "beta",
-					CatalogSourceNamespace: "another-catalog-namespace",
+					CatalogSourceNamespace: "another-namespace-name",
 					InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
 					Package:                "package-2",
 				},
@@ -831,9 +799,8 @@ func TestStandaloneProvider_buildKasFleetshardCatalogSource(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					KasFleetshardOperatorOLMConfig: config.OperatorInstallationConfig{
-						Namespace:              "namespace-name",
-						CatalogSourceNamespace: "catalog-namespace",
-						IndexImage:             "index-image-1",
+						Namespace:  "namespace-name",
+						IndexImage: "index-image-1",
 					},
 				},
 			},
@@ -844,38 +811,11 @@ func TestStandaloneProvider_buildKasFleetshardCatalogSource(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      kasFleetShardOperatorCatalogSourceName,
-					Namespace: "catalog-namespace",
+					Namespace: "namespace-name",
 				},
 				Spec: operatorsv1alpha1.CatalogSourceSpec{
 					SourceType: operatorsv1alpha1.SourceTypeGrpc,
 					Image:      "index-image-1",
-				},
-			},
-		},
-		{
-			name: "buids a namespace with another given parameters",
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					KasFleetshardOperatorOLMConfig: config.OperatorInstallationConfig{
-						Namespace:              "another-namespace-name",
-						CatalogSourceNamespace: "another-catalog-namespace",
-						IndexImage:             "index-image-2",
-					},
-				},
-			},
-			want: &operatorsv1alpha1.CatalogSource{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
-					Kind:       operatorsv1alpha1.CatalogSourceKind,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      kasFleetShardOperatorCatalogSourceName,
-					Namespace: "another-catalog-namespace",
-				},
-				Spec: operatorsv1alpha1.CatalogSourceSpec{
-					SourceType: operatorsv1alpha1.SourceTypeGrpc,
-					Image:      "index-image-2",
 				},
 			},
 		},
@@ -908,9 +848,8 @@ func TestStandaloneProvider_buildKasFleetshardOperatorGroup(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					KasFleetshardOperatorOLMConfig: config.OperatorInstallationConfig{
-						Namespace:              "namespace-name",
-						CatalogSourceNamespace: "catalog-namespace",
-						IndexImage:             "index-image-1",
+						Namespace:  "namespace-name",
+						IndexImage: "index-image-1",
 					},
 				},
 			},
@@ -932,9 +871,8 @@ func TestStandaloneProvider_buildKasFleetshardOperatorGroup(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					KasFleetshardOperatorOLMConfig: config.OperatorInstallationConfig{
-						Namespace:              "another-namespace-name",
-						CatalogSourceNamespace: "another-catalog-namespace",
-						IndexImage:             "index-image-2",
+						Namespace:  "another-namespace-name",
+						IndexImage: "index-image-2",
 					},
 				},
 			},
@@ -991,7 +929,7 @@ func TestStandaloneProvider_buildKasFleetshardOperatorSubscription(t *testing.T)
 				Spec: &operatorsv1alpha1.SubscriptionSpec{
 					CatalogSource:          kasFleetShardOperatorCatalogSourceName,
 					Channel:                "alpha",
-					CatalogSourceNamespace: "catalog-namespace",
+					CatalogSourceNamespace: "namespace-name",
 					InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
 					Package:                "package-1",
 				},
@@ -1003,11 +941,10 @@ func TestStandaloneProvider_buildKasFleetshardOperatorSubscription(t *testing.T)
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					KasFleetshardOperatorOLMConfig: config.OperatorInstallationConfig{
-						Namespace:              "another-namespace-name",
-						CatalogSourceNamespace: "another-catalog-namespace",
-						IndexImage:             "index-image-2",
-						SubscriptionChannel:    "beta",
-						Package:                "package-2",
+						Namespace:           "another-namespace-name",
+						IndexImage:          "index-image-2",
+						SubscriptionChannel: "beta",
+						Package:             "package-2",
 					},
 				},
 			},
@@ -1023,7 +960,7 @@ func TestStandaloneProvider_buildKasFleetshardOperatorSubscription(t *testing.T)
 				Spec: &operatorsv1alpha1.SubscriptionSpec{
 					CatalogSource:          kasFleetShardOperatorCatalogSourceName,
 					Channel:                "beta",
-					CatalogSourceNamespace: "another-catalog-namespace",
+					CatalogSourceNamespace: "another-namespace-name",
 					InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
 					Package:                "package-2",
 				},
@@ -1052,7 +989,7 @@ func TestStandaloneProvider_InstallStrimzi(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want	bool
+		want    bool
 		wantErr bool
 	}{
 		{
@@ -1064,7 +1001,7 @@ func TestStandaloneProvider_InstallStrimzi(t *testing.T) {
 			args: args{
 				clusterSpec: &types.ClusterSpec{},
 			},
-			want: true,
+			want:    true,
 			wantErr: false,
 		},
 	}
@@ -1110,7 +1047,7 @@ func TestStandaloneProvider_InstallKasFleetshard(t *testing.T) {
 					},
 				},
 			},
-			want: true,
+			want:    true,
 			wantErr: false,
 		},
 	}
@@ -1239,8 +1176,8 @@ func Test_shouldApplyChanges(t *testing.T) {
 	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			 got := shouldApplyChanges(tt.args.dynamicClient, tt.args.existingObj, tt.args.newConfiguration)
-			 Expect(got).To(Equal(tt.want))
+			got := shouldApplyChanges(tt.args.dynamicClient, tt.args.existingObj, tt.args.newConfiguration)
+			Expect(got).To(Equal(tt.want))
 		})
 	}
 }

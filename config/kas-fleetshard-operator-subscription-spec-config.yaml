@@ -1,0 +1,23 @@
+---
+# Kas-fleetshard operator subscription config. This is applied for standalone clusters only. 
+# The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig
+resources:
+  requests:
+    memory: "1Gi"
+    cpu: "500m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+env:
+- name: SSO_ENABLED
+  value: "true"
+- name: MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED
+  value: "true"
+- name: STANDARD_KAFKA_CONTAINER_CPU
+  value: 500m
+- name: STANDARD_KAFKA_CONTAINER_MEMORY
+  value: 4Gi
+- name: STANDARD_KAFKA_JVM_XMS
+  value: 1G
+- name: STANDARD_ZOOKEEPER_CONTAINER_CPU
+  value: 500m

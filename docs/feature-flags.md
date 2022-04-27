@@ -127,17 +127,17 @@ This lists the feature flags and their sub-configurations to enable/disable and 
         - `cluster-compute-machine-type` [Optional]: The compute machine type to be used for provisioning a new dataplane cluster (default: `m5.2xlarge`).
         - `cluster-openshift-version` [Optional]: The OpenShift version to be installed on the dataplane cluster (default: `""`, empty string indicates that the latest stable version will be used). 
 - **cluster-logging-operator-addon-id**: Enables the Cluster Logging Operator addon with Cloud Watch and application level logs enabled. (default: `""`, An empty string indicates that the operator should not be installed).
-- **strimzi-operator-cs-namespace**: Strimzi operator catalog source namespace.
 - **strimzi-operator-index-image**: Strimzi operator index image name
 - **strimzi-operator-namespace**: Strimzi operator namespace
 - **strimzi-operator-package**: Strimzi operator package name
 - **strimzi-operator-sub-channel**: Strimzi operator subscription channel
-- **kas-fleetshard-operator-cs-namespace**: kas-fleetshard operator catalog source namespace
+- **strimzi-operator-subscription-config-file**: Strimzi operator subscription config. This is applied for standalone clusters only. The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig
 - **kas-fleetshard-operator-index-image**: kas-fleetshard operator index image name
 - **kas-fleetshard-operator-namespace**: kas-fleetshard operator namespace
 - **kas-fleetshard-operator-package**: kas-fleetshard operator package name
 - **kas-fleetshard-operator-sub-channel**: kas-fleetshard operator subscription channel
-
+- **kas-fleetshard-operator-subscription-config-file**: kas-fleetshard operator subscription config. This is applied for standalone clusters only. The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig
+  
 ## Sentry
 - **enable-sentry**: Enables Sentry error reporting.
     - `sentry-key-file` [Required]: The path to the file containing the Sentry key (default: `'secrets/sentry.key'`).

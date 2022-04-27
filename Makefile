@@ -754,6 +754,8 @@ deploy/service: STRIMZI_OLM_PACKAGE_NAME ?= "managed-kafka"
 deploy/service: KAS_FLEETSHARD_OLM_PACKAGE_NAME ?= "kas-fleetshard-operator"
 deploy/service: CLUSTER_LIST ?= "[]"
 deploy/service: SUPPORTED_CLOUD_PROVIDERS ?= "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, developer: {}}}]}]"
+deploy/service: KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG ?= "{}"
+deploy/service: STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG ?= "{}"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
@@ -810,6 +812,10 @@ deploy/service: deploy/envoy deploy/route
 		-p KAS_FLEETSHARD_OLM_PACKAGE_NAME="${KAS_FLEETSHARD_OLM_PACKAGE_NAME}" \
 		-p CLUSTER_LIST="${CLUSTER_LIST}" \
 		-p SUPPORTED_CLOUD_PROVIDERS=${SUPPORTED_CLOUD_PROVIDERS} \
+		-p STRIMZI_OPERATOR_STARTING_CSV=${STRIMZI_OPERATOR_STARTING_CSV} \
+		-p KAS_FLEETSHARD_OPERATOR_STARTING_CSV=${KAS_FLEETSHARD_OPERATOR_STARTING_CSV} \
+		-p KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG=${KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG} \
+		-p STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG=${STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG} \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 
