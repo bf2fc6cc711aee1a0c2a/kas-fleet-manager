@@ -16,15 +16,20 @@ func PresentManagedKafka(from *v1.ManagedKafka) private.ManagedKafka {
 				Bf2OrgId:          from.Annotations["bf2.org/id"],
 				Bf2OrgPlacementId: from.Annotations["bf2.org/placementId"],
 			},
+			Labels: private.ManagedKafkaAllOfMetadataLabels{
+				Bf2OrgKafkaInstanceProfileType:          from.Labels["bf2.org/kafkaInstanceProfileType"],
+				Bf2OrgKafkaInstanceProfileQuotaConsumed: from.Labels["bf2.org/kafkaInstanceProfileQuotaConsumed"],
+			},
 		},
 		Spec: private.ManagedKafkaAllOfSpec{
 			Capacity: private.ManagedKafkaCapacity{
-				IngressEgressThroughputPerSec: from.Spec.Capacity.IngressEgressThroughputPerSec,
-				TotalMaxConnections:           int32(from.Spec.Capacity.TotalMaxConnections),
-				MaxDataRetentionSize:          from.Spec.Capacity.MaxDataRetentionSize,
-				MaxPartitions:                 int32(from.Spec.Capacity.MaxPartitions),
-				MaxDataRetentionPeriod:        from.Spec.Capacity.MaxDataRetentionPeriod,
-				MaxConnectionAttemptsPerSec:   int32(from.Spec.Capacity.MaxConnectionAttemptsPerSec),
+				IngressPerSec:               from.Spec.Capacity.IngressPerSec,
+				EgressPerSec:                from.Spec.Capacity.EgressPerSec,
+				TotalMaxConnections:         int32(from.Spec.Capacity.TotalMaxConnections),
+				MaxDataRetentionSize:        from.Spec.Capacity.MaxDataRetentionSize,
+				MaxPartitions:               int32(from.Spec.Capacity.MaxPartitions),
+				MaxDataRetentionPeriod:      from.Spec.Capacity.MaxDataRetentionPeriod,
+				MaxConnectionAttemptsPerSec: int32(from.Spec.Capacity.MaxConnectionAttemptsPerSec),
 			},
 			Oauth: private.ManagedKafkaAllOfSpecOauth{
 				ClientId:               from.Spec.OAuth.ClientId,

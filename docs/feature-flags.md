@@ -36,12 +36,12 @@ This lists the feature flags and their sub-configurations to enable/disable and 
     - `https-key-file` [Required]: The path to the file containing the TLS private key.
 
 ## Kafka
-- **enable-deletion-of-expired-kafka**: Enables deletion of eval Kafka instances when its life span has expired.
+- **enable-deletion-of-expired-kafka**: Enables deletion of developer Kafka instances when its life span has expired.
     - `kafka-lifespan` [Optional]: The desired lifespan of a Kafka instance in hour(s) (default: `48`).
 - **enable-kafka-external-certificate**: Enables custom Kafka TLS certificate.
     - `kafka-tls-cert-file` [Required]: The path to the file containing the Kafka TLS certificate (default: `'secrets/kafka-tls.crt'`).
     - `kafka-tls-key-file` [Required]: The path to the file containing the Kafka TLS private key (default: `'secrets/kafka-tls.key'`).
-- **enable-evaluator-instance**: Enable the creation of one kafka evaluator instances per user    
+- **enable-developer-instance**: Enable the creation of one kafka developer instances per user    
 - **quota-type**: Sets the quota service to be used for access control when requesting Kafka instances (options: `ams` or `quota-management-list`, default: `quota-management-list`).
     > For more information on the quota service implementation, see the [quota service architecture](./architecture/quota-service-implementation) architecture documentation.
     - If this is set to `quota-management-list`, quotas will be managed via the quota management list configuration. 

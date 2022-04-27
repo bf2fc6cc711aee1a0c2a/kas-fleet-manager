@@ -432,7 +432,9 @@ func (d *dataPlaneClusterService) scaleUpThresholds(status *dbapi.DataPlaneClust
 // to consider that a kafka cluster has capacity available
 func (d *dataPlaneClusterService) minimumKafkaCapacity() *dataPlaneComputeNodesKafkaCapacityAttributes {
 	return &dataPlaneComputeNodesKafkaCapacityAttributes{
-		Connections: d.KafkaConfig.KafkaCapacity.TotalMaxConnections,
-		Partitions:  d.KafkaConfig.KafkaCapacity.MaxPartitions,
+		// using hardcoded values because the dynamic scaling implementation will be revised in the future and
+		// does not support streaming units in it's current state
+		Connections: 100,
+		Partitions:  100,
 	}
 }

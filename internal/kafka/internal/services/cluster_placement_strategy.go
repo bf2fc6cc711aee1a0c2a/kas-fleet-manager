@@ -4,20 +4,20 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
 //go:generate moq -out cluster_placement_strategy_moq.go . ClusterPlacementStrategy
 type ClusterPlacementStrategy interface {
 	// FindCluster finds and returns a Cluster depends on the specific impl.
-	FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error)
+	FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError)
 }
 
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the placement configuration
-func NewClusterPlacementStrategy(clusterService ClusterService, dataplaneClusterConfig *config.DataplaneClusterConfig) ClusterPlacementStrategy {
+func NewClusterPlacementStrategy(clusterService ClusterService, dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig) ClusterPlacementStrategy {
 	var clusterSelection ClusterPlacementStrategy
 	if dataplaneClusterConfig.IsDataPlaneManualScalingEnabled() {
-		clusterSelection = &FirstSchedulableWithinLimit{dataplaneClusterConfig, clusterService}
+		clusterSelection = &FirstSchedulableWithinLimit{dataplaneClusterConfig, clusterService, kafkaConfig}
 	} else {
 		clusterSelection = &FirstReadyCluster{clusterService}
 	}
@@ -29,7 +29,7 @@ type FirstReadyCluster struct {
 	ClusterService ClusterService
 }
 
-func (f *FirstReadyCluster) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+func (f *FirstReadyCluster) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
 	criteria := FindClusterCriteria{
 		Provider:              kafka.CloudProvider,
 		Region:                kafka.Region,
@@ -40,7 +40,7 @@ func (f *FirstReadyCluster) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster
 
 	cluster, err := f.ClusterService.FindCluster(criteria)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to find cluster for kafka request %s", kafka.ID)
+		return nil, err
 	}
 
 	return cluster, nil
@@ -51,15 +51,21 @@ func (f *FirstReadyCluster) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster
 type FirstSchedulableWithinLimit struct {
 	DataplaneClusterConfig *config.DataplaneClusterConfig
 	ClusterService         ClusterService
+	KafkaConfig            *config.KafkaConfig
 }
 
-func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
 	criteria := FindClusterCriteria{
 		Provider:              kafka.CloudProvider,
 		Region:                kafka.Region,
 		MultiAZ:               kafka.MultiAZ,
 		Status:                api.ClusterReady,
 		SupportedInstanceType: kafka.InstanceType,
+	}
+
+	kafkaInstanceSize, e := f.KafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+	if e != nil {
+		return nil, errors.NewWithCause(errors.ErrorInstancePlanNotSupported, e, "failed to find cluster with criteria '%v'", criteria)
 	}
 
 	//#1
@@ -93,7 +99,7 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 	//we want to make sure the order of the ids configuration is always respected: e.g the first cluster in the configuration that passes all the checks should be picked first
 	for _, schClusterid := range clusterSchIds {
 		cnt := clusterWithinLimit[schClusterid]
-		if dataplaneClusterConfig.IsNumberOfKafkaWithinClusterLimit(schClusterid, cnt+1) {
+		if dataplaneClusterConfig.IsNumberOfKafkaWithinClusterLimit(schClusterid, cnt+kafkaInstanceSize.CapacityConsumed) {
 			return searchClusterObjInArray(clusterObj, schClusterid), nil
 		}
 	}
@@ -112,9 +118,9 @@ func searchClusterObjInArray(clusters []*api.Cluster, clusterId string) *api.Clu
 }
 
 // findClusterKafkaInstanceCount searches DB for the number of Kafka instance associated with each OSD Clusters
-func (f *FirstSchedulableWithinLimit) findClusterKafkaInstanceCount(clusterIDs []string) (map[string]int, error) {
+func (f *FirstSchedulableWithinLimit) findClusterKafkaInstanceCount(clusterIDs []string) (map[string]int, *errors.ServiceError) {
 	if instanceLst, err := f.ClusterService.FindKafkaInstanceCount(clusterIDs); err != nil {
-		return nil, errors.Wrapf(err, "failed to found kafka instance count for cluster %s", clusterIDs)
+		return nil, errors.NewWithCause(err.Code, err, "failed to find kafka instance count for clusters '%v'", clusterIDs)
 	} else {
 		clusterWithinLimitMap := make(map[string]int)
 		for _, c := range instanceLst {

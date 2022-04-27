@@ -30,7 +30,7 @@ const usEast1Region = "us-east-1"
 var limit = int(1)
 
 var allTypesMap = config.InstanceTypeMap{
-	"eval": {
+	"developer": {
 		Limit: &limit,
 	},
 	"standard": {
@@ -44,8 +44,8 @@ var standardMap = config.InstanceTypeMap{
 	},
 }
 
-var evalMap = config.InstanceTypeMap{
-	"eval": {
+var developerMap = config.InstanceTypeMap{
+	"developer": {
 		Limit: &limit,
 	},
 }
@@ -70,6 +70,51 @@ var dummyClusters = []*api.Cluster{
 		Status:             api.ClusterReady,
 		ProviderType:       api.ClusterProviderOCM,
 		IdentityProviderID: "some-identity-provider-id",
+	},
+}
+
+var mockSupportedInstanceTypes = &config.KafkaSupportedInstanceTypesConfig{
+	Configuration: config.SupportedKafkaInstanceTypesConfig{
+		SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+			{
+				Id:          "standard",
+				DisplayName: "Standard",
+				Sizes: []config.KafkaInstanceSize{
+					{
+						Id:                          "x1",
+						IngressThroughputPerSec:     "30Mi",
+						EgressThroughputPerSec:      "30Mi",
+						TotalMaxConnections:         1000,
+						MaxDataRetentionSize:        "100Gi",
+						MaxPartitions:               1000,
+						MaxDataRetentionPeriod:      "P14D",
+						MaxConnectionAttemptsPerSec: 100,
+						QuotaConsumed:               1,
+						QuotaType:                   "rhosak",
+						CapacityConsumed:            1,
+					},
+				},
+			},
+			{
+				Id:          "developer",
+				DisplayName: "Trial",
+				Sizes: []config.KafkaInstanceSize{
+					{
+						Id:                          "x1",
+						IngressThroughputPerSec:     "30Mi",
+						EgressThroughputPerSec:      "30Mi",
+						TotalMaxConnections:         1000,
+						MaxDataRetentionSize:        "100Gi",
+						MaxPartitions:               1000,
+						MaxDataRetentionPeriod:      "P14D",
+						MaxConnectionAttemptsPerSec: 100,
+						QuotaConsumed:               1,
+						QuotaType:                   "rhosak",
+						CapacityConsumed:            1,
+					},
+				},
+			},
+		},
 	},
 }
 
@@ -115,11 +160,26 @@ func setupOcmServerWithMockRegionsResp() (*httptest.Server, error) {
 		Enabled(true).
 		SupportsMultiAZ(true)
 
-	awsRegions, err := clustersmgmtv1.NewCloudRegionList().Items(usEast1, afSouth1, euWest2, euCentral1, apSouth1).Build()
+	regions, err := clustersmgmtv1.NewCloudRegionList().Items(usEast1, afSouth1, euWest2, euCentral1, apSouth1).Build()
 	if err != nil {
 		return nil, err
 	}
-	ocmServerBuilder.SetCloudRegionsGetResponse(awsRegions, nil)
+	ocmServerBuilder.SetCloudRegionsGetResponse(regions, nil)
+
+	awsProvider := mocks.GetMockCloudProviderBuilder(nil)
+	gcpProvider := mocks.GetMockCloudProviderBuilder(func(builder *clustersmgmtv1.CloudProviderBuilder) {
+		builder.ID("gcp").
+			HREF("/api/clusters_mgmt/v1/cloud_providers/gcp").
+			Name("gcp").
+			DisplayName("gcp")
+	})
+
+	providers, err := clustersmgmtv1.NewCloudProviderList().Items(awsProvider, gcpProvider).Build()
+	if err != nil {
+		return nil, err
+	}
+
+	ocmServerBuilder.SetCloudProvidersGetResponse(providers, nil)
 	ocmServer := ocmServerBuilder.Build()
 	return ocmServer, nil
 }
@@ -239,7 +299,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 	}
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(pc *config.ProviderConfig) {
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(pc *config.ProviderConfig, kc *config.KafkaConfig, dc *config.DataplaneClusterConfig) {
 		pc.ProvidersConfig.SupportedProviders = config.ProviderList{
 			{
 				Name:    "aws",
@@ -251,8 +311,10 @@ func TestListCloudProviderRegions(t *testing.T) {
 						SupportedInstanceTypes: allTypesMap,
 					},
 					{
-						Name:                   "af-south-1",
-						SupportedInstanceTypes: standardMap,
+						Name: "af-south-1",
+						SupportedInstanceTypes: config.InstanceTypeMap{
+							"standard": {},
+						},
 					},
 					{
 						Name:                   "eu-central-1",
@@ -261,14 +323,38 @@ func TestListCloudProviderRegions(t *testing.T) {
 				},
 			},
 		}
+
+		kc.SupportedInstanceTypes = mockSupportedInstanceTypes
+		dc.DataPlaneClusterScalingType = config.ManualScaling
+		dc.ClusterConfig = config.NewClusterConfig(config.ClusterList{
+			{
+				Name:                  "dummyCluster1",
+				ClusterId:             api.NewID(),
+				MultiAZ:               true,
+				Region:                afEast1Region,
+				CloudProvider:         gcp,
+				Status:                api.ClusterReady,
+				ProviderType:          api.ClusterProviderOCM,
+				SupportedInstanceType: "standard,developer",
+				KafkaInstanceLimit:    1,
+				Schedulable:           true,
+			},
+			{
+				Name:                  "dummyCluster2",
+				ClusterId:             api.NewID(),
+				MultiAZ:               true,
+				Region:                usEast1Region,
+				CloudProvider:         aws,
+				Status:                api.ClusterReady,
+				ProviderType:          api.ClusterProviderOCM,
+				SupportedInstanceType: "standard,developer",
+				KafkaInstanceLimit:    2,
+				Schedulable:           true,
+			},
+		})
+
 	})
 	defer teardown()
-
-	// Create two clusters each with different provider type
-	if err := test.TestServices.DBFactory.New().Create(dummyClusters).Error; err != nil {
-		t.Error("failed to create dummy clusters")
-		return
-	}
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
@@ -281,10 +367,54 @@ func TestListCloudProviderRegions(t *testing.T) {
 
 	// enabled should only be set to true for regions that support at least one instance type in the providers config
 	for _, cpr := range cloudProviderRegionsList.Items {
-		if cpr.Id == "us-east-1" || cpr.Id == "af-south-1" {
+		if cpr.Id == "us-east-1" {
 			Expect(cpr.Enabled).To(BeTrue())
+			Expect(cpr.Capacity).To(HaveLen(2))
+
+			for _, c := range cpr.Capacity {
+				Expect(c.AvailableSizes).To(HaveLen(1))
+				Expect(c.AvailableSizes[0]).To(Equal("x1"))
+			}
+		} else if cpr.Id == "af-south-1" {
+			Expect(cpr.Enabled).To(BeTrue())
+			Expect(cpr.Capacity).To(HaveLen(1))                   // only supports standard
+			Expect(cpr.Capacity[0].AvailableSizes).To(HaveLen(0)) // no cluster has been created in this region so capacity should be empty
 		} else {
 			Expect(cpr.Enabled).To(BeFalse())
+			Expect(cpr.Capacity).To(HaveLen(0))
+		}
+	}
+
+	// Create a kafka in us-east-1 to use up capacity
+	if err := test.TestServices.DBFactory.New().Create(&dbapi.KafkaRequest{
+		Name:          "dummyKafka",
+		Region:        usEast1Region,
+		CloudProvider: aws,
+		InstanceType:  "standard",
+		SizeId:        "x1",
+	}).Error; err != nil {
+		t.Error("failed to create dummy kafka")
+		return
+	}
+
+	// ensure capacity has changed for us-east-1
+	cloudProviderRegionsList, resp1, err = client.DefaultApi.GetCloudProviderRegions(ctx, mocks.MockCluster.CloudProvider().ID(), nil)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
+	Expect(resp1.StatusCode).To(Equal(http.StatusOK))
+	Expect(cloudProviderRegionsList.Items).NotTo(BeEmpty(), "Expected aws cloud provider regions to return a non-empty list")
+
+	for _, cpr := range cloudProviderRegionsList.Items {
+		if cpr.Id == "us-east-1" {
+			Expect(cpr.Capacity).To(HaveLen(2))
+
+			for _, c := range cpr.Capacity {
+				if c.InstanceType == "standard" {
+					Expect(c.AvailableSizes).To(HaveLen(0)) // dummy Kafka created above has used up all capacity for standard Kafka instances in this region
+				} else {
+					Expect(c.AvailableSizes).To(HaveLen(1)) // other Kafka instance types should not have been affected
+				}
+			}
+			break
 		}
 	}
 
@@ -330,7 +460,7 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 					},
 					{
 						Name:                   "eu-west-2",
-						SupportedInstanceTypes: evalMap,
+						SupportedInstanceTypes: developerMap,
 					},
 					{
 						Name:                   "eu-central-1",
@@ -351,12 +481,12 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	// should only return regions that support 'eval' instance type if 'instance_type=eval' was specified
+	// should only return regions that support 'developer' instance type if 'instance_type=developer' was specified
 	regions, resp, err := client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
-		InstanceType: optional.NewString("eval"),
+		InstanceType: optional.NewString("developer"),
 	})
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type 'eval': %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type 'developer': %v", err)
 	Expect(regions.Items).To(HaveLen(2))
 	for _, r := range regions.Items {
 		Expect(r.Id).To(SatisfyAny(Equal("us-east-1"), Equal("eu-west-2")))
@@ -395,7 +525,7 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 			Expect(cpr.Enabled).To(BeTrue())
 			if cpr.Id == "us-east-1" {
 				for _, capacity := range cpr.Capacity {
-					Expect(capacity.MaxCapacityReached).To(BeFalse())
+					Expect(capacity.DeprecatedMaxCapacityReached).To(BeFalse())
 				}
 			}
 		} else {
@@ -403,8 +533,8 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 		}
 	}
 
-	// create kafkas of supported instance types ("standard" and "eval") in the "us-east-1" region and confirm that
-	// MaxCapacityReached will be false (due to the limit being set to 1 instance of given type in this region)
+	// create kafkas of supported instance types ("standard" and "developer") in the "us-east-1" region and confirm that
+	// DeprecatedMaxCapacityReached will be false (due to the limit being set to 1 instance of given type in this region)
 	db := test.TestServices.DBFactory.New()
 	kafka := &dbapi.KafkaRequest{
 		Meta: api.Meta{
@@ -419,6 +549,7 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 		Status:         constants.KafkaRequestStatusReady.String(),
 		ClusterID:      mocks.MockCluster.ID(),
 		InstanceType:   types.STANDARD.String(),
+		SizeId:         "x1",
 	}
 
 	if err := db.Create(kafka).Error; err != nil {
@@ -435,16 +566,16 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 		if cpr.Id == "us-east-1" {
 			for _, capacity := range cpr.Capacity {
 				if capacity.InstanceType == types.STANDARD.String() {
-					Expect(capacity.MaxCapacityReached).To(BeTrue())
-				} else if capacity.InstanceType == types.EVAL.String() {
-					Expect(capacity.MaxCapacityReached).To(BeFalse())
+					Expect(capacity.DeprecatedMaxCapacityReached).To(BeTrue())
+				} else if capacity.InstanceType == types.DEVELOPER.String() {
+					Expect(capacity.DeprecatedMaxCapacityReached).To(BeFalse())
 				}
 			}
 		}
 	}
 
 	kafka.ID = api.NewID()
-	kafka.InstanceType = types.EVAL.String()
+	kafka.InstanceType = types.DEVELOPER.String()
 
 	if err := db.Create(kafka).Error; err != nil {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
@@ -459,7 +590,7 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 	for _, cpr := range regions.Items {
 		if cpr.Id == "us-east-1" {
 			for _, capacity := range cpr.Capacity {
-				Expect(capacity.MaxCapacityReached).To(BeTrue())
+				Expect(capacity.DeprecatedMaxCapacityReached).To(BeTrue())
 			}
 		}
 	}

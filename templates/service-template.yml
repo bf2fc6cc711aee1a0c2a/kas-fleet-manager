@@ -155,12 +155,12 @@ parameters:
 - name: SUPPORTED_CLOUD_PROVIDERS
   displayName: Supported Cloud Providers
   description: A list of supported cloud providers in a yaml format.
-  value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, eval: {}}}]}]"
+  value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, developer: {}}}]}]"
 
 - name: SUPPORTED_INSTANCE_TYPES
   displayName: Supported Kafka instance types
   description: A list of supported Kafka instance types in a yaml format.
-  value: "[{id: eval, sizes: [{id: x1, ingressThroughputPerSec: 30Mi, egressThroughputPerSec: 30Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1000, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, capacityConsumed: 1, quotaType: rhosak, quotaConsumed: 1}]}, {id: standard, sizes: [{id: x1, ingressThroughputPerSec: 50Mi, egressThroughputPerSec: 100Mi, totalMaxConnections: 3000, maxDataRetentionSize: 1000Gi, maxPartitions: 1500, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 100, capacityConsumed: 1, quotaType: rhosak, quotaConsumed: 1}]}]"
+  value: "[{id: standard, display_name: Standard, sizes: [{id: x1, ingressThroughputPerSec: 50Mi, egressThroughputPerSec: 100Mi, totalMaxConnections: 3000, maxConnectionAttemptsPerSec: 100, maxDataRetentionSize: 1000Gi, maxDataRetentionPeriod: P14D, maxPartitions: 1500, quotaConsumed: 1, quotaType: RHOSAK, capacityConsumed: 1}, {id: x2, ingressThroughputPerSec: 100Mi, egressThroughputPerSec: 200Mi, totalMaxConnections: 6000, maxDataRetentionSize: 2000Gi, maxPartitions: 3000, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 200, quotaConsumed: 2, quotaType: RHOSAK, capacityConsumed: 2}]}, {id: developer, display_name: Trial, sizes: [{id: x1, ingressThroughputPerSec: 1Mi, egressThroughputPerSec: 1Mi, totalMaxConnections: 100, maxConnectionAttemptsPerSec: 50, maxDataRetentionSize: 10Gi, maxDataRetentionPeriod: P14D, maxPartitions: 100, quotaConsumed: 1, quotaType: RHOSAKTrial, capacityConsumed: 1}]}, {id: eval, display_name: Eval, sizes: [{id: x1, ingressThroughputPerSec: 30Mi, egressThroughputPerSec: 30Mi, totalMaxConnections: 3000, maxConnectionAttemptsPerSec: 100, maxDataRetentionSize: 1000Gi, maxDataRetentionPeriod: P14D, maxPartitions: 1000, quotaConsumed: 1, quotaType: RHOSAKTrial, capacityConsumed: 1}]}]"
 
 - name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
   displayName: Enable Kafka TLS
@@ -383,9 +383,9 @@ parameters:
   description: The compute machine type of each node on a new created cluster.
   value: "m5.2xlarge"
 
-- name: ALLOW_EVALUATOR_INSTANCE
-  displayName: Allow Evaluator Instance
-  description: Allow the creation of one kafka evaluator instance per user
+- name: ALLOW_DEVELOPER_INSTANCE
+  displayName: Allow Developer Instance
+  description: Allow the creation of one kafka developer instance per user
   value: "true"
 
 - name: QUOTA_TYPE
@@ -422,36 +422,6 @@ parameters:
   displayName: The public HTTP host URL of the service
   description: The public HTTP host URL of the service
   value: "https://api.openshift.com"
-
-- name: KAFKA_CAPACITY_INGRESS_THROUGHPUT
-  displayName: Kafka ingress throughput
-  description: Ingress throughput configuration for the default Kafka instance type
-  value: "2Mi"
-
-- name: KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS
-  displayName: Kafka total max connections
-  description: Total max connections configuration for the default Kafka instance type
-  value: "100"
-
-- name: KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE
-  displayName: Kafka max data retention size
-  description: Data retention size configuration for the default Kafka instance type
-  value: "60Gi"
-
-- name: KAFKA_CAPACITY_MAX_PARTITIONS
-  displayName: Kafka max partitions
-  description: Max partitions configuration for the default Kafka instance type
-  value: "100"
-
-- name: KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD
-  displayName: Kafka max data retention period
-  description: Data retention period configuration for the default Kafka instance type
-  value: "P14D"
-
-- name: KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC
-  displayName: Kafka max connection attempts per second
-  description: Max connection attempts per second configuration for the default Kafka instance type
-  value: "100"
 
 - name: KAFKA_LIFE_SPAN
   displayName: Kafka life span expiration in hours
@@ -598,20 +568,6 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-kafka-capacity-config
-      annotations:
-        qontract.recycle: "true"
-    data:
-      kafka-capacity-config.yaml: |-
-        ingressEgressThroughputPerSec: ${KAFKA_CAPACITY_INGRESS_THROUGHPUT}
-        totalMaxConnections: ${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}
-        maxDataRetentionSize: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE}
-        maxPartitions: ${KAFKA_CAPACITY_MAX_PARTITIONS}
-        maxDataRetentionPeriod: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}
-        maxConnectionAttemptsPerSec: ${KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC}
-  - kind: ConfigMap
-    apiVersion: v1
-    metadata:
       name: kas-fleet-manager-authentication
       annotations:
         qontract.recycle: "true"
@@ -744,9 +700,6 @@ objects:
           - name: kas-fleet-manager-kafka-sre-user-list
             configMap:
               name: kas-fleet-manager-kafka-sre-user-list
-          - name: kas-fleet-manager-kafka-capacity-config
-            configMap:
-              name: kas-fleet-manager-kafka-capacity-config
           - name: kas-fleet-manager-authentication
             configMap:
               name: kas-fleet-manager-authentication
@@ -824,9 +777,6 @@ objects:
             - name: kas-fleet-manager-kafka-sre-user-list
               mountPath: /config/kafka-sre-user-list.yaml
               subPath: kafka-sre-user-list.yaml
-            - name: kas-fleet-manager-kafka-capacity-config
-              mountPath: /config/kafka-capacity-config.yaml
-              subPath: kafka-capacity-config.yaml
             - name: kas-fleet-manager-authentication
               mountPath: /config/authentication
             - name: kas-fleet-manager-dataplane-cluster-scaling-config
@@ -849,7 +799,7 @@ objects:
             - --deny-list-config-file=/config/deny-list-configuration.yaml
             - --read-only-user-list-file=/config/read-only-user-list.yaml
             - --kafka-sre-user-list-file=/config/kafka-sre-user-list.yaml
-            - --kafka-capacity-config-file=/config/kafka-capacity-config.yaml
+            - --supported-kafka-instance-types-config-file=/config/kafka-instance-types-configuration.yaml
             - --kafka-lifespan=${KAFKA_LIFE_SPAN}
             - --enable-deletion-of-expired-kafka=${ENABLE_KAFKA_LIFE_SPAN}
             - --aws-access-key-file=/secrets/service/aws.accesskey
@@ -946,7 +896,7 @@ objects:
             - --kubeconfig=/secrets/service/kubeconfig
             - --kas-fleetshard-poll-interval=${KAS_FLEETSHARD_POLL_INTERVAL}
             - --kas-fleetshard-resync-interval=${KAS_FLEETSHARD_RESYNC_INTERVAL}
-            - --allow-evaluator-instance=${ALLOW_EVALUATOR_INSTANCE}
+            - --allow-developer-instance=${ALLOW_DEVELOPER_INSTANCE}
             - --quota-type=${QUOTA_TYPE}
             - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
             - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}

@@ -8,8 +8,8 @@ type Parameter struct {
 type KafkaQuotaType string
 
 const (
-	EvalQuota     KafkaQuotaType = "eval"
-	StandardQuota KafkaQuotaType = "standard"
+	DeveloperQuota KafkaQuotaType = "developer"
+	StandardQuota  KafkaQuotaType = "standard"
 )
 
 type KafkaProduct string

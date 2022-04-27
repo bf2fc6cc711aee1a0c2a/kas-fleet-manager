@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	config "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -48,14 +49,44 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
 			ValidateKafkaClaims(ctx, &kafkaRequest, convKafka),
 			ValidateCloudProvider(&h.service, convKafka, h.providerConfig, "creating kafka requests"),
-			handlers.ValidateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
+			func() *errors.ServiceError { // Validate plan
+				instanceType, err := h.service.AssignInstanceType(convKafka)
+				if err != nil {
+					return err
+				}
+				if stringSet(&kafkaRequest.Plan) {
+					plan := config.Plan(kafkaRequest.Plan)
+					instTypeFromPlan, e := plan.GetInstanceType()
+					if e != nil || instTypeFromPlan != string(instanceType) {
+						return errors.New(errors.ErrorBadRequest, fmt.Sprintf("Unable to detect instance type in plan provided: '%s'", kafkaRequest.Plan))
+					}
+					size, e1 := plan.GetSizeID()
+					if e1 != nil {
+						return errors.New(errors.ErrorBadRequest, fmt.Sprintf("Unable to detect instance size in plan provided: '%s'", kafkaRequest.Plan))
+					}
+					_, e2 := h.kafkaConfig.GetKafkaInstanceSize(instTypeFromPlan, size)
+
+					if e2 != nil {
+						return errors.InstancePlanNotSupported("Unsupported plan provided: '%s'", kafkaRequest.Plan)
+					}
+					convKafka.SizeId = size
+				} else {
+					rSize, err := h.kafkaConfig.GetFirstAvailableSize(instanceType.String())
+					if err != nil {
+						return errors.InstanceTypeNotSupported("Unsupported kafka instance type: '%s' provided", instanceType.String())
+					}
+					convKafka.SizeId = rSize.Id
+				}
+				convKafka.InstanceType = instanceType.String()
+				return nil
+			},
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			svcErr := h.service.RegisterKafkaJob(convKafka)
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			return presenters.PresentKafkaRequest(convKafka, h.kafkaConfig.BrowserUrl), nil
+			return presenters.PresentKafkaRequest(convKafka, h.kafkaConfig)
 		},
 	}
 
@@ -72,7 +103,7 @@ func (h kafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig.BrowserUrl), nil
+			return presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig)
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -120,7 +151,10 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, kafkaRequest := range kafkaRequests {
-				converted := presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig.BrowserUrl)
+				converted, err := presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig)
+				if err != nil {
+					return public.KafkaRequestList{}, err
+				}
 				kafkaRequestList.Items = append(kafkaRequestList.Items, converted)
 			}
 
@@ -171,7 +205,7 @@ func (h kafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			return presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig.BrowserUrl), nil
+			return presenters.PresentKafkaRequest(kafkaRequest, h.kafkaConfig)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)

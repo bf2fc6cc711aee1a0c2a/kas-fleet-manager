@@ -17,7 +17,7 @@ import (
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 )
 
 func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
@@ -77,12 +77,13 @@ func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			validateFn := ValidateKafkaClusterNameIsUnique(&tt.arg.name, tt.arg.kafkaService, tt.arg.context)
 			err := validateFn()
-			gomega.Expect(tt.want).To(gomega.Equal(err))
+			Expect(err).To(Equal(tt.want))
 		})
 	}
 }
@@ -125,15 +126,16 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			validateFn := ValidKafkaClusterName(&tt.name, "name")
 			err := validateFn()
 			if tt.expectError {
-				gomega.Expect(err).Should(gomega.HaveOccurred())
+				Expect(err).Should(HaveOccurred())
 			} else {
-				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
+				Expect(err).ShouldNot(HaveOccurred())
 			}
 		})
 	}
@@ -141,8 +143,8 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 
 func Test_Validation_validateCloudProvider(t *testing.T) {
 	limit := int(5)
-	evalMap := config.InstanceTypeMap{
-		"eval": {
+	developerMap := config.InstanceTypeMap{
+		"developer": {
 			Limit: &limit,
 		},
 	}
@@ -172,8 +174,8 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "do not throw an error when default provider and region are picked",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
-						return types.EVAL, nil
+					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
 					},
 				},
 				kafkaRequest: dbapi.KafkaRequest{},
@@ -187,7 +189,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 									config.Region{
 										Name:                   "us-east-1",
 										Default:                true,
-										SupportedInstanceTypes: evalMap,
+										SupportedInstanceTypes: developerMap,
 									},
 								},
 							},
@@ -207,8 +209,8 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "do not throw an error when cloud provider and region matches",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
-						return types.EVAL, nil
+					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
 					},
 				},
 				kafkaRequest: dbapi.KafkaRequest{
@@ -223,7 +225,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Regions: config.RegionList{
 									config.Region{
 										Name:                   "eu-east-1",
-										SupportedInstanceTypes: evalMap,
+										SupportedInstanceTypes: developerMap,
 									},
 								},
 							},
@@ -232,7 +234,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Regions: config.RegionList{
 									config.Region{
 										Name:                   "us-east-1",
-										SupportedInstanceTypes: evalMap,
+										SupportedInstanceTypes: developerMap,
 									},
 								},
 							},
@@ -252,8 +254,8 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "throws an error when cloud provider and region do not match",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
-						return types.EVAL, nil
+					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
 					},
 				},
 				kafkaRequest: dbapi.KafkaRequest{
@@ -268,7 +270,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 								Regions: config.RegionList{
 									config.Region{
 										Name:                   "us-east-1",
-										SupportedInstanceTypes: evalMap,
+										SupportedInstanceTypes: developerMap,
 									},
 								},
 							},
@@ -285,8 +287,8 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "throws an error when instance type is not supported",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
-						return types.EVAL, nil
+					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
 					},
 				},
 				kafkaRequest: dbapi.KafkaRequest{
@@ -311,28 +313,29 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			},
 			want: result{
 				wantErr: true,
-				reason:  "instance type 'eval' not supported for region 'us-east'",
+				reason:  "instance type 'developer' not supported for region 'us-east'",
 			},
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			validateFn := ValidateCloudProvider(&tt.arg.kafkaService, &tt.arg.kafkaRequest, tt.arg.ProviderConfig, "creating-kafka")
 			err := validateFn()
 			if !tt.want.wantErr && err != nil {
 				t.Errorf("validatedCloudProvider() expected not to throw error but threw %v", err)
 			} else if tt.want.wantErr {
-				gomega.Expect(err.Reason).To(gomega.Equal(tt.want.reason))
+				Expect(err.Reason).To(Equal(tt.want.reason))
 				return
 			}
 
-			gomega.Expect(tt.want.wantErr).To(gomega.Equal(err != nil))
+			Expect(err != nil).To(Equal(tt.want.wantErr))
 
 			if !tt.want.wantErr {
-				gomega.Expect(tt.arg.kafkaRequest.CloudProvider).To(gomega.Equal(tt.want.kafkaRequest.CloudProvider))
-				gomega.Expect(tt.arg.kafkaRequest.Region).To(gomega.Equal(tt.want.kafkaRequest.Region))
+				Expect(tt.arg.kafkaRequest.CloudProvider).To(Equal(tt.want.kafkaRequest.CloudProvider))
+				Expect(tt.arg.kafkaRequest.Region).To(Equal(tt.want.kafkaRequest.Region))
 			}
 
 		})
@@ -497,16 +500,15 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			validateFn := ValidateKafkaUserFacingUpdateFields(tt.arg.ctx, tt.arg.authService, tt.arg.kafka, &tt.arg.kafkaUpdateRequest)
 			err := validateFn()
-			gomega.Expect(tt.want.wantErr).To(gomega.Equal(err != nil))
-			if !tt.want.wantErr && err != nil {
-				t.Errorf("ValidateKafkaUserFacingUpdateFields() expected not to throw error but threw %v", err)
-			} else if tt.want.wantErr {
-				gomega.Expect(err.Reason).To(gomega.Equal(tt.want.reason))
+			Expect(err != nil).To(Equal(tt.want.wantErr), "ValidateKafkaUserFacingUpdateFields() expected not to throw error but threw %v", err)
+			if tt.want.wantErr {
+				Expect(err.Reason).To(Equal(tt.want.reason))
 				return
 			}
 		})

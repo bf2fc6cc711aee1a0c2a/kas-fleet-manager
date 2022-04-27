@@ -26,6 +26,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //
 // 		// make and configure a mocked KafkaService
 // 		mockedKafkaService := &KafkaServiceMock{
+// 			AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *serviceError.ServiceError) {
+// 				panic("mock out the AssignInstanceType method")
+// 			},
 // 			ChangeKafkaCNAMErecordsFunc: func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
 // 				panic("mock out the ChangeKafkaCNAMErecords method")
 // 			},
@@ -44,11 +47,11 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			DeprovisionKafkaForUsersFunc: func(users []string) *serviceError.ServiceError {
 // 				panic("mock out the DeprovisionKafkaForUsers method")
 // 			},
-// 			DetectInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *serviceError.ServiceError) {
-// 				panic("mock out the DetectInstanceType method")
-// 			},
 // 			GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *serviceError.ServiceError) {
 // 				panic("mock out the Get method")
+// 			},
+// 			GetAvailableSizesInRegionFunc: func(criteria *FindClusterCriteria) ([]string, *serviceError.ServiceError) {
+// 				panic("mock out the GetAvailableSizesInRegion method")
 // 			},
 // 			GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *serviceError.ServiceError) {
 // 				panic("mock out the GetById method")
@@ -102,6 +105,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //
 // 	}
 type KafkaServiceMock struct {
+	// AssignInstanceTypeFunc mocks the AssignInstanceType method.
+	AssignInstanceTypeFunc func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *serviceError.ServiceError)
+
 	// ChangeKafkaCNAMErecordsFunc mocks the ChangeKafkaCNAMErecords method.
 	ChangeKafkaCNAMErecordsFunc func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
 
@@ -120,11 +126,11 @@ type KafkaServiceMock struct {
 	// DeprovisionKafkaForUsersFunc mocks the DeprovisionKafkaForUsers method.
 	DeprovisionKafkaForUsersFunc func(users []string) *serviceError.ServiceError
 
-	// DetectInstanceTypeFunc mocks the DetectInstanceType method.
-	DetectInstanceTypeFunc func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *serviceError.ServiceError)
-
 	// GetFunc mocks the Get method.
 	GetFunc func(ctx context.Context, id string) (*dbapi.KafkaRequest, *serviceError.ServiceError)
+
+	// GetAvailableSizesInRegionFunc mocks the GetAvailableSizesInRegion method.
+	GetAvailableSizesInRegionFunc func(criteria *FindClusterCriteria) ([]string, *serviceError.ServiceError)
 
 	// GetByIdFunc mocks the GetById method.
 	GetByIdFunc func(id string) (*dbapi.KafkaRequest, *serviceError.ServiceError)
@@ -173,6 +179,11 @@ type KafkaServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// AssignInstanceType holds details about calls to the AssignInstanceType method.
+		AssignInstanceType []struct {
+			// KafkaRequest is the kafkaRequest argument value.
+			KafkaRequest *dbapi.KafkaRequest
+		}
 		// ChangeKafkaCNAMErecords holds details about calls to the ChangeKafkaCNAMErecords method.
 		ChangeKafkaCNAMErecords []struct {
 			// KafkaRequest is the kafkaRequest argument value.
@@ -203,17 +214,17 @@ type KafkaServiceMock struct {
 			// Users is the users argument value.
 			Users []string
 		}
-		// DetectInstanceType holds details about calls to the DetectInstanceType method.
-		DetectInstanceType []struct {
-			// KafkaRequest is the kafkaRequest argument value.
-			KafkaRequest *dbapi.KafkaRequest
-		}
 		// Get holds details about calls to the Get method.
 		Get []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+		}
+		// GetAvailableSizesInRegion holds details about calls to the GetAvailableSizesInRegion method.
+		GetAvailableSizesInRegion []struct {
+			// Criteria is the criteria argument value.
+			Criteria *FindClusterCriteria
 		}
 		// GetById holds details about calls to the GetById method.
 		GetById []struct {
@@ -297,14 +308,15 @@ type KafkaServiceMock struct {
 			KafkaRequest *dbapi.KafkaRequest
 		}
 	}
+	lockAssignInstanceType             sync.RWMutex
 	lockChangeKafkaCNAMErecords        sync.RWMutex
 	lockCountByRegionAndInstanceType   sync.RWMutex
 	lockCountByStatus                  sync.RWMutex
 	lockDelete                         sync.RWMutex
 	lockDeprovisionExpiredKafkas       sync.RWMutex
 	lockDeprovisionKafkaForUsers       sync.RWMutex
-	lockDetectInstanceType             sync.RWMutex
 	lockGet                            sync.RWMutex
+	lockGetAvailableSizesInRegion      sync.RWMutex
 	lockGetById                        sync.RWMutex
 	lockGetCNAMERecordStatus           sync.RWMutex
 	lockGetManagedKafkaByClusterID     sync.RWMutex
@@ -320,6 +332,37 @@ type KafkaServiceMock struct {
 	lockUpdateStatus                   sync.RWMutex
 	lockUpdates                        sync.RWMutex
 	lockVerifyAndUpdateKafkaAdmin      sync.RWMutex
+}
+
+// AssignInstanceType calls AssignInstanceTypeFunc.
+func (mock *KafkaServiceMock) AssignInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *serviceError.ServiceError) {
+	if mock.AssignInstanceTypeFunc == nil {
+		panic("KafkaServiceMock.AssignInstanceTypeFunc: method is nil but KafkaService.AssignInstanceType was just called")
+	}
+	callInfo := struct {
+		KafkaRequest *dbapi.KafkaRequest
+	}{
+		KafkaRequest: kafkaRequest,
+	}
+	mock.lockAssignInstanceType.Lock()
+	mock.calls.AssignInstanceType = append(mock.calls.AssignInstanceType, callInfo)
+	mock.lockAssignInstanceType.Unlock()
+	return mock.AssignInstanceTypeFunc(kafkaRequest)
+}
+
+// AssignInstanceTypeCalls gets all the calls that were made to AssignInstanceType.
+// Check the length with:
+//     len(mockedKafkaService.AssignInstanceTypeCalls())
+func (mock *KafkaServiceMock) AssignInstanceTypeCalls() []struct {
+	KafkaRequest *dbapi.KafkaRequest
+} {
+	var calls []struct {
+		KafkaRequest *dbapi.KafkaRequest
+	}
+	mock.lockAssignInstanceType.RLock()
+	calls = mock.calls.AssignInstanceType
+	mock.lockAssignInstanceType.RUnlock()
+	return calls
 }
 
 // ChangeKafkaCNAMErecords calls ChangeKafkaCNAMErecordsFunc.
@@ -507,37 +550,6 @@ func (mock *KafkaServiceMock) DeprovisionKafkaForUsersCalls() []struct {
 	return calls
 }
 
-// DetectInstanceType calls DetectInstanceTypeFunc.
-func (mock *KafkaServiceMock) DetectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *serviceError.ServiceError) {
-	if mock.DetectInstanceTypeFunc == nil {
-		panic("KafkaServiceMock.DetectInstanceTypeFunc: method is nil but KafkaService.DetectInstanceType was just called")
-	}
-	callInfo := struct {
-		KafkaRequest *dbapi.KafkaRequest
-	}{
-		KafkaRequest: kafkaRequest,
-	}
-	mock.lockDetectInstanceType.Lock()
-	mock.calls.DetectInstanceType = append(mock.calls.DetectInstanceType, callInfo)
-	mock.lockDetectInstanceType.Unlock()
-	return mock.DetectInstanceTypeFunc(kafkaRequest)
-}
-
-// DetectInstanceTypeCalls gets all the calls that were made to DetectInstanceType.
-// Check the length with:
-//     len(mockedKafkaService.DetectInstanceTypeCalls())
-func (mock *KafkaServiceMock) DetectInstanceTypeCalls() []struct {
-	KafkaRequest *dbapi.KafkaRequest
-} {
-	var calls []struct {
-		KafkaRequest *dbapi.KafkaRequest
-	}
-	mock.lockDetectInstanceType.RLock()
-	calls = mock.calls.DetectInstanceType
-	mock.lockDetectInstanceType.RUnlock()
-	return calls
-}
-
 // Get calls GetFunc.
 func (mock *KafkaServiceMock) Get(ctx context.Context, id string) (*dbapi.KafkaRequest, *serviceError.ServiceError) {
 	if mock.GetFunc == nil {
@@ -570,6 +582,37 @@ func (mock *KafkaServiceMock) GetCalls() []struct {
 	mock.lockGet.RLock()
 	calls = mock.calls.Get
 	mock.lockGet.RUnlock()
+	return calls
+}
+
+// GetAvailableSizesInRegion calls GetAvailableSizesInRegionFunc.
+func (mock *KafkaServiceMock) GetAvailableSizesInRegion(criteria *FindClusterCriteria) ([]string, *serviceError.ServiceError) {
+	if mock.GetAvailableSizesInRegionFunc == nil {
+		panic("KafkaServiceMock.GetAvailableSizesInRegionFunc: method is nil but KafkaService.GetAvailableSizesInRegion was just called")
+	}
+	callInfo := struct {
+		Criteria *FindClusterCriteria
+	}{
+		Criteria: criteria,
+	}
+	mock.lockGetAvailableSizesInRegion.Lock()
+	mock.calls.GetAvailableSizesInRegion = append(mock.calls.GetAvailableSizesInRegion, callInfo)
+	mock.lockGetAvailableSizesInRegion.Unlock()
+	return mock.GetAvailableSizesInRegionFunc(criteria)
+}
+
+// GetAvailableSizesInRegionCalls gets all the calls that were made to GetAvailableSizesInRegion.
+// Check the length with:
+//     len(mockedKafkaService.GetAvailableSizesInRegionCalls())
+func (mock *KafkaServiceMock) GetAvailableSizesInRegionCalls() []struct {
+	Criteria *FindClusterCriteria
+} {
+	var calls []struct {
+		Criteria *FindClusterCriteria
+	}
+	mock.lockGetAvailableSizesInRegion.RLock()
+	calls = mock.calls.GetAvailableSizesInRegion
+	mock.lockGetAvailableSizesInRegion.RUnlock()
 	return calls
 }
 

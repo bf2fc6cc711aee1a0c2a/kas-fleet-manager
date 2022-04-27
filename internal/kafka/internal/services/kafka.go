@@ -19,6 +19,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 
+	"strconv"
 	"time"
 
 	"github.com/golang/glog"
@@ -37,6 +38,7 @@ import (
 
 var kafkaDeletionStatuses = []string{constants2.KafkaRequestStatusDeleting.String(), constants2.KafkaRequestStatusDeprovision.String()}
 var kafkaManagedCRStatuses = []string{constants2.KafkaRequestStatusProvisioning.String(), constants2.KafkaRequestStatusDeprovision.String(), constants2.KafkaRequestStatusReady.String(), constants2.KafkaRequestStatusFailed.String()}
+var kafkaDeletionInstanceTypes = []string{types.DEVELOPER.String(), types.EVAL.String()}
 
 type KafkaRoutesAction string
 
@@ -81,7 +83,7 @@ type KafkaService interface {
 	Updates(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError
 	ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 	GetCNAMERecordStatus(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error)
-	DetectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError)
+	AssignInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError)
 	RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionKafkaForUsers registers all kafkas for deprovisioning given the list of owners
 	DeprovisionKafkaForUsers(users []string) *errors.ServiceError
@@ -92,6 +94,8 @@ type KafkaService interface {
 	VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
 	ListComponentVersions() ([]KafkaComponentVersions, error)
 	HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError)
+	// GetAvailableSizesInRegion returns a list of ids of the Kafka instance sizes that can still be created according to the specified criteria
+	GetAvailableSizesInRegion(criteria *FindClusterCriteria) ([]string, *errors.ServiceError)
 }
 
 var _ KafkaService = &kafkaService{}
@@ -147,20 +151,95 @@ func (k *kafkaService) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaReq
 }
 
 func (k *kafkaService) capacityAvailableForRegionAndInstanceType(instTypeRegCapacity *int, kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
+	errMessage := fmt.Sprintf("Failed to check kafka capacity for region '%s' and instance type '%s'", kafkaRequest.Region, kafkaRequest.InstanceType)
+
 	dbConn := k.connectionFactory.New()
 
 	var count int64
+
+	var kafkas []*dbapi.KafkaRequest
+
 	if err := dbConn.Model(&dbapi.KafkaRequest{}).
 		Where("region = ?", kafkaRequest.Region).
 		Where("cloud_provider = ?", kafkaRequest.CloudProvider).
 		Where("instance_type = ?", kafkaRequest.InstanceType).
-		Count(&count).Error; err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka request")
+		Scan(&kafkas).Error; err != nil {
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, errMessage)
 	}
-	return instTypeRegCapacity == nil || count < int64(*instTypeRegCapacity), nil
+
+	for _, kafka := range kafkas {
+		kafkaInstanceSize, e := k.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+		if e != nil {
+			return false, errors.NewWithCause(errors.ErrorInstancePlanNotSupported, e, errMessage)
+		}
+		count += int64(kafkaInstanceSize.CapacityConsumed)
+	}
+
+	kafkaInstanceSize, e := k.kafkaConfig.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
+	if e != nil {
+		return false, errors.NewWithCause(errors.ErrorInstancePlanNotSupported, e, errMessage)
+	}
+
+	count += int64(kafkaInstanceSize.CapacityConsumed)
+
+	return instTypeRegCapacity == nil || count <= int64(*instTypeRegCapacity), nil
 }
 
-func (k *kafkaService) DetectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+func (k *kafkaService) GetAvailableSizesInRegion(criteria *FindClusterCriteria) ([]string, *errors.ServiceError) {
+	if criteria == nil {
+		err := errors.GeneralError("unable to get available sizes in region: criteria was not specified")
+		logger.Logger.Error(err)
+		return nil, err
+	}
+
+	supportedInstanceTypes := k.kafkaConfig.SupportedInstanceTypes.Configuration
+	instanceType, err := supportedInstanceTypes.GetKafkaInstanceTypeByID(criteria.SupportedInstanceType)
+	if err != nil {
+		err := errors.InstanceTypeNotSupported("unable to get available sizes in region: %s", err.Error())
+		logger.Logger.Error(err)
+		return nil, err
+	}
+
+	// The kafka size list configuration must always be ordered starting with the smallest unit.
+	// The following finds the largest Kafka size that is still available in this region. Anything smaller than this
+	// size will also be considered as available to create with the remaining capacity.
+	for i := len(instanceType.Sizes) - 1; i >= 0; i-- {
+		kafka := &dbapi.KafkaRequest{
+			CloudProvider: criteria.Provider,
+			Region:        criteria.Region,
+			InstanceType:  criteria.SupportedInstanceType,
+			MultiAZ:       criteria.MultiAZ,
+			SizeId:        instanceType.Sizes[i].Id,
+		}
+
+		// Check against region limits
+		hasCapacity, err := k.HasAvailableCapacityInRegion(kafka)
+		if err != nil {
+			logger.Logger.Error(err)
+			return nil, err
+		}
+
+		if hasCapacity {
+			// Check if there is an available cluster in the region that can fit this Kafka instance type and size
+			cluster, err := k.clusterPlacementStrategy.FindCluster(kafka)
+			if err != nil {
+				logger.Logger.Error(err)
+				return nil, err
+			}
+
+			if cluster != nil {
+				var availableSizes []string
+				for _, size := range instanceType.Sizes[0 : i+1] {
+					availableSizes = append(availableSizes, size.Id)
+				}
+				return availableSizes, nil
+			}
+		}
+	}
+	return nil, nil
+}
+
+func (k *kafkaService) AssignInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
@@ -174,30 +253,36 @@ func (k *kafkaService) DetectInstanceType(kafkaRequest *dbapi.KafkaRequest) (typ
 		return types.STANDARD, nil
 	}
 
-	return types.EVAL, nil
+	return types.DEVELOPER, nil
 }
 
 // reserveQuota - reserves quota for the given kafka request. If a RHOSAK quota has been assigned, it will try to reserve RHOSAK quota, otherwise it will try with RHOSAKTrial
 func (k *kafkaService) reserveQuota(kafkaRequest *dbapi.KafkaRequest) (subscriptionId string, err *errors.ServiceError) {
-	if kafkaRequest.InstanceType == types.EVAL.String() {
-		if !k.kafkaConfig.Quota.AllowEvaluatorInstance {
-			return "", errors.NewWithCause(errors.ErrorForbidden, err, "kafka eval instances are not allowed")
+	if kafkaRequest.InstanceType == types.DEVELOPER.String() {
+		instType, err := k.kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafkaRequest.InstanceType)
+
+		if err != nil {
+			return "", errors.NewWithCause(errors.ErrorGeneral, err, "unable to reserve quota")
 		}
 
-		// Only one EVAL instance is admitted. Let's check if the user already owns one
+		if !k.kafkaConfig.Quota.AllowDeveloperInstance {
+			return "", errors.NewWithCause(errors.ErrorForbidden, err, "kafka %s instances are not allowed", instType.DisplayName)
+		}
+
+		// Only one DEVELOPER instance is admitted. Let's check if the user already owns one
 		dbConn := k.connectionFactory.New()
 		var count int64
 		if err := dbConn.Model(&dbapi.KafkaRequest{}).
-			Where("instance_type = ?", types.EVAL).
+			Where("instance_type = ?", types.DEVELOPER).
 			Where("owner = ?", kafkaRequest.Owner).
 			Where("organisation_id = ?", kafkaRequest.OrganisationId).
 			Count(&count).
 			Error; err != nil {
-			return "", errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka eval instances")
+			return "", errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka %s instances", instType.DisplayName)
 		}
 
 		if count > 0 {
-			return "", errors.TooManyKafkaInstancesReached("only one eval instance is allowed")
+			return "", errors.TooManyKafkaInstancesReached("only one %s instance is allowed", instType.DisplayName)
 		}
 	}
 
@@ -216,12 +301,15 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	// we need to pre-populate the ID to be able to reserve the quota
 	kafkaRequest.ID = api.NewID()
 
-	instanceType, err := k.DetectInstanceType(kafkaRequest)
-	if err != nil {
-		return err
+	// The Instance Type determines the MultiAZ attribute. The previously value
+	// set for the MultiAZ attribute in the request (if any) is ignored.
+	// TODO improve this
+	switch kafkaRequest.InstanceType {
+	case types.STANDARD.String():
+		kafkaRequest.MultiAZ = true
+	case types.DEVELOPER.String():
+		kafkaRequest.MultiAZ = false
 	}
-
-	kafkaRequest.InstanceType = instanceType.String()
 
 	hasCapacity, err := k.HasAvailableCapacityInRegion(kafkaRequest)
 	if err != nil {
@@ -254,8 +342,19 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	dbConn := k.connectionFactory.New()
 	kafkaRequest.SubscriptionId = subscriptionId
 	kafkaRequest.Status = constants2.KafkaRequestStatusAccepted.String()
+
 	// when creating new kafka - default storage size is assigned
-	kafkaRequest.KafkaStorageSize = k.kafkaConfig.KafkaCapacity.MaxDataRetentionSize
+	instanceType, instanceTypeErr := k.kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafkaRequest.InstanceType)
+	if instanceTypeErr != nil {
+		return errors.InstanceTypeNotSupported(instanceTypeErr.Error())
+	}
+
+	size, sizeErr := instanceType.GetKafkaInstanceSizeByID(kafkaRequest.SizeId)
+	if sizeErr != nil {
+		return errors.InstancePlanNotSupported(sizeErr.Error())
+	}
+
+	kafkaRequest.KafkaStorageSize = size.MaxDataRetentionSize.String()
 
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a kafka A is created, at the time of creation the quota-type was ams. At some point in the future
@@ -265,6 +364,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	if err := dbConn.Create(kafkaRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create kafka request") //hide the db error to http caller
 	}
+
 	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 	return nil
 }
@@ -477,8 +577,8 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
 		Model(&dbapi.KafkaRequest{}).
-		Where("instance_type = ?", types.EVAL.String()).
-		Where("created_at  <=  ?", time.Now().Add(-1*time.Duration(kafkaAgeInHours)*time.Hour)).
+		Where("instance_type IN (?)", kafkaDeletionInstanceTypes).
+		Where("created_at <= ?", time.Now().Add(-1*time.Duration(kafkaAgeInHours)*time.Hour)).
 		Where("status NOT IN (?)", kafkaDeletionStatuses)
 
 	db := dbConn.Update("status", constants2.KafkaRequestStatusDeprovision)
@@ -633,7 +733,10 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 	var res []managedkafka.ManagedKafka
 	// convert kafka requests to managed kafka
 	for _, kafkaRequest := range kafkaRequestList {
-		mk := buildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService)
+		mk, err := buildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService)
+		if err != nil {
+			return nil, err
+		}
 		res = append(res, *mk)
 	}
 
@@ -835,10 +938,39 @@ type KafkaRegionCount struct {
 
 func (k *kafkaService) CountByRegionAndInstanceType() ([]KafkaRegionCount, error) {
 	dbConn := k.connectionFactory.New()
+
+	var kafkas []*dbapi.KafkaRequest
+
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).
+		Scan(&kafkas).Error; err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count kafkas when setting capacity metrics")
+	}
+
 	var results []KafkaRegionCount
 
-	if err := dbConn.Model(&dbapi.KafkaRequest{}).Select("region as Region, instance_type, cluster_id, cloud_provider, count(1) as Count").Group("region,instance_type,cluster_id,cloud_provider").Scan(&results).Error; err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count kafkas")
+	for _, kafka := range kafkas {
+		resultPresent := false
+		instSize, err := k.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+		if err != nil {
+			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count kafkas of '%s' instance type and '%s' size_id when setting capacity metrics", kafka.InstanceType, kafka.SizeId)
+		}
+
+		for i, result := range results {
+			if result.CloudProvider == kafka.CloudProvider && result.ClusterId == kafka.ClusterID &&
+				result.InstanceType == kafka.InstanceType && result.Region == kafka.Region {
+				results[i].Count = result.Count + float64(instSize.CapacityConsumed)
+				resultPresent = true
+			}
+		}
+		if !resultPresent {
+			results = append(results, KafkaRegionCount{
+				CloudProvider: kafka.CloudProvider,
+				ClusterId:     kafka.ClusterID,
+				InstanceType:  kafka.InstanceType,
+				Region:        kafka.Region,
+				Count:         float64(instSize.CapacityConsumed),
+			})
+		}
 	}
 
 	return results, nil
@@ -900,7 +1032,17 @@ func (k *kafkaService) ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, 
 	return results, nil
 }
 
-func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakService sso.KeycloakService) *managedkafka.ManagedKafka {
+func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakService sso.KeycloakService) (*managedkafka.ManagedKafka, *errors.ServiceError) {
+	k, err := kafkaConfig.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka request")
+	}
+	labels := map[string]string{
+		"bf2.org/kafkaInstanceProfileQuotaConsumed": strconv.Itoa(k.QuotaConsumed),
+	}
+	if kafkaRequest.InstanceType != types.EVAL.String() {
+		labels["bf2.org/kafkaInstanceProfileType"] = kafkaRequest.InstanceType
+	}
 	managedKafkaCR := &managedkafka.ManagedKafka{
 		Id: kafkaRequest.ID,
 		TypeMeta: metav1.TypeMeta{
@@ -914,15 +1056,17 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 				"bf2.org/id":          kafkaRequest.ID,
 				"bf2.org/placementId": kafkaRequest.PlacementId,
 			},
+			Labels: labels,
 		},
 		Spec: managedkafka.ManagedKafkaSpec{
 			Capacity: managedkafka.Capacity{
-				IngressEgressThroughputPerSec: kafkaConfig.KafkaCapacity.IngressEgressThroughputPerSec,
-				TotalMaxConnections:           kafkaConfig.KafkaCapacity.TotalMaxConnections,
-				MaxDataRetentionSize:          kafkaRequest.KafkaStorageSize,
-				MaxPartitions:                 kafkaConfig.KafkaCapacity.MaxPartitions,
-				MaxDataRetentionPeriod:        kafkaConfig.KafkaCapacity.MaxDataRetentionPeriod,
-				MaxConnectionAttemptsPerSec:   kafkaConfig.KafkaCapacity.MaxConnectionAttemptsPerSec,
+				IngressPerSec:               k.IngressThroughputPerSec.String(),
+				EgressPerSec:                k.EgressThroughputPerSec.String(),
+				TotalMaxConnections:         k.TotalMaxConnections,
+				MaxDataRetentionSize:        kafkaRequest.KafkaStorageSize,
+				MaxPartitions:               k.MaxPartitions,
+				MaxDataRetentionPeriod:      k.MaxDataRetentionPeriod,
+				MaxConnectionAttemptsPerSec: k.MaxConnectionAttemptsPerSec,
 			},
 			Endpoint: managedkafka.EndpointSpec{
 				BootstrapServerHost: kafkaRequest.BootstrapServerHost,
@@ -980,7 +1124,7 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		}
 	}
 
-	return managedKafkaCR
+	return managedKafkaCR, nil
 }
 
 func buildKafkaClusterCNAMESRecordBatch(routes []dbapi.DataPlaneKafkaRoute, action string) *route53.ChangeBatch {

@@ -26,15 +26,17 @@ type cloudProvidersHandler struct {
 	supportedProviders       config.ProviderList
 	kafkaService             services.KafkaService
 	clusterPlacementStrategy services.ClusterPlacementStrategy
+	kafkaConfig              *config.KafkaConfig
 }
 
-func NewCloudProviderHandler(service services.CloudProvidersService, providerConfig *config.ProviderConfig, kafkaService services.KafkaService, clusterPlacementStrategy services.ClusterPlacementStrategy) *cloudProvidersHandler {
+func NewCloudProviderHandler(service services.CloudProvidersService, providerConfig *config.ProviderConfig, kafkaService services.KafkaService, clusterPlacementStrategy services.ClusterPlacementStrategy, kafkaConfig *config.KafkaConfig) *cloudProvidersHandler {
 	return &cloudProvidersHandler{
 		service:                  service,
 		supportedProviders:       providerConfig.ProvidersConfig.SupportedProviders,
 		cache:                    cache.New(5*time.Minute, 10*time.Minute),
 		kafkaService:             kafkaService,
 		clusterPlacementStrategy: clusterPlacementStrategy,
+		kafkaConfig:              kafkaConfig,
 	}
 }
 
@@ -75,9 +77,15 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 					cloudRegion.Enabled = true
 					cloudRegion.SupportedInstanceTypes = region.SupportedInstanceTypes.AsSlice()
 					for _, instType := range cloudRegion.SupportedInstanceTypes {
+						// --- to be removed once MaxCapacityReached has been removed. ---
 						maxCapacityReached := true
 						kafka.InstanceType = instType
 						kafka.Region = cloudRegion.Id
+						size, e := h.kafkaConfig.GetFirstAvailableSize(instType)
+						if e != nil {
+							return nil, errors.NewWithCause(errors.ErrorGeneral, e, "Unable to list cloud provider regions")
+						}
+						kafka.SizeId = size.Id
 						kafka.CloudProvider = cloudRegion.CloudProvider
 						hasCapacity, err := h.kafkaService.HasAvailableCapacityInRegion(kafka)
 						if err == nil && hasCapacity {
@@ -86,7 +94,27 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 								maxCapacityReached = false
 							}
 						}
-						capacity := api.RegionCapacityListItem{InstanceType: instType, MaxCapacityReached: maxCapacityReached}
+						// ---
+
+						availableSizes, err := h.kafkaService.GetAvailableSizesInRegion(&services.FindClusterCriteria{
+							Provider:              cloudRegion.CloudProvider,
+							Region:                cloudRegion.Id,
+							SupportedInstanceType: instType,
+							MultiAZ:               true,
+						})
+
+						// ignore any non-general errors (unsupported instance types/sizes). In this case, we should return an empty size array
+						// unsupported instance type/sizes may occur due to misconfiguration of cloud provider/supported instance type config.
+						// any errors returned will be logged and captured in Sentry
+						if err != nil && err.Code == errors.ErrorGeneral {
+							return nil, errors.GeneralError("unable to list cloud provider regions at this time")
+						}
+
+						capacity := api.RegionCapacityListItem{
+							InstanceType:                 instType,
+							DeprecatedMaxCapacityReached: maxCapacityReached,
+							AvailableSizes:               availableSizes,
+						}
 						capacities = append(capacities, capacity)
 					}
 					cloudRegion.Capacity = capacities

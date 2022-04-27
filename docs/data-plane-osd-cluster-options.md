@@ -42,7 +42,7 @@ clusters:
     multi_az: true
     schedulable: true # change this to false if you do not want the cluster to be schedulable
     kafka_instance_limit: 2 # change this to match any value of configuration
-    supported_instance_type: "standard,eval" # could be "eval", "standard" or both i.e "standard,eval" or "eval,standard". Defaults to "standard,eval" if not set
+    supported_instance_type: "standard,developer" # could be "developer", "standard" or both i.e "standard,developer" or "developer,standard". Defaults to "standard,developer" if not set
 ```
 ### Connecting to a standalone cluster
 

@@ -1,0 +1,75 @@
+# This configuration defines a list of supported Kafka instance types and their available sizes for KAS Fleet Manager. 
+# Modify this file to add additional Kafka instance types and sizes or change the default values listed below.
+# 
+# The following properties must be defined for each Kafka instance type:
+#   - id: Identifier for the Kafka instance type. Each instance type name should be unique.
+#   - display_name: human readable value of an instance type
+#   - sizes: A list of sizes available for this instance type (should not be an empty list)
+#
+# The following properties must be defined for each size (all values must be larger than '0'):
+#   - id: The size identifier. Each size id should be unique.
+#   - ingressThroughputPerSec: Maximum limit for ingress throughput per second (MB/s).
+#   - egressThroughputPerSec: Maximum limit for egress throughput per second (MB/s).
+#   - totalMaxConnections: Maximum client connections allowed.
+#   - maxConnectionAttemptsPerSec: Maximum client connection attempts per second.
+#   - maxDataRetentionSize: Maximum storage (GB).
+#   - maxDataRetentionPeriod: Maximum duration(ISO8601) for retaining data.
+#   - maxPartitions: Maximum partitions for all topics combined.
+#   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
+#   - quotaType: Quota type that will be consumed when this size is selected.
+#   - capacityConsumed: Data plane cluster capacity consumed by this Kafka instance size (only used for manual scaling)
+---
+supported_instance_types:
+  - id: standard
+    display_name: Standard
+    sizes:
+    - id: x1
+      ingressThroughputPerSec: "50Mi"
+      egressThroughputPerSec: "100Mi"
+      totalMaxConnections: 3000
+      maxConnectionAttemptsPerSec: 100
+      maxDataRetentionSize: "1000Gi"
+      maxDataRetentionPeriod: "P14D"
+      maxPartitions: 1500
+      quotaConsumed: 1
+      quotaType: "RHOSAK"
+      capacityConsumed: 1
+    - id: x2
+      ingressThroughputPerSec: "100Mi"
+      egressThroughputPerSec: "200Mi"
+      totalMaxConnections: 6000
+      maxDataRetentionSize: "2000Gi"
+      maxPartitions: 3000
+      maxDataRetentionPeriod: "P14D"
+      maxConnectionAttemptsPerSec: 200
+      quotaConsumed: 2
+      quotaType: "RHOSAK"
+      capacityConsumed: 2
+  - id: developer
+    display_name: Trial
+    sizes:
+    - id: x1
+      ingressThroughputPerSec: "1Mi"
+      egressThroughputPerSec: "1Mi"
+      totalMaxConnections: 100
+      maxConnectionAttemptsPerSec: 50
+      maxDataRetentionSize: "10Gi"
+      maxDataRetentionPeriod: "P14D"
+      maxPartitions: 100
+      quotaConsumed: 1
+      quotaType: "RHOSAKTrial"
+      capacityConsumed: 1
+  - id: eval
+    display_name: Eval
+    sizes:
+    - id: x1
+      ingressThroughputPerSec: "30Mi"
+      egressThroughputPerSec: "30Mi"
+      totalMaxConnections: 3000
+      maxConnectionAttemptsPerSec: 100
+      maxDataRetentionSize: "1000Gi"
+      maxDataRetentionPeriod: "P14D"
+      maxPartitions: 1000
+      quotaConsumed: 1
+      quotaType: "RHOSAKTrial"
+      capacityConsumed: 1

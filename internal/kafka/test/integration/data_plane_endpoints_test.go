@@ -6,6 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -213,6 +214,21 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 }
 
 func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
+	kafkaInstancesizes := []config.KafkaInstanceSize{
+		{
+			Id:                          "x1",
+			QuotaConsumed:               2,
+			IngressThroughputPerSec:     "50Mi",
+			EgressThroughputPerSec:      "100Mi",
+			TotalMaxConnections:         3000,
+			MaxConnectionAttemptsPerSec: 100,
+			MaxDataRetentionSize:        "1000Gi",
+			MaxDataRetentionPeriod:      "P14D",
+			MaxPartitions:               1500,
+			QuotaType:                   "rhosak",
+			CapacityConsumed:            1,
+		},
+	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
@@ -223,13 +239,27 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			},
 			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
 		}
-	}, nil)
+	}, func(kafkaConfig *config.KafkaConfig) {
+		kafkaConfig.SupportedInstanceTypes.Configuration.SupportedKafkaInstanceTypes = []config.KafkaInstanceType{
+			{
+				Id:          types.STANDARD.String(),
+				DisplayName: "standard",
+				Sizes:       kafkaInstancesizes,
+			},
+			{
+				Id:          types.DEVELOPER.String(),
+				DisplayName: "developer",
+				Sizes:       kafkaInstancesizes,
+			},
+		}
+	})
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 	storageSize := "60Gi"
 	updatedStorageSize := "70Gi"
+	sizeId := "x1"
 
 	biggerStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
 		KafkaStorageSize: updatedStorageSize,
@@ -250,6 +280,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -266,6 +297,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -281,7 +313,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
 			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
 			DesiredKafkaIBPVersion: "2.7.0",
-			InstanceType:           types.EVAL.String(),
+			InstanceType:           types.DEVELOPER.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -300,6 +333,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 		{
@@ -318,6 +352,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ActualKafkaIBPVersion:  "2.7.0",
 			DesiredKafkaIBPVersion: "2.7.0",
 			InstanceType:           types.STANDARD.String(),
+			SizeId:                 sizeId,
 			KafkaStorageSize:       storageSize,
 		},
 	}
@@ -351,7 +386,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		Status:                 constants2.KafkaRequestStatusFailed.String(),
 		DesiredKafkaVersion:    "2.7.2",
 		DesiredKafkaIBPVersion: "2.7",
-		InstanceType:           types.EVAL.String(),
+		InstanceType:           types.DEVELOPER.String(),
 	}
 
 	if err := db.Save(additionalKafka).Error; err != nil {
@@ -370,12 +405,20 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 				Expect(mk.Metadata.Name).To(Equal(k.Name))
 				Expect(mk.Metadata.Annotations.Bf2OrgPlacementId).To(Equal(k.PlacementId))
 				Expect(mk.Metadata.Annotations.Bf2OrgId).To(Equal(k.ID))
+				Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileType).To(Equal(k.InstanceType))
+				Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileQuotaConsumed).To(Equal(strconv.Itoa(kafkaInstancesizes[0].QuotaConsumed)))
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
 				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
 				Expect(mk.Spec.Versions.Kafka).To(Equal(k.DesiredKafkaVersion))
 				Expect(mk.Spec.Versions.KafkaIbp).To(Equal(k.DesiredKafkaIBPVersion))
 				Expect(mk.Spec.Endpoint.Tls).To(BeNil())
 				Expect(mk.Spec.Capacity.MaxDataRetentionSize).To(Equal(biggerStorageUpdateRequest.KafkaStorageSize))
+				Expect(mk.Spec.Capacity.IngressPerSec).To(Equal(kafkaInstancesizes[0].IngressThroughputPerSec.String()))
+				Expect(mk.Spec.Capacity.EgressPerSec).To(Equal(kafkaInstancesizes[0].EgressThroughputPerSec.String()))
+				Expect(mk.Spec.Capacity.TotalMaxConnections).To(Equal(int32(kafkaInstancesizes[0].TotalMaxConnections)))
+				Expect(mk.Spec.Capacity.MaxConnectionAttemptsPerSec).To(Equal(int32(kafkaInstancesizes[0].MaxConnectionAttemptsPerSec)))
+				Expect(mk.Spec.Capacity.MaxDataRetentionPeriod).To(Equal(kafkaInstancesizes[0].MaxDataRetentionPeriod))
+				Expect(mk.Spec.Capacity.MaxPartitions).To(Equal(int32(kafkaInstancesizes[0].MaxPartitions)))
 			} else {
 				t.Error("failed matching managedkafka id with kafkarequest id")
 				break
@@ -556,7 +599,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		PlacementId:                      "some-placement-id",
 		DesiredKafkaVersion:              "2.7.0",
 		DesiredKafkaIBPVersion:           "2.7",
-		InstanceType:                     types.EVAL.String(),
+		InstanceType:                     types.DEVELOPER.String(),
+		SizeId:                           "x1",
 	}
 
 	db := test.TestServices.DBFactory.New()
@@ -616,6 +660,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 		DesiredKafkaVersion:              "2.7.0",
 		DesiredKafkaIBPVersion:           "2.7",
 		InstanceType:                     types.STANDARD.String(),
+		SizeId:                           "x1",
 	}
 
 	db := test.TestServices.DBFactory.New()
@@ -674,6 +719,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		DesiredKafkaVersion:    "2.7.0",
 		DesiredKafkaIBPVersion: "2.7",
 		InstanceType:           types.STANDARD.String(),
+		SizeId:                 "x1",
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -731,6 +777,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 		DesiredKafkaIBPVersion:  "2.7",
 		InstanceType:            types.STANDARD.String(),
 		ReauthenticationEnabled: true, // enable session reauthentication
+		SizeId:                  "x1",
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -776,6 +823,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 		DesiredKafkaIBPVersion:  "2.7",
 		InstanceType:            types.STANDARD.String(),
 		ReauthenticationEnabled: true, // enable session reauthentication
+		SizeId:                  "x1",
 	}
 
 	if err := db.Create(anotherTestKafka).Error; err != nil {
@@ -840,7 +888,8 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			SsoClientSecret:        ssoSecret,
 			DesiredKafkaVersion:    "2.6.0",
 			DesiredKafkaIBPVersion: "2.6",
-			InstanceType:           types.EVAL.String(),
+			InstanceType:           types.DEVELOPER.String(),
+			SizeId:                 "x1",
 		},
 	}
 
@@ -971,6 +1020,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		DesiredKafkaVersion:    "2.7.0",
 		DesiredKafkaIBPVersion: "2.7",
 		InstanceType:           types.STANDARD.String(),
+		SizeId:                 "x1",
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -1031,6 +1081,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 		DesiredKafkaVersion:    "2.7.0",
 		DesiredKafkaIBPVersion: "2.7",
 		InstanceType:           types.STANDARD.String(),
+		SizeId:                 "x1",
 	}
 
 	// create dummy kafkas
@@ -1092,6 +1143,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 		FailedReason:           "test failed reason",
 		RoutesCreated:          true,
 		InstanceType:           types.STANDARD.String(),
+		SizeId:                 "x1",
 	}
 
 	// create dummy kafkas

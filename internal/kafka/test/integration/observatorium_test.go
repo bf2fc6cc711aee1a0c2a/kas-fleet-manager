@@ -65,10 +65,10 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 	k := public.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
-		MultiAz:       testMultiAZ,
+		Region:            mocks.MockCluster.Region().ID(),
+		CloudProvider:     mocks.MockCluster.CloudProvider().ID(),
+		Name:              mockKafkaName,
+		DeprecatedMultiAz: testMultiAZ,
 	}
 
 	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
@@ -118,10 +118,10 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 	k := public.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
-		MultiAz:       testMultiAZ,
+		Region:            mocks.MockCluster.Region().ID(),
+		CloudProvider:     mocks.MockCluster.CloudProvider().ID(),
+		Name:              mockKafkaName,
+		DeprecatedMultiAz: testMultiAZ,
 	}
 
 	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
@@ -188,10 +188,10 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 	k := public.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
-		MultiAz:       testMultiAZ,
+		Region:            mocks.MockCluster.Region().ID(),
+		CloudProvider:     mocks.MockCluster.CloudProvider().ID(),
+		Name:              mockKafkaName,
+		DeprecatedMultiAz: testMultiAZ,
 	}
 
 	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)

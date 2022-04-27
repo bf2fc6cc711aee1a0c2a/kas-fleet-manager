@@ -44,7 +44,7 @@ func ConfigProviders() di.Option {
 		di.Provide(config.NewAWSConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewSupportedProvidersConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
 		di.Provide(observatoriumClient.NewObservabilityConfigurationConfig, di.As(new(environments2.ConfigModule))),
-		di.Provide(config.NewKafkaConfig, di.As(new(environments2.ConfigModule))),
+		di.Provide(config.NewKafkaConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
 		di.Provide(config.NewDataplaneClusterConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewKasFleetshardConfig, di.As(new(environments2.ConfigModule))),
 
@@ -67,6 +67,7 @@ func ServiceProviders() di.Option {
 		di.Provide(services.NewClusterService),
 		di.Provide(services.NewKafkaService, di.As(new(services.KafkaService))),
 		di.Provide(services.NewCloudProvidersService),
+		di.Provide(services.NewSupportedKafkaInstanceTypesService),
 		di.Provide(services.NewObservatoriumService),
 		di.Provide(services.NewKasFleetshardOperatorAddon),
 		di.Provide(services.NewClusterPlacementStrategy),

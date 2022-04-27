@@ -16,7 +16,7 @@ func Test_NewKafkaQuotaConfig(t *testing.T) {
 			name: "should return new KafkaQuotaConfig",
 			want: &KafkaQuotaConfig{
 				Type:                   api.QuotaManagementListQuotaType.String(),
-				AllowEvaluatorInstance: true,
+				AllowDeveloperInstance: true,
 			},
 		},
 	}

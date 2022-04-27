@@ -5,7 +5,7 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 # There should be no duplicated endpoints or schemas in these 2 files. They should only defined in one of them.
 info:
   title: Kafka Service Fleet Manager
-  version: 1.4.0
+  version: 1.5.0
   description: Kafka Service Fleet Manager APIs that are used by internal services e.g kas-fleetshard operators.
 servers:
   - url: https://api.openshift.com
@@ -199,7 +199,9 @@ components:
     ManagedKafkaCapacity:
       type: object
       properties:
-        ingressEgressThroughputPerSec:
+        ingressPerSec:
+          type: string
+        egressPerSec:
           type: string
         totalMaxConnections:
           type: integer
@@ -247,6 +249,16 @@ components:
                       type: string
                     bf2.org/placementId:
                       type: string
+                labels:
+                  type: object
+                  required:
+                    - bf2.org/kafkaInstanceProfileType
+                    - bf2.org/kafkaInstanceProfileQuotaConsumed
+                  properties:
+                    bf2.org/kafkaInstanceProfileType:
+                      type: string
+                    bf2.org/kafkaInstanceProfileQuotaConsumed:
+                      type: string 
 
             spec:
               type: object
@@ -365,10 +377,10 @@ components:
           nullable: true
           properties:
             ingressEgressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+              type: string #an example is "40Gi", a k8s quantity.
               nullable: true
             connections:
-              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+              type: integer # an example is 10000.
               nullable: true
             dataRetentionSize:
               type: string
@@ -401,10 +413,10 @@ components:
           type: object
           properties:
             ingressEgressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+              type: string #an example is "40Gi", a k8s quantity.
               nullable: true
             connections:
-              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+              type: integer # an example is 10000.
               nullable: true
             dataRetentionSize:
               type: string
@@ -417,10 +429,10 @@ components:
           properties:
             # TODO 'total', 'remaining' attributes share the same properties so should we refactor it to a common schema?
             ingressEgressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+              type: string #an example is "40Gi", a k8s quantity.
               nullable: true
             connections:
-              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+              type: integer # an example is 10000.
               nullable: true
             dataRetentionSize:
               type: string
@@ -577,9 +589,13 @@ components:
           annotations:
             bf2.org/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
             bf2.org/placementId: ""
+          labels:
+            bf2.org/kafkaInstanceProfileType: "standard"
+            bf2.org/kafkaInstanceProfileQuotaConsumed: "1"
         spec:
           capacity:
-            ingressEgressThroughputPerSec: 4Mi
+            ingressThroughputPerSec: 4Mi
+            egressThroughputPerSec: 4Mi
             totalMaxConnections: 500
             maxDataRetentionSize: 100Gi
             maxPartitions: 100

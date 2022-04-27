@@ -180,13 +180,21 @@ const (
 	ErrorMalformedServiceAccountId       ServiceErrorCode = 40
 	ErrorMalformedServiceAccountIdReason string           = "Service account id is invalid"
 
-	// Region not supported
+	// Instance type not supported
 	ErrorInstanceTypeNotSupported       ServiceErrorCode = 41
 	ErrorInstanceTypeNotSupportedReason string           = "Instance Type not supported"
+
+	// Instance plan not supported
+	ErrorInstancePlanNotSupported       ServiceErrorCode = 42
+	ErrorInstancePlanNotSupportedReason string           = "Instance plan not supported"
 
 	// Too Many requests error. Used by rate limiting
 	ErrorTooManyRequests       ServiceErrorCode = 429
 	ErrorTooManyRequestsReason string           = "Too Many requests"
+
+	//Only SingleAZ supported for Developer/Trial requests
+	ErrorOnlySingleAZSupported       ServiceErrorCode = 43
+	ErrorOnlySingleAZSupportedReason string           = "Only Single-AZ Kafkas of this type are supported, use multi_az=false"
 )
 
 type ErrorList []error
@@ -257,6 +265,8 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMalformedServiceAccountDesc, ErrorMalformedServiceAccountDescReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil},
+		ServiceError{ErrorInstancePlanNotSupported, ErrorInstancePlanNotSupportedReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorOnlySingleAZSupported, ErrorOnlySingleAZSupportedReason, http.StatusBadRequest, nil},
 	}
 }
 
@@ -441,6 +451,10 @@ func (e *ServiceError) IsFailedToCheckQuota() bool {
 	return e.Code == FailedToCheckQuota("").Code
 }
 
+func (e *ServiceError) IsInstanceTypeNotSupported() bool {
+	return e.Code == ErrorInstanceTypeNotSupported
+}
+
 func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compat.Error {
 	href := Href(e.Code)
 	code := CodeStr(e.Code)
@@ -534,6 +548,10 @@ func NotMultiAzActionNotSupported() *ServiceError {
 	return New(ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason)
 }
 
+func NotSingleAzActionNotSupported() *ServiceError {
+	return New(ErrorOnlySingleAZSupported, ErrorOnlySingleAZSupportedReason)
+}
+
 func FailedToCreateSSOClient(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToCreateSSOClient, reason, values...)
 }
@@ -580,6 +598,10 @@ func InstanceTypeNotSupported(reason string, values ...interface{}) *ServiceErro
 
 func ProviderNotSupported(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorProviderNotSupported, reason, values...)
+}
+
+func InstancePlanNotSupported(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorInstancePlanNotSupported, reason, values...)
 }
 
 func MalformedKafkaClusterName(reason string, values ...interface{}) *ServiceError {

@@ -17,5 +17,7 @@ type RegionCapacityListItem struct {
 	// kafka instance type
 	InstanceType string `json:"instance_type,omitempty"`
 	// flag indicating whether the capacity for the instance type in the region is reached
-	MaxCapacityReached bool `json:"max_capacity_reached,omitempty"`
+	DeprecatedMaxCapacityReached bool `json:"max_capacity_reached,omitempty"`
+	// a list of kafka instance sizes that can still be created in this region
+	AvailableSizes []string `json:"available_sizes,omitempty"`
 }

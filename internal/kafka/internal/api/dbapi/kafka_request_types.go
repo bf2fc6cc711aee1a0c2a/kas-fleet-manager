@@ -38,7 +38,7 @@ type KafkaRequest struct {
 	StrimziUpgrading       bool   `json:"strimzi_upgrading"`
 	KafkaIBPUpgrading      bool   `json:"kafka_ibp_upgrading"`
 	KafkaStorageSize       string `json:"kafka_storage_size"`
-	// The type of kafka instance (eval or standard)
+	// The type of kafka instance (developer or standard)
 	InstanceType string `json:"instance_type"`
 	// the quota service type for the kafka, e.g. ams, quota-management-list
 	QuotaType string `json:"quota_type"`
@@ -51,6 +51,7 @@ type KafkaRequest struct {
 	Namespace               string `json:"namespace"`
 	ReauthenticationEnabled bool   `json:"reauthentication_enabled"`
 	RoutesCreationId        string `json:"routes_creation_id"`
+	SizeId                  string `json:"size_id"`
 }
 
 type KafkaList []*KafkaRequest
