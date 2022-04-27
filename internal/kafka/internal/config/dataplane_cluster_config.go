@@ -127,6 +127,14 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 						v1.ResourceCPU:    resource.MustParse("500m"),
 					},
 				},
+				Env: []v1.EnvVar{
+					{Name: "SSO_ENABLED", Value: "true"},
+					{Name: "MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED", Value: "true"},
+					{Name: "STANDARD_KAFKA_CONTAINER_CPU", Value: "500m"},
+					{Name: "STANDARD_KAFKA_CONTAINER_MEMORY", Value: "4Gi"},
+					{Name: "STANDARD_KAFKA_JVM_XMS", Value: "1G"},
+					{Name: "STANDARD_ZOOKEEPER_CONTAINER_CPU", Value: "500m"},
+				},
 			},
 		},
 	}
