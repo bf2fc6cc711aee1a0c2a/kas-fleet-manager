@@ -11,6 +11,6 @@ package private
 
 // ManagedKafkaAllOfMetadataLabels struct for ManagedKafkaAllOfMetadataLabels
 type ManagedKafkaAllOfMetadataLabels struct {
-	Bf2OrgKafkaInstanceProfileType          string `json:"bf2.org/kafkaInstanceProfileType"`
+	Bf2OrgKafkaInstanceProfileType          string `json:"bf2.org/kafkaInstanceProfileType,omitempty"`
 	Bf2OrgKafkaInstanceProfileQuotaConsumed string `json:"bf2.org/kafkaInstanceProfileQuotaConsumed"`
 }
