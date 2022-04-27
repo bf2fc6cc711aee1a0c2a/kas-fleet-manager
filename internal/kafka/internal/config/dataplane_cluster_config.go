@@ -19,8 +19,6 @@ import (
 
 	k8sYaml "sigs.k8s.io/yaml"
 
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
@@ -95,18 +93,7 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 			Namespace:              constants.StrimziOperatorNamespace,
 			SubscriptionChannel:    "alpha",
 			Package:                "managed-kafka",
-			SubscriptionConfig: operatorsv1alpha1.SubscriptionConfig{
-				Resources: v1.ResourceRequirements{
-					Requests: v1.ResourceList{
-						v1.ResourceMemory: resource.MustParse("1Gi"),
-						v1.ResourceCPU:    resource.MustParse("500m"),
-					},
-					Limits: v1.ResourceList{
-						v1.ResourceMemory: resource.MustParse("1Gi"),
-						v1.ResourceCPU:    resource.MustParse("500m"),
-					},
-				},
-			},
+			SubscriptionConfig:     operatorsv1alpha1.SubscriptionConfig{},
 			SubscriptionConfigFile: "config/strimzi-operator-subscription-spec-config.yaml",
 		},
 		KasFleetshardOperatorOLMConfig: OperatorInstallationConfig{
@@ -116,26 +103,7 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 			SubscriptionChannel:    "alpha",
 			Package:                "kas-fleetshard-operator",
 			SubscriptionConfigFile: "config/kas-fleetshard-operator-subscription-spec-config.yaml",
-			SubscriptionConfig: operatorsv1alpha1.SubscriptionConfig{
-				Resources: v1.ResourceRequirements{
-					Requests: v1.ResourceList{
-						v1.ResourceMemory: resource.MustParse("1Gi"),
-						v1.ResourceCPU:    resource.MustParse("500m"),
-					},
-					Limits: v1.ResourceList{
-						v1.ResourceMemory: resource.MustParse("1Gi"),
-						v1.ResourceCPU:    resource.MustParse("500m"),
-					},
-				},
-				Env: []v1.EnvVar{
-					{Name: "SSO_ENABLED", Value: "true"},
-					{Name: "MANAGEDKAFKA_ADMINSERVER_EDGE_TLS_ENABLED", Value: "true"},
-					{Name: "STANDARD_KAFKA_CONTAINER_CPU", Value: "500m"},
-					{Name: "STANDARD_KAFKA_CONTAINER_MEMORY", Value: "4Gi"},
-					{Name: "STANDARD_KAFKA_JVM_XMS", Value: "1G"},
-					{Name: "STANDARD_ZOOKEEPER_CONTAINER_CPU", Value: "500m"},
-				},
-			},
+			SubscriptionConfig:     operatorsv1alpha1.SubscriptionConfig{},
 		},
 	}
 }
