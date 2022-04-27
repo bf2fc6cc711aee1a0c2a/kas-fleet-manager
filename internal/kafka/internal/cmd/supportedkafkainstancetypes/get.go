@@ -21,14 +21,14 @@ func NewGetCommand(env *environments.Env) *cobra.Command {
 			runGet(env, cmd, args)
 		},
 	}
-	cmd.Flags().String(FlagCloudProvider, "", "cloud provider id")
+	cmd.Flags().String(FlagCloudProviderID, "", "cloud provider id")
 	cmd.Flags().String(FlagCloudRegion, "", "cloud region name")
 
 	return cmd
 }
 
 func runGet(env *environments.Env, cmd *cobra.Command, _ []string) {
-	id := flags.MustGetDefinedString(FlagCloudProvider, cmd.Flags())
+	id := flags.MustGetDefinedString(FlagCloudProviderID, cmd.Flags())
 	region := flags.MustGetDefinedString(FlagCloudRegion, cmd.Flags())
 	var supportedKafkaInstanceTypeService services.SupportedKafkaInstanceTypesService
 	env.MustResolve(&supportedKafkaInstanceTypeService)
