@@ -67,7 +67,7 @@ func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *h
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &serviceAccountRequest,
 		Validate: []handlers.Validate{
-			handlers.ValidateLength(&serviceAccountRequest.Name, "name", &handlers.MinRequiredFieldLength, &handlers.MaxServiceAccountNameLength),
+			handlers.ValidateLength(&serviceAccountRequest.Name, "name", handlers.MinRequiredFieldLength, &handlers.MaxServiceAccountNameLength),
 			handlers.ValidateMaxLength(&serviceAccountRequest.Description, "description", &handlers.MaxServiceAccountDescLength),
 			handlers.ValidateServiceAccountName(&serviceAccountRequest.Name, "name"),
 			handlers.ValidateServiceAccountDesc(&serviceAccountRequest.Description, "description"),
@@ -89,7 +89,7 @@ func (s serviceAccountsHandler) DeleteServiceAccount(w http.ResponseWriter, r *h
 	id := mux.Vars(r)["id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateLength(&id, "id", &handlers.MinRequiredFieldLength, &handlers.MaxServiceAccountId),
+			handlers.ValidateLength(&id, "id", handlers.MinRequiredFieldLength, &handlers.MaxServiceAccountId),
 			handlers.ValidateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -106,7 +106,7 @@ func (s serviceAccountsHandler) ResetServiceAccountCredential(w http.ResponseWri
 	id := mux.Vars(r)["id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateLength(&id, "id", &handlers.MinRequiredFieldLength, &handlers.MaxServiceAccountId),
+			handlers.ValidateLength(&id, "id", handlers.MinRequiredFieldLength, &handlers.MaxServiceAccountId),
 			handlers.ValidateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -126,7 +126,7 @@ func (s serviceAccountsHandler) GetServiceAccountByClientId(w http.ResponseWrite
 	clientId := r.FormValue("client_id")
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateLength(&clientId, "client_id", &handlers.MinRequiredFieldLength, &handlers.MaxServiceAccountClientId),
+			handlers.ValidateLength(&clientId, "client_id", handlers.MinRequiredFieldLength, &handlers.MaxServiceAccountClientId),
 			handlers.ValidateServiceAccountClientId(&clientId, "client_id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -157,7 +157,7 @@ func (s serviceAccountsHandler) GetServiceAccountById(w http.ResponseWriter, r *
 	id := mux.Vars(r)["id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateLength(&id, "id", &handlers.MinRequiredFieldLength, &handlers.MaxServiceAccountId),
+			handlers.ValidateLength(&id, "id", handlers.MinRequiredFieldLength, &handlers.MaxServiceAccountId),
 			handlers.ValidateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {

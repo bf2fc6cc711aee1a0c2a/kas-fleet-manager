@@ -45,7 +45,7 @@ func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	clusterID := mux.Vars(r)["id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateLength(&clusterID, "id", &handlers.MinRequiredFieldLength, nil),
+			handlers.ValidateLength(&clusterID, "id", handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			managedKafkas, err := h.kafkaService.GetManagedKafkaByClusterID(clusterID)

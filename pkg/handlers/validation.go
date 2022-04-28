@@ -83,16 +83,21 @@ func ValidateMaxLength(value *string, field string, maxVal *int) Validate {
 	}
 }
 
-func ValidateLength(value *string, field string, minVal *int, maxVal *int) Validate {
-	var min = 1
-	if *minVal > 1 {
-		min = *minVal
+func ValidateLength(value *string, field string, min int, maxVal *int) Validate {
+	if min < 1 {
+		min = 1
 	}
-	resp := ValidateMaxLength(value, field, maxVal)
-	if resp != nil {
-		return resp
+	return func() *errors.ServiceError {
+		err := ValidateMaxLength(value, field, maxVal)()
+		if err != nil {
+			return err
+		}
+		err = ValidateMinLength(value, field, min)()
+		if err != nil {
+			return err
+		}
+		return nil
 	}
-	return ValidateMinLength(value, field, min)
 }
 
 func ValidateMinLength(value *string, field string, min int) Validate {
