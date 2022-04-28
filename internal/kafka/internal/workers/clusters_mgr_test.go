@@ -1414,7 +1414,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 			},
 			Type: k8sCoreV1.SecretTypeDockerConfigJson,
 			Data: map[string][]byte{
-				k8sCoreV1.DockerConfigKey: []byte(clusterConfig.ImagePullDockerConfigContent),
+				k8sCoreV1.DockerConfigJsonKey: []byte(clusterConfig.ImagePullDockerConfigContent),
 			},
 		},
 			&k8sCoreV1.Secret{
@@ -1428,7 +1428,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				},
 				Type: k8sCoreV1.SecretTypeDockerConfigJson,
 				Data: map[string][]byte{
-					k8sCoreV1.DockerConfigKey: []byte(clusterConfig.ImagePullDockerConfigContent),
+					k8sCoreV1.DockerConfigJsonKey: []byte(clusterConfig.ImagePullDockerConfigContent),
 				},
 			})
 	}
