@@ -1001,7 +1001,7 @@ func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secre
 	}
 
 	dataMap := map[string][]byte{
-		k8sCoreV1.DockerConfigKey: []byte(content),
+		k8sCoreV1.DockerConfigJsonKey: []byte(content),
 	}
 
 	return &k8sCoreV1.Secret{
