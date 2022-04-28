@@ -33,18 +33,18 @@ func TestGetRoutesFromKafkaRequest(t *testing.T) {
 		{
 			name: "should return empty routes if the KafkaRequest routes are malformed",
 			args: args{
-				dbKafkaRequest: mock.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.Routes = mock.GetMalformedRoutes()
-				}),
+				dbKafkaRequest: mock.BuildKafkaRequest(
+					mock.WithRoutes(mock.GetMalformedRoutes()),
+				),
 			},
 			want: emptyKafkaRoutes,
 		},
 		{
 			name: "should return routes if not empty and in correct format in the KafkaRequest",
 			args: args{
-				dbKafkaRequest: mock.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.Routes = mock.GetRoutes()
-				}),
+				dbKafkaRequest: mock.BuildKafkaRequest(
+					mock.WithRoutes(mock.GetRoutes()),
+				),
 			},
 			want: mock.GetSampleKafkaAllRoutes(),
 		},
@@ -74,7 +74,7 @@ func TestPresentKafkaRequestAdminEndpoint(t *testing.T) {
 		{
 			name: "should return admin kafka request",
 			args: args{
-				dbKafkaRequest: mock.BuildKafkaRequest(nil),
+				dbKafkaRequest: mock.BuildKafkaRequest(),
 				accountService: account.NewMockAccountService(),
 			},
 			want: mock.BuildAdminKafkaRequest(nil),
