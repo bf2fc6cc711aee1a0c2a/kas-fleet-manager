@@ -20,7 +20,65 @@ const (
 	multiAz              = true
 )
 
-func BuildKafkaRequest(modifyFn func(kafkaRequest *dbapi.KafkaRequest)) *dbapi.KafkaRequest {
+type KafkaRequestAttribute int
+
+const (
+	STATUS KafkaRequestAttribute = iota
+	OWNER
+	CLUSTER_ID
+	BOOTSTRAP_SERVER_HOST
+	FAILED_REASON
+	ACTUAL_KAFKA_VERSION
+	INSTANCE_TYPE
+	STORAGE_SIZE
+)
+
+type KafkaAttribute int
+
+type KafkaRequestBuildOption func(*dbapi.KafkaRequest)
+
+func With(attribute KafkaRequestAttribute, value string) KafkaRequestBuildOption {
+	return func(request *dbapi.KafkaRequest) {
+		switch attribute {
+		case STATUS:
+			request.Status = value
+		case OWNER:
+			request.Owner = value
+		case CLUSTER_ID:
+			request.ClusterID = value
+		case BOOTSTRAP_SERVER_HOST:
+			request.BootstrapServerHost = value
+		case FAILED_REASON:
+			request.FailedReason = value
+		case ACTUAL_KAFKA_VERSION:
+			request.ActualKafkaVersion = value
+		case INSTANCE_TYPE:
+			request.InstanceType = value
+		case STORAGE_SIZE:
+			request.KafkaStorageSize = value
+		}
+	}
+}
+
+func WithRoutes(routes api.JSON) KafkaRequestBuildOption {
+	return func(request *dbapi.KafkaRequest) {
+		request.Routes = routes
+	}
+}
+
+func WithReauthenticationEnabled(enabled bool) KafkaRequestBuildOption {
+	return func(request *dbapi.KafkaRequest) {
+		request.ReauthenticationEnabled = enabled
+	}
+}
+
+func WithDeleted(deleted bool) KafkaRequestBuildOption {
+	return func(request *dbapi.KafkaRequest) {
+		request.Meta.DeletedAt.Valid = deleted
+	}
+}
+
+func BuildKafkaRequest(options ...KafkaRequestBuildOption) *dbapi.KafkaRequest {
 	kafkaRequest := &dbapi.KafkaRequest{
 		Meta: api.Meta{
 			DeletedAt: gorm.DeletedAt{Valid: true},
@@ -33,8 +91,8 @@ func BuildKafkaRequest(modifyFn func(kafkaRequest *dbapi.KafkaRequest)) *dbapi.K
 		Status:        constants.KafkaRequestStatusReady.String(),
 		Owner:         user,
 	}
-	if modifyFn != nil {
-		modifyFn(kafkaRequest)
+	for _, option := range options {
+		option(kafkaRequest)
 	}
 	return kafkaRequest
 }

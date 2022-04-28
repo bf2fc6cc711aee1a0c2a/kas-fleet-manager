@@ -32,14 +32,13 @@ func TestConvertKafkaRequest(t *testing.T) {
 				kafkaRequestPayload: *mock.BuildKafkaRequestPayload(nil),
 				dbKafkaRequests:     []*dbapi.KafkaRequest{},
 			},
-			// want: dbKafkaRequest, //mock.BuildKafkaRequest(nil),
-			want: mock.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-				kafkaRequest.Status = ""
-				kafkaRequest.Owner = ""
-				kafkaRequest.ClusterID = ""
-				kafkaRequest.ReauthenticationEnabled = reauthEnabled
-				kafkaRequest.Meta.DeletedAt.Valid = false
-			}),
+			want: mock.BuildKafkaRequest(
+				mock.With(mock.STATUS, ""),
+				mock.With(mock.OWNER, ""),
+				mock.With(mock.CLUSTER_ID, ""),
+				mock.WithReauthenticationEnabled(reauthEnabled),
+				mock.WithDeleted(false),
+			),
 		},
 		{
 			name: "Should return empty kafka request with reauthentication disabled",
@@ -47,25 +46,25 @@ func TestConvertKafkaRequest(t *testing.T) {
 				kafkaRequestPayload: *mock.BuildKafkaRequestPayload(func(payload *public.KafkaRequestPayload) {
 					payload.ReauthenticationEnabled = &reauthDisabled
 				}),
-				dbKafkaRequests: []*dbapi.KafkaRequest{mock.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.ReauthenticationEnabled = reauthDisabled
-				})},
+				dbKafkaRequests: []*dbapi.KafkaRequest{mock.BuildKafkaRequest(
+					mock.WithReauthenticationEnabled(reauthEnabled),
+				)},
 			},
-			want: mock.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-				kafkaRequest.ReauthenticationEnabled = reauthDisabled
-			}),
+			want: mock.BuildKafkaRequest(
+				mock.WithReauthenticationEnabled(reauthDisabled),
+			),
 		},
 		{
 			name: "should convert and return kafka request from non-empty db kafka request slice with reauth enabled",
 			args: args{
 				kafkaRequestPayload: *mock.BuildKafkaRequestPayload(nil),
-				dbKafkaRequests: []*dbapi.KafkaRequest{mock.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.ReauthenticationEnabled = reauthEnabled
-				})},
+				dbKafkaRequests: []*dbapi.KafkaRequest{mock.BuildKafkaRequest(
+					mock.WithReauthenticationEnabled(true),
+				)},
 			},
-			want: mock.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-				kafkaRequest.ReauthenticationEnabled = reauthEnabled
-			}),
+			want: mock.BuildKafkaRequest(
+				mock.WithReauthenticationEnabled(true),
+			),
 		},
 	}
 
@@ -98,14 +97,14 @@ func TestPresentKafkaRequest(t *testing.T) {
 		{
 			name: "should return kafka request as presented to an end user",
 			args: args{
-				dbKafkaRequest: mock.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.ReauthenticationEnabled = reauthEnabled
-					kafkaRequest.BootstrapServerHost = bootstrapServer
-					kafkaRequest.FailedReason = failedReason
-					kafkaRequest.ActualKafkaVersion = version
-					kafkaRequest.InstanceType = instanceType
-					kafkaRequest.KafkaStorageSize = kafkaStorageSize
-				}),
+				dbKafkaRequest: mock.BuildKafkaRequest(
+					mock.WithReauthenticationEnabled(reauthEnabled),
+					mock.With(mock.BOOTSTRAP_SERVER_HOST, bootstrapServer),
+					mock.With(mock.FAILED_REASON, failedReason),
+					mock.With(mock.ACTUAL_KAFKA_VERSION, version),
+					mock.With(mock.INSTANCE_TYPE, instanceType),
+					mock.With(mock.STORAGE_SIZE, kafkaStorageSize),
+				),
 			},
 			want: *mock.BuildPublicKafkaRequest(func(kafkaRequest *public.KafkaRequest) {
 				kafkaRequest.ReauthenticationEnabled = reauthEnabled

@@ -28,7 +28,7 @@ func TestPresentReference(t *testing.T) {
 			name: "should return valid ObjectReference for kafka",
 			args: args{
 				id:  mockObjRef.GetObjectReferenceMockId(""),
-				obj: mockKafka.BuildKafkaRequest(nil),
+				obj: mockKafka.BuildKafkaRequest(),
 			},
 			want: mockObjRef.GetKafkaObjectReference(),
 		},
