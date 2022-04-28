@@ -135,6 +135,9 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 					if serviceError != nil {
 						sentry.CaptureException(serviceError)
 						glog.Errorf("failed to present connector deployment %s: %v", resource.ID, serviceError)
+						// also reduce size and total count
+						list.Size--
+						list.Total--
 					} else {
 						list.Items = append(list.Items, converted)
 					}

@@ -381,12 +381,14 @@ func (k *connectorsService) ForceDelete(ctx context.Context, id string) *errors.
 				return err
 			}
 		}
-		if err := k.Delete(ctx, id); err != nil {
-			return err
-		}
 		return nil
 	}); err != nil {
 		return services.HandleDeleteError("Connector", "id", id, err)
+	}
+
+	// delete connector in a separate transaction to allow deleting dangling deployments
+	if err := k.Delete(ctx, id); err != nil {
+		return err
 	}
 	return nil
 }

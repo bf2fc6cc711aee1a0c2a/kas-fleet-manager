@@ -11,6 +11,7 @@ Feature: connector agent API
     Given a user named "Dr. Evil"
     Given a user named "Shard"
     Given a user named "Shard2"
+    Given a user named "Shard3"
     Given an admin user named "Ricky Bobby" with roles "connector-fleet-manager-admin-full"
     Given an admin user named "Cal Naughton Jr." with roles "connector-fleet-manager-admin-write"
     Given an admin user named "Carley Bobby" with roles "connector-fleet-manager-admin-read"
@@ -1670,3 +1671,153 @@ Feature: connector agent API
       "reason": "Connector cluster with id='${connector_cluster_id}' has been deleted"
     }
     """
+
+    Scenario: Admin API can delete dangling connector deployments
+      Given I am logged in as "Bobby"
+      When I POST path "/v1/kafka_connector_clusters" with json body:
+      """
+      {}
+      """
+      Then the response code should be 202
+      And the ".status.state" selection from the response should match "disconnected"
+      Given I store the ".id" selection from the response as ${connector_cluster_id}
+
+      When I GET path "/v1/kafka_connector_namespaces/?search=cluster_id=${connector_cluster_id}"
+      Then the response code should be 200
+      Given I store the ".items[0].id" selection from the response as ${connector_namespace_id}
+
+      When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
+      Then the response code should be 200
+      And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
+      And I remember keycloak client for cleanup with clientID: ${clientID}
+
+      Given I am logged in as "Shard3"
+      Given I set the "Authorization" header to "Bearer ${shard_token}"
+      When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
+      """
+      {
+        "phase":"ready",
+        "version": "0.0.1",
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }],
+        "namespaces": [{
+          "id": "${connector_namespace_id}",
+          "phase": "ready",
+          "version": "0.0.1",
+          "connectors_deployed": 0,
+          "conditions": [{
+            "type": "Ready",
+            "status": "True",
+            "lastTransitionTime": "2018-01-01T00:00:00Z"
+          }]
+        }],
+        "operators": [{
+          "id":"camelk",
+          "version": "1.0",
+          "namespace": "openshift-mcs-camelk-1.0",
+          "status": "ready"
+        }]
+      }
+      """
+      Then the response code should be 204
+      And the response should match ""
+
+      # create a connector
+      Given I am logged in as "Bobby"
+      When I POST path "/v1/kafka_connectors?async=true" with json body:
+      """
+      {
+        "kind": "Connector",
+        "name": "example 1",
+        "namespace_id": "${connector_namespace_id}",
+        "channel":"stable",
+        "connector_type_id": "log_sink_0.1",
+        "kafka": {
+          "id": "mykafka",
+          "url": "kafka.hostname"
+        },
+        "service_account": {
+          "client_id": "myclient",
+          "client_secret": "test"
+        },
+        "connector": {
+          "log_multi_line": true,
+          "kafka_topic":"test",
+          "processors":[]
+        }
+      }
+      """
+      Then the response code should be 202
+      Given I store the ".id" selection from the response as ${connector_id}
+
+      # wait for the agent to see deployment
+      Given I am logged in as "Shard3"
+      Given I set the "Authorization" header to "Bearer ${shard_token}"
+      When I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
+      When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments"
+      Then the response code should be 200
+      And the ".total" selection from the response should match "1"
+
+      # set deleted_at to delete connector
+      When I run SQL "UPDATE connectors SET deleted_at='1000-01-01 00:00:00.000000+00' WHERE id = '${connector_id}';" expect 1 row to be affected.
+
+      # agent doesn't see dangling deployment
+      Given I am logged in as "Shard3"
+      Given I set the "Authorization" header to "Bearer ${shard_token}"
+      When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments"
+      Then the response code should be 200
+      And the ".total" selection from the response should match "0"
+
+      # connector returns 410
+      Given I am logged in as "Ricky Bobby"
+      When I GET path "/v1/admin/kafka_connectors/${connector_id}"
+      Then the response code should be 410
+      And the response should match json:
+      """
+      {
+        "id": "25",
+        "kind": "Error",
+        "href": "/api/connector_mgmt/v1/errors/25",
+        "code": "CONNECTOR-MGMT-25",
+        "reason": "Connector with id='${connector_id}' has been deleted",
+        "operation_id": "${response.operation_id}"
+      }
+      """
+
+      # listing deployments as Admin returns a not found error for the missing connector
+      When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments"
+      Then the response code should be 404
+      And the response should match json:
+      """
+      {
+        "id": "7",
+        "kind": "Error",
+        "href": "/api/connector_mgmt/v1/errors/7",
+        "code": "CONNECTOR-MGMT-7",
+        "reason": "Connector with id='${connector_id}' not found",
+        "operation_id": "${response.operation_id}"
+      }
+      """
+
+      # force deleting MUST delete dangling deployment but return with not found error for deleted connector
+      When I DELETE path "/v1/admin/kafka_connectors/${connector_id}?force=true"
+      Then the response code should be 404
+      And the response should match json:
+      """
+      {
+        "id": "7",
+        "kind": "Error",
+        "href": "/api/connector_mgmt/v1/errors/7",
+        "code": "CONNECTOR-MGMT-7",
+        "reason": "Connector with id='${connector_id}' not found",
+        "operation_id": "${response.operation_id}"
+      }
+      """
+
+      # deployment has been deleted, list should be empty
+      When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments"
+      Then the response code should be 200
+      And the ".total" selection from the response should match "0"
