@@ -349,6 +349,8 @@ func DataplaneClusterConfig(h *coreTest.Helper) (dataplaneClusterConfig *config.
 }
 
 func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
+	t.Skip("skipping dynamic scaling related tests")
+
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedCluster, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
 	if err != nil {
@@ -466,6 +468,8 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 }
 
 func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
+	t.Skip("skipping dynamic scaling related tests")
+
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedCluster, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
 	if err != nil {
@@ -1046,6 +1050,7 @@ func mockedClusterWithMetricsInfo(computeNodes int) (*clustersmgmtv1.Cluster, er
 	return clusterBuilder.Build()
 }
 
+// nolint
 func mockedClusterWithClusterID(clusterID string) (*clustersmgmtv1.Cluster, error) {
 	clusterBuilder := mocks.GetMockClusterBuilder(nil)
 	clusterBuilder.ID(clusterID)
