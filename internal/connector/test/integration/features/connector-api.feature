@@ -1635,13 +1635,6 @@ Feature: create a connector
             "reason": "Maximum field length has been depassed"
           },
           {
-            "code": "CONNECTOR-MGMT-35",
-            "href": "/api/connector_mgmt/v1/errors/35",
-            "id": "35",
-            "kind": "Error",
-            "reason": "Only multiAZ Kafkas are supported, use multi_az=true"
-          },
-          {
             "code": "CONNECTOR-MGMT-36",
             "href": "/api/connector_mgmt/v1/errors/36",
             "id": "36",
@@ -1689,13 +1682,6 @@ Feature: create a connector
              "id": "42",
              "kind": "Error",
              "reason": "Instance plan not supported"
-          },
-          {
-            "code": "CONNECTOR-MGMT-43",
-            "href": "/api/connector_mgmt/v1/errors/43",
-            "id": "43",
-            "kind": "Error",
-            "reason": "Only Single-AZ Kafkas of this type are supported, use multi_az=false"
           },
           {
             "code": "CONNECTOR-MGMT-103",
@@ -1798,8 +1784,8 @@ Feature: create a connector
         ],
         "kind": "ErrorList",
         "page": 1,
-        "size": 43,
-        "total": 43
+        "size": 41,
+        "total": 41
       }
       """
 

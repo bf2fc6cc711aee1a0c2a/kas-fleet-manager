@@ -152,10 +152,6 @@ const (
 	ErrorMaximumFieldLength       ServiceErrorCode = 34
 	ErrorMaximumFieldLengthReason string           = "Maximum field length has been depassed"
 
-	// Only MultiAZ is supported
-	ErrorOnlyMultiAZSupported       ServiceErrorCode = 35
-	ErrorOnlyMultiAZSupportedReason string           = "Only multiAZ Kafkas are supported, use multi_az=true"
-
 	// Kafka cluster name must be unique
 	ErrorDuplicateKafkaClusterName       ServiceErrorCode = 36
 	ErrorDuplicateKafkaClusterNameReason string           = "Kafka cluster name is already used"
@@ -191,10 +187,6 @@ const (
 	// Too Many requests error. Used by rate limiting
 	ErrorTooManyRequests       ServiceErrorCode = 429
 	ErrorTooManyRequestsReason string           = "Too Many requests"
-
-	//Only SingleAZ supported for Developer/Trial requests
-	ErrorOnlySingleAZSupported       ServiceErrorCode = 43
-	ErrorOnlySingleAZSupportedReason string           = "Only Single-AZ Kafkas of this type are supported, use multi_az=false"
 )
 
 type ErrorList []error
@@ -255,7 +247,6 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMalformedKafkaClusterName, ErrorMalformedKafkaClusterNameReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorDuplicateKafkaClusterName, ErrorDuplicateKafkaClusterNameReason, http.StatusConflict, nil},
 		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest, nil},
@@ -266,7 +257,6 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil},
 		ServiceError{ErrorInstancePlanNotSupported, ErrorInstancePlanNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorOnlySingleAZSupported, ErrorOnlySingleAZSupportedReason, http.StatusBadRequest, nil},
 	}
 }
 
@@ -542,14 +532,6 @@ func FailedToParseSearch(reason string, values ...interface{}) *ServiceError {
 
 func SyncActionNotSupported() *ServiceError {
 	return New(ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason)
-}
-
-func NotMultiAzActionNotSupported() *ServiceError {
-	return New(ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason)
-}
-
-func NotSingleAzActionNotSupported() *ServiceError {
-	return New(ErrorOnlySingleAZSupported, ErrorOnlySingleAZSupportedReason)
 }
 
 func FailedToCreateSSOClient(reason string, values ...interface{}) *ServiceError {

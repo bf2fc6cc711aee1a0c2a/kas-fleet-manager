@@ -298,7 +298,7 @@ func TestGetSupportedLabels(t *testing.T) {
 	}{
 		{
 			name: "Should return a slice of supported labels",
-			want: []string{"__name__", "strimzi_io_cluster", "topic", "persistentvolumeclaim", "statefulset_kubernetes_io_pod_name", "exported_service", "exported_pod", "route"},
+			want: []string{"__name__", "strimzi_io_cluster", "topic", "persistentvolumeclaim", "statefulset_kubernetes_io_pod_name", "exported_service", "exported_pod", "route", "broker_id", "quota_type"},
 		},
 	}
 

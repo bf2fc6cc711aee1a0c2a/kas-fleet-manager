@@ -7,6 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -96,12 +97,19 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 						}
 						// ---
 
-						availableSizes, err := h.kafkaService.GetAvailableSizesInRegion(&services.FindClusterCriteria{
+						criteria := &services.FindClusterCriteria{
 							Provider:              cloudRegion.CloudProvider,
 							Region:                cloudRegion.Id,
 							SupportedInstanceType: instType,
-							MultiAZ:               true,
-						})
+						}
+
+						// only 'standard' Kafka instances should have the criteria of multiaz: true
+						// developer instances can be scheduled either single or multi az. With Gorm, it ignores this criteria when a boolean field
+						// is set to false. Therefore, we only need to set this criteria for 'standard' instances.
+						if instType == types.STANDARD.String() {
+							criteria.MultiAZ = true
+						}
+						availableSizes, err := h.kafkaService.GetAvailableSizesInRegion(criteria)
 
 						// ignore any non-general errors (unsupported instance types/sizes). In this case, we should return an empty size array
 						// unsupported instance type/sizes may occur due to misconfiguration of cloud provider/supported instance type config.
