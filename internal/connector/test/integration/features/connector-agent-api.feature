@@ -921,7 +921,7 @@ Feature: connector agent API
       "quota": {},
       "resource_version": ${response.resource_version},
       "status": {
-        "connectors_deployed": 0,
+        "connectors_deployed": 1,
         "error": "Testing: This is a test failure message; Testing2: This is another test failure message",
         "state": "ready",
         "version": "0.0.1"
@@ -1379,14 +1379,22 @@ Feature: connector agent API
     Then the response code should be 204
     And the response should match ""
 
+    # verify that initially the namespace status includes connectors_deployed=0
+    Given I am logged in as "Bobby"
+    When I wait up to "10" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response ".status.connectors_deployed" selection to match "0"
+    Then I GET path "/v1/kafka_connector_namespaces/${connector_namespace_id}"
+    And the response code should be 200
+    And the ".status.connectors_deployed" selection from the response should match "0"
+
     # agent should be able to post individual namespace status
+    Given I am logged in as "Shard"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}/status" with json body:
       """
       {
         "id": "${connector_namespace_id}",
         "phase": "ready",
-        "version": "0.0.1",
-        "connectors_deployed": 3,
+        "version": "0.0.3",
         "conditions": [{
           "type": "Ready",
           "status": "True",
@@ -1396,9 +1404,9 @@ Feature: connector agent API
       """
     Then the response code should be 204
     And the response should match ""
-    And I run SQL "SELECT status_connectors_deployed FROM connector_namespaces WHERE id='${connector_namespace_id}'" gives results:
-      | status_connectors_deployed |
-      | 3                          |
+    And I run SQL "SELECT status_version FROM connector_namespaces WHERE id='${connector_namespace_id}'" gives results:
+      | status_version |
+      | 0.0.3          |
 
     #---------------------------------------------------------------------------------------------
     # Create a connector
@@ -1429,6 +1437,12 @@ Feature: connector agent API
       """
     Then the response code should be 202
     Given I store the ".id" selection from the response as ${connector_id}
+
+    # verify that the namespace status includes connectors_deployed=1
+    When I wait up to "10" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response ".status.connectors_deployed" selection to match "1"
+    Then I GET path "/v1/kafka_connector_namespaces/${connector_namespace_id}"
+    And the response code should be 200
+    And the ".status.connectors_deployed" selection from the response should match "1"
 
     #-----------------------------------------------------------------------------------------------------------------
     # Shard waits for the deployment, marks it ready, Bobby waits to see ready status.
