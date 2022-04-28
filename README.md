@@ -70,6 +70,10 @@ make observatorium/setup
 ```
 make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
 ```
+9. Setup the RedHat SSO  secrets
+```
+make redhatsso/setup
+```
 ## Running a Local Observatorium Token Refresher 
 > NOTE: This is only required if your Observatorium instance is authenticated using sso.redhat.com.
 
