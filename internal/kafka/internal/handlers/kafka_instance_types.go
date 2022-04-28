@@ -28,8 +28,8 @@ func (h *supportedKafkaInstanceTypesHandler) ListSupportedKafkaInstanceTypes(w h
 
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateLength(&cloudProvider, "cloud_provider", &handlers.MinRequiredFieldLength, nil),
-			handlers.ValidateLength(&cloudRegion, "cloud_region", &handlers.MinRequiredFieldLength, nil),
+			handlers.ValidateLength(&cloudProvider, "cloud_provider", handlers.MinRequiredFieldLength, nil),
+			handlers.ValidateLength(&cloudRegion, "cloud_region", handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			supportedKafkaInstanceTypeList := public.SupportedKafkaInstanceTypesList{

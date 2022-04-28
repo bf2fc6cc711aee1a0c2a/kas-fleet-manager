@@ -31,7 +31,7 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &dataPlaneClusterUpdateRequest,
 		Validate: []handlers.Validate{
-			handlers.ValidateLength(&dataPlaneClusterID, "id", &handlers.MinRequiredFieldLength, nil),
+			handlers.ValidateLength(&dataPlaneClusterID, "id", handlers.MinRequiredFieldLength, nil),
 			h.validateBody(&dataPlaneClusterUpdateRequest),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -54,7 +54,7 @@ func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWrite
 
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateLength(&dataPlaneClusterID, "id", &handlers.MinRequiredFieldLength, nil),
+			handlers.ValidateLength(&dataPlaneClusterID, "id", handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()

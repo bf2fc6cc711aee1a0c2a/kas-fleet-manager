@@ -47,7 +47,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateLength(&id, "id", &handlers.MinRequiredFieldLength, nil),
+			handlers.ValidateLength(&id, "id", handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			cloudRegions, err := h.service.ListCachedCloudProviderRegions(id)

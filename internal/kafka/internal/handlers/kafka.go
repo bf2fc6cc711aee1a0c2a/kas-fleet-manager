@@ -44,7 +44,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 		MarshalInto: &kafkaRequest,
 		Validate: []handlers.Validate{
 			handlers.ValidateAsyncEnabled(r, "creating kafka requests"),
-			handlers.ValidateLength(&kafkaRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxKafkaNameLength),
+			handlers.ValidateLength(&kafkaRequest.Name, "name", handlers.MinRequiredFieldLength, &MaxKafkaNameLength),
 			ValidKafkaClusterName(&kafkaRequest.Name, "name"),
 			ValidateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
 			ValidateKafkaClaims(ctx, &kafkaRequest, convKafka),
