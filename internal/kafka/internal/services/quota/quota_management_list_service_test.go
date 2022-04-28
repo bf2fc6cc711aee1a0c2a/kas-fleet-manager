@@ -12,10 +12,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 	mocket "github.com/selvatico/go-mocket"
 )
 
@@ -142,10 +144,9 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
-
 			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList, &defaultKafkaConf)
 			quotaService, _ := factory.GetQuotaService(api.QuotaManagementListQuotaType)
 			kafka := &dbapi.KafkaRequest{
@@ -446,10 +447,9 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			wantErr: nil,
 		},
 	}
-
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -462,7 +462,45 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 				InstanceType:   tt.args.instanceType.String(),
 			}
 			_, err := quotaService.ReserveQuota(kafka, tt.args.instanceType)
-			gomega.Expect(tt.wantErr).To(gomega.Equal(err))
+			Expect(tt.wantErr).To(Equal(err))
+		})
+	}
+}
+func Test_DefaultQuotaServiceFactory_GetQuotaService(t *testing.T) {
+	type fields struct {
+		QuoataServiceContainer map[api.QuotaType]services.QuotaService
+	}
+	type args struct {
+		quoataType api.QuotaType
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   services.QuotaService
+		want1  *errors.ServiceError
+	}{
+		{
+			name: "Should return nil and error if QuotaType is invalid",
+			fields: fields{
+				QuoataServiceContainer: map[api.QuotaType]services.QuotaService{},
+			},
+			args: args{
+				quoataType: api.UndefinedQuotaType,
+			},
+			want:  nil,
+			want1: errors.GeneralError("invalid quota service type: %v", api.QuotaManagementListQuotaType),
+		},
+	}
+	RegisterTestingT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			factory := &DefaultQuotaServiceFactory{
+				quotaServiceContainer: map[api.QuotaType]services.QuotaService{},
+			}
+			got, got1 := factory.GetQuotaService(tt.args.quoataType)
+			Expect(got).To(BeNil())
+			Expect(got1).To(Equal(tt.want1))
 		})
 	}
 }

@@ -77,6 +77,79 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 				return NewDataPlaneClusterService(sampleValidApplicationConfigForDataPlaneClusterTest(clusterService))
 			},
 		},
+		{
+			name:          "An error is returned when svcErr != nil",
+			clusterID:     testClusterID,
+			clusterStatus: nil,
+			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
+				clusterService := &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, &errors.ServiceError{}
+					},
+				}
+				return NewDataPlaneClusterService(sampleValidApplicationConfigForDataPlaneClusterTest(clusterService))
+			},
+			wantErr: true,
+		},
+		{
+			name:          "An error is returned when Status: api.ClusterFailed ",
+			clusterID:     testClusterID,
+			clusterStatus: nil,
+			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
+				clusterService := &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID: clusterID,
+							Status:    api.ClusterFailed,
+						}, nil
+					},
+				}
+				return NewDataPlaneClusterService(sampleValidApplicationConfigForDataPlaneClusterTest(clusterService))
+			},
+			wantErr: false,
+		},
+		{
+			name:      "an error is returned when fleetShardOperatorReady is false",
+			clusterID: testClusterID,
+			clusterStatus: &dbapi.DataPlaneClusterStatus{
+				Conditions: []dbapi.DataPlaneClusterStatusCondition{
+					{
+						Type:   "Ready",
+						Status: "False",
+					},
+				},
+				NodeInfo: dbapi.DataPlaneClusterStatusNodeInfo{
+					Current: 6,
+				},
+			},
+			wantErr: false,
+			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
+				clusterService := &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID: clusterID,
+							Status:    api.ClusterReady,
+						}, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+					GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *errors.ServiceError) {
+						return &types.ComputeNodesInfo{
+							Actual:  6,
+							Desired: 6,
+						}, nil
+					},
+				}
+				return NewDataPlaneClusterService(sampleValidApplicationConfigForDataPlaneClusterTest(clusterService))
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -676,7 +749,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 	}
 }
 
-func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
+func Test_NewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 	type fields struct {
 		clusterService             ClusterService
 		ObservabilityConfiguration *observatorium.ObservabilityConfiguration
@@ -732,10 +805,27 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 			wantErr: true,
 			want:    nil,
 		},
+		{
+			name: "should return nil if cluster == nil",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+				ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{
+					ObservabilityConfigRepo:        "test-repo",
+					ObservabilityConfigChannel:     "test-channel",
+					ObservabilityConfigAccessToken: "test-token",
+					ObservabilityConfigTag:         "test-tag",
+				},
+				DataplaneClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest(nil).DataplaneClusterConfig,
+			},
+			wantErr: true,
+			want:    nil,
+		},
 	}
-
 	RegisterTestingT(t)
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewDataPlaneClusterService(dataPlaneClusterService{

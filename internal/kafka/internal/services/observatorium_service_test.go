@@ -1,14 +1,46 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
-
+	Error "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	. "github.com/onsi/gomega"
 )
 
+func Test_NewObservatoriumService(t *testing.T) {
+	type args struct {
+		observatorium *observatorium.Client
+		kafkaService  KafkaService
+	}
+	tests := []struct {
+		name string
+		args args
+		want ObservatoriumService
+	}{
+		{
+			name: "Should return the New Observatorium Service",
+			args: args{
+				observatorium: &observatorium.Client{},
+				kafkaService:  &KafkaServiceMock{},
+			},
+			want: &observatoriumService{
+				observatorium: &observatorium.Client{},
+				kafkaService:  &KafkaServiceMock{},
+			},
+		},
+	}
+	RegisterTestingT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Expect(NewObservatoriumService(tt.args.observatorium, tt.args.kafkaService)).To(Equal(tt.want))
+		})
+	}
+}
 func Test_ObservatoriumService_GetKafkaState(t *testing.T) {
 
 	type fields struct {
@@ -60,10 +92,8 @@ func Test_ObservatoriumService_GetKafkaState(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			o := tt.fields.observatorium
 			got, err := o.GetKafkaState(tt.args.name, tt.args.namespaceName)
 			if (err != nil) != tt.wantErr {
@@ -71,6 +101,109 @@ func Test_ObservatoriumService_GetKafkaState(t *testing.T) {
 				return
 			}
 			Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_observatoriumService_GetMetricsByKafkaId(t *testing.T) {
+	type fields struct {
+		observatorium *observatorium.Client
+		kafkaService  KafkaService
+	}
+	type args struct {
+		ctx           context.Context
+		kafkasMetrics *observatorium.KafkaMetrics
+		id            string
+		query         observatorium.MetricsReqParams
+	}
+
+	client, _ := observatorium.NewClientMock(&observatorium.Configuration{})
+	q := observatorium.MetricsReqParams{}
+	q.ResultType = observatorium.RangeQuery
+	q.FillDefaults()
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "Should return the kafka request id",
+			fields: fields{
+				kafkaService: &KafkaServiceMock{
+					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *Error.ServiceError) {
+						return &dbapi.KafkaRequest{
+							Meta: api.Meta{
+								ID: "Kafka-request-Id",
+							},
+							ClusterID: "cluster-id",
+							Namespace: "kafkaRequestNamespace",
+						}, nil
+					},
+				},
+				observatorium: client,
+			},
+			args: args{
+				ctx: context.Background(),
+				kafkasMetrics: &observatorium.KafkaMetrics{
+					observatorium.Metric{},
+				},
+				id:    "cluster-id",
+				query: q,
+			},
+			want: "Kafka-request-Id",
+		},
+		{
+			name: "Should return empty string and err if kafka service Get() fails",
+			fields: fields{
+				kafkaService: &KafkaServiceMock{
+					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *Error.ServiceError) {
+						return nil, &Error.ServiceError{}
+					},
+				},
+			},
+			args:    args{},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "Should return kafkaRequest.ID and error if GetMetrics() fails ",
+			fields: fields{
+				kafkaService: &KafkaServiceMock{
+					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *Error.ServiceError) {
+						return &dbapi.KafkaRequest{
+							Meta: api.Meta{
+								ID: "Kafka-request-Id",
+							},
+							ClusterID: "cluster-id",
+							Namespace: "kafkaRequestNamespace",
+						}, nil
+					},
+				},
+				observatorium: client,
+			},
+			args: args{
+				ctx:           context.Background(),
+				kafkasMetrics: &observatorium.KafkaMetrics{},
+				id:            "cluster-id",
+				query:         observatorium.MetricsReqParams{},
+			},
+			want:    "Kafka-request-Id",
+			wantErr: true,
+		},
+	}
+	RegisterTestingT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obs := observatoriumService{
+				observatorium: tt.fields.observatorium,
+				kafkaService:  tt.fields.kafkaService,
+			}
+			got, got1 := obs.GetMetricsByKafkaId(tt.args.ctx, tt.args.kafkasMetrics, tt.args.id, tt.args.query)
+			Expect(got).To(Equal(tt.want))
+			Expect(got1 != nil).To(Equal(tt.wantErr))
 		})
 	}
 }

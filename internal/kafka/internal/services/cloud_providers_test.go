@@ -7,9 +7,9 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	Error "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	. "github.com/onsi/gomega"
 	"github.com/patrickmn/go-cache"
 	mocket "github.com/selvatico/go-mocket"
@@ -145,10 +145,23 @@ func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "failed to get provider implementation",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return nil, errors.New("failed to get provider implementation")
+					},
+				},
+			},
+			wantErr: true,
+			setupFn: func() {},
+		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			tt.setupFn()
 			p := cloudProvidersService{
 				providerFactory:   tt.fields.providerFactory,
@@ -349,9 +362,9 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 			},
 		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			tt.setupFn()
 			p := cloudProvidersService{
 				providerFactory:   tt.fields.providerFactory,
@@ -485,10 +498,51 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "failed to get provider implementation",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return nil, errors.New("failed to get provider implementation")
+					},
+				},
+			},
+			wantErr: true,
+			setupFn: func() {},
+		},
+		{
+			name: "failed to retrieve cloud regions",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
+								return &types.CloudProviderInfoList{
+									Items: []types.CloudProviderInfo{
+										{
+											ID:          "aws",
+											Name:        "aws",
+											DisplayName: "aws",
+										},
+									},
+								}, nil
+							},
+							GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
+								return nil, errors.New("failed to retrieve cloud regions")
+							},
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+			setupFn: func() {},
+		},
 	}
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			tt.setupFn()
 			p := cloudProvidersService{
 				providerFactory:   tt.fields.providerFactory,
@@ -498,6 +552,116 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 			got, err := p.ListCloudProviderRegions("aws")
 			Expect(tt.wantErr).To(Equal(err != nil))
 			Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_cloudProvidersService_ListCachedCloudProviderRegions(t *testing.T) {
+	type fields struct {
+		providerFactory   clusters.ProviderFactory
+		connectionFactory *db.ConnectionFactory
+		cache             *cache.Cache
+	}
+	type args struct {
+		id string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []api.CloudRegion
+		setupFn func()
+		wantErr *Error.ServiceError
+	}{
+		{
+			name: "successful get cloud provider regions from various provider types",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
+								return &types.CloudProviderInfoList{
+									Items: []types.CloudProviderInfo{
+										{
+											ID:          "azure",
+											Name:        "azure",
+											DisplayName: "azure",
+										},
+										{
+											ID:          "aws",
+											Name:        "aws",
+											DisplayName: "aws",
+										},
+									},
+								}, nil
+							},
+							GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
+								return &types.CloudProviderRegionInfoList{
+									Items: []types.CloudProviderRegionInfo{
+										{
+											ID:              "af-east-1",
+											CloudProviderID: providerInf.ID,
+											Name:            "af-east-1",
+											DisplayName:     "af-east-1",
+										},
+										{
+											ID:              "af-south-1",
+											CloudProviderID: providerInf.ID,
+											Name:            "af-south-1",
+											DisplayName:     "af-south-1",
+										},
+									},
+								}, nil
+							},
+						}, nil
+					}},
+				cache: cache.New(5*time.Minute, 10*time.Minute),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().
+					WithQuery("SELECT DISTINCT").
+					WithReply([]map[string]interface{}{{"provider_type": "ocm"}, {"provider_type": "standalone"}})
+			},
+			args: args{
+				id: "azure",
+			},
+			want: []api.CloudRegion{
+				{
+					Kind:                   "",
+					Id:                     "af-east-1",
+					DisplayName:            "af-east-1",
+					CloudProvider:          "azure",
+					Enabled:                false,
+					SupportedInstanceTypes: nil,
+					Capacity:               nil,
+				},
+				{
+					Kind:                   "",
+					Id:                     "af-south-1",
+					DisplayName:            "af-south-1",
+					CloudProvider:          "azure",
+					Enabled:                false,
+					SupportedInstanceTypes: nil,
+					Capacity:               nil,
+				},
+			},
+			wantErr: nil,
+		},
+	}
+	RegisterTestingT(t)
+	for _, tt := range tests {
+		tt.setupFn()
+		t.Run(tt.name, func(t *testing.T) {
+			p := cloudProvidersService{
+				providerFactory:   tt.fields.providerFactory,
+				connectionFactory: tt.fields.connectionFactory,
+				cache:             tt.fields.cache,
+			}
+			got, err := p.ListCachedCloudProviderRegions(tt.args.id)
+			Expect(got).To(Equal(tt.want))
+			Expect(err).To(Equal(tt.wantErr))
 		})
 	}
 }
