@@ -111,7 +111,7 @@ func GetMetricsMetaData() map[string]MetricsMetadata {
 			Help:           KafkaBrokerClientQuotaLimitDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+			VariableLabels: []string{"statefulset_kubernetes_io_pod_name", "strimzi_io_cluster", "quota_type"},
 		},
 		"kubelet_volume_stats_available_bytes": {
 			Name:           "kubelet_volume_stats_available_bytes",
@@ -223,14 +223,14 @@ func GetMetricsMetaData() map[string]MetricsMetadata {
 			Help:           KafkaInstanceConnectionLimitDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{"instance_name"},
+			VariableLabels: []string{"instance_name", "broker_id"},
 		},
 		"kafka_instance_connection_creation_rate_limit": {
 			Name:           "kafka_instance_connection_creation_rate_limit",
 			Help:           KafkaInstanceConnectionCreationRateLimitDesc,
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
-			VariableLabels: []string{"instance_name"},
+			VariableLabels: []string{"instance_name", "broker_id"},
 		},
 	}
 }
