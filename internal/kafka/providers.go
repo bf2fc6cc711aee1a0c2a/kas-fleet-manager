@@ -21,6 +21,7 @@ import (
 	observatoriumClient "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	environments2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"github.com/goava/di"
 )
 
@@ -47,6 +48,7 @@ func ConfigProviders() di.Option {
 		di.Provide(config.NewKafkaConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
 		di.Provide(config.NewDataplaneClusterConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewKasFleetshardConfig, di.As(new(environments2.ConfigModule))),
+		di.Provide(quota_management.NewQuotaManagementListConfig, di.As(new(environments2.ConfigModule))),
 
 		// Additional CLI subcommands
 		di.Provide(cluster.NewClusterCommand),

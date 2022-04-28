@@ -18,23 +18,21 @@ func NewIntegrationEnvLoader() environments.EnvLoader {
 
 func (b IntegrationEnvLoader) Defaults() map[string]string {
 	return map[string]string{
-		"v":                             "0",
-		"logtostderr":                   "true",
-		"ocm-base-url":                  "https://api-integration.6943.hive-integration.openshiftapps.com",
-		"enable-https":                  "false",
-		"enable-metrics-https":          "false",
-		"enable-terms-acceptance":       "false",
-		"ocm-debug":                     "false",
-		"enable-ocm-mock":               "true",
-		"ocm-mock-mode":                 ocm.MockModeEmulateServer,
-		"enable-sentry":                 "false",
-		"enable-deny-list":              "true",
-		"enable-instance-limit-control": "true",
-		"max-allowed-instances":         "1",
-		"mas-sso-base-url":              "http://127.0.0.1:8180",
-		"mas-sso-realm":                 "rhoas",
-		"connector-eval-duration":       "48h",
-		"osd-idp-mas-sso-realm":         "rhoas-kafka-sre",
+		"v":                       "0",
+		"logtostderr":             "true",
+		"ocm-base-url":            "https://api-integration.6943.hive-integration.openshiftapps.com",
+		"enable-https":            "false",
+		"enable-metrics-https":    "false",
+		"enable-terms-acceptance": "false",
+		"ocm-debug":               "false",
+		"enable-ocm-mock":         "true",
+		"ocm-mock-mode":           ocm.MockModeEmulateServer,
+		"enable-sentry":           "false",
+		"enable-deny-list":        "true",
+		"mas-sso-base-url":        "http://127.0.0.1:8180",
+		"mas-sso-realm":           "rhoas",
+		"connector-eval-duration": "48h",
+		"osd-idp-mas-sso-realm":   "rhoas-kafka-sre",
 	}
 }
 

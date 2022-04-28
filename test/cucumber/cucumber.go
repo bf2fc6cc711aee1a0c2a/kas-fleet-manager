@@ -37,8 +37,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
@@ -279,21 +277,6 @@ func TestMain(helper *test.Helper) int {
 		ApiURL:    "http://localhost:8000",
 		users:     map[string]*TestUser{},
 		nextOrgId: 20000000,
-	}
-
-	var allow *quota_management.QuotaManagementListConfig
-	helper.Env.MustResolveAll(&allow)
-
-	// Generate lots of org id's that scenarios can use to avoid
-	// conflicting with each other..
-	if allow != nil {
-		for i := 0; i < 1000; i++ {
-			allow.QuotaList.Organisations = append(allow.QuotaList.Organisations, quota_management.Organisation{
-				Id:                  fmt.Sprintf("%d", 20000000+i),
-				AnyUser:             true,
-				MaxAllowedInstances: 1,
-			})
-		}
 	}
 
 	for _, arg := range os.Args[1:] {
