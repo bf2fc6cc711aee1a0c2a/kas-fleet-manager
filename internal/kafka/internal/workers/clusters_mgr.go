@@ -1013,7 +1013,7 @@ func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secre
 			Name:      kafkaConstants.ImagePullSecretName,
 			Namespace: namespace,
 		},
-		Type: k8sCoreV1.SecretTypeDockercfg,
+		Type: k8sCoreV1.SecretTypeDockerConfigJson,
 		Data: dataMap,
 	}
 }

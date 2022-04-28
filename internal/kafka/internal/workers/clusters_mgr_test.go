@@ -1412,7 +1412,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				Name:      constants.ImagePullSecretName,
 				Namespace: strimziNamespace,
 			},
-			Type: k8sCoreV1.SecretTypeDockercfg,
+			Type: k8sCoreV1.SecretTypeDockerConfigJson,
 			Data: map[string][]byte{
 				k8sCoreV1.DockerConfigKey: []byte(clusterConfig.ImagePullDockerConfigContent),
 			},
@@ -1426,7 +1426,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 					Name:      constants.ImagePullSecretName,
 					Namespace: kasFleetshardNamespace,
 				},
-				Type: k8sCoreV1.SecretTypeDockercfg,
+				Type: k8sCoreV1.SecretTypeDockerConfigJson,
 				Data: map[string][]byte{
 					k8sCoreV1.DockerConfigKey: []byte(clusterConfig.ImagePullDockerConfigContent),
 				},
