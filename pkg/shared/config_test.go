@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestConfigReadStringFile(t *testing.T) {
+func Test_Config_ReadStringFile(t *testing.T) {
 	RegisterTestingT(t)
 
 	stringFile, err := createConfigFile("string", "example\n")
@@ -24,14 +24,14 @@ func TestConfigReadStringFile(t *testing.T) {
 	Expect(stringConfig).To(Equal("example"))
 }
 
-func TestConfigReadEmptyFile(t *testing.T) {
+func Test_Config_ReadEmptyFile(t *testing.T) {
 	RegisterTestingT(t)
 	res, err := ReadFile("")
 	Expect(err).NotTo(HaveOccurred())
 	Expect(res).To(Equal(""))
 }
 
-func TestConfigReadIntFile(t *testing.T) {
+func Test_Config_ReadIntFile(t *testing.T) {
 	RegisterTestingT(t)
 
 	intFile, err := createConfigFile("int", "123")
@@ -46,7 +46,7 @@ func TestConfigReadIntFile(t *testing.T) {
 	Expect(intConfig).To(Equal(123))
 }
 
-func TestConfigReadBoolFile(t *testing.T) {
+func Test_Config_ReadBoolFile(t *testing.T) {
 	RegisterTestingT(t)
 
 	boolFile, err := createConfigFile("bool", "true")
@@ -61,7 +61,7 @@ func TestConfigReadBoolFile(t *testing.T) {
 	Expect(boolConfig).To(Equal(true))
 }
 
-func TestConfigReadQuotedFile(t *testing.T) {
+func Test_Config_ReadQuotedFile(t *testing.T) {
 	RegisterTestingT(t)
 
 	stringFile, err := createConfigFile("string", "example")
@@ -75,6 +75,7 @@ func TestConfigReadQuotedFile(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(val).To(Equal("example"))
 }
+
 func createConfigFile(namePrefix, contents string) (*os.File, error) {
 	configFile, err := ioutil.TempFile("", namePrefix)
 	if err != nil {
@@ -99,7 +100,7 @@ func createYamlFilefromStringData(namePrefix string, contents string) (*os.File,
 	return configFile, err
 }
 
-func TestReadYamlFile(t *testing.T) {
+func Test_ReadYamlFile(t *testing.T) {
 	RegisterTestingT(t)
 
 	yamlFile, err := createYamlFilefromStringData("skiplist.yaml", "---\n- 01234\n- 56789")

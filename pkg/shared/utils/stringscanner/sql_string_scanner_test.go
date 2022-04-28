@@ -1,8 +1,9 @@
 package stringscanner
 
 import (
-	. "github.com/onsi/gomega"
 	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 func Test_SQLStringScanner(t *testing.T) {
@@ -77,6 +78,65 @@ func Test_SQLStringScanner(t *testing.T) {
 				allTokens = append(allTokens, *scanner.Token())
 			}
 			Expect(allTokens).To(Equal(tt.expectedTokens))
+		})
+	}
+}
+
+func Test_scanner_Peek(t *testing.T) {
+	tests := []struct {
+		name    string
+		s       *scanner
+		want    bool
+		wantVal *Token
+	}{
+		{
+			name: "return true and token if pos < length of tokens -1",
+			s: &scanner{
+				pos: 1,
+				tokens: []Token{
+					{Value: "testToken1"},
+					{Value: "testToken2"},
+					{Value: "testToken3"},
+				},
+			},
+			want: true,
+			wantVal: &Token{
+				Value: "testToken3",
+			},
+		},
+		{
+			name: "return false and nil if pos < length of tokens -1",
+			s: &scanner{
+				pos: 2,
+				tokens: []Token{
+					{Value: "testToken1"},
+					{Value: "testToken2"},
+				},
+			},
+			want:    false,
+			wantVal: nil,
+		},
+		{
+			name: "return false and nil if pos == length of tokens -1",
+			s: &scanner{
+				pos: 1,
+				tokens: []Token{
+					{Value: "testToken1"},
+					{Value: "testToken2"},
+				},
+			},
+			want:    false,
+			wantVal: nil,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotVal := tt.s.Peek()
+			Expect(got).To(Equal(tt.want))
+			Expect(gotVal).To(Equal(tt.wantVal))
 		})
 	}
 }
