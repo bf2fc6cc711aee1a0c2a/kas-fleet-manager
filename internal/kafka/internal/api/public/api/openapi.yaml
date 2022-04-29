@@ -1852,7 +1852,6 @@ components:
       required:
       - capacity
       - enabled
-      - supported_instance_types
     ServiceAccount:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'

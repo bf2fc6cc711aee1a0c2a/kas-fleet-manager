@@ -21,7 +21,7 @@ type CloudRegion struct {
 	Enabled bool `json:"enabled"`
 	// The Kafka instance types supported by this region.  DEPRECATION NOTICE - instance_type will be deprecated
 	// Deprecated
-	DeprecatedSupportedInstanceTypes []string `json:"supported_instance_types"`
+	DeprecatedSupportedInstanceTypes []string `json:"supported_instance_types,omitempty"`
 	// Indicates whether there is capacity left per instance type
 	Capacity []RegionCapacityListItem `json:"capacity"`
 }

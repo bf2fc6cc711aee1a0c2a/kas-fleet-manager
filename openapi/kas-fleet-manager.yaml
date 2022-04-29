@@ -1239,7 +1239,6 @@ components:
               - $ref: "#/components/schemas/RegionCapacityListItem"
       required:
         - enabled
-        - supported_instance_types
         - capacity
     ServiceAccount:
       description: 'Service Account created in MAS-SSO for the Kafka Cluster for authentication'
