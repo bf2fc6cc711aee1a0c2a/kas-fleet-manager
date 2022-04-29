@@ -26,7 +26,7 @@ var _ KafkaService = &KafkaServiceMock{}
 //
 // 		// make and configure a mocked KafkaService
 // 		mockedKafkaService := &KafkaServiceMock{
-// 			AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *serviceError.ServiceError) {
+// 			AssignInstanceTypeFunc: func(owner string, organisationID string) (types.KafkaInstanceType, *serviceError.ServiceError) {
 // 				panic("mock out the AssignInstanceType method")
 // 			},
 // 			ChangeKafkaCNAMErecordsFunc: func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
@@ -106,7 +106,7 @@ var _ KafkaService = &KafkaServiceMock{}
 // 	}
 type KafkaServiceMock struct {
 	// AssignInstanceTypeFunc mocks the AssignInstanceType method.
-	AssignInstanceTypeFunc func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *serviceError.ServiceError)
+	AssignInstanceTypeFunc func(owner string, organisationID string) (types.KafkaInstanceType, *serviceError.ServiceError)
 
 	// ChangeKafkaCNAMErecordsFunc mocks the ChangeKafkaCNAMErecords method.
 	ChangeKafkaCNAMErecordsFunc func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
@@ -181,8 +181,10 @@ type KafkaServiceMock struct {
 	calls struct {
 		// AssignInstanceType holds details about calls to the AssignInstanceType method.
 		AssignInstanceType []struct {
-			// KafkaRequest is the kafkaRequest argument value.
-			KafkaRequest *dbapi.KafkaRequest
+			// Owner is the owner argument value.
+			Owner string
+			// OrganisationID is the organisationID argument value.
+			OrganisationID string
 		}
 		// ChangeKafkaCNAMErecords holds details about calls to the ChangeKafkaCNAMErecords method.
 		ChangeKafkaCNAMErecords []struct {
@@ -335,29 +337,33 @@ type KafkaServiceMock struct {
 }
 
 // AssignInstanceType calls AssignInstanceTypeFunc.
-func (mock *KafkaServiceMock) AssignInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *serviceError.ServiceError) {
+func (mock *KafkaServiceMock) AssignInstanceType(owner string, organisationID string) (types.KafkaInstanceType, *serviceError.ServiceError) {
 	if mock.AssignInstanceTypeFunc == nil {
 		panic("KafkaServiceMock.AssignInstanceTypeFunc: method is nil but KafkaService.AssignInstanceType was just called")
 	}
 	callInfo := struct {
-		KafkaRequest *dbapi.KafkaRequest
+		Owner          string
+		OrganisationID string
 	}{
-		KafkaRequest: kafkaRequest,
+		Owner:          owner,
+		OrganisationID: organisationID,
 	}
 	mock.lockAssignInstanceType.Lock()
 	mock.calls.AssignInstanceType = append(mock.calls.AssignInstanceType, callInfo)
 	mock.lockAssignInstanceType.Unlock()
-	return mock.AssignInstanceTypeFunc(kafkaRequest)
+	return mock.AssignInstanceTypeFunc(owner, organisationID)
 }
 
 // AssignInstanceTypeCalls gets all the calls that were made to AssignInstanceType.
 // Check the length with:
 //     len(mockedKafkaService.AssignInstanceTypeCalls())
 func (mock *KafkaServiceMock) AssignInstanceTypeCalls() []struct {
-	KafkaRequest *dbapi.KafkaRequest
+	Owner          string
+	OrganisationID string
 } {
 	var calls []struct {
-		KafkaRequest *dbapi.KafkaRequest
+		Owner          string
+		OrganisationID string
 	}
 	mock.lockAssignInstanceType.RLock()
 	calls = mock.calls.AssignInstanceType

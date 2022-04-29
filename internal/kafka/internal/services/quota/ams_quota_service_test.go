@@ -185,9 +185,9 @@ func Test_AMSCheckQuota(t *testing.T) {
 				SizeId:       "x1",
 				InstanceType: string(tt.args.kafkaInstanceType),
 			}
-			sq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka, types.STANDARD)
+			sq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, types.STANDARD)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
-			eq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka, types.DEVELOPER)
+			eq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, types.DEVELOPER)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			gomega.Expect(sq).To(gomega.Equal(tt.args.hasStandardQuota))
 			fmt.Printf("eq is %v\n", eq)
@@ -755,7 +755,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.ocmClient, nil, nil, &defaultKafkaConf)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
-			res, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(tt.args.kafkaRequest, tt.args.kafkaInstanceType)
+			res, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(tt.args.kafkaRequest.Owner, tt.args.kafkaRequest.OrganisationId, tt.args.kafkaInstanceType)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			gomega.Expect(res).To(gomega.Equal(tt.want))
 		})

@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"net/http"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	config "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -40,52 +38,32 @@ func NewKafkaHandler(service services.KafkaService, providerConfig *config.Provi
 }
 
 func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var kafkaRequest public.KafkaRequestPayload
+	var kafkaRequestPayload public.KafkaRequestPayload
 	ctx := r.Context()
-	convKafka := &dbapi.KafkaRequest{}
 
 	cfg := &handlers.HandlerConfig{
-		MarshalInto: &kafkaRequest,
+		MarshalInto: &kafkaRequestPayload,
 		Validate: []handlers.Validate{
 			handlers.ValidateAsyncEnabled(r, "creating kafka requests"),
-			handlers.ValidateLength(&kafkaRequest.Name, "name", handlers.MinRequiredFieldLength, &MaxKafkaNameLength),
-			ValidKafkaClusterName(&kafkaRequest.Name, "name"),
-			ValidateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
-			ValidateKafkaClaims(ctx, &kafkaRequest, convKafka),
-			ValidateCloudProvider(&h.service, convKafka, h.providerConfig, "creating kafka requests"),
-			func() *errors.ServiceError { // Validate plan
-				instanceType, err := h.service.AssignInstanceType(convKafka)
-				if err != nil {
-					return err
-				}
-				if stringSet(&kafkaRequest.Plan) {
-					plan := config.Plan(kafkaRequest.Plan)
-					instTypeFromPlan, e := plan.GetInstanceType()
-					if e != nil || instTypeFromPlan != string(instanceType) {
-						return errors.New(errors.ErrorBadRequest, fmt.Sprintf("Unable to detect instance type in plan provided: '%s'", kafkaRequest.Plan))
-					}
-					size, e1 := plan.GetSizeID()
-					if e1 != nil {
-						return errors.New(errors.ErrorBadRequest, fmt.Sprintf("Unable to detect instance size in plan provided: '%s'", kafkaRequest.Plan))
-					}
-					_, e2 := h.kafkaConfig.GetKafkaInstanceSize(instTypeFromPlan, size)
-
-					if e2 != nil {
-						return errors.InstancePlanNotSupported("Unsupported plan provided: '%s'", kafkaRequest.Plan)
-					}
-					convKafka.SizeId = size
-				} else {
-					rSize, err := h.kafkaConfig.GetFirstAvailableSize(instanceType.String())
-					if err != nil {
-						return errors.InstanceTypeNotSupported("Unsupported kafka instance type: '%s' provided", instanceType.String())
-					}
-					convKafka.SizeId = rSize.Id
-				}
-				convKafka.InstanceType = instanceType.String()
-				return nil
-			},
+			handlers.ValidateLength(&kafkaRequestPayload.Name, "name", handlers.MinRequiredFieldLength, &MaxKafkaNameLength),
+			ValidKafkaClusterName(&kafkaRequestPayload.Name, "name"),
+			ValidateKafkaClusterNameIsUnique(&kafkaRequestPayload.Name, h.service, r.Context()),
+			ValidateKafkaClaims(ctx, ValidateUsername(), ValidateOrganisationId()),
+			ValidateCloudProvider(ctx, &h.service, &kafkaRequestPayload, h.providerConfig, "creating kafka requests"),
+			ValidateKafkaPlan(ctx, &h.service, h.kafkaConfig, &kafkaRequestPayload),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
+			convKafka := presenters.ConvertKafkaRequest(kafkaRequestPayload)
+
+			claims, _ := getClaims(ctx)
+			convKafka.Owner = auth.GetUsernameFromClaims(claims)
+			convKafka.OrganisationId = auth.GetOrgIdFromClaims(claims)
+			convKafka.OwnerAccountId = auth.GetAccountIdFromClaims(claims)
+
+			convKafka.InstanceType, convKafka.SizeId, _ = getInstanceTypeAndSize(ctx, &h.service, h.kafkaConfig, &kafkaRequestPayload)
+
+			convKafka.CloudProvider, convKafka.Region, _ = getCloudProviderAndRegion(ctx, &h.service, &kafkaRequestPayload, h.providerConfig)
+
 			svcErr := h.service.RegisterKafkaJob(convKafka)
 			if svcErr != nil {
 				return nil, svcErr

@@ -32,10 +32,10 @@ var supportedAMSBillingModels map[string]struct{} = map[string]struct{}{
 	string(amsv1.BillingModelStandard):    {},
 }
 
-func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
-	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(kafka.OrganisationId)
+func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(externalId)
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", kafka.OrganisationId))
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", externalId))
 	}
 
 	hasQuota, err := q.hasConfiguredQuotaCost(orgId, instanceType.GetQuotaType())
