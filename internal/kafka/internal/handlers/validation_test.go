@@ -143,6 +143,16 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 
 func Test_Validation_validateCloudProvider(t *testing.T) {
 	limit := int(5)
+
+	createValidationContext := func(username string, orgId string) ValidationContext {
+		validationContext := make(map[string]interface{})
+		validationContext[CLAIMS] = jwt.MapClaims{
+			"username": username,
+			"org_id":   orgId,
+		}
+		return validationContext
+	}
+
 	developerMap := config.InstanceTypeMap{
 		"developer": {
 			Limit: &limit,
@@ -154,9 +164,10 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		},
 	}
 	type args struct {
-		kafkaRequest   dbapi.KafkaRequest
-		ProviderConfig *config.ProviderConfig
-		kafkaService   services.KafkaService
+		kafkaRequest      public.KafkaRequestPayload
+		ProviderConfig    *config.ProviderConfig
+		kafkaService      services.KafkaService
+		validationContext ValidationContext
 	}
 
 	type result struct {
@@ -174,11 +185,12 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "do not throw an error when default provider and region are picked",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+					AssignInstanceTypeFunc: func(owner string, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
 						return types.DEVELOPER, nil
 					},
 				},
-				kafkaRequest: dbapi.KafkaRequest{},
+				kafkaRequest:      public.KafkaRequestPayload{},
+				validationContext: createValidationContext("testuser", "testorgid"),
 				ProviderConfig: &config.ProviderConfig{
 					ProvidersConfig: config.ProviderConfiguration{
 						SupportedProviders: config.ProviderList{
@@ -208,12 +220,13 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "do not throw an error when cloud provider and region matches",
 			arg: args{
+				validationContext: createValidationContext("testuser", "testorgid"),
 				kafkaService: &services.KafkaServiceMock{
-					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+					AssignInstanceTypeFunc: func(owner string, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
 						return types.DEVELOPER, nil
 					},
 				},
-				kafkaRequest: dbapi.KafkaRequest{
+				kafkaRequest: public.KafkaRequestPayload{
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
@@ -253,12 +266,13 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "throws an error when cloud provider and region do not match",
 			arg: args{
+				validationContext: createValidationContext("testuser", "testorgid"),
 				kafkaService: &services.KafkaServiceMock{
-					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+					AssignInstanceTypeFunc: func(owner string, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
 						return types.DEVELOPER, nil
 					},
 				},
-				kafkaRequest: dbapi.KafkaRequest{
+				kafkaRequest: public.KafkaRequestPayload{
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},
@@ -286,12 +300,13 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "throws an error when instance type is not supported",
 			arg: args{
+				validationContext: createValidationContext("testuser", "testorgid"),
 				kafkaService: &services.KafkaServiceMock{
-					AssignInstanceTypeFunc: func(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+					AssignInstanceTypeFunc: func(owner string, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
 						return types.DEVELOPER, nil
 					},
 				},
-				kafkaRequest: dbapi.KafkaRequest{
+				kafkaRequest: public.KafkaRequestPayload{
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},
@@ -322,7 +337,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validateFn := ValidateCloudProvider(&tt.arg.kafkaService, &tt.arg.kafkaRequest, tt.arg.ProviderConfig, "creating-kafka")
+			validateFn := ValidateCloudProvider(tt.arg.validationContext, context.Background(), &tt.arg.kafkaService, &tt.arg.kafkaRequest, tt.arg.ProviderConfig, "creating-kafka")
 			err := validateFn()
 			if !tt.want.wantErr && err != nil {
 				t.Errorf("validatedCloudProvider() expected not to throw error but threw %v", err)
@@ -334,8 +349,8 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			Expect(err != nil).To(Equal(tt.want.wantErr))
 
 			if !tt.want.wantErr {
-				Expect(tt.arg.kafkaRequest.CloudProvider).To(Equal(tt.want.kafkaRequest.CloudProvider))
-				Expect(tt.arg.kafkaRequest.Region).To(Equal(tt.want.kafkaRequest.Region))
+				Expect(tt.arg.validationContext[CLOUD_PROVIDER]).To(Equal(tt.want.kafkaRequest.CloudProvider))
+				Expect(tt.arg.validationContext[REGION]).To(Equal(tt.want.kafkaRequest.Region))
 			}
 
 		})

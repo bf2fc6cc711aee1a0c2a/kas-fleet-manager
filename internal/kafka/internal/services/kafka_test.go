@@ -926,7 +926,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
@@ -964,7 +964,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
@@ -1002,7 +1002,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
@@ -1043,7 +1043,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						return false, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
@@ -1085,7 +1085,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						// No RHOSAK quota assigned
 						return instanceType != types.STANDARD, nil
 					},
@@ -1121,7 +1121,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
@@ -1156,7 +1156,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaConfig:            defaultKafkaConf,
 				clusterService:         nil,
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
@@ -1249,7 +1249,7 @@ func Test_AssignInstanceType(t *testing.T) {
 			name: "registering kafka job fails: quota error",
 			fields: fields{
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						return false, errors.InsufficientQuotaError("insufficient quota error")
 					},
 				},
@@ -1283,7 +1283,7 @@ func Test_AssignInstanceType(t *testing.T) {
 				},
 			}
 
-			_, err := k.AssignInstanceType(tt.args.kafkaRequest)
+			_, err := k.AssignInstanceType(tt.args.kafkaRequest.Owner, tt.args.kafkaRequest.OrganisationId)
 
 			if (err != nil) != tt.error.wantErr {
 				t.Errorf("AssignInstanceType() error = %v, wantErr = %v", err, tt.error.wantErr)
