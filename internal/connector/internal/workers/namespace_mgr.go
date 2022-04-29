@@ -52,21 +52,21 @@ func (m *NamespaceManager) Reconcile() []error {
 	}
 
 	// reconcile expired namespaces
-	m.reconcile(&errs, "expired", m.namespaceService.ReconcileExpiredNamespaces)
+	m.doReconcile(&errs, "expired", m.namespaceService.ReconcileExpiredNamespaces)
 
 	// reconcile unused "deleting" namespaces that never had connectors
-	m.reconcile(&errs, "unused deleting", m.namespaceService.ReconcileUnusedDeletingNamespaces)
+	m.doReconcile(&errs, "unused deleting", m.namespaceService.ReconcileUnusedDeletingNamespaces)
 
 	// reconcile used "deleting" namespaces that have connectors
-	m.reconcile(&errs, "used deleting", m.namespaceService.ReconcileUsedDeletingNamespaces)
+	m.doReconcile(&errs, "used deleting", m.namespaceService.ReconcileUsedDeletingNamespaces)
 
 	// delete "deleted" namespaces with no connectors
-	m.reconcile(&errs, "empty deleted", m.namespaceService.ReconcileDeletedNamespaces)
+	m.doReconcile(&errs, "empty deleted", m.namespaceService.ReconcileDeletedNamespaces)
 
 	return errs
 }
 
-func (m *NamespaceManager) reconcile(errs *[]error, nsType string, reconcileFunc func(ctx context.Context) (int64, *errors.ServiceError)) {
+func (m *NamespaceManager) doReconcile(errs *[]error, nsType string, reconcileFunc func(ctx context.Context) (int64, *errors.ServiceError)) {
 	glog.V(5).Infof("Reconciling %s namespaces...", nsType)
 	var count int64
 	err := InDBTransaction(m.ctx, func(ctx context.Context) error {

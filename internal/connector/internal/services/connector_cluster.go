@@ -191,7 +191,7 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 				// cascade delete namespaces and deployments, first
 				var serr *errors.ServiceError
 				_, serr = k.connectorNamespaceService.DeleteNamespaceAndConnectorDeployments(ctx, dbConn,
-					`connector_namespaces.cluster_id = ?`, id)
+					"connector_namespaces.cluster_id = ?", id)
 				if serr != nil {
 					return serr
 				}
