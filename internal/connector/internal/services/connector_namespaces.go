@@ -212,7 +212,7 @@ func (k *connectorNamespaceService) setConnectorsDeployed(namespaces dbapi.Conne
 	if err := k.connectionFactory.New().Model(&dbapi.ConnectorDeployment{}).
 		Select("namespace_id as id, count(*) as count").
 		Group("namespace_id").
-		Having("namespace_id in ?", ids).
+		Where("namespace_id in ?", ids).
 		Find(&result).Error; err != nil {
 		return services.HandleGetError(`Connector namespace`, `id`, ids, err)
 	}
@@ -479,11 +479,6 @@ func (k *connectorNamespaceService) DeleteNamespaceAndConnectorDeployments(ctx c
 		Updates(&dbapi.ConnectorStatus{Phase: dbapi.ConnectorStatusPhaseDeleting}).Error; err != nil {
 		return count, services.HandleUpdateError("Connector", err)
 	}
-	// mark all deployment statuses as "deleting"
-	if err := dbConn.Where("deleted_at IS NULL AND id IN ?", connectorIds).
-		Updates(&dbapi.ConnectorDeploymentStatus{Phase: dbapi.ConnectorStatusPhaseDeleting}).Error; err != nil {
-		return count, services.HandleUpdateError("Connector", err)
-	}
 
 	// notify deployment status update
 	_ = db.AddPostCommitAction(ctx, func() {
@@ -565,7 +560,7 @@ func (k *connectorNamespaceService) ReconcileUsedDeletingNamespaces(ctx context.
 				"connectors.deleted_at IS NULL AND connectors.desired_state NOT IN ?",
 				[]string{string(dbapi.ConnectorDeleted), string(dbapi.ConnectorUnassigned)}).
 			Group("connector_namespaces.id").
-			Having("connector_namespaces.status_phase = ? AND connector_namespaces.deleted_at IS NULL",
+			Where("connector_namespaces.status_phase = ? AND connector_namespaces.deleted_at IS NULL",
 				dbapi.ConnectorNamespacePhaseDeleting).
 			Find(&namespaceIds).Error; err != nil {
 			return services.HandleGetError("Connector namespace",
