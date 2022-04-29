@@ -49,6 +49,7 @@ type ConnectorClusterService interface {
 	CleanupDeployments() *errors.ServiceError
 	ReconcileDeletingClusters() (int, []*errors.ServiceError)
 	GetClusterOrg(id string) (string, *errors.ServiceError)
+	ResetServiceAccount(ctx context.Context, cluster *dbapi.ConnectorCluster) *errors.ServiceError
 }
 
 var _ ConnectorClusterService = &connectorClusterService{}
@@ -908,4 +909,21 @@ func (k *connectorClusterService) GetClusterOrg(id string) (string, *errors.Serv
 		return "", services.HandleGoneError("Connector cluster", "id", id)
 	}
 	return cluster.OrganisationId, nil
+}
+
+func (k *connectorClusterService) ResetServiceAccount(ctx context.Context, cluster *dbapi.ConnectorCluster) *errors.ServiceError {
+	secret, serr := k.keycloakService.GetKafkaClientSecret(cluster.ClientId)
+	if serr != nil {
+		return serr
+	}
+	cluster.ClientSecret = secret
+
+	if err := k.connectionFactory.New().UpdateColumns(dbapi.ConnectorCluster{
+		Model:        db.Model{ID: cluster.ID},
+		ClientId:     cluster.ClientId,
+		ClientSecret: cluster.ClientSecret,
+	}).Error; err != nil {
+		return services.HandleGetError(`Connector cluster`, `id`, cluster.ID, err)
+	}
+	return nil
 }

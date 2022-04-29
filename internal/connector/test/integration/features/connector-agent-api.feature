@@ -39,6 +39,16 @@ Feature: connector agent API
     And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
     And I remember keycloak client for cleanup with clientID: ${clientID}
 
+    # test client credentials reset
+    Given I run SQL "UPDATE connector_clusters SET client_secret=NULL WHERE id='${connector_cluster_id}';" expect 1 row to be affected.
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters?reset_credentials=true"
+    Then the response code should be 200
+    And I run SQL "SELECT count(*) FROM connector_clusters WHERE id='${connector_cluster_id}' AND client_secret IS NOT NULL" gives results:
+      | count |
+      | 1     |
+    And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
+    And I remember keycloak client for cleanup with clientID: ${clientID}
+
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
