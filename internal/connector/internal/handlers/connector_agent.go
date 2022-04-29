@@ -66,7 +66,7 @@ func (h *ConnectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 						}
 					}
 
-					// process deleted namespaces
+					// process missing namespaces as deleted
 					if len(deletingNamespaces) > 0 {
 						for _, namespace := range deletingNamespaces {
 							// set namespace phase to deleted
@@ -423,7 +423,6 @@ func (h *ConnectorClusterHandler) UpdateNamespaceStatus(w http.ResponseWriter, r
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			// validate namespace
 			converted := presenters.ConvertConnectorNamespaceStatus(resource)
 			err := h.ConnectorNamespace.UpdateConnectorNamespaceStatus(ctx, namespaceId, converted)
 			return nil, err

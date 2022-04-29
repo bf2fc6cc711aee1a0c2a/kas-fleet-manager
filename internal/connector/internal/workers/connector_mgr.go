@@ -115,24 +115,24 @@ func (k *ConnectorManager) Reconcile() []error {
 	}
 
 	// reconcile assigning connectors in "ready" desired state with "assigning" phase and a valid namespace id
-	k.doReconcile(errs, "assigning", k.reconcileAssigning,
+	k.doReconcile(&errs, "assigning", k.reconcileAssigning,
 		"desired_state = ? AND phase = ? AND connectors.namespace_id IS NOT NULL", dbapi.ConnectorReady, dbapi.ConnectorStatusPhaseAssigning)
 
 	// reconcile unassigned connectors in "unassigned" desired state and "deleted" phase
-	k.doReconcile(errs, "unassigned", k.reconcileUnassigned,
+	k.doReconcile(&errs, "unassigned", k.reconcileUnassigned,
 		"desired_state = ? AND phase = ?", dbapi.ConnectorUnassigned, dbapi.ConnectorStatusPhaseDeleted)
 
 	// reconcile deleting connectors with no deployments
-	k.doReconcile(errs, "deleting", k.reconcileDeleting,
+	k.doReconcile(&errs, "deleting", k.reconcileDeleting,
 		"desired_state = ? AND phase = ?", dbapi.ConnectorDeleted, string(dbapi.ConnectorStatusPhaseDeleting))
 
 	// reconcile deleted connectors with no deployments
-	k.doReconcile(errs, "deleted", k.reconcileDeleted,
+	k.doReconcile(&errs, "deleted", k.reconcileDeleted,
 		"desired_state = ? AND phase IN ?", dbapi.ConnectorDeleted,
 		[]string{string(dbapi.ConnectorStatusPhaseAssigning), string(dbapi.ConnectorStatusPhaseDeleted)})
 
 	// reconcile connector updates for assigned connectors that aren't being deleted...
-	k.doReconcile(errs, "updated", k.reconcileConnectorUpdate,
+	k.doReconcile(&errs, "updated", k.reconcileConnectorUpdate,
 		"version > ? AND phase NOT IN ?", k.lastVersion,
 		[]string{string(dbapi.ConnectorStatusPhaseAssigning), string(dbapi.ConnectorStatusPhaseDeleting), string(dbapi.ConnectorStatusPhaseDeleted)})
 
@@ -273,7 +273,7 @@ func (k *ConnectorManager) reconcileConnectorUpdate(ctx context.Context, connect
 	return err
 }
 
-func (k *ConnectorManager) doReconcile(errs []error, reconcilePhase string, reconcileFunc func(ctx context.Context, connector *dbapi.Connector) error, query string, args ...interface{}) {
+func (k *ConnectorManager) doReconcile(errs *[]error, reconcilePhase string, reconcileFunc func(ctx context.Context, connector *dbapi.Connector) error, query string, args ...interface{}) {
 	var count int64
 	var serviceErrs []error
 	glog.V(5).Infof("Reconciling %s connectors...", reconcilePhase)
@@ -288,9 +288,9 @@ func (k *ConnectorManager) doReconcile(errs []error, reconcilePhase string, reco
 			return nil
 		})
 	}, query, args...); len(serviceErrs) > 0 {
-		errs = append(errs, serviceErrs...)
+		*errs = append(*errs, serviceErrs...)
 	}
-	if count == 0 && len(errs) == 0 {
+	if count == 0 && len(serviceErrs) == 0 {
 		glog.V(5).Infof("No %s connectors", reconcilePhase)
 	} else {
 		glog.V(5).Infof("Reconciled %d %s connectors with %d errors", count, reconcilePhase, len(serviceErrs))
