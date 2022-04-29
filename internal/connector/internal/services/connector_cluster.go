@@ -176,7 +176,7 @@ func (k *connectorClusterService) Get(ctx context.Context, id string) (dbapi.Con
 // Delete deletes a connector cluster from the database.
 func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors.ServiceError {
 
-	var clusterDeleted, namespacesDeleted, connectorsDeleted bool
+	var clusterDeleted bool
 	if err := k.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
 
 		var resource dbapi.ConnectorCluster
@@ -190,7 +190,7 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 
 				// cascade delete namespaces and deployments, first
 				var serr *errors.ServiceError
-				namespacesDeleted, connectorsDeleted, serr = k.connectorNamespaceService.DeleteNamespaceAndConnectorDeployments(ctx, dbConn,
+				_, serr = k.connectorNamespaceService.DeleteNamespaceAndConnectorDeployments(ctx, dbConn,
 					"connector_namespaces.cluster_id = ?", id)
 				if serr != nil {
 					return serr
@@ -216,16 +216,6 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 	defer func() {
 		if clusterDeleted {
 			k.bus.Notify("reconcile:connector_cluster")
-		}
-	}()
-	defer func() {
-		if namespacesDeleted {
-			k.bus.Notify("reconcile:connector_namespace")
-		}
-	}()
-	defer func() {
-		if connectorsDeleted {
-			k.bus.Notify("reconcile:connector")
 		}
 	}()
 

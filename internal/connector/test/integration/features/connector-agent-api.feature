@@ -1835,3 +1835,131 @@ Feature: connector agent API
       When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments"
       Then the response code should be 200
       And the ".total" selection from the response should match "0"
+
+  Scenario: Deleting namespaces with undeleted stuck connectors get reconciled
+    Given I am logged in as "Bobby"
+    When I POST path "/v1/kafka_connector_clusters" with json body:
+      """
+      {}
+      """
+    Then the response code should be 202
+    And the ".status.state" selection from the response should match "disconnected"
+    Given I store the ".id" selection from the response as ${connector_cluster_id}
+
+    When I GET path "/v1/kafka_connector_namespaces/?search=cluster_id=${connector_cluster_id}"
+    Then the response code should be 200
+    Given I store the ".items[0].id" selection from the response as ${connector_namespace_id}
+
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
+    Then the response code should be 200
+    And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
+    And I remember keycloak client for cleanup with clientID: ${clientID}
+
+    Given I am logged in as "Shard3"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
+      """
+      {
+        "phase":"ready",
+        "version": "0.0.1",
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }],
+        "namespaces": [{
+          "id": "${connector_namespace_id}",
+          "phase": "ready",
+          "version": "0.0.1",
+          "connectors_deployed": 0,
+          "conditions": [{
+            "type": "Ready",
+            "status": "True",
+            "lastTransitionTime": "2018-01-01T00:00:00Z"
+          }]
+        }],
+        "operators": [{
+          "id":"camelk",
+          "version": "1.0",
+          "namespace": "openshift-mcs-camelk-1.0",
+          "status": "ready"
+        }]
+      }
+      """
+    Then the response code should be 204
+    And the response should match ""
+
+      # create a connector
+    Given I am logged in as "Bobby"
+    When I POST path "/v1/kafka_connectors?async=true" with json body:
+      """
+      {
+        "kind": "Connector",
+        "name": "example 1",
+        "namespace_id": "${connector_namespace_id}",
+        "channel":"stable",
+        "connector_type_id": "log_sink_0.1",
+        "kafka": {
+          "id": "mykafka",
+          "url": "kafka.hostname"
+        },
+        "service_account": {
+          "client_id": "myclient",
+          "client_secret": "test"
+        },
+        "connector": {
+          "log_multi_line": true,
+          "kafka_topic":"test",
+          "processors":[]
+        }
+      }
+      """
+    Then the response code should be 202
+    Given I store the ".id" selection from the response as ${connector_id}
+
+      # wait for the agent to see deployment
+    Given I am logged in as "Shard3"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    When I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
+    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments"
+    Then the response code should be 200
+    And the ".total" selection from the response should match "1"
+    Given I store the ".items[0].id" selection from the response as ${connector_deployment_id}
+
+    # set namespace phase to delete namespace, without deleting it's connector
+    When I run SQL "UPDATE connector_namespaces SET status_phase='deleting' WHERE id = '${connector_namespace_id}';" expect 1 row to be affected.
+
+    # agent deletes unassigning connector
+    When I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "unassigned"
+    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
+    Then the ".spec.desired_state" selection from the response should match "unassigned"
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+      """
+      {
+        "phase":"deleted",
+        "resource_version": 46
+      }
+      """
+    Then the response code should be 204
+
+    # agent deletes namespace by posting phase `deleted`
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}/status" with json body:
+      """
+      {
+        "phase":"deleted",
+        "version": "0.0.2"
+      }
+      """
+    Then the response code should be 204
+
+    # wait for namespace to get deleted
+    Given I am logged in as "Bobby"
+    When I wait up to "10" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response code to match "410"
+    When I GET path "/v1/kafka_connector_namespaces/${connector_namespace_id}"
+    Then the response code should be 410
+
+    # connector must be unassigned
+    When I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".desired_state" selection to match "unassigned"
+    When I GET path "/v1/kafka_connectors/${connector_id}"
+    And the ".desired_state" selection from the response should match "unassigned"
+    And the ".namespace_id" selection from the response should match ""
