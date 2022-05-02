@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
+	gherrors "github.com/pkg/errors"
 	"io/ioutil"
 	"path/filepath"
 	"sort"
@@ -60,6 +61,7 @@ func (c *ConnectorsConfig) ReadFiles() error {
 		dir = shared.BuildFullFilePath(dir)
 		files, err := ioutil.ReadDir(dir)
 		if err != nil {
+			err = gherrors.Errorf("error listing connector catalogs in %s: %s", dir, err)
 			return err
 		}
 
@@ -75,18 +77,21 @@ func (c *ConnectorsConfig) ReadFiles() error {
 			// Read the file
 			buf, err := ioutil.ReadFile(file)
 			if err != nil {
+				err = gherrors.Errorf("error reading catalog file %s: %s", file, err)
 				return err
 			}
 
 			entry := ConnectorCatalogEntry{}
 			err = json.Unmarshal(buf, &entry)
 			if err != nil {
+				err = gherrors.Errorf("error unmarshaling catalog file %s: %s", file, err)
 				return err
 			}
 
 			// compute checksum for catalog entry to look for updates
 			sum, err := checksum(entry)
 			if err != nil {
+				err = gherrors.Errorf("error computing checksum for catalog file %s: %s", file, err)
 				return err
 			}
 			c.CatalogChecksums[entry.ConnectorType.Id] = sum
