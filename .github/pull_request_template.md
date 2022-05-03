@@ -23,6 +23,7 @@ If manual verifications required, please provide an environment where the review
 - [ ] CI and all relevant tests are passing
 - [ ] Code Review completed
 - [ ] Verified independently by reviewer
+- [ ] All PR comments are resolved either by addressing them or creating follow up tasks
 - [ ] Required metrics/dashboards/alerts have been added (or PR created).
 - [ ] Required Standard Operating Procedure (SOP) is added.
 - [ ] JIRA has created for changes required on the client side
