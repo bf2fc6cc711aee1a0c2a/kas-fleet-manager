@@ -10,11 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/goava/di"
@@ -64,6 +63,11 @@ func NewHelper(t *testing.T, httpServer *httptest.Server, options ...di.Option) 
 // The startHook will be invoked after the environments.Env is created but before the api server is started, which will allow caller to change configurations.
 // The startHook can should be a function and can optionally have type arguments that can be injected from the configuration container.
 func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configurationHook interface{}, envProviders ...di.Option) (*Helper, func()) {
+	return NewHelperWithHooksAndDBsetup(t, httpServer, []string{}, configurationHook, envProviders...)
+}
+
+// NewHelperWithHooksAndDBsetup will also init the DB state  executing the sql statement provided as setupDBsqlStatements after the DB has been reset.
+func NewHelperWithHooksAndDBsetup(t *testing.T, httpServer *httptest.Server, setupDBsqlStatements []string, configurationHook interface{}, envProviders ...di.Option) (*Helper, func()) {
 
 	// Register the test with gomega
 	gm.RegisterTestingT(t)
@@ -144,6 +148,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 	h.CleanDB()
 	h.ResetDB()
+	h.SetupDB(setupDBsqlStatements)
 	env.Start()
 	return h, buildTeardownHelperFn(
 		env.Stop,
@@ -358,4 +363,14 @@ func (helper *Helper) OpenapiError(err error) compat.Error {
 		helper.T.Errorf("Unable to convert error response to openapi error: %s", jsonErr)
 	}
 	return exErr
+}
+
+func (helper *Helper) SetupDB(statements []string) {
+	gorm := helper.DBFactory().New()
+	for _, sql := range statements {
+		exec := gorm.Exec(sql)
+		if exec.Error != nil {
+			glog.Fatalf("Could not perfor DB set: %v", exec.Error)
+		}
+	}
 }

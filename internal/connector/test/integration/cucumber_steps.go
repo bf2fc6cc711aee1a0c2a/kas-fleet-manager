@@ -3,9 +3,11 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"net/url"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/golang/glog"
 
@@ -153,6 +155,17 @@ func (s *extender) updateConnectorCatalogOfTypeAndChannelWithShardMetadata(conne
 	return nil
 }
 
+func (s *extender) iDeleteUnusedAndNotInCatalogConnectorTypes() error {
+	var service services.ConnectorTypesService
+	if err := s.Suite.Helper.Env.ServiceContainer.Resolve(&service); err != nil {
+		return err
+	}
+	if err := service.DeleteUnusedAndNotInCatalog(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func init() {
 	// This is how we can contribute additional steps over the standard ones provided in the cucumber package.
 	cucumber.StepModules = append(cucumber.StepModules, func(ctx *godog.ScenarioContext, s *cucumber.TestScenario) {
@@ -162,6 +175,7 @@ func init() {
 		ctx.Step(`^I reset the vault counters$`, e.iResetTheVaultCounters)
 		ctx.Step(`^update connector catalog of type "([^"]*)" and channel "([^"]*)" with shard metadata:$`, e.updateConnectorCatalogOfTypeAndChannelWithShardMetadata)
 		ctx.Step(`I remember keycloak client for cleanup with clientID: \${([^"]*)}$`, e.rememberKeycloakClientForCleanup)
+		ctx.Step(`^I delete the unused and not in catalog connector types$`, e.iDeleteUnusedAndNotInCatalogConnectorTypes)
 
 		ctx.AfterScenario(e.deleteKeycloakClients)
 	})

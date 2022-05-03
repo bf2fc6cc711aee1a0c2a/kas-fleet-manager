@@ -67,10 +67,15 @@ func NewConnectorManager(
 		db:                      db,
 	}
 
+	// The release of this waiting group signal the http service to start serving request
+	// this needs to be done across multiple instances of fleetmanager running,
+	// and yet just one instance of ConnectorManager of those multiple fleet manager will run the reconcile loop.
+	// The release of the waiting group must then be done outside the reconcile loop,
+	// the condition is checked in runStartupReconcileCheckWorker().
 	result.startupReconcileWG.Add(1)
 
-	// mark startupReconcileWG as done in a background thread instead of in worker reconcile
-	// this is required to allow multiple instances of fleetmanager to startup
+	// Mark startupReconcileWG as done in a separate goroutine instead of in worker reconcile
+	// this is required to allow multiple instances of fleetmanager to startup.
 	result.runStartupReconcileCheckWorker()
 	return result
 }
@@ -91,9 +96,18 @@ func (k *ConnectorManager) Reconcile() []error {
 
 	if !k.startupReconcileDone {
 		glog.V(5).Infoln("Reconciling startup connector catalog updates...")
+		
+		// the assumption here is that this runs on one instance only of fleetmanager,
+		// runs only at startup and while requests are not being served
+		if err := k.connectorTypesService.DeleteUnusedAndNotInCatalog(); err != nil {
+			return []error{err}
+		}
 
 		// We only need to reconcile channel updates once per process startup since,
 		// configured channel settings are only loaded on startup.
+		// These operations, once completed successfully, make the condition at runStartupReconcileCheckWorker() to pass
+		// practically starting the serving of requests from the service.
+		// IMPORTANT: Everything that should run before the first request is served should happen before this
 		if err := k.connectorTypesService.ForEachConnectorCatalogEntry(k.ReconcileConnectorCatalogEntry); err != nil {
 			return []error{err}
 		}
@@ -301,6 +315,8 @@ func (k *ConnectorManager) runStartupReconcileCheckWorker() {
 	go func() {
 		for !k.startupReconcileDone {
 			glog.V(5).Infoln("Waiting for startup connector catalog updates...")
+			// this check that ConnectorTypes in the current configured catalog have the same checksum of the one
+			// stored in the db (comparing them by id).
 			done, err := k.connectorTypesService.CatalogEntriesReconciled()
 			if err != nil {
 				glog.Errorf("Error checking catalog entry checksums: %s", err)

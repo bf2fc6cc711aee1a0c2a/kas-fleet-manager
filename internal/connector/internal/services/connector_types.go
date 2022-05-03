@@ -18,6 +18,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
+	"github.com/golang/glog"
 )
 
 type ConnectorTypesService interface {
@@ -29,6 +30,7 @@ type ConnectorTypesService interface {
 	GetConnectorShardMetadata(id int64) (*dbapi.ConnectorShardMetadata, *errors.ServiceError)
 	GetLatestConnectorShardMetadataID(tid, channel string) (int64, *errors.ServiceError)
 	CatalogEntriesReconciled() (bool, *errors.ServiceError)
+	DeleteUnusedAndNotInCatalog() *errors.ServiceError
 }
 
 var _ ConnectorTypesService = &connectorTypesService{}
@@ -90,13 +92,6 @@ func (cts *connectorTypesService) Create(resource *dbapi.ConnectorType) *errors.
 		First(&resource).Error; err != nil {
 		return services.HandleGetError("Connector", "id", tid, err)
 	}
-
-	/*
-		_ = db.AddPostCommitAction(ctx, func() {
-			// Wake up the reconcile loop...
-			cts.bus.Notify("reconcile:connectortype")
-		})
-	*/
 
 	return nil
 }
@@ -207,8 +202,8 @@ func (cts *connectorTypesService) ForEachConnectorCatalogEntry(f func(id string,
 
 		// update type checksum for latest catalog shard metadata
 		dbConn := cts.connectionFactory.New()
-		if err = dbConn.Model(connectorType).Where(`id = ?`, connectorType.ID).
-			UpdateColumn(`checksum`, cts.connectorsConfig.CatalogChecksums[connectorType.ID]).Error; err != nil {
+		if err = dbConn.Model(connectorType).Where("id = ?", connectorType.ID).
+			UpdateColumn("checksum", cts.connectorsConfig.CatalogChecksums[connectorType.ID]).Error; err != nil {
 			return errors.GeneralError("failed to update connector type %s checksum: %v", entry.ConnectorType.Id, err.Error())
 		}
 	}
@@ -325,4 +320,27 @@ func (cts *connectorTypesService) CatalogEntriesReconciled() (bool, *errors.Serv
 		}
 	}
 	return done, nil
+}
+
+func (cts *connectorTypesService) DeleteUnusedAndNotInCatalog() *errors.ServiceError {
+	notToBeDeletedIDs := []string{}
+	for _, entry := range cts.connectorsConfig.CatalogEntries {
+		notToBeDeletedIDs = append(notToBeDeletedIDs, entry.ConnectorType.Id)
+	}
+	glog.V(5).Infof("Connector Type IDs in catalog not to be deleted: %v", notToBeDeletedIDs)
+
+	var usedConnectorTypeIDs []string
+	dbConn := cts.connectionFactory.New()
+	if err := dbConn.Model(&dbapi.Connector{}).Distinct("connector_type_id").Find(&usedConnectorTypeIDs).Error; err != nil {
+		return errors.GeneralError("failed to find active connectors: %v", err.Error())
+	}
+	glog.V(5).Infof("Connector Type IDs used by at least an active connector not to be deleted: %v", usedConnectorTypeIDs)
+
+	notToBeDeletedIDs = append(notToBeDeletedIDs, usedConnectorTypeIDs...)
+
+	if err := dbConn.Delete(&dbapi.ConnectorType{}, "id NOT IN ?", notToBeDeletedIDs).Error; err != nil {
+		return errors.GeneralError("failed to delete connector type with ids %v : %v", notToBeDeletedIDs, err.Error())
+	}
+	glog.V(5).Infof("Deleted Connector Type with id NOT IN: %v", notToBeDeletedIDs)
+	return nil
 }
