@@ -827,6 +827,7 @@ Feature: connector agent API
     Then the response code should be 200
     And the ".kind" selection from the response should match "ConnectorAdminViewList"
     And the ".items[0].kind" selection from the response should match "ConnectorAdminView"
+    And the ".items[0].namespace_id" selection from the response should match "${connector_namespace_id}"
     And the ".items[0].kafka" selection from the response should match "null"
     And the ".items[0].service_account" selection from the response should match "null"
     And the ".items[0].schema_registry" selection from the response should match "null"

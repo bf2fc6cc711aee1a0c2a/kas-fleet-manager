@@ -206,7 +206,7 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 	return nil
 }
 
-var validConnectorColumns = []string{"name", "owner", "kafka_id", "connector_type_id", "desired_state", "channel", "namespace_id", "cluster_id"}
+var validConnectorColumns = []string{"name", "owner", "kafka_id", "connector_type_id", "desired_state", "channel", "namespace_id"}
 
 // List returns all connectors visible to the user within the requested paging window.
 func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *services.ListArguments, tid string, clusterId string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
@@ -237,7 +237,7 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 	}
 
 	if clusterId != "" {
-		dbConn.Joins("JOIN connector_namespaces ON connectors.namespace_id = connector_namespaces.id and connector_namespaces.cluster_id = ?", clusterId)
+		dbConn = dbConn.Joins("JOIN connector_namespaces ON connectors.namespace_id = connector_namespaces.id and connector_namespaces.cluster_id = ?", clusterId)
 	}
 
 	// Apply search query
