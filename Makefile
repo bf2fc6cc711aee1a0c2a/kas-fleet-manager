@@ -756,6 +756,7 @@ deploy/service: CLUSTER_LIST ?= "[]"
 deploy/service: SUPPORTED_CLOUD_PROVIDERS ?= "[{name: aws, default: true, regions: [{name: us-east-1, default: true, supported_instance_type: {standard: {}, developer: {}}}]}]"
 deploy/service: KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG ?= "{}"
 deploy/service: STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG ?= "{}"
+deploy/service: ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION="true"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
@@ -785,6 +786,7 @@ deploy/service: deploy/envoy deploy/route
 		-p SERVICE_ACCOUNT_LIMIT_CHECK_SKIP_ORG_ID_LIST="$(SERVICE_ACCOUNT_LIMIT_CHECK_SKIP_ORG_ID_LIST)"\
 		-p MAX_LIMIT_FOR_SSO_GET_CLIENTS="${MAX_LIMIT_FOR_SSO_GET_CLIENTS}" \
 		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
+		-p ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION="${ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION}" \
 		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \
 		-p SERVICE_PUBLIC_HOST_URL="https://$(shell oc get routes/kas-fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
 		-p OBSERVATORIUM_AUTH_TYPE="${OBSERVATORIUM_AUTH_TYPE}" \

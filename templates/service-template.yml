@@ -345,6 +345,11 @@ parameters:
   description: Enable MAS SSO Auth for the data plane
   value: "true"
 
+- name: ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION
+  displayName: Enable the configuration of Kafka_SRE identity provider on the data plane cluster
+  description: Enable the configuration of Kafka_SRE identity provider on the data plane cluster
+  value: "true"
+
 - name: MAS_SSO_INSECURE
   displayName: Enable MAS SSO Insecure Connection
   description: Enable MAS SSO insecure connection
@@ -845,6 +850,7 @@ objects:
             - --providers-config-file=/config/provider-configuration.yaml
             - --quota-management-list-config-file=/config/quota-management-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml
+            - --enable-kafka-sre-identity-provider-configuration=${ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION}
             - --read-only-user-list-file=/config/read-only-user-list.yaml
             - --kafka-sre-user-list-file=/config/kafka-sre-user-list.yaml
             - --supported-kafka-instance-types-config-file=/config/kafka-instance-types-configuration.yaml

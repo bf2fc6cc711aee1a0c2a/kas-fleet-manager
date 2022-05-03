@@ -1097,6 +1097,11 @@ func (c *ClusterManager) buildKafkaSreClusterRoleBindingResource() *authv1.Clust
 }
 
 func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) error {
+	if !c.DataplaneClusterConfig.EnableKafkaSreIdentityProviderConfiguration {
+		glog.Infof("Configuration of data plane identity providers is disabled. Skipping configuring the identity provider for ClusterID '%s'", cluster.ClusterID)
+		return nil
+	}
+
 	if cluster.IdentityProviderID != "" {
 		return nil
 	}

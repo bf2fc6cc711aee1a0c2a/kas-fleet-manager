@@ -647,8 +647,9 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 
 func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 	type fields struct {
-		clusterService        services.ClusterService
-		osdIdpKeycloakService sso.KeycloakService
+		clusterService         services.ClusterService
+		osdIdpKeycloakService  sso.KeycloakService
+		dataplaneClusterConfig *config.DataplaneClusterConfig
 	}
 	tests := []struct {
 		name    string
@@ -657,12 +658,58 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "should skip the creation of the identity provider when cluster identity provider has already been set",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: nil, // setting it to nill so that it is not called
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: nil, // setting it to nill so that it is not called
+					GetRealmConfigFunc:                nil, // setting it to nill so that it is not called
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableKafkaSreIdentityProviderConfiguration: true,
+				},
+			},
+			arg: api.Cluster{
+				Meta: api.Meta{
+					ID: "cluster-id",
+				},
+				IdentityProviderID: "some-identity-provider-id", // identity provider already set
+			},
+			wantErr: false,
+		},
+		{
+			name: "should skip the creation of the identity provider when configuration of it is disabled",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: nil, // setting it to nill so that it is not called
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: nil, // setting it to nill so that it is not called
+					GetRealmConfigFunc:                nil, // setting it to nill so that it is not called
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableKafkaSreIdentityProviderConfiguration: false, // disabling identity provider configuration
+				},
+			},
+			arg: api.Cluster{
+				Meta: api.Meta{
+					ID: "cluster-id",
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "should receive error when GetClusterDNSFunc returns error",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "", apiErrors.GeneralError("failed")
 					},
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableKafkaSreIdentityProviderConfiguration: true,
 				},
 			},
 			wantErr: true,
@@ -681,6 +728,9 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					},
 					GetRealmConfigFunc: nil, // setting it to nill so that it is not called
 				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableKafkaSreIdentityProviderConfiguration: true,
+				},
 			},
 			arg: api.Cluster{
 				Meta: api.Meta{
@@ -692,6 +742,9 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 		{
 			name: "should receive error when creating the identity provider throws an error during creation",
 			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableKafkaSreIdentityProviderConfiguration: true,
+				},
 				clusterService: &services.ClusterServiceMock{
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "test.com", nil
@@ -716,6 +769,9 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 		{
 			name: "should create an identity provider when cluster identity provider has not been set",
 			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableKafkaSreIdentityProviderConfiguration: true,
+				},
 				clusterService: &services.ClusterServiceMock{
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "test.com", nil
@@ -748,8 +804,9 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService:        tt.fields.clusterService,
-					OsdIdpKeycloakService: tt.fields.osdIdpKeycloakService,
+					ClusterService:         tt.fields.clusterService,
+					OsdIdpKeycloakService:  tt.fields.osdIdpKeycloakService,
+					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
 				},
 			}
 
