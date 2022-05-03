@@ -4,21 +4,20 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
-	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	authv1 "github.com/openshift/api/authorization/v1"
 	userv1 "github.com/openshift/api/user/v1"
@@ -28,14 +27,1448 @@ import (
 
 	k8sCoreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	dpMock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
 )
 
 var (
-	testRegion                    = "us-west-1"
+	testRegion                    = "us-east-1"
 	testProvider                  = "aws"
 	strimziAddonID                = "managed-kafka-test"
 	clusterLoggingOperatorAddonID = "cluster-logging-operator-test"
+	supportedInstanceType         = "eval"
+	deprovisionCluster            = api.Cluster{
+		Status: api.ClusterDeprovisioning,
+	}
+	acceptedCluster = api.Cluster{
+		Status: api.ClusterAccepted,
+	}
+	readyCluster = api.Cluster{
+		Status: api.ClusterReady,
+	}
+	clusterWaitingForKasFleetShardOperator = api.Cluster{
+		Status: api.ClusterWaitingForKasFleetShardOperator,
+	}
+	supportedProviders = config.ProviderConfig{
+		ProvidersConfig: config.ProviderConfiguration{
+			SupportedProviders: config.ProviderList{
+				config.Provider{
+					Name: "aws",
+					Regions: config.RegionList{
+						config.Region{
+							Name: "us-east-1",
+							SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
+								"standard": {Limit: nil},
+								"eval":     {Limit: nil},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	keycloakRealmConfig = keycloak.KeycloakRealmConfig{
+		ValidIssuerURI: "https://foo.bar",
+	}
+	autoScalingDataPlaneConfig = &config.DataplaneClusterConfig{
+		DataPlaneClusterScalingType: config.AutoScaling,
+	}
 )
+
+func TestClusterManager_GetID(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "should return cluster manager id",
+			want: "",
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{}
+
+			Expect(c.GetID()).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterManager_GetWorkerType(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "should return cluster worker type",
+			want: "cluster",
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewClusterManager(ClusterManagerOptions{})
+
+			Expect(c.GetWorkerType()).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterManager_IsRunning(t *testing.T) {
+	type args struct {
+		isRunning bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "should return false if cluster manager is not running",
+			args: args{isRunning: false},
+			want: false,
+		},
+		{
+			name: "should return true if cluster manager is running",
+			args: args{isRunning: true},
+			want: true,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewClusterManager(ClusterManagerOptions{})
+			c.SetIsRunning(tt.args.isRunning)
+			Expect(c.IsRunning()).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterManager_reconcile(t *testing.T) {
+	type fields struct {
+		clusterService         services.ClusterService
+		dataplaneClusterConfig *config.DataplaneClusterConfig
+		supportedProviders     *config.ProviderConfig
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			// single test case here with default/ empty values is sufficient, as the rest of the functionality called by the
+			// reconciler will be tested in the unit tests that "reconcile" calls
+			name: "should successfully complete reconciliation with empty return values",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
+						return []services.ClusterStatusCount{}, nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return []services.ResKafkaInstanceCount{}, nil
+					},
+					ListByStatusFunc: func(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{}, nil
+					},
+					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
+						return []*services.ResGroupCPRegion{}, nil
+					},
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					ClusterConfig:               &config.ClusterConfig{},
+				},
+				supportedProviders: &config.ProviderConfig{},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:         tt.fields.clusterService,
+					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
+					SupportedProviders:     tt.fields.supportedProviders,
+				},
+			}
+
+			Expect(len(c.Reconcile()) > 0).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_processMetrics(t *testing.T) {
+	type fields struct {
+		clusterService         services.ClusterService
+		dataplaneClusterConfig *config.DataplaneClusterConfig
+		supportedProviders     *config.ProviderConfig
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should return an error if CountByStatus called by setClusterStatusCountMetrics fails in ClusterService",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to count by status")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if FindKafkaInstanceCount called by setKafkaPerClusterCountMetrics fails in ClusterService",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
+						return []services.ClusterStatusCount{}, nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to find kafka instances count")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if GetInstanceLimit called by setClusterStatusMaxCapacityMetrics fails in SupportedProviders",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
+						return []services.ClusterStatusCount{}, nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return []services.ResKafkaInstanceCount{}, nil
+					},
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					ClusterConfig: config.NewClusterConfig(
+						config.ClusterList{
+							dpMock.BuildManualCluster(supportedInstanceType),
+						}),
+				},
+				supportedProviders: &config.ProviderConfig{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should succeed if no errors occur during the execution",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
+						return []services.ClusterStatusCount{}, nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return []services.ResKafkaInstanceCount{}, nil
+					},
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					ClusterConfig: config.NewClusterConfig(
+						config.ClusterList{
+							dpMock.BuildManualCluster(supportedInstanceType),
+						}),
+				},
+				supportedProviders: &supportedProviders,
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:         tt.fields.clusterService,
+					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
+					SupportedProviders:     tt.fields.supportedProviders,
+				},
+			}
+			Expect(len(c.processMetrics()) > 0).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_processDeprovisioningClusters(t *testing.T) {
+	type fields struct {
+		clusterService         services.ClusterService
+		dataplaneClusterConfig *config.DataplaneClusterConfig
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should return an error if ListByStatus fails in ClusterService",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to list by status")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if reconcileDeprovisioningCluster fails during processing deprovisioned clusters",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							deprovisionCluster,
+						}, nil
+					},
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return &deprovisionCluster, nil
+					},
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return false, apiErrors.GeneralError("failed to delete cluster")
+					},
+				},
+				dataplaneClusterConfig: autoScalingDataPlaneConfig,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should succeed if no errors are encountered",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							deprovisionCluster,
+						}, nil
+					},
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return &deprovisionCluster, nil
+					},
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+				dataplaneClusterConfig: autoScalingDataPlaneConfig,
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:         tt.fields.clusterService,
+					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
+				},
+			}
+			Expect(len(c.processDeprovisioningClusters()) > 0).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_processCleanupClusters(t *testing.T) {
+	type fields struct {
+		clusterService             services.ClusterService
+		osdIDPKeycloakService      sso.KeycloakService
+		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should return an error if ListByStatus fails in ClusterService",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to list by status")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if reconcileCleanupCluster fails during processing cleaned up clusters",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							deprovisionCluster,
+						}, nil
+					},
+				},
+				osdIDPKeycloakService: &sso.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to deregister client in sso")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should succeed if no errors are encountered",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							deprovisionCluster,
+						}, nil
+					},
+					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIDPKeycloakService: &sso.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:             tt.fields.clusterService,
+					OsdIdpKeycloakService:      tt.fields.osdIDPKeycloakService,
+					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
+				},
+			}
+			Expect(len(c.processCleanupClusters()) > 0).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_processAcceptedClusters(t *testing.T) {
+	type fields struct {
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should return an error if ListByStatus fails in ClusterService",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to list by status")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if reconcileAcceptedCluster fails during processing accepted clusters",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							acceptedCluster,
+						}, nil
+					},
+					CreateFunc: func(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to create cluster")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should succeed if no errors are encountered",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							acceptedCluster,
+						}, nil
+					},
+					CreateFunc: func(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
+						return &acceptedCluster, nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService: tt.fields.clusterService,
+				},
+			}
+			Expect(len(c.processAcceptedClusters()) > 0).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_processProvisioningClusters(t *testing.T) {
+	type fields struct {
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should return an error if ListByStatus fails in ClusterService",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to list by status")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if reconcileClusterStatus fails during processing provisioning clusters",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							acceptedCluster,
+						}, nil
+					},
+					CheckClusterStatusFunc: func(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to check cluster status")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should succeed if no errors are encountered",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							acceptedCluster,
+						}, nil
+					},
+					CheckClusterStatusFunc: func(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
+						return &acceptedCluster, nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService: tt.fields.clusterService,
+				},
+			}
+			Expect(len(c.processProvisioningClusters()) > 0).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_processProvisionedClusters(t *testing.T) {
+	type fields struct {
+		clusterService             services.ClusterService
+		osdIdpKeycloakService      sso.KeycloakService
+		dataplaneClusterConfig     *config.DataplaneClusterConfig
+		supportedProviders         *config.ProviderConfig
+		observabilityConfiguration *observatorium.ObservabilityConfiguration
+		agentOperator              services.KasFleetshardOperatorAddon
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should return an error if ListByStatus fails in ClusterService",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to list by status")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if reconcileProvisionedCluster fails during processing provisioned clusters",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							acceptedCluster,
+						}, nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "", apiErrors.GeneralError("failed to get cluster dns")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should succeed if no errors are encountered",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							acceptedCluster,
+						}, nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &acceptedCluster, nil
+					},
+					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
+						return []services.ClusterStatusCount{}, nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return []services.ResKafkaInstanceCount{}, nil
+					},
+					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
+						return []*services.ResGroupCPRegion{}, nil
+					},
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+					UpdateStatusAndClientFunc: func(cluster api.Cluster, status api.ClusterStatus, serviceClientId string, serviceClientSecret string) error {
+						return nil
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					ClusterConfig:               &config.ClusterConfig{},
+				},
+				supportedProviders:         &config.ProviderConfig{},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
+						return true, services.ParameterList{}, nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:             tt.fields.clusterService,
+					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
+					DataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
+					SupportedProviders:         tt.fields.supportedProviders,
+					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
+					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					KasFleetshardOperatorAddon: tt.fields.agentOperator,
+				},
+			}
+			Expect(len(c.processProvisionedClusters()) > 0).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_processReadyClusters(t *testing.T) {
+	type fields struct {
+		clusterService         services.ClusterService
+		dataplaneClusterConfig *config.DataplaneClusterConfig
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should return an error if ListByStatus fails in ClusterService",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to list by status")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if reconcileEmptyCluster fails during processing ready clusters",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							readyCluster,
+						}, nil
+					},
+					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to find non empty cluster by id")
+					},
+				},
+				dataplaneClusterConfig: autoScalingDataPlaneConfig,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should not return an error if reconcileReadyCluster doesn't throw an error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							readyCluster,
+						}, nil
+					},
+					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return &readyCluster, apiErrors.GeneralError("failed to find non empty cluster by id")
+					},
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType:           "manual",
+					EnableReadyDataPlaneClustersReconcile: false,
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:         tt.fields.clusterService,
+					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
+				},
+			}
+			Expect(len(c.processReadyClusters()) > 0).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_reconcileReadyCluster(t *testing.T) {
+	type fields struct {
+		clusterService             services.ClusterService
+		dataplaneClusterConfig     *config.DataplaneClusterConfig
+		osdIdpKeycloakService      sso.KeycloakService
+		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+		observabilityConfiguration *observatorium.ObservabilityConfiguration
+	}
+
+	type args struct {
+		cluster api.Cluster
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "should return no error if EnableReadyDataPlaneClustersReconcile is set to false",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: false,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should fail if reconcileClusterInstanceType fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to update cluster")
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should fail if reconcileClusterResources fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to apply resources")
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should fail if reconcileClusterIdentityProvider fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "", apiErrors.GeneralError("failed to register osd cluster client in sso")
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should fail if reconcileKasFleetshardOperator fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &clusterWaitingForKasFleetShardOperator, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to reconcile params")
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should succeed if no errors are thrown during execution",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &clusterWaitingForKasFleetShardOperator, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *apiErrors.ServiceError) {
+						return services.ParameterList{}, nil
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:             tt.fields.clusterService,
+					DataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
+					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
+					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
+					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
+				},
+			}
+			Expect(c.reconcileReadyCluster(tt.args.cluster) != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testing.T) {
+	type fields struct {
+		clusterService             services.ClusterService
+		dataplaneClusterConfig     *config.DataplaneClusterConfig
+		osdIdpKeycloakService      sso.KeycloakService
+		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+		observabilityConfiguration *observatorium.ObservabilityConfiguration
+	}
+
+	type args struct {
+		cluster api.Cluster
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "should fail if reconcileClusterResources fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to apply resources")
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should fail if reconcileClusterIdentityProvider fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "", apiErrors.GeneralError("failed to register osd cluster client in sso")
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should fail if reconcileKasFleetshardOperator fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &clusterWaitingForKasFleetShardOperator, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to reconcile params")
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should succeed if no errors are thrown during execution",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &clusterWaitingForKasFleetShardOperator, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *apiErrors.ServiceError) {
+						return services.ParameterList{}, nil
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:             tt.fields.clusterService,
+					DataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
+					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
+					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
+					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
+				},
+			}
+			Expect(c.reconcileWaitingForKasFleetshardOperatorCluster(tt.args.cluster) != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
+	type fields struct {
+		clusterService             services.ClusterService
+		dataplaneClusterConfig     *config.DataplaneClusterConfig
+		osdIdpKeycloakService      sso.KeycloakService
+		observabilityConfiguration *observatorium.ObservabilityConfiguration
+		agentOperator              services.KasFleetshardOperatorAddon
+	}
+
+	type args struct {
+		cluster api.Cluster
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "should fail if reconcileClusterIdentityProvider fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "", apiErrors.GeneralError("failed to get cluster dns")
+					},
+				},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should fail if reconcileClusterResources fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to apply resources")
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &clusterWaitingForKasFleetShardOperator, nil
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should fail if reconcileAddonOperator fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &clusterWaitingForKasFleetShardOperator, nil
+					},
+					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+					UpdateStatusAndClientFunc: func(cluster api.Cluster, status api.ClusterStatus, serviceClientId string, serviceClientSecret string) error {
+						return apiErrors.GeneralError("failed to update status and client")
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
+						return true, services.ParameterList{}, nil
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should succeed if no errors occur during execution",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &clusterWaitingForKasFleetShardOperator, nil
+					},
+					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+					UpdateStatusAndClientFunc: func(cluster api.Cluster, status api.ClusterStatus, serviceClientId string, serviceClientSecret string) error {
+						return nil
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
+						return true, services.ParameterList{}, nil
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:             tt.fields.clusterService,
+					DataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
+					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
+					KasFleetshardOperatorAddon: tt.fields.agentOperator,
+					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
+				},
+			}
+			Expect(c.reconcileProvisionedCluster(tt.args.cluster) != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testing.T) {
+	type fields struct {
+		clusterService             services.ClusterService
+		dataplaneClusterConfig     *config.DataplaneClusterConfig
+		observabilityConfiguration *observatorium.ObservabilityConfiguration
+		osdIdpKeycloakService      sso.KeycloakService
+		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should return an error if ListByStatus fails in ClusterService",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to list by status")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if reconcileEmptyCluster fails during processing ready clusters",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							clusterWaitingForKasFleetShardOperator,
+						}, nil
+					},
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to apply resources")
+					},
+				},
+				dataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should not return an error if no errors occur during execution",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							clusterWaitingForKasFleetShardOperator,
+						}, nil
+					},
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &clusterWaitingForKasFleetShardOperator, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+				},
+				dataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:             tt.fields.clusterService,
+					DataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
+					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
+					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
+					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
+				},
+			}
+			Expect(len(c.processWaitingForKasFleetshardOperatorClusters()) > 0).To(Equal(tt.wantErr))
+		})
+	}
+}
 
 func TestClusterManager_reconcileKasFleetshardOperator(t *testing.T) {
 	type fields struct {
@@ -53,8 +1486,8 @@ func TestClusterManager_reconcileKasFleetshardOperator(t *testing.T) {
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
-					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *ocmErrors.ServiceError) {
-						return nil, &ocmErrors.ServiceError{}
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *apiErrors.ServiceError) {
+						return nil, &apiErrors.ServiceError{}
 					},
 				},
 			},
@@ -65,7 +1498,7 @@ func TestClusterManager_reconcileKasFleetshardOperator(t *testing.T) {
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
-					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *ocmErrors.ServiceError) {
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *apiErrors.ServiceError) {
 						return nil, nil
 					},
 				},
@@ -77,12 +1510,12 @@ func TestClusterManager_reconcileKasFleetshardOperator(t *testing.T) {
 			name: "error when UpdateFunc returns error",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					UpdateFunc: func(cluster api.Cluster) *ocmErrors.ServiceError {
-						return &ocmErrors.ServiceError{}
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return &apiErrors.ServiceError{}
 					},
 				},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
-					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *ocmErrors.ServiceError) {
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *apiErrors.ServiceError) {
 						return nil, nil
 					},
 				},
@@ -93,12 +1526,12 @@ func TestClusterManager_reconcileKasFleetshardOperator(t *testing.T) {
 			name: "should not receive error when UpdateFunc does not return error",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					UpdateFunc: func(cluster api.Cluster) *ocmErrors.ServiceError {
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
 				},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
-					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *ocmErrors.ServiceError) {
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *apiErrors.ServiceError) {
 						return nil, nil
 					},
 				},
@@ -107,9 +1540,10 @@ func TestClusterManager_reconcileKasFleetshardOperator(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
@@ -117,8 +1551,7 @@ func TestClusterManager_reconcileKasFleetshardOperator(t *testing.T) {
 				},
 			}
 
-			err := c.reconcileKasFleetshardOperator(tt.arg)
-			gomega.Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(c.reconcileKasFleetshardOperator(tt.arg) != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -151,6 +1584,23 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "successful reconcile of failed cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					CheckClusterStatusFunc: func(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
+						return cluster, nil
+					},
+				},
+			},
+			args: args{
+				cluster: &api.Cluster{
+					ClusterID: "test",
+					Status:    api.ClusterFailed,
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "successful reconcile",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
@@ -168,6 +1618,9 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
@@ -176,10 +1629,7 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 				},
 			}
 			_, err := c.reconcileClusterStatus(tt.args.cluster)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("reconcileClusterStatus() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -216,6 +1666,9 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
@@ -230,10 +1683,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			_, err := c.reconcileStrimziOperator(api.Cluster{
 				ClusterID: "clusterId",
 			})
-			if (err != nil) != tt.wantErr {
-				t.Errorf("reconcileStrimziOperator() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -251,7 +1701,7 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 			name: "error when installing cluster logging operator",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *ocmErrors.ServiceError) {
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
 						return false, apiErrors.GeneralError("failed to install cluster logging operator")
 					},
 				},
@@ -262,7 +1712,7 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 			name: "cluster logging operator installed successfully",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *ocmErrors.ServiceError) {
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
 						return true, nil
 					},
 				},
@@ -270,6 +1720,9 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
@@ -284,10 +1737,7 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 			_, err := c.reconcileClusterLoggingOperator(api.Cluster{
 				ClusterID: "clusterId",
 			})
-			if (err != nil) != tt.wantErr {
-				t.Errorf("reconcileClusterLoggingOperator() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -306,14 +1756,28 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 			name: "reconcile cluster with cluster creation requests",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					CreateFunc: func(cluster *api.Cluster) (cls *api.Cluster, e *ocmErrors.ServiceError) {
+					CreateFunc: func(cluster *api.Cluster) (cls *api.Cluster, e *apiErrors.ServiceError) {
 						return cluster, nil
 					},
 				},
 			},
 			wantErr: false,
 		},
+		{
+			name: "failed accepted cluster reconciliation should result in an error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					CreateFunc: func(cluster *api.Cluster) (cls *api.Cluster, e *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to create cluster")
+					},
+				},
+			},
+			wantErr: true,
+		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
@@ -324,25 +1788,17 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 				},
 			}
 
-			clusterRequest := &api.Cluster{
-				Region:        testRegion,
-				CloudProvider: testProvider,
-				Status:        "cluster_accepted",
-			}
-
-			err := c.reconcileAcceptedCluster(clusterRequest)
-			if err != nil && !tt.wantErr {
-				t.Errorf("reconcileAcceptedCluster() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			Expect(c.reconcileAcceptedCluster(&acceptedCluster) != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
 
 func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 	type fields struct {
-		providerLst     []string
-		clusterService  services.ClusterService
-		providersConfig config.ProviderConfig
+		providerLst            []string
+		clusterService         services.ClusterService
+		providersConfig        config.ProviderConfig
+		dataplaneClusterConfig *config.DataplaneClusterConfig
 	}
 
 	tests := []struct {
@@ -351,11 +1807,60 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 		fields  fields
 	}{
 		{
-			name: "creates a missing OSD cluster request automatically",
+			name: "creates a missing OSD cluster request automatically when autoscaling is enabled",
 			fields: fields{
-				providerLst: []string{"us-east-1"},
+				dataplaneClusterConfig: autoScalingDataPlaneConfig,
+				providerLst:            []string{testRegion},
 				clusterService: &services.ClusterServiceMock{
-					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *ocmErrors.ServiceError) {
+					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *apiErrors.ServiceError) {
+						res := []*services.ResGroupCPRegion{
+							{
+								Provider: testProvider,
+								Region:   testRegion,
+								Count:    1,
+							},
+						}
+						return res, nil
+					},
+					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				providersConfig: supportedProviders,
+			},
+			wantErr: false,
+		},
+		{
+			name: "skips reconciliation if autoscaling is disabled",
+			fields: fields{
+				dataplaneClusterConfig: config.NewDataplaneClusterConfig(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error if ListGroupByProviderAndRegion fails",
+			fields: fields{
+				dataplaneClusterConfig: autoScalingDataPlaneConfig,
+				providerLst:            []string{"us-east-1"},
+				clusterService: &services.ClusterServiceMock{
+					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *apiErrors.ServiceError) {
+						res := []*services.ResGroupCPRegion{}
+						return res, nil
+					},
+					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to register cluster job")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "failed to create OSD request with empty services.ResGroupCPRegion",
+			fields: fields{
+				dataplaneClusterConfig: autoScalingDataPlaneConfig,
+				providerLst:            []string{"us-east-1"},
+				clusterService: &services.ClusterServiceMock{
+					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *apiErrors.ServiceError) {
 						var res []*services.ResGroupCPRegion
 						return res, nil
 					},
@@ -363,29 +1868,17 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						return nil
 					},
 				},
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
-								Name: "aws",
-								Regions: config.RegionList{
-									config.Region{
-										Name: "us-east-1",
-									},
-								},
-							},
-						},
-					},
-				},
+				providersConfig: supportedProviders,
 			},
 			wantErr: false,
 		},
 		{
-			name: "failed to create OSD request",
+			name: "should create OSD request ",
 			fields: fields{
-				providerLst: []string{"us-east-1"},
+				dataplaneClusterConfig: autoScalingDataPlaneConfig,
+				providerLst:            []string{"us-east-1"},
 				clusterService: &services.ClusterServiceMock{
-					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *ocmErrors.ServiceError) {
+					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *apiErrors.ServiceError) {
 						var res []*services.ResGroupCPRegion
 						return res, nil
 					},
@@ -393,50 +1886,14 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						return apiErrors.GeneralError("failed to create cluster request")
 					},
 				},
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
-								Name: "aws",
-								Regions: config.RegionList{
-									config.Region{
-										Name: "us-east-1",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "failed to retrieve OSD cluster info from database",
-			fields: fields{
-				providerLst: []string{"us-east-1"},
-				clusterService: &services.ClusterServiceMock{
-					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *ocmErrors.ServiceError) {
-						return nil, ocmErrors.New(ocmErrors.ErrorGeneral, "Database retrieval failed")
-					},
-				},
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
-								Name: "aws",
-								Regions: config.RegionList{
-									config.Region{
-										Name: "us-east-1",
-									},
-								},
-							},
-						},
-					},
-				},
+				providersConfig: supportedProviders,
 			},
 			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
@@ -444,13 +1901,10 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 					ClusterService:             tt.fields.clusterService,
 					SupportedProviders:         &tt.fields.providersConfig,
 					ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{},
-					DataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
+					DataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
 				},
 			}
-			err := c.reconcileClustersForRegions()
-			if err != nil && !tt.wantErr {
-				t.Errorf("reconcileClustersForRegions() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			Expect(c.reconcileClustersForRegions() != nil && !tt.wantErr).To(BeFalse())
 		})
 	}
 }
@@ -477,7 +1931,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *ocmErrors.ServiceError) {
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -497,7 +1951,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, apiErrors.GeneralError("failed to install strimzi")
 					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *ocmErrors.ServiceError) {
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
 				},
@@ -511,7 +1965,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, apiErrors.GeneralError("failed to install strimzi")
 					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *ocmErrors.ServiceError) {
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
 				},
@@ -525,7 +1979,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *ocmErrors.ServiceError) {
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -545,6 +1999,8 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
@@ -554,642 +2010,9 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					KasFleetshardOperatorAddon: tt.fields.agentOperator,
 				},
 			}
-			err := c.reconcileAddonOperator(api.Cluster{
+			Expect(c.reconcileAddonOperator(api.Cluster{
 				ClusterID: "test-cluster-id",
-			})
-			if err != nil && !tt.wantErr {
-				t.Errorf("reconcileAddonOperator() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
-	const ingressDNS = "foo.bar.example.com"
-	observabilityConfig := buildObservabilityConfig()
-	clusterConfig := config.DataplaneClusterConfig{
-		ImagePullDockerConfigContent: "image-pull-secret-test",
-		StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
-			Namespace: "strimzi-namespace",
-		},
-		KasFleetshardOperatorOLMConfig: config.OperatorInstallationConfig{
-			Namespace: "kas-fleet-shard-namespace",
-		},
-	}
-	type fields struct {
-		clusterService services.ClusterService
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		arg     api.Cluster
-		wantErr bool
-	}{
-		{
-			name: "test should pass and resourceset should be created for ocm clusters",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
-						want, _ := buildResourceSet(observabilityConfig, clusterConfig, ingressDNS, cluster)
-						Expect(resources).To(Equal(want))
-						return nil
-					},
-				},
-			},
-			arg: api.Cluster{ClusterID: "test-cluster-id", ProviderType: "ocm"},
-		},
-		{
-			name: "test should pass and resourceset should be created for standalone clusters",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
-						want, _ := buildResourceSet(observabilityConfig, clusterConfig, ingressDNS, cluster)
-						Expect(resources).To(Equal(want))
-						return nil
-					},
-				},
-			},
-			arg: api.Cluster{ClusterID: "test-cluster-id", ProviderType: "standalone"},
-		},
-		{
-			name: "should receive error when ApplyResources returns error",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
-						return apiErrors.GeneralError("failed to apply resources")
-					},
-				},
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
-			c := &ClusterManager{
-				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService:             tt.fields.clusterService,
-					SupportedProviders:         &config.ProviderConfig{},
-					ObservabilityConfiguration: &observabilityConfig,
-					DataplaneClusterConfig:     &clusterConfig,
-					OCMConfig:                  &ocm.OCMConfig{},
-				},
-			}
-
-			err := c.reconcileClusterResources(tt.arg)
-			if !tt.wantErr && err != nil {
-				t.Errorf("unexpected error: %v", err)
-			}
-		})
-	}
-}
-
-func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
-	type fields struct {
-		clusterService        services.ClusterService
-		osdIdpKeycloakService sso.KeycloakService
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		arg     api.Cluster
-		wantErr bool
-	}{
-		{
-			name: "should receive error when GetClusterDNSFunc returns error",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
-						return "", apiErrors.GeneralError("failed")
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "should receive an error when creating the the OSD cluster IDP in keycloak fails",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
-						return "test.com", nil
-					},
-				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
-						return "", apiErrors.FailedToCreateSSOClient("failure")
-					},
-					GetRealmConfigFunc: nil, // setting it to nill so that it is not called
-				},
-			},
-			arg: api.Cluster{
-				Meta: api.Meta{
-					ID: "cluster-id",
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "should receive error when creating the identity provider throws an error during creation",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
-						return "test.com", nil
-					},
-					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, apiErrors.GeneralError("failed to configure IDP")
-					},
-				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
-						return "secret", nil
-					},
-					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
-						return &keycloak.KeycloakRealmConfig{
-							ValidIssuerURI: "https://foo.bar",
-						}
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "should create an identity provider when cluster identity provider has not been set",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
-						return "test.com", nil
-					},
-					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
-						return cluster, nil
-					},
-				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
-						return "secret", nil
-					},
-					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
-						return &keycloak.KeycloakRealmConfig{
-							ValidIssuerURI: "https://foo.bar",
-						}
-					},
-				},
-			},
-			arg: api.Cluster{
-				Meta: api.Meta{
-					ID: "cluster-id",
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
-			c := &ClusterManager{
-				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService:        tt.fields.clusterService,
-					OsdIdpKeycloakService: tt.fields.osdIdpKeycloakService,
-				},
-			}
-
-			err := c.reconcileClusterIdentityProvider(tt.arg)
-			gomega.Expect(err != nil).To(Equal(tt.wantErr))
-		})
-	}
-}
-
-func TestClusterManager_reconcileClusterDNS(t *testing.T) {
-	type fields struct {
-		clusterService services.ClusterService
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		arg     api.Cluster
-		wantErr bool
-	}{
-		{
-			name: "should return when clusterDNS is already set",
-			arg: api.Cluster{
-				ClusterDNS: "my-cluster-dns",
-			},
-			wantErr: false,
-		},
-		{
-			name: "should receive error when GetClusterDNSFunc returns error",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
-						return "", apiErrors.GeneralError("failed")
-					},
-				},
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
-			c := &ClusterManager{
-				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService: tt.fields.clusterService,
-				},
-			}
-
-			err := c.reconcileClusterDNS(tt.arg)
-			gomega.Expect(err != nil).To(Equal(tt.wantErr))
-		})
-	}
-}
-
-func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
-	type fields struct {
-		clusterService         services.ClusterService
-		DataplaneClusterConfig *config.DataplaneClusterConfig
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		arg     api.Cluster
-		wantErr bool
-	}{
-		{
-			name: "should receive error when FindCluster to retrieve sibling cluster returns error",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, &apiErrors.ServiceError{}
-					},
-					UpdateStatusFunc: nil, // set to nil as it should not be called
-				},
-				DataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: "auto",
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "should update the status back to ready when no sibling cluster found",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, nil
-					},
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return nil
-					},
-				},
-				DataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: "auto",
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "recieves an error when delete OCM cluster fails",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
-						return &api.Cluster{ClusterID: "dummy cluster"}, nil
-					},
-					UpdateStatusFunc: nil,
-					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
-						return false, apiErrors.GeneralError("failed to remove cluster")
-					},
-				},
-				DataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: "auto",
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "successful deletion of an OSD cluster when auto configuration is enabled",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
-						return &api.Cluster{ClusterID: "dummy cluster"}, nil
-					},
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return nil
-					},
-					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
-						return true, nil
-					},
-				},
-				DataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: "auto",
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "successful deletion of an OSD cluster when manual configuration is enabled",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: nil, // should not be called
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return nil
-					},
-					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
-						return true, nil
-					},
-				},
-				DataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: "manual",
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "receives an error when the update status fails",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return fmt.Errorf("Some errors")
-					},
-					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
-						return true, nil
-					},
-				},
-				DataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: "manual",
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "does not update cluster status when cluster has not been fully deleted from ClusterService",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
-						return false, nil
-					},
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return errors.Errorf("this should not be called")
-					},
-				},
-				DataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: "manual",
-				},
-			},
-			wantErr: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
-			c := &ClusterManager{
-				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService:         tt.fields.clusterService,
-					DataplaneClusterConfig: tt.fields.DataplaneClusterConfig,
-				},
-			}
-
-			err := c.reconcileDeprovisioningCluster(&tt.arg)
-			gomega.Expect(err != nil).To(Equal(tt.wantErr))
-		})
-	}
-}
-
-func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
-	type fields struct {
-		clusterService             services.ClusterService
-		osdIDPKeycloakService      sso.KeycloakService
-		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		arg     api.Cluster
-		wantErr bool
-	}{
-
-		{
-			name: "recieves an error when deregistering the OSD IDP from keycloak fails",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return &apiErrors.ServiceError{}
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "recieves an error when remove kas-fleetshard-operator service account fails",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return nil
-					},
-				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
-					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
-						return &apiErrors.ServiceError{}
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "recieves an error when soft delete cluster from database fails",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
-						return &apiErrors.ServiceError{}
-					},
-				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
-					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "successfull deletion of an OSD cluster",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
-					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-			},
-			wantErr: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
-			c := &ClusterManager{
-				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService:             tt.fields.clusterService,
-					OsdIdpKeycloakService:      tt.fields.osdIDPKeycloakService,
-					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
-				},
-			}
-
-			err := c.reconcileCleanupCluster(tt.arg)
-			gomega.Expect(err != nil).To(Equal(tt.wantErr))
-		})
-	}
-}
-
-func TestClusterManager_reconcileEmptyCluster(t *testing.T) {
-	type fields struct {
-		clusterService services.ClusterService
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-		want    bool
-	}{
-		{
-			name: "should receive error when FindNonEmptyClusterById returns error",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, &apiErrors.ServiceError{}
-					},
-					UpdateStatusFunc:                 nil, // set to nil as it should not be called
-					ListGroupByProviderAndRegionFunc: nil, // set to nil as it should not be called
-				},
-			},
-			wantErr: true,
-			want:    false,
-		},
-		{
-			name: "should return false when cluster is not empty",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
-						return &api.Cluster{ClusterID: clusterId}, nil
-					},
-					UpdateStatusFunc:                 nil, // set to nil as it should not be called
-					ListGroupByProviderAndRegionFunc: nil, // set to nil as it should not be called
-				},
-			},
-			wantErr: false,
-			want:    false,
-		},
-		{
-			name: "receives an error when ListGroupByProviderAndRegion returns an error",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, nil
-					},
-					UpdateStatusFunc: nil, // set to nil as it should not be called
-					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
-						return nil, &apiErrors.ServiceError{}
-					},
-				},
-			},
-			wantErr: true,
-			want:    false,
-		},
-		{
-			name: "should not update the cluster status to deprovisioning when no sibling found",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, nil
-					},
-					UpdateStatusFunc: nil, // set to nil as it not be called
-					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
-						return []*services.ResGroupCPRegion{{Count: 1}}, nil
-					},
-				},
-			},
-			wantErr: false,
-			want:    false,
-		},
-		{
-			name: "should return false when updating cluster status fails",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, nil
-					},
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return &apiErrors.ServiceError{}
-					},
-					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
-						return []*services.ResGroupCPRegion{{Count: 2}}, nil
-					},
-				},
-			},
-			wantErr: true,
-			want:    false,
-		},
-		{
-			name: "should return true and update the cluster status",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, nil
-					},
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return nil
-					},
-					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
-						return []*services.ResGroupCPRegion{{Count: 2}}, nil
-					},
-				},
-			},
-			wantErr: false,
-			want:    true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
-			c := &ClusterManager{
-				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService: tt.fields.clusterService,
-				},
-			}
-
-			emptyClusterReconciled, err := c.reconcileEmptyCluster(api.Cluster{
-				Meta: api.Meta{
-					ID: "cluster-id",
-				},
-			})
-			gomega.Expect(err != nil).To(Equal(tt.wantErr))
-			gomega.Expect(emptyClusterReconciled).To(Equal(tt.want))
+			}) != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -1439,6 +2262,634 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 	}, nil
 }
 
+func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
+	const ingressDNS = "foo.bar.example.com"
+	observabilityConfig := buildObservabilityConfig()
+	clusterConfig := config.DataplaneClusterConfig{
+		ImagePullDockerConfigContent: "image-pull-secret-test",
+		StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
+			Namespace: "strimzi-namespace",
+		},
+		KasFleetshardOperatorOLMConfig: config.OperatorInstallationConfig{
+			Namespace: "kas-fleet-shard-namespace",
+		},
+	}
+	type fields struct {
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		wantErr bool
+	}{
+		{
+			name: "test should pass and resourceset should be created for ocm clusters",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						want, _ := buildResourceSet(observabilityConfig, clusterConfig, ingressDNS, cluster)
+						Expect(resources).To(Equal(want))
+						return nil
+					},
+				},
+			},
+			arg: api.Cluster{ClusterID: "test-cluster-id", ProviderType: "ocm"},
+		},
+		{
+			name: "test should pass and resourceset should be created for standalone clusters",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						want, _ := buildResourceSet(observabilityConfig, clusterConfig, ingressDNS, cluster)
+						Expect(resources).To(Equal(want))
+						return nil
+					},
+				},
+			},
+			arg: api.Cluster{ClusterID: "test-cluster-id", ProviderType: "standalone"},
+		},
+		{
+			name: "should receive error when ApplyResources returns error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to apply resources")
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:             tt.fields.clusterService,
+					SupportedProviders:         &config.ProviderConfig{},
+					ObservabilityConfiguration: &observabilityConfig,
+					DataplaneClusterConfig:     &clusterConfig,
+					OCMConfig:                  &ocm.OCMConfig{},
+				},
+			}
+
+			Expect(c.reconcileClusterResources(tt.arg) != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
+	type fields struct {
+		clusterService        services.ClusterService
+		osdIdpKeycloakService sso.KeycloakService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		wantErr bool
+	}{
+		{
+			name: "should receive error when GetClusterDNSFunc returns error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "", apiErrors.GeneralError("failed")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should receive an error when creating the the OSD cluster IDP in keycloak fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "", apiErrors.FailedToCreateSSOClient("failure")
+					},
+					GetRealmConfigFunc: nil, // setting it to nil so that it is not called
+				},
+			},
+			arg: api.Cluster{
+				Meta: api.Meta{
+					ID: "cluster-id",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should receive error when creating the identity provider throws an error during creation",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to configure IDP")
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should create an identity provider when cluster identity provider has not been set",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return cluster, nil
+					},
+				},
+				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+			},
+			arg: api.Cluster{
+				Meta: api.Meta{
+					ID: "cluster-id",
+				},
+			},
+		},
+		{
+			name: "should return no error for cluster with IdentityProviderID set",
+			arg: api.Cluster{
+				IdentityProviderID: "test_id",
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:        tt.fields.clusterService,
+					OsdIdpKeycloakService: tt.fields.osdIdpKeycloakService,
+				},
+			}
+
+			Expect(c.reconcileClusterIdentityProvider(tt.arg) != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_reconcileClusterDNS(t *testing.T) {
+	type fields struct {
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		wantErr bool
+	}{
+		{
+			name: "should return when clusterDNS is already set",
+			arg: api.Cluster{
+				ClusterDNS: "my-cluster-dns",
+			},
+			wantErr: false,
+		},
+		{
+			name: "should receive error when GetClusterDNSFunc returns error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "", apiErrors.GeneralError("failed")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should successfully reconcile",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "", nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService: tt.fields.clusterService,
+				},
+			}
+
+			Expect(c.reconcileClusterDNS(tt.arg) != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
+	type fields struct {
+		clusterService         services.ClusterService
+		DataplaneClusterConfig *config.DataplaneClusterConfig
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		wantErr bool
+	}{
+		{
+			name: "should receive error when FindCluster to retrieve sibling cluster returns error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, &apiErrors.ServiceError{}
+					},
+					UpdateStatusFunc: nil, // set to nil as it should not be called
+				},
+				DataplaneClusterConfig: autoScalingDataPlaneConfig,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should update the status back to ready when no sibling cluster found",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+				DataplaneClusterConfig: autoScalingDataPlaneConfig,
+			},
+			wantErr: false,
+		},
+		{
+			name: "receives an error when delete OCM cluster fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{ClusterID: "dummy cluster"}, nil
+					},
+					UpdateStatusFunc: nil,
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return false, apiErrors.GeneralError("failed to remove cluster")
+					},
+				},
+				DataplaneClusterConfig: autoScalingDataPlaneConfig,
+			},
+			wantErr: true,
+		},
+		{
+			name: "successful deletion of an OSD cluster when auto configuration is enabled",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{ClusterID: "dummy cluster"}, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+				},
+				DataplaneClusterConfig: autoScalingDataPlaneConfig,
+			},
+			wantErr: false,
+		},
+		{
+			name: "successful deletion of an OSD cluster when manual configuration is enabled",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: nil, // should not be called
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+				},
+				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "receives an error when the update status fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return fmt.Errorf("Some errors")
+					},
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+				},
+				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
+			},
+			wantErr: true,
+		},
+		{
+			name: "does not update cluster status when cluster has not been fully deleted from ClusterService",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return false, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return errors.Errorf("this should not be called")
+					},
+				},
+				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:         tt.fields.clusterService,
+					DataplaneClusterConfig: tt.fields.DataplaneClusterConfig,
+				},
+			}
+
+			Expect(c.reconcileDeprovisioningCluster(&tt.arg) != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
+	type fields struct {
+		clusterService             services.ClusterService
+		osdIDPKeycloakService      sso.KeycloakService
+		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		wantErr bool
+	}{
+
+		{
+			name: "receives an error when deregistering the OSD IDP from keycloak fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIDPKeycloakService: &sso.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return &apiErrors.ServiceError{}
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "receives an error when remove kas-fleetshard-operator service account fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+				osdIDPKeycloakService: &sso.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return &apiErrors.ServiceError{}
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "receives an error when soft delete cluster from database fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return &apiErrors.ServiceError{}
+					},
+				},
+				osdIDPKeycloakService: &sso.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "successfull deletion of an OSD cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIDPKeycloakService: &sso.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService:             tt.fields.clusterService,
+					OsdIdpKeycloakService:      tt.fields.osdIDPKeycloakService,
+					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
+				},
+			}
+			Expect(c.reconcileCleanupCluster(tt.arg) != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_reconcileEmptyCluster(t *testing.T) {
+	type fields struct {
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+		want    bool
+	}{
+		{
+			name: "should receive error when FindNonEmptyClusterById returns error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, &apiErrors.ServiceError{}
+					},
+					UpdateStatusFunc:                 nil, // set to nil as it should not be called
+					ListGroupByProviderAndRegionFunc: nil, // set to nil as it should not be called
+				},
+			},
+			wantErr: true,
+			want:    false,
+		},
+		{
+			name: "should return false when cluster is not empty",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{ClusterID: clusterId}, nil
+					},
+					UpdateStatusFunc:                 nil, // set to nil as it should not be called
+					ListGroupByProviderAndRegionFunc: nil, // set to nil as it should not be called
+				},
+			},
+			wantErr: false,
+			want:    false,
+		},
+		{
+			name: "receives an error when ListGroupByProviderAndRegion returns an error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					UpdateStatusFunc: nil, // set to nil as it should not be called
+					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
+						return nil, &apiErrors.ServiceError{}
+					},
+				},
+			},
+			wantErr: true,
+			want:    false,
+		},
+		{
+			name: "should not update the cluster status to deprovisioning when no sibling found",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					UpdateStatusFunc: nil, // set to nil as it not be called
+					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
+						return []*services.ResGroupCPRegion{{Count: 1}}, nil
+					},
+				},
+			},
+			wantErr: false,
+			want:    false,
+		},
+		{
+			name: "should return false when updating cluster status fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return &apiErrors.ServiceError{}
+					},
+					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
+						return []*services.ResGroupCPRegion{{Count: 2}}, nil
+					},
+				},
+			},
+			wantErr: true,
+			want:    false,
+		},
+		{
+			name: "should return true and update the cluster status",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
+						return []*services.ResGroupCPRegion{{Count: 2}}, nil
+					},
+				},
+			},
+			wantErr: false,
+			want:    true,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService: tt.fields.clusterService,
+				},
+			}
+
+			emptyClusterReconciled, err := c.reconcileEmptyCluster(api.Cluster{
+				Meta: api.Meta{
+					ID: "cluster-id",
+				},
+			})
+			Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(emptyClusterReconciled).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 	type fields struct {
 		clusterService         services.ClusterService
@@ -1452,18 +2903,13 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Successfully applies manually configurated Cluster",
+			name: "Successfully applies manually configured Cluster without deprovisioning clusters",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
-						var list []api.Cluster
-						list = append(list, api.Cluster{ClusterID: "test02"})
-						return list, nil
+						return []api.Cluster{{ClusterID: "test02"}}, nil
 					},
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
-						return nil
-					},
-					UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
 						return nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
@@ -1480,7 +2926,92 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Failed to apply manually configurated Cluster",
+			name: "Successfully applies manually configured Cluster with deprovisioning clusters",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{{ClusterID: "test02"}}, nil
+					},
+					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+					UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
+						return nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return []services.ResKafkaInstanceCount{
+							{
+								Clusterid: "test02",
+								Count:     0,
+							},
+						}, nil
+					},
+				},
+				DataplaneClusterConfig: testOsdConfig,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Should fail if UpdateMultiClusterStatus fails on clusters to deprovision",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{{ClusterID: "test02"}}, nil
+					},
+					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+					UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to update multi cluster status")
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return []services.ResKafkaInstanceCount{
+							{
+								Clusterid: "test02",
+								Count:     0,
+							},
+						}, nil
+					},
+				},
+				DataplaneClusterConfig: testOsdConfig,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should fail if RegisterClusterJob fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{{ClusterID: "test02"}}, nil
+					},
+					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to register cluster job")
+					},
+				},
+				DataplaneClusterConfig: testOsdConfig,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should fail if FindKafkaInstanceCount fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{{ClusterID: "test02"}}, nil
+					},
+					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to find kafka instance count")
+					},
+				},
+				DataplaneClusterConfig: testOsdConfig,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Failed to apply manually configured Cluster",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
@@ -1501,6 +3032,9 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
@@ -1509,9 +3043,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					ClusterService:         tt.fields.clusterService,
 				},
 			}
-			if err := c.reconcileClusterWithManualConfig(); (len(err) > 0) != tt.wantErr {
-				t.Errorf("reconcileClusterWithManualConfig() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			Expect(len(c.reconcileClusterWithManualConfig()) > 0).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -1522,11 +3054,11 @@ func TestClusterManager_reconcileClusterInstanceType(t *testing.T) {
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 		cluster                api.Cluster
 	}
-	clusterId := "some-cluster-id"
-	supportedInstanceType := "developer"
 	testOsdConfig := config.NewDataplaneClusterConfig()
-	testOsdConfig.DataPlaneClusterScalingType = config.ManualScaling
-	testOsdConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{config.ManualCluster{Schedulable: true, KafkaInstanceLimit: 2, ClusterId: clusterId, SupportedInstanceType: supportedInstanceType}})
+	testOsdConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{dpMock.BuildManualCluster(supportedInstanceType)})
+	noScalingDataplaneClusterConfig := config.DataplaneClusterConfig{
+		DataPlaneClusterScalingType: config.NoScaling,
+	}
 	tests := []struct {
 		name    string
 		fields  fields
@@ -1536,17 +3068,11 @@ func TestClusterManager_reconcileClusterInstanceType(t *testing.T) {
 			name: "Throw an error when update in database fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					UpdateFunc: func(cluster api.Cluster) *ocmErrors.ServiceError {
-						return &ocmErrors.ServiceError{}
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return &apiErrors.ServiceError{}
 					},
 				},
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: config.NoScaling,
-				},
-				cluster: api.Cluster{
-					SupportedInstanceType: "",
-					ClusterID:             clusterId,
-				},
+				dataplaneClusterConfig: &noScalingDataplaneClusterConfig,
 			},
 			wantErr: true,
 		},
@@ -1554,20 +3080,14 @@ func TestClusterManager_reconcileClusterInstanceType(t *testing.T) {
 			name: "Update the cluster instance type in the database to standard,developer when cluster scaling type is not manual",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					UpdateFunc: func(cluster api.Cluster) *ocmErrors.ServiceError {
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						if cluster.SupportedInstanceType != api.AllInstanceTypeSupport.String() {
-							return &ocmErrors.ServiceError{}
+							return &apiErrors.ServiceError{}
 						} // the cluster should support both instance types
 						return nil
 					},
 				},
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: config.NoScaling,
-				},
-				cluster: api.Cluster{
-					ClusterID:             clusterId,
-					SupportedInstanceType: "",
-				},
+				dataplaneClusterConfig: &noScalingDataplaneClusterConfig,
 			},
 			wantErr: false,
 		},
@@ -1577,11 +3097,8 @@ func TestClusterManager_reconcileClusterInstanceType(t *testing.T) {
 				clusterService: &services.ClusterServiceMock{
 					UpdateFunc: nil,
 				},
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: config.NoScaling,
-				},
+				dataplaneClusterConfig: &noScalingDataplaneClusterConfig,
 				cluster: api.Cluster{
-					ClusterID:             clusterId,
 					SupportedInstanceType: api.DeveloperTypeSupport.String(),
 				},
 			},
@@ -1591,16 +3108,15 @@ func TestClusterManager_reconcileClusterInstanceType(t *testing.T) {
 			name: "Update the cluster instance type in the database to the one set in manual cluster configuration",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					UpdateFunc: func(cluster api.Cluster) *ocmErrors.ServiceError {
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						if cluster.SupportedInstanceType != supportedInstanceType {
-							return &ocmErrors.ServiceError{}
+							return &apiErrors.ServiceError{}
 						} // the cluster should support both instance types
 						return nil
 					},
 				},
 				dataplaneClusterConfig: testOsdConfig,
 				cluster: api.Cluster{
-					ClusterID:             clusterId,
 					SupportedInstanceType: api.StandardTypeSupport.String(),
 				},
 			},
@@ -1614,7 +3130,6 @@ func TestClusterManager_reconcileClusterInstanceType(t *testing.T) {
 				},
 				dataplaneClusterConfig: testOsdConfig,
 				cluster: api.Cluster{
-					ClusterID:             "some-randome-cluster-id",
 					SupportedInstanceType: api.StandardTypeSupport.String(),
 				},
 			},
@@ -1624,16 +3139,15 @@ func TestClusterManager_reconcileClusterInstanceType(t *testing.T) {
 			name: "Update the cluster in the database to support both instance types if not found in manual configuration and not already set",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					UpdateFunc: func(cluster api.Cluster) *ocmErrors.ServiceError {
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						if cluster.SupportedInstanceType != api.AllInstanceTypeSupport.String() {
-							return &ocmErrors.ServiceError{}
+							return &apiErrors.ServiceError{}
 						} // the cluster should support both instance types
 						return nil
 					},
 				},
 				dataplaneClusterConfig: testOsdConfig,
 				cluster: api.Cluster{
-					ClusterID:             "some-randome-cluster-id",
 					SupportedInstanceType: "",
 				},
 			},
@@ -1647,24 +3161,207 @@ func TestClusterManager_reconcileClusterInstanceType(t *testing.T) {
 				},
 				dataplaneClusterConfig: testOsdConfig,
 				cluster: api.Cluster{
-					ClusterID:             clusterId,
 					SupportedInstanceType: supportedInstanceType,
 				},
 			},
 			wantErr: false,
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
 					ClusterService:         tt.fields.clusterService,
 				},
 			}
-			err := c.reconcileClusterInstanceType(tt.fields.cluster)
-			gomega.Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(c.reconcileClusterInstanceType(tt.fields.cluster) != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_setClusterStatusMaxCapacityMetrics(t *testing.T) {
+	type fields struct {
+		dataplaneClusterConfig *config.DataplaneClusterConfig
+		providersConfig        config.ProviderConfig
+	}
+	testOsdConfig := config.NewDataplaneClusterConfig()
+	testOsdConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
+		dpMock.BuildManualCluster(supportedInstanceType),
+		config.ManualCluster{
+			Schedulable: false,
+		},
+	})
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "Should return no error and set metrics for supported instance type for given cluster config",
+			fields: fields{
+				dataplaneClusterConfig: testOsdConfig,
+				providersConfig:        supportedProviders,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Should return error when providersConfig doesn't support instance type from dataplaneClusterConfig",
+			fields: fields{
+				dataplaneClusterConfig: testOsdConfig,
+				providersConfig:        config.ProviderConfig{},
+			},
+			wantErr: true,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
+					SupportedProviders:     &tt.fields.providersConfig,
+				},
+			}
+			Expect(c.setClusterStatusMaxCapacityMetrics() != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_setClusterStatusCountMetrics(t *testing.T) {
+	type fields struct {
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should return an error when error is returned from CountByStatus",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to count by status")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should successfully set cluster status count metrics",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
+						return []services.ClusterStatusCount{
+							{
+								Status: api.ClusterReady,
+								Count:  1,
+							},
+						}, nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService: tt.fields.clusterService,
+				},
+			}
+			Expect(c.setClusterStatusCountMetrics() != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_setKafkaPerClusterCountMetrics(t *testing.T) {
+	type fields struct {
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should not return an error with nil counters and no error returned from FindKafkaInstanceCount",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+					return nil, nil
+				}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error when error is returned from FindKafkaInstanceCount",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+					return nil, apiErrors.GeneralError("failed to find kafka instance count")
+				}},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error when error is returned from GetExternalID",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return []services.ResKafkaInstanceCount{
+							{
+								Clusterid: "test02",
+								Count:     1,
+							},
+						}, nil
+					},
+					GetExternalIDFunc: func(clusterId string) (string, *apiErrors.ServiceError) {
+						return "", apiErrors.GeneralError("failed to get external ID")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should successfully set kafka per cluster count metrics",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return []services.ResKafkaInstanceCount{
+							{
+								Clusterid: "test02",
+								Count:     1,
+							},
+						}, nil
+					},
+					GetExternalIDFunc: func(clusterId string) (string, *apiErrors.ServiceError) {
+						return "cluster-id", nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					ClusterService: tt.fields.clusterService,
+				},
+			}
+			Expect(c.setKafkaPerClusterCountMetrics() != nil).To(Equal(tt.wantErr))
 		})
 	}
 }

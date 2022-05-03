@@ -3,14 +3,112 @@ package kafka_mgrs
 import (
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
-	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+
+	dpMock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
 )
+
+func TestKafkaManager_Reconcile(t *testing.T) {
+	type fields struct {
+		kafkaService            services.KafkaService
+		dataplaneClusterConfig  config.DataplaneClusterConfig
+		cloudProviders          config.ProviderConfig
+		accessControlListConfig *acl.AccessControlListConfig
+		kafkaConfig             config.KafkaConfig
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should return an error if setKafkaStatusCountMetric returns an error",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
+						return nil, errors.GeneralError("failed to count kafkas by status")
+					},
+					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
+						return []services.KafkaRegionCount{}, nil
+					},
+					DeprovisionExpiredKafkasFunc: func(kafkaAgeInHours int) *errors.ServiceError {
+						return nil
+					},
+				},
+				dataplaneClusterConfig:  *config.NewDataplaneClusterConfig(),
+				accessControlListConfig: acl.NewAccessControlListConfig(),
+				kafkaConfig:             *config.NewKafkaConfig(),
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if setClusterStatusCapacityMetrics returns an error",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
+						return []services.KafkaStatusCount{}, nil
+					},
+					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
+						return nil, errors.GeneralError("failed to count kafkas by region and instance type")
+					},
+					DeprovisionExpiredKafkasFunc: func(kafkaAgeInHours int) *errors.ServiceError {
+						return nil
+					},
+				},
+				dataplaneClusterConfig:  *config.NewDataplaneClusterConfig(),
+				accessControlListConfig: acl.NewAccessControlListConfig(),
+				kafkaConfig:             *config.NewKafkaConfig(),
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if DeprovisionExpiredKafkas returns an error",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
+						return []services.KafkaStatusCount{}, nil
+					},
+					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
+						return []services.KafkaRegionCount{}, nil
+					},
+					DeprovisionExpiredKafkasFunc: func(kafkaAgeInHours int) *errors.ServiceError {
+						return errors.GeneralError("failed to deprovision expired kafkas")
+					},
+				},
+				dataplaneClusterConfig: *config.NewDataplaneClusterConfig(),
+				accessControlListConfig: &acl.AccessControlListConfig{
+					EnableDenyList: true,
+				},
+				kafkaConfig: *config.NewKafkaConfig(),
+			},
+			wantErr: true,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := &KafkaManager{
+				kafkaService:            tt.fields.kafkaService,
+				dataplaneClusterConfig:  &tt.fields.dataplaneClusterConfig,
+				accessControlListConfig: tt.fields.accessControlListConfig,
+				cloudProviders:          &tt.fields.cloudProviders,
+				kafkaConfig:             &tt.fields.kafkaConfig,
+			}
+
+			Expect(len(k.Reconcile()) > 0).To(Equal(tt.wantErr))
+		})
+	}
+}
 
 func TestKafkaManager_reconcileDeniedKafkaOwners(t *testing.T) {
 	type fields struct {
@@ -67,14 +165,190 @@ func TestKafkaManager_reconcileDeniedKafkaOwners(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			k := &KafkaManager{
 				kafkaService: tt.fields.kafkaService,
 			}
-			err := k.reconcileDeniedKafkaOwners(tt.args.deniedAccounts)
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			Expect(k.reconcileDeniedKafkaOwners(tt.args.deniedAccounts) != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestKafkaManager_setKafkaStatusCountMetric(t *testing.T) {
+	type fields struct {
+		kafkaService services.KafkaService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should return an error if CountByStatus fails",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
+						return nil, errors.GeneralError("failed to count kafkas by status")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should successfully set kafka status count metrics",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
+						return []services.KafkaStatusCount{
+							{
+								Status: constants.KafkaRequestStatusAccepted,
+								Count:  2,
+							},
+						}, nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := NewKafkaManager(tt.fields.kafkaService, nil, nil, nil, nil, workers.Reconciler{})
+
+			Expect(k.setKafkaStatusCountMetric() != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
+	type fields struct {
+		kafkaService           services.KafkaService
+		dataplaneClusterConfig config.DataplaneClusterConfig
+		cloudProviders         config.ProviderConfig
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should return an error if CountByRegionAndInstanceType fails",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
+						return nil, errors.GeneralError("failed to count kafkas")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if calculateAvailableCapacityByRegionAndInstanceType fails",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
+						return []services.KafkaRegionCount{
+							{
+								Region:        "us-east-1",
+								InstanceType:  "standard",
+								ClusterId:     "a",
+								Count:         5,
+								CloudProvider: "aws",
+							},
+						}, nil
+					},
+				},
+				dataplaneClusterConfig: config.DataplaneClusterConfig{
+					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
+						dpMock.BuildManualCluster("invalid"),
+					}),
+				},
+				cloudProviders: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: []config.Provider{
+							{
+								Name:    "aws",
+								Default: true,
+								Regions: []config.Region{
+									{
+										Name:    "us-east-1",
+										Default: true,
+										SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
+											"standard": {Limit: &cloudProviderStandardLimit},
+											"eval":     {Limit: nil},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should successfully assign metrics",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
+						return []services.KafkaRegionCount{
+							{
+								Region:        "us-east-1",
+								InstanceType:  "standard",
+								ClusterId:     "a",
+								Count:         5,
+								CloudProvider: "aws",
+							},
+						}, nil
+					},
+				},
+				dataplaneClusterConfig: config.DataplaneClusterConfig{
+					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
+						dpMock.BuildManualCluster("standard,eval"),
+					}),
+				},
+				cloudProviders: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: []config.Provider{
+							{
+								Name:    "aws",
+								Default: true,
+								Regions: []config.Region{
+									{
+										Name:    "us-east-1",
+										Default: true,
+										SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
+											"standard": {Limit: &cloudProviderStandardLimit},
+											"eval":     {Limit: nil},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := &KafkaManager{
+				kafkaService:           tt.fields.kafkaService,
+				dataplaneClusterConfig: &tt.fields.dataplaneClusterConfig,
+				cloudProviders:         &tt.fields.cloudProviders,
+			}
+
+			Expect(k.setClusterStatusCapacityMetrics() != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -103,17 +377,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 				},
 				dataplaneClusterConfig: config.DataplaneClusterConfig{
 					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
-						{
-							Name:                  "a",
-							ClusterId:             "a",
-							CloudProvider:         "aws",
-							Region:                "us-east-1",
-							MultiAZ:               true,
-							Schedulable:           true,
-							KafkaInstanceLimit:    10,
-							Status:                "ready",
-							SupportedInstanceType: "standard",
-						},
+						dpMock.BuildManualCluster("standard"),
 					}),
 				},
 				cloudProviders: config.ProviderConfig{
@@ -139,7 +403,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 					{
 						Region:        "us-east-1",
 						InstanceType:  "standard",
-						ClusterId:     "a",
+						ClusterId:     "cluster-id",
 						Count:         5,
 						CloudProvider: "aws",
 					},
@@ -163,17 +427,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 				},
 				dataplaneClusterConfig: config.DataplaneClusterConfig{
 					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
-						{
-							Name:                  "a",
-							ClusterId:             "a",
-							CloudProvider:         "aws",
-							Region:                "us-east-1",
-							MultiAZ:               true,
-							Schedulable:           true,
-							KafkaInstanceLimit:    10,
-							Status:                "ready",
-							SupportedInstanceType: "standard,developer",
-						},
+						dpMock.BuildManualCluster("standard,developer"),
 					}),
 				},
 				cloudProviders: config.ProviderConfig{
@@ -200,14 +454,14 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 					{
 						Region:        "us-east-1",
 						InstanceType:  "standard",
-						ClusterId:     "a",
+						ClusterId:     "cluster-id",
 						Count:         5,
 						CloudProvider: "aws",
 					},
 					{
 						Region:        "us-east-1",
 						InstanceType:  "developer",
-						ClusterId:     "a",
+						ClusterId:     "cluster-id",
 						Count:         3,
 						CloudProvider: "aws",
 					},
@@ -234,17 +488,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 				},
 				dataplaneClusterConfig: config.DataplaneClusterConfig{
 					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
-						{
-							Name:                  "a",
-							ClusterId:             "a",
-							CloudProvider:         "aws",
-							Region:                "us-east-1",
-							MultiAZ:               true,
-							Schedulable:           true,
-							KafkaInstanceLimit:    10,
-							Status:                "ready",
-							SupportedInstanceType: "standard",
-						},
+						dpMock.BuildManualCluster("standard"),
 					}),
 				},
 				cloudProviders: config.ProviderConfig{
@@ -270,7 +514,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 					{
 						Region:        "us-east-1",
 						InstanceType:  "standard",
-						ClusterId:     "a",
+						ClusterId:     "cluster-id",
 						Count:         4,
 						CloudProvider: "aws",
 					},
@@ -294,17 +538,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 				},
 				dataplaneClusterConfig: config.DataplaneClusterConfig{
 					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
-						{
-							Name:                  "a",
-							ClusterId:             "a",
-							CloudProvider:         "aws",
-							Region:                "us-east-1",
-							MultiAZ:               true,
-							Schedulable:           true,
-							KafkaInstanceLimit:    10,
-							Status:                "ready",
-							SupportedInstanceType: "developer,standard",
-						},
+						dpMock.BuildManualCluster("developer,standard"),
 					}),
 				},
 				cloudProviders: config.ProviderConfig{
@@ -331,14 +565,14 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 					{
 						Region:        "us-east-1",
 						InstanceType:  "standard",
-						ClusterId:     "a",
+						ClusterId:     "cluster-id",
 						Count:         4,
 						CloudProvider: "aws",
 					},
 					{
 						Region:        "us-east-1",
 						InstanceType:  "developer",
-						ClusterId:     "a",
+						ClusterId:     "cluster-id",
 						Count:         4,
 						CloudProvider: "aws",
 					},
@@ -359,9 +593,10 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			k := &KafkaManager{
 				kafkaService:           tt.fields.kafkaService,
 				dataplaneClusterConfig: &tt.fields.dataplaneClusterConfig,
@@ -369,10 +604,10 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 			}
 
 			results, err := k.calculateAvailableCapacityByRegionAndInstanceType(tt.fields.existingKafkas)
-			gomega.Expect(err).To(gomega.BeNil())
+			Expect(err).To(BeNil())
 
 			for _, result := range results {
-				gomega.Expect(result.Count).To(gomega.Equal(tt.expected[result.Region][result.InstanceType]))
+				Expect(result.Count).To(Equal(tt.expected[result.Region][result.InstanceType]))
 			}
 		})
 	}

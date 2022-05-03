@@ -127,7 +127,6 @@ func Test_Organisation_IsUserAllowed(t *testing.T) {
 				AnyUser:         false,
 			},
 			want: false,
-	
 		},
 	}
 	RegisterTestingT(t)
@@ -335,14 +334,12 @@ func Test_GetDefaultMaxAllowedInstances(t *testing.T) {
 		{
 			name: "Should return the value for MaxAllowedInstances",
 			want: 1,
-	
 		},
 	}
-	RegisterTestingT(t)	
+	RegisterTestingT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(GetDefaultMaxAllowedInstances()).To(Equal(tt.want))
 		})
 	}
 }
-

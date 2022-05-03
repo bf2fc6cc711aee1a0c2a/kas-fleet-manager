@@ -9,12 +9,58 @@ import (
 )
 
 var (
-	testRegion        = "us-west-1"
-	testProvider      = "aws"
-	testCloudProvider = "aws"
-	testMultiAZ       = true
-	testStatus        = api.ClusterProvisioned
-	testClusterID     = "123"
+	testRegion                  = "us-west-1"
+	testProvider                = "aws"
+	testCloudProvider           = "aws"
+	testMultiAZ                 = true
+	testStatus                  = api.ClusterProvisioned
+	TestClusterID               = "123"
+	StrimziOperatorVersion      = "strimzi-cluster-operator.from-cluster"
+	AvailableStrimziVersions, _ = json.Marshal([]api.StrimziVersion{
+		{
+			Version: StrimziOperatorVersion,
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				{
+					Version: "2.7.0",
+				},
+				{
+					Version: "2.8.0",
+				},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				{
+					Version: "2.7",
+				},
+				{
+					Version: "2.8",
+				},
+			},
+		},
+	})
+
+	NoAvailableStrimziVersions, _ = json.Marshal([]api.StrimziVersion{
+		{
+			Version: StrimziOperatorVersion,
+			Ready:   false,
+			KafkaVersions: []api.KafkaVersion{
+				{
+					Version: "2.7.0",
+				},
+				{
+					Version: "2.8.0",
+				},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				{
+					Version: "2.7",
+				},
+				{
+					Version: "2.8",
+				},
+			},
+		},
+	})
 )
 
 // build a test cluster
@@ -25,8 +71,8 @@ func BuildCluster(modifyFn func(cluster *api.Cluster)) *api.Cluster {
 		Region:        testRegion,
 		CloudProvider: testProvider,
 		MultiAZ:       testMultiAZ,
-		ClusterID:     testClusterID,
-		ExternalID:    testClusterID,
+		ClusterID:     TestClusterID,
+		ExternalID:    TestClusterID,
 		Status:        testStatus,
 		ClusterSpec:   clusterSpec,
 		ProviderSpec:  providerSpec,
@@ -46,8 +92,8 @@ func BuildClusterMap(modifyFn func(m []map[string]interface{})) []map[string]int
 			"cloud_provider": testCloudProvider,
 			"multi_az":       testMultiAZ,
 			"status":         testStatus,
-			"cluster_id":     testClusterID,
-			"external_id":    testClusterID,
+			"cluster_id":     TestClusterID,
+			"external_id":    TestClusterID,
 			"created_at":     time.Time{},
 			"deleted_at":     time.Time{},
 			"updated_at":     time.Time{},
