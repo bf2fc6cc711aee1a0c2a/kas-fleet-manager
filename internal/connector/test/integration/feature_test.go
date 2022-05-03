@@ -1,10 +1,11 @@
 package integration
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -22,7 +23,10 @@ func TestMain(m *testing.M) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, teardown := test.NewHelperWithHooks(t, ocmServer,
+	h, teardown := test.NewHelperWithHooksAndDBsetup(t, ocmServer,
+		[]string{"INSERT INTO connector_types (id, name, checksum) VALUES ('OldConnectorTypeId', 'Old Connector Type', 'fakeChecksum1')",
+			"INSERT INTO connector_types (id, name, checksum) VALUES ('OldConnectorTypeStillInUseId', 'Old Connector Type still in use', 'fakeChecksum2')",
+			"INSERT INTO connectors (id, name, connector_type_id) VALUES ('ConnectorUsingOldTypeId', 'Connector using old type', 'OldConnectorTypeStillInUseId')"},
 		func(c *config.ConnectorsConfig, kc *keycloak.KeycloakConfig, reconcilerConfig *workers.ReconcilerConfig) {
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
 			c.ConnectorEvalDuration, _ = time.ParseDuration("2s")

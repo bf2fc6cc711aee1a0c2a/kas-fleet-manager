@@ -16,7 +16,7 @@ Feature: create a connector
     Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types"
     Then the response code should be 200
-    And the ".total" selection from the response should match "2"
+    And the ".total" selection from the response should match "3"
     And I run SQL "SELECT count(*) FROM connector_types WHERE checksum IS NULL AND deleted_at IS NULL" gives results:
       | count |
       | 0     |
@@ -448,12 +448,18 @@ Feature: create a connector
               "type": "object"
             },
             "version": "0.1"
+          },
+          {
+            "href": "/api/connector_mgmt/v1/kafka_connector_types/OldConnectorTypeStillInUseId",
+            "id": "OldConnectorTypeStillInUseId",
+            "kind": "ConnectorType",
+            "name": "Old Connector Type still in use"
           }
         ],
         "kind": "ConnectorTypeList",
         "page": 1,
-        "size": 2,
-        "total": 2
+        "size": 3,
+        "total": 3
       }
       """
 
@@ -1101,7 +1107,7 @@ Feature: create a connector
          "kind": "ConnectorTypeList",
          "page": 2,
          "size": 1,
-         "total": 2
+         "total": 3
       }
       """
 
