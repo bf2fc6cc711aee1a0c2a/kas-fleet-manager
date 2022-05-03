@@ -234,7 +234,7 @@ func Test_kafkaService_Get(t *testing.T) {
 		// below is a single test case, we define each of the fields that we care about from the anonymous test struct
 		// above
 		{
-			name: "error when id is undefined",
+			name: "error when kafka id is undefined",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
@@ -324,7 +324,7 @@ func Test_kafkaService_GetById(t *testing.T) {
 		setupFn func()
 	}{
 		{
-			name: "error when id is undefined",
+			name: "error when kafka id is undefined",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
@@ -636,7 +636,7 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 			},
 		},
 		{
-			name: "error when id is undefined",
+			name: "error when id is an empty string",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
@@ -2341,36 +2341,6 @@ func Test_KafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 			},
 			wantErr: true,
 		},
-		{
-			name: "should return error if it creates aws client",
-			fields: fields{
-				awsClient: &aws.ClientMock{
-					ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
-						if len(recordChangeBatch.Changes) != 1 {
-							return nil, goerrors.Errorf("number of record changes should be 1")
-						}
-						if *recordChangeBatch.Changes[0].Action != "CREATE" {
-							return nil, goerrors.Errorf("the action of the record change is not CREATE")
-						}
-						return nil, nil
-					},
-					ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
-						return nil, nil
-					},
-				},
-			},
-			args: args{
-				kafkaRequest: &dbapi.KafkaRequest{
-					Meta: api.Meta{
-						ID: "test-kafka-id",
-					},
-					Name:   "test-kafka-cname",
-					Region: testKafkaRequestRegion,
-				},
-				action: KafkaRoutesActionCreate,
-			},
-			wantErr: true,
-		},
 	}
 
 	for _, tt := range tests {
@@ -2789,9 +2759,11 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 				keycloakService:   tt.fields.keycloakService,
 				kafkaConfig:       tt.fields.kafkaConfig,
 			}
-			got, got1 := k.GetManagedKafkaByClusterID(tt.args.clusterID)
+			got, err := k.GetManagedKafkaByClusterID(tt.args.clusterID)
 			Expect(got).To(Equal(tt.want))
-			Expect(got1).To(Equal(tt.wantErr))
+			if err != nil{
+			Expect(err).To(Equal(tt.wantErr))
+			}
 		})
 	}
 }
@@ -3262,7 +3234,7 @@ func Test_kafkaService_ListKafkasWithRoutesNotCreated(t *testing.T) {
 		name    string
 		fields  fields
 		want    []*dbapi.KafkaRequest
-		want1   *errors.ServiceError
+		wantErr   *errors.ServiceError
 		setupFn func()
 	}{
 		{

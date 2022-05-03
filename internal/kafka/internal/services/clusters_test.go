@@ -152,7 +152,7 @@ func Test_Cluster_Create(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "failed to get provider implementation",
+			name: "An error is returned when the cloud provider cannot be obtained",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{
@@ -252,7 +252,7 @@ func Test_GetClusterDNS(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "failed to get cluster DNS from OCM",
+			name: "An error is returned when the cluster DNS cannot be obtained from OCM",
 			fields: fields{
 				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 					return &clusters.ProviderMock{GetClusterDNSFunc: func(clusterSpec *types.ClusterSpec) (string, error) {
@@ -266,7 +266,7 @@ func Test_GetClusterDNS(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "failed to get provider implementation",
+			name: "An error is returned when the cloud provider cannot be obtained",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{
@@ -595,7 +595,7 @@ func Test_ListByStatus(t *testing.T) {
 	}
 }
 
-func Test_ClusterService_Update(t *testing.T) {
+func Test_clusterService_Update(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
@@ -976,7 +976,7 @@ func Test_ScaleDownComputeNodes(t *testing.T) {
 	}
 }
 
-func Test_ClusterService_ListGroupByProviderAndRegion(t *testing.T) {
+func Test_clusterService_ListGroupByProviderAndRegion(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		providers         []string
@@ -1237,7 +1237,7 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 			}
 			got, err := c.ListAllClusterIds()
 			if err != nil && err != tt.wantErr {
-				t.Errorf("ListAllClusterIds() got1 = %v, want %v", err, tt.wantErr)
+				t.Errorf("ListAllClusterIds() err = %v, want %v", err, tt.wantErr)
 				return
 			}
 			Expect(got).To(Equal(tt.want))
@@ -1483,7 +1483,7 @@ func Test_clusterService_UpdateMultiClusterStatus(t *testing.T) {
 	}
 }
 
-func Test_ClusterService_CountByStatus(t *testing.T) {
+func Test_clusterService_CountByStatus(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
@@ -1565,7 +1565,7 @@ func Test_ClusterService_CountByStatus(t *testing.T) {
 	}
 }
 
-func Test_ClusterService_GetComputeNodes(t *testing.T) {
+func Test_clusterService_GetComputeNodes(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		clusterProviderFactory clusters.ProviderFactory
@@ -1633,7 +1633,7 @@ func Test_ClusterService_GetComputeNodes(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "failed to get provider implementation",
+			name: "An error is returned when the cloud provider cannot be obtained",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{
@@ -1670,7 +1670,7 @@ func Test_ClusterService_GetComputeNodes(t *testing.T) {
 	}
 }
 
-func Test_ClusterService_CheckClusterStatus(t *testing.T) {
+func Test_clusterService_CheckClusterStatus(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		clusterProviderFactory clusters.ProviderFactory
@@ -1753,7 +1753,7 @@ func Test_ClusterService_CheckClusterStatus(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "failed to get provider implementation",
+			name: "An error is returned when the cloud provider cannot be obtained",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{
@@ -1797,7 +1797,7 @@ func Test_ClusterService_CheckClusterStatus(t *testing.T) {
 	}
 }
 
-func Test_ClusterService_RemoveClusterFromProvider(t *testing.T) {
+func Test_clusterService_RemoveClusterFromProvider(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		clusterProviderFactory clusters.ProviderFactory
@@ -1863,7 +1863,7 @@ func Test_ClusterService_RemoveClusterFromProvider(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "failed to get provider implementation",
+			name: "An error is returned when the cloud provider cannot be obtained",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{
@@ -1900,7 +1900,7 @@ func Test_ClusterService_RemoveClusterFromProvider(t *testing.T) {
 	}
 }
 
-func Test_ClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
+func Test_clusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		clusterProviderFactory clusters.ProviderFactory
@@ -2001,7 +2001,7 @@ func Test_ClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "failed to get provider implementation",
+			name: "An error is returned when the cloud provider cannot be obtained",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{
@@ -2038,7 +2038,7 @@ func Test_ClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 	}
 }
 
-func Test_ClusterService_ApplyResources(t *testing.T) {
+func Test_clusterService_ApplyResources(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		clusterProviderFactory clusters.ProviderFactory
@@ -2107,7 +2107,7 @@ func Test_ClusterService_ApplyResources(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "failed to get provider implementation",
+			name: "An error is returned when the cloud provider cannot be obtained",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{
@@ -2142,7 +2142,7 @@ func Test_ClusterService_ApplyResources(t *testing.T) {
 	}
 }
 
-func Test_ClusterService_InstallStrimzi(t *testing.T) {
+func Test_clusterService_InstallStrimzi(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		clusterProviderFactory clusters.ProviderFactory
@@ -2213,7 +2213,7 @@ func Test_ClusterService_InstallStrimzi(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "failed to get provider implementation",
+			name: "An error is returned when the cloud provider cannot be obtained",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{
@@ -2252,7 +2252,7 @@ func Test_ClusterService_InstallStrimzi(t *testing.T) {
 	}
 }
 
-func Test_ClusterService_ClusterLogging(t *testing.T) {
+func Test_clusterService_ClusterLogging(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		clusterProviderFactory clusters.ProviderFactory
@@ -2325,7 +2325,7 @@ func Test_ClusterService_ClusterLogging(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "failed to get provider implementation",
+			name: "An error is returned when the cloud provider cannot be obtained",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{
@@ -2364,7 +2364,7 @@ func Test_ClusterService_ClusterLogging(t *testing.T) {
 	}
 }
 
-func Test_ClusterService_GetExternalID(t *testing.T) {
+func Test_clusterService_GetExternalID(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		clusterProviderFactory clusters.ProviderFactory
@@ -2519,7 +2519,7 @@ func Test_clusterService_GetClientId(t *testing.T) {
 			want:    "ClientID",
 		},
 		{
-			name: "Should return empty string if cluster is nil",
+			name: "An empty string is returned if the provided cluster is not found",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{},
@@ -2676,6 +2676,14 @@ func Test_clusterService_IsStrimziKafkaVersionAvailableInCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal("failed to convert available strimzi versions to json")
 	}
+
+	false_availableStrimziVersions, err := json.Marshal([]api.StrimziVersion{
+		{
+			Version: strimziOperatorVersion,
+			Ready:   false,
+		},
+	})
+
 	if err != nil {
 		t.Fatal("failed to convert available strimzi versions to json")
 	}
@@ -2715,13 +2723,58 @@ func Test_clusterService_IsStrimziKafkaVersionAvailableInCluster(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should return false if Strimzi kafka versions are available in cluster",
+			name: "Returns false if the provided kafka and kafka ibp versions are not available in the cluster",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				providerFactory:   &clusters.ProviderFactoryMock{},
 			},
 			args: args{
 				cluster:        mockCluster,
+				strimziVersion: "fake-strimzi-version",
+				kafkaVersion:   "fake-kafka-version",
+				ibpVersion:     "fake-ibpversion",
+			},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "Returns false if kafka version is available in the cluster but the kafka ibp version is not available in the cluster",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				providerFactory:   &clusters.ProviderFactoryMock{},
+			},
+			args: args{
+				cluster:        mockCluster,
+				strimziVersion: "fake-strimzi-version",
+				kafkaVersion:   "fake-kafka-version",
+			},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "Returns false if kafka ibp version is available in the cluster but the kafka version is not available in the cluster",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				providerFactory:   &clusters.ProviderFactoryMock{},
+			},
+			args: args{
+				cluster:        mockCluster,
+				strimziVersion: "fake-strimzi-version",
+				ibpVersion:     "fake-ibpversion",
+			},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "Returns false if kafka version and kafka ibp versions are in the cluster but its corresponding strimzi version is not ready",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				providerFactory:   &clusters.ProviderFactoryMock{},
+			},
+			args: args{
+				cluster:        &api.Cluster{
+					AvailableStrimziVersions: false_availableStrimziVersions,
+				},
 				strimziVersion: "fake-strimzi-version",
 				kafkaVersion:   "fake-kafka-version",
 				ibpVersion:     "fake-ibpversion",
@@ -2765,9 +2818,26 @@ func Test_clusterService_SetComputeNodes(t *testing.T) {
 			name: "should return nil and error if clusterID is undefined",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				providerFactory:   &clusters.ProviderFactoryMock{},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
+								return &types.ClusterSpec{
+									InternalID: testClusterID,
+								}, nil
+							},
+							SetComputeNodesFunc: func(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error) {
+								return &types.ClusterSpec{
+									InternalID: testClusterID,
+								}, nil
+							},
+						}, nil
+
+					}},
 			},
-			args:    args{},
+			args:    args{
+				numNodes: 2,
+			},
 			want:    nil,
 			wantErr: true,
 			setupFn: func() {},
@@ -2817,7 +2887,7 @@ func Test_clusterService_SetComputeNodes(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "failed to get provider implementation",
+			name: "An error is returned when the cloud provider cannot be obtained",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				providerFactory: &clusters.ProviderFactoryMock{
@@ -2872,9 +2942,9 @@ func Test_clusterService_SetComputeNodes(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 				providerFactory:   tt.fields.providerFactory,
 			}
-			got, got1 := c.SetComputeNodes(tt.args.clusterID, tt.args.numNodes)
+			got, err := c.SetComputeNodes(tt.args.clusterID, tt.args.numNodes)
 			Expect(got).To(Equal(tt.want))
-			Expect(got1 != nil).To(Equal(tt.wantErr))
+			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }

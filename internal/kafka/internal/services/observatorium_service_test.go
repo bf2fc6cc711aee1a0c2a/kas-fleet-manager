@@ -201,9 +201,9 @@ func Test_observatoriumService_GetMetricsByKafkaId(t *testing.T) {
 				observatorium: tt.fields.observatorium,
 				kafkaService:  tt.fields.kafkaService,
 			}
-			got, got1 := obs.GetMetricsByKafkaId(tt.args.ctx, tt.args.kafkasMetrics, tt.args.id, tt.args.query)
+			got, err := obs.GetMetricsByKafkaId(tt.args.ctx, tt.args.kafkasMetrics, tt.args.id, tt.args.query)
 			Expect(got).To(Equal(tt.want))
-			Expect(got1 != nil).To(Equal(tt.wantErr))
+			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }

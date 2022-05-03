@@ -78,7 +78,7 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 			},
 		},
 		{
-			name:          "An error is returned when svcErr != nil",
+			name:          "An error is returned when an error occurs while trying to retrieve the cluter using its id",
 			clusterID:     testClusterID,
 			clusterStatus: nil,
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
@@ -92,7 +92,7 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:          "An error is returned when Status: api.ClusterFailed ",
+			name:          "Returns nil if cluster cannot process status reports",
 			clusterID:     testClusterID,
 			clusterStatus: nil,
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
@@ -112,7 +112,7 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:      "an error is returned when fleetShardOperatorReady is false",
+			name:      "An error is returned when the fleet shard operator is not ready",
 			clusterID: testClusterID,
 			clusterStatus: &dbapi.DataPlaneClusterStatus{
 				Conditions: []dbapi.DataPlaneClusterStatusCondition{
@@ -749,7 +749,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 	}
 }
 
-func Test_NewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
+func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 	type fields struct {
 		clusterService             ClusterService
 		ObservabilityConfiguration *observatorium.ObservabilityConfiguration
@@ -806,7 +806,7 @@ func Test_NewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 			want:    nil,
 		},
 		{
-			name: "should return nil if cluster == nil",
+			name: "nil is returned when the provided cluster cannot be found",
 			fields: fields{
 				clusterService: &ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {

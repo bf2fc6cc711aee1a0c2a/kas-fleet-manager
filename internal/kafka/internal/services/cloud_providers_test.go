@@ -146,7 +146,7 @@ func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 			},
 		},
 		{
-			name: "failed to get provider implementation",
+			name: "An error is returned when the cloud provider cannot be obtained",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				providerFactory: &clusters.ProviderFactoryMock{
@@ -403,6 +403,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().WithQuery("SELECT DISTINCT").WithError(errors.New("some-error"))
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 		},
 		{
@@ -483,6 +484,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 				mocket.Catcher.NewMock().
 					WithQuery("SELECT DISTINCT").
 					WithReply([]map[string]interface{}{{"provider_type": "ocm"}, {"provider_type": "standalone"}})
+					mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 			wantErr: false,
 			want: []api.CloudRegion{
@@ -499,7 +501,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 			},
 		},
 		{
-			name: "failed to get provider implementation",
+			name: "An error is returned when the cloud provider cannot be obtained",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				providerFactory: &clusters.ProviderFactoryMock{
@@ -509,10 +511,16 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			setupFn: func() {},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().
+					WithQuery("SELECT DISTINCT").
+					WithReply([]map[string]interface{}{{"provider_type": "ocm"}, {"provider_type": "standalone"}})
+					mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
 		},
 		{
-			name: "failed to retrieve cloud regions",
+			name: "An error is returned when the cloud regions cannot be obtained",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				providerFactory: &clusters.ProviderFactoryMock{
@@ -537,7 +545,13 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			setupFn: func() {},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().
+					WithQuery("SELECT DISTINCT").
+					WithReply([]map[string]interface{}{{"provider_type": "ocm"}, {"provider_type": "standalone"}})
+					mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
 		},
 	}
 	RegisterTestingT(t)
@@ -623,6 +637,7 @@ func Test_cloudProvidersService_ListCachedCloudProviderRegions(t *testing.T) {
 				mocket.Catcher.NewMock().
 					WithQuery("SELECT DISTINCT").
 					WithReply([]map[string]interface{}{{"provider_type": "ocm"}, {"provider_type": "standalone"}})
+					mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			args: args{
 				id: "azure",

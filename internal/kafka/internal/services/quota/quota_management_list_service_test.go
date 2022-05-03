@@ -478,7 +478,7 @@ func Test_DefaultQuotaServiceFactory_GetQuotaService(t *testing.T) {
 		fields fields
 		args   args
 		want   services.QuotaService
-		want1  *errors.ServiceError
+		wantErr  *errors.ServiceError
 	}{
 		{
 			name: "Should return nil and error if QuotaType is invalid",
@@ -489,7 +489,7 @@ func Test_DefaultQuotaServiceFactory_GetQuotaService(t *testing.T) {
 				quoataType: api.UndefinedQuotaType,
 			},
 			want:  nil,
-			want1: errors.GeneralError("invalid quota service type: %v", api.QuotaManagementListQuotaType),
+			wantErr: errors.GeneralError("invalid quota service type: %v", api.QuotaManagementListQuotaType),
 		},
 	}
 	RegisterTestingT(t)
@@ -498,9 +498,9 @@ func Test_DefaultQuotaServiceFactory_GetQuotaService(t *testing.T) {
 			factory := &DefaultQuotaServiceFactory{
 				quotaServiceContainer: map[api.QuotaType]services.QuotaService{},
 			}
-			got, got1 := factory.GetQuotaService(tt.args.quoataType)
-			Expect(got).To(BeNil())
-			Expect(got1).To(Equal(tt.want1))
+			quotaService, err := factory.GetQuotaService(tt.args.quoataType)
+			Expect(quotaService).To(BeNil())
+			Expect(err).To(Equal(tt.wantErr))
 		})
 	}
 }
