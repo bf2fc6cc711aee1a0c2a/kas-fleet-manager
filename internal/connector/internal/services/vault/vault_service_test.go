@@ -6,6 +6,7 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -42,6 +43,7 @@ func TestNewVaultService(t *testing.T) {
 				AccessKey:       vc.AccessKey,
 				SecretAccessKey: vc.SecretAccessKey,
 				Region:          vc.Region,
+				SecretPrefix:    "managed-connectors",
 			},
 			skip: vc.Kind != vault.KindAws,
 		},
@@ -80,7 +82,7 @@ func happyPath(vault vault.VaultService, numSecrets int, t *testing.T) {
 	g.Expect(counter).Should(gomega.Equal(numSecrets))
 
 	keyName := api.NewID()
-	err = vault.SetSecretString(keyName, "hello", "thistest")
+	err = vault.SetSecretString(keyName, "hello", handlers.OwningResourcePrefix+"thistest")
 	g.Expect(err).Should(gomega.BeNil())
 
 	value, err := vault.GetSecretString(keyName)
