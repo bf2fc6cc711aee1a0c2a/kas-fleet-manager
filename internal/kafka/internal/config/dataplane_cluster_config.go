@@ -32,18 +32,19 @@ type DataplaneClusterConfig struct {
 	// 'manual' to use OSD Cluster configuration file,
 	// 'auto' to use dynamic scaling
 	// 'none' to disabled scaling all together, useful in testing
-	DataPlaneClusterScalingType           string `json:"dataplane_cluster_scaling_type"`
-	DataPlaneClusterConfigFile            string `json:"dataplane_cluster_config_file"`
-	ReadOnlyUserList                      userv1.OptionalNames
-	ReadOnlyUserListFile                  string
-	KafkaSREUsers                         userv1.OptionalNames
-	KafkaSREUsersFile                     string
-	ClusterConfig                         *ClusterConfig `json:"clusters_config"`
-	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
-	Kubeconfig                            string         `json:"kubeconfig"`
-	RawKubernetesConfig                   *clientcmdapi.Config
-	StrimziOperatorOLMConfig              OperatorInstallationConfig `json:"strimzi_operator_olm_config"`
-	KasFleetshardOperatorOLMConfig        OperatorInstallationConfig `json:"kas_fleetshard_operator_olm_config"`
+	DataPlaneClusterScalingType                 string `json:"dataplane_cluster_scaling_type"`
+	DataPlaneClusterConfigFile                  string `json:"dataplane_cluster_config_file"`
+	ReadOnlyUserList                            userv1.OptionalNames
+	ReadOnlyUserListFile                        string
+	KafkaSREUsers                               userv1.OptionalNames
+	KafkaSREUsersFile                           string
+	ClusterConfig                               *ClusterConfig `json:"clusters_config"`
+	EnableReadyDataPlaneClustersReconcile       bool           `json:"enable_ready_dataplane_clusters_reconcile"`
+	EnableKafkaSreIdentityProviderConfiguration bool
+	Kubeconfig                                  string `json:"kubeconfig"`
+	RawKubernetesConfig                         *clientcmdapi.Config
+	StrimziOperatorOLMConfig                    OperatorInstallationConfig `json:"strimzi_operator_olm_config"`
+	KasFleetshardOperatorOLMConfig              OperatorInstallationConfig `json:"kas_fleetshard_operator_olm_config"`
 }
 
 type OperatorInstallationConfig struct {
@@ -75,17 +76,18 @@ func getDefaultKubeconfig() string {
 
 func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	return &DataplaneClusterConfig{
-		OpenshiftVersion:                      "",
-		ComputeMachineType:                    "m5.2xlarge",
-		ImagePullDockerConfigContent:          "",
-		ImagePullDockerConfigFile:             "secrets/image-pull.dockerconfigjson",
-		DataPlaneClusterConfigFile:            "config/dataplane-cluster-configuration.yaml",
-		ReadOnlyUserListFile:                  "config/read-only-user-list.yaml",
-		KafkaSREUsersFile:                     "config/kafka-sre-user-list.yaml",
-		DataPlaneClusterScalingType:           ManualScaling,
-		ClusterConfig:                         &ClusterConfig{},
-		EnableReadyDataPlaneClustersReconcile: true,
-		Kubeconfig:                            getDefaultKubeconfig(),
+		OpenshiftVersion:                            "",
+		ComputeMachineType:                          "m5.2xlarge",
+		ImagePullDockerConfigContent:                "",
+		ImagePullDockerConfigFile:                   "secrets/image-pull.dockerconfigjson",
+		DataPlaneClusterConfigFile:                  "config/dataplane-cluster-configuration.yaml",
+		ReadOnlyUserListFile:                        "config/read-only-user-list.yaml",
+		KafkaSREUsersFile:                           "config/kafka-sre-user-list.yaml",
+		DataPlaneClusterScalingType:                 ManualScaling,
+		ClusterConfig:                               &ClusterConfig{},
+		EnableReadyDataPlaneClustersReconcile:       true,
+		EnableKafkaSreIdentityProviderConfiguration: true,
+		Kubeconfig:                                  getDefaultKubeconfig(),
 		StrimziOperatorOLMConfig: OperatorInstallationConfig{
 			IndexImage:             "quay.io/osd-addons/managed-kafka:production-82b42db",
 			Namespace:              constants.StrimziOperatorNamespace,
@@ -271,6 +273,7 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ReadOnlyUserListFile, "read-only-user-list-file", c.ReadOnlyUserListFile, "File contains a list of users with read-only permissions to data plane clusters")
 	fs.StringVar(&c.KafkaSREUsersFile, "kafka-sre-user-list-file", c.KafkaSREUsersFile, "File contains a list of kafka-sre users with cluster-admin permissions to data plane clusters")
 	fs.BoolVar(&c.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", c.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
+	fs.BoolVar(&c.EnableKafkaSreIdentityProviderConfiguration, "enable-kafka-sre-identity-provider-configuration", c.EnableKafkaSreIdentityProviderConfiguration, "Enable the configuration of Kafka_SRE identity provider on the data plane cluster")
 	fs.StringVar(&c.Kubeconfig, "kubeconfig", c.Kubeconfig, "A path to kubeconfig file used for communication with standalone clusters")
 	fs.StringVar(&c.StrimziOperatorOLMConfig.IndexImage, "strimzi-operator-index-image", c.StrimziOperatorOLMConfig.IndexImage, "Strimzi operator index image")
 	fs.StringVar(&c.StrimziOperatorOLMConfig.Namespace, "strimzi-operator-namespace", c.StrimziOperatorOLMConfig.Namespace, "Strimzi operator namespace")

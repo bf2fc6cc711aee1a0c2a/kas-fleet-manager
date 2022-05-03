@@ -116,6 +116,10 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 
 ## Dataplane Cluster Management
 - **enable-ready-dataplane-clusters-reconcile**: Enables reconciliation of data plane clusters in a `Ready` state.
+- **enable-kafka-sre-identity-provider-configuration**: Enable the configuration of Kafka_SRE identity provider on the data plane cluster. If enabled, the following flags are required.
+    - `osd-idp-mas-sso-client-id-file` [Required]: The path to the file containing a Keycloak account client ID that has access to the Kafka SRE realm (default: `'secrets/osd-idp-keycloak-service.clientId'`).
+    - `osd-idp-mas-sso-client-secret-file` [Required]: The path to the file containing a Keycloak account client secret that has access to the Kafka SRE realm (default: `'secrets/osd-idp-keycloak-service.clientSecret'`).
+    - `osd-idp-mas-sso-realm` [Required]: The Keycloak realm to be used for the Kafka SRE.
 - **kubeconfig**: A path to kubeconfig file used to communicate with standalone dataplane clusters.
 - **dataplane-cluster-scaling-type**: Sets the behaviour of how the service manages and scales OSD clusters (options: `manual`, `auto` or `none`).
     > For more information on the different dataplane cluster scaling types and their behaviour, see the [dataplane osd cluster options](./data-plane-osd-cluster-options.md) documentation.
