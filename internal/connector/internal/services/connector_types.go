@@ -118,10 +118,16 @@ func (cts *connectorTypesService) Get(id string) (*dbapi.ConnectorType, *errors.
 	return &resource, nil
 }
 
-var validColumns = []string{"name", "description", "version", "label", "channel"}
+func GetValidConnectorTypeColumns() []string {
+	return []string{"name", "description", "version", "label", "channel"}
+}
 
 // List returns all connector types
 func (cts *connectorTypesService) List(ctx context.Context, listArgs *services.ListArguments) (dbapi.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError) {
+	if err := listArgs.Validate(GetValidConnectorTypeColumns()); err != nil {
+		return nil, nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list connector type requests: %s", err.Error())
+	}
+
 	//var resourceList dbapi.ConnectorTypeList
 	var resourceList dbapi.ConnectorTypeList
 	dbConn := cts.connectionFactory.New()
@@ -132,7 +138,7 @@ func (cts *connectorTypesService) List(ctx context.Context, listArgs *services.L
 
 	// Apply search query
 	if len(listArgs.Search) > 0 {
-		queryParser := coreServices.NewQueryParser(validColumns...)
+		queryParser := coreServices.NewQueryParser(GetValidConnectorTypeColumns()...)
 		searchDbQuery, err := queryParser.Parse(listArgs.Search)
 		if err != nil {
 			return resourceList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector type requests: %s", err.Error())
@@ -306,7 +312,7 @@ func (cts *connectorTypesService) CatalogEntriesReconciled() (bool, *errors.Serv
 
 	var connectorTypes dbapi.ConnectorTypeList
 	dbConn := cts.connectionFactory.New()
-	if err := dbConn.Select(`id, checksum`).Where(`id in ?`, typeIds).
+	if err := dbConn.Select("id, checksum").Where("id in ?", typeIds).
 		Find(&connectorTypes).Error; err != nil {
 		return false, services.HandleGetError("Connector type", "id", typeIds, err)
 	}

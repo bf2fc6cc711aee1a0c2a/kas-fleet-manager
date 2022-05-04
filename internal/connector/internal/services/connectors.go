@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"strings"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -11,7 +13,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
 	goerrors "github.com/pkg/errors"
 	"github.com/spyzhov/ajson"
-	"strings"
 
 	"gorm.io/gorm"
 
@@ -206,10 +207,16 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 	return nil
 }
 
-var validConnectorColumns = []string{"name", "owner", "kafka_id", "connector_type_id", "desired_state", "channel", "namespace_id"}
+func GetValidConnectorColumns() []string {
+	return []string{"name", "owner", "kafka_id", "connector_type_id", "desired_state", "channel", "namespace_id"}
+}
 
 // List returns all connectors visible to the user within the requested paging window.
 func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *services.ListArguments, tid string, clusterId string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
+	if err := listArgs.Validate(GetValidConnectorColumns()); err != nil {
+		return nil, nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list connector type requests: %s", err.Error())
+	}
+
 	dbConn := k.connectionFactory.New()
 	pagingMeta := &api.PagingMeta{
 		Page: listArgs.Page,
@@ -242,7 +249,7 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 
 	// Apply search query
 	if len(listArgs.Search) > 0 {
-		queryParser := coreServices.NewQueryParser(validConnectorColumns...)
+		queryParser := coreServices.NewQueryParser(GetValidConnectorColumns()...)
 		searchDbQuery, err := queryParser.Parse(listArgs.Search)
 		if err != nil {
 			return nil, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector requests: %s", err.Error())

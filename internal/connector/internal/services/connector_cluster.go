@@ -372,7 +372,9 @@ func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *
 	return nil
 }
 
-var validDeploymentColumns = []string{"connector_id", "connector_version", "connector_type_channel_id", "cluster_id", "operator_id", "namespace_id"}
+func GetValidDeploymentColumns() []string {
+	return []string{"connector_id", "connector_version", "connector_type_channel_id", "cluster_id", "operator_id", "namespace_id"}
+}
 
 // ListConnectorDeployments returns all deployments assigned to the cluster
 func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, id string, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError) {
@@ -393,7 +395,7 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 
 	// Apply search query
 	if len(listArgs.Search) > 0 {
-		queryParser := coreServices.NewQueryParser(validDeploymentColumns...)
+		queryParser := coreServices.NewQueryParser(GetValidDeploymentColumns()...)
 		searchDbQuery, err := queryParser.Parse(listArgs.Search)
 		if err != nil {
 			return resourceList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector deployments requests: %s", err.Error())

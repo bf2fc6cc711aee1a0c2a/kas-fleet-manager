@@ -21,6 +21,35 @@ Feature: create a connector
       | count |
       | 0     |
 
+  Scenario: Gary tries to sql inject connector type listing
+    Given I am logged in as "Gary"
+    When I GET path "/v1/kafka_connector_types?orderBy=CAST(CHR(32)||(SELECT+version())+AS+NUMERIC)"
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "id":"17",
+        "kind":"Error",
+        "href":"/api/connector_mgmt/v1/errors/17",
+        "code":"CONNECTOR-MGMT-17",
+        "reason":"Unable to list connector type requests: invalid order by clause 'CAST(CHR(32)||(SELECT version()) AS NUMERIC)'",
+        "operation_id": "${response.operation_id}"
+      }
+      """
+
+    When I GET path "/v1/kafka_connector_types?search=CAST(CHR(32)||(SELECT+version())+AS+NUMERIC)"
+    Then the response code should be 400
+      """
+      {
+        "id":"23",
+        "kind":"Error",
+        "href":"/api/connector_mgmt/v1/errors/23",
+        "code":"CONNECTOR-MGMT-23",
+        "reason":"Unable to list connector type requests: [1] error parsing the filter: invalid column name: 'CAST'",
+        "operation_id": "${response.operation_id}"
+      }
+      """
+
   Scenario: Gary lists all connector types
     Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types"
@@ -1108,6 +1137,35 @@ Feature: create a connector
          "page": 2,
          "size": 1,
          "total": 3
+      }
+      """
+
+  Scenario: Gary tries to sql inject connector listing
+    Given I am logged in as "Gary"
+    When I GET path "/v1/kafka_connectors?orderBy=CAST(CHR(32)||(SELECT+version())+AS+NUMERIC)"
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "id":"17",
+        "kind":"Error",
+        "href":"/api/connector_mgmt/v1/errors/17",
+        "code":"CONNECTOR-MGMT-17",
+        "reason":"Unable to list connector type requests: invalid order by clause 'CAST(CHR(32)||(SELECT version()) AS NUMERIC)'",
+        "operation_id": "${response.operation_id}"
+      }
+      """
+
+    When I GET path "/v1/kafka_connectors?search=CAST(CHR(32)||(SELECT+version())+AS+NUMERIC)"
+    Then the response code should be 400
+      """
+      {
+        "id":"23",
+        "kind":"Error",
+        "href":"/api/connector_mgmt/v1/errors/23",
+        "code":"CONNECTOR-MGMT-23",
+        "reason":"Unable to list connector type requests: [1] error parsing the filter: invalid column name: 'CAST'",
+        "operation_id": "${response.operation_id}"
       }
       """
 

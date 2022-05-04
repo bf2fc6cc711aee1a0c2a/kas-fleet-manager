@@ -219,6 +219,35 @@ Feature: connector namespaces API
       | Kevin  | kevin_user_id  |
       | Carl    | carl_user_id    |
 
+  Scenario: Gru tries to sql inject namespaces listing
+    Given I am logged in as "Gru"
+    When I GET path "/v1/kafka_connector_namespaces?orderBy=CAST(CHR(32)||(SELECT+version())+AS+NUMERIC)"
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "id":"17",
+        "kind":"Error",
+        "href":"/api/connector_mgmt/v1/errors/17",
+        "code":"CONNECTOR-MGMT-17",
+        "reason":"Unable to list connector type requests: invalid order by clause 'CAST(CHR(32)||(SELECT version()) AS NUMERIC)'",
+        "operation_id": "${response.operation_id}"
+      }
+      """
+
+    When I GET path "/v1/kafka_connector_namespaces?search=CAST(CHR(32)||(SELECT+version())+AS+NUMERIC)"
+    Then the response code should be 400
+      """
+      {
+        "id":"23",
+        "kind":"Error",
+        "href":"/api/connector_mgmt/v1/errors/23",
+        "code":"CONNECTOR-MGMT-23",
+        "reason":"Unable to list connector type requests: [1] error parsing the filter: invalid column name: 'CAST'",
+        "operation_id": "${response.operation_id}"
+      }
+      """
+
   Scenario: Create namespaces in cluster for organization 13640230
     Given I am logged in as "Dusty"
     When I POST path "/v1/kafka_connector_clusters" with json body:
