@@ -163,8 +163,8 @@ func (k *connectorNamespaceService) Update(ctx context.Context, request *dbapi.C
 	}
 
 	// reload namespace to get version update
-	if err := dbConn.Select(`version`).First(request).Error; err != nil {
-		return services.HandleGetError(`Connector namespace`, `id`, request.ID, err)
+	if err := dbConn.Select("version").First(request).Error; err != nil {
+		return services.HandleGetError("Connector namespace", "id", request.ID, err)
 	}
 
 	return nil
@@ -179,7 +179,7 @@ func (k *connectorNamespaceService) Get(ctx context.Context, namespaceID string)
 	}
 	if err := dbConn.Preload("Annotations").Preload("TenantUser").Preload("TenantOrganisation").
 		Unscoped().First(result).Error; err != nil {
-		return nil, services.HandleGetError(`Connector namespace`, `id`, namespaceID, err)
+		return nil, services.HandleGetError("Connector namespace", "id", namespaceID, err)
 	}
 	if result.DeletedAt.Valid {
 		return nil, services.HandleGoneError("Connector namespace", "id", namespaceID)
@@ -231,9 +231,15 @@ func (k *connectorNamespaceService) setConnectorsDeployed(namespaces dbapi.Conne
 	return nil
 }
 
-var validNamespaceColumns = []string{`name`, `cluster_id`, `owner`, `expiration`, `tenant_user_id`, `tenant_organisation_id`, `status_phase`}
+func GetValidNamespaceColumns() []string {
+	return []string{`name`, `cluster_id`, `owner`, `expiration`, `tenant_user_id`, `tenant_organisation_id`, `status_phase`}
+}
 
 func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []string, listArguments *services.ListArguments, gtVersion int64) (dbapi.ConnectorNamespaceList, *api.PagingMeta, *errors.ServiceError) {
+	if err := listArguments.Validate(GetValidNamespaceColumns()); err != nil {
+		return nil, nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list connector type requests: %s", err.Error())
+	}
+
 	var resourceList dbapi.ConnectorNamespaceList
 	pagingMeta := api.PagingMeta{
 		Page:  listArguments.Page,
@@ -247,7 +253,7 @@ func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []strin
 
 	// Apply search query
 	if len(listArguments.Search) > 0 {
-		queryParser := queryparser.NewQueryParser(validNamespaceColumns...)
+		queryParser := queryparser.NewQueryParser(GetValidNamespaceColumns()...)
 		searchDbQuery, err := queryParser.Parse(listArguments.Search)
 		if err != nil {
 			return resourceList, &pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector namespace requests: %s", err.Error())
@@ -370,7 +376,7 @@ func (k *connectorNamespaceService) UpdateConnectorNamespaceStatus(ctx context.C
 		}
 
 		var cluster dbapi.ConnectorCluster
-		if err := dbConn.Select(`id`, `status_phase`).Where(`id = ?`, namespace.ClusterId).
+		if err := dbConn.Select("id", "status_phase").Where("id = ?", namespace.ClusterId).
 			First(&cluster).Error; err != nil {
 			return services.HandleGetError("Connector namespace", "id", namespaceID, err)
 		}
@@ -630,7 +636,7 @@ func (k *connectorNamespaceService) GetNamespaceTenant(namespaceId string) (*dba
 	dbConn := k.connectionFactory.New()
 	var namespace dbapi.ConnectorNamespace
 	if err := dbConn.Unscoped().Where("id = ?", namespaceId).
-		Select(`id`, `tenant_user_id`, `tenant_organisation_id`).First(&namespace).Error; err != nil {
+		Select("id", "tenant_user_id", "tenant_organisation_id").First(&namespace).Error; err != nil {
 		return nil, services.HandleGetError("Connector namespace", "id", namespaceId, err)
 	}
 	if namespace.DeletedAt.Valid {
@@ -645,7 +651,7 @@ func (k *connectorNamespaceService) CheckConnectorQuota(namespaceId string) *err
 	var quota config.NamespaceQuota
 	if err := dbConn.Model(&dbapi.ConnectorNamespaceAnnotation{}).
 		Where("namespace_id = ? AND key = ?", namespaceId, config.AnnotationProfileKey).
-		Select(`value`).First(&profileName).Error; err != nil {
+		Select("value").First(&profileName).Error; err != nil {
 		return errors.FailedToCheckQuota("Error reading Connector namespace annotation with namespace id %s: %s", namespaceId, err)
 	}
 	quota, _ = k.quotaConfig.GetNamespaceQuota(profileName)

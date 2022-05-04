@@ -26,6 +26,10 @@ type kafkaHandler struct {
 	kafkaConfig    *config.KafkaConfig
 }
 
+func GetAcceptedOrderByParams() []string {
+	return []string{"bootstrap_server_host", "cloud_provider", "cluster_id", "created_at", "href", "id", "instance_type", "multi_az", "name", "organisation_id", "owner", "reauthentication_enabled", "region", "status", "updated_at", "version"}
+}
+
 func NewKafkaHandler(service services.KafkaService, providerConfig *config.ProviderConfig, authService authorization.Authorization, kafkaConfig *config.KafkaConfig) *kafkaHandler {
 	return &kafkaHandler{
 		service:        service,
@@ -133,7 +137,7 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 
 			listArgs := coreServices.NewListArguments(r.URL.Query())
 
-			if err := listArgs.Validate(); err != nil {
+			if err := listArgs.Validate(GetAcceptedOrderByParams()); err != nil {
 				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list kafka requests: %s", err.Error())
 			}
 

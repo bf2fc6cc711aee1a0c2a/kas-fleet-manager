@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 
@@ -54,7 +55,7 @@ func (h adminKafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 
 			listArgs := coreServices.NewListArguments(r.URL.Query())
 
-			if err := listArgs.Validate(); err != nil {
+			if err := listArgs.Validate(GetAcceptedOrderByParams()); err != nil {
 				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list kafka requests: %s", err.Error())
 			}
 
