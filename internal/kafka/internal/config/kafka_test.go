@@ -22,6 +22,8 @@ func Test_NewKafkaConfig(t *testing.T) {
 				Quota:                          NewKafkaQuotaConfig(),
 				BrowserUrl:                     "http://localhost:8080/",
 				SupportedInstanceTypes:         NewKafkaSupportedInstanceTypesConfig(),
+				EnableKafkaOwnerConfig:         false,
+				KafkaOwnerListFile:             "config/kafka-owner-list.yaml",
 			},
 		},
 	}
