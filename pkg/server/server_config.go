@@ -1,6 +1,8 @@
 package server
 
 import (
+	"crypto/tls"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 )
@@ -19,6 +21,11 @@ type ServerConfig struct {
 	PublicHostURL         string `json:"public_url"`
 	EnableTermsAcceptance bool   `json:"enable_terms_acceptance"`
 	VerifyInsecure        bool   `json:"verify_insecure"`
+	// Minimum TLS version accepted by the server. Only takes effect when
+	// EnableHTTPS is true. The data type is uint16 due to golang's
+	// tls package accepts the versions in uint16 format, whose values
+	// are available as constants in that same package
+	MinTLSVersion uint16
 }
 
 func NewServerConfig() *ServerConfig {
@@ -32,6 +39,7 @@ func NewServerConfig() *ServerConfig {
 		HTTPSKeyFile:   "",
 		PublicHostURL:  "http://localhost",
 		VerifyInsecure: false,
+		MinTLSVersion:  tls.VersionTLS12,
 	}
 }
 
