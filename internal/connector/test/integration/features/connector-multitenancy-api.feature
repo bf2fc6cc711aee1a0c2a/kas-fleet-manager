@@ -42,7 +42,37 @@ Feature: connector namespaces API
     Given an org admin user named "El Guapo" in organization "13640231"
     Given I store userid for "El Guapo" as ${guapo_user_id}
 
+    # agent user
+    Given a user named "Gru_shard"
+
   Scenario Outline: Create eval namespace
+    # cannot create eval namespaces with no eval clusters
+    Given I am logged in as "<user>"
+    When I POST path "/v1/kafka_connector_namespaces/eval" with json body:
+    """
+    {
+      "name": "<user>_namespace",
+      "annotations": [
+        {
+          "key": "connector_mgmt.bf2.org/profile",
+          "value": "evaluation-profile"
+        }
+      ]
+    }
+    """
+    Then the response code should be 500
+    And the response should match json:
+    """
+    {
+      "code": "CONNECTOR-MGMT-9",
+      "href": "/api/connector_mgmt/v1/errors/9",
+      "id": "9",
+      "kind": "Error",
+      "operation_id": "${response.operation_id}",
+      "reason": "no ready eval clusters"
+    }
+    """
+
     Given I am logged in as "Gru"
     When I POST path "/v1/kafka_connector_clusters" with json body:
      """
@@ -59,12 +89,94 @@ Feature: connector namespaces API
     And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
     And I remember keycloak client for cleanup with clientID: ${clientID}
 
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/namespaces"
+    Then the response code should be 200
+    Given I store the ".items[0].id" selection from the response as ${connector_namespace_id}
+
+    # cannot create eval namespaces with no ready eval clusters
+    Given I am logged in as "<user>"
+    When I POST path "/v1/kafka_connector_namespaces/eval" with json body:
+    """
+    {
+      "name": "<user>_namespace",
+      "annotations": [
+        {
+          "key": "connector_mgmt.bf2.org/profile",
+          "value": "evaluation-profile"
+        }
+      ]
+    }
+    """
+    Then the response code should be 500
+    And the response should match json:
+    """
+    {
+      "code": "CONNECTOR-MGMT-9",
+      "href": "/api/connector_mgmt/v1/errors/9",
+      "id": "9",
+      "kind": "Error",
+      "operation_id": "${response.operation_id}",
+      "reason": "no ready eval clusters"
+    }
+    """
+
+    # start the cluster to create eval namespace
+    Given I am logged in as "Gru_shard"
+    And I set the "Authorization" header to "Bearer ${shard_token}"
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
+      """
+      {
+        "phase":"ready",
+        "version": "0.0.1",
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }],
+        "namespaces": [{
+          "id": "${connector_namespace_id}",
+          "phase": "ready",
+          "version": "0.0.1",
+          "connectors_deployed": 0,
+          "conditions": [
+            {
+              "type": "Ready",
+              "status": "True",
+              "lastTransitionTime": "2018-01-01T00:00:00Z"
+            },
+            {
+              "type": "NamespaceDeletionContentFailure",
+              "status": "True",
+              "lastTransitionTime": "2018-01-01T00:00:00Z",
+              "reason": "Testing",
+              "message": "This is a test failure message"
+            },
+            {
+              "type": "NamespaceDeletionDiscoveryFailure",
+              "status": "True",
+              "lastTransitionTime": "2018-01-01T00:00:00Z",
+              "reason": "Testing2",
+              "message": "This is another test failure message"
+            }
+          ]
+        }],
+        "operators": [{
+          "id":"camelk",
+          "version": "1.0",
+          "namespace": "openshift-mcs-camelk-1.0",
+          "status": "ready"
+        }]
+      }
+      """
+    Then the response code should be 204
+    And the response should match ""
+
    # There should be no namespaces at first for user
     Given I am logged in as "<user>"
     When I GET path "/v1/kafka_connector_namespaces/"
     Then the response code should be 200
     And the response should match json:
-     """
+    """
      {
        "items": [],
        "kind": "ConnectorNamespaceList",
@@ -213,11 +325,31 @@ Feature: connector namespaces API
     Then the response code should be 204
     And the response should match ""
 
+    # agent deletes default namespace
+    Given I am logged in as "Gru_shard"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}/status" with json body:
+      """
+      {
+        "id": "${connector_namespace_id}",
+        "phase": "deleted",
+        "version": "0.0.3"
+      }
+      """
+    Then the response code should be 204
+    And the response should match ""
+
+    # cluster should be gone
+    Given I am logged in as "Gru"
+    And I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "410"
+    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
+    Then the response code should be 410
+
     Examples:
       | user   | user_id        |
       | Stuart | stuart_user_id |
       | Kevin  | kevin_user_id  |
-      | Carl    | carl_user_id    |
+      | Carl   | carl_user_id   |
 
   Scenario: Gru tries to sql inject namespaces listing
     Given I am logged in as "Gru"

@@ -71,15 +71,16 @@ func (k *connectorNamespaceService) SetEvalClusterId(request *dbapi.ConnectorNam
 
 	// get eval clusters
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Raw("SELECT id FROM connector_clusters WHERE deleted_at is null AND organisation_id IN ?",
-		k.connectorsConfig.ConnectorEvalOrganizations).
-		Scan(&availableClusters).Error; err != nil {
-		return errors.Unauthorized("failed to get eval cluster id: %v", err)
+	if err := dbConn.Model(&dbapi.ConnectorCluster{}).Select("id").
+		Where("organisation_id IN ? AND status_phase=?",
+			k.connectorsConfig.ConnectorEvalOrganizations, dbapi.ConnectorClusterPhaseReady).
+		Find(&availableClusters).Error; err != nil {
+		return errors.GeneralError("failed to get ready eval cluster id: %v", err)
 	}
 
 	numOrgClusters := len(availableClusters)
 	if numOrgClusters == 0 {
-		return errors.Unauthorized("no eval clusters")
+		return errors.GeneralError("no ready eval clusters")
 	} else if numOrgClusters == 1 {
 		request.ClusterId = availableClusters[0]
 	} else {
