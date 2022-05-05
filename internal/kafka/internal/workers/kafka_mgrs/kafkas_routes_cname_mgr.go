@@ -17,7 +17,7 @@ type KafkaRoutesCNAMEManager struct {
 
 var _ workers.Worker = &KafkaRoutesCNAMEManager{}
 
-func NewKafkaCNAMEManager(kafkaService services.KafkaService, kafkfConfig *config.KafkaConfig, reconciler workers.Reconciler) *KafkaRoutesCNAMEManager {
+func NewKafkaCNAMEManager(kafkaService services.KafkaService, kafkaConfig *config.KafkaConfig, reconciler workers.Reconciler) *KafkaRoutesCNAMEManager {
 	return &KafkaRoutesCNAMEManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -25,7 +25,7 @@ func NewKafkaCNAMEManager(kafkaService services.KafkaService, kafkfConfig *confi
 			Reconciler: reconciler,
 		},
 		kafkaService: kafkaService,
-		kafkaConfig:  kafkfConfig,
+		kafkaConfig:  kafkaConfig,
 	}
 }
 

@@ -38,8 +38,8 @@ func Test_QuotaManagementListConfig_ReadFiles(t *testing.T) {
 		EnableInstanceLimitControl bool
 	}
 	tests := []struct {
-		name   string
-		fields fields
+		name    string
+		fields  fields
 		wantErr bool
 	}{
 		{

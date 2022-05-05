@@ -17,20 +17,18 @@ import (
 // ProvisioningKafkaManager represents a kafka manager that periodically reconciles provisioning kafka requests.
 type ProvisioningKafkaManager struct {
 	workers.BaseWorker
-	kafkaService         services.KafkaService
-	observatoriumService services.ObservatoriumService
+	kafkaService services.KafkaService
 }
 
 // NewProvisioningKafkaManager creates a new kafka manager to reconcile provisioning kafkas.
-func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatoriumService services.ObservatoriumService, reconciler workers.Reconciler) *ProvisioningKafkaManager {
+func NewProvisioningKafkaManager(kafkaService services.KafkaService, reconciler workers.Reconciler) *ProvisioningKafkaManager {
 	return &ProvisioningKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "provisioning_kafka",
 			Reconciler: reconciler,
 		},
-		kafkaService:         kafkaService,
-		observatoriumService: observatoriumService,
+		kafkaService: kafkaService,
 	}
 }
 

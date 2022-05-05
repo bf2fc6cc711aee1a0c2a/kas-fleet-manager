@@ -1,7 +1,6 @@
 package kafka_mgrs
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -12,86 +11,128 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	w "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
-	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+
+	mockClusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
+	mockKafkas "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 )
 
-func TestAcceptedKafkaManager(t *testing.T) {
-	testConfig := config.NewDataplaneClusterConfig()
-
-	strimziOperatorVersion := "strimzi-cluster-operator.from-cluster"
-	availableStrimziVersions, err := json.Marshal([]api.StrimziVersion{
+func TestAcceptedKafkaManager_Reconcile(t *testing.T) {
+	type fields struct {
+		kafkaService   services.KafkaService
+		quotaService   services.QuotaService
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
 		{
-			Version: strimziOperatorVersion,
-			Ready:   true,
-			KafkaVersions: []api.KafkaVersion{
-				{
-					Version: "2.7.0",
-				},
-				{
-					Version: "2.8.0",
+			name: "Should fail if listing kafkas in the reconciler fails",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+						return nil, errors.GeneralError("fail to list kafka requests")
+					},
 				},
 			},
-			KafkaIBPVersions: []api.KafkaIBPVersion{
-				{
-					Version: "2.7",
-				},
-				{
-					Version: "2.8",
-				},
-			},
+			wantErr: true,
 		},
-	})
-	if err != nil {
-		t.Fatal("failed to convert available strimzi versions to json")
-	}
-
-	noAvailableStrimziVersions, err := json.Marshal([]api.StrimziVersion{
 		{
-			Version: strimziOperatorVersion,
-			Ready:   false,
-			KafkaVersions: []api.KafkaVersion{
-				{
-					Version: "2.7.0",
-				},
-				{
-					Version: "2.8.0",
+			name: "Should not fail if listing kafkas returns an empty list",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+						return []*dbapi.KafkaRequest{}, nil
+					},
 				},
 			},
-			KafkaIBPVersions: []api.KafkaIBPVersion{
-				{
-					Version: "2.7",
+			wantErr: false,
+		},
+		{
+			name: "Should call reconcileAcceptedKafka and fail if an error is returned",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+						return []*dbapi.KafkaRequest{
+							mockKafkas.BuildKafkaRequest(
+								mockKafkas.With(mockKafkas.STATUS, ""),
+							),
+						}, nil
+					},
 				},
-				{
-					Version: "2.8",
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, errors.GeneralError("failed to find cluster")
+					},
 				},
 			},
+			wantErr: true,
 		},
-	})
-	if err != nil {
-		t.Fatal("failed to convert available strimzi versions to json")
+		{
+			name: "Should call reconcileAcceptedKafka and dont fail if an error is not returned",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+						return []*dbapi.KafkaRequest{
+							mockKafkas.BuildKafkaRequest(
+								mockKafkas.With(mockKafkas.STATUS, constants2.KafkaRequestStatusAccepted.String()),
+							),
+						}, nil
+					},
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{}, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return mockClusters.BuildCluster(func(cluster *api.Cluster) {
+							cluster.AvailableStrimziVersions = mockClusters.AvailableStrimziVersions
+						}), nil
+					},
+				},
+				quotaService: &services.QuotaServiceMock{
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "sub-scription", nil
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 
-	mockCluster := &api.Cluster{
-		Meta: api.Meta{
-			ID:        "id",
-			CreatedAt: time.Now(),
-		},
-		ClusterID:                "cluster-id",
-		MultiAZ:                  true,
-		Region:                   "us-east-1",
-		Status:                   "ready",
-		AvailableStrimziVersions: availableStrimziVersions,
-	}
+	RegisterTestingT(t)
 
-	mockClusterWithoutAvailableStrimziVersion := *mockCluster
-	mockClusterWithoutAvailableStrimziVersion.AvailableStrimziVersions = noAvailableStrimziVersions
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := NewAcceptedKafkaManager(
+				tt.fields.kafkaService,
+				&services.QuotaServiceFactoryMock{
+					GetQuotaServiceFunc: func(quoataType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
+						return tt.fields.quotaService, nil
+					},
+				},
+				services.NewClusterPlacementStrategy(tt.fields.clusterService, config.NewDataplaneClusterConfig(), &config.KafkaConfig{}),
+				config.NewDataplaneClusterConfig(),
+				tt.fields.clusterService,
+				w.Reconciler{})
+			Expect(len(k.Reconcile()) > 0).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 
 	type fields struct {
-		kafkaService           services.KafkaService
-		quotaService           services.QuotaService
-		dataPlaneClusterConfig *config.DataplaneClusterConfig
-		clusterService         services.ClusterService
+		kafkaService   services.KafkaService
+		quotaService   services.QuotaService
+		clusterService services.ClusterService
 	}
 	type args struct {
 		kafka *dbapi.KafkaRequest
@@ -117,15 +158,11 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return nil, errors.GeneralError("test")
 					},
 				},
-				dataPlaneClusterConfig: testConfig,
 			},
 			args: args{
-				kafka: &dbapi.KafkaRequest{
-					Meta: api.Meta{
-						CreatedAt: time.Now(),
-					},
-					ClusterID: mockCluster.ClusterID,
-				},
+				kafka: mockKafkas.BuildKafkaRequest(
+					mockKafkas.With(mockKafkas.STATUS, ""),
+				),
 			},
 			wantErr: true,
 		},
@@ -134,7 +171,9 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return mockCluster, nil
+						return mockClusters.BuildCluster(func(cluster *api.Cluster) {
+							cluster.AvailableStrimziVersions = mockClusters.AvailableStrimziVersions
+						}), nil
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
@@ -147,26 +186,24 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return "some-subscription", nil
 					},
 				},
-				dataPlaneClusterConfig: testConfig,
 			},
 			args: args{
-				kafka: &dbapi.KafkaRequest{
-					Meta: api.Meta{
-						CreatedAt: time.Now(),
-					},
-					ClusterID: mockCluster.ClusterID,
-				},
+				kafka: mockKafkas.BuildKafkaRequest(
+					mockKafkas.With(mockKafkas.STATUS, ""),
+				),
 			},
 			wantErr:                    true,
 			wantStatus:                 constants2.KafkaRequestStatusPreparing.String(),
-			wantStrimziOperatorVersion: strimziOperatorVersion,
+			wantStrimziOperatorVersion: mockClusters.StrimziOperatorVersion,
 		},
 		{
 			name: "should get desired strimzi version from cluster if the StrimziOperatorVersion is not set in the data plane config",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return mockCluster, nil
+						return mockClusters.BuildCluster(func(cluster *api.Cluster) {
+							cluster.AvailableStrimziVersions = mockClusters.AvailableStrimziVersions
+						}), nil
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
@@ -182,26 +219,24 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return "sub-scription", nil
 					},
 				},
-				dataPlaneClusterConfig: config.NewDataplaneClusterConfig(),
 			},
 			args: args{
-				kafka: &dbapi.KafkaRequest{
-					Meta: api.Meta{
-						CreatedAt: time.Now(),
-					},
-					ClusterID: mockCluster.ClusterID,
-				},
+				kafka: mockKafkas.BuildKafkaRequest(
+					mockKafkas.With(mockKafkas.STATUS, ""),
+				),
 			},
 			wantErr:                    false,
 			wantStatus:                 constants2.KafkaRequestStatusPreparing.String(),
-			wantStrimziOperatorVersion: strimziOperatorVersion,
+			wantStrimziOperatorVersion: mockClusters.StrimziOperatorVersion,
 		},
 		{
 			name: "should keep kafka status as accepted if no strimzi operator version is available when retry period has not expired",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return &mockClusterWithoutAvailableStrimziVersion, nil
+						return mockClusters.BuildCluster(func(cluster *api.Cluster) {
+							cluster.AvailableStrimziVersions = mockClusters.NoAvailableStrimziVersions
+						}), nil
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
@@ -217,15 +252,12 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return "sub-scription", nil
 					},
 				},
-				dataPlaneClusterConfig: config.NewDataplaneClusterConfig(),
 			},
 			args: args{
-				kafka: &dbapi.KafkaRequest{
-					Meta: api.Meta{
-						CreatedAt: time.Now(),
-					},
-					ClusterID: mockCluster.ClusterID,
-				},
+				kafka: mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.Status = ""
+					kafkaRequest.CreatedAt = time.Now()
+				}),
 			},
 			wantErr: false,
 		},
@@ -234,7 +266,9 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return &mockClusterWithoutAvailableStrimziVersion, nil
+						return mockClusters.BuildCluster(func(cluster *api.Cluster) {
+							cluster.AvailableStrimziVersions = mockClusters.NoAvailableStrimziVersions
+						}), nil
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
@@ -250,23 +284,22 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return "sub-scription", nil
 					},
 				},
-				dataPlaneClusterConfig: config.NewDataplaneClusterConfig(),
 			},
 			args: args{
-				kafka: &dbapi.KafkaRequest{
-					Meta: api.Meta{
-						CreatedAt: time.Now().Add(time.Duration(-constants2.AcceptedKafkaMaxRetryDuration)),
-					},
-					ClusterID: mockCluster.ClusterID,
-				},
+				kafka: mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.Status = ""
+					kafkaRequest.CreatedAt = time.Now().Add(time.Duration(-constants2.AcceptedKafkaMaxRetryDuration))
+				}),
 			},
 			wantErr:    true,
 			wantStatus: constants2.KafkaRequestStatusFailed.String(),
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			k := &AcceptedKafkaManager{
 				kafkaService:   tt.fields.kafkaService,
 				clusterService: tt.fields.clusterService,
@@ -275,13 +308,12 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return tt.fields.quotaService, nil
 					},
 				},
-				dataPlaneClusterConfig: tt.fields.dataPlaneClusterConfig,
+				dataPlaneClusterConfig: config.NewDataplaneClusterConfig(),
 			}
-			err := k.reconcileAcceptedKafka(tt.args.kafka)
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
-			gomega.Expect(tt.args.kafka.Status).To(gomega.Equal(tt.wantStatus))
-			gomega.Expect(tt.args.kafka.DesiredStrimziVersion).To(gomega.Equal(tt.wantStrimziOperatorVersion))
-			gomega.Expect(tt.args.kafka.ClusterID).ToNot(gomega.Equal(""))
+			Expect(k.reconcileAcceptedKafka(tt.args.kafka) != nil).To(Equal(tt.wantErr))
+			Expect(tt.args.kafka.Status).To(Equal(tt.wantStatus))
+			Expect(tt.args.kafka.DesiredStrimziVersion).To(Equal(tt.wantStrimziOperatorVersion))
+			Expect(tt.args.kafka.ClusterID).ToNot(Equal(""))
 		})
 	}
 }
