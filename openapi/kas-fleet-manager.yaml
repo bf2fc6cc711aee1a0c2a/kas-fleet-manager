@@ -1163,7 +1163,8 @@ components:
       type: object
       properties:
         bytes:
-          type: number
+          type: integer
+          format: int64
     CloudProviderList:
       allOf:
         - $ref: "#/components/schemas/List"

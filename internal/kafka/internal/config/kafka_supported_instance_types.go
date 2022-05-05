@@ -187,11 +187,11 @@ func (q *Quantity) String() string {
 	return string(*q)
 }
 
-func (q *Quantity) ToFloat32() (float32, error) {
+func (q *Quantity) ToInt64() (int64, error) {
 	if p, err := resource.ParseQuantity(string(*q)); err != nil {
 		return 0, err
 	} else {
-		return float32(p.Value()), nil
+		return p.Value(), nil
 	}
 }
 

@@ -17,11 +17,11 @@ func PresentSupportedKafkaInstanceTypes(supportedInstanceType *config.KafkaInsta
 func GetSupportedSizes(supportedInstanceType *config.KafkaInstanceType) []public.SupportedKafkaSize {
 	supportedSizes := make([]public.SupportedKafkaSize, len(supportedInstanceType.Sizes))
 	for i, size := range supportedInstanceType.Sizes {
-		//errors from Quantity.ToFloat32() ignored. Strings already validated as resource.Quantity
-		ingressBytes, _ := size.IngressThroughputPerSec.ToFloat32()
-		egressBytes, _ := size.EgressThroughputPerSec.ToFloat32()
-		retentionSizeBytes, _ := size.MaxDataRetentionSize.ToFloat32()
-		maxMessageSizeBytes, _ := size.MaxMessageSize.ToFloat32()
+		//errors from Quantity.ToInt64() ignored. Strings already validated as resource.Quantity
+		ingressBytes, _ := size.IngressThroughputPerSec.ToInt64()
+		egressBytes, _ := size.EgressThroughputPerSec.ToInt64()
+		retentionSizeBytes, _ := size.MaxDataRetentionSize.ToInt64()
+		maxMessageSizeBytes, _ := size.MaxMessageSize.ToInt64()
 		supportedSizes[i] = public.SupportedKafkaSize{
 			Id:          size.Id,
 			DisplayName: size.DisplayName,

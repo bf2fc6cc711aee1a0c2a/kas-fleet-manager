@@ -11,5 +11,5 @@ package public
 
 // SupportedKafkaSizeBytesValueItem struct for SupportedKafkaSizeBytesValueItem
 type SupportedKafkaSizeBytesValueItem struct {
-	Bytes float32 `json:"bytes,omitempty"`
+	Bytes int64 `json:"bytes,omitempty"`
 }
