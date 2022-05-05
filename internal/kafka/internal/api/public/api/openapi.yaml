@@ -1749,6 +1749,9 @@ components:
         id:
           description: Unique identifier of this Kafka instance size.
           type: string
+        display_name:
+          description: Display name of this Kafka instance size.
+          type: string
         ingress_throughput_per_sec:
           $ref: '#/components/schemas/SupportedKafkaSizeBytesValueItem'
         egress_throughput_per_sec:
@@ -1771,6 +1774,14 @@ components:
           description: Maximium connection attempts per second available to this Kafka
             instance size.
           type: integer
+        max_message_size:
+          $ref: '#/components/schemas/SupportedKafkaSizeBytesValueItem'
+        supported_az_modes:
+          description: List of Availability Zone modes that this Kafka instance size
+            supports. The possible values are "single", "multi".
+          items:
+            type: string
+          type: array
         quota_consumed:
           description: Quota consumed by this Kafka instance size.
           type: integer

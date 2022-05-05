@@ -49,6 +49,7 @@ func (kp *KafkaInstanceType) validate() error {
 
 type KafkaInstanceSize struct {
 	Id                          string   `yaml:"id"`
+	DisplayName                 string   `yaml:"display_name"`
 	IngressThroughputPerSec     Quantity `yaml:"ingressThroughputPerSec"`
 	EgressThroughputPerSec      Quantity `yaml:"egressThroughputPerSec"`
 	TotalMaxConnections         int      `yaml:"totalMaxConnections"`
@@ -60,6 +61,7 @@ type KafkaInstanceSize struct {
 	QuotaConsumed               int      `yaml:"quotaConsumed"`
 	QuotaType                   string   `yaml:"quotaType"`
 	CapacityConsumed            int      `yaml:"capacityConsumed"`
+	SupportedAZModes            []string `yaml:"supportedAZModes"`
 }
 
 // validates Kafka instance size configuration to ensure the following:

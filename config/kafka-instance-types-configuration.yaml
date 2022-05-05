@@ -8,6 +8,7 @@
 #
 # The following properties must be defined for each size (all values must be larger than '0'):
 #   - id: The size identifier. Each size id should be unique.
+#   - display_name: human readable value of the instance size
 #   - ingressThroughputPerSec: Maximum limit for ingress throughput per second (MB/s).
 #   - egressThroughputPerSec: Maximum limit for egress throughput per second (MB/s).
 #   - totalMaxConnections: Maximum client connections allowed.
@@ -16,6 +17,7 @@
 #   - maxDataRetentionPeriod: Maximum duration(ISO8601) for retaining data.
 #   - maxPartitions: Maximum partitions for all topics combined.
 #   - maxMessageSize: Maximum message size (MB)
+#   - supportedAZModes: a list of the supported AZ modes. The possible values are "single", "multi"
 #   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
 #   - quotaType: Quota type that will be consumed when this size is selected.
 #   - capacityConsumed: Data plane cluster capacity consumed by this Kafka instance size (only used for manual scaling)
@@ -25,6 +27,7 @@ supported_instance_types:
     display_name: Standard
     sizes:
     - id: x1
+      display_name: "1"
       ingressThroughputPerSec: "50Mi"
       egressThroughputPerSec: "100Mi"
       totalMaxConnections: 3000
@@ -36,7 +39,10 @@ supported_instance_types:
       quotaConsumed: 1
       quotaType: "RHOSAK"
       capacityConsumed: 1
+      supportedAZModes:
+      - multi
     - id: x2
+      display_name: "2"
       ingressThroughputPerSec: "100Mi"
       egressThroughputPerSec: "200Mi"
       totalMaxConnections: 6000
@@ -48,10 +54,13 @@ supported_instance_types:
       quotaConsumed: 2
       quotaType: "RHOSAK"
       capacityConsumed: 2
+      supportedAZModes:
+      - multi
   - id: developer
     display_name: Trial
     sizes:
     - id: x1
+      display_name: "1"
       ingressThroughputPerSec: "1Mi"
       egressThroughputPerSec: "1Mi"
       totalMaxConnections: 100
@@ -63,3 +72,5 @@ supported_instance_types:
       quotaConsumed: 1
       quotaType: "RHOSAKTrial"
       capacityConsumed: 1
+      supportedAZModes:
+      - single
