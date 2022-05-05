@@ -369,14 +369,21 @@ func (a *ConnectorClustersApiService) GetConnectorCluster(ctx _context.Context, 
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+// GetConnectorClusterAddonParametersOpts Optional parameters for the method 'GetConnectorClusterAddonParameters'
+type GetConnectorClusterAddonParametersOpts struct {
+	ResetCredentials optional.Bool
+}
+
 /*
 GetConnectorClusterAddonParameters Get a connector cluster's addon parameters
 Get a connector cluster&#39;s addon parameters
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param connectorClusterId The id of the connector cluster
+ * @param optional nil or *GetConnectorClusterAddonParametersOpts - Optional Parameters:
+ * @param "ResetCredentials" (optional.Bool) -  Resets cluster service account credentials when true
 @return []AddonParameter
 */
-func (a *ConnectorClustersApiService) GetConnectorClusterAddonParameters(ctx _context.Context, connectorClusterId string) ([]AddonParameter, *_nethttp.Response, error) {
+func (a *ConnectorClustersApiService) GetConnectorClusterAddonParameters(ctx _context.Context, connectorClusterId string, localVarOptionals *GetConnectorClusterAddonParametersOpts) ([]AddonParameter, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -394,6 +401,9 @@ func (a *ConnectorClustersApiService) GetConnectorClusterAddonParameters(ctx _co
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
+	if localVarOptionals != nil && localVarOptionals.ResetCredentials.IsSet() {
+		localVarQueryParams.Add("reset_credentials", parameterToString(localVarOptionals.ResetCredentials.Value(), ""))
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
