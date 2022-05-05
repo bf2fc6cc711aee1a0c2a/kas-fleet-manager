@@ -15,6 +15,7 @@
 #   - maxDataRetentionSize: Maximum storage (GB).
 #   - maxDataRetentionPeriod: Maximum duration(ISO8601) for retaining data.
 #   - maxPartitions: Maximum partitions for all topics combined.
+#   - maxMessageSize: Maximum message size (MB)
 #   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
 #   - quotaType: Quota type that will be consumed when this size is selected.
 #   - capacityConsumed: Data plane cluster capacity consumed by this Kafka instance size (only used for manual scaling)
@@ -31,6 +32,7 @@ supported_instance_types:
       maxDataRetentionSize: "1000Gi"
       maxDataRetentionPeriod: "P14D"
       maxPartitions: 1500
+      maxMessageSize: "1Mi"
       quotaConsumed: 1
       quotaType: "RHOSAK"
       capacityConsumed: 1
@@ -40,6 +42,7 @@ supported_instance_types:
       totalMaxConnections: 6000
       maxDataRetentionSize: "2000Gi"
       maxPartitions: 3000
+      maxMessageSize: "1Mi"
       maxDataRetentionPeriod: "P14D"
       maxConnectionAttemptsPerSec: 200
       quotaConsumed: 2
@@ -56,6 +59,7 @@ supported_instance_types:
       maxDataRetentionSize: "10Gi"
       maxDataRetentionPeriod: "P14D"
       maxPartitions: 100
+      maxMessageSize: "1Mi"
       quotaConsumed: 1
       quotaType: "RHOSAKTrial"
       capacityConsumed: 1

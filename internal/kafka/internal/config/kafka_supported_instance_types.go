@@ -56,6 +56,7 @@ type KafkaInstanceSize struct {
 	MaxPartitions               int      `yaml:"maxPartitions"`
 	MaxDataRetentionPeriod      string   `yaml:"maxDataRetentionPeriod"`
 	MaxConnectionAttemptsPerSec int      `yaml:"maxConnectionAttemptsPerSec"`
+	MaxMessageSize              Quantity `yaml:"maxMessageSize"`
 	QuotaConsumed               int      `yaml:"quotaConsumed"`
 	QuotaType                   string   `yaml:"quotaType"`
 	CapacityConsumed            int      `yaml:"capacityConsumed"`
