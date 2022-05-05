@@ -645,6 +645,9 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 						return "", apiErrors.GeneralError("failed to get cluster dns")
 					},
 				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableKafkaSreIdentityProviderConfiguration: true,
+				},
 			},
 			wantErr: true,
 		},
@@ -887,7 +890,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 						return nil
 					},
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
-						return "test", nil
+						return "", apiErrors.GeneralError("failed to get cluster dns")
 					},
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
@@ -1058,16 +1061,17 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 			name: "should fail if reconcileClusterIdentityProvider fails",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					EnableReadyDataPlaneClustersReconcile: true,
-					DataPlaneClusterScalingType:           config.ManualScaling,
-					ClusterConfig:                         &config.ClusterConfig{},
+					EnableKafkaSreIdentityProviderConfiguration: true,
+					EnableReadyDataPlaneClustersReconcile:       true,
+					DataPlaneClusterScalingType:                 config.ManualScaling,
+					ClusterConfig:                               &config.ClusterConfig{},
 				},
 				clusterService: &services.ClusterServiceMock{
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
 						return nil
 					},
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
-						return "test", nil
+						return "", apiErrors.GeneralError("failed to get cluster dns")
 					},
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
@@ -1215,6 +1219,9 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "", apiErrors.GeneralError("failed to get cluster dns")
 					},
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableKafkaSreIdentityProviderConfiguration: true,
 				},
 			},
 			args: args{
@@ -2493,6 +2500,11 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 			name: "should return no error for cluster with IdentityProviderID set",
 			arg: api.Cluster{
 				IdentityProviderID: "test_id",
+			},
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableKafkaSreIdentityProviderConfiguration: true,
+				},
 			},
 			wantErr: false,
 		},
