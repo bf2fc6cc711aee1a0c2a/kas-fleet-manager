@@ -45,13 +45,16 @@ Feature: connector namespaces API
     # agent user
     Given a user named "Gru_shard"
 
-  Scenario Outline: Create eval namespace
+  Scenario: Cannot create eval namespace with no ready eval clusters
+    # block any other scenarios from running in parallel
+    Given LOCK--------------------------------------------------------------
+
     # cannot create eval namespaces with no eval clusters
-    Given I am logged in as "<user>"
+    Given I am logged in as "Stuart"
     When I POST path "/v1/kafka_connector_namespaces/eval" with json body:
     """
     {
-      "name": "<user>_namespace",
+      "name": "Stuart_namespace",
       "annotations": [
         {
           "key": "connector_mgmt.bf2.org/profile",
@@ -94,11 +97,11 @@ Feature: connector namespaces API
     Given I store the ".items[0].id" selection from the response as ${connector_namespace_id}
 
     # cannot create eval namespaces with no ready eval clusters
-    Given I am logged in as "<user>"
+    Given I am logged in as "Stuart"
     When I POST path "/v1/kafka_connector_namespaces/eval" with json body:
     """
     {
-      "name": "<user>_namespace",
+      "name": "Stuart_namespace",
       "annotations": [
         {
           "key": "connector_mgmt.bf2.org/profile",
@@ -119,6 +122,36 @@ Feature: connector namespaces API
       "reason": "no ready eval clusters"
     }
     """
+
+    # cleanup eval cluster
+    Given I am logged in as "Gru"
+    When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
+    Then the response code should be 204
+    And the response should match ""
+
+    # unblock all other scenarios
+    And UNLOCK---------------------------------------------------------------
+
+  Scenario Outline: Create eval namespace
+    Given I am logged in as "Gru"
+    When I POST path "/v1/kafka_connector_clusters" with json body:
+     """
+     {
+      "name": "Evaluation Cluster"
+     }
+     """
+    Then the response code should be 202
+    And the ".status.state" selection from the response should match "disconnected"
+
+    Given I store the ".id" selection from the response as ${connector_cluster_id}
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
+    Then the response code should be 200
+    And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
+    And I remember keycloak client for cleanup with clientID: ${clientID}
+
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/namespaces"
+    Then the response code should be 200
+    Given I store the ".items[0].id" selection from the response as ${connector_namespace_id}
 
     # start the cluster to create eval namespace
     Given I am logged in as "Gru_shard"
