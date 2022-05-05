@@ -38,8 +38,8 @@ var namespaceEvents = map[dbapi.ConnectorClusterPhaseEnum][]fsm.EventDesc{
 		{Name: string(DeleteNamespace), Src: []string{string(dbapi.ConnectorNamespacePhaseReady), string(dbapi.ConnectorNamespacePhaseDeleting)}, Dst: string(dbapi.ConnectorNamespacePhaseDeleting)},
 	},
 	dbapi.ConnectorClusterPhaseDeleting: {
-		{Name: string(ConnectNamespace), Src: []string{string(dbapi.ConnectorClusterPhaseDeleting)}, Dst: string(dbapi.ConnectorNamespacePhaseDeleting)},
-		{Name: string(DeleteNamespace), Src: []string{string(dbapi.ConnectorNamespacePhaseDeleting)}, Dst: string(dbapi.ConnectorNamespacePhaseDeleting)},
+		{Name: string(ConnectNamespace), Src: []string{string(dbapi.ConnectorNamespacePhaseDisconnected), string(dbapi.ConnectorNamespacePhaseReady), string(dbapi.ConnectorNamespacePhaseDeleting)}, Dst: string(dbapi.ConnectorNamespacePhaseDeleting)},
+		{Name: string(DeleteNamespace), Src: []string{string(dbapi.ConnectorNamespacePhaseDisconnected), string(dbapi.ConnectorNamespacePhaseReady), string(dbapi.ConnectorNamespacePhaseDeleting)}, Dst: string(dbapi.ConnectorNamespacePhaseDeleting)},
 		{Name: string(DeleteNamespace), Src: []string{string(dbapi.ConnectorNamespacePhaseDeleted)}, Dst: string(dbapi.ConnectorNamespacePhaseDeleted)},
 	},
 }

@@ -96,7 +96,7 @@ func (k *ConnectorManager) Reconcile() []error {
 
 	if !k.startupReconcileDone {
 		glog.V(5).Infoln("Reconciling startup connector catalog updates...")
-		
+
 		// the assumption here is that this runs on one instance only of fleetmanager,
 		// runs only at startup and while requests are not being served
 		if err := k.connectorTypesService.DeleteUnusedAndNotInCatalog(); err != nil {
