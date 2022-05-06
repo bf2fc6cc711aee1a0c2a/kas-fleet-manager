@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -407,7 +408,7 @@ func Test_BuildCustomClaimCheck(t *testing.T) {
 			name: "Customclaimcheck without canary service account client ID - uses MAS SSO",
 			args: args{
 				kafkaRequest:      &kafkaRequest,
-				ssoconfigProvider: "mas_sso",
+				ssoconfigProvider: keycloak.MAS_SSO,
 			},
 			expectedCustomClaim: fmt.Sprintf("@.rh-org-id == '%s'|| @.org_id == '%s'", kafkaRequest.OrganisationId, kafkaRequest.OrganisationId),
 		},
@@ -415,7 +416,7 @@ func Test_BuildCustomClaimCheck(t *testing.T) {
 			name: "Customclaimcheck with canary service account client ID - uses REDHAT SSO",
 			args: args{
 				kafkaRequest:      &kafkaRequest,
-				ssoconfigProvider: "redhat_sso",
+				ssoconfigProvider: keycloak.REDHAT_SSO,
 			},
 			expectedCustomClaim: fmt.Sprintf("@.rh-org-id == '%s'|| @.org_id == '%s' || @.clientId == '%s'", kafkaRequest.OrganisationId, kafkaRequest.OrganisationId, kafkaRequest.CanaryServiceAccountClientID),
 		},

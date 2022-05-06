@@ -605,8 +605,6 @@ keycloak/setup:
 	@echo -n "$(MAS_SSO_CLIENT_SECRET)" > secrets/keycloak-service.clientSecret
 	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_ID)" > secrets/osd-idp-keycloak-service.clientId
 	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
-	@echo -n "$(REDHAT_SSO_CLIENT_ID)" > secrets/redhatsso-service.clientId
-	@echo -n "$(REDHAT_SSO_CLIENT_SECRET)" > secrets/redhatsso-service.clientSecret
 .PHONY:keycloak/setup
 
 redhatsso/setup:
@@ -769,7 +767,7 @@ deploy/service: STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG ?= "{}"
 deploy/service: ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION="true"
 deploy/service: ENABLE_KAFKA_OWNER="false"
 deploy/service: KAFKA_OWNERS="[]"
-deploy/service: SELECT_SSO_PROVIDER ?= "mas_sso"
+deploy/service: SSO_PROVIDER_TYPE ?= "mas_sso"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
@@ -833,7 +831,7 @@ deploy/service: deploy/envoy deploy/route
 		-p KAS_FLEETSHARD_OPERATOR_STARTING_CSV=${KAS_FLEETSHARD_OPERATOR_STARTING_CSV} \
 		-p KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG=${KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG} \
 		-p STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG=${STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG} \
-		-p SELECT_SSO_PROVIDER=${SELECT_SSO_PROVIDER} \
+		-p SSO_PROVIDER_TYPE=${SSO_PROVIDER_TYPE} \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 

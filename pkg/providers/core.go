@@ -34,7 +34,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(db.NewDatabaseConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(server.NewServerConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(ocm.NewOCMConfig, di.As(new(environments.ConfigModule))),
-		di.Provide(keycloak.NewKeycloakConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(keycloak.NewKeycloakConfig, di.As(new(environments.ConfigModule)), di.As(new(environments.ServiceValidator))),
 		di.Provide(acl.NewAccessControlListConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(server.NewMetricsConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(workers.NewReconcilerConfig, di.As(new(environments.ConfigModule))),
