@@ -76,6 +76,7 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 			// Store the routes (and create them) when Kafka is ready. By the time it is ready, the routes should definitely be there.
 			e = d.persistKafkaRoutes(kafka, ks, cluster)
 			if e == nil {
+				kafka.AdminApiServerURL = ks.AdminServerURI
 				e = d.setKafkaClusterReady(kafka)
 			}
 		case statusInstalling:
@@ -121,10 +122,11 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *dbapi.KafkaRequest) 
 		return err
 	}
 
-	err = d.kafkaService.Updates(kafka, map[string]interface{}{"failed_reason": "", "status": constants2.KafkaRequestStatusReady.String()})
+	err = d.kafkaService.Updates(kafka, map[string]interface{}{"admin_api_server_url": kafka.AdminApiServerURL, "failed_reason": "", "status": constants2.KafkaRequestStatusReady.String()})
 	if err != nil {
-		return serviceError.NewWithCause(err.Code, err, "failed to update status %s for kafka cluster %s", constants2.KafkaRequestStatusReady, kafka.ID)
+		return serviceError.NewWithCause(err.Code, err, "failed to update kafka cluster %s", kafka.ID)
 	}
+
 	if shouldSendMetric {
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusReady, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))

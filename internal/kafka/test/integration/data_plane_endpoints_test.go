@@ -833,7 +833,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 
 }
 
-func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
+func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t *testing.T) {
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
@@ -854,6 +854,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 	}
 
 	bootstrapServerHost := "prefix.some-bootstrap⁻host"
+	adminApiServerUrl := "https://test-url.com"
 
 	var testKafkas = []*dbapi.KafkaRequest{
 		{
@@ -884,6 +885,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 	updates := map[string]private.DataPlaneKafkaStatus{}
 	for _, item := range list.Items {
 		updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlaneKafkaStatus{
+			AdminServerURI: adminApiServerUrl,
 			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 				Type:   "Ready",
 				Status: "True",
@@ -949,6 +951,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
 		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
+		Expect(c.AdminApiServerURL).To(Equal(adminApiServerUrl))
 	}
 
 	db = test.TestServices.DBFactory.New()

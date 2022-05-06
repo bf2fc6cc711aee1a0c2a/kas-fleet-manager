@@ -441,6 +441,8 @@ components:
             $ref: '#/components/schemas/DataPlaneKafkaStatus_routes'
           nullable: true
           type: array
+        adminServerURI:
+          type: string
       type: object
     DataPlaneKafkaStatusUpdateRequest:
       additionalProperties:

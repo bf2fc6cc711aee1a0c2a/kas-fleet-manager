@@ -523,6 +523,8 @@ components:
                 type: string
               router:
                 type: string
+        adminServerURI:
+          type: string
       example:
         $ref: '#/components/examples/DataPlaneKafkaStatusRequestExample'
 

@@ -20,6 +20,8 @@ import (
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
+const AdminServerURI = "http://test-admin-server-uri.com"
+
 // defaultUpdateDataplaneClusterStatusFunc - The default behaviour for updating data plane cluster status in each Kas Fleetshard Sync reconcile.
 // Retrieves all clusters in the database in a 'waiting_for_kas_fleetshard_operator' state and updates it to 'ready' once all of the addons are installed.
 var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error {
@@ -336,6 +338,7 @@ func GetReadyKafkaStatusResponse(clusterDNS string) private.DataPlaneKafkaStatus
 				Router: clusterDNS,
 			},
 		},
+		AdminServerURI: AdminServerURI,
 	}
 }
 

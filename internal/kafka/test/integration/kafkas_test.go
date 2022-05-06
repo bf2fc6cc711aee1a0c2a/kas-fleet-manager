@@ -114,6 +114,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(kafka.BrowserUrl).To(Equal(fmt.Sprintf("%s%s/dashboard", test.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
 	Expect(kafka.InstanceTypeName).To(Equal("Standard"))
 	Expect(kafka.ExpiresAt).To(BeNil())
+	Expect(kafka.AdminApiServerUrl).To(BeEmpty())
 
 	// wait until the kafka goes into a ready state
 	// the timeout here assumes a backing cluster has already been provisioned
@@ -124,11 +125,14 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
 	Expect(foundKafka.Version).To(Equal(kasfleetshardsync.GetDefaultReportedKafkaVersion()))
 	Expect(foundKafka.Owner).To(Equal(kafka.Owner))
+	Expect(foundKafka.AdminApiServerUrl).To(Equal(kasfleetshardsync.AdminServerURI))
+
 	// checking kafka_request bootstrap server port number being present
 	kafka, _, err = client.DefaultApi.GetKafkaById(ctx, foundKafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Error getting created kafka_request:  %v", err)
 	Expect(strings.HasSuffix(kafka.BootstrapServerHost, ":443")).To(Equal(true))
 	Expect(kafka.Version).To(Equal(kasfleetshardsync.GetDefaultReportedKafkaVersion()))
+	Expect(kafka.AdminApiServerUrl).To(Equal(kasfleetshardsync.AdminServerURI))
 
 	db := test.TestServices.DBFactory.New()
 	var kafkaRequest dbapi.KafkaRequest
