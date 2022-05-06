@@ -40,7 +40,7 @@ func Test_ListErrors(t *testing.T) {
 			req, rw := GetHandlerParams("GET", "/", nil)
 			handler := NewErrorsHandler()
 			Expect(handler != nil).To(Equal(tt.wantNotNil))
-			handler.List(rw, req)
+			handler.List(rw, req) //nolint
 			Expect(rw.Code).To(Equal(http.StatusOK))
 			bodyStr, err := io.ReadAll(rw.Body)
 			Expect(err != nil).To(BeFalse())
@@ -91,7 +91,6 @@ func Test_GetError(t *testing.T) {
 			handler := NewErrorsHandler()
 			req, rw := GetHandlerParams("GET", fmt.Sprintf("/%s", tt.args.id), nil)
 			req = mux.SetURLVars(req, map[string]string{"id": tt.args.id})
-			req.URL.Query().Add("id", tt.args.id)
 			handler.Get(rw, req)
 			if tt.wantStatusCode != 0 {
 				Expect(rw.Code).To(Equal(tt.wantStatusCode))
@@ -101,9 +100,6 @@ func Test_GetError(t *testing.T) {
 }
 
 func Test_CreateError(t *testing.T) {
-	type args struct {
-		id string
-	}
 	tests := []struct {
 		name           string
 		wantStatusCode int
@@ -127,9 +123,6 @@ func Test_CreateError(t *testing.T) {
 }
 
 func Test_DeleteError(t *testing.T) {
-	type args struct {
-		id string
-	}
 	tests := []struct {
 		name           string
 		wantStatusCode int
@@ -153,9 +146,6 @@ func Test_DeleteError(t *testing.T) {
 }
 
 func Test_PatchError(t *testing.T) {
-	type args struct {
-		id string
-	}
 	tests := []struct {
 		name           string
 		wantStatusCode int
