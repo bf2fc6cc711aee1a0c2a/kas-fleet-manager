@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -43,9 +42,9 @@ func Test_ListErrors(t *testing.T) {
 			handler.List(rw, req) //nolint
 			Expect(rw.Code).To(Equal(http.StatusOK))
 			bodyStr, err := io.ReadAll(rw.Body)
-			Expect(err != nil).To(BeFalse())
+			Expect(err).ToNot(HaveOccurred())
 			// body response should contain the size (len) of the errors
-			Expect(strings.Contains(string(bodyStr), errorsLen)).To(BeTrue())
+			Expect(bodyStr).To(ContainSubstring(errorsLen))
 		})
 	}
 }
@@ -67,6 +66,7 @@ func Test_GetError(t *testing.T) {
 			args: args{
 				id: errorId,
 			},
+			wantStatusCode: http.StatusOK,
 		},
 		{
 			name: "Should create new errors handler and get not found if providing invalid id",
@@ -92,9 +92,7 @@ func Test_GetError(t *testing.T) {
 			req, rw := GetHandlerParams("GET", fmt.Sprintf("/%s", tt.args.id), nil)
 			req = mux.SetURLVars(req, map[string]string{"id": tt.args.id})
 			handler.Get(rw, req)
-			if tt.wantStatusCode != 0 {
-				Expect(rw.Code).To(Equal(tt.wantStatusCode))
-			}
+			Expect(rw.Code).To(Equal(tt.wantStatusCode))
 		})
 	}
 }
