@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
-	"os"
 )
 
 const AnnotationProfileKey = "connector_mgmt.bf2.org/profile"
@@ -34,13 +35,13 @@ func (c *ConnectorsQuotaConfig) ReadFiles() (err error) {
 
 	if err == nil {
 		if _, ok := c.ConnectorsQuotaMap[c.EvalNamespaceQuotaProfile]; !ok {
-			err = fmt.Errorf("Configuration file '%s' is missing evaluation namespace quota profile '%s'",
+			err = fmt.Errorf("configuration file '%s' is missing evaluation namespace quota profile '%s'",
 				c.ConnectorsQuotaConfigFile, c.EvalNamespaceQuotaProfile)
 		}
 	} else if os.IsNotExist(err) {
-		err = fmt.Errorf("Configuration file for connectors-quota-config-file not found: '%s'", c.ConnectorsQuotaConfigFile)
+		err = fmt.Errorf("configuration file for connectors-quota-config-file not found: '%s'", c.ConnectorsQuotaConfigFile)
 	} else {
-		err = fmt.Errorf("Error reading configuration file '%s': %s", c.ConnectorsQuotaConfigFile, err)
+		err = fmt.Errorf("error reading configuration file '%s': %s", c.ConnectorsQuotaConfigFile, err)
 	}
 
 	return err
