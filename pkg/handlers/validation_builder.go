@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"regexp"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 )
 
 type ValidateOption func(field string, value *string) *errors.ServiceError
@@ -39,10 +40,10 @@ func MinLen(min int) ValidateOption {
 	}
 }
 
-func MaxLen(min int) ValidateOption {
+func MaxLen(max int) ValidateOption {
 	return func(field string, value *string) *errors.ServiceError {
-		if value != nil && len(*value) > min {
-			return errors.MinimumFieldLengthNotReached("%s is not valid. Maximum length %d is required.", field, min)
+		if value != nil && len(*value) > max {
+			return errors.MinimumFieldLengthNotReached("%s is not valid. Maximum length %d is required.", field, max)
 		}
 		return nil
 	}
