@@ -278,7 +278,7 @@ func TestServiceAccounts_SsoProvider_MAS_SSO(t *testing.T) {
 	defer ocmServer.Close()
 
 	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *keycloak.KeycloakConfig) {
-		c.SelectSSOProvider = keycloak.MAS_SSO
+		c.SelectSSOProvider = "mas_sso"
 	})
 	defer teardown()
 
@@ -296,7 +296,7 @@ func TestServiceAccounts_SsoProvider_SSO(t *testing.T) {
 	defer ocmServer.Close()
 
 	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *keycloak.KeycloakConfig) {
-		c.SelectSSOProvider = keycloak.REDHAT_SSO
+		c.SelectSSOProvider = "redhat_sso"
 	})
 	defer teardown()
 

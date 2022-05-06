@@ -377,7 +377,11 @@ parameters:
   displayName: MAS SSO REALM for OSD Cluster Identity Provider Clients
   description: MAS SSO realm for OSD Cluster Identity Provider Clients
   value: "interim-test-realm"
-
+  
+- name: SELECT_SSO_PROVIDER
+  description: Option to choose between sso providers i.e, mas-sso or redhat_sso, mas-sso by default
+  value: "mas_sso"
+  
 - name: CLUSTER_OPENSHIFT_VERSION
   displayName: The version of openshift
   description: The version of openshift to be deployed on a new created OSD cluster
@@ -1001,6 +1005,9 @@ objects:
             - --kas-fleetshard-operator-package=${KAS_FLEETSHARD_OLM_PACKAGE_NAME}
             - --kas-fleetshard-operator-subscription-config-file=/config/kas-fleetshard-operator-subscription-spec-config.yaml
             - --kas-fleetshard-operator-starting-csv=${KAS_FLEETSHARD_OPERATOR_STARTING_CSV}
+            - --select-sso-provider=${SELECT_SSO_PROVIDER}
+            - --redhat-sso-client-id-file=/secrets/service/redhatsso-service.clientId
+            - --redhat-sso-client-secret-file=/secrets/service/redhatsso-service.clientSecret
             - -v=${GLOG_V}
             resources:
               requests:

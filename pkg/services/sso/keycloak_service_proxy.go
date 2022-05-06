@@ -40,7 +40,7 @@ func retrieveUserToken(ctx context.Context) (string, *errors.ServiceError) {
 func tokenForServiceAPIHandler(ctx context.Context, r *keycloakServiceProxy) (string, *errors.ServiceError) {
 	var token string
 	var err *errors.ServiceError
-	if r.GetConfig().SelectSSOProvider == keycloak.REDHAT_SSO {
+	if r.GetConfig().SelectSSOProvider == "redhat_sso" {
 		token, err = retrieveUserToken(ctx)
 	} else {
 		token, err = r.retrieveToken()

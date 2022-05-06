@@ -54,10 +54,10 @@ type KeycloakRealmConfig struct {
 
 func (kc *KeycloakConfig) SSOProviderRealm() *KeycloakRealmConfig {
 	provider := kc.SelectSSOProvider
-	switch provider {
-	case MAS_SSO:
+	switch {
+	case provider == "mas_sso":
 		return kc.KafkaRealm
-	case REDHAT_SSO:
+	case provider == "redhat_sso":
 		return kc.RedhatSSORealm
 	default:
 		return kc.KafkaRealm
@@ -69,6 +69,12 @@ func (c *KeycloakRealmConfig) setDefaultURIs(baseURL string) {
 	c.ValidIssuerURI = baseURL + "/auth/realms/" + c.Realm
 	c.JwksEndpointURI = baseURL + "/auth/realms/" + c.Realm + "/protocol/openid-connect/certs"
 	c.TokenEndpointURI = baseURL + "/auth/realms/" + c.Realm + "/protocol/openid-connect/token"
+}
+
+func validateSSOProviderRealm(ssoProvider string) {
+	if ssoProvider != "redhat_sso" && ssoProvider != "mas_sso" {
+		panic("Invalid Provider selected must be `mas-sso` or `redhat_sso`")
+	}
 }
 
 func NewKeycloakConfig() *KeycloakConfig {
@@ -100,7 +106,7 @@ func NewKeycloakConfig() *KeycloakConfig {
 		TLSTrustedCertificatesKey:                  "keycloak.crt",
 		MaxAllowedServiceAccounts:                  50,
 		MaxLimitForGetClients:                      100,
-		SelectSSOProvider:                          MAS_SSO,
+		SelectSSOProvider:                          "mas_sso",
 		SSOSpecialManagementOrgID:                  SSO_SPEICAL_MGMT_ORG_ID_STAGE,
 		ServiceAccounttLimitCheckSkipOrgIdListFile: "config/service-account-limits-check-skip-org-id-list.yaml",
 	}
@@ -128,6 +134,7 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.SsoBaseUrl, "redhat-sso-base-url", kc.SsoBaseUrl, "The base URL of the mas-sso, integration by default")
 	fs.StringVar(&kc.SSOSpecialManagementOrgID, "sso-special-management-org-id", SSO_SPEICAL_MGMT_ORG_ID_STAGE, "The Special Management Organization ID used for creating internal Service accounts")
 	fs.StringVar(&kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "service-account-limits-check-skip-org-id-list-file", kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "File containing a list of Org IDs for which service account limits check will be skipped")
+	fs.StringVar(&kc.SelectSSOProvider, "select-sso-provider", kc.SelectSSOProvider, "Option to choose between sso providers i.e, mas-sso or redhat_sso, mas-sso by default")
 }
 
 func (kc *KeycloakConfig) ReadFiles() error {
@@ -151,7 +158,7 @@ func (kc *KeycloakConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-	if kc.SelectSSOProvider == REDHAT_SSO {
+	if kc.SelectSSOProvider == "redhat_sso" {
 		err = shared.ReadFileValueString(kc.RedhatSSORealm.ClientIDFile, &kc.RedhatSSORealm.ClientID)
 		if err != nil {
 			return err
@@ -182,6 +189,7 @@ func (kc *KeycloakConfig) ReadFiles() error {
 		}
 	}
 
+	validateSSOProviderRealm(kc.SelectSSOProvider)
 	kc.KafkaRealm.setDefaultURIs(kc.BaseURL)
 	kc.OSDClusterIDPRealm.setDefaultURIs(kc.BaseURL)
 	kc.RedhatSSORealm.setDefaultURIs(kc.SsoBaseUrl)

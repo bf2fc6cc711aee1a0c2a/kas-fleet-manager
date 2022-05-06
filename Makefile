@@ -605,6 +605,8 @@ keycloak/setup:
 	@echo -n "$(MAS_SSO_CLIENT_SECRET)" > secrets/keycloak-service.clientSecret
 	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_ID)" > secrets/osd-idp-keycloak-service.clientId
 	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
+	@echo -n "$(REDHAT_SSO_CLIENT_ID)" > secrets/redhatsso-service.clientId
+	@echo -n "$(REDHAT_SSO_CLIENT_SECRET)" > secrets/redhatsso-service.clientSecret
 .PHONY:keycloak/setup
 
 redhatsso/setup:
@@ -704,6 +706,8 @@ deploy/secrets:
 		-p OBSERVABILITY_RHSSO_METRICS_SECRET="$(shell ([ -s './secrets/rhsso-metrics.clientSecret' ] && [ -z '${OBSERVABILITY_RHSSO_METRICS_SECRET}' ]) && cat ./secrets/rhsso-metrics.clientSecret || echo '${OBSERVABILITY_RHSSO_METRICS_SECRET}')" \
 		-p OBSERVABILITY_RHSSO_GRAFANA_CLIENT_ID="${OBSERVABILITY_RHSSO_GRAFANA_CLIENT_ID}" \
 		-p OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET="${OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET}" \
+		-p REDHAT_SSO_CLIENT_ID="$(shell ([ -s './secrets/redhatsso-service.clientId' ] && [ -z '${REDHAT_SSO_CLIENT_ID}' ]) && cat ./secrets/redhatsso-service.clientId || echo '${REDHAT_SSO_CLIENT_ID}')" \
+		-p REDHAT_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/redhatsso-service.clientSecret' ] && [ -z '${REDHAT_SSO_CLIENT_SECRET}' ]) && cat ./secrets/redhatsso-service.clientSecret || echo '${REDHAT_SSO_CLIENT_SECRET}')" \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/secrets
 
@@ -765,6 +769,7 @@ deploy/service: STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG ?= "{}"
 deploy/service: ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION="true"
 deploy/service: ENABLE_KAFKA_OWNER="false"
 deploy/service: KAFKA_OWNERS="[]"
+deploy/service: SELECT_SSO_PROVIDER ?= "mas_sso"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
@@ -828,6 +833,7 @@ deploy/service: deploy/envoy deploy/route
 		-p KAS_FLEETSHARD_OPERATOR_STARTING_CSV=${KAS_FLEETSHARD_OPERATOR_STARTING_CSV} \
 		-p KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG=${KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG} \
 		-p STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG=${STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG} \
+		-p SELECT_SSO_PROVIDER=${SELECT_SSO_PROVIDER} \
 		| oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 
