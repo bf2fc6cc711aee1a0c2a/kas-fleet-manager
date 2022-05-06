@@ -115,8 +115,8 @@ func Test_getLimitSetForInstanceTypeInRegion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			limit, err := region.getLimitSetForInstanceTypeInRegion(tt.args.instanceType)
-			Expect(limit).To(Equal(tt.want))
 			Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(limit).To(Equal(tt.want))
 		})
 	}
 }
@@ -346,8 +346,8 @@ func Test_GetInstanceLimit(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			limit, err := tt.fields.providerConfig.GetInstanceLimit(tt.args.region, tt.args.providerName, tt.args.InstanceType)
-			Expect(limit).To(Equal(tt.want))
 			Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(limit).To(Equal(tt.want))
 		})
 	}
 }
