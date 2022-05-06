@@ -27,6 +27,10 @@ type SupportedKafkaSize struct {
 	// Maximium connection attempts per second available to this Kafka instance size.
 	MaxConnectionAttemptsPerSec int32                            `json:"max_connection_attempts_per_sec,omitempty"`
 	MaxMessageSize              SupportedKafkaSizeBytesValueItem `json:"max_message_size,omitempty"`
+	// Minimum number of in-sync replicas.
+	MinInSyncReplicas int32 `json:"min_in_sync_replicas,omitempty"`
+	// Replication factor available to this Kafka instance size.
+	ReplicationFactor int32 `json:"replication_factor,omitempty"`
 	// List of Availability Zone modes that this Kafka instance size supports. The possible values are \"single\", \"multi\".
 	SupportedAzModes []string `json:"supported_az_modes,omitempty"`
 	// Quota consumed by this Kafka instance size.

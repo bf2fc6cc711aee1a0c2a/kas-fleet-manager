@@ -41,10 +41,12 @@ func GetSupportedSizes(supportedInstanceType *config.KafkaInstanceType) []public
 			MaxMessageSize: public.SupportedKafkaSizeBytesValueItem{
 				Bytes: maxMessageSizeBytes,
 			},
-			QuotaConsumed:    int32(size.QuotaConsumed),
-			QuotaType:        size.QuotaType,
-			CapacityConsumed: int32(size.CapacityConsumed),
-			SupportedAzModes: size.SupportedAZModes,
+			MinInSyncReplicas: int32(size.MinInSyncReplicas),
+			ReplicationFactor: int32(size.ReplicationFactor),
+			QuotaConsumed:     int32(size.QuotaConsumed),
+			QuotaType:         size.QuotaType,
+			CapacityConsumed:  int32(size.CapacityConsumed),
+			SupportedAzModes:  size.SupportedAZModes,
 		}
 	}
 	return supportedSizes

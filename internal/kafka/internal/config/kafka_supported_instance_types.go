@@ -62,6 +62,8 @@ type KafkaInstanceSize struct {
 	QuotaType                   string   `yaml:"quotaType"`
 	CapacityConsumed            int      `yaml:"capacityConsumed"`
 	SupportedAZModes            []string `yaml:"supportedAZModes"`
+	MinInSyncReplicas           int      `yaml:"minInSyncReplicas"` // also abbreviated as ISR in Kafka terminology
+	ReplicationFactor           int      `yaml:"replicationFactor"` // also abbreviated as RF in Kafka terminology
 }
 
 // validates Kafka instance size configuration to ensure the following:

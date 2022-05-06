@@ -1776,6 +1776,12 @@ components:
           type: integer
         max_message_size:
           $ref: '#/components/schemas/SupportedKafkaSizeBytesValueItem'
+        min_in_sync_replicas:
+          description: Minimum number of in-sync replicas.
+          type: integer
+        replication_factor:
+          description: Replication factor available to this Kafka instance size.
+          type: integer
         supported_az_modes:
           description: List of Availability Zone modes that this Kafka instance size
             supports. The possible values are "single", "multi".
