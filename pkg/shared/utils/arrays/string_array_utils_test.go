@@ -1,12 +1,13 @@
 package arrays
 
 import (
-	. "github.com/onsi/gomega"
 	"testing"
 	"unicode"
+
+	. "github.com/onsi/gomega"
 )
 
-func TestStringFindFirst(t *testing.T) {
+func Test_StringFindFirst(t *testing.T) {
 	RegisterTestingT(t)
 	type args struct {
 		ary       []string
@@ -14,9 +15,9 @@ func TestStringFindFirst(t *testing.T) {
 		predicate func(x string) bool
 	}
 	tests := []struct {
-		name  string
-		args  args
-		wants int
+		name string
+		args args
+		want int
 	}{
 		{
 			name: "FindFirst success",
@@ -25,7 +26,7 @@ func TestStringFindFirst(t *testing.T) {
 				val:       "Red",
 				predicate: func(x string) bool { return x == "Red" },
 			},
-			wants: 2,
+			want: 2,
 		},
 		{
 			name: "FindFirst Not Found",
@@ -34,26 +35,25 @@ func TestStringFindFirst(t *testing.T) {
 				val:       "Red",
 				predicate: func(x string) bool { return x == "Blue" },
 			},
-			wants: -1,
+			want: -1,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			idx := FindFirstString(tt.args.ary, tt.args.predicate)
-			Expect(idx).To(Equal(tt.wants))
+			Expect(FindFirstString(tt.args.ary, tt.args.predicate)).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestFilterStringSlice(t *testing.T) {
+func Test_FilterStringSlice(t *testing.T) {
 	RegisterTestingT(t)
 	res := FilterStringSlice([]string{"this", "is", "Red", "Hat"}, func(x string) bool { return x != "" && unicode.IsUpper([]rune(x)[0]) })
 	Expect(res).To(HaveLen(2))
 	Expect(res).To(Equal([]string{"Red", "Hat"}))
 }
 
-func TestStringFirstNonEmpty(t *testing.T) {
+func Test_StringFirstNonEmpty(t *testing.T) {
 	RegisterTestingT(t)
 	type args struct {
 		ary []string
@@ -99,16 +99,16 @@ func TestStringFirstNonEmpty(t *testing.T) {
 	}
 }
 
-func TestStringFirstNonEmptyOrDefault(t *testing.T) {
+func Test_StringFirstNonEmptyOrDefault(t *testing.T) {
 	RegisterTestingT(t)
 	type args struct {
 		ary          []string
 		defaultValue string
 	}
 	tests := []struct {
-		name  string
-		args  args
-		wants string
+		name string
+		args args
+		want string
 	}{
 		{
 			name: "Value found: Red",
@@ -116,7 +116,7 @@ func TestStringFirstNonEmptyOrDefault(t *testing.T) {
 				ary:          []string{"", "", "Red", "Hat"},
 				defaultValue: "Red Hat",
 			},
-			wants: "Red",
+			want: "Red",
 		},
 		{
 			name: "Value not found: default: 'Red Hat'",
@@ -124,28 +124,27 @@ func TestStringFirstNonEmptyOrDefault(t *testing.T) {
 				ary:          []string{"", "", "", ""},
 				defaultValue: "Red Hat",
 			},
-			wants: "Red Hat",
+			want: "Red Hat",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			val := FirstNonEmptyOrDefault(tt.args.defaultValue, tt.args.ary...)
-			Expect(val).To(Equal(tt.wants))
+			Expect(FirstNonEmptyOrDefault(tt.args.defaultValue, tt.args.ary...)).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestContains(t *testing.T) {
+func Test_Contains(t *testing.T) {
 	RegisterTestingT(t)
 	type args struct {
 		ary   []string
 		value string
 	}
 	tests := []struct {
-		name  string
-		args  args
-		wants bool
+		name string
+		args args
+		want bool
 	}{
 		{
 			name: "Value found",
@@ -153,7 +152,7 @@ func TestContains(t *testing.T) {
 				ary:   []string{"yellow", "green", "blue"},
 				value: "green",
 			},
-			wants: true,
+			want: true,
 		},
 		{
 			name: "Value not found",
@@ -161,7 +160,7 @@ func TestContains(t *testing.T) {
 				ary:   []string{"yellow", "green", "blue"},
 				value: "red",
 			},
-			wants: false,
+			want: false,
 		},
 		{
 			name: "Value not found - Empty Array",
@@ -169,7 +168,7 @@ func TestContains(t *testing.T) {
 				ary:   []string{},
 				value: "red",
 			},
-			wants: false,
+			want: false,
 		},
 		{
 			name: "Value not found - Nil Array",
@@ -177,13 +176,12 @@ func TestContains(t *testing.T) {
 				ary:   nil,
 				value: "red",
 			},
-			wants: false,
+			want: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ret := Contains(tt.args.ary, tt.args.value)
-			Expect(ret).To(Equal(tt.wants))
+			Expect(Contains(tt.args.ary, tt.args.value)).To(Equal(tt.want))
 		})
 	}
 }

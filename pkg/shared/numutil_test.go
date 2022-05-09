@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestRoundUp(t *testing.T) {
+func Test_RoundUp(t *testing.T) {
 	cases := []struct {
 		name     string
 		number   int
@@ -48,7 +48,7 @@ func TestRoundUp(t *testing.T) {
 	}
 }
 
-func TestRoundDown(t *testing.T) {
+func Test_RoundDown(t *testing.T) {
 	cases := []struct {
 		name     string
 		number   int

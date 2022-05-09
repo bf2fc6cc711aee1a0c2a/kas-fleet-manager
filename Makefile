@@ -320,7 +320,9 @@ test: gotestsum
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/metrics/providers.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/error.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/metadata.go" \
-    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth/helper.go" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/write_json_response.go" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/handle_error.go" \
+	-e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth/helper.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth/context_config.go" \
 	cover.out > coverage.out
 .PHONY: test
