@@ -16,15 +16,13 @@ import (
 // ServiceAccount Service Account created in MAS-SSO for the Kafka Cluster for authentication
 type ServiceAccount struct {
 	// server generated unique id of the service account
-	Id           string `json:"id,omitempty"`
-	Kind         string `json:"kind,omitempty"`
-	Href         string `json:"href,omitempty"`
-	Name         string `json:"name,omitempty"`
-	Description  string `json:"description,omitempty"`
-	ClientId     string `json:"client_id,omitempty"`
-	ClientSecret string `json:"client_secret,omitempty"`
-	// Deprecated
-	DeprecatedOwner string    `json:"owner,omitempty"`
-	CreatedBy       string    `json:"created_by,omitempty"`
-	CreatedAt       time.Time `json:"created_at,omitempty"`
+	Id           string    `json:"id,omitempty"`
+	Kind         string    `json:"kind,omitempty"`
+	Href         string    `json:"href,omitempty"`
+	Name         string    `json:"name,omitempty"`
+	Description  string    `json:"description,omitempty"`
+	ClientId     string    `json:"client_id,omitempty"`
+	ClientSecret string    `json:"client_secret,omitempty"`
+	CreatedBy    string    `json:"created_by,omitempty"`
+	CreatedAt    time.Time `json:"created_at,omitempty"`
 }

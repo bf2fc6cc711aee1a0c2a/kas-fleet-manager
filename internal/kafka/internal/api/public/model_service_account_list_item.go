@@ -23,9 +23,6 @@ type ServiceAccountListItem struct {
 	ClientId string `json:"client_id,omitempty"`
 	// name of the service account
 	Name string `json:"name,omitempty"`
-	// owner of the service account
-	// Deprecated
-	DeprecatedOwner string `json:"owner,omitempty"`
 	// service account created by the user
 	CreatedBy string `json:"created_by,omitempty"`
 	// service account creation timestamp

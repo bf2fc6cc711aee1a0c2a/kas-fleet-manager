@@ -1291,7 +1291,6 @@ components:
         description: service account for my app
         client_id: SA-121212
         client_secret: secret
-        owner: test-user
         created_by: test-user
         created_at: 2021-04-07T16:24:01+05:30
     SsoProviderExample:
@@ -1310,7 +1309,6 @@ components:
         name: my-app-sa
         description: service account for my app
         client_id: SA-121212
-        owner: test-user
         created_by: test-user
         created_at: 2021-04-07T16:24:01+05:30
     ServiceAccountListItemExample:
@@ -1321,7 +1319,6 @@ components:
         name: my-app-sa
         description: service account for my app
         client_id: SA-121212
-        owner: test-user
         created_by: test-user
         created_at: 2021-04-07T16:24:01+05:30
     MetricsRangeQueryExample:
@@ -2092,9 +2089,6 @@ components:
           type: string
         client_secret:
           type: string
-        owner:
-          deprecated: true
-          type: string
         created_by:
           type: string
         created_at:
@@ -2110,10 +2104,6 @@ components:
           type: string
         name:
           description: name of the service account
-          type: string
-        owner:
-          deprecated: true
-          description: owner of the service account
           type: string
         created_by:
           description: service account created by the user

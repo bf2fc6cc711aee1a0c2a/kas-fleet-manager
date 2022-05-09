@@ -55,8 +55,6 @@ func BuildServiceAccount(modifyFn func(ServiceAccount public.ServiceAccount)) *p
 		Description:  description,
 		ClientId:     clientId,
 		ClientSecret: clientSecret,
-		// Deprecated
-		DeprecatedOwner: owner,
 		CreatedBy:       owner,
 		Href:            fmt.Sprintf("/api/kafkas_mgmt/v1/service_accounts/%s", id),
 	}
@@ -89,7 +87,6 @@ func BuildServiceAccountListItem(modifyFn func(ServiceAccount public.ServiceAcco
 		Kind:            kindServiceAccount,
 		Description:     description,
 		ClientId:        clientId,
-		DeprecatedOwner: owner,
 		CreatedBy:       owner,
 	}
 	if modifyFn != nil {
