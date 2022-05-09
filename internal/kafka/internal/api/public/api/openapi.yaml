@@ -1244,6 +1244,7 @@ components:
         display_name: Trial
         sizes:
         - id: x1
+          display_name: "1"
           ingress_throughput_per_sec:
             bytes: 31457280
           egress_throughput_per_sec:
@@ -1257,6 +1258,13 @@ components:
           quota_consumed: 1
           quota_type: rhosak
           capacity_consumed: 1
+          max_message_size:
+            bytes: 1048576
+          min_in_sync_replicas: 1
+          replication_factor: 1
+          supported_az_modes:
+          - single
+          - multi
     CloudProviderExample:
       value:
         kind: CloudProvider
