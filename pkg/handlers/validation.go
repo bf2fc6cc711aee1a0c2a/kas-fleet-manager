@@ -75,7 +75,7 @@ func ValidateServiceAccountClientId(value *string, field string) Validate {
 func ValidateMaxLength(value *string, field string, maxVal *int) Validate {
 	return func() *errors.ServiceError {
 		if maxVal != nil && len(*value) > *maxVal {
-			return errors.MaximumFieldLengthMissing("%s is not valid. Maximum length %d is required", field, *maxVal)
+			return errors.MaximumFieldLengthExceeded("%s is not valid. Maximum length %d is required", field, *maxVal)
 		}
 		return nil
 	}

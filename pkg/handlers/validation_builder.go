@@ -43,7 +43,7 @@ func MinLen(min int) ValidateOption {
 func MaxLen(max int) ValidateOption {
 	return func(field string, value *string) *errors.ServiceError {
 		if value != nil && len(*value) > max {
-			return errors.MinimumFieldLengthNotReached("%s is not valid. Maximum length %d is required.", field, max)
+			return errors.MaximumFieldLengthExceeded("%s is not valid. Maximum length %d is required.", field, max)
 		}
 		return nil
 	}
