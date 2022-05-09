@@ -219,7 +219,6 @@ func Test_HandleDelete(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -408,7 +407,7 @@ func Test_ConvertToPrivateError(t *testing.T) {
 		want compat.PrivateError
 	}{
 		{
-			name: "should return converted PrivareError",
+			name: "should return converted PrivateError",
 			args: args{
 				e: compat.Error{},
 			},

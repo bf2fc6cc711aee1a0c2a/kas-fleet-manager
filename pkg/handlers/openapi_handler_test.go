@@ -8,12 +8,12 @@ import (
 
 func Test_OpenapiHandler(t *testing.T) {
 	tests := []struct {
-		name       string
-		wantNotNil bool
+		name    string
+		wantNil bool
 	}{
 		{
-			name:       "Should create OpenAPIHandler",
-			wantNotNil: true,
+			name:    "Should create OpenAPIHandler",
+			wantNil: false,
 		},
 	}
 
@@ -22,7 +22,7 @@ func Test_OpenapiHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewOpenAPIHandler(nil)
-			Expect(handler != nil).To(Equal(tt.wantNotNil))
+			Expect(handler == nil).To(Equal(tt.wantNil))
 
 			req, rw := GetHandlerParams("GET", "/", nil)
 

@@ -8,12 +8,12 @@ import (
 
 func Test_PrometheusHandler(t *testing.T) {
 	tests := []struct {
-		name       string
-		wantNotNil bool
+		name    string
+		wantNil bool
 	}{
 		{
-			name:       "Should create PrometheusMetricsHandler",
-			wantNotNil: true,
+			name:    "Should create PrometheusMetricsHandler",
+			wantNil: false,
 		},
 	}
 
@@ -22,7 +22,7 @@ func Test_PrometheusHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewPrometheusMetricsHandler().Handler()
-			Expect(handler != nil).To(Equal(tt.wantNotNil))
+			Expect(handler == nil).To(Equal(tt.wantNil))
 			req, rw := GetHandlerParams("GET", "/", nil)
 			handler.ServeHTTP(rw, req)
 			Expect(rw.Code).ToNot(Equal(0))

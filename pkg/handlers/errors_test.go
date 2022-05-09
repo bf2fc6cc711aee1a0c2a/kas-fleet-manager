@@ -15,19 +15,19 @@ import (
 
 func GetHandlerParams(method string, url string, body io.Reader) (*http.Request, *httptest.ResponseRecorder) {
 	req, err := http.NewRequest(method, url, body)
-	Expect(err != nil).To(BeFalse())
+	Expect(err).NotTo(HaveOccurred())
 
 	return req, httptest.NewRecorder()
 }
 
 func Test_ListErrors(t *testing.T) {
 	tests := []struct {
-		name       string
-		wantNotNil bool
+		name    string
+		wantNil bool
 	}{
 		{
-			name:       "Should create new errors handler and list all the errors",
-			wantNotNil: true,
+			name:    "Should create new errors handler and list all the errors",
+			wantNil: false,
 		},
 	}
 
@@ -38,7 +38,7 @@ func Test_ListErrors(t *testing.T) {
 			errorsLen := strconv.Itoa(len(errors.Errors()))
 			req, rw := GetHandlerParams("GET", "/", nil)
 			handler := NewErrorsHandler()
-			Expect(handler != nil).To(Equal(tt.wantNotNil))
+			Expect(handler == nil).To(Equal(tt.wantNil))
 			handler.List(rw, req) //nolint
 			Expect(rw.Code).To(Equal(http.StatusOK))
 			bodyStr, err := io.ReadAll(rw.Body)

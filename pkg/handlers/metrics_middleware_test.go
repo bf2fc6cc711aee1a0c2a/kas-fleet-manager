@@ -9,12 +9,12 @@ import (
 
 func Test_MetricsMiddleware(t *testing.T) {
 	tests := []struct {
-		name       string
-		wantNotNil bool
+		name    string
+		wantNil bool
 	}{
 		{
-			name:       "Should create metrics middleware handler",
-			wantNotNil: true,
+			name:    "Should create metrics middleware handler",
+			wantNil: false,
 		},
 	}
 
@@ -25,7 +25,7 @@ func Test_MetricsMiddleware(t *testing.T) {
 			req, rw := GetHandlerParams("GET", "/", nil)
 			m := http.NewServeMux()
 			handler := MetricsMiddleware(m)
-			Expect(handler != nil).To(Equal(tt.wantNotNil))
+			Expect(handler == nil).To(Equal(tt.wantNil))
 			handler.ServeHTTP(rw, req)
 			Expect(rw.Code).ToNot(Equal(0))
 		})
