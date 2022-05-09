@@ -6,679 +6,803 @@ import (
 
 func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 	tests := []struct {
-		name    string
-		config  SupportedKafkaInstanceTypesConfig
-		wantErr bool
+		name              string
+		configFactoryFunc func() SupportedKafkaInstanceTypesConfig
+		wantErr           bool
 	}{
 		{
 			name: "Should not return an error with valid configuration",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
-							},
-							{
-								Id:                          "x2",
-								IngressThroughputPerSec:     "60Mi",
-								EgressThroughputPerSec:      "60Mi",
-								TotalMaxConnections:         2000,
-								MaxDataRetentionSize:        "200Gi",
-								MaxPartitions:               2000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 200,
-								QuotaConsumed:               2,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            2,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex2 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex2.Id = "x2"
+				testKafkaInstanceSizex2.DisplayName = "2"
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+								testKafkaInstanceSizex2,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: false,
 		},
 		{
 			name: "Should fail because size was repeated",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
-							},
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should fail because property TotalMaxConnections was not specified",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.TotalMaxConnections = 0
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should fail because property MaxPartitions was not specified",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MaxPartitions = 0
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should fail because property MaxConnectionAttemptsPerSec was not specified",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                      "x1",
-								IngressThroughputPerSec: "30Mi",
-								EgressThroughputPerSec:  "30Mi",
-								TotalMaxConnections:     1000,
-								MaxDataRetentionSize:    "100Gi",
-								MaxDataRetentionPeriod:  "P14D",
-								MaxPartitions:           1000,
-								QuotaConsumed:           1,
-								QuotaType:               "rhosak",
-								CapacityConsumed:        1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MaxConnectionAttemptsPerSec = 0
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return error when property IngressThroughputPerSec is undefined",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.IngressThroughputPerSec = Quantity("")
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return error when property EgressThroughputPerSec is undefined",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.EgressThroughputPerSec = Quantity("")
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return error when property MaxDataRetentionSize is undefined",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								EgressThroughputPerSec:      "30Mi",
-								IngressThroughputPerSec:     "30Mi",
-								TotalMaxConnections:         1000,
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MaxDataRetentionSize = Quantity("")
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return error when property MaxDataRetentionPeriod is undefined",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								EgressThroughputPerSec:      "30Mi",
-								IngressThroughputPerSec:     "30Mi",
-								TotalMaxConnections:         1000,
-								MaxPartitions:               1000,
-								MaxConnectionAttemptsPerSec: 100,
-								MaxDataRetentionSize:        "100Gi",
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MaxDataRetentionPeriod = ""
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return error when property Id is undefined",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								EgressThroughputPerSec:      "30Mi",
-								IngressThroughputPerSec:     "30Mi",
-								TotalMaxConnections:         1000,
-								MaxPartitions:               1000,
-								MaxConnectionAttemptsPerSec: 100,
-								MaxDataRetentionSize:        "100Gi",
-								MaxDataRetentionPeriod:      "P14D",
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.Id = ""
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
-			name: "Should return error when property with quantity format is invalid",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Midk",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			name: "Should return error when a property with quantity format is invalid",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.IngressThroughputPerSec = "30Midk"
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return error when property with quantity format is Zero",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "0Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MaxDataRetentionSize = Quantity("0Gi")
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return error when property with quantity format is less than Zero",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "-30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.EgressThroughputPerSec = Quantity("-30Mi")
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return error when property MaxDataRetentionPeriod is invalid",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14Dygyuook",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MaxDataRetentionPeriod = "P14Dygyuook"
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return error when property MaxDataRetentionPeriod is zero",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P0S",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MaxDataRetentionPeriod = "P0S"
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return error when property KafkaProfile.id is undefined",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return error when KafkaProfile.Sizes is empty",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes:       []KafkaInstanceSize{},
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes:       []KafkaInstanceSize{},
+						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
-			name: "Should fail because profile was repeted",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			name: "Should fail because profile was repeated",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-					{
-						Id: "standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
-							},
-						},
-					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return an error when quota consumed is less than 1",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               -1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.QuotaConsumed = -1
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return an error when quota consumed is undefined",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.QuotaConsumed = 0
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return an error when quota type is undefined",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.QuotaType = ""
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return an error when capacity consumed is undefined",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.CapacityConsumed = 0
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return an error when capacity consumed is less than 1",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "standard",
-						DisplayName: "Standard",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								CapacityConsumed:            0,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.CapacityConsumed = -1
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should return an error when profile id is invalid",
-			config: SupportedKafkaInstanceTypesConfig{
-				SupportedKafkaInstanceTypes: []KafkaInstanceType{
-					{
-						Id:          "invalid",
-						DisplayName: "Invalid",
-						Sizes: []KafkaInstanceSize{
-							{
-								Id:                          "x1",
-								IngressThroughputPerSec:     "30Mi",
-								EgressThroughputPerSec:      "30Mi",
-								TotalMaxConnections:         1000,
-								MaxDataRetentionSize:        "100Gi",
-								MaxPartitions:               1000,
-								MaxDataRetentionPeriod:      "P14D",
-								MaxConnectionAttemptsPerSec: 100,
-								QuotaConsumed:               1,
-								QuotaType:                   "rhosak",
-								CapacityConsumed:            1,
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "invalid",
+							DisplayName: "Invalid",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
 							},
 						},
 					},
-				},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return error when property MaxMessageSize is not set",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MaxMessageSize = Quantity("")
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return error when property MaxMessageSize is invalid",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MaxMessageSize = Quantity("30Minonvalid")
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return error when property MaxMessageSize is negative",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MaxMessageSize = Quantity("-30Mi")
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return error when property MinInSyncReplicas is not set",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MinInSyncReplicas = 0
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return error when property MinInSyncReplicas is less than zero",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MinInSyncReplicas = -1
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return error when property ReplicationFactor is not set",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.ReplicationFactor = 0
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return error when property ReplicationFactor is less than zero",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.ReplicationFactor = -1
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return error when property supportedAZModes is not set",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.SupportedAZModes = nil
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return error when property supportedAZModes is empty",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.SupportedAZModes = []string{}
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return error when property supportedAZModes contains an invalid value",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.SupportedAZModes = []string{"multi", "nonvalidvalue"}
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should succeed with multiple valid supportedAZModes values in a kafka instance size",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.SupportedAZModes = []string{"multi", "single"}
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: false,
+		},
+		{
+			name: "Should return error when property DisplayName in a kafka instance size is not set",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.DisplayName = ""
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return error when property LifespanSeconds in a kafka instance is set with an invalid value",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.LifespanSeconds = &[]int{-1}[0]
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return error when property LifespanSeconds in a kafka instance is set to 0",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.LifespanSeconds = &[]int{0}[0]
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
 			},
 			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.config.validate(); (err != nil) != tt.wantErr {
+			supportedKafkaInstanceTypesConfig := tt.configFactoryFunc()
+			if err := supportedKafkaInstanceTypesConfig.validate(); (err != nil) != tt.wantErr {
 				t.Errorf("SupportedKafkaSizesConfig.Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func buildTestStandardKafkaInstanceSize() KafkaInstanceSize {
+	return KafkaInstanceSize{
+		Id:                          "x1",
+		DisplayName:                 "1",
+		IngressThroughputPerSec:     "30Mi",
+		EgressThroughputPerSec:      "30Mi",
+		TotalMaxConnections:         1000,
+		MaxDataRetentionSize:        "100Gi",
+		MaxPartitions:               1000,
+		MaxDataRetentionPeriod:      "P14D",
+		MaxConnectionAttemptsPerSec: 100,
+		MaxMessageSize:              "1Mi",
+		MinInSyncReplicas:           2,
+		ReplicationFactor:           3,
+		SupportedAZModes: []string{
+			"multi",
+		},
+		QuotaConsumed:    1,
+		QuotaType:        "rhosak",
+		CapacityConsumed: 1,
 	}
 }
