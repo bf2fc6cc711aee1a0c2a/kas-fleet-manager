@@ -175,6 +175,8 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	adminRouter.HandleFunc("/kafka_connector_namespaces/{namespace_id}/deployments", s.ConnectorAdminHandler.GetNamespaceDeployments).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafka_connectors/{connector_id}", s.ConnectorAdminHandler.GetConnector).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafka_connectors/{connector_id}", s.ConnectorAdminHandler.DeleteConnector).Methods(http.MethodDelete)
+	adminRouter.HandleFunc("/kafka_connector_types", s.ConnectorAdminHandler.ListConnectorTypes).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafka_connector_types/{connector_type_id}", s.ConnectorAdminHandler.GetConnectorType).Methods(http.MethodGet)
 
 	v1Metadata := api.VersionMetadata{
 		ID:          "v1",

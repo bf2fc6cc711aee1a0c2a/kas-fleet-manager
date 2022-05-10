@@ -879,6 +879,88 @@ paths:
                 $ref: "#/components/schemas/ConnectorAvailableOperatorUpgrade"
         required: true
 
+  /api/connector_mgmt/v1/admin/kafka_connector_types:
+    get:
+      tags:
+        - Connector Types
+      security:
+        - Bearer: [ ]
+      operationId: getConnectorTypes
+      summary: Returns a list of connector types
+      description: Returns a list of connector types
+      parameters:
+        - $ref: "connector_mgmt.yaml#/components/parameters/page"
+        - $ref: "connector_mgmt.yaml#/components/parameters/size"
+        - $ref: 'connector_mgmt.yaml#/components/parameters/orderBy'
+        - $ref: 'connector_mgmt.yaml#/components/parameters/search'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectorTypeAdminViewList"
+          description: A list of connector types
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+
+  /api/connector_mgmt/v1/admin/kafka_connector_types/{connector_type_id}:
+    parameters:
+      - name: connector_type_id
+        description: The id of the connector type
+        schema:
+          type: string
+        in: path
+        required: true
+    get:
+      tags:
+        - Connector Types
+      security:
+        - Bearer: [ ]
+      operationId: getConnectorTypeByID
+      summary: Get a connector type by id
+      description: Get a connector type by id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectorTypeAdminView"
+          description: A list of connector types
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+
 components:
   schemas:
     ConnectorAvailableTypeUpgradeList:
@@ -1044,6 +1126,35 @@ components:
               items:
                 allOf:
                   - $ref: '#/components/schemas/ConnectorDeploymentAdminView'
+
+    ConnectorTypeAdminViewList:
+      allOf:
+        - $ref: 'connector_mgmt.yaml#/components/schemas/List'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ConnectorTypeAdminView'
+
+    ConnectorTypeAdminView:
+      description: Holds the connector type
+      allOf:
+        - $ref: 'connector_mgmt.yaml#/components/schemas/ObjectReference'
+        - $ref: 'connector_mgmt.yaml#/components/schemas/ConnectorType'
+        - type: object
+          properties:
+            channels:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/ConnectorTypeChannel'
+
+    ConnectorTypeChannel:
+      description: Holds the connector type channel
+      type: object
+      properties:
+        shard_metadata:
+          type: object
 
   securitySchemes:
     Bearer:

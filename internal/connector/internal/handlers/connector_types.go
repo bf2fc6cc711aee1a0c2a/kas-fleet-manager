@@ -52,10 +52,8 @@ func (h ConnectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
 func (h ConnectorTypesHandler) List(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
-			ctx := r.Context()
-
 			listArgs := coreServices.NewListArguments(r.URL.Query())
-			resources, paging, err := h.service.List(ctx, listArgs)
+			resources, paging, err := h.service.List(listArgs)
 			if err != nil {
 				return nil, err
 			}

@@ -36,8 +36,8 @@ type ConnectorChannelConfig struct {
 }
 
 type ConnectorCatalogEntry struct {
-	Channels      map[string]*ConnectorChannelConfig `json:"channels,omitempty"`
-	ConnectorType public.ConnectorType               `json:"connector_type"`
+	Channels      map[string]ConnectorChannelConfig `json:"channels,omitempty"`
+	ConnectorType public.ConnectorType              `json:"connector_type"`
 }
 
 func NewConnectorsConfig() *ConnectorsConfig {

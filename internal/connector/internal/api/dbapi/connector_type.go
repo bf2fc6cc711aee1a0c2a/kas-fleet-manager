@@ -57,6 +57,11 @@ type ConnectorShardMetadata struct {
 	LatestId        *int64
 }
 
+type ConnectorCatalogEntry struct {
+	ConnectorType *ConnectorType
+	Channels      map[string]*ConnectorShardMetadata
+}
+
 func (ct *ConnectorType) ChannelNames() []string {
 	channels := make([]string, len(ct.Channels))
 	for i := 0; i < len(channels); i++ {
