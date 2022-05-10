@@ -2,14 +2,13 @@ package config
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/profiles"
 	"os"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 )
-
-const AnnotationProfileKey = "connector_mgmt.bf2.org/profile"
 
 type ConnectorsQuotaConfig struct {
 	ConnectorsQuotaMap        ConnectorsQuotaProfileMap
@@ -21,7 +20,7 @@ func NewConnectorsQuotaConfig() *ConnectorsQuotaConfig {
 	return &ConnectorsQuotaConfig{
 		ConnectorsQuotaMap:        make(ConnectorsQuotaProfileMap),
 		ConnectorsQuotaConfigFile: "config/connectors-quota-configuration.yaml",
-		EvalNamespaceQuotaProfile: "evaluation-profile",
+		EvalNamespaceQuotaProfile: profiles.EvaluationProfileName,
 	}
 }
 

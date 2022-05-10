@@ -7,6 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/profiles"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -166,7 +167,7 @@ func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace, quotaConfig 
 	annotations := make(map[string]string, len(namespace.Annotations))
 	for _, anno := range namespace.Annotations {
 		annotations[anno.Key] = anno.Value
-		if anno.Key == config.AnnotationProfileKey {
+		if anno.Key == profiles.AnnotationProfileKey {
 			// TODO handle unknown profiles instead of using defaults
 			quota, _ = quotaConfig.GetNamespaceQuota(anno.Value)
 		}
@@ -223,7 +224,7 @@ func PresentPrivateConnectorNamespace(namespace *dbapi.ConnectorNamespace, quota
 	annotations := make(map[string]string, len(namespace.Annotations))
 	for _, anno := range namespace.Annotations {
 		annotations[anno.Key] = anno.Value
-		if anno.Key == config.AnnotationProfileKey {
+		if anno.Key == profiles.AnnotationProfileKey {
 			quota, _ = quotaConfig.GetNamespaceQuota(anno.Value)
 		}
 	}
