@@ -98,11 +98,11 @@ func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *admin.Connecto
 		},
 	}
 	if namespaceRequest.Expiration != "" {
-		time, err := time.Parse(time.RFC3339, namespaceRequest.Expiration)
+		expiration, err := time.Parse(time.RFC3339, namespaceRequest.Expiration)
 		if err != nil {
 			return nil, errors.BadRequest("invalid namespace expiration '%s': %s", namespaceRequest.Expiration, err)
 		}
-		result.Expiration = &time
+		result.Expiration = &expiration
 	}
 	switch namespaceRequest.Tenant.Kind {
 	case admin.CONNECTORNAMESPACETENANTKIND_USER:
