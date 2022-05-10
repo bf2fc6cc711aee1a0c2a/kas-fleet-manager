@@ -138,7 +138,7 @@ func (k *ConnectorManager) Reconcile() []error {
 
 	// reconcile deleting connectors with no deployments
 	k.doReconcile(&errs, "deleting", k.reconcileDeleting,
-		"desired_state = ? AND phase = ?", dbapi.ConnectorDeleted, string(dbapi.ConnectorStatusPhaseDeleting))
+		"desired_state = ? AND phase = ?", dbapi.ConnectorDeleted, dbapi.ConnectorStatusPhaseDeleting)
 
 	// reconcile deleted connectors with no deployments
 	k.doReconcile(&errs, "deleted", k.reconcileDeleted,
@@ -239,6 +239,12 @@ func (k *ConnectorManager) reconcileDeleting(ctx context.Context, connector *dba
 	_, err := k.connectorClusterService.GetDeploymentByConnectorId(ctx, connector.ID)
 	if err != nil {
 		if err.Is404() {
+			// set namespace id to nil
+			if err := k.db.New().Model(&connector).Where("id = ?", connector.ID).
+				Update("namespace_id", nil).Error; err != nil {
+				return errors.Wrapf(err, "failed to update namespace_id for connector %s", connector.ID)
+			}
+			// set status to `deleted`
 			connector.Status.Phase = dbapi.ConnectorStatusPhaseDeleted
 			if err = k.connectorService.SaveStatus(ctx, connector.Status); err != nil {
 				return err

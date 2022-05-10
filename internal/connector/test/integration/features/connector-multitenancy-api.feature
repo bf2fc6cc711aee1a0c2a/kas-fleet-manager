@@ -357,10 +357,12 @@ Feature: connector namespaces API
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204
     And the response should match ""
+    # wait for cluster reconcile to delete namespaces
+    And I sleep for 5 seconds
 
     # agent deletes default namespace
     Given I am logged in as "Gru_shard"
-    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    And I set the "Authorization" header to "Bearer ${shard_token}"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}/status" with json body:
       """
       {

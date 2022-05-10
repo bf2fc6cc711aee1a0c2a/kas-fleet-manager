@@ -47,7 +47,9 @@ type ConnectorClusterService interface {
 	GetAvailableDeploymentOperatorUpgrades(listArgs *services.ListArguments) (dbapi.ConnectorDeploymentOperatorUpgradeList, *api.PagingMeta, *errors.ServiceError)
 	UpgradeConnectorsByOperator(ctx context.Context, clusterId string, upgrades dbapi.ConnectorDeploymentOperatorUpgradeList) *errors.ServiceError
 	CleanupDeployments() *errors.ServiceError
-	ReconcileDeletingClusters() (int, []*errors.ServiceError)
+	ReconcileEmptyDeletingClusters(ctx context.Context, clusterIds []string) (int, []*errors.ServiceError)
+	ReconcileNonEmptyDeletingClusters(ctx context.Context, clusterIds []string) (int, []*errors.ServiceError)
+	GetClusterIds(query string, args ...interface{}) ([]string, error)
 	GetClusterOrg(id string) (string, *errors.ServiceError)
 	ResetServiceAccount(ctx context.Context, cluster *dbapi.ConnectorCluster) *errors.ServiceError
 }
@@ -174,7 +176,7 @@ func (k *connectorClusterService) Get(ctx context.Context, id string) (dbapi.Con
 	return resource, nil
 }
 
-// Delete deletes a connector cluster from the database.
+// Delete changes connector cluster status phase to `deleting`
 func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors.ServiceError {
 
 	var clusterDeleted bool
@@ -189,14 +191,7 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 		if _, err := phase.PerformClusterOperation(&resource, phase.DeleteCluster,
 			func(cluster *dbapi.ConnectorCluster) *errors.ServiceError {
 
-				// cascade delete namespaces and deployments, first
-				var serr *errors.ServiceError
-				_, serr = k.connectorNamespaceService.DeleteNamespaceAndConnectorDeployments(ctx, dbConn,
-					"connector_namespaces.cluster_id = ?", id)
-				if serr != nil {
-					return serr
-				}
-
+				// mark cluster for deletion
 				if err := dbConn.Model(cluster).Update("status_phase", cluster.Status.Phase).Error; err != nil {
 					return services.HandleUpdateError("Connector cluster", err)
 				}
@@ -213,12 +208,12 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 		return services.HandleDeleteError("Connector cluster", "id", id, err)
 	}
 
-	// reconcile deleting clusters, namespaces and connectors
-	defer func() {
-		if clusterDeleted {
+	if clusterDeleted {
+		// reconcile deleting clusters
+		_ = db.AddPostCommitAction(ctx, func() {
 			k.bus.Notify("reconcile:connector_cluster")
-		}
-	}()
+		})
+	}
 
 	return nil
 }
@@ -465,7 +460,7 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 	}
 
 	// update the connector status
-	if err := dbConn.Model(&connectorStatus).Where("id = ?", deployment.ConnectorID).Updates(&connectorStatus).Error; err != nil {
+	if err := dbConn.Where("id = ?", deployment.ConnectorID).Updates(&connectorStatus).Error; err != nil {
 		return services.HandleUpdateError("Connector status", err)
 	}
 
@@ -854,27 +849,10 @@ func toOperatorMap(arr []dbapi.ConnectorDeploymentOperatorUpgrade) map[string]db
 
 // ReconcileDeletingClusters deletes empty clusters with no namespaces that are in phase deleting,
 // it also deletes their service accounts to disconnect from the agent gracefully
-func (k *connectorClusterService) ReconcileDeletingClusters() (int, []*errors.ServiceError) {
-	count := 0
+func (k *connectorClusterService) ReconcileEmptyDeletingClusters(_ context.Context, clusterIds []string) (int, []*errors.ServiceError) {
+	count := len(clusterIds)
 	var errs []*errors.ServiceError
 	if err := k.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
-
-		// get ids of all clusters in deleting phase that have no namespaces
-		var clusterIds []string
-		if err := dbConn.Table("connector_clusters").Select("connector_clusters.id").
-			Joins("LEFT JOIN connector_namespaces ON connector_namespaces.cluster_id = connector_clusters.id AND "+
-				"connector_namespaces.deleted_at IS NULL").
-			Where("connector_clusters.status_phase = ? AND "+
-				"connector_clusters.deleted_at IS NULL AND cluster_id IS NULL", dbapi.ConnectorClusterPhaseDeleting).
-			Find(&clusterIds).Error; err != nil {
-			return services.HandleGetError("Connector cluster",
-				"status_phase", dbapi.ConnectorClusterPhaseDeleting, err)
-		}
-
-		count = len(clusterIds)
-		if count == 0 {
-			return nil
-		}
 
 		// remove service account for clusters first, so agents are blocked from connecting
 		for _, id := range clusterIds {
@@ -896,9 +874,50 @@ func (k *connectorClusterService) ReconcileDeletingClusters() (int, []*errors.Se
 	}); err != nil {
 		errs = append(errs, services.HandleDeleteError("Connector cluster", "status_phase",
 			dbapi.ConnectorClusterPhaseDeleting, err))
+		count = 0
 	}
 
 	return count, errs
+}
+
+// ReconcileNonEmptyDeletingClusters deletes non-deleting namespaces in deleting clusters
+func (k *connectorClusterService) ReconcileNonEmptyDeletingClusters(ctx context.Context, clusterIds []string) (int, []*errors.ServiceError) {
+	count := len(clusterIds)
+	var errs []*errors.ServiceError
+	if err := k.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
+
+		// cascade delete non-deleting namespaces
+		var serr *errors.ServiceError
+		_, serr = k.connectorNamespaceService.DeleteNamespaces(ctx, dbConn,
+			"connector_namespaces.cluster_id IN ? AND connector_namespaces.status_phase NOT IN ?",
+			clusterIds, []string{string(dbapi.ConnectorNamespacePhaseDeleting), string(dbapi.ConnectorNamespacePhaseDeleted)})
+		if serr != nil {
+			return serr
+		}
+
+		return nil
+
+	}); err != nil {
+		errs = append(errs, services.HandleDeleteError("Connector cluster", "status_phase",
+			dbapi.ConnectorClusterPhaseDeleting, err))
+		count = 0
+	}
+
+	return count, errs
+}
+
+// GetClusterIds gets ids of all clusters that match the query and args
+func (k *connectorClusterService) GetClusterIds(query string, args ...interface{}) ([]string, error) {
+	var clusterIds []string
+	if err := k.connectionFactory.New().Table("connector_clusters").Select("connector_clusters.id").
+		Joins("LEFT JOIN connector_namespaces ON connector_namespaces.cluster_id = connector_clusters.id AND "+
+			"connector_namespaces.deleted_at IS NULL").
+		Group("connector_clusters.id").
+		Where(query, args...).
+		Find(&clusterIds).Error; err != nil {
+		return nil, services.HandleGetError("Connector cluster", query, args, err)
+	}
+	return clusterIds, nil
 }
 
 func (k *connectorClusterService) GetClusterOrg(id string) (string, *errors.ServiceError) {
