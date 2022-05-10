@@ -1156,6 +1156,10 @@ components:
           type: array
           items:
             type: string
+        lifespan_seconds:
+          description: 'The limit lifespan of the kafka instance in seconds. If not specified then the instance never expires.'
+          type: integer
+          nullable: true
         quota_consumed:
           description: 'Quota consumed by this Kafka instance size.'
           type: integer

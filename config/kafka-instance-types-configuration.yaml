@@ -20,6 +20,7 @@
 #   - minInSyncReplicas: Minimum number of in sync replicas
 #   - replicationFactor: Replication factor
 #   - supportedAZModes: a list of the supported AZ modes. The possible values are "single", "multi"
+#   - lifespanSeconds: The limit lifespan of the kafka instance in seconds. If not specified then the instance never expires
 #   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
 #   - quotaType: Quota type that will be consumed when this size is selected.
 #   - capacityConsumed: Data plane cluster capacity consumed by this Kafka instance size (only used for manual scaling)
@@ -82,3 +83,4 @@ supported_instance_types:
       capacityConsumed: 1
       supportedAZModes:
       - single
+      lifespanSeconds: 172800

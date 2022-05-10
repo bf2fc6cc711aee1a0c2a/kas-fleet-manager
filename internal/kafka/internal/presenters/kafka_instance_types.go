@@ -22,6 +22,11 @@ func GetSupportedSizes(supportedInstanceType *config.KafkaInstanceType) []public
 		egressBytes, _ := size.EgressThroughputPerSec.ToInt64()
 		retentionSizeBytes, _ := size.MaxDataRetentionSize.ToInt64()
 		maxMessageSizeBytes, _ := size.MaxMessageSize.ToInt64()
+		var lifespanSeconds *int32
+		if size.LifespanSeconds != nil {
+			tmpLifespanSeconds := int32(*size.LifespanSeconds)
+			lifespanSeconds = &tmpLifespanSeconds
+		}
 		supportedSizes[i] = public.SupportedKafkaSize{
 			Id:          size.Id,
 			DisplayName: size.DisplayName,
@@ -47,6 +52,7 @@ func GetSupportedSizes(supportedInstanceType *config.KafkaInstanceType) []public
 			QuotaType:         size.QuotaType,
 			CapacityConsumed:  int32(size.CapacityConsumed),
 			SupportedAzModes:  size.SupportedAZModes,
+			LifespanSeconds:   lifespanSeconds,
 		}
 	}
 	return supportedSizes

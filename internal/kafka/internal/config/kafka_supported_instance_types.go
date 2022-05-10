@@ -64,6 +64,7 @@ type KafkaInstanceSize struct {
 	SupportedAZModes            []string `yaml:"supportedAZModes"`
 	MinInSyncReplicas           int      `yaml:"minInSyncReplicas"` // also abbreviated as ISR in Kafka terminology
 	ReplicationFactor           int      `yaml:"replicationFactor"` // also abbreviated as RF in Kafka terminology
+	LifespanSeconds             *int     `yaml:"lifespanSeconds"`
 }
 
 // validates Kafka instance size configuration to ensure the following:
@@ -111,6 +112,10 @@ func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 		if _, ok := validSupportedAZModes[supportedAZMode]; !ok {
 			return fmt.Errorf("value '%s' in supportedAZModes for Kafka instance type '%s', size '%s' is invalid", supportedAZMode, k.Id, instanceTypeId)
 		}
+	}
+
+	if k.LifespanSeconds != nil && *k.LifespanSeconds <= 0 {
+		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' specifies a lifespanSeconds seconds value less than or equals to Zero.", k.Id, instanceTypeId)
 	}
 
 	if maxDataRetentionPeriod.IsZero() || egressThroughputQuantity.CmpInt64(1) < 0 ||

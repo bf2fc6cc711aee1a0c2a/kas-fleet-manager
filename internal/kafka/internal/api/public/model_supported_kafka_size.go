@@ -33,6 +33,8 @@ type SupportedKafkaSize struct {
 	ReplicationFactor int32 `json:"replication_factor,omitempty"`
 	// List of Availability Zone modes that this Kafka instance size supports. The possible values are \"single\", \"multi\".
 	SupportedAzModes []string `json:"supported_az_modes,omitempty"`
+	// The limit lifespan of the kafka instance in seconds. If not specified then the instance never expires.
+	LifespanSeconds *int32 `json:"lifespan_seconds,omitempty"`
 	// Quota consumed by this Kafka instance size.
 	QuotaConsumed int32 `json:"quota_consumed,omitempty"`
 	// Quota type used by this Kafka instance size.
