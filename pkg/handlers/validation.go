@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/xeipuuv/gojsonschema"
-
 	"net/url"
 	"strconv"
 
@@ -77,7 +75,7 @@ func ValidateServiceAccountClientId(value *string, field string) Validate {
 func ValidateMaxLength(value *string, field string, maxVal *int) Validate {
 	return func() *errors.ServiceError {
 		if maxVal != nil && len(*value) > *maxVal {
-			return errors.MaximumFieldLengthMissing("%s is not valid. Maximum length %d is required", field, *maxVal)
+			return errors.MaximumFieldLengthExceeded("%s is not valid. Maximum length %d is required", field, *maxVal)
 		}
 		return nil
 	}
@@ -107,23 +105,6 @@ func ValidateMinLength(value *string, field string, min int) Validate {
 		}
 		return nil
 	}
-}
-
-func ValidateJsonSchema(schemaName string, schemaLoader gojsonschema.JSONLoader, documentName string, documentLoader gojsonschema.JSONLoader) *errors.ServiceError {
-	schema, err := gojsonschema.NewSchema(schemaLoader)
-	if err != nil {
-		return errors.BadRequest("invalid %s: %v", schemaName, err)
-	}
-
-	r, err := schema.Validate(documentLoader)
-	if err != nil {
-		return errors.BadRequest("invalid %s: %v", documentName, err)
-	}
-	if !r.Valid() {
-		return errors.BadRequest("%s not conform to the %s. %d errors encountered.  1st error: %s",
-			documentName, schemaName, len(r.Errors()), r.Errors()[0].String())
-	}
-	return nil
 }
 
 func ValidatQueryParam(queryParams url.Values, field string) Validate {

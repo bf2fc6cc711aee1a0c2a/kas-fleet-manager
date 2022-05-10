@@ -610,7 +610,7 @@ func MinimumFieldLengthNotReached(reason string, values ...interface{}) *Service
 	return New(ErrorMinimumFieldLength, reason, values...)
 }
 
-func MaximumFieldLengthMissing(reason string, values ...interface{}) *ServiceError {
+func MaximumFieldLengthExceeded(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMaximumFieldLength, reason, values...)
 }
 

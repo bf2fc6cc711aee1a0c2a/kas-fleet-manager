@@ -318,6 +318,7 @@ test: gotestsum
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/environments/"  \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments/"  \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/metrics/providers.go" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers/json_schema_validation.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/error.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/metadata.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/write_json_response.go" \
