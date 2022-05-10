@@ -34,16 +34,8 @@ func ConvertConnectorNamespaceRequest(namespaceRequest *public.ConnectorNamespac
 			Phase: dbapi.ConnectorNamespacePhaseDisconnected,
 		},
 	}
-	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
 
-	index := 0
-	for key, val := range namespaceRequest.Annotations {
-		result.Annotations[index].NamespaceId = result.ID
-		result.Annotations[index].Key = key
-		result.Annotations[index].Value = val
-
-		index++
-	}
+	result.Annotations = getAnnotations(result.ID, namespaceRequest.Annotations)
 
 	switch namespaceRequest.Kind {
 	case public.CONNECTORNAMESPACETENANTKIND_USER:
@@ -81,16 +73,8 @@ func ConvertConnectorNamespaceEvalRequest(namespaceRequest *public.ConnectorName
 			Phase: dbapi.ConnectorNamespacePhaseDisconnected,
 		},
 	}
-	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
 
-	index := 0
-	for key, val := range namespaceRequest.Annotations {
-		result.Annotations[index].NamespaceId = result.ID
-		result.Annotations[index].Key = key
-		result.Annotations[index].Value = val
-
-		index++
-	}
+	result.Annotations = getAnnotations(result.ID, namespaceRequest.Annotations)
 
 	result.TenantUserId = &result.Owner
 	result.TenantUser = &dbapi.ConnectorTenantUser{
@@ -138,16 +122,8 @@ func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *admin.Connecto
 	default:
 		return nil, errors.BadRequest("invalid kind %s", namespaceRequest.Tenant.Kind)
 	}
-	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
 
-	index := 0
-	for key, val := range namespaceRequest.Annotations {
-		result.Annotations[index].NamespaceId = result.ID
-		result.Annotations[index].Key = key
-		result.Annotations[index].Value = val
-
-		index++
-	}
+	result.Annotations = getAnnotations(result.ID, namespaceRequest.Annotations)
 
 	return result, nil
 }
@@ -288,4 +264,19 @@ func getError(conditions dbapi.ConditionList) string {
 		}
 	}
 	return strings.Join(err, "; ")
+}
+
+func getAnnotations(namespaceId string, annotations map[string]string) []dbapi.ConnectorNamespaceAnnotation {
+	result := make([]dbapi.ConnectorNamespaceAnnotation, len(annotations))
+
+	index := 0
+	for key, val := range annotations {
+		result[index].NamespaceId = namespaceId
+		result[index].Key = key
+		result[index].Value = val
+
+		index++
+	}
+
+	return result
 }
