@@ -344,11 +344,8 @@ func (k *connectorNamespaceService) CreateDefaultNamespace(ctx context.Context, 
 
 	namespaceRequest, err := presenters.ConvertConnectorNamespaceRequest(&public.ConnectorNamespaceRequest{
 		Name: defaultNamespaceName,
-		Annotations: []public.ConnectorNamespaceRequestMetaAnnotations{
-			{
-				Key:   config.AnnotationProfileKey,
-				Value: "default-profile",
-			},
+		Annotations: map[string]string{
+			config.AnnotationProfileKey: "default-profile",
 		},
 		ClusterId: connectorCluster.ID,
 		Kind:      kind,

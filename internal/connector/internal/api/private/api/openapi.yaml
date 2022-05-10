@@ -791,9 +791,9 @@ components:
           pattern: ^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$
           type: string
         annotations:
-          items:
-            $ref: '#/components/schemas/ConnectorNamespaceRequestMeta_annotations'
-          type: array
+          additionalProperties:
+            type: string
+          type: object
       type: object
     ConnectorNamespaceQuota:
       properties:
@@ -1025,15 +1025,6 @@ components:
           type: integer
         quota:
           $ref: '#/components/schemas/ConnectorNamespaceQuota'
-    ConnectorNamespaceRequestMeta_annotations:
-      properties:
-        key:
-          type: string
-        value:
-          type: string
-      required:
-      - key
-      - value
   securitySchemes:
     Bearer:
       bearerFormat: JWT
