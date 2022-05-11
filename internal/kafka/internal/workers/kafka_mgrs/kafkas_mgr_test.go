@@ -280,8 +280,8 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 										Name:    "us-east-1",
 										Default: true,
 										SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
-											"standard": {Limit: &cloudProviderStandardLimit},
-											"eval":     {Limit: nil},
+											"standard":  {Limit: &cloudProviderStandardLimit},
+											"developer": {Limit: nil},
 										},
 									},
 								},
@@ -310,7 +310,7 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 				},
 				dataplaneClusterConfig: config.DataplaneClusterConfig{
 					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
-						dpMock.BuildManualCluster("standard,eval"),
+						dpMock.BuildManualCluster("standard,developer"),
 					}),
 				},
 				cloudProviders: config.ProviderConfig{
@@ -324,8 +324,8 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 										Name:    "us-east-1",
 										Default: true,
 										SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
-											"standard": {Limit: &cloudProviderStandardLimit},
-											"eval":     {Limit: nil},
+											"standard":  {Limit: &cloudProviderStandardLimit},
+											"developer": {Limit: nil},
 										},
 									},
 								},

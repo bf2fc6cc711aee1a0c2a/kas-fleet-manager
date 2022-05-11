@@ -36,7 +36,7 @@ var (
 	testProvider                  = "aws"
 	strimziAddonID                = "managed-kafka-test"
 	clusterLoggingOperatorAddonID = "cluster-logging-operator-test"
-	supportedInstanceType         = "eval"
+	supportedInstanceType         = "developer"
 	deprovisionCluster            = api.Cluster{
 		Status: api.ClusterDeprovisioning,
 	}
@@ -58,8 +58,8 @@ var (
 						config.Region{
 							Name: "us-east-1",
 							SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
-								"standard": {Limit: nil},
-								"eval":     {Limit: nil},
+								"standard":  {Limit: nil},
+								"developer": {Limit: nil},
 							},
 						},
 					},
