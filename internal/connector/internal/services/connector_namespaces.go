@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/profiles"
 	"math/rand"
 	"time"
 
@@ -97,7 +98,7 @@ func (k *connectorNamespaceService) SetEvalClusterId(request *dbapi.ConnectorNam
 	found := false
 	for i := 0; i < len(request.Annotations); i++ {
 		ann := &request.Annotations[i]
-		if ann.Key == config.AnnotationProfileKey {
+		if ann.Key == profiles.AnnotationProfileKey {
 			if ann.Value != k.quotaConfig.EvalNamespaceQuotaProfile {
 				ann.Value = k.quotaConfig.EvalNamespaceQuotaProfile
 			}
@@ -108,7 +109,7 @@ func (k *connectorNamespaceService) SetEvalClusterId(request *dbapi.ConnectorNam
 	if !found {
 		request.Annotations = append(request.Annotations, dbapi.ConnectorNamespaceAnnotation{
 			NamespaceId: request.ID,
-			Key:         config.AnnotationProfileKey,
+			Key:         profiles.AnnotationProfileKey,
 			Value:       k.quotaConfig.EvalNamespaceQuotaProfile,
 		})
 	}
@@ -138,7 +139,7 @@ func (k *connectorNamespaceService) Create(ctx context.Context, request *dbapi.C
 
 func (k *connectorNamespaceService) validateAnnotations(request *dbapi.ConnectorNamespace) *errors.ServiceError {
 	for _, a := range request.Annotations {
-		if a.Key == config.AnnotationProfileKey {
+		if a.Key == profiles.AnnotationProfileKey {
 			if _, ok := k.quotaConfig.GetNamespaceQuota(a.Value); !ok {
 				return errors.BadRequest(`invalid profile %s`, a.Value)
 			}
@@ -344,11 +345,8 @@ func (k *connectorNamespaceService) CreateDefaultNamespace(ctx context.Context, 
 
 	namespaceRequest, err := presenters.ConvertConnectorNamespaceRequest(&public.ConnectorNamespaceRequest{
 		Name: defaultNamespaceName,
-		Annotations: []public.ConnectorNamespaceRequestMetaAnnotations{
-			{
-				Key:   config.AnnotationProfileKey,
-				Value: "default-profile",
-			},
+		Annotations: map[string]string{
+			profiles.AnnotationProfileKey: profiles.DefaultProfileName,
 		},
 		ClusterId: connectorCluster.ID,
 		Kind:      kind,
@@ -651,7 +649,7 @@ func (k *connectorNamespaceService) CheckConnectorQuota(namespaceId string) *err
 	var profileName string
 	var quota config.NamespaceQuota
 	if err := dbConn.Model(&dbapi.ConnectorNamespaceAnnotation{}).
-		Where("namespace_id = ? AND key = ?", namespaceId, config.AnnotationProfileKey).
+		Where("namespace_id = ? AND key = ?", namespaceId, profiles.AnnotationProfileKey).
 		Select("value").First(&profileName).Error; err != nil {
 		return errors.FailedToCheckQuota("Error reading Connector namespace annotation with namespace id %s: %s", namespaceId, err)
 	}

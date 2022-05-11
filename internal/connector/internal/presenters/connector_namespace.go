@@ -7,6 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/profiles"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -33,12 +34,9 @@ func ConvertConnectorNamespaceRequest(namespaceRequest *public.ConnectorNamespac
 			Phase: dbapi.ConnectorNamespacePhaseDisconnected,
 		},
 	}
-	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
-	for i, annotation := range namespaceRequest.Annotations {
-		result.Annotations[i].NamespaceId = result.ID
-		result.Annotations[i].Key = annotation.Key
-		result.Annotations[i].Value = annotation.Value
-	}
+
+	result.Annotations = getAnnotations(result.ID, namespaceRequest.Annotations)
+
 	switch namespaceRequest.Kind {
 	case public.CONNECTORNAMESPACETENANTKIND_USER:
 		result.TenantUserId = &userID
@@ -75,12 +73,9 @@ func ConvertConnectorNamespaceEvalRequest(namespaceRequest *public.ConnectorName
 			Phase: dbapi.ConnectorNamespacePhaseDisconnected,
 		},
 	}
-	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
-	for i, annotation := range namespaceRequest.Annotations {
-		result.Annotations[i].NamespaceId = result.ID
-		result.Annotations[i].Key = annotation.Key
-		result.Annotations[i].Value = annotation.Value
-	}
+
+	result.Annotations = getAnnotations(result.ID, namespaceRequest.Annotations)
+
 	result.TenantUserId = &result.Owner
 	result.TenantUser = &dbapi.ConnectorTenantUser{
 		Model: db.Model{
@@ -103,11 +98,11 @@ func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *admin.Connecto
 		},
 	}
 	if namespaceRequest.Expiration != "" {
-		time, err := time.Parse(time.RFC3339, namespaceRequest.Expiration)
+		expiration, err := time.Parse(time.RFC3339, namespaceRequest.Expiration)
 		if err != nil {
 			return nil, errors.BadRequest("invalid namespace expiration '%s': %s", namespaceRequest.Expiration, err)
 		}
-		result.Expiration = &time
+		result.Expiration = &expiration
 	}
 	switch namespaceRequest.Tenant.Kind {
 	case admin.CONNECTORNAMESPACETENANTKIND_USER:
@@ -127,12 +122,8 @@ func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *admin.Connecto
 	default:
 		return nil, errors.BadRequest("invalid kind %s", namespaceRequest.Tenant.Kind)
 	}
-	result.Annotations = make([]dbapi.ConnectorNamespaceAnnotation, len(namespaceRequest.Annotations))
-	for i, annotation := range namespaceRequest.Annotations {
-		result.Annotations[i].NamespaceId = result.ID
-		result.Annotations[i].Key = annotation.Key
-		result.Annotations[i].Value = annotation.Value
-	}
+
+	result.Annotations = getAnnotations(result.ID, namespaceRequest.Annotations)
 
 	return result, nil
 }
@@ -149,11 +140,10 @@ func ConvertConnectorNamespaceStatus(from private.ConnectorNamespaceStatus) *dba
 func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace, quotaConfig *config.ConnectorsQuotaConfig) public.ConnectorNamespace {
 
 	var quota config.NamespaceQuota
-	annotations := make([]public.ConnectorNamespaceRequestMetaAnnotations, len(namespace.Annotations))
-	for i, anno := range namespace.Annotations {
-		annotations[i].Key = anno.Key
-		annotations[i].Value = anno.Value
-		if anno.Key == config.AnnotationProfileKey {
+	annotations := make(map[string]string, len(namespace.Annotations))
+	for _, anno := range namespace.Annotations {
+		annotations[anno.Key] = anno.Value
+		if anno.Key == profiles.AnnotationProfileKey {
 			// TODO handle unknown profiles instead of using defaults
 			quota, _ = quotaConfig.GetNamespaceQuota(anno.Value)
 		}
@@ -207,11 +197,10 @@ func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace, quotaConfig 
 func PresentPrivateConnectorNamespace(namespace *dbapi.ConnectorNamespace, quotaConfig *config.ConnectorsQuotaConfig) admin.ConnectorNamespace {
 
 	var quota config.NamespaceQuota
-	annotations := make([]admin.ConnectorNamespaceRequestMetaAnnotations, len(namespace.Annotations))
-	for i, anno := range namespace.Annotations {
-		annotations[i].Key = anno.Key
-		annotations[i].Value = anno.Value
-		if anno.Key == config.AnnotationProfileKey {
+	annotations := make(map[string]string, len(namespace.Annotations))
+	for _, anno := range namespace.Annotations {
+		annotations[anno.Key] = anno.Value
+		if anno.Key == profiles.AnnotationProfileKey {
 			quota, _ = quotaConfig.GetNamespaceQuota(anno.Value)
 		}
 	}
@@ -275,4 +264,19 @@ func getError(conditions dbapi.ConditionList) string {
 		}
 	}
 	return strings.Join(err, "; ")
+}
+
+func getAnnotations(namespaceId string, annotations map[string]string) []dbapi.ConnectorNamespaceAnnotation {
+	result := make([]dbapi.ConnectorNamespaceAnnotation, len(annotations))
+
+	index := 0
+	for key, val := range annotations {
+		result[index].NamespaceId = namespaceId
+		result[index].Key = key
+		result[index].Value = val
+
+		index++
+	}
+
+	return result
 }

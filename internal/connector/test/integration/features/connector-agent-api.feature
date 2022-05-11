@@ -915,12 +915,9 @@ Feature: connector agent API
     And the response should match json:
     """
     {
-      "annotations": [
-        {
-          "key": "connector_mgmt.bf2.org/profile",
-          "value": "default-profile"
-        }
-      ],
+      "annotations": {
+          "connector_mgmt.bf2.org/profile": "default-profile"
+      },
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${connector_namespace_id}",
