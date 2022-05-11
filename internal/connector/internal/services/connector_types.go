@@ -8,6 +8,7 @@ package services
 
 import (
 	"context"
+	"gorm.io/gorm"
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
@@ -69,20 +70,20 @@ func (cts *connectorTypesService) Create(resource *dbapi.ConnectorType) *errors.
 		}
 
 	} else {
-		// update the existing connector type, keep creation timestamp
-		resource.CreatedAt = oldResource.CreatedAt
-		if err := dbConn.Updates(resource).Error; err != nil {
+		// remove old associations first
+		if err := dbConn.Where("connector_type_id = ?", tid).Delete(&dbapi.ConnectorTypeLabel{}).Error; err != nil {
+			return errors.GeneralError("failed to remove connector type labels %q: %v", tid, err)
+		}
+		if err := dbConn.Exec("DELETE FROM connector_type_channels WHERE connector_type_id = ?", tid).Error; err != nil {
+			return errors.GeneralError("failed to remove connector type channels %q: %v", tid, err)
+		}
+		if err := dbConn.Where("connector_type_id = ?", tid).Delete(&dbapi.ConnectorTypeCapability{}).Error; err != nil {
+			return errors.GeneralError("failed to remove connector type capabilities %q: %v", tid, err)
+		}
+
+		// update the existing connector type
+		if err := dbConn.Session(&gorm.Session{FullSaveAssociations: true}).Updates(resource).Error; err != nil {
 			return errors.GeneralError("failed to update connector type %q: %v", tid, err)
-		}
-		// update associations
-		if dbConn.Model(&resource).Association("Channels").Replace(resource.Channels) != nil {
-			return errors.GeneralError("failed to update connector type %q channels: %v", tid, err)
-		}
-		if dbConn.Model(&resource).Association("Labels").Replace(resource.Labels) != nil {
-			return errors.GeneralError("failed to update connector type %q labels: %v", tid, err)
-		}
-		if dbConn.Model(&resource).Association("Capabilities").Replace(resource.Capabilities) != nil {
-			return errors.GeneralError("failed to update connector type %q capabilities: %v", tid, err)
 		}
 	}
 
