@@ -357,8 +357,12 @@ Feature: connector namespaces API
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204
     And the response should match ""
-    # wait for cluster reconcile to delete namespaces
-    And I sleep for 5 seconds
+
+    # cluster reconcile marks namespace for deletion
+    When I wait up to "10" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response ".status.state" selection to match "deleting"
+    And I GET path "/v1/kafka_connector_namespaces/${connector_namespace_id}"
+    Then the response code should be 200
+    And the ".status.state" selection from the response should match "deleting"
 
     # agent deletes default namespace
     Given I am logged in as "Gru_shard"
