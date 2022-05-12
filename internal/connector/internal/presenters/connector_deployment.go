@@ -11,7 +11,7 @@ import (
 func PresentConnectorDeployment(from dbapi.ConnectorDeployment) (private.ConnectorDeployment, *errors.ServiceError) {
 	var conditions []private.MetaV1Condition
 	if from.Status.Conditions != nil {
-		err := json.Unmarshal([]byte(from.Status.Conditions), &conditions)
+		err := from.Status.Conditions.Unmarshal(&conditions)
 		if err != nil {
 			return private.ConnectorDeployment{}, errors.GeneralError("invalid status conditions: %v", err)
 		}
@@ -19,7 +19,7 @@ func PresentConnectorDeployment(from dbapi.ConnectorDeployment) (private.Connect
 
 	var operators private.ConnectorDeploymentStatusOperators
 	if from.Status.Operators != nil {
-		err := json.Unmarshal([]byte(from.Status.Operators), &operators)
+		err := from.Status.Operators.Unmarshal(&operators)
 		if err != nil {
 			return private.ConnectorDeployment{}, errors.GeneralError("invalid status operators: %v", err)
 		}

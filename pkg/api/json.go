@@ -55,3 +55,11 @@ func (m JSON) Object() (map[string]interface{}, error) {
 	err := json.Unmarshal(m, &result)
 	return result, err
 }
+
+func (m JSON) Unmarshal(v interface{}) error {
+	if m == nil {
+		return nil
+	}
+
+	return json.Unmarshal(m, v)
+}
