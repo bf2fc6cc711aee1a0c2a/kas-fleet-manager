@@ -7,7 +7,6 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 )
 
@@ -17,6 +16,7 @@ const (
 	ActionKey       LoggerKeys = "Action"
 	ActionResultKey LoggerKeys = "EventResult"
 	RemoteAddrKey   LoggerKeys = "RemoteAddr"
+	TxIdKey         LoggerKeys = "txid"
 
 	ActionFailed  LoggerKeys = "failed"
 	ActionSuccess LoggerKeys = "success"
@@ -122,7 +122,7 @@ func (l *logger) prepareLogPrefix(format string, args ...interface{}) string {
 		prefix = strings.Join([]string{prefix, "session='", l.session, "' "}, "")
 	}
 
-	if txid, ok := l.context.Value("txid").(int64); ok {
+	if txid, ok := l.context.Value(TxIdKey).(int64); ok {
 		prefix = strings.Join([]string{prefix, "tx_id='", fmt.Sprintf("%v", txid), "' "}, "")
 	}
 
@@ -134,7 +134,7 @@ func (l *logger) prepareLogPrefix(format string, args ...interface{}) string {
 		prefix = strings.Join([]string{prefix, "opid='", opid, "' "}, "")
 	}
 
-	return prefix + orig
+	return strings.Trim(prefix+orig, " ")
 }
 
 func (l *logger) V(level int32) UHCLogger {
@@ -164,50 +164,6 @@ func getSessionFromClaims(ctx context.Context) string {
 	}
 
 	return ""
-}
-
-func (l *logger) Infof(format string, args ...interface{}) {
-	prefixed := l.prepareLogPrefix(format, args...)
-	glog.V(glog.Level(l.level)).Infof(prefixed)
-}
-
-func (l *logger) Warningf(format string, args ...interface{}) {
-	prefixed := l.prepareLogPrefix(format, args...)
-	glog.Warningln(prefixed)
-	l.captureSentryEvent(sentry.LevelWarning, format, args...)
-}
-
-func (l *logger) Errorf(format string, args ...interface{}) {
-	prefixed := l.prepareLogPrefix(format, args...)
-	glog.Errorln(prefixed)
-	l.captureSentryEvent(sentry.LevelError, format, args...)
-}
-
-func (l *logger) Error(err error) {
-	glog.Error(err)
-	if l.sentryHub == nil {
-		sentry.CaptureException(err)
-		return
-	}
-	l.sentryHub.CaptureException(err)
-}
-
-func (l *logger) Fatalf(format string, args ...interface{}) {
-	prefixed := l.prepareLogPrefix(format, args...)
-	glog.Fatalln(prefixed)
-	l.captureSentryEvent(sentry.LevelFatal, format, args...)
-}
-
-func (l *logger) captureSentryEvent(level sentry.Level, format string, args ...interface{}) {
-	event := sentry.NewEvent()
-	event.Level = level
-	event.Message = fmt.Sprintf(format, args...)
-	if l.sentryHub == nil {
-		glog.Warning("Sentry hub not present in logger")
-		sentry.CaptureEvent(event)
-		return
-	}
-	l.sentryHub.CaptureEvent(event)
 }
 
 func getUsernameFromClaims(ctx context.Context) string {

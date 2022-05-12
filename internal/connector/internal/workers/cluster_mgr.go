@@ -36,7 +36,7 @@ func NewClusterManager(clusterService services.ConnectorClusterService, db *db.C
 			Reconciler: reconciler,
 		},
 		clusterService: clusterService,
-		db: db,
+		db:             db,
 	}
 }
 
