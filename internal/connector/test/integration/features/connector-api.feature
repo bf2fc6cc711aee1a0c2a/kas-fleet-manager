@@ -1378,7 +1378,7 @@ Feature: create a connector
     When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
       """
       {
-          "connector_spec": {
+          "connector": {
               "aws_secret_key": {
                 "ref": "hack"
               }

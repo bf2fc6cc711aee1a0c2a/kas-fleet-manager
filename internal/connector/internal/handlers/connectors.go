@@ -340,7 +340,7 @@ func ValidateConnectorOperation(ctx context.Context, namespaceService services.C
 
 func validateConnectorPatch(bytes []byte, ct *dbapi.ConnectorType) *errors.ServiceError {
 	type Connector struct {
-		ConnectorSpec api.JSON `json:"connector_spec,omitempty"`
+		ConnectorSpec api.JSON `json:"connector,omitempty"`
 	}
 	c := Connector{}
 	err := json.Unmarshal(bytes, &c)
