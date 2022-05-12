@@ -352,7 +352,7 @@ func (cts *connectorTypesService) CatalogEntriesReconciled() (bool, *errors.Serv
 }
 
 func (cts *connectorTypesService) DeleteUnusedAndNotInCatalog() *errors.ServiceError {
-	notToBeDeletedIDs := []string{}
+	notToBeDeletedIDs := make([]string, len(cts.connectorsConfig.CatalogEntries))
 	for _, entry := range cts.connectorsConfig.CatalogEntries {
 		notToBeDeletedIDs = append(notToBeDeletedIDs, entry.ConnectorType.Id)
 	}
