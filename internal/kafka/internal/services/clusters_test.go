@@ -10,6 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
+	mocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -26,23 +27,6 @@ var (
 	testMultiAZ  = true
 	testStatus   = api.ClusterProvisioned
 )
-
-// build a test cluster
-func buildCluster(modifyFn func(cluster *api.Cluster)) *api.Cluster {
-	cluster := &api.Cluster{
-		Region:        testRegion,
-		CloudProvider: testProvider,
-		MultiAZ:       testMultiAZ,
-		ProviderType:  api.ClusterProviderOCM,
-		Meta: api.Meta{
-			DeletedAt: gorm.DeletedAt{Valid: true},
-		},
-	}
-	if modifyFn != nil {
-		modifyFn(cluster)
-	}
-	return cluster
-}
 
 func checkClusterFields(this *api.Cluster, that *api.Cluster) bool {
 	if this == that {
@@ -101,7 +85,7 @@ func Test_Cluster_Create(t *testing.T) {
 				}},
 			},
 			args: args{
-				cluster: buildCluster(nil),
+				cluster: mocks.BuildCluster(nil),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery(`INSERT INTO "clusters"`)
@@ -123,7 +107,7 @@ func Test_Cluster_Create(t *testing.T) {
 				}},
 			},
 			args: args{
-				cluster: buildCluster(nil),
+				cluster: mocks.BuildCluster(nil),
 			},
 			wantErr: true,
 		},
@@ -144,7 +128,7 @@ func Test_Cluster_Create(t *testing.T) {
 				}},
 			},
 			args: args{
-				cluster: buildCluster(nil),
+				cluster: mocks.BuildCluster(nil),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithExecException()
@@ -162,7 +146,7 @@ func Test_Cluster_Create(t *testing.T) {
 				},
 			},
 			args: args{
-				cluster: buildCluster(nil),
+				cluster: mocks.BuildCluster(nil),
 			},
 			wantErr: true,
 		},
@@ -375,7 +359,7 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -389,7 +373,7 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 				t.Errorf("FindClusterByID() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -459,14 +443,14 @@ func Test_FindCluster(t *testing.T) {
 			args: args{
 				criteria: clusterDetails,
 			},
-			want: buildCluster(nil),
+			want: mocks.BuildCluster(nil),
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "clusters"`).WithReply(converters.ConvertCluster(buildCluster(nil)))
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "clusters"`).WithReply(converters.ConvertCluster(mocks.BuildCluster(nil)))
 			},
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -482,7 +466,7 @@ func Test_FindCluster(t *testing.T) {
 				t.Errorf("FindCluster() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -575,7 +559,7 @@ func Test_ListByStatus(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
@@ -590,7 +574,7 @@ func Test_ListByStatus(t *testing.T) {
 				t.Errorf("ListByStatus() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -1032,7 +1016,7 @@ func Test_clusterService_ListGroupByProviderAndRegion(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
@@ -1044,7 +1028,7 @@ func Test_clusterService_ListGroupByProviderAndRegion(t *testing.T) {
 				t.Errorf("ListGroupByProviderAndRegion err = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -1090,7 +1074,7 @@ func Test_DeleteByClusterId(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1100,7 +1084,7 @@ func Test_DeleteByClusterId(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			err := k.DeleteByClusterID(tt.args.clusterID)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -1167,7 +1151,7 @@ func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1177,8 +1161,8 @@ func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			got, err := k.FindNonEmptyClusterById(tt.args.clusterId)
-			Expect(got).To(Equal(tt.want))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -1226,7 +1210,7 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1240,7 +1224,7 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 				t.Errorf("ListAllClusterIds() err = %v, want %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -1306,7 +1290,7 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1321,7 +1305,7 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 				return
 			}
 			for i, res := range got {
-				Expect(res).To(Equal(tt.want[i]))
+				g.Expect(res).To(Equal(tt.want[i]))
 			}
 		})
 	}
@@ -1385,6 +1369,7 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 			wantErr: false,
 		},
 	}
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1399,7 +1384,7 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 				return
 			}
 			for i, res := range got {
-				Expect(*res).To(Equal(*tt.want[i]))
+				g.Expect(*res).To(Equal(*tt.want[i]))
 			}
 		})
 	}
@@ -1547,7 +1532,7 @@ func Test_clusterService_CountByStatus(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFunc != nil {
@@ -1560,7 +1545,7 @@ func Test_clusterService_CountByStatus(t *testing.T) {
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for CountByStatus: %v", err)
 			}
-			Expect(status).To(Equal(tt.want))
+			g.Expect(status).To(Equal(tt.want))
 		})
 	}
 }
@@ -1648,7 +1633,7 @@ func Test_clusterService_GetComputeNodes(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1665,7 +1650,7 @@ func Test_clusterService_GetComputeNodes(t *testing.T) {
 				t.Errorf("GetComputeNodes() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -1775,7 +1760,7 @@ func Test_clusterService_CheckClusterStatus(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1792,7 +1777,7 @@ func Test_clusterService_CheckClusterStatus(t *testing.T) {
 				t.Errorf("CheckClusterStatus() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -1878,7 +1863,7 @@ func Test_clusterService_RemoveClusterFromProvider(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1895,7 +1880,7 @@ func Test_clusterService_RemoveClusterFromProvider(t *testing.T) {
 				t.Errorf("Delete() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -2016,7 +2001,7 @@ func Test_clusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -2033,7 +2018,7 @@ func Test_clusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 				t.Errorf("ConfigureAndSaveIdentityProvider() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -2230,7 +2215,7 @@ func Test_clusterService_InstallStrimzi(t *testing.T) {
 			want:    false,
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -2247,7 +2232,7 @@ func Test_clusterService_InstallStrimzi(t *testing.T) {
 				t.Errorf("InstallStrimzi() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -2342,7 +2327,7 @@ func Test_clusterService_ClusterLogging(t *testing.T) {
 			want:    false,
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -2359,7 +2344,7 @@ func Test_clusterService_ClusterLogging(t *testing.T) {
 				t.Errorf("InstallClusterLogging() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -2454,7 +2439,7 @@ func Test_clusterService_GetExternalID(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -2471,7 +2456,7 @@ func Test_clusterService_GetExternalID(t *testing.T) {
 				t.Errorf("GetExternalID() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -2532,7 +2517,7 @@ func Test_clusterService_GetClientId(t *testing.T) {
 			setupFn: func() {},
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		if tt.setupFn != nil {
 			tt.setupFn()
@@ -2543,8 +2528,8 @@ func Test_clusterService_GetClientId(t *testing.T) {
 				providerFactory:   tt.fields.clusterProviderFactory,
 			}
 			got, err := c.GetClientId(tt.args.clusterId)
-			Expect(got).To(Equal(tt.want))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -2623,7 +2608,7 @@ func Test_clusterService_CheckStrimziVersionReady(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := clusterService{
@@ -2631,8 +2616,8 @@ func Test_clusterService_CheckStrimziVersionReady(t *testing.T) {
 				providerFactory:   tt.fields.providerFactory,
 			}
 			got, err := c.CheckStrimziVersionReady(tt.args.cluster, tt.args.strimziVersion)
-			Expect(got).To(Equal(tt.want))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -2715,7 +2700,7 @@ func Test_clusterService_IsStrimziKafkaVersionAvailableInCluster(t *testing.T) {
 			},
 			args: args{
 				cluster:        mockCluster,
-				strimziVersion: "strimzi-cluster-operator.from-cluster",
+				strimziVersion: strimziOperatorVersion,
 				kafkaVersion:   "2.7.0",
 				ibpVersion:     "2.7",
 			},
@@ -2730,7 +2715,7 @@ func Test_clusterService_IsStrimziKafkaVersionAvailableInCluster(t *testing.T) {
 			},
 			args: args{
 				cluster:        mockCluster,
-				strimziVersion: "fake-strimzi-version",
+				strimziVersion: strimziOperatorVersion,
 				kafkaVersion:   "fake-kafka-version",
 				ibpVersion:     "fake-ibpversion",
 			},
@@ -2745,8 +2730,8 @@ func Test_clusterService_IsStrimziKafkaVersionAvailableInCluster(t *testing.T) {
 			},
 			args: args{
 				cluster:        mockCluster,
-				strimziVersion: "fake-strimzi-version",
-				kafkaVersion:   "fake-kafka-version",
+				strimziVersion: strimziOperatorVersion,
+				kafkaVersion:   "2.7.0",
 			},
 			want:    false,
 			wantErr: false,
@@ -2759,8 +2744,8 @@ func Test_clusterService_IsStrimziKafkaVersionAvailableInCluster(t *testing.T) {
 			},
 			args: args{
 				cluster:        mockCluster,
-				strimziVersion: "fake-strimzi-version",
-				ibpVersion:     "fake-ibpversion",
+				strimziVersion: strimziOperatorVersion,
+				ibpVersion:     "2.7",
 			},
 			want:    false,
 			wantErr: false,
@@ -2772,18 +2757,18 @@ func Test_clusterService_IsStrimziKafkaVersionAvailableInCluster(t *testing.T) {
 				providerFactory:   &clusters.ProviderFactoryMock{},
 			},
 			args: args{
-				cluster:        &api.Cluster{
+				cluster: &api.Cluster{
 					AvailableStrimziVersions: false_availableStrimziVersions,
 				},
 				strimziVersion: "fake-strimzi-version",
-				kafkaVersion:   "fake-kafka-version",
-				ibpVersion:     "fake-ibpversion",
+				kafkaVersion:   "2.7.0",
+				ibpVersion:     "2.7",
 			},
 			want:    false,
 			wantErr: false,
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := clusterService{
@@ -2791,8 +2776,8 @@ func Test_clusterService_IsStrimziKafkaVersionAvailableInCluster(t *testing.T) {
 				providerFactory:   tt.fields.providerFactory,
 			}
 			got, err := c.IsStrimziKafkaVersionAvailableInCluster(tt.args.cluster, tt.args.strimziVersion, tt.args.kafkaVersion, tt.args.ibpVersion)
-			Expect(got).To(Equal(tt.want))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -2835,7 +2820,7 @@ func Test_clusterService_SetComputeNodes(t *testing.T) {
 
 					}},
 			},
-			args:    args{
+			args: args{
 				numNodes: 2,
 			},
 			want:    nil,
@@ -2932,7 +2917,7 @@ func Test_clusterService_SetComputeNodes(t *testing.T) {
 			setupFn: func() {},
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		if tt.setupFn != nil {
 			tt.setupFn()
@@ -2943,8 +2928,8 @@ func Test_clusterService_SetComputeNodes(t *testing.T) {
 				providerFactory:   tt.fields.providerFactory,
 			}
 			got, err := c.SetComputeNodes(tt.args.clusterID, tt.args.numNodes)
-			Expect(got).To(Equal(tt.want))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }

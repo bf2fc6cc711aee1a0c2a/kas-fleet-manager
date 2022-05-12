@@ -474,11 +474,11 @@ func Test_DefaultQuotaServiceFactory_GetQuotaService(t *testing.T) {
 		quoataType api.QuotaType
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   services.QuotaService
-		wantErr  *errors.ServiceError
+		name    string
+		fields  fields
+		args    args
+		want    services.QuotaService
+		wantErr *errors.ServiceError
 	}{
 		{
 			name: "Should return nil and error if QuotaType is invalid",
@@ -488,7 +488,7 @@ func Test_DefaultQuotaServiceFactory_GetQuotaService(t *testing.T) {
 			args: args{
 				quoataType: api.UndefinedQuotaType,
 			},
-			want:  nil,
+			want:    nil,
 			wantErr: errors.GeneralError("invalid quota service type: %v", api.QuotaManagementListQuotaType),
 		},
 	}

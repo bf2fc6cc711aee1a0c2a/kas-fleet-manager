@@ -134,7 +134,7 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 								ID: "id",
 							},
 							ClusterID: clusterID,
-							Status:    api.ClusterReady,
+							Status:    api.ClusterWaitingForKasFleetShardOperator,
 						}, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -439,7 +439,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -448,7 +448,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 			}
 
 			input := tt.inputFactory()
-			Expect(input).ToNot(BeNil())
+			g.Expect(input).ToNot(BeNil())
 
 			dataPlaneClusterService := input.dataPlaneClusterService
 			nodesAfterScaling, err := dataPlaneClusterService.updateDataPlaneClusterNodes(input.cluster, input.status)
@@ -457,7 +457,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 				t.Errorf("updateDataPlaneClusterNodes() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(nodesAfterScaling).To(Equal(tt.expectedResult))
+			g.Expect(nodesAfterScaling).To(Equal(tt.expectedResult))
 		})
 	}
 }
@@ -524,6 +524,7 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 		},
 	}
 
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := tt.dataPlaneClusterServiceFactory()
@@ -539,7 +540,7 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 				t.Errorf("computeNodeScalingActionInProgress() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(Equal(tt.want))
 		})
 	}
 }
@@ -617,8 +618,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := tt.dataPlaneClusterServiceFactory()
@@ -631,7 +631,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 				t.Errorf("isFleetShardOperatorReady() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(Equal(tt.want))
 		})
 	}
 }
@@ -733,7 +733,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -743,7 +743,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 			}
 
 			res := f.clusterCanProcessStatusReports(tt.apiCluster)
-			Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(Equal(tt.want))
 
 		})
 	}
@@ -825,7 +825,7 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 			want:    nil,
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewDataPlaneClusterService(dataPlaneClusterService{
@@ -837,7 +837,7 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 			if err != nil && !tt.wantErr {
 				t.Fatalf("unexpected error %v", err)
 			}
-			Expect(config).To(Equal(tt.want))
+			g.Expect(config).To(Equal(tt.want))
 		})
 	}
 }
@@ -1029,7 +1029,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1038,16 +1038,14 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 			}
 
 			f, spyReceivedStatus := tt.inputFactory()
-			Expect(f).ToNot(BeNil(), "dataPlaneClusterService is nil")
+			g.Expect(f).ToNot(BeNil(), "dataPlaneClusterService is nil")
 
 			res := f.dataPlaneClusterService.setClusterStatus(f.cluster, f.status)
 			if res != nil != tt.wantErr {
 				t.Errorf("setClusterStatus() got = %+v, expected %+v", res, tt.wantErr)
 			}
-			if spyReceivedStatus == nil {
-				t.Fatalf("spyStatus is nil")
-			}
-			Expect(*spyReceivedStatus).To(Equal(tt.want))
+			g.Expect(spyReceivedStatus).ToNot(BeNil())
+			g.Expect(*spyReceivedStatus).To(Equal(tt.want))
 		})
 	}
 }
