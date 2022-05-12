@@ -7,7 +7,7 @@ import (
 )
 
 var _ VaultService = &TmpVaultService{}
-var NotFound = fmt.Errorf("Not Found")
+var NotFound = fmt.Errorf("not found")
 
 type tmpSecret struct {
 	name           string
