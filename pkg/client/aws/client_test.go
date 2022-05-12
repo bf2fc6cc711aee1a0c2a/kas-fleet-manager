@@ -165,12 +165,8 @@ func TestAwsClient_ListHostedZonesByNameInput(t *testing.T) {
 	type fields struct {
 		route53Client route53iface.Route53API
 	}
-	type args struct {
-		client AWSClient
-	}
 	tests := []struct {
 		name    string
-		args    args
 		fields  fields
 		wantErr bool
 	}{
