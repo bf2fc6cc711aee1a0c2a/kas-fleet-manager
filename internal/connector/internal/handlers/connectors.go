@@ -494,17 +494,12 @@ func HandleConnectorDelete(ctx context.Context, connectorsService services.Conne
 }
 
 func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
-	kafkaId := r.URL.Query().Get("kafka_id")
-	connectorTypeId := mux.Vars(r)["connector_type_id"]
 	cfg := &handlers.HandlerConfig{
-		Validate: []handlers.Validate{
-			handlers.Validation("kafka_id", &kafkaId, handlers.MaxLen(maxKafkaNameLength)),
-			handlers.Validation("connector_type_id", &connectorTypeId, handlers.MaxLen(maxConnectorTypeIdLength)),
-		},
+		Validate: []handlers.Validate{},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			listArgs := coreServices.NewListArguments(r.URL.Query())
-			resources, paging, err := h.connectorsService.List(ctx, kafkaId, listArgs, connectorTypeId, "")
+			resources, paging, err := h.connectorsService.List(ctx, listArgs, "")
 			if err != nil {
 				return nil, err
 			}
