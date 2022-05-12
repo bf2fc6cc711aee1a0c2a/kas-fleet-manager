@@ -21,3 +21,5 @@ env:
   value: 1G
 - name: STANDARD_ZOOKEEPER_CONTAINER_CPU
   value: 500m
+- name:  MANAGEDKAFKA_KAFKA_PARTITION_LIMIT_ENFORCED
+  value: "true"
