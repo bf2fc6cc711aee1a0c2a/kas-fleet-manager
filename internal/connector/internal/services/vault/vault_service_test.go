@@ -20,7 +20,7 @@ func TestNewVaultService(t *testing.T) {
 
 	// Enable testing against aws if the access keys are configured..
 	if content, err := ioutil.ReadFile(shared.BuildFullFilePath(vc.AccessKeyFile)); err == nil && len(content) > 0 {
-		vc.Kind = "aws"
+		vc.Kind = vault.KindAws
 	}
 	Expect(vc.ReadFiles()).To(BeNil())
 
@@ -31,17 +31,17 @@ func TestNewVaultService(t *testing.T) {
 		skip         bool
 	}{
 		{
-			config: &vault.Config{Kind: "tmp"},
+			config: &vault.Config{Kind: vault.KindTmp},
 		},
 		{
 			numSecrets: 92, // NOTE: change this to number of secrets actually in test AWS account after first failure
 			config: &vault.Config{
-				Kind:            "aws",
+				Kind:            vault.KindAws,
 				AccessKey:       vc.AccessKey,
 				SecretAccessKey: vc.SecretAccessKey,
 				Region:          vc.Region,
 			},
-			skip: vc.Kind != "aws",
+			skip: vc.Kind != vault.KindAws,
 		},
 		{
 			config:       &vault.Config{Kind: "wrong"},

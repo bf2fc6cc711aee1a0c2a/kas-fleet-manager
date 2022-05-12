@@ -40,7 +40,7 @@ func NewTmpVaultService() (*TmpVaultService, error) {
 }
 
 func (k *TmpVaultService) Kind() string {
-	return "tmp"
+	return KindTmp
 }
 
 func (k *TmpVaultService) ResetCounters() {
