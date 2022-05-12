@@ -681,7 +681,10 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return true, nil
 					},
-					UpdateStatusAndClientFunc: func(cluster api.Cluster, status api.ClusterStatus, serviceClientId string, serviceClientSecret string) error {
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
 				},
@@ -1284,8 +1287,11 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return true, nil
 					},
-					UpdateStatusAndClientFunc: func(cluster api.Cluster, status api.ClusterStatus, serviceClientId string, serviceClientSecret string) error {
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return apiErrors.GeneralError("failed to update status and client")
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
 					},
 				},
 				osdIdpKeycloakService: &sso.KeycloakServiceMock{
@@ -1329,7 +1335,10 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return true, nil
 					},
-					UpdateStatusAndClientFunc: func(cluster api.Cluster, status api.ClusterStatus, serviceClientId string, serviceClientSecret string) error {
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
 					},
 				},
@@ -1924,14 +1933,15 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 	tests := []struct {
 		name    string
 		fields  fields
+		arg     api.Cluster
 		wantErr bool
 	}{
 		{
-			name: "successful strimzi cluster, logging operator and kas fleetshard operator installation",
+			name: "should not return an error when operators installation have been accepted but not ready yet",
 			fields: fields{
 				agentOperator: &services.KasFleetshardOperatorAddonMock{
 					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
-						return true, services.ParameterList{}, nil
+						return false, services.ParameterList{}, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -1941,13 +1951,66 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						if status != api.ClusterWaitingForKasFleetShardOperator {
-							t.Errorf("expect status to be %s but got %s", api.ClusterWaitingForKasFleetShardOperator.String(), status)
-						}
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
+					UpdateStatusFunc: nil, // set to nil as it should not be called as operators installation status is false
 				},
+			},
+			arg: api.Cluster{
+				ClusterID: "test-cluster-id",
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error operators installation have been accepted but not ready yet but updating of client id and client secrets fails in the database",
+			fields: fields{
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
+						return false, services.ParameterList{}, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return false, nil
+					},
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+						return false, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("some errors")
+					},
+					UpdateStatusFunc: nil, // set to nil as it should not be called as operators installation status is false
+				},
+			},
+			arg: api.Cluster{
+				ClusterID: "test-cluster-id",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should not store the client_id and client_secret if they are already set",
+			fields: fields{
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
+						return false, services.ParameterList{}, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return false, nil
+					},
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+						return false, nil
+					},
+					UpdateFunc:       nil, // set to nil as this should not be called since client_id and client_secret are already set
+					UpdateStatusFunc: nil, // set to nil as it should not be called as operators installation status is false
+				},
+			},
+			arg: api.Cluster{
+				ClusterID:    "test-cluster-id",
+				ClientID:     "some-client-id",
+				ClientSecret: "some-client-secret",
 			},
 			wantErr: false,
 		},
@@ -1963,6 +2026,9 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					},
 				},
 			},
+			arg: api.Cluster{
+				ClusterID: "test-cluster-id",
+			},
 			wantErr: true,
 		},
 		{
@@ -1976,6 +2042,9 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 						return false, nil
 					},
 				},
+			},
+			arg: api.Cluster{
+				ClusterID: "test-cluster-id",
 			},
 			wantErr: true,
 		},
@@ -2002,11 +2071,68 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					},
 				},
 			},
+			arg: api.Cluster{
+				ClusterID: "test-cluster-id",
+			},
 			wantErr: true,
 		},
+		{
+			name: "fail to reconcile when updating status in database fails after operators installation are ready",
+			fields: fields{
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
+						return true, services.ParameterList{}, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return apiErrors.GeneralError("some errors")
+					},
+				},
+			},
+			arg: api.Cluster{
+				ClusterID: "test-cluster-id",
+			},
+			wantErr: true,
+		},
+		{
+			name: "successful reconciles operators installation are ready",
+			fields: fields{
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
+						return true, services.ParameterList{}, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+			},
+			arg: api.Cluster{
+				ClusterID: "test-cluster-id",
+			},
+			wantErr: false,
+		},
 	}
-
-	RegisterTestingT(t)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2017,9 +2143,10 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					KasFleetshardOperatorAddon: tt.fields.agentOperator,
 				},
 			}
-			Expect(c.reconcileAddonOperator(api.Cluster{
-				ClusterID: "test-cluster-id",
-			}) != nil).To(Equal(tt.wantErr))
+			err := c.reconcileAddonOperator(tt.arg)
+			if err != nil && !tt.wantErr {
+				t.Errorf("reconcileAddonOperator() error = %v, wantErr %v", err, tt.wantErr)
+			}
 		})
 	}
 }
