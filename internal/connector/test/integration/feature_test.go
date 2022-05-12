@@ -26,7 +26,13 @@ func TestMain(m *testing.M) {
 	h, teardown := test.NewHelperWithHooksAndDBsetup(t, ocmServer,
 		[]string{"INSERT INTO connector_types (id, name, checksum) VALUES ('OldConnectorTypeId', 'Old Connector Type', 'fakeChecksum1')",
 			"INSERT INTO connector_types (id, name, checksum) VALUES ('OldConnectorTypeStillInUseId', 'Old Connector Type still in use', 'fakeChecksum2')",
-			"INSERT INTO connectors (id, name, connector_type_id) VALUES ('ConnectorUsingOldTypeId', 'Connector using old type', 'OldConnectorTypeStillInUseId')"},
+			"INSERT INTO connectors (id, name, connector_type_id) VALUES ('ConnectorUsingOldTypeId', 'Connector using old type', 'OldConnectorTypeStillInUseId')",
+			"INSERT INTO connector_types (id, name, checksum) VALUES ('log_sink_0.1', 'Log Sink', 'fakeChecksum')",
+			"INSERT INTO connector_type_labels (connector_type_id, label) VALUES ('log_sink_0.1', 'old_label')",
+			"INSERT INTO connector_channels (channel) VALUES ('old_channel')",
+			"INSERT INTO connector_type_channels (connector_type_id, connector_channel_channel) VALUES ('log_sink_0.1', 'old_channel')",
+			"INSERT INTO connector_type_capabilities (connector_type_id, capability) VALUES ('log_sink_0.1', 'old_capability')",
+		},
 		func(c *config.ConnectorsConfig, kc *keycloak.KeycloakConfig, reconcilerConfig *workers.ReconcilerConfig) {
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
 			c.ConnectorEvalDuration, _ = time.ParseDuration("2s")
