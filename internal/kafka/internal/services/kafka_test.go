@@ -2195,7 +2195,7 @@ func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
 
 func TestKafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 	type fields struct {
-		awsClient aws.Client
+		awsClient aws.AWSClient
 	}
 
 	type args struct {
@@ -2212,7 +2212,7 @@ func TestKafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 		{
 			name: "should create CNAMEs for kafka",
 			fields: fields{
-				awsClient: &aws.ClientMock{
+				awsClient: &aws.AWSClientMock{
 					ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
 						if len(recordChangeBatch.Changes) != 1 {
 							return nil, goerrors.Errorf("number of record changes should be 1")
@@ -2242,7 +2242,7 @@ func TestKafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 		{
 			name: "should delete CNAMEs for kafka",
 			fields: fields{
-				awsClient: &aws.ClientMock{
+				awsClient: &aws.AWSClientMock{
 					ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
 						if len(recordChangeBatch.Changes) != 1 {
 							return nil, goerrors.Errorf("number of record changes should be 1")
