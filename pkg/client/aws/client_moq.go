@@ -8,32 +8,32 @@ import (
 	"sync"
 )
 
-// Ensure, that ClientMock does implement Client.
+// Ensure, that AWSClientMock does implement AWSClient.
 // If this is not the case, regenerate this file with moq.
-var _ Client = &ClientMock{}
+var _ AWSClient = &AWSClientMock{}
 
-// ClientMock is a mock implementation of Client.
+// AWSClientMock is a mock implementation of AWSClient.
 //
-// 	func TestSomethingThatUsesClient(t *testing.T) {
+//     func TestSomethingThatUsesAWSClient(t *testing.T) {
 //
-// 		// make and configure a mocked Client
-// 		mockedClient := &ClientMock{
-// 			ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
-// 				panic("mock out the ChangeResourceRecordSets method")
-// 			},
-// 			GetChangeFunc: func(changeId string) (*route53.GetChangeOutput, error) {
-// 				panic("mock out the GetChange method")
-// 			},
-// 			ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
-// 				panic("mock out the ListHostedZonesByNameInput method")
-// 			},
-// 		}
+//         // make and configure a mocked AWSClient
+//         mockedAWSClient := &AWSClientMock{
+//             ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
+// 	               panic("mock out the ChangeResourceRecordSets method")
+//             },
+//             GetChangeFunc: func(changeId string) (*route53.GetChangeOutput, error) {
+// 	               panic("mock out the GetChange method")
+//             },
+//             ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
+// 	               panic("mock out the ListHostedZonesByNameInput method")
+//             },
+//         }
 //
-// 		// use mockedClient in code that requires Client
-// 		// and then make assertions.
+//         // use mockedAWSClient in code that requires AWSClient
+//         // and then make assertions.
 //
-// 	}
-type ClientMock struct {
+//     }
+type AWSClientMock struct {
 	// ChangeResourceRecordSetsFunc mocks the ChangeResourceRecordSets method.
 	ChangeResourceRecordSetsFunc func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)
 
@@ -69,9 +69,9 @@ type ClientMock struct {
 }
 
 // ChangeResourceRecordSets calls ChangeResourceRecordSetsFunc.
-func (mock *ClientMock) ChangeResourceRecordSets(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
+func (mock *AWSClientMock) ChangeResourceRecordSets(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
 	if mock.ChangeResourceRecordSetsFunc == nil {
-		panic("ClientMock.ChangeResourceRecordSetsFunc: method is nil but Client.ChangeResourceRecordSets was just called")
+		panic("AWSClientMock.ChangeResourceRecordSetsFunc: method is nil but AWSClient.ChangeResourceRecordSets was just called")
 	}
 	callInfo := struct {
 		DnsName           string
@@ -88,8 +88,8 @@ func (mock *ClientMock) ChangeResourceRecordSets(dnsName string, recordChangeBat
 
 // ChangeResourceRecordSetsCalls gets all the calls that were made to ChangeResourceRecordSets.
 // Check the length with:
-//     len(mockedClient.ChangeResourceRecordSetsCalls())
-func (mock *ClientMock) ChangeResourceRecordSetsCalls() []struct {
+//     len(mockedAWSClient.ChangeResourceRecordSetsCalls())
+func (mock *AWSClientMock) ChangeResourceRecordSetsCalls() []struct {
 	DnsName           string
 	RecordChangeBatch *route53.ChangeBatch
 } {
@@ -104,9 +104,9 @@ func (mock *ClientMock) ChangeResourceRecordSetsCalls() []struct {
 }
 
 // GetChange calls GetChangeFunc.
-func (mock *ClientMock) GetChange(changeId string) (*route53.GetChangeOutput, error) {
+func (mock *AWSClientMock) GetChange(changeId string) (*route53.GetChangeOutput, error) {
 	if mock.GetChangeFunc == nil {
-		panic("ClientMock.GetChangeFunc: method is nil but Client.GetChange was just called")
+		panic("AWSClientMock.GetChangeFunc: method is nil but AWSClient.GetChange was just called")
 	}
 	callInfo := struct {
 		ChangeId string
@@ -121,8 +121,8 @@ func (mock *ClientMock) GetChange(changeId string) (*route53.GetChangeOutput, er
 
 // GetChangeCalls gets all the calls that were made to GetChange.
 // Check the length with:
-//     len(mockedClient.GetChangeCalls())
-func (mock *ClientMock) GetChangeCalls() []struct {
+//     len(mockedAWSClient.GetChangeCalls())
+func (mock *AWSClientMock) GetChangeCalls() []struct {
 	ChangeId string
 } {
 	var calls []struct {
@@ -135,9 +135,9 @@ func (mock *ClientMock) GetChangeCalls() []struct {
 }
 
 // ListHostedZonesByNameInput calls ListHostedZonesByNameInputFunc.
-func (mock *ClientMock) ListHostedZonesByNameInput(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
+func (mock *AWSClientMock) ListHostedZonesByNameInput(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
 	if mock.ListHostedZonesByNameInputFunc == nil {
-		panic("ClientMock.ListHostedZonesByNameInputFunc: method is nil but Client.ListHostedZonesByNameInput was just called")
+		panic("AWSClientMock.ListHostedZonesByNameInputFunc: method is nil but AWSClient.ListHostedZonesByNameInput was just called")
 	}
 	callInfo := struct {
 		DnsName string
@@ -152,8 +152,8 @@ func (mock *ClientMock) ListHostedZonesByNameInput(dnsName string) (*route53.Lis
 
 // ListHostedZonesByNameInputCalls gets all the calls that were made to ListHostedZonesByNameInput.
 // Check the length with:
-//     len(mockedClient.ListHostedZonesByNameInputCalls())
-func (mock *ClientMock) ListHostedZonesByNameInputCalls() []struct {
+//     len(mockedAWSClient.ListHostedZonesByNameInputCalls())
+func (mock *AWSClientMock) ListHostedZonesByNameInputCalls() []struct {
 	DnsName string
 } {
 	var calls []struct {

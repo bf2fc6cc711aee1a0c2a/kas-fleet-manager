@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	errors "github.com/zgalor/weberr"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/client"
@@ -13,10 +11,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
+	errors "github.com/zgalor/weberr"
 )
 
-//go:generate moq -out client_moq.go . Client
-type Client interface {
+type Route53API route53iface.Route53API
+
+//go:generate moq -out client_moq.go . AWSClient
+type AWSClient interface {
 	// route53
 	ListHostedZonesByNameInput(dnsName string) (*route53.ListHostedZonesByNameOutput, error)
 	ChangeResourceRecordSets(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)
@@ -24,12 +25,12 @@ type Client interface {
 }
 
 type ClientFactory interface {
-	NewClient(credentials Config, region string) (Client, error)
+	NewClient(credentials Config, region string) (AWSClient, error)
 }
 
 type DefaultClientFactory struct{}
 
-func (f *DefaultClientFactory) NewClient(credentials Config, region string) (Client, error) {
+func (f *DefaultClientFactory) NewClient(credentials Config, region string) (AWSClient, error) {
 	return newClient(credentials, region)
 }
 
@@ -38,20 +39,22 @@ func NewDefaultClientFactory() *DefaultClientFactory {
 }
 
 type MockClientFactory struct {
-	mock Client
+	mock AWSClient
 }
 
-func (m *MockClientFactory) NewClient(credentials Config, region string) (Client, error) {
+func (m *MockClientFactory) NewClient(credentials Config, region string) (AWSClient, error) {
 	return m.mock, nil
 }
 
-func NewMockClientFactory(client Client) *MockClientFactory {
+func NewMockClientFactory(client AWSClient) *MockClientFactory {
 	return &MockClientFactory{
 		mock: client,
 	}
 }
 
-type awsClient struct {
+var _ AWSClient = &awsCl{}
+
+type awsCl struct {
 	route53Client route53iface.Route53API
 }
 
@@ -63,7 +66,7 @@ type Config struct {
 	SecretAccessKey string
 }
 
-func newClient(credentials Config, region string) (Client, error) {
+func newClient(credentials Config, region string) (AWSClient, error) {
 	cfg := &aws.Config{
 		Credentials: awscredentials.NewStaticCredentials(
 			credentials.AccessKeyID,
@@ -76,12 +79,12 @@ func newClient(credentials Config, region string) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &awsClient{
+	return &awsCl{
 		route53Client: route53.New(sess),
 	}, nil
 }
 
-func (client *awsClient) GetChange(changeId string) (*route53.GetChangeOutput, error) {
+func (client *awsCl) GetChange(changeId string) (*route53.GetChangeOutput, error) {
 	changeInput := &route53.GetChangeInput{
 		Id: &changeId,
 	}
@@ -94,7 +97,7 @@ func (client *awsClient) GetChange(changeId string) (*route53.GetChangeOutput, e
 	return change, nil
 }
 
-func (client *awsClient) ListHostedZonesByNameInput(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
+func (client *awsCl) ListHostedZonesByNameInput(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
 	maxItems := "1"
 	requestInput := &route53.ListHostedZonesByNameInput{
 		DNSName:  &dnsName,
@@ -108,7 +111,7 @@ func (client *awsClient) ListHostedZonesByNameInput(dnsName string) (*route53.Li
 	return zone, nil
 }
 
-func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
+func (client *awsCl) ChangeResourceRecordSets(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
 	zones, err := client.ListHostedZonesByNameInput(dnsName)
 	if err != nil {
 		return nil, err
