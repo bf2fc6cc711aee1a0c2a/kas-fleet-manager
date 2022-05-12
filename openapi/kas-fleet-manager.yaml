@@ -474,8 +474,8 @@ paths:
             type: string
           required: false
           examples:
-            eval_instance_type:
-              value: "eval"
+            developer_instance_type:
+              value: "developer"
             standard_instance_type:
               value: "standard"
   /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region}:

@@ -38,7 +38,7 @@ import (
 
 var kafkaDeletionStatuses = []string{constants2.KafkaRequestStatusDeleting.String(), constants2.KafkaRequestStatusDeprovision.String()}
 var kafkaManagedCRStatuses = []string{constants2.KafkaRequestStatusProvisioning.String(), constants2.KafkaRequestStatusDeprovision.String(), constants2.KafkaRequestStatusReady.String(), constants2.KafkaRequestStatusFailed.String()}
-var kafkaDeletionInstanceTypes = []string{types.DEVELOPER.String(), types.EVAL.String()}
+var kafkaDeletionInstanceTypes = []string{types.DEVELOPER.String()}
 
 type KafkaRoutesAction string
 
@@ -1039,9 +1039,7 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 	}
 	labels := map[string]string{
 		"bf2.org/kafkaInstanceProfileQuotaConsumed": strconv.Itoa(k.QuotaConsumed),
-	}
-	if kafkaRequest.InstanceType != types.EVAL.String() {
-		labels["bf2.org/kafkaInstanceProfileType"] = kafkaRequest.InstanceType
+		"bf2.org/kafkaInstanceProfileType":          kafkaRequest.InstanceType,
 	}
 	managedKafkaCR := &managedkafka.ManagedKafka{
 		Id: kafkaRequest.ID,

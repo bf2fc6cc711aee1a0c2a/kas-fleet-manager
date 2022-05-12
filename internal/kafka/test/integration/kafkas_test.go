@@ -2167,24 +2167,6 @@ func TestKafka_RemovingExpiredKafkas_NoStandardInstances(t *testing.T) {
 			InstanceType:        types.DEVELOPER.String(),
 			SizeId:              "x1",
 		},
-		{
-			Meta: api.Meta{
-				CreatedAt: time.Now().Add(time.Duration(-49 * time.Hour)),
-			},
-			MultiAZ:             false,
-			Owner:               testuser1,
-			Region:              kafkaRegion,
-			CloudProvider:       kafkaCloudProvider,
-			ClusterID:           clusterID,
-			Name:                "dummy-kafka-4",
-			OrganisationId:      orgId,
-			BootstrapServerHost: "dummy-bootstrap-host",
-			SsoClientID:         "dummy-sso-client-id",
-			SsoClientSecret:     "dummy-sso-client-secret",
-			Status:              constants2.KafkaRequestStatusProvisioning.String(),
-			InstanceType:        types.EVAL.String(),
-			SizeId:              "x1",
-		},
 	}
 
 	if err := db.Create(&kafkas).Error; err != nil {

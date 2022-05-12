@@ -59,17 +59,3 @@ supported_instance_types:
       quotaConsumed: 1
       quotaType: "RHOSAKTrial"
       capacityConsumed: 1
-  - id: eval
-    display_name: Eval
-    sizes:
-    - id: x1
-      ingressThroughputPerSec: "30Mi"
-      egressThroughputPerSec: "30Mi"
-      totalMaxConnections: 3000
-      maxConnectionAttemptsPerSec: 100
-      maxDataRetentionSize: "1000Gi"
-      maxDataRetentionPeriod: "P14D"
-      maxPartitions: 1000
-      quotaConsumed: 1
-      quotaType: "RHOSAKTrial"
-      capacityConsumed: 1
