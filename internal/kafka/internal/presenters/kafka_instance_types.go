@@ -17,12 +17,19 @@ func PresentSupportedKafkaInstanceTypes(supportedInstanceType *config.KafkaInsta
 func GetSupportedSizes(supportedInstanceType *config.KafkaInstanceType) []public.SupportedKafkaSize {
 	supportedSizes := make([]public.SupportedKafkaSize, len(supportedInstanceType.Sizes))
 	for i, size := range supportedInstanceType.Sizes {
-		//errors from Quantity.ToFloat32() ignored. Strings already validated as resource.Quantity
-		ingressBytes, _ := size.IngressThroughputPerSec.ToFloat32()
-		egressBytes, _ := size.EgressThroughputPerSec.ToFloat32()
-		retentionSizeBytes, _ := size.MaxDataRetentionSize.ToFloat32()
+		//errors from Quantity.ToInt64() ignored. Strings already validated as resource.Quantity
+		ingressBytes, _ := size.IngressThroughputPerSec.ToInt64()
+		egressBytes, _ := size.EgressThroughputPerSec.ToInt64()
+		retentionSizeBytes, _ := size.MaxDataRetentionSize.ToInt64()
+		maxMessageSizeBytes, _ := size.MaxMessageSize.ToInt64()
+		var lifespanSeconds *int32
+		if size.LifespanSeconds != nil {
+			tmpLifespanSeconds := int32(*size.LifespanSeconds)
+			lifespanSeconds = &tmpLifespanSeconds
+		}
 		supportedSizes[i] = public.SupportedKafkaSize{
-			Id: size.Id,
+			Id:          size.Id,
+			DisplayName: size.DisplayName,
 			IngressThroughputPerSec: public.SupportedKafkaSizeBytesValueItem{
 				Bytes: ingressBytes,
 			},
@@ -36,9 +43,16 @@ func GetSupportedSizes(supportedInstanceType *config.KafkaInstanceType) []public
 			MaxPartitions:               int32(size.MaxPartitions),
 			MaxDataRetentionPeriod:      size.MaxDataRetentionPeriod,
 			MaxConnectionAttemptsPerSec: int32(size.MaxConnectionAttemptsPerSec),
-			QuotaConsumed:               int32(size.QuotaConsumed),
-			QuotaType:                   size.QuotaType,
-			CapacityConsumed:            int32(size.CapacityConsumed),
+			MaxMessageSize: public.SupportedKafkaSizeBytesValueItem{
+				Bytes: maxMessageSizeBytes,
+			},
+			MinInSyncReplicas: int32(size.MinInSyncReplicas),
+			ReplicationFactor: int32(size.ReplicationFactor),
+			QuotaConsumed:     int32(size.QuotaConsumed),
+			QuotaType:         size.QuotaType,
+			CapacityConsumed:  int32(size.CapacityConsumed),
+			SupportedAzModes:  size.SupportedAZModes,
+			LifespanSeconds:   lifespanSeconds,
 		}
 	}
 	return supportedSizes

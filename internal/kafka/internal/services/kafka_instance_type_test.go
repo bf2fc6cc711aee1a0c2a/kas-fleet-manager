@@ -20,6 +20,9 @@ var supportedKafkaSizeStandard = []config.KafkaInstanceSize{
 		QuotaConsumed:               1,
 		QuotaType:                   "rhosak",
 		CapacityConsumed:            1,
+		MaxMessageSize:              "1Mi",
+		MinInSyncReplicas:           2,
+		ReplicationFactor:           3,
 	},
 }
 
@@ -36,6 +39,10 @@ var supportedKafkaSizeDeveloper = []config.KafkaInstanceSize{
 		QuotaConsumed:               2,
 		QuotaType:                   "rhosak",
 		CapacityConsumed:            2,
+		MaxMessageSize:              "1Mi",
+		MinInSyncReplicas:           1,
+		ReplicationFactor:           1,
+		LifespanSeconds:             &[]int{172800}[0],
 	},
 }
 

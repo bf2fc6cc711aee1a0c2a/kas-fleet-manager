@@ -3,12 +3,13 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -217,6 +218,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	kafkaInstancesizes := []config.KafkaInstanceSize{
 		{
 			Id:                          "x1",
+			DisplayName:                 "1",
 			QuotaConsumed:               2,
 			IngressThroughputPerSec:     "50Mi",
 			EgressThroughputPerSec:      "100Mi",
@@ -225,8 +227,15 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			MaxDataRetentionSize:        "1000Gi",
 			MaxDataRetentionPeriod:      "P14D",
 			MaxPartitions:               1500,
-			QuotaType:                   "rhosak",
-			CapacityConsumed:            1,
+			MaxMessageSize:              "1Mi",
+			MinInSyncReplicas:           2,
+			ReplicationFactor:           3,
+			SupportedAZModes: []string{
+				"single",
+				"multi",
+			},
+			QuotaType:        "rhosak",
+			CapacityConsumed: 1,
 		},
 	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {

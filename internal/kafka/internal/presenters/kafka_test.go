@@ -9,6 +9,7 @@ import (
 	"github.com/onsi/gomega"
 
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
@@ -234,6 +235,9 @@ func TestCapacityLimitReports(t *testing.T) {
 										MaxConnectionAttemptsPerSec: 100,
 										QuotaConsumed:               1,
 										CapacityConsumed:            0,
+										MaxMessageSize:              "1Mi",
+										MinInSyncReplicas:           2,
+										ReplicationFactor:           3,
 									},
 								},
 							},
@@ -278,6 +282,9 @@ func TestCapacityLimitReports(t *testing.T) {
 										MaxConnectionAttemptsPerSec: 100,
 										QuotaConsumed:               1,
 										CapacityConsumed:            0,
+										MaxMessageSize:              "1Mi",
+										MinInSyncReplicas:           2,
+										ReplicationFactor:           3,
 									},
 								},
 							},
@@ -322,6 +329,9 @@ func TestCapacityLimitReports(t *testing.T) {
 										MaxConnectionAttemptsPerSec: 100,
 										QuotaConsumed:               1,
 										CapacityConsumed:            0,
+										MaxMessageSize:              "1Mi",
+										MinInSyncReplicas:           2,
+										ReplicationFactor:           3,
 									},
 								},
 							},

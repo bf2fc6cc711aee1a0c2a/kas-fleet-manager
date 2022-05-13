@@ -49,6 +49,7 @@ func (kp *KafkaInstanceType) validate() error {
 
 type KafkaInstanceSize struct {
 	Id                          string   `yaml:"id"`
+	DisplayName                 string   `yaml:"display_name"`
 	IngressThroughputPerSec     Quantity `yaml:"ingressThroughputPerSec"`
 	EgressThroughputPerSec      Quantity `yaml:"egressThroughputPerSec"`
 	TotalMaxConnections         int      `yaml:"totalMaxConnections"`
@@ -56,9 +57,14 @@ type KafkaInstanceSize struct {
 	MaxPartitions               int      `yaml:"maxPartitions"`
 	MaxDataRetentionPeriod      string   `yaml:"maxDataRetentionPeriod"`
 	MaxConnectionAttemptsPerSec int      `yaml:"maxConnectionAttemptsPerSec"`
+	MaxMessageSize              Quantity `yaml:"maxMessageSize"`
 	QuotaConsumed               int      `yaml:"quotaConsumed"`
 	QuotaType                   string   `yaml:"quotaType"`
 	CapacityConsumed            int      `yaml:"capacityConsumed"`
+	SupportedAZModes            []string `yaml:"supportedAZModes"`
+	MinInSyncReplicas           int      `yaml:"minInSyncReplicas"` // also abbreviated as ISR in Kafka terminology
+	ReplicationFactor           int      `yaml:"replicationFactor"` // also abbreviated as RF in Kafka terminology
+	LifespanSeconds             *int     `yaml:"lifespanSeconds"`
 }
 
 // validates Kafka instance size configuration to ensure the following:
@@ -68,7 +74,8 @@ type KafkaInstanceSize struct {
 // - any int values must not be less than or equal to zero
 func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 	if k.EgressThroughputPerSec.IsEmpty() || k.IngressThroughputPerSec.IsEmpty() ||
-		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize.IsEmpty() || k.Id == "" || k.QuotaType == "" {
+		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize.IsEmpty() || k.Id == "" || k.QuotaType == "" ||
+		k.DisplayName == "" || k.MaxMessageSize.IsEmpty() || k.SupportedAZModes == nil {
 		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' is missing required parameters.", k.Id, instanceTypeId)
 	}
 
@@ -92,10 +99,30 @@ func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 		return fmt.Errorf("maxDataRetentionPeriod for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
 	}
 
+	maxMessageSize, err := k.MaxMessageSize.ToK8Quantity()
+	if err != nil {
+		return fmt.Errorf("maxMessageSize for Kafka instance type '%s', size '%s' is invalid: %s", k.Id, instanceTypeId, err.Error())
+	}
+
+	validSupportedAZModes := map[string]struct{}{
+		"single": {},
+		"multi":  {},
+	}
+	for _, supportedAZMode := range k.SupportedAZModes {
+		if _, ok := validSupportedAZModes[supportedAZMode]; !ok {
+			return fmt.Errorf("value '%s' in supportedAZModes for Kafka instance type '%s', size '%s' is invalid", supportedAZMode, k.Id, instanceTypeId)
+		}
+	}
+
+	if k.LifespanSeconds != nil && *k.LifespanSeconds <= 0 {
+		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' specifies a lifespanSeconds seconds value less than or equals to Zero.", k.Id, instanceTypeId)
+	}
+
 	if maxDataRetentionPeriod.IsZero() || egressThroughputQuantity.CmpInt64(1) < 0 ||
 		ingressThroughputQuantity.CmpInt64(1) < 0 || maxDataRetentionSize.CmpInt64(1) < 0 ||
 		k.TotalMaxConnections <= 0 || k.MaxPartitions <= 0 || k.MaxConnectionAttemptsPerSec <= 0 ||
-		k.QuotaConsumed < 1 || k.CapacityConsumed < 1 {
+		k.QuotaConsumed < 1 || k.CapacityConsumed < 1 || k.MinInSyncReplicas < 1 ||
+		k.ReplicationFactor < 1 || maxMessageSize.CmpInt64(0) < 0 || len(k.SupportedAZModes) == 0 {
 		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' specifies a property value less than or equals to Zero.", k.Id, instanceTypeId)
 	}
 
@@ -184,11 +211,11 @@ func (q *Quantity) String() string {
 	return string(*q)
 }
 
-func (q *Quantity) ToFloat32() (float32, error) {
+func (q *Quantity) ToInt64() (int64, error) {
 	if p, err := resource.ParseQuantity(string(*q)); err != nil {
 		return 0, err
 	} else {
-		return float32(p.Value()), nil
+		return p.Value(), nil
 	}
 }
 
