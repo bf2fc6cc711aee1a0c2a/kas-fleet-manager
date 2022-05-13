@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/Nerzal/gocloak/v11"
@@ -16,6 +17,13 @@ const (
 	// gocloak access token duration before expiration
 	tokenLifeDuration    = 5 * time.Minute
 	cacheCleanupInterval = 5 * time.Minute
+	OrgKey               = "rh-org-id"
+	UserKey              = "rh-user-id"
+)
+
+var (
+	protocol = "openid-connect"
+	mapper   = "oidc-usermodel-attribute-mapper"
 )
 
 //go:generate moq -out client_moq.go . KcClient
@@ -84,7 +92,6 @@ func NewClient(config *KeycloakConfig, realmConfig *KeycloakRealmConfig) *kcClie
 }
 
 func (kc *kcClient) ClientConfig(client ClientRepresentation) gocloak.Client {
-	protocol := "openid-connect"
 	publicClient := false
 	directAccess := false
 	return gocloak.Client{
@@ -104,12 +111,10 @@ func (kc *kcClient) ClientConfig(client ClientRepresentation) gocloak.Client {
 }
 
 func (kc *kcClient) CreateProtocolMapperConfig(name string) []gocloak.ProtocolMapperRepresentation {
-	proto := "openid-connect"
-	mapper := "oidc-usermodel-attribute-mapper"
 	protocolMapper := []gocloak.ProtocolMapperRepresentation{
 		{
 			Name:           &name,
-			Protocol:       &proto,
+			Protocol:       &protocol,
 			ProtocolMapper: &mapper,
 			Config: &map[string]string{
 				"access.token.claim":   "true",
@@ -192,15 +197,11 @@ func (kc *kcClient) GetClientSecret(internalClientId string, accessToken string)
 	if resp.Value == nil {
 		return "", errors.Errorf("failed to retrieve credentials")
 	}
-	value := *resp.Value
-	return value, err
+	return *resp.Value, err
 }
 
 func (kc *kcClient) DeleteClient(internalClientID string, accessToken string) error {
 	err := kc.kcClient.DeleteClient(kc.ctx, accessToken, kc.realmConfig.Realm, internalClientID)
-	if err != nil {
-		return err
-	}
 	return err
 }
 
@@ -291,7 +292,7 @@ func (kc *kcClient) IsSameOrg(client *gocloak.Client, orgId string) bool {
 		return false
 	}
 	attributes := *client.Attributes
-	return attributes["rh-org-id"] == orgId
+	return attributes[OrgKey] == orgId
 }
 
 func (kc *kcClient) IsOwner(client *gocloak.Client, userId string) bool {
@@ -299,12 +300,10 @@ func (kc *kcClient) IsOwner(client *gocloak.Client, userId string) bool {
 		return false
 	}
 	attributes := *client.Attributes
-	if rhUserId, found := attributes["rh-user-id"]; found {
+	if rhUserId, found := attributes[UserKey]; found {
 		if rhUserId == userId {
 			return true
 		}
-	} else {
-		return true
 	}
 	return false
 }
@@ -368,7 +367,7 @@ func (kc *kcClient) AddRealmRoleToUser(accessToken string, userId string, role g
 
 func isNotFoundError(err error) bool {
 	if e, ok := err.(*gocloak.APIError); ok {
-		if e.Code == 404 {
+		if e.Code == http.StatusNotFound {
 			return true
 		}
 	}
