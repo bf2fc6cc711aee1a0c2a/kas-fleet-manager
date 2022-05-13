@@ -24,6 +24,8 @@ const (
 	KindConnectorNamespace = "ConnectorNamespace"
 	// KindConnectorType is a string identifier for the type dbapi.ConnectorType
 	KindConnectorType = "ConnectorType"
+	// ConnectorTypeAdminView is a string identifier for the type admin.ConnectorTypeAdminView
+	ConnectorTypeAdminView = "ConnectorTypeAdminView"
 	// KindError is a string identifier for the type api.ServiceError
 	KindError = "Error"
 )
@@ -48,6 +50,8 @@ func objectKind(i interface{}) string {
 		return KindConnectorNamespace
 	case dbapi.ConnectorType, *dbapi.ConnectorType:
 		return KindConnectorType
+	case admin.ConnectorTypeAdminView:
+		return ConnectorTypeAdminView
 	case errors.ServiceError, *errors.ServiceError:
 		return KindError
 	default:
@@ -63,6 +67,8 @@ func objectPath(id string, obj interface{}) string {
 		return fmt.Sprintf("/api/connector_mgmt/v1/admin/kafka_connectors/%s", id)
 	case dbapi.ConnectorType, *dbapi.ConnectorType:
 		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_types/%s", id)
+	case admin.ConnectorTypeAdminView:
+		return fmt.Sprintf("/api/connector_mgmt/v1/admin/kafka_connector_types/%s", id)
 	case dbapi.ConnectorCluster, *dbapi.ConnectorCluster:
 		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_clusters/%s", id)
 	case dbapi.ConnectorDeployment:

@@ -1491,6 +1491,102 @@ paths:
       summary: upgrade a connector cluster
       tags:
       - Connector Clusters Admin
+  /api/connector_mgmt/v1/admin/kafka_connector_types:
+    get:
+      description: Returns a list of connector types
+      operationId: getConnectorTypes
+      parameters:
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorTypeAdminViewList'
+          description: A list of connector types
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns a list of connector types
+      tags:
+      - Connector Types
+  /api/connector_mgmt/v1/admin/kafka_connector_types/{connector_type_id}:
+    get:
+      description: Get a connector type by id
+      operationId: getConnectorTypeByID
+      parameters:
+      - description: The id of the connector type
+        explode: false
+        in: path
+        name: connector_type_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorTypeAdminView'
+          description: A list of connector types
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Get a connector type by id
+      tags:
+      - Connector Types
 components:
   examples:
     "401Example":
@@ -1621,6 +1717,22 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorDeploymentAdminViewList_allOf'
+    ConnectorTypeAdminViewList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ConnectorTypeAdminViewList_allOf'
+    ConnectorTypeAdminView:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/ConnectorType'
+      - $ref: '#/components/schemas/ConnectorTypeAdminView_allOf'
+      description: Holds the connector type
+    ConnectorTypeChannel:
+      description: Holds the connector type channel
+      properties:
+        shard_metadata:
+          type: object
+      type: object
     ConnectorClusterList:
       allOf:
       - $ref: '#/components/schemas/List'
@@ -1880,6 +1992,20 @@ components:
         last_transition_time:
           type: string
       type: object
+    ConnectorType:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/ConnectorType_allOf'
+      description: Represents a connector type supported by the API
+      oneOf:
+      - required:
+        - name
+        - schema
+        - version
+      - required:
+        - json_schema
+        - name
+        - version
     ConnectorAvailableTypeUpgradeList_allOf:
       properties:
         items:
@@ -1960,6 +2086,18 @@ components:
             allOf:
             - $ref: '#/components/schemas/ConnectorDeploymentAdminView'
           type: array
+    ConnectorTypeAdminViewList_allOf:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ConnectorTypeAdminView'
+          type: array
+    ConnectorTypeAdminView_allOf:
+      properties:
+        channels:
+          additionalProperties:
+            $ref: '#/components/schemas/ConnectorTypeChannel'
+          type: object
     ConnectorClusterList_allOf:
       properties:
         items:
@@ -2030,6 +2168,43 @@ components:
           $ref: '#/components/schemas/ConnectorOperator'
         available:
           $ref: '#/components/schemas/ConnectorOperator'
+    ConnectorType_allOf:
+      properties:
+        name:
+          description: Name of the connector type.
+          type: string
+        version:
+          description: Version of the connector type.
+          type: string
+        channels:
+          description: Channels of the connector type.
+          items:
+            $ref: '#/components/schemas/Channel'
+          type: array
+        description:
+          description: A description of the connector.
+          type: string
+        icon_href:
+          description: URL to an icon of the connector.
+          type: string
+        labels:
+          description: Labels used to categorize the connector
+          items:
+            type: string
+          type: array
+        capabilities:
+          description: The capabilities supported by the conenctor
+          items:
+            type: string
+          type: array
+        schema:
+          description: A json schema that can be used to validate a ConnectorRequest
+            connector field.
+          type: object
+        json_schema:
+          description: A json schema that can be used to validate a ConnectorRequest
+            connector field.
+          type: object
   securitySchemes:
     Bearer:
       bearerFormat: JWT

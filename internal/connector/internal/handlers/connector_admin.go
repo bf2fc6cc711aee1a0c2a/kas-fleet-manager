@@ -23,13 +23,14 @@ import (
 
 type ConnectorAdminHandler struct {
 	di.Inject
-	ConnectorsConfig  *config.ConnectorsConfig
-	AuthZService      authz.AuthZService
-	Service           services.ConnectorClusterService
-	ConnectorsService services.ConnectorsService
-	NamespaceService  services.ConnectorNamespaceService
-	QuotaConfig       *config.ConnectorsQuotaConfig
-	ConnectorCluster  *ConnectorClusterHandler // TODO eventually move deployent handling into a deployment service
+	ConnectorsConfig      *config.ConnectorsConfig
+	AuthZService          authz.AuthZService
+	Service               services.ConnectorClusterService
+	ConnectorsService     services.ConnectorsService
+	NamespaceService      services.ConnectorNamespaceService
+	QuotaConfig           *config.ConnectorsQuotaConfig
+	ConnectorCluster      *ConnectorClusterHandler // TODO eventually move deployent handling into a deployment service
+	ConnectorTypesService services.ConnectorTypesService
 }
 
 func NewConnectorAdminHandler(handler ConnectorAdminHandler) *ConnectorAdminHandler {
@@ -560,6 +561,65 @@ func (h *ConnectorAdminHandler) GetNamespaceDeployments(writer http.ResponseWrit
 			}
 
 			return result, nil
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorAdminHandler) ListConnectorTypes(writer http.ResponseWriter, request *http.Request) {
+	listArgs := coreservices.NewListArguments(request.URL.Query())
+
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{},
+		Action: func() (interface{}, *errors.ServiceError) {
+			entries, paging, err := h.ConnectorTypesService.ListCatalogEntries(listArgs)
+			if err != nil {
+				return nil, err
+			}
+
+			result := private.ConnectorTypeAdminViewList{
+				Kind:  "ConnectorTypeAdminViewList",
+				Page:  int32(paging.Page),
+				Size:  int32(paging.Size),
+				Total: int32(paging.Total),
+			}
+
+			result.Items = make([]private.ConnectorTypeAdminView, len(entries))
+			for i, deployment := range entries {
+				item, err := presenters.PresentConnectorTypeAdminView(deployment)
+				if err != nil {
+					return nil, err
+				}
+				if item != nil {
+					result.Items[i] = *item
+				}
+			}
+
+			return result, nil
+		},
+	}
+
+	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorAdminHandler) GetConnectorType(writer http.ResponseWriter, request *http.Request) {
+	id := mux.Vars(request)["connector_type_id"]
+
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_type_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+			entry, err := h.ConnectorTypesService.GetCatalogEntry(id)
+			if err != nil {
+				return nil, err
+			}
+			if entry == nil {
+				return nil, nil
+			}
+
+			return presenters.PresentConnectorTypeAdminView(*entry)
 		},
 	}
 

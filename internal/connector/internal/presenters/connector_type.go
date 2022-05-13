@@ -1,9 +1,11 @@
 package presenters
 
 import (
+	admin "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
 func toStringSlice(channels []public.Channel) []string {
@@ -74,4 +76,44 @@ func PresentConnectorType(from *dbapi.ConnectorType) (*public.ConnectorType, err
 		Channels:     toChannelSlice(from.ChannelNames()),
 		Capabilities: from.CapabilitiesNames(),
 	}, nil
+}
+
+func PresentConnectorTypeAdminView(from dbapi.ConnectorCatalogEntry) (*admin.ConnectorTypeAdminView, *errors.ServiceError) {
+	view := admin.ConnectorTypeAdminView{
+		Id:          from.ConnectorType.ID,
+		Name:        from.ConnectorType.Name,
+		Version:     from.ConnectorType.Version,
+		Description: from.ConnectorType.Description,
+		IconHref:    from.ConnectorType.IconHref,
+		Labels:      make([]string, len(from.ConnectorType.Labels)),
+		Channels:    make(map[string]admin.ConnectorTypeChannel),
+	}
+
+	for i, l := range from.ConnectorType.Labels {
+		view.Labels[i] = l.Label
+	}
+
+	for name, channel := range from.Channels {
+		meta, err := channel.ShardMetadata.Object()
+		if err != nil {
+			return nil, errors.ToServiceError(err)
+		}
+
+		view.Channels[name] = admin.ConnectorTypeChannel{
+			ShardMetadata: meta,
+		}
+	}
+
+	schema, err := from.ConnectorType.JsonSchema.Object()
+	if err != nil {
+		return nil, errors.ToServiceError(err)
+	}
+
+	view.Schema = schema
+
+	reference := PresentReference(view.Id, view)
+	view.Kind = reference.Kind
+	view.Href = reference.Href
+
+	return &view, nil
 }

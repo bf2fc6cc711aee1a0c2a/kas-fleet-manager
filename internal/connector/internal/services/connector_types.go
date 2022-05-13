@@ -7,7 +7,6 @@ package services
 // pane cluster.
 
 import (
-	"context"
 	"gorm.io/gorm"
 	"strings"
 
@@ -18,20 +17,24 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
+	coreService "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 	"github.com/golang/glog"
 )
 
 type ConnectorTypesService interface {
 	Get(id string) (*dbapi.ConnectorType, *errors.ServiceError)
-	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError)
+	List(listArgs *services.ListArguments) (dbapi.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError)
 	ForEachConnectorCatalogEntry(f func(id string, channel string, ccc *config.ConnectorChannelConfig) *errors.ServiceError) *errors.ServiceError
 
 	PutConnectorShardMetadata(ctc *dbapi.ConnectorShardMetadata) (int64, *errors.ServiceError)
 	GetConnectorShardMetadata(id int64) (*dbapi.ConnectorShardMetadata, *errors.ServiceError)
 	GetLatestConnectorShardMetadataID(tid, channel string) (int64, *errors.ServiceError)
+	GetLatestConnectorShardMetadata(tid, channel string) (*dbapi.ConnectorShardMetadata, *errors.ServiceError)
 	CatalogEntriesReconciled() (bool, *errors.ServiceError)
 	DeleteUnusedAndNotInCatalog() *errors.ServiceError
+	ListCatalogEntries(*coreService.ListArguments) ([]dbapi.ConnectorCatalogEntry, *api.PagingMeta, *errors.ServiceError)
+	GetCatalogEntry(tyd string) (*dbapi.ConnectorCatalogEntry, *errors.ServiceError)
 }
 
 var _ ConnectorTypesService = &connectorTypesService{}
@@ -124,7 +127,7 @@ func GetValidConnectorTypeColumns() []string {
 }
 
 // List returns all connector types
-func (cts *connectorTypesService) List(ctx context.Context, listArgs *services.ListArguments) (dbapi.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError) {
+func (cts *connectorTypesService) List(listArgs *services.ListArguments) (dbapi.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError) {
 	if err := listArgs.Validate(GetValidConnectorTypeColumns()); err != nil {
 		return nil, nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list connector type requests: %s", err.Error())
 	}
@@ -139,7 +142,7 @@ func (cts *connectorTypesService) List(ctx context.Context, listArgs *services.L
 
 	// Apply search query
 	if len(listArgs.Search) > 0 {
-		queryParser := coreServices.NewQueryParser(GetValidConnectorTypeColumns()...)
+		queryParser := queryparser.NewQueryParser(GetValidConnectorTypeColumns()...)
 		searchDbQuery, err := queryParser.Parse(listArgs.Search)
 		if err != nil {
 			return resourceList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector type requests: %s", err.Error())
@@ -201,7 +204,7 @@ func (cts *connectorTypesService) ForEachConnectorCatalogEntry(f func(id string,
 
 		// reconcile channels
 		for channel, ccc := range entry.Channels {
-			err := f(entry.ConnectorType.Id, channel, ccc)
+			err := f(entry.ConnectorType.Id, channel, &ccc)
 			if err != nil {
 				return err
 			}
@@ -304,6 +307,25 @@ func (cts *connectorTypesService) GetLatestConnectorShardMetadataID(tid, channel
 	return resource.ID, nil
 }
 
+func (cts *connectorTypesService) GetLatestConnectorShardMetadata(tid, channel string) (*dbapi.ConnectorShardMetadata, *errors.ServiceError) {
+	resource := &dbapi.ConnectorShardMetadata{}
+	dbConn := cts.connectionFactory.New()
+
+	err := dbConn.Unscoped().
+		Where("connector_type_id", tid).
+		Where("channel", channel).
+		First(&resource).Error
+
+	if err != nil {
+		if services.IsRecordNotFoundError(err) {
+			return nil, errors.NotFound("connector type channel not found")
+		}
+		return nil, errors.GeneralError("Unable to get connector type channel: %s", err)
+	}
+
+	return resource, nil
+}
+
 func (cts *connectorTypesService) CatalogEntriesReconciled() (bool, *errors.ServiceError) {
 	var typeIds []string
 	catalogChecksums := cts.connectorsConfig.CatalogChecksums
@@ -350,4 +372,52 @@ func (cts *connectorTypesService) DeleteUnusedAndNotInCatalog() *errors.ServiceE
 	}
 	glog.V(5).Infof("Deleted Connector Type with id NOT IN: %v", notToBeDeletedIDs)
 	return nil
+}
+
+func (cts *connectorTypesService) ListCatalogEntries(listArgs *coreService.ListArguments) ([]dbapi.ConnectorCatalogEntry, *api.PagingMeta, *errors.ServiceError) {
+	types, pagin, err := cts.List(listArgs)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	entries := make([]dbapi.ConnectorCatalogEntry, len(types))
+
+	for i := range types {
+		ct := types[i]
+		entry, err := cts.toConnectorCatalogEntry(ct)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		entries[i] = *entry
+	}
+
+	return entries, pagin, nil
+}
+
+func (cts *connectorTypesService) GetCatalogEntry(id string) (*dbapi.ConnectorCatalogEntry, *errors.ServiceError) {
+	ct, err := cts.Get(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return cts.toConnectorCatalogEntry(ct)
+}
+
+func (cts *connectorTypesService) toConnectorCatalogEntry(ct *dbapi.ConnectorType) (*dbapi.ConnectorCatalogEntry, *errors.ServiceError) {
+	entry := dbapi.ConnectorCatalogEntry{
+		ConnectorType: ct,
+		Channels:      make(map[string]*dbapi.ConnectorShardMetadata),
+	}
+
+	for _, c := range ct.Channels {
+		meta, err := cts.GetLatestConnectorShardMetadata(ct.ID, c.Channel)
+		if err != nil {
+			return nil, err
+		}
+
+		entry.Channels[c.Channel] = meta
+	}
+
+	return &entry, nil
 }
