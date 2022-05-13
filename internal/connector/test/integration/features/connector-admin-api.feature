@@ -6,13 +6,19 @@ Feature: connector admin api
   Background:
     Given the path prefix is "/api/connector_mgmt"
 
-    # org admin user used in admin API
+    # users with fleet role
     Given an admin user named "Ricky Bobby" with roles "connector-fleet-manager-admin-full"
 
-    # regular user without roles
-    Given a user named "Evil Bob"
+    # org admins
+    Given an org admin user named "Stuart Admin" in organization "13640240"
+    Given an org admin user named "Kevin Admin" in organization "13640241"
+
+    # regular users
+    Given a user named "Regular Bob"
 
   Scenario: Ricky lists connector types
+    Given LOCK--------------------------------------------------------------
+
     Given I am logged in as "Ricky Bobby"
 
     When I GET path "/v1/admin/kafka_connector_types"
@@ -71,8 +77,82 @@ Feature: connector admin api
     And the ".kind" selection from the response should match "ConnectorTypeAdminViewList"
     And the ".items | length" selection from the response should match "1"
 
-  Scenario: Bob can't lists connector types
-    Given I am logged in as "Evil Bob"
+    Given I am logged in as "Regular Bob"
     When I GET path "/v1/admin/kafka_connector_types"
     Then the response code should be 404
+
+    And UNLOCK--------------------------------------------------------------
+
+  Scenario: Ricky can lists all connector clusters, others can't
+    Given LOCK--------------------------------------------------------------
+
+    Given I am logged in as "Stuart Admin"
+    When I POST path "/v1/kafka_connector_clusters" with json body:
+      """
+      { "name": "stuart_cluster" }
+      """
+    Then the response code should be 202
+    Given I store the ".id" selection from the response as ${stuart_cluster_id}
+
+    Given I am logged in as "Kevin Admin"
+    When I POST path "/v1/kafka_connector_clusters" with json body:
+      """
+      { "name": "kevin_cluster" }
+      """
+    Then the response code should be 202
+    Given I store the ".id" selection from the response as ${kevin_cluster_id}
+
+    Given I am logged in as "Ricky Bobby"
+
+    When I GET path "/v1/admin/kafka_connector_clusters"
+    Then the response code should be 200
+    And the ".kind" selection from the response should match "ConnectorClusterList"
+    And the ".items[] | select(.name == "stuart_cluster") | .id" selection from the response should match "${stuart_cluster_id}"
+    And the ".items[] | select(.name == "kevin_cluster") | .id" selection from the response should match "${kevin_cluster_id}"
+
+    When I GET path "/v1/admin/kafka_connector_clusters/${stuart_cluster_id}"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${stuart_cluster_id}",
+        "id": "${stuart_cluster_id}",
+        "kind": "ConnectorCluster",
+        "name": "stuart_cluster",
+        "created_at": "${response.created_at}",
+        "owner": "${response.owner}",
+        "modified_at": "${response.modified_at}",
+        "status": {
+          "state": "disconnected"
+        }
+      }
+      """
+
+    When I GET path "/v1/admin/kafka_connector_clusters/${kevin_cluster_id}"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${kevin_cluster_id}",
+        "id": "${kevin_cluster_id}",
+        "kind": "ConnectorCluster",
+        "name": "kevin_cluster",
+        "created_at": "${response.created_at}",
+        "owner": "${response.owner}",
+        "modified_at": "${response.modified_at}",
+        "status": {
+          "state": "disconnected"
+        }
+      }
+      """
+
+    Given I am logged in as "Regular Bob"
+    When I GET path "/v1/admin/kafka_connector_clusters"
+    Then the response code should be 404
+    When I GET path "/v1/admin/kafka_connector_clusters/${stuart_cluster_id}"
+    Then the response code should be 404
+    When I GET path "/v1/admin/kafka_connector_clusters/${kevin_cluster_id}"
+    Then the response code should be 404
+
+    And UNLOCK--------------------------------------------------------------
 

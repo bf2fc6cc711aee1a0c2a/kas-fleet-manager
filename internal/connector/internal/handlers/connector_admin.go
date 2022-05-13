@@ -37,6 +37,26 @@ func NewConnectorAdminHandler(handler ConnectorAdminHandler) *ConnectorAdminHand
 	return &handler
 }
 
+func (h *ConnectorAdminHandler) GetConnectorCluster(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["connector_cluster_id"]
+
+	cfg := handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+
+			cluster, serviceError := h.Service.Get(r.Context(), id)
+			if serviceError != nil {
+				return nil, serviceError
+			}
+			return presenters.PresentPrivateConnectorCluster(cluster), nil
+		},
+	}
+
+	handlers.HandleGet(w, r, &cfg)
+}
+
 func (h *ConnectorAdminHandler) ListConnectorClusters(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {

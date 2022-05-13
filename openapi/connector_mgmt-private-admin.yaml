@@ -61,6 +61,47 @@ paths:
       operationId: listConnectorClusters
       summary: Returns a list of connector clusters
 
+  /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}:
+    get:
+      tags:
+        - Connector Clusters Admin
+      parameters:
+        - name: connector_cluster_id
+          description: The id of the connector cluster
+          schema:
+            type: string
+          in: path
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/ConnectorCluster"
+          description: The connector cluster matching the request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+      security:
+        - Bearer: [ ]
+      operationId: getConnectorCluster
+      summary: Get a connector cluster
+
   /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/namespaces:
     get:
       tags:
