@@ -159,6 +159,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, kerrors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(kerrors.ErrorNotFound))
 	adminRouter.HandleFunc("/kafka_connector_clusters", s.ConnectorAdminHandler.ListConnectorClusters).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}", s.ConnectorAdminHandler.GetConnectorCluster).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/namespaces", s.ConnectorAdminHandler.GetClusterNamespaces).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/connectors", s.ConnectorAdminHandler.GetClusterConnectors).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}/deployments", s.ConnectorAdminHandler.GetClusterDeployments).Methods(http.MethodGet)
