@@ -201,8 +201,7 @@ func (kc *kcClient) GetClientSecret(internalClientId string, accessToken string)
 }
 
 func (kc *kcClient) DeleteClient(internalClientID string, accessToken string) error {
-	err := kc.kcClient.DeleteClient(kc.ctx, accessToken, kc.realmConfig.Realm, internalClientID)
-	return err
+	return kc.kcClient.DeleteClient(kc.ctx, accessToken, kc.realmConfig.Realm, internalClientID)
 }
 
 func (kc *kcClient) getClient(clientId string, accessToken string) ([]*gocloak.Client, error) {
