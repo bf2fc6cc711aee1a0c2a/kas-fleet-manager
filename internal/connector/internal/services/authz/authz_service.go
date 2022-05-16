@@ -4,10 +4,8 @@ import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"github.com/golang-jwt/jwt/v4"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 )
 
 var (
@@ -17,7 +15,7 @@ var (
 
 type User struct {
 	ctx    context.Context
-	claims jwt.MapClaims
+	claims auth.KFMClaims
 }
 
 type ValidationUser struct {
@@ -190,7 +188,7 @@ func (u *ValidationUser) ValidateNamespaceConnectorQuota() handlers.ValidateOpti
 }
 
 func (u *User) IsOrgAdmin() bool {
-	return auth.GetIsOrgAdminFromClaims(u.claims)
+	return u.claims.IsOrgAdmin()
 }
 
 func (u *User) IsAdmin() bool {
@@ -198,9 +196,11 @@ func (u *User) IsAdmin() bool {
 }
 
 func (u *User) UserId() string {
-	return auth.GetUsernameFromClaims(u.claims)
+	username, _ := u.claims.GetUsername()
+	return username
 }
 
 func (u *User) OrgId() string {
-	return auth.GetOrgIdFromClaims(u.claims)
+	orgid, _ := u.claims.GetOrgId()
+	return orgid
 }

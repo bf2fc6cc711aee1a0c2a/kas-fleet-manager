@@ -127,12 +127,12 @@ func filterConnectorsToOwnerOrOrg(ctx context.Context, dbConn *gorm.DB, factory 
 	if err != nil {
 		return dbConn, errors.Unauthenticated("user not authenticated")
 	}
-	owner := auth.GetUsernameFromClaims(claims)
+	owner, _ := claims.GetUsername()
 	if owner == "" {
 		return dbConn, errors.Unauthenticated("user not authenticated")
 	}
 
-	orgId := auth.GetOrgIdFromClaims(claims)
+	orgId, _ := claims.GetOrgId()
 	filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
 
 	// filter by organisationId if a user is part of an organisation and is not allowed as a service account

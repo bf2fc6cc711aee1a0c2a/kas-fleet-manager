@@ -176,9 +176,9 @@ func (kc *masService) CreateServiceAccount(accessToken string, serviceAccountReq
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
-	orgId := auth.GetOrgIdFromClaims(claims)
-	ownerAccountId := auth.GetAccountIdFromClaims(claims)
-	owner := auth.GetUsernameFromClaims(claims)
+	orgId, _ := claims.GetOrgId()
+	ownerAccountId, _ := claims.GetAccountId()
+	owner, _ := claims.GetUsername()
 	isAllowed, err := kc.checkAllowedServiceAccountsLimits(accessToken, kc.GetConfig().MaxAllowedServiceAccounts, orgId)
 	if err != nil { //5xx
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to create service account")
@@ -260,7 +260,7 @@ func (kc *masService) ListServiceAcc(accessToken string, ctx context.Context, fi
 	if err != nil { //4xx
 		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
-	orgId := auth.GetOrgIdFromClaims(claims)
+	orgId, _ := claims.GetOrgId()
 	searchAtt := fmt.Sprintf("rh-org-id:%s", orgId)
 	clients, err := kc.kcClient.GetClients(accessToken, first, max, searchAtt)
 	if err != nil {
@@ -306,10 +306,10 @@ func (kc *masService) DeleteServiceAccount(accessToken string, ctx context.Conte
 		return errors.NewWithCause(errors.ErrorServiceAccountNotFound, err, "service account not found %s", id)
 	}
 
-	orgId := auth.GetOrgIdFromClaims(claims)
-	userId := auth.GetAccountIdFromClaims(claims)
-	owner := auth.GetUsernameFromClaims(claims)
-	if kc.kcClient.IsSameOrg(c, orgId) && (kc.kcClient.IsOwner(c, userId) || auth.GetIsOrgAdminFromClaims(claims)) {
+	orgId, _ := claims.GetOrgId()
+	userId, _ := claims.GetAccountId()
+	owner, _ := claims.GetUsername()
+	if kc.kcClient.IsSameOrg(c, orgId) && (kc.kcClient.IsOwner(c, userId) || claims.IsOrgAdmin()) {
 		err = kc.kcClient.DeleteClient(id, accessToken) //id existence checked
 		if err != nil {                                 //5xx
 			return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "failed to delete service account")
@@ -358,9 +358,9 @@ func (kc *masService) ResetServiceAccountCredentials(accessToken string, ctx con
 	}
 
 	//http request's info
-	orgId := auth.GetOrgIdFromClaims(claims)
-	userId := auth.GetAccountIdFromClaims(claims)
-	if kc.kcClient.IsSameOrg(c, orgId) && (kc.kcClient.IsOwner(c, userId) || auth.GetIsOrgAdminFromClaims(claims)) {
+	orgId, _ := claims.GetOrgId()
+	userId, _ := claims.GetAccountId()
+	if kc.kcClient.IsSameOrg(c, orgId) && (kc.kcClient.IsOwner(c, userId) || claims.IsOrgAdmin()) {
 		credRep, err := kc.kcClient.RegenerateClientSecret(accessToken, id)
 		if err != nil { //5xx
 			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to reset service account credentials")
@@ -414,9 +414,9 @@ func (kc *masService) getServiceAccount(accessToken string, ctx context.Context,
 	}
 
 	//http requester's info.
-	orgId := auth.GetOrgIdFromClaims(claims)
-	userId := auth.GetAccountIdFromClaims(claims)
-	owner := auth.GetUsernameFromClaims(claims)
+	orgId, _ := claims.GetOrgId()
+	userId, _ := claims.GetAccountId()
+	owner, _ := claims.GetUsername()
 	attributes := c.Attributes
 	att := *attributes
 	createdAt, err := time.Parse(time.RFC3339, att["created_at"])

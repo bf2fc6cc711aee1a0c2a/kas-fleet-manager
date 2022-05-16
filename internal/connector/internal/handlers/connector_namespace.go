@@ -105,7 +105,7 @@ func (h *ConnectorNamespaceHandler) CreateEvaluation(w http.ResponseWriter, r *h
 			if err != nil {
 				return nil, errors.Unauthenticated("user not authenticated")
 			}
-			userId := auth.GetUsernameFromClaims(claims)
+			userId, _ := claims.GetUsername()
 
 			convResource := presenters.ConvertConnectorNamespaceEvalRequest(&resource, userId)
 			if err := h.Service.SetEvalClusterId(convResource); err != nil {

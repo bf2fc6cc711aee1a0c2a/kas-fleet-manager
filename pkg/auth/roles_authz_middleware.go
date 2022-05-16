@@ -10,7 +10,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 const (
@@ -94,7 +93,7 @@ func (m *rolesAuthMiddleware) RequireRolesForMethods(roles map[string][]string, 
 	}
 }
 
-func getRealmRolesClaim(claims jwt.MapClaims) []string {
+func getRealmRolesClaim(claims KFMClaims) []string {
 	if realmRoles, ok := claims["realm_access"]; ok {
 		if roles, ok := realmRoles.(map[string]interface{}); ok {
 			if arr, ok := roles["roles"].([]interface{}); ok {

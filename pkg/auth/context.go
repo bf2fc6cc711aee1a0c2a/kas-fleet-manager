@@ -19,39 +19,6 @@ const (
 	contextIsAdmin              contextKey = "is_admin"
 )
 
-func _onlyValue(f func() (string, error)) string {
-	val, _ := f()
-	return val
-}
-
-// GetUsernameFromClaims
-// Deprecated: use KFMClaims.GetUsername instead
-func GetUsernameFromClaims(claims jwt.MapClaims) string {
-	kfmClaims := KFMClaims(claims)
-	return _onlyValue(kfmClaims.GetUsername)
-}
-
-// GetAccountIdFromClaims
-// Deprecated: use KFMClaims.GetAccountId instead
-func GetAccountIdFromClaims(claims jwt.MapClaims) string {
-	kfmClaims := KFMClaims(claims)
-	return _onlyValue(kfmClaims.GetAccountId)
-}
-
-// GetOrgIdFromClaims
-// Deprecated: use KFMClaims.GetOrgId instead
-func GetOrgIdFromClaims(claims jwt.MapClaims) string {
-	kfmClaims := KFMClaims(claims)
-	return _onlyValue(kfmClaims.GetOrgId)
-}
-
-// GetIsOrgAdminFromClaims
-// Deprecated: use KFMClaims.IsOrgAdmin instead
-func GetIsOrgAdminFromClaims(claims jwt.MapClaims) bool {
-	kfmClaims := KFMClaims(claims)
-	return kfmClaims.IsOrgAdmin()
-}
-
 func GetIsAdminFromContext(ctx context.Context) bool {
 	isAdmin := ctx.Value(contextIsAdmin)
 	if isAdmin == nil {
@@ -80,15 +47,15 @@ func SetTokenInContext(ctx context.Context, token *jwt.Token) context.Context {
 	return authentication.ContextWithToken(ctx, token)
 }
 
-func GetClaimsFromContext(ctx context.Context) (jwt.MapClaims, error) {
-	var claims jwt.MapClaims
+func GetClaimsFromContext(ctx context.Context) (KFMClaims, error) {
+	var claims KFMClaims
 	token, err := authentication.TokenFromContext(ctx)
 	if err != nil {
 		return claims, fmt.Errorf("failed to get jwt token from context: %v", err)
 	}
 
 	if token != nil && token.Claims != nil {
-		claims = token.Claims.(jwt.MapClaims)
+		claims = KFMClaims(token.Claims.(jwt.MapClaims))
 	}
 	return claims, nil
 }
