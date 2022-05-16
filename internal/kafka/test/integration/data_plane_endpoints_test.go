@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	adminprivate "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
@@ -25,6 +23,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -71,6 +70,7 @@ func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer 
 		ProviderType:          api.ClusterProviderStandalone,
 		SupportedInstanceType: api.AllInstanceTypeSupport.String(),
 		ClientID:              fmt.Sprintf("kas-fleetshard-agent-%s", clusterId),
+		ClientSecret:          "some-cluster-secret",
 	}
 
 	err := cluster.SetAvailableStrimziVersions(getTestStrimziVersionsMatrix())
@@ -395,7 +395,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(list.Items).To(HaveLen(4)) // only count valid Managed Kafka CR
+	Expect(list.Items).To(HaveLen(5)) // only count valid Managed Kafka CR
 
 	for _, k := range testKafkas {
 		if k.Status != constants2.KafkaRequestStatusPreparing.String() && k.Status != constants2.KafkaRequestStatusDeprovision.String() {

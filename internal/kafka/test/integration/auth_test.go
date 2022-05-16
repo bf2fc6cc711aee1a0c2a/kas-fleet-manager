@@ -240,7 +240,9 @@ func TestAuthFailure_usingMasSsoTokenOnKafkasGet(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(keycloakConfig *keycloak.KeycloakConfig) {
+		keycloakConfig.SelectSSOProvider = keycloak.MAS_SSO
+	})
 	defer teardown()
 
 	// create a mas-sso service account token

@@ -1679,7 +1679,11 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 
 		// only update kafka status if a data plane cluster is available
 		if dataplaneCluster != nil {
-			ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(helper, dataplaneCluster.ClusterID)
+			ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(helper, dataplaneCluster.ClusterID)
+			if err != nil {
+				return err
+			}
+
 			kafkaList, _, err := privateClient.AgentClustersApi.GetKafkas(ctx, dataplaneCluster.ClusterID)
 			if err != nil {
 				return err

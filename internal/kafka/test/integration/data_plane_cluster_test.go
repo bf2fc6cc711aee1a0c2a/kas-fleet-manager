@@ -18,6 +18,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
+	dataplanemocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/golang-jwt/jwt/v4"
@@ -48,7 +49,8 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 		t.Fatalf("Cluster not found")
 	}
 
-	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	commonKafkaVersions := []string{"2.8.0", "1.3.6", "2.7.0"}
@@ -110,15 +112,16 @@ func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
 	defer tearDown()
 
 	testDataPlaneclusterID := "test-cluster-id"
-	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
-	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, private.DataPlaneClusterUpdateStatusRequest{})
-	Expect(resp.StatusCode).To(Equal(http.StatusNotFound)) // We expect 404 error in this test because the cluster ID does not exist
+	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *dataplanemocks.BuildValidDataPlaneClusterUpdateStatusRequest(nil))
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest)) // We expect 400 error in this test because the cluster ID does not exist
 	Expect(err).To(HaveOccurred())
 
 	_, resp, err = privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
-	Expect(resp.StatusCode).To(Equal(http.StatusNotFound)) // We expect 404 error in this test because the cluster ID does not exist
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest)) // We expect 400 error in this test because the cluster ID does not exist
 	Expect(err).To(HaveOccurred())
 }
 
@@ -197,7 +200,9 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
 		t.Fatalf("Cluster not found")
 	}
 
-	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+
 	privateAPIClient := test.NewPrivateAPIClient(h)
 	config, resp, err := privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
@@ -288,7 +293,9 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	// before enabling the dynamic scaling logic
 	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
-	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
@@ -327,7 +334,8 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	// enable dynamic autoscaling
 	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
-	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
@@ -380,7 +388,9 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	// enable auto scaling
 	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
-	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	ocmClient := test.TestServices.OCMClient
@@ -504,7 +514,9 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(count).To(Equal(int64(initialExpectedOSDClusters)))
 
-	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	ocmClient := test.TestServices.OCMClient
@@ -613,7 +625,9 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 		t.Fatalf("Cluster not found")
 	}
 
-	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
@@ -655,7 +669,9 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 		t.Fatalf("Cluster not found")
 	}
 
-	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
@@ -696,7 +712,9 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 		t.Fatalf("Cluster not found")
 	}
 
-	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
@@ -751,7 +769,9 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 		t.Fatalf("Cluster not found")
 	}
 
-	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
@@ -846,7 +866,9 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziV
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("available_strimzi_versions", initialAvailableStrimziVersionsStr).Error
 	Expect(err).ToNot(HaveOccurred())
 
-	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	commonKafkaVersions := []string{"2.8.0", "2.7.0"}
