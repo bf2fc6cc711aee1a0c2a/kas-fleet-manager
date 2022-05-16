@@ -17,6 +17,7 @@ const (
 	ActionKey       LoggerKeys = "Action"
 	ActionResultKey LoggerKeys = "EventResult"
 	RemoteAddrKey   LoggerKeys = "RemoteAddr"
+	TxIdKey         LoggerKeys = "txid"
 
 	ActionFailed  LoggerKeys = "failed"
 	ActionSuccess LoggerKeys = "success"
@@ -122,7 +123,7 @@ func (l *logger) prepareLogPrefix(format string, args ...interface{}) string {
 		prefix = strings.Join([]string{prefix, "session='", l.session, "' "}, "")
 	}
 
-	if txid, ok := l.context.Value("txid").(int64); ok {
+	if txid, ok := l.context.Value(TxIdKey).(int64); ok {
 		prefix = strings.Join([]string{prefix, "tx_id='", fmt.Sprintf("%v", txid), "' "}, "")
 	}
 
@@ -134,7 +135,7 @@ func (l *logger) prepareLogPrefix(format string, args ...interface{}) string {
 		prefix = strings.Join([]string{prefix, "opid='", opid, "' "}, "")
 	}
 
-	return prefix + orig
+	return strings.Trim(prefix+orig, " ")
 }
 
 func (l *logger) V(level int32) UHCLogger {
@@ -161,6 +162,28 @@ func getSessionFromClaims(ctx context.Context) string {
 	if claims["session_state"] != nil {
 		// return username from ocm token
 		return claims["session_state"].(string)
+	}
+
+	return ""
+}
+
+func getUsernameFromClaims(ctx context.Context) string {
+	var claims jwt.MapClaims
+	token, err := authentication.TokenFromContext(ctx)
+	if err != nil {
+		return ""
+	}
+
+	if token != nil && token.Claims != nil {
+		claims = token.Claims.(jwt.MapClaims)
+	}
+
+	if claims["username"] != nil {
+		// return username from ocm token
+		return claims["username"].(string)
+	} else if claims["preferred_username"] != nil {
+		// return username from mas-sso token
+		return claims["preferred_username"].(string)
 	}
 
 	return ""
@@ -208,26 +231,4 @@ func (l *logger) captureSentryEvent(level sentry.Level, format string, args ...i
 		return
 	}
 	l.sentryHub.CaptureEvent(event)
-}
-
-func getUsernameFromClaims(ctx context.Context) string {
-	var claims jwt.MapClaims
-	token, err := authentication.TokenFromContext(ctx)
-	if err != nil {
-		return ""
-	}
-
-	if token != nil && token.Claims != nil {
-		claims = token.Claims.(jwt.MapClaims)
-	}
-
-	if claims["username"] != nil {
-		// return username from ocm token
-		return claims["username"].(string)
-	} else if claims["preferred_username"] != nil {
-		// return username from mas-sso token
-		return claims["preferred_username"].(string)
-	}
-
-	return ""
 }
