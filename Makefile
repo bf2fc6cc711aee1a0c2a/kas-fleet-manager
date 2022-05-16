@@ -762,6 +762,8 @@ deploy/service: SUPPORTED_CLOUD_PROVIDERS ?= "[{name: aws, default: true, region
 deploy/service: KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG ?= "{}"
 deploy/service: STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG ?= "{}"
 deploy/service: ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION="true"
+deploy/service: ENABLE_KAFKA_OWNER="false"
+deploy/service: KAFKA_OWNERS="[]"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
@@ -771,6 +773,8 @@ deploy/service: deploy/envoy deploy/route
 		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
 		-p IMAGE_TAG=$(IMAGE_TAG) \
 		-p REPLICAS="${REPLICAS}" \
+		-p ENABLE_KAFKA_OWNER="${ENABLE_KAFKA_OWNER}" \
+		-p KAFKA_OWNERS="${KAFKA_OWNERS}" \
 		-p ENABLE_KAFKA_EXTERNAL_CERTIFICATE="${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}" \
 		-p ENABLE_KAFKA_LIFE_SPAN="${ENABLE_KAFKA_LIFE_SPAN}" \
 		-p KAFKA_LIFE_SPAN="${KAFKA_LIFE_SPAN}" \

@@ -1075,9 +1075,7 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 				KafkaIBP: kafkaRequest.DesiredKafkaIBPVersion,
 			},
 			Deleted: kafkaRequest.Status == constants2.KafkaRequestStatusDeprovision.String(),
-			Owners: []string{
-				kafkaRequest.Owner,
-			},
+			Owners:  buildKafkaOwner(kafkaRequest, kafkaConfig),
 		},
 		Status: managedkafka.ManagedKafkaStatus{},
 	}
@@ -1123,6 +1121,15 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 	}
 
 	return managedKafkaCR, nil
+}
+
+func buildKafkaOwner(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig) []string {
+	if kafkaConfig.EnableKafkaOwnerConfig {
+		return append([]string{kafkaRequest.Owner}, kafkaConfig.KafkaOwnerList...)
+	}
+	return []string{
+		kafkaRequest.Owner,
+	}
 }
 
 func buildKafkaClusterCNAMESRecordBatch(routes []dbapi.DataPlaneKafkaRoute, action string) *route53.ChangeBatch {

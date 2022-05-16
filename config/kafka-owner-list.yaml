@@ -1,0 +1,4 @@
+---
+# A list of users, service accounts configured as kafka owners in the data plane clusters
+- kafka-sre-user-1
+- service-account-1

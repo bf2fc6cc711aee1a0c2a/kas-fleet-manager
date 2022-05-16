@@ -30,6 +30,9 @@ type KafkaConfig struct {
 	KafkaLifespan          *KafkaLifespanConfig               `json:"kafka_lifespan"`
 	Quota                  *KafkaQuotaConfig                  `json:"kafka_quota"`
 	SupportedInstanceTypes *KafkaSupportedInstanceTypesConfig `json:"kafka_supported_sizes"`
+	EnableKafkaOwnerConfig bool                               `json:"enable_kafka_owner_config"`
+	KafkaOwnerList         []string                           `json:"kafka_owner_list"`
+	KafkaOwnerListFile     string                             `json:"kafka_owner_list_file"`
 }
 
 func NewKafkaConfig() *KafkaConfig {
@@ -37,10 +40,12 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaTLSCertFile:               "secrets/kafka-tls.crt",
 		KafkaTLSKeyFile:                "secrets/kafka-tls.key",
 		EnableKafkaExternalCertificate: false,
+		EnableKafkaOwnerConfig:         false,
 		KafkaDomainName:                "kafka.bf2.dev",
 		KafkaLifespan:                  NewKafkaLifespanConfig(),
 		Quota:                          NewKafkaQuotaConfig(),
 		SupportedInstanceTypes:         NewKafkaSupportedInstanceTypesConfig(),
+		KafkaOwnerListFile:             "config/kafka-owner-list.yaml",
 		BrowserUrl:                     "http://localhost:8080/",
 	}
 }
@@ -56,6 +61,8 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.Quota.AllowDeveloperInstance, "allow-developer-instance", c.Quota.AllowDeveloperInstance, "Allow the creation of kafka developer instances")
 	fs.StringVar(&c.SupportedInstanceTypes.ConfigurationFile, "supported-kafka-instance-types-config-file", c.SupportedInstanceTypes.ConfigurationFile, "File containing the supported instance types configuration")
 	fs.StringVar(&c.BrowserUrl, "browser-url", c.BrowserUrl, "Browser url to kafka admin UI")
+	fs.BoolVar(&c.EnableKafkaOwnerConfig, "enable-kafka-owner-config", c.EnableKafkaOwnerConfig, "Enable configuration for setting kafka owners")
+	fs.StringVar(&c.KafkaOwnerListFile, "kafka-owner-list-file", c.KafkaOwnerListFile, "File containing list of kafka owners")
 }
 
 func (c *KafkaConfig) ReadFiles() error {
@@ -66,6 +73,12 @@ func (c *KafkaConfig) ReadFiles() error {
 	err = shared.ReadFileValueString(c.KafkaTLSKeyFile, &c.KafkaTLSKey)
 	if err != nil {
 		return err
+	}
+	if c.EnableKafkaOwnerConfig {
+		err = shared.ReadYamlFile(c.KafkaOwnerListFile, &c.KafkaOwnerList)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = shared.ReadYamlFile(c.SupportedInstanceTypes.ConfigurationFile, &c.SupportedInstanceTypes.Configuration)

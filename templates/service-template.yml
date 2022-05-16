@@ -479,6 +479,14 @@ parameters:
   description: Enables reconciliation for data plane clusters in the 'Ready' state
   value: "true"
 
+- name: ENABLE_KAFKA_OWNER
+  description: Enable setting up kafka owners from a configuration list
+  value: "false"
+
+- name: KAFKA_OWNERS
+  description: Setting up kafka owners from configuration
+  value: "[]"
+
 - name: STRIMZI_OLM_INDEX_IMAGE
   displayName: Strimzi operator OLM index image
   description: Strimzi operator OLM index image
@@ -570,6 +578,15 @@ objects:
     data:
       deny-list-configuration.yaml: |-
         ${DENIED_USERS}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: kas-fleet-manager-kafka-owner-list
+      annotations:
+        qontract.recycle: "true"
+    data:
+      kafka-owner-list.yaml: |-
+        ${KAFKA_OWNERS}
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -732,6 +749,9 @@ objects:
           - name: kas-fleet-manager-allowed-users-config
             configMap:
               name: kas-fleet-manager-allowed-users-config
+          - name: kas-fleet-manager-kafka-owner-list
+            configMap:
+                name: kas-fleet-manager-kafka-owner-list
           - name: kas-fleet-manager-denied-users-config
             configMap:
               name: kas-fleet-manager-denied-users-config
@@ -832,6 +852,9 @@ objects:
             - name: service-account-limits-check-skip-org-id-list
               mountPath: /config/service-account-limits-check-skip-org-id-list.yaml
               subPath: service-account-limits-check-skip-org-id-list.yaml
+            - name: kas-fleet-manager-kafka-owner-list
+              mountPath: /config/kafka-owner-list.yaml
+              subPath: kafka-owner-list.yaml
             - name: kas-fleet-manager-fleetshard-operator-subscription-config
               mountPath: /config/kas-fleetshard-operator-subscription-spec-config.yaml
               subPath: kas-fleetshard-operator-subscription-spec-config.yaml
@@ -855,6 +878,8 @@ objects:
             - --kafka-sre-user-list-file=/config/kafka-sre-user-list.yaml
             - --supported-kafka-instance-types-config-file=/config/kafka-instance-types-configuration.yaml
             - --kafka-lifespan=${KAFKA_LIFE_SPAN}
+            - --enable-kafka-owner-config=${ENABLE_KAFKA_OWNER}
+            - --kafka-owner-list-file=/config/kafka-owner-list.yaml
             - --enable-deletion-of-expired-kafka=${ENABLE_KAFKA_LIFE_SPAN}
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
