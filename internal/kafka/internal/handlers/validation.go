@@ -222,7 +222,7 @@ func ValidateUsername() ValidateKafkaClaimsOptions {
 	return func(claims *jwt.MapClaims) *errors.ServiceError {
 		username := auth.GetUsernameFromClaims(*claims)
 		if username == "" {
-			return errors.New(errors.ErrorBadRequest, "can't find 'user' attribute in claims")
+			return errors.New(errors.ErrorForbidden, "can't find neither 'user' or 'preferred_username' attribute in claims")
 		}
 		return nil
 	}
@@ -232,7 +232,7 @@ func ValidateOrganisationId() ValidateKafkaClaimsOptions {
 	return func(claims *jwt.MapClaims) *errors.ServiceError {
 		orgId := auth.GetOrgIdFromClaims(*claims)
 		if orgId == "" {
-			return errors.New(errors.ErrorBadRequest, "can't find 'organisation id' attribute in claims")
+			return errors.New(errors.ErrorForbidden, "can't find neither 'org_id' or 'rh-org-id' attribute in claims")
 		}
 		return nil
 	}
