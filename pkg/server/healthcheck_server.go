@@ -2,11 +2,13 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 
 	health "github.com/docker/go-healthcheck"
 	"github.com/golang/glog"
@@ -37,6 +39,9 @@ func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *Se
 	srv := &http.Server{
 		Handler: router,
 		Addr:    healthCheckConfig.BindAddress,
+		TLSConfig: &tls.Config{
+			MinVersion: healthCheckConfig.MinTLSVersion,
+		},
 	}
 
 	return &HealthCheckServer{

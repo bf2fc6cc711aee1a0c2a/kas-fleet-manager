@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -115,6 +116,9 @@ func NewAPIServer(options ServerOptions) *ApiServer {
 	s.httpServer = &http.Server{
 		Addr:    options.ServerConfig.BindAddress,
 		Handler: mainHandler,
+		TLSConfig: &tls.Config{
+			MinVersion: options.ServerConfig.MinTLSVersion,
+		},
 	}
 
 	return s

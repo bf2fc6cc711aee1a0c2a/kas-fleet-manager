@@ -2,12 +2,14 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
-	"github.com/golang/glog"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
+	"github.com/golang/glog"
 
 	"github.com/gorilla/mux"
 
@@ -33,6 +35,9 @@ func NewMetricsServer(metricsConfig *MetricsConfig, serverConfig *ServerConfig, 
 	s.httpServer = &http.Server{
 		Addr:    metricsConfig.BindAddress,
 		Handler: mainHandler,
+		TLSConfig: &tls.Config{
+			MinVersion: metricsConfig.MinTLSVersion,
+		},
 	}
 	return s
 }
