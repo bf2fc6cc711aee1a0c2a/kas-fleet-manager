@@ -130,7 +130,7 @@ func getStatusError(conditions []private.MetaV1Condition) string {
 
 func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceError) {
 	spec := map[string]interface{}{}
-	err := json.Unmarshal([]byte(from.ConnectorSpec), &spec)
+	err := from.ConnectorSpec.Unmarshal(&spec)
 	if err != nil {
 		return public.Connector{}, errors.BadRequest("invalid connector spec: %v", err)
 	}

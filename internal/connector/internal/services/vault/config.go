@@ -17,10 +17,10 @@ type Config struct {
 
 func NewConfig() *Config {
 	return &Config{
-		Kind:                "tmp",
+		Kind:                KindTmp,
 		AccessKeyFile:       "secrets/vault.accesskey",
 		SecretAccessKeyFile: "secrets/vault.secretaccesskey",
-		Region:              "us-east-1",
+		Region:              DefaultRegion,
 	}
 }
 
@@ -32,7 +32,7 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *Config) ReadFiles() error {
-	if c.Kind == "aws" {
+	if c.Kind == KindAws {
 		err := shared.ReadFileValueString(c.AccessKeyFile, &c.AccessKey)
 		if err != nil {
 			return err

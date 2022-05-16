@@ -25,7 +25,7 @@ import (
 type ConnectorsService interface {
 	Create(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError
 	Get(ctx context.Context, id string, tid string) (*dbapi.ConnectorWithConditions, *errors.ServiceError)
-	List(ctx context.Context, kid string, listArgs *services.ListArguments, tid string, clusterId string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError)
+	List(ctx context.Context, listArgs *services.ListArguments, clusterId string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError)
 	Update(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError
 	SaveStatus(ctx context.Context, resource dbapi.ConnectorStatus) *errors.ServiceError
 	Delete(ctx context.Context, id string) *errors.ServiceError
@@ -212,7 +212,7 @@ func GetValidConnectorColumns() []string {
 }
 
 // List returns all connectors visible to the user within the requested paging window.
-func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *services.ListArguments, tid string, clusterId string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
+func (k *connectorsService) List(ctx context.Context, listArgs *services.ListArguments, clusterId string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
 	if err := listArgs.Validate(GetValidConnectorColumns()); err != nil {
 		return nil, nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list connector type requests: %s", err.Error())
 	}
@@ -221,10 +221,6 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 	pagingMeta := &api.PagingMeta{
 		Page: listArgs.Page,
 		Size: listArgs.Size,
-	}
-
-	if kafka_id != "" {
-		dbConn = dbConn.Where("kafka_id = ?", kafka_id)
 	}
 
 	var err *errors.ServiceError
@@ -237,10 +233,6 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 		if err != nil {
 			return nil, nil, err
 		}
-	}
-
-	if tid != "" {
-		dbConn = dbConn.Where("connector_type_id = ?", tid)
 	}
 
 	if clusterId != "" {

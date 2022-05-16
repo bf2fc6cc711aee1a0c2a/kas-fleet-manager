@@ -7,7 +7,7 @@ import (
 )
 
 var _ VaultService = &TmpVaultService{}
-var NotFound = fmt.Errorf("Not Found")
+var NotFound = fmt.Errorf("not found")
 
 type tmpSecret struct {
 	name           string
@@ -40,7 +40,7 @@ func NewTmpVaultService() (*TmpVaultService, error) {
 }
 
 func (k *TmpVaultService) Kind() string {
-	return "tmp"
+	return KindTmp
 }
 
 func (k *TmpVaultService) ResetCounters() {

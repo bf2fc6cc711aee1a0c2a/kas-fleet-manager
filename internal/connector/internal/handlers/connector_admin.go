@@ -351,7 +351,7 @@ func (h *ConnectorAdminHandler) GetClusterConnectors(writer http.ResponseWriter,
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			connectors, paging, err := h.ConnectorsService.List(request.Context(), "", listArgs, "", id)
+			connectors, paging, err := h.ConnectorsService.List(request.Context(), listArgs, id)
 			if err != nil {
 				return nil, err
 			}
@@ -392,7 +392,7 @@ func (h *ConnectorAdminHandler) GetNamespaceConnectors(writer http.ResponseWrite
 			} else {
 				listArgs.Search = fmt.Sprintf("namespace_id = %s AND (%s)", id, listArgs.Search)
 			}
-			connectors, paging, err := h.ConnectorsService.List(request.Context(), "", listArgs, "", "")
+			connectors, paging, err := h.ConnectorsService.List(request.Context(), listArgs, "")
 			if err != nil {
 				return nil, err
 			}

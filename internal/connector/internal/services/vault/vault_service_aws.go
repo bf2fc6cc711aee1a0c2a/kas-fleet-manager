@@ -47,7 +47,7 @@ func NewAwsVaultService(vaultConfig *Config) (*awsVaultService, error) {
 }
 
 func (k *awsVaultService) Kind() string {
-	return "aws"
+	return KindAws
 }
 
 func (k *awsVaultService) GetSecretString(name string) (string, error) {
