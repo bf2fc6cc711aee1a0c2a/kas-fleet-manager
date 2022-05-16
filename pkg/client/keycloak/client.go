@@ -365,9 +365,7 @@ func (kc *kcClient) AddRealmRoleToUser(accessToken string, userId string, role g
 
 func isNotFoundError(err error) bool {
 	if e, ok := err.(*gocloak.APIError); ok {
-		if e.Code == http.StatusNotFound {
-			return true
-		}
+		return e.Code == http.StatusNotFound
 	}
 	return false
 }
