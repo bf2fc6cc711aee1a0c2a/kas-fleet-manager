@@ -113,6 +113,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(kafka.ReauthenticationEnabled).To(BeTrue())
 	Expect(kafka.BrowserUrl).To(Equal(fmt.Sprintf("%s%s/dashboard", test.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
 	Expect(kafka.InstanceTypeName).To(Equal("Standard"))
+	Expect(kafka.ExpiresAt).To(BeNil())
 
 	// wait until the kafka goes into a ready state
 	// the timeout here assumes a backing cluster has already been provisioned
@@ -200,6 +201,7 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(kafka.InstanceType).To(Equal(types.STANDARD.String()))
 	Expect(kafka.MultiAz).To(BeTrue())
+	Expect(kafka.ExpiresAt).To(BeNil())
 
 	// successful creation of kafka with valid "developer plan format
 	k2 := public.KafkaRequestPayload{
@@ -217,6 +219,13 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(kafka.InstanceType).To(Equal(types.DEVELOPER.String()))
 	Expect(kafka.MultiAz).To(BeFalse())
+	// Verify that developer instances should have an expiration time set
+	Expect(kafka.ExpiresAt).NotTo(BeNil())
+	instanceTypeConfig, err := test.TestServices.KafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafka.InstanceType)
+	Expect(err).ToNot(HaveOccurred())
+	instanceTypeSizeConfig, err := instanceTypeConfig.GetKafkaInstanceSizeByID("x1")
+	Expect(err).ToNot(HaveOccurred())
+	Expect(*kafka.ExpiresAt).To(Equal(kafka.CreatedAt.Add(time.Duration(*instanceTypeSizeConfig.LifespanSeconds) * time.Second)))
 
 	// unsuccessful creation of kafka with invalid instance type provided in the "plan" parameter
 	k.Plan = "invalid.x1"

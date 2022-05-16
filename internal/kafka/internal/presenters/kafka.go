@@ -3,6 +3,7 @@ package presenters
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
@@ -40,6 +41,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 
 	var ingressThroughputPerSec, egressThroughputPerSec, maxDataRetentionPeriod string
 	var totalMaxConnections, maxPartitions, maxConnectionAttemptsPerSec int
+	var expiresAt *time.Time
 	if config != nil {
 		kafkaConfig, err := config.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
 		if err != nil {
@@ -51,6 +53,9 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 			maxPartitions = kafkaConfig.MaxPartitions
 			maxDataRetentionPeriod = kafkaConfig.MaxDataRetentionPeriod
 			maxConnectionAttemptsPerSec = kafkaConfig.MaxConnectionAttemptsPerSec
+			if kafkaConfig.LifespanSeconds != nil {
+				expiresAt = calculateKafkaInstanceExpirationTime(kafkaRequest.CreatedAt, *kafkaConfig.LifespanSeconds)
+			}
 		}
 	}
 
@@ -73,6 +78,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 		Status:                      kafkaRequest.Status,
 		CreatedAt:                   kafkaRequest.CreatedAt,
 		UpdatedAt:                   kafkaRequest.UpdatedAt,
+		ExpiresAt:                   expiresAt,
 		FailedReason:                kafkaRequest.FailedReason,
 		Version:                     kafkaRequest.ActualKafkaVersion,
 		InstanceType:                kafkaRequest.InstanceType,
@@ -106,4 +112,11 @@ func getDisplayName(instanceType string, config *config.KafkaConfig) (string, *e
 		return kafkaInstanceType.DisplayName, nil
 	}
 	return "", nil
+}
+
+// calculateKafkaInstanceExpirationTime returns the expiration Time based
+// on a given creationTime time and lifespan in seconds
+func calculateKafkaInstanceExpirationTime(creationTime time.Time, lifespanSeconds int) *time.Time {
+	expireTime := creationTime.Add(time.Duration(lifespanSeconds) * time.Second)
+	return &expireTime
 }
