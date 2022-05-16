@@ -105,7 +105,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	apiV1SsoProvider := apiV1Router.Path("/sso_providers").Subrouter()
 	apiV1SsoProvider.HandleFunc("", serviceAccountsHandler.GetSsoProviders).Methods(http.MethodGet)
-	apiV1SsoProvider.Use(authorizeMiddleware)
 
 	v1Collections := []api.CollectionMetadata{}
 

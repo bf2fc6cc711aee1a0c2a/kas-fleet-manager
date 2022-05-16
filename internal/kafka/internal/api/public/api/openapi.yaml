@@ -981,8 +981,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
-      security:
-      - Bearer: []
       summary: Return sso provider info
       tags:
       - security
@@ -1304,8 +1302,6 @@ components:
         created_at: 2021-04-07T16:24:01+05:30
     SsoProviderExample:
       value:
-        kind: SsoProvider
-        href: /api/kafkas_mgmt/v1/sso_providers
         base_url: https://identity.api.redhat.com
         jwks: https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/certs
         token_url: https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/token
