@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
@@ -56,9 +55,9 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			convKafka := presenters.ConvertKafkaRequest(kafkaRequestPayload)
 
 			claims, _ := getClaims(ctx)
-			convKafka.Owner = auth.GetUsernameFromClaims(claims)
-			convKafka.OrganisationId = auth.GetOrgIdFromClaims(claims)
-			convKafka.OwnerAccountId = auth.GetAccountIdFromClaims(claims)
+			convKafka.Owner, _ = claims.GetUsername()
+			convKafka.OrganisationId, _ = claims.GetOrgId()
+			convKafka.OwnerAccountId, _ = claims.GetAccountId()
 
 			convKafka.InstanceType, convKafka.SizeId, _ = getInstanceTypeAndSize(ctx, &h.service, h.kafkaConfig, &kafkaRequestPayload)
 

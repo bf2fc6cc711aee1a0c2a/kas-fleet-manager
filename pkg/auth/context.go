@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 )
@@ -20,57 +19,37 @@ const (
 	contextIsAdmin              contextKey = "is_admin"
 )
 
-var (
-	// ocm token claim keys
-	tenantUsernameClaim string = "username"
-	tenantIdClaim       string = "org_id"
-	tenantOrgAdminClaim string = "is_org_admin" // same key used in mas-sso tokens
+func _onlyValue(f func() (string, error)) string {
+	val, _ := f()
+	return val
+}
 
-	// sso.redhat.com token claim keys
-	alternateTenantUsernameClaim string = "preferred_username" // same key used in mas-sso tokens
-	tenantUserIdClaim            string = "account_id"
-
-	// mas-sso token claim keys
-	// NOTE: This should be removed once we migrate to sso.redhat.com as it will no longer be needed (TODO: to be removed as part of MGDSTRM-6159)
-	alternateTenantIdClaim = "rh-org-id"
-)
-
+// GetUsernameFromClaims
+// Deprecated: use KFMClaims.GetUsername instead
 func GetUsernameFromClaims(claims jwt.MapClaims) string {
-	if idx, val := arrays.FindFirst(func(x interface{}) bool { return x != nil }, claims[tenantUsernameClaim], claims[alternateTenantUsernameClaim]); idx != -1 {
-		return val.(string)
-	}
-	return ""
+	kfmClaims := KFMClaims(claims)
+	return _onlyValue(kfmClaims.GetUsername)
 }
 
+// GetAccountIdFromClaims
+// Deprecated: use KFMClaims.GetAccountId instead
 func GetAccountIdFromClaims(claims jwt.MapClaims) string {
-	if claims[tenantUserIdClaim] != nil {
-		return claims[tenantUserIdClaim].(string)
-	}
-	return ""
+	kfmClaims := KFMClaims(claims)
+	return _onlyValue(kfmClaims.GetAccountId)
 }
 
+// GetOrgIdFromClaims
+// Deprecated: use KFMClaims.GetOrgId instead
 func GetOrgIdFromClaims(claims jwt.MapClaims) string {
-	if claims[tenantIdClaim] != nil {
-		if orgId, ok := claims[tenantIdClaim].(string); ok {
-			return orgId
-		}
-	}
-
-	// NOTE: This should be removed once we migrate to sso.redhat.com as it will no longer be needed (TODO: to be removed as part of MGDSTRM-6159)
-	if claims[alternateTenantIdClaim] != nil {
-		if orgId, ok := claims[alternateTenantIdClaim].(string); ok {
-			return orgId
-		}
-	}
-
-	return ""
+	kfmClaims := KFMClaims(claims)
+	return _onlyValue(kfmClaims.GetOrgId)
 }
 
+// GetIsOrgAdminFromClaims
+// Deprecated: use KFMClaims.IsOrgAdmin instead
 func GetIsOrgAdminFromClaims(claims jwt.MapClaims) bool {
-	if claims[tenantOrgAdminClaim] != nil {
-		return claims[tenantOrgAdminClaim].(bool)
-	}
-	return false
+	kfmClaims := KFMClaims(claims)
+	return kfmClaims.IsOrgAdmin()
 }
 
 func GetIsAdminFromContext(ctx context.Context) bool {

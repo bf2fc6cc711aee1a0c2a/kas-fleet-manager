@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
-	"github.com/golang-jwt/jwt/v4"
 	"regexp"
 	"strings"
 
@@ -81,8 +80,8 @@ func getCloudProviderAndRegion(
 		return "", "", err
 	}
 
-	owner := auth.GetUsernameFromClaims(claims)
-	organisationId := auth.GetOrgIdFromClaims(claims)
+	owner, _ := claims.GetUsername()
+	organisationId, _ := claims.GetOrgId()
 
 	// Validate Region/InstanceType
 	instanceType, err := (*kafkaService).AssignInstanceType(owner, organisationId)
@@ -118,8 +117,8 @@ func getInstanceTypeAndSize(ctx context.Context, kafkaService *services.KafkaSer
 		return "", "", err
 	}
 
-	owner := auth.GetUsernameFromClaims(claims)
-	organisationId := auth.GetOrgIdFromClaims(claims)
+	owner, _ := claims.GetUsername()
+	organisationId, _ := claims.GetOrgId()
 	instanceType, err := (*kafkaService).AssignInstanceType(owner, organisationId)
 	if err != nil {
 		return "", "", err
@@ -175,14 +174,14 @@ func stringSet(value *string) bool {
 
 func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService authorization.Authorization, kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *public.KafkaUpdateRequest) handlers.Validate {
 	return func() *errors.ServiceError {
-		claims, claimsErr := auth.GetClaimsFromContext(ctx)
+		claims, claimsErr := getClaims(ctx)
 		if claimsErr != nil {
-			return errors.NewWithCause(errors.ErrorUnauthenticated, claimsErr, "User not authenticated")
+			return claimsErr
 		}
 
-		username := auth.GetUsernameFromClaims(claims)
-		orgId := auth.GetOrgIdFromClaims(claims)
-		isOrgAdmin := auth.GetIsOrgAdminFromClaims(claims)
+		username, _ := claims.GetUsername()
+		orgId, _ := claims.GetOrgId()
+		isOrgAdmin := claims.IsOrgAdmin()
 		// only Kafka owner or organisation admin is allowed to perform the action
 		isOwner := (isOrgAdmin || kafkaRequest.Owner == username) && kafkaRequest.OrganisationId == orgId
 		if !isOwner {
@@ -208,31 +207,29 @@ func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService author
 	}
 }
 
-func getClaims(ctx context.Context) (jwt.MapClaims, *errors.ServiceError) {
+func getClaims(ctx context.Context) (auth.KFMClaims, *errors.ServiceError) {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return nil, errors.Unauthenticated("user not authenticated")
 	}
-	return claims, nil
+	return auth.KFMClaims(claims), nil
 }
 
-type ValidateKafkaClaimsOptions func(claims *jwt.MapClaims) *errors.ServiceError
+type ValidateKafkaClaimsOptions func(claims *auth.KFMClaims) *errors.ServiceError
 
 func ValidateUsername() ValidateKafkaClaimsOptions {
-	return func(claims *jwt.MapClaims) *errors.ServiceError {
-		username := auth.GetUsernameFromClaims(*claims)
-		if username == "" {
-			return errors.New(errors.ErrorForbidden, "can't find neither 'user' or 'preferred_username' attribute in claims")
+	return func(claims *auth.KFMClaims) *errors.ServiceError {
+		if _, err := claims.GetUsername(); err != nil {
+			return errors.New(errors.ErrorForbidden, err.Error())
 		}
 		return nil
 	}
 }
 
 func ValidateOrganisationId() ValidateKafkaClaimsOptions {
-	return func(claims *jwt.MapClaims) *errors.ServiceError {
-		orgId := auth.GetOrgIdFromClaims(*claims)
-		if orgId == "" {
-			return errors.New(errors.ErrorForbidden, "can't find neither 'org_id' or 'rh-org-id' attribute in claims")
+	return func(claims *auth.KFMClaims) *errors.ServiceError {
+		if _, err := claims.GetOrgId(); err != nil {
+			return errors.New(errors.ErrorForbidden, err.Error())
 		}
 		return nil
 	}
