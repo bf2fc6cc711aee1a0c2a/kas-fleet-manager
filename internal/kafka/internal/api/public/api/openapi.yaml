@@ -1302,6 +1302,7 @@ components:
         created_at: 2021-04-07T16:24:01+05:30
     SsoProviderExample:
       value:
+        name: mas_sso
         base_url: https://identity.api.redhat.com
         jwks: https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/certs
         token_url: https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/token
@@ -2168,6 +2169,9 @@ components:
     SsoProvider_allOf:
       example: '{"$ref":"#/components/examples/SsoProviderExample"}'
       properties:
+        name:
+          description: name of the sso provider
+          type: string
         base_url:
           description: base url
           type: string

@@ -177,7 +177,9 @@ func (s serviceAccountsHandler) GetSsoProviders(w http.ResponseWriter, r *http.R
 	cfg := &handlers.HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			config := s.service.GetRealmConfig()
+
 			provider := api.SsoProvider{
+				Name: 		 s.service.GetConfig().SelectSSOProvider,
 				BaseUrl:     config.BaseURL,
 				Jwks:        config.JwksEndpointURI,
 				TokenUrl:    config.TokenEndpointURI,

@@ -70,7 +70,7 @@ func BuildKeycloakClientNameIdentifier(kafkaRequestID string) string {
 	return fmt.Sprintf("%s-%s", "kafka", strings.ToLower(kafkaRequestID))
 }
 
-func BuildCustomClaimCheck(kafkaRequest *dbapi.KafkaRequest, ssoconfigProvider keycloak.SSOProvider) string {
+func BuildCustomClaimCheck(kafkaRequest *dbapi.KafkaRequest, ssoconfigProvider string) string {
 	if ssoconfigProvider == keycloak.REDHAT_SSO {
 		return fmt.Sprintf("@.rh-org-id == '%s'|| @.org_id == '%s' || @.clientId == '%s'", kafkaRequest.OrganisationId, kafkaRequest.OrganisationId, kafkaRequest.CanaryServiceAccountClientID)
 	} else {
