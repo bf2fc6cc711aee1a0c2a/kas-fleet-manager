@@ -45,6 +45,7 @@ func PresentServiceAccountListItem(account *api.ServiceAccount) public.ServiceAc
 
 func PresentSsoProvider(provider *api.SsoProvider) public.SsoProvider {
 	return public.SsoProvider{
+		Name:        provider.Name,
 		Jwks:        provider.Jwks,
 		BaseUrl:     provider.BaseUrl,
 		TokenUrl:    provider.TokenUrl,

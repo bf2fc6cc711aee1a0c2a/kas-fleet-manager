@@ -282,11 +282,11 @@ func TestServiceAccounts_SsoProvider_MAS_SSO(t *testing.T) {
 	})
 	defer teardown()
 
-	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account, nil)
+	ctx := h.NewAuthenticatedContext(nil, nil)
 	sp, resp, err := client.SecurityApi.GetSsoProviders(ctx)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(sp.Name).To(Equal("mas_sso"))
 	Expect(sp.BaseUrl).To(Equal(test.TestServices.KeycloakConfig.BaseURL))
 	Expect(sp.TokenUrl).To(Equal(test.TestServices.KeycloakConfig.BaseURL + "/auth/realms/rhoas/protocol/openid-connect/token"))
 }
@@ -300,12 +300,12 @@ func TestServiceAccounts_SsoProvider_SSO(t *testing.T) {
 	})
 	defer teardown()
 
-	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account, nil)
+	ctx := h.NewAuthenticatedContext(nil, nil)
 
 	sp, resp, err := client.SecurityApi.GetSsoProviders(ctx)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(sp.Name).To(Equal("redhat_sso"))
 	Expect(sp.BaseUrl).To(Equal("https://sso.redhat.com"))
 	Expect(sp.TokenUrl).To(Equal("https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"))
 }

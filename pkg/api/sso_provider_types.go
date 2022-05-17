@@ -1,6 +1,7 @@
 package api
 
 type SsoProvider struct {
+	Name        string `json:"name"`
 	BaseUrl     string `json:"base_url,omitempty"`
 	TokenUrl    string `json:"token_url,omitempty"`
 	Jwks        string `json:"jwks,omitempty"`

@@ -397,7 +397,7 @@ func Test_contains(t *testing.T) {
 func Test_BuildCustomClaimCheck(t *testing.T) {
 	type args struct {
 		kafkaRequest      *dbapi.KafkaRequest
-		ssoconfigProvider keycloak.SSOProvider
+		ssoconfigProvider string
 	}
 	kafkaRequest := buildKafkaDBApiRequest()
 	tests := []struct {

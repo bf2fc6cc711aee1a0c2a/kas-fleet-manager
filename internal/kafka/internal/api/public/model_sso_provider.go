@@ -14,6 +14,8 @@ type SsoProvider struct {
 	Id   string `json:"id,omitempty"`
 	Kind string `json:"kind,omitempty"`
 	Href string `json:"href,omitempty"`
+	// name of the sso provider
+	Name string `json:"name,omitempty"`
 	// base url
 	BaseUrl     string `json:"base_url,omitempty"`
 	TokenUrl    string `json:"token_url,omitempty"`

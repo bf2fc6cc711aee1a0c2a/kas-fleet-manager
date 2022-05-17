@@ -33,6 +33,7 @@ func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig 
 			KeysURL(KeycloakConfig.OSDClusterIDPRealm.JwksEndpointURI). // mas-sso SRE realm cert URL
 			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
 			Service(errors.ERROR_CODE_PREFIX).
+		    Public(fmt.Sprintf("^%s/%s/%s/sso_providers/?$", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix, routes.Version)).
 			Public(fmt.Sprintf("^%s/%s/?$", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix)).
 			Public(fmt.Sprintf("^%s/%s/%s/?$", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix, routes.Version)).
 			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix, routes.Version)).
