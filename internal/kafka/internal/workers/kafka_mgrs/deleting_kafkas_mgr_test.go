@@ -70,6 +70,9 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 						return true, nil
 					},
 				},
+				keycloakConfig: &keycloak.KeycloakConfig{
+					EnableAuthenticationOnKafka: true,
+				},
 			},
 			wantErr: true,
 		},

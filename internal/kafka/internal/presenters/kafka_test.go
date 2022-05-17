@@ -37,12 +37,12 @@ func TestConvertKafkaRequest(t *testing.T) {
 				kafkaRequestPayload: *mock.BuildKafkaRequestPayload(nil),
 				dbKafkaRequests:     []*dbapi.KafkaRequest{},
 			},
-			want: mock.BuildKafkaRequest(
-				mock.With(mock.STATUS, ""),
-				mock.With(mock.OWNER, ""),
-				mock.With(mock.CLUSTER_ID, ""),
+			want: mock.BuildEmptyKafkaRequest(
+				mock.With(mock.REGION, mock.DefaultKafkaRequestRegion),
+				mock.With(mock.CLOUD_PROVIDER, mock.DefaultKafkaRequestProvider),
+				mock.With(mock.NAME, mock.DefaultKafkaRequestName),
+				mock.WithMultiAZ(true),
 				mock.WithReauthenticationEnabled(reauthEnabled),
-				mock.WithDeleted(false),
 			),
 		},
 		{
@@ -94,6 +94,8 @@ func TestPresentKafkaRequest(t *testing.T) {
 	reauthEnabled := true
 	kafkaStorageSize := "1000Gi"
 
+	defaultInstanceSize := *mock.BuildKafkaInstanceSize(nil)
+
 	tests := []struct {
 		name   string
 		args   args
@@ -119,6 +121,13 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.InstanceType = instanceType
 				kafkaRequest.KafkaStorageSize = kafkaStorageSize
 				kafkaRequest.BrowserUrl = "//dashboard"
+				kafkaRequest.SizeId = defaultInstanceSize.Id
+				kafkaRequest.IngressThroughputPerSec = defaultInstanceSize.IngressThroughputPerSec.String()
+				kafkaRequest.EgressThroughputPerSec = defaultInstanceSize.EgressThroughputPerSec.String()
+				kafkaRequest.TotalMaxConnections = int32(defaultInstanceSize.TotalMaxConnections)
+				kafkaRequest.MaxPartitions = int32(defaultInstanceSize.MaxPartitions)
+				kafkaRequest.MaxDataRetentionPeriod = defaultInstanceSize.MaxDataRetentionPeriod
+				kafkaRequest.MaxConnectionAttemptsPerSec = int32(defaultInstanceSize.MaxConnectionAttemptsPerSec)
 			}),
 			config: config.KafkaConfig{
 				SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
@@ -127,18 +136,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 							{
 								Id: "standard",
 								Sizes: []config.KafkaInstanceSize{
-									{
-										Id:                          "x1",
-										IngressThroughputPerSec:     "30Mi",
-										EgressThroughputPerSec:      "30Mi",
-										TotalMaxConnections:         1000,
-										MaxDataRetentionSize:        "100Gi",
-										MaxPartitions:               1000,
-										MaxDataRetentionPeriod:      "P14D",
-										MaxConnectionAttemptsPerSec: 100,
-										QuotaConsumed:               1,
-										CapacityConsumed:            0,
-									},
+									defaultInstanceSize,
 								},
 							},
 						},
