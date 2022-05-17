@@ -46,6 +46,7 @@ supported_instance_types:
       capacityConsumed: 1
       supportedAZModes:
       - multi
+      maturityStatus: stable
     - id: x2
       display_name: "2"
       ingressThroughputPerSec: "100Mi"
@@ -63,6 +64,7 @@ supported_instance_types:
       capacityConsumed: 2
       supportedAZModes:
       - multi
+      maturityStatus: preview
   - id: developer
     display_name: Trial
     sizes:
@@ -84,3 +86,4 @@ supported_instance_types:
       supportedAZModes:
       - single
       lifespanSeconds: 172800
+      maturityStatus: preview

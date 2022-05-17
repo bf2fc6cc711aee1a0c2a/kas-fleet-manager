@@ -41,4 +41,6 @@ type SupportedKafkaSize struct {
 	QuotaType string `json:"quota_type,omitempty"`
 	// Data plane cluster capacity consumed by this Kafka instance size.
 	CapacityConsumed int32 `json:"capacity_consumed,omitempty"`
+	// Maturity level of the size. Can be stable or tech preview.
+	MaturityStatus string `json:"maturity_status,omitempty"`
 }

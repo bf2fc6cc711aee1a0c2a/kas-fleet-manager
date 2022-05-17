@@ -14,25 +14,25 @@ var _ AWSClient = &AWSClientMock{}
 
 // AWSClientMock is a mock implementation of AWSClient.
 //
-//     func TestSomethingThatUsesAWSClient(t *testing.T) {
+// 	func TestSomethingThatUsesAWSClient(t *testing.T) {
 //
-//         // make and configure a mocked AWSClient
-//         mockedAWSClient := &AWSClientMock{
-//             ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
-// 	               panic("mock out the ChangeResourceRecordSets method")
-//             },
-//             GetChangeFunc: func(changeId string) (*route53.GetChangeOutput, error) {
-// 	               panic("mock out the GetChange method")
-//             },
-//             ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
-// 	               panic("mock out the ListHostedZonesByNameInput method")
-//             },
-//         }
+// 		// make and configure a mocked AWSClient
+// 		mockedAWSClient := &AWSClientMock{
+// 			ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
+// 				panic("mock out the ChangeResourceRecordSets method")
+// 			},
+// 			GetChangeFunc: func(changeId string) (*route53.GetChangeOutput, error) {
+// 				panic("mock out the GetChange method")
+// 			},
+// 			ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
+// 				panic("mock out the ListHostedZonesByNameInput method")
+// 			},
+// 		}
 //
-//         // use mockedAWSClient in code that requires AWSClient
-//         // and then make assertions.
+// 		// use mockedAWSClient in code that requires AWSClient
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type AWSClientMock struct {
 	// ChangeResourceRecordSetsFunc mocks the ChangeResourceRecordSets method.
 	ChangeResourceRecordSetsFunc func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)

@@ -1171,6 +1171,9 @@ components:
         capacity_consumed:
           description: 'Data plane cluster capacity consumed by this Kafka instance size.'
           type: integer
+        maturity_status:
+          description: 'Maturity level of the size. Can be stable or tech preview.'
+          type: string
     SupportedKafkaSizeBytesValueItem:
       type: object
       properties:
@@ -1720,7 +1723,8 @@ components:
               supported_az_modes: [
                 "single",
                 "multi",
-              ]
+              ],
+              maturity_status: 'stable'
             },
           ]
     CloudProviderExample:
