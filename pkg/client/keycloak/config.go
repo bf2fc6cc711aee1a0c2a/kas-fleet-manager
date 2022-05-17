@@ -12,7 +12,7 @@ import (
 const (
 	MAS_SSO                       string = "mas_sso"
 	REDHAT_SSO                    string = "redhat_sso"
-	SSO_SPEICAL_MGMT_ORG_ID_STAGE string      = "13640203"
+	SSO_SPEICAL_MGMT_ORG_ID_STAGE string = "13640203"
 	//AUTH_SSO SSOProvider ="auth_sso"
 )
 
@@ -32,7 +32,7 @@ type KeycloakConfig struct {
 	RedhatSSORealm                             *KeycloakRealmConfig `json:"redhat_sso_config"`
 	MaxAllowedServiceAccounts                  int                  `json:"max_allowed_service_accounts"`
 	MaxLimitForGetClients                      int                  `json:"max_limit_for_get_clients"`
-	SelectSSOProvider                          string          `json:"select_sso_provider"`
+	SelectSSOProvider                          string               `json:"select_sso_provider"`
 	SSOSpecialManagementOrgID                  string               `json:"-"`
 	ServiceAccounttLimitCheckSkipOrgIdListFile string               `json:"-"`
 	ServiceAccounttLimitCheckSkipOrgIdList     []string             `json:"-"`
