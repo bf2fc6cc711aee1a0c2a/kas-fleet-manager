@@ -334,6 +334,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 							MinInSyncReplicas:           2,
 							ReplicationFactor:           3,
 							SupportedAZModes:            []string{"multi"},
+							MaturityStatus:              config.MaturityStatusStable,
 						},
 						{
 							Id:                          "x2",
@@ -352,6 +353,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 							MinInSyncReplicas:           2,
 							ReplicationFactor:           3,
 							SupportedAZModes:            []string{"multi"},
+							MaturityStatus:              config.MaturityStatusTechPreview,
 						},
 						{
 							Id:                          "x3",
@@ -370,6 +372,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 							MinInSyncReplicas:           2,
 							ReplicationFactor:           3,
 							SupportedAZModes:            []string{"multi"},
+							MaturityStatus:              config.MaturityStatusTechPreview,
 						},
 					},
 				},
@@ -394,6 +397,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 							MinInSyncReplicas:           1,
 							ReplicationFactor:           1,
 							SupportedAZModes:            []string{"single"},
+							MaturityStatus:              config.MaturityStatusTechPreview,
 						},
 						{
 							Id:                          "x2",
@@ -412,6 +416,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 							MinInSyncReplicas:           1,
 							ReplicationFactor:           1,
 							SupportedAZModes:            []string{"single"},
+							MaturityStatus:              config.MaturityStatusTechPreview,
 						},
 						{
 							Id:                          "x3",
@@ -430,6 +435,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 							MinInSyncReplicas:           1,
 							ReplicationFactor:           1,
 							SupportedAZModes:            []string{"single"},
+							MaturityStatus:              config.MaturityStatusTechPreview,
 						},
 					},
 				},

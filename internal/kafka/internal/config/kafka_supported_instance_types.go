@@ -134,6 +134,7 @@ func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 	for _, status := range getValidMaturityStates() {
 		if k.MaturityStatus == status {
 			maturityStatusKnown = true
+			break
 		}
 	}
 
