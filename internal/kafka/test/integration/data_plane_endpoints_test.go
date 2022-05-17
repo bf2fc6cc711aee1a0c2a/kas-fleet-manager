@@ -236,6 +236,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			},
 			QuotaType:        "rhosak",
 			CapacityConsumed: 1,
+			MaturityStatus:   config.MaturityStatusStable,
 		},
 	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {

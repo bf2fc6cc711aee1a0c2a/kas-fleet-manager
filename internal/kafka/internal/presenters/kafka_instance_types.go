@@ -53,6 +53,7 @@ func GetSupportedSizes(supportedInstanceType *config.KafkaInstanceType) []public
 			CapacityConsumed:  int32(size.CapacityConsumed),
 			SupportedAzModes:  size.SupportedAZModes,
 			LifespanSeconds:   lifespanSeconds,
+			MaturityStatus:    string(size.MaturityStatus),
 		}
 	}
 	return supportedSizes

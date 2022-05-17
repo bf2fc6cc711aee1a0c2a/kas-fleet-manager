@@ -12,10 +12,21 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
+type MaturityStatus string
+
+const (
+	MaturityStatusTechPreview MaturityStatus = "preview"
+	MaturityStatusStable      MaturityStatus = "stable"
+)
+
 type KafkaInstanceType struct {
 	Id          string              `yaml:"id"`
 	DisplayName string              `yaml:"display_name"`
 	Sizes       []KafkaInstanceSize `yaml:"sizes"`
+}
+
+func getValidMaturityStates() []MaturityStatus {
+	return []MaturityStatus{MaturityStatusStable, MaturityStatusTechPreview}
 }
 
 // validates kafka instance type config to ensure the following:
@@ -48,23 +59,24 @@ func (kp *KafkaInstanceType) validate() error {
 }
 
 type KafkaInstanceSize struct {
-	Id                          string   `yaml:"id"`
-	DisplayName                 string   `yaml:"display_name"`
-	IngressThroughputPerSec     Quantity `yaml:"ingressThroughputPerSec"`
-	EgressThroughputPerSec      Quantity `yaml:"egressThroughputPerSec"`
-	TotalMaxConnections         int      `yaml:"totalMaxConnections"`
-	MaxDataRetentionSize        Quantity `yaml:"maxDataRetentionSize"`
-	MaxPartitions               int      `yaml:"maxPartitions"`
-	MaxDataRetentionPeriod      string   `yaml:"maxDataRetentionPeriod"`
-	MaxConnectionAttemptsPerSec int      `yaml:"maxConnectionAttemptsPerSec"`
-	MaxMessageSize              Quantity `yaml:"maxMessageSize"`
-	QuotaConsumed               int      `yaml:"quotaConsumed"`
-	QuotaType                   string   `yaml:"quotaType"`
-	CapacityConsumed            int      `yaml:"capacityConsumed"`
-	SupportedAZModes            []string `yaml:"supportedAZModes"`
-	MinInSyncReplicas           int      `yaml:"minInSyncReplicas"` // also abbreviated as ISR in Kafka terminology
-	ReplicationFactor           int      `yaml:"replicationFactor"` // also abbreviated as RF in Kafka terminology
-	LifespanSeconds             *int     `yaml:"lifespanSeconds"`
+	Id                          string         `yaml:"id"`
+	DisplayName                 string         `yaml:"display_name"`
+	IngressThroughputPerSec     Quantity       `yaml:"ingressThroughputPerSec"`
+	EgressThroughputPerSec      Quantity       `yaml:"egressThroughputPerSec"`
+	TotalMaxConnections         int            `yaml:"totalMaxConnections"`
+	MaxDataRetentionSize        Quantity       `yaml:"maxDataRetentionSize"`
+	MaxPartitions               int            `yaml:"maxPartitions"`
+	MaxDataRetentionPeriod      string         `yaml:"maxDataRetentionPeriod"`
+	MaxConnectionAttemptsPerSec int            `yaml:"maxConnectionAttemptsPerSec"`
+	MaxMessageSize              Quantity       `yaml:"maxMessageSize"`
+	QuotaConsumed               int            `yaml:"quotaConsumed"`
+	QuotaType                   string         `yaml:"quotaType"`
+	CapacityConsumed            int            `yaml:"capacityConsumed"`
+	SupportedAZModes            []string       `yaml:"supportedAZModes"`
+	MinInSyncReplicas           int            `yaml:"minInSyncReplicas"` // also abbreviated as ISR in Kafka terminology
+	ReplicationFactor           int            `yaml:"replicationFactor"` // also abbreviated as RF in Kafka terminology
+	LifespanSeconds             *int           `yaml:"lifespanSeconds"`
+	MaturityStatus              MaturityStatus `yaml:"maturityStatus"`
 }
 
 // validates Kafka instance size configuration to ensure the following:
@@ -116,6 +128,18 @@ func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 
 	if k.LifespanSeconds != nil && *k.LifespanSeconds <= 0 {
 		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' specifies a lifespanSeconds seconds value less than or equals to Zero.", k.Id, instanceTypeId)
+	}
+
+	maturityStatusKnown := false
+	for _, status := range getValidMaturityStates() {
+		if k.MaturityStatus == status {
+			maturityStatusKnown = true
+			break
+		}
+	}
+
+	if !maturityStatusKnown {
+		return fmt.Errorf("maturityStatus for Kafka instance type '%s', size '%s' is unknown: '%s'", k.Id, instanceTypeId, k.MaturityStatus)
 	}
 
 	if maxDataRetentionPeriod.IsZero() || egressThroughputQuantity.CmpInt64(1) < 0 ||

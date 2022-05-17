@@ -772,8 +772,47 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Should return an error if maturity status is invalid",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MaturityStatus = "invalid"
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return an error if maturity status is empty",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				testKafkaInstanceSizex1.MaturityStatus = ""
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			supportedKafkaInstanceTypesConfig := tt.configFactoryFunc()
@@ -804,5 +843,6 @@ func buildTestStandardKafkaInstanceSize() KafkaInstanceSize {
 		QuotaConsumed:    1,
 		QuotaType:        "rhosak",
 		CapacityConsumed: 1,
+		MaturityStatus:   MaturityStatusStable,
 	}
 }
