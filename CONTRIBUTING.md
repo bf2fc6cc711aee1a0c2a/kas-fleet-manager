@@ -182,13 +182,22 @@ func check(err error, msg string) {
 
 ## Running linter
 
-`golangci-lint` is used to run a static code analysis. This is enabled on per MR check and it will fail, if any new changes don't conform to the rules specified by the linter.
+`golangci-lint` is used to run a static code analysis. This is enabled on per PR check and it will fail, if any new changes don't conform to the rules specified by the linter.
 
 To manually run the check, execute this command from the root of this repository
 
 ```sh
 make lint
 ```
+
+## Running the formatter
+
+To run the formatter, use the below command which uses `gofmt` command.
+
+```sh
+make code/fix
+```
+
 ## Writing Docs
 
 Please see the [README](./docs/README.md) in `docs` directory.
