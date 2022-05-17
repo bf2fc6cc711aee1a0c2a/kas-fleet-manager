@@ -18,9 +18,8 @@ type QuotaManagementListService struct {
 	kafkaConfig         *config.KafkaConfig
 }
 
-func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
-	username := kafka.Owner
-	orgId := kafka.OrganisationId
+func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(username string, organisationId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+	orgId := organisationId
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetById(orgId)
 	userIsRegistered := false
 	if orgFound && org.IsUserRegistered(username) {

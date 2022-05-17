@@ -152,7 +152,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 				Owner:          "username",
 				OrganisationId: "org-id",
 			}
-			allowed, _ := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka, tt.args.instanceType)
+			allowed, _ := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, tt.args.instanceType)
 			gomega.Expect(tt.want).To(gomega.Equal(allowed))
 		})
 	}

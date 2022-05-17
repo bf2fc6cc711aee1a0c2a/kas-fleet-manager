@@ -20,7 +20,7 @@ var _ QuotaService = &QuotaServiceMock{}
 //
 // 		// make and configure a mocked QuotaService
 // 		mockedQuotaService := &QuotaServiceMock{
-// 			CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *serviceError.ServiceError) {
+// 			CheckIfQuotaIsDefinedForInstanceTypeFunc: func(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *serviceError.ServiceError) {
 // 				panic("mock out the CheckIfQuotaIsDefinedForInstanceType method")
 // 			},
 // 			DeleteQuotaFunc: func(subscriptionId string) *serviceError.ServiceError {
@@ -37,7 +37,7 @@ var _ QuotaService = &QuotaServiceMock{}
 // 	}
 type QuotaServiceMock struct {
 	// CheckIfQuotaIsDefinedForInstanceTypeFunc mocks the CheckIfQuotaIsDefinedForInstanceType method.
-	CheckIfQuotaIsDefinedForInstanceTypeFunc func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *serviceError.ServiceError)
+	CheckIfQuotaIsDefinedForInstanceTypeFunc func(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *serviceError.ServiceError)
 
 	// DeleteQuotaFunc mocks the DeleteQuota method.
 	DeleteQuotaFunc func(subscriptionId string) *serviceError.ServiceError
@@ -49,8 +49,10 @@ type QuotaServiceMock struct {
 	calls struct {
 		// CheckIfQuotaIsDefinedForInstanceType holds details about calls to the CheckIfQuotaIsDefinedForInstanceType method.
 		CheckIfQuotaIsDefinedForInstanceType []struct {
-			// Kafka is the kafka argument value.
-			Kafka *dbapi.KafkaRequest
+			// Username is the username argument value.
+			Username string
+			// ExternalId is the externalId argument value.
+			ExternalId string
 			// InstanceType is the instanceType argument value.
 			InstanceType types.KafkaInstanceType
 		}
@@ -73,32 +75,36 @@ type QuotaServiceMock struct {
 }
 
 // CheckIfQuotaIsDefinedForInstanceType calls CheckIfQuotaIsDefinedForInstanceTypeFunc.
-func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *serviceError.ServiceError) {
+func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *serviceError.ServiceError) {
 	if mock.CheckIfQuotaIsDefinedForInstanceTypeFunc == nil {
 		panic("QuotaServiceMock.CheckIfQuotaIsDefinedForInstanceTypeFunc: method is nil but QuotaService.CheckIfQuotaIsDefinedForInstanceType was just called")
 	}
 	callInfo := struct {
-		Kafka        *dbapi.KafkaRequest
+		Username     string
+		ExternalId   string
 		InstanceType types.KafkaInstanceType
 	}{
-		Kafka:        kafka,
+		Username:     username,
+		ExternalId:   externalId,
 		InstanceType: instanceType,
 	}
 	mock.lockCheckIfQuotaIsDefinedForInstanceType.Lock()
 	mock.calls.CheckIfQuotaIsDefinedForInstanceType = append(mock.calls.CheckIfQuotaIsDefinedForInstanceType, callInfo)
 	mock.lockCheckIfQuotaIsDefinedForInstanceType.Unlock()
-	return mock.CheckIfQuotaIsDefinedForInstanceTypeFunc(kafka, instanceType)
+	return mock.CheckIfQuotaIsDefinedForInstanceTypeFunc(username, externalId, instanceType)
 }
 
 // CheckIfQuotaIsDefinedForInstanceTypeCalls gets all the calls that were made to CheckIfQuotaIsDefinedForInstanceType.
 // Check the length with:
 //     len(mockedQuotaService.CheckIfQuotaIsDefinedForInstanceTypeCalls())
 func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceTypeCalls() []struct {
-	Kafka        *dbapi.KafkaRequest
+	Username     string
+	ExternalId   string
 	InstanceType types.KafkaInstanceType
 } {
 	var calls []struct {
-		Kafka        *dbapi.KafkaRequest
+		Username     string
+		ExternalId   string
 		InstanceType types.KafkaInstanceType
 	}
 	mock.lockCheckIfQuotaIsDefinedForInstanceType.RLock()

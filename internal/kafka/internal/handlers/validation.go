@@ -3,10 +3,9 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"regexp"
 	"strings"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -51,46 +50,109 @@ func ValidateKafkaClusterNameIsUnique(name *string, kafkaService services.KafkaS
 	}
 }
 
-// ValidateCloudProvider returns a validator that sets default cloud provider details if needed and validates provided
-// provider and region
-func ValidateCloudProvider(kafkaService *services.KafkaService, kafkaRequest *dbapi.KafkaRequest, providerConfig *config.ProviderConfig, action string) handlers.Validate {
-	return func() *errors.ServiceError {
-		// Set Cloud Provider default if not received in the request
-		supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
-		if kafkaRequest.CloudProvider == "" {
-			defaultProvider, _ := supportedProviders.GetDefault()
-			kafkaRequest.CloudProvider = defaultProvider.Name
-		}
+func getCloudProviderAndRegion(
+	ctx context.Context,
+	kafkaService *services.KafkaService,
+	kafkaRequest *public.KafkaRequestPayload,
+	providerConfig *config.ProviderConfig) (string, string, *errors.ServiceError) {
 
-		// Validation for Cloud Provider
-		provider, providerSupported := supportedProviders.GetByName(kafkaRequest.CloudProvider)
-		if !providerSupported {
-			return errors.ProviderNotSupported("provider %s is not supported, supported providers are: %s", kafkaRequest.CloudProvider, supportedProviders)
-		}
+	// Set Cloud Provider default if not received in the request
+	supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
 
-		// Set Cloud Region default if not received in the request
-		if kafkaRequest.Region == "" {
-			defaultRegion, _ := provider.GetDefaultRegion()
-			kafkaRequest.Region = defaultRegion.Name
-		}
+	defaultProvider, _ := supportedProviders.GetDefault()
+	providerName := arrays.FirstNonEmptyOrDefault(defaultProvider.Name, kafkaRequest.CloudProvider)
+	// Validation for Cloud Provider
+	provider, providerSupported := supportedProviders.GetByName(providerName)
+	if !providerSupported {
+		return "", "", errors.ProviderNotSupported("provider %s is not supported, supported providers are: %s", kafkaRequest.CloudProvider, supportedProviders)
+	}
 
-		// Validation for Cloud Region
+	// Validation for Cloud Region
+	if kafkaRequest.Region != "" { // if region is empty, default region will be chosen, so no validation is needed
 		regionSupported := provider.IsRegionSupported(kafkaRequest.Region)
 		if !regionSupported {
-			return errors.RegionNotSupported("region %s is not supported for %s, supported regions are: %s", kafkaRequest.Region, kafkaRequest.CloudProvider, provider.Regions)
+			return "", "", errors.RegionNotSupported("region %s is not supported for %s, supported regions are: %s", kafkaRequest.Region, kafkaRequest.CloudProvider, provider.Regions)
 		}
+	}
 
-		// Validate Region/InstanceType
-		instanceType, err := (*kafkaService).AssignInstanceType(kafkaRequest)
+	claims, err := getClaims(ctx)
+	if err != nil {
+		return "", "", err
+	}
+
+	owner, _ := claims.GetUsername()
+	organisationId, _ := claims.GetOrgId()
+
+	// Validate Region/InstanceType
+	instanceType, err := (*kafkaService).AssignInstanceType(owner, organisationId)
+	if err != nil {
+		return "", "", errors.NewWithCause(errors.ErrorGeneral, err, "error assigning instance type: %s", err.Error())
+	}
+
+	var region config.Region
+	if kafkaRequest.Region == "" {
+		region, _ = provider.GetDefaultRegion()
+	} else {
+		region, _ = provider.Regions.GetByName(kafkaRequest.Region)
+	}
+
+	if !region.IsInstanceTypeSupported(config.InstanceType(instanceType)) {
+		return "", "", errors.InstanceTypeNotSupported("instance type '%s' not supported for region '%s'", instanceType.String(), region.Name)
+	}
+
+	return providerName, region.Name, nil
+}
+
+// ValidateCloudProvider returns a validator that validates provided provider and region
+func ValidateCloudProvider(ctx context.Context, kafkaService *services.KafkaService, kafkaRequest *public.KafkaRequestPayload, providerConfig *config.ProviderConfig, action string) handlers.Validate {
+	return func() *errors.ServiceError {
+		_, _, err := getCloudProviderAndRegion(ctx, kafkaService, kafkaRequest, providerConfig)
+		return err
+	}
+}
+
+func getInstanceTypeAndSize(ctx context.Context, kafkaService *services.KafkaService, kafkaConfig *config.KafkaConfig, kafkaRequestPayload *public.KafkaRequestPayload) (string, string, *errors.ServiceError) {
+	claims, err := getClaims(ctx)
+	if err != nil {
+		return "", "", err
+	}
+
+	owner, _ := claims.GetUsername()
+	organisationId, _ := claims.GetOrgId()
+	instanceType, err := (*kafkaService).AssignInstanceType(owner, organisationId)
+	if err != nil {
+		return "", "", err
+	}
+	if stringSet(&kafkaRequestPayload.Plan) {
+		plan := config.Plan(kafkaRequestPayload.Plan)
+		instTypeFromPlan, err := plan.GetInstanceType()
+		if err != nil || instTypeFromPlan != string(instanceType) {
+			return "", "", errors.New(errors.ErrorBadRequest, fmt.Sprintf("Unable to detect instance type in plan provided: '%s'", kafkaRequestPayload.Plan))
+		}
+		size, err := plan.GetSizeID()
 		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "error assigning instance type: %s", err.Error())
+			return "", "", errors.New(errors.ErrorBadRequest, fmt.Sprintf("Unable to detect instance size in plan provided: '%s'", kafkaRequestPayload.Plan))
 		}
+		_, err = kafkaConfig.GetKafkaInstanceSize(instTypeFromPlan, size)
 
-		region, _ := provider.Regions.GetByName(kafkaRequest.Region)
-		if !region.IsInstanceTypeSupported(config.InstanceType(instanceType)) {
-			return errors.InstanceTypeNotSupported("instance type '%s' not supported for region '%s'", instanceType.String(), region.Name)
+		if err != nil {
+			return "", "", errors.InstancePlanNotSupported("Unsupported plan provided: '%s'", kafkaRequestPayload.Plan)
 		}
-		return nil
+		return instanceType.String(), size, nil
+	} else {
+		rSize, err := kafkaConfig.GetFirstAvailableSize(instanceType.String())
+		if err != nil {
+			return "", "", errors.InstanceTypeNotSupported("Unsupported kafka instance type: '%s' provided", instanceType.String())
+		}
+		return instanceType.String(), rSize.Id, nil
+	}
+}
+
+// ValidateKafkaPlan - validate the requested Kafka Plan
+func ValidateKafkaPlan(ctx context.Context, kafkaService *services.KafkaService, kafkaConfig *config.KafkaConfig, kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate { // Validate plan
+	return func() *errors.ServiceError {
+		_, _, err := getInstanceTypeAndSize(ctx, kafkaService, kafkaConfig, kafkaRequestPayload)
+		return err
 	}
 }
 
@@ -112,14 +174,14 @@ func stringSet(value *string) bool {
 
 func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService authorization.Authorization, kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *public.KafkaUpdateRequest) handlers.Validate {
 	return func() *errors.ServiceError {
-		claims, claimsErr := auth.GetClaimsFromContext(ctx)
+		claims, claimsErr := getClaims(ctx)
 		if claimsErr != nil {
-			return errors.NewWithCause(errors.ErrorUnauthenticated, claimsErr, "User not authenticated")
+			return claimsErr
 		}
 
-		username := auth.GetUsernameFromClaims(claims)
-		orgId := auth.GetOrgIdFromClaims(claims)
-		isOrgAdmin := auth.GetIsOrgAdminFromClaims(claims)
+		username, _ := claims.GetUsername()
+		orgId, _ := claims.GetOrgId()
+		isOrgAdmin := claims.IsOrgAdmin()
 		// only Kafka owner or organisation admin is allowed to perform the action
 		isOwner := (isOrgAdmin || kafkaRequest.Owner == username) && kafkaRequest.OrganisationId == orgId
 		if !isOwner {
@@ -145,18 +207,45 @@ func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService author
 	}
 }
 
-func ValidateKafkaClaims(ctx context.Context, kafkaRequestPayload *public.KafkaRequestPayload, kafkaRequest *dbapi.KafkaRequest) handlers.Validate {
-	return func() *errors.ServiceError {
-		kafkaRequest = presenters.ConvertKafkaRequest(*kafkaRequestPayload, kafkaRequest)
-		claims, err := auth.GetClaimsFromContext(ctx)
-		if err != nil {
-			return errors.Unauthenticated("user not authenticated")
-		}
-		(*kafkaRequest).Owner = auth.GetUsernameFromClaims(claims)
-		(*kafkaRequest).OrganisationId = auth.GetOrgIdFromClaims(claims)
-		(*kafkaRequest).OwnerAccountId = auth.GetAccountIdFromClaims(claims)
+func getClaims(ctx context.Context) (auth.KFMClaims, *errors.ServiceError) {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, errors.Unauthenticated("user not authenticated")
+	}
+	return auth.KFMClaims(claims), nil
+}
 
+type ValidateKafkaClaimsOptions func(claims *auth.KFMClaims) *errors.ServiceError
+
+func ValidateUsername() ValidateKafkaClaimsOptions {
+	return func(claims *auth.KFMClaims) *errors.ServiceError {
+		if _, err := claims.GetUsername(); err != nil {
+			return errors.New(errors.ErrorForbidden, err.Error())
+		}
 		return nil
+	}
+}
+
+func ValidateOrganisationId() ValidateKafkaClaimsOptions {
+	return func(claims *auth.KFMClaims) *errors.ServiceError {
+		if _, err := claims.GetOrgId(); err != nil {
+			return errors.New(errors.ErrorForbidden, err.Error())
+		}
+		return nil
+	}
+}
+
+// ValidateKafkaClaims - Verifies that the context contains the required claims
+func ValidateKafkaClaims(ctx context.Context, validations ...ValidateKafkaClaimsOptions) handlers.Validate {
+	return func() *errors.ServiceError {
+		claims, err := getClaims(ctx)
+
+		for _, validation := range validations {
+			if err = validation(&claims); err != nil {
+				return err
+			}
+		}
+		return err
 	}
 }
 

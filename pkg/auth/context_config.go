@@ -4,6 +4,21 @@ import (
 	"github.com/spf13/pflag"
 )
 
+var (
+	// ocm token claim keys
+	tenantUsernameClaim string = "username"
+	tenantIdClaim       string = "org_id"
+	tenantOrgAdminClaim string = "is_org_admin" // same key used in mas-sso tokens
+
+	// sso.redhat.com token claim keys
+	alternateTenantUsernameClaim string = "preferred_username" // same key used in mas-sso tokens
+	tenantUserIdClaim            string = "account_id"
+
+	// mas-sso token claim keys
+	// NOTE: This should be removed once we migrate to sso.redhat.com as it will no longer be needed (TODO: to be removed as part of MGDSTRM-6159)
+	alternateTenantIdClaim = "rh-org-id"
+)
+
 type ContextConfig struct {
 }
 
