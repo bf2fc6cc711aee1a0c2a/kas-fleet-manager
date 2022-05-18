@@ -137,7 +137,7 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 				accessTokenProvider: tt.fields.kcClient,
 				service:             &masService{kcClient: tt.fields.kcClient},
 			}
-			got, err := keycloakService.RegisterOSDClusterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
+			got, err := keycloakService.RegisterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
 			Expect(got).To(Equal(tt.want))
 			Expect(err).To(Equal(tt.wantErr))
 		})

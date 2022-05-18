@@ -1118,7 +1118,7 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 	}
 
 	callbackUri := fmt.Sprintf("https://oauth-openshift.%s/oauth2callback/%s", clusterDNS, openIDIdentityProviderName)
-	clientSecret, ssoErr := c.OsdIdpKeycloakService.RegisterOSDClusterClientInSSO(cluster.ID, callbackUri)
+	clientSecret, ssoErr := c.OsdIdpKeycloakService.RegisterClientInSSO(cluster.ID, callbackUri)
 	if ssoErr != nil {
 		return errors.WithMessagef(ssoErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, ssoErr.Error())
 	}

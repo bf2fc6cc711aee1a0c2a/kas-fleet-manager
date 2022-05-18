@@ -20,37 +20,6 @@ type keycloakServiceProxy struct {
 var _ KeycloakService = &keycloakServiceProxy{}
 var _ OSDKeycloakService = &keycloakServiceProxy{}
 
-func (r *keycloakServiceProxy) retrieveToken() (string, *errors.ServiceError) {
-	accessToken, tokenErr := r.accessTokenProvider.GetToken()
-	if tokenErr != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "error getting access token")
-	}
-	return accessToken, nil
-}
-
-func retrieveUserToken(ctx context.Context) (string, *errors.ServiceError) {
-	userToken, err := authentication.TokenFromContext(ctx)
-	if err != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, err, "error getting access token")
-	}
-	token := userToken.Raw
-	return token, nil
-}
-
-func tokenForServiceAPIHandler(ctx context.Context, r *keycloakServiceProxy) (string, *errors.ServiceError) {
-	var token string
-	var err *errors.ServiceError
-	if r.GetConfig().SelectSSOProvider == keycloak.REDHAT_SSO {
-		token, err = retrieveUserToken(ctx)
-	} else {
-		token, err = r.retrieveToken()
-	}
-	if err != nil {
-		return "", err
-	}
-	return token, nil
-}
-
 func (r *keycloakServiceProxy) DeRegisterClientInSSO(clientId string) *errors.ServiceError {
 	if token, err := r.retrieveToken(); err != nil {
 		return err
@@ -59,11 +28,11 @@ func (r *keycloakServiceProxy) DeRegisterClientInSSO(clientId string) *errors.Se
 	}
 }
 
-func (r *keycloakServiceProxy) RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
+func (r *keycloakServiceProxy) RegisterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
 	if token, err := r.retrieveToken(); err != nil {
 		return "", err
 	} else {
-		return r.service.RegisterOSDClusterClientInSSO(token, clusterId, clusterOathCallbackURI)
+		return r.service.RegisterClientInSSO(token, clusterId, clusterOathCallbackURI)
 	}
 }
 
@@ -181,4 +150,37 @@ func (r *keycloakServiceProxy) DeleteServiceAccountInternal(clientId string) *er
 	} else {
 		return r.service.DeleteServiceAccountInternal(token, clientId)
 	}
+}
+
+// Utility functions
+
+func (r *keycloakServiceProxy) retrieveToken() (string, *errors.ServiceError) {
+	accessToken, tokenErr := r.accessTokenProvider.GetToken()
+	if tokenErr != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "error getting access token")
+	}
+	return accessToken, nil
+}
+
+func retrieveUserToken(ctx context.Context) (string, *errors.ServiceError) {
+	userToken, err := authentication.TokenFromContext(ctx)
+	if err != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, err, "error getting access token")
+	}
+	token := userToken.Raw
+	return token, nil
+}
+
+func tokenForServiceAPIHandler(ctx context.Context, r *keycloakServiceProxy) (string, *errors.ServiceError) {
+	var token string
+	var err *errors.ServiceError
+	if r.GetConfig().SelectSSOProvider == keycloak.REDHAT_SSO {
+		token, err = retrieveUserToken(ctx)
+	} else {
+		token, err = r.retrieveToken()
+	}
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }

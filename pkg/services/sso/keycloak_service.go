@@ -72,7 +72,7 @@ func NewKeycloakServiceWithClient(client keycloak.KcClient) KeycloakService {
 	}
 }
 
-func (kc *masService) RegisterOSDClusterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
+func (kc *masService) RegisterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
 	internalClientId, err := kc.kcClient.IsClientExist(clusterId, accessToken)
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clusterId)

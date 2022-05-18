@@ -19,9 +19,9 @@ type redhatssoService struct {
 	client redhatsso.SSOClient
 }
 
-func (r *redhatssoService) RegisterOSDClusterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
+func (r *redhatssoService) RegisterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
 	// TODO
-	return "", errors.New(errors.ErrorGeneral, "RegisterOSDClusterClientInSSO Not implemented")
+	return "", errors.New(errors.ErrorGeneral, "RegisterClientInSSO Not implemented")
 }
 
 func (r *redhatssoService) DeRegisterClientInSSO(accessToken string, clientId string) *errors.ServiceError {

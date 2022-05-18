@@ -696,7 +696,7 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
 					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
@@ -907,7 +907,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "", apiErrors.GeneralError("failed to register osd cluster client in sso")
 					},
 				},
@@ -941,7 +941,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
 					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
@@ -983,7 +983,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
 					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
@@ -1088,7 +1088,7 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "", apiErrors.GeneralError("failed to register osd cluster client in sso")
 					},
 				},
@@ -1122,7 +1122,7 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
 					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
@@ -1164,7 +1164,7 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
 					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
@@ -1259,7 +1259,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
 					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
@@ -1302,7 +1302,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
 					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
@@ -1350,7 +1350,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
 					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
@@ -1455,7 +1455,7 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
 					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
@@ -2501,8 +2501,8 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					GetClusterDNSFunc: nil, // setting it to nill so that it is not called
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: nil, // setting it to nill so that it is not called
-					GetRealmConfigFunc:                nil, // setting it to nill so that it is not called
+					RegisterClientInSSOFunc: nil, // setting it to nill so that it is not called
+					GetRealmConfigFunc:      nil, // setting it to nill so that it is not called
 				},
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					EnableKafkaSreIdentityProviderConfiguration: true,
@@ -2523,8 +2523,8 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					GetClusterDNSFunc: nil, // setting it to nill so that it is not called
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: nil, // setting it to nill so that it is not called
-					GetRealmConfigFunc:                nil, // setting it to nill so that it is not called
+					RegisterClientInSSOFunc: nil, // setting it to nill so that it is not called
+					GetRealmConfigFunc:      nil, // setting it to nill so that it is not called
 				},
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					EnableKafkaSreIdentityProviderConfiguration: false, // disabling identity provider configuration
@@ -2560,7 +2560,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "", apiErrors.FailedToCreateSSOClient("failure")
 					},
 					GetRealmConfigFunc: nil, // setting it to nil so that it is not called
@@ -2591,7 +2591,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
 					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
@@ -2616,7 +2616,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					},
 				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
 					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {

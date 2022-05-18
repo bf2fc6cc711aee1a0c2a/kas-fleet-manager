@@ -63,14 +63,14 @@ var _ OSDKeycloakService = &OSDKeycloakServiceMock{}
 // 			ListServiceAccFunc: func(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
 // 				panic("mock out the ListServiceAcc method")
 // 			},
+// 			RegisterClientInSSOFunc: func(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
+// 				panic("mock out the RegisterClientInSSO method")
+// 			},
 // 			RegisterConnectorFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 // 				panic("mock out the RegisterConnectorFleetshardOperatorServiceAccount method")
 // 			},
 // 			RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 // 				panic("mock out the RegisterKasFleetshardOperatorServiceAccount method")
-// 			},
-// 			RegisterOSDClusterClientInSSOFunc: func(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
-// 				panic("mock out the RegisterOSDClusterClientInSSO method")
 // 			},
 // 			ResetServiceAccountCredentialsFunc: func(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
 // 				panic("mock out the ResetServiceAccountCredentials method")
@@ -124,14 +124,14 @@ type OSDKeycloakServiceMock struct {
 	// ListServiceAccFunc mocks the ListServiceAcc method.
 	ListServiceAccFunc func(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError)
 
+	// RegisterClientInSSOFunc mocks the RegisterClientInSSO method.
+	RegisterClientInSSOFunc func(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
+
 	// RegisterConnectorFleetshardOperatorServiceAccountFunc mocks the RegisterConnectorFleetshardOperatorServiceAccount method.
 	RegisterConnectorFleetshardOperatorServiceAccountFunc func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError)
 
 	// RegisterKasFleetshardOperatorServiceAccountFunc mocks the RegisterKasFleetshardOperatorServiceAccount method.
 	RegisterKasFleetshardOperatorServiceAccountFunc func(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError)
-
-	// RegisterOSDClusterClientInSSOFunc mocks the RegisterOSDClusterClientInSSO method.
-	RegisterOSDClusterClientInSSOFunc func(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
 
 	// ResetServiceAccountCredentialsFunc mocks the ResetServiceAccountCredentials method.
 	ResetServiceAccountCredentialsFunc func(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
@@ -216,6 +216,13 @@ type OSDKeycloakServiceMock struct {
 			// Max is the max argument value.
 			Max int
 		}
+		// RegisterClientInSSO holds details about calls to the RegisterClientInSSO method.
+		RegisterClientInSSO []struct {
+			// ClusterId is the clusterId argument value.
+			ClusterId string
+			// ClusterOathCallbackURI is the clusterOathCallbackURI argument value.
+			ClusterOathCallbackURI string
+		}
 		// RegisterConnectorFleetshardOperatorServiceAccount holds details about calls to the RegisterConnectorFleetshardOperatorServiceAccount method.
 		RegisterConnectorFleetshardOperatorServiceAccount []struct {
 			// AgentClusterId is the agentClusterId argument value.
@@ -225,13 +232,6 @@ type OSDKeycloakServiceMock struct {
 		RegisterKasFleetshardOperatorServiceAccount []struct {
 			// AgentClusterId is the agentClusterId argument value.
 			AgentClusterId string
-		}
-		// RegisterOSDClusterClientInSSO holds details about calls to the RegisterOSDClusterClientInSSO method.
-		RegisterOSDClusterClientInSSO []struct {
-			// ClusterId is the clusterId argument value.
-			ClusterId string
-			// ClusterOathCallbackURI is the clusterOathCallbackURI argument value.
-			ClusterOathCallbackURI string
 		}
 		// ResetServiceAccountCredentials holds details about calls to the ResetServiceAccountCredentials method.
 		ResetServiceAccountCredentials []struct {
@@ -255,9 +255,9 @@ type OSDKeycloakServiceMock struct {
 	lockGetServiceAccountById                               sync.RWMutex
 	lockIsKafkaClientExist                                  sync.RWMutex
 	lockListServiceAcc                                      sync.RWMutex
+	lockRegisterClientInSSO                                 sync.RWMutex
 	lockRegisterConnectorFleetshardOperatorServiceAccount   sync.RWMutex
 	lockRegisterKasFleetshardOperatorServiceAccount         sync.RWMutex
-	lockRegisterOSDClusterClientInSSO                       sync.RWMutex
 	lockResetServiceAccountCredentials                      sync.RWMutex
 }
 
@@ -709,6 +709,41 @@ func (mock *OSDKeycloakServiceMock) ListServiceAccCalls() []struct {
 	return calls
 }
 
+// RegisterClientInSSO calls RegisterClientInSSOFunc.
+func (mock *OSDKeycloakServiceMock) RegisterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
+	if mock.RegisterClientInSSOFunc == nil {
+		panic("OSDKeycloakServiceMock.RegisterClientInSSOFunc: method is nil but OSDKeycloakService.RegisterClientInSSO was just called")
+	}
+	callInfo := struct {
+		ClusterId              string
+		ClusterOathCallbackURI string
+	}{
+		ClusterId:              clusterId,
+		ClusterOathCallbackURI: clusterOathCallbackURI,
+	}
+	mock.lockRegisterClientInSSO.Lock()
+	mock.calls.RegisterClientInSSO = append(mock.calls.RegisterClientInSSO, callInfo)
+	mock.lockRegisterClientInSSO.Unlock()
+	return mock.RegisterClientInSSOFunc(clusterId, clusterOathCallbackURI)
+}
+
+// RegisterClientInSSOCalls gets all the calls that were made to RegisterClientInSSO.
+// Check the length with:
+//     len(mockedOSDKeycloakService.RegisterClientInSSOCalls())
+func (mock *OSDKeycloakServiceMock) RegisterClientInSSOCalls() []struct {
+	ClusterId              string
+	ClusterOathCallbackURI string
+} {
+	var calls []struct {
+		ClusterId              string
+		ClusterOathCallbackURI string
+	}
+	mock.lockRegisterClientInSSO.RLock()
+	calls = mock.calls.RegisterClientInSSO
+	mock.lockRegisterClientInSSO.RUnlock()
+	return calls
+}
+
 // RegisterConnectorFleetshardOperatorServiceAccount calls RegisterConnectorFleetshardOperatorServiceAccountFunc.
 func (mock *OSDKeycloakServiceMock) RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	if mock.RegisterConnectorFleetshardOperatorServiceAccountFunc == nil {
@@ -768,41 +803,6 @@ func (mock *OSDKeycloakServiceMock) RegisterKasFleetshardOperatorServiceAccountC
 	mock.lockRegisterKasFleetshardOperatorServiceAccount.RLock()
 	calls = mock.calls.RegisterKasFleetshardOperatorServiceAccount
 	mock.lockRegisterKasFleetshardOperatorServiceAccount.RUnlock()
-	return calls
-}
-
-// RegisterOSDClusterClientInSSO calls RegisterOSDClusterClientInSSOFunc.
-func (mock *OSDKeycloakServiceMock) RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
-	if mock.RegisterOSDClusterClientInSSOFunc == nil {
-		panic("OSDKeycloakServiceMock.RegisterOSDClusterClientInSSOFunc: method is nil but OSDKeycloakService.RegisterOSDClusterClientInSSO was just called")
-	}
-	callInfo := struct {
-		ClusterId              string
-		ClusterOathCallbackURI string
-	}{
-		ClusterId:              clusterId,
-		ClusterOathCallbackURI: clusterOathCallbackURI,
-	}
-	mock.lockRegisterOSDClusterClientInSSO.Lock()
-	mock.calls.RegisterOSDClusterClientInSSO = append(mock.calls.RegisterOSDClusterClientInSSO, callInfo)
-	mock.lockRegisterOSDClusterClientInSSO.Unlock()
-	return mock.RegisterOSDClusterClientInSSOFunc(clusterId, clusterOathCallbackURI)
-}
-
-// RegisterOSDClusterClientInSSOCalls gets all the calls that were made to RegisterOSDClusterClientInSSO.
-// Check the length with:
-//     len(mockedOSDKeycloakService.RegisterOSDClusterClientInSSOCalls())
-func (mock *OSDKeycloakServiceMock) RegisterOSDClusterClientInSSOCalls() []struct {
-	ClusterId              string
-	ClusterOathCallbackURI string
-} {
-	var calls []struct {
-		ClusterId              string
-		ClusterOathCallbackURI string
-	}
-	mock.lockRegisterOSDClusterClientInSSO.RLock()
-	calls = mock.calls.RegisterOSDClusterClientInSSO
-	mock.lockRegisterOSDClusterClientInSSO.RUnlock()
 	return calls
 }
 
