@@ -16,12 +16,14 @@ type RedhatSSOMock interface {
 	Stop()
 	BaseURL() string
 	GenerateNewAuthToken() string
+	SetBearerToken(token string) string
 }
 
 type redhatSSOMock struct {
-	server          *httptest.Server
-	authTokens      []string
-	serviceAccounts map[string]serviceaccountsclient.ServiceAccountData
+	server           *httptest.Server
+	authTokens       []string
+	serviceAccounts  map[string]serviceaccountsclient.ServiceAccountData
+	sessionAuthToken string
 }
 
 type getTokenResponseMock struct {
@@ -108,7 +110,7 @@ func (mockServer *redhatSSOMock) init() {
 
 func (mockServer *redhatSSOMock) getTokenHandler(w http.ResponseWriter, r *http.Request) {
 	resp := getTokenResponseMock{
-		AccessToken:      "DUMMY-BEARER-TOKEN-" + uuid.New().String(),
+		AccessToken:      mockServer.sessionAuthToken,
 		ExpiresIn:        0,
 		RefreshExpiresIn: 0,
 		TokenType:        "Bearer",
@@ -262,5 +264,11 @@ func (mockServer *redhatSSOMock) regenerateSecretHandler(w http.ResponseWriter, 
 func (mockServer *redhatSSOMock) GenerateNewAuthToken() string {
 	token := uuid.New().String()
 	mockServer.authTokens = append(mockServer.authTokens, token)
+	return token
+}
+
+func (mockServer *redhatSSOMock) SetBearerToken(token string) string {
+	mockServer.authTokens = append(mockServer.authTokens, token)
+	mockServer.sessionAuthToken = token
 	return token
 }

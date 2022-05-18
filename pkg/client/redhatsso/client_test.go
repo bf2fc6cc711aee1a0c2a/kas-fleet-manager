@@ -36,6 +36,50 @@ func CreateServiceAccountForTests(accessToken string, server mocks.RedhatSSOMock
 	return serviceAccount
 }
 
+func TestNewSSOClient(t *testing.T) {
+	type args struct {
+		config      *keycloak.KeycloakConfig
+		realmConfig *keycloak.KeycloakRealmConfig
+	}
+	tests := []struct {
+		name string
+		args args
+		want SSOClient
+	}{
+		{
+			name: "should successfully return a new sso client",
+			args: args{
+				config: &keycloak.KeycloakConfig{
+					EnableAuthenticationOnKafka: true,
+					BaseURL:                     "base_url",
+				},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					ClientID:     "Client_Id",
+					ClientSecret: "ClientSecret",
+				},
+			},
+			want: &rhSSOClient{
+				config: &keycloak.KeycloakConfig{
+					EnableAuthenticationOnKafka: true,
+					BaseURL:                     "base_url",
+				},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					ClientID:     "Client_Id",
+					ClientSecret: "ClientSecret",
+				},
+			},
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ssoClient := NewSSOClient(tt.args.config, tt.args.realmConfig)
+			g.Expect(ssoClient.GetConfig()).To(Equal(tt.want.GetConfig()))
+			g.Expect(ssoClient.GetRealmConfig()).To(Equal(tt.want.GetRealmConfig()))
+		})
+	}
+}
+
 func Test_rhSSOClient_getConfiguration(t *testing.T) {
 	type fields struct {
 		config        *keycloak.KeycloakConfig
@@ -169,6 +213,81 @@ func Test_rhSSOClient_getCachedToken(t *testing.T) {
 	}
 }
 
+func Test_rhSSOClient_GetToken(t *testing.T) {
+	type fields struct {
+		config        *keycloak.KeycloakConfig
+		realmConfig   *keycloak.KeycloakRealmConfig
+		configuration *serviceaccountsclient.Configuration
+		cache         *cache.Cache
+	}
+	server := mocks.NewMockServer()
+	server.Start()
+	defer server.Stop()
+	accessToken := server.GenerateNewAuthToken()
+	serviceAccount := CreateServiceAccountForTests(accessToken, server, accountName, accountDescription)
+	server.SetBearerToken(*serviceAccount.Secret)
+
+	tests := []struct {
+		name    string
+		fields  fields
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "should successfully return a clients token",
+			fields: fields{
+				config: &keycloak.KeycloakConfig{
+					SsoBaseUrl: server.BaseURL(),
+				},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					ClientID:         *serviceAccount.ClientId,
+					ClientSecret:     *serviceAccount.Secret,
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+				},
+				configuration: nil,
+				cache:         cache.New(tokenLifeDuration, cacheCleanupInterval),
+			},
+			want:    *serviceAccount.Secret,
+			wantErr: false,
+		},
+		{
+			name: "should return an error when it fails to retrieve the token key",
+			fields: fields{
+				config: &keycloak.KeycloakConfig{
+					SsoBaseUrl: server.BaseURL(),
+				},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					ClientID:         "",
+					ClientSecret:     "",
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+				},
+				configuration: nil,
+				cache:         cache.New(tokenLifeDuration, cacheCleanupInterval),
+			},
+			want:    "",
+			wantErr: true,
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &rhSSOClient{
+				config:        tt.fields.config,
+				realmConfig:   tt.fields.realmConfig,
+				configuration: tt.fields.configuration,
+				cache:         tt.fields.cache,
+			}
+			got, err := c.GetToken()
+			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
 func Test_rhSSOClient_GetConfig(t *testing.T) {
 	type fields struct {
 		config *keycloak.KeycloakConfig
@@ -276,6 +395,34 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 			},
 			want:    []serviceaccountsclient.ServiceAccountData{},
 			wantErr: false,
+		},
+		{
+			name: "should return an error when server URL is Missing",
+			fields: fields{
+				config:      &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{},
+				configuration: &serviceaccountsclient.Configuration{
+					DefaultHeader: map[string]string{
+						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
+						"Content-Type":  "application/json",
+					},
+					UserAgent: "OpenAPI-Generator/1.0.0/go",
+					Debug:     false,
+					Servers: serviceaccountsclient.ServerConfigurations{
+						{
+							URL: "",
+						},
+					},
+				},
+				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
+			},
+			args: args{
+				accessToken: accessToken,
+				first:       0,
+				max:         5,
+			},
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	g := NewWithT(t)
@@ -387,9 +534,9 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 				cache:         tt.fields.cache,
 			}
 			got, httpStatus, err := c.GetServiceAccount(tt.args.accessToken, tt.args.clientId)
+			g.Expect(err != nil).To(Equal(tt.wantErr))
 			g.Expect(got).To(Equal(tt.want))
 			g.Expect(httpStatus).To(Equal(tt.found))
-			g.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -421,7 +568,7 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "should sucessfully create the service account",
+			name: "should successfully create the service account",
 			fields: fields{
 				config:      &keycloak.KeycloakConfig{},
 				realmConfig: &keycloak.KeycloakRealmConfig{},
@@ -442,6 +589,37 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 			},
 			args: args{
 				accessToken: accessToken,
+				name:        "serviceAccount",
+				description: "fake service account",
+			},
+			want: serviceaccountsclient.ServiceAccountData{
+				Name:        &accountName,
+				Description: &accountDescription,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should fail to create the service account if wrong access token is given",
+			fields: fields{
+				config:      &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{},
+				configuration: &serviceaccountsclient.Configuration{
+					DefaultHeader: map[string]string{
+						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
+						"Content-Type":  "application/json",
+					},
+					UserAgent: "OpenAPI-Generator/1.0.0/go",
+					Debug:     false,
+					Servers: serviceaccountsclient.ServerConfigurations{
+						{
+							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+						},
+					},
+				},
+				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
+			},
+			args: args{
+				accessToken: "wrong_access_token",
 				name:        "serviceAccount",
 				description: "fake service account",
 			},
@@ -494,7 +672,7 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "should sucessfully delete the service account",
+			name: "should successfully delete the service account",
 			fields: fields{
 				config:      &keycloak.KeycloakConfig{},
 				realmConfig: &keycloak.KeycloakRealmConfig{},
@@ -518,6 +696,32 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 				clientId:    *serviceAccount.ClientId,
 			},
 			wantErr: false,
+		},
+		{
+			name: "should return an error if it fails to find service account for deletion",
+			fields: fields{
+				config:      &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{},
+				configuration: &serviceaccountsclient.Configuration{
+					DefaultHeader: map[string]string{
+						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
+						"Content-Type":  "application/json",
+					},
+					UserAgent: "OpenAPI-Generator/1.0.0/go",
+					Debug:     false,
+					Servers: serviceaccountsclient.ServerConfigurations{
+						{
+							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+						},
+					},
+				},
+				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
+			},
+			args: args{
+				accessToken: accessToken,
+				clientId:    "",
+			},
+			wantErr: true,
 		},
 	}
 	g := NewWithT(t)
@@ -565,7 +769,7 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "should sucessfully update the service account",
+			name: "should successfully update the service account",
 			fields: fields{
 				config:      &keycloak.KeycloakConfig{},
 				realmConfig: &keycloak.KeycloakRealmConfig{},
@@ -601,6 +805,35 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "should return an error if it fails to find the service account to update",
+			fields: fields{
+				config:      &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{},
+				configuration: &serviceaccountsclient.Configuration{
+					DefaultHeader: map[string]string{
+						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
+						"Content-Type":  "application/json",
+					},
+					UserAgent: "OpenAPI-Generator/1.0.0/go",
+					Debug:     false,
+					Servers: serviceaccountsclient.ServerConfigurations{
+						{
+							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+						},
+					},
+				},
+				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
+			},
+			args: args{
+				accessToken: accessToken,
+				clientId:    "",
+				name:        "new name",
+				description: "new description",
+			},
+			want:    serviceaccountsclient.ServiceAccountData{},
+			wantErr: true,
+		},
 	}
 	g := NewWithT(t)
 	for _, tt := range tests {
@@ -612,8 +845,8 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 				cache:         tt.fields.cache,
 			}
 			got, err := c.UpdateServiceAccount(tt.args.accessToken, tt.args.clientId, tt.args.name, tt.args.description)
-			g.Expect(got).To(Equal(tt.want))
 			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -644,7 +877,7 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "should sucessfully regenerate the clients secret",
+			name: "should successfully regenerate the clients secret",
 			fields: fields{
 				config:      &keycloak.KeycloakConfig{},
 				realmConfig: &keycloak.KeycloakRealmConfig{},
@@ -668,15 +901,38 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 				id:          *serviceAccount.ClientId,
 			},
 			want: serviceaccountsclient.ServiceAccountData{
-				Id:          serviceAccount.Id,
-				ClientId:    serviceAccount.ClientId,
-				Secret:      &accessToken,
-				Name:        serviceAccount.Name,
-				Description: serviceAccount.Description,
-				OwnerId:     nil,
-				CreatedAt:   nil,
+				Secret: &accessToken,
 			},
 			wantErr: false,
+		},
+		{
+			name: "should return an error if it fails to find the service account to regenerate client secret",
+			fields: fields{
+				config:      &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{},
+				configuration: &serviceaccountsclient.Configuration{
+					DefaultHeader: map[string]string{
+						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
+						"Content-Type":  "application/json",
+					},
+					UserAgent: "OpenAPI-Generator/1.0.0/go",
+					Debug:     false,
+					Servers: serviceaccountsclient.ServerConfigurations{
+						{
+							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+						},
+					},
+				},
+				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
+			},
+			args: args{
+				accessToken: accessToken,
+				id:          "",
+			},
+			want: serviceaccountsclient.ServiceAccountData{
+				Secret: &accessToken,
+			},
+			wantErr: true,
 		},
 	}
 	g := NewWithT(t)
@@ -689,8 +945,8 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 				cache:         tt.fields.cache,
 			}
 			got, err := c.RegenerateClientSecret(tt.args.accessToken, tt.args.id)
-			g.Expect(got.Secret).To(Not(Equal(tt.want.Secret)))
 			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(Not(Equal(tt.want)))
 		})
 	}
 }
