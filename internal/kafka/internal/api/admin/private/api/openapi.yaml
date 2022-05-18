@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   description: The admin APIs for the fleet manager of Kafka service
   title: Kafka Service Fleet Manager Admin APIs
-  version: 0.0.3
+  version: 0.0.4
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -428,8 +428,6 @@ components:
         organisation_id:
           type: string
         subscription_id:
-          type: string
-        sso_client_id:
           type: string
         owner_account_id:
           type: string

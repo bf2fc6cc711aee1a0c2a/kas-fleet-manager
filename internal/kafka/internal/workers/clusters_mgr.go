@@ -414,7 +414,6 @@ func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
 	if keycloakDeregistrationErr != nil {
 		return errors.Wrapf(keycloakDeregistrationErr, "Failed to removed Dataplance cluster %s IDP client", cluster.ClusterID)
 	}
-
 	glog.Infof("Removing Dataplane cluster %s fleetshard service account", cluster.ClusterID)
 	serviceAcountRemovalErr := c.KasFleetshardOperatorAddon.RemoveServiceAccount(cluster)
 	if serviceAcountRemovalErr != nil {

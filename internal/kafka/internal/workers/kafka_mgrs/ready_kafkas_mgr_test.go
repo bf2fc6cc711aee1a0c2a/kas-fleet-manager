@@ -69,31 +69,6 @@ func TestReadyKafkaManager_Reconcile(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Should throw an error if reconciling sso client and secret fails",
-			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
-						return []*dbapi.KafkaRequest{
-							mockKafkas.BuildKafkaRequest(),
-						}, nil
-					},
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-				},
-				keycloakService: &sso.KeycloakServiceMock{
-					GetKafkaClientSecretFunc: func(clientId string) (string, *errors.ServiceError) {
-						return "", errors.GeneralError("failed to get client secret")
-					},
-					CreateServiceAccountInternalFunc: func(request sso.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
-						return mockServiceAccounts.BuildApiServiceAccount(nil), nil
-					},
-				},
-				keycloakConfig: enabledAuthKeycloakConfig,
-			},
-			wantErr: true,
-		},
-		{
 			name: "Should throw an error if reconciling canary service account fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
@@ -127,94 +102,6 @@ func TestReadyKafkaManager_Reconcile(t *testing.T) {
 			k := NewReadyKafkaManager(tt.fields.kafkaService, tt.fields.keycloakService, tt.fields.keycloakConfig, w.Reconciler{})
 
 			Expect(len(k.Reconcile()) > 0).To(Equal(tt.wantErr))
-		})
-	}
-}
-
-func TestReadyKafkaManager_reconcileSsoClientIDAndSecret(t *testing.T) {
-	type fields struct {
-		kafkaService    services.KafkaService
-		keycloakService sso.KeycloakService
-	}
-	type args struct {
-		kafka *dbapi.KafkaRequest
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		{
-			name: "Should successfully reconcile empty kafka request",
-			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-				},
-				keycloakService: &sso.KeycloakServiceMock{
-					GetKafkaClientSecretFunc: func(clientId string) (string, *errors.ServiceError) {
-						return "secret", nil
-					},
-				},
-			},
-			args: args{
-				kafka: &dbapi.KafkaRequest{},
-			},
-			wantErr: false,
-		},
-		{
-			name: "Should throw an error if kafka update fails",
-			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-						return errors.GeneralError("failed to update kafka request")
-					},
-				},
-				keycloakService: &sso.KeycloakServiceMock{
-					GetKafkaClientSecretFunc: func(clientId string) (string, *errors.ServiceError) {
-						return "secret", nil
-					},
-				},
-			},
-			args: args{
-				kafka: &dbapi.KafkaRequest{},
-			},
-			wantErr: true,
-		},
-		{
-			name: "Should throw an error if getting kafka client secret fails",
-			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-				},
-				keycloakService: &sso.KeycloakServiceMock{
-					GetKafkaClientSecretFunc: func(clientId string) (string, *errors.ServiceError) {
-						return "", errors.GeneralError("failed to get client secret")
-					},
-				},
-			},
-			args: args{
-				kafka: &dbapi.KafkaRequest{},
-			},
-			wantErr: true,
-		},
-	}
-	RegisterTestingT(t)
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			k := NewReadyKafkaManager(tt.fields.kafkaService, tt.fields.keycloakService, nil, w.Reconciler{})
-
-			Expect(k.reconcileSsoClientIDAndSecret(tt.args.kafka) != nil).To(Equal(tt.wantErr))
-
-			if !tt.wantErr {
-				Expect(tt.args.kafka.SsoClientID).NotTo(BeEmpty())
-				Expect(tt.args.kafka.SsoClientSecret).NotTo(BeEmpty())
-			}
 		})
 	}
 }

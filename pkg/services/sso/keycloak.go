@@ -20,9 +20,7 @@ type CompleteServiceAccountRequest struct {
 
 //go:generate moq -out keycloakservice_moq.go . KeycloakService
 type KeycloakService interface {
-	RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError)
 	RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
-	DeRegisterClientInSSO(kafkaNamespace string) *errors.ServiceError
 	GetConfig() *keycloak.KeycloakConfig
 	GetRealmConfig() *keycloak.KeycloakRealmConfig
 	IsKafkaClientExist(clientId string) *errors.ServiceError
@@ -41,10 +39,14 @@ type KeycloakService interface {
 	DeleteServiceAccountInternal(clientId string) *errors.ServiceError
 }
 
+type OSDKeycloakService interface {
+	KeycloakService
+	DeRegisterClientInSSO(kafkaNamespace string) *errors.ServiceError
+}
+
 type keycloakServiceInternal interface {
-	RegisterKafkaClientInSSO(accessToken string, kafkaNamespace string, orgId string) (string, *errors.ServiceError)
-	RegisterOSDClusterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
 	DeRegisterClientInSSO(accessToken string, kafkaNamespace string) *errors.ServiceError
+	RegisterOSDClusterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
 	GetConfig() *keycloak.KeycloakConfig
 	GetRealmConfig() *keycloak.KeycloakRealmConfig
 	IsKafkaClientExist(accessToken string, clientId string) *errors.ServiceError

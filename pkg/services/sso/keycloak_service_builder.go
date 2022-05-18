@@ -8,10 +8,56 @@ import (
 
 var _ KeycloakServiceBuilderSelector = &keycloakServiceBuilderSelector{}
 var _ KeycloakServiceBuilder = &keycloakServiceBuilder{}
+var _ KFMKeycloakServiceBuilderConfigurator = &keycloakBuilderConfigurator{}
+var _ OSDKeycloakServiceBuilderConfigurator = &osdBuilderConfigurator{}
+
+type KeycloakServiceBuilderSelector interface {
+	ForOSD() OSDKeycloakServiceBuilderConfigurator
+	ForKFM() KFMKeycloakServiceBuilderConfigurator
+}
+
+type KFMKeycloakServiceBuilderConfigurator interface {
+	WithConfiguration(config *keycloak.KeycloakConfig) KeycloakServiceBuilder
+}
+
+type OSDKeycloakServiceBuilderConfigurator interface {
+	WithConfiguration(config *keycloak.KeycloakConfig) OSDKeycloakServiceBuilder
+}
 
 type KeycloakServiceBuilder interface {
 	WithRealmConfig(realmConfig *keycloak.KeycloakRealmConfig) KeycloakServiceBuilder
 	Build() KeycloakService
+}
+
+type OSDKeycloakServiceBuilder interface {
+	WithRealmConfig(realmConfig *keycloak.KeycloakRealmConfig) OSDKeycloakServiceBuilder
+	Build() OSDKeycloakService
+}
+
+type keycloakServiceBuilderSelector struct {
+}
+
+func (s *keycloakServiceBuilderSelector) ForOSD() OSDKeycloakServiceBuilderConfigurator {
+	return &osdBuilderConfigurator{}
+}
+
+func (s *keycloakServiceBuilderSelector) ForKFM() KFMKeycloakServiceBuilderConfigurator {
+	return &keycloakBuilderConfigurator{}
+}
+
+type keycloakBuilderConfigurator struct{}
+type osdBuilderConfigurator keycloakBuilderConfigurator
+
+func (k *keycloakBuilderConfigurator) WithConfiguration(config *keycloak.KeycloakConfig) KeycloakServiceBuilder {
+	return &keycloakServiceBuilder{
+		config: config,
+	}
+}
+
+func (o *osdBuilderConfigurator) WithConfiguration(config *keycloak.KeycloakConfig) OSDKeycloakServiceBuilder {
+	return &osdKeycloackServiceBuilder{
+		config: config,
+	}
 }
 
 type keycloakServiceBuilder struct {
@@ -19,30 +65,13 @@ type keycloakServiceBuilder struct {
 	realmConfig *keycloak.KeycloakRealmConfig
 }
 
+type osdKeycloackServiceBuilder keycloakServiceBuilder
+
 // Build returns an instance of KeycloakService ready to be used.
 // If a custom realm is configured (WithRealmConfig called), then always Keycloak provider is used
 // irrespective of the `builder.config.SelectSSOProvider` value
 func (builder *keycloakServiceBuilder) Build() KeycloakService {
-	notNilPredicate := func(x interface{}) bool {
-		return x.(*keycloak.KeycloakRealmConfig) != nil
-	}
-
-	// Temporary: if a realm configuration different from the one into the config is specified
-	// we always instantiate MAS_SSO irrespective of the selected provider
-	if builder.config.SelectSSOProvider == keycloak.MAS_SSO ||
-		builder.realmConfig != nil {
-		_, realmConfig := arrays.FindFirst(notNilPredicate, builder.realmConfig, builder.config.KafkaRealm)
-		return newKeycloakService(builder.config, realmConfig.(*keycloak.KeycloakRealmConfig))
-	} else {
-		_, realmConfig := arrays.FindFirst(notNilPredicate, builder.realmConfig, builder.config.RedhatSSORealm)
-		client := redhatsso.NewSSOClient(builder.config, realmConfig.(*keycloak.KeycloakRealmConfig))
-		return &keycloakServiceProxy{
-			accessTokenProvider: client,
-			service: &redhatssoService{
-				client: client,
-			},
-		}
-	}
+	return build(builder.config.SelectSSOProvider, builder.config, builder.realmConfig)
 }
 
 func (builder *keycloakServiceBuilder) WithRealmConfig(realmConfig *keycloak.KeycloakRealmConfig) KeycloakServiceBuilder {
@@ -50,15 +79,37 @@ func (builder *keycloakServiceBuilder) WithRealmConfig(realmConfig *keycloak.Key
 	return builder
 }
 
-type KeycloakServiceBuilderSelector interface {
-	WithConfiguration(config *keycloak.KeycloakConfig) KeycloakServiceBuilder
+// Build returns an instance of KeycloakService ready to be used.
+// If a custom realm is configured (WithRealmConfig called), then always Keycloak provider is used
+// irrespective of the `builder.config.SelectSSOProvider` value
+func (builder *osdKeycloackServiceBuilder) Build() OSDKeycloakService {
+	return build(builder.config.SelectSSOProvider, builder.config, builder.realmConfig).(OSDKeycloakService)
 }
 
-type keycloakServiceBuilderSelector struct {
+func (builder *osdKeycloackServiceBuilder) WithRealmConfig(realmConfig *keycloak.KeycloakRealmConfig) OSDKeycloakServiceBuilder {
+	builder.realmConfig = realmConfig
+	return builder
 }
 
-func (s *keycloakServiceBuilderSelector) WithConfiguration(config *keycloak.KeycloakConfig) KeycloakServiceBuilder {
-	return &keycloakServiceBuilder{
-		config: config,
+func build(providerName string, keycloakConfig *keycloak.KeycloakConfig, realmConfig *keycloak.KeycloakRealmConfig) KeycloakService {
+	notNilPredicate := func(x interface{}) bool {
+		return x.(*keycloak.KeycloakRealmConfig) != nil
+	}
+
+	// Temporary: if a realm configuration different from the one into the config is specified
+	// we always instantiate MAS_SSO irrespective of the selected provider
+	if providerName == keycloak.MAS_SSO ||
+		realmConfig != nil {
+		_, realmConfig := arrays.FindFirst(notNilPredicate, realmConfig, keycloakConfig.KafkaRealm)
+		return newKeycloakService(keycloakConfig, realmConfig.(*keycloak.KeycloakRealmConfig))
+	} else {
+		_, realmConfig := arrays.FindFirst(notNilPredicate, realmConfig, keycloakConfig.RedhatSSORealm)
+		client := redhatsso.NewSSOClient(keycloakConfig, realmConfig.(*keycloak.KeycloakRealmConfig))
+		return &keycloakServiceProxy{
+			accessTokenProvider: client,
+			service: &redhatssoService{
+				client: client,
+			},
+		}
 	}
 }
