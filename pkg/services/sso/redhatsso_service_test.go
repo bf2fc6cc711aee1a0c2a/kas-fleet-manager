@@ -126,7 +126,7 @@ func TestRedhatSSO_RegisterOSDClusterClientInSSO(t *testing.T) {
 				accessTokenProvider: tt.fields.kcClient,
 				service:             &redhatssoService{client: tt.fields.kcClient},
 			}
-			got, err := keycloakService.RegisterOSDClusterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
+			got, err := keycloakService.RegisterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
 			Expect(err).To(Equal(tt.wantErr))
 			Expect(got).To(Equal(tt.want))
 		})
