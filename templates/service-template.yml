@@ -381,6 +381,10 @@ parameters:
 - name: SSO_PROVIDER_TYPE
   description: Option to choose between sso providers i.e, mas-sso or redhat_sso, mas-sso by default
   value: "mas_sso"
+
+- name: SSO_BASE_URL
+  description: redhat_sso base url
+  value:  "https://sso.redhat.com"
   
 - name: CLUSTER_OPENSHIFT_VERSION
   displayName: The version of openshift
@@ -1008,6 +1012,7 @@ objects:
             - --sso-provider-type=${SSO_PROVIDER_TYPE}
             - --redhat-sso-client-id-file=/secrets/service/redhatsso-service.clientId
             - --redhat-sso-client-secret-file=/secrets/service/redhatsso-service.clientSecret
+            - --redhat-sso-base-url=${SSO_BASE_URL}
             - -v=${GLOG_V}
             resources:
               requests:
