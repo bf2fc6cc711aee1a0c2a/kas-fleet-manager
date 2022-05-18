@@ -467,12 +467,12 @@ func (k *kafkaService) Get(ctx context.Context, id string) (*dbapi.KafkaRequest,
 
 	var user string
 	if !auth.GetIsAdminFromContext(ctx) {
-		user = auth.GetUsernameFromClaims(claims)
+		user, _ = claims.GetUsername()
 		if user == "" {
 			return nil, errors.Unauthenticated("user not authenticated")
 		}
 
-		orgId := auth.GetOrgIdFromClaims(claims)
+		orgId, _ := claims.GetOrgId()
 		filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
 
 		// filter by organisationId if a user is part of an organisation and is not allowed as a service account
@@ -523,11 +523,11 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 
 	if auth.GetIsAdminFromContext(ctx) {
 		dbConn = dbConn.Where("id = ?", id)
-	} else if auth.GetIsOrgAdminFromClaims(claims) {
-		orgId := auth.GetOrgIdFromClaims(claims)
+	} else if claims.IsOrgAdmin() {
+		orgId, _ := claims.GetOrgId()
 		dbConn = dbConn.Where("id = ?", id).Where("organisation_id = ?", orgId)
 	} else {
-		user := auth.GetUsernameFromClaims(claims)
+		user, _ := claims.GetUsername()
 		dbConn = dbConn.Where("id = ?", id).Where("owner = ? ", user)
 	}
 
@@ -659,12 +659,12 @@ func (k *kafkaService) List(ctx context.Context, listArgs *services.ListArgument
 	}
 
 	if !auth.GetIsAdminFromContext(ctx) {
-		user := auth.GetUsernameFromClaims(claims)
+		user, _ := claims.GetUsername()
 		if user == "" {
 			return nil, nil, errors.Unauthenticated("user not authenticated")
 		}
 
-		orgId := auth.GetOrgIdFromClaims(claims)
+		orgId, _ := claims.GetOrgId()
 		filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
 
 		// filter by organisationId if a user is part of an organisation and is not allowed as a service account

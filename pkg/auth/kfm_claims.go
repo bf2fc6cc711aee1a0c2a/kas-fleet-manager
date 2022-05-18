@@ -8,6 +8,10 @@ import (
 
 type KFMClaims jwt.MapClaims
 
+func (c *KFMClaims) VerifyIssuer(cmp string, req bool) bool {
+	return jwt.MapClaims(*c).VerifyIssuer(cmp, req)
+}
+
 func (c *KFMClaims) GetUsername() (string, error) {
 	if idx, val := arrays.FindFirst(func(x interface{}) bool { return x != nil }, (*c)[tenantUsernameClaim], (*c)[alternateTenantUsernameClaim]); idx != -1 {
 		return val.(string), nil
