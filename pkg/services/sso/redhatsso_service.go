@@ -24,6 +24,15 @@ func (r *redhatssoService) RegisterOSDClusterClientInSSO(accessToken string, clu
 	return "", errors.New(errors.ErrorGeneral, "RegisterOSDClusterClientInSSO Not implemented")
 }
 
+func (r *redhatssoService) DeRegisterClientInSSO(accessToken string, clientId string) *errors.ServiceError {
+	err := r.client.DeleteServiceAccount(accessToken, clientId)
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorFailedToDeleteSSOClient, err, "failed to delete the sso client")
+	}
+	glog.V(5).Infof("Kafka Client %s deleted successfully", clientId)
+	return nil
+}
+
 func (r *redhatssoService) GetConfig() *keycloak.KeycloakConfig {
 	return r.client.GetConfig()
 }

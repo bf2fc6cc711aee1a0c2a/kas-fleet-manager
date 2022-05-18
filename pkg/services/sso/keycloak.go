@@ -39,7 +39,13 @@ type KeycloakService interface {
 	DeleteServiceAccountInternal(clientId string) *errors.ServiceError
 }
 
+type OSDKeycloakService interface {
+	KeycloakService
+	DeRegisterClientInSSO(kafkaNamespace string) *errors.ServiceError
+}
+
 type keycloakServiceInternal interface {
+	DeRegisterClientInSSO(accessToken string, kafkaNamespace string) *errors.ServiceError
 	RegisterOSDClusterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
 	GetConfig() *keycloak.KeycloakConfig
 	GetRealmConfig() *keycloak.KeycloakRealmConfig

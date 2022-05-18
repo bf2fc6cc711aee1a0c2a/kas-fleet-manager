@@ -389,7 +389,7 @@ func TestClusterManager_processDeprovisioningClusters(t *testing.T) {
 func TestClusterManager_processCleanupClusters(t *testing.T) {
 	type fields struct {
 		clusterService             services.ClusterService
-		osdIDPKeycloakService      sso.KeycloakService
+		osdIDPKeycloakService      sso.OSDKeycloakService
 		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 	}
 	tests := []struct {
@@ -421,7 +421,11 @@ func TestClusterManager_processCleanupClusters(t *testing.T) {
 						return nil
 					},
 				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{},
+				osdIDPKeycloakService: &sso.OSDKeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to deregister client in sso")
+					},
+				},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
 					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return apiErrors.GeneralError("failed to remove service account client in sso")
@@ -443,7 +447,11 @@ func TestClusterManager_processCleanupClusters(t *testing.T) {
 						return nil
 					},
 				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{},
+				osdIDPKeycloakService: &sso.OSDKeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
 					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
@@ -609,7 +617,7 @@ func TestClusterManager_processProvisioningClusters(t *testing.T) {
 func TestClusterManager_processProvisionedClusters(t *testing.T) {
 	type fields struct {
 		clusterService             services.ClusterService
-		osdIdpKeycloakService      sso.KeycloakService
+		osdIdpKeycloakService      sso.OSDKeycloakService
 		dataplaneClusterConfig     *config.DataplaneClusterConfig
 		supportedProviders         *config.ProviderConfig
 		observabilityConfiguration *observatorium.ObservabilityConfiguration
@@ -687,7 +695,7 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 						return nil
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
@@ -810,7 +818,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 	type fields struct {
 		clusterService             services.ClusterService
 		dataplaneClusterConfig     *config.DataplaneClusterConfig
-		osdIdpKeycloakService      sso.KeycloakService
+		osdIdpKeycloakService      sso.OSDKeycloakService
 		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 		observabilityConfiguration *observatorium.ObservabilityConfiguration
 	}
@@ -898,7 +906,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 						return nil
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "", apiErrors.GeneralError("failed to register osd cluster client in sso")
 					},
@@ -932,7 +940,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 						return nil
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
@@ -974,7 +982,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 						return nil
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
@@ -1019,7 +1027,7 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 	type fields struct {
 		clusterService             services.ClusterService
 		dataplaneClusterConfig     *config.DataplaneClusterConfig
-		osdIdpKeycloakService      sso.KeycloakService
+		osdIdpKeycloakService      sso.OSDKeycloakService
 		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 		observabilityConfiguration *observatorium.ObservabilityConfiguration
 	}
@@ -1079,7 +1087,7 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 						return nil
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "", apiErrors.GeneralError("failed to register osd cluster client in sso")
 					},
@@ -1113,7 +1121,7 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 						return nil
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
@@ -1155,7 +1163,7 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 						return nil
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
@@ -1200,7 +1208,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 	type fields struct {
 		clusterService             services.ClusterService
 		dataplaneClusterConfig     *config.DataplaneClusterConfig
-		osdIdpKeycloakService      sso.KeycloakService
+		osdIdpKeycloakService      sso.OSDKeycloakService
 		observabilityConfiguration *observatorium.ObservabilityConfiguration
 		agentOperator              services.KasFleetshardOperatorAddon
 	}
@@ -1250,7 +1258,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 						return &clusterWaitingForKasFleetShardOperator, nil
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
@@ -1293,7 +1301,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 						return nil
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
@@ -1341,7 +1349,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 						return nil
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
@@ -1387,7 +1395,7 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 		clusterService             services.ClusterService
 		dataplaneClusterConfig     *config.DataplaneClusterConfig
 		observabilityConfiguration *observatorium.ObservabilityConfiguration
-		osdIdpKeycloakService      sso.KeycloakService
+		osdIdpKeycloakService      sso.OSDKeycloakService
 		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 	}
 	tests := []struct {
@@ -1446,7 +1454,7 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 						return nil
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
@@ -2477,7 +2485,7 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 	type fields struct {
 		clusterService         services.ClusterService
-		osdIdpKeycloakService  sso.KeycloakService
+		osdIdpKeycloakService  sso.OSDKeycloakService
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 	}
 	tests := []struct {
@@ -2492,7 +2500,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 				clusterService: &services.ClusterServiceMock{
 					GetClusterDNSFunc: nil, // setting it to nill so that it is not called
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: nil, // setting it to nill so that it is not called
 					GetRealmConfigFunc:                nil, // setting it to nill so that it is not called
 				},
@@ -2514,7 +2522,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 				clusterService: &services.ClusterServiceMock{
 					GetClusterDNSFunc: nil, // setting it to nill so that it is not called
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: nil, // setting it to nill so that it is not called
 					GetRealmConfigFunc:                nil, // setting it to nill so that it is not called
 				},
@@ -2551,7 +2559,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 						return "test.com", nil
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "", apiErrors.FailedToCreateSSOClient("failure")
 					},
@@ -2582,7 +2590,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 						return nil, apiErrors.GeneralError("failed to configure IDP")
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
@@ -2607,7 +2615,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 						return cluster, nil
 					},
 				},
-				osdIdpKeycloakService: &sso.KeycloakServiceMock{
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
@@ -2849,7 +2857,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 	type fields struct {
 		clusterService             services.ClusterService
-		osdIDPKeycloakService      sso.KeycloakService
+		osdIDPKeycloakService      sso.OSDKeycloakService
 		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 	}
 	tests := []struct {
@@ -2866,7 +2874,11 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 						return nil
 					},
 				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{},
+				osdIDPKeycloakService: &sso.OSDKeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
 					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return &apiErrors.ServiceError{}
@@ -2883,7 +2895,11 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 						return &apiErrors.ServiceError{}
 					},
 				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{},
+				osdIDPKeycloakService: &sso.OSDKeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
 					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
@@ -2893,14 +2909,18 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "successfull deletion of an OSD cluster",
+			name: "successful deletion of an OSD cluster",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
 						return nil
 					},
 				},
-				osdIDPKeycloakService: &sso.KeycloakServiceMock{},
+				osdIDPKeycloakService: &sso.OSDKeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
 					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil

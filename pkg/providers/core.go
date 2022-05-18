@@ -83,11 +83,13 @@ func ServiceProviders() di.Option {
 		di.Provide(handlers.NewErrorsHandler),
 		di.Provide(func(c *keycloak.KeycloakConfig) sso.KafkaKeycloakService {
 			return sso.NewKeycloakServiceBuilder().
+				ForKFM().
 				WithConfiguration(c).
 				Build()
 		}),
 		di.Provide(func(c *keycloak.KeycloakConfig) sso.OsdKeycloakService {
 			return sso.NewKeycloakServiceBuilder().
+				ForOSD().
 				WithConfiguration(c).
 				WithRealmConfig(c.OSDClusterIDPRealm).
 				Build()

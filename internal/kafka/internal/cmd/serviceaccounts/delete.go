@@ -34,6 +34,7 @@ func runDelete(env *environments.Env, cmd *cobra.Command) {
 	// setup required services
 	keycloakConfig := KeycloakConfig(env)
 	keycloakService := sso.NewKeycloakServiceBuilder().
+		ForKFM().
 		WithConfiguration(keycloakConfig).
 		Build()
 

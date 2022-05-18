@@ -31,7 +31,7 @@ const (
 )
 
 type KafkaKeycloakService KeycloakService
-type OsdKeycloakService KeycloakService
+type OsdKeycloakService OSDKeycloakService
 
 type masService struct {
 	kcClient keycloak.KcClient
@@ -47,6 +47,20 @@ func newKeycloakService(config *keycloak.KeycloakConfig, realmConfig *keycloak.K
 			kcClient: client,
 		},
 	}
+}
+
+func (kc *masService) DeRegisterClientInSSO(accessToken string, clientId string) *errors.ServiceError {
+	internalClientID, _ := kc.kcClient.IsClientExist(clientId, accessToken)
+	glog.V(5).Infof("Existing Kafka Client %s found", clientId)
+	if internalClientID == "" {
+		return nil
+	}
+	err := kc.kcClient.DeleteClient(internalClientID, accessToken)
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorFailedToDeleteSSOClient, err, "failed to delete the sso client")
+	}
+	glog.V(5).Infof("Kafka Client %s with internal id of %s deleted successfully", clientId, internalClientID)
+	return nil
 }
 
 func NewKeycloakServiceWithClient(client keycloak.KcClient) KeycloakService {

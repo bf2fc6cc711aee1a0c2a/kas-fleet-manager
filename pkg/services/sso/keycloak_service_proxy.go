@@ -18,6 +18,7 @@ type keycloakServiceProxy struct {
 }
 
 var _ KeycloakService = &keycloakServiceProxy{}
+var _ OSDKeycloakService = &keycloakServiceProxy{}
 
 func (r *keycloakServiceProxy) retrieveToken() (string, *errors.ServiceError) {
 	accessToken, tokenErr := r.accessTokenProvider.GetToken()
@@ -48,6 +49,14 @@ func tokenForServiceAPIHandler(ctx context.Context, r *keycloakServiceProxy) (st
 		return "", err
 	}
 	return token, nil
+}
+
+func (r *keycloakServiceProxy) DeRegisterClientInSSO(clientId string) *errors.ServiceError {
+	if token, err := r.retrieveToken(); err != nil {
+		return err
+	} else {
+		return r.service.DeRegisterClientInSSO(token, clientId)
+	}
 }
 
 func (r *keycloakServiceProxy) RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {

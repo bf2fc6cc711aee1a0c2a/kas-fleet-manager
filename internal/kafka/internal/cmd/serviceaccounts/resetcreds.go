@@ -36,6 +36,7 @@ func runResetCreds(env *environments.Env, cmd *cobra.Command) {
 	keycloakConfig := KeycloakConfig(env)
 	// setup required services
 	keycloakService := sso.NewKeycloakServiceBuilder().
+		ForKFM().
 		WithConfiguration(keycloakConfig).
 		Build()
 
