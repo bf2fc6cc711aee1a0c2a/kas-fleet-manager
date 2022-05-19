@@ -72,15 +72,10 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 	}
 
 	for _, deprovisioningKafka := range deprovisioningKafkas {
-		// As long as one of the three fields checked below are empty, the Kafka wouldn't have been provisioned to an OSD cluster and should be deleted immediately.
+		// As long as one of these fields checked below are empty, the Kafka wouldn't have been provisioned to an OSD cluster and should be deleted immediately.
 		if deprovisioningKafka.BootstrapServerHost == "" {
 			deletingKafkas = append(deletingKafkas, deprovisioningKafka)
 			continue
-		}
-
-		// If EnableAuthenticationOnKafka is not set, these fields would also be empty even when provisioned to an OSD cluster.
-		if k.keycloakConfig.EnableAuthenticationOnKafka {
-			deletingKafkas = append(deletingKafkas, deprovisioningKafka)
 		}
 	}
 
