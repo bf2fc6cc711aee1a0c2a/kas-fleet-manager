@@ -247,7 +247,8 @@ help:
 	@echo "make sso/setup                   local keycloak instance"
 	@echo "make sso/config                  local configure realm"
 	@echo "make sso/teardown                teardown keycloak instance"
-	@echo "make redhatsso/setup             setup mas sso clientId & clientSecret "
+	@echo "make redhatsso/setup             setup mas sso clientId & clientSecret"
+	@echo "make imagepull/secret/setup      setup dockerconfig image pull secret"
 	@echo "$(fake)"
 .PHONY: help
 
@@ -868,6 +869,10 @@ docs/generate/mermaid:
 		docker run -it -v $(DOCS_DIR)/mermaid-diagrams-source:/data -v $(DOCS_DIR)/images:/output minlag/mermaid-cli -i /data/`basename $${f}` -o /output/`basename $${f} .mmd`.png; \
 	done
 .PHONY: docs/generate/mermaid
+
+imagepull/secret/setup:
+	@echo -n "$(PULL_SECRET)" > secrets/image-pull.dockerconfigjson
+.PHONY: imagepull/secret/setup
 
 # TODO CRC Deployment stuff
 

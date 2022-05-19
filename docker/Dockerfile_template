@@ -30,6 +30,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV REPORTPORTAL_ENDPOINT <report_portal_endpoint>
 ENV REPORTPORTAL_ACCESS_TOKEN <report_portal_access_token>
 ENV REPORTPORTAL_PROJECT <report_portal_project>
+ENV PULL_SECRET <pull_secret>
 
 RUN apt-get update
 RUN apt-get install -y make sudo git wget curl ca-certificates
@@ -76,6 +77,7 @@ RUN make ocm/setup
 RUN make keycloak/setup redhatsso/setup
 RUN make kafkacert/setup
 RUN make observatorium/setup
+RUN make imagepull/secret/setup
 
 # Docker built / owned  as 'root' but the 'postgres' user runs the image
 RUN chown -R postgres:postgres /kas-fleet-manager /usr/local/go
