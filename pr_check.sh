@@ -45,7 +45,7 @@ then
 else
   if [[ -z "${OCM_ENV}" ]] || [[ -z "${AWS_ACCESS_KEY}" ]] || [[ -z "${AWS_ACCOUNT_ID}" ]] || 
     [[ -z "${AWS_SECRET_ACCESS_KEY}" ]] || [[ -z "${OCM_OFFLINE_TOKEN}" ]] || [[ -z "${OBSERVATORIUM_CONFIG_ACCESS_TOKEN}" ]] || 
-    [[ -z "${PULL_SECRET}" ]];  then
+    [[ -z "${DATA_PLANE_PULL_SECRET}" ]];  then
     echo "Required env var not provided. Exiting...".
     exit 1
   fi
@@ -53,7 +53,7 @@ else
   sed -i -e "s/<ocm_env>/${OCM_ENV}/g" -e "s/<aws_access_key>/${AWS_ACCESS_KEY}/g" \
   -e "s/<aws_account_id>/${AWS_ACCOUNT_ID}/g" -e  "s/<aws_secret_access_key>/${AWS_SECRET_ACCESS_KEY}/g" \
   -e "s/<ocm_offline_token>/${OCM_OFFLINE_TOKEN}/g" \
-  -e "s/<pull_secret>/${PULL_SECRET}/g" \
+  -e "s/<data_plane_pull_secret>/${DATA_PLANE_PULL_SECRET}/g" \
   -e "s/<observatorium_config_access_token>/${OBSERVATORIUM_CONFIG_ACCESS_TOKEN}/g" Dockerfile_integration_tests
   if [[ -z "${REPORTPORTAL_ENDPOINT}" ]] || [[ -z "${REPORTPORTAL_ACCESS_TOKEN}" ]] || [[ -z "${REPORTPORTAL_PROJECT}" ]];  then
     echo "Required report portal env vars not provided. Exiting...".
