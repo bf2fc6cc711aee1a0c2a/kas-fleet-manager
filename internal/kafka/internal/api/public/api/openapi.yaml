@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   description: Kafka Service Fleet Manager is a Rest API to manage Kafka instances.
   title: Kafka Service Fleet Manager
-  version: 1.7.0
+  version: 1.7.1
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -1810,7 +1810,7 @@ components:
             size.
           type: integer
         maturity_status:
-          description: Maturity level of the size. Can be stable or tech preview.
+          description: Maturity level of the size. Can be "stable" or "preview".
           type: string
       type: object
     SupportedKafkaSizeBytesValueItem:
