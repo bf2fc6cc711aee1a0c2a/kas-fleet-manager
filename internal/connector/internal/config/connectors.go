@@ -4,18 +4,21 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
-	gherrors "github.com/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/files"
+	"io/fs"
 	"io/ioutil"
-	"path/filepath"
 	"sort"
 	"strings"
+
+	gherrors "github.com/pkg/errors"
+
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
-	"time"
 )
 
 type ConnectorsConfig struct {
@@ -57,57 +60,68 @@ func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
 func (c *ConnectorsConfig) ReadFiles() error {
 	typesLoaded := map[string]string{}
 	var values []ConnectorCatalogEntry
+
 	for _, dir := range c.ConnectorCatalogDirs {
 		dir = shared.BuildFullFilePath(dir)
-		files, err := ioutil.ReadDir(dir)
-		if err != nil {
-			err = gherrors.Errorf("error listing connector catalogs in %s: %s", dir, err)
-			return err
-		}
 
-		for _, f := range files {
-
-			// skip over hidden files and dirs..
-			if f.IsDir() || strings.HasPrefix(f.Name(), ".") {
-				continue
+		err := files.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+			if err != nil {
+				return err
 			}
 
-			file := filepath.Join(dir, f.Name())
+			// skip over hidden files and dirs..
+			if info.IsDir() || strings.HasPrefix(path, ".") {
+				return nil
+			}
+
+			glog.Infof("loading connectors from file %s", path)
 
 			// Read the file
-			buf, err := ioutil.ReadFile(file)
+			buf, err := ioutil.ReadFile(path)
 			if err != nil {
-				err = gherrors.Errorf("error reading catalog file %s: %s", file, err)
+				err = gherrors.Errorf("error reading catalog file %s: %s", path, err)
 				return err
 			}
 
 			entry := ConnectorCatalogEntry{}
 			err = json.Unmarshal(buf, &entry)
 			if err != nil {
-				err = gherrors.Errorf("error unmarshaling catalog file %s: %s", file, err)
+				err = gherrors.Errorf("error unmarshaling catalog file %s: %s", path, err)
 				return err
 			}
 
 			// compute checksum for catalog entry to look for updates
 			sum, err := checksum(entry)
 			if err != nil {
-				err = gherrors.Errorf("error computing checksum for catalog file %s: %s", file, err)
+				err = gherrors.Errorf("error computing checksum for catalog file %s: %s", path, err)
 				return err
 			}
 			c.CatalogChecksums[entry.ConnectorType.Id] = sum
 
 			if prev, found := typesLoaded[entry.ConnectorType.Id]; found {
-				return fmt.Errorf("connector type '%s' defined in '%s' and '%s'", entry.ConnectorType.Id, file, prev)
+				return fmt.Errorf("connector type '%s' defined in '%s' and '%s'", entry.ConnectorType.Id, path, prev)
 			}
-			typesLoaded[entry.ConnectorType.Id] = file
+			typesLoaded[entry.ConnectorType.Id] = path
 			values = append(values, entry)
+
+			glog.Infof("loaded connector %s from file %s", entry.ConnectorType.Id, path)
+
+			return nil
+		})
+
+		if err != nil {
+			err = gherrors.Errorf("error listing connector catalogs in %s: %s", dir, err)
+			return err
 		}
 	}
+
 	sort.Slice(values, func(i, j int) bool {
 		return values[i].ConnectorType.Id < values[j].ConnectorType.Id
 	})
+
 	glog.Infof("loaded %d connector types", len(values))
 	c.CatalogEntries = values
+
 	return nil
 }
 
