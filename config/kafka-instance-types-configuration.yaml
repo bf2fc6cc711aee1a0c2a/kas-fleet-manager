@@ -86,4 +86,4 @@ supported_instance_types:
       supportedAZModes:
       - single
       lifespanSeconds: 172800
-      maturityStatus: preview
+      maturityStatus: stable
