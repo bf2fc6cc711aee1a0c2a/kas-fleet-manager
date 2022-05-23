@@ -13,6 +13,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
+	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
 
 	. "github.com/onsi/gomega"
 )
@@ -94,7 +95,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 	reauthEnabled := true
 	kafkaStorageSize := "1000Gi"
 
-	defaultInstanceSize := *mock.BuildKafkaInstanceSize(nil)
+	defaultInstanceSize := *mocksupportedinstancetypes.BuildKafkaInstanceSize()
 
 	tests := []struct {
 		name   string

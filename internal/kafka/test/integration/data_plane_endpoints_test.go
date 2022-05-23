@@ -20,6 +20,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	kafkamocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
+	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -351,7 +352,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-1"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusProvisioning.String()),
-			kafkamocks.With(kafkamocks.STORAGE_SIZE, kafkamocks.DefaultMaxDataRetentionSize),
+			kafkamocks.With(kafkamocks.STORAGE_SIZE, mocksupportedinstancetypes.DefaultMaxDataRetentionSize),
 			kafkamocks.With(kafkamocks.DESIRED_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
 			kafkamocks.With(kafkamocks.DESIRED_KAFKA_VERSION, "2.8.1"),
 			kafkamocks.With(kafkamocks.DESIRED_KAFKA_IBP_VERSION, "2.7.0"),
@@ -360,7 +361,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-2"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusReady.String()),
-			kafkamocks.With(kafkamocks.STORAGE_SIZE, kafkamocks.DefaultMaxDataRetentionSize),
+			kafkamocks.With(kafkamocks.STORAGE_SIZE, mocksupportedinstancetypes.DefaultMaxDataRetentionSize),
 			kafkamocks.With(kafkamocks.DESIRED_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
 			kafkamocks.With(kafkamocks.ACTUAL_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
 			kafkamocks.With(kafkamocks.DESIRED_KAFKA_VERSION, "2.8.1"),
@@ -372,7 +373,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-3"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusFailed.String()),
-			kafkamocks.With(kafkamocks.STORAGE_SIZE, kafkamocks.DefaultMaxDataRetentionSize),
+			kafkamocks.With(kafkamocks.STORAGE_SIZE, mocksupportedinstancetypes.DefaultMaxDataRetentionSize),
 			kafkamocks.With(kafkamocks.DESIRED_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
 			kafkamocks.With(kafkamocks.ACTUAL_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
 			kafkamocks.With(kafkamocks.DESIRED_KAFKA_VERSION, "2.8.1"),
@@ -384,7 +385,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-4"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusDeprovision.String()),
-			kafkamocks.With(kafkamocks.STORAGE_SIZE, kafkamocks.DefaultMaxDataRetentionSize),
+			kafkamocks.With(kafkamocks.STORAGE_SIZE, mocksupportedinstancetypes.DefaultMaxDataRetentionSize),
 			kafkamocks.With(kafkamocks.DESIRED_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
 			kafkamocks.With(kafkamocks.ACTUAL_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
 			kafkamocks.With(kafkamocks.DESIRED_KAFKA_VERSION, "2.8.1"),

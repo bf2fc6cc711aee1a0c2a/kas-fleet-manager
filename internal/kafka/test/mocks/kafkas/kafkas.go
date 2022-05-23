@@ -9,6 +9,9 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+
+	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
+
 	"gorm.io/gorm"
 )
 
@@ -145,7 +148,7 @@ func BuildKafkaRequest(options ...KafkaRequestBuildOption) *dbapi.KafkaRequest {
 		Status:              constants.KafkaRequestStatusReady.String(),
 		Owner:               user,
 		InstanceType:        DefaultInstanceType,
-		SizeId:              DefaultKafkaInstanceSizeId,
+		SizeId:              mocksupportedinstancetypes.DefaultKafkaInstanceSizeId,
 		BootstrapServerHost: DefaultBootstrapServerHost,
 	}
 	for _, option := range options {
