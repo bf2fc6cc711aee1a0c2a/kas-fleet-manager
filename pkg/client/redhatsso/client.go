@@ -73,7 +73,7 @@ func (c *rhSSOClient) getConfiguration(accessToken string) *serviceaccountsclien
 			Debug:     false,
 			Servers: serviceaccountsclient.ServerConfigurations{
 				{
-					URL: c.realmConfig.APIEndpointURI,
+					URL: c.realmConfig.BaseURL + c.realmConfig.APIEndpointURI,
 				},
 			},
 		}
