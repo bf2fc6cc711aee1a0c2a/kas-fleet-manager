@@ -4,17 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/phase"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/phase"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -145,11 +145,6 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			handlers.Validation("Content-Type header", &contentType, handlers.IsOneOf("application/json", "application/json-patch+json", "application/merge-patch+json")),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-
-			if contentType == "application/json" {
-				contentType = "application/merge-patch+json"
-			}
-
 			dbresource, serr := h.connectorsService.Get(r.Context(), connectorId, connectorTypeId)
 			if serr != nil {
 				return nil, serr
@@ -399,13 +394,13 @@ func PatchResource(resource interface{}, patchType string, patchBytes []byte, pa
 		if err != nil {
 			return errors.GeneralError("failed to apply patch patch: %v", err)
 		}
-	case "application/merge-patch+json":
+	case "application/merge-patch+json", "application/json":
 		resourceJson, err = jsonpatch.MergePatch(resourceJson, patchBytes)
 		if err != nil {
-			return errors.BadRequest("invalid json patch: %v", err)
+			return errors.BadRequest("invalid merge patch: %v", err)
 		}
 	default:
-		return errors.BadRequest("bad Content-Type, must be one of: application/json-patch+json or application/merge-patch+json")
+		return errors.BadRequest("bad Content-Type, must be one of: application/json-patch+json, application/merge-patch+json (or equivalently application/json).")
 	}
 
 	err = json.Unmarshal(resourceJson, patched)

@@ -1374,6 +1374,7 @@ Feature: create a connector
       }
       """
 
+    # Check that not allowed secrets update of a connector are rejected
     Given I set the "Content-Type" header to "application/merge-patch+json"
     When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
       """
@@ -1398,10 +1399,60 @@ Feature: create a connector
       }
       """
 
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      {
+          "desired_state": "stopped",
+          "connector": {
+              "aws_secret_key": {
+                "ref": "hack"
+              }
+          }
+      }
+      """
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "invalid patch: attempting to change opaque connector secret"
+      }
+      """
+
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      {
+          "service_account": {
+            "client_secret": {
+                "ref": "hack"
+            },
+            "client_id": "myclient"
+          }
+      }
+      """
+    Then the response code should be 500
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-9",
+        "href": "/api/connector_mgmt/v1/errors/9",
+        "id": "9",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "failed to decode patched resource: json: cannot unmarshal object into Go struct field ServiceAccount.service_account.client_secret of type string"
+      }
+      """
+
     # Check that we can update secrets of a connector
     Given LOCK--------------------------------------------------------------
       Given I reset the vault counters
-      Given I set the "Content-Type" header to "application/merge-patch+json"
+      Given I set the "Content-Type" header to "application/json"
       When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
         """
         {
