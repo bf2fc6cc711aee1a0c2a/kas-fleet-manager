@@ -2,6 +2,7 @@ package presenters
 
 import (
 	"testing"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -129,6 +130,9 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.MaxPartitions = int32(defaultInstanceSize.MaxPartitions)
 				kafkaRequest.MaxDataRetentionPeriod = defaultInstanceSize.MaxDataRetentionPeriod
 				kafkaRequest.MaxConnectionAttemptsPerSec = int32(defaultInstanceSize.MaxConnectionAttemptsPerSec)
+
+				expireTime := kafkaRequest.CreatedAt.Add(time.Duration(*defaultInstanceSize.LifespanSeconds) * time.Second)
+				kafkaRequest.ExpiresAt = &expireTime
 			}),
 			config: config.KafkaConfig{
 				SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
