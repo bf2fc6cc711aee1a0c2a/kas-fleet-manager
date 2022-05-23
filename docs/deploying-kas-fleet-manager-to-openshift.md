@@ -98,6 +98,8 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `MAS_SSO_CRT`: The TLS certificate of the MAS SSO instance. Defaults to value read from _./secrets/keycloak-service.crt_
 - `MAS_SSO_INSECURE`: Skip TLS insecure verification for the connection to a MAS SSO instance. Defaults to value false.
 - `OSD_IDP_MAS_SSO_CLIENT_ID`: The client id for a MAS SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientId_
+- `REDHAT_SSO_CLIENT_ID`: The client id for a REDHAT SSO service account. Defaults to value read from _./secrets/redhatsso-service.clientId_
+- `REDHAT_SSO_CLIENT_SECRET`: The client secret for a REDHAT SSO service account. Defaults to value read from _./secrets/redhatsso-service.clientSecret_
 - `OSD_IDP_MAS_SSO_CLIENT_SECRET`: The client secret for a MAS SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientSecret_
 - `IMAGE_PULL_DOCKER_CONFIG`: Base64 encoded Docker config content for pulling private images. Defaults to value read from _./secrets/image-pull.dockerconfigjson_
 - `KUBE_CONFIG`: Base64 encoded Kubeconfig content for standalone dataplane clusters communication. Defaults to `''`
