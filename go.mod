@@ -41,7 +41,7 @@ require (
 	github.com/prometheus/client_golang v1.12.1
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.32.1
-	github.com/redhat-developer/app-services-sdk-go/serviceaccounts v0.3.0
+	github.com/redhat-developer/app-services-sdk-go/serviceaccounts v0.4.0
 	github.com/rs/xid v1.2.1
 	github.com/santhosh-tekuri/jsonschema/v3 v3.0.1
 	github.com/selvatico/go-mocket v1.0.7
@@ -51,7 +51,7 @@ require (
 	github.com/spyzhov/ajson v0.4.2
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zgalor/weberr v0.6.0
-	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b
+	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.0.8
