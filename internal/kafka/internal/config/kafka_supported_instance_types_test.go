@@ -2,6 +2,8 @@ package config
 
 import (
 	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
@@ -821,6 +823,44 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+func TestKafkaInstanceType_HasAnInstanceSizeWithLifespan(t *testing.T) {
+	tests := []struct {
+		name              string
+		kafkaInstanceType KafkaInstanceType
+		want              bool
+	}{
+		{
+			name: "returns true when kafka instance type has at least one size with lifespanSeconds set",
+			kafkaInstanceType: KafkaInstanceType{
+				Id: "myinstancetype",
+				Sizes: []KafkaInstanceSize{
+					KafkaInstanceSize{Id: "instancesize1"},
+					KafkaInstanceSize{Id: "instancesize3", LifespanSeconds: &[]int{33513}[0]},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "returns false when kafka instance type has no size with lifespanSeconds set",
+			kafkaInstanceType: KafkaInstanceType{
+				Id: "myinstancetype",
+				Sizes: []KafkaInstanceSize{
+					KafkaInstanceSize{Id: "instancesize1"},
+					KafkaInstanceSize{Id: "instancesize3", LifespanSeconds: nil},
+				},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res := tt.kafkaInstanceType.HasAnInstanceSizeWithLifespan()
+			Expect(res).To(Equal(tt.want))
+		})
+	}
+
 }
 
 func buildTestStandardKafkaInstanceSize() KafkaInstanceSize {

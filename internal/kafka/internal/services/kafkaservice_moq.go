@@ -41,7 +41,7 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			DeleteFunc: func(kafkaRequest *dbapi.KafkaRequest) *serviceError.ServiceError {
 // 				panic("mock out the Delete method")
 // 			},
-// 			DeprovisionExpiredKafkasFunc: func(kafkaAgeInHours int) *serviceError.ServiceError {
+// 			DeprovisionExpiredKafkasFunc: func() *serviceError.ServiceError {
 // 				panic("mock out the DeprovisionExpiredKafkas method")
 // 			},
 // 			DeprovisionKafkaForUsersFunc: func(users []string) *serviceError.ServiceError {
@@ -121,7 +121,7 @@ type KafkaServiceMock struct {
 	DeleteFunc func(kafkaRequest *dbapi.KafkaRequest) *serviceError.ServiceError
 
 	// DeprovisionExpiredKafkasFunc mocks the DeprovisionExpiredKafkas method.
-	DeprovisionExpiredKafkasFunc func(kafkaAgeInHours int) *serviceError.ServiceError
+	DeprovisionExpiredKafkasFunc func() *serviceError.ServiceError
 
 	// DeprovisionKafkaForUsersFunc mocks the DeprovisionKafkaForUsers method.
 	DeprovisionKafkaForUsersFunc func(users []string) *serviceError.ServiceError
@@ -208,8 +208,6 @@ type KafkaServiceMock struct {
 		}
 		// DeprovisionExpiredKafkas holds details about calls to the DeprovisionExpiredKafkas method.
 		DeprovisionExpiredKafkas []struct {
-			// KafkaAgeInHours is the kafkaAgeInHours argument value.
-			KafkaAgeInHours int
 		}
 		// DeprovisionKafkaForUsers holds details about calls to the DeprovisionKafkaForUsers method.
 		DeprovisionKafkaForUsers []struct {
@@ -495,29 +493,24 @@ func (mock *KafkaServiceMock) DeleteCalls() []struct {
 }
 
 // DeprovisionExpiredKafkas calls DeprovisionExpiredKafkasFunc.
-func (mock *KafkaServiceMock) DeprovisionExpiredKafkas(kafkaAgeInHours int) *serviceError.ServiceError {
+func (mock *KafkaServiceMock) DeprovisionExpiredKafkas() *serviceError.ServiceError {
 	if mock.DeprovisionExpiredKafkasFunc == nil {
 		panic("KafkaServiceMock.DeprovisionExpiredKafkasFunc: method is nil but KafkaService.DeprovisionExpiredKafkas was just called")
 	}
 	callInfo := struct {
-		KafkaAgeInHours int
-	}{
-		KafkaAgeInHours: kafkaAgeInHours,
-	}
+	}{}
 	mock.lockDeprovisionExpiredKafkas.Lock()
 	mock.calls.DeprovisionExpiredKafkas = append(mock.calls.DeprovisionExpiredKafkas, callInfo)
 	mock.lockDeprovisionExpiredKafkas.Unlock()
-	return mock.DeprovisionExpiredKafkasFunc(kafkaAgeInHours)
+	return mock.DeprovisionExpiredKafkasFunc()
 }
 
 // DeprovisionExpiredKafkasCalls gets all the calls that were made to DeprovisionExpiredKafkas.
 // Check the length with:
 //     len(mockedKafkaService.DeprovisionExpiredKafkasCalls())
 func (mock *KafkaServiceMock) DeprovisionExpiredKafkasCalls() []struct {
-	KafkaAgeInHours int
 } {
 	var calls []struct {
-		KafkaAgeInHours int
 	}
 	mock.lockDeprovisionExpiredKafkas.RLock()
 	calls = mock.calls.DeprovisionExpiredKafkas

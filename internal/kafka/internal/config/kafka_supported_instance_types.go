@@ -19,14 +19,35 @@ const (
 	MaturityStatusStable      MaturityStatus = "stable"
 )
 
+func getValidMaturityStates() []MaturityStatus {
+	return []MaturityStatus{MaturityStatusStable, MaturityStatusTechPreview}
+}
+
 type KafkaInstanceType struct {
 	Id          string              `yaml:"id"`
 	DisplayName string              `yaml:"display_name"`
 	Sizes       []KafkaInstanceSize `yaml:"sizes"`
 }
 
-func getValidMaturityStates() []MaturityStatus {
-	return []MaturityStatus{MaturityStatusStable, MaturityStatusTechPreview}
+func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(sizeId string) (*KafkaInstanceSize, error) {
+	for _, size := range kp.Sizes {
+		if size.Id == sizeId {
+			ret := size
+			return &ret, nil
+		}
+	}
+	return nil, fmt.Errorf("Kafka instance size id: '%s' not found for '%s' instance type", sizeId, kp.Id)
+}
+
+// HasAnInstanceSizeWithLifespan returns true if kp contains at least one Kafka
+// size with a non-nil LifespanSeconds value
+func (kp *KafkaInstanceType) HasAnInstanceSizeWithLifespan() bool {
+	for _, kafkaSize := range kp.Sizes {
+		if kafkaSize.LifespanSeconds != nil {
+			return true
+		}
+	}
+	return false
 }
 
 // validates kafka instance type config to ensure the following:
@@ -157,6 +178,16 @@ type SupportedKafkaInstanceTypesConfig struct {
 	SupportedKafkaInstanceTypes []KafkaInstanceType `yaml:"supported_instance_types"`
 }
 
+func (s *SupportedKafkaInstanceTypesConfig) GetKafkaInstanceTypeByID(instanceType string) (*KafkaInstanceType, error) {
+	for _, t := range s.SupportedKafkaInstanceTypes {
+		if t.Id == instanceType {
+			ret := t
+			return &ret, nil
+		}
+	}
+	return nil, fmt.Errorf("Unable to find kafka instance type for '%s'", instanceType)
+}
+
 func (s *SupportedKafkaInstanceTypesConfig) validate() error {
 	existingInstanceTypes := make(map[string]int, len(s.SupportedKafkaInstanceTypes))
 
@@ -183,26 +214,6 @@ func NewKafkaSupportedInstanceTypesConfig() *KafkaSupportedInstanceTypesConfig {
 	return &KafkaSupportedInstanceTypesConfig{
 		ConfigurationFile: "config/kafka-instance-types-configuration.yaml",
 	}
-}
-
-func (s *SupportedKafkaInstanceTypesConfig) GetKafkaInstanceTypeByID(instanceType string) (*KafkaInstanceType, error) {
-	for _, t := range s.SupportedKafkaInstanceTypes {
-		if t.Id == instanceType {
-			ret := t
-			return &ret, nil
-		}
-	}
-	return nil, fmt.Errorf("Unable to find kafka instance type for '%s'", instanceType)
-}
-
-func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(sizeId string) (*KafkaInstanceSize, error) {
-	for _, size := range kp.Sizes {
-		if size.Id == sizeId {
-			ret := size
-			return &ret, nil
-		}
-	}
-	return nil, fmt.Errorf("Kafka instance size id: '%s' not found for '%s' instance type", sizeId, kp.Id)
 }
 
 type Plan string

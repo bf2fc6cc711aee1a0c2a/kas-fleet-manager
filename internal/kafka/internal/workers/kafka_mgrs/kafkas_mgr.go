@@ -94,7 +94,7 @@ func (k *KafkaManager) Reconcile() []error {
 	kafkaConfig := k.kafkaConfig
 	if kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka {
 		glog.Infoln("deprovisioning expired kafkas")
-		expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas(kafkaConfig.KafkaLifespan.KafkaLifespanInHours)
+		expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas()
 		if expiredKafkasError != nil {
 			wrappedError := errors.Wrap(expiredKafkasError, "failed to deprovision expired Kafka instances")
 			encounteredErrors = append(encounteredErrors, wrappedError)

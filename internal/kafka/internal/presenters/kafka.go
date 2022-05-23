@@ -54,7 +54,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 			maxDataRetentionPeriod = kafkaConfig.MaxDataRetentionPeriod
 			maxConnectionAttemptsPerSec = kafkaConfig.MaxConnectionAttemptsPerSec
 			if kafkaConfig.LifespanSeconds != nil {
-				expiresAt = calculateKafkaInstanceExpirationTime(kafkaRequest.CreatedAt, *kafkaConfig.LifespanSeconds)
+				expiresAt = kafkaRequest.GetExpirationTime(*kafkaConfig.LifespanSeconds)
 			}
 		}
 	}
@@ -112,11 +112,4 @@ func getDisplayName(instanceType string, config *config.KafkaConfig) (string, *e
 		return kafkaInstanceType.DisplayName, nil
 	}
 	return "", nil
-}
-
-// calculateKafkaInstanceExpirationTime returns the expiration Time based
-// on a given creationTime time and lifespan in seconds
-func calculateKafkaInstanceExpirationTime(creationTime time.Time, lifespanSeconds int) *time.Time {
-	expireTime := creationTime.Add(time.Duration(lifespanSeconds) * time.Second)
-	return &expireTime
 }

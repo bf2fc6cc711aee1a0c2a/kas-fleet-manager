@@ -2,6 +2,7 @@ package dbapi
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"gorm.io/gorm"
@@ -91,4 +92,12 @@ func (k *KafkaRequest) SetRoutes(routes []DataPlaneKafkaRoute) error {
 		k.Routes = r
 		return nil
 	}
+}
+
+// GetExpirationTime returns when the Kafka request will expire based on the
+// provided lifespanSeconds value. lifespanSeconds is assumed to be greater
+// than 0
+func (k *KafkaRequest) GetExpirationTime(lifespanSeconds int) *time.Time {
+	expireTime := k.CreatedAt.Add(time.Duration(lifespanSeconds) * time.Second)
+	return &expireTime
 }

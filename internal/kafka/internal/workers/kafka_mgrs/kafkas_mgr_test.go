@@ -39,7 +39,7 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
 						return []services.KafkaRegionCount{}, nil
 					},
-					DeprovisionExpiredKafkasFunc: func(kafkaAgeInHours int) *errors.ServiceError {
+					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
 						return nil
 					},
 				},
@@ -59,7 +59,7 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
 						return nil, errors.GeneralError("failed to count kafkas by region and instance type")
 					},
-					DeprovisionExpiredKafkasFunc: func(kafkaAgeInHours int) *errors.ServiceError {
+					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
 						return nil
 					},
 				},
@@ -79,7 +79,7 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
 						return []services.KafkaRegionCount{}, nil
 					},
-					DeprovisionExpiredKafkasFunc: func(kafkaAgeInHours int) *errors.ServiceError {
+					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
 						return errors.GeneralError("failed to deprovision expired kafkas")
 					},
 				},

@@ -1963,14 +1963,12 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 		connectionFactory *db.ConnectionFactory
 	}
 
-	type args struct {
-		kafkaAgeInMins int
-	}
+	const instanceType = "type1"
+	const instanceSize = "size4"
 
 	tests := []struct {
 		name    string
 		fields  fields
-		args    args
 		wantErr bool
 		setupFn func()
 	}{
@@ -1981,7 +1979,8 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			},
 			wantErr: true,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithError(fmt.Errorf("an update error"))
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type IN ($1) AND status NOT IN ($2,$3)`).WithReply([]map[string]interface{}{{"id": "kafkainstance1", "instance_type": instanceType, "size_id": instanceSize}})
+				mocket.Catcher.NewMock().WithQuery(`UPDATE "kafka_requests" SET "status"=$1,"updated_at"=$2 WHERE id IN ($3)`).WithError(fmt.Errorf("an update error"))
 			},
 		},
 		{
@@ -1991,7 +1990,8 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests" SET "status"=$1,"updated_at"=$2 WHERE instance_type IN ($3) AND created_at <= $4 AND status NOT IN ($5,$6)`)
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type IN ($1) AND status NOT IN ($2,$3)`).WithReply([]map[string]interface{}{{"id": "kafkainstance1", "instance_type": instanceType, "size_id": instanceSize}})
+				mocket.Catcher.NewMock().WithQuery(`UPDATE "kafka_requests" SET "status"=$1,"updated_at"=$2 WHERE id IN ($3)`)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
@@ -2006,7 +2006,18 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 				kafkaConfig:       config.NewKafkaConfig(),
 			}
-			err := k.DeprovisionExpiredKafkas(tt.args.kafkaAgeInMins)
+			k.kafkaConfig.SupportedInstanceTypes.Configuration = config.SupportedKafkaInstanceTypesConfig{
+				SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+					config.KafkaInstanceType{
+						Id: instanceType,
+						Sizes: []config.KafkaInstanceSize{
+							config.KafkaInstanceSize{Id: "size1"},
+							config.KafkaInstanceSize{Id: instanceSize, LifespanSeconds: &[]int{1234}[0]},
+						},
+					},
+				},
+			}
+			err := k.DeprovisionExpiredKafkas()
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
