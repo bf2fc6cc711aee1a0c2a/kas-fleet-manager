@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
@@ -95,7 +94,7 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	cachedTokenKey := fmt.Sprintf("%s%s", c.realmConfig.Realm, c.realmConfig.ClientID)
 	cachedToken, _ := c.getCachedToken(cachedTokenKey)
 
-	if cachedToken != "" && !shared.IsJWTTokenExpired(cachedToken) {
+	if cachedToken != "" && !keycloak.IsJWTTokenExpired(cachedToken) {
 		return cachedToken, nil
 	}
 

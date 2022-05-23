@@ -1552,3 +1552,79 @@ func Test_kcClient_isNotFoundError(t *testing.T) {
 		})
 	}
 }
+
+func Test_IsJWTTokenExpired(t *testing.T) {
+	RegisterTestingT(t)
+
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, "")
+	Expect(err).ToNot(HaveOccurred())
+
+	account, err := authHelper.NewAccount("testuser", "user", "user@email.com", "orgId")
+	Expect(err).ToNot(HaveOccurred())
+
+	nilExpToken, err := authHelper.CreateSignedJWT(account, jwt.MapClaims{
+		"exp": nil,
+	})
+	Expect(err).ToNot(HaveOccurred())
+
+	expiredToken, err := authHelper.CreateSignedJWT(account, jwt.MapClaims{
+		"exp": time.Now().Add(-1 * time.Minute * time.Duration(5)).Unix(),
+	})
+	Expect(err).ToNot(HaveOccurred())
+
+	unExpiredToken, err := authHelper.CreateSignedJWT(account, jwt.MapClaims{
+		"exp": time.Now().Add(time.Minute * time.Duration(5)).Unix(),
+	})
+	Expect(err).ToNot(HaveOccurred())
+
+	type args struct {
+		accessToken string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "return true for empty accessToken",
+			args: args{
+				accessToken: "",
+			},
+			want: true,
+		},
+		{
+			name: "return true for invalid accessToken",
+			args: args{
+				accessToken: "invalid",
+			},
+			want: true,
+		},
+		{
+			name: "return true for nil 'exp' accessToken",
+			args: args{
+				accessToken: nilExpToken,
+			},
+			want: true,
+		},
+		{
+			name: "return true for expired accessToken",
+			args: args{
+				accessToken: expiredToken,
+			},
+			want: true,
+		},
+		{
+			name: "return false for unExpired accessToken",
+			args: args{
+				accessToken: unExpiredToken,
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Expect(IsJWTTokenExpired(tt.args.accessToken)).To(Equal(tt.want))
+		})
+	}
+}

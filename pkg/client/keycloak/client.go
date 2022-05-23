@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/Nerzal/gocloak/v11"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 )
@@ -168,7 +168,7 @@ func (kc *kcClient) GetToken() (string, error) {
 	cachedTokenKey := fmt.Sprintf("%s%s", kc.realmConfig.ValidIssuerURI, kc.realmConfig.ClientID)
 	cachedToken, _ := kc.GetCachedToken(cachedTokenKey)
 
-	if cachedToken != "" && !shared.IsJWTTokenExpired(cachedToken) {
+	if cachedToken != "" && !IsJWTTokenExpired(cachedToken) {
 		return cachedToken, nil
 	}
 	tokenResp, err := kc.kcClient.GetToken(kc.ctx, kc.realmConfig.Realm, options)
@@ -178,6 +178,19 @@ func (kc *kcClient) GetToken() (string, error) {
 
 	kc.cache.Set(cachedTokenKey, tokenResp.AccessToken, cacheCleanupInterval)
 	return tokenResp.AccessToken, nil
+}
+
+// IsJWTTokenExpired returns false if JWT token is not expired, otherwise returns true
+// This method does NOT validate the token, and should not be used when validation is necessary
+func IsJWTTokenExpired(accessToken string) bool {
+	if token, _ := jwt.Parse(accessToken, nil); token != nil {
+		tokenClaims := token.Claims.(jwt.MapClaims)
+		if _, ok := tokenClaims["exp"]; ok {
+			expTime := time.Unix(int64(tokenClaims["exp"].(float64)), 0)
+			return time.Now().After(expTime)
+		}
+	}
+	return true
 }
 
 func (kc *kcClient) GetCachedToken(tokenKey string) (string, error) {
