@@ -86,7 +86,7 @@ func NewKeycloakConfig() *KeycloakConfig {
 			GrantType:        "client_credentials",
 		},
 		RedhatSSORealm: &KeycloakRealmConfig{
-			APIEndpointURI:   "https://sso.redhat.com/auth/realms/redhat-external",
+			APIEndpointURI:   "/auth/realms/redhat-external",
 			Realm:            "redhat-external",
 			ClientIDFile:     "secrets/redhatsso-service.clientId",
 			ClientSecretFile: "secrets/redhatsso-service.clientSecret",
