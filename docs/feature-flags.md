@@ -37,7 +37,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 
 ## Kafka
 - **enable-deletion-of-expired-kafka**: Enables deletion of developer Kafka instances when its life span has expired.
-    - `kafka-lifespan` [Optional]: The desired lifespan of a Kafka instance in hour(s) (default: `48`).
 - **enable-kafka-external-certificate**: Enables custom Kafka TLS certificate.
     - `kafka-tls-cert-file` [Required]: The path to the file containing the Kafka TLS certificate (default: `'secrets/kafka-tls.crt'`).
     - `kafka-tls-key-file` [Required]: The path to the file containing the Kafka TLS private key (default: `'secrets/kafka-tls.key'`).

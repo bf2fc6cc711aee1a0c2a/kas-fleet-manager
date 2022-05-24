@@ -434,8 +434,8 @@ parameters:
   value: "48"
 
 - name: ENABLE_KAFKA_LIFE_SPAN
-  displayName: Enables Kafka life span for expiration in hours
-  description: Enables the ability to set a Kafka life span for expiration in hours
+  displayName: Enables Kafka life span
+  description: Enables the ability to deprovision kafka instances that have a type/size with a lifespan and have expired
   value: "false"
 
 - name: DATAPLANE_CLUSTER_SCALING_TYPE
