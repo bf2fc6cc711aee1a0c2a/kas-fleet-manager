@@ -17,6 +17,14 @@ func (c *Client) MockAPI() pV1.API {
 type httpAPIMock struct {
 }
 
+func (t *httpAPIMock) WalReplay(ctx context.Context) (pV1.WalReplayStatus, error) {
+	return pV1.WalReplayStatus{}, fmt.Errorf("not implemented")
+}
+
+func (t *httpAPIMock) QueryExemplars(ctx context.Context, query string, startTime time.Time, endTime time.Time) ([]pV1.ExemplarQueryResult, error) {
+	return []pV1.ExemplarQueryResult{}, fmt.Errorf("not implemented")
+}
+
 // performs a query for the kafka metrics.
 func (t *httpAPIMock) Query(ctx context.Context, query string, ts time.Time) (pModel.Value, pV1.Warnings, error) {
 	values := getMockQueryData(query)
