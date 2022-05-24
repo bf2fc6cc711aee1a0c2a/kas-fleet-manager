@@ -725,7 +725,6 @@ deploy/service: FLEET_MANAGER_ENV ?= "development"
 deploy/service: REPLICAS ?= "1"
 deploy/service: ENABLE_KAFKA_EXTERNAL_CERTIFICATE ?= "false"
 deploy/service: ENABLE_KAFKA_LIFE_SPAN ?= "false"
-deploy/service: KAFKA_LIFE_SPAN ?= "48"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
 deploy/service: AMS_URL ?= "https://api.stage.openshift.com"
 deploy/service: MAS_SSO_ENABLE_AUTH ?= "true"
@@ -783,7 +782,6 @@ deploy/service: deploy/envoy deploy/route
 		-p KAFKA_OWNERS="${KAFKA_OWNERS}" \
 		-p ENABLE_KAFKA_EXTERNAL_CERTIFICATE="${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}" \
 		-p ENABLE_KAFKA_LIFE_SPAN="${ENABLE_KAFKA_LIFE_SPAN}" \
-		-p KAFKA_LIFE_SPAN="${KAFKA_LIFE_SPAN}" \
 		-p ENABLE_OCM_MOCK=$(ENABLE_OCM_MOCK) \
 		-p OCM_MOCK_MODE=$(OCM_MOCK_MODE) \
 		-p OCM_URL="$(OCM_URL)" \
