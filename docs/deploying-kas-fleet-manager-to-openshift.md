@@ -98,6 +98,8 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `MAS_SSO_CRT`: The TLS certificate of the MAS SSO instance. Defaults to value read from _./secrets/keycloak-service.crt_
 - `MAS_SSO_INSECURE`: Skip TLS insecure verification for the connection to a MAS SSO instance. Defaults to value false.
 - `OSD_IDP_MAS_SSO_CLIENT_ID`: The client id for a MAS SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientId_
+- `REDHAT_SSO_CLIENT_ID`: The client id for a REDHAT SSO service account. Defaults to value read from _./secrets/redhatsso-service.clientId_
+- `REDHAT_SSO_CLIENT_SECRET`: The client secret for a REDHAT SSO service account. Defaults to value read from _./secrets/redhatsso-service.clientSecret_
 - `OSD_IDP_MAS_SSO_CLIENT_SECRET`: The client secret for a MAS SSO service account used to configure OpenShift identity provider. Defaults to value read from _./secrets/osd-idp-keycloak-service.clientSecret_
 - `IMAGE_PULL_DOCKER_CONFIG`: Base64 encoded Docker config content for pulling private images. Defaults to value read from _./secrets/image-pull.dockerconfigjson_
 - `KUBE_CONFIG`: Base64 encoded Kubeconfig content for standalone dataplane clusters communication. Defaults to `''`
@@ -178,6 +180,7 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `KAS_FLEETSHARD_OPERATOR_STARTING_CSV`: Kas-fleetshard operator starting csv. This is only applied for standalone clusters. Defaults to empty string
 - `KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG`: Kas-fleetshard operator subscription config. This is applied for standalone clusters only. The configuration must be of type [SubscriptionConfig](https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig). Defaults to an empty object i.e `{}`. See the [config/kas-fleetshard-operator-subscription-spec-config.yaml](../config/kas-fleetshard-operator-subscription-spec-config.yaml) file for example values.
 - `STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG`: Strimzi operator subscription config. This is applied for standalone clusters only. The configuration must be of type [SubscriptionConfig](https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig). Defaults to an empty object i.e `{}`. See the [config/strimzi-operator-subscription-spec-config.yaml](../config/strimzi-operator-subscription-spec-config.yaml) file for example values. 
+- `SSO_PROVIDER_TYPE`: Option to choose between sso providers i.e, mas_sso or redhat_sso, mas-sso by default.
 
 ### Using an Image from a Private External Registry
 If you are using a private external registry, a docker pull secret must be created in the namespace where KAS Fleet Manager is deployed and linked to the service account that KAS Fleet Manager uses.
