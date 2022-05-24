@@ -47,4 +47,6 @@ type KafkaRequest struct {
 	MaxPartitions               int32      `json:"max_partitions,omitempty"`
 	MaxDataRetentionPeriod      string     `json:"max_data_retention_period,omitempty"`
 	MaxConnectionAttemptsPerSec int32      `json:"max_connection_attempts_per_sec,omitempty"`
+	CloudAccountId              string     `json:"cloud_account_id,omitempty"`
+	Marketplace                 string     `json:"marketplace,omitempty"`
 }
