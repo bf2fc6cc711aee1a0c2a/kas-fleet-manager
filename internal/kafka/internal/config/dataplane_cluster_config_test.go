@@ -846,7 +846,7 @@ func Test_ReadFiles(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			name: "should return an error with misconfigured ImagePullDockerConfig",
+			name: "should not return an error when specified ImagePullDockerConfig file does not exist",
 			fields: fields{
 				config: NewDataplaneClusterConfig(),
 			},
@@ -854,7 +854,7 @@ func Test_ReadFiles(t *testing.T) {
 				config.ImagePullDockerConfigFile = "invalid"
 				config.ImagePullDockerConfigContent = ""
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "should return an error with invalid DataPlaneClusterConfigFile",

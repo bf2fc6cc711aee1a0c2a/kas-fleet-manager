@@ -292,8 +292,12 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 func (c *DataplaneClusterConfig) ReadFiles() error {
 	if c.ImagePullDockerConfigContent == "" && c.ImagePullDockerConfigFile != "" {
 		err := shared.ReadFileValueString(c.ImagePullDockerConfigFile, &c.ImagePullDockerConfigContent)
-		if err != nil {
+		if err != nil && !os.IsNotExist(err) {
 			return err
+		}
+
+		if (err != nil && os.IsNotExist(err)) || c.ImagePullDockerConfigContent == "" {
+			logger.Logger.Warningf("Specified image pull secret file does not exist or has no content. Data plane cluster terraform may fail if operators to be installed use images from a private repository")
 		}
 	}
 
