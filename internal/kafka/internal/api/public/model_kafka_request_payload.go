@@ -24,4 +24,8 @@ type KafkaRequestPayload struct {
 	ReauthenticationEnabled *bool `json:"reauthentication_enabled,omitempty"`
 	// kafka plan in a format of <instance_type>.<size_id>
 	Plan string `json:"plan,omitempty"`
+	// cloud account id used to purchase the instance
+	CloudAccountId *string `json:"cloud_account_id,omitempty"`
+	// marketplace where the instance is purchased on
+	Marketplace *string `json:"marketplace,omitempty"`
 }
