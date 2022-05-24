@@ -15,7 +15,6 @@ func Test_NewKafkaLifespanConfig(t *testing.T) {
 			name: "should return new KafkaLifespanConfig",
 			want: &KafkaLifespanConfig{
 				EnableDeletionOfExpiredKafka: true,
-				KafkaLifespanInHours:         48,
 			},
 		},
 	}
