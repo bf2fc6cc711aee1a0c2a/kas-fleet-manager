@@ -876,7 +876,7 @@ docs/generate/mermaid:
 .PHONY: docs/generate/mermaid
 
 dataplane/imagepull/secret/setup:
-	@echo -n "$(DATA_PLANE_PULL_SECRET)" > secrets/image-pull.dockerconfigjson
+	@echo -n "$${DATA_PLANE_PULL_SECRET}" > secrets/image-pull.dockerconfigjson
 .PHONY: dataplane/imagepull/secret/setup
 
 # TODO CRC Deployment stuff
