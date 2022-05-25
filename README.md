@@ -1,6 +1,7 @@
 Kafka Service Fleet Manager
 ---
 ![build status badge](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/actions/workflows/ci.yaml/badge.svg)
+![codecov](https://codecov.io/gh/bf2fc6cc711aee1a0c2a/kas-fleet-manager/branch/main/graph/badge.svg)
 
 A service for provisioning and managing fleets of Kafka instances.
 
