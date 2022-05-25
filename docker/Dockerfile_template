@@ -30,7 +30,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV REPORTPORTAL_ENDPOINT <report_portal_endpoint>
 ENV REPORTPORTAL_ACCESS_TOKEN <report_portal_access_token>
 ENV REPORTPORTAL_PROJECT <report_portal_project>
-ENV DATA_PLANE_PULL_SECRET <data_plane_pull_secret>
 
 RUN apt-get update
 RUN apt-get install -y make sudo git wget curl ca-certificates
