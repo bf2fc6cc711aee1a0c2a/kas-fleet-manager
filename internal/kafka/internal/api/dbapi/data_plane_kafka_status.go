@@ -12,6 +12,7 @@ type DataPlaneKafkaStatus struct {
 	KafkaVersion    string
 	StrimziVersion  string
 	KafkaIBPVersion string
+	AdminServerURI  string
 }
 
 type DataPlaneKafkaStatusCondition struct {

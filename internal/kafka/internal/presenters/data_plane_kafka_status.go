@@ -34,6 +34,7 @@ func ConvertDataPlaneKafkaStatus(status map[string]private.DataPlaneKafkaStatus)
 			KafkaVersion:    v.Versions.Kafka,
 			StrimziVersion:  v.Versions.Strimzi,
 			KafkaIBPVersion: v.Versions.KafkaIbp,
+			AdminServerURI:  v.AdminServerURI,
 		})
 	}
 

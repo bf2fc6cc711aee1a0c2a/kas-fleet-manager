@@ -22,6 +22,7 @@ type KafkaRequest struct {
 	Owner                            string `json:"owner" gorm:"index"` // TODO: ocm owner?
 	OwnerAccountId                   string `json:"owner_account_id"`
 	BootstrapServerHost              string `json:"bootstrap_server_host"`
+	AdminApiServerURL                string `json:"admin_api_server_url"`
 	OrganisationId                   string `json:"organisation_id" gorm:"index"`
 	FailedReason                     string `json:"failed_reason"`
 	// PlacementId field should be updated every time when a KafkaRequest is assigned to an OSD cluster (even if it's the same one again)

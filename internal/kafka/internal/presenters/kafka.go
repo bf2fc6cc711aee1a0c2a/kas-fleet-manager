@@ -75,6 +75,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 		MultiAz:                     kafkaRequest.MultiAZ,
 		Owner:                       kafkaRequest.Owner,
 		BootstrapServerHost:         setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
+		AdminApiServerUrl:           kafkaRequest.AdminApiServerURL,
 		Status:                      kafkaRequest.Status,
 		CreatedAt:                   kafkaRequest.CreatedAt,
 		UpdatedAt:                   kafkaRequest.UpdatedAt,
