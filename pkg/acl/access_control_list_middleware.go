@@ -41,6 +41,14 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 
 		orgId, _ := claims.GetOrgId()
 
+		if middleware.accessControlListConfig.EnableAccessList {
+			orgIsAccepted := middleware.accessControlListConfig.AccessList.IsOrganisationAccepted(orgId)
+			if !orgIsAccepted {
+				shared.HandleError(r, w, errors.New(errors.ErrorForbidden, "organisation '%s' is not authorized to access the service during the current SSO Migration.", orgId))
+				return
+			}
+		}
+
 		// If the users claim has an orgId, resources should be filtered by their organisation. Otherwise, filter them by owner.
 		context = auth.SetFilterByOrganisationContext(context, orgId != "")
 		*r = *r.WithContext(context)

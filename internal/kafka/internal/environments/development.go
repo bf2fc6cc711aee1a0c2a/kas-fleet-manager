@@ -16,6 +16,7 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"api-server-bindaddress":                          "localhost:8000",
 		"enable-sentry":                                   "false",
 		"enable-deny-list":                                "true",
+		"enable-access-list":                              "false",
 		"enable-instance-limit-control":                   "false",
 		"mas-sso-base-url":                                "https://identity.api.stage.openshift.com",
 		"mas-sso-realm":                                   "rhoas",

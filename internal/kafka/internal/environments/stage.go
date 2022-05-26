@@ -8,6 +8,7 @@ func NewStageEnvLoader() environments.EnvLoader {
 		"ams-base-url":                      "https://api.stage.openshift.com",
 		"enable-ocm-mock":                   "false",
 		"enable-deny-list":                  "true",
+		"enable-access-list":                "false",
 		"max-allowed-instances":             "1",
 		"mas-sso-base-url":                  "https://identity.api.stage.openshift.com",
 		"mas-sso-realm":                     "rhoas",

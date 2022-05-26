@@ -1,0 +1,14 @@
+---
+# A list of organisations given by their orgId which are allowed access when access list is enabled.
+
+
+  # The Control Plane team
+- 13640203
+  # The App SRE team
+- 12147054
+  # The Kafka Instances team
+- 13639843
+  # The MK Security team
+- 13785172
+  # The Running the Service team
+- 13645369
