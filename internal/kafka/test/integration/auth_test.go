@@ -55,14 +55,14 @@ func TestAuthSucess_publicUrls(t *testing.T) {
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusOK))
 
 	errorsList, resp, err := client.ErrorsApi.GetErrors(context.Background())
+	Expect(err).To(BeNil())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(errorsList.Items).NotTo(BeEmpty())
-	Expect(err).To(BeNil())
 
 	errorCode := "7"
 	_, notFoundErrorResp, err := client.ErrorsApi.GetErrorById(context.Background(), errorCode)
-	Expect(notFoundErrorResp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).To(BeNil())
+	Expect(notFoundErrorResp.StatusCode).To(Equal(http.StatusOK))
 }
 
 func TestAuthSuccess_usingSSORHToken(t *testing.T) {

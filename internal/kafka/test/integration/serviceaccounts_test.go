@@ -113,8 +113,8 @@ func TestServiceAccounts_Success(t *testing.T) {
 	// verify get by id
 	id := sa.Id
 	sa, resp, err = client.SecurityApi.GetServiceAccountById(ctx, id)
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).ShouldNot(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(sa.ClientId).NotTo(BeEmpty())
 	Expect(sa.Id).NotTo(BeEmpty())
 	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
@@ -289,8 +289,8 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	// verify malformed  id
 	id := faker.ID
 	_, resp, err = client.SecurityApi.GetServiceAccountById(ctx, id)
-	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 }
 
 func TestServiceAccounts_SsoProvider_MAS_SSO(t *testing.T) {

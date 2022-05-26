@@ -502,8 +502,8 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 	regions, resp, err := client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
 		InstanceType: optional.NewString("developer"),
 	})
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type 'developer': %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(regions.Items).To(HaveLen(2))
 	for _, r := range regions.Items {
 		Expect(r.Id).To(SatisfyAny(Equal("us-east-1"), Equal("eu-west-2")))
@@ -514,8 +514,8 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
 		InstanceType: optional.NewString("standard"),
 	})
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type 'standard': %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(regions.Items).To(HaveLen(2))
 	for _, r := range regions.Items {
 		Expect(r.Id).To(SatisfyAny(Equal("us-east-1"), Equal("af-south-1")))
@@ -526,16 +526,16 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
 		InstanceType: optional.NewString("!invalid!"),
 	})
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions of instance type '!invalid!': %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(regions.Items).To(HaveLen(0))
 
 	// should return all regions if specified instance_type was an empty string
 	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
 		InstanceType: optional.NewString(""),
 	})
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions when specifying empty instance type: %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(regions.Items).ToNot(BeEmpty())
 	for _, cpr := range regions.Items {
 		if cpr.Id == "us-east-1" || cpr.Id == "af-south-1" || cpr.Id == "eu-west-2" {
@@ -576,8 +576,8 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
 		InstanceType: optional.NewString(""),
 	})
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions when specifying empty instance type: %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(regions.Items).ToNot(BeEmpty())
 	for _, cpr := range regions.Items {
 		if cpr.Id == "us-east-1" {
@@ -601,8 +601,8 @@ func TestListCloudProviderRegionsWithInstanceType(t *testing.T) {
 	regions, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "aws", &public.GetCloudProviderRegionsOpts{
 		InstanceType: optional.NewString(""),
 	})
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud provider regions when specifying empty instance type: %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(regions.Items).ToNot(BeEmpty())
 	for _, cpr := range regions.Items {
 		if cpr.Id == "us-east-1" {

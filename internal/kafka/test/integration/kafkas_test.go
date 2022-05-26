@@ -1725,9 +1725,9 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 
 	// Test deletion of a kafka in an 'accepted' state
 	kafka, resp, err := common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 
 	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
@@ -1744,9 +1744,9 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 
 	// Test deletion of a kafka in a 'preparing' state
 	kafka, resp, err = common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 
 	kafka, err = common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusPreparing)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be preparing: %v", err)
@@ -1766,9 +1766,9 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 
 	// Test deletion of a kafka in a 'provisioning' state
 	kafka, resp, err = common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 
 	kafka, err = common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusProvisioning)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be provisioning: %v", err)
