@@ -191,7 +191,7 @@ func convertServiceAccountDataToAPIServiceAccount(data *serviceaccountsclient.Se
 		ClientID:     shared.SafeString(data.ClientId),
 		ClientSecret: shared.SafeString(data.Secret),
 		Name:         shared.SafeString(data.Name),
-		Owner:        shared.SafeString(data.CreatedBy),
+		CreatedBy:    shared.SafeString(data.CreatedBy),
 		Description:  shared.SafeString(data.Description),
 		CreatedAt:    time.Unix(0, shared.SafeInt64(data.CreatedAt)*int64(time.Millisecond)),
 	}

@@ -15,7 +15,7 @@ const (
 	id                     = "test-id"
 	clientId               = "test-client-id"
 	clientSecret           = "test-client-secret"
-	owner                  = "test-owner"
+	createdBy              = "test-owner"
 	kindServiceAccount     = "ServiceAccount"
 	baseUrlSsoProvider     = "https://base_url_sso_provider"
 	tokenUrlSsoProvider    = "https://token_url_sso_provider"
@@ -56,8 +56,8 @@ func BuildServiceAccount(modifyFn func(ServiceAccount public.ServiceAccount)) *p
 		ClientId:     clientId,
 		ClientSecret: clientSecret,
 		// Deprecated
-		DeprecatedOwner: owner,
-		CreatedBy:       owner,
+		DeprecatedOwner: createdBy,
+		CreatedBy:       createdBy,
 		Href:            fmt.Sprintf("/api/kafkas_mgmt/v1/service_accounts/%s", id),
 	}
 	if modifyFn != nil {
@@ -73,7 +73,7 @@ func BuildApiServiceAccount(modifyFn func(ServiceAccount api.ServiceAccount)) *a
 		Description:  description,
 		ClientID:     clientId,
 		ClientSecret: clientSecret,
-		Owner:        owner,
+		CreatedBy:    createdBy,
 	}
 	if modifyFn != nil {
 		modifyFn(serviceAccount)
@@ -89,8 +89,8 @@ func BuildServiceAccountListItem(modifyFn func(ServiceAccount public.ServiceAcco
 		Kind:            kindServiceAccount,
 		Description:     description,
 		ClientId:        clientId,
-		DeprecatedOwner: owner,
-		CreatedBy:       owner,
+		DeprecatedOwner: createdBy,
+		CreatedBy:       createdBy,
 	}
 	if modifyFn != nil {
 		modifyFn(serviceAccountListItem)

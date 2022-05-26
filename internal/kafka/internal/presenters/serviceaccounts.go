@@ -19,9 +19,9 @@ func PresentServiceAccount(account *api.ServiceAccount) *public.ServiceAccount {
 		ClientSecret:    account.ClientSecret,
 		Name:            account.Name,
 		Description:     account.Description,
-		DeprecatedOwner: account.Owner,
+		DeprecatedOwner: account.CreatedBy,
 		CreatedAt:       account.CreatedAt,
-		CreatedBy:       account.Owner,
+		CreatedBy:       account.CreatedBy,
 		Id:              reference.Id,
 		Kind:            reference.Kind,
 		Href:            reference.Href,
@@ -36,10 +36,10 @@ func PresentServiceAccountListItem(account *api.ServiceAccount) public.ServiceAc
 		Href:            ref.Href,
 		ClientId:        account.ClientID,
 		Name:            account.Name,
-		DeprecatedOwner: account.Owner,
+		DeprecatedOwner: account.CreatedBy,
 		Description:     account.Description,
 		CreatedAt:       account.CreatedAt,
-		CreatedBy:       account.Owner,
+		CreatedBy:       account.CreatedBy,
 	}
 }
 
