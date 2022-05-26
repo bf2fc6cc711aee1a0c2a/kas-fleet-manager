@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	clusterType "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -21,6 +22,31 @@ func BuildApiRegionCapacityListItemSlice(modifyFn func(regionCapacityListItems [
 		modifyFn(apiRegionCapacityListItem)
 	}
 	return apiRegionCapacityListItem
+}
+
+func BuildCloudProviderInfoList(modifyFn func(CloudProviderInfo *clusterType.CloudProviderInfo)) *clusterType.CloudProviderInfo {
+	CloudProviderInfo := clusterType.CloudProviderInfo{
+		ID:          mocks.MockCloudProviderID,
+		DisplayName: mocks.MockCloudRegionDisplayName,
+		Name:        mocks.MockCloudRegionDisplayName,
+	}
+	if modifyFn != nil {
+		modifyFn(&CloudProviderInfo)
+	}
+	return &CloudProviderInfo
+}
+
+func BuildCloudProviderRegionInfoList(modifyFn func(CloudProviderRegionInfo *clusterType.CloudProviderRegionInfo)) *clusterType.CloudProviderRegionInfo {
+	CloudProviderRegionInfo := clusterType.CloudProviderRegionInfo{
+		ID:              mocks.MockCloudProviderRegion.ID(),
+		DisplayName:     mocks.MockCloudProviderRegion.DisplayName(),
+		CloudProviderID: mocks.MockCloudProviderRegion.ID(),
+		Name:            mocks.MockCloudProviderRegion.DisplayName(),
+	}
+	if modifyFn != nil {
+		modifyFn(&CloudProviderRegionInfo)
+	}
+	return &CloudProviderRegionInfo
 }
 
 func BuildRegionCapacityListItemSlice(modifyFn func(regionCapacityListItems []public.RegionCapacityListItem)) []public.RegionCapacityListItem {

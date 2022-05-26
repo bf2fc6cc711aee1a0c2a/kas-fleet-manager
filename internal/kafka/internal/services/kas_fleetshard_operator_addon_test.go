@@ -1,23 +1,21 @@
 package services
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/onsi/gomega"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	. "github.com/onsi/gomega"
 )
 
-func TestAgentOperatorAddon_Provision(t *testing.T) {
+func Test_AgentOperatorAddon_Provision(t *testing.T) {
 	addonId := "test-id"
 	type fields struct {
 		providerFactory clusters.ProviderFactory
@@ -72,9 +70,9 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 			wantErr: true,
 		},
 	}
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				SsoService:          tt.fields.ssoService,
 				ProviderFactory:     tt.fields.providerFactory,
@@ -92,12 +90,12 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 			if err != nil && !tt.wantErr {
 				t.Errorf("Provision() error = %v, want = %v", err, tt.wantErr)
 			}
-			Expect(ready).To(Equal(tt.result))
+			g.Expect(ready).To(Equal(tt.result))
 		})
 	}
 }
 
-func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
+func Test_AgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 	type fields struct {
 		ssoService sso.KeycloakService
 	}
@@ -129,9 +127,9 @@ func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 			wantErr: false,
 		},
 	}
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				SsoService: tt.fields.ssoService,
 			}
@@ -139,12 +137,12 @@ func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 				ClusterID:    "test-cluster-id",
 				ProviderType: api.ClusterProviderOCM,
 			})
-			gomega.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
 
-func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
+func Test_KasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 	type fields struct {
 		providerFactory clusters.ProviderFactory
 		ssoService      sso.KeycloakService
@@ -199,7 +197,6 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				SsoService:          tt.fields.ssoService,
 				ProviderFactory:     tt.fields.providerFactory,
@@ -217,6 +214,51 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 			if err != nil && !tt.wantErr {
 				t.Errorf("Provision() error = %v, want = %v", err, tt.wantErr)
 			}
+		})
+	}
+}
+
+func Test_ParameterList_GetParam(t *testing.T) {
+	type args struct {
+		name string
+	}
+	tests := []struct {
+		name string
+		p    ParameterList
+		args args
+		want string
+	}{
+		{
+			name: "should get parameter value if id and name match",
+			p: ParameterList{
+				ocm.Parameter{
+					Id:    "parameterName",
+					Value: "parameterValue",
+				},
+			},
+			args: args{
+				name: "parameterName",
+			},
+			want: "parameterValue",
+		},
+		{
+			name: "should return empty string if theres no match",
+			p: ParameterList{
+				ocm.Parameter{
+					Id:    "parameterName",
+					Value: "parameterValue",
+				},
+			},
+			args: args{
+				name: "",
+			},
+			want: "",
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g.Expect(tt.p.GetParam(tt.args.name)).To(Equal(tt.want))
 		})
 	}
 }

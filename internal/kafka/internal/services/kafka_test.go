@@ -9,27 +9,28 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
-
 	"github.com/aws/aws-sdk-go/service/route53"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	mocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 	goerrors "github.com/pkg/errors"
 	mocket "github.com/selvatico/go-mocket"
 	"gorm.io/gorm"
-
-	. "github.com/onsi/gomega"
 )
 
 const (
@@ -157,7 +158,7 @@ var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig
 				DisplayName: "Trial",
 				Sizes: []config.KafkaInstanceSize{
 					{
-						Id:                          "x2",
+						Id:                          "x1",
 						IngressThroughputPerSec:     "60Mi",
 						EgressThroughputPerSec:      "60Mi",
 						TotalMaxConnections:         2000,
@@ -234,7 +235,7 @@ func Test_kafkaService_Get(t *testing.T) {
 		// below is a single test case, we define each of the fields that we care about from the anonymous test struct
 		// above
 		{
-			name: "error when id is undefined",
+			name: "error when kafka id is undefined",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
@@ -274,10 +275,11 @@ func Test_kafkaService_Get(t *testing.T) {
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE id = $1 AND owner = $2`).
 					WithArgs(testID, testUser).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 	}
-	RegisterTestingT(t)
+	g := NewWithT(t)
 	// we loop through each test case defined in the list above and start a new test invocation, using the testing
 	// t.Run function
 	for _, tt := range tests {
@@ -302,7 +304,7 @@ func Test_kafkaService_Get(t *testing.T) {
 			}
 			// in our test case we used 'want' to define the output api.KafkaRequest that we expect to be returned, we
 			// can use Equal function to compare expected and received result
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -324,7 +326,7 @@ func Test_kafkaService_GetById(t *testing.T) {
 		setupFn func()
 	}{
 		{
-			name: "error when id is undefined",
+			name: "error when kafka id is undefined",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
@@ -361,11 +363,12 @@ func Test_kafkaService_GetById(t *testing.T) {
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE id = $1`).
 					WithArgs(testID).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -380,7 +383,7 @@ func Test_kafkaService_GetById(t *testing.T) {
 				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -633,7 +636,19 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 			wantErrMsg: "KAFKAS-MGMT-9",
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests"`).WithQueryException()
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
+		},
+		{
+			name: "error when id is an empty string",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+				kafkaRequest.ID = ""
+			}),
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -901,8 +916,65 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.InstanceType = types.STANDARD.String()
+					})))
+				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			error: errorCheck{
+				wantErr: false,
+			},
+		},
+		{
+			name: "registering kafka job succeeds with developer",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				clusterService:         nil,
+				kafkaConfig:            defaultKafkaConf,
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+						return mockCluster, nil
+					},
+				},
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(username, externalId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "subscription-id", nil
+					},
+				},
+				providerConfig: buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.DEVELOPER.String()
+					kafkaRequest.SizeId = "x1"
+					kafkaRequest.Owner = testUser
+					kafkaRequest.OrganisationId = "org-id"
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "developer").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.ID = ""
+						kafkaRequest.InstanceType = types.DEVELOPER.String()
+						kafkaRequest.SizeId = "x1"
+						kafkaRequest.Owner = testUser
+						kafkaRequest.OrganisationId = "org-id"
+					})))
+				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQuery(``)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+
 			},
 			error: errorCheck{
 				wantErr: false,
@@ -939,8 +1011,13 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithExecException().WithQueryException()
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.InstanceType = types.STANDARD.String()
+					})))
+				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 			error: errorCheck{
 				wantErr: false,
@@ -977,8 +1054,13 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithExecException().WithQueryException()
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.InstanceType = types.STANDARD.String()
+					})))
+				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 			error: errorCheck{
 				wantErr:  true,
@@ -1013,7 +1095,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
 					kafkaRequest.InstanceType = types.DEVELOPER.String()
-					kafkaRequest.SizeId = "x2"
+					kafkaRequest.SizeId = "x1"
 				}),
 			},
 			error: errorCheck{
@@ -1023,7 +1105,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 		{
-			name: "registering kafka job developer disabled",
+			name: "registering kafka job unsucessful when wrong plan is selected",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				clusterService:         nil,
@@ -1056,12 +1138,16 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
 					kafkaRequest.InstanceType = types.DEVELOPER.String()
+					kafkaRequest.SizeId = "x2"
 				}),
 			},
 			error: errorCheck{
 				wantErr:  true,
 				code:     errors.ErrorInstancePlanNotSupported,
 				httpCode: http.StatusBadRequest,
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
 			},
 		},
 		{
@@ -1094,9 +1180,14 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).WithReply([]map[string]interface{}{})
-				mocket.Catcher.NewMock().WithQuery("INSERT")
-				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.InstanceType = types.STANDARD.String()
+					})))
+				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 			error: errorCheck{
 				wantErr:  true,
@@ -1572,7 +1663,7 @@ func Test_kafkaService_List(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1592,7 +1683,7 @@ func Test_kafkaService_List(t *testing.T) {
 			}
 
 			// compare wanted vs actual pagingMeta result
-			Expect(pagingMeta).To(Equal(tt.want.pagingMeta))
+			g.Expect(pagingMeta).To(Equal(tt.want.pagingMeta))
 
 			// compare wanted vs actual results
 			if len(result) != len(tt.want.kafkaList) {
@@ -1600,7 +1691,7 @@ func Test_kafkaService_List(t *testing.T) {
 			}
 
 			for i, got := range result {
-				Expect(got).To(Equal(tt.want.kafkaList[i]))
+				g.Expect(got).To(Equal(tt.want.kafkaList[i]))
 			}
 		})
 	}
@@ -1630,6 +1721,7 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 			wantErr: true,
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -1648,7 +1740,7 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1664,7 +1756,7 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 				t.Errorf("kafkaService.ListByStatus() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -1809,6 +1901,7 @@ func Test_kafkaService_Update(t *testing.T) {
 			wantErr: true,
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithExecException()
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -1869,6 +1962,7 @@ func Test_kafkaService_Updates(t *testing.T) {
 			wantErr: true,
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithExecException()
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -1929,6 +2023,7 @@ func Test_kafkaService_DeprovisionKafkaForUsers(t *testing.T) {
 			wantErr: true,
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithError(fmt.Errorf("some update error"))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			args: args{users: []string{"user"}},
 		},
@@ -1945,15 +2040,15 @@ func Test_kafkaService_DeprovisionKafkaForUsers(t *testing.T) {
 			},
 		},
 	}
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
-			gomega.RegisterTestingT(t)
 			k := kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			err := k.DeprovisionKafkaForUsers(tt.args.users)
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -1981,6 +2076,7 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type IN ($1) AND status NOT IN ($2,$3)`).WithReply([]map[string]interface{}{{"id": "kafkainstance1", "instance_type": instanceType, "size_id": instanceSize}})
 				mocket.Catcher.NewMock().WithQuery(`UPDATE "kafka_requests" SET "status"=$1,"updated_at"=$2 WHERE id IN ($3)`).WithError(fmt.Errorf("an update error"))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -1996,9 +2092,9 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			},
 		},
 	}
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -2018,12 +2114,12 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 				},
 			}
 			err := k.DeprovisionExpiredKafkas()
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
 
-func TestKafkaService_CountByStatus(t *testing.T) {
+func Test_KafkaService_CountByStatus(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
@@ -2061,6 +2157,7 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 					WithQuery(`SELECT status as Status, count(1) as Count FROM "kafka_requests" WHERE status in ($1,$2,$3)`).
 					WithArgs(constants2.KafkaRequestStatusAccepted.String(), constants2.KafkaRequestStatusReady.String(), constants2.KafkaRequestStatusProvisioning.String()).
 					WithReply(counters)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			want: []KafkaStatusCount{{
 				Status: constants2.KafkaRequestStatusAccepted,
@@ -2082,12 +2179,13 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 			wantErr: true,
 			setupFunc: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithQueryException()
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			want: nil,
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2101,12 +2199,12 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for CountByStatus: %v", err)
 			}
-			Expect(status).To(Equal(tt.want))
+			g.Expect(status).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
+func Test_KafkaService_CountByRegionAndInstanceType(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
@@ -2117,8 +2215,27 @@ func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
 		setupFunc func()
 	}{
 		{
-			name:    "should return the counts of Kafkas per region and instance type",
-			fields:  fields{connectionFactory: db.NewMockConnectionFactory(nil)},
+			name: "success",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: false,
+			setupFunc: func() {
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests"`).
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.SizeId = "x1"
+						kafkaRequest.InstanceType = "developer"
+					})))
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+		},
+		{
+			name: "should return the counts of Kafkas per region and instance type",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
 			wantErr: false,
 			setupFunc: func() {
 				counters := []map[string]interface{}{
@@ -2127,23 +2244,24 @@ func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
 						"instance_type": "standard",
 						"cluster_id":    testClusterID,
 						"Count":         1,
+						"SizeId":        "x1",
 					},
 					{
 						"region":        "eu-west-1",
 						"instance_type": "developer",
 						"cluster_id":    testClusterID,
 						"Count":         1,
+						"SizeId":        "x1",
 					},
 				}
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT FROM "kafka_requests" WHERE "kafka_requests"."deleted_at" IS NULL`).
+					WithQuery(`SELECT * FROM "kafka_requests"`).
 					WithReply(counters)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 	}
-
-	RegisterTestingT(t)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2152,6 +2270,9 @@ func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
 			}
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
+				},
 			}
 			_, err := k.CountByRegionAndInstanceType()
 			if !tt.wantErr && err != nil {
@@ -2161,7 +2282,7 @@ func TestKafkaService_CountByRegionAndInstanceType(t *testing.T) {
 	}
 }
 
-func TestKafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
+func Test_KafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 	type fields struct {
 		awsClient aws.AWSClient
 	}
@@ -2237,6 +2358,36 @@ func TestKafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 				action: KafkaRoutesActionDelete,
 			},
 		},
+		{
+			name: "should return error if it fails to get routes",
+			fields: fields{
+				awsClient: &aws.AWSClientMock{
+					ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
+						if len(recordChangeBatch.Changes) != 1 {
+							return nil, goerrors.Errorf("number of record changes should be 1")
+						}
+						if *recordChangeBatch.Changes[0].Action != "CREATE" {
+							return nil, goerrors.Errorf("the action of the record change is not CREATE")
+						}
+						return nil, nil
+					},
+					ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
+						return nil, nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						ID: "test-kafka-id",
+					},
+					Name:   "test-kafka-cname",
+					Region: testKafkaRequestRegion,
+				},
+				action: KafkaRoutesActionCreate,
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -2261,7 +2412,7 @@ func TestKafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 
 }
 
-func TestKafkaService_ListComponentVersions(t *testing.T) {
+func Test_KafkaService_ListComponentVersions(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
@@ -2309,6 +2460,7 @@ func TestKafkaService_ListComponentVersions(t *testing.T) {
 					NewMock().
 					WithQuery(`SELECT "id","cluster_id","desired_strimzi_version","actual_strimzi_version","strimzi_upgrading","desired_kafka_version","actual_kafka_version","kafka_upgrading","desired_kafka_ibp_version","actual_kafka_ibp_version","kafka_ibp_upgrading"`).
 					WithReply(versions)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			want: []KafkaComponentVersions{{
 				ID:                     "1",
@@ -2342,13 +2494,13 @@ func TestKafkaService_ListComponentVersions(t *testing.T) {
 			wantErr: true,
 			setupFunc: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithQueryException()
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			want: nil,
 		},
 	}
 
-	RegisterTestingT(t)
-
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFunc != nil {
@@ -2361,7 +2513,7 @@ func TestKafkaService_ListComponentVersions(t *testing.T) {
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for ListComponentVersions: %v", err)
 			}
-			Expect(result).To(Equal(tt.want))
+			g.Expect(result).To(Equal(tt.want))
 		})
 	}
 }
@@ -2406,7 +2558,7 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 				providerConfig:         buildProviderConfiguration("us-east-1", 1000, 1000, false),
 				clusterPlacementStrategy: &ClusterPlacementStrategyMock{
 					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
-						return buildCluster(nil), nil
+						return mocks.BuildCluster(nil), nil
 					},
 				},
 			},
@@ -2421,6 +2573,7 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
 					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
 					WithReply(nil)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -2445,6 +2598,7 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
 					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
 					WithReply(nil)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			result:  nil,
 			wantErr: false,
@@ -2458,7 +2612,7 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 				providerConfig:         buildProviderConfiguration("us-east-1", 1, 1, false),
 				clusterPlacementStrategy: &ClusterPlacementStrategyMock{
 					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
-						return buildCluster(nil), nil
+						return mocks.BuildCluster(nil), nil
 					},
 				},
 			},
@@ -2480,6 +2634,7 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 							"instance_type":  testCriteria.SupportedInstanceType,
 						},
 					})
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			result:  nil,
 			wantErr: false,
@@ -2535,6 +2690,7 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
 					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
 					WithQueryException()
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			result:  nil,
 			wantErr: true,
@@ -2543,9 +2699,9 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 			},
 		},
 	}
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
 
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -2561,11 +2717,558 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 
 			got, err := k.GetAvailableSizesInRegion(tt.args.criteria)
 
-			gomega.Expect(tt.result).To(gomega.Equal(got))
-			gomega.Expect(tt.wantErr).To(gomega.Equal(err != nil))
+			g.Expect(tt.result).To(gomega.Equal(got))
+			g.Expect(tt.wantErr).To(gomega.Equal(err != nil))
 			if tt.wantErr && tt.expectedErr != nil {
-				gomega.Expect(tt.expectedErr.Code).To(gomega.Equal(err.Code))
+				g.Expect(tt.expectedErr.Code).To(gomega.Equal(err.Code))
 			}
+		})
+	}
+}
+func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		keycloakService   sso.KeycloakService
+		kafkaConfig       *config.KafkaConfig
+	}
+	type args struct {
+		clusterID string
+	}
+	kafkaRequestList := dbapi.KafkaList{
+		&dbapi.KafkaRequest{
+			ClusterID:    testClusterID,
+			InstanceType: "developer",
+			SizeId:       "x1",
+		},
+	}
+	managedkafkaCR, _ := buildManagedKafkaCR(
+		&dbapi.KafkaRequest{
+			ClusterID:    testClusterID,
+			InstanceType: "developer",
+			SizeId:       "x1",
+		},
+		&config.KafkaConfig{
+			EnableKafkaExternalCertificate: true,
+			SupportedInstanceTypes:         &kafkaSupportedInstanceTypesConfig,
+		},
+		&sso.KeycloakServiceMock{
+			GetConfigFunc: func() *keycloak.KeycloakConfig {
+				return &keycloak.KeycloakConfig{
+					EnableAuthenticationOnKafka: true,
+				}
+			},
+			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+				return &keycloak.KeycloakRealmConfig{}
+			},
+		})
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []managedkafka.ManagedKafka
+		wantErr *errors.ServiceError
+		setupFn func()
+	}{
+		{
+			name: "should return the kafka by cluster id",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				keycloakService: &sso.KeycloakServiceMock{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloak.KeycloakRealmConfig{}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaExternalCertificate: true,
+					SupportedInstanceTypes:         &kafkaSupportedInstanceTypesConfig,
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			wantErr: nil,
+			want:    []managedkafka.ManagedKafka{*managedkafkaCR},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
+				response := converters.ConvertKafkaRequestList(kafkaRequestList)
+				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		tt.setupFn()
+		t.Run(tt.name, func(t *testing.T) {
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+				keycloakService:   tt.fields.keycloakService,
+				kafkaConfig:       tt.fields.kafkaConfig,
+			}
+			got, err := k.GetManagedKafkaByClusterID(tt.args.clusterID)
+			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func Test_kafkaService_VerifyAndUpdateKafkaAdmin(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		clusterService    ClusterService
+		authService       authorization.Authorization
+	}
+	type args struct {
+		ctx          context.Context
+		kafkaRequest *dbapi.KafkaRequest
+	}
+	strimziOperatorVersion := "strimzi-cluster-operator.from-cluster"
+	availableStrimziVersions, err := json.Marshal([]api.StrimziVersion{
+		{
+			Version: strimziOperatorVersion,
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				{
+					Version: "2.7.0",
+				},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				{
+					Version: "2.7",
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal("failed to convert available strimzi versions to json")
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		want      *errors.ServiceError
+		setupFunc func()
+	}{
+		{
+			name: "should return nil if it can Verify And Update Kafka Admin ",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				authService:       authorization.NewMockAuthorization(),
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID:                "cluster-id",
+							AvailableStrimziVersions: availableStrimziVersions,
+						}, nil
+					},
+					IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+						return true, nil
+					},
+					CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+						return true, nil
+					},
+				},
+			},
+			args: args{
+				ctx: auth.SetIsAdminContext(context.TODO(), true),
+				kafkaRequest: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID:              "cluster-id",
+					ActualKafkaIBPVersion:  "2.7",
+					DesiredKafkaIBPVersion: "2.7",
+					ActualKafkaVersion:     "2.7",
+					DesiredKafkaVersion:    "2.7",
+					DesiredStrimziVersion:  "2.7",
+					KafkaStorageSize:       "100",
+				},
+			},
+			want: nil,
+			setupFunc: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`).
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "should return error if user is not authenticated",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				authService:       authorization.NewMockAuthorization(),
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID:                "cluster-id",
+							AvailableStrimziVersions: availableStrimziVersions,
+						}, nil
+					},
+					IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+						return true, nil
+					},
+					CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+						return true, nil
+					},
+				},
+			},
+			args: args{
+				ctx: auth.SetIsAdminContext(context.TODO(), false),
+			},
+			want: errors.New(errors.ErrorUnauthenticated, "User not authenticated"),
+			setupFunc: func() {
+				mocket.Catcher.Reset()
+			},
+		},
+		{
+			name: "should return error if cluster is == nil",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				authService:       authorization.NewMockAuthorization(),
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+					IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+						return true, nil
+					},
+					CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+						return true, nil
+					},
+				},
+			},
+			args: args{
+				ctx: auth.SetIsAdminContext(context.TODO(), true),
+				kafkaRequest: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID: "cluster-id",
+				},
+			},
+			want: errors.New(errors.ErrorValidation, "Unable to get cluster for kafka id"),
+			setupFunc: func() {
+				mocket.Catcher.Reset()
+			},
+		},
+		{
+			name: "should return error if unable to compare actual ibp with desired",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				authService:       authorization.NewMockAuthorization(),
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID: "cluster-id",
+						}, nil
+					},
+					IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+						return true, nil
+					},
+					CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+						return true, nil
+					},
+				},
+			},
+			args: args{
+				ctx: auth.SetIsAdminContext(context.TODO(), true),
+				kafkaRequest: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID: "cluster-id",
+				},
+			},
+			want: errors.New(errors.ErrorValidation, "Unable to compare actual ibp version:  with desired ibp version: "),
+			setupFunc: func() {
+				mocket.Catcher.Reset()
+			},
+		},
+		{
+			name: "should return error if kafka version is not available",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				authService:       authorization.NewMockAuthorization(),
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID:                "cluster-id",
+							AvailableStrimziVersions: availableStrimziVersions,
+						}, nil
+					},
+					IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+						return false, nil
+					},
+					CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+						return true, nil
+					},
+				},
+			},
+			args: args{
+				ctx: auth.SetIsAdminContext(context.TODO(), true),
+				kafkaRequest: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID: "cluster-id",
+				},
+			},
+			want: errors.New(errors.ErrorValidation, "Unable to update kafka: id with kafka version: "),
+			setupFunc: func() {
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE id = $1`).
+					WithArgs("id").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "should return error if strimzi is not ready",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				authService:       authorization.NewMockAuthorization(),
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID:                "cluster-id",
+							AvailableStrimziVersions: availableStrimziVersions,
+						}, nil
+					},
+					IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+						return true, nil
+					},
+					CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+						return false, nil
+					},
+				},
+			},
+			args: args{
+				ctx: auth.SetIsAdminContext(context.TODO(), true),
+				kafkaRequest: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID: "cluster-id",
+				},
+			},
+			want: errors.New(errors.ErrorValidation, "Unable to update kafka: id with strimzi version: "),
+			setupFunc: func() {
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE id = $1`).
+					WithArgs("id").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		tt.setupFunc()
+		t.Run(tt.name, func(t *testing.T) {
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+				clusterService:    tt.fields.clusterService,
+				authService:       tt.fields.authService,
+			}
+			g.Expect(k.VerifyAndUpdateKafkaAdmin(tt.args.ctx, tt.args.kafkaRequest)).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_kafkaService_GetCNAMERecordStatus(t *testing.T) {
+	type fields struct {
+		awsConfig        *config.AWSConfig
+		awsClientFactory aws.ClientFactory
+	}
+
+	CNAME_Id := "CNAME_Id"
+	CNAME_Status := "CNAME_Status"
+	awsConfig := &config.AWSConfig{
+		AccountID:              "AccountID",
+		AccessKey:              "AccessKey",
+		SecretAccessKey:        "SecretAccessKey",
+		Route53AccessKey:       "Route53AccessKey",
+		Route53SecretAccessKey: "Route53SecretAccessKey",
+	}
+
+	type args struct {
+		kafkaRequest *dbapi.KafkaRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *CNameRecordStatus
+		wantErr bool
+	}{
+		{
+			name: "should get the CNAME record Status",
+			fields: fields{
+				awsConfig: awsConfig,
+				awsClientFactory: aws.NewMockClientFactory(&aws.AWSClientMock{
+					GetChangeFunc: func(changeId string) (*route53.GetChangeOutput, error) {
+						return &route53.GetChangeOutput{
+							ChangeInfo: &route53.ChangeInfo{
+								Id:     &CNAME_Id,
+								Status: &CNAME_Status,
+							},
+						}, nil
+					},
+				}),
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					Region: "us-east-1",
+				},
+			},
+			want: &CNameRecordStatus{
+				Id:     &CNAME_Id,
+				Status: &CNAME_Status,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return error when it fails to get CNAME status",
+			fields: fields{
+				awsConfig: awsConfig,
+				awsClientFactory: aws.NewMockClientFactory(&aws.AWSClientMock{
+					GetChangeFunc: func(changeId string) (*route53.GetChangeOutput, error) {
+						return nil, errors.GeneralError("Unable to CNAME record status")
+					},
+				}),
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					Region: "us-east-1",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := &kafkaService{
+				awsConfig:        tt.fields.awsConfig,
+				awsClientFactory: tt.fields.awsClientFactory,
+			}
+			got, err := k.GetCNAMERecordStatus(tt.args.kafkaRequest)
+			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func Test_NewKafkaService(t *testing.T) {
+	type args struct {
+		connectionFactory        *db.ConnectionFactory
+		clusterService           ClusterService
+		keycloakService          sso.KafkaKeycloakService
+		kafkaConfig              *config.KafkaConfig
+		dataplaneClusterConfig   *config.DataplaneClusterConfig
+		awsConfig                *config.AWSConfig
+		quotaServiceFactory      QuotaServiceFactory
+		awsClientFactory         aws.ClientFactory
+		authorizationService     authorization.Authorization
+		providerConfig           *config.ProviderConfig
+		clusterPlacementStrategy ClusterPlacementStrategy
+	}
+	tests := []struct {
+		name string
+		args args
+		want *kafkaService
+	}{
+		{
+			name: "should return the kafka service",
+			args: args{
+				connectionFactory:        &db.ConnectionFactory{},
+				clusterService:           &ClusterServiceMock{},
+				keycloakService:          &sso.KeycloakServiceMock{},
+				kafkaConfig:              &config.KafkaConfig{},
+				dataplaneClusterConfig:   &config.DataplaneClusterConfig{},
+				awsConfig:                &config.AWSConfig{},
+				quotaServiceFactory:      &QuotaServiceFactoryMock{},
+				awsClientFactory:         &aws.MockClientFactory{},
+				providerConfig:           &config.ProviderConfig{},
+				clusterPlacementStrategy: &ClusterPlacementStrategyMock{},
+			},
+			want: &kafkaService{
+				connectionFactory:        &db.ConnectionFactory{},
+				clusterService:           &ClusterServiceMock{},
+				keycloakService:          &sso.KeycloakServiceMock{},
+				kafkaConfig:              &config.KafkaConfig{},
+				dataplaneClusterConfig:   &config.DataplaneClusterConfig{},
+				awsConfig:                &config.AWSConfig{},
+				quotaServiceFactory:      &QuotaServiceFactoryMock{},
+				awsClientFactory:         &aws.MockClientFactory{},
+				providerConfig:           &config.ProviderConfig{},
+				clusterPlacementStrategy: &ClusterPlacementStrategyMock{},
+			},
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		g.Expect(NewKafkaService(tt.args.connectionFactory, tt.args.clusterService, tt.args.keycloakService, tt.args.kafkaConfig, tt.args.dataplaneClusterConfig, tt.args.awsConfig, tt.args.quotaServiceFactory, tt.args.awsClientFactory, tt.args.authorizationService, tt.args.providerConfig, tt.args.clusterPlacementStrategy)).To(Equal(tt.want))
+	}
+}
+
+func Test_kafkaService_ListKafkasWithRoutesNotCreated(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		want    []*dbapi.KafkaRequest
+		wantErr *errors.ServiceError
+		setupFn func()
+	}{
+		{
+			name: "should return the kafka by cluster id",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			want: []*dbapi.KafkaRequest{buildKafkaRequest(nil)},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests"`).
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		tt.setupFn()
+		t.Run(tt.name, func(t *testing.T) {
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			g.Expect(k.ListKafkasWithRoutesNotCreated()).To(Equal(tt.want))
 		})
 	}
 }

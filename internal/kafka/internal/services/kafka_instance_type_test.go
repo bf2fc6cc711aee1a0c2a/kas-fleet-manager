@@ -28,7 +28,7 @@ var supportedKafkaSizeStandard = []config.KafkaInstanceSize{
 
 var supportedKafkaSizeDeveloper = []config.KafkaInstanceSize{
 	{
-		Id:                          "x2",
+		Id:                          "x1",
 		IngressThroughputPerSec:     "60Mi",
 		EgressThroughputPerSec:      "60Mi",
 		TotalMaxConnections:         2000,

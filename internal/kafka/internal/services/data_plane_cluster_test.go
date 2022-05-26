@@ -77,6 +77,79 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 				return NewDataPlaneClusterService(sampleValidApplicationConfigForDataPlaneClusterTest(clusterService))
 			},
 		},
+		{
+			name:          "An error is returned when an error occurs while trying to retrieve the cluter using its id",
+			clusterID:     testClusterID,
+			clusterStatus: nil,
+			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
+				clusterService := &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, &errors.ServiceError{}
+					},
+				}
+				return NewDataPlaneClusterService(sampleValidApplicationConfigForDataPlaneClusterTest(clusterService))
+			},
+			wantErr: true,
+		},
+		{
+			name:          "Returns nil if cluster cannot process status reports",
+			clusterID:     testClusterID,
+			clusterStatus: nil,
+			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
+				clusterService := &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID: clusterID,
+							Status:    api.ClusterFailed,
+						}, nil
+					},
+				}
+				return NewDataPlaneClusterService(sampleValidApplicationConfigForDataPlaneClusterTest(clusterService))
+			},
+			wantErr: false,
+		},
+		{
+			name:      "An error is returned when the fleet shard operator is not ready",
+			clusterID: testClusterID,
+			clusterStatus: &dbapi.DataPlaneClusterStatus{
+				Conditions: []dbapi.DataPlaneClusterStatusCondition{
+					{
+						Type:   "Ready",
+						Status: "False",
+					},
+				},
+				NodeInfo: dbapi.DataPlaneClusterStatusNodeInfo{
+					Current: 6,
+				},
+			},
+			wantErr: false,
+			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
+				clusterService := &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID: clusterID,
+							Status:    api.ClusterWaitingForKasFleetShardOperator,
+						}, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+					GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *errors.ServiceError) {
+						return &types.ComputeNodesInfo{
+							Actual:  6,
+							Desired: 6,
+						}, nil
+					},
+				}
+				return NewDataPlaneClusterService(sampleValidApplicationConfigForDataPlaneClusterTest(clusterService))
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -366,7 +439,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -375,7 +448,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 			}
 
 			input := tt.inputFactory()
-			Expect(input).ToNot(BeNil())
+			g.Expect(input).ToNot(BeNil())
 
 			dataPlaneClusterService := input.dataPlaneClusterService
 			nodesAfterScaling, err := dataPlaneClusterService.updateDataPlaneClusterNodes(input.cluster, input.status)
@@ -384,7 +457,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 				t.Errorf("updateDataPlaneClusterNodes() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(nodesAfterScaling).To(Equal(tt.expectedResult))
+			g.Expect(nodesAfterScaling).To(Equal(tt.expectedResult))
 		})
 	}
 }
@@ -451,6 +524,7 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 		},
 	}
 
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := tt.dataPlaneClusterServiceFactory()
@@ -466,7 +540,7 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 				t.Errorf("computeNodeScalingActionInProgress() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(Equal(tt.want))
 		})
 	}
 }
@@ -544,8 +618,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := tt.dataPlaneClusterServiceFactory()
@@ -558,7 +631,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 				t.Errorf("isFleetShardOperatorReady() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(Equal(tt.want))
 		})
 	}
 }
@@ -660,7 +733,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -670,13 +743,13 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 			}
 
 			res := f.clusterCanProcessStatusReports(tt.apiCluster)
-			Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(Equal(tt.want))
 
 		})
 	}
 }
 
-func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
+func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 	type fields struct {
 		clusterService             ClusterService
 		ObservabilityConfiguration *observatorium.ObservabilityConfiguration
@@ -732,10 +805,27 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 			wantErr: true,
 			want:    nil,
 		},
+		{
+			name: "nil is returned when the provided cluster cannot be found",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+				ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{
+					ObservabilityConfigRepo:        "test-repo",
+					ObservabilityConfigChannel:     "test-channel",
+					ObservabilityConfigAccessToken: "test-token",
+					ObservabilityConfigTag:         "test-tag",
+				},
+				DataplaneClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest(nil).DataplaneClusterConfig,
+			},
+			wantErr: true,
+			want:    nil,
+		},
 	}
-
-	RegisterTestingT(t)
-
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewDataPlaneClusterService(dataPlaneClusterService{
@@ -747,7 +837,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 			if err != nil && !tt.wantErr {
 				t.Fatalf("unexpected error %v", err)
 			}
-			Expect(config).To(Equal(tt.want))
+			g.Expect(config).To(Equal(tt.want))
 		})
 	}
 }
@@ -939,7 +1029,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
+	g := NewWithT(t)
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -948,16 +1038,14 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 			}
 
 			f, spyReceivedStatus := tt.inputFactory()
-			Expect(f).ToNot(BeNil(), "dataPlaneClusterService is nil")
+			g.Expect(f).ToNot(BeNil(), "dataPlaneClusterService is nil")
 
 			res := f.dataPlaneClusterService.setClusterStatus(f.cluster, f.status)
 			if res != nil != tt.wantErr {
 				t.Errorf("setClusterStatus() got = %+v, expected %+v", res, tt.wantErr)
 			}
-			if spyReceivedStatus == nil {
-				t.Fatalf("spyStatus is nil")
-			}
-			Expect(*spyReceivedStatus).To(Equal(tt.want))
+			g.Expect(spyReceivedStatus).ToNot(BeNil())
+			g.Expect(*spyReceivedStatus).To(Equal(tt.want))
 		})
 	}
 }

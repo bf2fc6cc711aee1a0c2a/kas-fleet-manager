@@ -3,16 +3,28 @@ package services
 import (
 	"errors"
 	"testing"
+
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
-
+	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/cloud_providers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+
+	svcErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	. "github.com/onsi/gomega"
 	"github.com/patrickmn/go-cache"
 	mocket "github.com/selvatico/go-mocket"
+)
+
+const (
+	MockCloudProviderID_Azure          = "azure"
+	MockCloudProviderName_Azure        = "azure"
+	MockCloudProviderDisplayName_Azure = "Microsoft Azure"
+	MockCloudProviderDisplayName_AWS   = "Amazon Web Services"
+	MockRegionName_south               = "af-south-1"
+	MockRegionName_east                = "us-east-1"
 )
 
 func Test_CloudProvider_ListCloudProviders(t *testing.T) {
@@ -92,11 +104,7 @@ func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 								GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
 									return &types.CloudProviderInfoList{
 										Items: []types.CloudProviderInfo{
-											{
-												ID:          "aws",
-												Name:        "aws",
-												DisplayName: "aws",
-											},
+											*mock.BuildCloudProviderInfoList(nil),
 										},
 									}, nil
 								},
@@ -108,16 +116,12 @@ func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 							GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
 								return &types.CloudProviderInfoList{
 									Items: []types.CloudProviderInfo{
-										{
-											ID:          "azure",
-											Name:        "azure",
-											DisplayName: "azure",
-										},
-										{
-											ID:          "aws",
-											Name:        "aws",
-											DisplayName: "aws",
-										},
+										*mock.BuildCloudProviderInfoList(func(CloudProviderInfo *types.CloudProviderInfo) {
+											CloudProviderInfo.ID = MockCloudProviderID_Azure
+											CloudProviderInfo.Name = MockCloudProviderName_Azure
+											CloudProviderInfo.DisplayName = MockCloudProviderDisplayName_Azure
+										}),
+										*mock.BuildCloudProviderInfoList(nil),
 									},
 								}, nil
 							},
@@ -133,30 +137,45 @@ func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 			},
 			wantErr: false,
 			want: []api.CloudProvider{
-				{
-					Id:          "aws",
-					Name:        "aws",
-					DisplayName: "Amazon Web Services",
-				},
-				{
-					Id:          "azure",
-					Name:        "azure",
-					DisplayName: "Microsoft Azure",
-				},
+				*mock.BuildApiCloudProvider(func(apiCloudProvider *api.CloudProvider) {
+					apiCloudProvider.Kind = ""
+					apiCloudProvider.Enabled = false
+					apiCloudProvider.DisplayName = MockCloudProviderDisplayName_AWS
+				}),
+				*mock.BuildApiCloudProvider(func(apiCloudProvider *api.CloudProvider) {
+					apiCloudProvider.Kind = ""
+					apiCloudProvider.Enabled = false
+					apiCloudProvider.Id = MockCloudProviderID_Azure
+					apiCloudProvider.Name = MockCloudProviderName_Azure
+					apiCloudProvider.DisplayName = MockCloudProviderDisplayName_Azure
+				}),
 			},
 		},
+		{
+			name: "An error is returned when the cloud provider cannot be obtained",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return nil, errors.New("failed to get provider implementation")
+					},
+				},
+			},
+			wantErr: true,
+			setupFn: func() {},
+		},
 	}
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			tt.setupFn()
 			p := cloudProvidersService{
 				providerFactory:   tt.fields.providerFactory,
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			got, err := p.ListCloudProviders()
-			Expect(tt.wantErr).To(Equal(err != nil))
-			Expect(got).To(Equal(tt.want))
+			g.Expect(tt.wantErr).To(Equal(err != nil))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -238,23 +257,14 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 								GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
 									return &types.CloudProviderInfoList{
 										Items: []types.CloudProviderInfo{
-											{
-												ID:          "aws",
-												Name:        "aws",
-												DisplayName: "aws",
-											},
+											*mock.BuildCloudProviderInfoList(nil),
 										},
 									}, nil
 								},
 								GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
 									return &types.CloudProviderRegionInfoList{
 										Items: []types.CloudProviderRegionInfo{
-											{
-												ID:              "af-east-1",
-												CloudProviderID: providerInf.ID,
-												Name:            "af-east-1",
-												DisplayName:     "af-east-1",
-											},
+											*mock.BuildCloudProviderRegionInfoList(nil),
 										},
 									}, nil
 								},
@@ -265,34 +275,24 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 							GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
 								return &types.CloudProviderInfoList{
 									Items: []types.CloudProviderInfo{
-										{
-											ID:          "azure",
-											Name:        "azure",
-											DisplayName: "azure",
-										},
-										{
-											ID:          "aws",
-											Name:        "aws",
-											DisplayName: "aws",
-										},
+										*mock.BuildCloudProviderInfoList(func(CloudProviderInfo *types.CloudProviderInfo) {
+											CloudProviderInfo.ID = MockCloudProviderID_Azure
+											CloudProviderInfo.Name = MockCloudProviderName_Azure
+											CloudProviderInfo.DisplayName = MockCloudProviderDisplayName_Azure
+										}),
+										*mock.BuildCloudProviderInfoList(nil),
 									},
 								}, nil
 							},
 							GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
 								return &types.CloudProviderRegionInfoList{
 									Items: []types.CloudProviderRegionInfo{
-										{
-											ID:              "af-east-1",
-											CloudProviderID: providerInf.ID,
-											Name:            "af-east-1",
-											DisplayName:     "af-east-1",
-										},
-										{
-											ID:              "af-south-1",
-											CloudProviderID: providerInf.ID,
-											Name:            "af-south-1",
-											DisplayName:     "af-south-1",
-										},
+										*mock.BuildCloudProviderRegionInfoList(nil),
+										*mock.BuildCloudProviderRegionInfoList(func(CloudProviderRegionInfo *types.CloudProviderRegionInfo) {
+											CloudProviderRegionInfo.ID = MockRegionName_south
+											CloudProviderRegionInfo.Name = MockRegionName_south
+											CloudProviderRegionInfo.DisplayName = MockRegionName_south
+										}),
 									},
 								}, nil
 							},
@@ -312,18 +312,12 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 					ID: "aws",
 					RegionList: &types.CloudProviderRegionInfoList{
 						Items: []types.CloudProviderRegionInfo{
-							{
-								CloudProviderID: "aws",
-								Name:            "af-east-1",
-								DisplayName:     "af-east-1",
-								ID:              "af-east-1",
-							},
-							{
-								CloudProviderID: "aws",
-								Name:            "af-south-1",
-								DisplayName:     "af-south-1",
-								ID:              "af-south-1",
-							},
+							*mock.BuildCloudProviderRegionInfoList(nil),
+							*mock.BuildCloudProviderRegionInfoList(func(CloudProviderRegionInfo *types.CloudProviderRegionInfo) {
+								CloudProviderRegionInfo.ID = MockRegionName_south
+								CloudProviderRegionInfo.Name = MockRegionName_south
+								CloudProviderRegionInfo.DisplayName = MockRegionName_south
+							}),
 						},
 					},
 				},
@@ -331,27 +325,21 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 					ID: "azure",
 					RegionList: &types.CloudProviderRegionInfoList{
 						Items: []types.CloudProviderRegionInfo{
-							{
-								CloudProviderID: "azure",
-								Name:            "af-east-1",
-								DisplayName:     "af-east-1",
-								ID:              "af-east-1",
-							},
-							{
-								CloudProviderID: "azure",
-								Name:            "af-south-1",
-								DisplayName:     "af-south-1",
-								ID:              "af-south-1",
-							},
+							*mock.BuildCloudProviderRegionInfoList(nil),
+							*mock.BuildCloudProviderRegionInfoList(func(CloudProviderRegionInfo *types.CloudProviderRegionInfo) {
+								CloudProviderRegionInfo.ID = MockRegionName_south
+								CloudProviderRegionInfo.Name = MockRegionName_south
+								CloudProviderRegionInfo.DisplayName = MockRegionName_south
+							}),
 						},
 					},
 				},
 			},
 		},
 	}
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			tt.setupFn()
 			p := cloudProvidersService{
 				providerFactory:   tt.fields.providerFactory,
@@ -359,8 +347,8 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			got, err := p.GetCachedCloudProvidersWithRegions()
-			Expect(tt.wantErr).To(Equal(err != nil))
-			Expect(got).To(Equal(tt.want))
+			g.Expect(tt.wantErr).To(Equal(err != nil))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
@@ -390,6 +378,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().WithQuery("SELECT DISTINCT").WithError(errors.New("some-error"))
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 		},
 		{
@@ -403,23 +392,14 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 								GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
 									return &types.CloudProviderInfoList{
 										Items: []types.CloudProviderInfo{
-											{
-												ID:          "aws",
-												Name:        "aws",
-												DisplayName: "aws",
-											},
+											*mock.BuildCloudProviderInfoList(nil),
 										},
 									}, nil
 								},
 								GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
 									return &types.CloudProviderRegionInfoList{
 										Items: []types.CloudProviderRegionInfo{
-											{
-												ID:              "af-east-1",
-												CloudProviderID: providerInf.ID,
-												Name:            "af-east-1",
-												DisplayName:     "af-east-1",
-											},
+											*mock.BuildCloudProviderRegionInfoList(nil),
 										},
 									}, nil
 								},
@@ -430,34 +410,24 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 							GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
 								return &types.CloudProviderInfoList{
 									Items: []types.CloudProviderInfo{
-										{
-											ID:          "azure",
-											Name:        "azure",
-											DisplayName: "azure",
-										},
-										{
-											ID:          "aws",
-											Name:        "aws",
-											DisplayName: "aws",
-										},
+										*mock.BuildCloudProviderInfoList(func(CloudProviderInfo *types.CloudProviderInfo) {
+											CloudProviderInfo.ID = MockCloudProviderID_Azure
+											CloudProviderInfo.Name = MockCloudProviderName_Azure
+											CloudProviderInfo.DisplayName = MockCloudProviderDisplayName_Azure
+										}),
+										*mock.BuildCloudProviderInfoList(nil),
 									},
 								}, nil
 							},
 							GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
 								return &types.CloudProviderRegionInfoList{
 									Items: []types.CloudProviderRegionInfo{
-										{
-											ID:              "af-east-1",
-											CloudProviderID: providerInf.ID,
-											Name:            "af-east-1",
-											DisplayName:     "af-east-1",
-										},
-										{
-											ID:              "af-south-1",
-											CloudProviderID: providerInf.ID,
-											Name:            "af-south-1",
-											DisplayName:     "af-south-1",
-										},
+										*mock.BuildCloudProviderRegionInfoList(nil),
+										*mock.BuildCloudProviderRegionInfoList(func(CloudProviderRegionInfo *types.CloudProviderRegionInfo) {
+											CloudProviderRegionInfo.ID = MockRegionName_south
+											CloudProviderRegionInfo.Name = MockRegionName_south
+											CloudProviderRegionInfo.DisplayName = MockRegionName_south
+										}),
 									},
 								}, nil
 							},
@@ -470,25 +440,77 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 				mocket.Catcher.NewMock().
 					WithQuery("SELECT DISTINCT").
 					WithReply([]map[string]interface{}{{"provider_type": "ocm"}, {"provider_type": "standalone"}})
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 			wantErr: false,
 			want: []api.CloudRegion{
-				{
-					CloudProvider: "aws",
-					DisplayName:   "af-east-1",
-					Id:            "af-east-1",
+				*mock.BuildApiCloudRegion(func(apiCloudRegion *api.CloudRegion) {
+					apiCloudRegion.Kind = ""
+					apiCloudRegion.Enabled = false
+					apiCloudRegion.CloudProvider = MockRegionName_east
+				}),
+				*mock.BuildApiCloudRegion(func(apiCloudRegion *api.CloudRegion) {
+					apiCloudRegion.Kind = ""
+					apiCloudRegion.DisplayName = MockRegionName_south
+					apiCloudRegion.Id = MockRegionName_south
+					apiCloudRegion.Enabled = false
+					apiCloudRegion.CloudProvider = MockRegionName_east
+				}),
+			},
+		},
+		{
+			name: "An error is returned when the cloud provider cannot be obtained",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return nil, errors.New("failed to get provider implementation")
+					},
 				},
-				{
-					CloudProvider: "aws",
-					DisplayName:   "af-south-1",
-					Id:            "af-south-1",
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().
+					WithQuery("SELECT DISTINCT").
+					WithReply([]map[string]interface{}{{"provider_type": "ocm"}, {"provider_type": "standalone"}})
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+		},
+		{
+			name: "An error is returned when the cloud regions cannot be obtained",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
+								return &types.CloudProviderInfoList{
+									Items: []types.CloudProviderInfo{
+										*mock.BuildCloudProviderInfoList(nil),
+									},
+								}, nil
+							},
+							GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
+								return nil, errors.New("failed to retrieve cloud regions")
+							},
+						}, nil
+					},
 				},
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().
+					WithQuery("SELECT DISTINCT").
+					WithReply([]map[string]interface{}{{"provider_type": "ocm"}, {"provider_type": "standalone"}})
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 		},
 	}
+	g := NewWithT(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			tt.setupFn()
 			p := cloudProvidersService{
 				providerFactory:   tt.fields.providerFactory,
@@ -496,8 +518,103 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			got, err := p.ListCloudProviderRegions("aws")
-			Expect(tt.wantErr).To(Equal(err != nil))
-			Expect(got).To(Equal(tt.want))
+			g.Expect(tt.wantErr).To(Equal(err != nil))
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_cloudProvidersService_ListCachedCloudProviderRegions(t *testing.T) {
+	type fields struct {
+		providerFactory   clusters.ProviderFactory
+		connectionFactory *db.ConnectionFactory
+		cache             *cache.Cache
+	}
+	type args struct {
+		id string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []api.CloudRegion
+		setupFn func()
+		wantErr *svcErrors.ServiceError
+	}{
+		{
+			name: "successful get cloud provider regions from various provider types",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
+								return &types.CloudProviderInfoList{
+									Items: []types.CloudProviderInfo{
+										*mock.BuildCloudProviderInfoList(func(CloudProviderInfo *types.CloudProviderInfo) {
+											CloudProviderInfo.ID = MockCloudProviderID_Azure
+											CloudProviderInfo.Name = MockCloudProviderName_Azure
+											CloudProviderInfo.DisplayName = MockCloudProviderDisplayName_Azure
+										}),
+										*mock.BuildCloudProviderInfoList(nil),
+									},
+								}, nil
+							},
+							GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
+								return &types.CloudProviderRegionInfoList{
+									Items: []types.CloudProviderRegionInfo{
+										*mock.BuildCloudProviderRegionInfoList(nil),
+										*mock.BuildCloudProviderRegionInfoList(func(CloudProviderRegionInfo *types.CloudProviderRegionInfo) {
+											CloudProviderRegionInfo.ID = MockRegionName_south
+											CloudProviderRegionInfo.Name = MockRegionName_south
+											CloudProviderRegionInfo.DisplayName = MockRegionName_south
+										}),
+									},
+								}, nil
+							},
+						}, nil
+					}},
+				cache: cache.New(5*time.Minute, 10*time.Minute),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().
+					WithQuery("SELECT DISTINCT").
+					WithReply([]map[string]interface{}{{"provider_type": "ocm"}, {"provider_type": "standalone"}})
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			args: args{
+				id: "azure",
+			},
+			want: []api.CloudRegion{
+				*mock.BuildApiCloudRegion(func(apiCloudRegion *api.CloudRegion) {
+					apiCloudRegion.Kind = ""
+					apiCloudRegion.Enabled = false
+					apiCloudRegion.CloudProvider = "us-east-1"
+				}),
+				*mock.BuildApiCloudRegion(func(apiCloudRegion *api.CloudRegion) {
+					apiCloudRegion.Kind = ""
+					apiCloudRegion.DisplayName = MockRegionName_south
+					apiCloudRegion.Id = MockRegionName_south
+					apiCloudRegion.Enabled = false
+					apiCloudRegion.CloudProvider = MockRegionName_east
+				}),
+			},
+			wantErr: nil,
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		tt.setupFn()
+		t.Run(tt.name, func(t *testing.T) {
+			p := cloudProvidersService{
+				providerFactory:   tt.fields.providerFactory,
+				connectionFactory: tt.fields.connectionFactory,
+				cache:             tt.fields.cache,
+			}
+			got, err := p.ListCachedCloudProviderRegions(tt.args.id)
+			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err).To(Equal(tt.wantErr))
 		})
 	}
 }

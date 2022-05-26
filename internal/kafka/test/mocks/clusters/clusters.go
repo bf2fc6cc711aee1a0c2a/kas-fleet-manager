@@ -6,6 +6,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"gorm.io/gorm"
 )
 
 var (
@@ -76,6 +77,10 @@ func BuildCluster(modifyFn func(cluster *api.Cluster)) *api.Cluster {
 		Status:        testStatus,
 		ClusterSpec:   clusterSpec,
 		ProviderSpec:  providerSpec,
+		ProviderType:  api.ClusterProviderOCM,
+		Meta: api.Meta{
+			DeletedAt: gorm.DeletedAt{Valid: true},
+		},
 	}
 	if modifyFn != nil {
 		modifyFn(cluster)
