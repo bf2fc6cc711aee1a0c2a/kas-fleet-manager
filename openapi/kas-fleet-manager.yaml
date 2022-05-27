@@ -1021,7 +1021,7 @@ components:
               type: string
             max_connection_attempts_per_sec:
               type: integer
-            cloud_account_id:
+            billing_cloud_account_id:
               type: string
             marketplace:
               type: string
@@ -1088,7 +1088,7 @@ components:
         plan:
           description: kafka plan in a format of <instance_type>.<size_id>
           type: string
-        cloud_account_id:
+        billing_cloud_account_id:
           description: cloud account id used to purchase the instance
           type: string
           nullable: true
@@ -1696,7 +1696,7 @@ components:
         max_partitions: 100
         max_data_retention_period: "P14D"
         max_connection_attempts_per_sec: 100
-        cloud_account_id: "123456789012"
+        billing_cloud_account_id: "123456789012"
         marketplace: "aws"
     KafkaRequestFailedCreationStatusExample:
       value:
