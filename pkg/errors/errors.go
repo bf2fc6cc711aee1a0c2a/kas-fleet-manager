@@ -644,6 +644,6 @@ func FailedToCheckQuota(reason string, values ...interface{}) *ServiceError {
 }
 
 func InvalidBillingAccount(reason string, values ...interface{}) *ServiceError {
-	message := fmt.Sprintf("%s: %s", ErrorBillingAccountInvalid, reason)
+	message := fmt.Sprintf("%s: %s", ErrorBillingAccountInvalidReason, reason)
 	return New(ErrorBillingAccountInvalid, message, values...)
 }

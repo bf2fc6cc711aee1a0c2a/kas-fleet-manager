@@ -31,12 +31,12 @@ func ValidateBillingCloudAccountIdAndMarketplace(ctx context.Context, kafkaServi
 
 	return func() *errors.ServiceError {
 		// both fields are optional
-		if blank(kafkaRequestPayload.CloudAccountId) && blank(kafkaRequestPayload.Marketplace) {
+		if blank(kafkaRequestPayload.BillingCloudAccountId) && blank(kafkaRequestPayload.Marketplace) {
 			return nil
 		}
 
 		// marketplace without a billing account provided
-		if blank(kafkaRequestPayload.CloudAccountId) && !blank(kafkaRequestPayload.Marketplace) {
+		if blank(kafkaRequestPayload.BillingCloudAccountId) && !blank(kafkaRequestPayload.Marketplace) {
 			return errors.InvalidBillingAccount("no billing account provided for marketplace: %s", kafkaRequestPayload.Marketplace)
 		}
 
@@ -53,7 +53,7 @@ func ValidateBillingCloudAccountIdAndMarketplace(ctx context.Context, kafkaServi
 			return errors.NewWithCause(errors.ErrorGeneral, err, "error assigning instance type: %s", err.Error())
 		}
 
-		return (*kafkaService).ValidateBillingAccount(organisationId, instanceType, *kafkaRequestPayload.CloudAccountId, kafkaRequestPayload.Marketplace)
+		return (*kafkaService).ValidateBillingAccount(organisationId, instanceType, *kafkaRequestPayload.BillingCloudAccountId, kafkaRequestPayload.Marketplace)
 	}
 }
 
