@@ -14,4 +14,6 @@ type QuotaService interface {
 	ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError)
 	// DeleteQuota deletes a reserved quota
 	DeleteQuota(subscriptionId string) *errors.ServiceError
+	// ValidateBillingAccount validates if a billing account is contained in the quota cost response
+	ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError
 }

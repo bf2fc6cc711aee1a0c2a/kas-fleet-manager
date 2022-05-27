@@ -18,6 +18,11 @@ type QuotaManagementListService struct {
 	kafkaConfig         *config.KafkaConfig
 }
 
+// don't validate billing accounts when using the quota list
+func (q QuotaManagementListService) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+	return nil
+}
+
 func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(username string, organisationId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 	orgId := organisationId
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetById(orgId)
