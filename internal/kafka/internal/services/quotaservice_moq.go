@@ -29,6 +29,9 @@ var _ QuotaService = &QuotaServiceMock{}
 // 			ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *serviceError.ServiceError) {
 // 				panic("mock out the ReserveQuota method")
 // 			},
+// 			ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError {
+// 				panic("mock out the ValidateBillingAccount method")
+// 			},
 // 		}
 //
 // 		// use mockedQuotaService in code that requires QuotaService
@@ -44,6 +47,9 @@ type QuotaServiceMock struct {
 
 	// ReserveQuotaFunc mocks the ReserveQuota method.
 	ReserveQuotaFunc func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *serviceError.ServiceError)
+
+	// ValidateBillingAccountFunc mocks the ValidateBillingAccount method.
+	ValidateBillingAccountFunc func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -68,10 +74,22 @@ type QuotaServiceMock struct {
 			// InstanceType is the instanceType argument value.
 			InstanceType types.KafkaInstanceType
 		}
+		// ValidateBillingAccount holds details about calls to the ValidateBillingAccount method.
+		ValidateBillingAccount []struct {
+			// ExternalId is the externalId argument value.
+			ExternalId string
+			// InstanceType is the instanceType argument value.
+			InstanceType types.KafkaInstanceType
+			// BillingCloudAccountId is the billingCloudAccountId argument value.
+			BillingCloudAccountId string
+			// Marketplace is the marketplace argument value.
+			Marketplace *string
+		}
 	}
 	lockCheckIfQuotaIsDefinedForInstanceType sync.RWMutex
 	lockDeleteQuota                          sync.RWMutex
 	lockReserveQuota                         sync.RWMutex
+	lockValidateBillingAccount               sync.RWMutex
 }
 
 // CheckIfQuotaIsDefinedForInstanceType calls CheckIfQuotaIsDefinedForInstanceTypeFunc.
@@ -176,5 +194,48 @@ func (mock *QuotaServiceMock) ReserveQuotaCalls() []struct {
 	mock.lockReserveQuota.RLock()
 	calls = mock.calls.ReserveQuota
 	mock.lockReserveQuota.RUnlock()
+	return calls
+}
+
+// ValidateBillingAccount calls ValidateBillingAccountFunc.
+func (mock *QuotaServiceMock) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError {
+	if mock.ValidateBillingAccountFunc == nil {
+		panic("QuotaServiceMock.ValidateBillingAccountFunc: method is nil but QuotaService.ValidateBillingAccount was just called")
+	}
+	callInfo := struct {
+		ExternalId            string
+		InstanceType          types.KafkaInstanceType
+		BillingCloudAccountId string
+		Marketplace           *string
+	}{
+		ExternalId:            externalId,
+		InstanceType:          instanceType,
+		BillingCloudAccountId: billingCloudAccountId,
+		Marketplace:           marketplace,
+	}
+	mock.lockValidateBillingAccount.Lock()
+	mock.calls.ValidateBillingAccount = append(mock.calls.ValidateBillingAccount, callInfo)
+	mock.lockValidateBillingAccount.Unlock()
+	return mock.ValidateBillingAccountFunc(externalId, instanceType, billingCloudAccountId, marketplace)
+}
+
+// ValidateBillingAccountCalls gets all the calls that were made to ValidateBillingAccount.
+// Check the length with:
+//     len(mockedQuotaService.ValidateBillingAccountCalls())
+func (mock *QuotaServiceMock) ValidateBillingAccountCalls() []struct {
+	ExternalId            string
+	InstanceType          types.KafkaInstanceType
+	BillingCloudAccountId string
+	Marketplace           *string
+} {
+	var calls []struct {
+		ExternalId            string
+		InstanceType          types.KafkaInstanceType
+		BillingCloudAccountId string
+		Marketplace           *string
+	}
+	mock.lockValidateBillingAccount.RLock()
+	calls = mock.calls.ValidateBillingAccount
+	mock.lockValidateBillingAccount.RUnlock()
 	return calls
 }
