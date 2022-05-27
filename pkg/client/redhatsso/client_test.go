@@ -800,7 +800,7 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 				Secret:      serviceAccount.Secret,
 				Name:        &name,
 				Description: &description,
-				OwnerId:     nil,
+				CreatedBy:   nil,
 				CreatedAt:   nil,
 			},
 			wantErr: false,
