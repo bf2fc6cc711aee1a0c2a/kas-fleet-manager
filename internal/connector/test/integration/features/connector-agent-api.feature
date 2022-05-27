@@ -141,10 +141,71 @@ Feature: connector agent API
     Then the response code should be 200
     And the ".total" selection from the response should match "1"
     And the ".items[0].id" selection from the response should match "${connector_namespace_id}"
+    And the ".kind" selection from the response should match "ConnectorNamespaceDeploymentList"
 
+     # agent should be able to get namespace details
     When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}"
     Then the response code should be 200
-    And the ".id" selection from the response should match "${connector_namespace_id}"
+    And the response should match json:
+    """
+    {
+      "kind": "ConnectorNamespaceDeployment",
+      "href": "/api/connector_mgmt/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}",
+      "annotations": { "connector_mgmt.bf2.org/profile": "default-profile" },
+      "cluster_id": "${connector_cluster_id}",
+      "created_at": "${response.created_at}",
+      "id": "${connector_namespace_id}",
+      "modified_at": "${response.modified_at}",
+      "name": "default-connector-namespace",
+      "owner": "${response.owner}",
+      "quota": {},
+      "resource_version": ${response.resource_version},
+      "status": {
+        "connectors_deployed": 0,
+        "state": "disconnected"
+      },
+      "tenant": {
+        "id": "${response.tenant.id}",
+        "kind": "organisation"
+      }
+    }
+    """
+
+    # agent and public APIs should be compatible at this stage, the only expected differences
+    # are about kind and href
+
+    Given I am logged in as "Jimmy"
+
+    When I GET path "/v1/kafka_connector_namespaces/${connector_namespace_id}"
+    Then the response code should be 200
+    And the response should match json:
+    """
+    {
+      "kind": "ConnectorNamespace",
+      "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${connector_namespace_id}",
+      "annotations": { "connector_mgmt.bf2.org/profile": "default-profile" },
+      "cluster_id": "${connector_cluster_id}",
+      "created_at": "${response.created_at}",
+      "id": "${connector_namespace_id}",
+      "modified_at": "${response.modified_at}",
+      "name": "default-connector-namespace",
+      "owner": "${response.owner}",
+      "quota": {},
+      "resource_version": ${response.resource_version},
+      "status": {
+        "connectors_deployed": 0,
+        "state": "disconnected"
+      },
+      "tenant": {
+        "id": "${response.tenant.id}",
+        "kind": "organisation"
+      }
+    }
+    """
+
+    # Logs in as the agent..
+    Given I am logged in as "Shard"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
 
     # There should be no deployments assigned yet, since the cluster status is disconnected
     When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments"

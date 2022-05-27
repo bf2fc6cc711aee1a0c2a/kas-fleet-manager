@@ -264,16 +264,16 @@ Returns a connector namespace assigned to the cluster.
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param connectorClusterId The id of the connector cluster
  * @param namespaceId The id of the namespace
-@return ConnectorNamespace
+@return ConnectorNamespaceDeployment
 */
-func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorNamespaceById(ctx _context.Context, connectorClusterId string, namespaceId string) (ConnectorNamespace, *_nethttp.Response, error) {
+func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorNamespaceById(ctx _context.Context, connectorClusterId string, namespaceId string) (ConnectorNamespaceDeployment, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  ConnectorNamespace
+		localVarReturnValue  ConnectorNamespaceDeployment
 	)
 
 	// create path and map variables
@@ -384,16 +384,16 @@ Returns all connector namespaces assigned to the cluster.
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
  * @param "GtVersion" (optional.Int64) -  filters the connectors to those with a version greater than the given value
-@return ConnectorNamespaceList
+@return ConnectorNamespaceDeploymentList
 */
-func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorNamespaces(ctx _context.Context, connectorClusterId string, localVarOptionals *GetClusterAsignedConnectorNamespacesOpts) (ConnectorNamespaceList, *_nethttp.Response, error) {
+func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorNamespaces(ctx _context.Context, connectorClusterId string, localVarOptionals *GetClusterAsignedConnectorNamespacesOpts) (ConnectorNamespaceDeploymentList, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  ConnectorNamespaceList
+		localVarReturnValue  ConnectorNamespaceDeploymentList
 	)
 
 	// create path and map variables
@@ -603,9 +603,9 @@ update the connector namespace status
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param connectorClusterId The id of the connector cluster
  * @param namespaceId The id of the namespace
- * @param connectorNamespaceStatus
+ * @param connectorNamespaceDeploymentStatus
 */
-func (a *ConnectorClustersAgentApiService) UpdateConnectorNamespaceStatus(ctx _context.Context, connectorClusterId string, namespaceId string, connectorNamespaceStatus ConnectorNamespaceStatus) (*_nethttp.Response, error) {
+func (a *ConnectorClustersAgentApiService) UpdateConnectorNamespaceStatus(ctx _context.Context, connectorClusterId string, namespaceId string, connectorNamespaceDeploymentStatus ConnectorNamespaceDeploymentStatus) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPut
 		localVarPostBody     interface{}
@@ -642,7 +642,7 @@ func (a *ConnectorClustersAgentApiService) UpdateConnectorNamespaceStatus(ctx _c
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = &connectorNamespaceStatus
+	localVarPostBody = &connectorNamespaceDeploymentStatus
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, err

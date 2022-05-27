@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"io"
 	"net/http"
 	"strconv"
@@ -59,8 +59,11 @@ func (h *ConnectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 						// physical namespace hasn't been deleted yet
 						delete(deletingNamespaces, namespaceStatus.Id)
 
-						err := h.ConnectorNamespace.UpdateConnectorNamespaceStatus(ctx, namespaceStatus.Id,
-							presenters.ConvertConnectorNamespaceStatus(namespaceStatus))
+						err := h.ConnectorNamespace.UpdateConnectorNamespaceStatus(
+							ctx,
+							namespaceStatus.Id,
+							presenters.ConvertConnectorNamespaceDeploymentStatus(namespaceStatus))
+
 						if err != nil {
 							errorList = append(errorList, err)
 						}
@@ -337,15 +340,15 @@ func (h *ConnectorClusterHandler) GetAgentNamespaces(writer http.ResponseWriter,
 				return nil, err
 			}
 
-			resourceList := public.ConnectorNamespaceList{
-				Kind:  "ConnectorNamespaceList",
+			resourceList := private.ConnectorNamespaceDeploymentList{
+				Kind:  "ConnectorNamespaceDeploymentList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
 				Total: int32(paging.Total),
 			}
 
 			for _, resource := range resources {
-				converted := presenters.PresentConnectorNamespace(resource, h.QuotaConfig)
+				converted := presenters.PresentConnectorNamespaceDeployment(resource, h.QuotaConfig)
 				resourceList.Items = append(resourceList.Items, converted)
 			}
 
@@ -356,7 +359,7 @@ func (h *ConnectorClusterHandler) GetAgentNamespaces(writer http.ResponseWriter,
 	handlers.HandleList(writer, request, cfg)
 }
 
-func (h *ConnectorClusterHandler) GetNamespace(w http.ResponseWriter, r *http.Request) {
+func (h *ConnectorClusterHandler) doGetNamespace(w http.ResponseWriter, r *http.Request, presenter func(*dbapi.ConnectorNamespace, *config.ConnectorsQuotaConfig) interface{}) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	namespaceId := mux.Vars(r)["namespace_id"]
 
@@ -376,10 +379,22 @@ func (h *ConnectorClusterHandler) GetNamespace(w http.ResponseWriter, r *http.Re
 				return nil, errors.NotFound("Connector namespace %s not found", namespaceId)
 			}
 
-			return presenters.PresentConnectorNamespace(resource, h.QuotaConfig), nil
+			return presenter(resource, h.QuotaConfig), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
+}
+
+func (h *ConnectorClusterHandler) GetNamespace(w http.ResponseWriter, r *http.Request) {
+	h.doGetNamespace(w, r, func(ns *dbapi.ConnectorNamespace, quotaConfig *config.ConnectorsQuotaConfig) interface{} {
+		return presenters.PresentConnectorNamespace(ns, quotaConfig)
+	})
+}
+
+func (h *ConnectorClusterHandler) GetAgentNamespace(w http.ResponseWriter, r *http.Request) {
+	h.doGetNamespace(w, r, func(ns *dbapi.ConnectorNamespace, quotaConfig *config.ConnectorsQuotaConfig) interface{} {
+		return presenters.PresentConnectorNamespaceDeployment(ns, quotaConfig)
+	})
 }
 
 func (h *ConnectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, r *http.Request) {
@@ -412,7 +427,7 @@ func (h *ConnectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, 
 func (h *ConnectorClusterHandler) UpdateNamespaceStatus(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	namespaceId := mux.Vars(r)["namespace_id"]
-	var resource private.ConnectorNamespaceStatus
+	var resource private.ConnectorNamespaceDeploymentStatus
 
 	ctx := r.Context()
 	cfg := &handlers.HandlerConfig{
@@ -423,7 +438,7 @@ func (h *ConnectorClusterHandler) UpdateNamespaceStatus(w http.ResponseWriter, r
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			converted := presenters.ConvertConnectorNamespaceStatus(resource)
+			converted := presenters.ConvertConnectorNamespaceDeploymentStatus(resource)
 			err := h.ConnectorNamespace.UpdateConnectorNamespaceStatus(ctx, namespaceId, converted)
 			return nil, err
 		},

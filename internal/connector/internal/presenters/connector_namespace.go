@@ -11,6 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"k8s.io/apimachinery/pkg/util/json"
 	"strings"
 	"time"
@@ -128,7 +129,7 @@ func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *admin.Connecto
 	return result, nil
 }
 
-func ConvertConnectorNamespaceStatus(from private.ConnectorNamespaceStatus) *dbapi.ConnectorNamespaceStatus {
+func ConvertConnectorNamespaceDeploymentStatus(from private.ConnectorNamespaceDeploymentStatus) *dbapi.ConnectorNamespaceStatus {
 	return &dbapi.ConnectorNamespaceStatus{
 		Phase:              dbapi.ConnectorNamespacePhaseEnum(from.Phase),
 		Version:            from.Version,
@@ -185,6 +186,71 @@ func PresentConnectorNamespace(namespace *dbapi.ConnectorNamespace, quotaConfig 
 	}
 	if namespace.TenantOrganisation != nil {
 		result.Tenant.Kind = public.CONNECTORNAMESPACETENANTKIND_ORGANISATION
+		result.Tenant.Id = namespace.TenantOrganisation.ID
+	}
+	if namespace.Expiration != nil {
+		result.Expiration = getTimestamp(*namespace.Expiration)
+	}
+
+	return result
+}
+
+func PresentConnectorNamespaceDeployment(namespace *dbapi.ConnectorNamespace, quotaConfig *config.ConnectorsQuotaConfig) private.ConnectorNamespaceDeployment {
+	var quota config.NamespaceQuota
+	annotations := make(map[string]string, len(namespace.Annotations))
+	for _, anno := range namespace.Annotations {
+		annotations[anno.Key] = anno.Value
+		if anno.Key == profiles.AnnotationProfileKey {
+			// TODO handle unknown profiles instead of using defaults
+			quota, _ = quotaConfig.GetNamespaceQuota(anno.Value)
+		}
+	}
+
+	reference := handlers.PresentReferenceWith(
+		namespace.ID,
+		namespace,
+		func(i interface{}) string {
+			return "ConnectorNamespaceDeployment"
+		},
+		func(id string, obj interface{}) string {
+			return fmt.Sprintf("/api/connector_mgmt/v1/agent/kafka_connector_clusters/%s/namespaces/%s", namespace.ClusterId, namespace.ID)
+		})
+
+	result := private.ConnectorNamespaceDeployment{
+		Id:   reference.Id,
+		Kind: reference.Kind,
+		Href: reference.Href,
+
+		CreatedAt:       namespace.CreatedAt,
+		ModifiedAt:      namespace.UpdatedAt,
+		Owner:           namespace.Owner,
+		ResourceVersion: namespace.Version,
+		Quota: private.ConnectorNamespaceQuota{
+			Connectors:     quota.Connectors,
+			MemoryRequests: quota.MemoryRequests,
+			MemoryLimits:   quota.MemoryLimits,
+			CpuRequests:    quota.CPURequests,
+			CpuLimits:      quota.CPULimits,
+		},
+
+		Name:        namespace.Name,
+		ClusterId:   namespace.ClusterId,
+		Tenant:      private.ConnectorNamespaceTenant{},
+		Annotations: annotations,
+
+		Status: private.ConnectorNamespaceStatus{
+			State:              private.ConnectorNamespaceState(namespace.Status.Phase),
+			Version:            namespace.Status.Version,
+			ConnectorsDeployed: namespace.Status.ConnectorsDeployed,
+			Error:              getError(namespace.Status.Conditions),
+		},
+	}
+	if namespace.TenantUser != nil {
+		result.Tenant.Kind = private.CONNECTORNAMESPACETENANTKIND_USER
+		result.Tenant.Id = namespace.TenantUser.ID
+	}
+	if namespace.TenantOrganisation != nil {
+		result.Tenant.Kind = private.CONNECTORNAMESPACETENANTKIND_ORGANISATION
 		result.Tenant.Id = namespace.TenantOrganisation.ID
 	}
 	if namespace.Expiration != nil {
