@@ -329,6 +329,7 @@ test: gotestsum
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak/config.go" \
 	-e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account/accountservice_interface.go" \
 	-e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account/organization_type.go" \
+	-e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account/account_mock.go" \
 	cover.out > coverage.out
 .PHONY: test
 
