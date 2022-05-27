@@ -2,13 +2,16 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/antihax/optional"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	kafkatest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
@@ -86,7 +89,20 @@ func TestServiceAccounts_Success(t *testing.T) {
 	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
+	// get username from the access token to verify service account owner
 	ctx := getAuthenticatedContext(h, nil)
+	accessTokenValue := fmt.Sprintf("%s", ctx.Value(compat.ContextAccessToken))
+	Expect(accessTokenValue).ToNot(BeEmpty(), "failed to get access token from context")
+
+	claims := jwt.MapClaims{}
+	_, _, err := jwt.NewParser().ParseUnverified(accessTokenValue, claims)
+	Expect(err).ToNot(HaveOccurred(), "failed to parse access token")
+	Expect(claims).ToNot(BeEmpty(), "access token does not have any claims")
+
+	kfmClaims := auth.KFMClaims(claims)
+	username, err := kfmClaims.GetUsername()
+	Expect(err).ToNot(HaveOccurred(), "failed to get username from claims")
+	Expect(username).ToNot(BeEmpty(), "username is empty in claims")
 
 	//verify list
 	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx, nil)
@@ -107,8 +123,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.Id).NotTo(BeEmpty())
 	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
-	// skipping for now as createdBy is empty when using redhat_sso client, will need to generate new version of sdk
-	// Expect(sa.CreatedBy).Should(Equal(account.Username()))
+	Expect(sa.CreatedBy).Should(Equal(username))
 
 	// verify get by id
 	id := sa.Id
@@ -118,9 +133,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(sa.ClientId).NotTo(BeEmpty())
 	Expect(sa.Id).NotTo(BeEmpty())
 	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
-	// skipping for now as createdBy is empty when using redhat_sso client, will need to generate new version of sdk
-	// Expect(sa.CreatedBy).NotTo(BeEmpty())
-	// Expect(sa.CreatedBy).Should(Equal(account.Username()))
+	Expect(sa.CreatedBy).Should(Equal(username))
 
 	//verify reset
 	oldSecret := sa.ClientSecret
@@ -129,9 +142,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(Equal(oldSecret))
 	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
-	// skipping for now as createdBy is empty when using redhat_sso client, will need to generate new version of sdk
-	// Expect(sa.CreatedBy).Should(Equal(account.Username())) // createdBy is empty
-	// Expect(sa.CreatedBy).NotTo(BeEmpty())
+	Expect(sa.CreatedBy).Should(Equal(username))
 
 	//verify delete
 	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, id)
