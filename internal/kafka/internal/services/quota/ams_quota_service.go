@@ -39,13 +39,43 @@ func (q amsQuotaService) ValidateBillingAccount(externalId string, instanceType 
 	}
 
 	quotaType := instanceType.GetQuotaType()
-
-	_, err = q.amsClient.GetQuotaCostsForProduct(orgId, quotaType.GetResourceName(), quotaType.GetProduct())
+	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgId, quotaType.GetResourceName(), quotaType.GetProduct())
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get assigned quota of type %v for organization with id %v", instanceType.GetQuotaType(), orgId))
 	}
 
-	return nil
+	var totalBillingAccounts = 0
+	var matchingBillingAccounts = 0
+	var billingAccounts []amsv1.CloudAccount
+
+	for _, quotaCost := range quotaCosts {
+		for _, cloudAccount := range quotaCost.CloudAccounts() {
+			totalBillingAccounts++
+			billingAccounts = append(billingAccounts, *cloudAccount)
+			if cloudAccount.CloudAccountID() == billingCloudAccountId {
+				if marketplace != nil && *marketplace != cloudAccount.CloudProviderID() {
+					continue
+				}
+
+				// matching billing account found
+				matchingBillingAccounts++
+			}
+		}
+	}
+
+	// only one matching billing account is expected. If there are multiple then they are with different
+	// cloud providers
+	if matchingBillingAccounts == 1 {
+
+	} else if matchingBillingAccounts > 1 {
+		return errors.InvalidBillingAccount("Multiple matching billing accounts found, only one expected. ", orgId)
+	}
+
+	if totalBillingAccounts == 0 {
+		return errors.InvalidBillingAccount("No billing account found for organization with id", orgId)
+	}
+
+	return errors.InvalidBillingAccount("Provided billing account does not match available. Provided: %s, Available: %v", billingCloudAccountId, billingAccounts)
 }
 
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
