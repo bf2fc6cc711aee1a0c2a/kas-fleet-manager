@@ -58,9 +58,7 @@ func TestAcceptedKafkaManager_Reconcile(t *testing.T) {
 				kafkaService: &services.KafkaServiceMock{
 					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{
-							mockKafkas.BuildKafkaRequest(
-								mockKafkas.With(mockKafkas.STATUS, ""),
-							),
+							mockKafkas.BuildKafkaRequest(),
 						}, nil
 					},
 				},
@@ -162,7 +160,6 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(
 					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
-					mockKafkas.With(mockKafkas.STATUS, ""),
 				),
 			},
 			wantErr: true,
@@ -191,7 +188,6 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(
 					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
-					mockKafkas.With(mockKafkas.STATUS, ""),
 				),
 			},
 			wantErr:                    true,
@@ -225,7 +221,6 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(
 					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
-					mockKafkas.With(mockKafkas.STATUS, ""),
 				),
 			},
 			wantErr:                    false,
@@ -260,7 +255,6 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 				kafka: mockKafkas.BuildKafkaRequest(
 					mockKafkas.WithCreatedAt(time.Now()),
 					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
-					mockKafkas.With(mockKafkas.STATUS, ""),
 				),
 			},
 			wantErr: false,
@@ -293,7 +287,6 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 				kafka: mockKafkas.BuildKafkaRequest(
 					mockKafkas.WithCreatedAt(time.Now().Add(time.Duration(-constants2.AcceptedKafkaMaxRetryDuration))),
 					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
-					mockKafkas.With(mockKafkas.STATUS, ""),
 				),
 			},
 			wantErr:    true,
