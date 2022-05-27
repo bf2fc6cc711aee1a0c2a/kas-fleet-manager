@@ -11,7 +11,7 @@ import (
 
 func BuildAdminKafkaRequest(modifyFn func(kafka *private.Kafka)) *private.Kafka {
 	kafka := &private.Kafka{
-		ClusterId:           clusterID,
+		ClusterId:           DefaultClusterID,
 		Region:              DefaultKafkaRequestRegion,
 		CloudProvider:       DefaultKafkaRequestProvider,
 		Status:              constants.KafkaRequestStatusReady.String(),

@@ -235,6 +235,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	// the following kafkas are expected to be returned by the endpoint
 	validKafkas := []*dbapi.KafkaRequest{
 		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-1"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusProvisioning.String()),
@@ -242,16 +243,19 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 		),
 
 		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-2"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusReady.String()),
 		),
 		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-3"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusFailed.String()),
 		),
 		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-4"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusDeprovision.String()),
@@ -262,6 +266,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	invalidKafkas := []*dbapi.KafkaRequest{
 		// kafka that is already been deleted, 'deleted_at' is not empty
 		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.WithDeleted(true),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-5"),
@@ -269,12 +274,14 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 		),
 		// kafka that is in a preparing state
 		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-6"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusPreparing.String()),
 		),
 		// kafka that failed during preparing
 		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-7"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusFailed.String()),
@@ -349,6 +356,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 
 	var testKafkas = []*dbapi.KafkaRequest{
 		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-1"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusProvisioning.String()),
@@ -358,6 +366,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			kafkamocks.With(kafkamocks.DESIRED_KAFKA_IBP_VERSION, "2.7.0"),
 		),
 		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-2"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusReady.String()),
@@ -370,6 +379,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			kafkamocks.With(kafkamocks.ACTUAL_KAFKA_IBP_VERSION, "2.7.0"),
 		),
 		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-3"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusFailed.String()),
@@ -382,6 +392,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			kafkamocks.With(kafkamocks.ACTUAL_KAFKA_IBP_VERSION, "2.7.0"),
 		),
 		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-4"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusDeprovision.String()),

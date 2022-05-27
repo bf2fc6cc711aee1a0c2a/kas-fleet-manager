@@ -161,6 +161,7 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 			},
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(
+					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
 					mockKafkas.With(mockKafkas.STATUS, ""),
 				),
 			},
@@ -189,6 +190,7 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 			},
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(
+					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
 					mockKafkas.With(mockKafkas.STATUS, ""),
 				),
 			},
@@ -222,6 +224,7 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 			},
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(
+					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
 					mockKafkas.With(mockKafkas.STATUS, ""),
 				),
 			},
@@ -254,10 +257,11 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.Status = ""
-					kafkaRequest.CreatedAt = time.Now()
-				}),
+				kafka: mockKafkas.BuildKafkaRequest(
+					mockKafkas.WithCreatedAt(time.Now()),
+					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
+					mockKafkas.With(mockKafkas.STATUS, ""),
+				),
 			},
 			wantErr: false,
 		},
@@ -286,10 +290,11 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.Status = ""
-					kafkaRequest.CreatedAt = time.Now().Add(time.Duration(-constants2.AcceptedKafkaMaxRetryDuration))
-				}),
+				kafka: mockKafkas.BuildKafkaRequest(
+					mockKafkas.WithCreatedAt(time.Now().Add(time.Duration(-constants2.AcceptedKafkaMaxRetryDuration))),
+					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
+					mockKafkas.With(mockKafkas.STATUS, ""),
+				),
 			},
 			wantErr:    true,
 			wantStatus: constants2.KafkaRequestStatusFailed.String(),

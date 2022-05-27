@@ -12,7 +12,6 @@ import (
 	"fmt"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
 
@@ -39,7 +38,7 @@ func TestConvertKafkaRequest(t *testing.T) {
 				kafkaRequestPayload: *mock.BuildKafkaRequestPayload(nil),
 				dbKafkaRequests:     []*dbapi.KafkaRequest{},
 			},
-			want: mock.BuildEmptyKafkaRequest(
+			want: mock.BuildKafkaRequest(
 				mock.With(mock.REGION, mock.DefaultKafkaRequestRegion),
 				mock.With(mock.CLOUD_PROVIDER, mock.DefaultKafkaRequestProvider),
 				mock.With(mock.NAME, mock.DefaultKafkaRequestName),
@@ -54,10 +53,19 @@ func TestConvertKafkaRequest(t *testing.T) {
 					payload.ReauthenticationEnabled = &reauthDisabled
 				}),
 				dbKafkaRequests: []*dbapi.KafkaRequest{mock.BuildKafkaRequest(
-					mock.WithReauthenticationEnabled(reauthEnabled),
+					mock.With(mock.REGION, mock.DefaultKafkaRequestRegion),
+					mock.With(mock.CLOUD_PROVIDER, mock.DefaultKafkaRequestProvider),
+					mock.With(mock.NAME, mock.DefaultKafkaRequestName),
+					mock.WithMultiAZ(true),
+					mock.WithReauthenticationEnabled(reauthDisabled),
 				)},
 			},
 			want: mock.BuildKafkaRequest(
+				mock.With(mock.REGION, mock.DefaultKafkaRequestRegion),
+				mock.With(mock.CLOUD_PROVIDER, mock.DefaultKafkaRequestProvider),
+				mock.With(mock.NAME, mock.DefaultKafkaRequestName),
+				mock.WithMultiAZ(true),
+				mock.WithReauthenticationEnabled(reauthDisabled),
 				mock.WithReauthenticationEnabled(reauthDisabled),
 			),
 		},
@@ -66,11 +74,13 @@ func TestConvertKafkaRequest(t *testing.T) {
 			args: args{
 				kafkaRequestPayload: *mock.BuildKafkaRequestPayload(nil),
 				dbKafkaRequests: []*dbapi.KafkaRequest{mock.BuildKafkaRequest(
-					mock.WithReauthenticationEnabled(true),
+					mock.WithPredefinedTestValues(),
+					mock.WithReauthenticationEnabled(reauthEnabled),
 				)},
 			},
 			want: mock.BuildKafkaRequest(
-				mock.WithReauthenticationEnabled(true),
+				mock.WithPredefinedTestValues(),
+				mock.WithReauthenticationEnabled(reauthEnabled),
 			),
 		},
 	}
@@ -92,7 +102,6 @@ func TestPresentKafkaRequest(t *testing.T) {
 	bootstrapServer := "http://test.com"
 	failedReason := ""
 	version := "2.8.0"
-	instanceType := types.STANDARD.String()
 	reauthEnabled := true
 	kafkaStorageSize := "1000Gi"
 
@@ -108,11 +117,11 @@ func TestPresentKafkaRequest(t *testing.T) {
 			name: "should return kafka request as presented to an end user",
 			args: args{
 				dbKafkaRequest: mock.BuildKafkaRequest(
+					mock.WithPredefinedTestValues(),
 					mock.WithReauthenticationEnabled(reauthEnabled),
 					mock.With(mock.BOOTSTRAP_SERVER_HOST, bootstrapServer),
 					mock.With(mock.FAILED_REASON, failedReason),
 					mock.With(mock.ACTUAL_KAFKA_VERSION, version),
-					mock.With(mock.INSTANCE_TYPE, instanceType),
 					mock.With(mock.STORAGE_SIZE, kafkaStorageSize),
 				),
 			},
@@ -120,7 +129,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.ReauthenticationEnabled = reauthEnabled
 				kafkaRequest.BootstrapServerHost = setBootstrapServerHost(bootstrapServer)
 				kafkaRequest.FailedReason = failedReason
-				kafkaRequest.InstanceType = instanceType
+				kafkaRequest.InstanceType = mock.DefaultInstanceType
 				kafkaRequest.KafkaStorageSize = kafkaStorageSize
 				kafkaRequest.BrowserUrl = "//dashboard"
 				kafkaRequest.SizeId = defaultInstanceSize.Id
@@ -139,7 +148,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 					Configuration: config.SupportedKafkaInstanceTypesConfig{
 						SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
 							{
-								Id: "standard",
+								Id: mock.DefaultInstanceType,
 								Sizes: []config.KafkaInstanceSize{
 									defaultInstanceSize,
 								},

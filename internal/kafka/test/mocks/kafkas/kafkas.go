@@ -19,7 +19,7 @@ const (
 	DefaultKafkaRequestRegion   = "us-east-1"
 	DefaultKafkaRequestProvider = "aws"
 	DefaultKafkaRequestName     = "test-cluster"
-	clusterID                   = "test-cluster-id"
+	DefaultClusterID            = "test-cluster-id"
 	user                        = "test-user"
 	DefaultMultiAz              = true
 	DefaultBootstrapServerHost  = "test-bootstrap-server-host"
@@ -124,33 +124,33 @@ func WithMultiAZ(multiaz bool) KafkaRequestBuildOption {
 	}
 }
 
-func BuildEmptyKafkaRequest(options ...KafkaRequestBuildOption) *dbapi.KafkaRequest {
-	kafkaRequest := &dbapi.KafkaRequest{}
-
-	for _, option := range options {
-		option(kafkaRequest)
+func WithCreatedAt(createdAt time.Time) KafkaRequestBuildOption {
+	return func(request *dbapi.KafkaRequest) {
+		request.Meta.CreatedAt = createdAt
 	}
+}
 
-	return kafkaRequest
+func WithPredefinedTestValues() KafkaRequestBuildOption {
+	return func(request *dbapi.KafkaRequest) {
+		request.Meta = api.Meta{
+			DeletedAt: gorm.DeletedAt{Valid: false},
+		}
+		request.Name = DefaultKafkaRequestName
+		request.Namespace = DefaultKafkaRequestName
+		request.Region = DefaultKafkaRequestRegion
+		request.CloudProvider = DefaultKafkaRequestProvider
+		request.MultiAZ = DefaultMultiAz
+		request.InstanceType = DefaultInstanceType
+		request.SizeId = mocksupportedinstancetypes.DefaultKafkaInstanceSizeId
+		request.ClusterID = DefaultClusterID
+		request.BootstrapServerHost = DefaultBootstrapServerHost
+		request.Owner = user
+		request.Status = constants.KafkaRequestStatusReady.String()
+	}
 }
 
 func BuildKafkaRequest(options ...KafkaRequestBuildOption) *dbapi.KafkaRequest {
-	kafkaRequest := &dbapi.KafkaRequest{
-		Meta: api.Meta{
-			DeletedAt: gorm.DeletedAt{Valid: false},
-		},
-		Region:              DefaultKafkaRequestRegion,
-		ClusterID:           clusterID,
-		CloudProvider:       DefaultKafkaRequestProvider,
-		Name:                DefaultKafkaRequestName,
-		Namespace:           DefaultKafkaRequestName,
-		MultiAZ:             DefaultMultiAz,
-		Status:              constants.KafkaRequestStatusReady.String(),
-		Owner:               user,
-		InstanceType:        DefaultInstanceType,
-		SizeId:              mocksupportedinstancetypes.DefaultKafkaInstanceSizeId,
-		BootstrapServerHost: DefaultBootstrapServerHost,
-	}
+	kafkaRequest := &dbapi.KafkaRequest{}
 	for _, option := range options {
 		option(kafkaRequest)
 	}
@@ -166,7 +166,7 @@ func BuildKafkaRequestMap(modifyFn func(m []map[string]interface{})) []map[strin
 			"name":                  DefaultKafkaRequestName,
 			"status":                constants.KafkaRequestStatusReady.String(),
 			"owner":                 user,
-			"cluster_id":            clusterID,
+			"cluster_id":            DefaultClusterID,
 			"id":                    "",
 			"bootstrap_server_host": "",
 			"created_at":            time.Time{},
