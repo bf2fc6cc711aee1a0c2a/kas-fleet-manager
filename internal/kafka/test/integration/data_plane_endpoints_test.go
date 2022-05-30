@@ -9,9 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	adminprivate "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -21,10 +18,13 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	kafkamocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
+	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -71,6 +71,7 @@ func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer 
 		ProviderType:          api.ClusterProviderStandalone,
 		SupportedInstanceType: api.AllInstanceTypeSupport.String(),
 		ClientID:              fmt.Sprintf("kas-fleetshard-agent-%s", clusterId),
+		ClientSecret:          "some-cluster-secret",
 	}
 
 	err := cluster.SetAvailableStrimziVersions(getTestStrimziVersionsMatrix())
@@ -214,31 +215,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound))
 }
 
-func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
-	kafkaInstancesizes := []config.KafkaInstanceSize{
-		{
-			Id:                          "x1",
-			DisplayName:                 "1",
-			QuotaConsumed:               2,
-			IngressThroughputPerSec:     "50Mi",
-			EgressThroughputPerSec:      "100Mi",
-			TotalMaxConnections:         3000,
-			MaxConnectionAttemptsPerSec: 100,
-			MaxDataRetentionSize:        "1000Gi",
-			MaxDataRetentionPeriod:      "P14D",
-			MaxPartitions:               1500,
-			MaxMessageSize:              "1Mi",
-			MinInSyncReplicas:           2,
-			ReplicationFactor:           3,
-			SupportedAZModes: []string{
-				"single",
-				"multi",
-			},
-			QuotaType:        "rhosak",
-			CapacityConsumed: 1,
-			MaturityStatus:   config.MaturityStatusStable,
-		},
-	}
+func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
@@ -249,145 +226,74 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			},
 			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
 		}
-	}, func(kafkaConfig *config.KafkaConfig) {
-		kafkaConfig.SupportedInstanceTypes.Configuration.SupportedKafkaInstanceTypes = []config.KafkaInstanceType{
-			{
-				Id:          types.STANDARD.String(),
-				DisplayName: "standard",
-				Sizes:       kafkaInstancesizes,
-			},
-			{
-				Id:          types.DEVELOPER.String(),
-				DisplayName: "developer",
-				Sizes:       kafkaInstancesizes,
-			},
-		}
+	}, func(kafkaConfig *config.KafkaConfig, reconcilerConfig *workers.ReconcilerConfig) {
+		// increase repeat interval so that the dummy kafkas created with a 'preparing' status does not get updated to the next state
+		reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Minute
 	})
 	defer testServer.TearDown()
-	bootstrapServerHost := "some-bootstrap⁻host"
-	storageSize := "60Gi"
-	updatedStorageSize := "70Gi"
-	sizeId := "x1"
 
-	biggerStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
-		KafkaStorageSize: updatedStorageSize,
+	// the following kafkas are expected to be returned by the endpoint
+	validKafkas := []*dbapi.KafkaRequest{
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-1"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusProvisioning.String()),
+			kafkamocks.With(kafkamocks.INSTANCE_TYPE, types.DEVELOPER.String()),
+		),
+
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-2"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusReady.String()),
+		),
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-3"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusFailed.String()),
+		),
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-4"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusDeprovision.String()),
+		),
 	}
 
-	var testKafkas = []*dbapi.KafkaRequest{
-		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Name:                   mockKafkaName1,
-			Namespace:              "mk-1",
-			Status:                 constants2.KafkaRequestStatusDeprovision.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			DesiredKafkaVersion:    "2.8.1",
-			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
-			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
-			DesiredKafkaIBPVersion: "2.7.0",
-			InstanceType:           types.STANDARD.String(),
-			SizeId:                 sizeId,
-			KafkaStorageSize:       storageSize,
-		},
-		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Name:                   mockKafkaName2,
-			Namespace:              "mk-2",
-			Status:                 constants2.KafkaRequestStatusProvisioning.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			DesiredKafkaVersion:    "2.8.1",
-			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
-			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
-			DesiredKafkaIBPVersion: "2.7.0",
-			InstanceType:           types.STANDARD.String(),
-			SizeId:                 sizeId,
-			KafkaStorageSize:       storageSize,
-		},
-		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Name:                   mockKafkaName3,
-			Namespace:              "mk-3",
-			Status:                 constants2.KafkaRequestStatusPreparing.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			DesiredKafkaVersion:    "2.8.1",
-			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
-			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
-			DesiredKafkaIBPVersion: "2.7.0",
-			InstanceType:           types.DEVELOPER.String(),
-			SizeId:                 sizeId,
-			KafkaStorageSize:       storageSize,
-		},
-		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Name:                   mockKafkaName4,
-			Namespace:              "mk-4",
-			Status:                 constants2.KafkaRequestStatusReady.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			ActualKafkaVersion:     "2.8.1",
-			DesiredKafkaVersion:    "2.8.1",
-			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
-			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
-			ActualKafkaIBPVersion:  "2.7.0",
-			DesiredKafkaIBPVersion: "2.7.0",
-			InstanceType:           types.STANDARD.String(),
-			SizeId:                 sizeId,
-			KafkaStorageSize:       storageSize,
-		},
-		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Namespace:              "mk-5",
-			Name:                   mockKafkaName5,
-			Status:                 constants2.KafkaRequestStatusFailed.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			ActualKafkaVersion:     "2.8.1",
-			DesiredKafkaVersion:    "2.8.1",
-			ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
-			DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
-			ActualKafkaIBPVersion:  "2.7.0",
-			DesiredKafkaIBPVersion: "2.7.0",
-			InstanceType:           types.STANDARD.String(),
-			SizeId:                 sizeId,
-			KafkaStorageSize:       storageSize,
-		},
+	// the following kafkas should not be returned by the endpoint
+	invalidKafkas := []*dbapi.KafkaRequest{
+		// kafka that is already been deleted, 'deleted_at' is not empty
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.WithDeleted(true),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-5"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusDeprovision.String()),
+		),
+		// kafka that is in a preparing state
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-6"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusPreparing.String()),
+		),
+		// kafka that failed during preparing
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-7"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusFailed.String()),
+			kafkamocks.With(kafkamocks.BOOTSTRAP_SERVER_HOST, ""),
+		),
 	}
 
-	db := test.TestServices.DBFactory.New()
+	dummyKafkas := append(validKafkas, invalidKafkas...)
 
 	// create dummy kafkas
-	if err := db.Create(&testKafkas).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
-		return
-	}
-
-	// updating KafkaStorageSize, so that later it can be validated against "PrivateClient.AgentClustersApi.GetKafkas()"
-	adminCtx := NewAuthenticatedContextForAdminEndpoints(testServer.Helper, []string{auth.KasFleetManagerAdminWriteRole})
-	client := test.NewAdminPrivateAPIClient(testServer.Helper)
-	for _, kafka := range testKafkas {
-		if arrays.Contains(constants.GetUpdateableStatuses(), kafka.Status) {
-			result, _, err := client.DefaultApi.UpdateKafkaById(adminCtx, kafka.ID, biggerStorageUpdateRequest)
-			Expect(err).To(BeNil())
-			Expect(result.KafkaStorageSize).To(Equal(biggerStorageUpdateRequest.KafkaStorageSize))
-		}
-	}
-
-	// create an additional kafka in failed state without "ssoSecret", "ssoClientID" and bootstrapServerHost. This indicates that the
-	// kafka failed in preparing state and should not be returned in the list
-	additionalKafka := &dbapi.KafkaRequest{
-		ClusterID:              testServer.ClusterID,
-		MultiAZ:                false,
-		Name:                   mockKafkaName4,
-		Namespace:              "mk",
-		Status:                 constants2.KafkaRequestStatusFailed.String(),
-		DesiredKafkaVersion:    "2.7.2",
-		DesiredKafkaIBPVersion: "2.7",
-		InstanceType:           types.DEVELOPER.String(),
-	}
-
-	if err := db.Save(additionalKafka).Error; err != nil {
+	db := test.TestServices.DBFactory.New()
+	if err := db.Create(&dummyKafkas).Error; err != nil {
 		Expect(err).NotTo(HaveOccurred())
 		return
 	}
@@ -397,48 +303,144 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(list.Items).To(HaveLen(4)) // only count valid Managed Kafka CR
 
-	for _, k := range testKafkas {
-		if k.Status != constants2.KafkaRequestStatusPreparing.String() && k.Status != constants2.KafkaRequestStatusDeprovision.String() {
-			if mk := findManagedKafkaByID(list.Items, k.ID); mk != nil {
-				Expect(mk.Metadata.Name).To(Equal(k.Name))
-				Expect(mk.Metadata.Annotations.Bf2OrgPlacementId).To(Equal(k.PlacementId))
-				Expect(mk.Metadata.Annotations.Bf2OrgId).To(Equal(k.ID))
-				Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileType).To(Equal(k.InstanceType))
-				Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileQuotaConsumed).To(Equal(strconv.Itoa(kafkaInstancesizes[0].QuotaConsumed)))
-				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
-				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
-				Expect(mk.Spec.Versions.Kafka).To(Equal(k.DesiredKafkaVersion))
-				Expect(mk.Spec.Versions.KafkaIbp).To(Equal(k.DesiredKafkaIBPVersion))
-				Expect(mk.Spec.Endpoint.Tls).To(BeNil())
-				Expect(mk.Spec.Capacity.MaxDataRetentionSize).To(Equal(biggerStorageUpdateRequest.KafkaStorageSize))
-				Expect(mk.Spec.Capacity.IngressPerSec).To(Equal(kafkaInstancesizes[0].IngressThroughputPerSec.String()))
-				Expect(mk.Spec.Capacity.EgressPerSec).To(Equal(kafkaInstancesizes[0].EgressThroughputPerSec.String()))
-				Expect(mk.Spec.Capacity.TotalMaxConnections).To(Equal(int32(kafkaInstancesizes[0].TotalMaxConnections)))
-				Expect(mk.Spec.Capacity.MaxConnectionAttemptsPerSec).To(Equal(int32(kafkaInstancesizes[0].MaxConnectionAttemptsPerSec)))
-				Expect(mk.Spec.Capacity.MaxDataRetentionPeriod).To(Equal(kafkaInstancesizes[0].MaxDataRetentionPeriod))
-				Expect(mk.Spec.Capacity.MaxPartitions).To(Equal(int32(kafkaInstancesizes[0].MaxPartitions)))
-			} else {
-				t.Error("failed matching managedkafka id with kafkarequest id")
+	var kafkaConfig *config.KafkaConfig
+	testServer.Helper.Env.MustResolve(&kafkaConfig)
+
+	for _, k := range validKafkas {
+		if mk := findManagedKafkaByID(list.Items, k.ID); mk != nil {
+			instanceSize, err := kafkaConfig.GetKafkaInstanceSize(k.InstanceType, k.SizeId)
+			if err != nil {
+				t.Errorf("failed to retrieve instance size for kafka '%s': %v", mk.Metadata.Name, err.Error())
 				break
 			}
+			Expect(mk.Metadata.Name).To(Equal(k.Name))
+			Expect(mk.Metadata.Annotations.Bf2OrgPlacementId).To(Equal(k.PlacementId))
+			Expect(mk.Metadata.Annotations.Bf2OrgId).To(Equal(k.ID))
+			Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileType).To(Equal(k.InstanceType))
+			Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileQuotaConsumed).To(Equal(strconv.Itoa(instanceSize.QuotaConsumed)))
+			Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
+			Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
+			Expect(mk.Spec.Versions.Kafka).To(Equal(k.DesiredKafkaVersion))
+			Expect(mk.Spec.Versions.KafkaIbp).To(Equal(k.DesiredKafkaIBPVersion))
+			Expect(mk.Spec.Endpoint.Tls).To(BeNil())
+			Expect(mk.Spec.Capacity.IngressPerSec).To(Equal(instanceSize.IngressThroughputPerSec.String()))
+			Expect(mk.Spec.Capacity.EgressPerSec).To(Equal(instanceSize.EgressThroughputPerSec.String()))
+			Expect(mk.Spec.Capacity.TotalMaxConnections).To(Equal(int32(instanceSize.TotalMaxConnections)))
+			Expect(mk.Spec.Capacity.MaxConnectionAttemptsPerSec).To(Equal(int32(instanceSize.MaxConnectionAttemptsPerSec)))
+			Expect(mk.Spec.Capacity.MaxDataRetentionPeriod).To(Equal(instanceSize.MaxDataRetentionPeriod))
+			Expect(mk.Spec.Capacity.MaxPartitions).To(Equal(int32(instanceSize.MaxPartitions)))
+		} else {
+			t.Error("failed matching managedkafka id with kafkarequest id")
+			break
 		}
 	}
+}
+
+func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
+		username, _ := account.GetUsername()
+		return jwt.MapClaims{
+			"username": username,
+			"iss":      test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
+			"realm_access": map[string][]string{
+				"roles": {"kas_fleetshard_operator"},
+			},
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
+		}
+	}, nil)
+	defer testServer.TearDown()
+
+	biggerStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
+		KafkaStorageSize: "70Gi",
+	}
+
+	var testKafkas = []*dbapi.KafkaRequest{
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-1"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusProvisioning.String()),
+			kafkamocks.With(kafkamocks.STORAGE_SIZE, mocksupportedinstancetypes.DefaultMaxDataRetentionSize),
+			kafkamocks.With(kafkamocks.DESIRED_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
+			kafkamocks.With(kafkamocks.DESIRED_KAFKA_VERSION, "2.8.1"),
+			kafkamocks.With(kafkamocks.DESIRED_KAFKA_IBP_VERSION, "2.7.0"),
+		),
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-2"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusReady.String()),
+			kafkamocks.With(kafkamocks.STORAGE_SIZE, mocksupportedinstancetypes.DefaultMaxDataRetentionSize),
+			kafkamocks.With(kafkamocks.DESIRED_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
+			kafkamocks.With(kafkamocks.ACTUAL_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
+			kafkamocks.With(kafkamocks.DESIRED_KAFKA_VERSION, "2.8.1"),
+			kafkamocks.With(kafkamocks.ACTUAL_KAFKA_VERSION, "2.8.1"),
+			kafkamocks.With(kafkamocks.DESIRED_KAFKA_IBP_VERSION, "2.7.0"),
+			kafkamocks.With(kafkamocks.ACTUAL_KAFKA_IBP_VERSION, "2.7.0"),
+		),
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-3"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusFailed.String()),
+			kafkamocks.With(kafkamocks.STORAGE_SIZE, mocksupportedinstancetypes.DefaultMaxDataRetentionSize),
+			kafkamocks.With(kafkamocks.DESIRED_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
+			kafkamocks.With(kafkamocks.ACTUAL_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
+			kafkamocks.With(kafkamocks.DESIRED_KAFKA_VERSION, "2.8.1"),
+			kafkamocks.With(kafkamocks.ACTUAL_KAFKA_VERSION, "2.8.1"),
+			kafkamocks.With(kafkamocks.DESIRED_KAFKA_IBP_VERSION, "2.7.0"),
+			kafkamocks.With(kafkamocks.ACTUAL_KAFKA_IBP_VERSION, "2.7.0"),
+		),
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-4"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusDeprovision.String()),
+			kafkamocks.With(kafkamocks.STORAGE_SIZE, mocksupportedinstancetypes.DefaultMaxDataRetentionSize),
+			kafkamocks.With(kafkamocks.DESIRED_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
+			kafkamocks.With(kafkamocks.ACTUAL_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
+			kafkamocks.With(kafkamocks.DESIRED_KAFKA_VERSION, "2.8.1"),
+			kafkamocks.With(kafkamocks.ACTUAL_KAFKA_VERSION, "2.8.1"),
+			kafkamocks.With(kafkamocks.DESIRED_KAFKA_IBP_VERSION, "2.7.0"),
+			kafkamocks.With(kafkamocks.ACTUAL_KAFKA_IBP_VERSION, "2.7.0"),
+		),
+	}
+
+	// create dummy kafkas
+	db := test.TestServices.DBFactory.New()
+	if err := db.Create(&testKafkas).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
+	// updating KafkaStorageSize, so that later it can be validated against "PrivateClient.AgentClustersApi.GetKafkas()"
+	adminCtx := NewAuthenticatedContextForAdminEndpoints(testServer.Helper, []string{auth.KasFleetManagerAdminWriteRole})
+	client := test.NewAdminPrivateAPIClient(testServer.Helper)
+	for _, kafka := range testKafkas {
+		result, _, err := client.DefaultApi.UpdateKafkaById(adminCtx, kafka.ID, biggerStorageUpdateRequest)
+		Expect(err).To(BeNil())
+		Expect(result.KafkaStorageSize).To(Equal(biggerStorageUpdateRequest.KafkaStorageSize))
+	}
+
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
 	var readyClusters, deletedClusters []string
 	updates := map[string]private.DataPlaneKafkaStatus{}
-	condtionsReasons := []string{
+	conditionsReasons := []string{
 		"StrimziUpdating",
 		"KafkaUpdating",
 		"KafkaIbpUpdating",
 	}
-	lengthConditionsReasons := len(condtionsReasons)
+	lengthConditionsReasons := len(conditionsReasons)
 	for idx, item := range list.Items {
 		if !item.Spec.Deleted {
 			updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlaneKafkaStatus{
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "True",
-					Reason: condtionsReasons[idx%lengthConditionsReasons],
+					Reason: conditionsReasons[idx%lengthConditionsReasons],
 				}},
 				Versions: private.DataPlaneKafkaStatusVersions{
 					Kafka:    fmt.Sprintf("kafka-new-version-%s", item.Metadata.Annotations.Bf2OrgId),

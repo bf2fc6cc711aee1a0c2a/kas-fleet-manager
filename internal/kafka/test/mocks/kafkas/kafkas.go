@@ -7,17 +7,27 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+
+	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
+
 	"gorm.io/gorm"
 )
 
 const (
-	kafkaRequestRegion   = "us-east-1"
-	kafkaRequestProvider = "aws"
-	kafkaRequestName     = "test-cluster"
-	clusterID            = "test-cluster-id"
-	user                 = "test-user"
-	multiAz              = true
+	DefaultKafkaRequestRegion   = "us-east-1"
+	DefaultKafkaRequestProvider = "aws"
+	DefaultKafkaRequestName     = "test-cluster"
+	DefaultClusterID            = "test-cluster-id"
+	user                        = "test-user"
+	DefaultMultiAz              = true
+	DefaultBootstrapServerHost  = "test-bootstrap-server-host"
+	DefaultPlacementId          = "test-placement-id"
+)
+
+var (
+	DefaultInstanceType = types.STANDARD.String()
 )
 
 type KafkaRequestAttribute int
@@ -29,8 +39,18 @@ const (
 	BOOTSTRAP_SERVER_HOST
 	FAILED_REASON
 	ACTUAL_KAFKA_VERSION
+	DESIRED_KAFKA_VERSION
 	INSTANCE_TYPE
 	STORAGE_SIZE
+	SIZE_ID
+	NAME
+	NAMESPACE
+	REGION
+	CLOUD_PROVIDER
+	ACTUAL_STRIMZI_VERSION
+	DESIRED_STRIMZI_VERSION
+	ACTUAL_KAFKA_IBP_VERSION
+	DESIRED_KAFKA_IBP_VERSION
 )
 
 type KafkaAttribute int
@@ -52,10 +72,30 @@ func With(attribute KafkaRequestAttribute, value string) KafkaRequestBuildOption
 			request.FailedReason = value
 		case ACTUAL_KAFKA_VERSION:
 			request.ActualKafkaVersion = value
+		case DESIRED_KAFKA_VERSION:
+			request.DesiredKafkaVersion = value
 		case INSTANCE_TYPE:
 			request.InstanceType = value
 		case STORAGE_SIZE:
 			request.KafkaStorageSize = value
+		case SIZE_ID:
+			request.SizeId = value
+		case NAME:
+			request.Name = value
+		case NAMESPACE:
+			request.Namespace = value
+		case REGION:
+			request.Region = value
+		case CLOUD_PROVIDER:
+			request.CloudProvider = value
+		case ACTUAL_STRIMZI_VERSION:
+			request.ActualStrimziVersion = value
+		case DESIRED_STRIMZI_VERSION:
+			request.DesiredStrimziVersion = value
+		case ACTUAL_KAFKA_IBP_VERSION:
+			request.ActualKafkaIBPVersion = value
+		case DESIRED_KAFKA_IBP_VERSION:
+			request.DesiredKafkaIBPVersion = value
 		}
 	}
 }
@@ -78,19 +118,39 @@ func WithDeleted(deleted bool) KafkaRequestBuildOption {
 	}
 }
 
-func BuildKafkaRequest(options ...KafkaRequestBuildOption) *dbapi.KafkaRequest {
-	kafkaRequest := &dbapi.KafkaRequest{
-		Meta: api.Meta{
-			DeletedAt: gorm.DeletedAt{Valid: true},
-		},
-		Region:        kafkaRequestRegion,
-		ClusterID:     clusterID,
-		CloudProvider: kafkaRequestProvider,
-		Name:          kafkaRequestName,
-		MultiAZ:       multiAz,
-		Status:        constants.KafkaRequestStatusReady.String(),
-		Owner:         user,
+func WithMultiAZ(multiaz bool) KafkaRequestBuildOption {
+	return func(request *dbapi.KafkaRequest) {
+		request.MultiAZ = multiaz
 	}
+}
+
+func WithCreatedAt(createdAt time.Time) KafkaRequestBuildOption {
+	return func(request *dbapi.KafkaRequest) {
+		request.Meta.CreatedAt = createdAt
+	}
+}
+
+func WithPredefinedTestValues() KafkaRequestBuildOption {
+	return func(request *dbapi.KafkaRequest) {
+		request.Meta = api.Meta{
+			DeletedAt: gorm.DeletedAt{Valid: false},
+		}
+		request.Name = DefaultKafkaRequestName
+		request.Namespace = DefaultKafkaRequestName
+		request.Region = DefaultKafkaRequestRegion
+		request.CloudProvider = DefaultKafkaRequestProvider
+		request.MultiAZ = DefaultMultiAz
+		request.InstanceType = DefaultInstanceType
+		request.SizeId = mocksupportedinstancetypes.DefaultKafkaInstanceSizeId
+		request.ClusterID = DefaultClusterID
+		request.BootstrapServerHost = DefaultBootstrapServerHost
+		request.Owner = user
+		request.Status = constants.KafkaRequestStatusReady.String()
+	}
+}
+
+func BuildKafkaRequest(options ...KafkaRequestBuildOption) *dbapi.KafkaRequest {
+	kafkaRequest := &dbapi.KafkaRequest{}
 	for _, option := range options {
 		option(kafkaRequest)
 	}
@@ -100,13 +160,13 @@ func BuildKafkaRequest(options ...KafkaRequestBuildOption) *dbapi.KafkaRequest {
 func BuildKafkaRequestMap(modifyFn func(m []map[string]interface{})) []map[string]interface{} {
 	m := []map[string]interface{}{
 		{
-			"region":                kafkaRequestRegion,
-			"cloud_provider":        kafkaRequestProvider,
-			"multi_az":              multiAz,
-			"name":                  kafkaRequestName,
+			"region":                DefaultKafkaRequestRegion,
+			"cloud_provider":        DefaultKafkaRequestProvider,
+			"multi_az":              DefaultMultiAz,
+			"name":                  DefaultKafkaRequestName,
 			"status":                constants.KafkaRequestStatusReady.String(),
 			"owner":                 user,
-			"cluster_id":            clusterID,
+			"cluster_id":            DefaultClusterID,
 			"id":                    "",
 			"bootstrap_server_host": "",
 			"created_at":            time.Time{},
@@ -134,10 +194,10 @@ func GetRoutes() []byte {
 
 func BuildKafkaRequestPayload(modifyFn func(payload *public.KafkaRequestPayload)) *public.KafkaRequestPayload {
 	payload := &public.KafkaRequestPayload{
-		CloudProvider:     kafkaRequestProvider,
-		DeprecatedMultiAz: multiAz,
-		Name:              kafkaRequestName,
-		Region:            kafkaRequestRegion,
+		CloudProvider:     DefaultKafkaRequestProvider,
+		DeprecatedMultiAz: DefaultMultiAz,
+		Name:              DefaultKafkaRequestName,
+		Region:            DefaultKafkaRequestRegion,
 	}
 	if modifyFn != nil {
 		modifyFn(payload)
@@ -147,10 +207,10 @@ func BuildKafkaRequestPayload(modifyFn func(payload *public.KafkaRequestPayload)
 
 func BuildPublicKafkaRequest(modifyFn func(kafka *public.KafkaRequest)) *public.KafkaRequest {
 	kafka := &public.KafkaRequest{
-		Region:        kafkaRequestRegion,
-		CloudProvider: kafkaRequestProvider,
-		Name:          kafkaRequestName,
-		MultiAz:       multiAz,
+		Region:        DefaultKafkaRequestRegion,
+		CloudProvider: DefaultKafkaRequestProvider,
+		Name:          DefaultKafkaRequestName,
+		MultiAz:       DefaultMultiAz,
 		Status:        constants.KafkaRequestStatusReady.String(),
 		Owner:         user,
 		CreatedAt:     time.Time{},

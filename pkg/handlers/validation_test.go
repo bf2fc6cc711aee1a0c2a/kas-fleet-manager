@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	. "github.com/onsi/gomega"
@@ -203,10 +204,13 @@ func Test_ValidateServiceAccountId(t *testing.T) {
 
 func Test_ValidateServiceAccountClientId(t *testing.T) {
 	field := "account-id"
-	validId := "srvc-acct-b92ba7eb-2636-dee7-93cf-8f3fc14a3ccc"
+	validIdMasSSO := "srvc-acct-b92ba7eb-2636-dee7-93cf-8f3fc14a3ccc"
+	validIdRedhatSSO := "b92ba7eb-2636-dee7-93cf-8f3fc14a3ccc"
+
 	type args struct {
-		value *string
-		field string
+		value       *string
+		field       string
+		ssoProvider string
 	}
 	tests := []struct {
 		name            string
@@ -215,21 +219,32 @@ func Test_ValidateServiceAccountClientId(t *testing.T) {
 		expectedErrCode errors.ServiceErrorCode
 	}{
 		{
-			name: "No error thrown if service account client id is valid",
+			name: "No error thrown if mas sso service account client id is valid",
 			args: args{
-				field: field,
-				value: &validId,
+				field:       field,
+				value:       &validIdMasSSO,
+				ssoProvider: keycloak.MAS_SSO,
 			},
 			wantErr: false,
 		},
 		{
-			name: "Should throw an error if service account client id is invalid",
+			name: "Should throw an error if mas sso service account client id is invalid",
 			args: args{
-				field: field,
-				value: &invalidField,
+				field:       field,
+				value:       &invalidField,
+				ssoProvider: keycloak.MAS_SSO,
 			},
 			wantErr:         true,
 			expectedErrCode: errors.ErrorMalformedServiceAccountId,
+		},
+		{
+			name: "No error thrown for redhat service account client id",
+			args: args{
+				field:       field,
+				value:       &validIdRedhatSSO,
+				ssoProvider: keycloak.REDHAT_SSO,
+			},
+			wantErr: false,
 		},
 	}
 
@@ -237,7 +252,7 @@ func Test_ValidateServiceAccountClientId(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := handlers.ValidateServiceAccountClientId(tt.args.value, tt.args.field)()
+			err := handlers.ValidateServiceAccountClientId(tt.args.value, tt.args.field, tt.args.ssoProvider)()
 			Expect(err != nil).To(Equal(tt.wantErr))
 			if err != nil {
 				Expect(err.Code).To(Equal(tt.expectedErrCode))

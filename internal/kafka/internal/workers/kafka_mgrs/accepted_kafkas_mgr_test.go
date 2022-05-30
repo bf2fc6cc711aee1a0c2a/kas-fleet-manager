@@ -58,9 +58,7 @@ func TestAcceptedKafkaManager_Reconcile(t *testing.T) {
 				kafkaService: &services.KafkaServiceMock{
 					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{
-							mockKafkas.BuildKafkaRequest(
-								mockKafkas.With(mockKafkas.STATUS, ""),
-							),
+							mockKafkas.BuildKafkaRequest(),
 						}, nil
 					},
 				},
@@ -161,7 +159,7 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 			},
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(
-					mockKafkas.With(mockKafkas.STATUS, ""),
+					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
 				),
 			},
 			wantErr: true,
@@ -189,7 +187,7 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 			},
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(
-					mockKafkas.With(mockKafkas.STATUS, ""),
+					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
 				),
 			},
 			wantErr:                    true,
@@ -222,7 +220,7 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 			},
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(
-					mockKafkas.With(mockKafkas.STATUS, ""),
+					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
 				),
 			},
 			wantErr:                    false,
@@ -254,10 +252,10 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.Status = ""
-					kafkaRequest.CreatedAt = time.Now()
-				}),
+				kafka: mockKafkas.BuildKafkaRequest(
+					mockKafkas.WithCreatedAt(time.Now()),
+					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
+				),
 			},
 			wantErr: false,
 		},
@@ -286,10 +284,10 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.Status = ""
-					kafkaRequest.CreatedAt = time.Now().Add(time.Duration(-constants2.AcceptedKafkaMaxRetryDuration))
-				}),
+				kafka: mockKafkas.BuildKafkaRequest(
+					mockKafkas.WithCreatedAt(time.Now().Add(time.Duration(-constants2.AcceptedKafkaMaxRetryDuration))),
+					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
+				),
 			},
 			wantErr:    true,
 			wantStatus: constants2.KafkaRequestStatusFailed.String(),

@@ -267,6 +267,16 @@ func (helper *Helper) NewAuthenticatedContext(account *amv1.Account, claims jwt.
 	return context.WithValue(context.Background(), compat.ContextAccessToken, token)
 }
 
+// Returns an authenticated context that can be used to interact with SSO
+func (helper *Helper) NewAuthenticatedContextForSSO(keycloakConfig *keycloak.KeycloakConfig) context.Context {
+	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.SSOProviderRealm())
+	accessToken, err := kcClient.GetToken()
+	if err != nil {
+		helper.T.Errorf(fmt.Sprintf("Unable to retrieve an access token from %s: %s", keycloakConfig.SSOProviderRealm().TokenEndpointURI, err.Error()))
+	}
+	return context.WithValue(context.Background(), compat.ContextAccessToken, accessToken)
+}
+
 func (helper *Helper) StartJWKCertServerMock() (string, func()) {
 	return mocks.NewJWKCertServerMock(helper.T, helper.JWTCA, auth.JwkKID)
 }

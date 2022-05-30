@@ -57,6 +57,7 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{
 							mockKafkas.BuildKafkaRequest(
+								mockKafkas.WithPredefinedTestValues(),
 								mockKafkas.With(mockKafkas.STATUS, constants2.KafkaRequestStatusDeleting.String()),
 							),
 						}, nil
@@ -70,6 +71,9 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 						return true, nil
 					},
 				},
+				keycloakConfig: &keycloak.KeycloakConfig{
+					EnableAuthenticationOnKafka: true,
+				},
 			},
 			wantErr: true,
 		},
@@ -80,10 +84,11 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{
 							mockKafkas.BuildKafkaRequest(
+								mockKafkas.WithPredefinedTestValues(),
 								mockKafkas.With(mockKafkas.STATUS, constants2.KafkaRequestStatusDeleting.String()),
 							),
 							mockKafkas.BuildKafkaRequest(
-								mockKafkas.With(mockKafkas.BOOTSTRAP_SERVER_HOST, "http://test.url"),
+								mockKafkas.WithPredefinedTestValues(),
 							),
 						}, nil
 					},
