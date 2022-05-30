@@ -44,13 +44,11 @@ func (q amsQuotaService) ValidateBillingAccount(externalId string, instanceType 
 		return errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get assigned quota of type %v for organization with id %v", instanceType.GetQuotaType(), orgId))
 	}
 
-	var totalBillingAccounts = 0
 	var matchingBillingAccounts = 0
 	var billingAccounts []amsv1.CloudAccount
 
 	for _, quotaCost := range quotaCosts {
 		for _, cloudAccount := range quotaCost.CloudAccounts() {
-			totalBillingAccounts++
 			billingAccounts = append(billingAccounts, *cloudAccount)
 			if cloudAccount.CloudAccountID() == billingCloudAccountId {
 				if marketplace != nil && *marketplace != cloudAccount.CloudProviderID() {
@@ -66,16 +64,16 @@ func (q amsQuotaService) ValidateBillingAccount(externalId string, instanceType 
 	// only one matching billing account is expected. If there are multiple then they are with different
 	// cloud providers
 	if matchingBillingAccounts == 1 {
-
+		return nil
 	} else if matchingBillingAccounts > 1 {
-		return errors.InvalidBillingAccount("Multiple matching billing accounts found, only one expected. ", orgId)
+		return errors.InvalidBillingAccount("Multiple matching billing accounts found, only one expected. Available billing accounts: %v", billingAccounts)
 	}
 
-	if totalBillingAccounts == 0 {
-		return errors.InvalidBillingAccount("No billing account found for organization with id", orgId)
+	if len(billingAccounts) == 0 {
+		return errors.InvalidBillingAccount("No billing accounts available in quota")
 	}
 
-	return errors.InvalidBillingAccount("Provided billing account does not match available. Provided: %s, Available: %v", billingCloudAccountId, billingAccounts)
+	return errors.InvalidBillingAccount("No matching billing account found. Provided: %s, Available: %v", billingCloudAccountId, billingAccounts)
 }
 
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
@@ -193,6 +191,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		AvailabilityZone("single").
 		Reserve(true).
 		Resources(&rr).
+		CloudAccountID(kafka.BillingCloudAccountId).
 		Build()
 
 	resp, err := q.amsClient.ClusterAuthorization(cb)
