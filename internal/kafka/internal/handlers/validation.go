@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"regexp"
 	"strings"
@@ -25,18 +26,14 @@ var ValidKafkaClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])
 var MaxKafkaNameLength = 32
 
 func ValidateBillingCloudAccountIdAndMarketplace(ctx context.Context, kafkaService *services.KafkaService, kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
-	blank := func(s *string) bool {
-		return s == nil || *s == ""
-	}
-
 	return func() *errors.ServiceError {
 		// both fields are optional
-		if blank(kafkaRequestPayload.BillingCloudAccountId) && blank(kafkaRequestPayload.Marketplace) {
+		if shared.SafeString(kafkaRequestPayload.BillingCloudAccountId) == "" && shared.SafeString(kafkaRequestPayload.Marketplace) == "" {
 			return nil
 		}
 
 		// marketplace without a billing account provided
-		if blank(kafkaRequestPayload.BillingCloudAccountId) && !blank(kafkaRequestPayload.Marketplace) {
+		if shared.SafeString(kafkaRequestPayload.BillingCloudAccountId) == "" && shared.SafeString(kafkaRequestPayload.Marketplace) != "" {
 			return errors.InvalidBillingAccount("no billing account provided for marketplace: %s", kafkaRequestPayload.Marketplace)
 		}
 

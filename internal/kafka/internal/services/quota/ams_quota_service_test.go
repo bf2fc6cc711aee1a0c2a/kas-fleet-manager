@@ -11,9 +11,174 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
+
+var ocmClientMockWithCloudAccounts = &ocm.ClientMock{
+	ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+		ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+		return ca, nil
+	},
+	GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+		return fmt.Sprintf("fake-org-id-%s", externalId), nil
+	},
+	GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+		if product != string(ocm.RHOSAKProduct) {
+			return []*v1.QuotaCost{}, nil
+		}
+		rrbq1 := v1.NewRelatedResource().
+			BillingModel(string(v1.BillingModelStandard)).
+			Product(string(ocm.RHOSAKProduct)).
+			ResourceName(resourceName).
+			Cost(1)
+
+		qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).
+			CloudAccounts(
+				v1.NewCloudAccount().CloudProviderID("aws").CloudAccountID("1234567890"),
+				v1.NewCloudAccount().CloudProviderID("ibm").CloudAccountID("2345678901"),
+				v1.NewCloudAccount().CloudProviderID("azure").CloudAccountID("1234567890"),
+			).
+			Build()
+		if err != nil {
+			panic("unexpected error")
+		}
+
+		return []*v1.QuotaCost{qcb}, nil
+	},
+}
+
+func Test_AMSValidateBillingAccount(t *testing.T) {
+	type fields struct {
+		ocmClient   ocm.Client
+		kafkaConfig *config.KafkaConfig
+	}
+	type args struct {
+		orgId            string
+		billingAccountId string
+		marketplace      *string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "check passes when requested billing account is found in account list",
+			args: args{
+				"test",
+				"1234567890",
+				&[]string{"aws"}[0],
+			},
+			fields: fields{
+				ocmClient:   ocmClientMockWithCloudAccounts,
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr: false,
+		},
+		{
+			name: "check passes when marketplace is not provided and account id is unambiguous",
+			args: args{
+				"test",
+				"2345678901",
+				nil,
+			},
+			fields: fields{
+				ocmClient:   ocmClientMockWithCloudAccounts,
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr: false,
+		},
+		{
+			name: "check fails when billing account id is not found",
+			args: args{
+				"test",
+				"xxx",
+				nil,
+			},
+			fields: fields{
+				ocmClient:   ocmClientMockWithCloudAccounts,
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr: true,
+		},
+		{
+			name: "check fails when billing account id is found in the wrong marketplace",
+			args: args{
+				"test",
+				"2345678901",
+				&[]string{"aws"}[0],
+			},
+			fields: fields{
+				ocmClient:   ocmClientMockWithCloudAccounts,
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr: true,
+		},
+		{
+			name: "check fails when billing account id ambiguous",
+			args: args{
+				"test",
+				"1234567890",
+				nil,
+			},
+			fields: fields{
+				ocmClient:   ocmClientMockWithCloudAccounts,
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr: true,
+		},
+		{
+			name: "check fails when no billing accounts are returned",
+			args: args{
+				"test",
+				"1234567890",
+				&[]string{"aws"}[0],
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						if product != string(ocm.RHOSAKProduct) {
+							return []*v1.QuotaCost{}, nil
+						}
+						rrbq1 := v1.NewRelatedResource().
+							BillingModel(string(v1.BillingModelStandard)).
+							Product(string(ocm.RHOSAKProduct)).
+							ResourceName(resourceName).
+							Cost(1)
+
+						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+
+						return []*v1.QuotaCost{qcb}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr: true,
+		},
+	}
+
+	RegisterTestingT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, tt.fields.kafkaConfig)
+			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
+			err := quotaService.ValidateBillingAccount(tt.args.orgId, types.STANDARD, tt.args.billingAccountId, tt.args.marketplace)
+			Expect(err != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
 
 func Test_AMSCheckQuota(t *testing.T) {
 	type fields struct {
@@ -174,27 +339,29 @@ func Test_AMSCheckQuota(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
+			RegisterTestingT(t)
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, tt.fields.kafkaConfig)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Meta: api.Meta{
 					ID: tt.args.kafkaID,
 				},
-				Owner:        tt.args.owner,
-				SizeId:       "x1",
-				InstanceType: string(tt.args.kafkaInstanceType),
+				Owner:          tt.args.owner,
+				SizeId:         "x1",
+				InstanceType:   string(tt.args.kafkaInstanceType),
+				OrganisationId: "test",
 			}
+
 			sq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, types.STANDARD)
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 			eq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, types.DEVELOPER)
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
-			gomega.Expect(sq).To(gomega.Equal(tt.args.hasStandardQuota))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(sq).To(Equal(tt.args.hasStandardQuota))
 			fmt.Printf("eq is %v\n", eq)
-			gomega.Expect(eq).To(gomega.Equal(tt.args.hasDeveloperQuota))
+			Expect(eq).To(Equal(tt.args.hasDeveloperQuota))
 
 			_, err = quotaService.ReserveQuota(kafka, tt.args.kafkaInstanceType)
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -497,7 +664,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
+			RegisterTestingT(t)
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, tt.fields.kafkaConfig)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
@@ -509,17 +676,17 @@ func Test_AMSReserveQuota(t *testing.T) {
 				InstanceType: string(tt.args.kafkaInstanceType),
 			}
 			subId, err := quotaService.ReserveQuota(kafka, types.STANDARD)
-			gomega.Expect(subId).To(gomega.Equal(tt.want))
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			Expect(subId).To(Equal(tt.want))
+			Expect(err != nil).To(Equal(tt.wantErr))
 
 			if tt.wantBillingModel != "" {
 				ocmClientMock := tt.fields.ocmClient.(*ocm.ClientMock)
 				clusterAuthorizationCalls := ocmClientMock.ClusterAuthorizationCalls()
-				gomega.Expect(len(clusterAuthorizationCalls)).To(gomega.Equal(1))
+				Expect(len(clusterAuthorizationCalls)).To(Equal(1))
 				clusterAuthorizationResources := clusterAuthorizationCalls[0].Cb.Resources()
-				gomega.Expect(len(clusterAuthorizationResources)).To(gomega.Equal(1))
+				Expect(clusterAuthorizationResources).To(HaveLen(1))
 				clusterAuthorizationResource := clusterAuthorizationResources[0]
-				gomega.Expect(string(clusterAuthorizationResource.BillingModel())).To(gomega.Equal(tt.wantBillingModel))
+				Expect(clusterAuthorizationResource.BillingModel()).To(BeEquivalentTo(tt.wantBillingModel))
 			}
 		})
 	}
@@ -752,12 +919,12 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
+			RegisterTestingT(t)
 			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.ocmClient, nil, nil, &defaultKafkaConf)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
 			res, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(tt.args.kafkaRequest.Owner, tt.args.kafkaRequest.OrganisationId, tt.args.kafkaInstanceType)
-			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
-			gomega.Expect(res).To(gomega.Equal(tt.want))
+			Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(res).To(Equal(tt.want))
 		})
 	}
 }

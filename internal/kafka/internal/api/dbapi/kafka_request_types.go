@@ -52,6 +52,8 @@ type KafkaRequest struct {
 	ReauthenticationEnabled bool   `json:"reauthentication_enabled"`
 	RoutesCreationId        string `json:"routes_creation_id"`
 	SizeId                  string `json:"size_id"`
+	BillingCloudAccountId   string `json:"billing_cloud_account_id"`
+	Marketplace             string `json:"marketplace"`
 }
 
 type KafkaList []*KafkaRequest
