@@ -40,7 +40,7 @@ registered_users_per_organisation:
     # The Kafka Instances team
   - id: 13639843
     any_user: true
-    max_allowed_instances: 1
+    max_allowed_instances: 5
     registered_users: []
     # The MK Security team
   - id: 13785172
