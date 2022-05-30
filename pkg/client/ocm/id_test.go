@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 func Test_idGenerator_Generate(t *testing.T) {
@@ -28,18 +30,14 @@ func Test_idGenerator_Generate(t *testing.T) {
 			},
 		},
 	}
+
+	RegisterTestingT(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := idGenerator{
-				prefix: tt.fields.prefix,
-			}
-			got := i.Generate()
-			if err := tt.validateFn(got); err != nil {
-				t.Errorf("Generate() = %v", err.Error())
-			}
-			if len(got) > MaxClusterNameLength {
-				t.Errorf("Generated ID length should not exceed 15 chars: %v", got)
-			}
+			got := NewIDGenerator(tt.fields.prefix).Generate()
+			Expect(tt.validateFn(got)).To(BeNil())
+			Expect(len(got) > MaxClusterNameLength).To(BeFalse())
 		})
 	}
 }
