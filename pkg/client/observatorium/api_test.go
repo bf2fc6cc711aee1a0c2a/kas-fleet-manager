@@ -18,7 +18,7 @@ func Test_GetKafkaState(t *testing.T) {
 	}
 
 	obsClientMock, err := NewClientMock(&Configuration{})
-	Expect(err).To(BeNil())
+	Expect(err).ToNot(HaveOccurred())
 
 	tests := []struct {
 		name    string
@@ -69,7 +69,7 @@ func TestServiceObservatorium_GetMetrics(t *testing.T) {
 	}
 
 	obsClientMock, err := NewClientMock(&Configuration{})
-	Expect(err).To(BeNil())
+	Expect(err).ToNot(HaveOccurred())
 
 	tests := []struct {
 		name    string
