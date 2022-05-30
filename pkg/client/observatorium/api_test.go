@@ -21,11 +21,10 @@ func Test_GetKafkaState(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-		want    KafkaState
+		name   string
+		fields fields
+		args   args
+		want   KafkaState
 	}{
 		{
 			name: "should return no error and Ready KafkaState",
@@ -36,7 +35,6 @@ func Test_GetKafkaState(t *testing.T) {
 				name:              "test",
 				resourceNamespace: "test",
 			},
-			wantErr: false,
 			want: KafkaState{
 				State: ClusterStateReady,
 			},
