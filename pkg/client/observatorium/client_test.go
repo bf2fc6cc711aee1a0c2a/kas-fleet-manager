@@ -108,7 +108,7 @@ func Test_NewClient(t *testing.T) {
 				tt.modifyFn(config)
 			}
 			_, err := NewClient(config)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(err).To(HaveOccurred())
 		})
 	}
 }

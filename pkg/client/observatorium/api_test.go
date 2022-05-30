@@ -49,7 +49,7 @@ func Test_GetKafkaState(t *testing.T) {
 				client: tt.fields.client,
 			}
 			state, err := obs.GetKafkaState(tt.args.name, tt.args.resourceNamespace)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			Expect(err).ToNot(HaveOccurred())
 			Expect(state).To(Equal(tt.want))
 		})
 	}
@@ -157,7 +157,6 @@ func TestServiceObservatorium_GetMetrics(t *testing.T) {
 				client: tt.fields.client,
 			}
 			Expect(obs.GetMetrics(tt.args.metrics, tt.args.namespace, tt.args.rq) != nil).To(Equal(tt.wantErr))
-			Expect(tt.args.metrics).NotTo(BeNil())
 		})
 	}
 }
