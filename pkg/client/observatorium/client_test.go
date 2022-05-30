@@ -258,10 +258,9 @@ func Test_Query(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		args    args
-		fields  fields
-		wantErr bool
+		name   string
+		args   args
+		fields fields
 	}{
 		{
 			name: "should successfully execute Query",
@@ -272,13 +271,12 @@ func Test_Query(t *testing.T) {
 				queryTemplate: "kafka_instance_connection_limit{%s}",
 				label:         "",
 			},
-			wantErr: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.c.Query(tt.args.queryTemplate, tt.args.label).Err != nil).To(Equal(tt.wantErr))
+			Expect(tt.fields.c.Query(tt.args.queryTemplate, tt.args.label).Err).ToNot(HaveOccurred())
 		})
 	}
 }
@@ -300,10 +298,9 @@ func Test_QueryRange(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		args    args
-		fields  fields
-		wantErr bool
+		name   string
+		args   args
+		fields fields
 	}{
 		{
 			name: "should successfully execute QueryRange",
@@ -315,13 +312,12 @@ func Test_QueryRange(t *testing.T) {
 				label:         "",
 				bounds:        pV1.Range{},
 			},
-			wantErr: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.c.QueryRange(tt.args.queryTemplate, tt.args.label, tt.args.bounds).Err != nil).To(Equal(tt.wantErr))
+			Expect(tt.fields.c.QueryRange(tt.args.queryTemplate, tt.args.label, tt.args.bounds).Err).ToNot(HaveOccurred())
 		})
 	}
 }
