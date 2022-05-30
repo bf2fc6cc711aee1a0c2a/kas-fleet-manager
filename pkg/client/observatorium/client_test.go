@@ -20,7 +20,8 @@ var (
 		AuthType: "test",
 		BaseURL:  "",
 	}
-	testValue = "test"
+	testValue  = "test"
+	invalidUrl = ":::"
 )
 
 func Test_NewObservatoriumClient(t *testing.T) {
@@ -61,6 +62,17 @@ func Test_NewObservatoriumClient(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "should return an error when providing default ObservabilityConfiguration with AuthType = AuthTypeSso and invalid url format",
+			args: args{
+				c: NewObservabilityConfigurationConfig(),
+			},
+			modifyFn: func(config *ObservabilityConfiguration) {
+				config.AuthType = AuthTypeSso
+				config.RedHatSsoTokenRefresherUrl = invalidUrl
+			},
+			wantErr: true,
+		},
 	}
 	RegisterTestingT(t)
 
@@ -94,7 +106,7 @@ func Test_NewClient(t *testing.T) {
 				c: &configuration,
 			},
 			modifyFn: func(config *Configuration) {
-				config.BaseURL = ":::" // invalid url
+				config.BaseURL = invalidUrl
 			},
 			wantErr: true,
 		},

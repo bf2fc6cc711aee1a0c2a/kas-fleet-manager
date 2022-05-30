@@ -69,7 +69,7 @@ func TestServiceObservatorium_GetMetrics(t *testing.T) {
 	}
 
 	obsClientMock, err := NewClientMock(&Configuration{})
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).ToNot(HaveOccurred(), "failed to create a mock observatorium client")
 
 	tests := []struct {
 		name    string
