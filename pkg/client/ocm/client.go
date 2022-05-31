@@ -34,9 +34,6 @@ type Client interface {
 	UpdateSyncSet(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
 	GetSyncSet(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error)
 	DeleteSyncSet(clusterID string, syncsetID string) (int, error)
-	ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, error)
-	ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
-	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error)
 	CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
 	GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
 	DeleteCluster(clusterID string) (int, error)
@@ -44,7 +41,6 @@ type Client interface {
 	DeleteSubscription(id string) (int, error)
 	FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error)
 	GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error)
-	GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error)
 	GetOrganisationIdFromExternalId(externalId string) (string, error)
 	Connection() *sdkClient.Connection
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
@@ -121,32 +117,6 @@ func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1
 	createdCluster := response.Body()
 
 	return createdCluster, nil
-}
-
-func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error) {
-	subscriptions, err := c.connection.AccountsMgmt().V1().Subscriptions().List().Search(fmt.Sprintf("cluster_id='%s'", clusterID)).Send()
-	if err != nil {
-		return nil, err
-	}
-	items := subscriptions.Items()
-	if items == nil || items.Len() == 0 {
-		return nil, nil
-	}
-
-	if items.Len() > 1 {
-		return nil, fmt.Errorf("expected 1 subscription item, found %d", items.Len())
-	}
-	subscriptionsMetrics := subscriptions.Items().Get(0).Metrics()
-	if len(subscriptionsMetrics) > 1 {
-		// this should never happen: https://github.com/openshift-online/ocm-api-model/blob/9ca12df7763723903c0d1cd87e993995a2acda5f/model/accounts_mgmt/v1/subscription_type.model#L49-L50
-		return nil, fmt.Errorf("expected 1 subscription metric, found %d", len(subscriptionsMetrics))
-	}
-
-	if len(subscriptionsMetrics) == 0 {
-		return nil, nil
-	}
-
-	return subscriptionsMetrics[0], nil
 }
 
 func (c *client) GetOrganisationIdFromExternalId(externalId string) (string, error) {
@@ -412,63 +382,6 @@ func (c client) DeleteSyncSet(clusterID string, syncsetID string) (int, error) {
 		Delete().
 		Send()
 	return response.Status(), syncsetErr
-}
-
-// ScaleUpComputeNodes scales up compute nodes by increment value
-func (c client) ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, error) {
-	return c.scaleComputeNodes(clusterID, increment)
-}
-
-// ScaleDownComputeNodes scales down compute nodes by decrement value
-func (c client) ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error) {
-	return c.scaleComputeNodes(clusterID, -decrement)
-}
-
-// scaleComputeNodes scales the Compute nodes up or down by the value of `numNodes`
-func (c client) scaleComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
-	clusterClient := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID)
-
-	cluster, err := clusterClient.Get().Send()
-	if err != nil {
-		return nil, err
-	}
-
-	// get current number of compute nodes
-	currentNumOfNodes := cluster.Body().Nodes().Compute()
-
-	// create a cluster object with updated number of compute nodes
-	// NOTE - there is no need to handle whether the number of nodes is valid, as this is handled by OCM
-	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(currentNumOfNodes + numNodes)).
-		Build()
-	if err != nil {
-		return nil, err
-	}
-
-	// patch cluster with updated number of compute nodes
-	resp, err := clusterClient.Update().Body(patch).Send()
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Body(), nil
-}
-
-func (c client) SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
-	clusterClient := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID)
-
-	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(numNodes)).
-		Build()
-	if err != nil {
-		return nil, err
-	}
-
-	// patch cluster with updated number of compute nodes
-	resp, err := clusterClient.Update().Body(patch).Send()
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Body(), nil
 }
 
 func newAddonParameterListBuilder(params []Parameter) *clustersmgmtv1.AddOnInstallationParameterListBuilder {

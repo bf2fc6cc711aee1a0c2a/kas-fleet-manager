@@ -99,8 +99,6 @@ const (
 	ClusterWaitingForKasFleetShardOperator ClusterStatus = "waiting_for_kas_fleetshard_operator"
 	// ClusterFull the cluster is full and cannot accept more Kafka clusters
 	ClusterFull ClusterStatus = "full"
-	// ClusterComputeNodeScalingUp the cluster is in the process of scaling up a compute node
-	ClusterComputeNodeScalingUp ClusterStatus = "compute_node_scaling_up"
 
 	ClusterProviderOCM        ClusterProviderType = "ocm"
 	ClusterProviderAwsEKS     ClusterProviderType = "aws_eks"
@@ -118,15 +116,14 @@ var ordinals = map[string]int{
 	ClusterProvisioned.String():                     20,
 	ClusterWaitingForKasFleetShardOperator.String(): 30,
 	ClusterReady.String():                           40,
-	ClusterComputeNodeScalingUp.String():            50,
-	ClusterDeprovisioning.String():                  60,
-	ClusterCleanup.String():                         70,
-	ClusterFailed.String():                          80,
+	ClusterDeprovisioning.String():                  50,
+	ClusterCleanup.String():                         60,
+	ClusterFailed.String():                          70,
 }
 
 // This represents the valid statuses of a dataplane cluster
 var StatusForValidCluster = []string{string(ClusterProvisioning), string(ClusterProvisioned), string(ClusterReady),
-	string(ClusterAccepted), string(ClusterWaitingForKasFleetShardOperator), string(ClusterComputeNodeScalingUp)}
+	string(ClusterAccepted), string(ClusterWaitingForKasFleetShardOperator)}
 
 // ClusterDeletionStatuses are statuses of clusters under deletion
 var ClusterDeletionStatuses = []string{ClusterCleanup.String(), ClusterDeprovisioning.String()}

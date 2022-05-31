@@ -24,7 +24,6 @@ func NewClusterCommand(env *environments.Env) *cobra.Command {
 	// add sub-commands
 	cmd.AddCommand(
 		NewCreateCommand(env),
-		NewScaleCommand(env),
 	)
 
 	return cmd

@@ -388,22 +388,6 @@ func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, reso
 	return &resources, nil
 }
 
-func (s *StandaloneProvider) ScaleUp(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
-	return clusterSpec, nil // NOOP
-}
-
-func (s *StandaloneProvider) ScaleDown(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error) {
-	return clusterSpec, nil // NOOP
-}
-
-func (s *StandaloneProvider) SetComputeNodes(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error) {
-	return clusterSpec, nil // NOOP
-}
-
-func (s *StandaloneProvider) GetComputeNodes(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
-	return &types.ComputeNodesInfo{}, nil // NOOP
-}
-
 func (s *StandaloneProvider) GetCloudProviders() (*types.CloudProviderInfoList, error) {
 	type Cluster struct {
 		CloudProvider string

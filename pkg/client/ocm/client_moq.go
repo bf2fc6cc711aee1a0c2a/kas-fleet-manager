@@ -71,9 +71,6 @@ var _ Client = &ClientMock{}
 // 			GetClusterStatusFunc: func(id string) (*clustersmgmtv1.ClusterStatus, error) {
 // 				panic("mock out the GetClusterStatus method")
 // 			},
-// 			GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
-// 				panic("mock out the GetExistingClusterMetrics method")
-// 			},
 // 			GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
 // 				panic("mock out the GetIdentityProviderList method")
 // 			},
@@ -91,15 +88,6 @@ var _ Client = &ClientMock{}
 // 			},
 // 			GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
 // 				panic("mock out the GetSyncSet method")
-// 			},
-// 			ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error) {
-// 				panic("mock out the ScaleDownComputeNodes method")
-// 			},
-// 			ScaleUpComputeNodesFunc: func(clusterID string, increment int) (*clustersmgmtv1.Cluster, error) {
-// 				panic("mock out the ScaleUpComputeNodes method")
-// 			},
-// 			SetComputeNodesFunc: func(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
-// 				panic("mock out the SetComputeNodes method")
 // 			},
 // 			UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 // 				panic("mock out the UpdateAddonParameters method")
@@ -165,9 +153,6 @@ type ClientMock struct {
 	// GetClusterStatusFunc mocks the GetClusterStatus method.
 	GetClusterStatusFunc func(id string) (*clustersmgmtv1.ClusterStatus, error)
 
-	// GetExistingClusterMetricsFunc mocks the GetExistingClusterMetrics method.
-	GetExistingClusterMetricsFunc func(clusterID string) (*amsv1.SubscriptionMetrics, error)
-
 	// GetIdentityProviderListFunc mocks the GetIdentityProviderList method.
 	GetIdentityProviderListFunc func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
 
@@ -185,15 +170,6 @@ type ClientMock struct {
 
 	// GetSyncSetFunc mocks the GetSyncSet method.
 	GetSyncSetFunc func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error)
-
-	// ScaleDownComputeNodesFunc mocks the ScaleDownComputeNodes method.
-	ScaleDownComputeNodesFunc func(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
-
-	// ScaleUpComputeNodesFunc mocks the ScaleUpComputeNodes method.
-	ScaleUpComputeNodesFunc func(clusterID string, increment int) (*clustersmgmtv1.Cluster, error)
-
-	// SetComputeNodesFunc mocks the SetComputeNodes method.
-	SetComputeNodesFunc func(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error)
 
 	// UpdateAddonParametersFunc mocks the UpdateAddonParameters method.
 	UpdateAddonParametersFunc func(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
@@ -298,11 +274,6 @@ type ClientMock struct {
 			// ID is the id argument value.
 			ID string
 		}
-		// GetExistingClusterMetrics holds details about calls to the GetExistingClusterMetrics method.
-		GetExistingClusterMetrics []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-		}
 		// GetIdentityProviderList holds details about calls to the GetIdentityProviderList method.
 		GetIdentityProviderList []struct {
 			// ClusterID is the clusterID argument value.
@@ -338,27 +309,6 @@ type ClientMock struct {
 			ClusterID string
 			// SyncSetID is the syncSetID argument value.
 			SyncSetID string
-		}
-		// ScaleDownComputeNodes holds details about calls to the ScaleDownComputeNodes method.
-		ScaleDownComputeNodes []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// Decrement is the decrement argument value.
-			Decrement int
-		}
-		// ScaleUpComputeNodes holds details about calls to the ScaleUpComputeNodes method.
-		ScaleUpComputeNodes []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// Increment is the increment argument value.
-			Increment int
-		}
-		// SetComputeNodes holds details about calls to the SetComputeNodes method.
-		SetComputeNodes []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// NumNodes is the numNodes argument value.
-			NumNodes int
 		}
 		// UpdateAddonParameters holds details about calls to the UpdateAddonParameters method.
 		UpdateAddonParameters []struct {
@@ -396,16 +346,12 @@ type ClientMock struct {
 	lockGetClusterDNS                   sync.RWMutex
 	lockGetClusterIngresses             sync.RWMutex
 	lockGetClusterStatus                sync.RWMutex
-	lockGetExistingClusterMetrics       sync.RWMutex
 	lockGetIdentityProviderList         sync.RWMutex
 	lockGetOrganisationIdFromExternalId sync.RWMutex
 	lockGetQuotaCostsForProduct         sync.RWMutex
 	lockGetRegions                      sync.RWMutex
 	lockGetRequiresTermsAcceptance      sync.RWMutex
 	lockGetSyncSet                      sync.RWMutex
-	lockScaleDownComputeNodes           sync.RWMutex
-	lockScaleUpComputeNodes             sync.RWMutex
-	lockSetComputeNodes                 sync.RWMutex
 	lockUpdateAddonParameters           sync.RWMutex
 	lockUpdateSyncSet                   sync.RWMutex
 }
@@ -955,37 +901,6 @@ func (mock *ClientMock) GetClusterStatusCalls() []struct {
 	return calls
 }
 
-// GetExistingClusterMetrics calls GetExistingClusterMetricsFunc.
-func (mock *ClientMock) GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error) {
-	if mock.GetExistingClusterMetricsFunc == nil {
-		panic("ClientMock.GetExistingClusterMetricsFunc: method is nil but Client.GetExistingClusterMetrics was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-	}{
-		ClusterID: clusterID,
-	}
-	mock.lockGetExistingClusterMetrics.Lock()
-	mock.calls.GetExistingClusterMetrics = append(mock.calls.GetExistingClusterMetrics, callInfo)
-	mock.lockGetExistingClusterMetrics.Unlock()
-	return mock.GetExistingClusterMetricsFunc(clusterID)
-}
-
-// GetExistingClusterMetricsCalls gets all the calls that were made to GetExistingClusterMetrics.
-// Check the length with:
-//     len(mockedClient.GetExistingClusterMetricsCalls())
-func (mock *ClientMock) GetExistingClusterMetricsCalls() []struct {
-	ClusterID string
-} {
-	var calls []struct {
-		ClusterID string
-	}
-	mock.lockGetExistingClusterMetrics.RLock()
-	calls = mock.calls.GetExistingClusterMetrics
-	mock.lockGetExistingClusterMetrics.RUnlock()
-	return calls
-}
-
 // GetIdentityProviderList calls GetIdentityProviderListFunc.
 func (mock *ClientMock) GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
 	if mock.GetIdentityProviderListFunc == nil {
@@ -1181,111 +1096,6 @@ func (mock *ClientMock) GetSyncSetCalls() []struct {
 	mock.lockGetSyncSet.RLock()
 	calls = mock.calls.GetSyncSet
 	mock.lockGetSyncSet.RUnlock()
-	return calls
-}
-
-// ScaleDownComputeNodes calls ScaleDownComputeNodesFunc.
-func (mock *ClientMock) ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error) {
-	if mock.ScaleDownComputeNodesFunc == nil {
-		panic("ClientMock.ScaleDownComputeNodesFunc: method is nil but Client.ScaleDownComputeNodes was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-		Decrement int
-	}{
-		ClusterID: clusterID,
-		Decrement: decrement,
-	}
-	mock.lockScaleDownComputeNodes.Lock()
-	mock.calls.ScaleDownComputeNodes = append(mock.calls.ScaleDownComputeNodes, callInfo)
-	mock.lockScaleDownComputeNodes.Unlock()
-	return mock.ScaleDownComputeNodesFunc(clusterID, decrement)
-}
-
-// ScaleDownComputeNodesCalls gets all the calls that were made to ScaleDownComputeNodes.
-// Check the length with:
-//     len(mockedClient.ScaleDownComputeNodesCalls())
-func (mock *ClientMock) ScaleDownComputeNodesCalls() []struct {
-	ClusterID string
-	Decrement int
-} {
-	var calls []struct {
-		ClusterID string
-		Decrement int
-	}
-	mock.lockScaleDownComputeNodes.RLock()
-	calls = mock.calls.ScaleDownComputeNodes
-	mock.lockScaleDownComputeNodes.RUnlock()
-	return calls
-}
-
-// ScaleUpComputeNodes calls ScaleUpComputeNodesFunc.
-func (mock *ClientMock) ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, error) {
-	if mock.ScaleUpComputeNodesFunc == nil {
-		panic("ClientMock.ScaleUpComputeNodesFunc: method is nil but Client.ScaleUpComputeNodes was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-		Increment int
-	}{
-		ClusterID: clusterID,
-		Increment: increment,
-	}
-	mock.lockScaleUpComputeNodes.Lock()
-	mock.calls.ScaleUpComputeNodes = append(mock.calls.ScaleUpComputeNodes, callInfo)
-	mock.lockScaleUpComputeNodes.Unlock()
-	return mock.ScaleUpComputeNodesFunc(clusterID, increment)
-}
-
-// ScaleUpComputeNodesCalls gets all the calls that were made to ScaleUpComputeNodes.
-// Check the length with:
-//     len(mockedClient.ScaleUpComputeNodesCalls())
-func (mock *ClientMock) ScaleUpComputeNodesCalls() []struct {
-	ClusterID string
-	Increment int
-} {
-	var calls []struct {
-		ClusterID string
-		Increment int
-	}
-	mock.lockScaleUpComputeNodes.RLock()
-	calls = mock.calls.ScaleUpComputeNodes
-	mock.lockScaleUpComputeNodes.RUnlock()
-	return calls
-}
-
-// SetComputeNodes calls SetComputeNodesFunc.
-func (mock *ClientMock) SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
-	if mock.SetComputeNodesFunc == nil {
-		panic("ClientMock.SetComputeNodesFunc: method is nil but Client.SetComputeNodes was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-		NumNodes  int
-	}{
-		ClusterID: clusterID,
-		NumNodes:  numNodes,
-	}
-	mock.lockSetComputeNodes.Lock()
-	mock.calls.SetComputeNodes = append(mock.calls.SetComputeNodes, callInfo)
-	mock.lockSetComputeNodes.Unlock()
-	return mock.SetComputeNodesFunc(clusterID, numNodes)
-}
-
-// SetComputeNodesCalls gets all the calls that were made to SetComputeNodes.
-// Check the length with:
-//     len(mockedClient.SetComputeNodesCalls())
-func (mock *ClientMock) SetComputeNodesCalls() []struct {
-	ClusterID string
-	NumNodes  int
-} {
-	var calls []struct {
-		ClusterID string
-		NumNodes  int
-	}
-	mock.lockSetComputeNodes.RLock()
-	calls = mock.calls.SetComputeNodes
-	mock.lockSetComputeNodes.RUnlock()
 	return calls
 }
 

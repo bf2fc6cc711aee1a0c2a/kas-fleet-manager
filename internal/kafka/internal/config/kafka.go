@@ -9,15 +9,6 @@ import (
 	"github.com/spf13/pflag"
 )
 
-type KafkaCapacityConfig struct {
-	IngressEgressThroughputPerSec string `yaml:"ingressEgressThroughputPerSec"`
-	TotalMaxConnections           int    `yaml:"totalMaxConnections"`
-	MaxDataRetentionSize          string `yaml:"maxDataRetentionSize"`
-	MaxPartitions                 int    `yaml:"maxPartitions"`
-	MaxDataRetentionPeriod        string `yaml:"maxDataRetentionPeriod"`
-	MaxConnectionAttemptsPerSec   int    `yaml:"maxConnectionAttemptsPerSec"`
-}
-
 type KafkaConfig struct {
 	KafkaTLSCert                   string `json:"kafka_tls_cert"`
 	KafkaTLSCertFile               string `json:"kafka_tls_cert_file"`
