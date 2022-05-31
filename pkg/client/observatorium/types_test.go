@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func Test_RFillDefaults(t *testing.T) {
+func Test_FillDefaults(t *testing.T) {
 	type fields struct {
 		config *MetricsReqParams
 	}
