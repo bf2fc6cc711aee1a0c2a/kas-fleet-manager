@@ -18,6 +18,13 @@ const (
 
 func CreateServiceAccountForTests(accessToken string, server mocks.RedhatSSOMock, accountName string, accountDescription string) serviceaccountsclient.ServiceAccountData {
 	c := &rhSSOClient{
+		realmConfig: &keycloak.KeycloakRealmConfig{
+			ClientID:         "",
+			ClientSecret:     "",
+			Realm:            "redhat-external",
+			APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+			TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+		},
 		configuration: &serviceaccountsclient.Configuration{
 			DefaultHeader: map[string]string{
 				"Authorization": fmt.Sprintf("Bearer %s", accessToken),
@@ -246,8 +253,16 @@ func Test_rhSSOClient_GetToken(t *testing.T) {
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
-				configuration: nil,
-				cache:         cache.New(tokenLifeDuration, cacheCleanupInterval),
+				configuration: &serviceaccountsclient.Configuration{
+					UserAgent: "OpenAPI-Generator/1.0.0/go",
+					Debug:     false,
+					Servers: serviceaccountsclient.ServerConfigurations{
+						{
+							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+						},
+					},
+				},
+				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			want:    *serviceAccount.Secret,
 			wantErr: false,
@@ -265,8 +280,16 @@ func Test_rhSSOClient_GetToken(t *testing.T) {
 					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
 					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
 				},
-				configuration: nil,
-				cache:         cache.New(tokenLifeDuration, cacheCleanupInterval),
+				configuration: &serviceaccountsclient.Configuration{
+					UserAgent: "OpenAPI-Generator/1.0.0/go",
+					Debug:     false,
+					Servers: serviceaccountsclient.ServerConfigurations{
+						{
+							URL: fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+						},
+					},
+				},
+				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
 			},
 			want:    "",
 			wantErr: true,
@@ -285,6 +308,7 @@ func Test_rhSSOClient_GetToken(t *testing.T) {
 			g.Expect(err != nil).To(Equal(tt.wantErr))
 			g.Expect(got).To(Equal(tt.want))
 		})
+
 	}
 }
 
@@ -371,8 +395,11 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 		{
 			name: "should return a list of service accounts",
 			fields: fields{
-				config:      &keycloak.KeycloakConfig{},
-				realmConfig: &keycloak.KeycloakRealmConfig{},
+				config: &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL())},
 				configuration: &serviceaccountsclient.Configuration{
 					DefaultHeader: map[string]string{
 						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
@@ -399,8 +426,14 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 		{
 			name: "should return an error when server URL is Missing",
 			fields: fields{
-				config:      &keycloak.KeycloakConfig{},
-				realmConfig: &keycloak.KeycloakRealmConfig{},
+				config: &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					BaseURL:          server.BaseURL(),
+					ClientID:         "",
+					ClientSecret:     "",
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL())},
 				configuration: &serviceaccountsclient.Configuration{
 					DefaultHeader: map[string]string{
 						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
@@ -470,13 +503,15 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 		{
 			name: "should return the service account with matching clientId",
 			fields: fields{
-				config:      &keycloak.KeycloakConfig{},
-				realmConfig: &keycloak.KeycloakRealmConfig{},
+				config: &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					ClientID:         *serviceAccount.ClientId,
+					ClientSecret:     *serviceAccount.Secret,
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+				},
 				configuration: &serviceaccountsclient.Configuration{
-					DefaultHeader: map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-						"Content-Type":  "application/json",
-					},
 					UserAgent: "OpenAPI-Generator/1.0.0/go",
 					Debug:     false,
 					Servers: serviceaccountsclient.ServerConfigurations{
@@ -498,13 +533,15 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 		{
 			name: "should fail if it cannot find the service account",
 			fields: fields{
-				config:      &keycloak.KeycloakConfig{},
-				realmConfig: &keycloak.KeycloakRealmConfig{},
+				config: &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					ClientID:         *serviceAccount.ClientId,
+					ClientSecret:     *serviceAccount.Secret,
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+				},
 				configuration: &serviceaccountsclient.Configuration{
-					DefaultHeader: map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-						"Content-Type":  "application/json",
-					},
 					UserAgent: "OpenAPI-Generator/1.0.0/go",
 					Debug:     false,
 					Servers: serviceaccountsclient.ServerConfigurations{
@@ -570,13 +607,13 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 		{
 			name: "should successfully create the service account",
 			fields: fields{
-				config:      &keycloak.KeycloakConfig{},
-				realmConfig: &keycloak.KeycloakRealmConfig{},
+				config: &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+				},
 				configuration: &serviceaccountsclient.Configuration{
-					DefaultHeader: map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-						"Content-Type":  "application/json",
-					},
 					UserAgent: "OpenAPI-Generator/1.0.0/go",
 					Debug:     false,
 					Servers: serviceaccountsclient.ServerConfigurations{
@@ -601,13 +638,13 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 		{
 			name: "should fail to create the service account if wrong access token is given",
 			fields: fields{
-				config:      &keycloak.KeycloakConfig{},
-				realmConfig: &keycloak.KeycloakRealmConfig{},
+				config: &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+				},
 				configuration: &serviceaccountsclient.Configuration{
-					DefaultHeader: map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-						"Content-Type":  "application/json",
-					},
 					UserAgent: "OpenAPI-Generator/1.0.0/go",
 					Debug:     false,
 					Servers: serviceaccountsclient.ServerConfigurations{
@@ -624,10 +661,10 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 				description: "fake service account",
 			},
 			want: serviceaccountsclient.ServiceAccountData{
-				Name:        &accountName,
-				Description: &accountDescription,
+				Name:        nil,
+				Description: nil,
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 	g := NewWithT(t)
@@ -674,13 +711,15 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 		{
 			name: "should successfully delete the service account",
 			fields: fields{
-				config:      &keycloak.KeycloakConfig{},
-				realmConfig: &keycloak.KeycloakRealmConfig{},
+				config: &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					ClientID:         *serviceAccount.ClientId,
+					ClientSecret:     *serviceAccount.Secret,
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+				},
 				configuration: &serviceaccountsclient.Configuration{
-					DefaultHeader: map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-						"Content-Type":  "application/json",
-					},
 					UserAgent: "OpenAPI-Generator/1.0.0/go",
 					Debug:     false,
 					Servers: serviceaccountsclient.ServerConfigurations{
@@ -700,13 +739,15 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 		{
 			name: "should return an error if it fails to find service account for deletion",
 			fields: fields{
-				config:      &keycloak.KeycloakConfig{},
-				realmConfig: &keycloak.KeycloakRealmConfig{},
+				config: &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					ClientID:         *serviceAccount.ClientId,
+					ClientSecret:     *serviceAccount.Secret,
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+				},
 				configuration: &serviceaccountsclient.Configuration{
-					DefaultHeader: map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-						"Content-Type":  "application/json",
-					},
 					UserAgent: "OpenAPI-Generator/1.0.0/go",
 					Debug:     false,
 					Servers: serviceaccountsclient.ServerConfigurations{
@@ -771,13 +812,15 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 		{
 			name: "should successfully update the service account",
 			fields: fields{
-				config:      &keycloak.KeycloakConfig{},
-				realmConfig: &keycloak.KeycloakRealmConfig{},
+				config: &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					ClientID:         *serviceAccount.ClientId,
+					ClientSecret:     *serviceAccount.Secret,
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+				},
 				configuration: &serviceaccountsclient.Configuration{
-					DefaultHeader: map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-						"Content-Type":  "application/json",
-					},
 					UserAgent: "OpenAPI-Generator/1.0.0/go",
 					Debug:     false,
 					Servers: serviceaccountsclient.ServerConfigurations{
@@ -808,13 +851,15 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 		{
 			name: "should return an error if it fails to find the service account to update",
 			fields: fields{
-				config:      &keycloak.KeycloakConfig{},
-				realmConfig: &keycloak.KeycloakRealmConfig{},
+				config: &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					ClientID:         *serviceAccount.ClientId,
+					ClientSecret:     *serviceAccount.Secret,
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+				},
 				configuration: &serviceaccountsclient.Configuration{
-					DefaultHeader: map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-						"Content-Type":  "application/json",
-					},
 					UserAgent: "OpenAPI-Generator/1.0.0/go",
 					Debug:     false,
 					Servers: serviceaccountsclient.ServerConfigurations{
@@ -879,13 +924,15 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 		{
 			name: "should successfully regenerate the clients secret",
 			fields: fields{
-				config:      &keycloak.KeycloakConfig{},
-				realmConfig: &keycloak.KeycloakRealmConfig{},
+				config: &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					ClientID:         *serviceAccount.ClientId,
+					ClientSecret:     *serviceAccount.Secret,
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+				},
 				configuration: &serviceaccountsclient.Configuration{
-					DefaultHeader: map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-						"Content-Type":  "application/json",
-					},
 					UserAgent: "OpenAPI-Generator/1.0.0/go",
 					Debug:     false,
 					Servers: serviceaccountsclient.ServerConfigurations{
@@ -908,13 +955,15 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 		{
 			name: "should return an error if it fails to find the service account to regenerate client secret",
 			fields: fields{
-				config:      &keycloak.KeycloakConfig{},
-				realmConfig: &keycloak.KeycloakRealmConfig{},
+				config: &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{
+					ClientID:         *serviceAccount.ClientId,
+					ClientSecret:     *serviceAccount.Secret,
+					Realm:            "redhat-external",
+					APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+					TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+				},
 				configuration: &serviceaccountsclient.Configuration{
-					DefaultHeader: map[string]string{
-						"Authorization": fmt.Sprintf("Bearer %s", accessToken),
-						"Content-Type":  "application/json",
-					},
 					UserAgent: "OpenAPI-Generator/1.0.0/go",
 					Debug:     false,
 					Servers: serviceaccountsclient.ServerConfigurations{
