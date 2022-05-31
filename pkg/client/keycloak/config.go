@@ -129,7 +129,7 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.SsoBaseUrl, "redhat-sso-base-url", kc.SsoBaseUrl, "The base URL of the mas-sso, integration by default")
 	fs.StringVar(&kc.SSOSpecialManagementOrgID, "sso-special-management-org-id", SSO_SPEICAL_MGMT_ORG_ID_STAGE, "The Special Management Organization ID used for creating internal Service accounts")
 	fs.StringVar(&kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "service-account-limits-check-skip-org-id-list-file", kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "File containing a list of Org IDs for which service account limits check will be skipped")
-	fs.StringVar(&kc.SelectSSOProvider, "sso-provider-type", kc.SelectSSOProvider, "Option to choose between sso providers i.e, mas-sso or redhat_sso, mas-sso by default")
+	fs.StringVar(&kc.SelectSSOProvider, "sso-provider-type", kc.SelectSSOProvider, "Option to choose between sso providers i.e, mas_sso or redhat_sso, mas_sso by default")
 }
 
 func (kc *KeycloakConfig) Validate(env *environments.Env) error {
