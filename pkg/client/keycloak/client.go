@@ -79,7 +79,7 @@ var _ KcClient = &kcClient{}
 
 func NewClient(config *KeycloakConfig, realmConfig *KeycloakRealmConfig) *kcClient {
 	setTokenEndpoints(config, realmConfig)
-	client := gocloak.NewClient(config.BaseURL)
+	client := gocloak.NewClient(realmConfig.BaseURL)
 	client.RestyClient().SetDebug(config.Debug)
 	client.RestyClient().SetTLSClientConfig(&tls.Config{InsecureSkipVerify: config.InsecureSkipVerify})
 	return &kcClient{
@@ -130,9 +130,9 @@ func (kc *kcClient) CreateProtocolMapperConfig(name string) []gocloak.ProtocolMa
 }
 
 func setTokenEndpoints(config *KeycloakConfig, realmConfig *KeycloakRealmConfig) {
-	realmConfig.JwksEndpointURI = config.BaseURL + "/auth/realms/" + realmConfig.Realm + "/protocol/openid-connect/certs"
-	realmConfig.TokenEndpointURI = config.BaseURL + "/auth/realms/" + realmConfig.Realm + "/protocol/openid-connect/token"
-	realmConfig.ValidIssuerURI = config.BaseURL + "/auth/realms/" + realmConfig.Realm
+	realmConfig.JwksEndpointURI = realmConfig.BaseURL + "/auth/realms/" + realmConfig.Realm + "/protocol/openid-connect/certs"
+	realmConfig.TokenEndpointURI = realmConfig.BaseURL + "/auth/realms/" + realmConfig.Realm + "/protocol/openid-connect/token"
+	realmConfig.ValidIssuerURI = realmConfig.BaseURL + "/auth/realms/" + realmConfig.Realm
 }
 
 func (kc *kcClient) CreateClient(client gocloak.Client, accessToken string) (string, error) {

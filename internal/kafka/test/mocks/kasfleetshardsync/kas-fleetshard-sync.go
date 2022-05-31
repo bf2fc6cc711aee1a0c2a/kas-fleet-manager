@@ -48,7 +48,11 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, priv
 		}
 
 		if managedKafkaAddon.State() == clustersmgmtv1.AddOnInstallationStateReady && (kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateReady || kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateInstalling) {
-			ctx := NewAuthenticatedContextForDataPlaneCluster(helper, cluster.ClusterID)
+			ctx, err := NewAuthenticatedContextForDataPlaneCluster(helper, cluster.ClusterID)
+			if err != nil {
+				return err
+			}
+
 			clusterStatusUpdateRequest := SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 			if _, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, cluster.ClusterID, *clusterStatusUpdateRequest); err != nil {
 				return fmt.Errorf("failed to update cluster status via agent endpoint: %v", err)
@@ -86,7 +90,10 @@ var defaultUpdateKafkaStatusFunc = func(helper *coreTest.Helper, privateClient *
 	dataplaneClusters = append(dataplaneClusters, fullDataplaneClusters...)
 
 	for _, dataplaneCluster := range dataplaneClusters {
-		ctx := NewAuthenticatedContextForDataPlaneCluster(helper, dataplaneCluster.ClusterID)
+		ctx, err := NewAuthenticatedContextForDataPlaneCluster(helper, dataplaneCluster.ClusterID)
+		if err != nil {
+			return err
+		}
 
 		kafkaList, _, err := privateClient.AgentClustersApi.GetKafkas(ctx, dataplaneCluster.ClusterID)
 		if err != nil {
@@ -211,22 +218,27 @@ func (m *mockKasFleetshardSync) reconcileKafkaClusters() {
 }
 
 // Returns an authenticated context to be used for calling the data plane endpoints
-func NewAuthenticatedContextForDataPlaneCluster(h *coreTest.Helper, clusterID string) context.Context {
+func NewAuthenticatedContextForDataPlaneCluster(h *coreTest.Helper, clusterID string) (context.Context, error) {
 	var keycloakConfig *keycloak.KeycloakConfig
-	h.Env.MustResolveAll(&keycloakConfig)
+	var clusterService services.ClusterService
+	h.Env.MustResolveAll(&keycloakConfig, &clusterService)
 
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
 		"iss": keycloakConfig.SSOProviderRealm().ValidIssuerURI,
-		"realm_access": map[string][]string{
-			"roles": {"kas_fleetshard_operator"},
-		},
-		"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", clusterID),
 	}
+
+	clientId, err := clusterService.GetClientId(clusterID)
+	if err != nil {
+		return nil, err
+	}
+
+	claims["clientId"] = clientId
+
 	token := h.CreateJWTStringWithClaim(account, claims)
 	ctx := context.WithValue(context.Background(), private.ContextAccessToken, token)
 
-	return ctx
+	return ctx, err
 }
 
 // Returns a sample data plane cluster status request with available capacity

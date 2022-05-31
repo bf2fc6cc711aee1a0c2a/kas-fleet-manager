@@ -1,14 +1,15 @@
 package handlers
 
 import (
+	"net/http"
+	"net/url"
+	"strconv"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
-	"net/http"
-	"net/url"
-	"strconv"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
@@ -29,6 +30,10 @@ func (s serviceAccountsHandler) ListServiceAccounts(w http.ResponseWriter, r *ht
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			Page, Size := s.handleParams(r.URL.Query())
+			// required for redhat sso client, returns a bad request stating this field needs to be larger than 0
+			if Size == 0 {
+				Size = s.service.GetConfig().MaxLimitForGetClients
+			}
 			sa, err := s.service.ListServiceAcc(ctx, Page, Size)
 			if err != nil {
 				return nil, err
@@ -124,10 +129,11 @@ func (s serviceAccountsHandler) ResetServiceAccountCredential(w http.ResponseWri
 
 func (s serviceAccountsHandler) GetServiceAccountByClientId(w http.ResponseWriter, r *http.Request) {
 	clientId := r.FormValue("client_id")
+
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
 			handlers.ValidateLength(&clientId, "client_id", handlers.MinRequiredFieldLength, &handlers.MaxServiceAccountClientId),
-			handlers.ValidateServiceAccountClientId(&clientId, "client_id"),
+			handlers.ValidateServiceAccountClientId(&clientId, "client_id", s.service.GetConfig().SelectSSOProvider),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
