@@ -184,6 +184,10 @@ const (
 	ErrorInstancePlanNotSupported       ServiceErrorCode = 42
 	ErrorInstancePlanNotSupportedReason string           = "Instance plan not supported"
 
+	// Billing account id missing or invalid
+	ErrorBillingAccountInvalid       ServiceErrorCode = 43
+	ErrorBillingAccountInvalidReason string           = "Billing account id missing or invalid"
+
 	// Too Many requests error. Used by rate limiting
 	ErrorTooManyRequests       ServiceErrorCode = 429
 	ErrorTooManyRequestsReason string           = "Too Many requests"
@@ -637,4 +641,9 @@ func InsufficientQuotaError(reason string, values ...interface{}) *ServiceError 
 func FailedToCheckQuota(reason string, values ...interface{}) *ServiceError {
 	message := fmt.Sprintf("%s: %s", ErrorFailedToCheckQuotaReason, reason)
 	return New(ErrorFailedToCheckQuota, message, values...)
+}
+
+func InvalidBillingAccount(reason string, values ...interface{}) *ServiceError {
+	message := fmt.Sprintf("%s: %s", ErrorBillingAccountInvalidReason, reason)
+	return New(ErrorBillingAccountInvalid, message, values...)
 }

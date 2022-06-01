@@ -32,6 +32,50 @@ var supportedAMSBillingModels map[string]struct{} = map[string]struct{}{
 	string(amsv1.BillingModelStandard):    {},
 }
 
+func (q amsQuotaService) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(externalId)
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", externalId))
+	}
+
+	quotaType := instanceType.GetQuotaType()
+	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgId, quotaType.GetResourceName(), quotaType.GetProduct())
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get assigned quota of type %v for organization with id %v", instanceType.GetQuotaType(), orgId))
+	}
+
+	var matchingBillingAccounts = 0
+	var billingAccounts []amsv1.CloudAccount
+
+	for _, quotaCost := range quotaCosts {
+		for _, cloudAccount := range quotaCost.CloudAccounts() {
+			billingAccounts = append(billingAccounts, *cloudAccount)
+			if cloudAccount.CloudAccountID() == billingCloudAccountId {
+				if marketplace != nil && *marketplace != cloudAccount.CloudProviderID() {
+					continue
+				}
+
+				// matching billing account found
+				matchingBillingAccounts++
+			}
+		}
+	}
+
+	// only one matching billing account is expected. If there are multiple then they are with different
+	// cloud providers
+	if matchingBillingAccounts == 1 {
+		return nil
+	} else if matchingBillingAccounts > 1 {
+		return errors.InvalidBillingAccount("Multiple matching billing accounts found, only one expected. Available billing accounts: %v", billingAccounts)
+	}
+
+	if len(billingAccounts) == 0 {
+		return errors.InvalidBillingAccount("No billing accounts available in quota")
+	}
+
+	return errors.InvalidBillingAccount("No matching billing account found. Provided: %s, Available: %v", billingCloudAccountId, billingAccounts)
+}
+
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(externalId)
 	if err != nil {
@@ -147,6 +191,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		AvailabilityZone("single").
 		Reserve(true).
 		Resources(&rr).
+		CloudAccountID(kafka.BillingCloudAccountId).
 		Build()
 
 	resp, err := q.amsClient.ClusterAuthorization(cb)
