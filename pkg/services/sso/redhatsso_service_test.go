@@ -1,6 +1,7 @@
 package sso
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -10,10 +11,9 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/redhatsso"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	. "github.com/onsi/gomega"
 	pkgErr "github.com/pkg/errors"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
-
-	. "github.com/onsi/gomega"
 )
 
 func TestRedhatSSO_RegisterOSDClusterClientInSSO(t *testing.T) {
@@ -563,7 +563,6 @@ func TestRedhatSSOService__DeRegisterConnectorFleetshardOperatorServiceAccount(t
 }
 
 func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
-	t.Skip("DeleteServiceAccountInternal not yet implemented")
 
 	type fields struct {
 		kcClient redhatsso.SSOClient
@@ -608,7 +607,7 @@ func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
 						return "", nil
 					},
 					DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
-						return fmt.Errorf("not found")
+						return nil
 					},
 				},
 			},
@@ -645,7 +644,6 @@ func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
 }
 
 func TestRedhatSSOService_CreateServiceAccountInternal(t *testing.T) {
-	t.Skip("CreateServiceAccountInternal not yet implemented")
 	tokenErr := pkgErr.New("token error")
 	request := CompleteServiceAccountRequest{
 		Owner:          "some-owner",
@@ -653,8 +651,10 @@ func TestRedhatSSOService_CreateServiceAccountInternal(t *testing.T) {
 		ClientId:       "some-client-id",
 		Name:           "some-name",
 		Description:    "some-description",
-		OrgId:          "some-organisation-id",
+		OrgId:          "some-organization-id",
 	}
+	id := "dsd"
+	clientSecret := "secret"
 	type fields struct {
 		kcClient redhatsso.SSOClient
 	}
@@ -671,6 +671,9 @@ func TestRedhatSSOService_CreateServiceAccountInternal(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return "", tokenErr
 					},
+					CreateServiceAccountFunc: func(accessToken, name, description string) (serviceaccountsclient.ServiceAccountData, error) {
+						return serviceaccountsclient.ServiceAccountData{}, nil
+					},
 				},
 			},
 			wantErr:               true,
@@ -683,18 +686,9 @@ func TestRedhatSSOService_CreateServiceAccountInternal(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return "", nil
 					},
-					//CreateProtocolMapperConfigFunc: func(s string) []gocloak.ProtocolMapperRepresentation {
-					//	return []gocloak.ProtocolMapperRepresentation{}
-					//},
-					//ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
-					//	return gocloak.Client{}
-					//},
-					//CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-					//	return "", pkgErr.New("failed to create client")
-					//},
-					//GetClientFunc: func(clientId, accessToken string) (*gocloak.Client, error) {
-					//	return nil, nil
-					//},
+					CreateServiceAccountFunc: func(accessToken, name, description string) (serviceaccountsclient.ServiceAccountData, error) {
+						return serviceaccountsclient.ServiceAccountData{}, errors.New(errors.ErrorFailedToCreateServiceAccount, "failed to create service account")
+					},
 				},
 			},
 			wantErr:               true,
@@ -707,27 +701,13 @@ func TestRedhatSSOService_CreateServiceAccountInternal(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return "", nil
 					},
-					//GetClientFunc: func(clientId, accessToken string) (*gocloak.Client, error) {
-					//	return nil, nil
-					//},
-					//CreateProtocolMapperConfigFunc: func(s string) []gocloak.ProtocolMapperRepresentation {
-					//	return []gocloak.ProtocolMapperRepresentation{}
-					//},
-					//ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
-					//	return gocloak.Client{}
-					//},
-					//CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-					//	return "dsd", nil
-					//},
-					//GetClientSecretFunc: func(internalClientId, accessToken string) (string, error) {
-					//	return "secret", nil
-					//},
-					//GetClientServiceAccountFunc: func(accessToken, internalClient string) (*gocloak.User, error) {
-					//	return &gocloak.User{}, nil
-					//},
-					//UpdateServiceAccountUserFunc: func(accessToken string, serviceAccountUser gocloak.User) error {
-					//	return nil
-					//},
+					CreateServiceAccountFunc: func(accessToken, name, description string) (serviceaccountsclient.ServiceAccountData, error) {
+						return serviceaccountsclient.ServiceAccountData{
+							Id:       &id,
+							ClientId: &request.ClientId,
+							Secret:   &clientSecret,
+						}, nil
+					},
 				},
 			},
 			wantErr:               false,
@@ -753,4 +733,661 @@ func TestRedhatSSOService_CreateServiceAccountInternal(t *testing.T) {
 		})
 	}
 
+}
+
+func Test_redhatssoService_DeRegisterClientInSSO(t *testing.T) {
+	type fields struct {
+		client redhatsso.SSOClient
+	}
+	type args struct {
+		accessToken string
+		clientId    string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *errors.ServiceError
+	}{
+		{
+			name: "should return nil if client is deregistered successfully",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					DeleteServiceAccountFunc: func(accessToken, clientId string) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want: nil,
+		},
+		{
+			name: "should return an error if it fails to deregistered client",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					DeleteServiceAccountFunc: func(accessToken, clientId string) error {
+						return errors.New(errors.ErrorFailedToDeleteSSOClient, "failed to delete the sso client")
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want: errors.NewWithCause(errors.ErrorFailedToDeleteSSOClient, errors.FailedToDeleteSSOClient("failed to delete the sso client"), "failed to delete the sso client"),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &redhatssoService{
+				client: tt.fields.client,
+			}
+			g.Expect(r.DeRegisterClientInSSO(tt.args.accessToken, tt.args.clientId)).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_redhatssoService_GetConfig(t *testing.T) {
+	type fields struct {
+		client redhatsso.SSOClient
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   *keycloak.KeycloakConfig
+	}{
+		{
+			name: "should return the redhatsso config",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{}
+					},
+				},
+			},
+			want: &keycloak.KeycloakConfig{},
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &redhatssoService{
+				client: tt.fields.client,
+			}
+			g.Expect(r.GetConfig()).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_redhatssoService_GetRealmConfig(t *testing.T) {
+	type fields struct {
+		client redhatsso.SSOClient
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   *keycloak.KeycloakRealmConfig
+	}{
+		{
+			name: "should return the realm config",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloak.KeycloakRealmConfig{}
+					},
+				},
+			},
+			want: &keycloak.KeycloakRealmConfig{},
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &redhatssoService{
+				client: tt.fields.client,
+			}
+			g.Expect(r.GetRealmConfig()).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_redhatssoService_IsKafkaClientExist(t *testing.T) {
+	type fields struct {
+		client redhatsso.SSOClient
+	}
+	type args struct {
+		accessToken string
+		clientId    string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *errors.ServiceError
+	}{
+		{
+			name: "should return nil if kafka client exists",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetServiceAccountFunc: func(accessToken, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+						return &serviceaccountsclient.ServiceAccountData{}, true, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want: nil,
+		},
+		{
+			name: "should return error if it fails to get sso client",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetServiceAccountFunc: func(accessToken, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+						return &serviceaccountsclient.ServiceAccountData{}, true, errors.New(errors.ErrorFailedToGetSSOClient, "failed to get sso client with id: %s", testClientID)
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want: errors.NewWithCause(errors.ErrorFailedToGetSSOClient, errors.FailedToGetSSOClient("failed to get sso client with id: %s", testClientID), "failed to get sso client with id: %s", testClientID),
+		},
+		{
+			name: "should return an error if the sso client cannot be found",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetServiceAccountFunc: func(accessToken, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+						return &serviceaccountsclient.ServiceAccountData{}, false, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want: errors.New(errors.ErrorNotFound, "sso client with id: %s not found", testClientID),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &redhatssoService{
+				client: tt.fields.client,
+			}
+			g.Expect(r.IsKafkaClientExist(tt.args.accessToken, tt.args.clientId)).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_redhatssoService_CreateServiceAccount(t *testing.T) {
+	type fields struct {
+		client redhatsso.SSOClient
+	}
+	type args struct {
+		accessToken           string
+		serviceAccountRequest *api.ServiceAccountRequest
+		ctx                   context.Context
+	}
+	clientId := testClientID
+	requestName := "ServiceAccountRequest_Name"
+	requestDescription := "ServiceAccountRequest_Description"
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *api.ServiceAccount
+		wantErr *errors.ServiceError
+	}{
+		{
+			name: "should return the service account if its created successfully",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					CreateServiceAccountFunc: func(accessToken, name, description string) (serviceaccountsclient.ServiceAccountData, error) {
+						return serviceaccountsclient.ServiceAccountData{
+							ClientId:    &clientId,
+							Name:        &requestName,
+							Description: &requestDescription,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				serviceAccountRequest: &api.ServiceAccountRequest{
+					Name:        requestName,
+					Description: requestDescription,
+				},
+				ctx: context.Background(),
+			},
+			want: &api.ServiceAccount{
+				ClientID:    testClientID,
+				Name:        requestName,
+				Description: requestDescription,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "should return an error if it fails to create a service account ",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					CreateServiceAccountFunc: func(accessToken, name, description string) (serviceaccountsclient.ServiceAccountData, error) {
+						return serviceaccountsclient.ServiceAccountData{}, errors.New(errors.ErrorFailedToCreateServiceAccount, "failed to create service account")
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				serviceAccountRequest: &api.ServiceAccountRequest{
+					Name:        requestName,
+					Description: requestDescription,
+				},
+				ctx: context.Background(),
+			},
+			want:    nil,
+			wantErr: errors.NewWithCause(errors.ErrorFailedToCreateServiceAccount, errors.FailedToCreateServiceAccount("failed to create service account"), "failed to create service account"),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &redhatssoService{
+				client: tt.fields.client,
+			}
+			got, err := r.CreateServiceAccount(tt.args.accessToken, tt.args.serviceAccountRequest, tt.args.ctx)
+			g.Expect(err).To(Equal(tt.wantErr))
+
+			if tt.want != nil {
+				g.Expect(got.ClientID).To(Equal(tt.want.ClientID))
+				g.Expect(got.Name).To(Equal(tt.want.Name))
+				g.Expect(got.Description).To(Equal(tt.want.Description))
+			}
+		})
+	}
+}
+
+func Test_redhatssoService_DeleteServiceAccount(t *testing.T) {
+	type fields struct {
+		client redhatsso.SSOClient
+	}
+	type args struct {
+		accessToken string
+		ctx         context.Context
+		clientId    string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *errors.ServiceError
+	}{
+		{
+			name: "should return nil if the client is successfully deleted",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					DeleteServiceAccountFunc: func(accessToken, clientId string) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				clientId:    testClientID,
+			},
+			want: nil,
+		},
+		{
+			name: "should return an error if it fails to delete the client",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					DeleteServiceAccountFunc: func(accessToken, clientId string) error {
+						return errors.New(errors.ErrorFailedToDeleteServiceAccount, "failed to delete service account")
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				clientId:    testClientID,
+			},
+			want: errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, errors.FailedToDeleteServiceAccount("failed to delete service account"), "failed to delete service account"),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &redhatssoService{
+				client: tt.fields.client,
+			}
+			g.Expect(r.DeleteServiceAccount(tt.args.accessToken, tt.args.ctx, tt.args.clientId)).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_redhatssoService_ResetServiceAccountCredentials(t *testing.T) {
+	type fields struct {
+		client redhatsso.SSOClient
+	}
+	type args struct {
+		accessToken string
+		ctx         context.Context
+		clientId    string
+	}
+	clientId := testClientID
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *api.ServiceAccount
+		wantErr *errors.ServiceError
+	}{
+		{
+			name: "should return the service account if it successfully resets the service account credentials",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					RegenerateClientSecretFunc: func(accessToken, id string) (serviceaccountsclient.ServiceAccountData, error) {
+						return serviceaccountsclient.ServiceAccountData{
+							ClientId: &clientId,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				clientId:    testClientID,
+			},
+			want: &api.ServiceAccount{
+				ClientID: clientId,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "should return an error if it fails to reset the service account credentials",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					RegenerateClientSecretFunc: func(accessToken, id string) (serviceaccountsclient.ServiceAccountData, error) {
+						return serviceaccountsclient.ServiceAccountData{}, errors.New(errors.ErrorGeneral, "failed to reset service account credentials")
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				clientId:    testClientID,
+			},
+			want:    nil,
+			wantErr: errors.NewWithCause(errors.ErrorGeneral, errors.GeneralError("failed to reset service account credentials"), "failed to reset service account credentials"),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &redhatssoService{
+				client: tt.fields.client,
+			}
+			got, err := r.ResetServiceAccountCredentials(tt.args.accessToken, tt.args.ctx, tt.args.clientId)
+			g.Expect(err).To(Equal(tt.wantErr))
+			if tt.want != nil {
+				g.Expect(got.ClientID).To(Equal(tt.want.ClientID))
+			}
+		})
+	}
+}
+
+func Test_redhatssoService_ListServiceAcc(t *testing.T) {
+	type fields struct {
+		client redhatsso.SSOClient
+	}
+	type args struct {
+		accessToken string
+		ctx         context.Context
+		first       int
+		max         int
+	}
+	clientId := testClientID
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []api.ServiceAccount
+		wantErr *errors.ServiceError
+	}{
+		{
+			name: "should return a list of service accounts",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetServiceAccountsFunc: func(accessToken string, first, max int) ([]serviceaccountsclient.ServiceAccountData, error) {
+						return []serviceaccountsclient.ServiceAccountData{
+							{
+								ClientId: &clientId,
+							},
+							{
+								ClientId: &clientId,
+							},
+						}, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				first:       1,
+				max:         10,
+			},
+			want: []api.ServiceAccount{
+				{
+					ClientID:  clientId,
+					CreatedAt: time.Unix(0, 0),
+				},
+				{
+					ClientID:  clientId,
+					CreatedAt: time.Unix(0, 0),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "should return an error if it fails to collect the service accounts",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetServiceAccountsFunc: func(accessToken string, first, max int) ([]serviceaccountsclient.ServiceAccountData, error) {
+						return []serviceaccountsclient.ServiceAccountData{}, errors.New(errors.ErrorGeneral, "failed to collect service accounts")
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				first:       1,
+				max:         10,
+			},
+			want:    nil,
+			wantErr: errors.NewWithCause(errors.ErrorGeneral, errors.GeneralError("failed to collect service accounts"), "failed to collect service accounts"),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &redhatssoService{
+				client: tt.fields.client,
+			}
+			got, err := r.ListServiceAcc(tt.args.accessToken, tt.args.ctx, tt.args.first, tt.args.max)
+			g.Expect(err).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_redhatssoService_GetServiceAccountById(t *testing.T) {
+	type fields struct {
+		client redhatsso.SSOClient
+	}
+	type args struct {
+		accessToken string
+		ctx         context.Context
+		id          string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *api.ServiceAccount
+		wantErr *errors.ServiceError
+	}{
+		{
+			name: "should return the service account",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetServiceAccountFunc: func(accessToken, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+						return &serviceaccountsclient.ServiceAccountData{}, true, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				id:          testClientID,
+			},
+			want: &api.ServiceAccount{
+				CreatedAt: time.Unix(0, 0),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "should return an error if cant retrieve the service account",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetServiceAccountFunc: func(accessToken, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+						return &serviceaccountsclient.ServiceAccountData{}, true, errors.New(errors.ErrorGeneral, "error retrieving service account with clientId %s", testClientID)
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				id:          testClientID,
+			},
+			want:    nil,
+			wantErr: errors.NewWithCause(errors.ErrorGeneral, errors.GeneralError("error retrieving service account with clientId %s", testClientID), "error retrieving service account with clientId %s", testClientID),
+		},
+		{
+			name: "should return an error if the service account cannot be found",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetServiceAccountFunc: func(accessToken, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+						return &serviceaccountsclient.ServiceAccountData{}, false, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				id:          testClientID,
+			},
+			want:    nil,
+			wantErr: errors.ServiceAccountNotFound("service account not found clientId %s", testClientID),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &redhatssoService{
+				client: tt.fields.client,
+			}
+			got, err := r.GetServiceAccountById(tt.args.accessToken, tt.args.ctx, tt.args.id)
+			g.Expect(err).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_redhatssoService_GetKafkaClientSecret(t *testing.T) {
+	type fields struct {
+		client redhatsso.SSOClient
+	}
+	type args struct {
+		accessToken string
+		clientId    string
+	}
+	clientSecret := secret
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    string
+		wantErr *errors.ServiceError
+	}{
+		{
+			name: "should return the the client secret",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetServiceAccountFunc: func(accessToken, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+						return &serviceaccountsclient.ServiceAccountData{
+							Secret: &clientSecret,
+						}, true, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want:    clientSecret,
+			wantErr: nil,
+		},
+		{
+			name: "should return an error if it failed to find the service account",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetServiceAccountFunc: func(accessToken, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+						return &serviceaccountsclient.ServiceAccountData{}, true, errors.New(errors.ErrorFailedToGetSSOClientSecret, "failed to get sso client secret")
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want:    "",
+			wantErr: errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, errors.FailedToGetSSOClientSecret("failed to get sso client secret"), "failed to get sso client secret"),
+		},
+		{
+			name: "should return an error if it failed to get the client secret",
+			fields: fields{
+				client: &redhatsso.SSOClientMock{
+					GetServiceAccountFunc: func(accessToken, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+						return &serviceaccountsclient.ServiceAccountData{}, false, nil
+					},
+					RegenerateClientSecretFunc: func(accessToken, id string) (serviceaccountsclient.ServiceAccountData, error) {
+						return serviceaccountsclient.ServiceAccountData{}, errors.New(errors.ErrorFailedToGetSSOClientSecret, "failed to get sso client secret")
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want:    "",
+			wantErr: errors.FailedToGetSSOClientSecret("failed to get sso client secret"),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &redhatssoService{
+				client: tt.fields.client,
+			}
+			got, err := r.GetKafkaClientSecret(tt.args.accessToken, tt.args.clientId)
+			g.Expect(err).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
 }
