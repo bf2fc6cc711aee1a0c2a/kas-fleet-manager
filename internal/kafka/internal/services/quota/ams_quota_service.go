@@ -169,10 +169,7 @@ func (q amsQuotaService) getAvailableBillingModelFromKafkaInstanceType(externalI
 				} else {
 					if rr.BillingModel() == string(amsv1.BillingModelStandard) {
 						return rr.BillingModel(), nil
-					} else if rr.BillingModel() == string(amsv1.BillingModelMarketplace) {
-						billingModel = rr.BillingModel()
-						matchedBillingModels++
-					} else if rr.BillingModel() == string(amsv1.BillingModelMarketplaceAWS) {
+					} else if rr.BillingModel() == string(amsv1.BillingModelMarketplace) || rr.BillingModel() == string(amsv1.BillingModelMarketplaceAWS) {
 						billingModel = rr.BillingModel()
 						matchedBillingModels++
 					}
