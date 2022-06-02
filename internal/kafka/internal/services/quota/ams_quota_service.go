@@ -158,6 +158,40 @@ func (q amsQuotaService) getAvailableBillingModelFromKafkaInstanceType(externalI
 	return billingModel, nil
 }
 
+func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, error) {
+	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(kafka.OrganisationId)
+	if err != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", orgId))
+	}
+
+	kafkaInstanceSize, e := q.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+	if e != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, e, "Error reserving quota")
+	}
+
+	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgId, instanceType.GetQuotaType().GetResourceName(), instanceType.GetQuotaType().GetProduct())
+	if err != nil {
+		return "", errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, instanceType.GetQuotaType().GetProduct())
+	}
+
+	// old behaviour
+	// not enough - if no standard quota exists, we try to pick a marketplace (iff exactly one exists)
+	if kafka.BillingCloudAccountId == "" && kafka.Marketplace == "" {
+		return q.getAvailableBillingModelFromKafkaInstanceType(kafka.OrganisationId, instanceType, kafkaInstanceSize.CapacityConsumed)
+	}
+
+	for _, quotaCost := range quotaCosts {
+		for _, cloudAccount := range quotaCost.CloudAccounts() {
+			if cloudAccount.CloudAccountID() == kafka.BillingCloudAccountId && (cloudAccount.CloudProviderID() == kafka.Marketplace || kafka.Marketplace == "") {
+				if cloudAccount.CloudProviderID() == "aws" {
+					return string(amsv1.BillingModelMarketplaceAWS), nil
+				}
+			}
+		}
+	}
+
+}
+
 func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
 	kafkaId := kafka.ID
 
@@ -168,7 +202,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		return "", errors.NewWithCause(errors.ErrorGeneral, e, "Error reserving quota")
 	}
 
-	bm, err := q.getAvailableBillingModelFromKafkaInstanceType(kafka.OrganisationId, instanceType, kafkaInstanceSize.CapacityConsumed)
+	bm, err := q.getBillingModel(kafka, instanceType)
 	if err != nil {
 		svcErr := errors.ToServiceError(err)
 		return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
