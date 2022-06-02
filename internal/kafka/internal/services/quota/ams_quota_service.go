@@ -157,7 +157,7 @@ func (q amsQuotaService) getAvailableBillingModelFromKafkaInstanceType(externalI
 				}
 			}
 		}
-		if !foundBillingCloudAccount {
+		if foundBillingCloudAccount {
 			continue
 		}
 		for _, rr := range qc.RelatedResources() {
