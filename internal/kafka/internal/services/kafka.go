@@ -96,7 +96,7 @@ type KafkaService interface {
 	HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError)
 	// GetAvailableSizesInRegion returns a list of ids of the Kafka instance sizes that can still be created according to the specified criteria
 	GetAvailableSizesInRegion(criteria *FindClusterCriteria) ([]string, *errors.ServiceError)
-	ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError
+	GetMarketplaceFromBillingAccountInformation(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) (string, *errors.ServiceError)
 }
 
 var _ KafkaService = &kafkaService{}
@@ -132,13 +132,13 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService Clu
 	}
 }
 
-func (k *kafkaService) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+func (k *kafkaService) GetMarketplaceFromBillingAccountInformation(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) (string, *errors.ServiceError) {
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
 	if factoryErr != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota during billing account validation")
+		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota during billing account validation")
 	}
 
-	return quotaService.ValidateBillingAccount(externalId, instanceType, billingCloudAccountId, marketplace)
+	return quotaService.GetMarketplaceFromBillingAccountInformation(externalId, instanceType, billingCloudAccountId, marketplace)
 }
 
 func (k *kafkaService) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {

@@ -14,6 +14,13 @@ type QuotaService interface {
 	ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError)
 	// DeleteQuota deletes a reserved quota
 	DeleteQuota(subscriptionId string) *errors.ServiceError
-	// ValidateBillingAccount validates if a billing account is contained in the quota cost response
-	ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError
+	// GetMarketplaceFromBillingAccountInformation gets the marketplace associated
+	// to the provided billing account information.
+	// If marketplace is not nil only accounts that belong to the provided
+	// marketplace for the provided billingCloudAccountId are considered.
+	// An error is returned if:
+	// - There is more than one cloud account that matches the provided
+	//   billing account information
+	// - There is no cloud account that matches billing account information
+	GetMarketplaceFromBillingAccountInformation(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) (string, *errors.ServiceError)
 }

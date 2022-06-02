@@ -53,7 +53,13 @@ type KafkaRequest struct {
 	RoutesCreationId        string `json:"routes_creation_id"`
 	SizeId                  string `json:"size_id"`
 	BillingCloudAccountId   string `json:"billing_cloud_account_id"`
-	Marketplace             string `json:"marketplace"`
+	// TODO At the moment (2022-06-02) if the kafka instance is using red hat marketplace
+	// billing model we do not set a value to the marketplace attribute. To
+	// be decided if we want to do that or not. If we decide to do that we
+	// have to be careful on the migration side to not break compatibility on
+	// AMS side nor kas fleet manager api side, deal with already existing
+	// instances stored in the DB, etc.
+	Marketplace string `json:"marketplace"`
 }
 
 type KafkaList []*KafkaRequest

@@ -5,10 +5,12 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	config "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/gorilla/mux"
 
@@ -50,7 +52,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateKafkaClaims(ctx, ValidateUsername(), ValidateOrganisationId()),
 			ValidateCloudProvider(ctx, &h.service, &kafkaRequestPayload, h.providerConfig, "creating kafka requests"),
 			ValidateKafkaPlan(ctx, &h.service, h.kafkaConfig, &kafkaRequestPayload),
-			ValidateBillingCloudAccountIdAndMarketplace(ctx, &h.service, &kafkaRequestPayload),
+			ValidateBillingInformation(ctx, &h.service, &kafkaRequestPayload),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			convKafka := presenters.ConvertKafkaRequest(kafkaRequestPayload)
@@ -63,6 +65,13 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			convKafka.InstanceType, convKafka.SizeId, _ = getInstanceTypeAndSize(ctx, &h.service, h.kafkaConfig, &kafkaRequestPayload)
 
 			convKafka.CloudProvider, convKafka.Region, _ = getCloudProviderAndRegion(ctx, &h.service, &kafkaRequestPayload, h.providerConfig)
+			if shared.SafeString(&convKafka.Marketplace) == "" && shared.SafeString(&convKafka.BillingCloudAccountId) != "" {
+				res, svcErr := h.service.GetMarketplaceFromBillingAccountInformation(convKafka.OrganisationId, types.KafkaInstanceType(convKafka.InstanceType), convKafka.BillingCloudAccountId, nil)
+				if svcErr != nil {
+					return nil, svcErr
+				}
+				convKafka.Marketplace = res
+			}
 
 			svcErr := h.service.RegisterKafkaJob(convKafka)
 			if svcErr != nil {
