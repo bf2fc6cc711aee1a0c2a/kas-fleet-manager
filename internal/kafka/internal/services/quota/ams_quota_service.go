@@ -147,32 +147,26 @@ func (q amsQuotaService) getAvailableBillingModelFromKafkaInstanceType(externalI
 
 	billingModel := ""
 	matchedBillingModels := 0
+	foundBillingAccount := false
 	for _, qc := range quotaCosts {
-		foundBillingCloudAccount := false
-		if marketplace != "" {
+		if billingCloudAccountId != "" && marketplace != "" {
 			for _, ca := range qc.CloudAccounts() {
-				if billingCloudAccountId == ca.CloudAccountID() {
-					foundBillingCloudAccount = true
+				if billingCloudAccountId == ca.CloudAccountID() && ca.CloudProviderID() == marketplace {
+					foundBillingAccount = true
 					break
 				}
 			}
 		}
-		if foundBillingCloudAccount {
-			continue
-		}
 		for _, rr := range qc.RelatedResources() {
 			if qc.Consumed()+sizeRequired <= qc.Allowed() || rr.Cost() == 0 {
-				if marketplace != "" {
-					if marketplace == "aws" && rr.BillingModel() == string(amsv1.BillingModelMarketplaceAWS) {
-						return rr.BillingModel(), nil
-					}
-				} else {
-					if rr.BillingModel() == string(amsv1.BillingModelStandard) {
-						return rr.BillingModel(), nil
-					} else if rr.BillingModel() == string(amsv1.BillingModelMarketplace) || rr.BillingModel() == string(amsv1.BillingModelMarketplaceAWS) {
-						billingModel = rr.BillingModel()
-						matchedBillingModels++
-					}
+				if foundBillingAccount && rr.BillingModel() == string(amsv1.BillingModelMarketplaceAWS) {
+					return rr.BillingModel(), nil
+				}
+				if rr.BillingModel() == string(amsv1.BillingModelStandard) {
+					return rr.BillingModel(), nil
+				} else if rr.BillingModel() == string(amsv1.BillingModelMarketplace) || rr.BillingModel() == string(amsv1.BillingModelMarketplaceAWS) {
+					billingModel = rr.BillingModel()
+					matchedBillingModels++
 				}
 			}
 		}
