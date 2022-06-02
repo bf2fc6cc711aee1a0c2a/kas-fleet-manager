@@ -120,3 +120,7 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, inst
 func (q QuotaManagementListService) DeleteQuota(SubscriptionId string) *errors.ServiceError {
 	return nil // NOOP
 }
+
+func (q QuotaManagementListService) GetMarketplaceFromBillingAccountInformation(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) (string, *errors.ServiceError) {
+	return "", nil
+}

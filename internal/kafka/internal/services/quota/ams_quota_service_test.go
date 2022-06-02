@@ -174,7 +174,7 @@ func Test_AMSValidateBillingAccount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, tt.fields.kafkaConfig)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
-			err := quotaService.GetMarketplaceFromBillingAccountInformation(tt.args.orgId, types.STANDARD, tt.args.billingAccountId, tt.args.marketplace)
+			_, err := quotaService.GetMarketplaceFromBillingAccountInformation(tt.args.orgId, types.STANDARD, tt.args.billingAccountId, tt.args.marketplace)
 			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
