@@ -30,10 +30,6 @@ func (s serviceAccountsHandler) ListServiceAccounts(w http.ResponseWriter, r *ht
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			Page, Size := s.handleParams(r.URL.Query())
-			// required for redhat sso client, returns a bad request stating this field needs to be larger than 0
-			if Size == 0 {
-				Size = s.service.GetConfig().MaxLimitForGetClients
-			}
 			sa, err := s.service.ListServiceAcc(ctx, Page, Size)
 			if err != nil {
 				return nil, err
