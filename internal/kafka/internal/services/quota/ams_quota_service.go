@@ -36,10 +36,10 @@ var supportedAMSBillingModels map[string]struct{} = map[string]struct{}{
 	string(amsv1.BillingModelStandard):    {},
 }
 
-func (q amsQuotaService) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
-	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(externalId)
+func (q amsQuotaService) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(organisationId)
 	if err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", externalId))
+		return errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", organisationId))
 	}
 
 	quotaType := instanceType.GetQuotaType()

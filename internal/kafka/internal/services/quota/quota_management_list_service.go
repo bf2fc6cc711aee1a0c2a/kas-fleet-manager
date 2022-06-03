@@ -19,7 +19,7 @@ type QuotaManagementListService struct {
 }
 
 // don't validate billing accounts when using the quota list
-func (q QuotaManagementListService) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+func (q QuotaManagementListService) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
 	return nil
 }
 
