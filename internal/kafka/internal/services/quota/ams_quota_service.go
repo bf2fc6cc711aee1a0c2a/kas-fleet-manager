@@ -246,6 +246,9 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 	rr.BillingModel(amsv1.BillingModel(bm))
 	rr.Count(kafkaInstanceSize.QuotaConsumed)
 
+	// will be empty if no marketplace account is used
+	rr.BillingMarketplaceAccount(kafka.BillingCloudAccountId)
+
 	cb, _ := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(kafka.Owner).
 		CloudProviderID(kafka.CloudProvider).
@@ -258,7 +261,6 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		AvailabilityZone("single").
 		Reserve(true).
 		Resources(&rr).
-		CloudAccountID(kafka.BillingCloudAccountId).
 		Build()
 
 	resp, err := q.amsClient.ClusterAuthorization(cb)
