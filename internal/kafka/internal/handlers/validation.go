@@ -34,7 +34,7 @@ func ValidateBillingCloudAccountIdAndMarketplace(ctx context.Context, kafkaServi
 
 		// marketplace without a billing account provided
 		if shared.SafeString(kafkaRequestPayload.BillingCloudAccountId) == "" && shared.SafeString(kafkaRequestPayload.Marketplace) != "" {
-			return errors.InvalidBillingAccount("no billing account provided for marketplace: %s", kafkaRequestPayload.Marketplace)
+			return errors.InvalidBillingAccount("no billing account provided for marketplace: %s", shared.SafeString(kafkaRequestPayload.Marketplace))
 		}
 
 		claims, err := getClaims(ctx)
