@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"regexp"
 	"strings"
@@ -23,6 +24,35 @@ import (
 var ValidKafkaClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
 
 var MaxKafkaNameLength = 32
+
+func ValidateBillingCloudAccountIdAndMarketplace(ctx context.Context, kafkaService *services.KafkaService, kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
+	return func() *errors.ServiceError {
+		// both fields are optional
+		if shared.SafeString(kafkaRequestPayload.BillingCloudAccountId) == "" && shared.SafeString(kafkaRequestPayload.Marketplace) == "" {
+			return nil
+		}
+
+		// marketplace without a billing account provided
+		if shared.SafeString(kafkaRequestPayload.BillingCloudAccountId) == "" && shared.SafeString(kafkaRequestPayload.Marketplace) != "" {
+			return errors.InvalidBillingAccount("no billing account provided for marketplace: %s", shared.SafeString(kafkaRequestPayload.Marketplace))
+		}
+
+		claims, err := getClaims(ctx)
+		if err != nil {
+			return err
+		}
+
+		owner, _ := claims.GetUsername()
+		organisationId, _ := claims.GetOrgId()
+
+		instanceType, err := (*kafkaService).AssignInstanceType(owner, organisationId)
+		if err != nil {
+			return errors.NewWithCause(errors.ErrorGeneral, err, "error assigning instance type: %s", err.Error())
+		}
+
+		return (*kafkaService).ValidateBillingAccount(organisationId, instanceType, *kafkaRequestPayload.BillingCloudAccountId, kafkaRequestPayload.Marketplace)
+	}
+}
 
 func ValidKafkaClusterName(value *string, field string) handlers.Validate {
 	return func() *errors.ServiceError {

@@ -16,6 +16,10 @@ type amsQuotaService struct {
 	kafkaConfig *config.KafkaConfig
 }
 
+const (
+	MarketplaceAWS = "aws"
+)
+
 func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder {
 	rr := amsv1.ReservedResourceBuilder{}
 	rr.ResourceType("cluster.aws") //cluster.aws
@@ -30,6 +34,50 @@ func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder
 var supportedAMSBillingModels map[string]struct{} = map[string]struct{}{
 	string(amsv1.BillingModelMarketplace): {},
 	string(amsv1.BillingModelStandard):    {},
+}
+
+func (q amsQuotaService) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(organisationId)
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", organisationId))
+	}
+
+	quotaType := instanceType.GetQuotaType()
+	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgId, quotaType.GetResourceName(), quotaType.GetProduct())
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get assigned quota of type %v for organization with id %v", instanceType.GetQuotaType(), orgId))
+	}
+
+	var matchingBillingAccounts = 0
+	var billingAccounts []amsv1.CloudAccount
+
+	for _, quotaCost := range quotaCosts {
+		for _, cloudAccount := range quotaCost.CloudAccounts() {
+			billingAccounts = append(billingAccounts, *cloudAccount)
+			if cloudAccount.CloudAccountID() == billingCloudAccountId {
+				if marketplace != nil && *marketplace != cloudAccount.CloudProviderID() {
+					continue
+				}
+
+				// matching billing account found
+				matchingBillingAccounts++
+			}
+		}
+	}
+
+	// only one matching billing account is expected. If there are multiple then they are with different
+	// cloud providers
+	if matchingBillingAccounts == 1 {
+		return nil
+	} else if matchingBillingAccounts > 1 {
+		return errors.InvalidBillingAccount("Multiple matching billing accounts found, only one expected. Available billing accounts: %v", billingAccounts)
+	}
+
+	if len(billingAccounts) == 0 {
+		return errors.InvalidBillingAccount("No billing accounts available in quota")
+	}
+
+	return errors.InvalidBillingAccount("No matching billing account found. Provided: %s, Available: %v", billingCloudAccountId, billingAccounts)
 }
 
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
@@ -114,6 +162,69 @@ func (q amsQuotaService) getAvailableBillingModelFromKafkaInstanceType(externalI
 	return billingModel, nil
 }
 
+func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, error) {
+	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(kafka.OrganisationId)
+	if err != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", orgId))
+	}
+
+	kafkaInstanceSize, err := q.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+	if err != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
+	}
+
+	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgId, instanceType.GetQuotaType().GetResourceName(), instanceType.GetQuotaType().GetProduct())
+	if err != nil {
+		return "", errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, instanceType.GetQuotaType().GetProduct())
+	}
+
+	getCloudAccounts := func() []*amsv1.CloudAccount {
+		var accounts []*amsv1.CloudAccount
+		for _, quotaCost := range quotaCosts {
+			accounts = append(accounts, quotaCost.CloudAccounts()...)
+		}
+		return accounts
+	}
+
+	// no billing account and marketplace provided
+	// in this case we first try to assign the billing model in the old way: prefer standard and use marketplace if standard is not available
+	// if marketplace was picked and there is a single cloud account of type aws, then we change the billing model to marketplace-aws and
+	// assign the account id
+	if kafka.BillingCloudAccountId == "" && kafka.Marketplace == "" {
+		billingModel, err := q.getAvailableBillingModelFromKafkaInstanceType(kafka.OrganisationId, instanceType, kafkaInstanceSize.CapacityConsumed)
+		if err != nil {
+			return "", err
+		}
+
+		cloudAccounts := getCloudAccounts()
+		if billingModel == string(amsv1.BillingModelMarketplace) && len(cloudAccounts) == 1 {
+			// at this point we know that there is only one cloud account
+			cloudAccount := cloudAccounts[0]
+			if cloudAccount.CloudProviderID() == MarketplaceAWS {
+				kafka.BillingCloudAccountId = cloudAccount.CloudAccountID()
+				kafka.Marketplace = MarketplaceAWS
+				return string(amsv1.BillingModelMarketplaceAWS), nil
+			}
+		} else {
+			// billing model was standard or can't choose a cloud account
+			return billingModel, nil
+		}
+	}
+
+	// billing account and marketplace (optional) provided
+	// find a matching cloud account and assign it if the provider id is aws (the only supported one at the moment)
+	for _, cloudAccount := range getCloudAccounts() {
+		if cloudAccount.CloudProviderID() == MarketplaceAWS && cloudAccount.CloudAccountID() == kafka.BillingCloudAccountId && (cloudAccount.CloudProviderID() == kafka.Marketplace || kafka.Marketplace == "") {
+			// assign marketplace in case it was not provided in the request
+			// at this point we know that an aws account was selected
+			kafka.Marketplace = MarketplaceAWS
+			return string(amsv1.BillingModelMarketplaceAWS), nil
+		}
+	}
+
+	return "", errors.InsufficientQuotaError("no matching marketplace quota found for product %s", instanceType.GetQuotaType().GetProduct())
+}
+
 func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
 	kafkaId := kafka.ID
 
@@ -124,7 +235,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		return "", errors.NewWithCause(errors.ErrorGeneral, e, "Error reserving quota")
 	}
 
-	bm, err := q.getAvailableBillingModelFromKafkaInstanceType(kafka.OrganisationId, instanceType, kafkaInstanceSize.CapacityConsumed)
+	bm, err := q.getBillingModel(kafka, instanceType)
 	if err != nil {
 		svcErr := errors.ToServiceError(err)
 		return "", errors.NewWithCause(svcErr.Code, svcErr, "Error getting billing model")
@@ -147,6 +258,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		AvailabilityZone("single").
 		Reserve(true).
 		Resources(&rr).
+		CloudAccountID(kafka.BillingCloudAccountId).
 		Build()
 
 	resp, err := q.amsClient.ClusterAuthorization(cb)
