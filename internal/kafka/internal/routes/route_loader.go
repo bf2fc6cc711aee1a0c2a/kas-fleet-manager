@@ -89,7 +89,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
 	issuerList := []string{s.ServerConfig.TokenIssuerURL}
 	if s.Keycloak.GetConfig().SelectSSOProvider == keycloak.REDHAT_SSO {
-		issuerList = append(issuerList, s.Keycloak.GetRealmConfig().TokenEndpointURI)
+		issuerList = append(issuerList, s.Keycloak.GetRealmConfig().ValidIssuerURI)
 	}
 	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(issuerList, errors.ErrorUnauthenticated)
 	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.AMSClient, errors.ErrorTermsNotAccepted)
