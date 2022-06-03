@@ -261,6 +261,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil},
 		ServiceError{ErrorInstancePlanNotSupported, ErrorInstancePlanNotSupportedReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorBillingAccountInvalid, ErrorBillingAccountInvalidReason, http.StatusBadRequest, nil},
 	}
 }
 

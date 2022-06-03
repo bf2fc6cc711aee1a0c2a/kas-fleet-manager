@@ -16,6 +16,10 @@ type amsQuotaService struct {
 	kafkaConfig *config.KafkaConfig
 }
 
+const (
+	MarketplaceAWS = "aws"
+)
+
 func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder {
 	rr := amsv1.ReservedResourceBuilder{}
 	rr.ResourceType("cluster.aws") //cluster.aws
@@ -164,9 +168,9 @@ func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", orgId))
 	}
 
-	kafkaInstanceSize, e := q.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
-	if e != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, e, "Error reserving quota")
+	kafkaInstanceSize, err := q.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+	if err != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
 	}
 
 	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgId, instanceType.GetQuotaType().GetResourceName(), instanceType.GetQuotaType().GetProduct())
@@ -174,19 +178,47 @@ func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType
 		return "", errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, instanceType.GetQuotaType().GetProduct())
 	}
 
-	// old behaviour
-	// not enough - if no standard quota exists, we try to pick a marketplace (iff exactly one exists)
-	if kafka.BillingCloudAccountId == "" && kafka.Marketplace == "" {
-		return q.getAvailableBillingModelFromKafkaInstanceType(kafka.OrganisationId, instanceType, kafkaInstanceSize.CapacityConsumed)
+	getCloudAccounts := func() []*amsv1.CloudAccount {
+		var accounts []*amsv1.CloudAccount
+		for _, quotaCost := range quotaCosts {
+			accounts = append(accounts, quotaCost.CloudAccounts()...)
+		}
+		return accounts
 	}
 
-	for _, quotaCost := range quotaCosts {
-		for _, cloudAccount := range quotaCost.CloudAccounts() {
-			if cloudAccount.CloudAccountID() == kafka.BillingCloudAccountId && (cloudAccount.CloudProviderID() == kafka.Marketplace || kafka.Marketplace == "") {
-				if cloudAccount.CloudProviderID() == "aws" {
-					return string(amsv1.BillingModelMarketplaceAWS), nil
-				}
+	// no billing account and marketplace provided
+	// in this case we first try to assign the billing model in the old way: prefer standard and use marketplace if standard is not available
+	// if marketplace was picked and there is a single cloud account of type aws, then we change the billing model to marketplace-aws and
+	// assign the account id
+	if kafka.BillingCloudAccountId == "" && kafka.Marketplace == "" {
+		billingModel, err := q.getAvailableBillingModelFromKafkaInstanceType(kafka.OrganisationId, instanceType, kafkaInstanceSize.CapacityConsumed)
+		if err != nil {
+			return "", err
+		}
+
+		cloudAccounts := getCloudAccounts()
+		if billingModel == string(amsv1.BillingModelMarketplace) && len(cloudAccounts) == 1 {
+			// at this point we know that there is only one cloud account
+			cloudAccount := cloudAccounts[0]
+			if cloudAccount.CloudProviderID() == MarketplaceAWS {
+				kafka.BillingCloudAccountId = cloudAccount.CloudAccountID()
+				kafka.Marketplace = MarketplaceAWS
+				return string(amsv1.BillingModelMarketplaceAWS), nil
 			}
+		} else {
+			// billing model was standard or can't choose a cloud account
+			return billingModel, nil
+		}
+	}
+
+	// billing account and marketplace (optional) provided
+	// find a matching cloud account and assign it if the provider id is aws (the only supported one at the moment)
+	for _, cloudAccount := range getCloudAccounts() {
+		if cloudAccount.CloudProviderID() == MarketplaceAWS && cloudAccount.CloudAccountID() == kafka.BillingCloudAccountId && (cloudAccount.CloudProviderID() == kafka.Marketplace || kafka.Marketplace == "") {
+			// assign marketplace in case it was not provided in the request
+			// at this point we know that an aws account was selected
+			kafka.Marketplace = MarketplaceAWS
+			return string(amsv1.BillingModelMarketplaceAWS), nil
 		}
 	}
 
