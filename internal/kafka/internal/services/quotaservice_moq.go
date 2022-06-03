@@ -29,7 +29,7 @@ var _ QuotaService = &QuotaServiceMock{}
 // 			ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *serviceError.ServiceError) {
 // 				panic("mock out the ReserveQuota method")
 // 			},
-// 			ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError {
+// 			ValidateBillingAccountFunc: func(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError {
 // 				panic("mock out the ValidateBillingAccount method")
 // 			},
 // 		}
@@ -49,7 +49,7 @@ type QuotaServiceMock struct {
 	ReserveQuotaFunc func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *serviceError.ServiceError)
 
 	// ValidateBillingAccountFunc mocks the ValidateBillingAccount method.
-	ValidateBillingAccountFunc func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError
+	ValidateBillingAccountFunc func(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -76,8 +76,8 @@ type QuotaServiceMock struct {
 		}
 		// ValidateBillingAccount holds details about calls to the ValidateBillingAccount method.
 		ValidateBillingAccount []struct {
-			// ExternalId is the externalId argument value.
-			ExternalId string
+			// OrganisationId is the organisationId argument value.
+			OrganisationId string
 			// InstanceType is the instanceType argument value.
 			InstanceType types.KafkaInstanceType
 			// BillingCloudAccountId is the billingCloudAccountId argument value.
@@ -198,17 +198,17 @@ func (mock *QuotaServiceMock) ReserveQuotaCalls() []struct {
 }
 
 // ValidateBillingAccount calls ValidateBillingAccountFunc.
-func (mock *QuotaServiceMock) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError {
+func (mock *QuotaServiceMock) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError {
 	if mock.ValidateBillingAccountFunc == nil {
 		panic("QuotaServiceMock.ValidateBillingAccountFunc: method is nil but QuotaService.ValidateBillingAccount was just called")
 	}
 	callInfo := struct {
-		ExternalId            string
+		OrganisationId        string
 		InstanceType          types.KafkaInstanceType
 		BillingCloudAccountId string
 		Marketplace           *string
 	}{
-		ExternalId:            externalId,
+		OrganisationId:        organisationId,
 		InstanceType:          instanceType,
 		BillingCloudAccountId: billingCloudAccountId,
 		Marketplace:           marketplace,
@@ -216,20 +216,20 @@ func (mock *QuotaServiceMock) ValidateBillingAccount(externalId string, instance
 	mock.lockValidateBillingAccount.Lock()
 	mock.calls.ValidateBillingAccount = append(mock.calls.ValidateBillingAccount, callInfo)
 	mock.lockValidateBillingAccount.Unlock()
-	return mock.ValidateBillingAccountFunc(externalId, instanceType, billingCloudAccountId, marketplace)
+	return mock.ValidateBillingAccountFunc(organisationId, instanceType, billingCloudAccountId, marketplace)
 }
 
 // ValidateBillingAccountCalls gets all the calls that were made to ValidateBillingAccount.
 // Check the length with:
 //     len(mockedQuotaService.ValidateBillingAccountCalls())
 func (mock *QuotaServiceMock) ValidateBillingAccountCalls() []struct {
-	ExternalId            string
+	OrganisationId        string
 	InstanceType          types.KafkaInstanceType
 	BillingCloudAccountId string
 	Marketplace           *string
 } {
 	var calls []struct {
-		ExternalId            string
+		OrganisationId        string
 		InstanceType          types.KafkaInstanceType
 		BillingCloudAccountId string
 		Marketplace           *string
