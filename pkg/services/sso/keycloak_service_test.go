@@ -1,17 +1,17 @@
 package sso
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/Nerzal/gocloak/v11"
-	. "github.com/onsi/gomega"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-
+	"github.com/google/uuid"
+	. "github.com/onsi/gomega"
 	pkgErr "github.com/pkg/errors"
 )
 
@@ -126,6 +126,51 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 			},
 			want:    "",
 			wantErr: errors.NewWithCause(errors.ErrorFailedToCreateSSOClient, failedToCreateClientErr, "failed to create sso client"),
+		},
+		{
+			name: "returns an error when it fails to find client",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return "", nil
+					},
+					IsClientExistFunc: func(clientId, accessToken string) (string, error) {
+						return "", errors.New(errors.ErrorFailedToGetSSOClient, "failed to get sso client with id: osd-cluster-12212")
+					},
+				},
+			},
+			want:    "",
+			wantErr: errors.NewWithCause(errors.ErrorFailedToGetSSOClient, errors.FailedToGetSSOClient("failed to get sso client with id: osd-cluster-12212"), "failed to get sso client with id: osd-cluster-12212"),
+		},
+		{
+			name: "successfully register a new sso client for the kafka cluster",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
+						return "", errors.New(errors.ErrorFailedToGetSSOClientSecret, "failed to get sso client secret")
+					},
+					CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
+						return testClientID, nil
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						testID := "12221"
+						return gocloak.Client{
+							ClientID: &testID,
+						}
+					},
+				},
+			},
+			want:    "",
+			wantErr: errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, errors.FailedToGetSSOClientSecret("failed to get sso client secret"), "failed to get sso client secret"),
 		},
 	}
 
@@ -337,7 +382,7 @@ func TestKeycloakService_DeRegisterKasFleetshardOperatorServiceAccount(t *testin
 						return token, nil
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
-						return "testclietid", nil
+						return "testclientid", nil
 					},
 					DeleteClientFunc: func(internalClientID, accessToken string) error {
 						return fmt.Errorf("some error")
@@ -599,7 +644,7 @@ func TestKeycloakService_DeRegisterConnectorFleetshardOperatorServiceAccount(t *
 						return token, nil
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
-						return "testclietid", nil
+						return "testclientid", nil
 					},
 					DeleteClientFunc: func(internalClientID, accessToken string) error {
 						return fmt.Errorf("some error")
@@ -766,7 +811,7 @@ func TestKeycloakService_CreateServiceAccountInternal(t *testing.T) {
 		ClientId:       "some-client-id",
 		Name:           "some-name",
 		Description:    "some-description",
-		OrgId:          "some-organisation-id",
+		OrgId:          "some-organization-id",
 	}
 	type fields struct {
 		kcClient keycloak.KcClient
@@ -997,6 +1042,887 @@ func TestKeycloakService_checkAllowedServiceAccountsLimits(t *testing.T) {
 			got, err := service.checkAllowedServiceAccountsLimits(tt.args.accessToken, tt.args.maxAllowed, tt.args.orgId)
 			Expect(err != nil).To(Equal(tt.wantErr), "checkAllowedServiceAccountsLimits() error = %v, wantErr %v", err, tt.wantErr)
 			Expect(tt.want).To(Equal(got))
+		})
+	}
+}
+
+func Test_newKeycloakService(t *testing.T) {
+	type args struct {
+		config      *keycloak.KeycloakConfig
+		realmConfig *keycloak.KeycloakRealmConfig
+	}
+	client := keycloak.NewClient(&keycloak.KeycloakConfig{}, &keycloak.KeycloakRealmConfig{})
+	tests := []struct {
+		name string
+		args args
+		want KeycloakService
+	}{
+		{
+			name: "should return new keycloak service",
+			args: args{
+				config:      &keycloak.KeycloakConfig{},
+				realmConfig: &keycloak.KeycloakRealmConfig{},
+			},
+			want: &keycloakServiceProxy{
+				accessTokenProvider: client,
+				service: &masService{
+					kcClient: client,
+				},
+			},
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			keycloakService := newKeycloakService(tt.args.config, tt.args.realmConfig)
+			g.Expect(keycloakService.GetConfig()).To(Equal(tt.want.GetConfig()))
+			g.Expect(keycloakService.GetRealmConfig()).To(Equal(tt.want.GetRealmConfig()))
+		})
+	}
+}
+
+func Test_masService_DeRegisterClientInSSO(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		accessToken string
+		clientId    string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *errors.ServiceError
+	}{
+		{
+			name: "should return nil if the client is deregistered successfully",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					IsClientExistFunc: func(clientId, accessToken string) (string, error) {
+						return testClientID, nil
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want: nil,
+		},
+		{
+			name: "should return nil if the client ID is empty",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					IsClientExistFunc: func(clientId, accessToken string) (string, error) {
+						return "", nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    "",
+			},
+			want: nil,
+		},
+		{
+			name: "should return error if the client is not deregistered",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					IsClientExistFunc: func(clientId, accessToken string) (string, error) {
+						return testClientID, nil
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return errors.New(errors.ErrorFailedToDeleteSSOClient, "failed to delete the sso client")
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want: errors.NewWithCause(errors.ErrorFailedToDeleteSSOClient, errors.FailedToDeleteSSOClient("failed to delete the sso client"), "failed to delete the sso client"),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kc := &masService{
+				kcClient: tt.fields.kcClient,
+			}
+			g.Expect(kc.DeRegisterClientInSSO(tt.args.accessToken, tt.args.clientId)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestNewKeycloakServiceWithClient(t *testing.T) {
+	type args struct {
+		client keycloak.KcClient
+	}
+	client := keycloak.NewClient(&keycloak.KeycloakConfig{}, &keycloak.KeycloakRealmConfig{})
+	tests := []struct {
+		name string
+		args args
+		want KeycloakService
+	}{
+		{
+			name: "should return New Keycloak Service With Client",
+			args: args{
+				client: client,
+			},
+			want: &keycloakServiceProxy{
+				accessTokenProvider: client,
+				service: &masService{
+					kcClient: client,
+				},
+			},
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g.Expect(NewKeycloakServiceWithClient(tt.args.client)).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_masService_IsKafkaClientExist(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		accessToken string
+		clientId    string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *errors.ServiceError
+	}{
+		{
+			name: "should return nil if client exists",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					IsClientExistFunc: func(clientId, accessToken string) (string, error) {
+						return testClientID, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want: nil,
+		},
+		{
+			name: "should return an error if it fails to find the client",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					IsClientExistFunc: func(clientId, accessToken string) (string, error) {
+						return "", errors.New(errors.ErrorFailedToGetSSOClient, "failed to get sso client with id: %s", testClientID)
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want: errors.NewWithCause(errors.ErrorFailedToGetSSOClient, errors.FailedToGetSSOClient("failed to get sso client with id: %s", testClientID), "failed to get sso client with id: %s", testClientID),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kc := masService{
+				kcClient: tt.fields.kcClient,
+			}
+			g.Expect(kc.IsKafkaClientExist(tt.args.accessToken, tt.args.clientId)).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_masService_GetKafkaClientSecret(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		accessToken string
+		clientId    string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    string
+		wantErr *errors.ServiceError
+	}{
+		{
+			name: "should return the client secret",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					IsClientExistFunc: func(clientId, accessToken string) (string, error) {
+						return testClientID, nil
+					},
+					GetClientSecretFunc: func(internalClientId, accessToken string) (string, error) {
+						return secret, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want:    secret,
+			wantErr: nil,
+		},
+		{
+			name: "should return an error in it fails to find the client",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					IsClientExistFunc: func(clientId, accessToken string) (string, error) {
+						return "", errors.New(errors.ErrorFailedToGetSSOClient, "failed to get sso client with id: %s", testClientID)
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want:    "",
+			wantErr: errors.NewWithCause(errors.ErrorFailedToGetSSOClient, errors.FailedToGetSSOClient("failed to get sso client with id: %s", testClientID), "failed to get sso client with id: %s", testClientID),
+		},
+		{
+			name: "should return an error if it fails to get the client secret",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					IsClientExistFunc: func(clientId, accessToken string) (string, error) {
+						return testClientID, nil
+					},
+					GetClientSecretFunc: func(internalClientId, accessToken string) (string, error) {
+						return "", errors.New(errors.ErrorFailedToGetSSOClientSecret, "failed to get sso client secret")
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				clientId:    testClientID,
+			},
+			want:    "",
+			wantErr: errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, errors.FailedToGetSSOClientSecret("failed to get sso client secret"), "failed to get sso client secret"),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kc := masService{
+				kcClient: tt.fields.kcClient,
+			}
+			got, err := kc.GetKafkaClientSecret(tt.args.accessToken, tt.args.clientId)
+			g.Expect(err).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_masService_CreateServiceAccount(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		accessToken           string
+		serviceAccountRequest *api.ServiceAccountRequest
+		ctx                   context.Context
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *api.ServiceAccount
+		wantErr *errors.ServiceError
+	}{
+		{
+			name: "should return the created service account",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetClientFunc: func(clientId, accessToken string) (*gocloak.Client, error) {
+						return nil, nil
+					},
+					CreateProtocolMapperConfigFunc: func(s string) []gocloak.ProtocolMapperRepresentation {
+						return []gocloak.ProtocolMapperRepresentation{}
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						return gocloak.Client{}
+					},
+					CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
+						return testClientID, nil
+					},
+					GetClientSecretFunc: func(internalClientId, accessToken string) (string, error) {
+						return secret, nil
+					},
+					GetClientServiceAccountFunc: func(accessToken, internalClient string) (*gocloak.User, error) {
+						return &gocloak.User{}, nil
+					},
+					UpdateServiceAccountUserFunc: func(accessToken string, serviceAccountUser gocloak.User) error {
+						return nil
+					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							MaxAllowedServiceAccounts: 1,
+						}
+					},
+					GetClientsFunc: func(accessToken string, first, max int, attribute string) ([]*gocloak.Client, error) {
+						return []*gocloak.Client{}, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				serviceAccountRequest: &api.ServiceAccountRequest{
+					Name:        "ServiceAccountRequest_name",
+					Description: "ServiceAccountRequest_description",
+				},
+				ctx: context.Background(),
+			},
+			want: &api.ServiceAccount{
+				ID:           "12221",
+				ClientSecret: "secret",
+				Name:         "ServiceAccountRequest_name",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "should return an error if it fails to create the service account",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetClientFunc: func(clientId, accessToken string) (*gocloak.Client, error) {
+						return nil, nil
+					},
+					CreateProtocolMapperConfigFunc: func(s string) []gocloak.ProtocolMapperRepresentation {
+						return []gocloak.ProtocolMapperRepresentation{}
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						return gocloak.Client{}
+					},
+					CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
+						return testClientID, nil
+					},
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							MaxAllowedServiceAccounts: 0,
+						}
+					},
+					GetClientsFunc: func(accessToken string, first, max int, attribute string) ([]*gocloak.Client, error) {
+						return []*gocloak.Client{}, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				serviceAccountRequest: &api.ServiceAccountRequest{
+					Name:        "ServiceAccountRequest_name",
+					Description: "ServiceAccountRequest_description",
+				},
+				ctx: context.Background(),
+			},
+			want:    nil,
+			wantErr: errors.MaxLimitForServiceAccountReached("Max allowed number:0 of service accounts for user in org: has reached"),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kc := &masService{
+				kcClient: tt.fields.kcClient,
+			}
+			got, err := kc.CreateServiceAccount(tt.args.accessToken, tt.args.serviceAccountRequest, tt.args.ctx)
+			g.Expect(err).To(Equal(tt.wantErr))
+
+			if tt.want != nil {
+				g.Expect(got.ID).To(Equal(tt.want.ID))
+				g.Expect(got.ClientSecret).To(Equal(tt.want.ClientSecret))
+				g.Expect(got.Name).To(Equal(tt.want.Name))
+			}
+		})
+	}
+}
+
+func Test_masService_ListServiceAcc(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		accessToken string
+		ctx         context.Context
+		first       int
+		max         int
+	}
+	id := "id"
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []api.ServiceAccount
+		wantErr *errors.ServiceError
+	}{
+		{
+			name: "should return a list of service accounts",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetClientsFunc: func(accessToken string, first, max int, attribute string) ([]*gocloak.Client, error) {
+						var clientArr []*gocloak.Client
+
+						for i := 0; i < 2; i++ {
+							client := gocloak.Client{}
+							idStr := fmt.Sprintf("srvc-acct-%d", i)
+							client.ClientID = &idStr
+							client.Attributes = &map[string]string{}
+							client.ID = &id
+							clientArr = append(clientArr, &client)
+						}
+						return clientArr, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				first:       1,
+				max:         10,
+			},
+			want: []api.ServiceAccount{
+				{
+					ID:       "id",
+					ClientID: "srvc-acct-0",
+				},
+				{
+					ID:       "id",
+					ClientID: "srvc-acct-1",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "should return an error when it fails to collect service accounts",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetClientsFunc: func(accessToken string, first, max int, attribute string) ([]*gocloak.Client, error) {
+						return nil, errors.New(errors.ErrorGeneral, "failed to collect service accounts")
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				first:       1,
+				max:         10,
+			},
+			want:    nil,
+			wantErr: errors.NewWithCause(errors.ErrorGeneral, errors.GeneralError("failed to collect service accounts"), "failed to collect service accounts"),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kc := &masService{
+				kcClient: tt.fields.kcClient,
+			}
+			got, err := kc.ListServiceAcc(tt.args.accessToken, tt.args.ctx, tt.args.first, tt.args.max)
+			g.Expect(err).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_masService_DeleteServiceAccount(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		accessToken string
+		ctx         context.Context
+		id          string
+	}
+	clientId := UserServiceAccountPrefix + uuid.New().String()
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *errors.ServiceError
+	}{
+		{
+			name: "return nil if it successfully deletes the service account",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetClientByIdFunc: func(id, accessToken string) (*gocloak.Client, error) {
+						return &gocloak.Client{
+							ClientID: &clientId,
+						}, nil
+					},
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return true
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				id:          clientId,
+			},
+			want: nil,
+		},
+		{
+			name: "should return an error if it fails to delete the service account",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetClientByIdFunc: func(id, accessToken string) (*gocloak.Client, error) {
+						return &gocloak.Client{
+							ClientID: &clientId,
+						}, nil
+					},
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return true
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return errors.New(errors.ErrorFailedToDeleteServiceAccount, "failed to delete service account")
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				id:          clientId,
+			},
+			want: errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, errors.FailedToDeleteServiceAccount("failed to delete service account"), "failed to delete service account"),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kc := &masService{
+				kcClient: tt.fields.kcClient,
+			}
+			g.Expect(kc.DeleteServiceAccount(tt.args.accessToken, tt.args.ctx, tt.args.id)).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_masService_ResetServiceAccountCredentials(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		accessToken string
+		ctx         context.Context
+		id          string
+	}
+	clientId := UserServiceAccountPrefix + uuid.New().String()
+	clientSecret := secret
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *api.ServiceAccount
+		wantErr *errors.ServiceError
+	}{
+		{
+			name: "should return service account if it successfully resets service account credentials",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetClientByIdFunc: func(id, accessToken string) (*gocloak.Client, error) {
+						return &gocloak.Client{
+							ClientID:   &clientId,
+							Attributes: &map[string]string{},
+							ID:         &clientId,
+						}, nil
+					},
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return true
+					},
+					RegenerateClientSecretFunc: func(accessToken, id string) (*gocloak.CredentialRepresentation, error) {
+						return &gocloak.CredentialRepresentation{
+							Value: &clientSecret,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				id:          clientId,
+			},
+			want: &api.ServiceAccount{
+				ID:           clientId,
+				ClientID:     clientId,
+				ClientSecret: secret,
+			},
+		},
+		{
+			name: "should return an error if it fails to resets service account credentials",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetClientByIdFunc: func(id, accessToken string) (*gocloak.Client, error) {
+						return &gocloak.Client{
+							ClientID:   &clientId,
+							Attributes: &map[string]string{},
+							ID:         &clientId,
+						}, nil
+					},
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return true
+					},
+					RegenerateClientSecretFunc: func(accessToken, id string) (*gocloak.CredentialRepresentation, error) {
+						return nil, errors.GeneralError("failed to reset service account credentials")
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				id:          clientId,
+			},
+			want:    nil,
+			wantErr: errors.NewWithCause(errors.ErrorGeneral, errors.GeneralError("failed to reset service account credentials"), "failed to reset service account credentials"),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kc := &masService{
+				kcClient: tt.fields.kcClient,
+			}
+			got, err := kc.ResetServiceAccountCredentials(tt.args.accessToken, tt.args.ctx, tt.args.id)
+			g.Expect(err).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_masService_getServiceAccount(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		accessToken   string
+		ctx           context.Context
+		getClientFunc func(client keycloak.KcClient, accessToken string) (*gocloak.Client, error)
+		key           string
+	}
+	clientId := UserServiceAccountPrefix + uuid.New().String()
+	key := "key"
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *api.ServiceAccount
+		wantErr *errors.ServiceError
+	}{
+		{
+			name: "should return service account if it successfully retrieves service account",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return true
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				getClientFunc: func(client keycloak.KcClient, accessToken string) (*gocloak.Client, error) {
+					return &gocloak.Client{
+						ClientID:   &clientId,
+						Attributes: &map[string]string{},
+						ID:         &clientId,
+					}, nil
+				},
+				key: key,
+			},
+			want: &api.ServiceAccount{
+				ID:       clientId,
+				ClientID: clientId,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "should return error if it fails to find the service account",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return true
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				getClientFunc: func(client keycloak.KcClient, accessToken string) (*gocloak.Client, error) {
+					return &gocloak.Client{
+						Attributes: &map[string]string{},
+						ID:         &clientId,
+					}, nil
+				},
+				key: key,
+			},
+			want:    nil,
+			wantErr: errors.New(errors.ErrorServiceAccountNotFound, "service account not found %s", key),
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kc := &masService{
+				kcClient: tt.fields.kcClient,
+			}
+			got, err := kc.getServiceAccount(tt.args.accessToken, tt.args.ctx, tt.args.getClientFunc, tt.args.key)
+			g.Expect(err).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_masService_GetServiceAccountByClientId(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		accessToken string
+		ctx         context.Context
+		clientId    string
+	}
+	clientId := UserServiceAccountPrefix
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *api.ServiceAccount
+		wantErr *errors.ServiceError
+	}{
+		{
+			name: "should return the service account with the client id",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetClientFunc: func(clientId, accessToken string) (*gocloak.Client, error) {
+						return &gocloak.Client{
+							ClientID:   &clientId,
+							Attributes: &map[string]string{},
+							ID:         &clientId,
+						}, nil
+					},
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return true
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				clientId:    clientId,
+			},
+			want: &api.ServiceAccount{
+				ID:       "srvc-acct-",
+				ClientID: "srvc-acct-",
+			},
+			wantErr: nil,
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kc := &masService{
+				kcClient: tt.fields.kcClient,
+			}
+			got, err := kc.GetServiceAccountByClientId(tt.args.accessToken, tt.args.ctx, tt.args.clientId)
+			g.Expect(err).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_masService_GetServiceAccountById(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		accessToken string
+		ctx         context.Context
+		id          string
+	}
+	clientId := UserServiceAccountPrefix
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *api.ServiceAccount
+		wantErr *errors.ServiceError
+	}{
+		{
+			name: "should return the service account with the client id",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetClientByIdFunc: func(id, accessToken string) (*gocloak.Client, error) {
+						return &gocloak.Client{
+							ClientID:   &clientId,
+							Attributes: &map[string]string{},
+							ID:         &clientId,
+						}, nil
+					},
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return true
+					},
+				},
+			},
+			args: args{
+				accessToken: token,
+				ctx:         context.Background(),
+				id:          clientId,
+			},
+			want: &api.ServiceAccount{
+				ID:       "srvc-acct-",
+				ClientID: "srvc-acct-",
+			},
+			wantErr: nil,
+		},
+	}
+	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kc := &masService{
+				kcClient: tt.fields.kcClient,
+			}
+			got, err := kc.GetServiceAccountById(tt.args.accessToken, tt.args.ctx, tt.args.id)
+			g.Expect(err).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }
