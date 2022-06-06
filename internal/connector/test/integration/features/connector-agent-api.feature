@@ -1983,8 +1983,19 @@ Feature: connector agent API
     And the ".total" selection from the response should match "1"
     Given I store the ".items[0].id" selection from the response as ${connector_deployment_id}
 
+    # remember the current namespace version
+    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}"
+    Then the response code should be 200
+    And I store the ".resource_version" selection from the response as ${namespace_version}
+
     # set namespace phase to delete namespace, without deleting it's connector
     When I run SQL "UPDATE connector_namespaces SET status_phase='deleting' WHERE id = '${connector_namespace_id}';" expect 1 row to be affected.
+
+    # validate that namespace shows up in updated namespace poll
+    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces?gt_version=${namespace_version}"
+    Then the response code should be 200
+    And the ".total" selection from the response should match "1"
+    And the ".items[0].id" selection from the response should match "${connector_namespace_id}"
 
     # agent deletes unassigning connector
     When I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "unassigned"
