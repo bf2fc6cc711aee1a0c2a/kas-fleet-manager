@@ -251,7 +251,7 @@ Feature: connector agent API
     Then the response code should be 200
     And I store the ".resource_version" selection from the response as ${namespace_version}
 
-    # send a namespace update without status change
+    # send a namespace status update with the same phase, which shouldn't trigger a version change
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}/status" with json body:
       """
       {
@@ -262,6 +262,11 @@ Feature: connector agent API
         "conditions": [
           {
             "type": "Ready",
+            "status": "True",
+            "lastTransitionTime": "2018-01-01T00:00:00Z"
+          },
+          {
+            "type": "Dummy Condition",
             "status": "True",
             "lastTransitionTime": "2018-01-01T00:00:00Z"
           },
@@ -285,7 +290,7 @@ Feature: connector agent API
     Then the response code should be 204
     And the response should match ""
 
-    # check that namespace status updates with no change don't change resource version
+    # check that resource version didn't change
     When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}"
     Then the response code should be 200
     And the ".resource_version" selection from the response should match "${namespace_version}"
