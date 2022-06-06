@@ -398,8 +398,10 @@ func (k *connectorNamespaceService) UpdateConnectorNamespaceStatus(ctx context.C
 			}
 		}
 
-		// take new phase from fsm operation above
+		// use new phase from fsm operation above
 		status.Phase = namespace.Status.Phase
+		// use connectorsDeployed being sent from agent
+		namespace.Status.ConnectorsDeployed = status.ConnectorsDeployed
 		if updated || !reflect.DeepEqual(namespace.Status, *status) {
 			namespace.Status.Version = status.Version
 			namespace.Status.Conditions = status.Conditions
