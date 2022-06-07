@@ -141,7 +141,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		agentRouter.HandleFunc("/deployments", s.ConnectorClusterHandler.ListDeployments).Methods(http.MethodGet)
 		agentRouter.HandleFunc("/deployments/{deployment_id}", s.ConnectorClusterHandler.GetDeployment).Methods(http.MethodGet)
 		agentRouter.HandleFunc("/namespaces", s.ConnectorClusterHandler.GetAgentNamespaces).Methods(http.MethodGet)
-		agentRouter.HandleFunc("/namespaces/{namespace_id}", s.ConnectorClusterHandler.GetNamespace).Methods(http.MethodGet)
+		agentRouter.HandleFunc("/namespaces/{namespace_id}", s.ConnectorClusterHandler.GetAgentNamespace).Methods(http.MethodGet)
 		agentRouter.HandleFunc("/namespaces/{namespace_id}/status", s.ConnectorClusterHandler.UpdateNamespaceStatus).Methods(http.MethodPut)
 		agentRouter.HandleFunc("/deployments/{deployment_id}/status", s.ConnectorClusterHandler.UpdateDeploymentStatus).Methods(http.MethodPut)
 		auth.UseOperatorAuthorisationMiddleware(agentRouter, s.KeycloakService.GetRealmConfig().ValidIssuerURI, "connector_cluster_id", s.AuthAgentService)
