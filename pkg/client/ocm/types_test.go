@@ -14,21 +14,21 @@ func Test_GetProduct(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   string
+		want   KafkaProduct
 	}{
 		{
 			name: "should return RHOSAK for standard quota",
 			fields: fields{
 				t: StandardQuota,
 			},
-			want: string(RHOSAKProduct),
+			want: RHOSAKProduct,
 		},
 		{
 			name: "should return RHOSAKTrial for developer quota",
 			fields: fields{
 				t: DeveloperQuota,
 			},
-			want: string(RHOSAKTrialProduct),
+			want: RHOSAKTrialProduct,
 		},
 	}
 
@@ -36,7 +36,7 @@ func Test_GetProduct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.t.GetProduct()).To(Equal(tt.want))
+			Expect(tt.fields.t.GetProduct()).To(BeEquivalentTo(tt.want))
 		})
 	}
 }

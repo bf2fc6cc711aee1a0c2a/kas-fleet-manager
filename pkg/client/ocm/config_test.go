@@ -7,28 +7,17 @@ import (
 )
 
 func Test_ReadFiles(t *testing.T) {
-	type fields struct {
-		config *OCMConfig
-	}
-
 	tests := []struct {
 		name     string
-		fields   fields
 		modifyFn func(config *OCMConfig)
 		wantErr  bool
 	}{
 		{
-			name: "should return no error when running ReadFiles with default OCMConfig",
-			fields: fields{
-				config: NewOCMConfig(),
-			},
+			name:    "should return no error when running ReadFiles with default OCMConfig",
 			wantErr: false,
 		},
 		{
 			name: "should return no error with misconfigured ClientIDFile",
-			fields: fields{
-				config: NewOCMConfig(),
-			},
 			modifyFn: func(config *OCMConfig) {
 				config.ClientIDFile = "invalid"
 			},
@@ -36,9 +25,6 @@ func Test_ReadFiles(t *testing.T) {
 		},
 		{
 			name: "should return no error with misconfigured ClientSecretFile",
-			fields: fields{
-				config: NewOCMConfig(),
-			},
 			modifyFn: func(config *OCMConfig) {
 				config.ClientSecretFile = "invalid"
 			},
@@ -50,7 +36,7 @@ func Test_ReadFiles(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config := tt.fields.config
+			config := NewOCMConfig()
 			if tt.modifyFn != nil {
 				tt.modifyFn(config)
 			}
