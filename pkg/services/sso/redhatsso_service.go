@@ -10,6 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/redhatsso"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/golang/glog"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 )
 
@@ -25,10 +26,12 @@ func (r *redhatssoService) RegisterClientInSSO(accessToken string, clusterId str
 }
 
 func (r *redhatssoService) DeRegisterClientInSSO(accessToken string, clientId string) *errors.ServiceError {
+	glog.V(5).Infof("Deregistering client with id: %s", clientId)
 	err := r.client.DeleteServiceAccount(accessToken, clientId)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteSSOClient, err, "failed to delete the sso client")
 	}
+	glog.V(5).Infof("Deregistered client with id: %s", clientId)
 	return nil
 }
 
@@ -41,6 +44,7 @@ func (r *redhatssoService) GetRealmConfig() *keycloak.KeycloakRealmConfig {
 }
 
 func (r *redhatssoService) IsKafkaClientExist(accessToken string, clientId string) *errors.ServiceError {
+	glog.V(5).Infof("Checking if client with id: %s exists", clientId)
 	_, found, err := r.client.GetServiceAccount(accessToken, clientId)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clientId)
@@ -49,34 +53,42 @@ func (r *redhatssoService) IsKafkaClientExist(accessToken string, clientId strin
 	if !found {
 		return errors.New(errors.ErrorNotFound, "sso client with id: %s not found", clientId)
 	}
+	glog.V(5).Infof("sso client with id: %s found", clientId)
 	return nil
 }
 
 func (r *redhatssoService) CreateServiceAccount(accessToken string, serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
+	glog.V(5).Infof("Creating service account with name: %s", serviceAccountRequest.Name)
 	serviceAccount, err := r.client.CreateServiceAccount(accessToken, serviceAccountRequest.Name, serviceAccountRequest.Description)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorFailedToCreateServiceAccount, err, "failed to create service account")
 	}
+	glog.V(5).Infof("Service account %s created", serviceAccountRequest.Name)
 	return convertServiceAccountDataToAPIServiceAccount(&serviceAccount), nil
 }
 
 func (r *redhatssoService) DeleteServiceAccount(accessToken string, ctx context.Context, clientId string) *errors.ServiceError {
+	glog.V(5).Infof("Deleting service account with id: %s", clientId)
 	err := r.client.DeleteServiceAccount(accessToken, clientId)
 	if err != nil { //5xx
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "failed to delete service account")
 	}
+	glog.V(5).Infof("service account with id: %s deleted", clientId)
 	return nil
 }
 
 func (r *redhatssoService) ResetServiceAccountCredentials(accessToken string, ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
+	glog.V(5).Infof("Regenerating service account credentials for client with id: %s", clientId)
 	serviceAccount, err := r.client.RegenerateClientSecret(accessToken, clientId)
 	if err != nil { //5xx
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to reset service account credentials")
 	}
+	glog.V(5).Infof("service account credentials regenerated for client with id: %s", clientId)
 	return convertServiceAccountDataToAPIServiceAccount(&serviceAccount), nil
 }
 
 func (r *redhatssoService) ListServiceAcc(accessToken string, ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
+	glog.V(5).Infof("Listing service accounts")
 	accounts, err := r.client.GetServiceAccounts(accessToken, first, max)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to collect service accounts")
@@ -94,19 +106,23 @@ func (r *redhatssoService) RegisterKasFleetshardOperatorServiceAccount(accessTok
 }
 
 func (r *redhatssoService) registerAgentServiceAccount(accessToken string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
+	glog.V(5).Infof("Registering agent service account with cluster: %s", agentClusterId)
 	svcData, err := r.client.CreateServiceAccount(accessToken, agentClusterId, fmt.Sprintf("service account for agent on cluster %s", agentClusterId))
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to create agent service account")
 	}
+	glog.V(5).Infof("Agent service account registered with cluster: %s", agentClusterId)
 	return convertServiceAccountDataToAPIServiceAccount(&svcData), nil
 }
 
 func (r *redhatssoService) DeRegisterKasFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) *errors.ServiceError {
+	glog.V(5).Infof("Deregistering kas Fleetshard agent service account with cluster: %s", agentClusterId)
 	if _, found, err := r.client.GetServiceAccount(accessToken, agentClusterId); err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
 	} else {
 		if !found {
 			// if the account to be deleted does not exists, we simply exit with no errors
+			glog.V(5).Infof("kas Fleetshard agent service account not found")
 			return nil
 		}
 	}
@@ -115,6 +131,7 @@ func (r *redhatssoService) DeRegisterKasFleetshardOperatorServiceAccount(accessT
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
 	}
+	glog.V(5).Infof("Kas Fleetshard agent service account deregistered with cluster: %s", agentClusterId)
 	return nil
 }
 
@@ -123,6 +140,7 @@ func (r *redhatssoService) GetServiceAccountById(accessToken string, ctx context
 }
 
 func (r *redhatssoService) GetServiceAccountByClientId(accessToken string, ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
+	glog.V(5).Infof("Getting service account by client id: %s", clientId)
 	serviceAccount, found, err := r.client.GetServiceAccount(accessToken, clientId)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving service account with clientId %s", clientId)
@@ -131,6 +149,7 @@ func (r *redhatssoService) GetServiceAccountByClientId(accessToken string, ctx c
 	if !found {
 		return nil, errors.NewWithCause(errors.ErrorServiceAccountNotFound, err, "service account not found clientId %s", clientId)
 	}
+	glog.V(5).Infof("service account with client id: %s returned", clientId)
 	return convertServiceAccountDataToAPIServiceAccount(serviceAccount), nil
 }
 
@@ -139,11 +158,13 @@ func (r *redhatssoService) RegisterConnectorFleetshardOperatorServiceAccount(acc
 }
 
 func (r *redhatssoService) DeRegisterConnectorFleetshardOperatorServiceAccount(accessToken string, agentClusterId string) *errors.ServiceError {
+	glog.V(5).Infof("DeRegistering Connector Fleetshard Operator Service Account with cluster: %s", agentClusterId)
 	if _, found, err := r.client.GetServiceAccount(accessToken, agentClusterId); err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
 	} else {
 		if !found {
 			// If the account does not exists, simply exit without errors
+			glog.V(5).Infof("Connector Fleetshard agent service account not found")
 			return nil
 		}
 	}
@@ -152,10 +173,12 @@ func (r *redhatssoService) DeRegisterConnectorFleetshardOperatorServiceAccount(a
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
 	}
+	glog.V(5).Infof("Connector Fleetshard Operator Service Account DeRegistered with cluster: %s", agentClusterId)
 	return nil
 }
 
 func (r *redhatssoService) GetKafkaClientSecret(accessToken string, clientId string) (string, *errors.ServiceError) {
+	glog.V(5).Infof("Getting client secret for client id: %s", clientId)
 	serviceAccount, found, err := r.client.GetServiceAccount(accessToken, clientId)
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")

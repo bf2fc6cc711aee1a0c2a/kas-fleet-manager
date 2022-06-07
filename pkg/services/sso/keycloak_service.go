@@ -15,6 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/golang/glog"
 	"github.com/google/uuid"
 )
 
@@ -51,6 +52,7 @@ func newKeycloakService(config *keycloak.KeycloakConfig, realmConfig *keycloak.K
 
 func (kc *masService) DeRegisterClientInSSO(accessToken string, clientId string) *errors.ServiceError {
 	internalClientID, _ := kc.kcClient.IsClientExist(clientId, accessToken)
+	glog.V(5).Infof("Existing Kafka Client %s found", clientId)
 	if internalClientID == "" {
 		return nil
 	}
@@ -58,6 +60,7 @@ func (kc *masService) DeRegisterClientInSSO(accessToken string, clientId string)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteSSOClient, err, "failed to delete the sso client")
 	}
+	glog.V(5).Infof("Kafka Client %s with internal id of %s deleted successfully", clientId, internalClientID)
 	return nil
 }
 
@@ -99,6 +102,7 @@ func (kc *masService) RegisterClientInSSO(accessToken string, clusterId string, 
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
 	}
+	glog.V(5).Infof("Kafka Client %s created successfully with internal id = %s", clusterId, internalClient)
 	return secretValue, nil
 }
 
@@ -156,6 +160,7 @@ func (kc *masService) CreateServiceAccount(accessToken string, serviceAccountReq
 }
 
 func (kc *masService) CreateServiceAccountInternal(accessToken string, request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
+	glog.V(5).Infof("creating service accounts: user = %s", request.Owner)
 	createdAt := time.Now().Format(time.RFC3339)
 	rhAccountID := map[string][]string{
 		rhOrgId:  {request.OrgId},
@@ -205,6 +210,7 @@ func (kc *masService) CreateServiceAccountInternal(accessToken string, request C
 		creationTime = time.Time{}
 	}
 	serviceAcc.CreatedAt = creationTime
+	glog.V(5).Infof("service account clientId = %s and internal id = %s created for user = %s", serviceAcc.ClientID, serviceAcc.ID, request.Owner)
 	return serviceAcc, nil
 }
 
@@ -265,11 +271,13 @@ func (kc *masService) DeleteServiceAccount(accessToken string, ctx context.Conte
 
 	orgId, _ := claims.GetOrgId()
 	userId, _ := claims.GetAccountId()
+	owner, _ := claims.GetUsername()
 	if kc.kcClient.IsSameOrg(c, orgId) && (kc.kcClient.IsOwner(c, userId) || claims.IsOrgAdmin()) {
 		err = kc.kcClient.DeleteClient(id, accessToken) //id existence checked
 		if err != nil {                                 //5xx
 			return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "failed to delete service account")
 		}
+		glog.V(5).Infof("deleted service account clientId = %s and internal id = %s owned by user = %s", shared.SafeString(c.ClientID), id, owner)
 		return nil
 	}
 
@@ -294,6 +302,7 @@ func (kc *masService) DeleteServiceAccountInternal(accessToken string, serviceAc
 		}
 	}
 
+	glog.V(5).Infof("deleted service account clientId = %s and internal id = %s", serviceAccountId, id)
 	return nil
 }
 
@@ -326,6 +335,7 @@ func (kc *masService) ResetServiceAccountCredentials(accessToken string, ctx con
 		if err != nil {
 			createdAt = time.Time{}
 		}
+		glog.V(5).Infof("Client %s with internal id = %s updated successfully ", *c.ClientID, *c.ID)
 		return &api.ServiceAccount{
 			ID:           *c.ID,
 			ClientID:     *c.ClientID,
@@ -433,6 +443,7 @@ func (kc *masService) registerAgentServiceAccount(accessToken string, serviceAcc
 	if err != nil {
 		return nil, err
 	}
+	glog.V(5).Infof("Client %s created successfully with internal id = %s", serviceAccountId, account.ID)
 	return account, nil
 }
 
@@ -449,10 +460,12 @@ func (kc *masService) deregisterAgentServiceAccount(accessToken string, prefix s
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", internalServiceAccountId)
 	}
+	glog.V(5).Infof("deleted service account clientId = %s and internal id = %s", serviceAccountId, internalServiceAccountId)
 	return nil
 }
 
 func (kc *masService) createServiceAccountIfNotExists(token string, clientRep keycloak.ClientRepresentation) (*api.ServiceAccount, *errors.ServiceError) {
+	glog.V(5).Infof("Creating service account: clientId = %s", clientRep.ClientID)
 	client, err := kc.kcClient.GetClient(clientRep.ClientID, token)
 	if err != nil { //5xx
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to check if client exists.")
@@ -461,12 +474,14 @@ func (kc *masService) createServiceAccountIfNotExists(token string, clientRep ke
 	//client exists
 	var internalClientId, clientSecret string
 	if client == nil {
+		glog.V(10).Infof("No exiting client found for %s, creating a new one", clientRep.ClientID)
 		clientConfig := kc.kcClient.ClientConfig(clientRep)
 		internalClientId, err = kc.kcClient.CreateClient(clientConfig, token)
 		if err != nil { //5xx
 			return nil, errors.NewWithCause(errors.ErrorFailedToCreateServiceAccount, err, "failed to create service account")
 		}
 	} else {
+		glog.V(5).Infof("Existing client found for %s with internal id = %s", clientRep.ClientID, *client.ID)
 		internalClientId = *client.ID
 	}
 
@@ -487,8 +502,10 @@ func (kc *masService) createServiceAccountIfNotExists(token string, clientRep ke
 }
 
 func (kc *masService) checkAllowedServiceAccountsLimits(accessToken string, maxAllowed int, orgId string) (bool, error) {
+	glog.V(5).Infof("Check if user is allowed to create service accounts: orgId = %s", orgId)
 
 	if arrays.Contains(kc.GetConfig().ServiceAccounttLimitCheckSkipOrgIdList, orgId) {
+		glog.V(5).Infof("orgId = %s , present in service account limits check skip list. No limits on the number of service accounts", orgId)
 		return true, nil
 	}
 	searchAtt := fmt.Sprintf("rh-org-id:%s", orgId)
@@ -505,6 +522,7 @@ func (kc *masService) checkAllowedServiceAccountsLimits(accessToken string, maxA
 		serviceAccountCount++
 	}
 
+	glog.V(10).Infof("Existing number of clients found: %d & max allowed: %d, for the orgId: %s", serviceAccountCount, maxAllowed, orgId)
 	if serviceAccountCount >= maxAllowed {
 		return false, nil //http requester's error
 	} else {
