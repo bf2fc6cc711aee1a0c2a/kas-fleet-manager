@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
@@ -63,8 +64,12 @@ func ValidateServiceAccountId(value *string, field string) Validate {
 	}
 }
 
-func ValidateServiceAccountClientId(value *string, field string) Validate {
+func ValidateServiceAccountClientId(value *string, field string, ssoProvider string) Validate {
 	return func() *errors.ServiceError {
+		if ssoProvider == keycloak.REDHAT_SSO {
+			// only service accounts from mas sso are prefixed with "srvc-acc-", always return nil for redhat_sso provider
+			return nil
+		}
 		if !ValidClientIdUuidRegexp.MatchString(*value) {
 			return errors.MalformedServiceAccountId("%s does not match %s", field, ValidClientIdUuidRegexp.String())
 		}

@@ -13,8 +13,8 @@ import (
 	"time"
 )
 
-// ConnectorNamespace A connector namespace
-type ConnectorNamespace struct {
+// ConnectorNamespaceDeployment A connector namespace deployment
+type ConnectorNamespaceDeployment struct {
 	Id              string                  `json:"id"`
 	Kind            string                  `json:"kind,omitempty"`
 	Href            string                  `json:"href,omitempty"`
@@ -27,7 +27,7 @@ type ConnectorNamespace struct {
 	Quota           ConnectorNamespaceQuota `json:"quota,omitempty"`
 	ClusterId       string                  `json:"cluster_id"`
 	// Namespace expiration timestamp in RFC 3339 format
-	Expiration string                    `json:"expiration,omitempty"`
-	Tenant     ConnectorNamespaceTenant  `json:"tenant"`
-	Status     ConnectorNamespaceStatus2 `json:"status"`
+	Expiration string                   `json:"expiration,omitempty"`
+	Tenant     ConnectorNamespaceTenant `json:"tenant"`
+	Status     ConnectorNamespaceStatus `json:"status"`
 }

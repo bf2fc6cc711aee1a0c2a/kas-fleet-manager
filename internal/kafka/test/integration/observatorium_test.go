@@ -151,8 +151,8 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	acc := h.NewRandAccount()
 	context := h.NewAuthenticatedContext(acc, nil)
 	kafka, _, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
-	Expect(kafka.Id).NotTo(BeEmpty())
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
+	Expect(kafka.Id).NotTo(BeEmpty())
 	filters := public.GetMetricsByRangeQueryOpts{}
 	metrics, resp, err := client.DefaultApi.GetMetricsByRangeQuery(context, kafka.Id, 5, 30, &filters)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)

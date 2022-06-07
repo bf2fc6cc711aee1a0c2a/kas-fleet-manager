@@ -20,8 +20,6 @@ const (
 	mockKafkaName1           = "test-kafka1"
 	mockKafkaName2           = "a-kafka1"
 	mockKafkaName3           = "z-kafka1"
-	mockKafkaName4           = "b-kafka1"
-	mockKafkaName5           = "c-kafka1"
 	nonExistentKafkaName     = "non-existentKafka"
 	nonExistentColumnName    = "non_existentColumn"
 	sqlDeleteQuery           = "delete * from clusters;"

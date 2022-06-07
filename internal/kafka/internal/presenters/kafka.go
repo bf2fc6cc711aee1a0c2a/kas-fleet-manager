@@ -2,6 +2,7 @@ package presenters
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"strings"
 	"time"
 
@@ -25,6 +26,9 @@ func ConvertKafkaRequest(kafkaRequestPayload public.KafkaRequestPayload, dbKafka
 	kafka.Name = kafkaRequestPayload.Name
 	kafka.CloudProvider = kafkaRequestPayload.CloudProvider
 	kafka.MultiAZ = kafkaRequestPayload.DeprecatedMultiAz
+
+	kafka.BillingCloudAccountId = shared.SafeString(kafkaRequestPayload.BillingCloudAccountId)
+	kafka.Marketplace = shared.SafeString(kafkaRequestPayload.Marketplace)
 
 	if kafkaRequestPayload.ReauthenticationEnabled != nil {
 		kafka.ReauthenticationEnabled = *kafkaRequestPayload.ReauthenticationEnabled
@@ -94,6 +98,8 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 		MaxPartitions:               int32(maxPartitions),
 		MaxDataRetentionPeriod:      maxDataRetentionPeriod,
 		MaxConnectionAttemptsPerSec: int32(maxConnectionAttemptsPerSec),
+		BillingCloudAccountId:       kafkaRequest.BillingCloudAccountId,
+		Marketplace:                 kafkaRequest.Marketplace,
 	}, nil
 }
 

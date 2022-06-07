@@ -547,7 +547,7 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
 	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
 
-	quotaCostList, err := quotaCostClient.List().Parameter("fetchRelatedResources", true).Send()
+	quotaCostList, err := quotaCostClient.List().Parameter("fetchRelatedResources", true).Parameter("fetchCloudAccounts", true).Send()
 	if err != nil {
 		return nil, err
 	}

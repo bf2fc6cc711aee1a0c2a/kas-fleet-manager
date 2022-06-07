@@ -95,6 +95,9 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *serviceError.ServiceError {
 // 				panic("mock out the Updates method")
 // 			},
+// 			ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError {
+// 				panic("mock out the ValidateBillingAccount method")
+// 			},
 // 			VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *serviceError.ServiceError {
 // 				panic("mock out the VerifyAndUpdateKafkaAdmin method")
 // 			},
@@ -173,6 +176,9 @@ type KafkaServiceMock struct {
 
 	// UpdatesFunc mocks the Updates method.
 	UpdatesFunc func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *serviceError.ServiceError
+
+	// ValidateBillingAccountFunc mocks the ValidateBillingAccount method.
+	ValidateBillingAccountFunc func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError
 
 	// VerifyAndUpdateKafkaAdminFunc mocks the VerifyAndUpdateKafkaAdmin method.
 	VerifyAndUpdateKafkaAdminFunc func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *serviceError.ServiceError
@@ -300,6 +306,17 @@ type KafkaServiceMock struct {
 			// Values is the values argument value.
 			Values map[string]interface{}
 		}
+		// ValidateBillingAccount holds details about calls to the ValidateBillingAccount method.
+		ValidateBillingAccount []struct {
+			// ExternalId is the externalId argument value.
+			ExternalId string
+			// InstanceType is the instanceType argument value.
+			InstanceType types.KafkaInstanceType
+			// BillingCloudAccountId is the billingCloudAccountId argument value.
+			BillingCloudAccountId string
+			// Marketplace is the marketplace argument value.
+			Marketplace *string
+		}
 		// VerifyAndUpdateKafkaAdmin holds details about calls to the VerifyAndUpdateKafkaAdmin method.
 		VerifyAndUpdateKafkaAdmin []struct {
 			// Ctx is the ctx argument value.
@@ -331,6 +348,7 @@ type KafkaServiceMock struct {
 	lockUpdate                         sync.RWMutex
 	lockUpdateStatus                   sync.RWMutex
 	lockUpdates                        sync.RWMutex
+	lockValidateBillingAccount         sync.RWMutex
 	lockVerifyAndUpdateKafkaAdmin      sync.RWMutex
 }
 
@@ -1052,6 +1070,49 @@ func (mock *KafkaServiceMock) UpdatesCalls() []struct {
 	mock.lockUpdates.RLock()
 	calls = mock.calls.Updates
 	mock.lockUpdates.RUnlock()
+	return calls
+}
+
+// ValidateBillingAccount calls ValidateBillingAccountFunc.
+func (mock *KafkaServiceMock) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError {
+	if mock.ValidateBillingAccountFunc == nil {
+		panic("KafkaServiceMock.ValidateBillingAccountFunc: method is nil but KafkaService.ValidateBillingAccount was just called")
+	}
+	callInfo := struct {
+		ExternalId            string
+		InstanceType          types.KafkaInstanceType
+		BillingCloudAccountId string
+		Marketplace           *string
+	}{
+		ExternalId:            externalId,
+		InstanceType:          instanceType,
+		BillingCloudAccountId: billingCloudAccountId,
+		Marketplace:           marketplace,
+	}
+	mock.lockValidateBillingAccount.Lock()
+	mock.calls.ValidateBillingAccount = append(mock.calls.ValidateBillingAccount, callInfo)
+	mock.lockValidateBillingAccount.Unlock()
+	return mock.ValidateBillingAccountFunc(externalId, instanceType, billingCloudAccountId, marketplace)
+}
+
+// ValidateBillingAccountCalls gets all the calls that were made to ValidateBillingAccount.
+// Check the length with:
+//     len(mockedKafkaService.ValidateBillingAccountCalls())
+func (mock *KafkaServiceMock) ValidateBillingAccountCalls() []struct {
+	ExternalId            string
+	InstanceType          types.KafkaInstanceType
+	BillingCloudAccountId string
+	Marketplace           *string
+} {
+	var calls []struct {
+		ExternalId            string
+		InstanceType          types.KafkaInstanceType
+		BillingCloudAccountId string
+		Marketplace           *string
+	}
+	mock.lockValidateBillingAccount.RLock()
+	calls = mock.calls.ValidateBillingAccount
+	mock.lockValidateBillingAccount.RUnlock()
 	return calls
 }
 

@@ -379,7 +379,7 @@ parameters:
   value: "interim-test-realm"
   
 - name: SSO_PROVIDER_TYPE
-  description: Option to choose between sso providers i.e, mas-sso or redhat_sso, mas-sso by default
+  description: Option to choose between sso providers i.e, mas_sso or redhat_sso, mas_sso by default
   value: "mas_sso"
 
 - name: REDHAT_SSO_BASE_URL

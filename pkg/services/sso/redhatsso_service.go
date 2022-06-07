@@ -3,6 +3,8 @@ package sso
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/redhatsso"
@@ -10,7 +12,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
-	"time"
 )
 
 var _ keycloakServiceInternal = &redhatssoService{}
@@ -193,6 +194,6 @@ func convertServiceAccountDataToAPIServiceAccount(data *serviceaccountsclient.Se
 		Name:         shared.SafeString(data.Name),
 		CreatedBy:    shared.SafeString(data.CreatedBy),
 		Description:  shared.SafeString(data.Description),
-		CreatedAt:    time.Unix(0, shared.SafeInt64(data.CreatedAt)*int64(time.Millisecond)),
+		CreatedAt:    time.Unix(shared.SafeInt64(data.CreatedAt), 0),
 	}
 }

@@ -40,8 +40,8 @@ func buildMockOrganizationList(count int) *OrganizationList {
 				Name:          fmt.Sprintf(mockOrgNameTemplate, i),
 				AccountNumber: fmt.Sprintf(mockEbsAccountIDTemplate, i),
 				ExternalID:    fmt.Sprintf(mockExternalIDTemplate, i),
-				CreatedAt:     time.Now(),
-				UpdatedAt:     time.Now(),
+				CreatedAt:     time.Now().Truncate(time.Minute),
+				UpdatedAt:     time.Now().Truncate(time.Minute),
 			})
 	}
 
