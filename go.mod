@@ -14,7 +14,7 @@ require (
 	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
-	github.com/evanphx/json-patch v4.9.0+incompatible
+	github.com/evanphx/json-patch v4.12.0+incompatible
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
@@ -57,7 +57,7 @@ require (
 	gorm.io/driver/postgres v1.0.8
 	gorm.io/gorm v1.21.7
 	k8s.io/api v0.21.2
-	k8s.io/apimachinery v0.21.2
+	k8s.io/apimachinery v0.24.1
 	k8s.io/client-go v0.21.2
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -73,12 +73,12 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/go-logr/logr v0.4.0 // indirect
+	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/go-cmp v0.5.6 // indirect
+	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.4.1 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
@@ -119,12 +119,13 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/protobuf v1.26.0 // indirect
+	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/klog/v2 v2.8.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 // indirect
-	k8s.io/utils v0.0.0-20201110183641-67b214c5f920 // indirect
+	k8s.io/klog/v2 v2.60.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
+	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
 	sigs.k8s.io/controller-runtime v0.6.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.1.0 // indirect
+	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 )
