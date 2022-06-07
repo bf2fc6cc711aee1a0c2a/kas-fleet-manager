@@ -1334,6 +1334,11 @@ func Test_redhatssoService_GetKafkaClientSecret(t *testing.T) {
 							Secret: &clientSecret,
 						}, true, nil
 					},
+					RegenerateClientSecretFunc: func(accessToken string, id string) (serviceaccountsclient.ServiceAccountData, error) {
+						return serviceaccountsclient.ServiceAccountData{
+							Secret: &clientSecret,
+						}, nil
+					},
 				},
 			},
 			args: args{
