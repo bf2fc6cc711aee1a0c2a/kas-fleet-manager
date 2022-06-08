@@ -30,7 +30,7 @@ const (
 	ErrorForbidden       ServiceErrorCode = 4
 	ErrorForbiddenReason string           = "Forbidden to perform this action"
 
-	// Forbidden occurs when a user or organisation has reached maximum number of allowed instances
+	// MaxAllowedInstanceReached occurs when a user or organisation has reached maximum number of allowed instances
 	ErrorMaxAllowedInstanceReached       ServiceErrorCode = 5
 	ErrorMaxAllowedInstanceReachedReason string           = "Forbidden to create more instances than the maximum allowed"
 
@@ -69,6 +69,10 @@ const (
 	// MalformedRequest occurs when the request body cannot be read
 	ErrorMalformedRequest       ServiceErrorCode = 17
 	ErrorMalformedRequestReason string           = "Unable to read request body"
+
+	// ServiceIsUnderMaintenance occurs when a user is unable to access the service due to ongoing maintenance
+	ErrorServiceIsUnderMaintenance       ServiceErrorCode = 18
+	ErrorServiceIsUnderMaintenanceReason string           = "Unable to perform this action, as the service is currently under maintenance"
 
 	// Bad Request
 	ErrorBadRequest       ServiceErrorCode = 21
@@ -234,6 +238,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorTermsNotAccepted, ErrorTermsNotAcceptedReason, http.StatusForbidden, nil},
 		ServiceError{ErrorUnauthenticated, ErrorUnauthenticatedReason, http.StatusUnauthorized, nil},
 		ServiceError{ErrorMalformedRequest, ErrorMalformedRequestReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorServiceIsUnderMaintenance, ErrorServiceIsUnderMaintenanceReason, http.StatusForbidden, nil},
 		ServiceError{ErrorBadRequest, ErrorBadRequestReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorFailedToParseSearch, ErrorFailedToParseSearchReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason, http.StatusBadRequest, nil},
@@ -500,6 +505,10 @@ func Unauthenticated(reason string, values ...interface{}) *ServiceError {
 
 func Forbidden(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorForbidden, reason, values...)
+}
+
+func Maintenance(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorServiceIsUnderMaintenance, reason, values...)
 }
 
 func MaximumAllowedInstanceReached(reason string, values ...interface{}) *ServiceError {

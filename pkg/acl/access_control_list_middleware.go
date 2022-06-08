@@ -44,7 +44,7 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 		if middleware.accessControlListConfig.EnableAccessList {
 			orgIsAccepted := middleware.accessControlListConfig.AccessList.IsOrganisationAccepted(orgId)
 			if !orgIsAccepted {
-				shared.HandleError(r, w, errors.New(errors.ErrorForbidden, "organisation '%s' is not authorized to access the service during the current SSO Migration.", orgId))
+				shared.HandleError(r, w, errors.New(errors.ErrorServiceIsUnderMaintenance, "organisation '%s' is not authorized to access the service during the current service maintenance.", orgId))
 				return
 			}
 		}
