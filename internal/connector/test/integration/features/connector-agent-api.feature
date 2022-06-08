@@ -307,6 +307,55 @@ Feature: connector agent API
     Then the response code should be 204
     And the response should match ""
 
+    # remember the current namespace version
+    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}"
+    Then the response code should be 200
+    And I store the ".resource_version" selection from the response as ${namespace_version}
+
+    # send a namespace status update with the same phase, which shouldn't trigger a version change
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}/status" with json body:
+      """
+      {
+        "id": "${connector_namespace_id}",
+        "phase": "ready",
+        "version": "0.0.1",
+        "connectors_deployed": 1,
+        "conditions": [
+          {
+            "type": "Ready",
+            "status": "True",
+            "lastTransitionTime": "2018-01-01T00:00:00Z"
+          },
+          {
+            "type": "Dummy Condition",
+            "status": "True",
+            "lastTransitionTime": "2018-01-01T00:00:00Z"
+          },
+          {
+            "type": "NamespaceDeletionContentFailure",
+            "status": "True",
+            "lastTransitionTime": "2018-01-01T00:00:00Z",
+            "reason": "Testing",
+            "message": "This is a test failure message"
+          },
+          {
+            "type": "NamespaceDeletionDiscoveryFailure",
+            "status": "True",
+            "lastTransitionTime": "2018-01-01T00:00:00Z",
+            "reason": "Testing2",
+            "message": "This is another test failure message"
+          }
+        ]
+      }
+      """
+    Then the response code should be 204
+    And the response should match ""
+
+    # check that resource version didn't change
+    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}"
+    Then the response code should be 200
+    And the ".resource_version" selection from the response should match "${namespace_version}"
+
     # check that the test failure condition is reported in namespace status error
     Given I am logged in as "Jimmy"
     When I GET path "/v1/kafka_connector_namespaces/${connector_namespace_id}"
@@ -1995,8 +2044,19 @@ Feature: connector agent API
     And the ".total" selection from the response should match "1"
     Given I store the ".items[0].id" selection from the response as ${connector_deployment_id}
 
+    # remember the current namespace version
+    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}"
+    Then the response code should be 200
+    And I store the ".resource_version" selection from the response as ${namespace_version}
+
     # set namespace phase to delete namespace, without deleting it's connector
     When I run SQL "UPDATE connector_namespaces SET status_phase='deleting' WHERE id = '${connector_namespace_id}';" expect 1 row to be affected.
+
+    # validate that namespace shows up in updated namespace poll
+    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces?gt_version=${namespace_version}"
+    Then the response code should be 200
+    And the ".total" selection from the response should match "1"
+    And the ".items[0].id" selection from the response should match "${connector_namespace_id}"
 
     # agent deletes unassigning connector
     When I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "unassigned"

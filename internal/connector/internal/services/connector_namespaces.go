@@ -367,7 +367,9 @@ func (k *connectorNamespaceService) UpdateConnectorNamespaceStatus(ctx context.C
 
 	if err := k.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
 		var namespace dbapi.ConnectorNamespace
-		if err := dbConn.Unscoped().Where(`id = ?`, namespaceID).First(&namespace).Error; err != nil {
+		if err := dbConn.Unscoped().Where(`id = ?`, namespaceID).
+			Select("id", "deleted_at", "cluster_id", "version", "status_phase", "status_version", "status_conditions").
+			First(&namespace).Error; err != nil {
 			return services.HandleGetError("Connector namespace", "id", namespaceID, err)
 		}
 		if namespace.DeletedAt.Valid {
@@ -377,7 +379,7 @@ func (k *connectorNamespaceService) UpdateConnectorNamespaceStatus(ctx context.C
 		var cluster dbapi.ConnectorCluster
 		if err := dbConn.Select("id", "status_phase").Where("id = ?", namespace.ClusterId).
 			First(&cluster).Error; err != nil {
-			return services.HandleGetError("Connector namespace", "id", namespaceID, err)
+			return services.HandleGetError("Connector cluster", "id", namespace.ClusterId, err)
 		}
 
 		updated, serr := phase.PerformNamespaceOperation(&cluster, &namespace, phase.ConnectNamespace)
@@ -398,12 +400,25 @@ func (k *connectorNamespaceService) UpdateConnectorNamespaceStatus(ctx context.C
 			}
 		}
 
-		// take new phase from fsm operation above
+		// use new phase from fsm operation above
 		status.Phase = namespace.Status.Phase
+		// use connectorsDeployed being sent from agent
+		namespace.Status.ConnectorsDeployed = status.ConnectorsDeployed
 		if updated || !reflect.DeepEqual(namespace.Status, *status) {
-			namespace.Status.Version = status.Version
-			namespace.Status.Conditions = status.Conditions
-			if err := k.Update(ctx, &namespace); err != nil {
+			updatedNamespace := dbapi.ConnectorNamespace{
+				Model: db.Model{
+					ID: namespaceID,
+				},
+				Version: namespace.Version,
+				Status: dbapi.ConnectorNamespaceStatus{
+					Version:    status.Version,
+					Conditions: status.Conditions,
+				},
+			}
+			if updated {
+				updatedNamespace.Status.Phase = status.Phase
+			}
+			if err := k.Update(ctx, &updatedNamespace); err != nil {
 				return err
 			}
 		}
