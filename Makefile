@@ -338,10 +338,14 @@ test: gotestsum
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account/account_mock.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso/keycloak.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso/keycloak_service_proxy.go" \
+<<<<<<< HEAD
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers/authentication.go" \
+=======
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry/providers.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry/config.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus/providers.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus/pg_signalbus.go" \
+>>>>>>> 58665b4004aa7d35bc3637b1a02cef718d365177
 	cover.out > coverage.out
 .PHONY: test
 
