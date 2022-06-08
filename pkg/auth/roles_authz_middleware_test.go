@@ -63,8 +63,10 @@ func TestRolesAuthMiddleware_RequireRealmRole(t *testing.T) {
 			req := httptest.NewRequest("GET", "http://example.com", nil)
 			recorder := httptest.NewRecorder()
 			toTest.ServeHTTP(recorder, req)
-			if recorder.Result().StatusCode != tt.want {
-				t.Errorf("expected status code %d but got %d", tt.want, recorder.Result().StatusCode)
+			resp := recorder.Result()
+			resp.Body.Close()
+			if resp.StatusCode != tt.want {
+				t.Errorf("expected status code %d but got %d", tt.want, resp.StatusCode)
 			}
 		})
 	}
@@ -155,8 +157,10 @@ func TestRolesAuthMiddleware_RequireRolesForMethods(t *testing.T) {
 			toTest := setContextToken(rolesHandler.RequireRolesForMethods(tt.rolesMap, errors.ErrorUnauthenticated)(tt.next), tt.token)
 			recorder := httptest.NewRecorder()
 			toTest.ServeHTTP(recorder, tt.request)
-			if recorder.Result().StatusCode != tt.want {
-				t.Errorf("expected status code %d but got %d", tt.want, recorder.Result().StatusCode)
+			resp := recorder.Result()
+			resp.Body.Close()
+			if resp.StatusCode != tt.want {
+				t.Errorf("expected status code %d but got %d", tt.want, resp.StatusCode)
 			}
 		})
 	}

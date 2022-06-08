@@ -37,7 +37,10 @@ func WaitForNumberOfKafkaToBeGivenCount(ctx context.Context, db *db.ConnectionFa
 			}
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			if list, _, err := client.DefaultApi.GetKafkas(ctx, nil); err != nil {
+			if list, resp, err := client.DefaultApi.GetKafkas(ctx, nil); err != nil {
+				if resp != nil {
+					_ = resp.Body.Close()
+				}
 				return false, err
 			} else {
 				currentCount = list.Size
@@ -61,6 +64,7 @@ func WaitForKafkaCreateToBeAccepted(ctx context.Context, db *db.ConnectionFactor
 			}
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
+			//nolint: bodyclose
 			kafka, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
 			if err != nil {
 				return true, err
@@ -87,11 +91,16 @@ func WaitForKafkaToReachStatus(ctx context.Context, db *db.ConnectionFactory, cl
 			}
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			kafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafkaId)
+			k, resp, err := client.DefaultApi.GetKafkaById(ctx, kafkaId)
+
+			if resp != nil {
+				resp.Body.Close()
+			}
 			if err != nil {
 				return true, err
 			}
 
+			kafka = k
 			switch kafka.Status {
 			case constants2.KafkaRequestStatusFailed.String():
 				fallthrough
@@ -114,7 +123,10 @@ func WaitForKafkaToBeDeleted(ctx context.Context, db *db.ConnectionFactory, clie
 		IntervalAndTimeout(defaultPollInterval, defaultKafkaReadyTimeout).
 		RetryLogMessagef("Waiting for kafka '%s' to be deleted", kafkaId).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			if _, _, err := client.DefaultApi.GetKafkaById(ctx, kafkaId); err != nil {
+			if _, resp, err := client.DefaultApi.GetKafkaById(ctx, kafkaId); err != nil {
+				if resp != nil {
+					resp.Body.Close()
+				}
 				if err.Error() == "404 Not Found" {
 					return true, nil
 				}

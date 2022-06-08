@@ -235,7 +235,10 @@ func Test_RoundTrip(t *testing.T) {
 			if tt.modifyFn != nil {
 				tt.modifyFn(&p)
 			}
-			_, err := p.RoundTrip(tt.args.request)
+			resp, err := p.RoundTrip(tt.args.request)
+			if resp != nil {
+				_ = resp.Body.Close()
+			}
 			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}

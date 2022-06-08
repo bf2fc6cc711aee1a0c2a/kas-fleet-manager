@@ -199,6 +199,9 @@ func TestAdminKafka_Get(t *testing.T) {
 			client := test.NewAdminPrivateAPIClient(h)
 			result, resp, err := client.DefaultApi.GetKafkaById(ctx, tt.args.kafkaID)
 			tt.verifyResponse(result, resp, err)
+			if resp != nil {
+				_ = resp.Body.Close()
+			}
 		})
 	}
 }
@@ -285,6 +288,9 @@ func TestAdminKafka_Delete(t *testing.T) {
 			ctx := tt.args.ctx(h)
 			client := test.NewAdminPrivateAPIClient(h)
 			_, resp, err := client.DefaultApi.DeleteKafkaById(ctx, kafkaId, true)
+			if resp != nil {
+				resp.Body.Close()
+			}
 			tt.verifyResponse(resp, err)
 		})
 	}
@@ -404,6 +410,9 @@ func TestAdminKafka_List(t *testing.T) {
 			ctx := tt.args.ctx(h)
 			client := test.NewAdminPrivateAPIClient(h)
 			kafkaList, resp, err := client.DefaultApi.GetKafkas(ctx, nil)
+			if resp != nil {
+				resp.Body.Close()
+			}
 			tt.verifyResponse(resp, err, kafkaList, tt.args.kafkaListSize)
 		})
 	}
@@ -1151,6 +1160,9 @@ func TestAdminKafka_Update(t *testing.T) {
 			ctx := tt.args.ctx(h)
 			client := test.NewAdminPrivateAPIClient(h)
 			result, resp, err := client.DefaultApi.UpdateKafkaById(ctx, tt.args.kafkaID, tt.args.kafkaUpdateRequest)
+			if resp != nil {
+				resp.Body.Close()
+			}
 			tt.verifyResponse(result, resp, err)
 		})
 	}

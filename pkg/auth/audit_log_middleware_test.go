@@ -52,7 +52,9 @@ func TestAuditLogMiddleware_AuditLog(t *testing.T) {
 			req := httptest.NewRequest("GET", "http://example.com", nil)
 			recorder := httptest.NewRecorder()
 			toTest.ServeHTTP(recorder, req)
-			Expect(recorder.Result().StatusCode).To(Equal(tt.wantCode))
+			resp := recorder.Result()
+			Expect(resp.StatusCode).To(Equal(tt.wantCode))
+			_ = resp.Body.Close()
 		})
 	}
 }

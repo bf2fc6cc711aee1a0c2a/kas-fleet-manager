@@ -82,6 +82,9 @@ func TestTermsRequired_CreateKafkaTermsRequired(t *testing.T) {
 	}
 
 	_, resp, err := env.client.DefaultApi.CreateKafka(ctx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 
 	Expect(err).To(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
@@ -107,6 +110,9 @@ func TestTermsRequired_CreateKafka_TermsNotRequired(t *testing.T) {
 	}
 
 	_, resp, err := env.client.DefaultApi.CreateKafka(ctx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
@@ -121,7 +127,9 @@ func TestTermsRequired_ListKafkaTermsRequired(t *testing.T) {
 	ctx := env.helper.NewAuthenticatedContext(account, nil)
 
 	_, resp, err := env.client.DefaultApi.GetKafkas(ctx, nil)
-
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 

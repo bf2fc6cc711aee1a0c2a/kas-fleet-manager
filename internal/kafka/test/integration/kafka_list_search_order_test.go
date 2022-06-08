@@ -259,7 +259,10 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			list, _, err := env.client.DefaultApi.GetKafkas(env.ctx, tc.searchOpts)
+			list, resp, err := env.client.DefaultApi.GetKafkas(env.ctx, tc.searchOpts)
+			if resp != nil {
+				resp.Body.Close()
+			}
 			if tc.wantErr {
 				Expect(err).To(HaveOccurred(), "Error wantErr: %v : %v", tc.wantErr, err)
 

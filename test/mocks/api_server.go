@@ -425,7 +425,10 @@ func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 	server.Listener = l
 	server.Start()
 	err = wait.PollImmediate(time.Second, 10*time.Second, func() (done bool, err error) {
-		_, err = http.Get("http://127.0.0.1:9876/api/clusters_mgmt/v1/cloud_providers/aws/regions")
+		resp, err := http.Get("http://127.0.0.1:9876/api/clusters_mgmt/v1/cloud_providers/aws/regions")
+		if resp != nil {
+			_ = resp.Body.Close()
+		}
 		return err == nil, nil
 	})
 	if err != nil {
