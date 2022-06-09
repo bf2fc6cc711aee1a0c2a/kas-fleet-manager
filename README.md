@@ -146,7 +146,7 @@ Follow this [guide](./docs/deploying-kas-fleet-manager-to-openshift.md) on how t
 #### Creating a Kafka Cluster
 ```
 # Submit a new Kafka cluster creation request
-curl -v -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas?async=true -d '{ "region": "us-east-1", "cloud_provider": "aws",  "name": "serviceapi", "multi_az":true}'
+curl -v -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas?async=true -d '{ "region": "us-east-1", "cloud_provider": "aws",  "name": "test-kafka", "multi_az":true}'
 
 # List a kafka request
 curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/<kafka_request_id> | jq
