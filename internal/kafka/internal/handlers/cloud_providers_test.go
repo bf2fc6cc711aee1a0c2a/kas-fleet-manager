@@ -268,8 +268,9 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 				req = mux.SetURLVars(req, map[string]string{"id": tt.args.id})
 			}
 			h.ListCloudProviderRegions(rw, req)
-			Expect(rw.Result().StatusCode).To(Equal(tt.wantStatusCode))
-			rw.Result().Body.Close()
+			resp := rw.Result()
+			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			resp.Body.Close()
 		})
 	}
 }
@@ -336,8 +337,9 @@ func Test_ListCloudProviders(t *testing.T) {
 
 			req, rw := GetHandlerParams("GET", "/", nil)
 			h.ListCloudProviders(rw, req)
-			Expect(rw.Result().StatusCode).To(Equal(tt.wantStatusCode))
-			rw.Result().Body.Close()
+			resp := rw.Result()
+			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			resp.Body.Close()
 		})
 	}
 }

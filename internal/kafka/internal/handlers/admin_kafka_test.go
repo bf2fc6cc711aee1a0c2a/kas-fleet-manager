@@ -71,8 +71,9 @@ func Test_Get(t *testing.T) {
 			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig)
 			req, rw := GetHandlerParams("GET", "/{id}", nil)
 			h.Get(rw, req)
-			Expect(rw.Result().StatusCode).To(Equal(tt.wantStatusCode))
-			rw.Result().Body.Close()
+			resp := rw.Result()
+			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			resp.Body.Close()
 		})
 	}
 }
@@ -158,8 +159,9 @@ func Test_List(t *testing.T) {
 			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig)
 			req, rw := GetHandlerParams("GET", tt.args.url, nil)
 			h.List(rw, req)
-			Expect(rw.Result().StatusCode).To(Equal(tt.wantStatusCode))
-			rw.Result().Body.Close()
+			resp := rw.Result()
+			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			resp.Body.Close()
 		})
 	}
 }
@@ -211,8 +213,9 @@ func Test_Delete(t *testing.T) {
 			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig)
 			req, rw := GetHandlerParams("DELETE", tt.args.url, nil)
 			h.Delete(rw, req)
-			Expect(rw.Result().StatusCode).To(Equal(tt.wantStatusCode))
-			rw.Result().Body.Close()
+			resp := rw.Result()
+			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			resp.Body.Close()
 		})
 	}
 }
@@ -386,8 +389,9 @@ func Test_Update(t *testing.T) {
 			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig)
 			req, rw := GetHandlerParams("PATCH", tt.args.url, bytes.NewBuffer(tt.args.body))
 			h.Update(rw, req)
-			Expect(rw.Result().StatusCode).To(Equal(tt.wantStatusCode))
-			rw.Result().Body.Close()
+			resp := rw.Result()
+			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			resp.Body.Close()
 		})
 	}
 }
