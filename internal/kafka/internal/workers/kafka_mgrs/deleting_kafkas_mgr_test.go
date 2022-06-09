@@ -112,7 +112,9 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			k := NewDeletingKafkaManager(tt.fields.kafkaService,
 				tt.fields.keycloakConfig,
@@ -201,7 +203,9 @@ func TestDeletingKafkaManager_reconcileDeletingKafkas(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			k := &DeletingKafkaManager{
 				kafkaService: tt.fields.kafkaService,

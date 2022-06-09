@@ -72,7 +72,8 @@ func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			// we need to use mux here to parse the id in the request url
 			route := mux.NewRouter().PathPrefix("/agent-cluster/{id}").Subrouter()
@@ -139,7 +140,8 @@ func TestOperatorAuthzMiddleware_CheckOCMToken(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			// we need to use mux here to parse the id in the request url
 			route := mux.NewRouter().PathPrefix("/agent-cluster/{id}").Subrouter()

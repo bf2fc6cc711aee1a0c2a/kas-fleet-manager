@@ -815,7 +815,9 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			supportedKafkaInstanceTypesConfig := tt.configFactoryFunc()
 			if err := supportedKafkaInstanceTypesConfig.validate(); (err != nil) != tt.wantErr {
@@ -854,7 +856,9 @@ func TestKafkaInstanceType_HasAnInstanceSizeWithLifespan(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			res := tt.kafkaInstanceType.HasAnInstanceSizeWithLifespan()
 			Expect(res).To(Equal(tt.want))

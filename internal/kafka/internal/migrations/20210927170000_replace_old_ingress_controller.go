@@ -34,7 +34,8 @@ func resetOldIngressControllerRoutes() *gormigrate.Migration {
 				return err
 			}
 
-			for _, kafka := range kafkas {
+			for i := range kafkas {
+				kafka := kafkas[i]
 				hasOldIngress, err := hasOldIngress(&kafka)
 				if err != nil {
 					return err

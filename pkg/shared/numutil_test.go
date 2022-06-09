@@ -41,7 +41,8 @@ func Test_RoundUp(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range cases {
+	for _, testcase := range cases {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(RoundUp(tt.number, tt.multiple)).To(Equal(tt.expected))
 		})
@@ -83,7 +84,9 @@ func Test_RoundDown(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range cases {
+	for _, testcase := range cases {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(RoundDown(tt.number, tt.multiple)).To(Equal(tt.expected))
 		})

@@ -19,7 +19,9 @@ func Test_OpenapiHandler(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewOpenAPIHandler(nil)
 			Expect(handler == nil).To(Equal(tt.wantNil))

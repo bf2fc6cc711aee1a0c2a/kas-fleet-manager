@@ -95,7 +95,9 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			k := &KafkaManager{
 				kafkaService:            tt.fields.kafkaService,
@@ -167,7 +169,9 @@ func TestKafkaManager_reconcileDeniedKafkaOwners(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			k := &KafkaManager{
 				kafkaService: tt.fields.kafkaService,
@@ -217,7 +221,9 @@ func TestKafkaManager_setKafkaStatusCountMetric(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			k := NewKafkaManager(tt.fields.kafkaService, nil, nil, nil, nil, workers.Reconciler{})
 
@@ -340,7 +346,9 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			k := &KafkaManager{
 				kafkaService:           tt.fields.kafkaService,
@@ -595,7 +603,9 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			k := &KafkaManager{
 				kafkaService:           tt.fields.kafkaService,

@@ -107,7 +107,9 @@ func TestAcceptedKafkaManager_Reconcile(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			k := NewAcceptedKafkaManager(
 				tt.fields.kafkaService,
@@ -296,7 +298,9 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			k := &AcceptedKafkaManager{
 				kafkaService:   tt.fields.kafkaService,

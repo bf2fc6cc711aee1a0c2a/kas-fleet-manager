@@ -255,10 +255,11 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 			expectedErr: "400 Bad Request",
 		},
 	}
+	RegisterTestingT(t)
 
-	for _, tc := range testCases {
+	for _, testcase := range testCases {
+		tc := testcase
 		t.Run(tc.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			list, resp, err := env.client.DefaultApi.GetKafkas(env.ctx, tc.searchOpts)
 			if resp != nil {
 				resp.Body.Close()

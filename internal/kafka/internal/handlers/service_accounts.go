@@ -44,7 +44,8 @@ func (s serviceAccountsHandler) ListServiceAccounts(w http.ResponseWriter, r *ht
 				Items: []public.ServiceAccountListItem{},
 			}
 
-			for _, account := range sa {
+			for i := range sa {
+				account := sa[i]
 				converted := presenters.PresentServiceAccountListItem(&account)
 				serviceAccountList.Items = append(serviceAccountList.Items, converted)
 			}

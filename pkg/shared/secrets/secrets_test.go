@@ -77,7 +77,8 @@ func Test_getSecretPaths(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := getPathsToPasswordFields([]byte(tt.args.schemaText))
 			if (err != nil) != tt.wantErr {
@@ -128,7 +129,8 @@ func Test_changePasswordFields(t *testing.T) {
 			}`,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := modifySecrets([]byte(tt.args.schemaText), []byte(tt.args.doc), tt.args.f)
 			if (err != nil) != tt.wantErr {

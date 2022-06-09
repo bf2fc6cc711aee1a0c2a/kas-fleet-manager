@@ -11,3 +11,4 @@ run:
 linters:
   enable:
     - bodyclose
+    - scopelint

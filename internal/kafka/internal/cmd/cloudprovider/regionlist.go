@@ -50,7 +50,8 @@ func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 
 	supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
 	provider, _ := supportedProviders.GetByName(id)
-	for _, cloudRegion := range cloudRegions {
+	for i := range cloudRegions {
+		cloudRegion := cloudRegions[i]
 		region, _ := provider.Regions.GetByName(cloudRegion.Id)
 		cloudRegion.Enabled = len(region.SupportedInstanceTypes) > 0
 

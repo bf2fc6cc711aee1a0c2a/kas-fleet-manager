@@ -33,7 +33,8 @@ func Test_ListErrors(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for i := range tests {
+		tt := tests[i]
 		t.Run(tt.name, func(t *testing.T) {
 			errorsLen := strconv.Itoa(len(errors.Errors()))
 			req, rw := GetHandlerParams("GET", "/", nil)
@@ -86,7 +87,8 @@ func Test_GetError(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewErrorsHandler()
 			req, rw := GetHandlerParams("GET", fmt.Sprintf("/%s", tt.args.id), nil)
@@ -110,7 +112,8 @@ func Test_CreateError(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewErrorsHandler()
 			req, rw := GetHandlerParams("POST", "/", nil)
@@ -133,7 +136,8 @@ func Test_DeleteError(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewErrorsHandler()
 			req, rw := GetHandlerParams("DELETE", "/", nil)
@@ -156,7 +160,9 @@ func Test_PatchError(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewErrorsHandler()
 			req, rw := GetHandlerParams("PATCH", "/", nil)

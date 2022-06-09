@@ -89,10 +89,11 @@ func TestOCMProvider_Create(t *testing.T) {
 			wantErr: true,
 		},
 	}
+	RegisterTestingT(t)
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			p := newOCMProvider(test.fields.ocmClient, cb, &ocm.OCMConfig{})
 			resp, err := p.Create(&test.args.clusterReq)
 			Expect(resp).To(Equal(test.want))
@@ -190,7 +191,8 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
@@ -273,10 +275,12 @@ func TestOCMProvider_Delete(t *testing.T) {
 			wantErr: true,
 		},
 	}
+	RegisterTestingT(t)
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
+
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.Delete(test.args.clusterSpec)
 			Expect(resp).To(Equal(test.want))
@@ -344,10 +348,11 @@ func TestOCMProvider_GetClusterDNS(t *testing.T) {
 			wantErr: true,
 		},
 	}
+	RegisterTestingT(t)
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.GetClusterDNS(test.args.clusterSpec)
 			Expect(resp).To(Equal(test.want))
@@ -471,7 +476,8 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
@@ -620,9 +626,10 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	RegisterTestingT(t)
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.ApplyResources(test.args.clusterSpec, test.args.resources)
 			Expect(resp).To(Equal(test.want))
@@ -718,9 +725,10 @@ func TestOCMProvider_InstallAddon(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	RegisterTestingT(t)
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.installAddon(test.args.clusterSpec, test.args.addonID)
 			Expect(resp).To(Equal(test.want))
@@ -826,7 +834,8 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
@@ -897,7 +906,8 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
@@ -1001,7 +1011,8 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})

@@ -63,7 +63,8 @@ func TestAwsClient_NewClientFromConfig(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := newClient(tt.args.credentials, tt.args.region)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -99,7 +100,8 @@ func TestAwsClient_NewClientFromFactory(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := tt.fields.f.NewClient(tt.args.credentials, tt.args.region)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -152,7 +154,8 @@ func TestAwsClient_GetChange(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			awsClient := testClientFactory{}.NewClient(&tt.fields.route53Client)
 			_, err := awsClient.GetChange(testValue)
@@ -196,7 +199,8 @@ func TestAwsClient_ListHostedZonesByNameInput(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			awsClient := testClientFactory{}.NewClient(&tt.fields.route53Client)
 			_, err := awsClient.ListHostedZonesByNameInput(testValue)
@@ -282,7 +286,8 @@ func TestAwsClient_ChangeResourceRecordSets(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			awsClient := testClientFactory{}.NewClient(&tt.fields.route53Client)
 			_, err := awsClient.ChangeResourceRecordSets(testValue, &route53.ChangeBatch{})

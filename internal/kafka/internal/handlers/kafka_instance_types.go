@@ -44,7 +44,8 @@ func (h *supportedKafkaInstanceTypesHandler) ListSupportedKafkaInstanceTypes(w h
 				}
 				return nil, err
 			}
-			for _, instanceType := range regionInstanceTypeList {
+			for idx := range regionInstanceTypeList {
+				instanceType := regionInstanceTypeList[idx]
 				converted := presenters.PresentSupportedKafkaInstanceTypes(&instanceType)
 				supportedKafkaInstanceTypeList.InstanceTypes = append(supportedKafkaInstanceTypeList.InstanceTypes, converted)
 			}

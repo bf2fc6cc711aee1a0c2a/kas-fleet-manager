@@ -35,7 +35,9 @@ func Test_NewObservatoriumService(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			g.Expect(NewObservatoriumService(tt.args.observatorium, tt.args.kafkaService)).To(Equal(tt.want))
 		})
@@ -92,7 +94,9 @@ func Test_ObservatoriumService_GetKafkaState(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			o := tt.fields.observatorium
 			got, err := o.GetKafkaState(tt.args.name, tt.args.namespaceName)
@@ -195,7 +199,9 @@ func Test_observatoriumService_GetMetricsByKafkaId(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			obs := observatoriumService{
 				observatorium: tt.fields.observatorium,

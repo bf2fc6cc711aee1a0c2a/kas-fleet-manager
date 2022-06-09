@@ -31,7 +31,9 @@ func TestConvertServiceAccountRequest(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(ConvertServiceAccountRequest(tt.args.from)).To(Equal(tt.want))
 		})
@@ -59,7 +61,9 @@ func TestPresentServiceAccount(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(PresentServiceAccount(tt.args.from)).To(Equal(tt.want))
 		})
@@ -87,7 +91,9 @@ func TestPresentServiceAccountListItem(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(PresentServiceAccountListItem(tt.args.from)).To(Equal(tt.want))
 		})
@@ -115,7 +121,9 @@ func TestPresentSsoProvider(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(PresentSsoProvider(tt.args.from)).To(Equal(tt.want))
 		})

@@ -193,7 +193,8 @@ func TestAdminKafka_Get(t *testing.T) {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := tt.args.ctx(h)
 			client := test.NewAdminPrivateAPIClient(h)
@@ -283,7 +284,8 @@ func TestAdminKafka_Delete(t *testing.T) {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := tt.args.ctx(h)
 			client := test.NewAdminPrivateAPIClient(h)
@@ -399,13 +401,15 @@ func TestAdminKafka_List(t *testing.T) {
 		},
 	}
 
-	for _, kafka := range kafkas {
-		if err := db.Create(&kafka).Error; err != nil {
+	for i := range kafkas {
+		if err := db.Create(&kafkas[i]).Error; err != nil {
 			t.Errorf("failed to create Kafka db record due to error: %v", err)
 		}
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := tt.args.ctx(h)
 			client := test.NewAdminPrivateAPIClient(h)
@@ -1155,7 +1159,9 @@ func TestAdminKafka_Update(t *testing.T) {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := tt.args.ctx(h)
 			client := test.NewAdminPrivateAPIClient(h)

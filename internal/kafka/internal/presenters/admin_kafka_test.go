@@ -54,7 +54,8 @@ func TestGetRoutesFromKafkaRequest(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(GetRoutesFromKafkaRequest(tt.args.dbKafkaRequest)).To(Equal(tt.want))
 		})
@@ -87,7 +88,8 @@ func TestPresentKafkaRequestAdminEndpoint(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			converted, err := PresentKafkaRequestAdminEndpoint(tt.args.dbKafkaRequest, tt.args.accountService)
 			if !tt.wantErr && err != nil {

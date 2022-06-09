@@ -76,7 +76,9 @@ func Test_PresentReferenceWith(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			ref := PresentReferenceWith(tt.args.id, tt.args.obj, tt.args.objectKind, tt.args.objectPath)
 			Expect(ref.Id).To(Equal(tt.wantId))

@@ -33,7 +33,8 @@ func Test_idGenerator_Generate(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got := NewIDGenerator(tt.fields.prefix).Generate()
 			Expect(tt.validateFn(got)).To(Succeed())

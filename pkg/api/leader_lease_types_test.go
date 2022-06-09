@@ -20,7 +20,9 @@ func Test_LeaderLeaseTypes_BeforeCreate(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.leaderLease.BeforeCreate(nil)
 			Expect(err).ToNot(HaveOccurred())
@@ -62,7 +64,9 @@ func Test_LeaderLeaseTypes_Index(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			index := tt.leaderLeases.Index()
 			Expect(index).To(Equal(tt.want))

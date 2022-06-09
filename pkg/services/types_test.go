@@ -85,9 +85,11 @@ func Test_ValidateOrderBy(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	RegisterTestingT(t)
+
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			la := NewListArguments(tt.params)
 			err := la.Validate(tt.validParams)
 			if tt.wantErr {

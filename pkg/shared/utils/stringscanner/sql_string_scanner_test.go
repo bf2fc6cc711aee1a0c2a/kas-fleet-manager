@@ -68,7 +68,9 @@ func Test_SQLStringScanner(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			scanner := NewSQLScanner()
@@ -132,7 +134,9 @@ func Test_scanner_Peek(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			got, gotVal := tt.s.Peek()
 			Expect(got).To(Equal(tt.want))

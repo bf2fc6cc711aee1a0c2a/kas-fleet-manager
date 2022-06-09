@@ -150,7 +150,9 @@ func Test_Cluster_Create(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -264,7 +266,9 @@ func Test_GetClusterDNS(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -359,7 +363,9 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -450,7 +456,9 @@ func Test_FindCluster(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -559,7 +567,9 @@ func Test_ListByStatus(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 
 			if tt.setupFn != nil {
@@ -626,7 +636,9 @@ func Test_clusterService_Update(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -717,7 +729,9 @@ func Test_UpdateStatus(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -772,7 +786,9 @@ func Test_RegisterClusterJob(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -847,7 +863,9 @@ func Test_clusterService_ListGroupByProviderAndRegion(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
 			k := &clusterService{
@@ -905,7 +923,9 @@ func Test_DeleteByClusterId(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -982,7 +1002,9 @@ func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -1041,7 +1063,9 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -1121,7 +1145,9 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -1200,7 +1226,9 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -1283,7 +1311,9 @@ func Test_clusterService_UpdateMultiClusterStatus(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -1363,7 +1393,9 @@ func Test_clusterService_CountByStatus(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFunc != nil {
 				tt.setupFunc()
@@ -1486,7 +1518,9 @@ func Test_clusterService_CheckClusterStatus(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -1589,7 +1623,9 @@ func Test_clusterService_RemoveClusterFromProvider(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -1727,7 +1763,9 @@ func Test_clusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -1832,7 +1870,9 @@ func Test_clusterService_ApplyResources(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -1941,7 +1981,9 @@ func Test_clusterService_InstallStrimzi(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -2053,7 +2095,9 @@ func Test_clusterService_ClusterLogging(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -2165,7 +2209,9 @@ func Test_clusterService_GetExternalID(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -2243,7 +2289,9 @@ func Test_clusterService_GetClientId(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		if tt.setupFn != nil {
 			tt.setupFn()
 		}
@@ -2334,7 +2382,9 @@ func Test_clusterService_CheckStrimziVersionReady(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := clusterService{
 				connectionFactory: tt.fields.connectionFactory,
@@ -2494,7 +2544,9 @@ func Test_clusterService_IsStrimziKafkaVersionAvailableInCluster(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := clusterService{
 				connectionFactory: tt.fields.connectionFactory,

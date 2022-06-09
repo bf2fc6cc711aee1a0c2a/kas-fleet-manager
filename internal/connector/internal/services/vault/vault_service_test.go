@@ -48,9 +48,12 @@ func TestNewVaultService(t *testing.T) {
 			wantErrOnNew: true,
 		},
 	}
-	for _, tt := range tests {
+
+	RegisterTestingT(t)
+
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.config.Kind, func(t *testing.T) {
-			RegisterTestingT(t)
 			svc, err := vault.NewVaultService(tt.config)
 			Expect(err != nil).Should(Equal(tt.wantErrOnNew), "NewVaultService() error = %v, wantErr %v", err, tt.wantErrOnNew)
 			if err == nil {

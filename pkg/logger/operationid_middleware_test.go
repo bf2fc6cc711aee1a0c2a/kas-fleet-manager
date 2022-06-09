@@ -42,7 +42,8 @@ func Test_WithOpID(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			context := WithOpID(tt.args.ctx)
 			Expect(context.Value(OpIDKey)).ToNot(Equal(""))
@@ -78,7 +79,8 @@ func Test_GetOperationID(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(GetOperationID(tt.args.ctx)).To(Equal(tt.want))
 		})

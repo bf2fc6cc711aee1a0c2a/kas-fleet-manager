@@ -122,7 +122,9 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 			wantErr: true,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			k := supportedKafkaInstanceTypesService{

@@ -284,7 +284,9 @@ func Test_kafkaService_Get(t *testing.T) {
 	g := NewWithT(t)
 	// we loop through each test case defined in the list above and start a new test invocation, using the testing
 	// t.Run function
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		// tt now contains our test case, we can use the 'fields' to construct the struct that we want to test and the
 		// 'args' to pass to the function we want to test
 		t.Run(tt.name, func(t *testing.T) {
@@ -372,7 +374,9 @@ func Test_kafkaService_GetById(t *testing.T) {
 
 	g := NewWithT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -557,7 +561,9 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -653,7 +659,9 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -795,7 +803,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -1233,7 +1243,9 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -1318,7 +1330,9 @@ func Test_AssignInstanceType(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -1667,7 +1681,9 @@ func Test_kafkaService_List(t *testing.T) {
 
 	g := NewWithT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn(tt.want.kafkaList)
 			k := &kafkaService{
@@ -1744,7 +1760,9 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 
 	g := NewWithT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
 			k := &kafkaService{
@@ -1855,7 +1873,9 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
 			k := kafkaService{
@@ -1920,7 +1940,9 @@ func Test_kafkaService_Update(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
 			k := kafkaService{
@@ -1981,7 +2003,9 @@ func Test_kafkaService_Updates(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
 			k := kafkaService{
@@ -2043,7 +2067,9 @@ func Test_kafkaService_DeprovisionKafkaForUsers(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
 			k := kafkaService{
@@ -2095,7 +2121,9 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -2189,7 +2217,9 @@ func Test_KafkaService_CountByStatus(t *testing.T) {
 
 	g := NewWithT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFunc != nil {
 				tt.setupFunc()
@@ -2540,7 +2570,9 @@ func Test_KafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			kafkaService := &kafkaService{
 				awsClientFactory: aws.NewMockClientFactory(tt.fields.awsClient),
@@ -2651,7 +2683,9 @@ func Test_KafkaService_ListComponentVersions(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFunc != nil {
 				tt.setupFunc()
@@ -2850,7 +2884,9 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 
 			if tt.setupFn != nil {
@@ -2954,7 +2990,8 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		tt.setupFn()
 		t.Run(tt.name, func(t *testing.T) {
 			k := &kafkaService{
@@ -3235,7 +3272,8 @@ func Test_kafkaService_VerifyAndUpdateKafkaAdmin(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		tt.setupFunc()
 		t.Run(tt.name, func(t *testing.T) {
 			k := &kafkaService{
@@ -3319,7 +3357,8 @@ func Test_kafkaService_GetCNAMERecordStatus(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			k := &kafkaService{
 				awsConfig:        tt.fields.awsConfig,
@@ -3380,7 +3419,8 @@ func Test_NewKafkaService(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		g.Expect(NewKafkaService(tt.args.connectionFactory, tt.args.clusterService, tt.args.keycloakService, tt.args.kafkaConfig, tt.args.dataplaneClusterConfig, tt.args.awsConfig, tt.args.quotaServiceFactory, tt.args.awsClientFactory, tt.args.authorizationService, tt.args.providerConfig, tt.args.clusterPlacementStrategy)).To(Equal(tt.want))
 	}
 }
@@ -3412,7 +3452,8 @@ func Test_kafkaService_ListKafkasWithRoutesNotCreated(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		tt.setupFn()
 		t.Run(tt.name, func(t *testing.T) {
 			k := &kafkaService{

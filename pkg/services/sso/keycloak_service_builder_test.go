@@ -45,7 +45,8 @@ func Test_keycloakServiceBuilder_Build_ForKFM(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			service := NewKeycloakServiceBuilder().
 				ForKFM().
@@ -87,7 +88,8 @@ func Test_osdKeycloackServiceBuilder_Build_ForOSD(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			service := NewKeycloakServiceBuilder().
 				ForOSD().

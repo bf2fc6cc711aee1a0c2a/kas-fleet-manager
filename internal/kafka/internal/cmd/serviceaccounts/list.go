@@ -67,8 +67,8 @@ func runList(env *environments.Env, cmd *cobra.Command) {
 		Items: []public.ServiceAccountListItem{},
 	}
 
-	for _, account := range sa {
-		converted := presenters.PresentServiceAccountListItem(&account)
+	for i := range sa {
+		converted := presenters.PresentServiceAccountListItem(&sa[i])
 		serviceAccountList.Items = append(serviceAccountList.Items, converted)
 	}
 

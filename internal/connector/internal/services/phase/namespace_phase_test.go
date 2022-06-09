@@ -47,7 +47,9 @@ func Test_PerformNamespaceOperation(t *testing.T) {
 		// TODO add rest of the test scenarios
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.scenario, func(t *testing.T) {
 			RegisterTestingT(t)
 

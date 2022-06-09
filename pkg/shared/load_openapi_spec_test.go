@@ -52,7 +52,8 @@ func Test_LoadOpenAPISpec(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := LoadOpenAPISpec(tt.args.assetFunc, tt.args.asset)
 			Expect(err != nil).To(Equal(tt.wantErr))

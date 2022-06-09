@@ -27,7 +27,9 @@ func Test_FillDefaults(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			tt.fields.config.FillDefaults()
 			Expect(tt.fields.config.Step).To(Equal(30 * time.Second))

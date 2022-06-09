@@ -253,7 +253,8 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 		},
 	}
 
-	for msg, f := range fetchers {
+	for msg := range fetchers {
+		f := fetchers[msg]
 		fetchAll := len(rq.Filters) == 0
 		if fetchAll {
 			result := obs.fetchMetricsResult(rq, &f)

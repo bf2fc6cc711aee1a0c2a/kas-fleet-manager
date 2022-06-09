@@ -166,7 +166,8 @@ func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
 			p := cloudProvidersService{
@@ -338,7 +339,8 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
 			p := cloudProvidersService{
@@ -509,7 +511,8 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
 			p := cloudProvidersService{
@@ -604,7 +607,8 @@ func Test_cloudProvidersService_ListCachedCloudProviderRegions(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		tt.setupFn()
 		t.Run(tt.name, func(t *testing.T) {
 			p := cloudProvidersService{

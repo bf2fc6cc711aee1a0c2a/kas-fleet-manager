@@ -78,7 +78,8 @@ func TestNewSSOClient(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			ssoClient := NewSSOClient(tt.args.config, tt.args.realmConfig)
 			g.Expect(ssoClient.GetConfig()).To(Equal(tt.want.GetConfig()))
@@ -130,7 +131,9 @@ func Test_rhSSOClient_getConfiguration(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &rhSSOClient{
 				config:        tt.fields.config,
@@ -202,7 +205,9 @@ func Test_rhSSOClient_getCachedToken(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		if tt.setupFn != nil {
 			tt.setupFn(&tt.fields)
 		}
@@ -296,7 +301,9 @@ func Test_rhSSOClient_GetToken(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := &rhSSOClient{
 				config:        tt.fields.config,
@@ -330,7 +337,9 @@ func Test_rhSSOClient_GetConfig(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := &rhSSOClient{
 				config: tt.fields.config,
@@ -358,7 +367,9 @@ func Test_rhSSOClient_GetRealmConfig(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := &rhSSOClient{
 				realmConfig: tt.fields.realmConfig,
@@ -459,7 +470,9 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := &rhSSOClient{
 				config:        tt.fields.config,
@@ -562,7 +575,9 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := &rhSSOClient{
 				config:        tt.fields.config,
@@ -668,7 +683,9 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := &rhSSOClient{
 				config:        tt.fields.config,
@@ -766,7 +783,9 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := &rhSSOClient{
 				config:        tt.fields.config,
@@ -881,7 +900,9 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := &rhSSOClient{
 				config:        tt.fields.config,
@@ -985,7 +1006,9 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := &rhSSOClient{
 				config:        tt.fields.config,

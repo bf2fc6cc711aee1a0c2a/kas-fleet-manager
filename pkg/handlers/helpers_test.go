@@ -40,7 +40,9 @@ func Test_DetermineListRange(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			_, count := DetermineListRange(tt.args.obj, tt.args.page, tt.args.size)
 			Expect(count).To(Equal(tt.wantSize))

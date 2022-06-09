@@ -235,7 +235,8 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			h := NewCloudProviderHandler(tt.fields.cloudProvidersService, tt.fields.providerConfig, tt.fields.kafkaService,
 				tt.fields.clusterPlacementStrategy, tt.fields.kafkaConfig)
@@ -307,7 +308,8 @@ func Test_ListCloudProviders(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			h := NewCloudProviderHandler(tt.fields.cloudProvidersService, tt.fields.providerConfig, tt.fields.kafkaService,
 				nil, tt.fields.kafkaConfig)

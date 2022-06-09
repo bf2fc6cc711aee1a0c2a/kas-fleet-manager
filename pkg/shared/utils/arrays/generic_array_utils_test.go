@@ -63,7 +63,8 @@ func Test_FindFirst(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			gotIndex, gotVal := FindFirst(tt.args.predicate, tt.args.values...)
 			Expect(gotIndex).To(Equal(tt.expectedIndex))

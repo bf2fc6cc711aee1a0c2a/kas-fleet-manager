@@ -256,7 +256,8 @@ func TestFederateMetrics_Collect(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			collector := NewFederatedUserMetricsCollector(&tt.metrics)
 			registry := prometheus.NewPedanticRegistry()

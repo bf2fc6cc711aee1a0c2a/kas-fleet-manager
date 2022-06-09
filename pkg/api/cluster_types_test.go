@@ -71,7 +71,8 @@ func TestGetAvailableStrimziVersions(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := tt.cluster().GetAvailableStrimziVersions()
 			gotErr := err != nil
@@ -146,7 +147,8 @@ func TestGetAvailableAndReadyStrimziVersions(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := tt.cluster().GetAvailableAndReadyStrimziVersions()
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -300,7 +302,8 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			cluster := &Cluster{}
 			err := cluster.SetAvailableStrimziVersions(tt.inputStrimziVersions)
@@ -398,7 +401,8 @@ func TestCompare(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.inputStrimziVersion1.Compare(tt.inputStrimziVersion2)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -531,7 +535,8 @@ func Test_StrimziVersionsDeepSort(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := StrimziVersionsDeepSort(tt.args.versions)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -558,7 +563,8 @@ func Test_CompareBuildAwareSemanticVersions(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := CompareBuildAwareSemanticVersions(tt.version1, tt.version2)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -585,7 +591,8 @@ func Test_CompareSemanticVersionsMajorAndMinor(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := CompareSemanticVersionsMajorAndMinor(tt.current, tt.desired)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -640,7 +647,8 @@ func Test_ClusterTypes_Index(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			index := tt.cluster.Index()
 			Expect(index).To(Equal(tt.want))
@@ -717,7 +725,8 @@ func Test_CompareTo(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			res := tt.k.CompareTo(tt.k1)
 			Expect(res).To(Equal(tt.want))
@@ -740,7 +749,8 @@ func Test_ClusterProviderType_String(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			res := tt.providerType.String()
 			Expect(res).To(Equal(tt.want))
@@ -763,7 +773,8 @@ func Test_ClusterStatus_String(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			res := tt.status.String()
 			Expect(res).To(Equal(tt.want))

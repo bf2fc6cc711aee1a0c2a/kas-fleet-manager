@@ -63,7 +63,9 @@ func TestProvisioningKafkaManager_Reconcile(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(len(NewProvisioningKafkaManager(tt.fields.kafkaService, w.Reconciler{}).Reconcile()) > 0).To(Equal(tt.wantErr))
 		})

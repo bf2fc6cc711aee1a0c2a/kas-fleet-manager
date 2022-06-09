@@ -41,7 +41,8 @@ func ConvertCluster(cluster *api.Cluster) []map[string]interface{} {
 func ConvertClusterList(clusterList []api.Cluster) []map[string]interface{} {
 	var convertedClusterList []map[string]interface{}
 
-	for _, cluster := range clusterList {
+	for i := range clusterList {
+		cluster := clusterList[i]
 		data := ConvertCluster(&cluster)
 		convertedClusterList = append(convertedClusterList, data...)
 	}

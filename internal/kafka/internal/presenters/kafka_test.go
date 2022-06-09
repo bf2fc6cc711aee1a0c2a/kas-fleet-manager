@@ -83,7 +83,9 @@ func TestConvertKafkaRequest(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(ConvertKafkaRequest(tt.args.kafkaRequestPayload, tt.args.dbKafkaRequests...)).To(Equal(tt.want))
 		})
@@ -158,7 +160,9 @@ func TestPresentKafkaRequest(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(PresentKafkaRequest(tt.args.dbKafkaRequest, &tt.config)).To(Equal(tt.want))
 		})
@@ -194,7 +198,9 @@ func TestSetBootstrapServerHost(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(setBootstrapServerHost(tt.args.bootstrapServerHost)).To(Equal(tt.want))
 		})
@@ -350,7 +356,8 @@ func TestCapacityLimitReports(t *testing.T) {
 			negative: true,
 		},
 	}
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			kafkaRequest, err := PresentKafkaRequest(&test.request, &test.config)

@@ -133,7 +133,8 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			dataPlaneClusterService := tt.dataPlaneClusterServiceFactory()
 			svcErr := dataPlaneClusterService.UpdateDataPlaneClusterStatus(context.Background(), tt.clusterID, tt.clusterStatus)
@@ -219,7 +220,8 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			f := tt.dataPlaneClusterServiceFactory()
 			if f == nil {
@@ -324,7 +326,9 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 
 	g := NewWithT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			f := tt.dataPlaneClusterServiceFactory()
 			if f == nil {
@@ -415,7 +419,9 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewDataPlaneClusterService(dataPlaneClusterService{
 				ClusterService:         tt.fields.clusterService,
@@ -480,7 +486,8 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 
 	g := NewWithT(t)
 
-	for _, tt := range cases {
+	for _, testcase := range cases {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			f, spyReceivedStatus := tt.inputFactory()
 			g.Expect(f).ToNot(BeNil(), "dataPlaneClusterService is nil")

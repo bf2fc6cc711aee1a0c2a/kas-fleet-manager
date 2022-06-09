@@ -95,8 +95,8 @@ func (r *redhatssoService) ListServiceAcc(accessToken string, ctx context.Contex
 	}
 	var res []api.ServiceAccount
 
-	for _, account := range accounts {
-		res = append(res, *convertServiceAccountDataToAPIServiceAccount(&account))
+	for i := range accounts {
+		res = append(res, *convertServiceAccountDataToAPIServiceAccount(&accounts[i]))
 	}
 	return res, nil
 }

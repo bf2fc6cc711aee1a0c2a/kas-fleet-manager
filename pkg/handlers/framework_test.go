@@ -37,7 +37,9 @@ func Test_errorHandler(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			errorHandler(tt.args.r, tt.args.w, tt.args.cfg, tt.args.err)
 			Expect(rw.Code).To(Equal(tt.wantStatusCode))
@@ -137,7 +139,9 @@ func Test_Handle(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Handle(tt.args.w, tt.args.r, tt.args.cfg, tt.args.httpStatus)
 			Expect(rw.Code).ToNot(Equal(0))
@@ -220,7 +224,9 @@ func Test_HandleDelete(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			HandleDelete(tt.args.w, tt.args.r, tt.args.cfg, tt.args.httpStatus)
 			Expect(rw.Code).ToNot(Equal(0))
@@ -303,7 +309,9 @@ func Test_HandleGet(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			HandleGet(tt.args.w, tt.args.r, tt.args.cfg)
 			Expect(rw.Code).ToNot(Equal(0))
@@ -388,7 +396,9 @@ func Test_HandleList(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			HandleList(tt.args.w, tt.args.r, tt.args.cfg)
 			Expect(rw.Code).ToNot(Equal(0))
@@ -417,7 +427,9 @@ func Test_ConvertToPrivateError(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(ConvertToPrivateError(tt.args.e)).To(Equal(tt.want))
 		})

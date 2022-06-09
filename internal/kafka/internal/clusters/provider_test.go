@@ -39,7 +39,9 @@ func TestNewDefaultProviderFactory(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			got := NewDefaultProviderFactory(tt.args.ocmClient, tt.args.connectionFactory, tt.args.ocmConfig, tt.args.awsConfig, tt.args.dataplaneClusterConfig)
 			Expect(got).To(Equal(tt.want))
@@ -102,7 +104,9 @@ func TestDefaultProviderFactory_GetProvider(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			d := &DefaultProviderFactory{
 				providerContainer: tt.fields.providerContainer,

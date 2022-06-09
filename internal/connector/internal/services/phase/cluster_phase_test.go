@@ -44,10 +44,10 @@ func Test_PerformClusterOperation(t *testing.T) {
 		// TODO add rest of the test scenarios
 	}
 
-	for _, tt := range tests {
+	RegisterTestingT(t)
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.scenario, func(t *testing.T) {
-			RegisterTestingT(t)
-
 			cluster := &dbapi.ConnectorCluster{
 				Status: dbapi.ConnectorClusterStatus{
 					Phase: tt.startPhase,

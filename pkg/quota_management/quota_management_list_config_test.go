@@ -24,7 +24,8 @@ func Test_NewQuotaManagementListConfig(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(NewQuotaManagementListConfig()).To(Equal(tt.want))
 		})
@@ -68,7 +69,8 @@ func Test_QuotaManagementListConfig_ReadFiles(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &QuotaManagementListConfig{
 				QuotaList:                  tt.fields.QuotaList,
@@ -132,7 +134,8 @@ func Test_QuotaManagementListConfig_GetAllowedAccountByUsernameAndOrgId(t *testi
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &QuotaManagementListConfig{
 				QuotaList:                  tt.fields.QuotaList,

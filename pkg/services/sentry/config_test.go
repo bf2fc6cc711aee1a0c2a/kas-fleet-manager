@@ -32,7 +32,8 @@ func Test_Sentry_ReadFiles(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			config := NewConfig()
 			if tt.modifyFn != nil {

@@ -82,10 +82,11 @@ func TestStandaloneProvider_GetCloudProviders(t *testing.T) {
 			},
 		},
 	}
+	RegisterTestingT(t)
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			test.setupFn()
 			provider := newStandaloneProvider(test.fields.connectionFactory, config.NewDataplaneClusterConfig())
 			resp, err := provider.GetCloudProviders()
@@ -165,10 +166,11 @@ func TestStandaloneProvider_GetCloudProviderRegions(t *testing.T) {
 			},
 		},
 	}
+	RegisterTestingT(t)
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			test.setupFn()
 			provider := newStandaloneProvider(test.fields.connectionFactory, config.NewDataplaneClusterConfig())
 			resp, err := provider.GetCloudProviderRegions(types.CloudProviderInfo{ID: "aws"})
@@ -239,10 +241,11 @@ func TestStandaloneProvider_buildOpenIDPClientSecret(t *testing.T) {
 			},
 		},
 	}
+	RegisterTestingT(t)
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			provider := newStandaloneProvider(db.NewMockConnectionFactory(nil), config.NewDataplaneClusterConfig())
 			secret := provider.buildOpenIDPClientSecret(test.args.idpProviderInfo)
 			Expect(secret).To(Equal(test.want))
@@ -345,10 +348,11 @@ func TestStandaloneProvider_buildIdentityProviderResource(t *testing.T) {
 			},
 		},
 	}
+	RegisterTestingT(t)
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			provider := newStandaloneProvider(db.NewMockConnectionFactory(nil), config.NewDataplaneClusterConfig())
 			secret := provider.buildIdentityProviderResource(test.args.idpProviderInfo)
 			Expect(secret).To(Equal(test.want))
@@ -408,10 +412,11 @@ func TestStandaloneProvider_buildStrimziOperatorNamespace(t *testing.T) {
 			},
 		},
 	}
+	RegisterTestingT(t)
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			namespace := provider.buildStrimziOperatorNamespace()
 			Expect(namespace).To(Equal(test.want))
@@ -457,10 +462,11 @@ func TestStandaloneProvider_buildStrimziCatalogSource(t *testing.T) {
 			},
 		},
 	}
+	RegisterTestingT(t)
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			catalogSource := provider.buildStrimziOperatorCatalogSource()
 			Expect(catalogSource).To(Equal(test.want))
@@ -527,9 +533,11 @@ func TestStandaloneProvider_buildStrimziOperatorGroup(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	RegisterTestingT(t)
+
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			operatorGroup := provider.buildStrimziOperatorOperatorGroup()
 			Expect(operatorGroup).To(Equal(test.want))
@@ -612,9 +620,11 @@ func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	RegisterTestingT(t)
+
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			subscription := provider.buildStrimziOperatorSubscription()
 			Expect(subscription).To(Equal(test.want))
@@ -675,9 +685,11 @@ func TestStandaloneProvider_buildKasFleetshardOperatorNamespace(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	RegisterTestingT(t)
+
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			namespace := provider.buildKASFleetShardOperatorNamespace()
 			Expect(namespace).To(Equal(test.want))
@@ -772,9 +784,11 @@ func TestStandaloneProvider_buildKasFleetshardSyncSecret(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	RegisterTestingT(t)
+
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			secret := provider.buildKASFleetShardSyncSecret(test.args.params)
 			Expect(secret).To(Equal(test.want))
@@ -821,9 +835,11 @@ func TestStandaloneProvider_buildKasFleetshardCatalogSource(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	RegisterTestingT(t)
+
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			catalogSource := provider.buildKASFleetShardOperatorCatalogSource()
 			Expect(catalogSource).To(Equal(test.want))
@@ -890,9 +906,11 @@ func TestStandaloneProvider_buildKasFleetshardOperatorGroup(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	RegisterTestingT(t)
+
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			operatorGroup := provider.buildKASFleetShardOperatorOperatorGroup()
 			Expect(operatorGroup).To(Equal(test.want))
@@ -968,9 +986,11 @@ func TestStandaloneProvider_buildKasFleetshardOperatorSubscription(t *testing.T)
 		},
 	}
 
-	for _, test := range tests {
+	RegisterTestingT(t)
+
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			subscription := provider.buildKASFleetShardOperatorSubscription()
 			Expect(subscription).To(Equal(test.want))
@@ -1006,7 +1026,9 @@ func TestStandaloneProvider_InstallStrimzi(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, test := range tests {
+
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			ok, err := provider.InstallStrimzi(test.args.clusterSpec)
@@ -1052,7 +1074,9 @@ func TestStandaloneProvider_InstallKasFleetshard(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, test := range tests {
+
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			ok, err := provider.InstallKasFleetshard(test.args.clusterSpec, test.args.params)
@@ -1107,7 +1131,9 @@ func TestStandaloneProvider_AddIdentityProvider(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
-	for _, test := range tests {
+
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			ok, err := provider.AddIdentityProvider(test.args.clusterSpec, test.args.identityProvider)
@@ -1174,7 +1200,9 @@ func Test_shouldApplyChanges(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got := shouldApplyChanges(tt.args.dynamicClient, tt.args.existingObj, tt.args.newConfiguration)
 			Expect(got).To(Equal(tt.want))

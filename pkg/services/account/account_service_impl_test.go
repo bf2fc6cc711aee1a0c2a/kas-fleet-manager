@@ -28,7 +28,8 @@ func TestNewAccountService(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g.Expect(NewAccountService(tt.args.connection)).To(Equal(tt.want))
 		})
@@ -53,7 +54,8 @@ func Test_convertOrganization(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g.Expect(convertOrganization(tt.args.o)).To(Equal(tt.want))
 		})
@@ -78,7 +80,8 @@ func Test_convertOrganizationList(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g.Expect(convertOrganizationList(tt.args.organizationList)).To(Equal(tt.want))
 		})
