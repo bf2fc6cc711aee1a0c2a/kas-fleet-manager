@@ -159,7 +159,7 @@ func (r *redhatssoService) GetKafkaClientSecret(accessToken string, clientId str
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
 	}
-	if !found {
+	if found {
 		//if client is found re-generate the client secret.
 		svcData, seErr := r.client.RegenerateClientSecret(accessToken, shared.SafeString(serviceAccount.Id))
 		if seErr != nil {
@@ -168,7 +168,7 @@ func (r *redhatssoService) GetKafkaClientSecret(accessToken string, clientId str
 		return shared.SafeString(svcData.Secret), nil
 	}
 
-	return *serviceAccount.Secret, nil
+	return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
 }
 func (r *redhatssoService) CreateServiceAccountInternal(accessToken string, request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
 	svcData, err := r.client.CreateServiceAccount(accessToken, request.ClientId, request.Description)
