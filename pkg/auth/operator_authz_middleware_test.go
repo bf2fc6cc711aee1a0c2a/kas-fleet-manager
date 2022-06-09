@@ -86,7 +86,9 @@ func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 			req := httptest.NewRequest("GET", "http://example.com/agent-cluster/"+tt.clusterId, nil)
 			recorder := httptest.NewRecorder()
 			route.ServeHTTP(recorder, req)
-			status := recorder.Result().StatusCode
+			resp := recorder.Result()
+			_ = resp.Body.Close()
+			status := resp.StatusCode
 			if status != tt.want {
 				t.Errorf("expected status code %d but got %d", tt.want, status)
 			}
@@ -152,7 +154,9 @@ func TestOperatorAuthzMiddleware_CheckOCMToken(t *testing.T) {
 			req := httptest.NewRequest("GET", "http://example.com/agent-cluster/"+tt.clusterId, nil)
 			recorder := httptest.NewRecorder()
 			route.ServeHTTP(recorder, req)
-			status := recorder.Result().StatusCode
+			resp := recorder.Result()
+			_ = resp.Body.Close()
+			status := resp.StatusCode
 			if status != tt.want {
 				t.Errorf("expected status code %d but got %d", tt.want, status)
 			}

@@ -71,7 +71,10 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 		DeprecatedMultiAz: testMultiAZ,
 	}
 
-	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	seedKafka, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	if err != nil {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
@@ -124,7 +127,10 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 		DeprecatedMultiAz: testMultiAZ,
 	}
 
-	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	seedKafka, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	if err != nil {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
@@ -133,6 +139,9 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
@@ -145,16 +154,25 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	// different account but same org, should be able to read the Kafka cluster
 	acc := h.NewRandAccount()
 	context := h.NewAuthenticatedContext(acc, nil)
-	kafka, _, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
+	kafka, resp, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
 	Expect(kafka.Id).NotTo(BeEmpty())
 	filters := public.GetMetricsByRangeQueryOpts{}
 	metrics, resp, err := client.DefaultApi.GetMetricsByRangeQuery(context, kafka.Id, 5, 30, &filters)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(metrics.Items)).NotTo(Equal(0))
@@ -194,7 +212,10 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 		DeprecatedMultiAz: testMultiAZ,
 	}
 
-	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	seedKafka, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	if err != nil {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
@@ -203,6 +224,9 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka to be ready")
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
@@ -215,16 +239,25 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	// different account but same org, should be able to read the Kafka cluster
 	acc := h.NewRandAccount()
 	context := h.NewAuthenticatedContext(acc, nil)
-	kafka, _, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
+	kafka, resp, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(kafka.Id).NotTo(BeEmpty())
 
 	filters := public.GetMetricsByInstantQueryOpts{}
 	metrics, resp, err := client.DefaultApi.GetMetricsByInstantQuery(context, kafka.Id, &filters)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(metrics.Items)).NotTo(Equal(0))

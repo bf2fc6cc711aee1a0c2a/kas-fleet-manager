@@ -102,7 +102,9 @@ func TestKafkaCreate_Success(t *testing.T) {
 	}
 
 	kafka, resp, err := common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
-
+	if resp != nil {
+		resp.Body.Close()
+	}
 	// kafka successfully registered with database
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
@@ -128,7 +130,10 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(foundKafka.AdminApiServerUrl).To(Equal(kasfleetshardsync.AdminServerURI))
 
 	// checking kafka_request bootstrap server port number being present
-	kafka, _, err = client.DefaultApi.GetKafkaById(ctx, foundKafka.Id)
+	kafka, resp, err = client.DefaultApi.GetKafkaById(ctx, foundKafka.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error getting created kafka_request:  %v", err)
 	Expect(strings.HasSuffix(kafka.BootstrapServerHost, ":443")).To(Equal(true))
 	Expect(kafka.Version).To(Equal(kasfleetshardsync.GetDefaultReportedKafkaVersion()))
@@ -196,7 +201,9 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 	}
 
 	kafka, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
-
+	if resp != nil {
+		resp.Body.Close()
+	}
 	// successful creation of kafka with a valid "standard" plan format
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
@@ -216,6 +223,9 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 	accountWithoutStandardInstances := h.NewAccountWithNameAndOrg("test-nameacc-2", "123456")
 	ctx2 := h.NewAuthenticatedContext(accountWithoutStandardInstances, nil)
 	kafka, resp, err = client.DefaultApi.CreateKafka(ctx2, true, k2)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
@@ -231,12 +241,18 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 
 	// unsuccessful creation of kafka with invalid instance type provided in the "plan" parameter
 	k.Plan = "invalid.x1"
-	kafka, _, err = client.DefaultApi.CreateKafka(ctx, true, k)
+	kafka, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).To(HaveOccurred(), "Error should have occurred when attempting to create kafka with invalid instance type provided in the plan")
 
 	// unsuccessful creation of kafka with invalid size_id provided in the "plan" parameter
 	k.Plan = fmt.Sprintf("%s.x9999", types.STANDARD.String())
-	kafka, _, err = client.DefaultApi.CreateKafka(ctx, true, k)
+	kafka, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).To(HaveOccurred(), "Error should have occurred when attempting to create kafka unsupported size_id")
 }
 
@@ -920,6 +936,9 @@ func TestKafka_Update(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			client := test.NewApiClient(h)
 			result, resp, err := client.DefaultApi.UpdateKafkaById(tt.args.ctx, tt.args.kafkaID, tt.args.kafkaUpdateRequest)
+			if resp != nil {
+				resp.Body.Close()
+			}
 			tt.verifyResponse(result, resp, err)
 		})
 	}
@@ -964,14 +983,19 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 		DeprecatedMultiAz: testMultiAZ,
 	}
 
-	_, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	_, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 
 	Expect(err).ToNot(HaveOccurred(), "Unexpected error occurred when creating kafka:  %v", err)
 
 	k.Name = mockKafkaName
 
-	_, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
-
+	_, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).To(HaveOccurred(), "Expecting error to be thrown when creating more kafkas than allowed by the cluster limit:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 
@@ -1069,6 +1093,9 @@ func TestKafkaPost_Validations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			_, resp, _ := client.DefaultApi.CreateKafka(ctx, true, tt.body)
+			if resp != nil {
+				resp.Body.Close()
+			}
 			Expect(resp.StatusCode).To(Equal(tt.wantCode))
 		})
 	}
@@ -1118,13 +1145,19 @@ func TestKafkaPost_NameUniquenessValidations(t *testing.T) {
 
 	// create the first kafka
 	_, resp1, _ := client.DefaultApi.CreateKafka(ctx1, true, k)
-
+	if resp1 != nil {
+		resp1.Body.Close()
+	}
 	// attempt to create the second kafka with same name
 	_, resp2, _ := client.DefaultApi.CreateKafka(ctx2, true, k)
-
+	if resp2 != nil {
+		resp2.Body.Close()
+	}
 	// create another kafka with same name for different org
 	_, resp3, _ := client.DefaultApi.CreateKafka(ctx3, true, k)
-
+	if resp3 != nil {
+		resp3.Body.Close()
+	}
 	// verify that the first and third requests were accepted
 	Expect(resp1.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(resp3.StatusCode).To(Equal(http.StatusAccepted))
@@ -1194,6 +1227,9 @@ func TestKafkaDenyList_UnauthorizedValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			resp := tt.operation()
+			if resp != nil {
+				resp.Body.Close()
+			}
 			Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 			Expect(resp.Header.Get("Content-Type")).To(Equal("application/json"))
 		})
@@ -1375,10 +1411,14 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 
 	// create the first kafka
 	resp1Body, resp1, _ := client.DefaultApi.CreateKafka(internalUserCtx, true, kafka1)
-
+	if resp1 != nil {
+		resp1.Body.Close()
+	}
 	// create the second kafka
 	_, resp2, _ := client.DefaultApi.CreateKafka(internalUserCtx, true, kafka2)
-
+	if resp2 != nil {
+		resp2.Body.Close()
+	}
 	// verify that the request errored with 403 forbidden for the account in same organisation
 	Expect(resp2.StatusCode).To(Equal(http.StatusForbidden))
 	Expect(resp2.Header.Get("Content-Type")).To(Equal("application/json"))
@@ -1392,6 +1432,9 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	internalUserCtx = h.NewAuthenticatedContext(accountInSameOrg, nil)
 
 	_, sameOrgUserResp, _ := client.DefaultApi.CreateKafka(internalUserCtx, true, kafka2)
+	if sameOrgUserResp != nil {
+		sameOrgUserResp.Body.Close()
+	}
 	Expect(sameOrgUserResp.StatusCode).To(Equal(http.StatusForbidden))
 	Expect(sameOrgUserResp.Header.Get("Content-Type")).To(Equal("application/json"))
 
@@ -1401,7 +1444,9 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 
 	// attempt to create kafka for this user account
 	_, resp4, _ := client.DefaultApi.CreateKafka(internalUserCtx, true, kafka1)
-
+	if resp4 != nil {
+		resp4.Body.Close()
+	}
 	// verify that the request was accepted
 	Expect(resp4.StatusCode).To(Equal(http.StatusAccepted))
 
@@ -1410,8 +1455,13 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	externalUserCtx := h.NewAuthenticatedContext(externalUserAccount, nil)
 
 	resp5Body, resp5, _ := client.DefaultApi.CreateKafka(externalUserCtx, true, kafka3)
+	if resp5 != nil {
+		resp5.Body.Close()
+	}
 	_, resp6, _ := client.DefaultApi.CreateKafka(externalUserCtx, true, kafka4)
-
+	if resp6 != nil {
+		resp6.Body.Close()
+	}
 	// verify that the first request was accepted for an developer type
 	Expect(resp5.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(resp5Body.InstanceType).To(Equal("developer"))
@@ -1425,8 +1475,13 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	externalUserSameOrgCtx := h.NewAuthenticatedContext(externalUserSameOrgAccount, nil)
 
 	_, resp7, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka5)
+	if resp7 != nil {
+		resp7.Body.Close()
+	}
 	_, resp8, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka4)
-
+	if resp8 != nil {
+		resp8.Body.Close()
+	}
 	// verify that the first request was accepted
 	Expect(resp7.StatusCode).To(Equal(http.StatusAccepted))
 
@@ -1467,13 +1522,19 @@ func TestKafkaGet(t *testing.T) {
 		ReauthenticationEnabled: &reauthenticationEnabled,
 	}
 
-	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	seedKafka, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	if err != nil {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
@@ -1501,6 +1562,9 @@ func TestKafkaGet(t *testing.T) {
 	Expect(kafka.BrowserUrl).To(Equal(fmt.Sprintf("%s%s/dashboard", test.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	// A different account than the one used to create the Kafka instance, within
@@ -1508,7 +1572,10 @@ func TestKafkaGet(t *testing.T) {
 	// should be able to read the Kafka cluster
 	account = h.NewRandAccount()
 	ctx = h.NewAuthenticatedContext(account, nil)
-	kafka, _, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(kafka.Id).NotTo(BeEmpty())
 
 	// An account in a different organization than the one used to create the
@@ -1518,6 +1585,9 @@ func TestKafkaGet(t *testing.T) {
 	account = h.NewAccountWithNameAndOrg(faker.Name(), anotherOrgID)
 	ctx = h.NewAuthenticatedContext(account, nil)
 	_, resp, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	// An allowed serviceaccount in config/quota-management-list-configuration.yaml
@@ -1525,6 +1595,9 @@ func TestKafkaGet(t *testing.T) {
 	account = h.NewAllowedServiceAccount()
 	ctx = h.NewAuthenticatedContext(account, nil)
 	_, resp, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
 
@@ -1647,6 +1720,9 @@ func TestKafka_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			client := test.NewApiClient(h)
 			_, resp, err := client.DefaultApi.DeleteKafkaById(tt.args.ctx, tt.args.kafkaID, tt.args.async)
+			if resp != nil {
+				resp.Body.Close()
+			}
 			tt.verifyResponse(resp, err)
 		})
 	}
@@ -1684,7 +1760,10 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 				return err
 			}
 
-			kafkaList, _, err := privateClient.AgentClustersApi.GetKafkas(ctx, dataplaneCluster.ClusterID)
+			kafkaList, resp, err := privateClient.AgentClustersApi.GetKafkas(ctx, dataplaneCluster.ClusterID)
+			if resp != nil {
+				resp.Body.Close()
+			}
 			if err != nil {
 				return err
 			}
@@ -1696,8 +1775,12 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 				}
 			}
 
-			if _, err = privateClient.AgentClustersApi.UpdateKafkaClusterStatus(ctx, dataplaneCluster.ClusterID, kafkaStatusList); err != nil {
+			if resp, err = privateClient.AgentClustersApi.UpdateKafkaClusterStatus(ctx, dataplaneCluster.ClusterID, kafkaStatusList); err != nil {
 				return err
+			} else {
+				if resp != nil {
+					resp.Body.Close()
+				}
 			}
 		}
 		return nil
@@ -1725,15 +1808,24 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 
 	// Test deletion of a kafka in an 'accepted' state
 	kafka, resp, err := common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 
-	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	_, resp, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
 	_ = common.WaitForKafkaToBeDeleted(ctx, test.TestServices.DBFactory, client, kafka.Id)
-	kafkaList, _, err := client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+	kafkaList, resp, err := client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
 
@@ -1744,6 +1836,9 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 
 	// Test deletion of a kafka in a 'preparing' state
 	kafka, resp, err = common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
@@ -1751,11 +1846,17 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	kafka, err = common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusPreparing)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be preparing: %v", err)
 
-	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	_, resp, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
 	_ = common.WaitForKafkaToBeDeleted(ctx, test.TestServices.DBFactory, client, kafka.Id)
-	kafkaList, _, err = client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+	kafkaList, resp, err = client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
 
@@ -1766,6 +1867,9 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 
 	// Test deletion of a kafka in a 'provisioning' state
 	kafka, resp, err = common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
@@ -1773,11 +1877,17 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	kafka, err = common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusProvisioning)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be provisioning: %v", err)
 
-	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	_, resp, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
 	_ = common.WaitForKafkaToBeDeleted(ctx, test.TestServices.DBFactory, client, kafka.Id)
-	kafkaList, _, err = client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+	kafkaList, resp, err = client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
 
@@ -1805,7 +1915,10 @@ func TestKafkaDelete_Fail(t *testing.T) {
 		Id:            "invalid-8a41f783-b5e4-4692-a7cd-c0b9c8eeede9",
 	}
 
-	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	_, resp, err := client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).To(HaveOccurred())
 	// The id is invalid, so the metric is not expected to exist
 	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount), false)
@@ -1923,6 +2036,9 @@ func TestKafka_DeleteAdminNonOwner(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			client := test.NewApiClient(h)
 			_, resp, err := client.DefaultApi.DeleteKafkaById(tt.args.ctx, tt.args.kafkaID, true)
+			if resp != nil {
+				resp.Body.Close()
+			}
 			tt.verifyResponse(resp, err)
 		})
 	}
@@ -1953,6 +2069,9 @@ func TestKafkaList_Success(t *testing.T) {
 
 	// get initial list (should be empty)
 	initList, resp, err := client.DefaultApi.GetKafkas(initCtx, nil)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(initList.Items).To(BeEmpty(), "Expected empty kafka requests list")
@@ -1976,13 +2095,19 @@ func TestKafkaList_Success(t *testing.T) {
 	}
 
 	// POST kafka request to populate the list
-	seedKafka, _, err := client.DefaultApi.CreateKafka(initCtx, true, k)
+	seedKafka, resp, err := client.DefaultApi.CreateKafka(initCtx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	if err != nil {
 		t.Fatalf("failed to create seeded KafkaRequest: %s", err.Error())
 	}
 
 	// get populated list of kafka requests
-	afterPostList, _, err := client.DefaultApi.GetKafkas(initCtx, nil)
+	afterPostList, resp, err := client.DefaultApi.GetKafkas(initCtx, nil)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(afterPostList.Items)).To(Equal(1), "Expected kafka requests list length to be 1")
@@ -2013,7 +2138,10 @@ func TestKafkaList_Success(t *testing.T) {
 
 	// get populated list of kafka requests
 
-	afterPostList, _, err = client.DefaultApi.GetKafkas(ctx, nil)
+	afterPostList, resp, err = client.DefaultApi.GetKafkas(ctx, nil)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(afterPostList.Items)).To(Equal(1), "Expected kafka requests list length to be 1")
@@ -2043,7 +2171,10 @@ func TestKafkaList_Success(t *testing.T) {
 	ctx = h.NewAuthenticatedContext(account, nil)
 
 	// expecting empty list for user that hasn't created any kafkas yet
-	newUserList, _, err := client.DefaultApi.GetKafkas(ctx, nil)
+	newUserList, resp, err := client.DefaultApi.GetKafkas(ctx, nil)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(newUserList.Items)).To(Equal(0), "Expected kafka requests list length to be 0")
@@ -2064,6 +2195,9 @@ func TestKafkaList_UnauthUser(t *testing.T) {
 	ctx := context.Background()
 
 	kafkaRequests, resp, err := client.DefaultApi.GetKafkas(ctx, nil)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).To(HaveOccurred()) // expecting an error here due unauthenticated user
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 	Expect(kafkaRequests.Items).To(BeNil())
@@ -2072,7 +2206,10 @@ func TestKafkaList_UnauthUser(t *testing.T) {
 }
 
 func deleteTestKafka(t *testing.T, h *coreTest.Helper, ctx context.Context, client *public.APIClient, kafkaID string) {
-	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafkaID, true)
+	_, resp, err := client.DefaultApi.DeleteKafkaById(ctx, kafkaID, true)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
 	// wait for kafka to be deleted
@@ -2110,6 +2247,9 @@ func TestKafkaList_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, claims)
 
 	_, resp, err := client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
@@ -2133,6 +2273,9 @@ func TestKafkaList_CorrectTokenIssuer_AuthzSuccess(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, claims)
 
 	_, resp, err := client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 }

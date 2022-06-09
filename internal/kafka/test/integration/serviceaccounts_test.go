@@ -53,6 +53,9 @@ func TestServiceAccounts_GetByClientID(t *testing.T) {
 	}
 
 	list, resp, err := client.SecurityApi.GetServiceAccounts(ctx, &opts)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(list.Items).To(HaveLen(0))
@@ -63,6 +66,9 @@ func TestServiceAccounts_GetByClientID(t *testing.T) {
 		Description: "created by the managed service integration tests",
 	}
 	sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 
@@ -70,13 +76,19 @@ func TestServiceAccounts_GetByClientID(t *testing.T) {
 	opts.ClientId = optional.NewString(sa.ClientId)
 
 	list, resp, err = client.SecurityApi.GetServiceAccounts(ctx, &opts)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(list.Items).To(HaveLen(1))
 	Expect(list.Items[0].ClientId == sa.ClientId)
 	Expect(list.Items[0].Id == sa.Id)
 	Expect(list.Items[0].Name == sa.Name)
-	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
+	_, resp, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 }
 
@@ -106,6 +118,9 @@ func TestServiceAccounts_Success(t *testing.T) {
 
 	//verify list
 	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx, nil)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	currTime := time.Now().Format(time.RFC3339)
@@ -117,6 +132,9 @@ func TestServiceAccounts_Success(t *testing.T) {
 		Description: "created by the managed service integration tests",
 	}
 	sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa.ClientId).NotTo(BeEmpty())
@@ -128,6 +146,9 @@ func TestServiceAccounts_Success(t *testing.T) {
 	// verify get by id
 	id := sa.Id
 	sa, resp, err = client.SecurityApi.GetServiceAccountById(ctx, id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(sa.ClientId).NotTo(BeEmpty())
@@ -137,7 +158,10 @@ func TestServiceAccounts_Success(t *testing.T) {
 
 	//verify reset
 	oldSecret := sa.ClientSecret
-	sa, _, err = client.SecurityApi.ResetServiceAccountCreds(ctx, id)
+	sa, resp, err = client.SecurityApi.ResetServiceAccountCreds(ctx, id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(Equal(oldSecret))
@@ -145,17 +169,26 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(sa.CreatedBy).Should(Equal(username))
 
 	//verify delete
-	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, id)
+	_, resp, err = client.SecurityApi.DeleteServiceAccountById(ctx, id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 
 	// verify deletion of non-existent service account throws http status code 404
-	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, id)
+	_, resp, err = client.SecurityApi.DeleteServiceAccountById(ctx, id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).To(HaveOccurred())
 	// skipping for now as mas sso and rhsso service returns different http codes: mas sso returns 404, rhsso returns 500.
 	// Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	f := false
-	accounts, _, _ := client.SecurityApi.GetServiceAccounts(ctx, nil)
+	accounts, resp, _ := client.SecurityApi.GetServiceAccounts(ctx, nil)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	for _, a := range accounts.Items {
 		if a.Id == id {
 			f = true
@@ -183,6 +216,9 @@ func TestServiceAccounts_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, claims)
 
 	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx, nil)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
@@ -199,6 +235,9 @@ func TestServiceAccounts_CorrectTokenIssuer_AuthzSuccess(t *testing.T) {
 	ctx := getAuthenticatedContext(h, nil)
 
 	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx, nil)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 }
@@ -220,6 +259,9 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Description: "created by the managed service integration",
 	}
 	_, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
@@ -229,6 +271,9 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Description: "created by the managed service integration",
 	}
 	_, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
@@ -238,6 +283,9 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Description: "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv",
 	}
 	_, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
@@ -247,6 +295,9 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Description: "test",
 	}
 	_, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
@@ -261,6 +312,9 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 			Description: "",
 		}
 		sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
+		if resp != nil {
+			resp.Body.Close()
+		}
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 		Expect(sa.ClientId).NotTo(BeEmpty())
@@ -268,7 +322,10 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Expect(sa.Id).NotTo(BeEmpty())
 
 		// verify delete
-		_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
+		_, resp, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
+		if resp != nil {
+			resp.Body.Close()
+		}
 		Expect(err).ShouldNot(HaveOccurred())
 	}
 
@@ -278,6 +335,9 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Description: "Created by the managed-services integration tests.,",
 	}
 	sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa.ClientId).NotTo(BeEmpty())
@@ -285,7 +345,10 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(sa.Id).NotTo(BeEmpty())
 
 	//verify delete
-	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
+	_, resp, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 
 	//xss prevention
@@ -294,12 +357,18 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Description: "created by the managed service integration #$@#$#@$#@$$#",
 	}
 	_, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
 	// verify malformed  id
 	id := faker.ID
 	_, resp, err = client.SecurityApi.GetServiceAccountById(ctx, id)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 }
@@ -316,6 +385,9 @@ func TestServiceAccounts_SsoProvider_MAS_SSO(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(nil, nil)
 
 	sp, resp, err := client.SecurityApi.GetSsoProviders(ctx)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(sp.Name).To(Equal("mas_sso"))
@@ -335,6 +407,9 @@ func TestServiceAccounts_SsoProvider_SSO(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(nil, nil)
 
 	sp, resp, err := client.SecurityApi.GetSsoProviders(ctx)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(sp.Name).To(Equal("redhat_sso"))

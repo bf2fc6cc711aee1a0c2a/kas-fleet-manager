@@ -299,6 +299,9 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(list.Items).To(HaveLen(4)) // only count valid Managed Kafka CR
@@ -417,12 +420,18 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 	adminCtx := NewAuthenticatedContextForAdminEndpoints(testServer.Helper, []string{auth.KasFleetManagerAdminWriteRole})
 	client := test.NewAdminPrivateAPIClient(testServer.Helper)
 	for _, kafka := range testKafkas {
-		result, _, err := client.DefaultApi.UpdateKafkaById(adminCtx, kafka.ID, biggerStorageUpdateRequest)
+		result, resp, err := client.DefaultApi.UpdateKafkaById(adminCtx, kafka.ID, biggerStorageUpdateRequest)
+		if resp != nil {
+			resp.Body.Close()
+		}
 		Expect(err).To(BeNil())
 		Expect(result.KafkaStorageSize).To(Equal(biggerStorageUpdateRequest.KafkaStorageSize))
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
@@ -469,7 +478,10 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 	}
 
 	// routes will be stored the first time status are updated
-	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	resp, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 
 	// wait for the CNAMEs for routes to be created
@@ -487,7 +499,10 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 	Expect(waitErr).To(BeNil())
 
 	// Send the requests again, this time the instances should be ready because routes are created
-	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	resp, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 
 	for _, cid := range readyClusters {
@@ -533,7 +548,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 
 	for _, cid := range readyClusters {
 		// update the status to ready again and remove reason field to simulate the end of upgrade process as reported by kas-fleet-shard
-		_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, map[string]private.DataPlaneKafkaStatus{
+		resp, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, map[string]private.DataPlaneKafkaStatus{
 			cid: {
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
@@ -546,7 +561,9 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 				},
 			},
 		})
-
+		if resp != nil {
+			resp.Body.Close()
+		}
 		Expect(err).NotTo(HaveOccurred())
 
 		c := &dbapi.KafkaRequest{}
@@ -608,6 +625,9 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
@@ -664,6 +684,9 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
@@ -721,6 +744,9 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
@@ -775,6 +801,9 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
@@ -814,6 +843,9 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 	}
 
 	list, resp, err = testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
@@ -879,6 +911,9 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // only count valid Managed Kafka CR
@@ -909,7 +944,10 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 	}
 
 	// routes will be stored the first time status are updated
-	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	resp, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 
 	// wait for the CNAMEs for routes to be created
@@ -944,7 +982,10 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 	Expect(waitErr).NotTo(HaveOccurred())
 
 	// Send the requests again, this time the instances should be ready because routes are created
-	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	resp, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 
 	for _, cid := range readyClusters {
@@ -1011,6 +1052,9 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
@@ -1064,6 +1108,9 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
@@ -1073,7 +1120,10 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	updateReq := map[string]private.DataPlaneKafkaStatus{
 		kafkaReqID: kasfleetshardsync.GetErrorWithCustomMessageKafkaStatusResponse(errMessage),
 	}
-	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
+	resp, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 
 	c := &dbapi.KafkaRequest{}
@@ -1122,6 +1172,9 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
@@ -1130,7 +1183,10 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 	updateReq := map[string]private.DataPlaneKafkaStatus{
 		kafkaReqID: kasfleetshardsync.GetReadyKafkaStatusResponse(clusterDNS),
 	}
-	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
+	resp, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred())
 
 	c := &dbapi.KafkaRequest{}

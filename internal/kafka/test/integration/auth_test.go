@@ -55,12 +55,19 @@ func TestAuthSucess_publicUrls(t *testing.T) {
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusOK))
 
 	errorsList, resp, err := client.ErrorsApi.GetErrors(context.Background())
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).To(BeNil())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(errorsList.Items).NotTo(BeEmpty())
 
 	errorCode := "7"
 	_, notFoundErrorResp, err := client.ErrorsApi.GetErrorById(context.Background(), errorCode)
+
+	if notFoundErrorResp != nil {
+		notFoundErrorResp.Body.Close()
+	}
 	Expect(err).To(BeNil())
 	Expect(notFoundErrorResp.StatusCode).To(Equal(http.StatusOK))
 }

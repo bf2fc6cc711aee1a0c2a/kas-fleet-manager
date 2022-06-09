@@ -72,6 +72,9 @@ func TestFederation_GetFederatedMetrics(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, nil)
 
 	federatedMetrics, resp, err := client.DefaultApi.FederateMetrics(ctx, kafkaId)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to call federation endpoint:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(federatedMetrics).NotTo(BeEmpty())
@@ -144,6 +147,9 @@ func TestFederation_GetFederatedMetricsUsingMasSsoToken(t *testing.T) {
 	masSsoCtx := h.NewAuthenticatedContext(masSsoSA, claims)
 
 	federatedMetrics, resp, err := client.DefaultApi.FederateMetrics(masSsoCtx, kafkaId)
+	if resp != nil {
+		resp.Body.Close()
+	}
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to call federation endpoint:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(federatedMetrics).NotTo(BeEmpty())
