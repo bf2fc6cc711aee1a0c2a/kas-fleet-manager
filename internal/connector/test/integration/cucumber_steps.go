@@ -64,7 +64,7 @@ func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as str
 		byId[p.Id] = p.Value
 	}
 
-	u, err := url.Parse(fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", byId["mas-sso-base-url"], byId["mas-sso-realm"]))
+	u, err := url.Parse(fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", byId["sso-base-url"], byId["sso-realm"]))
 	if err != nil {
 		return err
 	}
