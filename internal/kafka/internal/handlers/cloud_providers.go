@@ -22,7 +22,7 @@ import (
 const cloudProvidersCacheKey = "cloudProviderList"
 
 type cloudProvidersHandler struct {
-	service                  services.CloudProvidersService
+	cloudProvidersService    services.CloudProvidersService
 	cache                    *cache.Cache
 	supportedProviders       config.ProviderList
 	kafkaService             services.KafkaService
@@ -30,9 +30,9 @@ type cloudProvidersHandler struct {
 	kafkaConfig              *config.KafkaConfig
 }
 
-func NewCloudProviderHandler(service services.CloudProvidersService, providerConfig *config.ProviderConfig, kafkaService services.KafkaService, clusterPlacementStrategy services.ClusterPlacementStrategy, kafkaConfig *config.KafkaConfig) *cloudProvidersHandler {
+func NewCloudProviderHandler(cloudProvidersService services.CloudProvidersService, providerConfig *config.ProviderConfig, kafkaService services.KafkaService, clusterPlacementStrategy services.ClusterPlacementStrategy, kafkaConfig *config.KafkaConfig) *cloudProvidersHandler {
 	return &cloudProvidersHandler{
-		service:                  service,
+		cloudProvidersService:    cloudProvidersService,
 		supportedProviders:       providerConfig.ProvidersConfig.SupportedProviders,
 		cache:                    cache.New(5*time.Minute, 10*time.Minute),
 		kafkaService:             kafkaService,
@@ -51,7 +51,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			handlers.ValidateLength(&id, "id", handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			cloudRegions, err := h.service.ListCachedCloudProviderRegions(id)
+			cloudRegions, err := h.cloudProvidersService.ListCachedCloudProviderRegions(id)
 			if err != nil {
 				return nil, err
 			}
@@ -147,7 +147,7 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 			if cached {
 				return cachedCloudProviderList, nil
 			}
-			cloudProviders, err := h.service.ListCloudProviders()
+			cloudProviders, err := h.cloudProvidersService.ListCloudProviders()
 			if err != nil {
 				return nil, err
 			}

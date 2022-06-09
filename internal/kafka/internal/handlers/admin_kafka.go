@@ -20,14 +20,14 @@ import (
 )
 
 type adminKafkaHandler struct {
-	service        services.KafkaService
+	kafkaService   services.KafkaService
 	accountService account.AccountService
 	providerConfig *config.ProviderConfig
 }
 
-func NewAdminKafkaHandler(service services.KafkaService, accountService account.AccountService, providerConfig *config.ProviderConfig) *adminKafkaHandler {
+func NewAdminKafkaHandler(kafkaService services.KafkaService, accountService account.AccountService, providerConfig *config.ProviderConfig) *adminKafkaHandler {
 	return &adminKafkaHandler{
-		service:        service,
+		kafkaService:   kafkaService,
 		accountService: accountService,
 		providerConfig: providerConfig,
 	}
@@ -38,7 +38,7 @@ func (h adminKafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
-			kafkaRequest, err := h.service.Get(ctx, id)
+			kafkaRequest, err := h.kafkaService.Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
@@ -59,7 +59,7 @@ func (h adminKafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list kafka requests: %s", err.Error())
 			}
 
-			kafkaRequests, paging, err := h.service.List(ctx, listArgs)
+			kafkaRequests, paging, err := h.kafkaService.List(ctx, listArgs)
 			if err != nil {
 				return nil, err
 			}
@@ -96,7 +96,7 @@ func (h adminKafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
 
-			err := h.service.RegisterKafkaDeprovisionJob(ctx, id)
+			err := h.kafkaService.RegisterKafkaDeprovisionJob(ctx, id)
 			return nil, err
 		},
 	}
@@ -108,7 +108,7 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
 	ctx := r.Context()
-	kafkaRequest, err := h.service.Get(ctx, id)
+	kafkaRequest, err := h.kafkaService.Get(ctx, id)
 
 	var kafkaUpdateReq private.KafkaUpdateRequest
 	cfg := &handlers.HandlerConfig{
@@ -173,7 +173,7 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 			updateRequired = update(&kafkaRequest.KafkaStorageSize, kafkaUpdateReq.KafkaStorageSize) || updateRequired
 
 			if updateRequired {
-				err3 := h.service.VerifyAndUpdateKafkaAdmin(ctx, kafkaRequest)
+				err3 := h.kafkaService.VerifyAndUpdateKafkaAdmin(ctx, kafkaRequest)
 				if err3 != nil {
 					return nil, err3
 				}
