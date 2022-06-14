@@ -1132,7 +1132,7 @@ Feature: connector agent API
     When update connector catalog of type "aws-sqs-source-v1alpha1" and channel "stable" with shard metadata:
       """
       {
-        "meta_image": "quay.io/mock-image:1.0.0",
+        "connector_image": "quay.io/mock-image:1.0.0",
         "operators": [
           {
             "type": "camel-k",
@@ -1191,7 +1191,7 @@ Feature: connector agent API
     And the ".items[0].spec.shard_metadata" selection from the response should match json:
       """"
       {
-        "meta_image": "quay.io/mock-image:1.0.0",
+        "connector_image": "quay.io/mock-image:1.0.0",
         "operators": [
           {
             "type": "camel-k",

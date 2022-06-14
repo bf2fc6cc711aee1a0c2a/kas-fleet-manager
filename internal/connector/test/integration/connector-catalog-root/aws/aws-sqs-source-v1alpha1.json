@@ -228,7 +228,7 @@
     "beta": {
       "revision": 1,
       "shard_metadata": {
-        "meta_image": "quay.io/mock-image:beta",
+        "connector_image": "quay.io/mock-image:beta",
         "operators": [
           {
             "type": "camel-k",

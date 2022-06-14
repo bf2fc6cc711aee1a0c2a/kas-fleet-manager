@@ -311,9 +311,10 @@ func (cts *connectorTypesService) GetLatestConnectorShardMetadata(tid, channel s
 	resource := &dbapi.ConnectorShardMetadata{}
 	dbConn := cts.connectionFactory.New()
 
-	err := dbConn.Unscoped().
-		Where("connector_type_id", tid).
-		Where("channel", channel).
+	err := dbConn.
+		Where("connector_type_id = ?", tid).
+		Where("channel = ?", channel).
+		Order("id desc").
 		First(&resource).Error
 
 	if err != nil {
