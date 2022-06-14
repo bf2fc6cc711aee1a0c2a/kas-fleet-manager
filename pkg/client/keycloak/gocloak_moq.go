@@ -94,6 +94,12 @@ var _ gocloak.GoCloak = &GoCloakMock{}
 // 			CreateClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string, roles []gocloak.Role) error {
 // 				panic("mock out the CreateClientScopeMappingsRealmRoles method")
 // 			},
+// 			CreateClientScopeProtocolMapperFunc: func(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) (string, error) {
+// 				panic("mock out the CreateClientScopeProtocolMapper method")
+// 			},
+// 			CreateClientScopesScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string, roles []gocloak.Role) error {
+// 				panic("mock out the CreateClientScopesScopeMappingsClientRoles method")
+// 			},
 // 			CreateClientScopesScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, roles []gocloak.Role) error {
 // 				panic("mock out the CreateClientScopesScopeMappingsRealmRoles method")
 // 			},
@@ -183,6 +189,12 @@ var _ gocloak.GoCloak = &GoCloakMock{}
 // 			},
 // 			DeleteClientScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClient string, roles []gocloak.Role) error {
 // 				panic("mock out the DeleteClientScopeMappingsRealmRoles method")
+// 			},
+// 			DeleteClientScopeProtocolMapperFunc: func(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapperID string) error {
+// 				panic("mock out the DeleteClientScopeProtocolMapper method")
+// 			},
+// 			DeleteClientScopesScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, ifOfClient string, roles []gocloak.Role) error {
+// 				panic("mock out the DeleteClientScopesScopeMappingsClientRoles method")
 // 			},
 // 			DeleteClientScopesScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, roles []gocloak.Role) error {
 // 				panic("mock out the DeleteClientScopesScopeMappingsRealmRoles method")
@@ -331,8 +343,20 @@ var _ gocloak.GoCloak = &GoCloakMock{}
 // 			GetClientScopeMappingsRealmRolesAvailableFunc: func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.Role, error) {
 // 				panic("mock out the GetClientScopeMappingsRealmRolesAvailable method")
 // 			},
+// 			GetClientScopeProtocolMapperFunc: func(ctx context.Context, token string, realm string, scopeID string, protocolMapperID string) (*gocloak.ProtocolMappers, error) {
+// 				panic("mock out the GetClientScopeProtocolMapper method")
+// 			},
+// 			GetClientScopeProtocolMappersFunc: func(ctx context.Context, token string, realm string, scopeID string) ([]*gocloak.ProtocolMappers, error) {
+// 				panic("mock out the GetClientScopeProtocolMappers method")
+// 			},
 // 			GetClientScopesFunc: func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
 // 				panic("mock out the GetClientScopes method")
+// 			},
+// 			GetClientScopesScopeMappingsClientRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetClientScopesScopeMappingsClientRoles method")
+// 			},
+// 			GetClientScopesScopeMappingsClientRolesAvailableFunc: func(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error) {
+// 				panic("mock out the GetClientScopesScopeMappingsClientRolesAvailable method")
 // 			},
 // 			GetClientScopesScopeMappingsRealmRolesFunc: func(ctx context.Context, token string, realm string, idOfClientScope string) ([]*gocloak.Role, error) {
 // 				panic("mock out the GetClientScopesScopeMappingsRealmRoles method")
@@ -649,6 +673,9 @@ var _ gocloak.GoCloak = &GoCloakMock{}
 // 			UpdateClientScopeFunc: func(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) error {
 // 				panic("mock out the UpdateClientScope method")
 // 			},
+// 			UpdateClientScopeProtocolMapperFunc: func(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) error {
+// 				panic("mock out the UpdateClientScopeProtocolMapper method")
+// 			},
 // 			UpdateCredentialUserLabelFunc: func(ctx context.Context, token string, realm string, userID string, credentialID string, userLabel string) error {
 // 				panic("mock out the UpdateCredentialUserLabel method")
 // 			},
@@ -779,6 +806,12 @@ type GoCloakMock struct {
 	// CreateClientScopeMappingsRealmRolesFunc mocks the CreateClientScopeMappingsRealmRoles method.
 	CreateClientScopeMappingsRealmRolesFunc func(ctx context.Context, token string, realm string, idOfClient string, roles []gocloak.Role) error
 
+	// CreateClientScopeProtocolMapperFunc mocks the CreateClientScopeProtocolMapper method.
+	CreateClientScopeProtocolMapperFunc func(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) (string, error)
+
+	// CreateClientScopesScopeMappingsClientRolesFunc mocks the CreateClientScopesScopeMappingsClientRoles method.
+	CreateClientScopesScopeMappingsClientRolesFunc func(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string, roles []gocloak.Role) error
+
 	// CreateClientScopesScopeMappingsRealmRolesFunc mocks the CreateClientScopesScopeMappingsRealmRoles method.
 	CreateClientScopesScopeMappingsRealmRolesFunc func(ctx context.Context, token string, realm string, idOfClientScope string, roles []gocloak.Role) error
 
@@ -868,6 +901,12 @@ type GoCloakMock struct {
 
 	// DeleteClientScopeMappingsRealmRolesFunc mocks the DeleteClientScopeMappingsRealmRoles method.
 	DeleteClientScopeMappingsRealmRolesFunc func(ctx context.Context, token string, realm string, idOfClient string, roles []gocloak.Role) error
+
+	// DeleteClientScopeProtocolMapperFunc mocks the DeleteClientScopeProtocolMapper method.
+	DeleteClientScopeProtocolMapperFunc func(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapperID string) error
+
+	// DeleteClientScopesScopeMappingsClientRolesFunc mocks the DeleteClientScopesScopeMappingsClientRoles method.
+	DeleteClientScopesScopeMappingsClientRolesFunc func(ctx context.Context, token string, realm string, idOfClientScope string, ifOfClient string, roles []gocloak.Role) error
 
 	// DeleteClientScopesScopeMappingsRealmRolesFunc mocks the DeleteClientScopesScopeMappingsRealmRoles method.
 	DeleteClientScopesScopeMappingsRealmRolesFunc func(ctx context.Context, token string, realm string, idOfClientScope string, roles []gocloak.Role) error
@@ -1016,8 +1055,20 @@ type GoCloakMock struct {
 	// GetClientScopeMappingsRealmRolesAvailableFunc mocks the GetClientScopeMappingsRealmRolesAvailable method.
 	GetClientScopeMappingsRealmRolesAvailableFunc func(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.Role, error)
 
+	// GetClientScopeProtocolMapperFunc mocks the GetClientScopeProtocolMapper method.
+	GetClientScopeProtocolMapperFunc func(ctx context.Context, token string, realm string, scopeID string, protocolMapperID string) (*gocloak.ProtocolMappers, error)
+
+	// GetClientScopeProtocolMappersFunc mocks the GetClientScopeProtocolMappers method.
+	GetClientScopeProtocolMappersFunc func(ctx context.Context, token string, realm string, scopeID string) ([]*gocloak.ProtocolMappers, error)
+
 	// GetClientScopesFunc mocks the GetClientScopes method.
 	GetClientScopesFunc func(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error)
+
+	// GetClientScopesScopeMappingsClientRolesFunc mocks the GetClientScopesScopeMappingsClientRoles method.
+	GetClientScopesScopeMappingsClientRolesFunc func(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error)
+
+	// GetClientScopesScopeMappingsClientRolesAvailableFunc mocks the GetClientScopesScopeMappingsClientRolesAvailable method.
+	GetClientScopesScopeMappingsClientRolesAvailableFunc func(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error)
 
 	// GetClientScopesScopeMappingsRealmRolesFunc mocks the GetClientScopesScopeMappingsRealmRoles method.
 	GetClientScopesScopeMappingsRealmRolesFunc func(ctx context.Context, token string, realm string, idOfClientScope string) ([]*gocloak.Role, error)
@@ -1333,6 +1384,9 @@ type GoCloakMock struct {
 
 	// UpdateClientScopeFunc mocks the UpdateClientScope method.
 	UpdateClientScopeFunc func(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) error
+
+	// UpdateClientScopeProtocolMapperFunc mocks the UpdateClientScopeProtocolMapper method.
+	UpdateClientScopeProtocolMapperFunc func(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) error
 
 	// UpdateCredentialUserLabelFunc mocks the UpdateCredentialUserLabel method.
 	UpdateCredentialUserLabelFunc func(ctx context.Context, token string, realm string, userID string, credentialID string, userLabel string) error
@@ -1674,6 +1728,34 @@ type GoCloakMock struct {
 			Token string
 			// Realm is the realm argument value.
 			Realm string
+			// IdOfClient is the idOfClient argument value.
+			IdOfClient string
+			// Roles is the roles argument value.
+			Roles []gocloak.Role
+		}
+		// CreateClientScopeProtocolMapper holds details about calls to the CreateClientScopeProtocolMapper method.
+		CreateClientScopeProtocolMapper []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// AccessToken is the accessToken argument value.
+			AccessToken string
+			// Realm is the realm argument value.
+			Realm string
+			// ScopeID is the scopeID argument value.
+			ScopeID string
+			// ProtocolMapper is the protocolMapper argument value.
+			ProtocolMapper gocloak.ProtocolMappers
+		}
+		// CreateClientScopesScopeMappingsClientRoles holds details about calls to the CreateClientScopesScopeMappingsClientRoles method.
+		CreateClientScopesScopeMappingsClientRoles []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Token is the token argument value.
+			Token string
+			// Realm is the realm argument value.
+			Realm string
+			// IdOfClientScope is the idOfClientScope argument value.
+			IdOfClientScope string
 			// IdOfClient is the idOfClient argument value.
 			IdOfClient string
 			// Roles is the roles argument value.
@@ -2040,6 +2122,34 @@ type GoCloakMock struct {
 			Realm string
 			// IdOfClient is the idOfClient argument value.
 			IdOfClient string
+			// Roles is the roles argument value.
+			Roles []gocloak.Role
+		}
+		// DeleteClientScopeProtocolMapper holds details about calls to the DeleteClientScopeProtocolMapper method.
+		DeleteClientScopeProtocolMapper []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// AccessToken is the accessToken argument value.
+			AccessToken string
+			// Realm is the realm argument value.
+			Realm string
+			// ScopeID is the scopeID argument value.
+			ScopeID string
+			// ProtocolMapperID is the protocolMapperID argument value.
+			ProtocolMapperID string
+		}
+		// DeleteClientScopesScopeMappingsClientRoles holds details about calls to the DeleteClientScopesScopeMappingsClientRoles method.
+		DeleteClientScopesScopeMappingsClientRoles []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Token is the token argument value.
+			Token string
+			// Realm is the realm argument value.
+			Realm string
+			// IdOfClientScope is the idOfClientScope argument value.
+			IdOfClientScope string
+			// IfOfClient is the ifOfClient argument value.
+			IfOfClient string
 			// Roles is the roles argument value.
 			Roles []gocloak.Role
 		}
@@ -2622,6 +2732,30 @@ type GoCloakMock struct {
 			// IdOfClient is the idOfClient argument value.
 			IdOfClient string
 		}
+		// GetClientScopeProtocolMapper holds details about calls to the GetClientScopeProtocolMapper method.
+		GetClientScopeProtocolMapper []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Token is the token argument value.
+			Token string
+			// Realm is the realm argument value.
+			Realm string
+			// ScopeID is the scopeID argument value.
+			ScopeID string
+			// ProtocolMapperID is the protocolMapperID argument value.
+			ProtocolMapperID string
+		}
+		// GetClientScopeProtocolMappers holds details about calls to the GetClientScopeProtocolMappers method.
+		GetClientScopeProtocolMappers []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Token is the token argument value.
+			Token string
+			// Realm is the realm argument value.
+			Realm string
+			// ScopeID is the scopeID argument value.
+			ScopeID string
+		}
 		// GetClientScopes holds details about calls to the GetClientScopes method.
 		GetClientScopes []struct {
 			// Ctx is the ctx argument value.
@@ -2630,6 +2764,32 @@ type GoCloakMock struct {
 			Token string
 			// Realm is the realm argument value.
 			Realm string
+		}
+		// GetClientScopesScopeMappingsClientRoles holds details about calls to the GetClientScopesScopeMappingsClientRoles method.
+		GetClientScopesScopeMappingsClientRoles []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Token is the token argument value.
+			Token string
+			// Realm is the realm argument value.
+			Realm string
+			// IdOfClientScope is the idOfClientScope argument value.
+			IdOfClientScope string
+			// IdOfClient is the idOfClient argument value.
+			IdOfClient string
+		}
+		// GetClientScopesScopeMappingsClientRolesAvailable holds details about calls to the GetClientScopesScopeMappingsClientRolesAvailable method.
+		GetClientScopesScopeMappingsClientRolesAvailable []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Token is the token argument value.
+			Token string
+			// Realm is the realm argument value.
+			Realm string
+			// IdOfClientScope is the idOfClientScope argument value.
+			IdOfClientScope string
+			// IdOfClient is the idOfClient argument value.
+			IdOfClient string
 		}
 		// GetClientScopesScopeMappingsRealmRoles holds details about calls to the GetClientScopesScopeMappingsRealmRoles method.
 		GetClientScopesScopeMappingsRealmRoles []struct {
@@ -3834,6 +3994,19 @@ type GoCloakMock struct {
 			// Scope is the scope argument value.
 			Scope gocloak.ClientScope
 		}
+		// UpdateClientScopeProtocolMapper holds details about calls to the UpdateClientScopeProtocolMapper method.
+		UpdateClientScopeProtocolMapper []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// AccessToken is the accessToken argument value.
+			AccessToken string
+			// Realm is the realm argument value.
+			Realm string
+			// ScopeID is the scopeID argument value.
+			ScopeID string
+			// ProtocolMapper is the protocolMapper argument value.
+			ProtocolMapper gocloak.ProtocolMappers
+		}
 		// UpdateCredentialUserLabel holds details about calls to the UpdateCredentialUserLabel method.
 		UpdateCredentialUserLabel []struct {
 			// Ctx is the ctx argument value.
@@ -4044,232 +4217,241 @@ type GoCloakMock struct {
 			Permission gocloak.PermissionGrantParams
 		}
 	}
-	lockAddClientRoleComposite                          sync.RWMutex
-	lockAddClientRoleToGroup                            sync.RWMutex
-	lockAddClientRoleToUser                             sync.RWMutex
-	lockAddDefaultGroup                                 sync.RWMutex
-	lockAddDefaultScopeToClient                         sync.RWMutex
-	lockAddOptionalScopeToClient                        sync.RWMutex
-	lockAddRealmRoleComposite                           sync.RWMutex
-	lockAddRealmRoleToGroup                             sync.RWMutex
-	lockAddRealmRoleToUser                              sync.RWMutex
-	lockAddUserToGroup                                  sync.RWMutex
-	lockClearKeysCache                                  sync.RWMutex
-	lockClearRealmCache                                 sync.RWMutex
-	lockClearUserCache                                  sync.RWMutex
-	lockCreateAuthenticationExecution                   sync.RWMutex
-	lockCreateAuthenticationExecutionFlow               sync.RWMutex
-	lockCreateAuthenticationFlow                        sync.RWMutex
-	lockCreateChildGroup                                sync.RWMutex
-	lockCreateClient                                    sync.RWMutex
-	lockCreateClientProtocolMapper                      sync.RWMutex
-	lockCreateClientRepresentation                      sync.RWMutex
-	lockCreateClientRole                                sync.RWMutex
-	lockCreateClientScope                               sync.RWMutex
-	lockCreateClientScopeMappingsClientRoles            sync.RWMutex
-	lockCreateClientScopeMappingsRealmRoles             sync.RWMutex
-	lockCreateClientScopesScopeMappingsRealmRoles       sync.RWMutex
-	lockCreateComponent                                 sync.RWMutex
-	lockCreateGroup                                     sync.RWMutex
-	lockCreateIdentityProvider                          sync.RWMutex
-	lockCreateIdentityProviderMapper                    sync.RWMutex
-	lockCreatePermission                                sync.RWMutex
-	lockCreatePermissionTicket                          sync.RWMutex
-	lockCreatePolicy                                    sync.RWMutex
-	lockCreateRealm                                     sync.RWMutex
-	lockCreateRealmRole                                 sync.RWMutex
-	lockCreateResource                                  sync.RWMutex
-	lockCreateResourceClient                            sync.RWMutex
-	lockCreateResourcePolicy                            sync.RWMutex
-	lockCreateScope                                     sync.RWMutex
-	lockCreateUser                                      sync.RWMutex
-	lockCreateUserFederatedIdentity                     sync.RWMutex
-	lockDecodeAccessToken                               sync.RWMutex
-	lockDecodeAccessTokenCustomClaims                   sync.RWMutex
-	lockDeleteAuthenticationExecution                   sync.RWMutex
-	lockDeleteAuthenticationFlow                        sync.RWMutex
-	lockDeleteClient                                    sync.RWMutex
-	lockDeleteClientProtocolMapper                      sync.RWMutex
-	lockDeleteClientRepresentation                      sync.RWMutex
-	lockDeleteClientRole                                sync.RWMutex
-	lockDeleteClientRoleComposite                       sync.RWMutex
-	lockDeleteClientRoleFromGroup                       sync.RWMutex
-	lockDeleteClientRoleFromUser                        sync.RWMutex
-	lockDeleteClientScope                               sync.RWMutex
-	lockDeleteClientScopeMappingsClientRoles            sync.RWMutex
-	lockDeleteClientScopeMappingsRealmRoles             sync.RWMutex
-	lockDeleteClientScopesScopeMappingsRealmRoles       sync.RWMutex
-	lockDeleteComponent                                 sync.RWMutex
-	lockDeleteCredentials                               sync.RWMutex
-	lockDeleteGroup                                     sync.RWMutex
-	lockDeleteIdentityProvider                          sync.RWMutex
-	lockDeleteIdentityProviderMapper                    sync.RWMutex
-	lockDeletePermission                                sync.RWMutex
-	lockDeletePolicy                                    sync.RWMutex
-	lockDeleteRealm                                     sync.RWMutex
-	lockDeleteRealmRole                                 sync.RWMutex
-	lockDeleteRealmRoleComposite                        sync.RWMutex
-	lockDeleteRealmRoleFromGroup                        sync.RWMutex
-	lockDeleteRealmRoleFromUser                         sync.RWMutex
-	lockDeleteResource                                  sync.RWMutex
-	lockDeleteResourceClient                            sync.RWMutex
-	lockDeleteResourcePolicy                            sync.RWMutex
-	lockDeleteScope                                     sync.RWMutex
-	lockDeleteUser                                      sync.RWMutex
-	lockDeleteUserFederatedIdentity                     sync.RWMutex
-	lockDeleteUserFromGroup                             sync.RWMutex
-	lockDeleteUserPermission                            sync.RWMutex
-	lockDisableAllCredentialsByType                     sync.RWMutex
-	lockExecuteActionsEmail                             sync.RWMutex
-	lockExportIDPPublicBrokerConfig                     sync.RWMutex
-	lockGetAdapterConfiguration                         sync.RWMutex
-	lockGetAuthenticationExecutions                     sync.RWMutex
-	lockGetAuthenticationFlows                          sync.RWMutex
-	lockGetAuthorizationPolicyAssociatedPolicies        sync.RWMutex
-	lockGetAuthorizationPolicyResources                 sync.RWMutex
-	lockGetAuthorizationPolicyScopes                    sync.RWMutex
-	lockGetAvailableClientRolesByGroupID                sync.RWMutex
-	lockGetAvailableClientRolesByUserID                 sync.RWMutex
-	lockGetAvailableRealmRolesByGroupID                 sync.RWMutex
-	lockGetAvailableRealmRolesByUserID                  sync.RWMutex
-	lockGetCerts                                        sync.RWMutex
-	lockGetClient                                       sync.RWMutex
-	lockGetClientOfflineSessions                        sync.RWMutex
-	lockGetClientRepresentation                         sync.RWMutex
-	lockGetClientRole                                   sync.RWMutex
-	lockGetClientRoleByID                               sync.RWMutex
-	lockGetClientRoles                                  sync.RWMutex
-	lockGetClientRolesByGroupID                         sync.RWMutex
-	lockGetClientRolesByUserID                          sync.RWMutex
-	lockGetClientScope                                  sync.RWMutex
-	lockGetClientScopeMappings                          sync.RWMutex
-	lockGetClientScopeMappingsClientRoles               sync.RWMutex
-	lockGetClientScopeMappingsClientRolesAvailable      sync.RWMutex
-	lockGetClientScopeMappingsRealmRoles                sync.RWMutex
-	lockGetClientScopeMappingsRealmRolesAvailable       sync.RWMutex
-	lockGetClientScopes                                 sync.RWMutex
-	lockGetClientScopesScopeMappingsRealmRoles          sync.RWMutex
-	lockGetClientScopesScopeMappingsRealmRolesAvailable sync.RWMutex
-	lockGetClientSecret                                 sync.RWMutex
-	lockGetClientServiceAccount                         sync.RWMutex
-	lockGetClientUserSessions                           sync.RWMutex
-	lockGetClients                                      sync.RWMutex
-	lockGetClientsDefaultScopes                         sync.RWMutex
-	lockGetClientsOptionalScopes                        sync.RWMutex
-	lockGetComponents                                   sync.RWMutex
-	lockGetCompositeClientRolesByGroupID                sync.RWMutex
-	lockGetCompositeClientRolesByRoleID                 sync.RWMutex
-	lockGetCompositeClientRolesByUserID                 sync.RWMutex
-	lockGetCompositeRealmRoles                          sync.RWMutex
-	lockGetCompositeRealmRolesByGroupID                 sync.RWMutex
-	lockGetCompositeRealmRolesByRoleID                  sync.RWMutex
-	lockGetCompositeRealmRolesByUserID                  sync.RWMutex
-	lockGetConfiguredUserStorageCredentialTypes         sync.RWMutex
-	lockGetCredentialRegistrators                       sync.RWMutex
-	lockGetCredentials                                  sync.RWMutex
-	lockGetDefaultDefaultClientScopes                   sync.RWMutex
-	lockGetDefaultGroups                                sync.RWMutex
-	lockGetDefaultOptionalClientScopes                  sync.RWMutex
-	lockGetDependentPermissions                         sync.RWMutex
-	lockGetEvents                                       sync.RWMutex
-	lockGetGroup                                        sync.RWMutex
-	lockGetGroupMembers                                 sync.RWMutex
-	lockGetGroups                                       sync.RWMutex
-	lockGetGroupsByRole                                 sync.RWMutex
-	lockGetGroupsCount                                  sync.RWMutex
-	lockGetIdentityProvider                             sync.RWMutex
-	lockGetIdentityProviderMapperByID                   sync.RWMutex
-	lockGetIdentityProviderMappers                      sync.RWMutex
-	lockGetIdentityProviders                            sync.RWMutex
-	lockGetIssuer                                       sync.RWMutex
-	lockGetKeyStoreConfig                               sync.RWMutex
-	lockGetPermission                                   sync.RWMutex
-	lockGetPermissionResources                          sync.RWMutex
-	lockGetPermissionScopes                             sync.RWMutex
-	lockGetPermissions                                  sync.RWMutex
-	lockGetPolicies                                     sync.RWMutex
-	lockGetPolicy                                       sync.RWMutex
-	lockGetRawUserInfo                                  sync.RWMutex
-	lockGetRealm                                        sync.RWMutex
-	lockGetRealmRole                                    sync.RWMutex
-	lockGetRealmRoleByID                                sync.RWMutex
-	lockGetRealmRoles                                   sync.RWMutex
-	lockGetRealmRolesByGroupID                          sync.RWMutex
-	lockGetRealmRolesByUserID                           sync.RWMutex
-	lockGetRealms                                       sync.RWMutex
-	lockGetRequestingPartyPermissionDecision            sync.RWMutex
-	lockGetRequestingPartyPermissions                   sync.RWMutex
-	lockGetRequestingPartyToken                         sync.RWMutex
-	lockGetResource                                     sync.RWMutex
-	lockGetResourceClient                               sync.RWMutex
-	lockGetResourcePolicies                             sync.RWMutex
-	lockGetResourcePolicy                               sync.RWMutex
-	lockGetResources                                    sync.RWMutex
-	lockGetResourcesClient                              sync.RWMutex
-	lockGetRoleMappingByGroupID                         sync.RWMutex
-	lockGetRoleMappingByUserID                          sync.RWMutex
-	lockGetScope                                        sync.RWMutex
-	lockGetScopes                                       sync.RWMutex
-	lockGetServerInfo                                   sync.RWMutex
-	lockGetToken                                        sync.RWMutex
-	lockGetUserByID                                     sync.RWMutex
-	lockGetUserCount                                    sync.RWMutex
-	lockGetUserFederatedIdentities                      sync.RWMutex
-	lockGetUserGroups                                   sync.RWMutex
-	lockGetUserInfo                                     sync.RWMutex
-	lockGetUserOfflineSessionsForClient                 sync.RWMutex
-	lockGetUserPermissions                              sync.RWMutex
-	lockGetUserSessions                                 sync.RWMutex
-	lockGetUsers                                        sync.RWMutex
-	lockGetUsersByClientRoleName                        sync.RWMutex
-	lockGetUsersByRoleName                              sync.RWMutex
-	lockGrantUserPermission                             sync.RWMutex
-	lockImportIdentityProviderConfig                    sync.RWMutex
-	lockImportIdentityProviderConfigFromFile            sync.RWMutex
-	lockLogin                                           sync.RWMutex
-	lockLoginAdmin                                      sync.RWMutex
-	lockLoginClient                                     sync.RWMutex
-	lockLoginClientSignedJWT                            sync.RWMutex
-	lockLoginClientTokenExchange                        sync.RWMutex
-	lockLoginOtp                                        sync.RWMutex
-	lockLogout                                          sync.RWMutex
-	lockLogoutAllSessions                               sync.RWMutex
-	lockLogoutPublicClient                              sync.RWMutex
-	lockLogoutUserSession                               sync.RWMutex
-	lockMoveCredentialBehind                            sync.RWMutex
-	lockMoveCredentialToFirst                           sync.RWMutex
-	lockRefreshToken                                    sync.RWMutex
-	lockRegenerateClientSecret                          sync.RWMutex
-	lockRemoveDefaultGroup                              sync.RWMutex
-	lockRemoveDefaultScopeFromClient                    sync.RWMutex
-	lockRemoveOptionalScopeFromClient                   sync.RWMutex
-	lockRestyClient                                     sync.RWMutex
-	lockRetrospectToken                                 sync.RWMutex
-	lockRevokeUserConsents                              sync.RWMutex
-	lockSetPassword                                     sync.RWMutex
-	lockSetRestyClient                                  sync.RWMutex
-	lockUpdateAuthenticationExecution                   sync.RWMutex
-	lockUpdateClient                                    sync.RWMutex
-	lockUpdateClientProtocolMapper                      sync.RWMutex
-	lockUpdateClientRepresentation                      sync.RWMutex
-	lockUpdateClientScope                               sync.RWMutex
-	lockUpdateCredentialUserLabel                       sync.RWMutex
-	lockUpdateGroup                                     sync.RWMutex
-	lockUpdateIdentityProvider                          sync.RWMutex
-	lockUpdateIdentityProviderMapper                    sync.RWMutex
-	lockUpdatePermission                                sync.RWMutex
-	lockUpdatePolicy                                    sync.RWMutex
-	lockUpdateRealm                                     sync.RWMutex
-	lockUpdateRealmRole                                 sync.RWMutex
-	lockUpdateRealmRoleByID                             sync.RWMutex
-	lockUpdateRequiredAction                            sync.RWMutex
-	lockUpdateResource                                  sync.RWMutex
-	lockUpdateResourceClient                            sync.RWMutex
-	lockUpdateResourcePolicy                            sync.RWMutex
-	lockUpdateRole                                      sync.RWMutex
-	lockUpdateScope                                     sync.RWMutex
-	lockUpdateUser                                      sync.RWMutex
-	lockUpdateUserPermission                            sync.RWMutex
+	lockAddClientRoleComposite                           sync.RWMutex
+	lockAddClientRoleToGroup                             sync.RWMutex
+	lockAddClientRoleToUser                              sync.RWMutex
+	lockAddDefaultGroup                                  sync.RWMutex
+	lockAddDefaultScopeToClient                          sync.RWMutex
+	lockAddOptionalScopeToClient                         sync.RWMutex
+	lockAddRealmRoleComposite                            sync.RWMutex
+	lockAddRealmRoleToGroup                              sync.RWMutex
+	lockAddRealmRoleToUser                               sync.RWMutex
+	lockAddUserToGroup                                   sync.RWMutex
+	lockClearKeysCache                                   sync.RWMutex
+	lockClearRealmCache                                  sync.RWMutex
+	lockClearUserCache                                   sync.RWMutex
+	lockCreateAuthenticationExecution                    sync.RWMutex
+	lockCreateAuthenticationExecutionFlow                sync.RWMutex
+	lockCreateAuthenticationFlow                         sync.RWMutex
+	lockCreateChildGroup                                 sync.RWMutex
+	lockCreateClient                                     sync.RWMutex
+	lockCreateClientProtocolMapper                       sync.RWMutex
+	lockCreateClientRepresentation                       sync.RWMutex
+	lockCreateClientRole                                 sync.RWMutex
+	lockCreateClientScope                                sync.RWMutex
+	lockCreateClientScopeMappingsClientRoles             sync.RWMutex
+	lockCreateClientScopeMappingsRealmRoles              sync.RWMutex
+	lockCreateClientScopeProtocolMapper                  sync.RWMutex
+	lockCreateClientScopesScopeMappingsClientRoles       sync.RWMutex
+	lockCreateClientScopesScopeMappingsRealmRoles        sync.RWMutex
+	lockCreateComponent                                  sync.RWMutex
+	lockCreateGroup                                      sync.RWMutex
+	lockCreateIdentityProvider                           sync.RWMutex
+	lockCreateIdentityProviderMapper                     sync.RWMutex
+	lockCreatePermission                                 sync.RWMutex
+	lockCreatePermissionTicket                           sync.RWMutex
+	lockCreatePolicy                                     sync.RWMutex
+	lockCreateRealm                                      sync.RWMutex
+	lockCreateRealmRole                                  sync.RWMutex
+	lockCreateResource                                   sync.RWMutex
+	lockCreateResourceClient                             sync.RWMutex
+	lockCreateResourcePolicy                             sync.RWMutex
+	lockCreateScope                                      sync.RWMutex
+	lockCreateUser                                       sync.RWMutex
+	lockCreateUserFederatedIdentity                      sync.RWMutex
+	lockDecodeAccessToken                                sync.RWMutex
+	lockDecodeAccessTokenCustomClaims                    sync.RWMutex
+	lockDeleteAuthenticationExecution                    sync.RWMutex
+	lockDeleteAuthenticationFlow                         sync.RWMutex
+	lockDeleteClient                                     sync.RWMutex
+	lockDeleteClientProtocolMapper                       sync.RWMutex
+	lockDeleteClientRepresentation                       sync.RWMutex
+	lockDeleteClientRole                                 sync.RWMutex
+	lockDeleteClientRoleComposite                        sync.RWMutex
+	lockDeleteClientRoleFromGroup                        sync.RWMutex
+	lockDeleteClientRoleFromUser                         sync.RWMutex
+	lockDeleteClientScope                                sync.RWMutex
+	lockDeleteClientScopeMappingsClientRoles             sync.RWMutex
+	lockDeleteClientScopeMappingsRealmRoles              sync.RWMutex
+	lockDeleteClientScopeProtocolMapper                  sync.RWMutex
+	lockDeleteClientScopesScopeMappingsClientRoles       sync.RWMutex
+	lockDeleteClientScopesScopeMappingsRealmRoles        sync.RWMutex
+	lockDeleteComponent                                  sync.RWMutex
+	lockDeleteCredentials                                sync.RWMutex
+	lockDeleteGroup                                      sync.RWMutex
+	lockDeleteIdentityProvider                           sync.RWMutex
+	lockDeleteIdentityProviderMapper                     sync.RWMutex
+	lockDeletePermission                                 sync.RWMutex
+	lockDeletePolicy                                     sync.RWMutex
+	lockDeleteRealm                                      sync.RWMutex
+	lockDeleteRealmRole                                  sync.RWMutex
+	lockDeleteRealmRoleComposite                         sync.RWMutex
+	lockDeleteRealmRoleFromGroup                         sync.RWMutex
+	lockDeleteRealmRoleFromUser                          sync.RWMutex
+	lockDeleteResource                                   sync.RWMutex
+	lockDeleteResourceClient                             sync.RWMutex
+	lockDeleteResourcePolicy                             sync.RWMutex
+	lockDeleteScope                                      sync.RWMutex
+	lockDeleteUser                                       sync.RWMutex
+	lockDeleteUserFederatedIdentity                      sync.RWMutex
+	lockDeleteUserFromGroup                              sync.RWMutex
+	lockDeleteUserPermission                             sync.RWMutex
+	lockDisableAllCredentialsByType                      sync.RWMutex
+	lockExecuteActionsEmail                              sync.RWMutex
+	lockExportIDPPublicBrokerConfig                      sync.RWMutex
+	lockGetAdapterConfiguration                          sync.RWMutex
+	lockGetAuthenticationExecutions                      sync.RWMutex
+	lockGetAuthenticationFlows                           sync.RWMutex
+	lockGetAuthorizationPolicyAssociatedPolicies         sync.RWMutex
+	lockGetAuthorizationPolicyResources                  sync.RWMutex
+	lockGetAuthorizationPolicyScopes                     sync.RWMutex
+	lockGetAvailableClientRolesByGroupID                 sync.RWMutex
+	lockGetAvailableClientRolesByUserID                  sync.RWMutex
+	lockGetAvailableRealmRolesByGroupID                  sync.RWMutex
+	lockGetAvailableRealmRolesByUserID                   sync.RWMutex
+	lockGetCerts                                         sync.RWMutex
+	lockGetClient                                        sync.RWMutex
+	lockGetClientOfflineSessions                         sync.RWMutex
+	lockGetClientRepresentation                          sync.RWMutex
+	lockGetClientRole                                    sync.RWMutex
+	lockGetClientRoleByID                                sync.RWMutex
+	lockGetClientRoles                                   sync.RWMutex
+	lockGetClientRolesByGroupID                          sync.RWMutex
+	lockGetClientRolesByUserID                           sync.RWMutex
+	lockGetClientScope                                   sync.RWMutex
+	lockGetClientScopeMappings                           sync.RWMutex
+	lockGetClientScopeMappingsClientRoles                sync.RWMutex
+	lockGetClientScopeMappingsClientRolesAvailable       sync.RWMutex
+	lockGetClientScopeMappingsRealmRoles                 sync.RWMutex
+	lockGetClientScopeMappingsRealmRolesAvailable        sync.RWMutex
+	lockGetClientScopeProtocolMapper                     sync.RWMutex
+	lockGetClientScopeProtocolMappers                    sync.RWMutex
+	lockGetClientScopes                                  sync.RWMutex
+	lockGetClientScopesScopeMappingsClientRoles          sync.RWMutex
+	lockGetClientScopesScopeMappingsClientRolesAvailable sync.RWMutex
+	lockGetClientScopesScopeMappingsRealmRoles           sync.RWMutex
+	lockGetClientScopesScopeMappingsRealmRolesAvailable  sync.RWMutex
+	lockGetClientSecret                                  sync.RWMutex
+	lockGetClientServiceAccount                          sync.RWMutex
+	lockGetClientUserSessions                            sync.RWMutex
+	lockGetClients                                       sync.RWMutex
+	lockGetClientsDefaultScopes                          sync.RWMutex
+	lockGetClientsOptionalScopes                         sync.RWMutex
+	lockGetComponents                                    sync.RWMutex
+	lockGetCompositeClientRolesByGroupID                 sync.RWMutex
+	lockGetCompositeClientRolesByRoleID                  sync.RWMutex
+	lockGetCompositeClientRolesByUserID                  sync.RWMutex
+	lockGetCompositeRealmRoles                           sync.RWMutex
+	lockGetCompositeRealmRolesByGroupID                  sync.RWMutex
+	lockGetCompositeRealmRolesByRoleID                   sync.RWMutex
+	lockGetCompositeRealmRolesByUserID                   sync.RWMutex
+	lockGetConfiguredUserStorageCredentialTypes          sync.RWMutex
+	lockGetCredentialRegistrators                        sync.RWMutex
+	lockGetCredentials                                   sync.RWMutex
+	lockGetDefaultDefaultClientScopes                    sync.RWMutex
+	lockGetDefaultGroups                                 sync.RWMutex
+	lockGetDefaultOptionalClientScopes                   sync.RWMutex
+	lockGetDependentPermissions                          sync.RWMutex
+	lockGetEvents                                        sync.RWMutex
+	lockGetGroup                                         sync.RWMutex
+	lockGetGroupMembers                                  sync.RWMutex
+	lockGetGroups                                        sync.RWMutex
+	lockGetGroupsByRole                                  sync.RWMutex
+	lockGetGroupsCount                                   sync.RWMutex
+	lockGetIdentityProvider                              sync.RWMutex
+	lockGetIdentityProviderMapperByID                    sync.RWMutex
+	lockGetIdentityProviderMappers                       sync.RWMutex
+	lockGetIdentityProviders                             sync.RWMutex
+	lockGetIssuer                                        sync.RWMutex
+	lockGetKeyStoreConfig                                sync.RWMutex
+	lockGetPermission                                    sync.RWMutex
+	lockGetPermissionResources                           sync.RWMutex
+	lockGetPermissionScopes                              sync.RWMutex
+	lockGetPermissions                                   sync.RWMutex
+	lockGetPolicies                                      sync.RWMutex
+	lockGetPolicy                                        sync.RWMutex
+	lockGetRawUserInfo                                   sync.RWMutex
+	lockGetRealm                                         sync.RWMutex
+	lockGetRealmRole                                     sync.RWMutex
+	lockGetRealmRoleByID                                 sync.RWMutex
+	lockGetRealmRoles                                    sync.RWMutex
+	lockGetRealmRolesByGroupID                           sync.RWMutex
+	lockGetRealmRolesByUserID                            sync.RWMutex
+	lockGetRealms                                        sync.RWMutex
+	lockGetRequestingPartyPermissionDecision             sync.RWMutex
+	lockGetRequestingPartyPermissions                    sync.RWMutex
+	lockGetRequestingPartyToken                          sync.RWMutex
+	lockGetResource                                      sync.RWMutex
+	lockGetResourceClient                                sync.RWMutex
+	lockGetResourcePolicies                              sync.RWMutex
+	lockGetResourcePolicy                                sync.RWMutex
+	lockGetResources                                     sync.RWMutex
+	lockGetResourcesClient                               sync.RWMutex
+	lockGetRoleMappingByGroupID                          sync.RWMutex
+	lockGetRoleMappingByUserID                           sync.RWMutex
+	lockGetScope                                         sync.RWMutex
+	lockGetScopes                                        sync.RWMutex
+	lockGetServerInfo                                    sync.RWMutex
+	lockGetToken                                         sync.RWMutex
+	lockGetUserByID                                      sync.RWMutex
+	lockGetUserCount                                     sync.RWMutex
+	lockGetUserFederatedIdentities                       sync.RWMutex
+	lockGetUserGroups                                    sync.RWMutex
+	lockGetUserInfo                                      sync.RWMutex
+	lockGetUserOfflineSessionsForClient                  sync.RWMutex
+	lockGetUserPermissions                               sync.RWMutex
+	lockGetUserSessions                                  sync.RWMutex
+	lockGetUsers                                         sync.RWMutex
+	lockGetUsersByClientRoleName                         sync.RWMutex
+	lockGetUsersByRoleName                               sync.RWMutex
+	lockGrantUserPermission                              sync.RWMutex
+	lockImportIdentityProviderConfig                     sync.RWMutex
+	lockImportIdentityProviderConfigFromFile             sync.RWMutex
+	lockLogin                                            sync.RWMutex
+	lockLoginAdmin                                       sync.RWMutex
+	lockLoginClient                                      sync.RWMutex
+	lockLoginClientSignedJWT                             sync.RWMutex
+	lockLoginClientTokenExchange                         sync.RWMutex
+	lockLoginOtp                                         sync.RWMutex
+	lockLogout                                           sync.RWMutex
+	lockLogoutAllSessions                                sync.RWMutex
+	lockLogoutPublicClient                               sync.RWMutex
+	lockLogoutUserSession                                sync.RWMutex
+	lockMoveCredentialBehind                             sync.RWMutex
+	lockMoveCredentialToFirst                            sync.RWMutex
+	lockRefreshToken                                     sync.RWMutex
+	lockRegenerateClientSecret                           sync.RWMutex
+	lockRemoveDefaultGroup                               sync.RWMutex
+	lockRemoveDefaultScopeFromClient                     sync.RWMutex
+	lockRemoveOptionalScopeFromClient                    sync.RWMutex
+	lockRestyClient                                      sync.RWMutex
+	lockRetrospectToken                                  sync.RWMutex
+	lockRevokeUserConsents                               sync.RWMutex
+	lockSetPassword                                      sync.RWMutex
+	lockSetRestyClient                                   sync.RWMutex
+	lockUpdateAuthenticationExecution                    sync.RWMutex
+	lockUpdateClient                                     sync.RWMutex
+	lockUpdateClientProtocolMapper                       sync.RWMutex
+	lockUpdateClientRepresentation                       sync.RWMutex
+	lockUpdateClientScope                                sync.RWMutex
+	lockUpdateClientScopeProtocolMapper                  sync.RWMutex
+	lockUpdateCredentialUserLabel                        sync.RWMutex
+	lockUpdateGroup                                      sync.RWMutex
+	lockUpdateIdentityProvider                           sync.RWMutex
+	lockUpdateIdentityProviderMapper                     sync.RWMutex
+	lockUpdatePermission                                 sync.RWMutex
+	lockUpdatePolicy                                     sync.RWMutex
+	lockUpdateRealm                                      sync.RWMutex
+	lockUpdateRealmRole                                  sync.RWMutex
+	lockUpdateRealmRoleByID                              sync.RWMutex
+	lockUpdateRequiredAction                             sync.RWMutex
+	lockUpdateResource                                   sync.RWMutex
+	lockUpdateResourceClient                             sync.RWMutex
+	lockUpdateResourcePolicy                             sync.RWMutex
+	lockUpdateRole                                       sync.RWMutex
+	lockUpdateScope                                      sync.RWMutex
+	lockUpdateUser                                       sync.RWMutex
+	lockUpdateUserPermission                             sync.RWMutex
 }
 
 // AddClientRoleComposite calls AddClientRoleCompositeFunc.
@@ -5357,6 +5539,104 @@ func (mock *GoCloakMock) CreateClientScopeMappingsRealmRolesCalls() []struct {
 	mock.lockCreateClientScopeMappingsRealmRoles.RLock()
 	calls = mock.calls.CreateClientScopeMappingsRealmRoles
 	mock.lockCreateClientScopeMappingsRealmRoles.RUnlock()
+	return calls
+}
+
+// CreateClientScopeProtocolMapper calls CreateClientScopeProtocolMapperFunc.
+func (mock *GoCloakMock) CreateClientScopeProtocolMapper(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) (string, error) {
+	if mock.CreateClientScopeProtocolMapperFunc == nil {
+		panic("GoCloakMock.CreateClientScopeProtocolMapperFunc: method is nil but GoCloak.CreateClientScopeProtocolMapper was just called")
+	}
+	callInfo := struct {
+		Ctx            context.Context
+		AccessToken    string
+		Realm          string
+		ScopeID        string
+		ProtocolMapper gocloak.ProtocolMappers
+	}{
+		Ctx:            ctx,
+		AccessToken:    accessToken,
+		Realm:          realm,
+		ScopeID:        scopeID,
+		ProtocolMapper: protocolMapper,
+	}
+	mock.lockCreateClientScopeProtocolMapper.Lock()
+	mock.calls.CreateClientScopeProtocolMapper = append(mock.calls.CreateClientScopeProtocolMapper, callInfo)
+	mock.lockCreateClientScopeProtocolMapper.Unlock()
+	return mock.CreateClientScopeProtocolMapperFunc(ctx, accessToken, realm, scopeID, protocolMapper)
+}
+
+// CreateClientScopeProtocolMapperCalls gets all the calls that were made to CreateClientScopeProtocolMapper.
+// Check the length with:
+//     len(mockedGoCloak.CreateClientScopeProtocolMapperCalls())
+func (mock *GoCloakMock) CreateClientScopeProtocolMapperCalls() []struct {
+	Ctx            context.Context
+	AccessToken    string
+	Realm          string
+	ScopeID        string
+	ProtocolMapper gocloak.ProtocolMappers
+} {
+	var calls []struct {
+		Ctx            context.Context
+		AccessToken    string
+		Realm          string
+		ScopeID        string
+		ProtocolMapper gocloak.ProtocolMappers
+	}
+	mock.lockCreateClientScopeProtocolMapper.RLock()
+	calls = mock.calls.CreateClientScopeProtocolMapper
+	mock.lockCreateClientScopeProtocolMapper.RUnlock()
+	return calls
+}
+
+// CreateClientScopesScopeMappingsClientRoles calls CreateClientScopesScopeMappingsClientRolesFunc.
+func (mock *GoCloakMock) CreateClientScopesScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string, roles []gocloak.Role) error {
+	if mock.CreateClientScopesScopeMappingsClientRolesFunc == nil {
+		panic("GoCloakMock.CreateClientScopesScopeMappingsClientRolesFunc: method is nil but GoCloak.CreateClientScopesScopeMappingsClientRoles was just called")
+	}
+	callInfo := struct {
+		Ctx             context.Context
+		Token           string
+		Realm           string
+		IdOfClientScope string
+		IdOfClient      string
+		Roles           []gocloak.Role
+	}{
+		Ctx:             ctx,
+		Token:           token,
+		Realm:           realm,
+		IdOfClientScope: idOfClientScope,
+		IdOfClient:      idOfClient,
+		Roles:           roles,
+	}
+	mock.lockCreateClientScopesScopeMappingsClientRoles.Lock()
+	mock.calls.CreateClientScopesScopeMappingsClientRoles = append(mock.calls.CreateClientScopesScopeMappingsClientRoles, callInfo)
+	mock.lockCreateClientScopesScopeMappingsClientRoles.Unlock()
+	return mock.CreateClientScopesScopeMappingsClientRolesFunc(ctx, token, realm, idOfClientScope, idOfClient, roles)
+}
+
+// CreateClientScopesScopeMappingsClientRolesCalls gets all the calls that were made to CreateClientScopesScopeMappingsClientRoles.
+// Check the length with:
+//     len(mockedGoCloak.CreateClientScopesScopeMappingsClientRolesCalls())
+func (mock *GoCloakMock) CreateClientScopesScopeMappingsClientRolesCalls() []struct {
+	Ctx             context.Context
+	Token           string
+	Realm           string
+	IdOfClientScope string
+	IdOfClient      string
+	Roles           []gocloak.Role
+} {
+	var calls []struct {
+		Ctx             context.Context
+		Token           string
+		Realm           string
+		IdOfClientScope string
+		IdOfClient      string
+		Roles           []gocloak.Role
+	}
+	mock.lockCreateClientScopesScopeMappingsClientRoles.RLock()
+	calls = mock.calls.CreateClientScopesScopeMappingsClientRoles
+	mock.lockCreateClientScopesScopeMappingsClientRoles.RUnlock()
 	return calls
 }
 
@@ -6715,6 +6995,104 @@ func (mock *GoCloakMock) DeleteClientScopeMappingsRealmRolesCalls() []struct {
 	mock.lockDeleteClientScopeMappingsRealmRoles.RLock()
 	calls = mock.calls.DeleteClientScopeMappingsRealmRoles
 	mock.lockDeleteClientScopeMappingsRealmRoles.RUnlock()
+	return calls
+}
+
+// DeleteClientScopeProtocolMapper calls DeleteClientScopeProtocolMapperFunc.
+func (mock *GoCloakMock) DeleteClientScopeProtocolMapper(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapperID string) error {
+	if mock.DeleteClientScopeProtocolMapperFunc == nil {
+		panic("GoCloakMock.DeleteClientScopeProtocolMapperFunc: method is nil but GoCloak.DeleteClientScopeProtocolMapper was just called")
+	}
+	callInfo := struct {
+		Ctx              context.Context
+		AccessToken      string
+		Realm            string
+		ScopeID          string
+		ProtocolMapperID string
+	}{
+		Ctx:              ctx,
+		AccessToken:      accessToken,
+		Realm:            realm,
+		ScopeID:          scopeID,
+		ProtocolMapperID: protocolMapperID,
+	}
+	mock.lockDeleteClientScopeProtocolMapper.Lock()
+	mock.calls.DeleteClientScopeProtocolMapper = append(mock.calls.DeleteClientScopeProtocolMapper, callInfo)
+	mock.lockDeleteClientScopeProtocolMapper.Unlock()
+	return mock.DeleteClientScopeProtocolMapperFunc(ctx, accessToken, realm, scopeID, protocolMapperID)
+}
+
+// DeleteClientScopeProtocolMapperCalls gets all the calls that were made to DeleteClientScopeProtocolMapper.
+// Check the length with:
+//     len(mockedGoCloak.DeleteClientScopeProtocolMapperCalls())
+func (mock *GoCloakMock) DeleteClientScopeProtocolMapperCalls() []struct {
+	Ctx              context.Context
+	AccessToken      string
+	Realm            string
+	ScopeID          string
+	ProtocolMapperID string
+} {
+	var calls []struct {
+		Ctx              context.Context
+		AccessToken      string
+		Realm            string
+		ScopeID          string
+		ProtocolMapperID string
+	}
+	mock.lockDeleteClientScopeProtocolMapper.RLock()
+	calls = mock.calls.DeleteClientScopeProtocolMapper
+	mock.lockDeleteClientScopeProtocolMapper.RUnlock()
+	return calls
+}
+
+// DeleteClientScopesScopeMappingsClientRoles calls DeleteClientScopesScopeMappingsClientRolesFunc.
+func (mock *GoCloakMock) DeleteClientScopesScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClientScope string, ifOfClient string, roles []gocloak.Role) error {
+	if mock.DeleteClientScopesScopeMappingsClientRolesFunc == nil {
+		panic("GoCloakMock.DeleteClientScopesScopeMappingsClientRolesFunc: method is nil but GoCloak.DeleteClientScopesScopeMappingsClientRoles was just called")
+	}
+	callInfo := struct {
+		Ctx             context.Context
+		Token           string
+		Realm           string
+		IdOfClientScope string
+		IfOfClient      string
+		Roles           []gocloak.Role
+	}{
+		Ctx:             ctx,
+		Token:           token,
+		Realm:           realm,
+		IdOfClientScope: idOfClientScope,
+		IfOfClient:      ifOfClient,
+		Roles:           roles,
+	}
+	mock.lockDeleteClientScopesScopeMappingsClientRoles.Lock()
+	mock.calls.DeleteClientScopesScopeMappingsClientRoles = append(mock.calls.DeleteClientScopesScopeMappingsClientRoles, callInfo)
+	mock.lockDeleteClientScopesScopeMappingsClientRoles.Unlock()
+	return mock.DeleteClientScopesScopeMappingsClientRolesFunc(ctx, token, realm, idOfClientScope, ifOfClient, roles)
+}
+
+// DeleteClientScopesScopeMappingsClientRolesCalls gets all the calls that were made to DeleteClientScopesScopeMappingsClientRoles.
+// Check the length with:
+//     len(mockedGoCloak.DeleteClientScopesScopeMappingsClientRolesCalls())
+func (mock *GoCloakMock) DeleteClientScopesScopeMappingsClientRolesCalls() []struct {
+	Ctx             context.Context
+	Token           string
+	Realm           string
+	IdOfClientScope string
+	IfOfClient      string
+	Roles           []gocloak.Role
+} {
+	var calls []struct {
+		Ctx             context.Context
+		Token           string
+		Realm           string
+		IdOfClientScope string
+		IfOfClient      string
+		Roles           []gocloak.Role
+	}
+	mock.lockDeleteClientScopesScopeMappingsClientRoles.RLock()
+	calls = mock.calls.DeleteClientScopesScopeMappingsClientRoles
+	mock.lockDeleteClientScopesScopeMappingsClientRoles.RUnlock()
 	return calls
 }
 
@@ -8905,6 +9283,96 @@ func (mock *GoCloakMock) GetClientScopeMappingsRealmRolesAvailableCalls() []stru
 	return calls
 }
 
+// GetClientScopeProtocolMapper calls GetClientScopeProtocolMapperFunc.
+func (mock *GoCloakMock) GetClientScopeProtocolMapper(ctx context.Context, token string, realm string, scopeID string, protocolMapperID string) (*gocloak.ProtocolMappers, error) {
+	if mock.GetClientScopeProtocolMapperFunc == nil {
+		panic("GoCloakMock.GetClientScopeProtocolMapperFunc: method is nil but GoCloak.GetClientScopeProtocolMapper was just called")
+	}
+	callInfo := struct {
+		Ctx              context.Context
+		Token            string
+		Realm            string
+		ScopeID          string
+		ProtocolMapperID string
+	}{
+		Ctx:              ctx,
+		Token:            token,
+		Realm:            realm,
+		ScopeID:          scopeID,
+		ProtocolMapperID: protocolMapperID,
+	}
+	mock.lockGetClientScopeProtocolMapper.Lock()
+	mock.calls.GetClientScopeProtocolMapper = append(mock.calls.GetClientScopeProtocolMapper, callInfo)
+	mock.lockGetClientScopeProtocolMapper.Unlock()
+	return mock.GetClientScopeProtocolMapperFunc(ctx, token, realm, scopeID, protocolMapperID)
+}
+
+// GetClientScopeProtocolMapperCalls gets all the calls that were made to GetClientScopeProtocolMapper.
+// Check the length with:
+//     len(mockedGoCloak.GetClientScopeProtocolMapperCalls())
+func (mock *GoCloakMock) GetClientScopeProtocolMapperCalls() []struct {
+	Ctx              context.Context
+	Token            string
+	Realm            string
+	ScopeID          string
+	ProtocolMapperID string
+} {
+	var calls []struct {
+		Ctx              context.Context
+		Token            string
+		Realm            string
+		ScopeID          string
+		ProtocolMapperID string
+	}
+	mock.lockGetClientScopeProtocolMapper.RLock()
+	calls = mock.calls.GetClientScopeProtocolMapper
+	mock.lockGetClientScopeProtocolMapper.RUnlock()
+	return calls
+}
+
+// GetClientScopeProtocolMappers calls GetClientScopeProtocolMappersFunc.
+func (mock *GoCloakMock) GetClientScopeProtocolMappers(ctx context.Context, token string, realm string, scopeID string) ([]*gocloak.ProtocolMappers, error) {
+	if mock.GetClientScopeProtocolMappersFunc == nil {
+		panic("GoCloakMock.GetClientScopeProtocolMappersFunc: method is nil but GoCloak.GetClientScopeProtocolMappers was just called")
+	}
+	callInfo := struct {
+		Ctx     context.Context
+		Token   string
+		Realm   string
+		ScopeID string
+	}{
+		Ctx:     ctx,
+		Token:   token,
+		Realm:   realm,
+		ScopeID: scopeID,
+	}
+	mock.lockGetClientScopeProtocolMappers.Lock()
+	mock.calls.GetClientScopeProtocolMappers = append(mock.calls.GetClientScopeProtocolMappers, callInfo)
+	mock.lockGetClientScopeProtocolMappers.Unlock()
+	return mock.GetClientScopeProtocolMappersFunc(ctx, token, realm, scopeID)
+}
+
+// GetClientScopeProtocolMappersCalls gets all the calls that were made to GetClientScopeProtocolMappers.
+// Check the length with:
+//     len(mockedGoCloak.GetClientScopeProtocolMappersCalls())
+func (mock *GoCloakMock) GetClientScopeProtocolMappersCalls() []struct {
+	Ctx     context.Context
+	Token   string
+	Realm   string
+	ScopeID string
+} {
+	var calls []struct {
+		Ctx     context.Context
+		Token   string
+		Realm   string
+		ScopeID string
+	}
+	mock.lockGetClientScopeProtocolMappers.RLock()
+	calls = mock.calls.GetClientScopeProtocolMappers
+	mock.lockGetClientScopeProtocolMappers.RUnlock()
+	return calls
+}
+
 // GetClientScopes calls GetClientScopesFunc.
 func (mock *GoCloakMock) GetClientScopes(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
 	if mock.GetClientScopesFunc == nil {
@@ -8941,6 +9409,100 @@ func (mock *GoCloakMock) GetClientScopesCalls() []struct {
 	mock.lockGetClientScopes.RLock()
 	calls = mock.calls.GetClientScopes
 	mock.lockGetClientScopes.RUnlock()
+	return calls
+}
+
+// GetClientScopesScopeMappingsClientRoles calls GetClientScopesScopeMappingsClientRolesFunc.
+func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error) {
+	if mock.GetClientScopesScopeMappingsClientRolesFunc == nil {
+		panic("GoCloakMock.GetClientScopesScopeMappingsClientRolesFunc: method is nil but GoCloak.GetClientScopesScopeMappingsClientRoles was just called")
+	}
+	callInfo := struct {
+		Ctx             context.Context
+		Token           string
+		Realm           string
+		IdOfClientScope string
+		IdOfClient      string
+	}{
+		Ctx:             ctx,
+		Token:           token,
+		Realm:           realm,
+		IdOfClientScope: idOfClientScope,
+		IdOfClient:      idOfClient,
+	}
+	mock.lockGetClientScopesScopeMappingsClientRoles.Lock()
+	mock.calls.GetClientScopesScopeMappingsClientRoles = append(mock.calls.GetClientScopesScopeMappingsClientRoles, callInfo)
+	mock.lockGetClientScopesScopeMappingsClientRoles.Unlock()
+	return mock.GetClientScopesScopeMappingsClientRolesFunc(ctx, token, realm, idOfClientScope, idOfClient)
+}
+
+// GetClientScopesScopeMappingsClientRolesCalls gets all the calls that were made to GetClientScopesScopeMappingsClientRoles.
+// Check the length with:
+//     len(mockedGoCloak.GetClientScopesScopeMappingsClientRolesCalls())
+func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRolesCalls() []struct {
+	Ctx             context.Context
+	Token           string
+	Realm           string
+	IdOfClientScope string
+	IdOfClient      string
+} {
+	var calls []struct {
+		Ctx             context.Context
+		Token           string
+		Realm           string
+		IdOfClientScope string
+		IdOfClient      string
+	}
+	mock.lockGetClientScopesScopeMappingsClientRoles.RLock()
+	calls = mock.calls.GetClientScopesScopeMappingsClientRoles
+	mock.lockGetClientScopesScopeMappingsClientRoles.RUnlock()
+	return calls
+}
+
+// GetClientScopesScopeMappingsClientRolesAvailable calls GetClientScopesScopeMappingsClientRolesAvailableFunc.
+func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRolesAvailable(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error) {
+	if mock.GetClientScopesScopeMappingsClientRolesAvailableFunc == nil {
+		panic("GoCloakMock.GetClientScopesScopeMappingsClientRolesAvailableFunc: method is nil but GoCloak.GetClientScopesScopeMappingsClientRolesAvailable was just called")
+	}
+	callInfo := struct {
+		Ctx             context.Context
+		Token           string
+		Realm           string
+		IdOfClientScope string
+		IdOfClient      string
+	}{
+		Ctx:             ctx,
+		Token:           token,
+		Realm:           realm,
+		IdOfClientScope: idOfClientScope,
+		IdOfClient:      idOfClient,
+	}
+	mock.lockGetClientScopesScopeMappingsClientRolesAvailable.Lock()
+	mock.calls.GetClientScopesScopeMappingsClientRolesAvailable = append(mock.calls.GetClientScopesScopeMappingsClientRolesAvailable, callInfo)
+	mock.lockGetClientScopesScopeMappingsClientRolesAvailable.Unlock()
+	return mock.GetClientScopesScopeMappingsClientRolesAvailableFunc(ctx, token, realm, idOfClientScope, idOfClient)
+}
+
+// GetClientScopesScopeMappingsClientRolesAvailableCalls gets all the calls that were made to GetClientScopesScopeMappingsClientRolesAvailable.
+// Check the length with:
+//     len(mockedGoCloak.GetClientScopesScopeMappingsClientRolesAvailableCalls())
+func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRolesAvailableCalls() []struct {
+	Ctx             context.Context
+	Token           string
+	Realm           string
+	IdOfClientScope string
+	IdOfClient      string
+} {
+	var calls []struct {
+		Ctx             context.Context
+		Token           string
+		Realm           string
+		IdOfClientScope string
+		IdOfClient      string
+	}
+	mock.lockGetClientScopesScopeMappingsClientRolesAvailable.RLock()
+	calls = mock.calls.GetClientScopesScopeMappingsClientRolesAvailable
+	mock.lockGetClientScopesScopeMappingsClientRolesAvailable.RUnlock()
 	return calls
 }
 
@@ -13551,6 +14113,53 @@ func (mock *GoCloakMock) UpdateClientScopeCalls() []struct {
 	mock.lockUpdateClientScope.RLock()
 	calls = mock.calls.UpdateClientScope
 	mock.lockUpdateClientScope.RUnlock()
+	return calls
+}
+
+// UpdateClientScopeProtocolMapper calls UpdateClientScopeProtocolMapperFunc.
+func (mock *GoCloakMock) UpdateClientScopeProtocolMapper(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) error {
+	if mock.UpdateClientScopeProtocolMapperFunc == nil {
+		panic("GoCloakMock.UpdateClientScopeProtocolMapperFunc: method is nil but GoCloak.UpdateClientScopeProtocolMapper was just called")
+	}
+	callInfo := struct {
+		Ctx            context.Context
+		AccessToken    string
+		Realm          string
+		ScopeID        string
+		ProtocolMapper gocloak.ProtocolMappers
+	}{
+		Ctx:            ctx,
+		AccessToken:    accessToken,
+		Realm:          realm,
+		ScopeID:        scopeID,
+		ProtocolMapper: protocolMapper,
+	}
+	mock.lockUpdateClientScopeProtocolMapper.Lock()
+	mock.calls.UpdateClientScopeProtocolMapper = append(mock.calls.UpdateClientScopeProtocolMapper, callInfo)
+	mock.lockUpdateClientScopeProtocolMapper.Unlock()
+	return mock.UpdateClientScopeProtocolMapperFunc(ctx, accessToken, realm, scopeID, protocolMapper)
+}
+
+// UpdateClientScopeProtocolMapperCalls gets all the calls that were made to UpdateClientScopeProtocolMapper.
+// Check the length with:
+//     len(mockedGoCloak.UpdateClientScopeProtocolMapperCalls())
+func (mock *GoCloakMock) UpdateClientScopeProtocolMapperCalls() []struct {
+	Ctx            context.Context
+	AccessToken    string
+	Realm          string
+	ScopeID        string
+	ProtocolMapper gocloak.ProtocolMappers
+} {
+	var calls []struct {
+		Ctx            context.Context
+		AccessToken    string
+		Realm          string
+		ScopeID        string
+		ProtocolMapper gocloak.ProtocolMappers
+	}
+	mock.lockUpdateClientScopeProtocolMapper.RLock()
+	calls = mock.calls.UpdateClientScopeProtocolMapper
+	mock.lockUpdateClientScopeProtocolMapper.RUnlock()
 	return calls
 }
 
