@@ -48,6 +48,307 @@ var ocmClientMockWithCloudAccounts = &ocm.ClientMock{
 	},
 }
 
+func Test_AMSGetBillingModel(t *testing.T) {
+	type fields struct {
+		ocmClient   ocm.Client
+		kafkaConfig *config.KafkaConfig
+	}
+	type args struct {
+		request dbapi.KafkaRequest
+	}
+	tests := []struct {
+		name             string
+		fields           fields
+		args             args
+		wantErr          bool
+		wantBillingModel string
+	}{
+		{
+			name: "aws marketplace billing model is detected",
+			args: args{
+				request: dbapi.KafkaRequest{
+					Name:                  "test",
+					SizeId:                "x1",
+					BillingCloudAccountId: "1234567890",
+					Marketplace:           "aws",
+					InstanceType:          "standard",
+				},
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						if product != string(ocm.RHOSAKProduct) {
+							return []*v1.QuotaCost{}, nil
+						}
+						rrbq1 := v1.NewRelatedResource().
+							BillingModel(string(v1.BillingModelMarketplace)).
+							Product(string(ocm.RHOSAKProduct)).
+							ResourceName(resourceName).
+							Cost(1)
+
+						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).
+							CloudAccounts(
+								v1.NewCloudAccount().CloudProviderID("aws").CloudAccountID("1234567890"),
+							).
+							Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+
+						return []*v1.QuotaCost{qcb}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr:          false,
+			wantBillingModel: string(v1.BillingModelMarketplaceAWS),
+		},
+		{
+			name: "rhm marketplace billing model is detected",
+			args: args{
+				request: dbapi.KafkaRequest{
+					Name:                  "test",
+					SizeId:                "x1",
+					BillingCloudAccountId: "1234567890",
+					Marketplace:           "rhm",
+					InstanceType:          "standard",
+				},
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						if product != string(ocm.RHOSAKProduct) {
+							return []*v1.QuotaCost{}, nil
+						}
+						rrbq1 := v1.NewRelatedResource().
+							BillingModel(string(v1.BillingModelMarketplace)).
+							Product(string(ocm.RHOSAKProduct)).
+							ResourceName(resourceName).
+							Cost(1)
+
+						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).
+							CloudAccounts(
+								v1.NewCloudAccount().CloudProviderID("rhm").CloudAccountID("1234567890"),
+							).
+							Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+
+						return []*v1.QuotaCost{qcb}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr:          false,
+			wantBillingModel: string(v1.BillingModelMarketplace),
+		},
+		{
+			name: "standard billing model is detected when no billing account provided",
+			args: args{
+				request: dbapi.KafkaRequest{
+					Name:         "test",
+					SizeId:       "x1",
+					InstanceType: "standard",
+				},
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						if product != string(ocm.RHOSAKProduct) {
+							return []*v1.QuotaCost{}, nil
+						}
+						rrbq1 := v1.NewRelatedResource().
+							BillingModel(string(v1.BillingModelStandard)).
+							Product(string(ocm.RHOSAKProduct)).
+							ResourceName(resourceName).
+							Cost(1)
+
+						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).CloudAccounts(
+							v1.NewCloudAccount().CloudProviderID("aws").CloudAccountID("1234567890"),
+						).Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+
+						return []*v1.QuotaCost{qcb}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr:          false,
+			wantBillingModel: string(v1.BillingModelStandard),
+		},
+		{
+			name: "marketplace billing model is rejected when no marketplace related resource is found",
+			args: args{
+				request: dbapi.KafkaRequest{
+					Name:                  "test",
+					SizeId:                "x1",
+					InstanceType:          "standard",
+					BillingCloudAccountId: "1234567890",
+					Marketplace:           "aws",
+				},
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						if product != string(ocm.RHOSAKProduct) {
+							return []*v1.QuotaCost{}, nil
+						}
+						rrbq1 := v1.NewRelatedResource().
+							BillingModel(string(v1.BillingModelStandard)).
+							Product(string(ocm.RHOSAKProduct)).
+							ResourceName(resourceName).
+							Cost(1)
+
+						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+
+						return []*v1.QuotaCost{qcb}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr:          true,
+			wantBillingModel: "",
+		},
+		{
+			name: "marketplace billing model is rejected when quota is insufficient",
+			args: args{
+				request: dbapi.KafkaRequest{
+					Name:                  "test",
+					SizeId:                "x1",
+					InstanceType:          "standard",
+					BillingCloudAccountId: "1234567890",
+					Marketplace:           "aws",
+				},
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						if product != string(ocm.RHOSAKProduct) {
+							return []*v1.QuotaCost{}, nil
+						}
+						rrbq1 := v1.NewRelatedResource().
+							BillingModel(string(v1.BillingModelMarketplace)).
+							Product(string(ocm.RHOSAKProduct)).
+							ResourceName(resourceName).
+							Cost(1)
+
+						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq1).CloudAccounts(
+							v1.NewCloudAccount().CloudProviderID("aws").CloudAccountID("1234567890"),
+						).Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+
+						return []*v1.QuotaCost{qcb}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr:          true,
+			wantBillingModel: "",
+		},
+		{
+			name: "unsupported cloud provider is rejected",
+			args: args{
+				request: dbapi.KafkaRequest{
+					Name:                  "test",
+					SizeId:                "x1",
+					InstanceType:          "standard",
+					BillingCloudAccountId: "1234567890",
+					Marketplace:           "xyz",
+				},
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						if product != string(ocm.RHOSAKProduct) {
+							return []*v1.QuotaCost{}, nil
+						}
+						rrbq1 := v1.NewRelatedResource().
+							BillingModel(string(v1.BillingModelStandard)).
+							Product(string(ocm.RHOSAKProduct)).
+							ResourceName(resourceName).
+							Cost(1)
+
+						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq1).CloudAccounts(
+							v1.NewCloudAccount().CloudProviderID("xyz").CloudAccountID("1234567890"),
+						).Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+
+						return []*v1.QuotaCost{qcb}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr:          true,
+			wantBillingModel: "",
+		},
+	}
+
+	RegisterTestingT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, tt.fields.kafkaConfig)
+			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
+
+			billingModel, err := quotaService.(*amsQuotaService).getBillingModel(&tt.args.request, types.STANDARD)
+			Expect(billingModel).To(Equal(tt.wantBillingModel))
+			Expect(err != nil).To(Equal(tt.wantErr))
+		})
+	}
+
+}
+
 func Test_AMSValidateBillingAccount(t *testing.T) {
 	type fields struct {
 		ocmClient   ocm.Client
