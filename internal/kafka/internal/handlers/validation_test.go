@@ -355,6 +355,41 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 				reason:  "error assigning instance type: KAFKAS-MGMT-9: error assigning instance type: ",
 			},
 		},
+		{
+			name: "should throw an error if the provider is not supported",
+			arg: args{
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner string, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
+					},
+				},
+				kafkaRequest: public.KafkaRequestPayload{
+					CloudProvider: "invalid_provider",
+					Region:        "us-east",
+				},
+				ProviderConfig: &config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name:    "aws",
+								Default: true,
+								Regions: config.RegionList{
+									config.Region{
+										Name:                   "us-east-1",
+										Default:                true,
+										SupportedInstanceTypes: developerMap,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: result{
+				wantErr: true,
+				reason:  "provider invalid_provider is not supported, supported providers are: [aws]",
+			},
+		},
 	}
 
 	RegisterTestingT(t)
@@ -531,6 +566,35 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 			},
 			want: result{
 				wantErr: false,
+			},
+		},
+		{
+			name: "should throw an error if user is not valid",
+			arg: args{
+				ctx: auth.SetTokenInContext(context.TODO(), &jwt.Token{
+					Claims: jwt.MapClaims{
+						"username":     username,
+						"org_id":       orgId,
+						"is_org_admin": true,
+					},
+				}),
+				kafka: &dbapi.KafkaRequest{
+					Owner:          username,
+					OrganisationId: orgId,
+				},
+				kafkaUpdateRequest: public.KafkaUpdateRequest{
+					ReauthenticationEnabled: &reauthenticationEnabled,
+					Owner:                   &newOwner,
+				},
+				authService: &authorization.AuthorizationMock{
+					CheckUserValidFunc: func(username, orgId string) (bool, error) {
+						return false, errors.New(errors.ErrorGeneral, "Unable to update kafka request owner")
+					},
+				},
+			},
+			want: result{
+				wantErr: true,
+				reason:  "Unable to update kafka request owner",
 			},
 		},
 	}
@@ -730,6 +794,136 @@ func TestValidateKafkaPlan(t *testing.T) {
 			},
 			want: nil,
 		},
+		{
+			name: "should return an error if the plan provided is invalid ",
+			args: args{
+				ctx: context.Background(),
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
+					},
+				},
+				kafkaRequestPayload: &public.KafkaRequestPayload{
+					Plan: fmt.Sprintf("%s.x1", "invalid_plan"),
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id:          "developer",
+									DisplayName: "Trial",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:          "x1",
+											DisplayName: "1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: errors.BadRequest("Unable to detect instance type in plan provided: 'invalid_plan.x1'"),
+		},
+		{
+			name: "should return an error if the plan provided is not supported",
+			args: args{
+				ctx: context.Background(),
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
+					},
+				},
+				kafkaRequestPayload: &public.KafkaRequestPayload{
+					Plan: "developer.x2",
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id:          "developer",
+									DisplayName: "Trial",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:          "x1",
+											DisplayName: "1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: errors.InstancePlanNotSupported("Unsupported plan provided: 'developer.x2'"),
+		},
+		{
+			name: "should return an error if KafkaRequestPayload.plan in not set and the kafka plan is not supported",
+			args: args{
+				ctx: context.Background(),
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.KafkaInstanceType(types.STANDARD.String()), nil
+					},
+				},
+				kafkaRequestPayload: &public.KafkaRequestPayload{},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id:          "developer",
+									DisplayName: "Trial",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:          "x1",
+											DisplayName: "1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: errors.InstanceTypeNotSupported("Unsupported kafka instance type: 'standard' provided"),
+		},
+		{
+			name: "should return an error if it is unable to detect instance size in plan provided",
+			args: args{
+				ctx: context.Background(),
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
+					},
+				},
+				kafkaRequestPayload: &public.KafkaRequestPayload{
+					Plan: "developer.invalidPlan",
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id:          "developer",
+									DisplayName: "Trial",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:          "x1",
+											DisplayName: "1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: errors.InstancePlanNotSupported("Unsupported plan provided: 'developer.invalidPlan'"),
+		},
 	}
 	g := NewWithT(t)
 	for _, testcase := range tests {
@@ -765,7 +959,7 @@ func TestValidateKafkaUpdateFields(t *testing.T) {
 			want: nil,
 		},
 		{
-			name: "should return error if  all fields are empty",
+			name: "should return error if all fields are empty",
 			args: args{
 				kafkaUpdateRequest: &private.KafkaUpdateRequest{
 					StrimziVersion:   "",
