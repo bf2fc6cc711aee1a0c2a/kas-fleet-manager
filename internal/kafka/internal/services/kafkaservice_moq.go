@@ -32,11 +32,11 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			ChangeKafkaCNAMErecordsFunc: func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError) {
 // 				panic("mock out the ChangeKafkaCNAMErecords method")
 // 			},
-// 			CountByRegionAndInstanceTypeFunc: func() ([]KafkaRegionCount, error) {
-// 				panic("mock out the CountByRegionAndInstanceType method")
-// 			},
 // 			CountByStatusFunc: func(status []constants2.KafkaStatus) ([]KafkaStatusCount, error) {
 // 				panic("mock out the CountByStatus method")
+// 			},
+// 			CountStreamingUnitByRegionAndInstanceTypeFunc: func() ([]KafkaStreamingUnitCountPerRegion, error) {
+// 				panic("mock out the CountStreamingUnitByRegionAndInstanceType method")
 // 			},
 // 			DeleteFunc: func(kafkaRequest *dbapi.KafkaRequest) *serviceError.ServiceError {
 // 				panic("mock out the Delete method")
@@ -114,11 +114,11 @@ type KafkaServiceMock struct {
 	// ChangeKafkaCNAMErecordsFunc mocks the ChangeKafkaCNAMErecords method.
 	ChangeKafkaCNAMErecordsFunc func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *serviceError.ServiceError)
 
-	// CountByRegionAndInstanceTypeFunc mocks the CountByRegionAndInstanceType method.
-	CountByRegionAndInstanceTypeFunc func() ([]KafkaRegionCount, error)
-
 	// CountByStatusFunc mocks the CountByStatus method.
 	CountByStatusFunc func(status []constants2.KafkaStatus) ([]KafkaStatusCount, error)
+
+	// CountStreamingUnitByRegionAndInstanceTypeFunc mocks the CountStreamingUnitByRegionAndInstanceType method.
+	CountStreamingUnitByRegionAndInstanceTypeFunc func() ([]KafkaStreamingUnitCountPerRegion, error)
 
 	// DeleteFunc mocks the Delete method.
 	DeleteFunc func(kafkaRequest *dbapi.KafkaRequest) *serviceError.ServiceError
@@ -199,13 +199,13 @@ type KafkaServiceMock struct {
 			// Action is the action argument value.
 			Action KafkaRoutesAction
 		}
-		// CountByRegionAndInstanceType holds details about calls to the CountByRegionAndInstanceType method.
-		CountByRegionAndInstanceType []struct {
-		}
 		// CountByStatus holds details about calls to the CountByStatus method.
 		CountByStatus []struct {
 			// Status is the status argument value.
 			Status []constants2.KafkaStatus
+		}
+		// CountStreamingUnitByRegionAndInstanceType holds details about calls to the CountStreamingUnitByRegionAndInstanceType method.
+		CountStreamingUnitByRegionAndInstanceType []struct {
 		}
 		// Delete holds details about calls to the Delete method.
 		Delete []struct {
@@ -325,31 +325,31 @@ type KafkaServiceMock struct {
 			KafkaRequest *dbapi.KafkaRequest
 		}
 	}
-	lockAssignInstanceType             sync.RWMutex
-	lockChangeKafkaCNAMErecords        sync.RWMutex
-	lockCountByRegionAndInstanceType   sync.RWMutex
-	lockCountByStatus                  sync.RWMutex
-	lockDelete                         sync.RWMutex
-	lockDeprovisionExpiredKafkas       sync.RWMutex
-	lockDeprovisionKafkaForUsers       sync.RWMutex
-	lockGet                            sync.RWMutex
-	lockGetAvailableSizesInRegion      sync.RWMutex
-	lockGetById                        sync.RWMutex
-	lockGetCNAMERecordStatus           sync.RWMutex
-	lockGetManagedKafkaByClusterID     sync.RWMutex
-	lockHasAvailableCapacityInRegion   sync.RWMutex
-	lockList                           sync.RWMutex
-	lockListByStatus                   sync.RWMutex
-	lockListComponentVersions          sync.RWMutex
-	lockListKafkasWithRoutesNotCreated sync.RWMutex
-	lockPrepareKafkaRequest            sync.RWMutex
-	lockRegisterKafkaDeprovisionJob    sync.RWMutex
-	lockRegisterKafkaJob               sync.RWMutex
-	lockUpdate                         sync.RWMutex
-	lockUpdateStatus                   sync.RWMutex
-	lockUpdates                        sync.RWMutex
-	lockValidateBillingAccount         sync.RWMutex
-	lockVerifyAndUpdateKafkaAdmin      sync.RWMutex
+	lockAssignInstanceType                        sync.RWMutex
+	lockChangeKafkaCNAMErecords                   sync.RWMutex
+	lockCountByStatus                             sync.RWMutex
+	lockCountStreamingUnitByRegionAndInstanceType sync.RWMutex
+	lockDelete                                    sync.RWMutex
+	lockDeprovisionExpiredKafkas                  sync.RWMutex
+	lockDeprovisionKafkaForUsers                  sync.RWMutex
+	lockGet                                       sync.RWMutex
+	lockGetAvailableSizesInRegion                 sync.RWMutex
+	lockGetById                                   sync.RWMutex
+	lockGetCNAMERecordStatus                      sync.RWMutex
+	lockGetManagedKafkaByClusterID                sync.RWMutex
+	lockHasAvailableCapacityInRegion              sync.RWMutex
+	lockList                                      sync.RWMutex
+	lockListByStatus                              sync.RWMutex
+	lockListComponentVersions                     sync.RWMutex
+	lockListKafkasWithRoutesNotCreated            sync.RWMutex
+	lockPrepareKafkaRequest                       sync.RWMutex
+	lockRegisterKafkaDeprovisionJob               sync.RWMutex
+	lockRegisterKafkaJob                          sync.RWMutex
+	lockUpdate                                    sync.RWMutex
+	lockUpdateStatus                              sync.RWMutex
+	lockUpdates                                   sync.RWMutex
+	lockValidateBillingAccount                    sync.RWMutex
+	lockVerifyAndUpdateKafkaAdmin                 sync.RWMutex
 }
 
 // AssignInstanceType calls AssignInstanceTypeFunc.
@@ -422,32 +422,6 @@ func (mock *KafkaServiceMock) ChangeKafkaCNAMErecordsCalls() []struct {
 	return calls
 }
 
-// CountByRegionAndInstanceType calls CountByRegionAndInstanceTypeFunc.
-func (mock *KafkaServiceMock) CountByRegionAndInstanceType() ([]KafkaRegionCount, error) {
-	if mock.CountByRegionAndInstanceTypeFunc == nil {
-		panic("KafkaServiceMock.CountByRegionAndInstanceTypeFunc: method is nil but KafkaService.CountByRegionAndInstanceType was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockCountByRegionAndInstanceType.Lock()
-	mock.calls.CountByRegionAndInstanceType = append(mock.calls.CountByRegionAndInstanceType, callInfo)
-	mock.lockCountByRegionAndInstanceType.Unlock()
-	return mock.CountByRegionAndInstanceTypeFunc()
-}
-
-// CountByRegionAndInstanceTypeCalls gets all the calls that were made to CountByRegionAndInstanceType.
-// Check the length with:
-//     len(mockedKafkaService.CountByRegionAndInstanceTypeCalls())
-func (mock *KafkaServiceMock) CountByRegionAndInstanceTypeCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockCountByRegionAndInstanceType.RLock()
-	calls = mock.calls.CountByRegionAndInstanceType
-	mock.lockCountByRegionAndInstanceType.RUnlock()
-	return calls
-}
-
 // CountByStatus calls CountByStatusFunc.
 func (mock *KafkaServiceMock) CountByStatus(status []constants2.KafkaStatus) ([]KafkaStatusCount, error) {
 	if mock.CountByStatusFunc == nil {
@@ -476,6 +450,32 @@ func (mock *KafkaServiceMock) CountByStatusCalls() []struct {
 	mock.lockCountByStatus.RLock()
 	calls = mock.calls.CountByStatus
 	mock.lockCountByStatus.RUnlock()
+	return calls
+}
+
+// CountStreamingUnitByRegionAndInstanceType calls CountStreamingUnitByRegionAndInstanceTypeFunc.
+func (mock *KafkaServiceMock) CountStreamingUnitByRegionAndInstanceType() ([]KafkaStreamingUnitCountPerRegion, error) {
+	if mock.CountStreamingUnitByRegionAndInstanceTypeFunc == nil {
+		panic("KafkaServiceMock.CountStreamingUnitByRegionAndInstanceTypeFunc: method is nil but KafkaService.CountStreamingUnitByRegionAndInstanceType was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockCountStreamingUnitByRegionAndInstanceType.Lock()
+	mock.calls.CountStreamingUnitByRegionAndInstanceType = append(mock.calls.CountStreamingUnitByRegionAndInstanceType, callInfo)
+	mock.lockCountStreamingUnitByRegionAndInstanceType.Unlock()
+	return mock.CountStreamingUnitByRegionAndInstanceTypeFunc()
+}
+
+// CountStreamingUnitByRegionAndInstanceTypeCalls gets all the calls that were made to CountStreamingUnitByRegionAndInstanceType.
+// Check the length with:
+//     len(mockedKafkaService.CountStreamingUnitByRegionAndInstanceTypeCalls())
+func (mock *KafkaServiceMock) CountStreamingUnitByRegionAndInstanceTypeCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockCountStreamingUnitByRegionAndInstanceType.RLock()
+	calls = mock.calls.CountStreamingUnitByRegionAndInstanceType
+	mock.lockCountStreamingUnitByRegionAndInstanceType.RUnlock()
 	return calls
 }
 

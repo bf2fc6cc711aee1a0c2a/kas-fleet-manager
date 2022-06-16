@@ -2,6 +2,7 @@ package converters
 
 import (
 	"encoding/json"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 )
 
@@ -18,19 +19,20 @@ func ConvertCluster(cluster *api.Cluster) []map[string]interface{} {
 	}
 	return []map[string]interface{}{
 		{
-			"id":             cluster.Meta.ID,
-			"region":         cluster.Region,
-			"cloud_provider": cluster.CloudProvider,
-			"multi_az":       cluster.MultiAZ,
-			"status":         cluster.Status,
-			"cluster_id":     cluster.ClusterID,
-			"external_id":    cluster.ExternalID,
-			"created_at":     cluster.Meta.CreatedAt,
-			"updated_at":     cluster.Meta.UpdatedAt,
-			"deleted_at":     cluster.Meta.DeletedAt.Time,
-			"provider_type":  cluster.ProviderType.String(),
-			"provider_spec":  p,
-			"cluster_spec":   c,
+			"id":                      cluster.Meta.ID,
+			"region":                  cluster.Region,
+			"cloud_provider":          cluster.CloudProvider,
+			"multi_az":                cluster.MultiAZ,
+			"status":                  cluster.Status,
+			"cluster_id":              cluster.ClusterID,
+			"external_id":             cluster.ExternalID,
+			"created_at":              cluster.Meta.CreatedAt,
+			"updated_at":              cluster.Meta.UpdatedAt,
+			"deleted_at":              cluster.Meta.DeletedAt.Time,
+			"provider_type":           cluster.ProviderType.String(),
+			"provider_spec":           p,
+			"cluster_spec":            c,
+			"supported_instance_type": cluster.SupportedInstanceType,
 		},
 	}
 }

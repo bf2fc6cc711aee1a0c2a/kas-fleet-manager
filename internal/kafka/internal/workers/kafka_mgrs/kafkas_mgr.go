@@ -126,17 +126,17 @@ func (k *KafkaManager) setKafkaStatusCountMetric() []error {
 }
 
 func (k *KafkaManager) setClusterStatusCapacityMetrics() error {
-	kafkasByRegion, err := k.kafkaService.CountByRegionAndInstanceType()
+	streamingUnitsByRegion, err := k.kafkaService.CountStreamingUnitByRegionAndInstanceType()
 	if err != nil {
 		return errors.Wrap(err, "failed to count Kafkas by region")
 	}
 
-	for _, region := range kafkasByRegion {
+	for _, region := range streamingUnitsByRegion {
 		used := float64(region.Count)
 		metrics.UpdateClusterStatusCapacityUsedCount(region.CloudProvider, region.Region, region.InstanceType, region.ClusterId, used)
 	}
 
-	availableCapacities, err := k.calculateAvailableCapacityByRegionAndInstanceType(kafkasByRegion)
+	availableCapacities, err := k.calculateAvailableCapacityByRegionAndInstanceType(streamingUnitsByRegion)
 	if err != nil {
 		return err
 	}
@@ -148,15 +148,15 @@ func (k *KafkaManager) setClusterStatusCapacityMetrics() error {
 	return nil
 }
 
-func (k *KafkaManager) calculateAvailableCapacityByRegionAndInstanceType(kafkasByRegion []services.KafkaRegionCount) ([]services.KafkaRegionCount, error) {
-	var result []services.KafkaRegionCount
+func (k *KafkaManager) calculateAvailableCapacityByRegionAndInstanceType(streamingUnitsByRegion []services.KafkaStreamingUnitCountPerRegion) ([]services.KafkaStreamingUnitCountPerRegion, error) {
+	var result []services.KafkaStreamingUnitCountPerRegion
 
 	// helper function that returns the sum of existing kafka instances for a clusterId split by
 	// all existing on cluster vs. instance type existing on cluster
 	findUsedCapacityForCluster := func(clusterId string, instanceType string) (float64, float64) {
 		var totalUsed float64 = 0
 		var instanceTypeUsed float64 = 0
-		for _, kafkaInRegion := range kafkasByRegion {
+		for _, kafkaInRegion := range streamingUnitsByRegion {
 			if kafkaInRegion.ClusterId == clusterId {
 				totalUsed += kafkaInRegion.Count
 
@@ -208,7 +208,7 @@ func (k *KafkaManager) calculateAvailableCapacityByRegionAndInstanceType(kafkasB
 				availableByInstanceType = 0
 			}
 
-			result = append(result, services.KafkaRegionCount{
+			result = append(result, services.KafkaStreamingUnitCountPerRegion{
 				Region:        cluster.Region,
 				InstanceType:  instanceType,
 				ClusterId:     cluster.ClusterId,
@@ -222,6 +222,6 @@ func (k *KafkaManager) calculateAvailableCapacityByRegionAndInstanceType(kafkasB
 	return result, nil
 }
 
-func (k *KafkaManager) setClusterStatusCapacityAvailableMetric(c *services.KafkaRegionCount) {
+func (k *KafkaManager) setClusterStatusCapacityAvailableMetric(c *services.KafkaStreamingUnitCountPerRegion) {
 	metrics.UpdateClusterStatusCapacityAvailableCount(c.CloudProvider, c.Region, c.InstanceType, c.ClusterId, c.Count)
 }

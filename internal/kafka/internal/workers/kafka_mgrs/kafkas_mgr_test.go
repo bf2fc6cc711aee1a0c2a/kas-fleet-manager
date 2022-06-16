@@ -36,8 +36,8 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
 						return nil, errors.GeneralError("failed to count kafkas by status")
 					},
-					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
-						return []services.KafkaRegionCount{}, nil
+					CountStreamingUnitByRegionAndInstanceTypeFunc: func() ([]services.KafkaStreamingUnitCountPerRegion, error) {
+						return []services.KafkaStreamingUnitCountPerRegion{}, nil
 					},
 					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
 						return nil
@@ -56,7 +56,7 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
 						return []services.KafkaStatusCount{}, nil
 					},
-					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
+					CountStreamingUnitByRegionAndInstanceTypeFunc: func() ([]services.KafkaStreamingUnitCountPerRegion, error) {
 						return nil, errors.GeneralError("failed to count kafkas by region and instance type")
 					},
 					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
@@ -76,8 +76,8 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
 						return []services.KafkaStatusCount{}, nil
 					},
-					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
-						return []services.KafkaRegionCount{}, nil
+					CountStreamingUnitByRegionAndInstanceTypeFunc: func() ([]services.KafkaStreamingUnitCountPerRegion, error) {
+						return []services.KafkaStreamingUnitCountPerRegion{}, nil
 					},
 					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
 						return errors.GeneralError("failed to deprovision expired kafkas")
@@ -238,10 +238,10 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "should return an error if CountByRegionAndInstanceType fails",
+			name: "should return an error if CountStreamingUnitByRegionAndInstanceType fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
+					CountStreamingUnitByRegionAndInstanceTypeFunc: func() ([]services.KafkaStreamingUnitCountPerRegion, error) {
 						return nil, errors.GeneralError("failed to count kafkas")
 					},
 				},
@@ -252,8 +252,8 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 			name: "should return an error if calculateAvailableCapacityByRegionAndInstanceType fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
-						return []services.KafkaRegionCount{
+					CountStreamingUnitByRegionAndInstanceTypeFunc: func() ([]services.KafkaStreamingUnitCountPerRegion, error) {
+						return []services.KafkaStreamingUnitCountPerRegion{
 							{
 								Region:        "us-east-1",
 								InstanceType:  "standard",
@@ -296,8 +296,8 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 			name: "should successfully assign metrics",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					CountByRegionAndInstanceTypeFunc: func() ([]services.KafkaRegionCount, error) {
-						return []services.KafkaRegionCount{
+					CountStreamingUnitByRegionAndInstanceTypeFunc: func() ([]services.KafkaStreamingUnitCountPerRegion, error) {
+						return []services.KafkaStreamingUnitCountPerRegion{
 							{
 								Region:        "us-east-1",
 								InstanceType:  "standard",
@@ -362,7 +362,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 		kafkaService           services.KafkaService
 		dataplaneClusterConfig config.DataplaneClusterConfig
 		cloudProviders         config.ProviderConfig
-		existingKafkas         []services.KafkaRegionCount
+		existingKafkas         []services.KafkaStreamingUnitCountPerRegion
 	}
 	tests := []struct {
 		name     string
@@ -399,7 +399,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 						},
 					},
 				},
-				existingKafkas: []services.KafkaRegionCount{
+				existingKafkas: []services.KafkaStreamingUnitCountPerRegion{
 					{
 						Region:        "us-east-1",
 						InstanceType:  "standard",
@@ -450,7 +450,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 						},
 					},
 				},
-				existingKafkas: []services.KafkaRegionCount{
+				existingKafkas: []services.KafkaStreamingUnitCountPerRegion{
 					{
 						Region:        "us-east-1",
 						InstanceType:  "standard",
@@ -510,7 +510,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 						},
 					},
 				},
-				existingKafkas: []services.KafkaRegionCount{
+				existingKafkas: []services.KafkaStreamingUnitCountPerRegion{
 					{
 						Region:        "us-east-1",
 						InstanceType:  "standard",
@@ -561,7 +561,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 						},
 					},
 				},
-				existingKafkas: []services.KafkaRegionCount{
+				existingKafkas: []services.KafkaStreamingUnitCountPerRegion{
 					{
 						Region:        "us-east-1",
 						InstanceType:  "standard",

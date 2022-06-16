@@ -16,6 +16,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	mocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
+	instanceTypesMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -44,6 +45,7 @@ var (
 	testKafkaRequestProvider = "aws"
 	testKafkaRequestName     = "test-cluster"
 	testClusterID            = "test-cluster-id"
+	testClusterID2           = "test-cluster-id-2"
 	testID                   = "test"
 	testUser                 = "test-user"
 	kafkaRequestTableName    = "kafka_requests"
@@ -2204,18 +2206,95 @@ func Test_KafkaService_CountByStatus(t *testing.T) {
 	}
 }
 
-func Test_KafkaService_CountByRegionAndInstanceType(t *testing.T) {
+func Test_KafkaService_CountStreamingUnitByRegionAndInstanceType(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
+	supportedInstanceTypeConfig := config.KafkaSupportedInstanceTypesConfig{
+		Configuration: config.SupportedKafkaInstanceTypesConfig{
+			SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+				{
+					Id:          "standard",
+					DisplayName: "Standard",
+					Sizes: []config.KafkaInstanceSize{
+						*instanceTypesMocks.BuildKafkaInstanceSize(func(kis *config.KafkaInstanceSize) {
+							kis.Id = "x1"
+							kis.QuotaConsumed = 1
+							kis.CapacityConsumed = 1
+						}),
+						*instanceTypesMocks.BuildKafkaInstanceSize(func(kis *config.KafkaInstanceSize) {
+							kis.Id = "x2"
+							kis.QuotaConsumed = 2
+							kis.CapacityConsumed = 2
+						}),
+					},
+				},
+				{
+					Id:          "developer",
+					DisplayName: "Trial",
+					Sizes: []config.KafkaInstanceSize{
+						*instanceTypesMocks.BuildKafkaInstanceSize(func(kis *config.KafkaInstanceSize) {
+							kis.Id = "x1"
+							kis.QuotaConsumed = 1
+							kis.CapacityConsumed = 1
+						}),
+					},
+				},
+			},
+		},
+	}
+
 	tests := []struct {
 		name      string
 		fields    fields
 		wantErr   bool
+		want      []KafkaStreamingUnitCountPerRegion
 		setupFunc func()
 	}{
 		{
-			name: "success",
+			name: "return an error when clusters query fails",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: true,
+			setupFunc: func() {
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT cloud_provider, region, count(1) as Count, size_id, cluster_id, instance_type FROM "kafka_requests"`).
+					WithReply([]map[string]interface{}{})
+
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM "clusters"`).
+					WithQueryException().
+					WithExecException()
+
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			want: nil,
+		},
+		{
+			name: "return an error when kafkas query fails",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: true,
+			setupFunc: func() {
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT cloud_provider, region, count(1) as Count, size_id, cluster_id, instance_type FROM "kafka_requests"`).
+					WithQueryException().
+					WithExecException()
+
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM "clusters"`).
+					WithReply([]map[string]interface{}{})
+
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			want: nil,
+		},
+		{
+			name: "should return an empty list when there are no data plane clusters",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
@@ -2223,13 +2302,16 @@ func Test_KafkaService_CountByRegionAndInstanceType(t *testing.T) {
 			setupFunc: func() {
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests"`).
-					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-						kafkaRequest.SizeId = "x1"
-						kafkaRequest.InstanceType = "developer"
-					})))
+					WithQuery(`SELECT cloud_provider, region, count(1) as Count, size_id, cluster_id, instance_type FROM "kafka_requests"`).
+					WithReply([]map[string]interface{}{})
+
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM "clusters"`).
+					WithReply([]map[string]interface{}{})
+
 				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
+			want: []KafkaStreamingUnitCountPerRegion{},
 		},
 		{
 			name: "should return the counts of Kafkas per region and instance type",
@@ -2240,44 +2322,112 @@ func Test_KafkaService_CountByRegionAndInstanceType(t *testing.T) {
 			setupFunc: func() {
 				counters := []map[string]interface{}{
 					{
-						"region":        "us-east-1",
-						"instance_type": "standard",
-						"cluster_id":    testClusterID,
-						"Count":         1,
-						"SizeId":        "x1",
+						"region":         "us-east-1",
+						"instance_type":  "standard",
+						"cluster_id":     testClusterID,
+						"cloud_provider": testKafkaRequestProvider,
+						"Count":          8,
+						"SizeId":         "x1",
 					},
 					{
-						"region":        "eu-west-1",
-						"instance_type": "developer",
-						"cluster_id":    testClusterID,
-						"Count":         1,
-						"SizeId":        "x1",
+						"region":         "us-east-1",
+						"instance_type":  "standard",
+						"cluster_id":     testClusterID,
+						"cloud_provider": testKafkaRequestProvider,
+						"Count":          2,
+						"SizeId":         "x2",
+					},
+					{
+						"region":         "eu-west-1",
+						"instance_type":  "developer",
+						"cluster_id":     testClusterID2,
+						"cloud_provider": testKafkaRequestProvider,
+						"Count":          1,
+						"SizeId":         "x1",
 					},
 				}
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests"`).
+					WithQuery(`SELECT cloud_provider, region, count(1) as Count, size_id, cluster_id, instance_type FROM "kafka_requests"`).
 					WithReply(counters)
+
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM "clusters"`).
+					WithReply([]map[string]interface{}{
+						{
+							"region":                  "us-east-1",
+							"cloud_provider":          testKafkaRequestProvider,
+							"cluster_id":              testClusterID,
+							"supported_instance_type": api.StandardTypeSupport.String(),
+						},
+						{
+							"region":                  "eu-west-1",
+							"cloud_provider":          testKafkaRequestProvider,
+							"cluster_id":              testClusterID2,
+							"supported_instance_type": api.DeveloperTypeSupport.String(),
+						},
+						{
+							"region":                  "eu-west-2",
+							"cloud_provider":          testKafkaRequestProvider,
+							"cluster_id":              testClusterID2,
+							"supported_instance_type": api.AllInstanceTypeSupport.String(),
+						},
+					})
+
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			want: []KafkaStreamingUnitCountPerRegion{
+				{
+					Region:        "us-east-1",
+					InstanceType:  "standard",
+					ClusterId:     "test-cluster-id",
+					Count:         12,
+					CloudProvider: "aws",
+				},
+				{
+					Region:        "eu-west-1",
+					InstanceType:  "developer",
+					ClusterId:     "test-cluster-id-2",
+					Count:         1,
+					CloudProvider: "aws",
+				},
+				{
+					Region:        "eu-west-2",
+					InstanceType:  "standard",
+					ClusterId:     "test-cluster-id-2",
+					Count:         0,
+					CloudProvider: "aws",
+				},
+				{
+					Region:        "eu-west-2",
+					InstanceType:  "developer",
+					ClusterId:     "test-cluster-id-2",
+					Count:         0,
+					CloudProvider: "aws",
+				},
 			},
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	RegisterTestingT(t)
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(testing *testing.T) {
 			if tt.setupFunc != nil {
 				tt.setupFunc()
 			}
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 				kafkaConfig: &config.KafkaConfig{
-					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
+					SupportedInstanceTypes: &supportedInstanceTypeConfig,
 				},
 			}
-			_, err := k.CountByRegionAndInstanceType()
-			if !tt.wantErr && err != nil {
-				t.Errorf("unexpected error for CountByRegionAndInstanceType: %v", err)
+			streamingUnitsCountPerRegion, err := k.CountStreamingUnitByRegionAndInstanceType()
+			Expect(err != nil).To(Equal(tt.wantErr))
+			if !tt.wantErr {
+				Expect(streamingUnitsCountPerRegion).To(Equal(tt.want))
 			}
+
 		})
 	}
 }
