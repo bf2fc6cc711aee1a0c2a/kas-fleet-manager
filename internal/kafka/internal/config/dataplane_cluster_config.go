@@ -45,6 +45,7 @@ type DataplaneClusterConfig struct {
 	RawKubernetesConfig                         *clientcmdapi.Config
 	StrimziOperatorOLMConfig                    OperatorInstallationConfig `json:"strimzi_operator_olm_config"`
 	KasFleetshardOperatorOLMConfig              OperatorInstallationConfig `json:"kas_fleetshard_operator_olm_config"`
+	DynamicScalingConfig                        DynamicScalingConfig
 }
 
 type OperatorInstallationConfig struct {
@@ -104,6 +105,7 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 			SubscriptionConfigFile: "config/kas-fleetshard-operator-subscription-spec-config.yaml",
 			SubscriptionConfig:     operatorsv1alpha1.SubscriptionConfig{},
 		},
+		DynamicScalingConfig: NewDynamicScalingConfig(),
 	}
 }
 
@@ -287,6 +289,7 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionStartingCSV, "kas-fleetshard-operator-starting-csv", c.KasFleetshardOperatorOLMConfig.SubscriptionStartingCSV, "kas-fleetshard operator subscription starting CSV")
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionChannel, "kas-fleetshard-operator-sub-channel", c.KasFleetshardOperatorOLMConfig.SubscriptionChannel, "kas-fleetshard operator subscription channel")
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile, "kas-fleetshard-operator-subscription-config-file", c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile, "kas-fleetshard operator subscription config. This is applied for standalone clusters only. The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig")
+	fs.StringVar(&c.DynamicScalingConfig.filePath, "dynamic-scaling-config-file", c.DynamicScalingConfig.filePath, "File path to a file containing the dynamic scaling configuration")
 }
 
 func (c *DataplaneClusterConfig) ReadFiles() error {
@@ -324,6 +327,17 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 			validationErr := validateClusterIsInKubeconfigContext(*c.RawKubernetesConfig, cluster)
 			if validationErr != nil {
 				return validationErr
+			}
+		}
+
+		if c.IsDataPlaneAutoScalingEnabled() {
+			err = shared.ReadYamlFile(c.DynamicScalingConfig.filePath, &c.DynamicScalingConfig.configuration)
+			if err != nil {
+				return err
+			}
+			err = c.DynamicScalingConfig.validate()
+			if err != nil {
+				return err
 			}
 		}
 

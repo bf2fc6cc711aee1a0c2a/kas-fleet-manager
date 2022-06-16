@@ -1,0 +1,7 @@
+---
+developer:
+  compute_nodes_config:
+    max_compute_nodes: 3
+standard:
+  compute_nodes_config:
+    max_compute_nodes: 9
