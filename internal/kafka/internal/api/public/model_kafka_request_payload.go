@@ -13,9 +13,6 @@ package public
 type KafkaRequestPayload struct {
 	// The cloud provider where the Kafka cluster will be created in
 	CloudProvider string `json:"cloud_provider,omitempty"`
-	// Deprecated. If it is specified, the value will be ignored. The API automatically determines this value from the 'plan' attribute\"
-	// Deprecated
-	DeprecatedMultiAz bool `json:"multi_az,omitempty"`
 	// The name of the Kafka cluster. It must consist of lower-case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character, and can not be longer than 32 characters.
 	Name string `json:"name"`
 	// The region where the Kafka cluster will be created in

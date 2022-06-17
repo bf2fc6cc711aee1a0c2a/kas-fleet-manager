@@ -2,9 +2,10 @@ package presenters
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"strings"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
@@ -25,7 +26,6 @@ func ConvertKafkaRequest(kafkaRequestPayload public.KafkaRequestPayload, dbKafka
 	kafka.Region = kafkaRequestPayload.Region
 	kafka.Name = kafkaRequestPayload.Name
 	kafka.CloudProvider = kafkaRequestPayload.CloudProvider
-	kafka.MultiAZ = kafkaRequestPayload.DeprecatedMultiAz
 
 	kafka.BillingCloudAccountId = shared.SafeString(kafkaRequestPayload.BillingCloudAccountId)
 	kafka.Marketplace = shared.SafeString(kafkaRequestPayload.Marketplace)

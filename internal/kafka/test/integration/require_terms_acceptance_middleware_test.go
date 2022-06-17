@@ -75,10 +75,9 @@ func TestTermsRequired_CreateKafkaTermsRequired(t *testing.T) {
 	ctx := env.helper.NewAuthenticatedContext(account, nil)
 
 	k := public.KafkaRequestPayload{
-		Region:            mocks.MockCluster.Region().ID(),
-		CloudProvider:     mocks.MockCluster.CloudProvider().ID(),
-		Name:              mockKafkaName,
-		DeprecatedMultiAz: testMultiAZ,
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockKafkaName,
 	}
 
 	_, resp, err := env.client.DefaultApi.CreateKafka(ctx, true, k)
@@ -103,10 +102,9 @@ func TestTermsRequired_CreateKafka_TermsNotRequired(t *testing.T) {
 	ctx := env.helper.NewAuthenticatedContext(account, nil)
 
 	k := public.KafkaRequestPayload{
-		Region:            mocks.MockCluster.Region().ID(),
-		CloudProvider:     mocks.MockCluster.CloudProvider().ID(),
-		Name:              mockKafkaName,
-		DeprecatedMultiAz: testMultiAZ,
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockKafkaName,
 	}
 
 	_, resp, err := env.client.DefaultApi.CreateKafka(ctx, true, k)
