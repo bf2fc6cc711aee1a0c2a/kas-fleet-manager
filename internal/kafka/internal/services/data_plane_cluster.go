@@ -18,10 +18,6 @@ import (
 	"github.com/golang/glog"
 )
 
-// Number of compute nodes in a Multi-AZ must be a multiple of
-// this number
-const multiAZClusterNodeScalingMultiple = 3
-
 //go:generate moq -out data_plane_cluster_service_moq.go . DataPlaneClusterService
 type DataPlaneClusterService interface {
 	UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *errors.ServiceError
