@@ -343,47 +343,6 @@ components:
                 allOf:
                   - $ref: "#/components/schemas/ManagedKafka"
 
-    DatePlaneClusterUpdateStatusRequestNodeInfo:
-      type: object
-      nullable: true
-      properties:
-        ceiling:
-          type: integer
-          nullable: true
-        floor:
-          type: integer
-          nullable: true
-        current:
-          type: integer
-          nullable: true
-        currentWorkLoadMinimum:
-          type: integer
-          nullable: true
-
-    DatePlaneClusterUpdateStatusRequestResizeInfo:
-      type: object
-      nullable: true
-      properties:
-        nodeDelta:
-          type: integer
-          nullable: true
-        delta:
-          type: object
-          nullable: true
-          properties:
-            ingressEgressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity.
-              nullable: true
-            connections:
-              type: integer # an example is 10000.
-              nullable: true
-            dataRetentionSize:
-              type: string
-              nullable: true
-            partitions:
-              type: integer
-              nullable: true
-
     DataPlaneClusterUpdateStatusRequest:
       # TODO are there any fields that should be required?
       # TODO are there any fields that should be nullable? (this is, a pointer in the resulting generated Go code)
@@ -404,41 +363,7 @@ components:
                 type: string
               status:
                 type: string
-        total:
-          type: object
-          properties:
-            ingressEgressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity.
-              nullable: true
-            connections:
-              type: integer # an example is 10000.
-              nullable: true
-            dataRetentionSize:
-              type: string
-              nullable: true
-            partitions:
-              type: integer
-              nullable: true
-        remaining:
-          type: object
-          properties:
-            # TODO 'total', 'remaining' attributes share the same properties so should we refactor it to a common schema?
-            ingressEgressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity.
-              nullable: true
-            connections:
-              type: integer # an example is 10000.
-              nullable: true
-            dataRetentionSize:
-              type: string
-              nullable: true
-            partitions:
-              type: integer
-              nullable: true
-        nodeInfo:
-          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
-        resizeInfo:
-          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
+                
         strimzi:
           type: array
           items:

@@ -139,66 +139,6 @@ func (o *OCMProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources t
 	return &resources, nil
 }
 
-func (o *OCMProvider) ScaleUp(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
-	_, err := o.ocmClient.ScaleUpComputeNodes(clusterSpec.InternalID, increment)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to scale up cluster %s by %d nodes", clusterSpec.InternalID, increment)
-	}
-	return clusterSpec, nil
-}
-
-func (o *OCMProvider) ScaleDown(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error) {
-	_, err := o.ocmClient.ScaleDownComputeNodes(clusterSpec.InternalID, decrement)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to scale down cluster %s by %d nodes", clusterSpec.InternalID, decrement)
-	}
-	return clusterSpec, nil
-}
-
-func (o *OCMProvider) SetComputeNodes(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error) {
-	_, err := o.ocmClient.SetComputeNodes(clusterSpec.InternalID, numNodes)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to set compute nodes value of cluster %s to %d", clusterSpec.InternalID, numNodes)
-	}
-	return clusterSpec, nil
-}
-
-func (o *OCMProvider) GetComputeNodes(clusterSpec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
-	ocmCluster, err := o.ocmClient.GetCluster(clusterSpec.InternalID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get cluster details %s", clusterSpec.InternalID)
-	}
-	metrics, err := o.ocmClient.GetExistingClusterMetrics(clusterSpec.InternalID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get metrics for cluster %s", clusterSpec.InternalID)
-	}
-	if metrics == nil {
-		return nil, errors.Errorf("cluster ID %s has no metrics", clusterSpec.InternalID)
-	}
-	existingNodes, ok := metrics.GetNodes()
-	if !ok {
-		return nil, errors.Errorf("Cluster ID %s has no node metrics", clusterSpec.InternalID)
-	}
-
-	existingComputeNodes, ok := existingNodes.GetCompute()
-	if !ok {
-		return nil, errors.Errorf("Cluster ID %s has no compute node metrics", clusterSpec.InternalID)
-	}
-
-	desiredNodes, ok := ocmCluster.GetNodes()
-	if !ok {
-		return nil, errors.Errorf("Cluster ID %s has no desired node information", clusterSpec.InternalID)
-	}
-	desiredComputeNodes, ok := desiredNodes.GetCompute()
-	if !ok {
-		return nil, errors.Errorf("Cluster ID %s has no desired compute node information", clusterSpec.InternalID)
-	}
-	return &types.ComputeNodesInfo{
-		Actual:  int(existingComputeNodes),
-		Desired: desiredComputeNodes,
-	}, nil
-}
-
 func (o *OCMProvider) InstallStrimzi(clusterSpec *types.ClusterSpec) (bool, error) {
 	return o.installAddon(clusterSpec, o.ocmConfig.StrimziOperatorAddonID)
 }
