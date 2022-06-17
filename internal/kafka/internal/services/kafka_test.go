@@ -2104,11 +2104,11 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			}
 			k.kafkaConfig.SupportedInstanceTypes.Configuration = config.SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
-					config.KafkaInstanceType{
+					{
 						Id: instanceType,
 						Sizes: []config.KafkaInstanceSize{
-							config.KafkaInstanceSize{Id: "size1"},
-							config.KafkaInstanceSize{Id: instanceSize, LifespanSeconds: &[]int{1234}[0]},
+							{Id: "size1"},
+							{Id: instanceSize, LifespanSeconds: &[]int{1234}[0]},
 						},
 					},
 				},

@@ -43,9 +43,6 @@ var _ Provider = &ProviderMock{}
 // 			GetClusterDNSFunc: func(clusterSpec *types.ClusterSpec) (string, error) {
 // 				panic("mock out the GetClusterDNS method")
 // 			},
-// 			GetComputeNodesFunc: func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
-// 				panic("mock out the GetComputeNodes method")
-// 			},
 // 			InstallClusterLoggingFunc: func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
 // 				panic("mock out the InstallClusterLogging method")
 // 			},
@@ -54,15 +51,6 @@ var _ Provider = &ProviderMock{}
 // 			},
 // 			InstallStrimziFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
 // 				panic("mock out the InstallStrimzi method")
-// 			},
-// 			ScaleDownFunc: func(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error) {
-// 				panic("mock out the ScaleDown method")
-// 			},
-// 			ScaleUpFunc: func(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
-// 				panic("mock out the ScaleUp method")
-// 			},
-// 			SetComputeNodesFunc: func(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error) {
-// 				panic("mock out the SetComputeNodes method")
 // 			},
 // 		}
 //
@@ -95,9 +83,6 @@ type ProviderMock struct {
 	// GetClusterDNSFunc mocks the GetClusterDNS method.
 	GetClusterDNSFunc func(clusterSpec *types.ClusterSpec) (string, error)
 
-	// GetComputeNodesFunc mocks the GetComputeNodes method.
-	GetComputeNodesFunc func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error)
-
 	// InstallClusterLoggingFunc mocks the InstallClusterLogging method.
 	InstallClusterLoggingFunc func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error)
 
@@ -106,15 +91,6 @@ type ProviderMock struct {
 
 	// InstallStrimziFunc mocks the InstallStrimzi method.
 	InstallStrimziFunc func(clusterSpec *types.ClusterSpec) (bool, error)
-
-	// ScaleDownFunc mocks the ScaleDown method.
-	ScaleDownFunc func(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error)
-
-	// ScaleUpFunc mocks the ScaleUp method.
-	ScaleUpFunc func(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error)
-
-	// SetComputeNodesFunc mocks the SetComputeNodes method.
-	SetComputeNodesFunc func(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -160,11 +136,6 @@ type ProviderMock struct {
 			// ClusterSpec is the clusterSpec argument value.
 			ClusterSpec *types.ClusterSpec
 		}
-		// GetComputeNodes holds details about calls to the GetComputeNodes method.
-		GetComputeNodes []struct {
-			// Spec is the spec argument value.
-			Spec *types.ClusterSpec
-		}
 		// InstallClusterLogging holds details about calls to the InstallClusterLogging method.
 		InstallClusterLogging []struct {
 			// ClusterSpec is the clusterSpec argument value.
@@ -184,27 +155,6 @@ type ProviderMock struct {
 			// ClusterSpec is the clusterSpec argument value.
 			ClusterSpec *types.ClusterSpec
 		}
-		// ScaleDown holds details about calls to the ScaleDown method.
-		ScaleDown []struct {
-			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types.ClusterSpec
-			// Decrement is the decrement argument value.
-			Decrement int
-		}
-		// ScaleUp holds details about calls to the ScaleUp method.
-		ScaleUp []struct {
-			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types.ClusterSpec
-			// Increment is the increment argument value.
-			Increment int
-		}
-		// SetComputeNodes holds details about calls to the SetComputeNodes method.
-		SetComputeNodes []struct {
-			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types.ClusterSpec
-			// NumNodes is the numNodes argument value.
-			NumNodes int
-		}
 	}
 	lockAddIdentityProvider     sync.RWMutex
 	lockApplyResources          sync.RWMutex
@@ -214,13 +164,9 @@ type ProviderMock struct {
 	lockGetCloudProviderRegions sync.RWMutex
 	lockGetCloudProviders       sync.RWMutex
 	lockGetClusterDNS           sync.RWMutex
-	lockGetComputeNodes         sync.RWMutex
 	lockInstallClusterLogging   sync.RWMutex
 	lockInstallKasFleetshard    sync.RWMutex
 	lockInstallStrimzi          sync.RWMutex
-	lockScaleDown               sync.RWMutex
-	lockScaleUp                 sync.RWMutex
-	lockSetComputeNodes         sync.RWMutex
 }
 
 // AddIdentityProvider calls AddIdentityProviderFunc.
@@ -474,37 +420,6 @@ func (mock *ProviderMock) GetClusterDNSCalls() []struct {
 	return calls
 }
 
-// GetComputeNodes calls GetComputeNodesFunc.
-func (mock *ProviderMock) GetComputeNodes(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
-	if mock.GetComputeNodesFunc == nil {
-		panic("ProviderMock.GetComputeNodesFunc: method is nil but Provider.GetComputeNodes was just called")
-	}
-	callInfo := struct {
-		Spec *types.ClusterSpec
-	}{
-		Spec: spec,
-	}
-	mock.lockGetComputeNodes.Lock()
-	mock.calls.GetComputeNodes = append(mock.calls.GetComputeNodes, callInfo)
-	mock.lockGetComputeNodes.Unlock()
-	return mock.GetComputeNodesFunc(spec)
-}
-
-// GetComputeNodesCalls gets all the calls that were made to GetComputeNodes.
-// Check the length with:
-//     len(mockedProvider.GetComputeNodesCalls())
-func (mock *ProviderMock) GetComputeNodesCalls() []struct {
-	Spec *types.ClusterSpec
-} {
-	var calls []struct {
-		Spec *types.ClusterSpec
-	}
-	mock.lockGetComputeNodes.RLock()
-	calls = mock.calls.GetComputeNodes
-	mock.lockGetComputeNodes.RUnlock()
-	return calls
-}
-
 // InstallClusterLogging calls InstallClusterLoggingFunc.
 func (mock *ProviderMock) InstallClusterLogging(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
 	if mock.InstallClusterLoggingFunc == nil {
@@ -603,110 +518,5 @@ func (mock *ProviderMock) InstallStrimziCalls() []struct {
 	mock.lockInstallStrimzi.RLock()
 	calls = mock.calls.InstallStrimzi
 	mock.lockInstallStrimzi.RUnlock()
-	return calls
-}
-
-// ScaleDown calls ScaleDownFunc.
-func (mock *ProviderMock) ScaleDown(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error) {
-	if mock.ScaleDownFunc == nil {
-		panic("ProviderMock.ScaleDownFunc: method is nil but Provider.ScaleDown was just called")
-	}
-	callInfo := struct {
-		ClusterSpec *types.ClusterSpec
-		Decrement   int
-	}{
-		ClusterSpec: clusterSpec,
-		Decrement:   decrement,
-	}
-	mock.lockScaleDown.Lock()
-	mock.calls.ScaleDown = append(mock.calls.ScaleDown, callInfo)
-	mock.lockScaleDown.Unlock()
-	return mock.ScaleDownFunc(clusterSpec, decrement)
-}
-
-// ScaleDownCalls gets all the calls that were made to ScaleDown.
-// Check the length with:
-//     len(mockedProvider.ScaleDownCalls())
-func (mock *ProviderMock) ScaleDownCalls() []struct {
-	ClusterSpec *types.ClusterSpec
-	Decrement   int
-} {
-	var calls []struct {
-		ClusterSpec *types.ClusterSpec
-		Decrement   int
-	}
-	mock.lockScaleDown.RLock()
-	calls = mock.calls.ScaleDown
-	mock.lockScaleDown.RUnlock()
-	return calls
-}
-
-// ScaleUp calls ScaleUpFunc.
-func (mock *ProviderMock) ScaleUp(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
-	if mock.ScaleUpFunc == nil {
-		panic("ProviderMock.ScaleUpFunc: method is nil but Provider.ScaleUp was just called")
-	}
-	callInfo := struct {
-		ClusterSpec *types.ClusterSpec
-		Increment   int
-	}{
-		ClusterSpec: clusterSpec,
-		Increment:   increment,
-	}
-	mock.lockScaleUp.Lock()
-	mock.calls.ScaleUp = append(mock.calls.ScaleUp, callInfo)
-	mock.lockScaleUp.Unlock()
-	return mock.ScaleUpFunc(clusterSpec, increment)
-}
-
-// ScaleUpCalls gets all the calls that were made to ScaleUp.
-// Check the length with:
-//     len(mockedProvider.ScaleUpCalls())
-func (mock *ProviderMock) ScaleUpCalls() []struct {
-	ClusterSpec *types.ClusterSpec
-	Increment   int
-} {
-	var calls []struct {
-		ClusterSpec *types.ClusterSpec
-		Increment   int
-	}
-	mock.lockScaleUp.RLock()
-	calls = mock.calls.ScaleUp
-	mock.lockScaleUp.RUnlock()
-	return calls
-}
-
-// SetComputeNodes calls SetComputeNodesFunc.
-func (mock *ProviderMock) SetComputeNodes(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error) {
-	if mock.SetComputeNodesFunc == nil {
-		panic("ProviderMock.SetComputeNodesFunc: method is nil but Provider.SetComputeNodes was just called")
-	}
-	callInfo := struct {
-		ClusterSpec *types.ClusterSpec
-		NumNodes    int
-	}{
-		ClusterSpec: clusterSpec,
-		NumNodes:    numNodes,
-	}
-	mock.lockSetComputeNodes.Lock()
-	mock.calls.SetComputeNodes = append(mock.calls.SetComputeNodes, callInfo)
-	mock.lockSetComputeNodes.Unlock()
-	return mock.SetComputeNodesFunc(clusterSpec, numNodes)
-}
-
-// SetComputeNodesCalls gets all the calls that were made to SetComputeNodes.
-// Check the length with:
-//     len(mockedProvider.SetComputeNodesCalls())
-func (mock *ProviderMock) SetComputeNodesCalls() []struct {
-	ClusterSpec *types.ClusterSpec
-	NumNodes    int
-} {
-	var calls []struct {
-		ClusterSpec *types.ClusterSpec
-		NumNodes    int
-	}
-	mock.lockSetComputeNodes.RLock()
-	calls = mock.calls.SetComputeNodes
-	mock.lockSetComputeNodes.RUnlock()
 	return calls
 }

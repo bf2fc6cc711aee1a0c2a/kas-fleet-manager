@@ -37,10 +37,6 @@ type ClusterService interface {
 	// finding the cluster an error is set
 	FindClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
 	GetClientId(clusterId string) (string, error)
-	ScaleUpComputeNodes(clusterID string, increment int) (*types.ClusterSpec, *apiErrors.ServiceError)
-	ScaleDownComputeNodes(clusterID string, decrement int) (*types.ClusterSpec, *apiErrors.ServiceError)
-	SetComputeNodes(clusterID string, numNodes int) (*types.ClusterSpec, *apiErrors.ServiceError)
-	GetComputeNodes(clusterID string) (*types.ComputeNodesInfo, *apiErrors.ServiceError)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError)
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
 	// DeleteByClusterID will delete the cluster from the database
@@ -323,105 +319,6 @@ func (c clusterService) GetClientId(clusterId string) (string, error) {
 		}
 		return cluster.ClientID, nil
 	}
-}
-
-// ScaleUpComputeNodes adds three additional compute nodes to cluster specified by clusterID
-func (c clusterService) ScaleUpComputeNodes(clusterID string, increment int) (*types.ClusterSpec, *apiErrors.ServiceError) {
-	if clusterID == "" {
-		return nil, apiErrors.Validation("clusterID is undefined")
-	}
-
-	cluster, serviceErr := c.FindClusterByID(clusterID)
-	if serviceErr != nil {
-		return nil, serviceErr
-	}
-
-	if cluster == nil {
-		return nil, apiErrors.New(apiErrors.ErrorGeneral, "unable to find a cluster identified by '%s'", clusterID)
-	}
-
-	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-
-	// scale up compute nodes
-	clusterSpec, err := provider.ScaleUp(buildClusterSpec(cluster), increment)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to scale up cluster")
-	}
-	return clusterSpec, nil
-}
-
-// ScaleDownComputeNodes removes three compute nodes to cluster specified by clusterID
-func (c clusterService) ScaleDownComputeNodes(clusterID string, decrement int) (*types.ClusterSpec, *apiErrors.ServiceError) {
-	if clusterID == "" {
-		return nil, apiErrors.Validation("clusterID is undefined")
-	}
-
-	cluster, serviceErr := c.FindClusterByID(clusterID)
-	if serviceErr != nil {
-		return nil, serviceErr
-	}
-	if cluster == nil {
-		return nil, apiErrors.New(apiErrors.ErrorGeneral, "unable to find a cluster identified by '%s'", clusterID)
-	}
-
-	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-
-	// scale up compute nodes
-	clusterSpec, err := provider.ScaleDown(buildClusterSpec(cluster), decrement)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to scale down cluster")
-	}
-	return clusterSpec, nil
-}
-
-func (c clusterService) SetComputeNodes(clusterID string, numNodes int) (*types.ClusterSpec, *apiErrors.ServiceError) {
-	if clusterID == "" {
-		return nil, apiErrors.Validation("clusterID is undefined")
-	}
-
-	cluster, serviceErr := c.FindClusterByID(clusterID)
-	if serviceErr != nil {
-		return nil, serviceErr
-	}
-
-	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-
-	// set number of compute nodes
-	clusterSpec, err := provider.SetComputeNodes(buildClusterSpec(cluster), numNodes)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to set compute nodes")
-	}
-	return clusterSpec, nil
-}
-
-func (c clusterService) GetComputeNodes(clusterID string) (*types.ComputeNodesInfo, *apiErrors.ServiceError) {
-	if clusterID == "" {
-		return nil, apiErrors.Validation("clusterID is undefined")
-	}
-
-	cluster, serviceErr := c.FindClusterByID(clusterID)
-	if serviceErr != nil {
-		return nil, serviceErr
-	}
-
-	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-	nodesInfo, err := provider.GetComputeNodes(buildClusterSpec(cluster))
-	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get compute nodes info from provider")
-	}
-	return nodesInfo, nil
 }
 
 func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceError {

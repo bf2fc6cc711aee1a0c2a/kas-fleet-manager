@@ -161,7 +161,7 @@ func WaitForMetricToBePresent(h *test.Helper, t *testing.T, metric string, value
 		IntervalAndTimeout(metricPollInterval, metricPollTimeout).
 		RetryLogMessagef("Waiting for metric '%s' to contain values '%s", metric, values).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			return IsMetricExposedWithValue(h, t, metric, values...), nil
+			return IsMetricExposedWithValue(t, metric, values...), nil
 		}).
 		Build().Poll()
 }

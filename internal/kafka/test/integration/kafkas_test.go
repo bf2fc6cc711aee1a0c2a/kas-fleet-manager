@@ -55,9 +55,10 @@ type errorCheck struct {
 }
 
 type kafkaValidation struct {
-	kafka        *dbapi.KafkaRequest
-	eCheck       errorCheck
-	capacityUsed string
+	kafka             *dbapi.KafkaRequest
+	eCheck            errorCheck
+	capacityUsed      string
+	assignedClusterID string
 }
 
 // TestKafkaCreate_Success validates the happy path of the kafka post endpoint:
@@ -267,12 +268,12 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 	configHook := func(clusterConfig *config.DataplaneClusterConfig) {
 		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
 		clusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
-			config.ManualCluster{ClusterId: "test01", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard,developer"},
-			config.ManualCluster{ClusterId: "test02", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard"},
-			config.ManualCluster{ClusterId: "test03", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "developer"},
-			config.ManualCluster{ClusterId: "test04", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard"},
-			config.ManualCluster{ClusterId: "test05", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "developer"},
-			config.ManualCluster{ClusterId: "test06", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 0, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard,developer"},
+			config.ManualCluster{ClusterId: "first", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard,developer"},
+			config.ManualCluster{ClusterId: "second", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard"},
+			config.ManualCluster{ClusterId: "third", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "developer"},
+			config.ManualCluster{ClusterId: "fourth", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard"},
+			config.ManualCluster{ClusterId: "fifth", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "developer"},
+			config.ManualCluster{ClusterId: "sixth", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 0, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard,developer"},
 		})
 	}
 
@@ -470,7 +471,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Need to mark the clusters to ClusterWaitingForKasFleetShardOperator so that fleetshardsync and placement can actually happen
-	updateErr := test.TestServices.ClusterService.UpdateMultiClusterStatus([]string{"test01", "test02", "test03", "test04"}, api.ClusterReady)
+	updateErr := test.TestServices.ClusterService.UpdateMultiClusterStatus([]string{"first", "second", "third", "fourth"}, api.ClusterReady)
 	Expect(updateErr).NotTo(HaveOccurred())
 
 	tooLargeStandardKafka := buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -593,82 +594,85 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		// first two kafkas are larger than cluster capacity (3 vs 2), hence can't be placed into
 		// any cluster despite of the global capacity being 5 for developer and standard instance types
 		{
-			tooLargeStandardKafka,
-			errorCheckWithError,
-			"",
+			kafka:        tooLargeStandardKafka,
+			eCheck:       errorCheckWithError,
+			capacityUsed: "",
 		},
 		{
-			tooLargeDeveloperKafka,
-			errorCheckWithError,
-			"",
+			kafka:        tooLargeDeveloperKafka,
+			eCheck:       errorCheckWithError,
+			capacityUsed: "",
 		},
 		{
-			x2StandardKafka,
-			errorCheckNoError,
-			"2",
+			kafka:             x2StandardKafka,
+			eCheck:            errorCheckNoError,
+			capacityUsed:      "2", // the kafka will use two capacity of the "first" cluster as a standard instance
+			assignedClusterID: "first",
 		},
 		{
-			x2DeveloperKafka,
-			errorCheckNoError,
-			"2",
+			kafka:             x2DeveloperKafka,
+			eCheck:            errorCheckNoError,
+			capacityUsed:      "2", // the kafka will use two capacity of the "third" cluster as a developer instance
+			assignedClusterID: "third",
 		},
 		{
-			standardKafka1,
-			errorCheckNoError,
-			"3",
+			kafka:             standardKafka1,
+			eCheck:            errorCheckNoError,
+			capacityUsed:      "1", // the kafka will use one capacity of the "second" cluster as a standard instance
+			assignedClusterID: "second",
 		},
 		{
-			standardKafka2,
-			errorCheckNoError,
-			"4",
+			kafka:             standardKafka2,
+			eCheck:            errorCheckNoError,
+			capacityUsed:      "2", // the kafka will use the remaining one capacity of the "second" cluster as a standard instance
+			assignedClusterID: "second",
 		},
 		{
-			standardKafka3,
-			errorCheckNoError,
-			"5",
+			kafka:             standardKafka3,
+			eCheck:            errorCheckNoError,
+			capacityUsed:      "1", // the kafka will use one capacity of the "fourth" cluster as a standard instance
+			assignedClusterID: "fourth",
 		},
 		{
-			developerKafka1,
-			errorCheckNoError,
-			"3",
+			kafka:             developerKafka1,
+			eCheck:            errorCheckNoError,
+			capacityUsed:      "1", // the kafka will use one capacity of the "fifth" cluster as a developer instance
+			assignedClusterID: "fifth",
 		},
 		{
-			developerKafka2,
-			errorCheckNoError,
-			"4",
+			kafka:             developerKafka2,
+			eCheck:            errorCheckNoError,
+			capacityUsed:      "2", // the kafka will use the remaining capacity of the "fifth" cluster
+			assignedClusterID: "fifth",
 		},
 		// the "standard,developer" cluster should be filled up by standard instances, hence despite of
 		// global capacity being available for developer instances, there is no space on clusters supporting this type of instance
 		{
-			developerKafka3,
-			errorCheckWithError,
-			"",
+			kafka:        developerKafka3,
+			eCheck:       errorCheckWithError,
+			capacityUsed: "",
 		},
 		{
-			developerKafka4,
-			errorCheckWithError,
-			"",
+			kafka:        developerKafka4,
+			eCheck:       errorCheckWithError,
+			capacityUsed: "",
 		},
 		{
-			standardKafka4,
-			errorCheckWithError,
-			"",
+			kafka:        standardKafka4,
+			eCheck:       errorCheckWithError,
+			capacityUsed: "",
 		},
 		{
-			standardKafkaIncorrectRegion,
-			errorCheckUnsupportedRegion,
-			"",
+			kafka:        standardKafkaIncorrectRegion,
+			eCheck:       errorCheckUnsupportedRegion,
+			capacityUsed: "",
 		},
 		{
-			developerKafkaIncorrectRegion,
-			errorCheckUnsupportedRegion,
-			"",
+			kafka:        developerKafkaIncorrectRegion,
+			eCheck:       errorCheckUnsupportedRegion,
+			capacityUsed: "",
 		},
 	}
-
-	standardClusters := "test01,test02,test04"
-
-	developerClusters := "test01,test03,test05"
 
 	defer func() {
 		kasfFleetshardSync.Stop()
@@ -685,7 +689,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		}
 	}()
 
-	testValidations(standardClusters, developerClusters, h, t, kafkaValidations)
+	testValidations(h, t, kafkaValidations)
 }
 
 // build a test kafka request
@@ -705,7 +709,7 @@ func buildKafkaRequest(modifyFn func(kafkaRequest *dbapi.KafkaRequest)) *dbapi.K
 	return kafkaRequest
 }
 
-func testValidations(standardClusters, developerClusters string, h *coreTest.Helper, t *testing.T, kafkaValidations []kafkaValidation) {
+func testValidations(h *coreTest.Helper, t *testing.T, kafkaValidations []kafkaValidation) {
 	for _, val := range kafkaValidations {
 		errK := test.TestServices.KafkaService.RegisterKafkaJob(val.kafka)
 		if (errK != nil) != val.eCheck.wantErr {
@@ -724,7 +728,8 @@ func testValidations(standardClusters, developerClusters string, h *coreTest.Hel
 				}
 			}
 		} else {
-			checkMetricsError := common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityUsed, val.capacityUsed, val.kafka.InstanceType)
+			Expect(val.kafka.ClusterID).To(Equal(val.assignedClusterID))
+			checkMetricsError := common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityUsed, val.capacityUsed, val.kafka.InstanceType, val.assignedClusterID, val.kafka.Region, val.kafka.CloudProvider)
 			Expect(checkMetricsError).NotTo(HaveOccurred())
 		}
 	}

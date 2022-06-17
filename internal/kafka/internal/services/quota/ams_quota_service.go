@@ -2,12 +2,12 @@ package quota
 
 import (
 	"fmt"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
 
@@ -17,8 +17,25 @@ type amsQuotaService struct {
 }
 
 const (
-	MarketplaceAWS = "aws"
+	CloudProviderAWS   = "aws"
+	CloudProviderRHM   = "rhm"
+	CloudProviderAzure = "azure"
 )
+
+var supportedCloudProviders = []string{CloudProviderAWS, CloudProviderRHM, CloudProviderAzure}
+
+func getBillingModelForCloudProvider(cloudProvider string) (amsv1.BillingModel, error) {
+	switch cloudProvider {
+	case CloudProviderAWS:
+		return amsv1.BillingModelMarketplaceAWS, nil
+	case CloudProviderRHM:
+		return amsv1.BillingModelMarketplace, nil
+	case CloudProviderAzure:
+		return amsv1.BillingModelMarketplaceAzure, nil
+	}
+
+	return "", errors.InvalidBillingAccount("unsupported cloud provider")
+}
 
 func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder {
 	rr := amsv1.ReservedResourceBuilder{}
@@ -186,6 +203,19 @@ func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType
 		return accounts
 	}
 
+	// check if it there is a related resource that supports the marketplace billing model and has quota
+	hasSufficientMarketplaceQuota := func() bool {
+		for _, quotaCost := range quotaCosts {
+			for _, rr := range quotaCost.RelatedResources() {
+				if rr.BillingModel() == string(amsv1.BillingModelMarketplace) &&
+					(rr.Cost() == 0 || quotaCost.Consumed()+kafkaInstanceSize.QuotaConsumed <= quotaCost.Allowed()) {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
 	// no billing account and marketplace provided
 	// in this case we first try to assign the billing model in the old way: prefer standard and use marketplace if standard is not available
 	// if marketplace was picked and there is a single cloud account of type aws, then we change the billing model to marketplace-aws and
@@ -200,11 +230,19 @@ func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType
 		if billingModel == string(amsv1.BillingModelMarketplace) && len(cloudAccounts) == 1 {
 			// at this point we know that there is only one cloud account
 			cloudAccount := cloudAccounts[0]
-			if cloudAccount.CloudProviderID() == MarketplaceAWS {
+
+			if arrays.Contains(supportedCloudProviders, cloudAccount.CloudProviderID()) {
 				kafka.BillingCloudAccountId = cloudAccount.CloudAccountID()
-				kafka.Marketplace = MarketplaceAWS
-				return string(amsv1.BillingModelMarketplaceAWS), nil
+				kafka.Marketplace = cloudAccount.CloudProviderID()
+
+				billingModel, err := getBillingModelForCloudProvider(cloudAccount.CloudProviderID())
+				if err != nil {
+					return "", err
+				}
+
+				return string(billingModel), nil
 			}
+
 		} else {
 			// billing model was standard or can't choose a cloud account
 			return billingModel, nil
@@ -214,11 +252,20 @@ func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType
 	// billing account and marketplace (optional) provided
 	// find a matching cloud account and assign it if the provider id is aws (the only supported one at the moment)
 	for _, cloudAccount := range getCloudAccounts() {
-		if cloudAccount.CloudProviderID() == MarketplaceAWS && cloudAccount.CloudAccountID() == kafka.BillingCloudAccountId && (cloudAccount.CloudProviderID() == kafka.Marketplace || kafka.Marketplace == "") {
+		if cloudAccount.CloudAccountID() == kafka.BillingCloudAccountId && (cloudAccount.CloudProviderID() == kafka.Marketplace || kafka.Marketplace == "") {
+			// check if we have quota
+			if !hasSufficientMarketplaceQuota() {
+				return "", errors.InsufficientQuotaError("quota does not support marketplace billing or has insufficient quota")
+			}
+
 			// assign marketplace in case it was not provided in the request
-			// at this point we know that an aws account was selected
-			kafka.Marketplace = MarketplaceAWS
-			return string(amsv1.BillingModelMarketplaceAWS), nil
+			kafka.Marketplace = cloudAccount.CloudProviderID()
+			billingModel, err := getBillingModelForCloudProvider(cloudAccount.CloudProviderID())
+			if err != nil {
+				return "", err
+			}
+
+			return string(billingModel), nil
 		}
 	}
 

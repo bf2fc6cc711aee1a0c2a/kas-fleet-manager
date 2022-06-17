@@ -12,6 +12,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
@@ -236,26 +237,25 @@ func CheckMetricExposed(h *test.Helper, t *testing.T, metric string) {
 
 // IsMetricExposedWithValue - checks whether metric is exposed in the metrics URL and the metric value(s)
 // match values param
-func IsMetricExposedWithValue(h *test.Helper, t *testing.T, metric string, values ...string) bool {
+func IsMetricExposedWithValue(t *testing.T, metric string, values ...string) bool {
 	resp := getMetrics(t)
 	metricLines := strings.Split(resp, "\n")
-	metricValuesFound := false
-	for _, l := range metricLines {
-		if strings.Contains(l, metric) {
-			valuesFound := 0
-			for _, v := range values {
-				if !strings.Contains(l, v) {
-					valuesFound++
-				} else {
-					break
-				}
-			}
-			if len(values) == valuesFound {
-				metricValuesFound = true
-			}
+	for _, metricLine := range metricLines {
+		if !strings.Contains(metricLine, metric) {
+			continue
 		}
+
+		allValuesFound := arrays.FindFirstString(values, func(value string) bool {
+			return !strings.Contains(metricLine, value)
+		}) == -1
+
+		if allValuesFound {
+			return true
+		}
+
 	}
-	return strings.Contains(resp, metric) && metricValuesFound
+
+	return false
 }
 
 // CheckMetric - check if the given metric exists in the metrics data

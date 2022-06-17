@@ -17,8 +17,8 @@ func TestDataPlaneKafkastatus_GetReadyCondition(t *testing.T) {
 			name:   "When no ready condition exists ok is false",
 			wantOK: false,
 			statusConds: []DataPlaneKafkaStatusCondition{
-				DataPlaneKafkaStatusCondition{Type: "CondType1"},
-				DataPlaneKafkaStatusCondition{Type: "CondType2"},
+				{Type: "CondType1"},
+				{Type: "CondType2"},
 			},
 		},
 		{
@@ -26,8 +26,8 @@ func TestDataPlaneKafkastatus_GetReadyCondition(t *testing.T) {
 			wantOK:       true,
 			wantCondType: "Ready",
 			statusConds: []DataPlaneKafkaStatusCondition{
-				DataPlaneKafkaStatusCondition{Type: "CondType1"},
-				DataPlaneKafkaStatusCondition{Type: "Ready"},
+				{Type: "CondType1"},
+				{Type: "Ready"},
 			},
 		},
 	}
