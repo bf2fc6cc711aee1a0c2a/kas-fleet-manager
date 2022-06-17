@@ -3,8 +3,8 @@ package config
 import "github.com/spf13/pflag"
 
 type KasFleetshardConfig struct {
-	PollInterval   string `json:"poll_interval"`
-	ResyncInterval string `json:"resync_interval"`
+	PollInterval   string
+	ResyncInterval string
 }
 
 func NewKasFleetshardConfig() *KasFleetshardConfig {
