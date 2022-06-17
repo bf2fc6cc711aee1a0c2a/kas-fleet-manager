@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -125,9 +126,9 @@ func (rl RegionList) String() string {
 }
 
 type Provider struct {
-	Name    string     `json:"name"`
-	Default bool       `json:"default"`
-	Regions RegionList `json:"regions"`
+	Name    string     `yaml:"name"`
+	Default bool       `yaml:"default"`
+	Regions RegionList `yaml:"regions"`
 }
 
 type ProviderList []Provider
@@ -154,8 +155,8 @@ type ProviderConfiguration struct {
 }
 
 type ProviderConfig struct {
-	ProvidersConfig     ProviderConfiguration `json:"providers"`
-	ProvidersConfigFile string                `json:"providers_config_file"`
+	ProvidersConfig     ProviderConfiguration
+	ProvidersConfigFile string
 }
 
 func NewSupportedProvidersConfig() *ProviderConfig {

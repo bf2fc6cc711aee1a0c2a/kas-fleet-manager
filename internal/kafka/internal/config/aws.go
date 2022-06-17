@@ -7,18 +7,18 @@ import (
 
 type AWSConfig struct {
 	// Used for OSD Cluster creation with OCM
-	AccountID           string `json:"account_id"`
-	AccountIDFile       string `json:"account_id_file"`
-	AccessKey           string `json:"access_key"`
-	AccessKeyFile       string `json:"access_key_file"`
-	SecretAccessKey     string `json:"secret_access_key"`
-	SecretAccessKeyFile string `json:"secret_access_key_file"`
+	AccountID           string
+	AccountIDFile       string
+	AccessKey           string
+	AccessKeyFile       string
+	SecretAccessKey     string
+	SecretAccessKeyFile string
 
 	// Used for domain modifications in Route 53
-	Route53AccessKey           string `json:"route53_access_key"`
-	Route53AccessKeyFile       string `json:"route53_access_key_file"`
-	Route53SecretAccessKey     string `json:"route53_secret_access_key"`
-	Route53SecretAccessKeyFile string `json:"route53_secret_access_key_file"`
+	Route53AccessKey           string
+	Route53AccessKeyFile       string
+	Route53SecretAccessKey     string
+	Route53SecretAccessKeyFile string
 }
 
 func NewAWSConfig() *AWSConfig {

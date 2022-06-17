@@ -24,35 +24,35 @@ import (
 )
 
 type DataplaneClusterConfig struct {
-	OpenshiftVersion             string `json:"cluster_openshift_version"`
-	ComputeMachineType           string `json:"cluster_compute_machine_type"`
-	ImagePullDockerConfigContent string `json:"image_pull_docker_config_content"`
-	ImagePullDockerConfigFile    string `json:"image_pull_docker_config_file"`
+	OpenshiftVersion             string
+	ComputeMachineType           string
+	ImagePullDockerConfigContent string
+	ImagePullDockerConfigFile    string
 	// Possible values are:
 	// 'manual' to use OSD Cluster configuration file,
 	// 'auto' to use dynamic scaling
 	// 'none' to disabled scaling all together, useful in testing
-	DataPlaneClusterScalingType                 string `json:"dataplane_cluster_scaling_type"`
-	DataPlaneClusterConfigFile                  string `json:"dataplane_cluster_config_file"`
+	DataPlaneClusterScalingType                 string
+	DataPlaneClusterConfigFile                  string
 	ReadOnlyUserList                            userv1.OptionalNames
 	ReadOnlyUserListFile                        string
 	KafkaSREUsers                               userv1.OptionalNames
 	KafkaSREUsersFile                           string
-	ClusterConfig                               *ClusterConfig `json:"clusters_config"`
-	EnableReadyDataPlaneClustersReconcile       bool           `json:"enable_ready_dataplane_clusters_reconcile"`
+	ClusterConfig                               *ClusterConfig
+	EnableReadyDataPlaneClustersReconcile       bool
 	EnableKafkaSreIdentityProviderConfiguration bool
-	Kubeconfig                                  string `json:"kubeconfig"`
+	Kubeconfig                                  string
 	RawKubernetesConfig                         *clientcmdapi.Config
-	StrimziOperatorOLMConfig                    OperatorInstallationConfig `json:"strimzi_operator_olm_config"`
-	KasFleetshardOperatorOLMConfig              OperatorInstallationConfig `json:"kas_fleetshard_operator_olm_config"`
+	StrimziOperatorOLMConfig                    OperatorInstallationConfig
+	KasFleetshardOperatorOLMConfig              OperatorInstallationConfig
 	DynamicScalingConfig                        DynamicScalingConfig
 }
 
 type OperatorInstallationConfig struct {
-	Namespace               string `json:"namespace"`
-	IndexImage              string `json:"index_image"`
-	Package                 string `json:"package"`
-	SubscriptionChannel     string `json:"subscription_channel"`
+	Namespace               string
+	IndexImage              string
+	Package                 string
+	SubscriptionChannel     string
 	SubscriptionConfig      operatorsv1alpha1.SubscriptionConfig
 	SubscriptionConfigFile  string
 	SubscriptionStartingCSV string
