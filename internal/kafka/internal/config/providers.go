@@ -126,9 +126,9 @@ func (rl RegionList) String() string {
 }
 
 type Provider struct {
-	Name    string
-	Default bool
-	Regions RegionList
+	Name    string     `yaml:"name"`
+	Default bool       `yaml:"default"`
+	Regions RegionList `yaml:"regions"`
 }
 
 type ProviderList []Provider
