@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"gorm.io/gorm"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -802,68 +801,6 @@ func (k *kafkaService) Updates(kafkaRequest *dbapi.KafkaRequest, fields map[stri
 func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 	if !auth.GetIsAdminFromContext(ctx) {
 		return errors.New(errors.ErrorUnauthenticated, "User not authenticated")
-	}
-
-	cluster, err := k.clusterService.FindClusterByID(kafkaRequest.ClusterID)
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find cluster associated with kafka request: %s", kafkaRequest.ID)
-	}
-	if cluster == nil {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to get cluster for kafka %s", kafkaRequest.ID))
-	}
-
-	kafkaVersionAvailable, err2 := k.clusterService.IsStrimziKafkaVersionAvailableInCluster(cluster, kafkaRequest.DesiredStrimziVersion, kafkaRequest.DesiredKafkaVersion, kafkaRequest.DesiredKafkaIBPVersion)
-	if err2 != nil {
-		return errors.Validation(err2.Error())
-	}
-
-	if !kafkaVersionAvailable {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaVersion))
-	}
-
-	strimziVersionReady, err2 := k.clusterService.CheckStrimziVersionReady(cluster, kafkaRequest.DesiredStrimziVersion)
-	if err2 != nil {
-		return errors.Validation(err2.Error())
-	}
-
-	if !strimziVersionReady {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with strimzi version: %s", kafkaRequest.ID, kafkaRequest.DesiredStrimziVersion))
-	}
-
-	currentIBPVersion, _ := arrays.FirstNonEmpty(kafkaRequest.ActualKafkaIBPVersion, kafkaRequest.DesiredKafkaIBPVersion)
-	vCompOldNewIbp, eIbp := api.CompareBuildAwareSemanticVersions(currentIBPVersion, kafkaRequest.DesiredKafkaIBPVersion)
-
-	if eIbp != nil {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare actual ibp version: %s with desired ibp version: %s", currentIBPVersion, kafkaRequest.DesiredKafkaVersion))
-	}
-
-	// actual ibp version cannot be greater than desired ibp version (no downgrade allowed)
-	if vCompOldNewIbp > 0 {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s ibp version: %s to a lower version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaIBPVersion, currentIBPVersion))
-	}
-
-	vCompIbpKafka, eIbpK := api.CompareBuildAwareSemanticVersions(kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion)
-
-	if eIbpK != nil {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare kafka ibp version: %s with kafka version: %s", kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
-	}
-
-	// ibp version cannot be greater than kafka version
-	if vCompIbpKafka > 0 {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s ibp version: %s with kafka version: %s", kafkaRequest.ID, kafkaRequest.DesiredKafkaIBPVersion, kafkaRequest.DesiredKafkaVersion))
-	}
-
-	currentKafkaVersion, _ := arrays.FirstNonEmpty(kafkaRequest.ActualKafkaVersion, kafkaRequest.DesiredKafkaVersion)
-
-	vCompKafka, ek := api.CompareSemanticVersionsMajorAndMinor(currentKafkaVersion, kafkaRequest.DesiredKafkaVersion)
-
-	if ek != nil {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare desired kafka version: %s with actual kafka version: %s", kafkaRequest.DesiredKafkaVersion, currentKafkaVersion))
-	}
-
-	// no minor/ major version downgrades allowed for kafka version
-	if vCompKafka > 0 {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s version: %s to the following kafka version: %s", kafkaRequest.ID, currentKafkaVersion, kafkaRequest.DesiredKafkaVersion))
 	}
 
 	// only updated specified columns to avoid changing other columns e.g Status
