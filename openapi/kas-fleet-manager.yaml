@@ -1249,15 +1249,6 @@ components:
           description: 'Whether the region is enabled for deploying an OSD cluster.'
           type: boolean
           default: false
-        supported_instance_types:
-          deprecated: true  
-          description:  |-
-            The Kafka instance types supported by this region.
-
-            DEPRECATION NOTICE - instance_type will be deprecated
-          type: array
-          items:
-            type: string
         capacity:
           description: 'Indicates whether there is capacity left per instance type'
           type: array
@@ -1738,7 +1729,6 @@ components:
         id: "us-east-1"
         display_name: "US East, N. Virginia"
         enabled: true
-        supported_instance_types: ["standard"]
         capacity: [
           {
               instance_type: "standard",
