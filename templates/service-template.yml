@@ -162,6 +162,11 @@ parameters:
   description: A list of supported Kafka instance types in a yaml format.
   value: "[{id: standard, display_name: Standard, sizes: [{id: x1, display_name: '1', ingressThroughputPerSec: 50Mi, egressThroughputPerSec: 100Mi, totalMaxConnections: 3000, maxConnectionAttemptsPerSec: 100, maxDataRetentionSize: 1000Gi, maxDataRetentionPeriod: P14D, maxPartitions: 1500, maxMessageSize: 1Mi, minInSyncReplicas: 2, replicationFactor: 3, quotaConsumed: 1, quotaType: RHOSAK, capacityConsumed: 1, supportedAZModes: [multi], maturityStatus: stable}, {id: x2, display_name: '2', ingressThroughputPerSec: 100Mi, egressThroughputPerSec: 200Mi, totalMaxConnections: 6000, maxDataRetentionSize: 2000Gi, maxPartitions: 3000, maxMessageSize: 1Mi, minInSyncReplicas: 2, replicationFactor: 3, maxDataRetentionPeriod: P14D, maxConnectionAttemptsPerSec: 200, quotaConsumed: 2, quotaType: RHOSAK, capacityConsumed: 2, supportedAZModes: [multi], maturityStatus: preview}]}, {id: developer, display_name: Trial, sizes: [{id: x1, display_name: '1', ingressThroughputPerSec: 1Mi, egressThroughputPerSec: 1Mi, totalMaxConnections: 100, maxConnectionAttemptsPerSec: 50, maxDataRetentionSize: 10Gi, maxDataRetentionPeriod: P14D, maxPartitions: 100, maxMessageSize: 1Mi, minInSyncReplicas: 1, quotaConsumed: 1, replicationFactor: 1, quotaType: RHOSAKTrial, capacityConsumed: 1, supportedAZModes: [single], lifespanSeconds: 172800, maturityStatus: stable}]}]"
 
+- name: DYNAMIC_SCALING_CONFIG
+  displayName: Dynamic Scaling configuration
+  description: "YAML content containing a map of the dynamic scaling configuration for each instance type"
+  value: "{developer: {compute_nodes_config: {max_compute_nodes: 3}}, standard: {compute_nodes_config: {max_compute_nodes: 9}}}"
+
 - name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
   displayName: Enable Kafka TLS
   description: Enable the Kafka TLS certificate
@@ -293,32 +298,32 @@ parameters:
 - name: TENANT_USERNAME_CLAIM
   displayName: Token claims username key
   description: Token claims key to retrieve the corresponding user principal.
-  value: "username" 
+  value: "username"
 
 - name: TENANT_ID_CLAIM
   displayName: Token claims organisation ID key
   description: Token claims key to retrieve the corresponding organisation ID.
-  value: "org_id" 
+  value: "org_id"
 
 - name: TENANT_ORG_ADMIN_CLAIM
   displayName: Token claims organisation admin access key
   description: Token claims key to retrieve the corresponding organisation admin role.
-  value: "is_org_admin" 
+  value: "is_org_admin"
 
 - name: ALTERNATE_TENANT_USERNAME_CLAIM
   displayName: Token claims alternative username key
   description: Token claims key to retrieve the corresponding user principal using an alternative claim.
-  value: "preferred_username" 
+  value: "preferred_username"
 
 - name: TENANT_USER_ID_CLAIM
   displayName: Token claims Account ID key
   description: Token claims key to retrieve the corresponding Account ID.
-  value: "account_id" 
+  value: "account_id"
 
 - name: ALTERNATE_TENANT_ID_CLAIM
   displayName: Token claims alternative organisation ID key.
   description: Token claims key to retrieve the corresponding organisation ID using an alternative claim.
-  value: "rh-org-id" 
+  value: "rh-org-id"
 
 - name: DENIED_USERS
   displayName: A list of denied users given by their usernames
@@ -377,7 +382,7 @@ parameters:
   displayName: MAS SSO REALM for OSD Cluster Identity Provider Clients
   description: MAS SSO realm for OSD Cluster Identity Provider Clients
   value: "interim-test-realm"
-  
+
 - name: SSO_PROVIDER_TYPE
   description: Option to choose between sso providers i.e, mas_sso or redhat_sso, mas_sso by default
   value: "mas_sso"
@@ -385,7 +390,7 @@ parameters:
 - name: REDHAT_SSO_BASE_URL
   description: redhat_sso base url
   value:  "https://sso.redhat.com"
-  
+
 - name: CLUSTER_OPENSHIFT_VERSION
   displayName: The version of openshift
   description: The version of openshift to be deployed on a new created OSD cluster
@@ -561,7 +566,16 @@ objects:
         qontract.recycle: "true"
     data:
       kafka-instance-types-configuration.yaml: |-
-        supported_instance_types: ${SUPPORTED_INSTANCE_TYPES}  
+        supported_instance_types: ${SUPPORTED_INSTANCE_TYPES}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: kas-fleet-manager-dynamic-scaling-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      dynamic-scaling-configuration.yaml: |-
+        ${DYNAMIC_SCALING_CONFIG}
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -748,7 +762,10 @@ objects:
               name: kas-fleet-manager-providers-config
           - name: kas-fleet-manager-kafka-instance-types-config
             configMap:
-              name: kas-fleet-manager-kafka-instance-types-config              
+              name: kas-fleet-manager-kafka-instance-types-config
+          - name: kas-fleet-manager-dynamic-scaling-config
+            configMap:
+              name: kas-fleet-manager-dynamic-scaling-config
           - name: kas-fleet-manager-allowed-users-config
             configMap:
               name: kas-fleet-manager-allowed-users-config
@@ -834,7 +851,10 @@ objects:
               subPath: provider-configuration.yaml
             - name: kas-fleet-manager-kafka-instance-types-config
               mountPath: /config/kafka-instance-types-configuration.yaml
-              subPath: kafka-instance-types-configuration.yaml              
+              subPath: kafka-instance-types-configuration.yaml
+            - name: kas-fleet-manager-dynamic-scaling-config
+              mountPath: /config/dynamic-scaling-configuration.yaml
+              subPath: dynamic-scaling-configuration.yaml
             - name: kas-fleet-manager-allowed-users-config
               mountPath: /config/quota-management-list-configuration.yaml
               subPath: quota-management-list-configuration.yaml
@@ -880,6 +900,7 @@ objects:
             - --read-only-user-list-file=/config/read-only-user-list.yaml
             - --kafka-sre-user-list-file=/config/kafka-sre-user-list.yaml
             - --supported-kafka-instance-types-config-file=/config/kafka-instance-types-configuration.yaml
+            - --dynamic-scaling-config-file=/config/dynamic-scaling-configuration.yaml
             - --enable-kafka-owner-config=${ENABLE_KAFKA_OWNER}
             - --kafka-owner-list-file=/config/kafka-owner-list.yaml
             - --enable-deletion-of-expired-kafka=${ENABLE_KAFKA_LIFE_SPAN}
