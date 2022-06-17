@@ -1316,10 +1316,6 @@ components:
         instance_type:
           description: 'kafka instance type'
           type: string
-        max_capacity_reached:
-          description: 'flag indicating whether the capacity for the instance type in the region is reached'
-          type: boolean
-          deprecated: true
         available_sizes:
           description: 'list of available Kafka instance sizes that can be created in this region when taking account current capacity and regional limits'
           type: array
@@ -1746,7 +1742,6 @@ components:
         capacity: [
           {
               instance_type: "standard",
-              max_capacity_reached: true,
               available_sizes: ["x1", "x2"]
           }
         ]

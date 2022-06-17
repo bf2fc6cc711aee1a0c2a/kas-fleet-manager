@@ -37,9 +37,8 @@ func GetRegionCapacityItems(capacityItems []api.RegionCapacityListItem) []public
 		}
 
 		items = append(items, public.RegionCapacityListItem{
-			InstanceType:                 c.InstanceType,
-			DeprecatedMaxCapacityReached: c.DeprecatedMaxCapacityReached,
-			AvailableSizes:               c.AvailableSizes,
+			InstanceType:   c.InstanceType,
+			AvailableSizes: c.AvailableSizes,
 		})
 	}
 	return items

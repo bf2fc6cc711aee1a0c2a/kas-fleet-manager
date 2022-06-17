@@ -13,9 +13,8 @@ import (
 func BuildApiRegionCapacityListItemSlice(modifyFn func(regionCapacityListItems []api.RegionCapacityListItem)) []api.RegionCapacityListItem {
 	apiRegionCapacityListItem := []api.RegionCapacityListItem{
 		{
-			InstanceType:                 types.STANDARD.String(),
-			DeprecatedMaxCapacityReached: false,
-			AvailableSizes:               []string{},
+			InstanceType:   types.STANDARD.String(),
+			AvailableSizes: []string{},
 		},
 	}
 	if modifyFn != nil {
@@ -52,9 +51,8 @@ func BuildCloudProviderRegionInfoList(modifyFn func(CloudProviderRegionInfo *clu
 func BuildRegionCapacityListItemSlice(modifyFn func(regionCapacityListItems []public.RegionCapacityListItem)) []public.RegionCapacityListItem {
 	regionCapacityListItem := []public.RegionCapacityListItem{
 		{
-			InstanceType:                 types.STANDARD.String(),
-			DeprecatedMaxCapacityReached: false,
-			AvailableSizes:               []string{},
+			InstanceType:   types.STANDARD.String(),
+			AvailableSizes: []string{},
 		},
 	}
 	if modifyFn != nil {
