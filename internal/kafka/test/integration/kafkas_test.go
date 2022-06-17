@@ -1098,7 +1098,8 @@ func TestKafkaPost_Validations(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			_, resp, _ := client.DefaultApi.CreateKafka(ctx, true, tt.body)
 			if resp != nil {

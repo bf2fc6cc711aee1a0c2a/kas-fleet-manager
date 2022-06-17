@@ -126,8 +126,9 @@ func TestAccessControlListMiddleware_Authorize(t *testing.T) {
 			wantHttpStatus: http.StatusForbidden,
 		},
 	}
-	for _, tt := range tests {
 
+	for _, testcase := range tests {
+		tt := testcase
 		req, err := http.NewRequest("GET", "/api/kafkas_mgmt/kafkas", nil)
 		Expect(err).NotTo(HaveOccurred())
 

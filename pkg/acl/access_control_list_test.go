@@ -119,7 +119,8 @@ func Test_ReadDenyListConfigFile(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			err := readDenyListConfigFile(tt.args.file, tt.args.deniedUsers)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -226,7 +227,8 @@ func Test_AccessControlListConfig_ReadFiles(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			aclConfig := &AccessControlListConfig{
 				DenyList:             tt.fields.denyList,
@@ -273,7 +275,8 @@ func Test_ReadAccessListConfigFile(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			err := readAccessListConfigFile(tt.args.file, tt.args.acceptedOrganisations)
 			Expect(err != nil).To(Equal(tt.wantErr))
