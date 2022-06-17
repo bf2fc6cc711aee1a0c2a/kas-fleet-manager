@@ -612,23 +612,6 @@ paths:
         schema:
           type: string
         style: form
-      - deprecated: true
-        description: |-
-          The Kafka instance type to filter the results by
-
-          DEPRECATION NOTICE - instance_type will be deprecated
-        examples:
-          developer_instance_type:
-            value: developer
-          standard_instance_type:
-            value: standard
-        explode: true
-        in: query
-        name: instance_type
-        required: false
-        schema:
-          type: string
-        style: form
       responses:
         "200":
           content:

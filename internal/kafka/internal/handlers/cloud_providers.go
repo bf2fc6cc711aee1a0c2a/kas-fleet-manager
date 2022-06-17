@@ -43,8 +43,6 @@ func NewCloudProviderHandler(cloudProvidersService services.CloudProvidersServic
 
 func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	query := r.URL.Query()
-	instanceTypeFilter := query.Get("instance_type")
 
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
@@ -64,11 +62,6 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			provider, _ := h.supportedProviders.GetByName(id)
 			for _, cloudRegion := range cloudRegions {
 				region, _ := provider.Regions.GetByName(cloudRegion.Id)
-
-				// skip any regions that do not support the specified instance type so its not included in the response
-				if instanceTypeFilter != "" && !region.IsInstanceTypeSupported(config.InstanceType(instanceTypeFilter)) {
-					continue
-				}
 
 				kafka := &dbapi.KafkaRequest{}
 
