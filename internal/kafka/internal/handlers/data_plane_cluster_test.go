@@ -70,13 +70,14 @@ func Test_UpdateDataPlaneClusterStatus(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			h := NewDataPlaneClusterHandler(tt.fields.dataplaneClusterService)
 			req, rw := GetHandlerParams("GET", "/{id}", bytes.NewBuffer(tt.args.body))
 			req = mux.SetURLVars(req, map[string]string{"id": "test-id"})
 			h.UpdateDataPlaneClusterStatus(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 			resp.Body.Close()
+			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -120,13 +121,14 @@ func Test_GetDataPlaneClusterConfig(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			h := NewDataPlaneClusterHandler(tt.fields.dataplaneClusterService)
 			req, rw := GetHandlerParams("GET", "/{id}", nil)
 			req = mux.SetURLVars(req, map[string]string{"id": "test-id"})
 			h.GetDataPlaneClusterConfig(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 			resp.Body.Close()
+			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -182,6 +184,7 @@ func Test_validateBody(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			h := NewDataPlaneClusterHandler(tt.fields.dataplaneClusterService)
 			err := h.validateBody(tt.args.request)()
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -278,6 +281,7 @@ func Test_validateStrimzi(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			h := NewDataPlaneClusterHandler(tt.fields.dataplaneClusterService)
 			Expect(h.validateStrimzi(tt.args.request) != nil).To(Equal(tt.wantErr))
 		})
