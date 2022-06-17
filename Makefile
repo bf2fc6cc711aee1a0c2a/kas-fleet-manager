@@ -538,12 +538,18 @@ db/teardown:
 	./scripts/local_db_teardown.sh
 .PHONY: db/teardown
 
+KEYCLOAK_URL ?= http://localhost
+KEYCLOAK_PORT_NO ?= 8180
+KEYCLOAK_USER ?= admin
+KEYCLOAK_PASSWORD ?= admin
+
 sso/setup:
-	./scripts/mas_sso_setup.sh
+	KEYCLOAK_PORT_NO=$(KEYCLOAK_PORT_NO) KEYCLOAK_USER=$(KEYCLOAK_USER) KEYCLOAK_PASSWORD=$(KEYCLOAK_PASSWORD) ./scripts/mas_sso_setup.sh
 .PHONY: sso/setup
 
 sso/config:
-	./scripts/mas_sso_config.sh
+	KEYCLOAK_URL=$(KEYCLOAK_URL) KEYCLOAK_PORT_NO=$(KEYCLOAK_PORT_NO) KEYCLOAK_USER=$(KEYCLOAK_USER) \
+	KEYCLOAK_PASSWORD=$(KEYCLOAK_PASSWORD) ./scripts/mas_sso_config.sh
 .PHONY: sso/config
 
 sso/teardown:
