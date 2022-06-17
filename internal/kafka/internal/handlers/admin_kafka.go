@@ -195,7 +195,7 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				return nil
 			},
 			func() *errors.ServiceError { // Validate Strimzi Version
-				cluster, err := h.clusterService.FindClusterByID(id)
+				cluster, err := h.clusterService.FindClusterByID(kafkaRequest.ClusterID)
 				if err != nil {
 					return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find cluster associated with kafka request: %s", kafkaRequest.ID)
 				}
