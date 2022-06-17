@@ -10,20 +10,20 @@ import (
 )
 
 type KafkaConfig struct {
-	KafkaTLSCert                   string `json:"kafka_tls_cert"`
-	KafkaTLSCertFile               string `json:"kafka_tls_cert_file"`
-	KafkaTLSKey                    string `json:"kafka_tls_key"`
-	KafkaTLSKeyFile                string `json:"kafka_tls_key_file"`
-	EnableKafkaExternalCertificate bool   `json:"enable_kafka_external_certificate"`
-	KafkaDomainName                string `json:"kafka_domain_name"`
-	BrowserUrl                     string `json:"browser_url"`
+	KafkaTLSCert                   string
+	KafkaTLSCertFile               string
+	KafkaTLSKey                    string
+	KafkaTLSKeyFile                string
+	EnableKafkaExternalCertificate bool
+	KafkaDomainName                string
+	BrowserUrl                     string
 
-	KafkaLifespan          *KafkaLifespanConfig               `json:"kafka_lifespan"`
-	Quota                  *KafkaQuotaConfig                  `json:"kafka_quota"`
-	SupportedInstanceTypes *KafkaSupportedInstanceTypesConfig `json:"kafka_supported_sizes"`
-	EnableKafkaOwnerConfig bool                               `json:"enable_kafka_owner_config"`
-	KafkaOwnerList         []string                           `json:"kafka_owner_list"`
-	KafkaOwnerListFile     string                             `json:"kafka_owner_list_file"`
+	KafkaLifespan          *KafkaLifespanConfig
+	Quota                  *KafkaQuotaConfig
+	SupportedInstanceTypes *KafkaSupportedInstanceTypesConfig
+	EnableKafkaOwnerConfig bool
+	KafkaOwnerList         []string
+	KafkaOwnerListFile     string
 }
 
 func NewKafkaConfig() *KafkaConfig {
