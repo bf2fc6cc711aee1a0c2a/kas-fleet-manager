@@ -14,12 +14,12 @@ import (
 )
 
 type dataPlaneClusterHandler struct {
-	service services.DataPlaneClusterService
+	dataplaneClusterService services.DataPlaneClusterService
 }
 
-func NewDataPlaneClusterHandler(service services.DataPlaneClusterService) *dataPlaneClusterHandler {
+func NewDataPlaneClusterHandler(dataplaneClusterService services.DataPlaneClusterService) *dataPlaneClusterHandler {
 	return &dataPlaneClusterHandler{
-		service: service,
+		dataplaneClusterService: dataplaneClusterService,
 	}
 }
 
@@ -40,7 +40,7 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 			if err != nil {
 				return nil, errors.Validation(err.Error())
 			}
-			svcErr := h.service.UpdateDataPlaneClusterStatus(ctx, dataPlaneClusterID, dataPlaneClusterStatus)
+			svcErr := h.dataplaneClusterService.UpdateDataPlaneClusterStatus(ctx, dataPlaneClusterID, dataPlaneClusterStatus)
 			return nil, svcErr
 		},
 	}
@@ -58,7 +58,7 @@ func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWrite
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			dataClusterConfig, err := h.service.GetDataPlaneClusterConfig(ctx, dataPlaneClusterID)
+			dataClusterConfig, err := h.dataplaneClusterService.GetDataPlaneClusterConfig(ctx, dataPlaneClusterID)
 			if err != nil {
 				return nil, err
 			}
