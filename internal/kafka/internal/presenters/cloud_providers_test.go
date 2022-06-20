@@ -10,34 +10,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestGetSupportedInstanceTypes(t *testing.T) {
-	type args struct {
-		instTypes []string
-	}
-
-	tests := []struct {
-		name string
-		args args
-		want []string
-	}{
-		{
-			name: "should return all supported instance types",
-			args: args{
-				instTypes: mock.GetAllSupportedInstancetypes(),
-			},
-			want: mock.GetAllSupportedInstancetypes(),
-		},
-	}
-
-	RegisterTestingT(t)
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			Expect(getSupportedInstanceTypes(tt.args.instTypes)).To(Equal(tt.want))
-		})
-	}
-}
-
 func TestGetRegionCapacityItems(t *testing.T) {
 	type args struct {
 		capacityItems []api.RegionCapacityListItem
@@ -109,12 +81,10 @@ func TestPresentCloudRegion(t *testing.T) {
 			args: args{
 				cloudRegion: mock.BuildApiCloudRegion(func(cloudRegion *api.CloudRegion) {
 					cloudRegion.Capacity = mock.BuildApiRegionCapacityListItemSlice(nil)
-					cloudRegion.SupportedInstanceTypes = getSupportedInstanceTypes(nil)
 				}),
 			},
 			want: mock.BuildCloudRegion(func(cloudRegion *public.CloudRegion) {
 				cloudRegion.Capacity = mock.BuildRegionCapacityListItemSlice(nil)
-				cloudRegion.DeprecatedSupportedInstanceTypes = getSupportedInstanceTypes(nil)
 			}),
 		},
 	}

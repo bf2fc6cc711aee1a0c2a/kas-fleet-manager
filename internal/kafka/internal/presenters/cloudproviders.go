@@ -19,12 +19,11 @@ func PresentCloudProvider(cloudProvider *api.CloudProvider) public.CloudProvider
 func PresentCloudRegion(cloudRegion *api.CloudRegion) public.CloudRegion {
 	reference := PresentReference(cloudRegion.Id, cloudRegion)
 	return public.CloudRegion{
-		Id:                               reference.Id,
-		Kind:                             reference.Kind,
-		DisplayName:                      cloudRegion.DisplayName,
-		Enabled:                          cloudRegion.Enabled,
-		DeprecatedSupportedInstanceTypes: getSupportedInstanceTypes(cloudRegion.SupportedInstanceTypes),
-		Capacity:                         GetRegionCapacityItems(cloudRegion.Capacity),
+		Id:          reference.Id,
+		Kind:        reference.Kind,
+		DisplayName: cloudRegion.DisplayName,
+		Enabled:     cloudRegion.Enabled,
+		Capacity:    GetRegionCapacityItems(cloudRegion.Capacity),
 	}
 }
 
@@ -37,17 +36,9 @@ func GetRegionCapacityItems(capacityItems []api.RegionCapacityListItem) []public
 		}
 
 		items = append(items, public.RegionCapacityListItem{
-			InstanceType:                 c.InstanceType,
-			DeprecatedMaxCapacityReached: c.DeprecatedMaxCapacityReached,
-			AvailableSizes:               c.AvailableSizes,
+			InstanceType:   c.InstanceType,
+			AvailableSizes: c.AvailableSizes,
 		})
 	}
 	return items
-}
-
-func getSupportedInstanceTypes(instTypes []string) []string {
-	if len(instTypes) > 0 {
-		return instTypes
-	}
-	return make([]string, 0)
 }

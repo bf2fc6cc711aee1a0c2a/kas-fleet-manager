@@ -194,10 +194,9 @@ func GetRoutes() []byte {
 
 func BuildKafkaRequestPayload(modifyFn func(payload *public.KafkaRequestPayload)) *public.KafkaRequestPayload {
 	payload := &public.KafkaRequestPayload{
-		CloudProvider:     DefaultKafkaRequestProvider,
-		DeprecatedMultiAz: DefaultMultiAz,
-		Name:              DefaultKafkaRequestName,
-		Region:            DefaultKafkaRequestRegion,
+		CloudProvider: DefaultKafkaRequestProvider,
+		Name:          DefaultKafkaRequestName,
+		Region:        DefaultKafkaRequestRegion,
 	}
 	if modifyFn != nil {
 		modifyFn(payload)

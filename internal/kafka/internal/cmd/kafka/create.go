@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"encoding/json"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
@@ -26,7 +27,6 @@ func NewCreateCommand(env *environments.Env) *cobra.Command {
 	cmd.Flags().String(FlagProvider, "aws", "OCM provider ID")
 	cmd.Flags().String(FlagOwner, "test-user", "User name")
 	cmd.Flags().String(FlagClusterID, "000", "Kafka  request cluster ID")
-	cmd.Flags().Bool(FlagMultiAZ, true, "Whether Kafka request should be Multi AZ or not")
 	cmd.Flags().String(FlagOrgID, "", "OCM org id")
 
 	return cmd
@@ -37,7 +37,6 @@ func runCreate(env *environments.Env, cmd *cobra.Command, _ []string) {
 	region := flags.MustGetDefinedString(FlagRegion, cmd.Flags())
 	provider := flags.MustGetDefinedString(FlagProvider, cmd.Flags())
 	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
-	multiAZ := flags.MustGetBool(FlagMultiAZ, cmd.Flags())
 	clusterID := flags.MustGetDefinedString(FlagClusterID, cmd.Flags())
 	orgId := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 
@@ -48,7 +47,6 @@ func runCreate(env *environments.Env, cmd *cobra.Command, _ []string) {
 		Region:         region,
 		ClusterID:      clusterID,
 		CloudProvider:  provider,
-		MultiAZ:        multiAZ,
 		Name:           name,
 		Owner:          owner,
 		OrganisationId: orgId,

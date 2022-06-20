@@ -198,29 +198,6 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 			wantStatusCode: http.StatusOK,
 		},
 		{
-			name: "should return an error when kafkaConfig.GetFirstAvailableSize fails",
-			args: args{
-				url: "/",
-				id:  "aws",
-			},
-			fields: fields{
-				cloudProvidersService: &services.CloudProvidersServiceMock{
-					ListCachedCloudProviderRegionsFunc: func(id string) ([]api.CloudRegion, *errors.ServiceError) {
-						return []api.CloudRegion{
-							*mocks.BuildApiCloudRegion(nil),
-						}, nil
-					},
-				},
-				providerConfig: &supportedProviders,
-				kafkaConfig: &config.KafkaConfig{
-					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
-						Configuration: config.SupportedKafkaInstanceTypesConfig{},
-					},
-				},
-			},
-			wantStatusCode: http.StatusInternalServerError,
-		},
-		{
 			name: "should return an error when GetAvailableSizesInRegion fails",
 			args: args{
 				url: "/",
