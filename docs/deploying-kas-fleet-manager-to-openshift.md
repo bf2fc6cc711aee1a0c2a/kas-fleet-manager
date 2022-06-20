@@ -155,6 +155,10 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `TOKEN_ISSUER_URL`: A token issuer url used to validate if JWT token used are coming from the given issuer. Defaults to `https://sso.redhat.com/auth/realms/redhat-external`.
 - `OBSERVATORIUM_AUTH_TYPE`: Authentication type for the Observability stack. Options: `dex` and `redhat`, Default: `dex`.
 - `DEX_USERNAME`: Username that will be used to authenticate with an Observatorium using Dex as authentication. Defaults to `admin@example.com`.
+- `ENABLE_DENY_LIST`: Enable the deny list access control feature. Defaults to `false`.
+- `ENABLE_ACCESS_LIST`: Enable the Access list access control feature. Defaults to `false`.
+- `DENIED_USERS`: A list of denied users that are not allowed to access the service. A user is identified by its username. Defaults to `[]`.
+- `ACCEPTED_ORGANISATIONS`: A list of accepted organisations that are allowed to access the service. An organisation is identified by its orgId. Defaults to `[]`.
 - `DEX_URL`: Dex URL. Defaults to `http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io`.
 - `OBSERVATORIUM_GATEWAY`: URL of an Observatorium using Dex as authentication. Defaults to `https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io`.
 - `OBSERVATORIUM_TENANT`: Tenant of an Observatorium using Dex as authentication. Defaults to `test`.

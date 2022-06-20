@@ -1687,6 +1687,13 @@ Feature: create a connector
             "reason": "Unable to read request body"
           },
           {
+            "code": "CONNECTOR-MGMT-18",
+            "href": "/api/connector_mgmt/v1/errors/18",
+            "id": "18",
+            "kind": "Error",
+            "reason": "Unable to perform this action, as the service is currently under maintenance"
+          },
+          {
             "code": "CONNECTOR-MGMT-21",
             "href": "/api/connector_mgmt/v1/errors/21",
             "id": "21",
@@ -1906,8 +1913,8 @@ Feature: create a connector
         ],
         "kind": "ErrorList",
         "page": 1,
-        "size": 42,
-        "total": 42
+        "size": 43,
+        "total": 43
       }
       """
 

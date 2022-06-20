@@ -21,6 +21,9 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 - **enable-deny-list**: Enables access control for denied users.
     - `deny-list-config-file` [Required]: The path to the file containing the list of users that should be denied access to the service. (default: `'config/deny-list-configuration.yaml'`, example: [deny-list-configuration.yaml](../config/deny-list-configuration.yaml)).
 
+- **enable-access-list**: Enables access control for accepted organisations.
+    - `access-list-config-file` [Required]: The path to the file containing the list of orgId's that should be allowed access to the service. (default: `'config/access-list-configuration.yaml'`, example: [access-list-configuration.yaml](../config/access-list-configuration.yaml)).
+
 ## Connectors
 - **enable-connectors**: Enables Kafka Connectors.
     - `mas-sso-base-url` [Required]: The base URL of the Keycloak instance to be used for authentication.

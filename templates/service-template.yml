@@ -260,6 +260,11 @@ parameters:
   description: Enable the denied list access control feature
   value: "false"
 
+- name: ENABLE_ACCESS_LIST
+  displayName: Enable the Access List
+  description: Enable the Access list access control feature
+  value: "false"
+  
 - name: ENABLE_INSTANCE_LIMIT_CONTROL
   displayName: Enable instance limit control
   description: Enable to enforce limits on how much instances a user can create.
@@ -328,6 +333,11 @@ parameters:
 - name: DENIED_USERS
   displayName: A list of denied users given by their usernames
   description: A list of denied users that are not allowed to access the service. A user is identified by its username.
+  value: "[]"
+
+- name: ACCEPTED_ORGANISATIONS
+  displayName: A list of accepted organisations given by their orgId
+  description: A list of accepted organisations that are allowed to access the service. An organisation is identified by its orgId.
   value: "[]"
 
 - name: READ_ONLY_USERS
@@ -598,6 +608,15 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
+      name: kas-fleet-manager-accepted-organisations-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      access-list-configuration.yaml: |-
+        ${ACCEPTED_ORGANISATIONS}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
       name: kas-fleet-manager-kafka-owner-list
       annotations:
         qontract.recycle: "true"
@@ -775,6 +794,9 @@ objects:
           - name: kas-fleet-manager-denied-users-config
             configMap:
               name: kas-fleet-manager-denied-users-config
+          - name: kas-fleet-manager-accepted-organisations-config
+            configMap:
+              name: kas-fleet-manager-accepted-organisations-config
           - name: kas-fleet-manager-read-only-user-list
             configMap:
               name: kas-fleet-manager-read-only-user-list
@@ -861,6 +883,9 @@ objects:
             - name: kas-fleet-manager-denied-users-config
               mountPath: /config/deny-list-configuration.yaml
               subPath: deny-list-configuration.yaml
+            - name: kas-fleet-manager-accepted-organisations-config
+              mountPath: /config/access-list-configuration.yaml
+              subPath: access-list-configuration.yaml
             - name: kas-fleet-manager-read-only-user-list
               mountPath: /config/read-only-user-list.yaml
               subPath: read-only-user-list.yaml
@@ -896,6 +921,7 @@ objects:
             - --providers-config-file=/config/provider-configuration.yaml
             - --quota-management-list-config-file=/config/quota-management-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml
+            - --access-list-config-file=/config/access-list-configuration.yaml
             - --enable-kafka-sre-identity-provider-configuration=${ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION}
             - --read-only-user-list-file=/config/read-only-user-list.yaml
             - --kafka-sre-user-list-file=/config/kafka-sre-user-list.yaml
@@ -990,6 +1016,7 @@ objects:
             - --sentry-key-file=/secrets/service/sentry.key
             - --enable-terms-acceptance=${ENABLE_TERMS_ACCEPTANCE}
             - --enable-deny-list=${ENABLE_DENY_LIST}
+            - --enable-access-list=${ENABLE_ACCESS_LIST}
             - --enable-instance-limit-control=${ENABLE_INSTANCE_LIMIT_CONTROL}
             - --max-allowed-instances=${MAX_ALLOWED_INSTANCES}
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}

@@ -3,6 +3,6 @@
 # The structure of denied accounts is:
 #  - 'username' which is the username of the user.
 
-# These a sample users used in integration tests
+# These are sample users used in integration tests
 - denied-test-user1@example.com
 - denied-test-user2@example.com
