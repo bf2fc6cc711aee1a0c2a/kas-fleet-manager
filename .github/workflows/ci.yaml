@@ -110,7 +110,7 @@ jobs:
         with:
           version: v1.29
       - name: Setup Keycloak realm config
-        run: ./scripts/mas_sso_config.sh
+        run: make sso/config
       - name: Cache go module
         uses: actions/cache@v2
         with:
