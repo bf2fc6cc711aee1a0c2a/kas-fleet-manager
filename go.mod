@@ -3,7 +3,7 @@ module github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
 go 1.17
 
 require (
-	github.com/Nerzal/gocloak/v11 v11.0.1
+	github.com/Nerzal/gocloak/v11 v11.2.0
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware v0.0.0-20190805220309-36081240882b
 	github.com/aws/aws-sdk-go v1.36.5
@@ -18,7 +18,7 @@ require (
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
-	github.com/go-resty/resty/v2 v2.6.0
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/goava/di v1.11.0
 	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/golang/glog v1.0.0
