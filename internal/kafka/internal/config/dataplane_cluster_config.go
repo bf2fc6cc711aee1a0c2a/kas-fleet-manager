@@ -350,7 +350,7 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 	}
 
 	if c.IsDataPlaneAutoScalingEnabled() {
-		err := shared.ReadYamlFile(c.DynamicScalingConfig.filePath, &c.DynamicScalingConfig.configuration)
+		err := shared.ReadYamlFile(c.DynamicScalingConfig.filePath, &c.DynamicScalingConfig.Configuration)
 		if err != nil {
 			return err
 		}

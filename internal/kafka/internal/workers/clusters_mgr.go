@@ -7,6 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	kafkaConstants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
@@ -113,6 +114,7 @@ type ClusterManagerOptions struct {
 	CloudProvidersService      services.CloudProvidersService
 	KasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 	OsdIdpKeycloakService      sso.OsdKeycloakService
+	ProviderFactory            clusters.ProviderFactory
 }
 
 type processor func() []error
@@ -544,6 +546,12 @@ func (c *ClusterManager) reconcileWaitingForKasFleetshardOperatorCluster(cluster
 }
 
 func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {
+	machinePoolsReconciled, err := c.reconcileClusterMachinePools(cluster)
+	if err != nil {
+		return err
+	}
+	glog.V(10).Infof("status of Machine Pools reconciling is %v", machinePoolsReconciled)
+
 	if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
 		return err
 	}
@@ -558,15 +566,18 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 		return errors.WithMessagef(syncSetErr, "failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
 	}
 
-	// Addon installation step
-	// TODO this is currently the responsible of setting the status of the cluster
-	// and it is setting it to a different value depending on the addon being
-	// installed. The logic to set the status of the cluster should probably done
-	// independently of the installation of the addon, and it should use the
-	// result of the addon/s reconciliation to set the status of the cluster.
-	addOnErr := c.reconcileAddonOperator(cluster)
+	addonsReconciled, addOnErr := c.reconcileAddonOperator(cluster)
 	if addOnErr != nil {
 		return errors.WithMessagef(addOnErr, "failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
+	}
+
+	if machinePoolsReconciled && addonsReconciled {
+		glog.V(0).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForKasFleetShardOperator, cluster.ClusterID)
+		if err := c.ClusterService.
+			UpdateStatus(cluster, api.ClusterWaitingForKasFleetShardOperator); err != nil {
+			return errors.Wrapf(err, "failed to update local cluster %s status: %s", cluster.ClusterID, err.Error())
+		}
+		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterWaitingForKasFleetShardOperator)
 	}
 
 	return nil
@@ -632,10 +643,10 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 	return updatedCluster, nil
 }
 
-func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) error {
+func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) (bool, error) {
 	strimziOperatorIsReady, err := c.reconcileStrimziOperator(provisionedCluster)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	clusterLoggingOperatorIsReady := false
@@ -643,7 +654,7 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 	if c.OCMConfig.ClusterLoggingOperatorAddonID != "" {
 		ready, err := c.reconcileClusterLoggingOperator(provisionedCluster)
 		if err != nil {
-			return err
+			return false, err
 		}
 		clusterLoggingOperatorIsReady = ready
 	}
@@ -651,27 +662,22 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 	glog.Infof("Provisioning kas-fleetshard-operator as it is enabled")
 	kasFleetshardOperatorIsReady, params, errs := c.KasFleetshardOperatorAddon.Provision(provisionedCluster)
 	if errs != nil {
-		return errs
+		return false, errs
 	}
 
 	if provisionedCluster.ClientID == "" || provisionedCluster.ClientSecret == "" {
 		provisionedCluster.ClientID = params.GetParam(services.KasFleetshardOperatorParamServiceAccountId)
 		provisionedCluster.ClientSecret = params.GetParam(services.KasFleetshardOperatorParamServiceAccountSecret)
 		if err := c.ClusterService.Update(provisionedCluster); err != nil {
-			return errors.WithMessagef(err, "failed to reconcile clientID of %s cluster %s: %s", provisionedCluster.Status, provisionedCluster.ClusterID, err.Error())
+			return false, errors.WithMessagef(err, "failed to reconcile clientID of %s cluster %s: %s", provisionedCluster.Status, provisionedCluster.ClusterID, err.Error())
 		}
 	}
 
 	if strimziOperatorIsReady && kasFleetshardOperatorIsReady && (clusterLoggingOperatorIsReady || c.OCMConfig.ClusterLoggingOperatorAddonID == "") {
-		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForKasFleetShardOperator, provisionedCluster.ClusterID)
-		if err := c.ClusterService.
-			UpdateStatus(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator); err != nil {
-			return errors.Wrapf(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
-		}
-		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator)
-		return nil
+		return true, nil
 	}
-	return nil
+
+	return false, nil
 }
 
 // reconcileStrimziOperator installs the Strimzi operator on a provisioned clusters
@@ -1097,6 +1103,78 @@ func (c *ClusterManager) buildKafkaSreClusterRoleBindingResource() *authv1.Clust
 			APIVersion: "rbac.authorization.k8s.io",
 		},
 	}
+}
+
+func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supportedInstanceType string, cluster api.Cluster) (*types.MachinePoolRequest, error) {
+	dynamicScalingConfig, found := c.DataplaneClusterConfig.DynamicScalingConfig.ForInstanceType(supportedInstanceType)
+	if !found {
+		return nil, fmt.Errorf("No dynamic scaling configuration found for instance type '%s'", supportedInstanceType)
+	}
+	machinePoolLabels := map[string]string{
+		"bf2.org/kafkaInstanceProfile": supportedInstanceType,
+	}
+	machinePoolTaint := types.CluserNodeTaint{
+		Effect: "NoExecute",
+		Key:    "bf2.org/kafkaInstanceProfileType",
+		Value:  supportedInstanceType,
+	}
+	machinePoolTaints := []types.CluserNodeTaint{machinePoolTaint}
+	machinePool := &types.MachinePoolRequest{
+		ID:                 machinePoolID,
+		InstanceSize:       c.DataplaneClusterConfig.ComputeMachineType,
+		MultiAZ:            cluster.MultiAZ,
+		AutoScalingEnabled: true,
+		AutoScaling: types.MachinePoolAutoScaling{
+			MinNodes: 0,
+			MaxNodes: dynamicScalingConfig.ComputeNodesConfig.MaxComputeNodes,
+		},
+		ClusterID:  cluster.ClusterID,
+		NodeLabels: machinePoolLabels,
+		NodeTaints: machinePoolTaints,
+	}
+
+	return machinePool, nil
+}
+
+func (c *ClusterManager) reconcileClusterMachinePools(cluster api.Cluster) (bool, error) {
+	if !c.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
+		return true, nil
+	}
+	// TODO should we implement machinepool creation of the additional 'kafka'
+	// machinepool when cluster scaling is manual or none???
+
+	providerClient, err := c.ProviderFactory.GetProvider(cluster.ProviderType)
+	if err != nil {
+		return false, err
+	}
+
+	glog.V(10).Infof("Reconciling MachinePools for clusterID '%s'", cluster.ClusterID)
+	supportedInstanceTypes := strings.Split(cluster.SupportedInstanceType, ",")
+	// Ensure a MachinePool is created for each supported instance type
+	for _, supportedInstanceType := range supportedInstanceTypes {
+		machinePoolID := fmt.Sprintf("kafka-%s", supportedInstanceType)
+		existingMachinePool, err := providerClient.GetMachinePool(cluster.ClusterID, machinePoolID)
+		if err != nil {
+			return false, err
+		}
+		if existingMachinePool != nil {
+			glog.V(10).Infof("MachinePool '%s' for clusterID '%s' already created. No further reconciling of it needed.", machinePoolID, cluster.ClusterID)
+			continue
+		}
+
+		machinePoolRequest, err := c.buildMachinePoolRequest(machinePoolID, supportedInstanceType, cluster)
+		if err != nil {
+			return false, err
+		}
+
+		glog.Infof("MachinePool '%s' for clusterID '%s' does not exist. Creating it...", cluster.ClusterID, machinePoolID)
+		_, err = providerClient.CreateMachinePool(machinePoolRequest)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	return true, nil
 }
 
 func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) error {

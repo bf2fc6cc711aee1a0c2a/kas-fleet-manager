@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -622,6 +623,7 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 		supportedProviders         *config.ProviderConfig
 		observabilityConfiguration *observatorium.ObservabilityConfiguration
 		agentOperator              services.KasFleetshardOperatorAddon
+		providerFactory            clusters.ProviderFactory
 	}
 	tests := []struct {
 		name    string
@@ -636,6 +638,7 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 						return nil, apiErrors.GeneralError("failed to list by status")
 					},
 				},
+				providerFactory: &clusters.ProviderFactoryMock{},
 			},
 			wantErr: true,
 		},
@@ -652,6 +655,7 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 						return "", apiErrors.GeneralError("failed to get cluster dns")
 					},
 				},
+				providerFactory: &clusters.ProviderFactoryMock{},
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					EnableKafkaSreIdentityProviderConfiguration: true,
 				},
@@ -695,6 +699,19 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 						return nil
 					},
 				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						providerMock := &clusters.ProviderMock{
+							GetMachinePoolFunc: func(clusterID, id string) (*types.MachinePoolInfo, error) {
+								return &types.MachinePoolInfo{
+									ID:        id,
+									ClusterID: clusterID,
+								}, nil
+							},
+						}
+						return providerMock, nil
+					},
+				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
@@ -732,6 +749,7 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
 					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
 					KasFleetshardOperatorAddon: tt.fields.agentOperator,
+					ProviderFactory:            tt.fields.providerFactory,
 				},
 			}
 			Expect(len(c.processProvisionedClusters()) > 0).To(Equal(tt.wantErr))
@@ -1211,6 +1229,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 		osdIdpKeycloakService      sso.OSDKeycloakService
 		observabilityConfiguration *observatorium.ObservabilityConfiguration
 		agentOperator              services.KasFleetshardOperatorAddon
+		providerFactory            clusters.ProviderFactory
 	}
 
 	type args struct {
@@ -1322,6 +1341,107 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "should fail if reconcileClusterMachinePools fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.AutoScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &clusterWaitingForKasFleetShardOperator, nil
+					},
+					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to update status and client")
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
+						return true, services.ParameterList{}, nil
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{}, fmt.Errorf("test error")
+					},
+				},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should fail when updating status in database fails after all elements are reconciled successfully",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &clusterWaitingForKasFleetShardOperator, nil
+					},
+					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return apiErrors.GeneralError("some errors")
+					},
+				},
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
+						return true, services.ParameterList{}, nil
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
 			name: "should succeed if no errors occur during execution",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
@@ -1383,6 +1503,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
 					KasFleetshardOperatorAddon: tt.fields.agentOperator,
 					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
+					ProviderFactory:            tt.fields.providerFactory,
 				},
 			}
 			Expect(c.reconcileProvisionedCluster(tt.args.cluster) != nil).To(Equal(tt.wantErr))
@@ -1941,6 +2062,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 		name    string
 		fields  fields
 		arg     api.Cluster
+		want    bool
 		wantErr bool
 	}{
 		{
@@ -1967,6 +2089,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 			arg: api.Cluster{
 				ClusterID: "test-cluster-id",
 			},
+			want:    false,
 			wantErr: false,
 		},
 		{
@@ -2019,6 +2142,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 				ClientID:     "some-client-id",
 				ClientSecret: "some-client-secret",
 			},
+			want:    false,
 			wantErr: false,
 		},
 		{
@@ -2036,6 +2160,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 			arg: api.Cluster{
 				ClusterID: "test-cluster-id",
 			},
+			want:    false,
 			wantErr: true,
 		},
 		{
@@ -2053,6 +2178,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 			arg: api.Cluster{
 				ClusterID: "test-cluster-id",
 			},
+			want:    false,
 			wantErr: true,
 		},
 		{
@@ -2081,34 +2207,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 			arg: api.Cluster{
 				ClusterID: "test-cluster-id",
 			},
-			wantErr: true,
-		},
-		{
-			name: "fail to reconcile when updating status in database fails after operators installation are ready",
-			fields: fields{
-				agentOperator: &services.KasFleetshardOperatorAddonMock{
-					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
-						return true, services.ParameterList{}, nil
-					},
-				},
-				clusterService: &services.ClusterServiceMock{
-					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
-						return true, nil
-					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
-						return true, nil
-					},
-					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
-						return nil
-					},
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return apiErrors.GeneralError("some errors")
-					},
-				},
-			},
-			arg: api.Cluster{
-				ClusterID: "test-cluster-id",
-			},
+			want:    false,
 			wantErr: true,
 		},
 		{
@@ -2137,11 +2236,13 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 			arg: api.Cluster{
 				ClusterID: "test-cluster-id",
 			},
+			want:    true,
 			wantErr: false,
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tc := range tests {
+		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -2150,9 +2251,12 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					KasFleetshardOperatorAddon: tt.fields.agentOperator,
 				},
 			}
-			err := c.reconcileAddonOperator(tt.arg)
+			reconciled, err := c.reconcileAddonOperator(tt.arg)
 			if err != nil && !tt.wantErr {
 				t.Errorf("reconcileAddonOperator() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if reconciled != tt.want {
+				t.Errorf("reconcileAddonOperator() got = %v, want %v", reconciled, tt.want)
 			}
 		})
 	}
@@ -3550,4 +3654,201 @@ func TestClusterManager_setKafkaPerClusterCountMetrics(t *testing.T) {
 			Expect(c.setKafkaPerClusterCountMetrics() != nil).To(Equal(tt.wantErr))
 		})
 	}
+}
+
+func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
+
+	type fields struct {
+		dataplaneClusterConfig *config.DataplaneClusterConfig
+		providerFactory        clusters.ProviderFactory
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		want    bool
+		wantErr bool
+	}{
+		{
+			name: "should return true if all machinepools for the given cluster already exist",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetMachinePoolFunc: func(clusterID, id string) (*types.MachinePoolInfo, error) {
+								return &types.MachinePoolInfo{ID: id, ClusterID: clusterID}, nil
+							},
+							CreateMachinePoolFunc: func(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error) {
+								return request, nil
+							},
+						}, nil
+					},
+				},
+			},
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "developer,standard",
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "should return true if new machinepools are created and the creation succeeds",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
+							"developer": config.InstanceTypeDynamicScalingConfig{
+								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
+									MaxComputeNodes: 3,
+								},
+							},
+						},
+					},
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetMachinePoolFunc: func(clusterID, id string) (*types.MachinePoolInfo, error) {
+								// We simulate that a kafka-developer machinepool has still not been created
+								// and that the kafka-standard machinepool is already created
+								if id == "kafka-developer" {
+									return nil, nil
+								}
+								return &types.MachinePoolInfo{ID: id, ClusterID: clusterID}, nil
+							},
+							CreateMachinePoolFunc: func(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error) {
+								return request, nil
+							},
+						}, nil
+					},
+				},
+			},
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "developer,standard",
+			},
+			want:    true,
+			wantErr: false,
+		},
+
+		{
+			name: "should return true if data plane cluster scaling is set to manual",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.ManualScaling,
+				},
+			},
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "developer,standard",
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "should return true if data plane cluster scaling is set to none",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.NoScaling,
+				},
+			},
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "developer,standard",
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "should return an error if the provider cannot be retrieved",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{}, fmt.Errorf("test error returning provider")
+					},
+				},
+			},
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "developer,standard",
+			},
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name: "should return an error if an error is returned when trying to retrieve a machinepool from the provider",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetMachinePoolFunc: func(clusterID, id string) (*types.MachinePoolInfo, error) {
+								return nil, fmt.Errorf("test error returning machinepool from provider")
+							},
+						}, nil
+					},
+				},
+			},
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "developer,standard",
+			},
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name: "should return an error if an error is returned when trying to create a machinepool",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetMachinePoolFunc: func(clusterID, id string) (*types.MachinePoolInfo, error) {
+								return &types.MachinePoolInfo{ID: id, ClusterID: clusterID}, nil
+							},
+							CreateMachinePoolFunc: func(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error) {
+								return nil, fmt.Errorf("test error creating machinepool using the provider")
+							},
+						}, nil
+					},
+				},
+			},
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "developer,standard",
+			},
+			want:    true,
+			wantErr: false,
+		},
+	}
+
+	for _, tc := range tests {
+		test := tc
+		t.Run(test.name, func(t *testing.T) {
+			g := NewWithT(t)
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					DataplaneClusterConfig: test.fields.dataplaneClusterConfig,
+					ProviderFactory:        test.fields.providerFactory,
+				},
+			}
+			reconciled, err := c.reconcileClusterMachinePools(test.arg)
+			gotErr := err != nil
+			g.Expect(gotErr).To(Equal(test.wantErr))
+			g.Expect(reconciled).To(Equal(test.want))
+		})
+	}
+
 }

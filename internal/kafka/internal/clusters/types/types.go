@@ -41,6 +41,41 @@ type ClusterRequest struct {
 	AdditionalSpec api.JSON
 }
 
+type MachinePoolRequest struct {
+	ID                 string
+	InstanceSize       string
+	MultiAZ            bool
+	AutoScalingEnabled bool
+	AutoScaling        MachinePoolAutoScaling
+	Replicas           int
+	ClusterID          string
+	NodeLabels         map[string]string
+	NodeTaints         []CluserNodeTaint
+}
+
+type MachinePoolInfo struct {
+	ID                 string
+	InstanceSize       string
+	MultiAZ            bool
+	AutoScalingEnabled bool
+	AutoScaling        MachinePoolAutoScaling
+	Replicas           int
+	ClusterID          string
+	NodeLabels         map[string]string
+	NodeTaints         []CluserNodeTaint
+}
+
+type MachinePoolAutoScaling struct {
+	MinNodes int
+	MaxNodes int
+}
+
+type CluserNodeTaint struct {
+	Effect string
+	Key    string
+	Value  string
+}
+
 // ClusterSpec Information about the openshift/k8s cluster
 type ClusterSpec struct {
 	// internal id of the cluster. Used when making requests to the provider

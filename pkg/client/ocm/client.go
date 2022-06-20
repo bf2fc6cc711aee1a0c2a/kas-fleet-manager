@@ -44,6 +44,8 @@ type Client interface {
 	GetOrganisationIdFromExternalId(externalId string) (string, error)
 	Connection() *sdkClient.Connection
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
+	GetMachinePool(clusterID string, machinePoolID string) (*clustersmgmtv1.MachinePool, error)
+	CreateMachinePool(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error)
 }
 
 var _ Client = &client{}
@@ -476,4 +478,34 @@ func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product st
 	})
 
 	return res, nil
+}
+
+// GetMachinePool returns the machinePoolID associated to clusterID.
+// If the cluster does not exist the returned MachinePool is nil
+func (c *client) GetMachinePool(clusterID string, machinePoolID string) (*clustersmgmtv1.MachinePool, error) {
+	machinePoolsClient := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID).MachinePools()
+	resp, err := machinePoolsClient.MachinePool(machinePoolID).Get().Send()
+	if resp.Status() == http.StatusNotFound {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Body(), nil
+}
+
+// CreateMachinePool creates the provided MachinePool in OCM.
+// The created MachinePool or an error is returned
+func (c *client) CreateMachinePool(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error) {
+	clusterClient := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterID)
+	machinePoolsClient := clusterClient.MachinePools()
+	response, err := machinePoolsClient.Add().Body(machinePool).Send()
+	if err != nil {
+		return nil, errors.New(errors.ErrorGeneral, err.Error())
+	}
+	createdMachinePool := response.Body()
+
+	return createdMachinePool, nil
 }

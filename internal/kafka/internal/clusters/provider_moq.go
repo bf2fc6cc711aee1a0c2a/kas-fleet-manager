@@ -31,6 +31,9 @@ var _ Provider = &ProviderMock{}
 // 			CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 // 				panic("mock out the Create method")
 // 			},
+// 			CreateMachinePoolFunc: func(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error) {
+// 				panic("mock out the CreateMachinePool method")
+// 			},
 // 			DeleteFunc: func(spec *types.ClusterSpec) (bool, error) {
 // 				panic("mock out the Delete method")
 // 			},
@@ -42,6 +45,9 @@ var _ Provider = &ProviderMock{}
 // 			},
 // 			GetClusterDNSFunc: func(clusterSpec *types.ClusterSpec) (string, error) {
 // 				panic("mock out the GetClusterDNS method")
+// 			},
+// 			GetMachinePoolFunc: func(clusterID string, id string) (*types.MachinePoolInfo, error) {
+// 				panic("mock out the GetMachinePool method")
 // 			},
 // 			InstallClusterLoggingFunc: func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
 // 				panic("mock out the InstallClusterLogging method")
@@ -71,6 +77,9 @@ type ProviderMock struct {
 	// CreateFunc mocks the Create method.
 	CreateFunc func(request *types.ClusterRequest) (*types.ClusterSpec, error)
 
+	// CreateMachinePoolFunc mocks the CreateMachinePool method.
+	CreateMachinePoolFunc func(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error)
+
 	// DeleteFunc mocks the Delete method.
 	DeleteFunc func(spec *types.ClusterSpec) (bool, error)
 
@@ -82,6 +91,9 @@ type ProviderMock struct {
 
 	// GetClusterDNSFunc mocks the GetClusterDNS method.
 	GetClusterDNSFunc func(clusterSpec *types.ClusterSpec) (string, error)
+
+	// GetMachinePoolFunc mocks the GetMachinePool method.
+	GetMachinePoolFunc func(clusterID string, id string) (*types.MachinePoolInfo, error)
 
 	// InstallClusterLoggingFunc mocks the InstallClusterLogging method.
 	InstallClusterLoggingFunc func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error)
@@ -118,6 +130,11 @@ type ProviderMock struct {
 			// Request is the request argument value.
 			Request *types.ClusterRequest
 		}
+		// CreateMachinePool holds details about calls to the CreateMachinePool method.
+		CreateMachinePool []struct {
+			// Request is the request argument value.
+			Request *types.MachinePoolRequest
+		}
 		// Delete holds details about calls to the Delete method.
 		Delete []struct {
 			// Spec is the spec argument value.
@@ -135,6 +152,13 @@ type ProviderMock struct {
 		GetClusterDNS []struct {
 			// ClusterSpec is the clusterSpec argument value.
 			ClusterSpec *types.ClusterSpec
+		}
+		// GetMachinePool holds details about calls to the GetMachinePool method.
+		GetMachinePool []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+			// ID is the id argument value.
+			ID string
 		}
 		// InstallClusterLogging holds details about calls to the InstallClusterLogging method.
 		InstallClusterLogging []struct {
@@ -160,10 +184,12 @@ type ProviderMock struct {
 	lockApplyResources          sync.RWMutex
 	lockCheckClusterStatus      sync.RWMutex
 	lockCreate                  sync.RWMutex
+	lockCreateMachinePool       sync.RWMutex
 	lockDelete                  sync.RWMutex
 	lockGetCloudProviderRegions sync.RWMutex
 	lockGetCloudProviders       sync.RWMutex
 	lockGetClusterDNS           sync.RWMutex
+	lockGetMachinePool          sync.RWMutex
 	lockInstallClusterLogging   sync.RWMutex
 	lockInstallKasFleetshard    sync.RWMutex
 	lockInstallStrimzi          sync.RWMutex
@@ -301,6 +327,37 @@ func (mock *ProviderMock) CreateCalls() []struct {
 	return calls
 }
 
+// CreateMachinePool calls CreateMachinePoolFunc.
+func (mock *ProviderMock) CreateMachinePool(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error) {
+	if mock.CreateMachinePoolFunc == nil {
+		panic("ProviderMock.CreateMachinePoolFunc: method is nil but Provider.CreateMachinePool was just called")
+	}
+	callInfo := struct {
+		Request *types.MachinePoolRequest
+	}{
+		Request: request,
+	}
+	mock.lockCreateMachinePool.Lock()
+	mock.calls.CreateMachinePool = append(mock.calls.CreateMachinePool, callInfo)
+	mock.lockCreateMachinePool.Unlock()
+	return mock.CreateMachinePoolFunc(request)
+}
+
+// CreateMachinePoolCalls gets all the calls that were made to CreateMachinePool.
+// Check the length with:
+//     len(mockedProvider.CreateMachinePoolCalls())
+func (mock *ProviderMock) CreateMachinePoolCalls() []struct {
+	Request *types.MachinePoolRequest
+} {
+	var calls []struct {
+		Request *types.MachinePoolRequest
+	}
+	mock.lockCreateMachinePool.RLock()
+	calls = mock.calls.CreateMachinePool
+	mock.lockCreateMachinePool.RUnlock()
+	return calls
+}
+
 // Delete calls DeleteFunc.
 func (mock *ProviderMock) Delete(spec *types.ClusterSpec) (bool, error) {
 	if mock.DeleteFunc == nil {
@@ -417,6 +474,41 @@ func (mock *ProviderMock) GetClusterDNSCalls() []struct {
 	mock.lockGetClusterDNS.RLock()
 	calls = mock.calls.GetClusterDNS
 	mock.lockGetClusterDNS.RUnlock()
+	return calls
+}
+
+// GetMachinePool calls GetMachinePoolFunc.
+func (mock *ProviderMock) GetMachinePool(clusterID string, id string) (*types.MachinePoolInfo, error) {
+	if mock.GetMachinePoolFunc == nil {
+		panic("ProviderMock.GetMachinePoolFunc: method is nil but Provider.GetMachinePool was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+		ID        string
+	}{
+		ClusterID: clusterID,
+		ID:        id,
+	}
+	mock.lockGetMachinePool.Lock()
+	mock.calls.GetMachinePool = append(mock.calls.GetMachinePool, callInfo)
+	mock.lockGetMachinePool.Unlock()
+	return mock.GetMachinePoolFunc(clusterID, id)
+}
+
+// GetMachinePoolCalls gets all the calls that were made to GetMachinePool.
+// Check the length with:
+//     len(mockedProvider.GetMachinePoolCalls())
+func (mock *ProviderMock) GetMachinePoolCalls() []struct {
+	ClusterID string
+	ID        string
+} {
+	var calls []struct {
+		ClusterID string
+		ID        string
+	}
+	mock.lockGetMachinePool.RLock()
+	calls = mock.calls.GetMachinePool
+	mock.lockGetMachinePool.RUnlock()
 	return calls
 }
 

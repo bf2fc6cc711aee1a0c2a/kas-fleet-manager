@@ -38,6 +38,9 @@ var _ Client = &ClientMock{}
 // 			CreateIdentityProviderFunc: func(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
 // 				panic("mock out the CreateIdentityProvider method")
 // 			},
+// 			CreateMachinePoolFunc: func(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error) {
+// 				panic("mock out the CreateMachinePool method")
+// 			},
 // 			CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
 // 				panic("mock out the CreateSyncSet method")
 // 			},
@@ -73,6 +76,9 @@ var _ Client = &ClientMock{}
 // 			},
 // 			GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
 // 				panic("mock out the GetIdentityProviderList method")
+// 			},
+// 			GetMachinePoolFunc: func(clusterID string, machinePoolID string) (*clustersmgmtv1.MachinePool, error) {
+// 				panic("mock out the GetMachinePool method")
 // 			},
 // 			GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 // 				panic("mock out the GetOrganisationIdFromExternalId method")
@@ -120,6 +126,9 @@ type ClientMock struct {
 	// CreateIdentityProviderFunc mocks the CreateIdentityProvider method.
 	CreateIdentityProviderFunc func(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
 
+	// CreateMachinePoolFunc mocks the CreateMachinePool method.
+	CreateMachinePoolFunc func(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error)
+
 	// CreateSyncSetFunc mocks the CreateSyncSet method.
 	CreateSyncSetFunc func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
 
@@ -155,6 +164,9 @@ type ClientMock struct {
 
 	// GetIdentityProviderListFunc mocks the GetIdentityProviderList method.
 	GetIdentityProviderListFunc func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
+
+	// GetMachinePoolFunc mocks the GetMachinePool method.
+	GetMachinePoolFunc func(clusterID string, machinePoolID string) (*clustersmgmtv1.MachinePool, error)
 
 	// GetOrganisationIdFromExternalIdFunc mocks the GetOrganisationIdFromExternalId method.
 	GetOrganisationIdFromExternalIdFunc func(externalId string) (string, error)
@@ -214,6 +226,13 @@ type ClientMock struct {
 			ClusterID string
 			// IdentityProvider is the identityProvider argument value.
 			IdentityProvider *clustersmgmtv1.IdentityProvider
+		}
+		// CreateMachinePool holds details about calls to the CreateMachinePool method.
+		CreateMachinePool []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+			// MachinePool is the machinePool argument value.
+			MachinePool *clustersmgmtv1.MachinePool
 		}
 		// CreateSyncSet holds details about calls to the CreateSyncSet method.
 		CreateSyncSet []struct {
@@ -279,6 +298,13 @@ type ClientMock struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
+		// GetMachinePool holds details about calls to the GetMachinePool method.
+		GetMachinePool []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+			// MachinePoolID is the machinePoolID argument value.
+			MachinePoolID string
+		}
 		// GetOrganisationIdFromExternalId holds details about calls to the GetOrganisationIdFromExternalId method.
 		GetOrganisationIdFromExternalId []struct {
 			// ExternalId is the externalId argument value.
@@ -335,6 +361,7 @@ type ClientMock struct {
 	lockCreateAddonWithParams           sync.RWMutex
 	lockCreateCluster                   sync.RWMutex
 	lockCreateIdentityProvider          sync.RWMutex
+	lockCreateMachinePool               sync.RWMutex
 	lockCreateSyncSet                   sync.RWMutex
 	lockDeleteCluster                   sync.RWMutex
 	lockDeleteSubscription              sync.RWMutex
@@ -347,6 +374,7 @@ type ClientMock struct {
 	lockGetClusterIngresses             sync.RWMutex
 	lockGetClusterStatus                sync.RWMutex
 	lockGetIdentityProviderList         sync.RWMutex
+	lockGetMachinePool                  sync.RWMutex
 	lockGetOrganisationIdFromExternalId sync.RWMutex
 	lockGetQuotaCostsForProduct         sync.RWMutex
 	lockGetRegions                      sync.RWMutex
@@ -550,6 +578,41 @@ func (mock *ClientMock) CreateIdentityProviderCalls() []struct {
 	mock.lockCreateIdentityProvider.RLock()
 	calls = mock.calls.CreateIdentityProvider
 	mock.lockCreateIdentityProvider.RUnlock()
+	return calls
+}
+
+// CreateMachinePool calls CreateMachinePoolFunc.
+func (mock *ClientMock) CreateMachinePool(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error) {
+	if mock.CreateMachinePoolFunc == nil {
+		panic("ClientMock.CreateMachinePoolFunc: method is nil but Client.CreateMachinePool was just called")
+	}
+	callInfo := struct {
+		ClusterID   string
+		MachinePool *clustersmgmtv1.MachinePool
+	}{
+		ClusterID:   clusterID,
+		MachinePool: machinePool,
+	}
+	mock.lockCreateMachinePool.Lock()
+	mock.calls.CreateMachinePool = append(mock.calls.CreateMachinePool, callInfo)
+	mock.lockCreateMachinePool.Unlock()
+	return mock.CreateMachinePoolFunc(clusterID, machinePool)
+}
+
+// CreateMachinePoolCalls gets all the calls that were made to CreateMachinePool.
+// Check the length with:
+//     len(mockedClient.CreateMachinePoolCalls())
+func (mock *ClientMock) CreateMachinePoolCalls() []struct {
+	ClusterID   string
+	MachinePool *clustersmgmtv1.MachinePool
+} {
+	var calls []struct {
+		ClusterID   string
+		MachinePool *clustersmgmtv1.MachinePool
+	}
+	mock.lockCreateMachinePool.RLock()
+	calls = mock.calls.CreateMachinePool
+	mock.lockCreateMachinePool.RUnlock()
 	return calls
 }
 
@@ -929,6 +992,41 @@ func (mock *ClientMock) GetIdentityProviderListCalls() []struct {
 	mock.lockGetIdentityProviderList.RLock()
 	calls = mock.calls.GetIdentityProviderList
 	mock.lockGetIdentityProviderList.RUnlock()
+	return calls
+}
+
+// GetMachinePool calls GetMachinePoolFunc.
+func (mock *ClientMock) GetMachinePool(clusterID string, machinePoolID string) (*clustersmgmtv1.MachinePool, error) {
+	if mock.GetMachinePoolFunc == nil {
+		panic("ClientMock.GetMachinePoolFunc: method is nil but Client.GetMachinePool was just called")
+	}
+	callInfo := struct {
+		ClusterID     string
+		MachinePoolID string
+	}{
+		ClusterID:     clusterID,
+		MachinePoolID: machinePoolID,
+	}
+	mock.lockGetMachinePool.Lock()
+	mock.calls.GetMachinePool = append(mock.calls.GetMachinePool, callInfo)
+	mock.lockGetMachinePool.Unlock()
+	return mock.GetMachinePoolFunc(clusterID, machinePoolID)
+}
+
+// GetMachinePoolCalls gets all the calls that were made to GetMachinePool.
+// Check the length with:
+//     len(mockedClient.GetMachinePoolCalls())
+func (mock *ClientMock) GetMachinePoolCalls() []struct {
+	ClusterID     string
+	MachinePoolID string
+} {
+	var calls []struct {
+		ClusterID     string
+		MachinePoolID string
+	}
+	mock.lockGetMachinePool.RLock()
+	calls = mock.calls.GetMachinePool
+	mock.lockGetMachinePool.RUnlock()
 	return calls
 }
 
