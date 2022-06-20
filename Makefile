@@ -538,7 +538,7 @@ db/teardown:
 	./scripts/local_db_teardown.sh
 .PHONY: db/teardown
 
-KEYCLOAK_URL ?= http://localhost
+KEYCLOAK_URL ?= http://localhost:8180
 KEYCLOAK_PORT_NO ?= 8180
 KEYCLOAK_USER ?= admin
 KEYCLOAK_PASSWORD ?= admin
