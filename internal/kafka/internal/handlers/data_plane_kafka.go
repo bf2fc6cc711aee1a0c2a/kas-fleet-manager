@@ -1,25 +1,26 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
 )
 
 type dataPlaneKafkaHandler struct {
-	service      services.DataPlaneKafkaService
-	kafkaService services.KafkaService
+	dataPlaneKafkaService services.DataPlaneKafkaService
+	kafkaService          services.KafkaService
 }
 
-func NewDataPlaneKafkaHandler(service services.DataPlaneKafkaService, kafkaService services.KafkaService) *dataPlaneKafkaHandler {
+func NewDataPlaneKafkaHandler(dataPlaneKafkaService services.DataPlaneKafkaService, kafkaService services.KafkaService) *dataPlaneKafkaHandler {
 	return &dataPlaneKafkaHandler{
-		service:      service,
-		kafkaService: kafkaService,
+		dataPlaneKafkaService: dataPlaneKafkaService,
+		kafkaService:          kafkaService,
 	}
 }
 
@@ -33,7 +34,7 @@ func (h *dataPlaneKafkaHandler) UpdateKafkaStatuses(w http.ResponseWriter, r *ht
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			dataPlaneKafkaStatus := presenters.ConvertDataPlaneKafkaStatus(data)
-			err := h.service.UpdateDataPlaneKafkaService(ctx, clusterId, dataPlaneKafkaStatus)
+			err := h.dataPlaneKafkaService.UpdateDataPlaneKafkaService(ctx, clusterId, dataPlaneKafkaStatus)
 			return nil, err
 		},
 	}
