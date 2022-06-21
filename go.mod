@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go v1.36.5
 	github.com/aws/aws-secretsmanager-caching-go v1.1.0
 	github.com/blang/semver/v4 v4.0.0
-	github.com/bxcodec/faker/v3 v3.2.0
+	github.com/bxcodec/faker/v3 v3.8.0
 	github.com/cucumber/godog v0.10.1-0.20210705192606-df8c6e49b40b
 	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/docker/go-healthcheck v0.1.0
@@ -40,7 +40,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.34.0
+	github.com/prometheus/common v0.35.0
 	github.com/redhat-developer/app-services-sdk-go/serviceaccounts v0.4.0
 	github.com/rs/xid v1.4.0
 	github.com/santhosh-tekuri/jsonschema/v3 v3.0.1
