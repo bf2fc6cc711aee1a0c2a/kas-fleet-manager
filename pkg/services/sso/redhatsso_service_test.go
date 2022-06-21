@@ -3,6 +3,7 @@ package sso
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"testing"
 	"time"
 
@@ -15,6 +16,15 @@ import (
 	pkgErr "github.com/pkg/errors"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 )
+
+type testGenericOpenAPIError struct {
+	body  []byte
+	error string
+}
+
+func (e testGenericOpenAPIError) Error() string {
+	return e.error
+}
 
 func TestRedhatSSO_RegisterOSDClusterClientInSSO(t *testing.T) {
 	tokenErr := pkgErr.New("token error")
@@ -247,6 +257,118 @@ func TestRedhatSSOService_RegisterKasFleetshardOperatorServiceAccount(t *testing
 			Expect(got).To(Equal(tt.want))
 		})
 	}
+}
+
+func Test_SSOClient_CreateServiceAccount(t *testing.T) {
+
+	server := mocks.NewMockServer(mocks.WithServiceAccountLimit(50))
+	server.Start()
+
+	t.Cleanup(func() {
+		server.Stop()
+	})
+
+	type args struct {
+		name        string
+		description string
+		count       int
+	}
+
+	type expect struct {
+		wantErr *testGenericOpenAPIError
+		count   int
+	}
+
+	tests := []struct {
+		name string
+		//fields  fields
+		args   args
+		expect expect
+		setup  func()
+	}{
+		{
+			name: "Test create 30 service accounts",
+			args: args{
+				name:        "test_%d",
+				description: "test account %d",
+				count:       30,
+			},
+			expect: expect{
+				wantErr: nil,
+				count:   30,
+			},
+			setup: func() {
+				server.DeleteAllServiceAccounts()
+			},
+		},
+		{
+			name: "Test create 60 service accounts",
+			args: args{
+				name:        "test_%d",
+				description: "test account %d",
+				count:       60,
+			},
+			expect: expect{
+				wantErr: &testGenericOpenAPIError{
+					body:  []byte(`{ "error": "service_account_limit_exceeded", "error_description": "Max allowed number:50 of service accounts for user has reached"}`),
+					error: "401 Unauthorized",
+				},
+				count: 50,
+			},
+			setup: func() {
+				server.DeleteAllServiceAccounts()
+			},
+		},
+	}
+	RegisterTestingT(t)
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			var err error
+			count := 0
+			if tt.setup != nil {
+				tt.setup()
+			}
+			for i := 0; i < tt.args.count; i++ {
+				name := fmt.Sprintf(tt.args.name, i)
+				description := fmt.Sprintf(tt.args.description, i)
+
+				client := redhatsso.NewSSOClient(&keycloak.KeycloakConfig{
+					SsoBaseUrl: server.BaseURL(),
+					RedhatSSORealm: &keycloak.KeycloakRealmConfig{
+						Realm:            "redhat-external",
+						APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+						TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+					},
+					SelectSSOProvider: keycloak.REDHAT_SSO,
+				},
+					&keycloak.KeycloakRealmConfig{
+						Realm:            "redhat-external",
+						APIEndpointURI:   fmt.Sprintf("%s/auth/realms/redhat-external", server.BaseURL()),
+						TokenEndpointURI: fmt.Sprintf("%s/auth/realms/redhat-external/protocol/openid-connect/token", server.BaseURL()),
+					},
+				)
+
+				accessToken := server.GenerateNewAuthToken()
+
+				_, err = client.CreateServiceAccount(accessToken, name, description)
+				if err != nil {
+					break
+				}
+				count++
+			}
+
+			Expect(err == nil).To(Equal(tt.expect.wantErr == nil))
+			Expect(count).To(Equal(tt.expect.count))
+			if err != nil {
+				Expect(err).To(BeAssignableToTypeOf(serviceaccountsclient.GenericOpenAPIError{}))
+				openApiError := err.(serviceaccountsclient.GenericOpenAPIError)
+				Expect(openApiError.Error()).To(Equal(tt.expect.wantErr.Error()))
+				Expect(openApiError.Body()).To(Equal(tt.expect.wantErr.body))
+			}
+		})
+	}
+
 }
 
 func TestRedhatSSOService_DeRegisterKasFleetshardOperatorServiceAccount(t *testing.T) {
@@ -1385,7 +1507,7 @@ func Test_redhatssoService_GetKafkaClientSecret(t *testing.T) {
 			fields: fields{
 				client: &redhatsso.SSOClientMock{
 					GetServiceAccountFunc: func(accessToken, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
-						return &serviceaccountsclient.ServiceAccountData{}, true, errors.New(errors.ErrorFailedToGetSSOClientSecret, "failed to get sso client secret")
+						return nil, false, errors.New(errors.ErrorFailedToGetSSOClientSecret, "failed to get sso client secret")
 					},
 				},
 			},
@@ -1394,7 +1516,7 @@ func Test_redhatssoService_GetKafkaClientSecret(t *testing.T) {
 				clientId:    testClientID,
 			},
 			want:    "",
-			wantErr: errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, errors.FailedToGetSSOClientSecret("failed to get sso client secret"), "failed to get sso client secret"),
+			wantErr: errors.NewWithCause(errors.ErrorFailedToGetSSOClient, errors.FailedToGetSSOClientSecret("failed to get sso client secret"), "failed to get sso client with id: %s", testClientID),
 		},
 		{
 			name: "should return an error if it failed to get the client secret",
