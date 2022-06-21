@@ -24,6 +24,13 @@ const (
 
 var supportedCloudProviders = []string{CloudProviderAWS, CloudProviderRHM, CloudProviderAzure}
 
+var supportedMarketplaceBillingModels = []string{
+	string(amsv1.BillingModelMarketplace),
+	string(amsv1.BillingModelMarketplaceAWS),
+	string(amsv1.BillingModelMarketplaceRHM),
+	string(amsv1.BillingModelMarketplaceAzure),
+}
+
 func getBillingModelForCloudProvider(cloudProvider string) (amsv1.BillingModel, error) {
 	switch cloudProvider {
 	case CloudProviderAWS:
@@ -51,6 +58,31 @@ func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder
 var supportedAMSBillingModels map[string]struct{} = map[string]struct{}{
 	string(amsv1.BillingModelMarketplace): {},
 	string(amsv1.BillingModelStandard):    {},
+}
+
+// checks if the requested billing model (pre-paid vs. consumption based) matches with the model returned from AMS
+// returns a boolean indicating the match and a string value indicating if the computed billing model matched to either
+// marketplace or standard billing
+func (q amsQuotaService) billingModelMatches(computedBillingModel string, requestedBillingModel string) (bool, string) {
+	// billing model is an optional parameter, infer the value from AMS if not provided
+	if requestedBillingModel == "" && computedBillingModel == string(amsv1.BillingModelStandard) {
+		return true, string(amsv1.BillingModelStandard)
+	} else if requestedBillingModel == "" && arrays.Contains(supportedMarketplaceBillingModels, computedBillingModel) {
+		return true, string(amsv1.BillingModelMarketplace)
+	}
+
+	// user requested pre-paid billing and it matches the computed billing model
+	if computedBillingModel == string(amsv1.BillingModelStandard) && requestedBillingModel == string(amsv1.BillingModelStandard) {
+		return true, string(amsv1.BillingModelStandard)
+	}
+
+	// user requested consumption based billing and it matches the computed billing model
+	if arrays.Contains(supportedMarketplaceBillingModels, computedBillingModel) && requestedBillingModel == string(amsv1.BillingModelMarketplace) {
+		return true, string(amsv1.BillingModelMarketplace)
+	}
+
+	// computed and requested billing models do not match
+	return false, ""
 }
 
 func (q amsQuotaService) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
@@ -290,6 +322,14 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 	if bm == "" {
 		return "", errors.InsufficientQuotaError("Error getting billing model: No available billing model found")
 	}
+
+	if match, matchedBillingModel := q.billingModelMatches(bm, kafka.BillingModel); match {
+		// assign the billing model in case it was not provided by the user but we were able to infer it
+		kafka.BillingModel = matchedBillingModel
+	} else {
+		return "", errors.InvalidBillingAccount("requested billing model does not match assigned. requested: %s, assigned: %s", kafka.BillingModel, bm)
+	}
+
 	rr.BillingModel(amsv1.BillingModel(bm))
 	rr.Count(kafkaInstanceSize.QuotaConsumed)
 

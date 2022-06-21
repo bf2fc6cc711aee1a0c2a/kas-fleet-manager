@@ -1051,3 +1051,64 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 		})
 	}
 }
+
+func Test_Validation_validateBillingModel(t *testing.T) {
+	type args struct {
+		kafkaRequest public.KafkaRequestPayload
+	}
+
+	tests := []struct {
+		name    string
+		arg     args
+		wantErr bool
+	}{
+		{
+			name: "do not throw an error when billing model is not provided",
+			arg: args{
+
+				kafkaRequest: public.KafkaRequestPayload{
+					BillingModel: nil,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "do not throw an error when marketplace model is provided",
+			arg: args{
+				kafkaRequest: public.KafkaRequestPayload{
+					BillingModel: &[]string{"marketplace"}[0],
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "do not throw an error when standard model is provided",
+			arg: args{
+				kafkaRequest: public.KafkaRequestPayload{
+					BillingModel: &[]string{"standard"}[0],
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "throw an error when unknown model is provided",
+			arg: args{
+				kafkaRequest: public.KafkaRequestPayload{
+					BillingModel: &[]string{"xyz"}[0],
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			validateFn := ValidateBillingModel(&tt.arg.kafkaRequest)
+			err := validateFn()
+			Expect(err != nil).To(Equal(tt.wantErr))
+		})
+	}
+}

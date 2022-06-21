@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
+	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"regexp"
 	"strings"
 
@@ -24,6 +25,18 @@ import (
 var ValidKafkaClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
 
 var MaxKafkaNameLength = 32
+
+func ValidateBillingModel(kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
+	return func() *errors.ServiceError {
+		// the billing model can only be either standard or marketplace
+		billingModel := shared.SafeString(kafkaRequestPayload.BillingModel)
+		if billingModel != "" && billingModel != string(v1.BillingModelStandard) && billingModel != string(v1.BillingModelMarketplace) {
+			return errors.InvalidBillingAccount("invalid billing model: %s, only %v and %v are allowed", billingModel,
+				v1.BillingModelStandard, v1.BillingModelMarketplace)
+		}
+		return nil
+	}
+}
 
 func ValidateBillingCloudAccountIdAndMarketplace(ctx context.Context, kafkaService *services.KafkaService, kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {

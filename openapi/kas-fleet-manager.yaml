@@ -2,7 +2,7 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 # All endpoints defined here will be discoverable by all users. If there is a need to keep some endpoints "private", add them to the "managed-services-api-private.yaml" file
 info:
   title: Kafka Service Fleet Manager
-  version: 1.9.0
+  version: 1.10.0
   description: Kafka Service Fleet Manager is a Rest API to manage Kafka instances.
 servers:
   - url: https://api.openshift.com
@@ -1009,6 +1009,8 @@ components:
               type: string
             marketplace:
               type: string
+            billing_model:
+              type: string
           example:
             $ref: "#/components/examples/KafkaRequestExample"
     KafkaRequestList:
@@ -1074,6 +1076,10 @@ components:
           nullable: true
         marketplace:
           description: marketplace where the instance is purchased on
+          type: string
+          nullable: true
+        billing_model:
+          description: billing model to use
           type: string
           nullable: true
     SupportedKafkaInstanceTypesList:
@@ -1665,6 +1671,7 @@ components:
         max_connection_attempts_per_sec: 100
         billing_cloud_account_id: "123456789012"
         marketplace: "aws"
+        billing_model: "marketplace"
     KafkaRequestFailedCreationStatusExample:
       value:
         id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"

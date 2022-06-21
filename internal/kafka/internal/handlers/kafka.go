@@ -51,6 +51,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateCloudProvider(ctx, &h.service, &kafkaRequestPayload, h.providerConfig, "creating kafka requests"),
 			ValidateKafkaPlan(ctx, &h.service, h.kafkaConfig, &kafkaRequestPayload),
 			ValidateBillingCloudAccountIdAndMarketplace(ctx, &h.service, &kafkaRequestPayload),
+			ValidateBillingModel(&kafkaRequestPayload),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			convKafka := presenters.ConvertKafkaRequest(kafkaRequestPayload)
