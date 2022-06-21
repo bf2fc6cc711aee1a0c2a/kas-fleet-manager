@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/antihax/optional"
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
+	mockkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+
+	"github.com/antihax/optional"
 	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
 )
@@ -52,33 +53,21 @@ func setUp(t *testing.T) *testEnv {
 
 	db := test.TestServices.DBFactory.New()
 	kafkas := []*dbapi.KafkaRequest{
-		{
-			MultiAZ:        false,
-			Owner:          usernameWithSpecialChars,
-			Region:         mocks.MockCluster.Region().ID(),
-			CloudProvider:  mocks.MockCluster.CloudProvider().ID(),
-			Name:           mockKafkaName1,
-			OrganisationId: orgId,
-			Status:         constants2.KafkaRequestStatusReady.String(),
-		},
-		{
-			MultiAZ:        false,
-			Owner:          usernameWithSpecialChars,
-			Region:         mocks.MockCluster.Region().ID(),
-			CloudProvider:  mocks.MockCluster.CloudProvider().ID(),
-			Name:           mockKafkaName2,
-			OrganisationId: orgId,
-			Status:         constants2.KafkaRequestStatusReady.String(),
-		},
-		{
-			MultiAZ:        false,
-			Owner:          usernameWithSpecialChars,
-			Region:         mocks.MockCluster.Region().ID(),
-			CloudProvider:  mocks.MockCluster.CloudProvider().ID(),
-			Name:           mockKafkaName3,
-			OrganisationId: orgId,
-			Status:         constants2.KafkaRequestStatusReady.String(),
-		},
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.With(mockkafka.OWNER, usernameWithSpecialChars),
+			mockkafka.With(mockkafka.NAME, mockKafkaName1),
+		),
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.With(mockkafka.OWNER, usernameWithSpecialChars),
+			mockkafka.With(mockkafka.NAME, mockKafkaName2),
+		),
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.With(mockkafka.OWNER, usernameWithSpecialChars),
+			mockkafka.With(mockkafka.NAME, mockKafkaName3),
+		),
 	}
 
 	if err := db.Create(&kafkas).Error; err != nil {

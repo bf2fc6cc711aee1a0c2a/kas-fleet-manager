@@ -23,6 +23,8 @@ func BuildAdminKafkaRequest(modifyFn func(kafka *private.Kafka)) *private.Kafka 
 		InstanceType:        DefaultInstanceType,
 		SizeId:              mocksupportedinstancetypes.DefaultKafkaInstanceSizeId,
 		BootstrapServerHost: fmt.Sprintf("%s:443", DefaultBootstrapServerHost),
+		KafkaStorageSize:    mocksupportedinstancetypes.DefaultMaxDataRetentionSize,
+		OrganisationId:      DefaultOrganisationId,
 	}
 	if modifyFn != nil {
 		modifyFn(kafka)

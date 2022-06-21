@@ -10,6 +10,7 @@ import (
 	adminprivate "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
+	mockkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -176,18 +177,11 @@ func TestAdminKafka_Get(t *testing.T) {
 	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 	db := test.TestServices.DBFactory.New()
-	kafka := &dbapi.KafkaRequest{
-		MultiAZ:               false,
-		Owner:                 "test-user",
-		Region:                "test",
-		CloudProvider:         "test",
-		Name:                  "test-kafka",
-		OrganisationId:        "13640203",
-		DesiredStrimziVersion: desiredStrimziVersion,
-		Status:                constants.KafkaRequestStatusReady.String(),
-		Namespace:             fmt.Sprintf("kafka-%s", sampleKafkaID),
-	}
-	kafka.ID = sampleKafkaID
+	kafka := mockkafka.BuildKafkaRequest(
+		mockkafka.WithPredefinedTestValues(),
+		mockkafka.With(mockkafka.ID, sampleKafkaID),
+		mockkafka.With(mockkafka.DESIRED_STRIMZI_VERSION, desiredStrimziVersion),
+	)
 
 	if err := db.Create(kafka).Error; err != nil {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
@@ -381,24 +375,13 @@ func TestAdminKafka_List(t *testing.T) {
 
 	db := test.TestServices.DBFactory.New()
 	kafkas := []dbapi.KafkaRequest{
-		{
-			MultiAZ:        false,
-			Owner:          "test-user1",
-			Region:         "test",
-			CloudProvider:  "test",
-			Name:           "test-kafka1",
-			OrganisationId: "13640203",
-			Status:         constants.KafkaRequestStatusReady.String(),
-		},
-		{
-			MultiAZ:        false,
-			Owner:          "test-user2",
-			Region:         "test",
-			CloudProvider:  "test",
-			Name:           "test-kafka2",
-			OrganisationId: "12147054",
-			Status:         constants.KafkaRequestStatusReady.String(),
-		},
+		*mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+		),
+		*mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.With(mockkafka.ORGANISATION_ID, "12147054"),
+		),
 	}
 
 	for i := range kafkas {

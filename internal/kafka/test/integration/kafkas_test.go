@@ -30,11 +30,13 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
 
+	mockkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+
 	"github.com/bxcodec/faker/v3"
 	"github.com/golang-jwt/jwt/v4"
 	. "github.com/onsi/gomega"
@@ -160,6 +162,10 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 
 	Expect(kafka.KafkaStorageSize).To(Equal(instanceSize.MaxDataRetentionSize.String()))
+
+	maxDataRetentionSizeBytes, err := instanceSize.MaxDataRetentionSize.ToInt64()
+	Expect(err).ToNot(HaveOccurred())
+	Expect(kafka.MaxDataRetentionSize.Bytes).To(Equal(maxDataRetentionSizeBytes))
 
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
 	common.CheckMetricExposed(h, t, metrics.ClusterStatusCapacityUsed)
@@ -914,25 +920,12 @@ func TestKafka_Update(t *testing.T) {
 	}
 
 	// create a kafka that will be updated
-	kafka := &dbapi.KafkaRequest{
-		Meta: api.Meta{
-			ID: sampleKafkaID,
-		},
-		MultiAZ:                 false,
-		Owner:                   owner,
-		Region:                  "test",
-		CloudProvider:           "test",
-		Name:                    "test-kafka",
-		OrganisationId:          orgId,
-		Status:                  constants.KafkaRequestStatusReady.String(),
-		ClusterID:               cluster.ClusterID,
-		ActualKafkaVersion:      "2.6.0",
-		DesiredKafkaVersion:     "2.6.0",
-		ActualStrimziVersion:    "v.23.0",
-		DesiredStrimziVersion:   "v0.23.0",
-		InstanceType:            types.STANDARD.String(),
-		ReauthenticationEnabled: false,
-	}
+	kafka := mockkafka.BuildKafkaRequest(
+		mockkafka.WithPredefinedTestValues(),
+		mockkafka.With(mockkafka.CLUSTER_ID, cluster.ClusterID),
+		mockkafka.WithReauthenticationEnabled(false),
+		mockkafka.With(mockkafka.ID, sampleKafkaID),
+	)
 
 	if err := db.Create(kafka).Error; err != nil {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
@@ -1341,74 +1334,53 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 	username1 := "denied-test-user1@example.com"
 	username2 := "denied-test-user2@example.com"
 
-	// this value is taken from config/quota-management-list-configuration.yaml
-	orgId := "13640203"
-
 	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
-	db := test.TestServices.DBFactory.New()
-	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
-	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
 	kafkas := []*dbapi.KafkaRequest{
-		{
-			MultiAZ:        false,
-			Owner:          username1,
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka",
-			OrganisationId: orgId,
-			Status:         constants2.KafkaRequestStatusAccepted.String(),
-			InstanceType:   types.STANDARD.String(),
-			SizeId:         "x1",
-		},
-		{
-			MultiAZ:        false,
-			Owner:          username2,
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka-2",
-			OrganisationId: orgId,
-			Status:         constants2.KafkaRequestStatusAccepted.String(),
-			InstanceType:   types.DEVELOPER.String(),
-			SizeId:         "x1",
-		},
-		{
-			MultiAZ:        false,
-			Owner:          username2,
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			ClusterID:      clusterID,
-			Name:           "dummy-kafka-3",
-			OrganisationId: orgId,
-			Status:         constants2.KafkaRequestStatusPreparing.String(),
-			InstanceType:   types.DEVELOPER.String(),
-			SizeId:         "x1",
-		},
-		{
-			MultiAZ:             false,
-			Owner:               username2,
-			Region:              kafkaRegion,
-			CloudProvider:       kafkaCloudProvider,
-			ClusterID:           clusterID,
-			BootstrapServerHost: "dummy-bootstrap-server-host",
-			Name:                "dummy-kafka-to-deprovision",
-			OrganisationId:      orgId,
-			Status:              constants2.KafkaRequestStatusProvisioning.String(),
-			InstanceType:        types.STANDARD.String(),
-			SizeId:              "x1",
-		},
-		{
-			MultiAZ:        false,
-			Owner:          "some-other-user",
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "this-kafka-will-remain",
-			OrganisationId: orgId,
-			Status:         constants2.KafkaRequestStatusAccepted.String(),
-			InstanceType:   types.STANDARD.String(),
-			SizeId:         "x1",
-		},
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka"),
+			mockkafka.With(mockkafka.OWNER, username1),
+			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.STATUS, constants2.KafkaRequestStatusAccepted.String()),
+			mockkafka.With(mockkafka.BOOTSTRAP_SERVER_HOST, ""),
+		),
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-2"),
+			mockkafka.With(mockkafka.OWNER, username2),
+			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.STATUS, constants2.KafkaRequestStatusAccepted.String()),
+			mockkafka.With(mockkafka.BOOTSTRAP_SERVER_HOST, ""),
+			mockkafka.WithMultiAZ(false),
+			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
+		),
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-3"),
+			mockkafka.With(mockkafka.OWNER, username2),
+			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.STATUS, constants2.KafkaRequestStatusPreparing.String()),
+			mockkafka.With(mockkafka.BOOTSTRAP_SERVER_HOST, ""),
+			mockkafka.WithMultiAZ(false),
+			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
+		),
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-deprovision"),
+			mockkafka.With(mockkafka.OWNER, username2),
+			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.STATUS, constants2.KafkaRequestStatusProvisioning.String()),
+		),
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.With(mockkafka.NAME, "this-kafka-will-remain"),
+			mockkafka.With(mockkafka.OWNER, "some-other-user"),
+			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.STATUS, constants2.KafkaRequestStatusAccepted.String()),
+		),
 	}
 
+	db := test.TestServices.DBFactory.New()
 	if err := db.Create(&kafkas).Error; err != nil {
 		Expect(err).NotTo(HaveOccurred())
 		return
@@ -1626,6 +1598,10 @@ func TestKafkaGet(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 
 	Expect(kafka.KafkaStorageSize).To(Equal(instanceSize.MaxDataRetentionSize.String()))
+
+	maxDataRetentionSizeBytes, err := instanceSize.MaxDataRetentionSize.ToInt64()
+	Expect(err).ToNot(HaveOccurred())
+	Expect(kafka.MaxDataRetentionSize.Bytes).To(Equal(maxDataRetentionSizeBytes))
 
 	// When kafka is in 'Accepted' state it means that it still has not been
 	// allocated to a cluster, which means that kas fleetshard-sync has not reported
@@ -2377,61 +2353,37 @@ func TestKafka_RemovingExpiredKafkas_NoStandardInstances(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	// create an account with values from config/quota-management-list-configuration.yaml
-	testuser1 := "testuser1@example.com"
-	orgId := "13640203"
-
 	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
-	db := test.TestServices.DBFactory.New()
-	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
-	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
-
 	kafkas := []*dbapi.KafkaRequest{
-		{
-			MultiAZ:        false,
-			Owner:          testuser1,
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka-to-remain",
-			OrganisationId: orgId,
-			Status:         constants2.KafkaRequestStatusAccepted.String(),
-			InstanceType:   types.DEVELOPER.String(),
-			SizeId:         "x1",
-		},
-		{
-			Meta: api.Meta{
-				CreatedAt: time.Now().Add(time.Duration(-49 * time.Hour)),
-			},
-			MultiAZ:             false,
-			Owner:               testuser1,
-			Region:              kafkaRegion,
-			CloudProvider:       kafkaCloudProvider,
-			ClusterID:           clusterID,
-			Name:                "dummy-kafka-2",
-			OrganisationId:      orgId,
-			BootstrapServerHost: "dummy-bootstrap-host",
-			Status:              constants2.KafkaRequestStatusProvisioning.String(),
-			InstanceType:        types.DEVELOPER.String(),
-			SizeId:              "x1",
-		},
-		{
-			Meta: api.Meta{
-				CreatedAt: time.Now().Add(time.Duration(-48 * time.Hour)),
-			},
-			MultiAZ:             false,
-			Owner:               testuser1,
-			Region:              kafkaRegion,
-			CloudProvider:       kafkaCloudProvider,
-			ClusterID:           clusterID,
-			Name:                "dummy-kafka-3",
-			OrganisationId:      orgId,
-			BootstrapServerHost: "dummy-bootstrap-host",
-			Status:              constants2.KafkaRequestStatusReady.String(),
-			InstanceType:        types.DEVELOPER.String(),
-			SizeId:              "x1",
-		},
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.WithMultiAZ(false),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-remain"),
+			mockkafka.With(mockkafka.STATUS, constants2.KafkaRequestStatusAccepted.String()),
+			mockkafka.With(mockkafka.BOOTSTRAP_SERVER_HOST, ""),
+			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
+			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+		),
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-49*time.Hour))),
+			mockkafka.WithMultiAZ(false),
+			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-2"),
+			mockkafka.With(mockkafka.STATUS, constants2.KafkaRequestStatusProvisioning.String()),
+			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
+		),
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-48*time.Hour))),
+			mockkafka.WithMultiAZ(false),
+			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-3"),
+			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
+		),
 	}
 
+	db := test.TestServices.DBFactory.New()
 	if err := db.Create(&kafkas).Error; err != nil {
 		Expect(err).NotTo(HaveOccurred())
 		return
@@ -2467,61 +2419,36 @@ func TestKafka_RemovingExpiredKafkas_WithStandardInstances(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	// create an account without values from config/allow-list-configuration.yaml
-	testuser1 := "testuser@noallowlist.com"
-	orgId := "13640203"
-
 	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
-	db := test.TestServices.DBFactory.New()
-	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
-	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
-
 	kafkas := []*dbapi.KafkaRequest{
-		{
-			MultiAZ:        false,
-			Owner:          testuser1,
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka-not-yet-expired",
-			OrganisationId: orgId,
-			Status:         constants2.KafkaRequestStatusAccepted.String(),
-			InstanceType:   types.DEVELOPER.String(),
-			SizeId:         "x1",
-		},
-		{
-			Meta: api.Meta{
-				CreatedAt: time.Now().Add(time.Duration(-49 * time.Hour)),
-			},
-			MultiAZ:             false,
-			Owner:               testuser1,
-			Region:              kafkaRegion,
-			CloudProvider:       kafkaCloudProvider,
-			ClusterID:           clusterID,
-			Name:                "dummy-kafka-to-remove",
-			OrganisationId:      orgId,
-			BootstrapServerHost: "dummy-bootstrap-host",
-			Status:              constants2.KafkaRequestStatusReady.String(),
-			InstanceType:        types.DEVELOPER.String(),
-			SizeId:              "x1",
-		},
-		{
-			Meta: api.Meta{
-				CreatedAt: time.Now().Add(time.Duration(-48 * time.Hour)),
-			},
-			MultiAZ:             false,
-			Owner:               testuser1,
-			Region:              kafkaRegion,
-			CloudProvider:       kafkaCloudProvider,
-			ClusterID:           clusterID,
-			Name:                "dummy-kafka-long-lived",
-			OrganisationId:      orgId,
-			BootstrapServerHost: "dummy-bootstrap-host",
-			Status:              constants2.KafkaRequestStatusReady.String(),
-			InstanceType:        types.STANDARD.String(),
-			SizeId:              "x1",
-		},
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.WithMultiAZ(false),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-not-yet-expired"),
+			mockkafka.With(mockkafka.STATUS, constants2.KafkaRequestStatusAccepted.String()),
+			mockkafka.With(mockkafka.BOOTSTRAP_SERVER_HOST, ""),
+			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
+			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+		),
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-49*time.Hour))),
+			mockkafka.WithMultiAZ(false),
+			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-remove"),
+			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
+		),
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-48*time.Hour))),
+			mockkafka.WithMultiAZ(false),
+			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-long-lived"),
+			mockkafka.With(mockkafka.INSTANCE_TYPE, types.STANDARD.String()),
+		),
 	}
 
+	db := test.TestServices.DBFactory.New()
 	if err := db.Create(&kafkas).Error; err != nil {
 		Expect(err).NotTo(HaveOccurred())
 		return

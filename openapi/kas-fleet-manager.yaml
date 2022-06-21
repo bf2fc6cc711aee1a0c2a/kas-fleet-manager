@@ -989,6 +989,8 @@ components:
               type: boolean
             kafka_storage_size:
               type: string
+            max_data_retention_size:
+              $ref: '#/components/schemas/SupportedKafkaSizeBytesValueItem'
             browser_url:
               type: string
             size_id:
@@ -1662,6 +1664,9 @@ components:
         instance_type: standard
         browser_url: "https://console.redhat.com/application-services/streams/kafkas/1isy6rq3jki8q0otmjqfd3ocfrg/dashboard"
         reauthentication_enabled: true
+        max_data_retention_size: {
+          bytes: 1073741824000
+        }
         size_id: x1
         ingress_throughput_per_sec: "2Mi"
         egress_throughput_per_sec: "2Mi"
