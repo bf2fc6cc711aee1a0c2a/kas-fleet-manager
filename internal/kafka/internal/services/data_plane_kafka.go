@@ -32,6 +32,7 @@ const (
 	kafkaIBPUpdating string      = "KafkaIbpUpdating"
 )
 
+//go:generate moq -out data_plane_kafka_service_moq.go . DataPlaneKafkaService
 type DataPlaneKafkaService interface {
 	UpdateDataPlaneKafkaService(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError
 }
