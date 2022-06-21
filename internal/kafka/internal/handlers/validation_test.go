@@ -2,14 +2,15 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
-
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -79,8 +80,10 @@ func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			validateFn := ValidateKafkaClusterNameIsUnique(&tt.arg.name, tt.arg.kafkaService, tt.arg.context)
 			err := validateFn()
 			Expect(err).To(Equal(tt.want))
@@ -128,8 +131,10 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
-		t.Run(tt.description, func(t *testing.T) {
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			validateFn := ValidKafkaClusterName(&tt.name, "name")
 			err := validateFn()
 			if tt.expectError {
@@ -317,12 +322,82 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 				reason:  "instance type 'developer' not supported for region 'us-east'",
 			},
 		},
+		{
+			name: "should return an error if it fails to assign an instance type",
+			arg: args{
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner string, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return "", errors.New(errors.ErrorGeneral, "error assigning instance type: ")
+					},
+				},
+				kafkaRequest: public.KafkaRequestPayload{
+					CloudProvider: "aws",
+					Region:        "us-east",
+				},
+				ProviderConfig: &config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "aws",
+								Regions: config.RegionList{
+									config.Region{
+										Name:                   "us-east",
+										SupportedInstanceTypes: standardMap,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: result{
+				wantErr: true,
+				reason:  "error assigning instance type: KAFKAS-MGMT-9: error assigning instance type: ",
+			},
+		},
+		{
+			name: "should throw an error if the provider is not supported",
+			arg: args{
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner string, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
+					},
+				},
+				kafkaRequest: public.KafkaRequestPayload{
+					CloudProvider: "invalid_provider",
+					Region:        "us-east",
+				},
+				ProviderConfig: &config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name:    "aws",
+								Default: true,
+								Regions: config.RegionList{
+									config.Region{
+										Name:                   "us-east-1",
+										Default:                true,
+										SupportedInstanceTypes: developerMap,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: result{
+				wantErr: true,
+				reason:  "provider invalid_provider is not supported, supported providers are: [aws]",
+			},
+		},
 	}
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			validateFn := ValidateCloudProvider(context.Background(), &tt.arg.kafkaService, &tt.arg.kafkaRequest, tt.arg.ProviderConfig, "creating-kafka")
 			err := validateFn()
 			if !tt.want.wantErr && err != nil {
@@ -493,12 +568,43 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 				wantErr: false,
 			},
 		},
+		{
+			name: "should throw an error if user is not valid",
+			arg: args{
+				ctx: auth.SetTokenInContext(context.TODO(), &jwt.Token{
+					Claims: jwt.MapClaims{
+						"username":     username,
+						"org_id":       orgId,
+						"is_org_admin": true,
+					},
+				}),
+				kafka: &dbapi.KafkaRequest{
+					Owner:          username,
+					OrganisationId: orgId,
+				},
+				kafkaUpdateRequest: public.KafkaUpdateRequest{
+					ReauthenticationEnabled: &reauthenticationEnabled,
+					Owner:                   &newOwner,
+				},
+				authService: &authorization.AuthorizationMock{
+					CheckUserValidFunc: func(username, orgId string) (bool, error) {
+						return false, errors.New(errors.ErrorGeneral, "Unable to update kafka request owner")
+					},
+				},
+			},
+			want: result{
+				wantErr: true,
+				reason:  "Unable to update kafka request owner",
+			},
+		},
 	}
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			validateFn := ValidateKafkaUserFacingUpdateFields(tt.arg.ctx, tt.arg.authService, tt.arg.kafka, &tt.arg.kafkaUpdateRequest)
 			err := validateFn()
 			Expect(err != nil).To(Equal(tt.want.wantErr), "ValidateKafkaUserFacingUpdateFields() expected not to throw error but threw %v", err)
@@ -506,6 +612,442 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 				Expect(err.Reason).To(Equal(tt.want.reason))
 				return
 			}
+		})
+	}
+}
+
+func TestValidateBillingCloudAccountIdAndMarketplace(t *testing.T) {
+	type args struct {
+		ctx                 context.Context
+		kafkaService        services.KafkaService
+		kafkaRequestPayload *public.KafkaRequestPayload
+	}
+	marketPlace := "MarketPlace"
+	BillingCloudAccountId := "1234"
+
+	tests := []struct {
+		name string
+		args args
+		want *errors.ServiceError
+	}{
+		{
+			name: "should return nil if BillingCloudAccountId and Marketplace is empty",
+			args: args{
+				ctx:                 context.Background(),
+				kafkaRequestPayload: &public.KafkaRequestPayload{},
+			},
+			want: nil,
+		},
+		{
+			name: "should return an error if BillingCloudAccountId is empty and marketplace is not empty",
+			args: args{
+				ctx: context.Background(),
+				kafkaRequestPayload: &public.KafkaRequestPayload{
+					Marketplace: &marketPlace,
+				},
+			},
+			want: errors.InvalidBillingAccount("no billing account provided for marketplace: %s", marketPlace),
+		},
+		{
+			name: "should return nil if it can validate the Billing CloudAccountId And Marketplace",
+			args: args{
+				ctx: context.Background(),
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
+					},
+					ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+						return nil
+					},
+				},
+				kafkaRequestPayload: &public.KafkaRequestPayload{
+					Marketplace:           &marketPlace,
+					BillingCloudAccountId: &BillingCloudAccountId,
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "should return an error if it cannot validate the Billing CloudAccountId And Marketplace",
+			args: args{
+				ctx: context.Background(),
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
+					},
+					ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+						return errors.GeneralError("error assigning instance type")
+					},
+				},
+				kafkaRequestPayload: &public.KafkaRequestPayload{
+					Marketplace:           &marketPlace,
+					BillingCloudAccountId: &BillingCloudAccountId,
+				},
+			},
+			want: errors.GeneralError("error assigning instance type"),
+		},
+		{
+			name: "should return an error if it fails to assign an instance type",
+			args: args{
+				ctx: context.Background(),
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return "", errors.New(errors.ErrorGeneral, "error assigning instance type: ")
+					},
+					ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+						return nil
+					},
+				},
+				kafkaRequestPayload: &public.KafkaRequestPayload{
+					Marketplace:           &marketPlace,
+					BillingCloudAccountId: &BillingCloudAccountId,
+				},
+			},
+			want: errors.NewWithCause(errors.ErrorGeneral, errors.GeneralError("error assigning instance type: "), "error assigning instance type: KAFKAS-MGMT-9: error assigning instance type: "),
+		},
+	}
+	g := NewWithT(t)
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			validateFn := ValidateBillingCloudAccountIdAndMarketplace(tt.args.ctx, &tt.args.kafkaService, tt.args.kafkaRequestPayload)
+			err := validateFn()
+			g.Expect(err).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestValidateKafkaPlan(t *testing.T) {
+	type args struct {
+		ctx                 context.Context
+		kafkaService        services.KafkaService
+		kafkaConfig         *config.KafkaConfig
+		kafkaRequestPayload *public.KafkaRequestPayload
+	}
+	tests := []struct {
+		name string
+		args args
+		want *errors.ServiceError
+	}{
+		{
+			name: "should not return an error if the kafka plan was successfully validated",
+			args: args{
+				ctx: context.Background(),
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
+					},
+				},
+				kafkaRequestPayload: &public.KafkaRequestPayload{
+					Plan: fmt.Sprintf("%s.x1", types.DEVELOPER.String()),
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id:          "developer",
+									DisplayName: "Trial",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:          "x1",
+											DisplayName: "1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "should not return an error if KafkaRequestPayload.plan in not set and the kafka plan was successfully validated",
+			args: args{
+				ctx: context.Background(),
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
+					},
+				},
+				kafkaRequestPayload: &public.KafkaRequestPayload{},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id:          "developer",
+									DisplayName: "Trial",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:          "x1",
+											DisplayName: "1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "should return an error if the plan provided is invalid ",
+			args: args{
+				ctx: context.Background(),
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
+					},
+				},
+				kafkaRequestPayload: &public.KafkaRequestPayload{
+					Plan: fmt.Sprintf("%s.x1", "invalid_plan"),
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id:          "developer",
+									DisplayName: "Trial",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:          "x1",
+											DisplayName: "1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: errors.BadRequest("Unable to detect instance type in plan provided: 'invalid_plan.x1'"),
+		},
+		{
+			name: "should return an error if the plan provided is not supported",
+			args: args{
+				ctx: context.Background(),
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
+					},
+				},
+				kafkaRequestPayload: &public.KafkaRequestPayload{
+					Plan: "developer.x2",
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id:          "developer",
+									DisplayName: "Trial",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:          "x1",
+											DisplayName: "1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: errors.InstancePlanNotSupported("Unsupported plan provided: 'developer.x2'"),
+		},
+		{
+			name: "should return an error if KafkaRequestPayload.plan in not set and the kafka plan is not supported",
+			args: args{
+				ctx: context.Background(),
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.KafkaInstanceType(types.STANDARD.String()), nil
+					},
+				},
+				kafkaRequestPayload: &public.KafkaRequestPayload{},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id:          "developer",
+									DisplayName: "Trial",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:          "x1",
+											DisplayName: "1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: errors.InstanceTypeNotSupported("Unsupported kafka instance type: 'standard' provided"),
+		},
+		{
+			name: "should return an error if it is unable to detect instance size in plan provided",
+			args: args{
+				ctx: context.Background(),
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.DEVELOPER, nil
+					},
+				},
+				kafkaRequestPayload: &public.KafkaRequestPayload{
+					Plan: "developer.invalidPlan",
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id:          "developer",
+									DisplayName: "Trial",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:          "x1",
+											DisplayName: "1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: errors.InstancePlanNotSupported("Unsupported plan provided: 'developer.invalidPlan'"),
+		},
+	}
+	g := NewWithT(t)
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			validateFn := ValidateKafkaPlan(tt.args.ctx, &tt.args.kafkaService, tt.args.kafkaConfig, tt.args.kafkaRequestPayload)
+			err := validateFn()
+			g.Expect(err).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestValidateKafkaUpdateFields(t *testing.T) {
+	type args struct {
+		kafkaUpdateRequest *private.KafkaUpdateRequest
+	}
+	tests := []struct {
+		name string
+		args args
+		want *errors.ServiceError
+	}{
+		{
+			name: "should return nil if it validates kafka update fields successfully",
+			args: args{
+				kafkaUpdateRequest: &private.KafkaUpdateRequest{
+					StrimziVersion:   "StrimziVersion",
+					KafkaVersion:     "KafkaVersion",
+					KafkaIbpVersion:  "KafkaIbpVersion",
+					KafkaStorageSize: "KafkaStorageSize",
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "should return error if all fields are empty",
+			args: args{
+				kafkaUpdateRequest: &private.KafkaUpdateRequest{
+					StrimziVersion:   "",
+					KafkaVersion:     "",
+					KafkaIbpVersion:  "",
+					KafkaStorageSize: "",
+				},
+			},
+			want: errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version or kafka_storage_size to be provided"),
+		},
+	}
+	g := NewWithT(t)
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			validateFn := ValidateKafkaUpdateFields(tt.args.kafkaUpdateRequest)
+			err := validateFn()
+			g.Expect(err).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestValidateKafkaStorageSize(t *testing.T) {
+	type args struct {
+		kafkaRequest   *dbapi.KafkaRequest
+		kafkaUpdateReq *private.KafkaUpdateRequest
+	}
+	tests := []struct {
+		name string
+		args args
+		want *errors.ServiceError
+	}{
+		{
+			name: "should return nil if it successfully validates the kafka storage size",
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					KafkaStorageSize: "2",
+				},
+				kafkaUpdateReq: &private.KafkaUpdateRequest{
+					KafkaStorageSize: "2",
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "should return an error if the kafka request storage size is missing",
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{},
+				kafkaUpdateReq: &private.KafkaUpdateRequest{
+					KafkaStorageSize: "2",
+				},
+			},
+			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: ''"),
+		},
+		{
+			name: "should return an error if it is unable to parse the kafka update request storage size parameter",
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					KafkaStorageSize: "2",
+				},
+				kafkaUpdateReq: &private.KafkaUpdateRequest{
+					KafkaStorageSize: "string",
+				},
+			},
+			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current requested size: 'string'"),
+		},
+		{
+			name: "should return an error if the the kafka request storage size parameter is greater than the the kafka update request storage size parameter",
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					KafkaStorageSize: "3",
+				},
+				kafkaUpdateReq: &private.KafkaUpdateRequest{
+					KafkaStorageSize: "2",
+				},
+			},
+			want: errors.FieldValidationError("Failed to update Kafka Request. Requested size: '2' should be greater than current size: '3'"),
+		},
+	}
+	g := NewWithT(t)
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			validateFn := ValidateKafkaStorageSize(tt.args.kafkaRequest, tt.args.kafkaUpdateReq)
+			err := validateFn()
+			g.Expect(err).To(Equal(tt.want))
 		})
 	}
 }
