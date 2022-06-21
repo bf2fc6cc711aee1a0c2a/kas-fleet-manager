@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	adminprivate "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	mockkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -798,6 +799,11 @@ func TestAdminKafka_Update(t *testing.T) {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.KafkaStorageSize).To(Equal(sameStorageSizeUpdateRequest.KafkaStorageSize))
+
+				dataRetentionSizeQuantity := config.Quantity(sameStorageSizeUpdateRequest.KafkaStorageSize)
+				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
+				Expect(convErr).ToNot(HaveOccurred())
+				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
 			},
 		},
 		{
@@ -898,6 +904,11 @@ func TestAdminKafka_Update(t *testing.T) {
 				Expect(result.DesiredKafkaIbpVersion).To(Equal(allFieldsUpdateRequest.KafkaIbpVersion))
 				Expect(result.DesiredStrimziVersion).To(Equal(allFieldsUpdateRequest.StrimziVersion))
 				Expect(result.KafkaStorageSize).To(Equal(allFieldsUpdateRequest.KafkaStorageSize))
+
+				dataRetentionSizeQuantity := config.Quantity(allFieldsUpdateRequest.KafkaStorageSize)
+				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
+				Expect(convErr).ToNot(HaveOccurred())
+				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
 			},
 		},
 		{
@@ -914,6 +925,11 @@ func TestAdminKafka_Update(t *testing.T) {
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID1))
 				Expect(result.KafkaStorageSize).To(Equal(biggerStorageDifferentFormatUpdateRequest.KafkaStorageSize))
+
+				dataRetentionSizeQuantity := config.Quantity(biggerStorageDifferentFormatUpdateRequest.KafkaStorageSize)
+				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
+				Expect(convErr).ToNot(HaveOccurred())
+				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
 			},
 		},
 		{

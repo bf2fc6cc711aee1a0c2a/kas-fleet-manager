@@ -426,6 +426,11 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 		}
 		Expect(err).To(BeNil())
 		Expect(result.KafkaStorageSize).To(Equal(biggerStorageUpdateRequest.KafkaStorageSize))
+
+		dataRetentionSizeQuantity := config.Quantity(biggerStorageUpdateRequest.KafkaStorageSize)
+		dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
+		Expect(convErr).ToNot(HaveOccurred())
+		Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)

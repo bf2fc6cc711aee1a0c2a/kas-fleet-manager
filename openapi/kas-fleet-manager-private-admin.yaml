@@ -280,6 +280,10 @@ components:
               type: string
             size_id:
               type: string
+            max_data_retention_size:
+              description: 'Maximum data storage available to this Kafka instance size.'
+              type: object
+              $ref: '#/components/schemas/SupportedKafkaSizeBytesValueItem'
     KafkaList:
       allOf:
         - $ref: "kas-fleet-manager.yaml#/components/schemas/List"
@@ -303,6 +307,8 @@ components:
           type: string
         kafka_storage_size:
           type: string
+    SupportedKafkaSizeBytesValueItem:
+      $ref: 'kas-fleet-manager.yaml#/components/schemas/SupportedKafkaSizeBytesValueItem'
 
   securitySchemes:
     Bearer:

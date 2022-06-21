@@ -138,17 +138,16 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.MaxDataRetentionPeriod = defaultInstanceSize.MaxDataRetentionPeriod
 				kafkaRequest.MaxConnectionAttemptsPerSec = int32(defaultInstanceSize.MaxConnectionAttemptsPerSec)
 
-				storageSizeQuantity := config.Quantity(kafkaStorageSize)
-				storageSizeBytes, err := storageSizeQuantity.ToInt64()
-				if err != nil {
-					t.Errorf("failed to convert kafkaStorageSize '%s' to bytes", kafkaStorageSize)
-				}
-				kafkaRequest.MaxDataRetentionSize = public.SupportedKafkaSizeBytesValueItem{
-					Bytes: storageSizeBytes,
-				}
-
 				expireTime := kafkaRequest.CreatedAt.Add(time.Duration(*defaultInstanceSize.LifespanSeconds) * time.Second)
 				kafkaRequest.ExpiresAt = &expireTime
+
+				dataRetentionSizeQuantity := config.Quantity(kafkaStorageSize)
+				dataRetentionSizeBytes, err := dataRetentionSizeQuantity.ToInt64()
+				Expect(err).ToNot(HaveOccurred(), "failed to convert kafka data retention size '%s' to bytes", kafkaStorageSize)
+
+				kafkaRequest.MaxDataRetentionSize = public.SupportedKafkaSizeBytesValueItem{
+					Bytes: dataRetentionSizeBytes,
+				}
 			}),
 			config: config.KafkaConfig{
 				SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{

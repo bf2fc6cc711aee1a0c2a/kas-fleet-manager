@@ -337,6 +337,12 @@ components:
         kafka_storage_size:
           type: string
       type: object
+    SupportedKafkaSizeBytesValueItem:
+      properties:
+        bytes:
+          format: int64
+          type: integer
+      type: object
     Error:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -450,6 +456,8 @@ components:
           type: string
         size_id:
           type: string
+        max_data_retention_size:
+          $ref: '#/components/schemas/SupportedKafkaSizeBytesValueItem'
     KafkaList_allOf:
       properties:
         items:
