@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go v1.36.5
 	github.com/aws/aws-secretsmanager-caching-go v1.1.0
 	github.com/blang/semver/v4 v4.0.0
-	github.com/bxcodec/faker/v3 v3.2.0
+	github.com/bxcodec/faker/v3 v3.8.0
 	github.com/cucumber/godog v0.10.1-0.20210705192606-df8c6e49b40b
 	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/docker/go-healthcheck v0.1.0
