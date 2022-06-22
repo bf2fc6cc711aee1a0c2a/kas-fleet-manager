@@ -161,7 +161,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	instanceSize, err := instanceType.GetKafkaInstanceSizeByID(kafka.SizeId)
 	Expect(err).ToNot(HaveOccurred())
 
-	Expect(kafka.KafkaStorageSize).To(Equal(instanceSize.MaxDataRetentionSize.String()))
+	Expect(kafka.DeprecatedKafkaStorageSize).To(Equal(instanceSize.MaxDataRetentionSize.String()))
 
 	maxDataRetentionSizeBytes, err := instanceSize.MaxDataRetentionSize.ToInt64()
 	Expect(err).ToNot(HaveOccurred())
@@ -1597,7 +1597,7 @@ func TestKafkaGet(t *testing.T) {
 	instanceSize, err := instanceType.GetKafkaInstanceSizeByID(kafka.SizeId)
 	Expect(err).ToNot(HaveOccurred())
 
-	Expect(kafka.KafkaStorageSize).To(Equal(instanceSize.MaxDataRetentionSize.String()))
+	Expect(kafka.DeprecatedKafkaStorageSize).To(Equal(instanceSize.MaxDataRetentionSize.String()))
 
 	maxDataRetentionSizeBytes, err := instanceSize.MaxDataRetentionSize.ToInt64()
 	Expect(err).ToNot(HaveOccurred())

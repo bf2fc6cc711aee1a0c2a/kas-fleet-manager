@@ -128,7 +128,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.BootstrapServerHost = setBootstrapServerHost(bootstrapServer)
 				kafkaRequest.FailedReason = failedReason
 				kafkaRequest.InstanceType = mock.DefaultInstanceType
-				kafkaRequest.KafkaStorageSize = kafkaStorageSize
+				kafkaRequest.DeprecatedKafkaStorageSize = kafkaStorageSize
 				kafkaRequest.BrowserUrl = "//dashboard"
 				kafkaRequest.SizeId = defaultInstanceSize.Id
 				kafkaRequest.IngressThroughputPerSec = defaultInstanceSize.IngressThroughputPerSec.String()

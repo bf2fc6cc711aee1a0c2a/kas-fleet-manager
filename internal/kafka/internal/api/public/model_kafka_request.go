@@ -29,16 +29,18 @@ type KafkaRequest struct {
 	Name                string `json:"name,omitempty"`
 	BootstrapServerHost string `json:"bootstrap_server_host,omitempty"`
 	// The kafka admin server url to perform kafka admin operations e.g acl management etc. The value will be available when the Kafka has been fully provisioned i.e it reaches a 'ready' state
-	AdminApiServerUrl           string                           `json:"admin_api_server_url,omitempty"`
-	CreatedAt                   time.Time                        `json:"created_at,omitempty"`
-	ExpiresAt                   *time.Time                       `json:"expires_at,omitempty"`
-	UpdatedAt                   time.Time                        `json:"updated_at,omitempty"`
-	FailedReason                string                           `json:"failed_reason,omitempty"`
-	Version                     string                           `json:"version,omitempty"`
-	InstanceType                string                           `json:"instance_type,omitempty"`
-	InstanceTypeName            string                           `json:"instance_type_name,omitempty"`
-	ReauthenticationEnabled     bool                             `json:"reauthentication_enabled"`
-	KafkaStorageSize            string                           `json:"kafka_storage_size,omitempty"`
+	AdminApiServerUrl       string     `json:"admin_api_server_url,omitempty"`
+	CreatedAt               time.Time  `json:"created_at,omitempty"`
+	ExpiresAt               *time.Time `json:"expires_at,omitempty"`
+	UpdatedAt               time.Time  `json:"updated_at,omitempty"`
+	FailedReason            string     `json:"failed_reason,omitempty"`
+	Version                 string     `json:"version,omitempty"`
+	InstanceType            string     `json:"instance_type,omitempty"`
+	InstanceTypeName        string     `json:"instance_type_name,omitempty"`
+	ReauthenticationEnabled bool       `json:"reauthentication_enabled"`
+	// Maximum data storage available to this Kafka. This is now deprecated, please use max_data_retention_size instead.
+	// Deprecated
+	DeprecatedKafkaStorageSize  string                           `json:"kafka_storage_size,omitempty"`
 	MaxDataRetentionSize        SupportedKafkaSizeBytesValueItem `json:"max_data_retention_size,omitempty"`
 	BrowserUrl                  string                           `json:"browser_url,omitempty"`
 	SizeId                      string                           `json:"size_id,omitempty"`
