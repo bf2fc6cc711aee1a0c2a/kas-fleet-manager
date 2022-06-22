@@ -54,6 +54,7 @@ type KafkaRequest struct {
 	SizeId                  string `json:"size_id"`
 	BillingCloudAccountId   string `json:"billing_cloud_account_id"`
 	Marketplace             string `json:"marketplace"`
+	BillingModel            string `json:"billing_model"`
 }
 
 type KafkaList []*KafkaRequest

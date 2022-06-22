@@ -29,6 +29,7 @@ func ConvertKafkaRequest(kafkaRequestPayload public.KafkaRequestPayload, dbKafka
 
 	kafka.BillingCloudAccountId = shared.SafeString(kafkaRequestPayload.BillingCloudAccountId)
 	kafka.Marketplace = shared.SafeString(kafkaRequestPayload.Marketplace)
+	kafka.BillingModel = shared.SafeString(kafkaRequestPayload.BillingModel)
 
 	if kafkaRequestPayload.ReauthenticationEnabled != nil {
 		kafka.ReauthenticationEnabled = *kafkaRequestPayload.ReauthenticationEnabled
@@ -100,6 +101,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaC
 		MaxConnectionAttemptsPerSec: int32(maxConnectionAttemptsPerSec),
 		BillingCloudAccountId:       kafkaRequest.BillingCloudAccountId,
 		Marketplace:                 kafkaRequest.Marketplace,
+		BillingModel:                kafkaRequest.BillingModel,
 	}, nil
 }
 

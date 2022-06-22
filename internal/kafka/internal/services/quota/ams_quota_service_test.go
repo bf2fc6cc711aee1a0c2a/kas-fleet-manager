@@ -57,11 +57,13 @@ func Test_AMSGetBillingModel(t *testing.T) {
 		request dbapi.KafkaRequest
 	}
 	tests := []struct {
-		name             string
-		fields           fields
-		args             args
-		wantErr          bool
-		wantBillingModel string
+		name                     string
+		fields                   fields
+		args                     args
+		wantErr                  bool
+		wantMatch                bool
+		wantBillingModel         string
+		wantInferredBillingModel string
 	}{
 		{
 			name: "aws marketplace billing model is detected",
@@ -107,8 +109,10 @@ func Test_AMSGetBillingModel(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantErr:          false,
-			wantBillingModel: string(v1.BillingModelMarketplaceAWS),
+			wantErr:                  false,
+			wantMatch:                true,
+			wantBillingModel:         string(v1.BillingModelMarketplaceAWS),
+			wantInferredBillingModel: string(v1.BillingModelMarketplace),
 		},
 		{
 			name: "rhm marketplace billing model is detected",
@@ -154,8 +158,10 @@ func Test_AMSGetBillingModel(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantErr:          false,
-			wantBillingModel: string(v1.BillingModelMarketplace),
+			wantErr:                  false,
+			wantMatch:                true,
+			wantBillingModel:         string(v1.BillingModelMarketplace),
+			wantInferredBillingModel: string(v1.BillingModelMarketplace),
 		},
 		{
 			name: "standard billing model is detected when no billing account provided",
@@ -197,8 +203,10 @@ func Test_AMSGetBillingModel(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantErr:          false,
-			wantBillingModel: string(v1.BillingModelStandard),
+			wantErr:                  false,
+			wantMatch:                true,
+			wantBillingModel:         string(v1.BillingModelStandard),
+			wantInferredBillingModel: string(v1.BillingModelStandard),
 		},
 		{
 			name: "marketplace billing model is rejected when no marketplace related resource is found",
@@ -240,8 +248,10 @@ func Test_AMSGetBillingModel(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantErr:          true,
-			wantBillingModel: "",
+			wantErr:                  true,
+			wantMatch:                false,
+			wantBillingModel:         "",
+			wantInferredBillingModel: "",
 		},
 		{
 			name: "marketplace billing model is rejected when quota is insufficient",
@@ -285,8 +295,10 @@ func Test_AMSGetBillingModel(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantErr:          true,
-			wantBillingModel: "",
+			wantErr:                  true,
+			wantMatch:                false,
+			wantBillingModel:         "",
+			wantInferredBillingModel: "",
 		},
 		{
 			name: "unsupported cloud provider is rejected",
@@ -330,8 +342,10 @@ func Test_AMSGetBillingModel(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantErr:          true,
-			wantBillingModel: "",
+			wantErr:                  true,
+			wantMatch:                false,
+			wantBillingModel:         "",
+			wantInferredBillingModel: "",
 		},
 		{
 			name: "standard billing is preferred when no billing account is provided",
@@ -379,8 +393,10 @@ func Test_AMSGetBillingModel(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantErr:          false,
-			wantBillingModel: string(v1.BillingModelStandard),
+			wantErr:                  false,
+			wantMatch:                true,
+			wantBillingModel:         string(v1.BillingModelStandard),
+			wantInferredBillingModel: string(v1.BillingModelStandard),
 		},
 		{
 			name: "marketplace billing is selected when billing account is provided",
@@ -430,8 +446,104 @@ func Test_AMSGetBillingModel(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantErr:          false,
-			wantBillingModel: string(v1.BillingModelMarketplaceAWS),
+			wantErr:                  false,
+			wantMatch:                true,
+			wantBillingModel:         string(v1.BillingModelMarketplaceAWS),
+			wantInferredBillingModel: string(v1.BillingModelMarketplace),
+		},
+		{
+			name: "detects non-matching requested billing model (standard)",
+			args: args{
+				request: dbapi.KafkaRequest{
+					Name:                  "test",
+					SizeId:                "x1",
+					BillingCloudAccountId: "1234567890",
+					Marketplace:           "aws",
+					InstanceType:          "standard",
+					BillingModel:          "standard",
+				},
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						if product != string(ocm.RHOSAKProduct) {
+							return []*v1.QuotaCost{}, nil
+						}
+						rrbq1 := v1.NewRelatedResource().
+							BillingModel(string(v1.BillingModelMarketplace)).
+							Product(string(ocm.RHOSAKProduct)).
+							ResourceName(resourceName).
+							Cost(1)
+
+						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).
+							CloudAccounts(
+								v1.NewCloudAccount().CloudProviderID("aws").CloudAccountID("1234567890"),
+							).
+							Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+
+						return []*v1.QuotaCost{qcb}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr:                  false,
+			wantMatch:                false,
+			wantBillingModel:         string(v1.BillingModelMarketplaceAWS),
+			wantInferredBillingModel: "",
+		},
+		{
+			name: "detects non-matching requested billing model (marketplace)",
+			args: args{
+				request: dbapi.KafkaRequest{
+					Name:         "test",
+					SizeId:       "x1",
+					InstanceType: "standard",
+					BillingModel: "marketplace",
+				},
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						if product != string(ocm.RHOSAKProduct) {
+							return []*v1.QuotaCost{}, nil
+						}
+						rrbq1 := v1.NewRelatedResource().
+							BillingModel(string(v1.BillingModelStandard)).
+							Product(string(ocm.RHOSAKProduct)).
+							ResourceName(resourceName).
+							Cost(1)
+
+						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+
+						return []*v1.QuotaCost{qcb}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr:                  false,
+			wantMatch:                false,
+			wantBillingModel:         string(v1.BillingModelStandard),
+			wantInferredBillingModel: "",
 		},
 	}
 
@@ -445,6 +557,10 @@ func Test_AMSGetBillingModel(t *testing.T) {
 			billingModel, err := quotaService.(*amsQuotaService).getBillingModel(&tt.args.request, types.STANDARD)
 			Expect(billingModel).To(Equal(tt.wantBillingModel))
 			Expect(err != nil).To(Equal(tt.wantErr))
+
+			match, bm := quotaService.(*amsQuotaService).billingModelMatches(billingModel, tt.args.request.BillingModel)
+			Expect(match).To(Equal(tt.wantMatch))
+			Expect(bm).To(Equal(tt.wantInferredBillingModel))
 		})
 	}
 
