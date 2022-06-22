@@ -5,6 +5,7 @@ import "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 type DataPlaneClusterStatus struct {
 	Conditions               []DataPlaneClusterStatusCondition
 	AvailableStrimziVersions []api.StrimziVersion
+	DynamicCapacityInfo      map[string]api.DynamicCapacityInfo
 }
 
 type DataPlaneClusterStatusCondition struct {
@@ -22,5 +23,6 @@ type DataPlaneClusterConfigObservability struct {
 }
 
 type DataPlaneClusterConfig struct {
-	Observability DataPlaneClusterConfigObservability
+	Observability       DataPlaneClusterConfigObservability
+	DynamicCapacityInfo map[string]api.DynamicCapacityInfo
 }

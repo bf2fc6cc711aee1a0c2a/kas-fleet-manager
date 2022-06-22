@@ -3,7 +3,7 @@ info:
   description: Kafka Service Fleet Manager APIs that are used by internal services
     e.g kas-fleetshard operators.
   title: Kafka Service Fleet Manager
-  version: 1.5.1
+  version: 1.6.0
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -343,7 +343,16 @@ components:
           type: type
           message: message
           status: status
+        capacity:
+          key:
+            maxUnits: 0
+            remainingUnits: 6
       properties:
+        capacity:
+          additionalProperties:
+            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_capacity'
+          description: A map of supported instance type to reported capacity information
+          type: object
         conditions:
           description: The cluster data plane conditions
           items:
@@ -392,6 +401,9 @@ components:
             tag: tag
             accessToken: accessToken
             repository: repository
+          capacity:
+            key:
+              maxNodes: 0
       properties:
         spec:
           $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec'
@@ -530,6 +542,20 @@ components:
             allOf:
             - $ref: '#/components/schemas/ManagedKafka'
           type: array
+    DataPlaneClusterUpdateStatusRequest_capacity:
+      description: The reported capacity object
+      example:
+        maxUnits: 0
+        remainingUnits: 6
+      properties:
+        maxUnits:
+          description: The maximum number of units that can be placed onto the instance
+            type machine pool
+          type: integer
+        remainingUnits:
+          description: the remaining units that can be placed onto the instance type
+            machine pool
+          type: integer
     DataPlaneClusterUpdateStatusRequest_conditions:
       example:
         reason: reason
@@ -609,6 +635,14 @@ components:
           type: string
         router:
           type: string
+    DataplaneClusterAgentConfig_spec_capacity:
+      description: The reported capacity object
+      example:
+        maxNodes: 0
+      properties:
+        maxNodes:
+          description: The maximum number of nodes configured for the instance type
+          type: integer
     DataplaneClusterAgentConfig_spec_observability:
       description: Observability configurations
       example:
@@ -634,7 +668,15 @@ components:
           tag: tag
           accessToken: accessToken
           repository: repository
+        capacity:
+          key:
+            maxNodes: 0
       properties:
+        capacity:
+          additionalProperties:
+            $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec_capacity'
+          description: A map of supported instance type to configured nodes size
+          type: object
         observability:
           $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec_observability'
     Error_allOf:

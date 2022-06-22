@@ -21,9 +21,18 @@ func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRe
 		})
 	}
 
+	dynamicCapacityInfo := map[string]api.DynamicCapacityInfo{}
+	for key, capacity := range status.Capacity {
+		dynamicCapacityInfo[key] = api.DynamicCapacityInfo{
+			MaxUnits:       capacity.MaxUnits,
+			RemainingUnits: capacity.RemainingUnits,
+		}
+	}
+
 	return &dbapi.DataPlaneClusterStatus{
 		Conditions:               conds,
 		AvailableStrimziVersions: availableStrimziVersions,
+		DynamicCapacityInfo:      dynamicCapacityInfo,
 	}, nil
 }
 
@@ -62,6 +71,13 @@ func getAvailableStrimziVersions(status private.DataPlaneClusterUpdateStatusRequ
 
 func PresentDataPlaneClusterConfig(config *dbapi.DataPlaneClusterConfig) private.DataplaneClusterAgentConfig {
 	accessToken := config.Observability.AccessToken
+	capacity := map[string]private.DataplaneClusterAgentConfigSpecCapacity{}
+	for k, v := range config.DynamicCapacityInfo {
+		capacity[k] = private.DataplaneClusterAgentConfigSpecCapacity{
+			MaxNodes: v.MaxNodes,
+		}
+	}
+
 	return private.DataplaneClusterAgentConfig{
 		Spec: private.DataplaneClusterAgentConfigSpec{
 			Observability: private.DataplaneClusterAgentConfigSpecObservability{
@@ -70,6 +86,7 @@ func PresentDataPlaneClusterConfig(config *dbapi.DataPlaneClusterConfig) private
 				Repository:  config.Observability.Repository,
 				Tag:         config.Observability.Tag,
 			},
+			Capacity: capacity,
 		},
 	}
 }

@@ -157,6 +157,10 @@ type Cluster struct {
 	// SupportedInstanceType holds information on what kind of instances types can be provisioned on this cluster.
 	// A cluster can support two kinds of instance types: 'developer', 'standard' or both in this case it will be a comma separated list of instance types e.g 'standard,developer'.
 	SupportedInstanceType string `json:"supported_instance_type"`
+
+	// DynamicCapacityInfo holds dynamic scaling capacity information per instance type.
+	// For each instance type, the maxinum number of nodes, remaining units and maximum supported units are stored
+	DynamicCapacityInfo JSON `json:"dynamic_capacity_info"`
 }
 
 type ClusterList []*Cluster
@@ -191,6 +195,12 @@ type StrimziVersion struct {
 	Ready            bool              `json:"ready"`
 	KafkaVersions    []KafkaVersion    `json:"kafkaVersions"`
 	KafkaIBPVersions []KafkaIBPVersion `json:"kafkaIBPVersions"`
+}
+
+type DynamicCapacityInfo struct {
+	MaxNodes       int32 `json:"max_nodes"`
+	MaxUnits       int32 `json:"max_units"`
+	RemainingUnits int32 `json:"remaining_units"`
 }
 
 type KafkaVersion struct {
@@ -387,4 +397,32 @@ func (cluster *Cluster) SetAvailableStrimziVersions(availableStrimziVersions []S
 		cluster.AvailableStrimziVersions = v
 		return nil
 	}
+}
+
+//SetDynamicCapacityInfo sets the dynamic scaling info per instance type into a json object that can be persisted in
+//the database
+func (cluster *Cluster) SetDynamicCapacityInfo(dynamicCapacityInfo map[string]DynamicCapacityInfo) error {
+	marshelledDynamicCapacityInfo, err := json.Marshal(dynamicCapacityInfo)
+
+	if err != nil {
+		return err
+	}
+
+	cluster.DynamicCapacityInfo = marshelledDynamicCapacityInfo
+	return nil
+}
+
+// RetrieveDynamicCapacityInfo returns the dynamic scaling info per instance type
+func (cluster *Cluster) RetrieveDynamicCapacityInfo() (map[string]DynamicCapacityInfo, error) {
+	dynamicCapacityInfo := map[string]DynamicCapacityInfo{}
+	if cluster.DynamicCapacityInfo == nil {
+		return dynamicCapacityInfo, nil
+	}
+
+	err := json.Unmarshal(cluster.DynamicCapacityInfo, &dynamicCapacityInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return dynamicCapacityInfo, nil
 }

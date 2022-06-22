@@ -12,6 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	clusterMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
 	dataplanemocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
@@ -21,6 +22,71 @@ import (
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
+
+func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testing.T) {
+	g := NewWithT(t)
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
+	g.Expect(err).ToNot(HaveOccurred(), "failed to build mock cluster object")
+
+	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
+
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+	var dataplaneConfig *config.DataplaneClusterConfig
+	h, _, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig) {
+		dataplaneConfig = d
+	})
+	defer tearDown()
+
+	cluster := clusterMocks.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderOCM
+		cluster.SupportedInstanceType = "standard"
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = "some-cluster-id"
+		cluster.CloudProvider = "aws"
+		cluster.Region = "us-east-1"
+		cluster.Status = "ready"
+		cluster.ProviderSpec = nil
+		cluster.ClusterSpec = nil
+		cluster.DynamicCapacityInfo = api.JSON([]byte(`{"standard":{"max_nodes":1,"max_units":1,"remaining_units":1}}`))
+	})
+	db := test.TestServices.DBFactory.New()
+	err = db.Create(cluster).Error
+	g.Expect(err).NotTo(HaveOccurred())
+
+	privateAPIClient := test.NewPrivateAPIClient(h)
+	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, cluster.ClusterID)
+	g.Expect(err).NotTo(HaveOccurred())
+
+	// turn on autoscaling and observe that the node capacity info are sent
+	dataplaneConfig.DataPlaneClusterScalingType = config.AutoScaling
+
+	managedKafkaAgentCR, resp, err := privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, cluster.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	g.Expect(managedKafkaAgentCR.Spec.Capacity).To(HaveLen(1))
+	capacity, ok := managedKafkaAgentCR.Spec.Capacity[cluster.SupportedInstanceType]
+	g.Expect(ok).To(BeTrue())
+	g.Expect(capacity.MaxNodes).To(Equal(int32(1)))
+
+	// turn off autoscaling and observe that capacity info is now empty
+	dataplaneConfig.DataPlaneClusterScalingType = config.NoScaling
+	managedKafkaAgentCR, resp, err = privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, cluster.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	g.Expect(managedKafkaAgentCR.Spec.Capacity).To(HaveLen(0))
+}
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing.T) {
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
@@ -671,6 +737,16 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *private.DataPlaneClusterUpd
 			{
 				Type:   "Ready",
 				Status: "True",
+			},
+		},
+		Capacity: map[string]private.DataPlaneClusterUpdateStatusRequestCapacity{
+			api.StandardTypeSupport.String(): {
+				MaxUnits:       4,
+				RemainingUnits: 0,
+			},
+			api.DeveloperTypeSupport.String(): {
+				MaxUnits:       90,
+				RemainingUnits: 89,
 			},
 		},
 	}

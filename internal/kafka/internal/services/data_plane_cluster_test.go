@@ -63,6 +63,9 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
 					},
+					UpdateFunc: func(cluster api.Cluster) *errors.ServiceError {
+						return nil
+					},
 				}
 				return NewDataPlaneClusterService(sampleValidApplicationConfigForDataPlaneClusterTest(clusterService))
 			},
@@ -125,6 +128,9 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 						}, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *errors.ServiceError {
 						return nil
 					},
 				}
@@ -356,11 +362,42 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 		want    *dbapi.DataPlaneClusterConfig
 	}{
 		{
-			name: "should success",
+			name: "should succeed by returned complete spec object with observability and empty capacity config for a given cluster when autoscaling is not set",
 			fields: fields{
 				clusterService: &ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return &api.Cluster{}, nil
+						return &api.Cluster{
+							DynamicCapacityInfo: api.JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
+						}, nil
+					},
+				},
+				ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{
+					ObservabilityConfigRepo:        "test-repo",
+					ObservabilityConfigChannel:     "test-channel",
+					ObservabilityConfigAccessToken: "test-token",
+					ObservabilityConfigTag:         "test-tag",
+				},
+				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
+			},
+			wantErr: false,
+			want: &dbapi.DataPlaneClusterConfig{
+				Observability: dbapi.DataPlaneClusterConfigObservability{
+					AccessToken: "test-token",
+					Channel:     "test-channel",
+					Repository:  "test-repo",
+					Tag:         "test-tag",
+				},
+				DynamicCapacityInfo: map[string]api.DynamicCapacityInfo{},
+			},
+		},
+		{
+			name: "should succeed by returned complete spec object with observability and capacity config for a given cluster when autoscaling is set",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							DynamicCapacityInfo: api.JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
+						}, nil
 					},
 				},
 				ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{
@@ -372,12 +409,21 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 				DataplaneClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest(nil).DataplaneClusterConfig,
 			},
 			wantErr: false,
-			want: &dbapi.DataPlaneClusterConfig{Observability: dbapi.DataPlaneClusterConfigObservability{
-				AccessToken: "test-token",
-				Channel:     "test-channel",
-				Repository:  "test-repo",
-				Tag:         "test-tag",
-			}},
+			want: &dbapi.DataPlaneClusterConfig{
+				Observability: dbapi.DataPlaneClusterConfigObservability{
+					AccessToken: "test-token",
+					Channel:     "test-channel",
+					Repository:  "test-repo",
+					Tag:         "test-tag",
+				},
+				DynamicCapacityInfo: map[string]api.DynamicCapacityInfo{
+					"key1": {
+						MaxNodes:       1,
+						RemainingUnits: 1,
+						MaxUnits:       1,
+					},
+				},
+			},
 		},
 		{
 			name: "should fail",
@@ -442,29 +488,31 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 		status                  *dbapi.DataPlaneClusterStatus
 		cluster                 *api.Cluster
 		dataPlaneClusterService *dataPlaneClusterService
+		clusterService          *ClusterServiceMock
 	}
 	cases := []struct {
-		name         string
-		inputFactory func() (*input, *api.ClusterStatus)
-		wantErr      bool
-		want         api.ClusterStatus
+		name                         string
+		inputFactory                 func() *input
+		wantErr                      bool
+		wantStatus                   api.ClusterStatus
+		wantDynamicCapacityInfo      api.JSON
+		wantAvailableStrimziVersions api.JSON
 	}{
 		{
-			name: "set cluster status as ready",
-			inputFactory: func() (*input, *api.ClusterStatus) {
+			name: "set cluster status as ready as well as updates dynamic capacity info and available strimzi versions",
+			inputFactory: func() *input {
 				apiCluster := &api.Cluster{
-					ClusterID: testClusterID,
-					MultiAZ:   true,
-					Status:    api.ClusterWaitingForKasFleetShardOperator,
+					ClusterID:           testClusterID,
+					MultiAZ:             true,
+					Status:              api.ClusterWaitingForKasFleetShardOperator,
+					DynamicCapacityInfo: api.JSON([]byte(`{"key":{"max_nodes": 90}}`)),
 				}
-				var spyReceivedUpdateStatus *api.ClusterStatus = new(api.ClusterStatus)
 
 				clusterService := &ClusterServiceMock{
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+					UpdateFunc: func(cluster api.Cluster) *errors.ServiceError {
 						if cluster.ClusterID != apiCluster.ClusterID {
 							return errors.GeneralError("unexpected test error")
 						}
-						*spyReceivedUpdateStatus = status
 						return nil
 					},
 				}
@@ -477,10 +525,42 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 					status:                  testStatus,
 					cluster:                 apiCluster,
 					dataPlaneClusterService: dataPlaneClusterService,
-				}, spyReceivedUpdateStatus
+					clusterService:          clusterService,
+				}
 			},
-			want:    api.ClusterReady,
-			wantErr: false,
+			wantStatus:                   api.ClusterReady,
+			wantDynamicCapacityInfo:      api.JSON([]byte(`{"key":{"max_nodes":90,"max_units":10,"remaining_units":2}}`)),
+			wantAvailableStrimziVersions: api.JSON([]byte(`[{"version":"1.0.0","ready":true,"kafkaVersions":[{"version":"3.0.1"}],"kafkaIBPVersions":[{"version":"3.0.1"}]}]`)),
+			wantErr:                      false,
+		},
+		{
+			name: "return an error when updates in the database fails",
+			inputFactory: func() *input {
+				apiCluster := &api.Cluster{
+					ClusterID:           testClusterID,
+					MultiAZ:             true,
+					Status:              api.ClusterWaitingForKasFleetShardOperator,
+					DynamicCapacityInfo: api.JSON([]byte(`{"key":{"max_nodes": 90}}`)),
+				}
+
+				clusterService := &ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *errors.ServiceError {
+						return errors.GeneralError("unexpected test error")
+					},
+				}
+
+				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
+				c := sampleValidApplicationConfigForDataPlaneClusterTest(clusterService)
+				c.DataplaneClusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+				dataPlaneClusterService := NewDataPlaneClusterService(c)
+				return &input{
+					status:                  testStatus,
+					cluster:                 apiCluster,
+					dataPlaneClusterService: dataPlaneClusterService,
+					clusterService:          clusterService,
+				}
+			},
+			wantErr: true,
 		},
 	}
 
@@ -489,21 +569,52 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 	for _, testcase := range cases {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			f, spyReceivedStatus := tt.inputFactory()
+			f := tt.inputFactory()
 			g.Expect(f).ToNot(BeNil(), "dataPlaneClusterService is nil")
 
 			res := f.dataPlaneClusterService.setClusterStatus(f.cluster, f.status)
+
+			updateCalls := f.clusterService.calls.Update
+			g.Expect(updateCalls).To(HaveLen(1))
 			if res != nil != tt.wantErr {
 				t.Errorf("setClusterStatus() got = %+v, expected %+v", res, tt.wantErr)
 			}
-			g.Expect(spyReceivedStatus).ToNot(BeNil())
-			g.Expect(*spyReceivedStatus).To(Equal(tt.want))
+
+			if !tt.wantErr {
+				updatedCluster := updateCalls[0].Cluster
+				g.Expect(updatedCluster.Status).To(Equal(tt.wantStatus))
+				g.Expect(updatedCluster.DynamicCapacityInfo).To(Equal(tt.wantDynamicCapacityInfo))
+				g.Expect(updatedCluster.AvailableStrimziVersions).To(Equal(tt.wantAvailableStrimziVersions))
+			}
+
 		})
 	}
 }
 
 func sampleValidBaseDataPlaneClusterStatusRequest() *dbapi.DataPlaneClusterStatus {
 	return &dbapi.DataPlaneClusterStatus{
+		DynamicCapacityInfo: map[string]api.DynamicCapacityInfo{
+			"key": {
+				MaxUnits:       10,
+				RemainingUnits: 2,
+			},
+		},
+		AvailableStrimziVersions: []api.StrimziVersion{
+			{
+				Version: "1.0.0",
+				Ready:   true,
+				KafkaIBPVersions: []api.KafkaIBPVersion{
+					{
+						Version: "3.0.1",
+					},
+				},
+				KafkaVersions: []api.KafkaVersion{
+					{
+						Version: "3.0.1",
+					},
+				},
+			},
+		},
 		Conditions: []dbapi.DataPlaneClusterStatusCondition{
 			{
 				Type:   "Ready",

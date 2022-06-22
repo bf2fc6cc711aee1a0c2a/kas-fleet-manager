@@ -3693,6 +3693,7 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 	type fields struct {
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 		providerFactory        clusters.ProviderFactory
+		clusterService         services.ClusterService
 	}
 	tests := []struct {
 		name    string
@@ -3719,6 +3720,11 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 						}, nil
 					},
 				},
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
 			},
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
@@ -3728,13 +3734,44 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "should return false and error if all machinepools for the given cluster already exist but update to database fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetMachinePoolFunc: func(clusterID, id string) (*types.MachinePoolInfo, error) {
+								return &types.MachinePoolInfo{ID: id, ClusterID: clusterID}, nil
+							},
+							CreateMachinePoolFunc: func(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error) {
+								return request, nil
+							},
+						}, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return &apiErrors.ServiceError{}
+					},
+				},
+			},
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "developer,standard",
+			},
+			want:    false,
+			wantErr: true,
+		},
+		{
 			name: "should return true if new machinepools are created and the creation succeeds",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					DataPlaneClusterScalingType: config.AutoScaling,
 					DynamicScalingConfig: config.DynamicScalingConfig{
 						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
-							"developer": config.InstanceTypeDynamicScalingConfig{
+							"developer": {
 								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
 									MaxComputeNodes: 3,
 								},
@@ -3757,6 +3794,11 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 								return request, nil
 							},
 						}, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
 					},
 				},
 			},
@@ -3848,7 +3890,7 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
 							GetMachinePoolFunc: func(clusterID, id string) (*types.MachinePoolInfo, error) {
-								return &types.MachinePoolInfo{ID: id, ClusterID: clusterID}, nil
+								return nil, nil
 							},
 							CreateMachinePoolFunc: func(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error) {
 								return nil, fmt.Errorf("test error creating machinepool using the provider")
@@ -3859,10 +3901,10 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 			},
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
-				SupportedInstanceType: "developer,standard",
+				SupportedInstanceType: "developer",
 			},
-			want:    true,
-			wantErr: false,
+			want:    false,
+			wantErr: true,
 		},
 	}
 
@@ -3874,12 +3916,223 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 				ClusterManagerOptions: ClusterManagerOptions{
 					DataplaneClusterConfig: test.fields.dataplaneClusterConfig,
 					ProviderFactory:        test.fields.providerFactory,
+					ClusterService:         test.fields.clusterService,
 				},
 			}
 			reconciled, err := c.reconcileClusterMachinePools(test.arg)
 			gotErr := err != nil
 			g.Expect(gotErr).To(Equal(test.wantErr))
 			g.Expect(reconciled).To(Equal(test.want))
+		})
+	}
+
+}
+
+func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
+
+	type fields struct {
+		dataplaneClusterConfig *config.DataplaneClusterConfig
+		clusterService         services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		wantErr bool
+	}{
+		{
+			name: "resets capacity to empty object when autoscaling is not enabled",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.ManualScaling,
+				},
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						capacityInfoToBePersisted, err := cluster.RetrieveDynamicCapacityInfo()
+						if err != nil {
+							t.Error(err)
+						}
+
+						if len(capacityInfoToBePersisted) != 0 {
+							t.Errorf("Persisted dynamic capacity size should be 0")
+						}
+						return nil
+					},
+				},
+			},
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "developer,standard",
+				DynamicCapacityInfo:   api.JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
+			},
+			wantErr: false,
+		},
+		{
+			name: "return no error if capacity info already there when autoscaling is enabled",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+				},
+				clusterService: nil, // set to nil as it not be called
+			},
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "developer,standard",
+				DynamicCapacityInfo:   api.JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
+			},
+			wantErr: false,
+		},
+		{
+			name: "return error when cluster service update returns an error and when autoscaling is enabled",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+				},
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return &apiErrors.ServiceError{}
+					},
+				},
+			},
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "developer,standard",
+				DynamicCapacityInfo:   api.JSON([]byte(`{}`)),
+			},
+			wantErr: true,
+		},
+		{
+			name: "return no error when cluster service update succeed both instance types and when autoscaling is enabled",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
+							api.StandardTypeSupport.String(): {
+								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
+									MaxComputeNodes: 2,
+								},
+							},
+							api.DeveloperTypeSupport.String(): {
+								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
+									MaxComputeNodes: 3,
+								},
+							},
+						},
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						capacityInfoToBePersisted, err := cluster.RetrieveDynamicCapacityInfo()
+						if err != nil {
+							t.Error(err)
+						}
+
+						if len(capacityInfoToBePersisted) != 2 {
+							t.Errorf("Persisted dynamic capacity size should be 2")
+						}
+
+						// check standard is there
+						standardCapacity, standardCapacityFound := capacityInfoToBePersisted[api.StandardTypeSupport.String()]
+						if !standardCapacityFound {
+							t.Error("standard dynamic capacity info should be there")
+						}
+
+						if standardCapacity.MaxNodes != 2 {
+							t.Error("standard max nodes should be 2")
+						}
+
+						// check developer is there
+						developerCapacity, developerCapacityFound := capacityInfoToBePersisted[api.DeveloperTypeSupport.String()]
+						if !developerCapacityFound {
+							t.Error("developer dynamic capacity info should be there")
+						}
+
+						if developerCapacity.MaxNodes != 3 {
+							t.Error("standard max nodes should be 3")
+						}
+						return nil
+					},
+				},
+			},
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "developer,standard",
+				DynamicCapacityInfo:   api.JSON([]byte(`{}`)),
+			},
+			wantErr: false,
+		},
+		{
+			name: "return no error when cluster service update succeed when cluster supports only one instance type and when autoscaling is enabled",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
+							api.StandardTypeSupport.String(): {
+								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
+									MaxComputeNodes: 20,
+								},
+							},
+							api.DeveloperTypeSupport.String(): {
+								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
+									MaxComputeNodes: 3,
+								},
+							},
+						},
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						capacityInfoToBePersisted, err := cluster.RetrieveDynamicCapacityInfo()
+						if err != nil {
+							t.Error(err)
+						}
+
+						if len(capacityInfoToBePersisted) != 1 {
+							t.Errorf("Persisted dynamic capacity size should be 1")
+						}
+
+						// check standard is there
+						standardCapacity, standardCapacityFound := capacityInfoToBePersisted[api.StandardTypeSupport.String()]
+						if !standardCapacityFound {
+							t.Error("standard max nodes should be there")
+						}
+
+						if standardCapacity.MaxNodes != 20 {
+							t.Error("standard max nodes should be 20")
+						}
+
+						// check developer is not there
+						_, developerCapacityFound := capacityInfoToBePersisted[api.DeveloperTypeSupport.String()]
+						if developerCapacityFound {
+							t.Error("develper should not be there as it is not supported by the cluster")
+						}
+						return nil
+					},
+				},
+			},
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "standard",
+				DynamicCapacityInfo:   api.JSON([]byte(`{}`)),
+			},
+			wantErr: false,
+		},
+	}
+	g := NewWithT(t)
+	for _, tc := range tests {
+		test := tc
+		t.Run(test.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ClusterManagerOptions: ClusterManagerOptions{
+					DataplaneClusterConfig: test.fields.dataplaneClusterConfig,
+					ClusterService:         test.fields.clusterService,
+				},
+			}
+			err := c.reconcileDynamicCapacityInfo(test.arg)
+			gotErr := err != nil
+			g.Expect(gotErr).To(Equal(test.wantErr))
 		})
 	}
 

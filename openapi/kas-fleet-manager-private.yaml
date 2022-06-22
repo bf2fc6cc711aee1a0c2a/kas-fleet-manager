@@ -5,7 +5,7 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 # There should be no duplicated endpoints or schemas in these 2 files. They should only defined in one of them.
 info:
   title: Kafka Service Fleet Manager
-  version: 1.5.1
+  version: 1.6.0
   description: Kafka Service Fleet Manager APIs that are used by internal services e.g kas-fleetshard operators.
 servers:
   - url: https://api.openshift.com
@@ -349,6 +349,19 @@ components:
       description: "Schema for the request to update a data plane cluster's status"
       type: object
       properties:
+        capacity:
+          description: A map of supported instance type to reported capacity information
+          type: object
+          additionalProperties:
+            type: object
+            description: The reported capacity object
+            properties:
+              maxUnits:
+                type: integer
+                description: The maximum number of units that can be placed onto the instance type machine pool
+              remainingUnits:
+                type: integer
+                description: the remaining units that can be placed onto the instance type machine pool  
         conditions:
           description: "The cluster data plane conditions"
           type: array
@@ -467,6 +480,16 @@ components:
           description: "Data plane cluster agent spec"
           type: object
           properties:
+            capacity:
+              description: A map of supported instance type to configured nodes size
+              type: object
+              additionalProperties:
+                type: object
+                description: The reported capacity object
+                properties:
+                  maxNodes:
+                    type: integer
+                    description: The maximum number of nodes configured for the instance type
             observability:
               description: "Observability configurations"
               type: object

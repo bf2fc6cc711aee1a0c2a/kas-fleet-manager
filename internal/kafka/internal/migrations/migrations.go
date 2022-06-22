@@ -80,6 +80,7 @@ var migrations = []*gormigrate.Migration{
 	addAdminApiServerURL(),
 	addKafkaCloudAccountIdMarketplaceFields(),
 	addKafkaBillingModel(),
+	addClusterDynamicCapacityInfo(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

@@ -445,6 +445,11 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 		return errors.WithMessagef(err, "failed to reconcile instance type ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 
+	err = c.reconcileDynamicCapacityInfo(cluster)
+	if err != nil {
+		return errors.WithMessagef(err, "failed to reconcile dynamic capacity info for ready cluster %s: %s", cluster.ClusterID, err.Error())
+	}
+
 	// resources update if needed
 	if err := c.reconcileClusterResources(cluster); err != nil {
 		return errors.WithMessagef(err, "failed to reconcile ready cluster resources %s ", cluster.ClusterID)
@@ -498,6 +503,42 @@ func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error
 	}
 
 	logger.Logger.Infof("supported instance type for cluster = %s successful updated", cluster.ClusterID)
+	return nil
+}
+
+func (c *ClusterManager) reconcileDynamicCapacityInfo(cluster api.Cluster) error {
+	updatedDynamicCapacityInfo := map[string]api.DynamicCapacityInfo{}
+
+	if c.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
+		previousDynamicCapacityInfo, err := cluster.RetrieveDynamicCapacityInfo()
+		if err != nil {
+			return err
+		}
+
+		if len(previousDynamicCapacityInfo) > 0 {
+			return nil
+		}
+
+		supportedInstanceTypes := strings.Split(cluster.SupportedInstanceType, ",")
+		for _, supportedInstanceType := range supportedInstanceTypes {
+			config, ok := c.DataplaneClusterConfig.DynamicScalingConfig.ForInstanceType(supportedInstanceType)
+			if !ok {
+				continue
+			}
+
+			updatedDynamicCapacityInfo[supportedInstanceType] = api.DynamicCapacityInfo{
+				MaxNodes: int32(config.ComputeNodesConfig.MaxComputeNodes),
+			}
+		}
+	}
+
+	_ = cluster.SetDynamicCapacityInfo(updatedDynamicCapacityInfo)
+	if err := c.ClusterService.Update(cluster); err != nil {
+		return errors.Wrapf(err, "failed to update instance type in database for cluster %s", cluster.ClusterID)
+	}
+
+	logger.Logger.Infof("reconciling cluster = %s dynamic config type", cluster.ClusterID)
+
 	return nil
 }
 
@@ -1154,6 +1195,8 @@ func (c *ClusterManager) reconcileClusterMachinePools(cluster api.Cluster) (bool
 	glog.V(10).Infof("Reconciling MachinePools for clusterID '%s'", cluster.ClusterID)
 	supportedInstanceTypes := strings.Split(cluster.SupportedInstanceType, ",")
 	// Ensure a MachinePool is created for each supported instance type
+	dynamicCapacityInfo := map[string]api.DynamicCapacityInfo{}
+
 	for _, supportedInstanceType := range supportedInstanceTypes {
 		machinePoolID := fmt.Sprintf("kafka-%s", supportedInstanceType)
 		existingMachinePool, err := providerClient.GetMachinePool(cluster.ClusterID, machinePoolID)
@@ -1161,6 +1204,9 @@ func (c *ClusterManager) reconcileClusterMachinePools(cluster api.Cluster) (bool
 			return false, err
 		}
 		if existingMachinePool != nil {
+			dynamicCapacityInfo[supportedInstanceType] = api.DynamicCapacityInfo{
+				MaxNodes: int32(existingMachinePool.AutoScaling.MaxNodes),
+			}
 			glog.V(10).Infof("MachinePool '%s' for clusterID '%s' already created. No further reconciling of it needed.", machinePoolID, cluster.ClusterID)
 			continue
 		}
@@ -1175,8 +1221,17 @@ func (c *ClusterManager) reconcileClusterMachinePools(cluster api.Cluster) (bool
 		if err != nil {
 			return false, err
 		}
+		dynamicCapacityInfo[supportedInstanceType] = api.DynamicCapacityInfo{
+			MaxNodes: int32(machinePoolRequest.AutoScaling.MaxNodes),
+		}
 	}
 
+	// update the dyamic capacity info for them to be stored in the database
+	_ = cluster.SetDynamicCapacityInfo(dynamicCapacityInfo)
+	srvErr := c.ClusterService.Update(cluster)
+	if srvErr != nil {
+		return false, errors.Wrapf(srvErr, "failed to update cluster")
+	}
 	return true, nil
 }
 

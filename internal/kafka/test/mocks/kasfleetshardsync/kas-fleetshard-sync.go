@@ -8,6 +8,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -21,6 +22,16 @@ import (
 )
 
 const AdminServerURI = "http://test-admin-server-uri.com"
+
+var StandardCapacityInfo private.DataPlaneClusterUpdateStatusRequestCapacity = private.DataPlaneClusterUpdateStatusRequestCapacity{
+	MaxUnits:       5,
+	RemainingUnits: 3,
+}
+
+var DeveloperCapacityInfo private.DataPlaneClusterUpdateStatusRequestCapacity = private.DataPlaneClusterUpdateStatusRequestCapacity{
+	MaxUnits:       50,
+	RemainingUnits: 8,
+}
 
 // defaultUpdateDataplaneClusterStatusFunc - The default behaviour for updating data plane cluster status in each Kas Fleetshard Sync reconcile.
 // Retrieves all clusters in the database in a 'waiting_for_kas_fleetshard_operator' state and updates it to 'ready' once all of the addons are installed.
@@ -249,6 +260,10 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 				Type:   "Ready",
 				Status: "True",
 			},
+		},
+		Capacity: map[string]private.DataPlaneClusterUpdateStatusRequestCapacity{
+			types.STANDARD.String():  StandardCapacityInfo,
+			types.DEVELOPER.String(): DeveloperCapacityInfo,
 		},
 		Strimzi: []private.DataPlaneClusterUpdateStatusRequestStrimzi{
 			{
