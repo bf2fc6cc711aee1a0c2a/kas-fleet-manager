@@ -65,7 +65,7 @@ golangci-lint:
 ifeq (, $(shell which $(LOCAL_BIN_PATH)/golangci-lint 2> /dev/null))
 	@{ \
 	set -e ;\
-	VERSION="v1.43.0" ;\
+	VERSION="v1.46.2" ;\
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/$${VERSION}/install.sh | sh -s -- -b ${LOCAL_BIN_PATH} $${VERSION} ;\
 	}
 endif
@@ -576,7 +576,7 @@ docker/login/internal:
 .PHONY: docker/login/internal
 
 # Build the binary and image
-image/build: 
+image/build:
 	docker --config="${DOCKER_CONFIG}" build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
 .PHONY: image/build
 
@@ -587,7 +587,7 @@ image/push: image/build
 
 # build binary and image for OpenShift deployment
 image/build/internal: IMAGE_TAG ?= $(image_tag)
-image/build/internal: 
+image/build/internal:
 	docker build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
 .PHONY: image/build/internal
 
