@@ -34,7 +34,9 @@ func TestPresentManagedKafka(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(PresentManagedKafka(tt.args.from)).To(Equal(tt.want))
 		})
@@ -62,7 +64,9 @@ func TestGetOpenAPIManagedKafkaEndpointTLS(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(getOpenAPIManagedKafkaEndpointTLS(tt.args.from)).To(Equal(tt.want))
 		})
@@ -90,7 +94,9 @@ func TestGetOpenAPIManagedKafkaOAuthTLSTrustedCertificate(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(getOpenAPIManagedKafkaOAuthTLSTrustedCertificate(tt.args.from)).To(Equal(tt.want))
 		})
@@ -118,7 +124,9 @@ func TestGetServiceAccounts(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(getServiceAccounts(tt.args.from)).To(Equal(tt.want))
 		})

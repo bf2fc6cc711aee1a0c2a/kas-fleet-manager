@@ -119,7 +119,9 @@ func TestRedhatSSO_RegisterOSDClusterClientInSSO(t *testing.T) {
 		//},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
@@ -230,7 +232,9 @@ func TestRedhatSSOService_RegisterKasFleetshardOperatorServiceAccount(t *testing
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := keycloakServiceProxy{
 				accessTokenProvider: tt.fields.kcClient,
@@ -336,7 +340,9 @@ func TestRedhatSSOService_DeRegisterKasFleetshardOperatorServiceAccount(t *testi
 			wantErr: false,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
@@ -439,7 +445,9 @@ func TestRedhatSSOService_RegisterConnectorFleetshardOperatorServiceAccount(t *t
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.disabled {
 				t.Skip(tt.skipReason)
@@ -546,7 +554,9 @@ func TestRedhatSSOService__DeRegisterConnectorFleetshardOperatorServiceAccount(t
 			wantErr: false,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.disabled {
 				t.Skip(tt.skipReason)
@@ -629,7 +639,9 @@ func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
@@ -715,7 +727,9 @@ func TestRedhatSSOService_CreateServiceAccountInternal(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
@@ -781,7 +795,9 @@ func Test_redhatssoService_DeRegisterClientInSSO(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			r := &redhatssoService{
 				client: tt.fields.client,
@@ -813,7 +829,9 @@ func Test_redhatssoService_GetConfig(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			r := &redhatssoService{
 				client: tt.fields.client,
@@ -845,7 +863,9 @@ func Test_redhatssoService_GetRealmConfig(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			r := &redhatssoService{
 				client: tt.fields.client,
@@ -916,7 +936,9 @@ func Test_redhatssoService_IsKafkaClientExist(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			r := &redhatssoService{
 				client: tt.fields.client,
@@ -995,7 +1017,9 @@ func Test_redhatssoService_CreateServiceAccount(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			r := &redhatssoService{
 				client: tt.fields.client,
@@ -1061,7 +1085,9 @@ func Test_redhatssoService_DeleteServiceAccount(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			r := &redhatssoService{
 				client: tt.fields.client,
@@ -1128,7 +1154,9 @@ func Test_redhatssoService_ResetServiceAccountCredentials(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			r := &redhatssoService{
 				client: tt.fields.client,
@@ -1214,7 +1242,9 @@ func Test_redhatssoService_ListServiceAcc(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			r := &redhatssoService{
 				client: tt.fields.client,
@@ -1297,7 +1327,9 @@ func Test_redhatssoService_GetServiceAccountById(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			r := &redhatssoService{
 				client: tt.fields.client,
@@ -1385,7 +1417,9 @@ func Test_redhatssoService_GetKafkaClientSecret(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			r := &redhatssoService{
 				client: tt.fields.client,

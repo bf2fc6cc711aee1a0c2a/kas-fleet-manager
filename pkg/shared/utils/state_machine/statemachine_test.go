@@ -57,9 +57,11 @@ func Test_StateMachine_ValidPaths(t *testing.T) {
 			path: []string{"NEW", "ASSIGNED", "IN PROGRESS", "WAITING FOR REVIEW", "IN PROGRESS", "WAITING FOR REVIEW", "REVIEWING", "WAITING FOR RELEASE", "DONE"},
 		},
 	}
-	for _, tt := range tests {
+	RegisterTestingT(t)
+
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			initialState := createStateMachine()
 			currentState := initialState
 			var err error
@@ -94,7 +96,8 @@ func Test_StateMachine_InvalidPaths(t *testing.T) {
 			error: "",
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			initialState := createStateMachine()

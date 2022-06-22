@@ -64,7 +64,9 @@ func TestRequireTermsAcceptanceMiddleware(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			requireTermsAcceptanceHandler := NewRequireTermsAcceptanceMiddleware()
 			toTest := requireTermsAcceptanceHandler.RequireTermsAcceptance(tt.enabled, tt.client, errors.ErrorTermsNotAccepted)(tt.next)

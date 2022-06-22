@@ -107,7 +107,9 @@ func Test_buildAwareSemanticVersioningCompare(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := buildAwareSemanticVersioningCompare(tt.args.v1, tt.args.v2)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -227,7 +229,9 @@ func Test_checkIfMinorDowngrade(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := checkIfMinorDowngrade(tt.args.current, tt.args.desired)
 			Expect(err != nil).To(Equal(tt.wantErr))

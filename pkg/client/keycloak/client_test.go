@@ -62,7 +62,8 @@ func Test_kcClient_NewClient(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(NewClient(tt.args.config, tt.args.realmConfig)).NotTo(BeNil())
 		})
@@ -95,7 +96,8 @@ func Test_kcClient_ClientConfig(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.kc.ClientConfig(tt.args.client)).NotTo(BeNil())
 		})
@@ -143,7 +145,8 @@ func Test_kcClient_CreateProtocolMapperConfig(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.kc.CreateProtocolMapperConfig(tt.args.name)).To(Equal(tt.want))
 		})
@@ -193,7 +196,8 @@ func Test_kcClient_CreateClient(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
@@ -310,7 +314,8 @@ func Test_kcClient_GetToken(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn(&tt.fields)
@@ -440,7 +445,8 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient:    tt.fields.goCloakClient,
@@ -550,7 +556,8 @@ func Test_kcClient_GetClient(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient:    tt.fields.goCloakClient,
@@ -635,7 +642,8 @@ func Test_kcClient_GetClientSecret(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
@@ -697,7 +705,8 @@ func Test_kcClient_DeleteClient(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
@@ -760,7 +769,8 @@ func Test_kcClient_GetClientById(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
@@ -787,7 +797,8 @@ func Test_kcClient_GetConfig(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				config: &KeycloakConfig{},
@@ -810,7 +821,8 @@ func Test_kcClient_KeycloakRealmConfig(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{realmConfig: &KeycloakRealmConfig{}}
 			Expect(kc.GetRealmConfig()).To(Equal(tt.want))
@@ -868,7 +880,8 @@ func Test_kcClient_GetClientServiceAccount(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
@@ -930,7 +943,8 @@ func Test_kcClient_UpdateUser(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
@@ -1011,10 +1025,10 @@ func Test_kcClient_GetClients(t *testing.T) {
 			wantErr: false,
 		},
 	}
-
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient: tt.fields.kc,
@@ -1075,7 +1089,8 @@ func Test_kcClient_IsSameOrg(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{}
 			Expect(kc.IsSameOrg(tt.args.client, tt.args.orgId)).To(Equal(tt.want))
@@ -1127,7 +1142,8 @@ func Test_kcClient_IsOwner(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{}
 			Expect(kc.IsOwner(tt.args.client, tt.args.userId)).To(Equal(tt.want))
@@ -1185,7 +1201,8 @@ func Test_kcClient_RegenerateClientSecret(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
@@ -1264,7 +1281,8 @@ func Test_kcClient_GetRealmRole(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
@@ -1349,7 +1367,8 @@ func Test_kcClient_CreateRealmRole(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
@@ -1434,7 +1453,8 @@ func Test_kcClient_UserHasRealmRole(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
@@ -1499,7 +1519,8 @@ func Test_kcClient_AddRealmRoleToUser(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
@@ -1546,7 +1567,8 @@ func Test_kcClient_isNotFoundError(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(isNotFoundError(tt.args.err)).To(Equal(tt.want))
 		})
@@ -1622,7 +1644,8 @@ func Test_IsJWTTokenExpired(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(IsJWTTokenExpired(tt.args.accessToken)).To(Equal(tt.want))
 		})

@@ -33,7 +33,9 @@ func TestConvertMatrix(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(convertMatrix(tt.args.from)).To(Equal(tt.want))
 		})
@@ -61,7 +63,9 @@ func TestConvertVector(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(convertVector(tt.args.from)).To(Equal(tt.want))
 		})
@@ -96,7 +100,9 @@ func TestConvertSampleStream(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(convertSampleStream(tt.args.from)).To(Equal(tt.want))
 		})
@@ -131,7 +137,9 @@ func TestConvertSample(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(convertSample(tt.args.from)).To(Equal(tt.want))
 		})
@@ -159,7 +167,9 @@ func TestConvertSamplePair(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(convertSamplePair(tt.args.from)).To(Equal(tt.want))
 		})
@@ -196,7 +206,9 @@ func TestPresentMetricsByRangeQuery(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			firstQuery, err := PresentMetricsByRangeQuery(tt.args.metrics)
 			if !tt.wantErr && err != nil {
@@ -239,7 +251,9 @@ func TestPresentMetricsByInstantQuery(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			query, err := PresentMetricsByInstantQuery(tt.args.metrics)
 			if !tt.wantErr && err != nil {
@@ -284,7 +298,9 @@ func TestIsAllowedLabel(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(isAllowedLabel(tt.args.label)).To(Equal(tt.want))
 		})
@@ -304,7 +320,9 @@ func TestGetSupportedLabels(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(getSupportedLabels()).To(Equal(tt.want))
 		})

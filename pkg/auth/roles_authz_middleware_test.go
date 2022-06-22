@@ -56,7 +56,9 @@ func TestRolesAuthMiddleware_RequireRealmRole(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			rolesHandler := NewRolesAuhzMiddleware()
 			toTest := setContextToken(rolesHandler.RequireRealmRole(tt.wantRole, errors.ErrorUnauthenticated)(tt.next), tt.token)
@@ -151,7 +153,9 @@ func TestRolesAuthMiddleware_RequireRolesForMethods(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			rolesHandler := NewRolesAuhzMiddleware()
 			toTest := setContextToken(rolesHandler.RequireRolesForMethods(tt.rolesMap, errors.ErrorUnauthenticated)(tt.next), tt.token)

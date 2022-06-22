@@ -134,7 +134,8 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		if tt.wantFn == nil {
 			tt.wantFn = func() *clustersmgmtv1.Cluster {
 				return nil

@@ -100,7 +100,9 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			inputClusterStatusRequest := tt.inputClusterUpdateStatusRequest()
 			res, err := ConvertDataPlaneClusterStatus(*inputClusterStatusRequest)
@@ -140,7 +142,9 @@ func TestPresentDataPlaneClusterConfig(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(PresentDataPlaneClusterConfig(tt.args.config)).To(Equal(tt.want))
 		})
@@ -168,7 +172,9 @@ func TestGetAvailableStrimziVersions(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			convertedConfig, err := getAvailableStrimziVersions(tt.args.status)
 			if err == nil {

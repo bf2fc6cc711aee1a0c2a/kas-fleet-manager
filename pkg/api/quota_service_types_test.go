@@ -33,7 +33,9 @@ func Test_QuotaService(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			res := tt.quotatype.String()
 			Expect(res).To(Equal(tt.want))

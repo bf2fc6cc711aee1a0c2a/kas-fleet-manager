@@ -37,7 +37,8 @@ func Test_JSON_Scan(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.json.Scan(tt.value)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -82,7 +83,8 @@ func Test_JSON_Object(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			object, err := tt.json.Object()
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -114,7 +116,8 @@ func Test_JSON_MarshalJSON(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			object, err := tt.json.MarshalJSON()
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -145,7 +148,8 @@ func Test_JSON_UnmarshalJSON(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.json.UnmarshalJSON(tt.data)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -183,7 +187,8 @@ func Test_JSON_Value(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.json.Value()
 			Expect(err != nil).To(Equal(tt.wantErr))

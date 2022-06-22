@@ -34,7 +34,8 @@ func Test_GetProduct(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.t.GetProduct()).To(BeEquivalentTo(tt.want))
 		})
@@ -69,7 +70,8 @@ func Test_GetResourceName(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.t.GetResourceName()).To(Equal(tt.want))
 		})
@@ -125,7 +127,8 @@ func Test_Equals(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.t.Equals(tt.args.t1)).To(Equal(tt.want))
 		})

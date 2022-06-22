@@ -118,9 +118,11 @@ func Test_CloudProviderRegionInfoList_Merge(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	RegisterTestingT(t)
+
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			tt.fields.target.Merge(tt.args.source)
 			Expect(tt.want).To(Equal(tt.fields.target.Items))
 		})

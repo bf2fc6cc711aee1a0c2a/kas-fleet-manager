@@ -162,7 +162,9 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupFn()
 			s := &LeaderElectionManager{leaderLeaseExpirationTime: 3 * time.Minute}

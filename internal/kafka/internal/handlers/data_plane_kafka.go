@@ -59,7 +59,8 @@ func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 				Items: []private.ManagedKafka{},
 			}
 
-			for _, mk := range managedKafkas {
+			for i := range managedKafkas {
+				mk := managedKafkas[i]
 				converted := presenters.PresentManagedKafka(&mk)
 				managedKafkaList.Items = append(managedKafkaList.Items, converted)
 			}

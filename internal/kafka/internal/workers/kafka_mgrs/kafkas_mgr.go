@@ -141,8 +141,8 @@ func (k *KafkaManager) setClusterStatusCapacityMetrics() error {
 		return err
 	}
 
-	for _, capacity := range availableCapacities {
-		k.setClusterStatusCapacityAvailableMetric(&capacity)
+	for i := range availableCapacities {
+		k.setClusterStatusCapacityAvailableMetric(&availableCapacities[i])
 	}
 
 	return nil

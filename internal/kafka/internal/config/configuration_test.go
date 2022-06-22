@@ -77,7 +77,9 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := tt.fields.providersConfig
 			got, err := c.ProvidersConfig.SupportedProviders.GetDefault()
@@ -152,7 +154,9 @@ func Test_configService_GetDefaultRegionForProvider(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.args.provider.GetDefaultRegion()
 			if (err != nil) != tt.wantErr {
@@ -196,7 +200,9 @@ func Test_configService_GetSupportedProviders(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := tt.fields.providersConfig
 			Expect(c.ProvidersConfig.SupportedProviders).To(Equal(tt.want))
@@ -250,7 +256,9 @@ func Test_configService_IsProviderSupported(t *testing.T) {
 			want: true,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := tt.fields.providersConfig
 			if _, got := c.ProvidersConfig.SupportedProviders.GetByName(tt.args.providerName); got != tt.want {
@@ -309,7 +317,9 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			org, found := tt.QuotaManagementList.QuotaList.Organisations.GetById(tt.arg)
@@ -408,7 +418,9 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			user, ok := tt.QuotaManagementList.GetAllowedAccountByUsernameAndOrgId(tt.arg.username, tt.arg.orgId)
@@ -486,7 +498,9 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			user, ok := tt.QuotaManagementList.QuotaList.ServiceAccounts.GetByUsername(tt.arg.username)
@@ -632,7 +646,9 @@ func Test_configService_Validate(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := tt.fields.providersConfig
 			if err := c.Validate(env); (err != nil) != tt.wantErr {
@@ -699,7 +715,9 @@ func Test_configService_validateProvider(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if err := tt.args.provider.Validate(tt.args.dataplaneClusterConfig); (err != nil) != tt.wantErr {
 				t.Errorf("validateProvider() error = %v, wantErr %v", err, tt.wantErr)
@@ -1056,7 +1074,9 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := tt.fields.providersConfig
 			if err := c.Validate(env); (err != nil) != tt.wantErr {

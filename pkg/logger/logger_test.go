@@ -51,7 +51,8 @@ func Test_NewLogEventFromString(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(NewLogEventFromString(tt.args.eventTypeAndDescription)).To(Equal(tt.want))
 		})
@@ -90,7 +91,8 @@ func Test_NewLogEvent(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(NewLogEvent(tt.args.eventType, tt.args.eventDescription)).To(Equal(tt.want))
 		})
@@ -129,7 +131,8 @@ func Test_ToString(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.l.ToString()).To(Equal(tt.want))
 		})
@@ -178,7 +181,8 @@ func Test_prepareLogPrefix(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.l.prepareLogPrefix(tt.args.format, tt.args.arguments)).To(Equal(tt.want))
 		})
@@ -225,7 +229,8 @@ func Test_Verbosity(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.l.V(tt.args.level)).To(Equal(tt.want))
 		})

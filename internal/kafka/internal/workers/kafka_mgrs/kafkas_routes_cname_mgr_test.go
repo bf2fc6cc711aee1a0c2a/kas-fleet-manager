@@ -200,7 +200,8 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, test := range tests {
+	for _, testcase := range tests {
+		test := testcase
 		t.Run(test.name, func(t *testing.T) {
 			Expect(len(NewKafkaCNAMEManager(test.fields.kafkaService,
 				test.fields.kafkaConfig, w.Reconciler{}).Reconcile()) > 0).To(Equal(test.wantErr))

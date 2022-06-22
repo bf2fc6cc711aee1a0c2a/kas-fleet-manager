@@ -31,7 +31,8 @@ func TestGetRegionCapacityItems(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(GetRegionCapacityItems(tt.args.capacityItems)).To(Equal(tt.want))
 		})
@@ -59,7 +60,8 @@ func TestPresentCloudProvider(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(PresentCloudProvider(tt.args.cloudProvider)).To(Equal(tt.want))
 		})
@@ -91,7 +93,8 @@ func TestPresentCloudRegion(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			cloudRegion := PresentCloudRegion(tt.args.cloudRegion)
 			Expect(&cloudRegion).To(Equal(tt.want))

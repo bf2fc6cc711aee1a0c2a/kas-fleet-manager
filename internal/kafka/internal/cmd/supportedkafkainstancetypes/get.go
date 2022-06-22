@@ -42,8 +42,8 @@ func runGet(env *environments.Env, cmd *cobra.Command, _ []string) {
 		InstanceTypes: []public.SupportedKafkaInstanceType{},
 	}
 
-	for _, instanceType := range regionInstanceTypeList {
-		converted := presenters.PresentSupportedKafkaInstanceTypes(&instanceType)
+	for i := range regionInstanceTypeList {
+		converted := presenters.PresentSupportedKafkaInstanceTypes(&regionInstanceTypeList[i])
 		supportedKafkaInstanceTypeList.InstanceTypes = append(supportedKafkaInstanceTypeList.InstanceTypes, converted)
 	}
 	output, marshalErr := json.MarshalIndent(supportedKafkaInstanceTypeList, "", "    ")

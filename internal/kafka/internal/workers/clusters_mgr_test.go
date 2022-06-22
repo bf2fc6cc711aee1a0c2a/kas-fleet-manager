@@ -88,7 +88,8 @@ func TestClusterManager_GetID(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{}
 
@@ -110,7 +111,8 @@ func TestClusterManager_GetWorkerType(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := NewClusterManager(ClusterManagerOptions{})
 
@@ -142,7 +144,8 @@ func TestClusterManager_IsRunning(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := NewClusterManager(ClusterManagerOptions{})
 			c.SetIsRunning(tt.args.isRunning)
@@ -193,7 +196,8 @@ func TestClusterManager_reconcile(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -292,7 +296,8 @@ func TestClusterManager_processMetrics(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -374,7 +379,8 @@ func TestClusterManager_processDeprovisioningClusters(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -465,7 +471,8 @@ func TestClusterManager_processCleanupClusters(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -535,7 +542,8 @@ func TestClusterManager_processAcceptedClusters(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -603,7 +611,8 @@ func TestClusterManager_processProvisioningClusters(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -738,7 +747,8 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -819,7 +829,8 @@ func TestClusterManager_processReadyClusters(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -1024,7 +1035,8 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -1205,7 +1217,8 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -1493,7 +1506,8 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -1597,7 +1611,8 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -1686,7 +1701,8 @@ func TestClusterManager_reconcileKasFleetshardOperator(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -1765,7 +1781,8 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -1813,7 +1830,8 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -1867,7 +1885,8 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -1922,7 +1941,8 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -2038,7 +2058,8 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -2569,7 +2590,8 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -2750,7 +2772,8 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -2808,7 +2831,8 @@ func TestClusterManager_reconcileClusterDNS(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -2944,7 +2968,8 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -3037,7 +3062,8 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -3161,7 +3187,8 @@ func TestClusterManager_reconcileEmptyCluster(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -3325,7 +3352,8 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -3460,7 +3488,8 @@ func TestClusterManager_reconcileClusterInstanceType(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -3510,7 +3539,8 @@ func TestClusterManager_setClusterStatusMaxCapacityMetrics(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -3563,7 +3593,8 @@ func TestClusterManager_setClusterStatusCountMetrics(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -3644,7 +3675,8 @@ func TestClusterManager_setKafkaPerClusterCountMetrics(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{

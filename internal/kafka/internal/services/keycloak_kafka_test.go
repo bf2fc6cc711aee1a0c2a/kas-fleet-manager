@@ -220,7 +220,9 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			// max allowed: 2
 			tt.fields.kcClient.GetConfig().MaxAllowedServiceAccounts = 2
@@ -458,7 +460,9 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
 			err := keycloakService.DeleteServiceAccount(tt.args.ctx, testClientID)
@@ -544,7 +548,9 @@ func TestKeycloakService_ListServiceAcc(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
 			got, err := keycloakService.ListServiceAcc(tt.args.ctx, 0, 10)
@@ -765,7 +771,9 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
 			got, err := keycloakService.ResetServiceAccountCredentials(tt.args.ctx, testClientID)
@@ -860,7 +868,9 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
 			got, err := keycloakService.GetServiceAccountById(tt.args.ctx, testClientID)
@@ -955,7 +965,9 @@ func TestKeycloakService_GetServiceAccountByClientId(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := sso.NewKeycloakServiceWithClient(tt.fields.kcClient)
 			got, err := keycloakService.GetServiceAccountByClientId(tt.args.ctx, testClientID)

@@ -145,7 +145,9 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList, &defaultKafkaConf)
 			quotaService, _ := factory.GetQuotaService(api.QuotaManagementListQuotaType)
@@ -448,7 +450,9 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -493,7 +497,9 @@ func Test_DefaultQuotaServiceFactory_GetQuotaService(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			factory := &DefaultQuotaServiceFactory{
 				quotaServiceContainer: map[api.QuotaType]services.QuotaService{},

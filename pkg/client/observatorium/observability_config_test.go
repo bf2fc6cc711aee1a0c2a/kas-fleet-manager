@@ -80,7 +80,9 @@ func Test_ReadFiles_ObservabilityConfiguration(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			config := tt.fields.config
 			if tt.modifyFn != nil {
@@ -153,7 +155,9 @@ func Test_ReadObservatoriumConfigFiles_ObservabilityConfiguration(t *testing.T) 
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			config := tt.fields.config
 			if tt.modifyFn != nil {

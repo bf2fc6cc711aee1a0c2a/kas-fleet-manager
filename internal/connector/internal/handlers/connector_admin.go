@@ -102,8 +102,8 @@ func (h *ConnectorAdminHandler) GetConnectorUpgradesByType(writer http.ResponseW
 				return nil, serviceError
 			}
 			result := make([]private.ConnectorAvailableTypeUpgrade, len(upgrades))
-			for j, upgrade := range upgrades {
-				result[j] = *presenters.PresentConnectorAvailableTypeUpgrade(&upgrade)
+			for j := range upgrades {
+				result[j] = *presenters.PresentConnectorAvailableTypeUpgrade(&upgrades[j])
 			}
 
 			i = private.ConnectorAvailableTypeUpgradeList{
@@ -130,8 +130,8 @@ func (h *ConnectorAdminHandler) UpgradeConnectorsByType(writer http.ResponseWrit
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
 			upgrades := make([]dbapi.ConnectorDeploymentTypeUpgrade, len(resource))
-			for i2, upgrade := range resource {
-				upgrades[i2] = *presenters.ConvertConnectorAvailableTypeUpgrade(&upgrade)
+			for i2 := range resource {
+				upgrades[i2] = *presenters.ConvertConnectorAvailableTypeUpgrade(&resource[i2])
 			}
 			return nil, h.Service.UpgradeConnectorsByType(request.Context(), id, upgrades)
 		},
@@ -153,8 +153,8 @@ func (h *ConnectorAdminHandler) GetConnectorUpgradesByOperator(writer http.Respo
 				return nil, serviceError
 			}
 			result := make([]private.ConnectorAvailableOperatorUpgrade, len(upgrades))
-			for i, upgrade := range upgrades {
-				result[i] = *presenters.PresentConnectorAvailableOperatorUpgrade(&upgrade)
+			for i := range upgrades {
+				result[i] = *presenters.PresentConnectorAvailableOperatorUpgrade(&upgrades[i])
 			}
 
 			i = private.ConnectorAvailableOperatorUpgradeList{
@@ -181,8 +181,8 @@ func (h *ConnectorAdminHandler) UpgradeConnectorsByOperator(writer http.Response
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
 			upgrades := make(dbapi.ConnectorDeploymentOperatorUpgradeList, len(resource))
-			for i2, upgrade := range resource {
-				upgrades[i2] = *presenters.ConvertConnectorAvailableOperatorUpgrade(&upgrade)
+			for i2 := range resource {
+				upgrades[i2] = *presenters.ConvertConnectorAvailableOperatorUpgrade(&resource[i2])
 			}
 			return nil, h.Service.UpgradeConnectorsByOperator(request.Context(), id, upgrades)
 		},

@@ -22,7 +22,9 @@ func Test_NewKasFleetshardConfig(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(NewKasFleetshardConfig()).To(Equal(tt.want))
 		})
@@ -50,7 +52,9 @@ func Test_ReadFilesKasFleetshardConfig(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.config.ReadFiles() != nil).To(Equal(tt.wantErr))
 		})

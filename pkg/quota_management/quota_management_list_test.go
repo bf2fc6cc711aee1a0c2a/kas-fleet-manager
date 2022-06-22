@@ -66,7 +66,8 @@ func Test_OrganisationList_GetById(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			organisation, ok := tt.orgs.GetById(tt.arg)
@@ -130,7 +131,8 @@ func Test_Organisation_IsUserAllowed(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ok := tt.org.IsUserRegistered(tt.arg)
@@ -165,7 +167,8 @@ func Test_Organisation_HasAllowedAccounts(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ok := tt.org.HasUsersRegistered()
@@ -219,7 +222,8 @@ func Test_AllowedAccounts_GetByUsername(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			user, found := tt.allowedAccounts.GetByUsername(tt.arg)
@@ -288,7 +292,8 @@ func Test_AllowedAccount_IsInstanceCountWithinLimit(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ok := tt.item.IsInstanceCountWithinLimit(tt.count)
@@ -317,7 +322,8 @@ func Test_AllowedAccount_GetMaxAllowedInstances(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ok := tt.allowedAccount.GetMaxAllowedInstances()
@@ -337,7 +343,8 @@ func Test_GetDefaultMaxAllowedInstances(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(GetDefaultMaxAllowedInstances()).To(Equal(tt.want))
 		})

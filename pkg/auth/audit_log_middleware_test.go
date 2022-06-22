@@ -45,7 +45,8 @@ func TestAuditLogMiddleware_AuditLog(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			auditLogMW := NewAuditLogMiddleware()
 			toTest := setContextToken(auditLogMW.AuditLog(tt.errCode)(tt.next), tt.token)

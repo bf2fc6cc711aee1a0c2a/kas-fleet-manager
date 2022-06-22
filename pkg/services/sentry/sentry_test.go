@@ -65,7 +65,8 @@ func TestInitialize(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got := Initialize(tt.args.envName, tt.args.c)
 			Expect(got == nil).To(Equal(tt.want == nil))

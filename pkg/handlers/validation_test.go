@@ -56,7 +56,8 @@ func Test_ValidateAsyncEnabled(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			err := handlers.ValidateAsyncEnabled(tt.args.r, tt.args.action)()
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -101,7 +102,8 @@ func Test_ValidateServiceAccountName(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			err := handlers.ValidateServiceAccountName(tt.args.value, tt.args.field)()
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -146,7 +148,8 @@ func Test_ValidateServiceAccountDesc(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			err := handlers.ValidateServiceAccountDesc(tt.args.value, tt.args.field)()
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -191,7 +194,8 @@ func Test_ValidateServiceAccountId(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			err := handlers.ValidateServiceAccountId(tt.args.value, tt.args.field)()
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -250,7 +254,8 @@ func Test_ValidateServiceAccountClientId(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			err := handlers.ValidateServiceAccountClientId(tt.args.value, tt.args.field, tt.args.ssoProvider)()
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -305,7 +310,8 @@ func TestValidateMaxLength(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			err := handlers.ValidateMaxLength(&tt.args.value, tt.args.field, tt.args.maxLen())()
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -352,7 +358,8 @@ func TestValidateMinLength(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			err := handlers.ValidateMinLength(&tt.args.value, tt.args.field, tt.args.minLen)()
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -419,7 +426,8 @@ func TestValidateLength(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			err := handlers.ValidateLength(&tt.args.value, tt.args.field, tt.args.minLen, tt.args.maxLen())()
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -477,7 +485,8 @@ func Test_ValidatQueryParam(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			err := handlers.ValidatQueryParam(tt.args.queryParams, tt.args.field)()
 			Expect(err != nil).To(Equal(tt.wantErr))

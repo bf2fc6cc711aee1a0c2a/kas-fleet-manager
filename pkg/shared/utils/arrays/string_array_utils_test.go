@@ -39,7 +39,9 @@ func Test_StringFindFirst(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(FindFirstString(tt.args.ary, tt.args.predicate)).To(Equal(tt.want))
 		})
@@ -90,7 +92,9 @@ func Test_StringFirstNonEmpty(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			val, err := FirstNonEmpty(tt.args.ary...)
 			Expect(val).To(Equal(tt.wants))
@@ -128,7 +132,9 @@ func Test_StringFirstNonEmptyOrDefault(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(FirstNonEmptyOrDefault(tt.args.defaultValue, tt.args.ary...)).To(Equal(tt.want))
 		})
@@ -179,7 +185,9 @@ func Test_Contains(t *testing.T) {
 			want: false,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(Contains(tt.args.ary, tt.args.value)).To(Equal(tt.want))
 		})

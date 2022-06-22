@@ -97,7 +97,9 @@ func TestReadyKafkaManager_Reconcile(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			k := NewReadyKafkaManager(tt.fields.kafkaService, tt.fields.keycloakService, tt.fields.keycloakConfig, w.Reconciler{})
 
@@ -199,7 +201,9 @@ func TestReadyKafkaManager_reconcileCanaryServiceAccount(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			k := &ReadyKafkaManager{
 				kafkaService:    tt.fields.kafkaService,

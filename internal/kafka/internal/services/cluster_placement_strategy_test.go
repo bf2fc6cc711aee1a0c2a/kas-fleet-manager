@@ -85,7 +85,9 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			f := &FirstReadyCluster{
 				ClusterService: tt.fields.ClusterService,
@@ -266,7 +268,9 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			f := &FirstSchedulableWithinLimit{
 				DataplaneClusterConfig: tt.fields.DataplaneClusterConfig,

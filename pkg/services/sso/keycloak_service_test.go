@@ -176,7 +176,9 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := keycloakServiceProxy{
 				accessTokenProvider: tt.fields.kcClient,
@@ -326,7 +328,9 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := keycloakServiceProxy{
 				accessTokenProvider: tt.fields.kcClient,
@@ -435,7 +439,9 @@ func TestKeycloakService_DeRegisterKasFleetshardOperatorServiceAccount(t *testin
 			wantErr: false,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
@@ -588,7 +594,9 @@ func TestKeycloakService_RegisterConnectorFleetshardOperatorServiceAccount(t *te
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := keycloakServiceProxy{
 				accessTokenProvider: tt.fields.kcClient,
@@ -697,7 +705,9 @@ func TestKeycloakService_DeRegisterConnectorFleetshardOperatorServiceAccount(t *
 			wantErr: false,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
@@ -789,7 +799,9 @@ func TestKeycloakService_DeleteServiceAccountInternal(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
@@ -893,7 +905,9 @@ func TestKeycloakService_CreateServiceAccountInternal(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
@@ -1034,7 +1048,9 @@ func TestKeycloakService_checkAllowedServiceAccountsLimits(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			service := masService{
 				kcClient: tt.fields.kcClient,
@@ -1072,7 +1088,9 @@ func Test_newKeycloakService(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := newKeycloakService(tt.args.config, tt.args.realmConfig)
 			g.Expect(keycloakService.GetConfig()).To(Equal(tt.want.GetConfig()))
@@ -1148,7 +1166,9 @@ func Test_masService_DeRegisterClientInSSO(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
@@ -1182,7 +1202,9 @@ func TestNewKeycloakServiceWithClient(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			g.Expect(NewKeycloakServiceWithClient(tt.args.client)).To(Equal(tt.want))
 		})
@@ -1235,7 +1257,9 @@ func Test_masService_IsKafkaClientExist(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			kc := masService{
 				kcClient: tt.fields.kcClient,
@@ -1316,7 +1340,9 @@ func Test_masService_GetKafkaClientSecret(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			kc := masService{
 				kcClient: tt.fields.kcClient,
@@ -1433,7 +1459,9 @@ func Test_masService_CreateServiceAccount(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
@@ -1525,7 +1553,9 @@ func Test_masService_ListServiceAcc(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
@@ -1609,7 +1639,9 @@ func Test_masService_DeleteServiceAccount(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
@@ -1704,7 +1736,9 @@ func Test_masService_ResetServiceAccountCredentials(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
@@ -1793,7 +1827,9 @@ func Test_masService_getServiceAccount(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
@@ -1854,7 +1890,9 @@ func Test_masService_GetServiceAccountByClientId(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
@@ -1915,7 +1953,9 @@ func Test_masService_GetServiceAccountById(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &masService{
 				kcClient: tt.fields.kcClient,

@@ -20,7 +20,9 @@ func Test_MetricsMiddleware(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			req, rw := GetHandlerParams("GET", "/", nil)
 			m := http.NewServeMux()

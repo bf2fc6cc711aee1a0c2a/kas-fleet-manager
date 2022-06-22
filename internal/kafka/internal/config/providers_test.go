@@ -74,7 +74,9 @@ func Test_IsInstanceTypeSupported(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(region.IsInstanceTypeSupported(InstanceType(tt.args.instanceType))).To(Equal(tt.want))
 		})
@@ -112,7 +114,9 @@ func Test_getLimitSetForInstanceTypeInRegion(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			limit, err := region.getLimitSetForInstanceTypeInRegion(tt.args.instanceType)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -152,7 +156,9 @@ func Test_GetByName(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			region, found := regionList.GetByName(tt.fields.regionName)
 			Expect(region).To(Equal(tt.want))
@@ -189,7 +195,9 @@ func Test_String_RegionList(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.regionList.String()).To(Equal(tt.want))
 		})
@@ -224,7 +232,9 @@ func Test_String_ProviderList(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.providerList.String()).To(Equal(tt.want))
 		})
@@ -246,7 +256,9 @@ func Test_NewSupportedProvidersConfig(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(NewSupportedProvidersConfig()).To(Equal(tt.want))
 		})
@@ -266,7 +278,9 @@ func Test_ReadFilesProviderConfig(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(NewSupportedProvidersConfig().ReadFiles() != nil).To(Equal(tt.wantErr))
 		})
@@ -343,7 +357,9 @@ func Test_GetInstanceLimit(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			limit, err := tt.fields.providerConfig.GetInstanceLimit(tt.args.region, tt.args.providerName, tt.args.InstanceType)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -383,7 +399,9 @@ func Test_readFileProvidersConfig(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			err := readFileProvidersConfig(tt.args.file, tt.args.val)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -429,7 +447,9 @@ func Test_IsRegionSupported(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.provider.IsRegionSupported(tt.args.region)).To(Equal(tt.want))
 		})

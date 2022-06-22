@@ -46,7 +46,8 @@ func TestFlags_MustGetDefinedString(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(MustGetDefinedString(tt.args.flagName, tt.args.flags)).To(Equal(tt.want))
 		})
@@ -75,7 +76,8 @@ func TestFlags_MustGetString(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(MustGetString(tt.args.flagName, tt.args.flags)).To(Equal(tt.want))
 		})
@@ -110,7 +112,8 @@ func TestFlags_MustGetBool(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(MustGetBool(tt.args.flagName, tt.args.flags)).To(Equal(tt.want))
 		})
@@ -137,7 +140,8 @@ func TestFlags_undefinedValueMessage(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(undefinedValueMessage(tt.args.flagName)).To(Equal(tt.want))
 		})
@@ -167,7 +171,8 @@ func TestFlags_notFoundMessage(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			errorMessage := notFoundMessage(tt.args.flagName, tt.args.e)
 			Expect(errorMessage).To(Equal(tt.want))

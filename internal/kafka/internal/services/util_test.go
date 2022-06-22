@@ -111,7 +111,9 @@ func Test_HandleGetError(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			got := services.HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err)
 			Expect(got).To(Equal(tt.want))
@@ -146,7 +148,9 @@ func Test_handleCreateError(t *testing.T) {
 			want: errors.Conflict("This %s already exists", resourceType),
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			got := services.HandleCreateError(tt.args.resourceType, tt.args.err)
 			Expect(got).To(Equal(tt.want))
@@ -181,7 +185,9 @@ func Test_handleUpdateError(t *testing.T) {
 			want: errors.Conflict("Changes to %s conflict with existing records", resourceType),
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			got := services.HandleUpdateError(tt.args.resourceType, tt.args.err)
 			Expect(got).To(Equal(tt.want))
@@ -218,7 +224,9 @@ func Test_TruncateString(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			got := TruncateString(tt.args.str, tt.args.num)
 			Expect(got).To(Equal(tt.want))
@@ -258,7 +266,9 @@ func Test_buildTruncateKafkaIdentifier(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			tt.args.kafkaRequest.ID = mockKafkaRequestID
 			got := buildTruncateKafkaIdentifier(tt.args.kafkaRequest)
@@ -292,7 +302,9 @@ func Test_MaskProceedingandTrailingDash(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			got := MaskProceedingandTrailingDash(tt.args.name)
 			Expect(got).To(Equal(tt.want))
@@ -333,7 +345,9 @@ func Test_replaceHostSpecialChar(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := replaceHostSpecialChar(tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -385,7 +399,9 @@ func Test_contains(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			got := arrays.Contains(tt.args.slice, tt.args.s)
 			Expect(got).To(Equal(tt.want))
@@ -422,7 +438,9 @@ func Test_BuildCustomClaimCheck(t *testing.T) {
 		},
 	}
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			receivedBuiltCustomClaimCheck := BuildCustomClaimCheck(tt.args.kafkaRequest, tt.args.ssoconfigProvider)
 			Expect(receivedBuiltCustomClaimCheck).To(Equal(tt.expectedCustomClaim))

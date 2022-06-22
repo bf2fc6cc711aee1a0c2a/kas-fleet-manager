@@ -82,7 +82,8 @@ func Test_DiffAsJson(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got := DiffAsJson(tt.args.a, tt.args.b, tt.args.aName, tt.args.bName)
 			Expect(got).To(Equal(tt.want))

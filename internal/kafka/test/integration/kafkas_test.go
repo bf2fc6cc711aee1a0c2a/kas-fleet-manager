@@ -935,7 +935,9 @@ func TestKafka_Update(t *testing.T) {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			client := test.NewApiClient(h)
 			result, resp, err := client.DefaultApi.UpdateKafkaById(tt.args.ctx, tt.args.kafkaID, tt.args.kafkaUpdateRequest)
@@ -1784,7 +1786,9 @@ func TestKafka_Delete(t *testing.T) {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			client := test.NewApiClient(h)
 			_, resp, err := client.DefaultApi.DeleteKafkaById(tt.args.ctx, tt.args.kafkaID, tt.args.async)
@@ -2099,7 +2103,9 @@ func TestKafka_DeleteAdminNonOwner(t *testing.T) {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			client := test.NewApiClient(h)
 			_, resp, err := client.DefaultApi.DeleteKafkaById(tt.args.ctx, tt.args.kafkaID, true)

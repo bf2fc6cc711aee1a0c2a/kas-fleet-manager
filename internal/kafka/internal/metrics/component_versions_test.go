@@ -50,7 +50,8 @@ func TestVersionsMetrics_Collect(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			m := newVersionMetrics(tt.fields.kafkaService)
 			ch := tt.args.ch
@@ -96,7 +97,8 @@ func TestVersionsMetrics_Describe(t *testing.T) {
 	}
 
 	RegisterTestingT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			m := newVersionMetrics(tt.fields.kafkaService)
 			ch := tt.args.ch

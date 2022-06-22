@@ -23,7 +23,9 @@ func Test_NewKafkaQuotaConfig(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(NewKafkaQuotaConfig()).To(Equal(tt.want))
 		})

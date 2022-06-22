@@ -27,7 +27,8 @@ func Test_TokenTransitions_toStateTransitions(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.transitions.toStateTransitions()).To(Equal(tt.want))
 		})
@@ -82,7 +83,8 @@ func Test_Grammar_toStateMachineDefinition(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.grammar.toStateMachineDefinition()).To(Equal(tt.want))
 		})

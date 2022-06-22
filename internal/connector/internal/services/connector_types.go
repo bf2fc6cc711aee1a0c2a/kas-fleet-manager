@@ -204,6 +204,7 @@ func (cts *connectorTypesService) ForEachConnectorCatalogEntry(f func(id string,
 
 		// reconcile channels
 		for channel, ccc := range entry.Channels {
+			ccc := ccc
 			err := f(entry.ConnectorType.Id, channel, &ccc)
 			if err != nil {
 				return err

@@ -117,7 +117,9 @@ func Test_QueryParser(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			qry, err := NewQueryParser().Parse(tt.qry)

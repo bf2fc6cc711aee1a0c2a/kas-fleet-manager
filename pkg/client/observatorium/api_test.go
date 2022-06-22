@@ -41,7 +41,8 @@ func Test_GetKafkaState(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			obs := &ServiceObservatorium{
 				client: tt.fields.client,
@@ -149,7 +150,8 @@ func TestServiceObservatorium_GetMetrics(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			obs := &ServiceObservatorium{
 				client: tt.fields.client,

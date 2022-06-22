@@ -71,7 +71,9 @@ func Test_AgentOperatorAddon_Provision(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				SsoService:          tt.fields.ssoService,
@@ -128,7 +130,9 @@ func Test_AgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				SsoService: tt.fields.ssoService,
@@ -195,7 +199,9 @@ func Test_KasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				SsoService:          tt.fields.ssoService,
@@ -256,7 +262,9 @@ func Test_ParameterList_GetParam(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			g.Expect(tt.p.GetParam(tt.args.name)).To(Equal(tt.want))
 		})

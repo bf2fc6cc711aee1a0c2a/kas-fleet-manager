@@ -75,7 +75,9 @@ func TestRequireOrgIDMiddleware(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			requireIssuerHandler := NewRequireOrgIDMiddleware()
 			toTest := setContextToken(requireIssuerHandler.RequireOrgID(tt.errCode)(tt.next), tt.token)

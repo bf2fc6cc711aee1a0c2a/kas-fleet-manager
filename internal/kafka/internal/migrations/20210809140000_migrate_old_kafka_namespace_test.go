@@ -44,7 +44,8 @@ func Test_buildOldKafkaNamespace(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := buildOldKafkaNamespace(tt.args.kafkaRequest)
 			if (err != nil) != tt.wantErr {
@@ -88,7 +89,8 @@ func Test_buildKafkaNamespaceIdentifier(t *testing.T) {
 			want: fmt.Sprintf("%s-%s", mockLongOwnerUsername[0:truncatedNamespaceLen], strings.ToLower(mockKafkaRequestID)),
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			tt.args.kafkaRequest.ID = mockKafkaRequestID
 			got := buildKafkaNamespaceIdentifier(tt.args.kafkaRequest)
@@ -134,7 +136,8 @@ func Test_replaceNamespaceSpecialChar(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := replaceNamespaceSpecialChar(tt.args.name)
 			if (err != nil) != tt.wantErr {

@@ -34,7 +34,8 @@ func migrateOldKafkaNamespace() *gormigrate.Migration {
 				return err
 			}
 
-			for _, kafka := range kafkas {
+			for i := range kafkas {
+				kafka := kafkas[i]
 				namespace, err := buildOldKafkaNamespace(&kafka)
 				if err != nil {
 					return err

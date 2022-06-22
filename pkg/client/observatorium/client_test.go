@@ -76,7 +76,8 @@ func Test_NewObservatoriumClient(t *testing.T) {
 	}
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			config := tt.args.c
 			if tt.modifyFn != nil {
@@ -113,7 +114,9 @@ func Test_NewClient(t *testing.T) {
 	}
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			config := tt.args.c
 			if tt.modifyFn != nil {
@@ -229,7 +232,9 @@ func Test_RoundTrip(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			p := tt.fields.p
 			if tt.modifyFn != nil {
@@ -276,7 +281,9 @@ func Test_Query(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.c.Query(tt.args.queryTemplate, tt.args.label).Err).ToNot(HaveOccurred())
 		})
@@ -317,7 +324,9 @@ func Test_QueryRange(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(tt.fields.c.QueryRange(tt.args.queryTemplate, tt.args.label, tt.args.bounds).Err).ToNot(HaveOccurred())
 		})
@@ -360,7 +369,9 @@ func Test_all(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(all(tt.args.items, tt.args.conjunction)).To(Equal(tt.want))
 		})

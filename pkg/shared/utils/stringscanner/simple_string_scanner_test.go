@@ -39,7 +39,9 @@ func Test_SimpleScanner(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			scanner := NewSimpleScanner()
 			scanner.Init(tt.value)
@@ -96,7 +98,9 @@ func Test_simpleStringScanner_Peek(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			got, gotVal := tt.s.Peek()
 			Expect(got).To(Equal(tt.want))

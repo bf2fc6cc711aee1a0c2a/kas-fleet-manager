@@ -113,7 +113,9 @@ func Test_Validation(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(Validation(tt.args.field, tt.args.value, tt.args.option)() != nil).To(Equal(tt.wantErr))
 		})
@@ -146,7 +148,9 @@ func Test_WithDefault(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(WithDefault(*tt.args.value)(tt.args.field, tt.args.value) != nil).To(Equal(tt.wantErr))
 		})

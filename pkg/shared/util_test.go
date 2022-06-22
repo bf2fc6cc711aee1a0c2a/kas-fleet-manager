@@ -34,7 +34,9 @@ func Test_SafeString(t *testing.T) {
 
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(SafeString(tt.args.ptr)).To(Equal(tt.want))
 		})
@@ -69,7 +71,9 @@ func Test_SafeInt64(t *testing.T) {
 	}
 	RegisterTestingT(t)
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
+
 		t.Run(tt.name, func(t *testing.T) {
 			Expect(SafeInt64(tt.args.ptr)).To(Equal(tt.want))
 		})

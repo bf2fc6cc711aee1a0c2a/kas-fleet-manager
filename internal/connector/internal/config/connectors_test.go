@@ -80,7 +80,8 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 			err:     ".*error unmarshaling catalog file .+/internal/connector/test/bad-connector-catalog/bad-connector-type.json: invalid character 'b' looking for beginning of value$",
 		},
 	}
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ConnectorsConfig{
 				ConnectorEvalDuration:               tt.fields.ConnectorEvalDuration,
@@ -102,6 +103,7 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 			for _, connectorID := range tt.connectorsIDs {
 				gomega.Expect(c.CatalogEntries).To(gomega.Satisfy(func(entries []ConnectorCatalogEntry) bool {
 					for i := range entries {
+						//nolint:scopelint
 						if entries[i].ConnectorType.Id == connectorID {
 							return true
 						}

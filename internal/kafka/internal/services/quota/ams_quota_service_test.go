@@ -740,10 +740,10 @@ func Test_AMSCheckQuota(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, tt.fields.kafkaConfig)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
@@ -1065,11 +1065,10 @@ func Test_AMSReserveQuota(t *testing.T) {
 			wantErr: true,
 		},
 	}
-
+	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, tt.fields.kafkaConfig)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
@@ -1145,7 +1144,8 @@ func Test_Delete_Quota(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, testcase := range tests {
+		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, &defaultKafkaConf)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
@@ -1322,10 +1322,10 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		},
 	}
 
+	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
 			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.ocmClient, nil, nil, &defaultKafkaConf)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
 			res, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(tt.args.kafkaRequest.Owner, tt.args.kafkaRequest.OrganisationId, tt.args.kafkaInstanceType)
