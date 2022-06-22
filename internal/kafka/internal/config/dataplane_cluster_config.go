@@ -330,17 +330,6 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 			}
 		}
 
-		if c.IsDataPlaneAutoScalingEnabled() {
-			err = shared.ReadYamlFile(c.DynamicScalingConfig.filePath, &c.DynamicScalingConfig.configuration)
-			if err != nil {
-				return err
-			}
-			err = c.DynamicScalingConfig.validate()
-			if err != nil {
-				return err
-			}
-		}
-
 		err = readOperatorsSubscriptionConfigFile(c.StrimziOperatorOLMConfig.SubscriptionConfigFile, &c.StrimziOperatorOLMConfig.SubscriptionConfig)
 		if err != nil {
 			if os.IsNotExist(err) {
@@ -357,6 +346,17 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 			} else {
 				return err
 			}
+		}
+	}
+
+	if c.IsDataPlaneAutoScalingEnabled() {
+		err := shared.ReadYamlFile(c.DynamicScalingConfig.filePath, &c.DynamicScalingConfig.Configuration)
+		if err != nil {
+			return err
+		}
+		err = c.DynamicScalingConfig.validate()
+		if err != nil {
+			return err
 		}
 	}
 

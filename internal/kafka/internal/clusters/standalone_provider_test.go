@@ -1181,3 +1181,76 @@ func Test_shouldApplyChanges(t *testing.T) {
 		})
 	}
 }
+
+func TestStandaloneProvider_GetMachinePool(t *testing.T) {
+	sampleMachinePoolID := "test-machinepool-id"
+	type args struct {
+		clusterID     string
+		machinePoolID string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *types.MachinePoolInfo
+		wantErr bool
+	}{
+		{
+			name: "Always returns a MachinePool with the provided MachinePool ID",
+			args: args{
+				clusterID:     "test-cluster-id",
+				machinePoolID: sampleMachinePoolID,
+			},
+			want: &types.MachinePoolInfo{
+				ID: sampleMachinePoolID,
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tc := range tests {
+		tt := tc
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			standaloneProvider := newStandaloneProvider(nil, nil)
+
+			got, err := standaloneProvider.GetMachinePool(tt.args.clusterID, tt.args.machinePoolID)
+			gotErr := err != nil
+			g.Expect(gotErr).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestStandaloneProvider_CreateMachinePool(t *testing.T) {
+	type args struct {
+		machinePoolRequest types.MachinePoolRequest
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *types.MachinePoolRequest
+		wantErr bool
+	}{
+		{
+			name: "Always returns nil and no error",
+			args: args{
+				machinePoolRequest: types.MachinePoolRequest{},
+			},
+			want:    nil,
+			wantErr: false,
+		},
+	}
+
+	for _, tc := range tests {
+		tt := tc
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			standaloneProvider := newStandaloneProvider(nil, nil)
+
+			got, err := standaloneProvider.CreateMachinePool(&tt.args.machinePoolRequest)
+			gotErr := err != nil
+			g.Expect(gotErr).To(Equal(tt.wantErr))
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}

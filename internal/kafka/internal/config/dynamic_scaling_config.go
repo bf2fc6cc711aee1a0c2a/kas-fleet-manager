@@ -6,26 +6,26 @@ import (
 
 type DynamicScalingConfig struct {
 	filePath      string
-	configuration map[string]InstanceTypeDynamicScalingConfig
+	Configuration map[string]InstanceTypeDynamicScalingConfig
 }
 
 func NewDynamicScalingConfig() DynamicScalingConfig {
 	return DynamicScalingConfig{
 		filePath:      "config/dynamic-scaling-configuration.yaml",
-		configuration: make(map[string]InstanceTypeDynamicScalingConfig),
+		Configuration: make(map[string]InstanceTypeDynamicScalingConfig),
 	}
 }
 
 func (c *DynamicScalingConfig) ForInstanceType(instanceTypeID string) (InstanceTypeDynamicScalingConfig, bool) {
-	if instanceTypeConfig, found := c.configuration[instanceTypeID]; found {
+	if instanceTypeConfig, found := c.Configuration[instanceTypeID]; found {
 		return instanceTypeConfig, true
 	}
 	return InstanceTypeDynamicScalingConfig{}, false
 }
 
 func (c *DynamicScalingConfig) InstanceTypeConfigs() map[string]InstanceTypeDynamicScalingConfig {
-	newConfig := make(map[string]InstanceTypeDynamicScalingConfig, len(c.configuration))
-	for k, v := range c.configuration {
+	newConfig := make(map[string]InstanceTypeDynamicScalingConfig, len(c.Configuration))
+	for k, v := range c.Configuration {
 		newConfig[k] = v
 	}
 
@@ -37,11 +37,11 @@ func (c *DynamicScalingConfig) validate() error {
 		return fmt.Errorf("dynamic scaling config file path is not specified")
 	}
 
-	if c.configuration == nil {
+	if c.Configuration == nil {
 		return fmt.Errorf("dynamic scaling configuration file %s has not been read or is empty", c.filePath)
 	}
 
-	for _, v := range c.configuration {
+	for _, v := range c.Configuration {
 		err := v.validate()
 		if err != nil {
 			return err

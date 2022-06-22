@@ -1,6 +1,7 @@
 package clusters
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -1008,6 +1010,340 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 			if test.wantErr {
 				Expect(err).NotTo(BeNil())
 			}
+		})
+	}
+}
+
+func TestOCMProvider_GetMachinePool(t *testing.T) {
+	type fields struct {
+		ocmClient ocm.Client
+	}
+
+	sampleMachinePoolID := "test-machinepool-id"
+	sampleClusterID := "test-cluster-id"
+
+	type args struct {
+		clusterID     string
+		machinePoolID string
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *types.MachinePoolInfo
+		wantErr bool
+	}{
+		{
+			name: "getting an existing machinepool succeeds",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetMachinePoolFunc: func(clusterID, machinePoolID string) (*clustersmgmtv1.MachinePool, error) {
+						machinePoolBuilder := clustersmgmtv1.NewMachinePool()
+						machinePoolBuilder.ID(machinePoolID)
+						machinePool, err := machinePoolBuilder.Build()
+						if err != nil {
+							return nil, err
+						}
+						return machinePool, nil
+					},
+				},
+			},
+			args: args{
+				clusterID:     sampleClusterID,
+				machinePoolID: sampleMachinePoolID,
+			},
+			want: &types.MachinePoolInfo{
+				ID: sampleMachinePoolID,
+			},
+			wantErr: false,
+		},
+		{
+			name: "getting an existing machinepool succeeds second test",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetMachinePoolFunc: func(clusterID, machinePoolID string) (*clustersmgmtv1.MachinePool, error) {
+						autoscalingBuilder := clustersmgmtv1.NewMachinePoolAutoscaling()
+						autoscalingBuilder.MinReplicas(3)
+						autoscalingBuilder.MaxReplicas(6)
+						machinePoolBuilder := clustersmgmtv1.NewMachinePool()
+						machinePoolBuilder.ID(machinePoolID)
+						machinePoolBuilder.Autoscaling(autoscalingBuilder)
+						machinePoolBuilder.AvailabilityZones("us-east-1", "eu-west-1")
+						machinePool, err := machinePoolBuilder.Build()
+						if err != nil {
+							return nil, err
+						}
+						return machinePool, nil
+					},
+				},
+			},
+			args: args{
+				clusterID:     sampleClusterID,
+				machinePoolID: sampleMachinePoolID,
+			},
+			want: &types.MachinePoolInfo{
+				ID:                 sampleMachinePoolID,
+				MultiAZ:            true,
+				AutoScalingEnabled: true,
+				AutoScaling: types.MachinePoolAutoScaling{
+					MinNodes: 3,
+					MaxNodes: 6,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "getting an unexisting machinepool from OCM returns nil as a result",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetMachinePoolFunc: func(clusterID, machinePoolID string) (*clustersmgmtv1.MachinePool, error) {
+						return nil, nil
+					},
+				},
+			},
+			args: args{
+				clusterID:     sampleClusterID,
+				machinePoolID: sampleMachinePoolID,
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name: "getting an error from OCM returns an error as a result",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetMachinePoolFunc: func(clusterID, machinePoolID string) (*clustersmgmtv1.MachinePool, error) {
+						return nil, fmt.Errorf("this is an example error")
+					},
+				},
+			},
+			args: args{
+				clusterID:     sampleClusterID,
+				machinePoolID: sampleMachinePoolID,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range tests {
+		test := tc
+		t.Run(test.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ocmProvider := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
+			res, err := ocmProvider.GetMachinePool(test.args.clusterID, test.args.machinePoolID)
+			gotErr := err != nil
+			g.Expect(gotErr).To(Equal(test.wantErr))
+			g.Expect(res).To(Equal(test.want))
+		})
+	}
+}
+
+func TestOCMProvider_CreateMachinePool(t *testing.T) {
+	type fields struct {
+		ocmClient ocm.Client
+	}
+
+	sampleMachinePoolID := "test-machinepool-id"
+	sampleClusterID := "test-cluster-id"
+
+	type args struct {
+		machinePoolRequest types.MachinePoolRequest
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *types.MachinePoolRequest
+		wantErr bool
+	}{
+		{
+			name: "creting a machinepool succeeds",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateMachinePoolFunc: func(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error) {
+						machinePoolBuilder := clustersmgmtv1.NewMachinePool()
+						machinePoolBuilder.ID(machinePool.ID())
+						machinePool, err := machinePoolBuilder.Build()
+						if err != nil {
+							return nil, err
+						}
+						return machinePool, nil
+					},
+				},
+			},
+			args: args{
+				machinePoolRequest: types.MachinePoolRequest{
+					ID:        sampleMachinePoolID,
+					ClusterID: sampleClusterID,
+				},
+			},
+			want: &types.MachinePoolRequest{
+				ID:        sampleMachinePoolID,
+				ClusterID: sampleClusterID,
+			},
+			wantErr: false,
+		},
+		{
+			name: "an error is returned when machinepool min nodes is greater than max nodes",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateMachinePoolFunc: func(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error) {
+						return nil, fmt.Errorf("test error")
+					},
+				},
+			},
+			args: args{
+				machinePoolRequest: types.MachinePoolRequest{
+					ID:                 sampleMachinePoolID,
+					ClusterID:          sampleClusterID,
+					AutoScalingEnabled: true,
+					AutoScaling: types.MachinePoolAutoScaling{
+						MinNodes: 6,
+						MaxNodes: 3,
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "when MultiAZ is enabled the number of nodes to specify in the OCM machine pool is a multiple of OCM MultiAZ requirement",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateMachinePoolFunc: func(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error) {
+						mpAutoscaling := machinePool.Autoscaling()
+						if mpAutoscaling == nil {
+							return nil, fmt.Errorf("test fail")
+						}
+						if mpAutoscaling.MinReplicas() != shared.RoundUp(2, ocmMultiAZClusterNodeScalingMultiple) {
+							return nil, fmt.Errorf("test fail: unexpected number of min replicas")
+						}
+						if mpAutoscaling.MaxReplicas() != shared.RoundUp(4, ocmMultiAZClusterNodeScalingMultiple) {
+							return nil, fmt.Errorf("test fail: unexpected number of max replicas")
+						}
+
+						machinePoolBuilder := clustersmgmtv1.NewMachinePool()
+						machinePoolBuilder.ID(machinePool.ID())
+						autoscalingBuilder := clustersmgmtv1.NewMachinePoolAutoscaling()
+						autoscalingBuilder.MinReplicas(mpAutoscaling.MinReplicas())
+						autoscalingBuilder.MaxReplicas(mpAutoscaling.MaxReplicas())
+						machinePool, err := machinePoolBuilder.Build()
+						if err != nil {
+							return nil, err
+						}
+						return machinePool, nil
+					},
+				},
+			},
+			args: args{
+				machinePoolRequest: types.MachinePoolRequest{
+					ID:                 sampleMachinePoolID,
+					ClusterID:          sampleClusterID,
+					MultiAZ:            true,
+					AutoScalingEnabled: true,
+					AutoScaling: types.MachinePoolAutoScaling{
+						MinNodes: 2,
+						MaxNodes: 4,
+					},
+				},
+			},
+			want: &types.MachinePoolRequest{
+				ID:                 sampleMachinePoolID,
+				ClusterID:          sampleClusterID,
+				AutoScalingEnabled: true,
+				MultiAZ:            true,
+				AutoScaling: types.MachinePoolAutoScaling{
+					MinNodes: 2,
+					MaxNodes: 4,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "when MultiAZ is disabled the number of nodes to specify in the OCM machine pool is a multiple of OCM MultiAZ requirement",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateMachinePoolFunc: func(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error) {
+						mpAutoscaling := machinePool.Autoscaling()
+						if mpAutoscaling == nil {
+							return nil, fmt.Errorf("test fail")
+						}
+						if mpAutoscaling.MinReplicas() != 2 {
+							return nil, fmt.Errorf("test fail: unexpected number of min replicas")
+						}
+						if mpAutoscaling.MaxReplicas() != 4 {
+							return nil, fmt.Errorf("test fail: unexpected number of max replicas")
+						}
+
+						machinePoolBuilder := clustersmgmtv1.NewMachinePool()
+						machinePoolBuilder.ID(machinePool.ID())
+						autoscalingBuilder := clustersmgmtv1.NewMachinePoolAutoscaling()
+						autoscalingBuilder.MinReplicas(mpAutoscaling.MinReplicas())
+						autoscalingBuilder.MaxReplicas(mpAutoscaling.MaxReplicas())
+						machinePool, err := machinePoolBuilder.Build()
+						if err != nil {
+							return nil, err
+						}
+						return machinePool, nil
+					},
+				},
+			},
+			args: args{
+				machinePoolRequest: types.MachinePoolRequest{
+					ID:                 sampleMachinePoolID,
+					ClusterID:          sampleClusterID,
+					MultiAZ:            false,
+					AutoScalingEnabled: true,
+					AutoScaling: types.MachinePoolAutoScaling{
+						MinNodes: 2,
+						MaxNodes: 4,
+					},
+				},
+			},
+			want: &types.MachinePoolRequest{
+				ID:                 sampleMachinePoolID,
+				ClusterID:          sampleClusterID,
+				AutoScalingEnabled: true,
+				MultiAZ:            false,
+				AutoScaling: types.MachinePoolAutoScaling{
+					MinNodes: 2,
+					MaxNodes: 4,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "an error is returned when OCM fails to create a machinepool",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateMachinePoolFunc: func(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error) {
+						return nil, fmt.Errorf("test error")
+					},
+				},
+			},
+			args: args{
+				machinePoolRequest: types.MachinePoolRequest{
+					ID:        sampleMachinePoolID,
+					ClusterID: sampleClusterID,
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range tests {
+		test := tc
+		t.Run(test.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ocmProvider := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
+			res, err := ocmProvider.CreateMachinePool(&test.args.machinePoolRequest)
+			gotErr := err != nil
+			g.Expect(gotErr).To(Equal(test.wantErr))
+			g.Expect(res).To(Equal(test.want))
 		})
 	}
 }

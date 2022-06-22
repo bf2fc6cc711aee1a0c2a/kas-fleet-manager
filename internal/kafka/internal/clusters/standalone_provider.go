@@ -545,3 +545,16 @@ func applyChangesFn(client dynamic.ResourceInterface, desiredObj *unstructured.U
 		FieldManager: fieldManager,
 	})
 }
+
+func (s *StandaloneProvider) GetMachinePool(clusterID string, id string) (*types.MachinePoolInfo, error) {
+	// TODO implement
+	res := &types.MachinePoolInfo{
+		ID: id,
+	}
+	return res, nil
+}
+
+func (s *StandaloneProvider) CreateMachinePool(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error) {
+	// TODO implement
+	return nil, nil
+}

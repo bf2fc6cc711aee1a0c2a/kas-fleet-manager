@@ -1,12 +1,14 @@
 package clusters
 
 import (
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	svcErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -18,6 +20,10 @@ import (
 
 const (
 	ipdAlreadyCreatedErrorToCheck = "already exists"
+
+	// In OCM, number of compute nodes in a Multi-AZ cluster must be a multiple of
+	// this number
+	ocmMultiAZClusterNodeScalingMultiple = 3
 )
 
 type OCMProvider struct {
@@ -351,4 +357,87 @@ func buildIdentityProvider(idpInfo types.OpenIDIdentityProviderInfo) (*clustersm
 	}
 
 	return identityProvider, nil
+}
+
+func (o *OCMProvider) GetMachinePool(clusterID string, id string) (*types.MachinePoolInfo, error) {
+	ocmMachinePool, err := o.ocmClient.GetMachinePool(clusterID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if ocmMachinePool == nil {
+		return nil, nil
+	}
+
+	var nodeTaints []types.CluserNodeTaint
+	for _, ocmNodeTaint := range ocmMachinePool.Taints() {
+		nodeTaint := types.CluserNodeTaint{
+			Effect: ocmNodeTaint.Effect(),
+			Key:    ocmNodeTaint.Key(),
+			Value:  ocmNodeTaint.Value(),
+		}
+		nodeTaints = append(nodeTaints, nodeTaint)
+	}
+	res := &types.MachinePoolInfo{
+		ID:                 ocmMachinePool.ID(),
+		InstanceSize:       ocmMachinePool.InstanceType(),
+		MultiAZ:            len(ocmMachinePool.AvailabilityZones()) > 1,
+		AutoScalingEnabled: !ocmMachinePool.Autoscaling().Empty(),
+		AutoScaling: types.MachinePoolAutoScaling{
+			MinNodes: ocmMachinePool.Autoscaling().MinReplicas(),
+			MaxNodes: ocmMachinePool.Autoscaling().MaxReplicas(),
+		},
+		NodeLabels: ocmMachinePool.Labels(),
+		NodeTaints: nodeTaints,
+	}
+
+	return res, nil
+}
+
+func (o *OCMProvider) CreateMachinePool(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error) {
+	machinePoolBuilder := clustersmgmtv1.NewMachinePool()
+	// At the moment of writing this (2022-06-20) OCM's maximum length for
+	// Machine Pool IDs is 30 characters
+	machinePoolBuilder.ID(request.ID)
+	machinePoolBuilder.InstanceType(request.InstanceSize)
+
+	if request.AutoScalingEnabled {
+		autoScalingMaxNodes := request.AutoScaling.MaxNodes
+		autoScalingMinNodes := request.AutoScaling.MinNodes
+
+		if request.MultiAZ {
+			autoScalingMinNodes = shared.RoundUp(request.AutoScaling.MinNodes, ocmMultiAZClusterNodeScalingMultiple)
+			autoScalingMaxNodes = shared.RoundUp(request.AutoScaling.MaxNodes, ocmMultiAZClusterNodeScalingMultiple)
+		}
+		if autoScalingMinNodes > autoScalingMaxNodes {
+			return nil, fmt.Errorf("error creating MachinePool '%s' for cluster id '%s': minimum number of nodes cannot be more than maximum number of nodes", request.ID, request.ClusterID)
+		}
+		autoScalingBuilder := clustersmgmtv1.NewMachinePoolAutoscaling()
+		autoScalingBuilder.MinReplicas(autoScalingMinNodes)
+		autoScalingBuilder.MaxReplicas(autoScalingMaxNodes)
+		autoScalingBuilder.ID(request.ID)
+		machinePoolBuilder.Autoscaling(autoScalingBuilder)
+
+	}
+	machinePoolBuilder.Labels(request.NodeLabels)
+	var taintsBuilders []*clustersmgmtv1.TaintBuilder
+	for _, nodeTaint := range request.NodeTaints {
+		taintBuilder := clustersmgmtv1.NewTaint()
+		taintBuilder.Key(nodeTaint.Key)
+		taintBuilder.Value(nodeTaint.Value)
+		taintBuilder.Effect(nodeTaint.Effect)
+		taintsBuilders = append(taintsBuilders, taintBuilder)
+	}
+	machinePoolBuilder.Taints(taintsBuilders...)
+	machinePool, err := machinePoolBuilder.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = o.ocmClient.CreateMachinePool(request.ClusterID, machinePool)
+	if err != nil {
+		return nil, err
+	}
+
+	return request, err
 }
