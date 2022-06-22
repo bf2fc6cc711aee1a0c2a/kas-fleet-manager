@@ -112,11 +112,6 @@ type CloudProviderRegionInfoList struct {
 	Items []CloudProviderRegionInfo
 }
 
-type ComputeNodesInfo struct {
-	Actual  int
-	Desired int
-}
-
 // Merge merges the items of source regions list with items of the target regions list
 func (target *CloudProviderRegionInfoList) Merge(source *CloudProviderRegionInfoList) {
 	// create a map for faster iteration
