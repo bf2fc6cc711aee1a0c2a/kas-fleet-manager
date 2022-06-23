@@ -234,7 +234,6 @@ make test
 ```
 
 ### Running integration tests
-
 Integration tests can be executed against a real or "emulated" OCM environment. Executing against
 an emulated environment can be useful to get fast feedback as OpenShift clusters will not actually
 be provisioned, reducing testing time greatly.
@@ -275,6 +274,7 @@ To stop and remove the keycloak container when finished, run:
 make sso/teardown
 ```
 
+Current list of integration tests can be found [here](test/integration-tests.md)
 ### Connector Service
 
 The https://github.com/bf2fc6cc711aee1a0c2a/cos-fleet-manager is used to build the `cos-fleet-manager` 
