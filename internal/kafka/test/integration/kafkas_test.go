@@ -263,7 +263,10 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		MultiAZ:  true,
 	}
 	// Start with no cluster config and manual scaling.
-	configHook := func(clusterConfig *config.DataplaneClusterConfig) {
+	configHook := func(clusterConfig *config.DataplaneClusterConfig, reconcilerConfig *workers.ReconcilerConfig) {
+		// set the interval to 1 second to have sufficient time for the metric to be propagate
+		// so that metrics checks does not timeout after 10s
+		reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Second
 		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
 		clusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 			config.ManualCluster{ClusterId: "first", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard,developer"},
