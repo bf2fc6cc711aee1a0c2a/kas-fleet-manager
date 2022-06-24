@@ -101,12 +101,20 @@ func build(providerName string, keycloakConfig *keycloak.KeycloakConfig, realmCo
 	if providerName == keycloak.MAS_SSO ||
 		realmConfig != nil {
 		_, realmConfig := arrays.FindFirst(notNilPredicate, realmConfig, keycloakConfig.KafkaRealm)
-		return newKeycloakService(keycloakConfig, realmConfig.(*keycloak.KeycloakRealmConfig))
+
+		client := keycloak.NewClient(keycloakConfig, realmConfig.(*keycloak.KeycloakRealmConfig))
+		return &keycloakServiceProxy{
+			getToken: client.GetToken,
+			service: &masService{
+				kcClient: client,
+			},
+		}
+
 	} else {
 		_, realmConfig := arrays.FindFirst(notNilPredicate, realmConfig, keycloakConfig.RedhatSSORealm)
 		client := redhatsso.NewSSOClient(keycloakConfig, realmConfig.(*keycloak.KeycloakRealmConfig))
 		return &keycloakServiceProxy{
-			accessTokenProvider: client,
+			getToken: client.GetToken,
 			service: &redhatssoService{
 				client: client,
 			},

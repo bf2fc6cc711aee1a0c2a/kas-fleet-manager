@@ -37,7 +37,7 @@ func Test_keycloakServiceBuilder_Build_ForKFM(t *testing.T) {
 				realmConfig: realmConfig,
 			},
 			want: &keycloakServiceProxy{
-				accessTokenProvider: client,
+				getToken: client.GetToken,
 				service: &masService{
 					kcClient: client,
 				},
@@ -80,7 +80,7 @@ func Test_osdKeycloackServiceBuilder_Build_ForOSD(t *testing.T) {
 				realmConfig: realmConfig,
 			},
 			want: &keycloakServiceProxy{
-				accessTokenProvider: client,
+				getToken: client.GetToken,
 				service: &masService{
 					kcClient: client,
 				},
