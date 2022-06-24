@@ -52,6 +52,7 @@ type KeycloakRealmConfig struct {
 	JwksEndpointURI  string `json:"jwks_endpoint_uri"`
 	ValidIssuerURI   string `json:"valid_issuer_uri"`
 	APIEndpointURI   string `json:"api_endpoint_uri"`
+	Scope            string `json:"scope"`
 }
 
 func (kc *KeycloakConfig) SSOProviderRealm() *KeycloakRealmConfig {
@@ -92,6 +93,7 @@ func NewKeycloakConfig() *KeycloakConfig {
 			ClientIDFile:     "secrets/redhatsso-service.clientId",
 			ClientSecretFile: "secrets/redhatsso-service.clientSecret",
 			GrantType:        "client_credentials",
+			Scope:            "api.iam.service_accounts",
 		},
 		TLSTrustedCertificatesFile:                 "secrets/keycloak-service.crt",
 		Debug:                                      false,
@@ -116,6 +118,7 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.KafkaRealm.Realm, "mas-sso-realm", kc.KafkaRealm.Realm, "Realm for Kafka service accounts in the mas-sso")
 	fs.StringVar(&kc.TLSTrustedCertificatesFile, "mas-sso-cert-file", kc.TLSTrustedCertificatesFile, "File containing tls cert for the mas-sso. Useful when mas-sso uses a self-signed certificate. If the provided file does not exist, is the empty string or the provided file content is empty then no custom MAS SSO certificate is used")
 	fs.BoolVar(&kc.Debug, "mas-sso-debug", kc.Debug, "Debug flag for Keycloak API")
+	fs.StringVar(&kc.RedhatSSORealm.Scope, "redhat-sso-scope", kc.RedhatSSORealm.Scope, "Scope for client credentials grant request in sso")
 	fs.BoolVar(&kc.InsecureSkipVerify, "mas-sso-insecure", kc.InsecureSkipVerify, "Disable tls verification with mas-sso")
 	fs.StringVar(&kc.OSDClusterIDPRealm.ClientIDFile, "osd-idp-mas-sso-client-id-file", kc.OSDClusterIDPRealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm")
 	fs.StringVar(&kc.OSDClusterIDPRealm.ClientSecretFile, "osd-idp-mas-sso-client-secret-file", kc.OSDClusterIDPRealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")

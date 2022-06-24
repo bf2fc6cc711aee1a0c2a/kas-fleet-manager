@@ -108,6 +108,7 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	client := &http.Client{}
 	parameters := url.Values{}
 	parameters.Set("grant_type", "client_credentials")
+	parameters.Set("scope", c.realmConfig.Scope)
 	parameters.Set("client_id", c.realmConfig.ClientID)
 	parameters.Set("client_secret", c.realmConfig.ClientSecret)
 	req, err := http.NewRequest("POST", c.realmConfig.TokenEndpointURI, strings.NewReader(parameters.Encode()))
