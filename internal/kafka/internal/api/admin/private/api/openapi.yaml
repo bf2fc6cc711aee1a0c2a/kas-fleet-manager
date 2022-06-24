@@ -325,6 +325,7 @@ components:
       example:
         strimzi_version: strimzi_version
         kafka_ibp_version: kafka_ibp_version
+        max_data_retention_size: max_data_retention_size
         kafka_version: kafka_version
         kafka_storage_size: kafka_storage_size
       properties:
@@ -335,6 +336,9 @@ components:
         kafka_ibp_version:
           type: string
         kafka_storage_size:
+          type: string
+        max_data_retention_size:
+          description: Maximum data storage available to this Kafka
           type: string
       type: object
     SupportedKafkaSizeBytesValueItem:

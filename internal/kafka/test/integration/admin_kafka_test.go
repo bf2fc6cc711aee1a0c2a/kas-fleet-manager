@@ -411,97 +411,20 @@ func TestAdminKafka_Update(t *testing.T) {
 	sampleKafkaID2 := api.NewID()
 	sampleKafkaID3 := api.NewID()
 	sampleKafkaID4 := api.NewID()
-	fullyPopulatedKafkaVersionUpdateRequest := adminprivate.KafkaUpdateRequest{
-		StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
-		KafkaVersion:    "2.8.2",
-		KafkaIbpVersion: "2.8.1",
-	}
-	emptyKafkaUpdateRequest := adminprivate.KafkaUpdateRequest{}
-	ibpDowngrade := adminprivate.KafkaUpdateRequest{
-		KafkaIbpVersion: "2.6.0",
-	}
-	ibpUpgrade := adminprivate.KafkaUpdateRequest{
-		KafkaIbpVersion: "2.8.0",
-	}
-	ibpUpgradeHigherThanKafka := adminprivate.KafkaUpdateRequest{
-		KafkaIbpVersion: "2.8.2",
-	}
-	kafkaVersionMajorDowngrade := adminprivate.KafkaUpdateRequest{
-		KafkaVersion: "1.8.0",
-	}
-	kafkaVersionMinorDowngrade := adminprivate.KafkaUpdateRequest{
-		KafkaVersion: "2.7.0",
-	}
-	kafkaVersionPatchDowngrade := adminprivate.KafkaUpdateRequest{
-		KafkaVersion: "2.8.0",
-	}
-	kafkaVersionPatchUpgradeInStatus := adminprivate.KafkaUpdateRequest{
-		KafkaVersion: "2.9.0",
-	}
-	kafkaVersionPatchUpgradeNotInStatus := adminprivate.KafkaUpdateRequest{
-		KafkaVersion: "2.10.0",
-	}
-	strimziUpgrade := adminprivate.KafkaUpdateRequest{
-		StrimziVersion: "strimzi-cluster-operator.v0.25.0-0",
-	}
-	nonExistentStrimziUpgrade := adminprivate.KafkaUpdateRequest{
-		StrimziVersion: "strimzi-cluster-operator.v0.29.0-0",
-	}
-	notReadyStrimziUpgrade := adminprivate.KafkaUpdateRequest{
-		StrimziVersion: "strimzi-cluster-operator.v0.25.1-0",
-	}
-	allVersionsUpgrade := adminprivate.KafkaUpdateRequest{
-		StrimziVersion:  "strimzi-cluster-operator.v0.25.0-0",
-		KafkaIbpVersion: "2.8.1",
-		KafkaVersion:    "2.8.2",
-	}
-	versionsNotInStatusForValidStrimziVersion := adminprivate.KafkaUpdateRequest{
-		StrimziVersion:  "strimzi-cluster-operator.v0.25.0-0",
-		KafkaIbpVersion: "2.8.3",
-		KafkaVersion:    "2.8.3",
-	}
 
 	allFieldsUpdateRequest := adminprivate.KafkaUpdateRequest{
-		StrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
-		KafkaVersion:     "2.8.2",
-		KafkaIbpVersion:  "2.8.1",
-		KafkaStorageSize: "70Gi",
+		StrimziVersion:       "strimzi-cluster-operator.v0.25.0-0",
+		KafkaVersion:         "2.8.3",
+		KafkaIbpVersion:      "2.8.1",
+		MaxDataRetentionSize: "70Gi",
 	}
 
-	allFieldsEmptyParams := adminprivate.KafkaUpdateRequest{
-		StrimziVersion:   " ",
-		KafkaVersion:     " ",
-		KafkaIbpVersion:  " ",
-		KafkaStorageSize: " ",
-	}
-
-	sameStorageSizeUpdateRequest := adminprivate.KafkaUpdateRequest{
-		KafkaStorageSize: "60Gi",
-	}
-
-	biggerStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
-		KafkaStorageSize: "70Gi",
-	}
-
-	biggerStorageDifferentFormatUpdateRequest := adminprivate.KafkaUpdateRequest{
-		KafkaStorageSize: "75000Mi",
-	}
-
-	smallerStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
-		KafkaStorageSize: "50Gi",
-	}
-
-	wrongFormatStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
-		KafkaStorageSize: "70Gb",
-	}
-
-	randomStringStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
-		KafkaStorageSize: "M2h9O8wO7k",
-	}
-
-	smallerStorageDifferentFormatUpdateRequest := adminprivate.KafkaUpdateRequest{
-		KafkaStorageSize: "50000Mi",
-	}
+	initialStorageSize := "60Gi"
+	biggerStorageSizeDifferentFormat := "75000Mi"
+	smallerStorageSize := "50Gi"
+	smallerStorageSizeDifferentFormat := "50000Mi"
+	wrongFormatStorageSize := "80Gb"
+	randomStringStorageSize := "M2h9O8wO7k"
 
 	type args struct {
 		ctx                func(h *coreTest.Helper) context.Context
@@ -513,6 +436,78 @@ func TestAdminKafka_Update(t *testing.T) {
 		args           args
 		verifyResponse func(result adminprivate.Kafka, resp *http.Response, err error)
 	}{
+		// General
+		{
+			name: "should fail when kafkaUpdateRequest is empty",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when kafkaUpdateRequest request params contain only strings with whitespaces",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					StrimziVersion:       " ",
+					KafkaVersion:         " ",
+					KafkaIbpVersion:      " ",
+					KafkaStorageSize:     " ",
+					MaxDataRetentionSize: " ",
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when the requested kafka does not exist",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+				},
+				kafkaID:            "nonexistentkafkaID",
+				kafkaUpdateRequest: allFieldsUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(HaveOccurred())
+				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+			},
+		},
+		{
+			name: "should succeed when upgrading all possible values",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: allFieldsUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID1))
+				Expect(result.DesiredKafkaVersion).To(Equal(allFieldsUpdateRequest.KafkaVersion))
+				Expect(result.DesiredKafkaIbpVersion).To(Equal(allFieldsUpdateRequest.KafkaIbpVersion))
+				Expect(result.DesiredStrimziVersion).To(Equal(allFieldsUpdateRequest.StrimziVersion))
+				Expect(result.DeprecatedKafkaStorageSize).To(Equal(allFieldsUpdateRequest.MaxDataRetentionSize))
+
+				dataRetentionSizeQuantity := config.Quantity(allFieldsUpdateRequest.MaxDataRetentionSize)
+				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
+				Expect(convErr).ToNot(HaveOccurred())
+				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
+			},
+		},
+		// Auth tests
 		{
 			name: "should fail authentication when there is no role defined in the request",
 			args: args{
@@ -553,199 +548,33 @@ func TestAdminKafka_Update(t *testing.T) {
 			},
 		},
 		{
-			name: "should fail when kafkaUpdateRequest is empty",
+			name: fmt.Sprintf("should succeed when the role defined in the request is %s", auth.KasFleetManagerAdminWriteRole),
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
+				},
+				kafkaID:            sampleKafkaID1,
+				kafkaUpdateRequest: allFieldsUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID1))
+			},
+		},
+		{
+			name: fmt.Sprintf("should succeed when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
 				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: emptyKafkaUpdateRequest,
+				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when kafkaUpdateRequest request params contain only strings with whitespaces",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: allFieldsEmptyParams,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when downgrading ibp version",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: ibpDowngrade,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when upgrading ibp version to version higher than kafka version",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: ibpUpgradeHigherThanKafka,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when upgrading ibp version when already upgrade in progress",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID2,
-				kafkaUpdateRequest: ibpUpgrade,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when downgrading to lower minor kafka version",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: kafkaVersionMinorDowngrade,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when downgrading to lower patch kafka version smaller than ibp version",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID3,
-				kafkaUpdateRequest: kafkaVersionPatchDowngrade,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when downgrading to lower major kafka version",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID4,
-				kafkaUpdateRequest: kafkaVersionMajorDowngrade,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when upgrading to higher minor kafka version when not in status",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: kafkaVersionPatchUpgradeNotInStatus,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when upgrading kafka version when already upgrade in progress",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID2,
-				kafkaUpdateRequest: kafkaVersionPatchUpgradeInStatus,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when upgrading strimzi version when already upgrade in progress",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID2,
-				kafkaUpdateRequest: strimziUpgrade,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when upgrading strimzi version to a version not in the status",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: nonExistentStrimziUpgrade,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when upgrading simultaneously kafka, ibp and strimzi version when any of those not in status",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: versionsNotInStatusForValidStrimziVersion,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when upgrading strimzi version to a version that is not ready",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
-				},
-				kafkaID:            sampleKafkaID2,
-				kafkaUpdateRequest: notReadyStrimziUpgrade,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-			},
-		},
-		{
-			name: "should fail when the requested kafka does not exist",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
-				},
-				kafkaID:            "nonexistentkafkaID",
-				kafkaUpdateRequest: fullyPopulatedKafkaVersionUpdateRequest,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(HaveOccurred())
-				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID1))
 			},
 		},
 		{
@@ -764,61 +593,59 @@ func TestAdminKafka_Update(t *testing.T) {
 					return ctx
 				},
 				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: fullyPopulatedKafkaVersionUpdateRequest,
+				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 			},
 		},
+		// Kafka ibp downgrade/upgrade tests
 		{
-			name: fmt.Sprintf("should succeed when the role defined in the request is %s", auth.KasFleetManagerAdminWriteRole),
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
-				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: fullyPopulatedKafkaVersionUpdateRequest,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID1))
-			},
-		},
-		{
-			name: "should not fail when attempting to upgrade to the same storage size",
+			name: "should fail when downgrading ibp version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: sameStorageSizeUpdateRequest,
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					// based on allFieldsUpdateRequest values
+					KafkaIbpVersion: "2.6.0",
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.DeprecatedKafkaStorageSize).To(Equal(sameStorageSizeUpdateRequest.KafkaStorageSize))
-
-				dataRetentionSizeQuantity := config.Quantity(sameStorageSizeUpdateRequest.KafkaStorageSize)
-				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
-				Expect(convErr).ToNot(HaveOccurred())
-				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
+				Expect(err).NotTo(BeNil())
 			},
 		},
 		{
-			name: fmt.Sprintf("should succeed when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
+			name: "should fail when upgrading ibp version to version higher than kafka version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: fullyPopulatedKafkaVersionUpdateRequest,
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					// based on allFieldsUpdateRequest values
+					KafkaIbpVersion: "2.8.5",
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID1))
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading ibp version when already upgrade in progress",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID2,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					KafkaIbpVersion: "2.8.2",
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
 			},
 		},
 		{
@@ -827,14 +654,94 @@ func TestAdminKafka_Update(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: ibpUpgrade,
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					// based on allFieldsUpdateRequest values
+					KafkaIbpVersion: "2.8.2",
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.DesiredKafkaIbpVersion).To(Equal(ibpUpgrade.KafkaIbpVersion))
+				Expect(result.DesiredKafkaIbpVersion).To(Equal("2.8.2"))
+			},
+		},
+		// Kafka version downgrade/upgrade tests
+		{
+			name: "should fail when downgrading to lower minor kafka version",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					// must be lower than allFieldsUpdateRequest.KafkaVersion
+					KafkaVersion: "2.7.0",
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading to higher minor kafka version when not in status",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					KafkaVersion: "2.8.15",
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when downgrading to lower patch kafka version smaller than ibp version",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID3,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					KafkaVersion: "2.8.0",
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when downgrading to lower major kafka version",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID4,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					KafkaVersion: "1.8.0",
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading kafka version when already upgrade in progress",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID2,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					KafkaVersion: "2.9.0",
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
 			},
 		},
 		{
@@ -843,14 +750,17 @@ func TestAdminKafka_Update(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: kafkaVersionPatchDowngrade,
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					// based on allFieldsUpdateRequest values
+					KafkaVersion: "2.8.2",
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.DesiredKafkaVersion).To(Equal(kafkaVersionPatchDowngrade.KafkaVersion))
+				Expect(result.DesiredKafkaVersion).To(Equal("2.8.2"))
 			},
 		},
 		{
@@ -859,155 +769,371 @@ func TestAdminKafka_Update(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: kafkaVersionPatchUpgradeInStatus,
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					// based on allFieldsUpdateRequest values
+					KafkaVersion: "2.9.0",
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.DesiredKafkaVersion).To(Equal(kafkaVersionPatchUpgradeInStatus.KafkaVersion))
+				Expect(result.DesiredKafkaVersion).To(Equal("2.9.0"))
 			},
 		},
+		// Strimzi version downgrade/upgrade tests
+		{
+			name: "should fail when upgrading strimzi version when already upgrade in progress",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID2,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					StrimziVersion: "strimzi-cluster-operator.v0.25.0-0",
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading strimzi version to a version not in the status",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					StrimziVersion: "strimzi-cluster-operator.v0.29.0-0",
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading simultaneously kafka, ibp and strimzi version when any of those not in status",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					StrimziVersion:  "strimzi-cluster-operator.v0.26.0-0",
+					KafkaIbpVersion: "2.8.4",
+					KafkaVersion:    "2.8.4",
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when upgrading strimzi version to a version that is not ready",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID2,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					StrimziVersion: "strimzi-cluster-operator.v0.25.1-0",
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		// all version upgrades
 		{
 			name: "should succeed when upgrading simultaneously kafka, ibp and strimzi version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: allVersionsUpgrade,
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					StrimziVersion:  "strimzi-cluster-operator.v0.26.0-0",
+					KafkaIbpVersion: "2.9.0",
+					KafkaVersion:    "2.9.1",
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.DesiredKafkaVersion).To(Equal(allVersionsUpgrade.KafkaVersion))
-				Expect(result.DesiredKafkaIbpVersion).To(Equal(allVersionsUpgrade.KafkaIbpVersion))
-				Expect(result.DesiredStrimziVersion).To(Equal(allVersionsUpgrade.StrimziVersion))
+				Expect(result.DesiredKafkaVersion).To(Equal("2.9.1"))
+				Expect(result.DesiredKafkaIbpVersion).To(Equal("2.9.0"))
+				Expect(result.DesiredStrimziVersion).To(Equal("strimzi-cluster-operator.v0.26.0-0"))
 			},
 		},
+		// Storage update tests - using kafka_storage_size
 		{
-			name: "should succeed when upgrading all possible values",
+			name: "should succeed when attempting to update to the same storage size using kafka_storage_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: allFieldsUpdateRequest,
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					// current storage size for this kafka was updated to this size by
+					// 'should succeed when upgrading all possible values' test case
+					KafkaStorageSize: allFieldsUpdateRequest.MaxDataRetentionSize,
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.DesiredKafkaVersion).To(Equal(allFieldsUpdateRequest.KafkaVersion))
-				Expect(result.DesiredKafkaIbpVersion).To(Equal(allFieldsUpdateRequest.KafkaIbpVersion))
-				Expect(result.DesiredStrimziVersion).To(Equal(allFieldsUpdateRequest.StrimziVersion))
-				Expect(result.DeprecatedKafkaStorageSize).To(Equal(allFieldsUpdateRequest.KafkaStorageSize))
+				Expect(result.DeprecatedKafkaStorageSize).To(Equal(allFieldsUpdateRequest.MaxDataRetentionSize))
 
-				dataRetentionSizeQuantity := config.Quantity(allFieldsUpdateRequest.KafkaStorageSize)
+				dataRetentionSizeQuantity := config.Quantity(allFieldsUpdateRequest.MaxDataRetentionSize)
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
 				Expect(convErr).ToNot(HaveOccurred())
 				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
 			},
 		},
 		{
-			name: "should succeed when upgrading to bigger storage in different format",
+			name: "should fail when attempting to update to smaller storage size using kafka_storage_size_field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: biggerStorageDifferentFormatUpdateRequest,
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					KafkaStorageSize: smallerStorageSize,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when attempting to update to smaller storage size in different format using kafka_storage_size field",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					KafkaStorageSize: smallerStorageSizeDifferentFormat,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when attempting to update to smaller storage size in the wrong format using kafka_storage_size_field",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					KafkaStorageSize: wrongFormatStorageSize,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should succeed when updating to bigger storage size using kafka_storage_size field",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					KafkaStorageSize: biggerStorageSizeDifferentFormat,
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.DeprecatedKafkaStorageSize).To(Equal(biggerStorageDifferentFormatUpdateRequest.KafkaStorageSize))
+				Expect(result.DeprecatedKafkaStorageSize).To(Equal(biggerStorageSizeDifferentFormat))
 
-				dataRetentionSizeQuantity := config.Quantity(biggerStorageDifferentFormatUpdateRequest.KafkaStorageSize)
+				dataRetentionSizeQuantity := config.Quantity(biggerStorageSizeDifferentFormat)
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
 				Expect(convErr).ToNot(HaveOccurred())
 				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
 			},
 		},
 		{
-			name: "should fail when attempting to upgrade to smaller storage size",
+			name: "should fail when attempting to update storage size to a random string using kafka_storage_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: smallerStorageUpdateRequest,
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					KafkaStorageSize: randomStringStorageSize,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		// Storage update tests - using max_data_retention_size
+		{
+			name: "should succeed when attempting to update to the same storage size using max_data_retention_size field",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID2,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					MaxDataRetentionSize: initialStorageSize,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).ToNot(HaveOccurred())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.DeprecatedKafkaStorageSize).To(Equal(initialStorageSize))
+
+				dataRetentionSizeQuantity := config.Quantity(initialStorageSize)
+				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
+				Expect(convErr).ToNot(HaveOccurred())
+				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
+			},
+		},
+		{
+			name: "should fail when attempting to upgrade to smaller storage size using max_data_retention_size field",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID2,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					MaxDataRetentionSize: smallerStorageSize,
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
 			},
 		},
 		{
-			name: "should fail when attempting to upgrade to smaller storage size in different format",
+			name: "should fail when attempting to update to smaller storage size in different format using kafka_storage_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: smallerStorageDifferentFormatUpdateRequest,
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					KafkaStorageSize: smallerStorageSizeDifferentFormat,
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
 			},
 		},
 		{
-			name: "should fail when attempting to upgrade to smaller storage size in wrong format",
+			name: "should fail when attempting to update storage using an invalid format using max_data_retention_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: wrongFormatStorageUpdateRequest,
+				kafkaID: sampleKafkaID2,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					MaxDataRetentionSize: wrongFormatStorageSize,
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
 			},
 		},
 		{
-			name: "should fail when attempting to upgrade to smaller storage size when providing random string as new storage size",
+			name: "should succeed when upgrading to bigger storage size using max_data_retention_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: randomStringStorageUpdateRequest,
+				kafkaID: sampleKafkaID2,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					MaxDataRetentionSize: biggerStorageSizeDifferentFormat,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID2))
+				Expect(result.DeprecatedKafkaStorageSize).To(Equal(biggerStorageSizeDifferentFormat))
+
+				dataRetentionSizeQuantity := config.Quantity(biggerStorageSizeDifferentFormat)
+				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
+				Expect(convErr).ToNot(HaveOccurred())
+				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
+			},
+		},
+		{
+			name: "should fail when attempting to update storage size to a random string using max_data_retention_size field",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					MaxDataRetentionSize: randomStringStorageSize,
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
 			},
 		},
 		{
-			name: "should fail when attempting to upgrade storage with current storage size not set",
+			name: "should fail when attempting to update storage when current storage size not set",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID4,
-				kafkaUpdateRequest: biggerStorageUpdateRequest,
+				kafkaID: sampleKafkaID4,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					MaxDataRetentionSize: "100Gi",
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
 			},
 		},
 		{
-			name: "should fail when attempting to upgrade storage with current storage size set to some incorrect value",
+			name: "should fail when attempting to update storage when current storage size is set to some incorrect value",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
 				},
-				kafkaID:            sampleKafkaID3,
-				kafkaUpdateRequest: biggerStorageUpdateRequest,
+				kafkaID: sampleKafkaID3,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					MaxDataRetentionSize: biggerStorageSizeDifferentFormat,
+				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should use max_data_retention_size over kafka_storage_size if both are specified",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					KafkaStorageSize:     "1000Gi",
+					MaxDataRetentionSize: "100Gi",
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID1))
+				Expect(result.DeprecatedKafkaStorageSize).To(Equal("100Gi"))
+
+				dataRetentionSizeQuantity := config.Quantity("100Gi")
+				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
+				Expect(convErr).ToNot(HaveOccurred())
+				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
 			},
 		},
 	}
@@ -1071,7 +1197,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
 		ActualKafkaIBPVersion:  "2.7.0",
 		DesiredKafkaIBPVersion: "2.7.0",
-		KafkaStorageSize:       "60Gi",
+		KafkaStorageSize:       initialStorageSize,
 	}
 
 	kafka2 := &dbapi.KafkaRequest{
@@ -1095,6 +1221,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		KafkaIBPUpgrading:      true,
 		KafkaUpgrading:         true,
 		StrimziUpgrading:       true,
+		KafkaStorageSize:       initialStorageSize,
 	}
 
 	kafka3 := &dbapi.KafkaRequest{
@@ -1249,12 +1376,15 @@ func getTestStrimziVersionsMatrix() []api.StrimziVersion {
 				{Version: "2.8.0"},
 				{Version: "2.8.1"},
 				{Version: "2.8.2"},
+				{Version: "2.8.3"},
+				{Version: "2.9.0"},
 			},
 			KafkaIBPVersions: []api.KafkaIBPVersion{
 				{Version: "2.6.0"},
 				{Version: "2.7.0"},
 				{Version: "2.8.0"},
 				{Version: "2.8.1"},
+				{Version: "2.8.2"},
 			},
 		},
 		{
@@ -1279,9 +1409,11 @@ func getTestStrimziVersionsMatrix() []api.StrimziVersion {
 			Ready:   true,
 			KafkaVersions: []api.KafkaVersion{
 				{Version: "2.8.2"},
+				{Version: "2.9.1"},
 			},
 			KafkaIBPVersions: []api.KafkaIBPVersion{
 				{Version: "2.8.2"},
+				{Version: "2.9.0"},
 			},
 		},
 	}

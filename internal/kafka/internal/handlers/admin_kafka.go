@@ -169,10 +169,12 @@ func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				return false
 			}
 
+			requestedStorageSize, _ := arrays.FirstNonEmpty(kafkaUpdateReq.MaxDataRetentionSize, kafkaUpdateReq.KafkaStorageSize)
+
 			updateRequired := update(&kafkaRequest.DesiredKafkaVersion, kafkaUpdateReq.KafkaVersion)
 			updateRequired = update(&kafkaRequest.DesiredStrimziVersion, kafkaUpdateReq.StrimziVersion) || updateRequired
 			updateRequired = update(&kafkaRequest.DesiredKafkaIBPVersion, kafkaUpdateReq.KafkaIbpVersion) || updateRequired
-			updateRequired = update(&kafkaRequest.KafkaStorageSize, kafkaUpdateReq.KafkaStorageSize) || updateRequired
+			updateRequired = update(&kafkaRequest.KafkaStorageSize, requestedStorageSize) || updateRequired
 
 			if updateRequired {
 				err := h.kafkaService.VerifyAndUpdateKafkaAdmin(ctx, kafkaRequest)

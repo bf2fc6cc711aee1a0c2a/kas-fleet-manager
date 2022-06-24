@@ -15,4 +15,6 @@ type KafkaUpdateRequest struct {
 	KafkaVersion     string `json:"kafka_version,omitempty"`
 	KafkaIbpVersion  string `json:"kafka_ibp_version,omitempty"`
 	KafkaStorageSize string `json:"kafka_storage_size,omitempty"`
+	// Maximum data storage available to this Kafka
+	MaxDataRetentionSize string `json:"max_data_retention_size,omitempty"`
 }

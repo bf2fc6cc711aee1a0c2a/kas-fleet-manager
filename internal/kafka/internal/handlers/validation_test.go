@@ -14,11 +14,13 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	mockkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
+
 	"github.com/golang-jwt/jwt/v4"
 	. "github.com/onsi/gomega"
 )
@@ -970,7 +972,7 @@ func TestValidateKafkaUpdateFields(t *testing.T) {
 					KafkaStorageSize: "",
 				},
 			},
-			want: errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version or kafka_storage_size to be provided"),
+			want: errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version, kafka_storage_size or max_data_retention_size to be provided"),
 		},
 	}
 	g := NewWithT(t)
@@ -990,60 +992,124 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 		kafkaRequest   *dbapi.KafkaRequest
 		kafkaUpdateReq *private.KafkaUpdateRequest
 	}
+
+	currentStorageSize := "1Gi"
+	increaseStorageSizeReq := "10Gi"
+	decreaseStorageSizeReq := "10Mi"
+	invalidStorageSize := "2abc"
+
 	tests := []struct {
 		name string
 		args args
 		want *errors.ServiceError
 	}{
 		{
-			name: "should return nil if it successfully validates the kafka storage size",
+			name: "should return nil if kafka_storage_size or max_data_retention_size is not specified",
 			args: args{
-				kafkaRequest: &dbapi.KafkaRequest{
-					KafkaStorageSize: "2",
-				},
+				kafkaRequest: mockkafka.BuildKafkaRequest(
+					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
+				),
+				kafkaUpdateReq: &private.KafkaUpdateRequest{},
+			},
+			want: nil,
+		},
+		{
+			name: "should return nil if specified kafka storage size is valid",
+			args: args{
+				kafkaRequest: mockkafka.BuildKafkaRequest(
+					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
+				),
 				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					KafkaStorageSize: "2",
+					KafkaStorageSize: increaseStorageSizeReq,
 				},
 			},
 			want: nil,
 		},
 		{
-			name: "should return an error if the kafka request storage size is missing",
+			name: "should return an error if it is unable to parse kafka_storage_size",
 			args: args{
-				kafkaRequest: &dbapi.KafkaRequest{},
+				kafkaRequest: mockkafka.BuildKafkaRequest(
+					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
+				),
 				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					KafkaStorageSize: "2",
+					KafkaStorageSize: invalidStorageSize,
+				},
+			},
+			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current requested size: '%s'", invalidStorageSize),
+		},
+		{
+			name: "should return an error if the the kafka request storage size parameter is greater than the the kafka update request storage size parameter",
+			args: args{
+				kafkaRequest: mockkafka.BuildKafkaRequest(
+					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
+				),
+				kafkaUpdateReq: &private.KafkaUpdateRequest{
+					KafkaStorageSize: decreaseStorageSizeReq,
+				},
+			},
+			want: errors.FieldValidationError("Failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", decreaseStorageSizeReq, currentStorageSize),
+		},
+		{
+			name: "should return nil if specified max data retention size is valid",
+			args: args{
+				kafkaRequest: mockkafka.BuildKafkaRequest(
+					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
+				),
+				kafkaUpdateReq: &private.KafkaUpdateRequest{
+					MaxDataRetentionSize: increaseStorageSizeReq,
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "should return an error if it is unable to parse max_data_retention_size",
+			args: args{
+				kafkaRequest: mockkafka.BuildKafkaRequest(
+					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
+				),
+				kafkaUpdateReq: &private.KafkaUpdateRequest{
+					MaxDataRetentionSize: invalidStorageSize,
+				},
+			},
+			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current requested size: '%s'", invalidStorageSize),
+		},
+		{
+			name: "should return an error if specified max data retention size is lower than current size",
+			args: args{
+				kafkaRequest: mockkafka.BuildKafkaRequest(
+					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
+				),
+				kafkaUpdateReq: &private.KafkaUpdateRequest{
+					MaxDataRetentionSize: decreaseStorageSizeReq,
+				},
+			},
+			want: errors.FieldValidationError("Failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", decreaseStorageSizeReq, currentStorageSize),
+		},
+		{
+			name: "should return an error if the current kafka request storage size is an empty string",
+			args: args{
+				kafkaRequest: mockkafka.BuildKafkaRequest(),
+				kafkaUpdateReq: &private.KafkaUpdateRequest{
+					KafkaStorageSize: increaseStorageSizeReq,
 				},
 			},
 			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: ''"),
 		},
 		{
-			name: "should return an error if it is unable to parse the kafka update request storage size parameter",
+			name: "should return an error if the current kafka request storage size is an invalid Quantity value",
 			args: args{
-				kafkaRequest: &dbapi.KafkaRequest{
-					KafkaStorageSize: "2",
-				},
+				kafkaRequest: mockkafka.BuildKafkaRequest(
+					mockkafka.With(mockkafka.STORAGE_SIZE, invalidStorageSize),
+				),
 				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					KafkaStorageSize: "string",
+					KafkaStorageSize: increaseStorageSizeReq,
 				},
 			},
-			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current requested size: 'string'"),
-		},
-		{
-			name: "should return an error if the the kafka request storage size parameter is greater than the the kafka update request storage size parameter",
-			args: args{
-				kafkaRequest: &dbapi.KafkaRequest{
-					KafkaStorageSize: "3",
-				},
-				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					KafkaStorageSize: "2",
-				},
-			},
-			want: errors.FieldValidationError("Failed to update Kafka Request. Requested size: '2' should be greater than current size: '3'"),
+			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: '%s'", invalidStorageSize),
 		},
 	}
-	g := NewWithT(t)
 	for _, testcase := range tests {
+		g := NewWithT(t)
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
