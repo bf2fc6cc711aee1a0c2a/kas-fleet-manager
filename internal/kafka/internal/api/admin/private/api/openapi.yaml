@@ -351,9 +351,26 @@ components:
           type: integer
       type: object
     Error:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/Error_allOf'
+      properties:
+        reason:
+          type: string
+        operation_id:
+          type: string
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+        code:
+          type: string
+      required:
+      - code
+      - href
+      - id
+      - kind
+      - reason
+      type: object
     ObjectReference:
       properties:
         id:
@@ -362,6 +379,10 @@ components:
           type: string
         href:
           type: string
+      required:
+      - href
+      - id
+      - kind
       type: object
     List:
       properties:
@@ -475,14 +496,6 @@ components:
             allOf:
             - $ref: '#/components/schemas/Kafka'
           type: array
-    Error_allOf:
-      properties:
-        code:
-          type: string
-        reason:
-          type: string
-        operation_id:
-          type: string
   securitySchemes:
     Bearer:
       bearerFormat: JWT

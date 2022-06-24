@@ -421,17 +421,25 @@ components:
       - type
       type: object
     Error:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/Error_allOf'
-    ObjectReference:
       properties:
+        reason:
+          type: string
+        operation_id:
+          type: string
         id:
           type: string
         kind:
           type: string
         href:
           type: string
+        code:
+          type: string
+      required:
+      - code
+      - href
+      - id
+      - kind
+      - reason
       type: object
     ManagedKafka_allOf_metadata_annotations:
       properties:
@@ -679,14 +687,6 @@ components:
           type: object
         observability:
           $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec_observability'
-    Error_allOf:
-      properties:
-        code:
-          type: string
-        reason:
-          type: string
-        operation_id:
-          type: string
   securitySchemes:
     Bearer:
       bearerFormat: JWT

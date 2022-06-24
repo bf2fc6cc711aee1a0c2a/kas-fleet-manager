@@ -15,9 +15,9 @@ import (
 
 // Kafka struct for Kafka
 type Kafka struct {
-	Id   string `json:"id,omitempty"`
-	Kind string `json:"kind,omitempty"`
-	Href string `json:"href,omitempty"`
+	Id   string `json:"id"`
+	Kind string `json:"kind"`
+	Href string `json:"href"`
 	// Values: [accepted, preparing, provisioning, ready, failed, deprovision, deleting]
 	Status string `json:"status,omitempty"`
 	// Name of Cloud used to deploy. For example AWS
