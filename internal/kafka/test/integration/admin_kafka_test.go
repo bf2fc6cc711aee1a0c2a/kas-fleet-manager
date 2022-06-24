@@ -798,7 +798,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.KafkaStorageSize).To(Equal(sameStorageSizeUpdateRequest.KafkaStorageSize))
+				Expect(result.DeprecatedKafkaStorageSize).To(Equal(sameStorageSizeUpdateRequest.KafkaStorageSize))
 
 				dataRetentionSizeQuantity := config.Quantity(sameStorageSizeUpdateRequest.KafkaStorageSize)
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
@@ -903,7 +903,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				Expect(result.DesiredKafkaVersion).To(Equal(allFieldsUpdateRequest.KafkaVersion))
 				Expect(result.DesiredKafkaIbpVersion).To(Equal(allFieldsUpdateRequest.KafkaIbpVersion))
 				Expect(result.DesiredStrimziVersion).To(Equal(allFieldsUpdateRequest.StrimziVersion))
-				Expect(result.KafkaStorageSize).To(Equal(allFieldsUpdateRequest.KafkaStorageSize))
+				Expect(result.DeprecatedKafkaStorageSize).To(Equal(allFieldsUpdateRequest.KafkaStorageSize))
 
 				dataRetentionSizeQuantity := config.Quantity(allFieldsUpdateRequest.KafkaStorageSize)
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
@@ -924,7 +924,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.KafkaStorageSize).To(Equal(biggerStorageDifferentFormatUpdateRequest.KafkaStorageSize))
+				Expect(result.DeprecatedKafkaStorageSize).To(Equal(biggerStorageDifferentFormatUpdateRequest.KafkaStorageSize))
 
 				dataRetentionSizeQuantity := config.Quantity(biggerStorageDifferentFormatUpdateRequest.KafkaStorageSize)
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()

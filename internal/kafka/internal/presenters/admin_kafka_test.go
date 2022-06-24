@@ -86,7 +86,7 @@ func TestPresentKafkaRequestAdminEndpoint(t *testing.T) {
 				accountService: account.NewMockAccountService(),
 			},
 			want: mock.BuildAdminKafkaRequest(func(kafka *private.Kafka) {
-				kafka.KafkaStorageSize = storageSize
+				kafka.DeprecatedKafkaStorageSize = storageSize
 				kafka.OrganisationId = mock.DefaultOrganisationId
 
 				dataRetentionSizeQuantity := config.Quantity(storageSize)

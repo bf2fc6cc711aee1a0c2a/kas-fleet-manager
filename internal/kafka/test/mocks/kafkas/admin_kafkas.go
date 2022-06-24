@@ -11,20 +11,20 @@ import (
 
 func BuildAdminKafkaRequest(modifyFn func(kafka *private.Kafka)) *private.Kafka {
 	kafka := &private.Kafka{
-		ClusterId:           DefaultClusterID,
-		Region:              DefaultKafkaRequestRegion,
-		CloudProvider:       DefaultKafkaRequestProvider,
-		Status:              constants.KafkaRequestStatusReady.String(),
-		MultiAz:             DefaultMultiAz,
-		Owner:               user,
-		AccountNumber:       "mock-ebs-0", // value relies on mock from here: pkg/services/account/account_mock.go
-		Name:                DefaultKafkaRequestName,
-		Namespace:           DefaultKafkaRequestName,
-		InstanceType:        DefaultInstanceType,
-		SizeId:              mocksupportedinstancetypes.DefaultKafkaInstanceSizeId,
-		BootstrapServerHost: fmt.Sprintf("%s:443", DefaultBootstrapServerHost),
-		KafkaStorageSize:    mocksupportedinstancetypes.DefaultMaxDataRetentionSize,
-		OrganisationId:      DefaultOrganisationId,
+		ClusterId:                  DefaultClusterID,
+		Region:                     DefaultKafkaRequestRegion,
+		CloudProvider:              DefaultKafkaRequestProvider,
+		Status:                     constants.KafkaRequestStatusReady.String(),
+		MultiAz:                    DefaultMultiAz,
+		Owner:                      user,
+		AccountNumber:              "mock-ebs-0", // value relies on mock from here: pkg/services/account/account_mock.go
+		Name:                       DefaultKafkaRequestName,
+		Namespace:                  DefaultKafkaRequestName,
+		InstanceType:               DefaultInstanceType,
+		SizeId:                     mocksupportedinstancetypes.DefaultKafkaInstanceSizeId,
+		BootstrapServerHost:        fmt.Sprintf("%s:443", DefaultBootstrapServerHost),
+		DeprecatedKafkaStorageSize: mocksupportedinstancetypes.DefaultMaxDataRetentionSize,
+		OrganisationId:             DefaultOrganisationId,
 	}
 	if modifyFn != nil {
 		modifyFn(kafka)

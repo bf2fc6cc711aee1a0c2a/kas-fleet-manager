@@ -425,7 +425,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			resp.Body.Close()
 		}
 		Expect(err).To(BeNil())
-		Expect(result.KafkaStorageSize).To(Equal(biggerStorageUpdateRequest.KafkaStorageSize))
+		Expect(result.DeprecatedKafkaStorageSize).To(Equal(biggerStorageUpdateRequest.KafkaStorageSize))
 
 		dataRetentionSizeQuantity := config.Quantity(biggerStorageUpdateRequest.KafkaStorageSize)
 		dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
