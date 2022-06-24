@@ -458,11 +458,11 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					StrimziVersion:       " ",
-					KafkaVersion:         " ",
-					KafkaIbpVersion:      " ",
-					KafkaStorageSize:     " ",
-					MaxDataRetentionSize: " ",
+					StrimziVersion:             " ",
+					KafkaVersion:               " ",
+					KafkaIbpVersion:            " ",
+					DeprecatedKafkaStorageSize: " ",
+					MaxDataRetentionSize:       " ",
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
@@ -868,7 +868,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				Expect(result.DesiredStrimziVersion).To(Equal("strimzi-cluster-operator.v0.26.0-0"))
 			},
 		},
-		// Storage update tests - using kafka_storage_size
+		// Storage update tests - using kafka_storage_size (to be removed once kafka_storage_size has been removed)
 		{
 			name: "should succeed when attempting to update to the same storage size using kafka_storage_size field",
 			args: args{
@@ -879,7 +879,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
 					// current storage size for this kafka was updated to this size by
 					// 'should succeed when upgrading all possible values' test case
-					KafkaStorageSize: allFieldsUpdateRequest.MaxDataRetentionSize,
+					DeprecatedKafkaStorageSize: allFieldsUpdateRequest.MaxDataRetentionSize,
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
@@ -901,7 +901,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					KafkaStorageSize: smallerStorageSize,
+					DeprecatedKafkaStorageSize: smallerStorageSize,
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
@@ -916,7 +916,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					KafkaStorageSize: smallerStorageSizeDifferentFormat,
+					DeprecatedKafkaStorageSize: smallerStorageSizeDifferentFormat,
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
@@ -931,7 +931,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					KafkaStorageSize: wrongFormatStorageSize,
+					DeprecatedKafkaStorageSize: wrongFormatStorageSize,
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
@@ -946,7 +946,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					KafkaStorageSize: biggerStorageSizeDifferentFormat,
+					DeprecatedKafkaStorageSize: biggerStorageSizeDifferentFormat,
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
@@ -969,7 +969,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					KafkaStorageSize: randomStringStorageSize,
+					DeprecatedKafkaStorageSize: randomStringStorageSize,
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
@@ -1022,7 +1022,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					KafkaStorageSize: smallerStorageSizeDifferentFormat,
+					DeprecatedKafkaStorageSize: smallerStorageSizeDifferentFormat,
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
@@ -1120,8 +1120,8 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					KafkaStorageSize:     "1000Gi",
-					MaxDataRetentionSize: "100Gi",
+					DeprecatedKafkaStorageSize: "1000Gi",
+					MaxDataRetentionSize:       "100Gi",
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {

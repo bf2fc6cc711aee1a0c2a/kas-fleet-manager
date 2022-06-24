@@ -954,10 +954,10 @@ func TestValidateKafkaUpdateFields(t *testing.T) {
 			name: "should return nil if it validates kafka update fields successfully",
 			args: args{
 				kafkaUpdateRequest: &private.KafkaUpdateRequest{
-					StrimziVersion:   "StrimziVersion",
-					KafkaVersion:     "KafkaVersion",
-					KafkaIbpVersion:  "KafkaIbpVersion",
-					KafkaStorageSize: "KafkaStorageSize",
+					StrimziVersion:             "StrimziVersion",
+					KafkaVersion:               "KafkaVersion",
+					KafkaIbpVersion:            "KafkaIbpVersion",
+					DeprecatedKafkaStorageSize: "KafkaStorageSize",
 				},
 			},
 			want: nil,
@@ -966,10 +966,10 @@ func TestValidateKafkaUpdateFields(t *testing.T) {
 			name: "should return error if all fields are empty",
 			args: args{
 				kafkaUpdateRequest: &private.KafkaUpdateRequest{
-					StrimziVersion:   "",
-					KafkaVersion:     "",
-					KafkaIbpVersion:  "",
-					KafkaStorageSize: "",
+					StrimziVersion:             "",
+					KafkaVersion:               "",
+					KafkaIbpVersion:            "",
+					DeprecatedKafkaStorageSize: "",
 				},
 			},
 			want: errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version, kafka_storage_size or max_data_retention_size to be provided"),
@@ -1020,7 +1020,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
 				),
 				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					KafkaStorageSize: increaseStorageSizeReq,
+					DeprecatedKafkaStorageSize: increaseStorageSizeReq,
 				},
 			},
 			want: nil,
@@ -1032,7 +1032,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
 				),
 				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					KafkaStorageSize: invalidStorageSize,
+					DeprecatedKafkaStorageSize: invalidStorageSize,
 				},
 			},
 			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current requested size: '%s'", invalidStorageSize),
@@ -1044,7 +1044,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
 				),
 				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					KafkaStorageSize: decreaseStorageSizeReq,
+					DeprecatedKafkaStorageSize: decreaseStorageSizeReq,
 				},
 			},
 			want: errors.FieldValidationError("Failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", decreaseStorageSizeReq, currentStorageSize),
@@ -1090,7 +1090,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 			args: args{
 				kafkaRequest: mockkafka.BuildKafkaRequest(),
 				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					KafkaStorageSize: increaseStorageSizeReq,
+					DeprecatedKafkaStorageSize: increaseStorageSizeReq,
 				},
 			},
 			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: ''"),
@@ -1102,7 +1102,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					mockkafka.With(mockkafka.STORAGE_SIZE, invalidStorageSize),
 				),
 				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					KafkaStorageSize: increaseStorageSizeReq,
+					DeprecatedKafkaStorageSize: increaseStorageSizeReq,
 				},
 			},
 			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: '%s'", invalidStorageSize),
