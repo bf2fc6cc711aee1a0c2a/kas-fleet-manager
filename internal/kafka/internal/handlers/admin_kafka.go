@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
@@ -23,13 +22,15 @@ type adminKafkaHandler struct {
 	kafkaService   services.KafkaService
 	accountService account.AccountService
 	providerConfig *config.ProviderConfig
+	clusterService services.ClusterService
 }
 
-func NewAdminKafkaHandler(kafkaService services.KafkaService, accountService account.AccountService, providerConfig *config.ProviderConfig) *adminKafkaHandler {
+func NewAdminKafkaHandler(kafkaService services.KafkaService, accountService account.AccountService, providerConfig *config.ProviderConfig, clusterService services.ClusterService) *adminKafkaHandler {
 	return &adminKafkaHandler{
 		kafkaService:   kafkaService,
 		accountService: accountService,
 		providerConfig: providerConfig,
+		clusterService: clusterService,
 	}
 }
 
@@ -104,7 +105,7 @@ func (h adminKafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)
 }
 
-func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
 	ctx := r.Context()
@@ -152,6 +153,7 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				}
 				return nil
 			},
+			validateVersionsCompatibility(h, kafkaRequest, &kafkaUpdateReq),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
@@ -173,9 +175,9 @@ func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 			updateRequired = update(&kafkaRequest.KafkaStorageSize, kafkaUpdateReq.KafkaStorageSize) || updateRequired
 
 			if updateRequired {
-				err3 := h.kafkaService.VerifyAndUpdateKafkaAdmin(ctx, kafkaRequest)
-				if err3 != nil {
-					return nil, err3
+				err := h.kafkaService.VerifyAndUpdateKafkaAdmin(ctx, kafkaRequest)
+				if err != nil {
+					return nil, err
 				}
 			}
 			return presenters.PresentKafkaRequestAdminEndpoint(kafkaRequest, h.accountService)
