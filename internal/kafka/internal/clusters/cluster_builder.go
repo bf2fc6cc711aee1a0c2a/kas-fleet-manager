@@ -61,8 +61,7 @@ func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRe
 	clusterBuilder.Name(r.idGenerator.Generate())
 	clusterBuilder.CloudProvider(clustersmgmtv1.NewCloudProvider().ID(clusterRequest.CloudProvider))
 	clusterBuilder.Region(clustersmgmtv1.NewCloudRegion().ID(clusterRequest.Region))
-	// currently only enabled for MultiAZ.
-	clusterBuilder.MultiAZ(true)
+	clusterBuilder.MultiAZ(clusterRequest.MultiAZ)
 	if r.dataplaneClusterConfig.OpenshiftVersion != "" {
 		clusterBuilder.Version(clustersmgmtv1.NewVersion().ID(r.dataplaneClusterConfig.OpenshiftVersion))
 	}

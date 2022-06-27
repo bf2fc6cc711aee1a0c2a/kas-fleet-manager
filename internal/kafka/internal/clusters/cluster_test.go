@@ -130,6 +130,43 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "successful conversion of all supported provided values with multi_az set to false",
+			fields: fields{
+				idGenerator: &ocm.IDGeneratorMock{
+					GenerateFunc: func() string {
+						return ""
+					},
+				},
+				awsConfig:              awsConfig,
+				dataplaneClusterConfig: dataplaneClusterConfig,
+			},
+			args: args{
+				clusterRequest: &types.ClusterRequest{
+					CloudProvider: clusterservicetest.MockClusterCloudProvider,
+					Region:        clusterservicetest.MockClusterRegion,
+					MultiAZ:       false,
+				},
+			},
+			wantFn: func() *clustersmgmtv1.Cluster {
+				cluster, err := clusterservicetest.NewMockCluster(func(builder *clustersmgmtv1.ClusterBuilder) {
+					// these values will be ignored by the conversion as they're unsupported. so expect different
+					// values than we provide.
+					builder.CCS(clustersmgmtv1.NewCCS().Enabled(true))
+					builder.Managed(true)
+					builder.Name("")
+					builder.AWS(clusterAWS)
+					builder.MultiAZ(false)
+					builder.Version(clustersmgmtv1.NewVersion().ID(openshiftVersion))
+					builder.Nodes(clustersmgmtv1.NewClusterNodes().ComputeMachineType(clustersmgmtv1.NewMachineType().ID(ComputeMachineType)))
+				})
+				if err != nil {
+					panic(err)
+				}
+				return cluster
+			},
+			wantErr: false,
+		},
 	}
 
 	RegisterTestingT(t)
