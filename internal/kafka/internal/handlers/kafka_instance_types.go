@@ -13,12 +13,12 @@ import (
 )
 
 type supportedKafkaInstanceTypesHandler struct {
-	service services.SupportedKafkaInstanceTypesService
+	supportedKafkaInstanceTypesService services.SupportedKafkaInstanceTypesService
 }
 
-func NewSupportedKafkaInstanceTypesHandler(service services.SupportedKafkaInstanceTypesService) *supportedKafkaInstanceTypesHandler {
+func NewSupportedKafkaInstanceTypesHandler(supportedKafkaInstanceTypesService services.SupportedKafkaInstanceTypesService) *supportedKafkaInstanceTypesHandler {
 	return &supportedKafkaInstanceTypesHandler{
-		service: service,
+		supportedKafkaInstanceTypesService: supportedKafkaInstanceTypesService,
 	}
 }
 
@@ -36,7 +36,7 @@ func (h *supportedKafkaInstanceTypesHandler) ListSupportedKafkaInstanceTypes(w h
 				InstanceTypes: []public.SupportedKafkaInstanceType{},
 			}
 
-			regionInstanceTypeList, err := h.service.GetSupportedKafkaInstanceTypesByRegion(cloudProvider, cloudRegion)
+			regionInstanceTypeList, err := h.supportedKafkaInstanceTypesService.GetSupportedKafkaInstanceTypesByRegion(cloudProvider, cloudRegion)
 			if err != nil {
 				if err.IsInstanceTypeNotSupported() {
 					logger.Logger.Error(err)
