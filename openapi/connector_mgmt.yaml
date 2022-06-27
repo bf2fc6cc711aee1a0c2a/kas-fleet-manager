@@ -5,6 +5,12 @@ info:
   title: Connector Management API
   version: 0.1.0
   description: Connector Management API is a REST API to manage connectors.
+  license:
+    name: 'Apache 2.0'
+    url: 'https://www.apache.org/licenses/LICENSE-2.0'
+  contact: 
+    name: 'Red Hat OpenShift Streams for Apache Kafka Support'
+    email: 'rhosak-support@redhat.com'
 servers:
   - url: https://api.openshift.com
     description: Main (production) server
@@ -23,7 +29,8 @@ tags:
     description: ""
   - name: Connector Service
     description: ""
-
+  - name : Connector Namespaces
+    description: ""
 paths:
   #
   #  Connector Service
@@ -986,18 +993,27 @@ components:
           type: integer
         total:
           type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ObjectReference"
 
     Error:
-      allOf:
-        - $ref: "#/components/schemas/ObjectReference"
-        - type: object
-          properties:
-            code:
-              type: string
-            reason:
-              type: string
-            operation_id:
-              type: string
+        type: object
+        required: [id, kind, href, code, reason]
+        properties:
+          reason:
+            type: string
+          operation_id:
+            type: string
+          id:
+            type: string
+          kind:
+            type: string
+          href:
+            type: string
+          code:
+            type: string
 
     ObjectReference:
       type: object
@@ -1719,6 +1735,9 @@ components:
         error_handling:
           dead_letter_queue:
             topic: "dlq"
+        service_account:
+            client_id: "SA-121212"
+            client_secret: "secret"
     ConnectorNamespaceCreateExample:
       value:
         name: "MyNamespace"

@@ -1797,6 +1797,10 @@ components:
           type: integer
         total:
           type: integer
+        items:
+          items:
+            $ref: '#/components/schemas/ObjectReference'
+          type: array
       required:
       - items
       - kind
@@ -1804,11 +1808,6 @@ components:
       - size
       - total
       type: object
-    ConnectorCluster:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/ConnectorClusterMeta'
-      - $ref: '#/components/schemas/ConnectorClusterStatus'
     ObjectReference:
       properties:
         id:
@@ -1818,6 +1817,11 @@ components:
         href:
           type: string
       type: object
+    ConnectorCluster:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/ConnectorClusterMeta'
+      - $ref: '#/components/schemas/ConnectorClusterStatus'
     ConnectorClusterMeta:
       allOf:
       - $ref: '#/components/schemas/ObjectMeta'
@@ -1848,9 +1852,33 @@ components:
       - deleting
       type: string
     Error:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/Error_allOf'
+      example:
+        reason: reason
+        code: code
+        kind: kind
+        operation_id: operation_id
+        id: id
+        href: href
+      properties:
+        reason:
+          type: string
+        operation_id:
+          type: string
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+        code:
+          type: string
+      required:
+      - code
+      - href
+      - id
+      - kind
+      - reason
+      type: object
     ConnectorNamespaceList:
       allOf:
       - $ref: '#/components/schemas/List'
@@ -2131,14 +2159,6 @@ components:
         state:
           $ref: '#/components/schemas/ConnectorClusterState'
         error:
-          type: string
-    Error_allOf:
-      properties:
-        code:
-          type: string
-        reason:
-          type: string
-        operation_id:
           type: string
     ConnectorNamespaceList_allOf:
       properties:

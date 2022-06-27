@@ -1,6 +1,12 @@
 openapi: 3.0.0
 info:
+  contact:
+    email: rhosak-support@redhat.com
+    name: Red Hat OpenShift Streams for Apache Kafka Support
   description: Connector Management API is a REST API to manage connectors.
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
   title: Connector Management API
   version: 0.1.0
 servers:
@@ -17,6 +23,7 @@ tags:
 - name: Connectors
 - name: Connector Clusters
 - name: Connector Service
+- name: Connector Namespaces
 paths:
   /api/connector_mgmt/v1:
     get:
@@ -1465,6 +1472,9 @@ components:
         error_handling:
           dead_letter_queue:
             topic: dlq
+        service_account:
+          client_id: SA-121212
+          client_secret: secret
     ConnectorNamespaceCreateExample:
       value:
         name: MyNamespace
@@ -1664,6 +1674,10 @@ components:
           type: integer
         total:
           type: integer
+        items:
+          items:
+            $ref: '#/components/schemas/ObjectReference'
+          type: array
       required:
       - items
       - kind
@@ -1672,9 +1686,33 @@ components:
       - total
       type: object
     Error:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/Error_allOf'
+      example:
+        reason: reason
+        code: code
+        kind: kind
+        operation_id: operation_id
+        id: id
+        href: href
+      properties:
+        reason:
+          type: string
+        operation_id:
+          type: string
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+        code:
+          type: string
+      required:
+      - code
+      - href
+      - id
+      - kind
+      - reason
+      type: object
     ObjectReference:
       properties:
         id:
@@ -1982,14 +2020,6 @@ components:
       description: CPU quota for limits or requests
       pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
       type: string
-    Error_allOf:
-      properties:
-        code:
-          type: string
-        reason:
-          type: string
-        operation_id:
-          type: string
     VersionMetadata_allOf:
       example: '{"kind":"APIVersion","id":"v1","href":"/api/connector_mgmt/v1","collections":[{"id":"kafkas","href":"/api/connector_mgmt/v1/kafka_connectors","kind":"ConnectorList"}]}'
       properties:
