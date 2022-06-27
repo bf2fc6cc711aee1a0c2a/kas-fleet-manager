@@ -6,9 +6,10 @@ package migrations
 // is done here, even though the same type is defined in pkg/api
 
 import (
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/go-gormigrate/gormigrate/v2"
-	"time"
 )
 
 func addConnectorNamespaceTables(migrationId string) *gormigrate.Migration {

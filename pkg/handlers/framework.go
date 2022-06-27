@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -65,7 +66,7 @@ func Handle(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, httpStat
 		// Use the following instead if you want to debug the request body:
 		//bytes, err := ioutil.ReadAll(r.Body)
 		//if err != nil {
-		//	handleError(r.Context(), w, errors.MalformedRequest("Unable to read request body: %s", err))
+		//	errorHandler(r, w, cfg, errors.MalformedRequest("Unable to read request body: %s", err))
 		//	return
 		//}
 		//fmt.Println(string(bytes))

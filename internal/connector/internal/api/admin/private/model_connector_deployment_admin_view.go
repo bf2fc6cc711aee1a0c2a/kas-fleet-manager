@@ -16,5 +16,5 @@ type ConnectorDeploymentAdminView struct {
 	Href     string                                    `json:"href,omitempty"`
 	Metadata ConnectorDeploymentAdminViewAllOfMetadata `json:"metadata,omitempty"`
 	Spec     ConnectorDeploymentAdminSpec              `json:"spec,omitempty"`
-	Status   ConnectorDeploymentStatus                 `json:"status,omitempty"`
+	Status   ConnectorDeploymentAdminStatus            `json:"status,omitempty"`
 }

@@ -32,6 +32,9 @@ func TestMain(m *testing.M) {
 			"INSERT INTO connector_channels (channel) VALUES ('old_channel')",
 			"INSERT INTO connector_type_channels (connector_type_id, connector_channel_channel) VALUES ('log_sink_0.1', 'old_channel')",
 			"INSERT INTO connector_type_capabilities (connector_type_id, capability) VALUES ('log_sink_0.1', 'old_capability')",
+
+			"INSERT INTO connector_channels (channel) VALUES ('stable')",
+			"INSERT INTO connector_shard_metadata (connector_type_id, channel) VALUES ('log_sink_0.1', 'stable')",
 		},
 		func(c *config.ConnectorsConfig, kc *keycloak.KeycloakConfig, reconcilerConfig *workers.ReconcilerConfig) {
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}

@@ -7,8 +7,10 @@ package services
 // pane cluster.
 
 import (
-	"gorm.io/gorm"
+	"database/sql"
 	"strings"
+
+	"gorm.io/gorm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
@@ -28,9 +30,8 @@ type ConnectorTypesService interface {
 	ForEachConnectorCatalogEntry(f func(id string, channel string, ccc *config.ConnectorChannelConfig) *errors.ServiceError) *errors.ServiceError
 
 	PutConnectorShardMetadata(ctc *dbapi.ConnectorShardMetadata) (int64, *errors.ServiceError)
-	GetConnectorShardMetadata(id int64) (*dbapi.ConnectorShardMetadata, *errors.ServiceError)
-	GetLatestConnectorShardMetadataID(tid, channel string) (int64, *errors.ServiceError)
-	GetLatestConnectorShardMetadata(tid, channel string) (*dbapi.ConnectorShardMetadata, *errors.ServiceError)
+	GetConnectorShardMetadata(typeId, channel string, revision int64) (*dbapi.ConnectorShardMetadata, *errors.ServiceError)
+	GetLatestConnectorShardMetadata(typeId, channel string) (*dbapi.ConnectorShardMetadata, *errors.ServiceError)
 	CatalogEntriesReconciled() (bool, *errors.ServiceError)
 	DeleteUnusedAndNotInCatalog() *errors.ServiceError
 	ListCatalogEntries(*coreService.ListArguments) ([]dbapi.ConnectorCatalogEntry, *api.PagingMeta, *errors.ServiceError)
@@ -221,110 +222,102 @@ func (cts *connectorTypesService) ForEachConnectorCatalogEntry(f func(id string,
 	return nil
 }
 
-func (cts *connectorTypesService) PutConnectorShardMetadata(ctc *dbapi.ConnectorShardMetadata) (int64, *errors.ServiceError) {
+func (cts *connectorTypesService) PutConnectorShardMetadata(connectorShardMetadata *dbapi.ConnectorShardMetadata) (int64, *errors.ServiceError) {
 
 	var resource dbapi.ConnectorShardMetadata
 
 	dbConn := cts.connectionFactory.New()
-	dbConn = dbConn.Select("id")
-	dbConn = dbConn.Where("connector_type_id = ?", ctc.ConnectorTypeId)
-	dbConn = dbConn.Where("channel = ?", ctc.Channel)
-	dbConn = dbConn.Where("shard_metadata = ?", ctc.ShardMetadata)
+	dbConn = dbConn.Select("id").
+		Where("connector_type_id = ?", connectorShardMetadata.ConnectorTypeId).
+		Where("channel = ?", connectorShardMetadata.Channel).
+		Where("revision = ?", connectorShardMetadata.Revision)
 
 	if err := dbConn.First(&resource).Error; err != nil {
 		if services.IsRecordNotFoundError(err) {
-
-			// We need to create the resource....
-			dbConn = cts.connectionFactory.New()
-			if err := dbConn.Save(ctc).Error; err != nil {
-				return 0, errors.GeneralError("failed to create connector type channel %q: %v", ctc.Channel, err)
+			// We need to understand if we are inserting the shard metadata with the latest revision
+			// among the same connector_type_id and channel group
+			var currentLatestRevision sql.NullInt64
+			dbConn = cts.connectionFactory.New().
+				Table("connector_shard_metadata").
+				Select("max(revision)").
+				Where("connector_type_id = ?", connectorShardMetadata.ConnectorTypeId).
+				Where("channel = ?", connectorShardMetadata.Channel)
+			if err := dbConn.Scan(&currentLatestRevision).Error; err != nil {
+				return 0, errors.GeneralError("failed to find max(revision) of connector shard metadata %v: %v", connectorShardMetadata, err)
+			}
+			// And updating LatestRevision field accordingly
+			if currentLatestRevision.Valid && connectorShardMetadata.Revision < currentLatestRevision.Int64 {
+				// The shard metadata we are saving has not the latest revision,
+				// so we set its LatestRevision field to currentLatestRevision
+				connectorShardMetadata.LatestRevision = &currentLatestRevision.Int64
+			} else {
+				// The shard metadata we are saving has the latest revision,
+				// so we set its LatestRevision field to nil
+				connectorShardMetadata.LatestRevision = nil
 			}
 
-			// read it back again to get it's version.
+			// We need to create the resource...
 			dbConn = cts.connectionFactory.New()
-			dbConn = dbConn.Select("id")
-			dbConn = dbConn.Where("connector_type_id = ?", ctc.ConnectorTypeId)
-			dbConn = dbConn.Where("channel = ?", ctc.Channel)
-			dbConn = dbConn.Where("shard_metadata = ?", ctc.ShardMetadata)
-			if err := dbConn.First(&resource).Error; err != nil {
-				return 0, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find connector type channel after insert")
+			if err := dbConn.Save(connectorShardMetadata).Error; err != nil {
+				return 0, errors.GeneralError("failed to create connector shard metadata %v: %v", connectorShardMetadata, err)
 			}
 
-			// update the other records to know the latest_id
-			dbConn = cts.connectionFactory.New()
-			dbConn = dbConn.Table("connector_shard_metadata")
-			dbConn = dbConn.Where("id <> ?", resource.ID)
-			dbConn = dbConn.Where("connector_type_id = ?", ctc.ConnectorTypeId)
-			dbConn = dbConn.Where("channel = ?", ctc.Channel)
-			if err := dbConn.Update(`latest_id`, resource.ID).Error; err != nil {
-				return 0, errors.GeneralError("failed to create connector type channel: %v", err)
+			// If we are inserting the latest revision we need to update other shard metadata record
+			// among the same connector_type_id and channel group
+			if connectorShardMetadata.LatestRevision == nil {
+				// update the other records latest_revision
+				dbConn = cts.connectionFactory.New().
+					Table("connector_shard_metadata").
+					Where("connector_type_id = ?", connectorShardMetadata.ConnectorTypeId).
+					Where("channel = ?", connectorShardMetadata.Channel).
+					Where("revision < ?", connectorShardMetadata.Revision)
+				if err := dbConn.Update("latest_revision", connectorShardMetadata.Revision).Error; err != nil {
+					return 0, errors.GeneralError("failed to update other connectors shard metadata with the latest revision from: %v", connectorShardMetadata)
+				}
 			}
 
 			return resource.ID, nil
-
 		} else {
-			return 0, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find connector type channel")
+			return 0, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to save connector shard metadata")
 		}
 	} else {
-		// resource existed... update the ctc with the version it's been assigned in the DB...
+		// resource existed... update the connectorShardMetadata with the version it's been assigned in the DB...
 		return resource.ID, nil
 	}
 }
 
-func (cts *connectorTypesService) GetConnectorShardMetadata(id int64) (*dbapi.ConnectorShardMetadata, *errors.ServiceError) {
+func (cts *connectorTypesService) GetConnectorShardMetadata(typeId, channel string, revision int64) (*dbapi.ConnectorShardMetadata, *errors.ServiceError) {
 	resource := &dbapi.ConnectorShardMetadata{}
 	dbConn := cts.connectionFactory.New()
 
 	err := dbConn.
-		Where("id", id).
+		Where(dbapi.ConnectorShardMetadata{ConnectorTypeId: typeId, Channel: channel, Revision: revision}).
 		First(&resource).Error
 
 	if err != nil {
 		if services.IsRecordNotFoundError(err) {
-			return nil, errors.NotFound("connector type channel not found")
+			return nil, errors.NotFound("Connector type shard metadata (ConnectorTypeId: %s, Channel: %s, Revision: %v) not found.", typeId, channel, revision)
 		}
-		return nil, errors.GeneralError("Unable to get connector type channel: %s", err)
+		return nil, errors.GeneralError("Unable to get connector type shard metadata (ConnectorTypeId: %s, Channel: %s, Revision: %v): %s", typeId, channel, revision, err)
 	}
 	return resource, nil
 }
 
-func (cts *connectorTypesService) GetLatestConnectorShardMetadataID(tid, channel string) (int64, *errors.ServiceError) {
+func (cts *connectorTypesService) GetLatestConnectorShardMetadata(typeId, channel string) (*dbapi.ConnectorShardMetadata, *errors.ServiceError) {
 	resource := &dbapi.ConnectorShardMetadata{}
 	dbConn := cts.connectionFactory.New()
 
 	err := dbConn.
-		Select("id").
-		Where("connector_type_id", tid).
-		Where("channel", channel).
-		Order("id desc").
+		Where(dbapi.ConnectorShardMetadata{ConnectorTypeId: typeId, Channel: channel}).
+		Order("revision desc").
 		First(&resource).Error
 
 	if err != nil {
 		if services.IsRecordNotFoundError(err) {
-			return 0, errors.NotFound("connector type channel not found")
+			return nil, errors.NotFound("connector type shard metadata not found")
 		}
-		return 0, errors.GeneralError("Unable to get connector type channel: %s", err)
+		return nil, errors.GeneralError("Unable to get connector type shard metadata: %s", err)
 	}
-	return resource.ID, nil
-}
-
-func (cts *connectorTypesService) GetLatestConnectorShardMetadata(tid, channel string) (*dbapi.ConnectorShardMetadata, *errors.ServiceError) {
-	resource := &dbapi.ConnectorShardMetadata{}
-	dbConn := cts.connectionFactory.New()
-
-	err := dbConn.
-		Where("connector_type_id = ?", tid).
-		Where("channel = ?", channel).
-		Order("id desc").
-		First(&resource).Error
-
-	if err != nil {
-		if services.IsRecordNotFoundError(err) {
-			return nil, errors.NotFound("connector type channel not found")
-		}
-		return nil, errors.GeneralError("Unable to get connector type channel: %s", err)
-	}
-
 	return resource, nil
 }
 
@@ -342,13 +335,14 @@ func (cts *connectorTypesService) CatalogEntriesReconciled() (bool, *errors.Serv
 		return false, services.HandleGetError("Connector type", "id", typeIds, err)
 	}
 
-	done := len(catalogChecksums) == len(connectorTypes)
-	if done {
+	done := false
+	if len(catalogChecksums) == len(connectorTypes) {
 		for _, ct := range connectorTypes {
 			if ct.Checksum == nil || *ct.Checksum != catalogChecksums[ct.ID] {
-				done = false
+				return done, nil
 			}
 		}
+		done = true
 	}
 	return done, nil
 }

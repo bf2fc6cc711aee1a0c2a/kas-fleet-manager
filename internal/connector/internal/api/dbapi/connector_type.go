@@ -2,8 +2,9 @@ package dbapi
 
 import (
 	"encoding/json"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -50,11 +51,12 @@ type ConnectorTypeCapability struct {
 }
 
 type ConnectorShardMetadata struct {
-	ID              int64    `gorm:"primaryKey:autoIncrement"`
-	ConnectorTypeId string   `gorm:"primaryKey"`
-	Channel         string   `gorm:"primaryKey"`
+	ID              int64  `gorm:"primaryKey:autoIncrement"`
+	ConnectorTypeId string `gorm:"index:idx_typeid_channel_revision;index:idx_typeid_channel"`
+	Channel         string `gorm:"index:idx_typeid_channel_revision;index:idx_typeid_channel"`
+	Revision        int64  `gorm:"index:idx_typeid_channel_revision;default:0"`
+	LatestRevision  *int64
 	ShardMetadata   api.JSON `gorm:"type:jsonb"`
-	LatestId        *int64
 }
 
 type ConnectorCatalogEntry struct {

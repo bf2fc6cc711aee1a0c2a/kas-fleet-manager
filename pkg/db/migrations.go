@@ -246,6 +246,26 @@ func DropTableColumnsAction(table interface{}, tableName ...string) MigrationAct
 	}
 }
 
+func DropTableColumnAction(table interface{}, columnName string) MigrationAction {
+	caller := ""
+	if _, file, no, ok := runtime.Caller(1); ok {
+		caller = fmt.Sprintf("[ %s:%d ]", file, no)
+	}
+	return func(tx *gorm.DB, apply bool) error {
+		if apply {
+			if err := tx.Migrator().DropColumn(table, columnName); err != nil {
+				return errors.Wrap(err, caller)
+			}
+		} else {
+			if err := tx.Migrator().AddColumn(table, columnName); err != nil {
+				return errors.Wrap(err, caller)
+			}
+		}
+		return nil
+
+	}
+}
+
 func RenameTableColumnAction(table interface{}, oldFieldName string, newFieldName string) MigrationAction {
 	caller := ""
 	if _, file, no, ok := runtime.Caller(1); ok {

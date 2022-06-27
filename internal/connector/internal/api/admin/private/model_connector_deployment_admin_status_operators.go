@@ -9,8 +9,8 @@
 
 package private
 
-// ConnectorDeploymentStatusOperators struct for ConnectorDeploymentStatusOperators
-type ConnectorDeploymentStatusOperators struct {
+// ConnectorDeploymentAdminStatusOperators struct for ConnectorDeploymentAdminStatusOperators
+type ConnectorDeploymentAdminStatusOperators struct {
 	Assigned  ConnectorOperator `json:"assigned,omitempty"`
 	Available ConnectorOperator `json:"available,omitempty"`
 }
