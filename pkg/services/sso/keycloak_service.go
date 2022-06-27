@@ -40,16 +40,6 @@ type masService struct {
 
 var _ keycloakServiceInternal = &masService{}
 
-func newKeycloakService(config *keycloak.KeycloakConfig, realmConfig *keycloak.KeycloakRealmConfig) KeycloakService {
-	client := keycloak.NewClient(config, realmConfig)
-	return &keycloakServiceProxy{
-		accessTokenProvider: client,
-		service: &masService{
-			kcClient: client,
-		},
-	}
-}
-
 func (kc *masService) DeRegisterClientInSSO(accessToken string, clientId string) *errors.ServiceError {
 	internalClientID, _ := kc.kcClient.IsClientExist(clientId, accessToken)
 	glog.V(5).Infof("Existing Kafka Client %s found", clientId)
@@ -62,15 +52,6 @@ func (kc *masService) DeRegisterClientInSSO(accessToken string, clientId string)
 	}
 	glog.V(5).Infof("Kafka Client %s with internal id of %s deleted successfully", clientId, internalClientID)
 	return nil
-}
-
-func NewKeycloakServiceWithClient(client keycloak.KcClient) KeycloakService {
-	return &keycloakServiceProxy{
-		accessTokenProvider: client,
-		service: &masService{
-			kcClient: client,
-		},
-	}
 }
 
 func (kc *masService) RegisterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {

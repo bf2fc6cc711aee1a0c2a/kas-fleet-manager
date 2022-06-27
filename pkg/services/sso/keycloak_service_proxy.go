@@ -10,13 +10,11 @@ import (
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 )
 
-type tokenProvider interface {
-	GetToken() (string, error)
-}
+type tokenProvider func() (string, error)
 
 type keycloakServiceProxy struct {
-	accessTokenProvider tokenProvider
-	service             keycloakServiceInternal
+	getToken tokenProvider
+	service  keycloakServiceInternal
 }
 
 var _ KeycloakService = &keycloakServiceProxy{}
@@ -172,7 +170,7 @@ func (r *keycloakServiceProxy) DeleteServiceAccountInternal(clientId string) *er
 
 func (r *keycloakServiceProxy) retrieveToken() (string, *errors.ServiceError) {
 	glog.V(5).Infof("Getting token")
-	accessToken, tokenErr := r.accessTokenProvider.GetToken()
+	accessToken, tokenErr := r.getToken()
 	if tokenErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "error getting access token")
 	}

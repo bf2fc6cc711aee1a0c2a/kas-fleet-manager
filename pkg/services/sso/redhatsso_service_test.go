@@ -135,8 +135,8 @@ func TestRedhatSSO_RegisterOSDClusterClientInSSO(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &redhatssoService{client: tt.fields.kcClient},
 			}
 			got, err := keycloakService.RegisterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
 			Expect(err).To(Equal(tt.wantErr))
@@ -247,8 +247,8 @@ func TestRedhatSSOService_RegisterKasFleetshardOperatorServiceAccount(t *testing
 
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &redhatssoService{client: tt.fields.kcClient},
 			}
 			got, err := keycloakService.RegisterKasFleetshardOperatorServiceAccount(tt.args.clusterId)
 			if (err != nil) != tt.wantErr {
@@ -468,8 +468,8 @@ func TestRedhatSSOService_DeRegisterKasFleetshardOperatorServiceAccount(t *testi
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &redhatssoService{client: tt.fields.kcClient},
 			}
 			err := keycloakService.DeRegisterKasFleetshardOperatorServiceAccount(tt.args.clusterId)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -575,8 +575,8 @@ func TestRedhatSSOService_RegisterConnectorFleetshardOperatorServiceAccount(t *t
 				t.Skip(tt.skipReason)
 			}
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &redhatssoService{client: tt.fields.kcClient},
 			}
 			got, err := keycloakService.RegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterId)
 			if (err != nil) != tt.wantErr {
@@ -685,8 +685,8 @@ func TestRedhatSSOService__DeRegisterConnectorFleetshardOperatorServiceAccount(t
 			}
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &redhatssoService{client: tt.fields.kcClient},
 			}
 			err := keycloakService.DeRegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterId)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -767,8 +767,8 @@ func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &redhatssoService{client: tt.fields.kcClient},
 			}
 			err := keycloakService.DeleteServiceAccountInternal("account-id")
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -855,8 +855,8 @@ func TestRedhatSSOService_CreateServiceAccountInternal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &redhatssoService{client: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &redhatssoService{client: tt.fields.kcClient},
 			}
 			serviceAccount, err := keycloakService.CreateServiceAccountInternal(request)
 			Expect(err != nil).To(Equal(tt.wantErr))

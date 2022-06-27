@@ -181,8 +181,8 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &masService{kcClient: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &masService{kcClient: tt.fields.kcClient},
 			}
 			got, err := keycloakService.RegisterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
 			Expect(got).To(Equal(tt.want))
@@ -333,8 +333,8 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &masService{kcClient: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &masService{kcClient: tt.fields.kcClient},
 			}
 			got, err := keycloakService.RegisterKasFleetshardOperatorServiceAccount(tt.args.clusterId)
 			if (err != nil) != tt.wantErr {
@@ -445,8 +445,8 @@ func TestKeycloakService_DeRegisterKasFleetshardOperatorServiceAccount(t *testin
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &masService{kcClient: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &masService{kcClient: tt.fields.kcClient},
 			}
 			err := keycloakService.DeRegisterKasFleetshardOperatorServiceAccount(tt.args.clusterId)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -599,8 +599,8 @@ func TestKeycloakService_RegisterConnectorFleetshardOperatorServiceAccount(t *te
 
 		t.Run(tt.name, func(t *testing.T) {
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &masService{kcClient: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &masService{kcClient: tt.fields.kcClient},
 			}
 			got, err := keycloakService.RegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterId)
 			if (err != nil) != tt.wantErr {
@@ -711,8 +711,8 @@ func TestKeycloakService_DeRegisterConnectorFleetshardOperatorServiceAccount(t *
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &masService{kcClient: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &masService{kcClient: tt.fields.kcClient},
 			}
 			err := keycloakService.DeRegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterId)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -805,8 +805,8 @@ func TestKeycloakService_DeleteServiceAccountInternal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &masService{kcClient: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &masService{kcClient: tt.fields.kcClient},
 			}
 			err := keycloakService.DeleteServiceAccountInternal("account-id")
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -911,8 +911,8 @@ func TestKeycloakService_CreateServiceAccountInternal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			keycloakService := keycloakServiceProxy{
-				accessTokenProvider: tt.fields.kcClient,
-				service:             &masService{kcClient: tt.fields.kcClient},
+				getToken: tt.fields.kcClient.GetToken,
+				service:  &masService{kcClient: tt.fields.kcClient},
 			}
 			serviceAccount, err := keycloakService.CreateServiceAccountInternal(request)
 			Expect(err != nil).To(Equal(tt.wantErr))
@@ -1080,7 +1080,7 @@ func Test_newKeycloakService(t *testing.T) {
 				realmConfig: &keycloak.KeycloakRealmConfig{},
 			},
 			want: &keycloakServiceProxy{
-				accessTokenProvider: client,
+				getToken: client.GetToken,
 				service: &masService{
 					kcClient: client,
 				},
@@ -1092,7 +1092,8 @@ func Test_newKeycloakService(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakService := newKeycloakService(tt.args.config, tt.args.realmConfig)
+			keycloakService := NewKeycloakServiceBuilder().
+				ForKFM().WithConfiguration(tt.args.config).WithRealmConfig(tt.args.realmConfig).Build()
 			g.Expect(keycloakService.GetConfig()).To(Equal(tt.want.GetConfig()))
 			g.Expect(keycloakService.GetRealmConfig()).To(Equal(tt.want.GetRealmConfig()))
 		})
@@ -1174,39 +1175,6 @@ func Test_masService_DeRegisterClientInSSO(t *testing.T) {
 				kcClient: tt.fields.kcClient,
 			}
 			g.Expect(kc.DeRegisterClientInSSO(tt.args.accessToken, tt.args.clientId)).To(Equal(tt.want))
-		})
-	}
-}
-
-func TestNewKeycloakServiceWithClient(t *testing.T) {
-	type args struct {
-		client keycloak.KcClient
-	}
-	client := keycloak.NewClient(&keycloak.KeycloakConfig{}, &keycloak.KeycloakRealmConfig{})
-	tests := []struct {
-		name string
-		args args
-		want KeycloakService
-	}{
-		{
-			name: "should return New Keycloak Service With Client",
-			args: args{
-				client: client,
-			},
-			want: &keycloakServiceProxy{
-				accessTokenProvider: client,
-				service: &masService{
-					kcClient: client,
-				},
-			},
-		},
-	}
-	g := NewWithT(t)
-	for _, testcase := range tests {
-		tt := testcase
-
-		t.Run(tt.name, func(t *testing.T) {
-			g.Expect(NewKeycloakServiceWithClient(tt.args.client)).To(Equal(tt.want))
 		})
 	}
 }
