@@ -52,12 +52,17 @@ func (c *DynamicScalingConfig) validate() error {
 }
 
 type InstanceTypeDynamicScalingConfig struct {
-	ComputeNodesConfig *DynamicScalingComputeNodesConfig `yaml:"compute_nodes_config"`
+	ComputeNodesConfig  *DynamicScalingComputeNodesConfig `yaml:"compute_nodes_config"`
+	CapacityReservation int                               `yaml:"capacity_reservation"`
 }
 
 func (c *InstanceTypeDynamicScalingConfig) validate() error {
 	if c.ComputeNodesConfig == nil {
 		return fmt.Errorf("compute_nodes_config is mandatory")
+	}
+
+	if c.CapacityReservation <= 0 {
+		return fmt.Errorf("capacity_reservation has to be greater than 0")
 	}
 
 	err := c.ComputeNodesConfig.validate()

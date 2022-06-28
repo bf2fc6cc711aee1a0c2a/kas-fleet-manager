@@ -1,7 +1,17 @@
+#This configuration file contains information about each Kafka instance types, dynamic scaling configuration
+#
+#The following properties must be defined for each Kafka instance type:
+#   - capacity_reservation: the number of reservation to be made on each data plane cluster
+#
+#The following properties must be defined for each instance types compute node configuration:
+#   - max_compute_nodes: the maximum number of nodes needed to create an appropriate machine pool with the configuration needed by the autoscaler
+
 ---
 developer:
+  capacity_reservation: 3 
   compute_nodes_config:
     max_compute_nodes: 3
 standard:
+  capacity_reservation: 10 
   compute_nodes_config:
     max_compute_nodes: 9

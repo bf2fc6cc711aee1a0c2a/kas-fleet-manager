@@ -165,7 +165,7 @@ parameters:
 - name: DYNAMIC_SCALING_CONFIG
   displayName: Dynamic Scaling configuration
   description: "YAML content containing a map of the dynamic scaling configuration for each instance type"
-  value: "{developer: {compute_nodes_config: {max_compute_nodes: 3}}, standard: {compute_nodes_config: {max_compute_nodes: 9}}}"
+  value: "{developer: {capacity_reservation: 3, compute_nodes_config: {max_compute_nodes: 3}}, standard: {capacity_reservation: 10, compute_nodes_config: {max_compute_nodes: 9}}}"
 
 - name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
   displayName: Enable Kafka TLS
