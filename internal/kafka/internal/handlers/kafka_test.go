@@ -82,8 +82,8 @@ func Test_KafkaHandler_Get(t *testing.T) {
 			req = mux.SetURLVars(req, map[string]string{"id": id})
 			h.Get(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 			resp.Body.Close()
+			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -150,8 +150,8 @@ func Test_KafkaHandler_Delete(t *testing.T) {
 			req, rw := GetHandlerParams("DELETE", tt.args.url, nil)
 			h.Delete(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 			resp.Body.Close()
+			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -240,8 +240,8 @@ func Test_KafkaHandler_List(t *testing.T) {
 			req, rw := GetHandlerParams("GET", tt.args.url, nil)
 			h.List(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 			resp.Body.Close()
+			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -355,8 +355,8 @@ func Test_KafkaHandler_Update(t *testing.T) {
 			req = req.WithContext(tt.args.ctx)
 			h.Update(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 			resp.Body.Close()
+			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -584,8 +584,8 @@ func Test_KafkaHandler_Create(t *testing.T) {
 			req = req.WithContext(tt.args.ctx)
 			h.Create(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 			resp.Body.Close()
+			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
 		})
 	}
 }
