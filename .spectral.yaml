@@ -3,3 +3,4 @@ rules:
   no-$ref-siblings: off
   rhoas-response-media-type: off
   oas3-valid-schema-example: off
+

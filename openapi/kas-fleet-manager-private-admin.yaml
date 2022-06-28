@@ -3,6 +3,12 @@ info:
   title: Kafka Service Fleet Manager Admin APIs
   description: The admin APIs for the fleet manager of Kafka service
   version: 0.1.0
+  license:
+    name: 'Apache 2.0'
+    url: 'https://www.apache.org/licenses/LICENSE-2.0'
+  contact: 
+    name: 'Red Hat Hybrid Cloud Console'
+    email: 'rhosak-support@redhat.com'
 servers:
   - url: https://api.openshift.com
     description: Main (production) server
@@ -19,7 +25,7 @@ tags:
 paths:
   '/api/kafkas_mgmt/v1/admin/kafkas':
     get:
-      summary: Returns a list of Kafkas
+      description: Returns a list of Kafkas
       operationId: getKafkas
       security:
         - Bearer: []
@@ -61,7 +67,7 @@ paths:
         - $ref: 'kas-fleet-manager.yaml#/components/parameters/search'
   '/api/kafkas_mgmt/v1/admin/kafkas/{id}':
     get:
-      summary: Return the details of Kafka instance by id
+      description: Return the details of Kafka instance by id
       parameters:
         - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
       security:
@@ -99,7 +105,7 @@ paths:
               schema:
                 $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
     patch:
-      summary: Update a Kafka instance by id
+      description: Update a Kafka instance by id
       parameters:
         - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
       security:
@@ -150,7 +156,7 @@ paths:
               schema:
                 $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
     delete:
-      summary: Delete a Kafka by ID
+      description: Delete a Kafka by ID
       parameters:
         - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
         - in: query
