@@ -7,6 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/files"
 	"io/fs"
 	"io/ioutil"
+	"os"
 	"sort"
 	"strings"
 
@@ -96,12 +97,42 @@ func (c *ConnectorsConfig) ReadFiles() error {
 				err = gherrors.Errorf("error computing checksum for catalog file %s: %s", path, err)
 				return err
 			}
-			c.CatalogChecksums[entry.ConnectorType.Id] = sum
+
+			// when walking directories with symlink such as what kubernetes does when mounting
+			// a volume from a configmap where the actual files are double-symlinked from some
+			// random named path so this method is invoked twice or more, but it is not actually
+			// always possible to reliably determine if files have been already processed, so we
+			// first check if:
+			//
+			// - the previous file and the new file are the same (os.SameFile)
+			// - the file has already been processed
+			// - the previous file checksum is the same
+			//
+			// if any of the above condition is true, we assume the previous file and the current
+			// one are actually the same, so we can safely ignore it
 
 			if prev, found := typesLoaded[entry.ConnectorType.Id]; found {
+				prevInfo, prevErr := os.Lstat(prev)
+				if prevErr != nil {
+					return nil
+				}
+
+				if os.SameFile(info, prevInfo) {
+					return nil
+				}
+				if typesLoaded[entry.ConnectorType.Id] == path {
+					return nil
+				}
+				if c.CatalogChecksums[entry.ConnectorType.Id] == sum {
+					return nil
+				}
+
 				return fmt.Errorf("connector type '%s' defined in '%s' and '%s'", entry.ConnectorType.Id, path, prev)
 			}
+
+			c.CatalogChecksums[entry.ConnectorType.Id] = sum
 			typesLoaded[entry.ConnectorType.Id] = path
+
 			values = append(values, entry)
 
 			glog.Infof("loaded connector %s from file %s", entry.ConnectorType.Id, path)

@@ -17,30 +17,34 @@ func walk(filename string, linkDirName string, fn filepath.WalkFunc) error {
 	}
 
 	symWalkFunc := func(path string, info os.FileInfo, err error) error {
-		if fname, err := filepath.Rel(filename, path); err == nil {
-			path = filepath.Join(linkDirName, fname)
-		} else {
-			return err
+		relName, relErr := filepath.Rel(filename, path)
+		if relErr != nil {
+			return relErr
 		}
 
-		if err == nil && info.Mode()&os.ModeSymlink == os.ModeSymlink {
-			finalPath, err := filepath.EvalSymlinks(path)
-			if err != nil {
-				return err
-			}
-
-			info, err := os.Lstat(finalPath)
-			if err == nil {
-				return err
-			}
-			if info.IsDir() {
-				return walk(finalPath, path, fn)
-			}
-		}
-
+		path = filepath.Join(linkDirName, relName)
 		if err != nil {
 			return fn(path, info, err)
 		}
+
+		if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			finalPath, fileErr := filepath.EvalSymlinks(path)
+			if fileErr != nil {
+				return fileErr
+			}
+
+			info, err = os.Lstat(finalPath)
+			if err != nil {
+				return fn(path, info, err)
+			}
+
+			if info.IsDir() {
+				return walk(finalPath, path, fn)
+			}
+
+			path = finalPath
+		}
+
 		if info != nil && !info.IsDir() {
 			return fn(path, info, err)
 		}
