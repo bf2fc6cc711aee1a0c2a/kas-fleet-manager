@@ -41,14 +41,20 @@ Feature: connector admin api
     And the ".items[] | select(.id == "aws-sqs-source-v1alpha1") | has("schema")" selection from the response should match "true"
     And the ".items[] | select(.id == "aws-sqs-source-v1alpha1") | .kind" selection from the response should match "ConnectorTypeAdminView"
     And the ".items[] | select(.id == "aws-sqs-source-v1alpha1") | .href" selection from the response should match "/api/connector_mgmt/v1/admin/kafka_connector_types/aws-sqs-source-v1alpha1"
-    And the ".items[] | select(.id == "aws-sqs-source-v1alpha1") | .channels.stable.shard_metadata.connector_image" selection from the response should match "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24"
+
+    # We cannot test this as the catalog is manipulated in the connector-agent-api.feature, hence depending on the execution
+    # order fo the tests, the result may be different
+    #And the ".items[] | select(.id == "aws-sqs-source-v1alpha1") | .channels.stable.shard_metadata.connector_image" selection from the response should match "quay.io/mock-image:1.0.0"
 
     When I GET path "/v1/admin/kafka_connector_types?search=name=aws-sqs-source"
     Then the response code should be 200
     And the ".items[] | select(.id == "aws-sqs-source-v1alpha1") | has("schema")" selection from the response should match "true"
     And the ".items[] | select(.id == "aws-sqs-source-v1alpha1") | .kind" selection from the response should match "ConnectorTypeAdminView"
     And the ".items[] | select(.id == "aws-sqs-source-v1alpha1") | .href" selection from the response should match "/api/connector_mgmt/v1/admin/kafka_connector_types/aws-sqs-source-v1alpha1"
-    And the ".items[] | select(.id == "aws-sqs-source-v1alpha1") | .channels.stable.shard_metadata.connector_image" selection from the response should match "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24"
+
+    # We cannot test this as the catalog is manipulated in the connector-agent-api.feature, hence depending on the execution
+    # order fo the tests, the result may be different
+    #And the ".items[] | select(.id == "aws-sqs-source-v1alpha1") | .channels.stable.shard_metadata.connector_image" selection from the response should match "quay.io/mock-image:1.0.0"
 
     When I GET path "/v1/admin/kafka_connector_types/log_sink_0.1"
     Then the response code should be 200
@@ -62,7 +68,9 @@ Feature: connector admin api
     And the ".kind" selection from the response should match "ConnectorTypeAdminView"
     And the "has("schema")" selection from the response should match "true"
     And the ".href" selection from the response should match "/api/connector_mgmt/v1/admin/kafka_connector_types/aws-sqs-source-v1alpha1"
-    And the ".channels.stable.shard_metadata.connector_image" selection from the response should match "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24"
+    # We cannot test this as the catalog is manipulated in the connector-agent-api.feature, hence depending on the execution
+    # order fo the tests, the result may be different
+    #And the ".channels.stable.shard_metadata.connector_image" selection from the response should match "quay.io/mock-image:1.0.0"
 
     When I GET path "/v1/admin/kafka_connector_types/not_existing"
     Then the response code should be 404
