@@ -415,6 +415,7 @@ generate: moq openapi/generate
 	$(GO) generate ./...
 	$(GO) mod vendor
 	$(MOQ) -out ./pkg/client/keycloak/gocloak_moq.go -pkg keycloak vendor/github.com/Nerzal/gocloak/v11 GoCloak:GoCloakMock
+	$(MOQ) -out ./pkg/client/aws/route53_moq.go -pkg aws vendor/github.com/aws/aws-sdk-go/service/route53/route53iface Route53API:Route53APIMock
 .PHONY: generate
 
 # validate the openapi schema
