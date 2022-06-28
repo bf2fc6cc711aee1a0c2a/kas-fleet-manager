@@ -27,6 +27,10 @@
 #
 # The machines that run this script need to have access to internet, so that
 # the built images can be pushed to quay.io.
+#
+# Final step (optional) is to create new release of kas-fleet-manager
+# in the managed-kafka-versions repo, given that required environment
+# variables are provided and the config is different than previously
 
 # The version should be the short hash from git. This is what the deployent process expects.
 VERSION="$(git log --pretty=format:'%h' -n 1)"
@@ -100,3 +104,30 @@ make \
   image_repository="$QUAY_ORG/kas-fleet-manager" \
   docker/login \
   image/push
+
+# create new relaase in managed-kafka-versions repo for kas-fleet-manager
+if [[ ! -z "$AUTHOR_EMAIL" ]] && [[ ! -z "$AUTHOR_NAME" ]] && [[ ! -z "$GITLAB_TOKEN" ]] && \
+[[ ! -z "$PASSWORD" ]] && [[ ! -z "$USERNAME" ]]; then
+  LATEST_COMMIT=$(git rev-parse HEAD)
+  echo "$LATEST_COMMIT"
+  SECOND_LAST_COMMIT=$(git rev-parse HEAD~1)
+  echo "$SECOND_LAST_COMMIT"
+  IMAGE_TAG=$(git rev-parse --short=7 HEAD)
+  echo "$IMAGE_TAG"
+  git clone "https://gitlab-ci-token:$GITLAB_TOKEN@gitlab.cee.redhat.com/mk-ci-cd/managed-kafka-versions.git" managed-kafka-versions
+  cd managed-kafka-versions
+  git checkout -b "$IMAGE_TAG"
+  # only update the config, if different
+  CURRENT_COMMIT_SHA=$(yq '.service.scm.commitSha' services/kas-fleet-manager.yaml)
+  if [[ "${CURRENT_COMMIT_SHA}" != "${LATEST_COMMIT}" ]]; then
+    # update commitSha
+    yq -i ".service.scm.commitSha = \"$LATEST_COMMIT\"" services/kas-fleet-manager.yaml
+    # update image tag
+    yq -i ".service.image.tag = \"$IMAGE_TAG\"" services/kas-fleet-manager.yaml
+    git config user.name "${AUTHOR_NAME}"
+    git config user.email "${AUTHOR_EMAIL}"
+    git commit -a -m "kas-fleet-manager stage release $IMAGE_TAG"
+    # create an MR in managed-kafka-versions repo
+    git push --force -o merge_request.create="true" -o merge_request.title="kas-fleet-manager stage release $IMAGE_TAG" -o merge_request.description="https://gitlab.cee.redhat.com/service/kas-fleet-manager/-/compare/$SECOND_LAST_COMMIT...$LATEST_COMMIT" -o merge_request.merge_when_pipeline_succeeds="false" -u origin "$IMAGE_TAG"
+  fi
+fi
