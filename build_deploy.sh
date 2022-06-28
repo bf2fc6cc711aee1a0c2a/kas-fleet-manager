@@ -32,6 +32,8 @@
 # in the managed-kafka-versions repo, given that required environment
 # variables are provided and the config is different than previously
 
+set -e
+
 # The version should be the short hash from git. This is what the deployent process expects.
 VERSION="$(git log --pretty=format:'%h' -n 1)"
 
@@ -106,20 +108,17 @@ make \
   image/push
 
 # create new relaase in managed-kafka-versions repo for kas-fleet-manager
-if [[ ! -z "$AUTHOR_EMAIL" ]] && [[ ! -z "$AUTHOR_NAME" ]] && [[ ! -z "$GITLAB_TOKEN" ]] && \
-[[ ! -z "$PASSWORD" ]] && [[ ! -z "$USERNAME" ]]; then
+if [[ ! -z "$AUTHOR_EMAIL" ]] && [[ ! -z "$AUTHOR_NAME" ]] && [[ ! -z "$GITLAB_TOKEN" ]]; then
   LATEST_COMMIT=$(git rev-parse HEAD)
-  echo "$LATEST_COMMIT"
-  SECOND_LAST_COMMIT=$(git rev-parse HEAD~1)
-  echo "$SECOND_LAST_COMMIT"
   IMAGE_TAG=$(git rev-parse --short=7 HEAD)
-  echo "$IMAGE_TAG"
   git clone "https://gitlab-ci-token:$GITLAB_TOKEN@gitlab.cee.redhat.com/mk-ci-cd/managed-kafka-versions.git" managed-kafka-versions
   cd managed-kafka-versions
-  git checkout -b "$IMAGE_TAG"
   # only update the config, if different
   CURRENT_COMMIT_SHA=$(yq '.service.scm.commitSha' services/kas-fleet-manager.yaml)
+  echo "Checking if the latest commit sha: $LATEST_COMMIT is different than current config commit sha: $CURRENT_COMMIT_SHA"
   if [[ "${CURRENT_COMMIT_SHA}" != "${LATEST_COMMIT}" ]]; then
+    git checkout -b "$IMAGE_TAG"
+    echo "Updating commit sha and image tag for kas-fleet-manager configuration"
     # update commitSha
     yq -i ".service.scm.commitSha = \"$LATEST_COMMIT\"" services/kas-fleet-manager.yaml
     # update image tag
@@ -128,6 +127,9 @@ if [[ ! -z "$AUTHOR_EMAIL" ]] && [[ ! -z "$AUTHOR_NAME" ]] && [[ ! -z "$GITLAB_T
     git config user.email "${AUTHOR_EMAIL}"
     git commit -a -m "kas-fleet-manager stage release $IMAGE_TAG"
     # create an MR in managed-kafka-versions repo
-    git push --force -o merge_request.create="true" -o merge_request.title="kas-fleet-manager stage release $IMAGE_TAG" -o merge_request.description="https://gitlab.cee.redhat.com/service/kas-fleet-manager/-/compare/$SECOND_LAST_COMMIT...$LATEST_COMMIT" -o merge_request.merge_when_pipeline_succeeds="false" -u origin "$IMAGE_TAG"
+    echo "Creating MR with new config in managed-kafka-versions repository"
+    git push --force -o merge_request.create="true" -o merge_request.title="kas-fleet-manager stage release $IMAGE_TAG" -o merge_request.description="https://gitlab.cee.redhat.com/service/kas-fleet-manager/-/compare/$CURRENT_COMMIT_SHA...$LATEST_COMMIT" -o merge_request.merge_when_pipeline_succeeds="false" -u origin "$IMAGE_TAG"
+  else
+    echo "No new version detected for kas-fleet-manager"
   fi
 fi
