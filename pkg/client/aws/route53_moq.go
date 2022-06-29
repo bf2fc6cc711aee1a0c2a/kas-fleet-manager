@@ -7,2299 +7,2883 @@ import (
 	"context"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 	"sync"
 )
 
-// Ensure, that Route53APIMock does implement Route53API.
+// Ensure, that Route53APIMock does implement route53iface.Route53API.
 // If this is not the case, regenerate this file with moq.
-var _ Route53API = &Route53APIMock{}
+var _ route53iface.Route53API = &Route53APIMock{}
 
-// Route53APIMock is a mock implementation of Route53API.
+// Route53APIMock is a mock implementation of route53iface.Route53API.
 //
-//     func TestSomethingThatUsesRoute53API(t *testing.T) {
+// 	func TestSomethingThatUsesRoute53API(t *testing.T) {
 //
-//         // make and configure a mocked Route53API
-//         mockedRoute53API := &Route53APIMock{
-//             AssociateVPCWithHostedZoneFunc: func(in1 *route53.AssociateVPCWithHostedZoneInput) (*route53.AssociateVPCWithHostedZoneOutput, error) {
-// 	               panic("mock out the AssociateVPCWithHostedZone method")
-//             },
-//             AssociateVPCWithHostedZoneRequestFunc: func(in1 *route53.AssociateVPCWithHostedZoneInput) (*request.Request, *route53.AssociateVPCWithHostedZoneOutput) {
-// 	               panic("mock out the AssociateVPCWithHostedZoneRequest method")
-//             },
-//             AssociateVPCWithHostedZoneWithContextFunc: func(in1 context.Context, in2 *route53.AssociateVPCWithHostedZoneInput, in3 ...request.Option) (*route53.AssociateVPCWithHostedZoneOutput, error) {
-// 	               panic("mock out the AssociateVPCWithHostedZoneWithContext method")
-//             },
-//             ChangeResourceRecordSetsFunc: func(in1 *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
-// 	               panic("mock out the ChangeResourceRecordSets method")
-//             },
-//             ChangeResourceRecordSetsRequestFunc: func(in1 *route53.ChangeResourceRecordSetsInput) (*request.Request, *route53.ChangeResourceRecordSetsOutput) {
-// 	               panic("mock out the ChangeResourceRecordSetsRequest method")
-//             },
-//             ChangeResourceRecordSetsWithContextFunc: func(in1 context.Context, in2 *route53.ChangeResourceRecordSetsInput, in3 ...request.Option) (*route53.ChangeResourceRecordSetsOutput, error) {
-// 	               panic("mock out the ChangeResourceRecordSetsWithContext method")
-//             },
-//             ChangeTagsForResourceFunc: func(in1 *route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
-// 	               panic("mock out the ChangeTagsForResource method")
-//             },
-//             ChangeTagsForResourceRequestFunc: func(in1 *route53.ChangeTagsForResourceInput) (*request.Request, *route53.ChangeTagsForResourceOutput) {
-// 	               panic("mock out the ChangeTagsForResourceRequest method")
-//             },
-//             ChangeTagsForResourceWithContextFunc: func(in1 context.Context, in2 *route53.ChangeTagsForResourceInput, in3 ...request.Option) (*route53.ChangeTagsForResourceOutput, error) {
-// 	               panic("mock out the ChangeTagsForResourceWithContext method")
-//             },
-//             CreateHealthCheckFunc: func(in1 *route53.CreateHealthCheckInput) (*route53.CreateHealthCheckOutput, error) {
-// 	               panic("mock out the CreateHealthCheck method")
-//             },
-//             CreateHealthCheckRequestFunc: func(in1 *route53.CreateHealthCheckInput) (*request.Request, *route53.CreateHealthCheckOutput) {
-// 	               panic("mock out the CreateHealthCheckRequest method")
-//             },
-//             CreateHealthCheckWithContextFunc: func(in1 context.Context, in2 *route53.CreateHealthCheckInput, in3 ...request.Option) (*route53.CreateHealthCheckOutput, error) {
-// 	               panic("mock out the CreateHealthCheckWithContext method")
-//             },
-//             CreateHostedZoneFunc: func(in1 *route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
-// 	               panic("mock out the CreateHostedZone method")
-//             },
-//             CreateHostedZoneRequestFunc: func(in1 *route53.CreateHostedZoneInput) (*request.Request, *route53.CreateHostedZoneOutput) {
-// 	               panic("mock out the CreateHostedZoneRequest method")
-//             },
-//             CreateHostedZoneWithContextFunc: func(in1 context.Context, in2 *route53.CreateHostedZoneInput, in3 ...request.Option) (*route53.CreateHostedZoneOutput, error) {
-// 	               panic("mock out the CreateHostedZoneWithContext method")
-//             },
-//             CreateQueryLoggingConfigFunc: func(in1 *route53.CreateQueryLoggingConfigInput) (*route53.CreateQueryLoggingConfigOutput, error) {
-// 	               panic("mock out the CreateQueryLoggingConfig method")
-//             },
-//             CreateQueryLoggingConfigRequestFunc: func(in1 *route53.CreateQueryLoggingConfigInput) (*request.Request, *route53.CreateQueryLoggingConfigOutput) {
-// 	               panic("mock out the CreateQueryLoggingConfigRequest method")
-//             },
-//             CreateQueryLoggingConfigWithContextFunc: func(in1 context.Context, in2 *route53.CreateQueryLoggingConfigInput, in3 ...request.Option) (*route53.CreateQueryLoggingConfigOutput, error) {
-// 	               panic("mock out the CreateQueryLoggingConfigWithContext method")
-//             },
-//             CreateReusableDelegationSetFunc: func(in1 *route53.CreateReusableDelegationSetInput) (*route53.CreateReusableDelegationSetOutput, error) {
-// 	               panic("mock out the CreateReusableDelegationSet method")
-//             },
-//             CreateReusableDelegationSetRequestFunc: func(in1 *route53.CreateReusableDelegationSetInput) (*request.Request, *route53.CreateReusableDelegationSetOutput) {
-// 	               panic("mock out the CreateReusableDelegationSetRequest method")
-//             },
-//             CreateReusableDelegationSetWithContextFunc: func(in1 context.Context, in2 *route53.CreateReusableDelegationSetInput, in3 ...request.Option) (*route53.CreateReusableDelegationSetOutput, error) {
-// 	               panic("mock out the CreateReusableDelegationSetWithContext method")
-//             },
-//             CreateTrafficPolicyFunc: func(in1 *route53.CreateTrafficPolicyInput) (*route53.CreateTrafficPolicyOutput, error) {
-// 	               panic("mock out the CreateTrafficPolicy method")
-//             },
-//             CreateTrafficPolicyInstanceFunc: func(in1 *route53.CreateTrafficPolicyInstanceInput) (*route53.CreateTrafficPolicyInstanceOutput, error) {
-// 	               panic("mock out the CreateTrafficPolicyInstance method")
-//             },
-//             CreateTrafficPolicyInstanceRequestFunc: func(in1 *route53.CreateTrafficPolicyInstanceInput) (*request.Request, *route53.CreateTrafficPolicyInstanceOutput) {
-// 	               panic("mock out the CreateTrafficPolicyInstanceRequest method")
-//             },
-//             CreateTrafficPolicyInstanceWithContextFunc: func(in1 context.Context, in2 *route53.CreateTrafficPolicyInstanceInput, in3 ...request.Option) (*route53.CreateTrafficPolicyInstanceOutput, error) {
-// 	               panic("mock out the CreateTrafficPolicyInstanceWithContext method")
-//             },
-//             CreateTrafficPolicyRequestFunc: func(in1 *route53.CreateTrafficPolicyInput) (*request.Request, *route53.CreateTrafficPolicyOutput) {
-// 	               panic("mock out the CreateTrafficPolicyRequest method")
-//             },
-//             CreateTrafficPolicyVersionFunc: func(in1 *route53.CreateTrafficPolicyVersionInput) (*route53.CreateTrafficPolicyVersionOutput, error) {
-// 	               panic("mock out the CreateTrafficPolicyVersion method")
-//             },
-//             CreateTrafficPolicyVersionRequestFunc: func(in1 *route53.CreateTrafficPolicyVersionInput) (*request.Request, *route53.CreateTrafficPolicyVersionOutput) {
-// 	               panic("mock out the CreateTrafficPolicyVersionRequest method")
-//             },
-//             CreateTrafficPolicyVersionWithContextFunc: func(in1 context.Context, in2 *route53.CreateTrafficPolicyVersionInput, in3 ...request.Option) (*route53.CreateTrafficPolicyVersionOutput, error) {
-// 	               panic("mock out the CreateTrafficPolicyVersionWithContext method")
-//             },
-//             CreateTrafficPolicyWithContextFunc: func(in1 context.Context, in2 *route53.CreateTrafficPolicyInput, in3 ...request.Option) (*route53.CreateTrafficPolicyOutput, error) {
-// 	               panic("mock out the CreateTrafficPolicyWithContext method")
-//             },
-//             CreateVPCAssociationAuthorizationFunc: func(in1 *route53.CreateVPCAssociationAuthorizationInput) (*route53.CreateVPCAssociationAuthorizationOutput, error) {
-// 	               panic("mock out the CreateVPCAssociationAuthorization method")
-//             },
-//             CreateVPCAssociationAuthorizationRequestFunc: func(in1 *route53.CreateVPCAssociationAuthorizationInput) (*request.Request, *route53.CreateVPCAssociationAuthorizationOutput) {
-// 	               panic("mock out the CreateVPCAssociationAuthorizationRequest method")
-//             },
-//             CreateVPCAssociationAuthorizationWithContextFunc: func(in1 context.Context, in2 *route53.CreateVPCAssociationAuthorizationInput, in3 ...request.Option) (*route53.CreateVPCAssociationAuthorizationOutput, error) {
-// 	               panic("mock out the CreateVPCAssociationAuthorizationWithContext method")
-//             },
-//             DeleteHealthCheckFunc: func(in1 *route53.DeleteHealthCheckInput) (*route53.DeleteHealthCheckOutput, error) {
-// 	               panic("mock out the DeleteHealthCheck method")
-//             },
-//             DeleteHealthCheckRequestFunc: func(in1 *route53.DeleteHealthCheckInput) (*request.Request, *route53.DeleteHealthCheckOutput) {
-// 	               panic("mock out the DeleteHealthCheckRequest method")
-//             },
-//             DeleteHealthCheckWithContextFunc: func(in1 context.Context, in2 *route53.DeleteHealthCheckInput, in3 ...request.Option) (*route53.DeleteHealthCheckOutput, error) {
-// 	               panic("mock out the DeleteHealthCheckWithContext method")
-//             },
-//             DeleteHostedZoneFunc: func(in1 *route53.DeleteHostedZoneInput) (*route53.DeleteHostedZoneOutput, error) {
-// 	               panic("mock out the DeleteHostedZone method")
-//             },
-//             DeleteHostedZoneRequestFunc: func(in1 *route53.DeleteHostedZoneInput) (*request.Request, *route53.DeleteHostedZoneOutput) {
-// 	               panic("mock out the DeleteHostedZoneRequest method")
-//             },
-//             DeleteHostedZoneWithContextFunc: func(in1 context.Context, in2 *route53.DeleteHostedZoneInput, in3 ...request.Option) (*route53.DeleteHostedZoneOutput, error) {
-// 	               panic("mock out the DeleteHostedZoneWithContext method")
-//             },
-//             DeleteQueryLoggingConfigFunc: func(in1 *route53.DeleteQueryLoggingConfigInput) (*route53.DeleteQueryLoggingConfigOutput, error) {
-// 	               panic("mock out the DeleteQueryLoggingConfig method")
-//             },
-//             DeleteQueryLoggingConfigRequestFunc: func(in1 *route53.DeleteQueryLoggingConfigInput) (*request.Request, *route53.DeleteQueryLoggingConfigOutput) {
-// 	               panic("mock out the DeleteQueryLoggingConfigRequest method")
-//             },
-//             DeleteQueryLoggingConfigWithContextFunc: func(in1 context.Context, in2 *route53.DeleteQueryLoggingConfigInput, in3 ...request.Option) (*route53.DeleteQueryLoggingConfigOutput, error) {
-// 	               panic("mock out the DeleteQueryLoggingConfigWithContext method")
-//             },
-//             DeleteReusableDelegationSetFunc: func(in1 *route53.DeleteReusableDelegationSetInput) (*route53.DeleteReusableDelegationSetOutput, error) {
-// 	               panic("mock out the DeleteReusableDelegationSet method")
-//             },
-//             DeleteReusableDelegationSetRequestFunc: func(in1 *route53.DeleteReusableDelegationSetInput) (*request.Request, *route53.DeleteReusableDelegationSetOutput) {
-// 	               panic("mock out the DeleteReusableDelegationSetRequest method")
-//             },
-//             DeleteReusableDelegationSetWithContextFunc: func(in1 context.Context, in2 *route53.DeleteReusableDelegationSetInput, in3 ...request.Option) (*route53.DeleteReusableDelegationSetOutput, error) {
-// 	               panic("mock out the DeleteReusableDelegationSetWithContext method")
-//             },
-//             DeleteTrafficPolicyFunc: func(in1 *route53.DeleteTrafficPolicyInput) (*route53.DeleteTrafficPolicyOutput, error) {
-// 	               panic("mock out the DeleteTrafficPolicy method")
-//             },
-//             DeleteTrafficPolicyInstanceFunc: func(in1 *route53.DeleteTrafficPolicyInstanceInput) (*route53.DeleteTrafficPolicyInstanceOutput, error) {
-// 	               panic("mock out the DeleteTrafficPolicyInstance method")
-//             },
-//             DeleteTrafficPolicyInstanceRequestFunc: func(in1 *route53.DeleteTrafficPolicyInstanceInput) (*request.Request, *route53.DeleteTrafficPolicyInstanceOutput) {
-// 	               panic("mock out the DeleteTrafficPolicyInstanceRequest method")
-//             },
-//             DeleteTrafficPolicyInstanceWithContextFunc: func(in1 context.Context, in2 *route53.DeleteTrafficPolicyInstanceInput, in3 ...request.Option) (*route53.DeleteTrafficPolicyInstanceOutput, error) {
-// 	               panic("mock out the DeleteTrafficPolicyInstanceWithContext method")
-//             },
-//             DeleteTrafficPolicyRequestFunc: func(in1 *route53.DeleteTrafficPolicyInput) (*request.Request, *route53.DeleteTrafficPolicyOutput) {
-// 	               panic("mock out the DeleteTrafficPolicyRequest method")
-//             },
-//             DeleteTrafficPolicyWithContextFunc: func(in1 context.Context, in2 *route53.DeleteTrafficPolicyInput, in3 ...request.Option) (*route53.DeleteTrafficPolicyOutput, error) {
-// 	               panic("mock out the DeleteTrafficPolicyWithContext method")
-//             },
-//             DeleteVPCAssociationAuthorizationFunc: func(in1 *route53.DeleteVPCAssociationAuthorizationInput) (*route53.DeleteVPCAssociationAuthorizationOutput, error) {
-// 	               panic("mock out the DeleteVPCAssociationAuthorization method")
-//             },
-//             DeleteVPCAssociationAuthorizationRequestFunc: func(in1 *route53.DeleteVPCAssociationAuthorizationInput) (*request.Request, *route53.DeleteVPCAssociationAuthorizationOutput) {
-// 	               panic("mock out the DeleteVPCAssociationAuthorizationRequest method")
-//             },
-//             DeleteVPCAssociationAuthorizationWithContextFunc: func(in1 context.Context, in2 *route53.DeleteVPCAssociationAuthorizationInput, in3 ...request.Option) (*route53.DeleteVPCAssociationAuthorizationOutput, error) {
-// 	               panic("mock out the DeleteVPCAssociationAuthorizationWithContext method")
-//             },
-//             DisassociateVPCFromHostedZoneFunc: func(in1 *route53.DisassociateVPCFromHostedZoneInput) (*route53.DisassociateVPCFromHostedZoneOutput, error) {
-// 	               panic("mock out the DisassociateVPCFromHostedZone method")
-//             },
-//             DisassociateVPCFromHostedZoneRequestFunc: func(in1 *route53.DisassociateVPCFromHostedZoneInput) (*request.Request, *route53.DisassociateVPCFromHostedZoneOutput) {
-// 	               panic("mock out the DisassociateVPCFromHostedZoneRequest method")
-//             },
-//             DisassociateVPCFromHostedZoneWithContextFunc: func(in1 context.Context, in2 *route53.DisassociateVPCFromHostedZoneInput, in3 ...request.Option) (*route53.DisassociateVPCFromHostedZoneOutput, error) {
-// 	               panic("mock out the DisassociateVPCFromHostedZoneWithContext method")
-//             },
-//             GetAccountLimitFunc: func(in1 *route53.GetAccountLimitInput) (*route53.GetAccountLimitOutput, error) {
-// 	               panic("mock out the GetAccountLimit method")
-//             },
-//             GetAccountLimitRequestFunc: func(in1 *route53.GetAccountLimitInput) (*request.Request, *route53.GetAccountLimitOutput) {
-// 	               panic("mock out the GetAccountLimitRequest method")
-//             },
-//             GetAccountLimitWithContextFunc: func(in1 context.Context, in2 *route53.GetAccountLimitInput, in3 ...request.Option) (*route53.GetAccountLimitOutput, error) {
-// 	               panic("mock out the GetAccountLimitWithContext method")
-//             },
-//             GetChangeFunc: func(in1 *route53.GetChangeInput) (*route53.GetChangeOutput, error) {
-// 	               panic("mock out the GetChange method")
-//             },
-//             GetChangeRequestFunc: func(in1 *route53.GetChangeInput) (*request.Request, *route53.GetChangeOutput) {
-// 	               panic("mock out the GetChangeRequest method")
-//             },
-//             GetChangeWithContextFunc: func(in1 context.Context, in2 *route53.GetChangeInput, in3 ...request.Option) (*route53.GetChangeOutput, error) {
-// 	               panic("mock out the GetChangeWithContext method")
-//             },
-//             GetCheckerIpRangesFunc: func(in1 *route53.GetCheckerIpRangesInput) (*route53.GetCheckerIpRangesOutput, error) {
-// 	               panic("mock out the GetCheckerIpRanges method")
-//             },
-//             GetCheckerIpRangesRequestFunc: func(in1 *route53.GetCheckerIpRangesInput) (*request.Request, *route53.GetCheckerIpRangesOutput) {
-// 	               panic("mock out the GetCheckerIpRangesRequest method")
-//             },
-//             GetCheckerIpRangesWithContextFunc: func(in1 context.Context, in2 *route53.GetCheckerIpRangesInput, in3 ...request.Option) (*route53.GetCheckerIpRangesOutput, error) {
-// 	               panic("mock out the GetCheckerIpRangesWithContext method")
-//             },
-//             GetGeoLocationFunc: func(in1 *route53.GetGeoLocationInput) (*route53.GetGeoLocationOutput, error) {
-// 	               panic("mock out the GetGeoLocation method")
-//             },
-//             GetGeoLocationRequestFunc: func(in1 *route53.GetGeoLocationInput) (*request.Request, *route53.GetGeoLocationOutput) {
-// 	               panic("mock out the GetGeoLocationRequest method")
-//             },
-//             GetGeoLocationWithContextFunc: func(in1 context.Context, in2 *route53.GetGeoLocationInput, in3 ...request.Option) (*route53.GetGeoLocationOutput, error) {
-// 	               panic("mock out the GetGeoLocationWithContext method")
-//             },
-//             GetHealthCheckFunc: func(in1 *route53.GetHealthCheckInput) (*route53.GetHealthCheckOutput, error) {
-// 	               panic("mock out the GetHealthCheck method")
-//             },
-//             GetHealthCheckCountFunc: func(in1 *route53.GetHealthCheckCountInput) (*route53.GetHealthCheckCountOutput, error) {
-// 	               panic("mock out the GetHealthCheckCount method")
-//             },
-//             GetHealthCheckCountRequestFunc: func(in1 *route53.GetHealthCheckCountInput) (*request.Request, *route53.GetHealthCheckCountOutput) {
-// 	               panic("mock out the GetHealthCheckCountRequest method")
-//             },
-//             GetHealthCheckCountWithContextFunc: func(in1 context.Context, in2 *route53.GetHealthCheckCountInput, in3 ...request.Option) (*route53.GetHealthCheckCountOutput, error) {
-// 	               panic("mock out the GetHealthCheckCountWithContext method")
-//             },
-//             GetHealthCheckLastFailureReasonFunc: func(in1 *route53.GetHealthCheckLastFailureReasonInput) (*route53.GetHealthCheckLastFailureReasonOutput, error) {
-// 	               panic("mock out the GetHealthCheckLastFailureReason method")
-//             },
-//             GetHealthCheckLastFailureReasonRequestFunc: func(in1 *route53.GetHealthCheckLastFailureReasonInput) (*request.Request, *route53.GetHealthCheckLastFailureReasonOutput) {
-// 	               panic("mock out the GetHealthCheckLastFailureReasonRequest method")
-//             },
-//             GetHealthCheckLastFailureReasonWithContextFunc: func(in1 context.Context, in2 *route53.GetHealthCheckLastFailureReasonInput, in3 ...request.Option) (*route53.GetHealthCheckLastFailureReasonOutput, error) {
-// 	               panic("mock out the GetHealthCheckLastFailureReasonWithContext method")
-//             },
-//             GetHealthCheckRequestFunc: func(in1 *route53.GetHealthCheckInput) (*request.Request, *route53.GetHealthCheckOutput) {
-// 	               panic("mock out the GetHealthCheckRequest method")
-//             },
-//             GetHealthCheckStatusFunc: func(in1 *route53.GetHealthCheckStatusInput) (*route53.GetHealthCheckStatusOutput, error) {
-// 	               panic("mock out the GetHealthCheckStatus method")
-//             },
-//             GetHealthCheckStatusRequestFunc: func(in1 *route53.GetHealthCheckStatusInput) (*request.Request, *route53.GetHealthCheckStatusOutput) {
-// 	               panic("mock out the GetHealthCheckStatusRequest method")
-//             },
-//             GetHealthCheckStatusWithContextFunc: func(in1 context.Context, in2 *route53.GetHealthCheckStatusInput, in3 ...request.Option) (*route53.GetHealthCheckStatusOutput, error) {
-// 	               panic("mock out the GetHealthCheckStatusWithContext method")
-//             },
-//             GetHealthCheckWithContextFunc: func(in1 context.Context, in2 *route53.GetHealthCheckInput, in3 ...request.Option) (*route53.GetHealthCheckOutput, error) {
-// 	               panic("mock out the GetHealthCheckWithContext method")
-//             },
-//             GetHostedZoneFunc: func(in1 *route53.GetHostedZoneInput) (*route53.GetHostedZoneOutput, error) {
-// 	               panic("mock out the GetHostedZone method")
-//             },
-//             GetHostedZoneCountFunc: func(in1 *route53.GetHostedZoneCountInput) (*route53.GetHostedZoneCountOutput, error) {
-// 	               panic("mock out the GetHostedZoneCount method")
-//             },
-//             GetHostedZoneCountRequestFunc: func(in1 *route53.GetHostedZoneCountInput) (*request.Request, *route53.GetHostedZoneCountOutput) {
-// 	               panic("mock out the GetHostedZoneCountRequest method")
-//             },
-//             GetHostedZoneCountWithContextFunc: func(in1 context.Context, in2 *route53.GetHostedZoneCountInput, in3 ...request.Option) (*route53.GetHostedZoneCountOutput, error) {
-// 	               panic("mock out the GetHostedZoneCountWithContext method")
-//             },
-//             GetHostedZoneLimitFunc: func(in1 *route53.GetHostedZoneLimitInput) (*route53.GetHostedZoneLimitOutput, error) {
-// 	               panic("mock out the GetHostedZoneLimit method")
-//             },
-//             GetHostedZoneLimitRequestFunc: func(in1 *route53.GetHostedZoneLimitInput) (*request.Request, *route53.GetHostedZoneLimitOutput) {
-// 	               panic("mock out the GetHostedZoneLimitRequest method")
-//             },
-//             GetHostedZoneLimitWithContextFunc: func(in1 context.Context, in2 *route53.GetHostedZoneLimitInput, in3 ...request.Option) (*route53.GetHostedZoneLimitOutput, error) {
-// 	               panic("mock out the GetHostedZoneLimitWithContext method")
-//             },
-//             GetHostedZoneRequestFunc: func(in1 *route53.GetHostedZoneInput) (*request.Request, *route53.GetHostedZoneOutput) {
-// 	               panic("mock out the GetHostedZoneRequest method")
-//             },
-//             GetHostedZoneWithContextFunc: func(in1 context.Context, in2 *route53.GetHostedZoneInput, in3 ...request.Option) (*route53.GetHostedZoneOutput, error) {
-// 	               panic("mock out the GetHostedZoneWithContext method")
-//             },
-//             GetQueryLoggingConfigFunc: func(in1 *route53.GetQueryLoggingConfigInput) (*route53.GetQueryLoggingConfigOutput, error) {
-// 	               panic("mock out the GetQueryLoggingConfig method")
-//             },
-//             GetQueryLoggingConfigRequestFunc: func(in1 *route53.GetQueryLoggingConfigInput) (*request.Request, *route53.GetQueryLoggingConfigOutput) {
-// 	               panic("mock out the GetQueryLoggingConfigRequest method")
-//             },
-//             GetQueryLoggingConfigWithContextFunc: func(in1 context.Context, in2 *route53.GetQueryLoggingConfigInput, in3 ...request.Option) (*route53.GetQueryLoggingConfigOutput, error) {
-// 	               panic("mock out the GetQueryLoggingConfigWithContext method")
-//             },
-//             GetReusableDelegationSetFunc: func(in1 *route53.GetReusableDelegationSetInput) (*route53.GetReusableDelegationSetOutput, error) {
-// 	               panic("mock out the GetReusableDelegationSet method")
-//             },
-//             GetReusableDelegationSetLimitFunc: func(in1 *route53.GetReusableDelegationSetLimitInput) (*route53.GetReusableDelegationSetLimitOutput, error) {
-// 	               panic("mock out the GetReusableDelegationSetLimit method")
-//             },
-//             GetReusableDelegationSetLimitRequestFunc: func(in1 *route53.GetReusableDelegationSetLimitInput) (*request.Request, *route53.GetReusableDelegationSetLimitOutput) {
-// 	               panic("mock out the GetReusableDelegationSetLimitRequest method")
-//             },
-//             GetReusableDelegationSetLimitWithContextFunc: func(in1 context.Context, in2 *route53.GetReusableDelegationSetLimitInput, in3 ...request.Option) (*route53.GetReusableDelegationSetLimitOutput, error) {
-// 	               panic("mock out the GetReusableDelegationSetLimitWithContext method")
-//             },
-//             GetReusableDelegationSetRequestFunc: func(in1 *route53.GetReusableDelegationSetInput) (*request.Request, *route53.GetReusableDelegationSetOutput) {
-// 	               panic("mock out the GetReusableDelegationSetRequest method")
-//             },
-//             GetReusableDelegationSetWithContextFunc: func(in1 context.Context, in2 *route53.GetReusableDelegationSetInput, in3 ...request.Option) (*route53.GetReusableDelegationSetOutput, error) {
-// 	               panic("mock out the GetReusableDelegationSetWithContext method")
-//             },
-//             GetTrafficPolicyFunc: func(in1 *route53.GetTrafficPolicyInput) (*route53.GetTrafficPolicyOutput, error) {
-// 	               panic("mock out the GetTrafficPolicy method")
-//             },
-//             GetTrafficPolicyInstanceFunc: func(in1 *route53.GetTrafficPolicyInstanceInput) (*route53.GetTrafficPolicyInstanceOutput, error) {
-// 	               panic("mock out the GetTrafficPolicyInstance method")
-//             },
-//             GetTrafficPolicyInstanceCountFunc: func(in1 *route53.GetTrafficPolicyInstanceCountInput) (*route53.GetTrafficPolicyInstanceCountOutput, error) {
-// 	               panic("mock out the GetTrafficPolicyInstanceCount method")
-//             },
-//             GetTrafficPolicyInstanceCountRequestFunc: func(in1 *route53.GetTrafficPolicyInstanceCountInput) (*request.Request, *route53.GetTrafficPolicyInstanceCountOutput) {
-// 	               panic("mock out the GetTrafficPolicyInstanceCountRequest method")
-//             },
-//             GetTrafficPolicyInstanceCountWithContextFunc: func(in1 context.Context, in2 *route53.GetTrafficPolicyInstanceCountInput, in3 ...request.Option) (*route53.GetTrafficPolicyInstanceCountOutput, error) {
-// 	               panic("mock out the GetTrafficPolicyInstanceCountWithContext method")
-//             },
-//             GetTrafficPolicyInstanceRequestFunc: func(in1 *route53.GetTrafficPolicyInstanceInput) (*request.Request, *route53.GetTrafficPolicyInstanceOutput) {
-// 	               panic("mock out the GetTrafficPolicyInstanceRequest method")
-//             },
-//             GetTrafficPolicyInstanceWithContextFunc: func(in1 context.Context, in2 *route53.GetTrafficPolicyInstanceInput, in3 ...request.Option) (*route53.GetTrafficPolicyInstanceOutput, error) {
-// 	               panic("mock out the GetTrafficPolicyInstanceWithContext method")
-//             },
-//             GetTrafficPolicyRequestFunc: func(in1 *route53.GetTrafficPolicyInput) (*request.Request, *route53.GetTrafficPolicyOutput) {
-// 	               panic("mock out the GetTrafficPolicyRequest method")
-//             },
-//             GetTrafficPolicyWithContextFunc: func(in1 context.Context, in2 *route53.GetTrafficPolicyInput, in3 ...request.Option) (*route53.GetTrafficPolicyOutput, error) {
-// 	               panic("mock out the GetTrafficPolicyWithContext method")
-//             },
-//             ListGeoLocationsFunc: func(in1 *route53.ListGeoLocationsInput) (*route53.ListGeoLocationsOutput, error) {
-// 	               panic("mock out the ListGeoLocations method")
-//             },
-//             ListGeoLocationsRequestFunc: func(in1 *route53.ListGeoLocationsInput) (*request.Request, *route53.ListGeoLocationsOutput) {
-// 	               panic("mock out the ListGeoLocationsRequest method")
-//             },
-//             ListGeoLocationsWithContextFunc: func(in1 context.Context, in2 *route53.ListGeoLocationsInput, in3 ...request.Option) (*route53.ListGeoLocationsOutput, error) {
-// 	               panic("mock out the ListGeoLocationsWithContext method")
-//             },
-//             ListHealthChecksFunc: func(in1 *route53.ListHealthChecksInput) (*route53.ListHealthChecksOutput, error) {
-// 	               panic("mock out the ListHealthChecks method")
-//             },
-//             ListHealthChecksPagesFunc: func(in1 *route53.ListHealthChecksInput, in2 func(*route53.ListHealthChecksOutput, bool) bool) error {
-// 	               panic("mock out the ListHealthChecksPages method")
-//             },
-//             ListHealthChecksPagesWithContextFunc: func(in1 context.Context, in2 *route53.ListHealthChecksInput, in3 func(*route53.ListHealthChecksOutput, bool) bool, in4 ...request.Option) error {
-// 	               panic("mock out the ListHealthChecksPagesWithContext method")
-//             },
-//             ListHealthChecksRequestFunc: func(in1 *route53.ListHealthChecksInput) (*request.Request, *route53.ListHealthChecksOutput) {
-// 	               panic("mock out the ListHealthChecksRequest method")
-//             },
-//             ListHealthChecksWithContextFunc: func(in1 context.Context, in2 *route53.ListHealthChecksInput, in3 ...request.Option) (*route53.ListHealthChecksOutput, error) {
-// 	               panic("mock out the ListHealthChecksWithContext method")
-//             },
-//             ListHostedZonesFunc: func(in1 *route53.ListHostedZonesInput) (*route53.ListHostedZonesOutput, error) {
-// 	               panic("mock out the ListHostedZones method")
-//             },
-//             ListHostedZonesByNameFunc: func(in1 *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error) {
-// 	               panic("mock out the ListHostedZonesByName method")
-//             },
-//             ListHostedZonesByNameRequestFunc: func(in1 *route53.ListHostedZonesByNameInput) (*request.Request, *route53.ListHostedZonesByNameOutput) {
-// 	               panic("mock out the ListHostedZonesByNameRequest method")
-//             },
-//             ListHostedZonesByNameWithContextFunc: func(in1 context.Context, in2 *route53.ListHostedZonesByNameInput, in3 ...request.Option) (*route53.ListHostedZonesByNameOutput, error) {
-// 	               panic("mock out the ListHostedZonesByNameWithContext method")
-//             },
-//             ListHostedZonesByVPCFunc: func(in1 *route53.ListHostedZonesByVPCInput) (*route53.ListHostedZonesByVPCOutput, error) {
-// 	               panic("mock out the ListHostedZonesByVPC method")
-//             },
-//             ListHostedZonesByVPCRequestFunc: func(in1 *route53.ListHostedZonesByVPCInput) (*request.Request, *route53.ListHostedZonesByVPCOutput) {
-// 	               panic("mock out the ListHostedZonesByVPCRequest method")
-//             },
-//             ListHostedZonesByVPCWithContextFunc: func(in1 context.Context, in2 *route53.ListHostedZonesByVPCInput, in3 ...request.Option) (*route53.ListHostedZonesByVPCOutput, error) {
-// 	               panic("mock out the ListHostedZonesByVPCWithContext method")
-//             },
-//             ListHostedZonesPagesFunc: func(in1 *route53.ListHostedZonesInput, in2 func(*route53.ListHostedZonesOutput, bool) bool) error {
-// 	               panic("mock out the ListHostedZonesPages method")
-//             },
-//             ListHostedZonesPagesWithContextFunc: func(in1 context.Context, in2 *route53.ListHostedZonesInput, in3 func(*route53.ListHostedZonesOutput, bool) bool, in4 ...request.Option) error {
-// 	               panic("mock out the ListHostedZonesPagesWithContext method")
-//             },
-//             ListHostedZonesRequestFunc: func(in1 *route53.ListHostedZonesInput) (*request.Request, *route53.ListHostedZonesOutput) {
-// 	               panic("mock out the ListHostedZonesRequest method")
-//             },
-//             ListHostedZonesWithContextFunc: func(in1 context.Context, in2 *route53.ListHostedZonesInput, in3 ...request.Option) (*route53.ListHostedZonesOutput, error) {
-// 	               panic("mock out the ListHostedZonesWithContext method")
-//             },
-//             ListQueryLoggingConfigsFunc: func(in1 *route53.ListQueryLoggingConfigsInput) (*route53.ListQueryLoggingConfigsOutput, error) {
-// 	               panic("mock out the ListQueryLoggingConfigs method")
-//             },
-//             ListQueryLoggingConfigsPagesFunc: func(in1 *route53.ListQueryLoggingConfigsInput, in2 func(*route53.ListQueryLoggingConfigsOutput, bool) bool) error {
-// 	               panic("mock out the ListQueryLoggingConfigsPages method")
-//             },
-//             ListQueryLoggingConfigsPagesWithContextFunc: func(in1 context.Context, in2 *route53.ListQueryLoggingConfigsInput, in3 func(*route53.ListQueryLoggingConfigsOutput, bool) bool, in4 ...request.Option) error {
-// 	               panic("mock out the ListQueryLoggingConfigsPagesWithContext method")
-//             },
-//             ListQueryLoggingConfigsRequestFunc: func(in1 *route53.ListQueryLoggingConfigsInput) (*request.Request, *route53.ListQueryLoggingConfigsOutput) {
-// 	               panic("mock out the ListQueryLoggingConfigsRequest method")
-//             },
-//             ListQueryLoggingConfigsWithContextFunc: func(in1 context.Context, in2 *route53.ListQueryLoggingConfigsInput, in3 ...request.Option) (*route53.ListQueryLoggingConfigsOutput, error) {
-// 	               panic("mock out the ListQueryLoggingConfigsWithContext method")
-//             },
-//             ListResourceRecordSetsFunc: func(in1 *route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error) {
-// 	               panic("mock out the ListResourceRecordSets method")
-//             },
-//             ListResourceRecordSetsPagesFunc: func(in1 *route53.ListResourceRecordSetsInput, in2 func(*route53.ListResourceRecordSetsOutput, bool) bool) error {
-// 	               panic("mock out the ListResourceRecordSetsPages method")
-//             },
-//             ListResourceRecordSetsPagesWithContextFunc: func(in1 context.Context, in2 *route53.ListResourceRecordSetsInput, in3 func(*route53.ListResourceRecordSetsOutput, bool) bool, in4 ...request.Option) error {
-// 	               panic("mock out the ListResourceRecordSetsPagesWithContext method")
-//             },
-//             ListResourceRecordSetsRequestFunc: func(in1 *route53.ListResourceRecordSetsInput) (*request.Request, *route53.ListResourceRecordSetsOutput) {
-// 	               panic("mock out the ListResourceRecordSetsRequest method")
-//             },
-//             ListResourceRecordSetsWithContextFunc: func(in1 context.Context, in2 *route53.ListResourceRecordSetsInput, in3 ...request.Option) (*route53.ListResourceRecordSetsOutput, error) {
-// 	               panic("mock out the ListResourceRecordSetsWithContext method")
-//             },
-//             ListReusableDelegationSetsFunc: func(in1 *route53.ListReusableDelegationSetsInput) (*route53.ListReusableDelegationSetsOutput, error) {
-// 	               panic("mock out the ListReusableDelegationSets method")
-//             },
-//             ListReusableDelegationSetsRequestFunc: func(in1 *route53.ListReusableDelegationSetsInput) (*request.Request, *route53.ListReusableDelegationSetsOutput) {
-// 	               panic("mock out the ListReusableDelegationSetsRequest method")
-//             },
-//             ListReusableDelegationSetsWithContextFunc: func(in1 context.Context, in2 *route53.ListReusableDelegationSetsInput, in3 ...request.Option) (*route53.ListReusableDelegationSetsOutput, error) {
-// 	               panic("mock out the ListReusableDelegationSetsWithContext method")
-//             },
-//             ListTagsForResourceFunc: func(in1 *route53.ListTagsForResourceInput) (*route53.ListTagsForResourceOutput, error) {
-// 	               panic("mock out the ListTagsForResource method")
-//             },
-//             ListTagsForResourceRequestFunc: func(in1 *route53.ListTagsForResourceInput) (*request.Request, *route53.ListTagsForResourceOutput) {
-// 	               panic("mock out the ListTagsForResourceRequest method")
-//             },
-//             ListTagsForResourceWithContextFunc: func(in1 context.Context, in2 *route53.ListTagsForResourceInput, in3 ...request.Option) (*route53.ListTagsForResourceOutput, error) {
-// 	               panic("mock out the ListTagsForResourceWithContext method")
-//             },
-//             ListTagsForResourcesFunc: func(in1 *route53.ListTagsForResourcesInput) (*route53.ListTagsForResourcesOutput, error) {
-// 	               panic("mock out the ListTagsForResources method")
-//             },
-//             ListTagsForResourcesRequestFunc: func(in1 *route53.ListTagsForResourcesInput) (*request.Request, *route53.ListTagsForResourcesOutput) {
-// 	               panic("mock out the ListTagsForResourcesRequest method")
-//             },
-//             ListTagsForResourcesWithContextFunc: func(in1 context.Context, in2 *route53.ListTagsForResourcesInput, in3 ...request.Option) (*route53.ListTagsForResourcesOutput, error) {
-// 	               panic("mock out the ListTagsForResourcesWithContext method")
-//             },
-//             ListTrafficPoliciesFunc: func(in1 *route53.ListTrafficPoliciesInput) (*route53.ListTrafficPoliciesOutput, error) {
-// 	               panic("mock out the ListTrafficPolicies method")
-//             },
-//             ListTrafficPoliciesRequestFunc: func(in1 *route53.ListTrafficPoliciesInput) (*request.Request, *route53.ListTrafficPoliciesOutput) {
-// 	               panic("mock out the ListTrafficPoliciesRequest method")
-//             },
-//             ListTrafficPoliciesWithContextFunc: func(in1 context.Context, in2 *route53.ListTrafficPoliciesInput, in3 ...request.Option) (*route53.ListTrafficPoliciesOutput, error) {
-// 	               panic("mock out the ListTrafficPoliciesWithContext method")
-//             },
-//             ListTrafficPolicyInstancesFunc: func(in1 *route53.ListTrafficPolicyInstancesInput) (*route53.ListTrafficPolicyInstancesOutput, error) {
-// 	               panic("mock out the ListTrafficPolicyInstances method")
-//             },
-//             ListTrafficPolicyInstancesByHostedZoneFunc: func(in1 *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error) {
-// 	               panic("mock out the ListTrafficPolicyInstancesByHostedZone method")
-//             },
-//             ListTrafficPolicyInstancesByHostedZoneRequestFunc: func(in1 *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*request.Request, *route53.ListTrafficPolicyInstancesByHostedZoneOutput) {
-// 	               panic("mock out the ListTrafficPolicyInstancesByHostedZoneRequest method")
-//             },
-//             ListTrafficPolicyInstancesByHostedZoneWithContextFunc: func(in1 context.Context, in2 *route53.ListTrafficPolicyInstancesByHostedZoneInput, in3 ...request.Option) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error) {
-// 	               panic("mock out the ListTrafficPolicyInstancesByHostedZoneWithContext method")
-//             },
-//             ListTrafficPolicyInstancesByPolicyFunc: func(in1 *route53.ListTrafficPolicyInstancesByPolicyInput) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error) {
-// 	               panic("mock out the ListTrafficPolicyInstancesByPolicy method")
-//             },
-//             ListTrafficPolicyInstancesByPolicyRequestFunc: func(in1 *route53.ListTrafficPolicyInstancesByPolicyInput) (*request.Request, *route53.ListTrafficPolicyInstancesByPolicyOutput) {
-// 	               panic("mock out the ListTrafficPolicyInstancesByPolicyRequest method")
-//             },
-//             ListTrafficPolicyInstancesByPolicyWithContextFunc: func(in1 context.Context, in2 *route53.ListTrafficPolicyInstancesByPolicyInput, in3 ...request.Option) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error) {
-// 	               panic("mock out the ListTrafficPolicyInstancesByPolicyWithContext method")
-//             },
-//             ListTrafficPolicyInstancesRequestFunc: func(in1 *route53.ListTrafficPolicyInstancesInput) (*request.Request, *route53.ListTrafficPolicyInstancesOutput) {
-// 	               panic("mock out the ListTrafficPolicyInstancesRequest method")
-//             },
-//             ListTrafficPolicyInstancesWithContextFunc: func(in1 context.Context, in2 *route53.ListTrafficPolicyInstancesInput, in3 ...request.Option) (*route53.ListTrafficPolicyInstancesOutput, error) {
-// 	               panic("mock out the ListTrafficPolicyInstancesWithContext method")
-//             },
-//             ListTrafficPolicyVersionsFunc: func(in1 *route53.ListTrafficPolicyVersionsInput) (*route53.ListTrafficPolicyVersionsOutput, error) {
-// 	               panic("mock out the ListTrafficPolicyVersions method")
-//             },
-//             ListTrafficPolicyVersionsRequestFunc: func(in1 *route53.ListTrafficPolicyVersionsInput) (*request.Request, *route53.ListTrafficPolicyVersionsOutput) {
-// 	               panic("mock out the ListTrafficPolicyVersionsRequest method")
-//             },
-//             ListTrafficPolicyVersionsWithContextFunc: func(in1 context.Context, in2 *route53.ListTrafficPolicyVersionsInput, in3 ...request.Option) (*route53.ListTrafficPolicyVersionsOutput, error) {
-// 	               panic("mock out the ListTrafficPolicyVersionsWithContext method")
-//             },
-//             ListVPCAssociationAuthorizationsFunc: func(in1 *route53.ListVPCAssociationAuthorizationsInput) (*route53.ListVPCAssociationAuthorizationsOutput, error) {
-// 	               panic("mock out the ListVPCAssociationAuthorizations method")
-//             },
-//             ListVPCAssociationAuthorizationsRequestFunc: func(in1 *route53.ListVPCAssociationAuthorizationsInput) (*request.Request, *route53.ListVPCAssociationAuthorizationsOutput) {
-// 	               panic("mock out the ListVPCAssociationAuthorizationsRequest method")
-//             },
-//             ListVPCAssociationAuthorizationsWithContextFunc: func(in1 context.Context, in2 *route53.ListVPCAssociationAuthorizationsInput, in3 ...request.Option) (*route53.ListVPCAssociationAuthorizationsOutput, error) {
-// 	               panic("mock out the ListVPCAssociationAuthorizationsWithContext method")
-//             },
-//             TestDNSAnswerFunc: func(in1 *route53.TestDNSAnswerInput) (*route53.TestDNSAnswerOutput, error) {
-// 	               panic("mock out the TestDNSAnswer method")
-//             },
-//             TestDNSAnswerRequestFunc: func(in1 *route53.TestDNSAnswerInput) (*request.Request, *route53.TestDNSAnswerOutput) {
-// 	               panic("mock out the TestDNSAnswerRequest method")
-//             },
-//             TestDNSAnswerWithContextFunc: func(in1 context.Context, in2 *route53.TestDNSAnswerInput, in3 ...request.Option) (*route53.TestDNSAnswerOutput, error) {
-// 	               panic("mock out the TestDNSAnswerWithContext method")
-//             },
-//             UpdateHealthCheckFunc: func(in1 *route53.UpdateHealthCheckInput) (*route53.UpdateHealthCheckOutput, error) {
-// 	               panic("mock out the UpdateHealthCheck method")
-//             },
-//             UpdateHealthCheckRequestFunc: func(in1 *route53.UpdateHealthCheckInput) (*request.Request, *route53.UpdateHealthCheckOutput) {
-// 	               panic("mock out the UpdateHealthCheckRequest method")
-//             },
-//             UpdateHealthCheckWithContextFunc: func(in1 context.Context, in2 *route53.UpdateHealthCheckInput, in3 ...request.Option) (*route53.UpdateHealthCheckOutput, error) {
-// 	               panic("mock out the UpdateHealthCheckWithContext method")
-//             },
-//             UpdateHostedZoneCommentFunc: func(in1 *route53.UpdateHostedZoneCommentInput) (*route53.UpdateHostedZoneCommentOutput, error) {
-// 	               panic("mock out the UpdateHostedZoneComment method")
-//             },
-//             UpdateHostedZoneCommentRequestFunc: func(in1 *route53.UpdateHostedZoneCommentInput) (*request.Request, *route53.UpdateHostedZoneCommentOutput) {
-// 	               panic("mock out the UpdateHostedZoneCommentRequest method")
-//             },
-//             UpdateHostedZoneCommentWithContextFunc: func(in1 context.Context, in2 *route53.UpdateHostedZoneCommentInput, in3 ...request.Option) (*route53.UpdateHostedZoneCommentOutput, error) {
-// 	               panic("mock out the UpdateHostedZoneCommentWithContext method")
-//             },
-//             UpdateTrafficPolicyCommentFunc: func(in1 *route53.UpdateTrafficPolicyCommentInput) (*route53.UpdateTrafficPolicyCommentOutput, error) {
-// 	               panic("mock out the UpdateTrafficPolicyComment method")
-//             },
-//             UpdateTrafficPolicyCommentRequestFunc: func(in1 *route53.UpdateTrafficPolicyCommentInput) (*request.Request, *route53.UpdateTrafficPolicyCommentOutput) {
-// 	               panic("mock out the UpdateTrafficPolicyCommentRequest method")
-//             },
-//             UpdateTrafficPolicyCommentWithContextFunc: func(in1 context.Context, in2 *route53.UpdateTrafficPolicyCommentInput, in3 ...request.Option) (*route53.UpdateTrafficPolicyCommentOutput, error) {
-// 	               panic("mock out the UpdateTrafficPolicyCommentWithContext method")
-//             },
-//             UpdateTrafficPolicyInstanceFunc: func(in1 *route53.UpdateTrafficPolicyInstanceInput) (*route53.UpdateTrafficPolicyInstanceOutput, error) {
-// 	               panic("mock out the UpdateTrafficPolicyInstance method")
-//             },
-//             UpdateTrafficPolicyInstanceRequestFunc: func(in1 *route53.UpdateTrafficPolicyInstanceInput) (*request.Request, *route53.UpdateTrafficPolicyInstanceOutput) {
-// 	               panic("mock out the UpdateTrafficPolicyInstanceRequest method")
-//             },
-//             UpdateTrafficPolicyInstanceWithContextFunc: func(in1 context.Context, in2 *route53.UpdateTrafficPolicyInstanceInput, in3 ...request.Option) (*route53.UpdateTrafficPolicyInstanceOutput, error) {
-// 	               panic("mock out the UpdateTrafficPolicyInstanceWithContext method")
-//             },
-//             WaitUntilResourceRecordSetsChangedFunc: func(in1 *route53.GetChangeInput) error {
-// 	               panic("mock out the WaitUntilResourceRecordSetsChanged method")
-//             },
-//             WaitUntilResourceRecordSetsChangedWithContextFunc: func(in1 context.Context, in2 *route53.GetChangeInput, in3 ...request.WaiterOption) error {
-// 	               panic("mock out the WaitUntilResourceRecordSetsChangedWithContext method")
-//             },
-//         }
+// 		// make and configure a mocked route53iface.Route53API
+// 		mockedRoute53API := &Route53APIMock{
+// 			ActivateKeySigningKeyFunc: func(activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput) (*route53.ActivateKeySigningKeyOutput, error) {
+// 				panic("mock out the ActivateKeySigningKey method")
+// 			},
+// 			ActivateKeySigningKeyRequestFunc: func(activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput) (*request.Request, *route53.ActivateKeySigningKeyOutput) {
+// 				panic("mock out the ActivateKeySigningKeyRequest method")
+// 			},
+// 			ActivateKeySigningKeyWithContextFunc: func(contextMoqParam context.Context, activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput, options ...request.Option) (*route53.ActivateKeySigningKeyOutput, error) {
+// 				panic("mock out the ActivateKeySigningKeyWithContext method")
+// 			},
+// 			AssociateVPCWithHostedZoneFunc: func(associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput) (*route53.AssociateVPCWithHostedZoneOutput, error) {
+// 				panic("mock out the AssociateVPCWithHostedZone method")
+// 			},
+// 			AssociateVPCWithHostedZoneRequestFunc: func(associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput) (*request.Request, *route53.AssociateVPCWithHostedZoneOutput) {
+// 				panic("mock out the AssociateVPCWithHostedZoneRequest method")
+// 			},
+// 			AssociateVPCWithHostedZoneWithContextFunc: func(contextMoqParam context.Context, associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput, options ...request.Option) (*route53.AssociateVPCWithHostedZoneOutput, error) {
+// 				panic("mock out the AssociateVPCWithHostedZoneWithContext method")
+// 			},
+// 			ChangeCidrCollectionFunc: func(changeCidrCollectionInput *route53.ChangeCidrCollectionInput) (*route53.ChangeCidrCollectionOutput, error) {
+// 				panic("mock out the ChangeCidrCollection method")
+// 			},
+// 			ChangeCidrCollectionRequestFunc: func(changeCidrCollectionInput *route53.ChangeCidrCollectionInput) (*request.Request, *route53.ChangeCidrCollectionOutput) {
+// 				panic("mock out the ChangeCidrCollectionRequest method")
+// 			},
+// 			ChangeCidrCollectionWithContextFunc: func(contextMoqParam context.Context, changeCidrCollectionInput *route53.ChangeCidrCollectionInput, options ...request.Option) (*route53.ChangeCidrCollectionOutput, error) {
+// 				panic("mock out the ChangeCidrCollectionWithContext method")
+// 			},
+// 			ChangeResourceRecordSetsFunc: func(changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
+// 				panic("mock out the ChangeResourceRecordSets method")
+// 			},
+// 			ChangeResourceRecordSetsRequestFunc: func(changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput) (*request.Request, *route53.ChangeResourceRecordSetsOutput) {
+// 				panic("mock out the ChangeResourceRecordSetsRequest method")
+// 			},
+// 			ChangeResourceRecordSetsWithContextFunc: func(contextMoqParam context.Context, changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput, options ...request.Option) (*route53.ChangeResourceRecordSetsOutput, error) {
+// 				panic("mock out the ChangeResourceRecordSetsWithContext method")
+// 			},
+// 			ChangeTagsForResourceFunc: func(changeTagsForResourceInput *route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
+// 				panic("mock out the ChangeTagsForResource method")
+// 			},
+// 			ChangeTagsForResourceRequestFunc: func(changeTagsForResourceInput *route53.ChangeTagsForResourceInput) (*request.Request, *route53.ChangeTagsForResourceOutput) {
+// 				panic("mock out the ChangeTagsForResourceRequest method")
+// 			},
+// 			ChangeTagsForResourceWithContextFunc: func(contextMoqParam context.Context, changeTagsForResourceInput *route53.ChangeTagsForResourceInput, options ...request.Option) (*route53.ChangeTagsForResourceOutput, error) {
+// 				panic("mock out the ChangeTagsForResourceWithContext method")
+// 			},
+// 			CreateCidrCollectionFunc: func(createCidrCollectionInput *route53.CreateCidrCollectionInput) (*route53.CreateCidrCollectionOutput, error) {
+// 				panic("mock out the CreateCidrCollection method")
+// 			},
+// 			CreateCidrCollectionRequestFunc: func(createCidrCollectionInput *route53.CreateCidrCollectionInput) (*request.Request, *route53.CreateCidrCollectionOutput) {
+// 				panic("mock out the CreateCidrCollectionRequest method")
+// 			},
+// 			CreateCidrCollectionWithContextFunc: func(contextMoqParam context.Context, createCidrCollectionInput *route53.CreateCidrCollectionInput, options ...request.Option) (*route53.CreateCidrCollectionOutput, error) {
+// 				panic("mock out the CreateCidrCollectionWithContext method")
+// 			},
+// 			CreateHealthCheckFunc: func(createHealthCheckInput *route53.CreateHealthCheckInput) (*route53.CreateHealthCheckOutput, error) {
+// 				panic("mock out the CreateHealthCheck method")
+// 			},
+// 			CreateHealthCheckRequestFunc: func(createHealthCheckInput *route53.CreateHealthCheckInput) (*request.Request, *route53.CreateHealthCheckOutput) {
+// 				panic("mock out the CreateHealthCheckRequest method")
+// 			},
+// 			CreateHealthCheckWithContextFunc: func(contextMoqParam context.Context, createHealthCheckInput *route53.CreateHealthCheckInput, options ...request.Option) (*route53.CreateHealthCheckOutput, error) {
+// 				panic("mock out the CreateHealthCheckWithContext method")
+// 			},
+// 			CreateHostedZoneFunc: func(createHostedZoneInput *route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
+// 				panic("mock out the CreateHostedZone method")
+// 			},
+// 			CreateHostedZoneRequestFunc: func(createHostedZoneInput *route53.CreateHostedZoneInput) (*request.Request, *route53.CreateHostedZoneOutput) {
+// 				panic("mock out the CreateHostedZoneRequest method")
+// 			},
+// 			CreateHostedZoneWithContextFunc: func(contextMoqParam context.Context, createHostedZoneInput *route53.CreateHostedZoneInput, options ...request.Option) (*route53.CreateHostedZoneOutput, error) {
+// 				panic("mock out the CreateHostedZoneWithContext method")
+// 			},
+// 			CreateKeySigningKeyFunc: func(createKeySigningKeyInput *route53.CreateKeySigningKeyInput) (*route53.CreateKeySigningKeyOutput, error) {
+// 				panic("mock out the CreateKeySigningKey method")
+// 			},
+// 			CreateKeySigningKeyRequestFunc: func(createKeySigningKeyInput *route53.CreateKeySigningKeyInput) (*request.Request, *route53.CreateKeySigningKeyOutput) {
+// 				panic("mock out the CreateKeySigningKeyRequest method")
+// 			},
+// 			CreateKeySigningKeyWithContextFunc: func(contextMoqParam context.Context, createKeySigningKeyInput *route53.CreateKeySigningKeyInput, options ...request.Option) (*route53.CreateKeySigningKeyOutput, error) {
+// 				panic("mock out the CreateKeySigningKeyWithContext method")
+// 			},
+// 			CreateQueryLoggingConfigFunc: func(createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput) (*route53.CreateQueryLoggingConfigOutput, error) {
+// 				panic("mock out the CreateQueryLoggingConfig method")
+// 			},
+// 			CreateQueryLoggingConfigRequestFunc: func(createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput) (*request.Request, *route53.CreateQueryLoggingConfigOutput) {
+// 				panic("mock out the CreateQueryLoggingConfigRequest method")
+// 			},
+// 			CreateQueryLoggingConfigWithContextFunc: func(contextMoqParam context.Context, createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput, options ...request.Option) (*route53.CreateQueryLoggingConfigOutput, error) {
+// 				panic("mock out the CreateQueryLoggingConfigWithContext method")
+// 			},
+// 			CreateReusableDelegationSetFunc: func(createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput) (*route53.CreateReusableDelegationSetOutput, error) {
+// 				panic("mock out the CreateReusableDelegationSet method")
+// 			},
+// 			CreateReusableDelegationSetRequestFunc: func(createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput) (*request.Request, *route53.CreateReusableDelegationSetOutput) {
+// 				panic("mock out the CreateReusableDelegationSetRequest method")
+// 			},
+// 			CreateReusableDelegationSetWithContextFunc: func(contextMoqParam context.Context, createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput, options ...request.Option) (*route53.CreateReusableDelegationSetOutput, error) {
+// 				panic("mock out the CreateReusableDelegationSetWithContext method")
+// 			},
+// 			CreateTrafficPolicyFunc: func(createTrafficPolicyInput *route53.CreateTrafficPolicyInput) (*route53.CreateTrafficPolicyOutput, error) {
+// 				panic("mock out the CreateTrafficPolicy method")
+// 			},
+// 			CreateTrafficPolicyInstanceFunc: func(createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput) (*route53.CreateTrafficPolicyInstanceOutput, error) {
+// 				panic("mock out the CreateTrafficPolicyInstance method")
+// 			},
+// 			CreateTrafficPolicyInstanceRequestFunc: func(createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput) (*request.Request, *route53.CreateTrafficPolicyInstanceOutput) {
+// 				panic("mock out the CreateTrafficPolicyInstanceRequest method")
+// 			},
+// 			CreateTrafficPolicyInstanceWithContextFunc: func(contextMoqParam context.Context, createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput, options ...request.Option) (*route53.CreateTrafficPolicyInstanceOutput, error) {
+// 				panic("mock out the CreateTrafficPolicyInstanceWithContext method")
+// 			},
+// 			CreateTrafficPolicyRequestFunc: func(createTrafficPolicyInput *route53.CreateTrafficPolicyInput) (*request.Request, *route53.CreateTrafficPolicyOutput) {
+// 				panic("mock out the CreateTrafficPolicyRequest method")
+// 			},
+// 			CreateTrafficPolicyVersionFunc: func(createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput) (*route53.CreateTrafficPolicyVersionOutput, error) {
+// 				panic("mock out the CreateTrafficPolicyVersion method")
+// 			},
+// 			CreateTrafficPolicyVersionRequestFunc: func(createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput) (*request.Request, *route53.CreateTrafficPolicyVersionOutput) {
+// 				panic("mock out the CreateTrafficPolicyVersionRequest method")
+// 			},
+// 			CreateTrafficPolicyVersionWithContextFunc: func(contextMoqParam context.Context, createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput, options ...request.Option) (*route53.CreateTrafficPolicyVersionOutput, error) {
+// 				panic("mock out the CreateTrafficPolicyVersionWithContext method")
+// 			},
+// 			CreateTrafficPolicyWithContextFunc: func(contextMoqParam context.Context, createTrafficPolicyInput *route53.CreateTrafficPolicyInput, options ...request.Option) (*route53.CreateTrafficPolicyOutput, error) {
+// 				panic("mock out the CreateTrafficPolicyWithContext method")
+// 			},
+// 			CreateVPCAssociationAuthorizationFunc: func(createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput) (*route53.CreateVPCAssociationAuthorizationOutput, error) {
+// 				panic("mock out the CreateVPCAssociationAuthorization method")
+// 			},
+// 			CreateVPCAssociationAuthorizationRequestFunc: func(createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput) (*request.Request, *route53.CreateVPCAssociationAuthorizationOutput) {
+// 				panic("mock out the CreateVPCAssociationAuthorizationRequest method")
+// 			},
+// 			CreateVPCAssociationAuthorizationWithContextFunc: func(contextMoqParam context.Context, createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput, options ...request.Option) (*route53.CreateVPCAssociationAuthorizationOutput, error) {
+// 				panic("mock out the CreateVPCAssociationAuthorizationWithContext method")
+// 			},
+// 			DeactivateKeySigningKeyFunc: func(deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput) (*route53.DeactivateKeySigningKeyOutput, error) {
+// 				panic("mock out the DeactivateKeySigningKey method")
+// 			},
+// 			DeactivateKeySigningKeyRequestFunc: func(deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput) (*request.Request, *route53.DeactivateKeySigningKeyOutput) {
+// 				panic("mock out the DeactivateKeySigningKeyRequest method")
+// 			},
+// 			DeactivateKeySigningKeyWithContextFunc: func(contextMoqParam context.Context, deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput, options ...request.Option) (*route53.DeactivateKeySigningKeyOutput, error) {
+// 				panic("mock out the DeactivateKeySigningKeyWithContext method")
+// 			},
+// 			DeleteCidrCollectionFunc: func(deleteCidrCollectionInput *route53.DeleteCidrCollectionInput) (*route53.DeleteCidrCollectionOutput, error) {
+// 				panic("mock out the DeleteCidrCollection method")
+// 			},
+// 			DeleteCidrCollectionRequestFunc: func(deleteCidrCollectionInput *route53.DeleteCidrCollectionInput) (*request.Request, *route53.DeleteCidrCollectionOutput) {
+// 				panic("mock out the DeleteCidrCollectionRequest method")
+// 			},
+// 			DeleteCidrCollectionWithContextFunc: func(contextMoqParam context.Context, deleteCidrCollectionInput *route53.DeleteCidrCollectionInput, options ...request.Option) (*route53.DeleteCidrCollectionOutput, error) {
+// 				panic("mock out the DeleteCidrCollectionWithContext method")
+// 			},
+// 			DeleteHealthCheckFunc: func(deleteHealthCheckInput *route53.DeleteHealthCheckInput) (*route53.DeleteHealthCheckOutput, error) {
+// 				panic("mock out the DeleteHealthCheck method")
+// 			},
+// 			DeleteHealthCheckRequestFunc: func(deleteHealthCheckInput *route53.DeleteHealthCheckInput) (*request.Request, *route53.DeleteHealthCheckOutput) {
+// 				panic("mock out the DeleteHealthCheckRequest method")
+// 			},
+// 			DeleteHealthCheckWithContextFunc: func(contextMoqParam context.Context, deleteHealthCheckInput *route53.DeleteHealthCheckInput, options ...request.Option) (*route53.DeleteHealthCheckOutput, error) {
+// 				panic("mock out the DeleteHealthCheckWithContext method")
+// 			},
+// 			DeleteHostedZoneFunc: func(deleteHostedZoneInput *route53.DeleteHostedZoneInput) (*route53.DeleteHostedZoneOutput, error) {
+// 				panic("mock out the DeleteHostedZone method")
+// 			},
+// 			DeleteHostedZoneRequestFunc: func(deleteHostedZoneInput *route53.DeleteHostedZoneInput) (*request.Request, *route53.DeleteHostedZoneOutput) {
+// 				panic("mock out the DeleteHostedZoneRequest method")
+// 			},
+// 			DeleteHostedZoneWithContextFunc: func(contextMoqParam context.Context, deleteHostedZoneInput *route53.DeleteHostedZoneInput, options ...request.Option) (*route53.DeleteHostedZoneOutput, error) {
+// 				panic("mock out the DeleteHostedZoneWithContext method")
+// 			},
+// 			DeleteKeySigningKeyFunc: func(deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput) (*route53.DeleteKeySigningKeyOutput, error) {
+// 				panic("mock out the DeleteKeySigningKey method")
+// 			},
+// 			DeleteKeySigningKeyRequestFunc: func(deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput) (*request.Request, *route53.DeleteKeySigningKeyOutput) {
+// 				panic("mock out the DeleteKeySigningKeyRequest method")
+// 			},
+// 			DeleteKeySigningKeyWithContextFunc: func(contextMoqParam context.Context, deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput, options ...request.Option) (*route53.DeleteKeySigningKeyOutput, error) {
+// 				panic("mock out the DeleteKeySigningKeyWithContext method")
+// 			},
+// 			DeleteQueryLoggingConfigFunc: func(deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput) (*route53.DeleteQueryLoggingConfigOutput, error) {
+// 				panic("mock out the DeleteQueryLoggingConfig method")
+// 			},
+// 			DeleteQueryLoggingConfigRequestFunc: func(deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput) (*request.Request, *route53.DeleteQueryLoggingConfigOutput) {
+// 				panic("mock out the DeleteQueryLoggingConfigRequest method")
+// 			},
+// 			DeleteQueryLoggingConfigWithContextFunc: func(contextMoqParam context.Context, deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput, options ...request.Option) (*route53.DeleteQueryLoggingConfigOutput, error) {
+// 				panic("mock out the DeleteQueryLoggingConfigWithContext method")
+// 			},
+// 			DeleteReusableDelegationSetFunc: func(deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput) (*route53.DeleteReusableDelegationSetOutput, error) {
+// 				panic("mock out the DeleteReusableDelegationSet method")
+// 			},
+// 			DeleteReusableDelegationSetRequestFunc: func(deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput) (*request.Request, *route53.DeleteReusableDelegationSetOutput) {
+// 				panic("mock out the DeleteReusableDelegationSetRequest method")
+// 			},
+// 			DeleteReusableDelegationSetWithContextFunc: func(contextMoqParam context.Context, deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput, options ...request.Option) (*route53.DeleteReusableDelegationSetOutput, error) {
+// 				panic("mock out the DeleteReusableDelegationSetWithContext method")
+// 			},
+// 			DeleteTrafficPolicyFunc: func(deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput) (*route53.DeleteTrafficPolicyOutput, error) {
+// 				panic("mock out the DeleteTrafficPolicy method")
+// 			},
+// 			DeleteTrafficPolicyInstanceFunc: func(deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput) (*route53.DeleteTrafficPolicyInstanceOutput, error) {
+// 				panic("mock out the DeleteTrafficPolicyInstance method")
+// 			},
+// 			DeleteTrafficPolicyInstanceRequestFunc: func(deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput) (*request.Request, *route53.DeleteTrafficPolicyInstanceOutput) {
+// 				panic("mock out the DeleteTrafficPolicyInstanceRequest method")
+// 			},
+// 			DeleteTrafficPolicyInstanceWithContextFunc: func(contextMoqParam context.Context, deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput, options ...request.Option) (*route53.DeleteTrafficPolicyInstanceOutput, error) {
+// 				panic("mock out the DeleteTrafficPolicyInstanceWithContext method")
+// 			},
+// 			DeleteTrafficPolicyRequestFunc: func(deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput) (*request.Request, *route53.DeleteTrafficPolicyOutput) {
+// 				panic("mock out the DeleteTrafficPolicyRequest method")
+// 			},
+// 			DeleteTrafficPolicyWithContextFunc: func(contextMoqParam context.Context, deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput, options ...request.Option) (*route53.DeleteTrafficPolicyOutput, error) {
+// 				panic("mock out the DeleteTrafficPolicyWithContext method")
+// 			},
+// 			DeleteVPCAssociationAuthorizationFunc: func(deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput) (*route53.DeleteVPCAssociationAuthorizationOutput, error) {
+// 				panic("mock out the DeleteVPCAssociationAuthorization method")
+// 			},
+// 			DeleteVPCAssociationAuthorizationRequestFunc: func(deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput) (*request.Request, *route53.DeleteVPCAssociationAuthorizationOutput) {
+// 				panic("mock out the DeleteVPCAssociationAuthorizationRequest method")
+// 			},
+// 			DeleteVPCAssociationAuthorizationWithContextFunc: func(contextMoqParam context.Context, deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput, options ...request.Option) (*route53.DeleteVPCAssociationAuthorizationOutput, error) {
+// 				panic("mock out the DeleteVPCAssociationAuthorizationWithContext method")
+// 			},
+// 			DisableHostedZoneDNSSECFunc: func(disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput) (*route53.DisableHostedZoneDNSSECOutput, error) {
+// 				panic("mock out the DisableHostedZoneDNSSEC method")
+// 			},
+// 			DisableHostedZoneDNSSECRequestFunc: func(disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput) (*request.Request, *route53.DisableHostedZoneDNSSECOutput) {
+// 				panic("mock out the DisableHostedZoneDNSSECRequest method")
+// 			},
+// 			DisableHostedZoneDNSSECWithContextFunc: func(contextMoqParam context.Context, disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput, options ...request.Option) (*route53.DisableHostedZoneDNSSECOutput, error) {
+// 				panic("mock out the DisableHostedZoneDNSSECWithContext method")
+// 			},
+// 			DisassociateVPCFromHostedZoneFunc: func(disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput) (*route53.DisassociateVPCFromHostedZoneOutput, error) {
+// 				panic("mock out the DisassociateVPCFromHostedZone method")
+// 			},
+// 			DisassociateVPCFromHostedZoneRequestFunc: func(disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput) (*request.Request, *route53.DisassociateVPCFromHostedZoneOutput) {
+// 				panic("mock out the DisassociateVPCFromHostedZoneRequest method")
+// 			},
+// 			DisassociateVPCFromHostedZoneWithContextFunc: func(contextMoqParam context.Context, disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput, options ...request.Option) (*route53.DisassociateVPCFromHostedZoneOutput, error) {
+// 				panic("mock out the DisassociateVPCFromHostedZoneWithContext method")
+// 			},
+// 			EnableHostedZoneDNSSECFunc: func(enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput) (*route53.EnableHostedZoneDNSSECOutput, error) {
+// 				panic("mock out the EnableHostedZoneDNSSEC method")
+// 			},
+// 			EnableHostedZoneDNSSECRequestFunc: func(enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput) (*request.Request, *route53.EnableHostedZoneDNSSECOutput) {
+// 				panic("mock out the EnableHostedZoneDNSSECRequest method")
+// 			},
+// 			EnableHostedZoneDNSSECWithContextFunc: func(contextMoqParam context.Context, enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput, options ...request.Option) (*route53.EnableHostedZoneDNSSECOutput, error) {
+// 				panic("mock out the EnableHostedZoneDNSSECWithContext method")
+// 			},
+// 			GetAccountLimitFunc: func(getAccountLimitInput *route53.GetAccountLimitInput) (*route53.GetAccountLimitOutput, error) {
+// 				panic("mock out the GetAccountLimit method")
+// 			},
+// 			GetAccountLimitRequestFunc: func(getAccountLimitInput *route53.GetAccountLimitInput) (*request.Request, *route53.GetAccountLimitOutput) {
+// 				panic("mock out the GetAccountLimitRequest method")
+// 			},
+// 			GetAccountLimitWithContextFunc: func(contextMoqParam context.Context, getAccountLimitInput *route53.GetAccountLimitInput, options ...request.Option) (*route53.GetAccountLimitOutput, error) {
+// 				panic("mock out the GetAccountLimitWithContext method")
+// 			},
+// 			GetChangeFunc: func(getChangeInput *route53.GetChangeInput) (*route53.GetChangeOutput, error) {
+// 				panic("mock out the GetChange method")
+// 			},
+// 			GetChangeRequestFunc: func(getChangeInput *route53.GetChangeInput) (*request.Request, *route53.GetChangeOutput) {
+// 				panic("mock out the GetChangeRequest method")
+// 			},
+// 			GetChangeWithContextFunc: func(contextMoqParam context.Context, getChangeInput *route53.GetChangeInput, options ...request.Option) (*route53.GetChangeOutput, error) {
+// 				panic("mock out the GetChangeWithContext method")
+// 			},
+// 			GetCheckerIpRangesFunc: func(getCheckerIpRangesInput *route53.GetCheckerIpRangesInput) (*route53.GetCheckerIpRangesOutput, error) {
+// 				panic("mock out the GetCheckerIpRanges method")
+// 			},
+// 			GetCheckerIpRangesRequestFunc: func(getCheckerIpRangesInput *route53.GetCheckerIpRangesInput) (*request.Request, *route53.GetCheckerIpRangesOutput) {
+// 				panic("mock out the GetCheckerIpRangesRequest method")
+// 			},
+// 			GetCheckerIpRangesWithContextFunc: func(contextMoqParam context.Context, getCheckerIpRangesInput *route53.GetCheckerIpRangesInput, options ...request.Option) (*route53.GetCheckerIpRangesOutput, error) {
+// 				panic("mock out the GetCheckerIpRangesWithContext method")
+// 			},
+// 			GetDNSSECFunc: func(getDNSSECInput *route53.GetDNSSECInput) (*route53.GetDNSSECOutput, error) {
+// 				panic("mock out the GetDNSSEC method")
+// 			},
+// 			GetDNSSECRequestFunc: func(getDNSSECInput *route53.GetDNSSECInput) (*request.Request, *route53.GetDNSSECOutput) {
+// 				panic("mock out the GetDNSSECRequest method")
+// 			},
+// 			GetDNSSECWithContextFunc: func(contextMoqParam context.Context, getDNSSECInput *route53.GetDNSSECInput, options ...request.Option) (*route53.GetDNSSECOutput, error) {
+// 				panic("mock out the GetDNSSECWithContext method")
+// 			},
+// 			GetGeoLocationFunc: func(getGeoLocationInput *route53.GetGeoLocationInput) (*route53.GetGeoLocationOutput, error) {
+// 				panic("mock out the GetGeoLocation method")
+// 			},
+// 			GetGeoLocationRequestFunc: func(getGeoLocationInput *route53.GetGeoLocationInput) (*request.Request, *route53.GetGeoLocationOutput) {
+// 				panic("mock out the GetGeoLocationRequest method")
+// 			},
+// 			GetGeoLocationWithContextFunc: func(contextMoqParam context.Context, getGeoLocationInput *route53.GetGeoLocationInput, options ...request.Option) (*route53.GetGeoLocationOutput, error) {
+// 				panic("mock out the GetGeoLocationWithContext method")
+// 			},
+// 			GetHealthCheckFunc: func(getHealthCheckInput *route53.GetHealthCheckInput) (*route53.GetHealthCheckOutput, error) {
+// 				panic("mock out the GetHealthCheck method")
+// 			},
+// 			GetHealthCheckCountFunc: func(getHealthCheckCountInput *route53.GetHealthCheckCountInput) (*route53.GetHealthCheckCountOutput, error) {
+// 				panic("mock out the GetHealthCheckCount method")
+// 			},
+// 			GetHealthCheckCountRequestFunc: func(getHealthCheckCountInput *route53.GetHealthCheckCountInput) (*request.Request, *route53.GetHealthCheckCountOutput) {
+// 				panic("mock out the GetHealthCheckCountRequest method")
+// 			},
+// 			GetHealthCheckCountWithContextFunc: func(contextMoqParam context.Context, getHealthCheckCountInput *route53.GetHealthCheckCountInput, options ...request.Option) (*route53.GetHealthCheckCountOutput, error) {
+// 				panic("mock out the GetHealthCheckCountWithContext method")
+// 			},
+// 			GetHealthCheckLastFailureReasonFunc: func(getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput) (*route53.GetHealthCheckLastFailureReasonOutput, error) {
+// 				panic("mock out the GetHealthCheckLastFailureReason method")
+// 			},
+// 			GetHealthCheckLastFailureReasonRequestFunc: func(getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput) (*request.Request, *route53.GetHealthCheckLastFailureReasonOutput) {
+// 				panic("mock out the GetHealthCheckLastFailureReasonRequest method")
+// 			},
+// 			GetHealthCheckLastFailureReasonWithContextFunc: func(contextMoqParam context.Context, getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput, options ...request.Option) (*route53.GetHealthCheckLastFailureReasonOutput, error) {
+// 				panic("mock out the GetHealthCheckLastFailureReasonWithContext method")
+// 			},
+// 			GetHealthCheckRequestFunc: func(getHealthCheckInput *route53.GetHealthCheckInput) (*request.Request, *route53.GetHealthCheckOutput) {
+// 				panic("mock out the GetHealthCheckRequest method")
+// 			},
+// 			GetHealthCheckStatusFunc: func(getHealthCheckStatusInput *route53.GetHealthCheckStatusInput) (*route53.GetHealthCheckStatusOutput, error) {
+// 				panic("mock out the GetHealthCheckStatus method")
+// 			},
+// 			GetHealthCheckStatusRequestFunc: func(getHealthCheckStatusInput *route53.GetHealthCheckStatusInput) (*request.Request, *route53.GetHealthCheckStatusOutput) {
+// 				panic("mock out the GetHealthCheckStatusRequest method")
+// 			},
+// 			GetHealthCheckStatusWithContextFunc: func(contextMoqParam context.Context, getHealthCheckStatusInput *route53.GetHealthCheckStatusInput, options ...request.Option) (*route53.GetHealthCheckStatusOutput, error) {
+// 				panic("mock out the GetHealthCheckStatusWithContext method")
+// 			},
+// 			GetHealthCheckWithContextFunc: func(contextMoqParam context.Context, getHealthCheckInput *route53.GetHealthCheckInput, options ...request.Option) (*route53.GetHealthCheckOutput, error) {
+// 				panic("mock out the GetHealthCheckWithContext method")
+// 			},
+// 			GetHostedZoneFunc: func(getHostedZoneInput *route53.GetHostedZoneInput) (*route53.GetHostedZoneOutput, error) {
+// 				panic("mock out the GetHostedZone method")
+// 			},
+// 			GetHostedZoneCountFunc: func(getHostedZoneCountInput *route53.GetHostedZoneCountInput) (*route53.GetHostedZoneCountOutput, error) {
+// 				panic("mock out the GetHostedZoneCount method")
+// 			},
+// 			GetHostedZoneCountRequestFunc: func(getHostedZoneCountInput *route53.GetHostedZoneCountInput) (*request.Request, *route53.GetHostedZoneCountOutput) {
+// 				panic("mock out the GetHostedZoneCountRequest method")
+// 			},
+// 			GetHostedZoneCountWithContextFunc: func(contextMoqParam context.Context, getHostedZoneCountInput *route53.GetHostedZoneCountInput, options ...request.Option) (*route53.GetHostedZoneCountOutput, error) {
+// 				panic("mock out the GetHostedZoneCountWithContext method")
+// 			},
+// 			GetHostedZoneLimitFunc: func(getHostedZoneLimitInput *route53.GetHostedZoneLimitInput) (*route53.GetHostedZoneLimitOutput, error) {
+// 				panic("mock out the GetHostedZoneLimit method")
+// 			},
+// 			GetHostedZoneLimitRequestFunc: func(getHostedZoneLimitInput *route53.GetHostedZoneLimitInput) (*request.Request, *route53.GetHostedZoneLimitOutput) {
+// 				panic("mock out the GetHostedZoneLimitRequest method")
+// 			},
+// 			GetHostedZoneLimitWithContextFunc: func(contextMoqParam context.Context, getHostedZoneLimitInput *route53.GetHostedZoneLimitInput, options ...request.Option) (*route53.GetHostedZoneLimitOutput, error) {
+// 				panic("mock out the GetHostedZoneLimitWithContext method")
+// 			},
+// 			GetHostedZoneRequestFunc: func(getHostedZoneInput *route53.GetHostedZoneInput) (*request.Request, *route53.GetHostedZoneOutput) {
+// 				panic("mock out the GetHostedZoneRequest method")
+// 			},
+// 			GetHostedZoneWithContextFunc: func(contextMoqParam context.Context, getHostedZoneInput *route53.GetHostedZoneInput, options ...request.Option) (*route53.GetHostedZoneOutput, error) {
+// 				panic("mock out the GetHostedZoneWithContext method")
+// 			},
+// 			GetQueryLoggingConfigFunc: func(getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput) (*route53.GetQueryLoggingConfigOutput, error) {
+// 				panic("mock out the GetQueryLoggingConfig method")
+// 			},
+// 			GetQueryLoggingConfigRequestFunc: func(getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput) (*request.Request, *route53.GetQueryLoggingConfigOutput) {
+// 				panic("mock out the GetQueryLoggingConfigRequest method")
+// 			},
+// 			GetQueryLoggingConfigWithContextFunc: func(contextMoqParam context.Context, getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput, options ...request.Option) (*route53.GetQueryLoggingConfigOutput, error) {
+// 				panic("mock out the GetQueryLoggingConfigWithContext method")
+// 			},
+// 			GetReusableDelegationSetFunc: func(getReusableDelegationSetInput *route53.GetReusableDelegationSetInput) (*route53.GetReusableDelegationSetOutput, error) {
+// 				panic("mock out the GetReusableDelegationSet method")
+// 			},
+// 			GetReusableDelegationSetLimitFunc: func(getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput) (*route53.GetReusableDelegationSetLimitOutput, error) {
+// 				panic("mock out the GetReusableDelegationSetLimit method")
+// 			},
+// 			GetReusableDelegationSetLimitRequestFunc: func(getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput) (*request.Request, *route53.GetReusableDelegationSetLimitOutput) {
+// 				panic("mock out the GetReusableDelegationSetLimitRequest method")
+// 			},
+// 			GetReusableDelegationSetLimitWithContextFunc: func(contextMoqParam context.Context, getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput, options ...request.Option) (*route53.GetReusableDelegationSetLimitOutput, error) {
+// 				panic("mock out the GetReusableDelegationSetLimitWithContext method")
+// 			},
+// 			GetReusableDelegationSetRequestFunc: func(getReusableDelegationSetInput *route53.GetReusableDelegationSetInput) (*request.Request, *route53.GetReusableDelegationSetOutput) {
+// 				panic("mock out the GetReusableDelegationSetRequest method")
+// 			},
+// 			GetReusableDelegationSetWithContextFunc: func(contextMoqParam context.Context, getReusableDelegationSetInput *route53.GetReusableDelegationSetInput, options ...request.Option) (*route53.GetReusableDelegationSetOutput, error) {
+// 				panic("mock out the GetReusableDelegationSetWithContext method")
+// 			},
+// 			GetTrafficPolicyFunc: func(getTrafficPolicyInput *route53.GetTrafficPolicyInput) (*route53.GetTrafficPolicyOutput, error) {
+// 				panic("mock out the GetTrafficPolicy method")
+// 			},
+// 			GetTrafficPolicyInstanceFunc: func(getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput) (*route53.GetTrafficPolicyInstanceOutput, error) {
+// 				panic("mock out the GetTrafficPolicyInstance method")
+// 			},
+// 			GetTrafficPolicyInstanceCountFunc: func(getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput) (*route53.GetTrafficPolicyInstanceCountOutput, error) {
+// 				panic("mock out the GetTrafficPolicyInstanceCount method")
+// 			},
+// 			GetTrafficPolicyInstanceCountRequestFunc: func(getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput) (*request.Request, *route53.GetTrafficPolicyInstanceCountOutput) {
+// 				panic("mock out the GetTrafficPolicyInstanceCountRequest method")
+// 			},
+// 			GetTrafficPolicyInstanceCountWithContextFunc: func(contextMoqParam context.Context, getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput, options ...request.Option) (*route53.GetTrafficPolicyInstanceCountOutput, error) {
+// 				panic("mock out the GetTrafficPolicyInstanceCountWithContext method")
+// 			},
+// 			GetTrafficPolicyInstanceRequestFunc: func(getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput) (*request.Request, *route53.GetTrafficPolicyInstanceOutput) {
+// 				panic("mock out the GetTrafficPolicyInstanceRequest method")
+// 			},
+// 			GetTrafficPolicyInstanceWithContextFunc: func(contextMoqParam context.Context, getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput, options ...request.Option) (*route53.GetTrafficPolicyInstanceOutput, error) {
+// 				panic("mock out the GetTrafficPolicyInstanceWithContext method")
+// 			},
+// 			GetTrafficPolicyRequestFunc: func(getTrafficPolicyInput *route53.GetTrafficPolicyInput) (*request.Request, *route53.GetTrafficPolicyOutput) {
+// 				panic("mock out the GetTrafficPolicyRequest method")
+// 			},
+// 			GetTrafficPolicyWithContextFunc: func(contextMoqParam context.Context, getTrafficPolicyInput *route53.GetTrafficPolicyInput, options ...request.Option) (*route53.GetTrafficPolicyOutput, error) {
+// 				panic("mock out the GetTrafficPolicyWithContext method")
+// 			},
+// 			ListCidrBlocksFunc: func(listCidrBlocksInput *route53.ListCidrBlocksInput) (*route53.ListCidrBlocksOutput, error) {
+// 				panic("mock out the ListCidrBlocks method")
+// 			},
+// 			ListCidrBlocksPagesFunc: func(listCidrBlocksInput *route53.ListCidrBlocksInput, fn func(*route53.ListCidrBlocksOutput, bool) bool) error {
+// 				panic("mock out the ListCidrBlocksPages method")
+// 			},
+// 			ListCidrBlocksPagesWithContextFunc: func(contextMoqParam context.Context, listCidrBlocksInput *route53.ListCidrBlocksInput, fn func(*route53.ListCidrBlocksOutput, bool) bool, options ...request.Option) error {
+// 				panic("mock out the ListCidrBlocksPagesWithContext method")
+// 			},
+// 			ListCidrBlocksRequestFunc: func(listCidrBlocksInput *route53.ListCidrBlocksInput) (*request.Request, *route53.ListCidrBlocksOutput) {
+// 				panic("mock out the ListCidrBlocksRequest method")
+// 			},
+// 			ListCidrBlocksWithContextFunc: func(contextMoqParam context.Context, listCidrBlocksInput *route53.ListCidrBlocksInput, options ...request.Option) (*route53.ListCidrBlocksOutput, error) {
+// 				panic("mock out the ListCidrBlocksWithContext method")
+// 			},
+// 			ListCidrCollectionsFunc: func(listCidrCollectionsInput *route53.ListCidrCollectionsInput) (*route53.ListCidrCollectionsOutput, error) {
+// 				panic("mock out the ListCidrCollections method")
+// 			},
+// 			ListCidrCollectionsPagesFunc: func(listCidrCollectionsInput *route53.ListCidrCollectionsInput, fn func(*route53.ListCidrCollectionsOutput, bool) bool) error {
+// 				panic("mock out the ListCidrCollectionsPages method")
+// 			},
+// 			ListCidrCollectionsPagesWithContextFunc: func(contextMoqParam context.Context, listCidrCollectionsInput *route53.ListCidrCollectionsInput, fn func(*route53.ListCidrCollectionsOutput, bool) bool, options ...request.Option) error {
+// 				panic("mock out the ListCidrCollectionsPagesWithContext method")
+// 			},
+// 			ListCidrCollectionsRequestFunc: func(listCidrCollectionsInput *route53.ListCidrCollectionsInput) (*request.Request, *route53.ListCidrCollectionsOutput) {
+// 				panic("mock out the ListCidrCollectionsRequest method")
+// 			},
+// 			ListCidrCollectionsWithContextFunc: func(contextMoqParam context.Context, listCidrCollectionsInput *route53.ListCidrCollectionsInput, options ...request.Option) (*route53.ListCidrCollectionsOutput, error) {
+// 				panic("mock out the ListCidrCollectionsWithContext method")
+// 			},
+// 			ListCidrLocationsFunc: func(listCidrLocationsInput *route53.ListCidrLocationsInput) (*route53.ListCidrLocationsOutput, error) {
+// 				panic("mock out the ListCidrLocations method")
+// 			},
+// 			ListCidrLocationsPagesFunc: func(listCidrLocationsInput *route53.ListCidrLocationsInput, fn func(*route53.ListCidrLocationsOutput, bool) bool) error {
+// 				panic("mock out the ListCidrLocationsPages method")
+// 			},
+// 			ListCidrLocationsPagesWithContextFunc: func(contextMoqParam context.Context, listCidrLocationsInput *route53.ListCidrLocationsInput, fn func(*route53.ListCidrLocationsOutput, bool) bool, options ...request.Option) error {
+// 				panic("mock out the ListCidrLocationsPagesWithContext method")
+// 			},
+// 			ListCidrLocationsRequestFunc: func(listCidrLocationsInput *route53.ListCidrLocationsInput) (*request.Request, *route53.ListCidrLocationsOutput) {
+// 				panic("mock out the ListCidrLocationsRequest method")
+// 			},
+// 			ListCidrLocationsWithContextFunc: func(contextMoqParam context.Context, listCidrLocationsInput *route53.ListCidrLocationsInput, options ...request.Option) (*route53.ListCidrLocationsOutput, error) {
+// 				panic("mock out the ListCidrLocationsWithContext method")
+// 			},
+// 			ListGeoLocationsFunc: func(listGeoLocationsInput *route53.ListGeoLocationsInput) (*route53.ListGeoLocationsOutput, error) {
+// 				panic("mock out the ListGeoLocations method")
+// 			},
+// 			ListGeoLocationsRequestFunc: func(listGeoLocationsInput *route53.ListGeoLocationsInput) (*request.Request, *route53.ListGeoLocationsOutput) {
+// 				panic("mock out the ListGeoLocationsRequest method")
+// 			},
+// 			ListGeoLocationsWithContextFunc: func(contextMoqParam context.Context, listGeoLocationsInput *route53.ListGeoLocationsInput, options ...request.Option) (*route53.ListGeoLocationsOutput, error) {
+// 				panic("mock out the ListGeoLocationsWithContext method")
+// 			},
+// 			ListHealthChecksFunc: func(listHealthChecksInput *route53.ListHealthChecksInput) (*route53.ListHealthChecksOutput, error) {
+// 				panic("mock out the ListHealthChecks method")
+// 			},
+// 			ListHealthChecksPagesFunc: func(listHealthChecksInput *route53.ListHealthChecksInput, fn func(*route53.ListHealthChecksOutput, bool) bool) error {
+// 				panic("mock out the ListHealthChecksPages method")
+// 			},
+// 			ListHealthChecksPagesWithContextFunc: func(contextMoqParam context.Context, listHealthChecksInput *route53.ListHealthChecksInput, fn func(*route53.ListHealthChecksOutput, bool) bool, options ...request.Option) error {
+// 				panic("mock out the ListHealthChecksPagesWithContext method")
+// 			},
+// 			ListHealthChecksRequestFunc: func(listHealthChecksInput *route53.ListHealthChecksInput) (*request.Request, *route53.ListHealthChecksOutput) {
+// 				panic("mock out the ListHealthChecksRequest method")
+// 			},
+// 			ListHealthChecksWithContextFunc: func(contextMoqParam context.Context, listHealthChecksInput *route53.ListHealthChecksInput, options ...request.Option) (*route53.ListHealthChecksOutput, error) {
+// 				panic("mock out the ListHealthChecksWithContext method")
+// 			},
+// 			ListHostedZonesFunc: func(listHostedZonesInput *route53.ListHostedZonesInput) (*route53.ListHostedZonesOutput, error) {
+// 				panic("mock out the ListHostedZones method")
+// 			},
+// 			ListHostedZonesByNameFunc: func(listHostedZonesByNameInput *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error) {
+// 				panic("mock out the ListHostedZonesByName method")
+// 			},
+// 			ListHostedZonesByNameRequestFunc: func(listHostedZonesByNameInput *route53.ListHostedZonesByNameInput) (*request.Request, *route53.ListHostedZonesByNameOutput) {
+// 				panic("mock out the ListHostedZonesByNameRequest method")
+// 			},
+// 			ListHostedZonesByNameWithContextFunc: func(contextMoqParam context.Context, listHostedZonesByNameInput *route53.ListHostedZonesByNameInput, options ...request.Option) (*route53.ListHostedZonesByNameOutput, error) {
+// 				panic("mock out the ListHostedZonesByNameWithContext method")
+// 			},
+// 			ListHostedZonesByVPCFunc: func(listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput) (*route53.ListHostedZonesByVPCOutput, error) {
+// 				panic("mock out the ListHostedZonesByVPC method")
+// 			},
+// 			ListHostedZonesByVPCRequestFunc: func(listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput) (*request.Request, *route53.ListHostedZonesByVPCOutput) {
+// 				panic("mock out the ListHostedZonesByVPCRequest method")
+// 			},
+// 			ListHostedZonesByVPCWithContextFunc: func(contextMoqParam context.Context, listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput, options ...request.Option) (*route53.ListHostedZonesByVPCOutput, error) {
+// 				panic("mock out the ListHostedZonesByVPCWithContext method")
+// 			},
+// 			ListHostedZonesPagesFunc: func(listHostedZonesInput *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool) error {
+// 				panic("mock out the ListHostedZonesPages method")
+// 			},
+// 			ListHostedZonesPagesWithContextFunc: func(contextMoqParam context.Context, listHostedZonesInput *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool, options ...request.Option) error {
+// 				panic("mock out the ListHostedZonesPagesWithContext method")
+// 			},
+// 			ListHostedZonesRequestFunc: func(listHostedZonesInput *route53.ListHostedZonesInput) (*request.Request, *route53.ListHostedZonesOutput) {
+// 				panic("mock out the ListHostedZonesRequest method")
+// 			},
+// 			ListHostedZonesWithContextFunc: func(contextMoqParam context.Context, listHostedZonesInput *route53.ListHostedZonesInput, options ...request.Option) (*route53.ListHostedZonesOutput, error) {
+// 				panic("mock out the ListHostedZonesWithContext method")
+// 			},
+// 			ListQueryLoggingConfigsFunc: func(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput) (*route53.ListQueryLoggingConfigsOutput, error) {
+// 				panic("mock out the ListQueryLoggingConfigs method")
+// 			},
+// 			ListQueryLoggingConfigsPagesFunc: func(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, fn func(*route53.ListQueryLoggingConfigsOutput, bool) bool) error {
+// 				panic("mock out the ListQueryLoggingConfigsPages method")
+// 			},
+// 			ListQueryLoggingConfigsPagesWithContextFunc: func(contextMoqParam context.Context, listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, fn func(*route53.ListQueryLoggingConfigsOutput, bool) bool, options ...request.Option) error {
+// 				panic("mock out the ListQueryLoggingConfigsPagesWithContext method")
+// 			},
+// 			ListQueryLoggingConfigsRequestFunc: func(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput) (*request.Request, *route53.ListQueryLoggingConfigsOutput) {
+// 				panic("mock out the ListQueryLoggingConfigsRequest method")
+// 			},
+// 			ListQueryLoggingConfigsWithContextFunc: func(contextMoqParam context.Context, listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, options ...request.Option) (*route53.ListQueryLoggingConfigsOutput, error) {
+// 				panic("mock out the ListQueryLoggingConfigsWithContext method")
+// 			},
+// 			ListResourceRecordSetsFunc: func(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error) {
+// 				panic("mock out the ListResourceRecordSets method")
+// 			},
+// 			ListResourceRecordSetsPagesFunc: func(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, fn func(*route53.ListResourceRecordSetsOutput, bool) bool) error {
+// 				panic("mock out the ListResourceRecordSetsPages method")
+// 			},
+// 			ListResourceRecordSetsPagesWithContextFunc: func(contextMoqParam context.Context, listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, fn func(*route53.ListResourceRecordSetsOutput, bool) bool, options ...request.Option) error {
+// 				panic("mock out the ListResourceRecordSetsPagesWithContext method")
+// 			},
+// 			ListResourceRecordSetsRequestFunc: func(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput) (*request.Request, *route53.ListResourceRecordSetsOutput) {
+// 				panic("mock out the ListResourceRecordSetsRequest method")
+// 			},
+// 			ListResourceRecordSetsWithContextFunc: func(contextMoqParam context.Context, listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, options ...request.Option) (*route53.ListResourceRecordSetsOutput, error) {
+// 				panic("mock out the ListResourceRecordSetsWithContext method")
+// 			},
+// 			ListReusableDelegationSetsFunc: func(listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput) (*route53.ListReusableDelegationSetsOutput, error) {
+// 				panic("mock out the ListReusableDelegationSets method")
+// 			},
+// 			ListReusableDelegationSetsRequestFunc: func(listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput) (*request.Request, *route53.ListReusableDelegationSetsOutput) {
+// 				panic("mock out the ListReusableDelegationSetsRequest method")
+// 			},
+// 			ListReusableDelegationSetsWithContextFunc: func(contextMoqParam context.Context, listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput, options ...request.Option) (*route53.ListReusableDelegationSetsOutput, error) {
+// 				panic("mock out the ListReusableDelegationSetsWithContext method")
+// 			},
+// 			ListTagsForResourceFunc: func(listTagsForResourceInput *route53.ListTagsForResourceInput) (*route53.ListTagsForResourceOutput, error) {
+// 				panic("mock out the ListTagsForResource method")
+// 			},
+// 			ListTagsForResourceRequestFunc: func(listTagsForResourceInput *route53.ListTagsForResourceInput) (*request.Request, *route53.ListTagsForResourceOutput) {
+// 				panic("mock out the ListTagsForResourceRequest method")
+// 			},
+// 			ListTagsForResourceWithContextFunc: func(contextMoqParam context.Context, listTagsForResourceInput *route53.ListTagsForResourceInput, options ...request.Option) (*route53.ListTagsForResourceOutput, error) {
+// 				panic("mock out the ListTagsForResourceWithContext method")
+// 			},
+// 			ListTagsForResourcesFunc: func(listTagsForResourcesInput *route53.ListTagsForResourcesInput) (*route53.ListTagsForResourcesOutput, error) {
+// 				panic("mock out the ListTagsForResources method")
+// 			},
+// 			ListTagsForResourcesRequestFunc: func(listTagsForResourcesInput *route53.ListTagsForResourcesInput) (*request.Request, *route53.ListTagsForResourcesOutput) {
+// 				panic("mock out the ListTagsForResourcesRequest method")
+// 			},
+// 			ListTagsForResourcesWithContextFunc: func(contextMoqParam context.Context, listTagsForResourcesInput *route53.ListTagsForResourcesInput, options ...request.Option) (*route53.ListTagsForResourcesOutput, error) {
+// 				panic("mock out the ListTagsForResourcesWithContext method")
+// 			},
+// 			ListTrafficPoliciesFunc: func(listTrafficPoliciesInput *route53.ListTrafficPoliciesInput) (*route53.ListTrafficPoliciesOutput, error) {
+// 				panic("mock out the ListTrafficPolicies method")
+// 			},
+// 			ListTrafficPoliciesRequestFunc: func(listTrafficPoliciesInput *route53.ListTrafficPoliciesInput) (*request.Request, *route53.ListTrafficPoliciesOutput) {
+// 				panic("mock out the ListTrafficPoliciesRequest method")
+// 			},
+// 			ListTrafficPoliciesWithContextFunc: func(contextMoqParam context.Context, listTrafficPoliciesInput *route53.ListTrafficPoliciesInput, options ...request.Option) (*route53.ListTrafficPoliciesOutput, error) {
+// 				panic("mock out the ListTrafficPoliciesWithContext method")
+// 			},
+// 			ListTrafficPolicyInstancesFunc: func(listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput) (*route53.ListTrafficPolicyInstancesOutput, error) {
+// 				panic("mock out the ListTrafficPolicyInstances method")
+// 			},
+// 			ListTrafficPolicyInstancesByHostedZoneFunc: func(listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error) {
+// 				panic("mock out the ListTrafficPolicyInstancesByHostedZone method")
+// 			},
+// 			ListTrafficPolicyInstancesByHostedZoneRequestFunc: func(listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*request.Request, *route53.ListTrafficPolicyInstancesByHostedZoneOutput) {
+// 				panic("mock out the ListTrafficPolicyInstancesByHostedZoneRequest method")
+// 			},
+// 			ListTrafficPolicyInstancesByHostedZoneWithContextFunc: func(contextMoqParam context.Context, listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error) {
+// 				panic("mock out the ListTrafficPolicyInstancesByHostedZoneWithContext method")
+// 			},
+// 			ListTrafficPolicyInstancesByPolicyFunc: func(listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error) {
+// 				panic("mock out the ListTrafficPolicyInstancesByPolicy method")
+// 			},
+// 			ListTrafficPolicyInstancesByPolicyRequestFunc: func(listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput) (*request.Request, *route53.ListTrafficPolicyInstancesByPolicyOutput) {
+// 				panic("mock out the ListTrafficPolicyInstancesByPolicyRequest method")
+// 			},
+// 			ListTrafficPolicyInstancesByPolicyWithContextFunc: func(contextMoqParam context.Context, listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error) {
+// 				panic("mock out the ListTrafficPolicyInstancesByPolicyWithContext method")
+// 			},
+// 			ListTrafficPolicyInstancesRequestFunc: func(listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput) (*request.Request, *route53.ListTrafficPolicyInstancesOutput) {
+// 				panic("mock out the ListTrafficPolicyInstancesRequest method")
+// 			},
+// 			ListTrafficPolicyInstancesWithContextFunc: func(contextMoqParam context.Context, listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesOutput, error) {
+// 				panic("mock out the ListTrafficPolicyInstancesWithContext method")
+// 			},
+// 			ListTrafficPolicyVersionsFunc: func(listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput) (*route53.ListTrafficPolicyVersionsOutput, error) {
+// 				panic("mock out the ListTrafficPolicyVersions method")
+// 			},
+// 			ListTrafficPolicyVersionsRequestFunc: func(listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput) (*request.Request, *route53.ListTrafficPolicyVersionsOutput) {
+// 				panic("mock out the ListTrafficPolicyVersionsRequest method")
+// 			},
+// 			ListTrafficPolicyVersionsWithContextFunc: func(contextMoqParam context.Context, listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput, options ...request.Option) (*route53.ListTrafficPolicyVersionsOutput, error) {
+// 				panic("mock out the ListTrafficPolicyVersionsWithContext method")
+// 			},
+// 			ListVPCAssociationAuthorizationsFunc: func(listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput) (*route53.ListVPCAssociationAuthorizationsOutput, error) {
+// 				panic("mock out the ListVPCAssociationAuthorizations method")
+// 			},
+// 			ListVPCAssociationAuthorizationsRequestFunc: func(listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput) (*request.Request, *route53.ListVPCAssociationAuthorizationsOutput) {
+// 				panic("mock out the ListVPCAssociationAuthorizationsRequest method")
+// 			},
+// 			ListVPCAssociationAuthorizationsWithContextFunc: func(contextMoqParam context.Context, listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput, options ...request.Option) (*route53.ListVPCAssociationAuthorizationsOutput, error) {
+// 				panic("mock out the ListVPCAssociationAuthorizationsWithContext method")
+// 			},
+// 			TestDNSAnswerFunc: func(testDNSAnswerInput *route53.TestDNSAnswerInput) (*route53.TestDNSAnswerOutput, error) {
+// 				panic("mock out the TestDNSAnswer method")
+// 			},
+// 			TestDNSAnswerRequestFunc: func(testDNSAnswerInput *route53.TestDNSAnswerInput) (*request.Request, *route53.TestDNSAnswerOutput) {
+// 				panic("mock out the TestDNSAnswerRequest method")
+// 			},
+// 			TestDNSAnswerWithContextFunc: func(contextMoqParam context.Context, testDNSAnswerInput *route53.TestDNSAnswerInput, options ...request.Option) (*route53.TestDNSAnswerOutput, error) {
+// 				panic("mock out the TestDNSAnswerWithContext method")
+// 			},
+// 			UpdateHealthCheckFunc: func(updateHealthCheckInput *route53.UpdateHealthCheckInput) (*route53.UpdateHealthCheckOutput, error) {
+// 				panic("mock out the UpdateHealthCheck method")
+// 			},
+// 			UpdateHealthCheckRequestFunc: func(updateHealthCheckInput *route53.UpdateHealthCheckInput) (*request.Request, *route53.UpdateHealthCheckOutput) {
+// 				panic("mock out the UpdateHealthCheckRequest method")
+// 			},
+// 			UpdateHealthCheckWithContextFunc: func(contextMoqParam context.Context, updateHealthCheckInput *route53.UpdateHealthCheckInput, options ...request.Option) (*route53.UpdateHealthCheckOutput, error) {
+// 				panic("mock out the UpdateHealthCheckWithContext method")
+// 			},
+// 			UpdateHostedZoneCommentFunc: func(updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput) (*route53.UpdateHostedZoneCommentOutput, error) {
+// 				panic("mock out the UpdateHostedZoneComment method")
+// 			},
+// 			UpdateHostedZoneCommentRequestFunc: func(updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput) (*request.Request, *route53.UpdateHostedZoneCommentOutput) {
+// 				panic("mock out the UpdateHostedZoneCommentRequest method")
+// 			},
+// 			UpdateHostedZoneCommentWithContextFunc: func(contextMoqParam context.Context, updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput, options ...request.Option) (*route53.UpdateHostedZoneCommentOutput, error) {
+// 				panic("mock out the UpdateHostedZoneCommentWithContext method")
+// 			},
+// 			UpdateTrafficPolicyCommentFunc: func(updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput) (*route53.UpdateTrafficPolicyCommentOutput, error) {
+// 				panic("mock out the UpdateTrafficPolicyComment method")
+// 			},
+// 			UpdateTrafficPolicyCommentRequestFunc: func(updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput) (*request.Request, *route53.UpdateTrafficPolicyCommentOutput) {
+// 				panic("mock out the UpdateTrafficPolicyCommentRequest method")
+// 			},
+// 			UpdateTrafficPolicyCommentWithContextFunc: func(contextMoqParam context.Context, updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput, options ...request.Option) (*route53.UpdateTrafficPolicyCommentOutput, error) {
+// 				panic("mock out the UpdateTrafficPolicyCommentWithContext method")
+// 			},
+// 			UpdateTrafficPolicyInstanceFunc: func(updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput) (*route53.UpdateTrafficPolicyInstanceOutput, error) {
+// 				panic("mock out the UpdateTrafficPolicyInstance method")
+// 			},
+// 			UpdateTrafficPolicyInstanceRequestFunc: func(updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput) (*request.Request, *route53.UpdateTrafficPolicyInstanceOutput) {
+// 				panic("mock out the UpdateTrafficPolicyInstanceRequest method")
+// 			},
+// 			UpdateTrafficPolicyInstanceWithContextFunc: func(contextMoqParam context.Context, updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput, options ...request.Option) (*route53.UpdateTrafficPolicyInstanceOutput, error) {
+// 				panic("mock out the UpdateTrafficPolicyInstanceWithContext method")
+// 			},
+// 			WaitUntilResourceRecordSetsChangedFunc: func(getChangeInput *route53.GetChangeInput) error {
+// 				panic("mock out the WaitUntilResourceRecordSetsChanged method")
+// 			},
+// 			WaitUntilResourceRecordSetsChangedWithContextFunc: func(contextMoqParam context.Context, getChangeInput *route53.GetChangeInput, waiterOptions ...request.WaiterOption) error {
+// 				panic("mock out the WaitUntilResourceRecordSetsChangedWithContext method")
+// 			},
+// 		}
 //
-//         // use mockedRoute53API in code that requires Route53API
-//         // and then make assertions.
+// 		// use mockedRoute53API in code that requires route53iface.Route53API
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type Route53APIMock struct {
+	// ActivateKeySigningKeyFunc mocks the ActivateKeySigningKey method.
+	ActivateKeySigningKeyFunc func(activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput) (*route53.ActivateKeySigningKeyOutput, error)
+
+	// ActivateKeySigningKeyRequestFunc mocks the ActivateKeySigningKeyRequest method.
+	ActivateKeySigningKeyRequestFunc func(activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput) (*request.Request, *route53.ActivateKeySigningKeyOutput)
+
+	// ActivateKeySigningKeyWithContextFunc mocks the ActivateKeySigningKeyWithContext method.
+	ActivateKeySigningKeyWithContextFunc func(contextMoqParam context.Context, activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput, options ...request.Option) (*route53.ActivateKeySigningKeyOutput, error)
+
 	// AssociateVPCWithHostedZoneFunc mocks the AssociateVPCWithHostedZone method.
-	AssociateVPCWithHostedZoneFunc func(in1 *route53.AssociateVPCWithHostedZoneInput) (*route53.AssociateVPCWithHostedZoneOutput, error)
+	AssociateVPCWithHostedZoneFunc func(associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput) (*route53.AssociateVPCWithHostedZoneOutput, error)
 
 	// AssociateVPCWithHostedZoneRequestFunc mocks the AssociateVPCWithHostedZoneRequest method.
-	AssociateVPCWithHostedZoneRequestFunc func(in1 *route53.AssociateVPCWithHostedZoneInput) (*request.Request, *route53.AssociateVPCWithHostedZoneOutput)
+	AssociateVPCWithHostedZoneRequestFunc func(associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput) (*request.Request, *route53.AssociateVPCWithHostedZoneOutput)
 
 	// AssociateVPCWithHostedZoneWithContextFunc mocks the AssociateVPCWithHostedZoneWithContext method.
-	AssociateVPCWithHostedZoneWithContextFunc func(in1 context.Context, in2 *route53.AssociateVPCWithHostedZoneInput, in3 ...request.Option) (*route53.AssociateVPCWithHostedZoneOutput, error)
+	AssociateVPCWithHostedZoneWithContextFunc func(contextMoqParam context.Context, associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput, options ...request.Option) (*route53.AssociateVPCWithHostedZoneOutput, error)
+
+	// ChangeCidrCollectionFunc mocks the ChangeCidrCollection method.
+	ChangeCidrCollectionFunc func(changeCidrCollectionInput *route53.ChangeCidrCollectionInput) (*route53.ChangeCidrCollectionOutput, error)
+
+	// ChangeCidrCollectionRequestFunc mocks the ChangeCidrCollectionRequest method.
+	ChangeCidrCollectionRequestFunc func(changeCidrCollectionInput *route53.ChangeCidrCollectionInput) (*request.Request, *route53.ChangeCidrCollectionOutput)
+
+	// ChangeCidrCollectionWithContextFunc mocks the ChangeCidrCollectionWithContext method.
+	ChangeCidrCollectionWithContextFunc func(contextMoqParam context.Context, changeCidrCollectionInput *route53.ChangeCidrCollectionInput, options ...request.Option) (*route53.ChangeCidrCollectionOutput, error)
 
 	// ChangeResourceRecordSetsFunc mocks the ChangeResourceRecordSets method.
-	ChangeResourceRecordSetsFunc func(in1 *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error)
+	ChangeResourceRecordSetsFunc func(changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error)
 
 	// ChangeResourceRecordSetsRequestFunc mocks the ChangeResourceRecordSetsRequest method.
-	ChangeResourceRecordSetsRequestFunc func(in1 *route53.ChangeResourceRecordSetsInput) (*request.Request, *route53.ChangeResourceRecordSetsOutput)
+	ChangeResourceRecordSetsRequestFunc func(changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput) (*request.Request, *route53.ChangeResourceRecordSetsOutput)
 
 	// ChangeResourceRecordSetsWithContextFunc mocks the ChangeResourceRecordSetsWithContext method.
-	ChangeResourceRecordSetsWithContextFunc func(in1 context.Context, in2 *route53.ChangeResourceRecordSetsInput, in3 ...request.Option) (*route53.ChangeResourceRecordSetsOutput, error)
+	ChangeResourceRecordSetsWithContextFunc func(contextMoqParam context.Context, changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput, options ...request.Option) (*route53.ChangeResourceRecordSetsOutput, error)
 
 	// ChangeTagsForResourceFunc mocks the ChangeTagsForResource method.
-	ChangeTagsForResourceFunc func(in1 *route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error)
+	ChangeTagsForResourceFunc func(changeTagsForResourceInput *route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error)
 
 	// ChangeTagsForResourceRequestFunc mocks the ChangeTagsForResourceRequest method.
-	ChangeTagsForResourceRequestFunc func(in1 *route53.ChangeTagsForResourceInput) (*request.Request, *route53.ChangeTagsForResourceOutput)
+	ChangeTagsForResourceRequestFunc func(changeTagsForResourceInput *route53.ChangeTagsForResourceInput) (*request.Request, *route53.ChangeTagsForResourceOutput)
 
 	// ChangeTagsForResourceWithContextFunc mocks the ChangeTagsForResourceWithContext method.
-	ChangeTagsForResourceWithContextFunc func(in1 context.Context, in2 *route53.ChangeTagsForResourceInput, in3 ...request.Option) (*route53.ChangeTagsForResourceOutput, error)
+	ChangeTagsForResourceWithContextFunc func(contextMoqParam context.Context, changeTagsForResourceInput *route53.ChangeTagsForResourceInput, options ...request.Option) (*route53.ChangeTagsForResourceOutput, error)
+
+	// CreateCidrCollectionFunc mocks the CreateCidrCollection method.
+	CreateCidrCollectionFunc func(createCidrCollectionInput *route53.CreateCidrCollectionInput) (*route53.CreateCidrCollectionOutput, error)
+
+	// CreateCidrCollectionRequestFunc mocks the CreateCidrCollectionRequest method.
+	CreateCidrCollectionRequestFunc func(createCidrCollectionInput *route53.CreateCidrCollectionInput) (*request.Request, *route53.CreateCidrCollectionOutput)
+
+	// CreateCidrCollectionWithContextFunc mocks the CreateCidrCollectionWithContext method.
+	CreateCidrCollectionWithContextFunc func(contextMoqParam context.Context, createCidrCollectionInput *route53.CreateCidrCollectionInput, options ...request.Option) (*route53.CreateCidrCollectionOutput, error)
 
 	// CreateHealthCheckFunc mocks the CreateHealthCheck method.
-	CreateHealthCheckFunc func(in1 *route53.CreateHealthCheckInput) (*route53.CreateHealthCheckOutput, error)
+	CreateHealthCheckFunc func(createHealthCheckInput *route53.CreateHealthCheckInput) (*route53.CreateHealthCheckOutput, error)
 
 	// CreateHealthCheckRequestFunc mocks the CreateHealthCheckRequest method.
-	CreateHealthCheckRequestFunc func(in1 *route53.CreateHealthCheckInput) (*request.Request, *route53.CreateHealthCheckOutput)
+	CreateHealthCheckRequestFunc func(createHealthCheckInput *route53.CreateHealthCheckInput) (*request.Request, *route53.CreateHealthCheckOutput)
 
 	// CreateHealthCheckWithContextFunc mocks the CreateHealthCheckWithContext method.
-	CreateHealthCheckWithContextFunc func(in1 context.Context, in2 *route53.CreateHealthCheckInput, in3 ...request.Option) (*route53.CreateHealthCheckOutput, error)
+	CreateHealthCheckWithContextFunc func(contextMoqParam context.Context, createHealthCheckInput *route53.CreateHealthCheckInput, options ...request.Option) (*route53.CreateHealthCheckOutput, error)
 
 	// CreateHostedZoneFunc mocks the CreateHostedZone method.
-	CreateHostedZoneFunc func(in1 *route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error)
+	CreateHostedZoneFunc func(createHostedZoneInput *route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error)
 
 	// CreateHostedZoneRequestFunc mocks the CreateHostedZoneRequest method.
-	CreateHostedZoneRequestFunc func(in1 *route53.CreateHostedZoneInput) (*request.Request, *route53.CreateHostedZoneOutput)
+	CreateHostedZoneRequestFunc func(createHostedZoneInput *route53.CreateHostedZoneInput) (*request.Request, *route53.CreateHostedZoneOutput)
 
 	// CreateHostedZoneWithContextFunc mocks the CreateHostedZoneWithContext method.
-	CreateHostedZoneWithContextFunc func(in1 context.Context, in2 *route53.CreateHostedZoneInput, in3 ...request.Option) (*route53.CreateHostedZoneOutput, error)
+	CreateHostedZoneWithContextFunc func(contextMoqParam context.Context, createHostedZoneInput *route53.CreateHostedZoneInput, options ...request.Option) (*route53.CreateHostedZoneOutput, error)
+
+	// CreateKeySigningKeyFunc mocks the CreateKeySigningKey method.
+	CreateKeySigningKeyFunc func(createKeySigningKeyInput *route53.CreateKeySigningKeyInput) (*route53.CreateKeySigningKeyOutput, error)
+
+	// CreateKeySigningKeyRequestFunc mocks the CreateKeySigningKeyRequest method.
+	CreateKeySigningKeyRequestFunc func(createKeySigningKeyInput *route53.CreateKeySigningKeyInput) (*request.Request, *route53.CreateKeySigningKeyOutput)
+
+	// CreateKeySigningKeyWithContextFunc mocks the CreateKeySigningKeyWithContext method.
+	CreateKeySigningKeyWithContextFunc func(contextMoqParam context.Context, createKeySigningKeyInput *route53.CreateKeySigningKeyInput, options ...request.Option) (*route53.CreateKeySigningKeyOutput, error)
 
 	// CreateQueryLoggingConfigFunc mocks the CreateQueryLoggingConfig method.
-	CreateQueryLoggingConfigFunc func(in1 *route53.CreateQueryLoggingConfigInput) (*route53.CreateQueryLoggingConfigOutput, error)
+	CreateQueryLoggingConfigFunc func(createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput) (*route53.CreateQueryLoggingConfigOutput, error)
 
 	// CreateQueryLoggingConfigRequestFunc mocks the CreateQueryLoggingConfigRequest method.
-	CreateQueryLoggingConfigRequestFunc func(in1 *route53.CreateQueryLoggingConfigInput) (*request.Request, *route53.CreateQueryLoggingConfigOutput)
+	CreateQueryLoggingConfigRequestFunc func(createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput) (*request.Request, *route53.CreateQueryLoggingConfigOutput)
 
 	// CreateQueryLoggingConfigWithContextFunc mocks the CreateQueryLoggingConfigWithContext method.
-	CreateQueryLoggingConfigWithContextFunc func(in1 context.Context, in2 *route53.CreateQueryLoggingConfigInput, in3 ...request.Option) (*route53.CreateQueryLoggingConfigOutput, error)
+	CreateQueryLoggingConfigWithContextFunc func(contextMoqParam context.Context, createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput, options ...request.Option) (*route53.CreateQueryLoggingConfigOutput, error)
 
 	// CreateReusableDelegationSetFunc mocks the CreateReusableDelegationSet method.
-	CreateReusableDelegationSetFunc func(in1 *route53.CreateReusableDelegationSetInput) (*route53.CreateReusableDelegationSetOutput, error)
+	CreateReusableDelegationSetFunc func(createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput) (*route53.CreateReusableDelegationSetOutput, error)
 
 	// CreateReusableDelegationSetRequestFunc mocks the CreateReusableDelegationSetRequest method.
-	CreateReusableDelegationSetRequestFunc func(in1 *route53.CreateReusableDelegationSetInput) (*request.Request, *route53.CreateReusableDelegationSetOutput)
+	CreateReusableDelegationSetRequestFunc func(createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput) (*request.Request, *route53.CreateReusableDelegationSetOutput)
 
 	// CreateReusableDelegationSetWithContextFunc mocks the CreateReusableDelegationSetWithContext method.
-	CreateReusableDelegationSetWithContextFunc func(in1 context.Context, in2 *route53.CreateReusableDelegationSetInput, in3 ...request.Option) (*route53.CreateReusableDelegationSetOutput, error)
+	CreateReusableDelegationSetWithContextFunc func(contextMoqParam context.Context, createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput, options ...request.Option) (*route53.CreateReusableDelegationSetOutput, error)
 
 	// CreateTrafficPolicyFunc mocks the CreateTrafficPolicy method.
-	CreateTrafficPolicyFunc func(in1 *route53.CreateTrafficPolicyInput) (*route53.CreateTrafficPolicyOutput, error)
+	CreateTrafficPolicyFunc func(createTrafficPolicyInput *route53.CreateTrafficPolicyInput) (*route53.CreateTrafficPolicyOutput, error)
 
 	// CreateTrafficPolicyInstanceFunc mocks the CreateTrafficPolicyInstance method.
-	CreateTrafficPolicyInstanceFunc func(in1 *route53.CreateTrafficPolicyInstanceInput) (*route53.CreateTrafficPolicyInstanceOutput, error)
+	CreateTrafficPolicyInstanceFunc func(createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput) (*route53.CreateTrafficPolicyInstanceOutput, error)
 
 	// CreateTrafficPolicyInstanceRequestFunc mocks the CreateTrafficPolicyInstanceRequest method.
-	CreateTrafficPolicyInstanceRequestFunc func(in1 *route53.CreateTrafficPolicyInstanceInput) (*request.Request, *route53.CreateTrafficPolicyInstanceOutput)
+	CreateTrafficPolicyInstanceRequestFunc func(createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput) (*request.Request, *route53.CreateTrafficPolicyInstanceOutput)
 
 	// CreateTrafficPolicyInstanceWithContextFunc mocks the CreateTrafficPolicyInstanceWithContext method.
-	CreateTrafficPolicyInstanceWithContextFunc func(in1 context.Context, in2 *route53.CreateTrafficPolicyInstanceInput, in3 ...request.Option) (*route53.CreateTrafficPolicyInstanceOutput, error)
+	CreateTrafficPolicyInstanceWithContextFunc func(contextMoqParam context.Context, createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput, options ...request.Option) (*route53.CreateTrafficPolicyInstanceOutput, error)
 
 	// CreateTrafficPolicyRequestFunc mocks the CreateTrafficPolicyRequest method.
-	CreateTrafficPolicyRequestFunc func(in1 *route53.CreateTrafficPolicyInput) (*request.Request, *route53.CreateTrafficPolicyOutput)
+	CreateTrafficPolicyRequestFunc func(createTrafficPolicyInput *route53.CreateTrafficPolicyInput) (*request.Request, *route53.CreateTrafficPolicyOutput)
 
 	// CreateTrafficPolicyVersionFunc mocks the CreateTrafficPolicyVersion method.
-	CreateTrafficPolicyVersionFunc func(in1 *route53.CreateTrafficPolicyVersionInput) (*route53.CreateTrafficPolicyVersionOutput, error)
+	CreateTrafficPolicyVersionFunc func(createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput) (*route53.CreateTrafficPolicyVersionOutput, error)
 
 	// CreateTrafficPolicyVersionRequestFunc mocks the CreateTrafficPolicyVersionRequest method.
-	CreateTrafficPolicyVersionRequestFunc func(in1 *route53.CreateTrafficPolicyVersionInput) (*request.Request, *route53.CreateTrafficPolicyVersionOutput)
+	CreateTrafficPolicyVersionRequestFunc func(createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput) (*request.Request, *route53.CreateTrafficPolicyVersionOutput)
 
 	// CreateTrafficPolicyVersionWithContextFunc mocks the CreateTrafficPolicyVersionWithContext method.
-	CreateTrafficPolicyVersionWithContextFunc func(in1 context.Context, in2 *route53.CreateTrafficPolicyVersionInput, in3 ...request.Option) (*route53.CreateTrafficPolicyVersionOutput, error)
+	CreateTrafficPolicyVersionWithContextFunc func(contextMoqParam context.Context, createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput, options ...request.Option) (*route53.CreateTrafficPolicyVersionOutput, error)
 
 	// CreateTrafficPolicyWithContextFunc mocks the CreateTrafficPolicyWithContext method.
-	CreateTrafficPolicyWithContextFunc func(in1 context.Context, in2 *route53.CreateTrafficPolicyInput, in3 ...request.Option) (*route53.CreateTrafficPolicyOutput, error)
+	CreateTrafficPolicyWithContextFunc func(contextMoqParam context.Context, createTrafficPolicyInput *route53.CreateTrafficPolicyInput, options ...request.Option) (*route53.CreateTrafficPolicyOutput, error)
 
 	// CreateVPCAssociationAuthorizationFunc mocks the CreateVPCAssociationAuthorization method.
-	CreateVPCAssociationAuthorizationFunc func(in1 *route53.CreateVPCAssociationAuthorizationInput) (*route53.CreateVPCAssociationAuthorizationOutput, error)
+	CreateVPCAssociationAuthorizationFunc func(createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput) (*route53.CreateVPCAssociationAuthorizationOutput, error)
 
 	// CreateVPCAssociationAuthorizationRequestFunc mocks the CreateVPCAssociationAuthorizationRequest method.
-	CreateVPCAssociationAuthorizationRequestFunc func(in1 *route53.CreateVPCAssociationAuthorizationInput) (*request.Request, *route53.CreateVPCAssociationAuthorizationOutput)
+	CreateVPCAssociationAuthorizationRequestFunc func(createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput) (*request.Request, *route53.CreateVPCAssociationAuthorizationOutput)
 
 	// CreateVPCAssociationAuthorizationWithContextFunc mocks the CreateVPCAssociationAuthorizationWithContext method.
-	CreateVPCAssociationAuthorizationWithContextFunc func(in1 context.Context, in2 *route53.CreateVPCAssociationAuthorizationInput, in3 ...request.Option) (*route53.CreateVPCAssociationAuthorizationOutput, error)
+	CreateVPCAssociationAuthorizationWithContextFunc func(contextMoqParam context.Context, createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput, options ...request.Option) (*route53.CreateVPCAssociationAuthorizationOutput, error)
+
+	// DeactivateKeySigningKeyFunc mocks the DeactivateKeySigningKey method.
+	DeactivateKeySigningKeyFunc func(deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput) (*route53.DeactivateKeySigningKeyOutput, error)
+
+	// DeactivateKeySigningKeyRequestFunc mocks the DeactivateKeySigningKeyRequest method.
+	DeactivateKeySigningKeyRequestFunc func(deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput) (*request.Request, *route53.DeactivateKeySigningKeyOutput)
+
+	// DeactivateKeySigningKeyWithContextFunc mocks the DeactivateKeySigningKeyWithContext method.
+	DeactivateKeySigningKeyWithContextFunc func(contextMoqParam context.Context, deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput, options ...request.Option) (*route53.DeactivateKeySigningKeyOutput, error)
+
+	// DeleteCidrCollectionFunc mocks the DeleteCidrCollection method.
+	DeleteCidrCollectionFunc func(deleteCidrCollectionInput *route53.DeleteCidrCollectionInput) (*route53.DeleteCidrCollectionOutput, error)
+
+	// DeleteCidrCollectionRequestFunc mocks the DeleteCidrCollectionRequest method.
+	DeleteCidrCollectionRequestFunc func(deleteCidrCollectionInput *route53.DeleteCidrCollectionInput) (*request.Request, *route53.DeleteCidrCollectionOutput)
+
+	// DeleteCidrCollectionWithContextFunc mocks the DeleteCidrCollectionWithContext method.
+	DeleteCidrCollectionWithContextFunc func(contextMoqParam context.Context, deleteCidrCollectionInput *route53.DeleteCidrCollectionInput, options ...request.Option) (*route53.DeleteCidrCollectionOutput, error)
 
 	// DeleteHealthCheckFunc mocks the DeleteHealthCheck method.
-	DeleteHealthCheckFunc func(in1 *route53.DeleteHealthCheckInput) (*route53.DeleteHealthCheckOutput, error)
+	DeleteHealthCheckFunc func(deleteHealthCheckInput *route53.DeleteHealthCheckInput) (*route53.DeleteHealthCheckOutput, error)
 
 	// DeleteHealthCheckRequestFunc mocks the DeleteHealthCheckRequest method.
-	DeleteHealthCheckRequestFunc func(in1 *route53.DeleteHealthCheckInput) (*request.Request, *route53.DeleteHealthCheckOutput)
+	DeleteHealthCheckRequestFunc func(deleteHealthCheckInput *route53.DeleteHealthCheckInput) (*request.Request, *route53.DeleteHealthCheckOutput)
 
 	// DeleteHealthCheckWithContextFunc mocks the DeleteHealthCheckWithContext method.
-	DeleteHealthCheckWithContextFunc func(in1 context.Context, in2 *route53.DeleteHealthCheckInput, in3 ...request.Option) (*route53.DeleteHealthCheckOutput, error)
+	DeleteHealthCheckWithContextFunc func(contextMoqParam context.Context, deleteHealthCheckInput *route53.DeleteHealthCheckInput, options ...request.Option) (*route53.DeleteHealthCheckOutput, error)
 
 	// DeleteHostedZoneFunc mocks the DeleteHostedZone method.
-	DeleteHostedZoneFunc func(in1 *route53.DeleteHostedZoneInput) (*route53.DeleteHostedZoneOutput, error)
+	DeleteHostedZoneFunc func(deleteHostedZoneInput *route53.DeleteHostedZoneInput) (*route53.DeleteHostedZoneOutput, error)
 
 	// DeleteHostedZoneRequestFunc mocks the DeleteHostedZoneRequest method.
-	DeleteHostedZoneRequestFunc func(in1 *route53.DeleteHostedZoneInput) (*request.Request, *route53.DeleteHostedZoneOutput)
+	DeleteHostedZoneRequestFunc func(deleteHostedZoneInput *route53.DeleteHostedZoneInput) (*request.Request, *route53.DeleteHostedZoneOutput)
 
 	// DeleteHostedZoneWithContextFunc mocks the DeleteHostedZoneWithContext method.
-	DeleteHostedZoneWithContextFunc func(in1 context.Context, in2 *route53.DeleteHostedZoneInput, in3 ...request.Option) (*route53.DeleteHostedZoneOutput, error)
+	DeleteHostedZoneWithContextFunc func(contextMoqParam context.Context, deleteHostedZoneInput *route53.DeleteHostedZoneInput, options ...request.Option) (*route53.DeleteHostedZoneOutput, error)
+
+	// DeleteKeySigningKeyFunc mocks the DeleteKeySigningKey method.
+	DeleteKeySigningKeyFunc func(deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput) (*route53.DeleteKeySigningKeyOutput, error)
+
+	// DeleteKeySigningKeyRequestFunc mocks the DeleteKeySigningKeyRequest method.
+	DeleteKeySigningKeyRequestFunc func(deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput) (*request.Request, *route53.DeleteKeySigningKeyOutput)
+
+	// DeleteKeySigningKeyWithContextFunc mocks the DeleteKeySigningKeyWithContext method.
+	DeleteKeySigningKeyWithContextFunc func(contextMoqParam context.Context, deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput, options ...request.Option) (*route53.DeleteKeySigningKeyOutput, error)
 
 	// DeleteQueryLoggingConfigFunc mocks the DeleteQueryLoggingConfig method.
-	DeleteQueryLoggingConfigFunc func(in1 *route53.DeleteQueryLoggingConfigInput) (*route53.DeleteQueryLoggingConfigOutput, error)
+	DeleteQueryLoggingConfigFunc func(deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput) (*route53.DeleteQueryLoggingConfigOutput, error)
 
 	// DeleteQueryLoggingConfigRequestFunc mocks the DeleteQueryLoggingConfigRequest method.
-	DeleteQueryLoggingConfigRequestFunc func(in1 *route53.DeleteQueryLoggingConfigInput) (*request.Request, *route53.DeleteQueryLoggingConfigOutput)
+	DeleteQueryLoggingConfigRequestFunc func(deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput) (*request.Request, *route53.DeleteQueryLoggingConfigOutput)
 
 	// DeleteQueryLoggingConfigWithContextFunc mocks the DeleteQueryLoggingConfigWithContext method.
-	DeleteQueryLoggingConfigWithContextFunc func(in1 context.Context, in2 *route53.DeleteQueryLoggingConfigInput, in3 ...request.Option) (*route53.DeleteQueryLoggingConfigOutput, error)
+	DeleteQueryLoggingConfigWithContextFunc func(contextMoqParam context.Context, deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput, options ...request.Option) (*route53.DeleteQueryLoggingConfigOutput, error)
 
 	// DeleteReusableDelegationSetFunc mocks the DeleteReusableDelegationSet method.
-	DeleteReusableDelegationSetFunc func(in1 *route53.DeleteReusableDelegationSetInput) (*route53.DeleteReusableDelegationSetOutput, error)
+	DeleteReusableDelegationSetFunc func(deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput) (*route53.DeleteReusableDelegationSetOutput, error)
 
 	// DeleteReusableDelegationSetRequestFunc mocks the DeleteReusableDelegationSetRequest method.
-	DeleteReusableDelegationSetRequestFunc func(in1 *route53.DeleteReusableDelegationSetInput) (*request.Request, *route53.DeleteReusableDelegationSetOutput)
+	DeleteReusableDelegationSetRequestFunc func(deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput) (*request.Request, *route53.DeleteReusableDelegationSetOutput)
 
 	// DeleteReusableDelegationSetWithContextFunc mocks the DeleteReusableDelegationSetWithContext method.
-	DeleteReusableDelegationSetWithContextFunc func(in1 context.Context, in2 *route53.DeleteReusableDelegationSetInput, in3 ...request.Option) (*route53.DeleteReusableDelegationSetOutput, error)
+	DeleteReusableDelegationSetWithContextFunc func(contextMoqParam context.Context, deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput, options ...request.Option) (*route53.DeleteReusableDelegationSetOutput, error)
 
 	// DeleteTrafficPolicyFunc mocks the DeleteTrafficPolicy method.
-	DeleteTrafficPolicyFunc func(in1 *route53.DeleteTrafficPolicyInput) (*route53.DeleteTrafficPolicyOutput, error)
+	DeleteTrafficPolicyFunc func(deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput) (*route53.DeleteTrafficPolicyOutput, error)
 
 	// DeleteTrafficPolicyInstanceFunc mocks the DeleteTrafficPolicyInstance method.
-	DeleteTrafficPolicyInstanceFunc func(in1 *route53.DeleteTrafficPolicyInstanceInput) (*route53.DeleteTrafficPolicyInstanceOutput, error)
+	DeleteTrafficPolicyInstanceFunc func(deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput) (*route53.DeleteTrafficPolicyInstanceOutput, error)
 
 	// DeleteTrafficPolicyInstanceRequestFunc mocks the DeleteTrafficPolicyInstanceRequest method.
-	DeleteTrafficPolicyInstanceRequestFunc func(in1 *route53.DeleteTrafficPolicyInstanceInput) (*request.Request, *route53.DeleteTrafficPolicyInstanceOutput)
+	DeleteTrafficPolicyInstanceRequestFunc func(deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput) (*request.Request, *route53.DeleteTrafficPolicyInstanceOutput)
 
 	// DeleteTrafficPolicyInstanceWithContextFunc mocks the DeleteTrafficPolicyInstanceWithContext method.
-	DeleteTrafficPolicyInstanceWithContextFunc func(in1 context.Context, in2 *route53.DeleteTrafficPolicyInstanceInput, in3 ...request.Option) (*route53.DeleteTrafficPolicyInstanceOutput, error)
+	DeleteTrafficPolicyInstanceWithContextFunc func(contextMoqParam context.Context, deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput, options ...request.Option) (*route53.DeleteTrafficPolicyInstanceOutput, error)
 
 	// DeleteTrafficPolicyRequestFunc mocks the DeleteTrafficPolicyRequest method.
-	DeleteTrafficPolicyRequestFunc func(in1 *route53.DeleteTrafficPolicyInput) (*request.Request, *route53.DeleteTrafficPolicyOutput)
+	DeleteTrafficPolicyRequestFunc func(deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput) (*request.Request, *route53.DeleteTrafficPolicyOutput)
 
 	// DeleteTrafficPolicyWithContextFunc mocks the DeleteTrafficPolicyWithContext method.
-	DeleteTrafficPolicyWithContextFunc func(in1 context.Context, in2 *route53.DeleteTrafficPolicyInput, in3 ...request.Option) (*route53.DeleteTrafficPolicyOutput, error)
+	DeleteTrafficPolicyWithContextFunc func(contextMoqParam context.Context, deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput, options ...request.Option) (*route53.DeleteTrafficPolicyOutput, error)
 
 	// DeleteVPCAssociationAuthorizationFunc mocks the DeleteVPCAssociationAuthorization method.
-	DeleteVPCAssociationAuthorizationFunc func(in1 *route53.DeleteVPCAssociationAuthorizationInput) (*route53.DeleteVPCAssociationAuthorizationOutput, error)
+	DeleteVPCAssociationAuthorizationFunc func(deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput) (*route53.DeleteVPCAssociationAuthorizationOutput, error)
 
 	// DeleteVPCAssociationAuthorizationRequestFunc mocks the DeleteVPCAssociationAuthorizationRequest method.
-	DeleteVPCAssociationAuthorizationRequestFunc func(in1 *route53.DeleteVPCAssociationAuthorizationInput) (*request.Request, *route53.DeleteVPCAssociationAuthorizationOutput)
+	DeleteVPCAssociationAuthorizationRequestFunc func(deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput) (*request.Request, *route53.DeleteVPCAssociationAuthorizationOutput)
 
 	// DeleteVPCAssociationAuthorizationWithContextFunc mocks the DeleteVPCAssociationAuthorizationWithContext method.
-	DeleteVPCAssociationAuthorizationWithContextFunc func(in1 context.Context, in2 *route53.DeleteVPCAssociationAuthorizationInput, in3 ...request.Option) (*route53.DeleteVPCAssociationAuthorizationOutput, error)
+	DeleteVPCAssociationAuthorizationWithContextFunc func(contextMoqParam context.Context, deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput, options ...request.Option) (*route53.DeleteVPCAssociationAuthorizationOutput, error)
+
+	// DisableHostedZoneDNSSECFunc mocks the DisableHostedZoneDNSSEC method.
+	DisableHostedZoneDNSSECFunc func(disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput) (*route53.DisableHostedZoneDNSSECOutput, error)
+
+	// DisableHostedZoneDNSSECRequestFunc mocks the DisableHostedZoneDNSSECRequest method.
+	DisableHostedZoneDNSSECRequestFunc func(disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput) (*request.Request, *route53.DisableHostedZoneDNSSECOutput)
+
+	// DisableHostedZoneDNSSECWithContextFunc mocks the DisableHostedZoneDNSSECWithContext method.
+	DisableHostedZoneDNSSECWithContextFunc func(contextMoqParam context.Context, disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput, options ...request.Option) (*route53.DisableHostedZoneDNSSECOutput, error)
 
 	// DisassociateVPCFromHostedZoneFunc mocks the DisassociateVPCFromHostedZone method.
-	DisassociateVPCFromHostedZoneFunc func(in1 *route53.DisassociateVPCFromHostedZoneInput) (*route53.DisassociateVPCFromHostedZoneOutput, error)
+	DisassociateVPCFromHostedZoneFunc func(disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput) (*route53.DisassociateVPCFromHostedZoneOutput, error)
 
 	// DisassociateVPCFromHostedZoneRequestFunc mocks the DisassociateVPCFromHostedZoneRequest method.
-	DisassociateVPCFromHostedZoneRequestFunc func(in1 *route53.DisassociateVPCFromHostedZoneInput) (*request.Request, *route53.DisassociateVPCFromHostedZoneOutput)
+	DisassociateVPCFromHostedZoneRequestFunc func(disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput) (*request.Request, *route53.DisassociateVPCFromHostedZoneOutput)
 
 	// DisassociateVPCFromHostedZoneWithContextFunc mocks the DisassociateVPCFromHostedZoneWithContext method.
-	DisassociateVPCFromHostedZoneWithContextFunc func(in1 context.Context, in2 *route53.DisassociateVPCFromHostedZoneInput, in3 ...request.Option) (*route53.DisassociateVPCFromHostedZoneOutput, error)
+	DisassociateVPCFromHostedZoneWithContextFunc func(contextMoqParam context.Context, disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput, options ...request.Option) (*route53.DisassociateVPCFromHostedZoneOutput, error)
+
+	// EnableHostedZoneDNSSECFunc mocks the EnableHostedZoneDNSSEC method.
+	EnableHostedZoneDNSSECFunc func(enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput) (*route53.EnableHostedZoneDNSSECOutput, error)
+
+	// EnableHostedZoneDNSSECRequestFunc mocks the EnableHostedZoneDNSSECRequest method.
+	EnableHostedZoneDNSSECRequestFunc func(enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput) (*request.Request, *route53.EnableHostedZoneDNSSECOutput)
+
+	// EnableHostedZoneDNSSECWithContextFunc mocks the EnableHostedZoneDNSSECWithContext method.
+	EnableHostedZoneDNSSECWithContextFunc func(contextMoqParam context.Context, enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput, options ...request.Option) (*route53.EnableHostedZoneDNSSECOutput, error)
 
 	// GetAccountLimitFunc mocks the GetAccountLimit method.
-	GetAccountLimitFunc func(in1 *route53.GetAccountLimitInput) (*route53.GetAccountLimitOutput, error)
+	GetAccountLimitFunc func(getAccountLimitInput *route53.GetAccountLimitInput) (*route53.GetAccountLimitOutput, error)
 
 	// GetAccountLimitRequestFunc mocks the GetAccountLimitRequest method.
-	GetAccountLimitRequestFunc func(in1 *route53.GetAccountLimitInput) (*request.Request, *route53.GetAccountLimitOutput)
+	GetAccountLimitRequestFunc func(getAccountLimitInput *route53.GetAccountLimitInput) (*request.Request, *route53.GetAccountLimitOutput)
 
 	// GetAccountLimitWithContextFunc mocks the GetAccountLimitWithContext method.
-	GetAccountLimitWithContextFunc func(in1 context.Context, in2 *route53.GetAccountLimitInput, in3 ...request.Option) (*route53.GetAccountLimitOutput, error)
+	GetAccountLimitWithContextFunc func(contextMoqParam context.Context, getAccountLimitInput *route53.GetAccountLimitInput, options ...request.Option) (*route53.GetAccountLimitOutput, error)
 
 	// GetChangeFunc mocks the GetChange method.
-	GetChangeFunc func(in1 *route53.GetChangeInput) (*route53.GetChangeOutput, error)
+	GetChangeFunc func(getChangeInput *route53.GetChangeInput) (*route53.GetChangeOutput, error)
 
 	// GetChangeRequestFunc mocks the GetChangeRequest method.
-	GetChangeRequestFunc func(in1 *route53.GetChangeInput) (*request.Request, *route53.GetChangeOutput)
+	GetChangeRequestFunc func(getChangeInput *route53.GetChangeInput) (*request.Request, *route53.GetChangeOutput)
 
 	// GetChangeWithContextFunc mocks the GetChangeWithContext method.
-	GetChangeWithContextFunc func(in1 context.Context, in2 *route53.GetChangeInput, in3 ...request.Option) (*route53.GetChangeOutput, error)
+	GetChangeWithContextFunc func(contextMoqParam context.Context, getChangeInput *route53.GetChangeInput, options ...request.Option) (*route53.GetChangeOutput, error)
 
 	// GetCheckerIpRangesFunc mocks the GetCheckerIpRanges method.
-	GetCheckerIpRangesFunc func(in1 *route53.GetCheckerIpRangesInput) (*route53.GetCheckerIpRangesOutput, error)
+	GetCheckerIpRangesFunc func(getCheckerIpRangesInput *route53.GetCheckerIpRangesInput) (*route53.GetCheckerIpRangesOutput, error)
 
 	// GetCheckerIpRangesRequestFunc mocks the GetCheckerIpRangesRequest method.
-	GetCheckerIpRangesRequestFunc func(in1 *route53.GetCheckerIpRangesInput) (*request.Request, *route53.GetCheckerIpRangesOutput)
+	GetCheckerIpRangesRequestFunc func(getCheckerIpRangesInput *route53.GetCheckerIpRangesInput) (*request.Request, *route53.GetCheckerIpRangesOutput)
 
 	// GetCheckerIpRangesWithContextFunc mocks the GetCheckerIpRangesWithContext method.
-	GetCheckerIpRangesWithContextFunc func(in1 context.Context, in2 *route53.GetCheckerIpRangesInput, in3 ...request.Option) (*route53.GetCheckerIpRangesOutput, error)
+	GetCheckerIpRangesWithContextFunc func(contextMoqParam context.Context, getCheckerIpRangesInput *route53.GetCheckerIpRangesInput, options ...request.Option) (*route53.GetCheckerIpRangesOutput, error)
+
+	// GetDNSSECFunc mocks the GetDNSSEC method.
+	GetDNSSECFunc func(getDNSSECInput *route53.GetDNSSECInput) (*route53.GetDNSSECOutput, error)
+
+	// GetDNSSECRequestFunc mocks the GetDNSSECRequest method.
+	GetDNSSECRequestFunc func(getDNSSECInput *route53.GetDNSSECInput) (*request.Request, *route53.GetDNSSECOutput)
+
+	// GetDNSSECWithContextFunc mocks the GetDNSSECWithContext method.
+	GetDNSSECWithContextFunc func(contextMoqParam context.Context, getDNSSECInput *route53.GetDNSSECInput, options ...request.Option) (*route53.GetDNSSECOutput, error)
 
 	// GetGeoLocationFunc mocks the GetGeoLocation method.
-	GetGeoLocationFunc func(in1 *route53.GetGeoLocationInput) (*route53.GetGeoLocationOutput, error)
+	GetGeoLocationFunc func(getGeoLocationInput *route53.GetGeoLocationInput) (*route53.GetGeoLocationOutput, error)
 
 	// GetGeoLocationRequestFunc mocks the GetGeoLocationRequest method.
-	GetGeoLocationRequestFunc func(in1 *route53.GetGeoLocationInput) (*request.Request, *route53.GetGeoLocationOutput)
+	GetGeoLocationRequestFunc func(getGeoLocationInput *route53.GetGeoLocationInput) (*request.Request, *route53.GetGeoLocationOutput)
 
 	// GetGeoLocationWithContextFunc mocks the GetGeoLocationWithContext method.
-	GetGeoLocationWithContextFunc func(in1 context.Context, in2 *route53.GetGeoLocationInput, in3 ...request.Option) (*route53.GetGeoLocationOutput, error)
+	GetGeoLocationWithContextFunc func(contextMoqParam context.Context, getGeoLocationInput *route53.GetGeoLocationInput, options ...request.Option) (*route53.GetGeoLocationOutput, error)
 
 	// GetHealthCheckFunc mocks the GetHealthCheck method.
-	GetHealthCheckFunc func(in1 *route53.GetHealthCheckInput) (*route53.GetHealthCheckOutput, error)
+	GetHealthCheckFunc func(getHealthCheckInput *route53.GetHealthCheckInput) (*route53.GetHealthCheckOutput, error)
 
 	// GetHealthCheckCountFunc mocks the GetHealthCheckCount method.
-	GetHealthCheckCountFunc func(in1 *route53.GetHealthCheckCountInput) (*route53.GetHealthCheckCountOutput, error)
+	GetHealthCheckCountFunc func(getHealthCheckCountInput *route53.GetHealthCheckCountInput) (*route53.GetHealthCheckCountOutput, error)
 
 	// GetHealthCheckCountRequestFunc mocks the GetHealthCheckCountRequest method.
-	GetHealthCheckCountRequestFunc func(in1 *route53.GetHealthCheckCountInput) (*request.Request, *route53.GetHealthCheckCountOutput)
+	GetHealthCheckCountRequestFunc func(getHealthCheckCountInput *route53.GetHealthCheckCountInput) (*request.Request, *route53.GetHealthCheckCountOutput)
 
 	// GetHealthCheckCountWithContextFunc mocks the GetHealthCheckCountWithContext method.
-	GetHealthCheckCountWithContextFunc func(in1 context.Context, in2 *route53.GetHealthCheckCountInput, in3 ...request.Option) (*route53.GetHealthCheckCountOutput, error)
+	GetHealthCheckCountWithContextFunc func(contextMoqParam context.Context, getHealthCheckCountInput *route53.GetHealthCheckCountInput, options ...request.Option) (*route53.GetHealthCheckCountOutput, error)
 
 	// GetHealthCheckLastFailureReasonFunc mocks the GetHealthCheckLastFailureReason method.
-	GetHealthCheckLastFailureReasonFunc func(in1 *route53.GetHealthCheckLastFailureReasonInput) (*route53.GetHealthCheckLastFailureReasonOutput, error)
+	GetHealthCheckLastFailureReasonFunc func(getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput) (*route53.GetHealthCheckLastFailureReasonOutput, error)
 
 	// GetHealthCheckLastFailureReasonRequestFunc mocks the GetHealthCheckLastFailureReasonRequest method.
-	GetHealthCheckLastFailureReasonRequestFunc func(in1 *route53.GetHealthCheckLastFailureReasonInput) (*request.Request, *route53.GetHealthCheckLastFailureReasonOutput)
+	GetHealthCheckLastFailureReasonRequestFunc func(getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput) (*request.Request, *route53.GetHealthCheckLastFailureReasonOutput)
 
 	// GetHealthCheckLastFailureReasonWithContextFunc mocks the GetHealthCheckLastFailureReasonWithContext method.
-	GetHealthCheckLastFailureReasonWithContextFunc func(in1 context.Context, in2 *route53.GetHealthCheckLastFailureReasonInput, in3 ...request.Option) (*route53.GetHealthCheckLastFailureReasonOutput, error)
+	GetHealthCheckLastFailureReasonWithContextFunc func(contextMoqParam context.Context, getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput, options ...request.Option) (*route53.GetHealthCheckLastFailureReasonOutput, error)
 
 	// GetHealthCheckRequestFunc mocks the GetHealthCheckRequest method.
-	GetHealthCheckRequestFunc func(in1 *route53.GetHealthCheckInput) (*request.Request, *route53.GetHealthCheckOutput)
+	GetHealthCheckRequestFunc func(getHealthCheckInput *route53.GetHealthCheckInput) (*request.Request, *route53.GetHealthCheckOutput)
 
 	// GetHealthCheckStatusFunc mocks the GetHealthCheckStatus method.
-	GetHealthCheckStatusFunc func(in1 *route53.GetHealthCheckStatusInput) (*route53.GetHealthCheckStatusOutput, error)
+	GetHealthCheckStatusFunc func(getHealthCheckStatusInput *route53.GetHealthCheckStatusInput) (*route53.GetHealthCheckStatusOutput, error)
 
 	// GetHealthCheckStatusRequestFunc mocks the GetHealthCheckStatusRequest method.
-	GetHealthCheckStatusRequestFunc func(in1 *route53.GetHealthCheckStatusInput) (*request.Request, *route53.GetHealthCheckStatusOutput)
+	GetHealthCheckStatusRequestFunc func(getHealthCheckStatusInput *route53.GetHealthCheckStatusInput) (*request.Request, *route53.GetHealthCheckStatusOutput)
 
 	// GetHealthCheckStatusWithContextFunc mocks the GetHealthCheckStatusWithContext method.
-	GetHealthCheckStatusWithContextFunc func(in1 context.Context, in2 *route53.GetHealthCheckStatusInput, in3 ...request.Option) (*route53.GetHealthCheckStatusOutput, error)
+	GetHealthCheckStatusWithContextFunc func(contextMoqParam context.Context, getHealthCheckStatusInput *route53.GetHealthCheckStatusInput, options ...request.Option) (*route53.GetHealthCheckStatusOutput, error)
 
 	// GetHealthCheckWithContextFunc mocks the GetHealthCheckWithContext method.
-	GetHealthCheckWithContextFunc func(in1 context.Context, in2 *route53.GetHealthCheckInput, in3 ...request.Option) (*route53.GetHealthCheckOutput, error)
+	GetHealthCheckWithContextFunc func(contextMoqParam context.Context, getHealthCheckInput *route53.GetHealthCheckInput, options ...request.Option) (*route53.GetHealthCheckOutput, error)
 
 	// GetHostedZoneFunc mocks the GetHostedZone method.
-	GetHostedZoneFunc func(in1 *route53.GetHostedZoneInput) (*route53.GetHostedZoneOutput, error)
+	GetHostedZoneFunc func(getHostedZoneInput *route53.GetHostedZoneInput) (*route53.GetHostedZoneOutput, error)
 
 	// GetHostedZoneCountFunc mocks the GetHostedZoneCount method.
-	GetHostedZoneCountFunc func(in1 *route53.GetHostedZoneCountInput) (*route53.GetHostedZoneCountOutput, error)
+	GetHostedZoneCountFunc func(getHostedZoneCountInput *route53.GetHostedZoneCountInput) (*route53.GetHostedZoneCountOutput, error)
 
 	// GetHostedZoneCountRequestFunc mocks the GetHostedZoneCountRequest method.
-	GetHostedZoneCountRequestFunc func(in1 *route53.GetHostedZoneCountInput) (*request.Request, *route53.GetHostedZoneCountOutput)
+	GetHostedZoneCountRequestFunc func(getHostedZoneCountInput *route53.GetHostedZoneCountInput) (*request.Request, *route53.GetHostedZoneCountOutput)
 
 	// GetHostedZoneCountWithContextFunc mocks the GetHostedZoneCountWithContext method.
-	GetHostedZoneCountWithContextFunc func(in1 context.Context, in2 *route53.GetHostedZoneCountInput, in3 ...request.Option) (*route53.GetHostedZoneCountOutput, error)
+	GetHostedZoneCountWithContextFunc func(contextMoqParam context.Context, getHostedZoneCountInput *route53.GetHostedZoneCountInput, options ...request.Option) (*route53.GetHostedZoneCountOutput, error)
 
 	// GetHostedZoneLimitFunc mocks the GetHostedZoneLimit method.
-	GetHostedZoneLimitFunc func(in1 *route53.GetHostedZoneLimitInput) (*route53.GetHostedZoneLimitOutput, error)
+	GetHostedZoneLimitFunc func(getHostedZoneLimitInput *route53.GetHostedZoneLimitInput) (*route53.GetHostedZoneLimitOutput, error)
 
 	// GetHostedZoneLimitRequestFunc mocks the GetHostedZoneLimitRequest method.
-	GetHostedZoneLimitRequestFunc func(in1 *route53.GetHostedZoneLimitInput) (*request.Request, *route53.GetHostedZoneLimitOutput)
+	GetHostedZoneLimitRequestFunc func(getHostedZoneLimitInput *route53.GetHostedZoneLimitInput) (*request.Request, *route53.GetHostedZoneLimitOutput)
 
 	// GetHostedZoneLimitWithContextFunc mocks the GetHostedZoneLimitWithContext method.
-	GetHostedZoneLimitWithContextFunc func(in1 context.Context, in2 *route53.GetHostedZoneLimitInput, in3 ...request.Option) (*route53.GetHostedZoneLimitOutput, error)
+	GetHostedZoneLimitWithContextFunc func(contextMoqParam context.Context, getHostedZoneLimitInput *route53.GetHostedZoneLimitInput, options ...request.Option) (*route53.GetHostedZoneLimitOutput, error)
 
 	// GetHostedZoneRequestFunc mocks the GetHostedZoneRequest method.
-	GetHostedZoneRequestFunc func(in1 *route53.GetHostedZoneInput) (*request.Request, *route53.GetHostedZoneOutput)
+	GetHostedZoneRequestFunc func(getHostedZoneInput *route53.GetHostedZoneInput) (*request.Request, *route53.GetHostedZoneOutput)
 
 	// GetHostedZoneWithContextFunc mocks the GetHostedZoneWithContext method.
-	GetHostedZoneWithContextFunc func(in1 context.Context, in2 *route53.GetHostedZoneInput, in3 ...request.Option) (*route53.GetHostedZoneOutput, error)
+	GetHostedZoneWithContextFunc func(contextMoqParam context.Context, getHostedZoneInput *route53.GetHostedZoneInput, options ...request.Option) (*route53.GetHostedZoneOutput, error)
 
 	// GetQueryLoggingConfigFunc mocks the GetQueryLoggingConfig method.
-	GetQueryLoggingConfigFunc func(in1 *route53.GetQueryLoggingConfigInput) (*route53.GetQueryLoggingConfigOutput, error)
+	GetQueryLoggingConfigFunc func(getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput) (*route53.GetQueryLoggingConfigOutput, error)
 
 	// GetQueryLoggingConfigRequestFunc mocks the GetQueryLoggingConfigRequest method.
-	GetQueryLoggingConfigRequestFunc func(in1 *route53.GetQueryLoggingConfigInput) (*request.Request, *route53.GetQueryLoggingConfigOutput)
+	GetQueryLoggingConfigRequestFunc func(getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput) (*request.Request, *route53.GetQueryLoggingConfigOutput)
 
 	// GetQueryLoggingConfigWithContextFunc mocks the GetQueryLoggingConfigWithContext method.
-	GetQueryLoggingConfigWithContextFunc func(in1 context.Context, in2 *route53.GetQueryLoggingConfigInput, in3 ...request.Option) (*route53.GetQueryLoggingConfigOutput, error)
+	GetQueryLoggingConfigWithContextFunc func(contextMoqParam context.Context, getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput, options ...request.Option) (*route53.GetQueryLoggingConfigOutput, error)
 
 	// GetReusableDelegationSetFunc mocks the GetReusableDelegationSet method.
-	GetReusableDelegationSetFunc func(in1 *route53.GetReusableDelegationSetInput) (*route53.GetReusableDelegationSetOutput, error)
+	GetReusableDelegationSetFunc func(getReusableDelegationSetInput *route53.GetReusableDelegationSetInput) (*route53.GetReusableDelegationSetOutput, error)
 
 	// GetReusableDelegationSetLimitFunc mocks the GetReusableDelegationSetLimit method.
-	GetReusableDelegationSetLimitFunc func(in1 *route53.GetReusableDelegationSetLimitInput) (*route53.GetReusableDelegationSetLimitOutput, error)
+	GetReusableDelegationSetLimitFunc func(getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput) (*route53.GetReusableDelegationSetLimitOutput, error)
 
 	// GetReusableDelegationSetLimitRequestFunc mocks the GetReusableDelegationSetLimitRequest method.
-	GetReusableDelegationSetLimitRequestFunc func(in1 *route53.GetReusableDelegationSetLimitInput) (*request.Request, *route53.GetReusableDelegationSetLimitOutput)
+	GetReusableDelegationSetLimitRequestFunc func(getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput) (*request.Request, *route53.GetReusableDelegationSetLimitOutput)
 
 	// GetReusableDelegationSetLimitWithContextFunc mocks the GetReusableDelegationSetLimitWithContext method.
-	GetReusableDelegationSetLimitWithContextFunc func(in1 context.Context, in2 *route53.GetReusableDelegationSetLimitInput, in3 ...request.Option) (*route53.GetReusableDelegationSetLimitOutput, error)
+	GetReusableDelegationSetLimitWithContextFunc func(contextMoqParam context.Context, getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput, options ...request.Option) (*route53.GetReusableDelegationSetLimitOutput, error)
 
 	// GetReusableDelegationSetRequestFunc mocks the GetReusableDelegationSetRequest method.
-	GetReusableDelegationSetRequestFunc func(in1 *route53.GetReusableDelegationSetInput) (*request.Request, *route53.GetReusableDelegationSetOutput)
+	GetReusableDelegationSetRequestFunc func(getReusableDelegationSetInput *route53.GetReusableDelegationSetInput) (*request.Request, *route53.GetReusableDelegationSetOutput)
 
 	// GetReusableDelegationSetWithContextFunc mocks the GetReusableDelegationSetWithContext method.
-	GetReusableDelegationSetWithContextFunc func(in1 context.Context, in2 *route53.GetReusableDelegationSetInput, in3 ...request.Option) (*route53.GetReusableDelegationSetOutput, error)
+	GetReusableDelegationSetWithContextFunc func(contextMoqParam context.Context, getReusableDelegationSetInput *route53.GetReusableDelegationSetInput, options ...request.Option) (*route53.GetReusableDelegationSetOutput, error)
 
 	// GetTrafficPolicyFunc mocks the GetTrafficPolicy method.
-	GetTrafficPolicyFunc func(in1 *route53.GetTrafficPolicyInput) (*route53.GetTrafficPolicyOutput, error)
+	GetTrafficPolicyFunc func(getTrafficPolicyInput *route53.GetTrafficPolicyInput) (*route53.GetTrafficPolicyOutput, error)
 
 	// GetTrafficPolicyInstanceFunc mocks the GetTrafficPolicyInstance method.
-	GetTrafficPolicyInstanceFunc func(in1 *route53.GetTrafficPolicyInstanceInput) (*route53.GetTrafficPolicyInstanceOutput, error)
+	GetTrafficPolicyInstanceFunc func(getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput) (*route53.GetTrafficPolicyInstanceOutput, error)
 
 	// GetTrafficPolicyInstanceCountFunc mocks the GetTrafficPolicyInstanceCount method.
-	GetTrafficPolicyInstanceCountFunc func(in1 *route53.GetTrafficPolicyInstanceCountInput) (*route53.GetTrafficPolicyInstanceCountOutput, error)
+	GetTrafficPolicyInstanceCountFunc func(getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput) (*route53.GetTrafficPolicyInstanceCountOutput, error)
 
 	// GetTrafficPolicyInstanceCountRequestFunc mocks the GetTrafficPolicyInstanceCountRequest method.
-	GetTrafficPolicyInstanceCountRequestFunc func(in1 *route53.GetTrafficPolicyInstanceCountInput) (*request.Request, *route53.GetTrafficPolicyInstanceCountOutput)
+	GetTrafficPolicyInstanceCountRequestFunc func(getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput) (*request.Request, *route53.GetTrafficPolicyInstanceCountOutput)
 
 	// GetTrafficPolicyInstanceCountWithContextFunc mocks the GetTrafficPolicyInstanceCountWithContext method.
-	GetTrafficPolicyInstanceCountWithContextFunc func(in1 context.Context, in2 *route53.GetTrafficPolicyInstanceCountInput, in3 ...request.Option) (*route53.GetTrafficPolicyInstanceCountOutput, error)
+	GetTrafficPolicyInstanceCountWithContextFunc func(contextMoqParam context.Context, getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput, options ...request.Option) (*route53.GetTrafficPolicyInstanceCountOutput, error)
 
 	// GetTrafficPolicyInstanceRequestFunc mocks the GetTrafficPolicyInstanceRequest method.
-	GetTrafficPolicyInstanceRequestFunc func(in1 *route53.GetTrafficPolicyInstanceInput) (*request.Request, *route53.GetTrafficPolicyInstanceOutput)
+	GetTrafficPolicyInstanceRequestFunc func(getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput) (*request.Request, *route53.GetTrafficPolicyInstanceOutput)
 
 	// GetTrafficPolicyInstanceWithContextFunc mocks the GetTrafficPolicyInstanceWithContext method.
-	GetTrafficPolicyInstanceWithContextFunc func(in1 context.Context, in2 *route53.GetTrafficPolicyInstanceInput, in3 ...request.Option) (*route53.GetTrafficPolicyInstanceOutput, error)
+	GetTrafficPolicyInstanceWithContextFunc func(contextMoqParam context.Context, getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput, options ...request.Option) (*route53.GetTrafficPolicyInstanceOutput, error)
 
 	// GetTrafficPolicyRequestFunc mocks the GetTrafficPolicyRequest method.
-	GetTrafficPolicyRequestFunc func(in1 *route53.GetTrafficPolicyInput) (*request.Request, *route53.GetTrafficPolicyOutput)
+	GetTrafficPolicyRequestFunc func(getTrafficPolicyInput *route53.GetTrafficPolicyInput) (*request.Request, *route53.GetTrafficPolicyOutput)
 
 	// GetTrafficPolicyWithContextFunc mocks the GetTrafficPolicyWithContext method.
-	GetTrafficPolicyWithContextFunc func(in1 context.Context, in2 *route53.GetTrafficPolicyInput, in3 ...request.Option) (*route53.GetTrafficPolicyOutput, error)
+	GetTrafficPolicyWithContextFunc func(contextMoqParam context.Context, getTrafficPolicyInput *route53.GetTrafficPolicyInput, options ...request.Option) (*route53.GetTrafficPolicyOutput, error)
+
+	// ListCidrBlocksFunc mocks the ListCidrBlocks method.
+	ListCidrBlocksFunc func(listCidrBlocksInput *route53.ListCidrBlocksInput) (*route53.ListCidrBlocksOutput, error)
+
+	// ListCidrBlocksPagesFunc mocks the ListCidrBlocksPages method.
+	ListCidrBlocksPagesFunc func(listCidrBlocksInput *route53.ListCidrBlocksInput, fn func(*route53.ListCidrBlocksOutput, bool) bool) error
+
+	// ListCidrBlocksPagesWithContextFunc mocks the ListCidrBlocksPagesWithContext method.
+	ListCidrBlocksPagesWithContextFunc func(contextMoqParam context.Context, listCidrBlocksInput *route53.ListCidrBlocksInput, fn func(*route53.ListCidrBlocksOutput, bool) bool, options ...request.Option) error
+
+	// ListCidrBlocksRequestFunc mocks the ListCidrBlocksRequest method.
+	ListCidrBlocksRequestFunc func(listCidrBlocksInput *route53.ListCidrBlocksInput) (*request.Request, *route53.ListCidrBlocksOutput)
+
+	// ListCidrBlocksWithContextFunc mocks the ListCidrBlocksWithContext method.
+	ListCidrBlocksWithContextFunc func(contextMoqParam context.Context, listCidrBlocksInput *route53.ListCidrBlocksInput, options ...request.Option) (*route53.ListCidrBlocksOutput, error)
+
+	// ListCidrCollectionsFunc mocks the ListCidrCollections method.
+	ListCidrCollectionsFunc func(listCidrCollectionsInput *route53.ListCidrCollectionsInput) (*route53.ListCidrCollectionsOutput, error)
+
+	// ListCidrCollectionsPagesFunc mocks the ListCidrCollectionsPages method.
+	ListCidrCollectionsPagesFunc func(listCidrCollectionsInput *route53.ListCidrCollectionsInput, fn func(*route53.ListCidrCollectionsOutput, bool) bool) error
+
+	// ListCidrCollectionsPagesWithContextFunc mocks the ListCidrCollectionsPagesWithContext method.
+	ListCidrCollectionsPagesWithContextFunc func(contextMoqParam context.Context, listCidrCollectionsInput *route53.ListCidrCollectionsInput, fn func(*route53.ListCidrCollectionsOutput, bool) bool, options ...request.Option) error
+
+	// ListCidrCollectionsRequestFunc mocks the ListCidrCollectionsRequest method.
+	ListCidrCollectionsRequestFunc func(listCidrCollectionsInput *route53.ListCidrCollectionsInput) (*request.Request, *route53.ListCidrCollectionsOutput)
+
+	// ListCidrCollectionsWithContextFunc mocks the ListCidrCollectionsWithContext method.
+	ListCidrCollectionsWithContextFunc func(contextMoqParam context.Context, listCidrCollectionsInput *route53.ListCidrCollectionsInput, options ...request.Option) (*route53.ListCidrCollectionsOutput, error)
+
+	// ListCidrLocationsFunc mocks the ListCidrLocations method.
+	ListCidrLocationsFunc func(listCidrLocationsInput *route53.ListCidrLocationsInput) (*route53.ListCidrLocationsOutput, error)
+
+	// ListCidrLocationsPagesFunc mocks the ListCidrLocationsPages method.
+	ListCidrLocationsPagesFunc func(listCidrLocationsInput *route53.ListCidrLocationsInput, fn func(*route53.ListCidrLocationsOutput, bool) bool) error
+
+	// ListCidrLocationsPagesWithContextFunc mocks the ListCidrLocationsPagesWithContext method.
+	ListCidrLocationsPagesWithContextFunc func(contextMoqParam context.Context, listCidrLocationsInput *route53.ListCidrLocationsInput, fn func(*route53.ListCidrLocationsOutput, bool) bool, options ...request.Option) error
+
+	// ListCidrLocationsRequestFunc mocks the ListCidrLocationsRequest method.
+	ListCidrLocationsRequestFunc func(listCidrLocationsInput *route53.ListCidrLocationsInput) (*request.Request, *route53.ListCidrLocationsOutput)
+
+	// ListCidrLocationsWithContextFunc mocks the ListCidrLocationsWithContext method.
+	ListCidrLocationsWithContextFunc func(contextMoqParam context.Context, listCidrLocationsInput *route53.ListCidrLocationsInput, options ...request.Option) (*route53.ListCidrLocationsOutput, error)
 
 	// ListGeoLocationsFunc mocks the ListGeoLocations method.
-	ListGeoLocationsFunc func(in1 *route53.ListGeoLocationsInput) (*route53.ListGeoLocationsOutput, error)
+	ListGeoLocationsFunc func(listGeoLocationsInput *route53.ListGeoLocationsInput) (*route53.ListGeoLocationsOutput, error)
 
 	// ListGeoLocationsRequestFunc mocks the ListGeoLocationsRequest method.
-	ListGeoLocationsRequestFunc func(in1 *route53.ListGeoLocationsInput) (*request.Request, *route53.ListGeoLocationsOutput)
+	ListGeoLocationsRequestFunc func(listGeoLocationsInput *route53.ListGeoLocationsInput) (*request.Request, *route53.ListGeoLocationsOutput)
 
 	// ListGeoLocationsWithContextFunc mocks the ListGeoLocationsWithContext method.
-	ListGeoLocationsWithContextFunc func(in1 context.Context, in2 *route53.ListGeoLocationsInput, in3 ...request.Option) (*route53.ListGeoLocationsOutput, error)
+	ListGeoLocationsWithContextFunc func(contextMoqParam context.Context, listGeoLocationsInput *route53.ListGeoLocationsInput, options ...request.Option) (*route53.ListGeoLocationsOutput, error)
 
 	// ListHealthChecksFunc mocks the ListHealthChecks method.
-	ListHealthChecksFunc func(in1 *route53.ListHealthChecksInput) (*route53.ListHealthChecksOutput, error)
+	ListHealthChecksFunc func(listHealthChecksInput *route53.ListHealthChecksInput) (*route53.ListHealthChecksOutput, error)
 
 	// ListHealthChecksPagesFunc mocks the ListHealthChecksPages method.
-	ListHealthChecksPagesFunc func(in1 *route53.ListHealthChecksInput, in2 func(*route53.ListHealthChecksOutput, bool) bool) error
+	ListHealthChecksPagesFunc func(listHealthChecksInput *route53.ListHealthChecksInput, fn func(*route53.ListHealthChecksOutput, bool) bool) error
 
 	// ListHealthChecksPagesWithContextFunc mocks the ListHealthChecksPagesWithContext method.
-	ListHealthChecksPagesWithContextFunc func(in1 context.Context, in2 *route53.ListHealthChecksInput, in3 func(*route53.ListHealthChecksOutput, bool) bool, in4 ...request.Option) error
+	ListHealthChecksPagesWithContextFunc func(contextMoqParam context.Context, listHealthChecksInput *route53.ListHealthChecksInput, fn func(*route53.ListHealthChecksOutput, bool) bool, options ...request.Option) error
 
 	// ListHealthChecksRequestFunc mocks the ListHealthChecksRequest method.
-	ListHealthChecksRequestFunc func(in1 *route53.ListHealthChecksInput) (*request.Request, *route53.ListHealthChecksOutput)
+	ListHealthChecksRequestFunc func(listHealthChecksInput *route53.ListHealthChecksInput) (*request.Request, *route53.ListHealthChecksOutput)
 
 	// ListHealthChecksWithContextFunc mocks the ListHealthChecksWithContext method.
-	ListHealthChecksWithContextFunc func(in1 context.Context, in2 *route53.ListHealthChecksInput, in3 ...request.Option) (*route53.ListHealthChecksOutput, error)
+	ListHealthChecksWithContextFunc func(contextMoqParam context.Context, listHealthChecksInput *route53.ListHealthChecksInput, options ...request.Option) (*route53.ListHealthChecksOutput, error)
 
 	// ListHostedZonesFunc mocks the ListHostedZones method.
-	ListHostedZonesFunc func(in1 *route53.ListHostedZonesInput) (*route53.ListHostedZonesOutput, error)
+	ListHostedZonesFunc func(listHostedZonesInput *route53.ListHostedZonesInput) (*route53.ListHostedZonesOutput, error)
 
 	// ListHostedZonesByNameFunc mocks the ListHostedZonesByName method.
-	ListHostedZonesByNameFunc func(in1 *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error)
+	ListHostedZonesByNameFunc func(listHostedZonesByNameInput *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error)
 
 	// ListHostedZonesByNameRequestFunc mocks the ListHostedZonesByNameRequest method.
-	ListHostedZonesByNameRequestFunc func(in1 *route53.ListHostedZonesByNameInput) (*request.Request, *route53.ListHostedZonesByNameOutput)
+	ListHostedZonesByNameRequestFunc func(listHostedZonesByNameInput *route53.ListHostedZonesByNameInput) (*request.Request, *route53.ListHostedZonesByNameOutput)
 
 	// ListHostedZonesByNameWithContextFunc mocks the ListHostedZonesByNameWithContext method.
-	ListHostedZonesByNameWithContextFunc func(in1 context.Context, in2 *route53.ListHostedZonesByNameInput, in3 ...request.Option) (*route53.ListHostedZonesByNameOutput, error)
+	ListHostedZonesByNameWithContextFunc func(contextMoqParam context.Context, listHostedZonesByNameInput *route53.ListHostedZonesByNameInput, options ...request.Option) (*route53.ListHostedZonesByNameOutput, error)
 
 	// ListHostedZonesByVPCFunc mocks the ListHostedZonesByVPC method.
-	ListHostedZonesByVPCFunc func(in1 *route53.ListHostedZonesByVPCInput) (*route53.ListHostedZonesByVPCOutput, error)
+	ListHostedZonesByVPCFunc func(listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput) (*route53.ListHostedZonesByVPCOutput, error)
 
 	// ListHostedZonesByVPCRequestFunc mocks the ListHostedZonesByVPCRequest method.
-	ListHostedZonesByVPCRequestFunc func(in1 *route53.ListHostedZonesByVPCInput) (*request.Request, *route53.ListHostedZonesByVPCOutput)
+	ListHostedZonesByVPCRequestFunc func(listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput) (*request.Request, *route53.ListHostedZonesByVPCOutput)
 
 	// ListHostedZonesByVPCWithContextFunc mocks the ListHostedZonesByVPCWithContext method.
-	ListHostedZonesByVPCWithContextFunc func(in1 context.Context, in2 *route53.ListHostedZonesByVPCInput, in3 ...request.Option) (*route53.ListHostedZonesByVPCOutput, error)
+	ListHostedZonesByVPCWithContextFunc func(contextMoqParam context.Context, listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput, options ...request.Option) (*route53.ListHostedZonesByVPCOutput, error)
 
 	// ListHostedZonesPagesFunc mocks the ListHostedZonesPages method.
-	ListHostedZonesPagesFunc func(in1 *route53.ListHostedZonesInput, in2 func(*route53.ListHostedZonesOutput, bool) bool) error
+	ListHostedZonesPagesFunc func(listHostedZonesInput *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool) error
 
 	// ListHostedZonesPagesWithContextFunc mocks the ListHostedZonesPagesWithContext method.
-	ListHostedZonesPagesWithContextFunc func(in1 context.Context, in2 *route53.ListHostedZonesInput, in3 func(*route53.ListHostedZonesOutput, bool) bool, in4 ...request.Option) error
+	ListHostedZonesPagesWithContextFunc func(contextMoqParam context.Context, listHostedZonesInput *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool, options ...request.Option) error
 
 	// ListHostedZonesRequestFunc mocks the ListHostedZonesRequest method.
-	ListHostedZonesRequestFunc func(in1 *route53.ListHostedZonesInput) (*request.Request, *route53.ListHostedZonesOutput)
+	ListHostedZonesRequestFunc func(listHostedZonesInput *route53.ListHostedZonesInput) (*request.Request, *route53.ListHostedZonesOutput)
 
 	// ListHostedZonesWithContextFunc mocks the ListHostedZonesWithContext method.
-	ListHostedZonesWithContextFunc func(in1 context.Context, in2 *route53.ListHostedZonesInput, in3 ...request.Option) (*route53.ListHostedZonesOutput, error)
+	ListHostedZonesWithContextFunc func(contextMoqParam context.Context, listHostedZonesInput *route53.ListHostedZonesInput, options ...request.Option) (*route53.ListHostedZonesOutput, error)
 
 	// ListQueryLoggingConfigsFunc mocks the ListQueryLoggingConfigs method.
-	ListQueryLoggingConfigsFunc func(in1 *route53.ListQueryLoggingConfigsInput) (*route53.ListQueryLoggingConfigsOutput, error)
+	ListQueryLoggingConfigsFunc func(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput) (*route53.ListQueryLoggingConfigsOutput, error)
 
 	// ListQueryLoggingConfigsPagesFunc mocks the ListQueryLoggingConfigsPages method.
-	ListQueryLoggingConfigsPagesFunc func(in1 *route53.ListQueryLoggingConfigsInput, in2 func(*route53.ListQueryLoggingConfigsOutput, bool) bool) error
+	ListQueryLoggingConfigsPagesFunc func(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, fn func(*route53.ListQueryLoggingConfigsOutput, bool) bool) error
 
 	// ListQueryLoggingConfigsPagesWithContextFunc mocks the ListQueryLoggingConfigsPagesWithContext method.
-	ListQueryLoggingConfigsPagesWithContextFunc func(in1 context.Context, in2 *route53.ListQueryLoggingConfigsInput, in3 func(*route53.ListQueryLoggingConfigsOutput, bool) bool, in4 ...request.Option) error
+	ListQueryLoggingConfigsPagesWithContextFunc func(contextMoqParam context.Context, listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, fn func(*route53.ListQueryLoggingConfigsOutput, bool) bool, options ...request.Option) error
 
 	// ListQueryLoggingConfigsRequestFunc mocks the ListQueryLoggingConfigsRequest method.
-	ListQueryLoggingConfigsRequestFunc func(in1 *route53.ListQueryLoggingConfigsInput) (*request.Request, *route53.ListQueryLoggingConfigsOutput)
+	ListQueryLoggingConfigsRequestFunc func(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput) (*request.Request, *route53.ListQueryLoggingConfigsOutput)
 
 	// ListQueryLoggingConfigsWithContextFunc mocks the ListQueryLoggingConfigsWithContext method.
-	ListQueryLoggingConfigsWithContextFunc func(in1 context.Context, in2 *route53.ListQueryLoggingConfigsInput, in3 ...request.Option) (*route53.ListQueryLoggingConfigsOutput, error)
+	ListQueryLoggingConfigsWithContextFunc func(contextMoqParam context.Context, listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, options ...request.Option) (*route53.ListQueryLoggingConfigsOutput, error)
 
 	// ListResourceRecordSetsFunc mocks the ListResourceRecordSets method.
-	ListResourceRecordSetsFunc func(in1 *route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error)
+	ListResourceRecordSetsFunc func(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error)
 
 	// ListResourceRecordSetsPagesFunc mocks the ListResourceRecordSetsPages method.
-	ListResourceRecordSetsPagesFunc func(in1 *route53.ListResourceRecordSetsInput, in2 func(*route53.ListResourceRecordSetsOutput, bool) bool) error
+	ListResourceRecordSetsPagesFunc func(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, fn func(*route53.ListResourceRecordSetsOutput, bool) bool) error
 
 	// ListResourceRecordSetsPagesWithContextFunc mocks the ListResourceRecordSetsPagesWithContext method.
-	ListResourceRecordSetsPagesWithContextFunc func(in1 context.Context, in2 *route53.ListResourceRecordSetsInput, in3 func(*route53.ListResourceRecordSetsOutput, bool) bool, in4 ...request.Option) error
+	ListResourceRecordSetsPagesWithContextFunc func(contextMoqParam context.Context, listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, fn func(*route53.ListResourceRecordSetsOutput, bool) bool, options ...request.Option) error
 
 	// ListResourceRecordSetsRequestFunc mocks the ListResourceRecordSetsRequest method.
-	ListResourceRecordSetsRequestFunc func(in1 *route53.ListResourceRecordSetsInput) (*request.Request, *route53.ListResourceRecordSetsOutput)
+	ListResourceRecordSetsRequestFunc func(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput) (*request.Request, *route53.ListResourceRecordSetsOutput)
 
 	// ListResourceRecordSetsWithContextFunc mocks the ListResourceRecordSetsWithContext method.
-	ListResourceRecordSetsWithContextFunc func(in1 context.Context, in2 *route53.ListResourceRecordSetsInput, in3 ...request.Option) (*route53.ListResourceRecordSetsOutput, error)
+	ListResourceRecordSetsWithContextFunc func(contextMoqParam context.Context, listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, options ...request.Option) (*route53.ListResourceRecordSetsOutput, error)
 
 	// ListReusableDelegationSetsFunc mocks the ListReusableDelegationSets method.
-	ListReusableDelegationSetsFunc func(in1 *route53.ListReusableDelegationSetsInput) (*route53.ListReusableDelegationSetsOutput, error)
+	ListReusableDelegationSetsFunc func(listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput) (*route53.ListReusableDelegationSetsOutput, error)
 
 	// ListReusableDelegationSetsRequestFunc mocks the ListReusableDelegationSetsRequest method.
-	ListReusableDelegationSetsRequestFunc func(in1 *route53.ListReusableDelegationSetsInput) (*request.Request, *route53.ListReusableDelegationSetsOutput)
+	ListReusableDelegationSetsRequestFunc func(listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput) (*request.Request, *route53.ListReusableDelegationSetsOutput)
 
 	// ListReusableDelegationSetsWithContextFunc mocks the ListReusableDelegationSetsWithContext method.
-	ListReusableDelegationSetsWithContextFunc func(in1 context.Context, in2 *route53.ListReusableDelegationSetsInput, in3 ...request.Option) (*route53.ListReusableDelegationSetsOutput, error)
+	ListReusableDelegationSetsWithContextFunc func(contextMoqParam context.Context, listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput, options ...request.Option) (*route53.ListReusableDelegationSetsOutput, error)
 
 	// ListTagsForResourceFunc mocks the ListTagsForResource method.
-	ListTagsForResourceFunc func(in1 *route53.ListTagsForResourceInput) (*route53.ListTagsForResourceOutput, error)
+	ListTagsForResourceFunc func(listTagsForResourceInput *route53.ListTagsForResourceInput) (*route53.ListTagsForResourceOutput, error)
 
 	// ListTagsForResourceRequestFunc mocks the ListTagsForResourceRequest method.
-	ListTagsForResourceRequestFunc func(in1 *route53.ListTagsForResourceInput) (*request.Request, *route53.ListTagsForResourceOutput)
+	ListTagsForResourceRequestFunc func(listTagsForResourceInput *route53.ListTagsForResourceInput) (*request.Request, *route53.ListTagsForResourceOutput)
 
 	// ListTagsForResourceWithContextFunc mocks the ListTagsForResourceWithContext method.
-	ListTagsForResourceWithContextFunc func(in1 context.Context, in2 *route53.ListTagsForResourceInput, in3 ...request.Option) (*route53.ListTagsForResourceOutput, error)
+	ListTagsForResourceWithContextFunc func(contextMoqParam context.Context, listTagsForResourceInput *route53.ListTagsForResourceInput, options ...request.Option) (*route53.ListTagsForResourceOutput, error)
 
 	// ListTagsForResourcesFunc mocks the ListTagsForResources method.
-	ListTagsForResourcesFunc func(in1 *route53.ListTagsForResourcesInput) (*route53.ListTagsForResourcesOutput, error)
+	ListTagsForResourcesFunc func(listTagsForResourcesInput *route53.ListTagsForResourcesInput) (*route53.ListTagsForResourcesOutput, error)
 
 	// ListTagsForResourcesRequestFunc mocks the ListTagsForResourcesRequest method.
-	ListTagsForResourcesRequestFunc func(in1 *route53.ListTagsForResourcesInput) (*request.Request, *route53.ListTagsForResourcesOutput)
+	ListTagsForResourcesRequestFunc func(listTagsForResourcesInput *route53.ListTagsForResourcesInput) (*request.Request, *route53.ListTagsForResourcesOutput)
 
 	// ListTagsForResourcesWithContextFunc mocks the ListTagsForResourcesWithContext method.
-	ListTagsForResourcesWithContextFunc func(in1 context.Context, in2 *route53.ListTagsForResourcesInput, in3 ...request.Option) (*route53.ListTagsForResourcesOutput, error)
+	ListTagsForResourcesWithContextFunc func(contextMoqParam context.Context, listTagsForResourcesInput *route53.ListTagsForResourcesInput, options ...request.Option) (*route53.ListTagsForResourcesOutput, error)
 
 	// ListTrafficPoliciesFunc mocks the ListTrafficPolicies method.
-	ListTrafficPoliciesFunc func(in1 *route53.ListTrafficPoliciesInput) (*route53.ListTrafficPoliciesOutput, error)
+	ListTrafficPoliciesFunc func(listTrafficPoliciesInput *route53.ListTrafficPoliciesInput) (*route53.ListTrafficPoliciesOutput, error)
 
 	// ListTrafficPoliciesRequestFunc mocks the ListTrafficPoliciesRequest method.
-	ListTrafficPoliciesRequestFunc func(in1 *route53.ListTrafficPoliciesInput) (*request.Request, *route53.ListTrafficPoliciesOutput)
+	ListTrafficPoliciesRequestFunc func(listTrafficPoliciesInput *route53.ListTrafficPoliciesInput) (*request.Request, *route53.ListTrafficPoliciesOutput)
 
 	// ListTrafficPoliciesWithContextFunc mocks the ListTrafficPoliciesWithContext method.
-	ListTrafficPoliciesWithContextFunc func(in1 context.Context, in2 *route53.ListTrafficPoliciesInput, in3 ...request.Option) (*route53.ListTrafficPoliciesOutput, error)
+	ListTrafficPoliciesWithContextFunc func(contextMoqParam context.Context, listTrafficPoliciesInput *route53.ListTrafficPoliciesInput, options ...request.Option) (*route53.ListTrafficPoliciesOutput, error)
 
 	// ListTrafficPolicyInstancesFunc mocks the ListTrafficPolicyInstances method.
-	ListTrafficPolicyInstancesFunc func(in1 *route53.ListTrafficPolicyInstancesInput) (*route53.ListTrafficPolicyInstancesOutput, error)
+	ListTrafficPolicyInstancesFunc func(listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput) (*route53.ListTrafficPolicyInstancesOutput, error)
 
 	// ListTrafficPolicyInstancesByHostedZoneFunc mocks the ListTrafficPolicyInstancesByHostedZone method.
-	ListTrafficPolicyInstancesByHostedZoneFunc func(in1 *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error)
+	ListTrafficPolicyInstancesByHostedZoneFunc func(listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error)
 
 	// ListTrafficPolicyInstancesByHostedZoneRequestFunc mocks the ListTrafficPolicyInstancesByHostedZoneRequest method.
-	ListTrafficPolicyInstancesByHostedZoneRequestFunc func(in1 *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*request.Request, *route53.ListTrafficPolicyInstancesByHostedZoneOutput)
+	ListTrafficPolicyInstancesByHostedZoneRequestFunc func(listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*request.Request, *route53.ListTrafficPolicyInstancesByHostedZoneOutput)
 
 	// ListTrafficPolicyInstancesByHostedZoneWithContextFunc mocks the ListTrafficPolicyInstancesByHostedZoneWithContext method.
-	ListTrafficPolicyInstancesByHostedZoneWithContextFunc func(in1 context.Context, in2 *route53.ListTrafficPolicyInstancesByHostedZoneInput, in3 ...request.Option) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error)
+	ListTrafficPolicyInstancesByHostedZoneWithContextFunc func(contextMoqParam context.Context, listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error)
 
 	// ListTrafficPolicyInstancesByPolicyFunc mocks the ListTrafficPolicyInstancesByPolicy method.
-	ListTrafficPolicyInstancesByPolicyFunc func(in1 *route53.ListTrafficPolicyInstancesByPolicyInput) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error)
+	ListTrafficPolicyInstancesByPolicyFunc func(listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error)
 
 	// ListTrafficPolicyInstancesByPolicyRequestFunc mocks the ListTrafficPolicyInstancesByPolicyRequest method.
-	ListTrafficPolicyInstancesByPolicyRequestFunc func(in1 *route53.ListTrafficPolicyInstancesByPolicyInput) (*request.Request, *route53.ListTrafficPolicyInstancesByPolicyOutput)
+	ListTrafficPolicyInstancesByPolicyRequestFunc func(listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput) (*request.Request, *route53.ListTrafficPolicyInstancesByPolicyOutput)
 
 	// ListTrafficPolicyInstancesByPolicyWithContextFunc mocks the ListTrafficPolicyInstancesByPolicyWithContext method.
-	ListTrafficPolicyInstancesByPolicyWithContextFunc func(in1 context.Context, in2 *route53.ListTrafficPolicyInstancesByPolicyInput, in3 ...request.Option) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error)
+	ListTrafficPolicyInstancesByPolicyWithContextFunc func(contextMoqParam context.Context, listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error)
 
 	// ListTrafficPolicyInstancesRequestFunc mocks the ListTrafficPolicyInstancesRequest method.
-	ListTrafficPolicyInstancesRequestFunc func(in1 *route53.ListTrafficPolicyInstancesInput) (*request.Request, *route53.ListTrafficPolicyInstancesOutput)
+	ListTrafficPolicyInstancesRequestFunc func(listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput) (*request.Request, *route53.ListTrafficPolicyInstancesOutput)
 
 	// ListTrafficPolicyInstancesWithContextFunc mocks the ListTrafficPolicyInstancesWithContext method.
-	ListTrafficPolicyInstancesWithContextFunc func(in1 context.Context, in2 *route53.ListTrafficPolicyInstancesInput, in3 ...request.Option) (*route53.ListTrafficPolicyInstancesOutput, error)
+	ListTrafficPolicyInstancesWithContextFunc func(contextMoqParam context.Context, listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesOutput, error)
 
 	// ListTrafficPolicyVersionsFunc mocks the ListTrafficPolicyVersions method.
-	ListTrafficPolicyVersionsFunc func(in1 *route53.ListTrafficPolicyVersionsInput) (*route53.ListTrafficPolicyVersionsOutput, error)
+	ListTrafficPolicyVersionsFunc func(listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput) (*route53.ListTrafficPolicyVersionsOutput, error)
 
 	// ListTrafficPolicyVersionsRequestFunc mocks the ListTrafficPolicyVersionsRequest method.
-	ListTrafficPolicyVersionsRequestFunc func(in1 *route53.ListTrafficPolicyVersionsInput) (*request.Request, *route53.ListTrafficPolicyVersionsOutput)
+	ListTrafficPolicyVersionsRequestFunc func(listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput) (*request.Request, *route53.ListTrafficPolicyVersionsOutput)
 
 	// ListTrafficPolicyVersionsWithContextFunc mocks the ListTrafficPolicyVersionsWithContext method.
-	ListTrafficPolicyVersionsWithContextFunc func(in1 context.Context, in2 *route53.ListTrafficPolicyVersionsInput, in3 ...request.Option) (*route53.ListTrafficPolicyVersionsOutput, error)
+	ListTrafficPolicyVersionsWithContextFunc func(contextMoqParam context.Context, listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput, options ...request.Option) (*route53.ListTrafficPolicyVersionsOutput, error)
 
 	// ListVPCAssociationAuthorizationsFunc mocks the ListVPCAssociationAuthorizations method.
-	ListVPCAssociationAuthorizationsFunc func(in1 *route53.ListVPCAssociationAuthorizationsInput) (*route53.ListVPCAssociationAuthorizationsOutput, error)
+	ListVPCAssociationAuthorizationsFunc func(listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput) (*route53.ListVPCAssociationAuthorizationsOutput, error)
 
 	// ListVPCAssociationAuthorizationsRequestFunc mocks the ListVPCAssociationAuthorizationsRequest method.
-	ListVPCAssociationAuthorizationsRequestFunc func(in1 *route53.ListVPCAssociationAuthorizationsInput) (*request.Request, *route53.ListVPCAssociationAuthorizationsOutput)
+	ListVPCAssociationAuthorizationsRequestFunc func(listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput) (*request.Request, *route53.ListVPCAssociationAuthorizationsOutput)
 
 	// ListVPCAssociationAuthorizationsWithContextFunc mocks the ListVPCAssociationAuthorizationsWithContext method.
-	ListVPCAssociationAuthorizationsWithContextFunc func(in1 context.Context, in2 *route53.ListVPCAssociationAuthorizationsInput, in3 ...request.Option) (*route53.ListVPCAssociationAuthorizationsOutput, error)
+	ListVPCAssociationAuthorizationsWithContextFunc func(contextMoqParam context.Context, listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput, options ...request.Option) (*route53.ListVPCAssociationAuthorizationsOutput, error)
 
 	// TestDNSAnswerFunc mocks the TestDNSAnswer method.
-	TestDNSAnswerFunc func(in1 *route53.TestDNSAnswerInput) (*route53.TestDNSAnswerOutput, error)
+	TestDNSAnswerFunc func(testDNSAnswerInput *route53.TestDNSAnswerInput) (*route53.TestDNSAnswerOutput, error)
 
 	// TestDNSAnswerRequestFunc mocks the TestDNSAnswerRequest method.
-	TestDNSAnswerRequestFunc func(in1 *route53.TestDNSAnswerInput) (*request.Request, *route53.TestDNSAnswerOutput)
+	TestDNSAnswerRequestFunc func(testDNSAnswerInput *route53.TestDNSAnswerInput) (*request.Request, *route53.TestDNSAnswerOutput)
 
 	// TestDNSAnswerWithContextFunc mocks the TestDNSAnswerWithContext method.
-	TestDNSAnswerWithContextFunc func(in1 context.Context, in2 *route53.TestDNSAnswerInput, in3 ...request.Option) (*route53.TestDNSAnswerOutput, error)
+	TestDNSAnswerWithContextFunc func(contextMoqParam context.Context, testDNSAnswerInput *route53.TestDNSAnswerInput, options ...request.Option) (*route53.TestDNSAnswerOutput, error)
 
 	// UpdateHealthCheckFunc mocks the UpdateHealthCheck method.
-	UpdateHealthCheckFunc func(in1 *route53.UpdateHealthCheckInput) (*route53.UpdateHealthCheckOutput, error)
+	UpdateHealthCheckFunc func(updateHealthCheckInput *route53.UpdateHealthCheckInput) (*route53.UpdateHealthCheckOutput, error)
 
 	// UpdateHealthCheckRequestFunc mocks the UpdateHealthCheckRequest method.
-	UpdateHealthCheckRequestFunc func(in1 *route53.UpdateHealthCheckInput) (*request.Request, *route53.UpdateHealthCheckOutput)
+	UpdateHealthCheckRequestFunc func(updateHealthCheckInput *route53.UpdateHealthCheckInput) (*request.Request, *route53.UpdateHealthCheckOutput)
 
 	// UpdateHealthCheckWithContextFunc mocks the UpdateHealthCheckWithContext method.
-	UpdateHealthCheckWithContextFunc func(in1 context.Context, in2 *route53.UpdateHealthCheckInput, in3 ...request.Option) (*route53.UpdateHealthCheckOutput, error)
+	UpdateHealthCheckWithContextFunc func(contextMoqParam context.Context, updateHealthCheckInput *route53.UpdateHealthCheckInput, options ...request.Option) (*route53.UpdateHealthCheckOutput, error)
 
 	// UpdateHostedZoneCommentFunc mocks the UpdateHostedZoneComment method.
-	UpdateHostedZoneCommentFunc func(in1 *route53.UpdateHostedZoneCommentInput) (*route53.UpdateHostedZoneCommentOutput, error)
+	UpdateHostedZoneCommentFunc func(updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput) (*route53.UpdateHostedZoneCommentOutput, error)
 
 	// UpdateHostedZoneCommentRequestFunc mocks the UpdateHostedZoneCommentRequest method.
-	UpdateHostedZoneCommentRequestFunc func(in1 *route53.UpdateHostedZoneCommentInput) (*request.Request, *route53.UpdateHostedZoneCommentOutput)
+	UpdateHostedZoneCommentRequestFunc func(updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput) (*request.Request, *route53.UpdateHostedZoneCommentOutput)
 
 	// UpdateHostedZoneCommentWithContextFunc mocks the UpdateHostedZoneCommentWithContext method.
-	UpdateHostedZoneCommentWithContextFunc func(in1 context.Context, in2 *route53.UpdateHostedZoneCommentInput, in3 ...request.Option) (*route53.UpdateHostedZoneCommentOutput, error)
+	UpdateHostedZoneCommentWithContextFunc func(contextMoqParam context.Context, updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput, options ...request.Option) (*route53.UpdateHostedZoneCommentOutput, error)
 
 	// UpdateTrafficPolicyCommentFunc mocks the UpdateTrafficPolicyComment method.
-	UpdateTrafficPolicyCommentFunc func(in1 *route53.UpdateTrafficPolicyCommentInput) (*route53.UpdateTrafficPolicyCommentOutput, error)
+	UpdateTrafficPolicyCommentFunc func(updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput) (*route53.UpdateTrafficPolicyCommentOutput, error)
 
 	// UpdateTrafficPolicyCommentRequestFunc mocks the UpdateTrafficPolicyCommentRequest method.
-	UpdateTrafficPolicyCommentRequestFunc func(in1 *route53.UpdateTrafficPolicyCommentInput) (*request.Request, *route53.UpdateTrafficPolicyCommentOutput)
+	UpdateTrafficPolicyCommentRequestFunc func(updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput) (*request.Request, *route53.UpdateTrafficPolicyCommentOutput)
 
 	// UpdateTrafficPolicyCommentWithContextFunc mocks the UpdateTrafficPolicyCommentWithContext method.
-	UpdateTrafficPolicyCommentWithContextFunc func(in1 context.Context, in2 *route53.UpdateTrafficPolicyCommentInput, in3 ...request.Option) (*route53.UpdateTrafficPolicyCommentOutput, error)
+	UpdateTrafficPolicyCommentWithContextFunc func(contextMoqParam context.Context, updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput, options ...request.Option) (*route53.UpdateTrafficPolicyCommentOutput, error)
 
 	// UpdateTrafficPolicyInstanceFunc mocks the UpdateTrafficPolicyInstance method.
-	UpdateTrafficPolicyInstanceFunc func(in1 *route53.UpdateTrafficPolicyInstanceInput) (*route53.UpdateTrafficPolicyInstanceOutput, error)
+	UpdateTrafficPolicyInstanceFunc func(updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput) (*route53.UpdateTrafficPolicyInstanceOutput, error)
 
 	// UpdateTrafficPolicyInstanceRequestFunc mocks the UpdateTrafficPolicyInstanceRequest method.
-	UpdateTrafficPolicyInstanceRequestFunc func(in1 *route53.UpdateTrafficPolicyInstanceInput) (*request.Request, *route53.UpdateTrafficPolicyInstanceOutput)
+	UpdateTrafficPolicyInstanceRequestFunc func(updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput) (*request.Request, *route53.UpdateTrafficPolicyInstanceOutput)
 
 	// UpdateTrafficPolicyInstanceWithContextFunc mocks the UpdateTrafficPolicyInstanceWithContext method.
-	UpdateTrafficPolicyInstanceWithContextFunc func(in1 context.Context, in2 *route53.UpdateTrafficPolicyInstanceInput, in3 ...request.Option) (*route53.UpdateTrafficPolicyInstanceOutput, error)
+	UpdateTrafficPolicyInstanceWithContextFunc func(contextMoqParam context.Context, updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput, options ...request.Option) (*route53.UpdateTrafficPolicyInstanceOutput, error)
 
 	// WaitUntilResourceRecordSetsChangedFunc mocks the WaitUntilResourceRecordSetsChanged method.
-	WaitUntilResourceRecordSetsChangedFunc func(in1 *route53.GetChangeInput) error
+	WaitUntilResourceRecordSetsChangedFunc func(getChangeInput *route53.GetChangeInput) error
 
 	// WaitUntilResourceRecordSetsChangedWithContextFunc mocks the WaitUntilResourceRecordSetsChangedWithContext method.
-	WaitUntilResourceRecordSetsChangedWithContextFunc func(in1 context.Context, in2 *route53.GetChangeInput, in3 ...request.WaiterOption) error
+	WaitUntilResourceRecordSetsChangedWithContextFunc func(contextMoqParam context.Context, getChangeInput *route53.GetChangeInput, waiterOptions ...request.WaiterOption) error
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// ActivateKeySigningKey holds details about calls to the ActivateKeySigningKey method.
+		ActivateKeySigningKey []struct {
+			// ActivateKeySigningKeyInput is the activateKeySigningKeyInput argument value.
+			ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
+		}
+		// ActivateKeySigningKeyRequest holds details about calls to the ActivateKeySigningKeyRequest method.
+		ActivateKeySigningKeyRequest []struct {
+			// ActivateKeySigningKeyInput is the activateKeySigningKeyInput argument value.
+			ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
+		}
+		// ActivateKeySigningKeyWithContext holds details about calls to the ActivateKeySigningKeyWithContext method.
+		ActivateKeySigningKeyWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ActivateKeySigningKeyInput is the activateKeySigningKeyInput argument value.
+			ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
+			// Options is the options argument value.
+			Options []request.Option
+		}
 		// AssociateVPCWithHostedZone holds details about calls to the AssociateVPCWithHostedZone method.
 		AssociateVPCWithHostedZone []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.AssociateVPCWithHostedZoneInput
+			// AssociateVPCWithHostedZoneInput is the associateVPCWithHostedZoneInput argument value.
+			AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
 		}
 		// AssociateVPCWithHostedZoneRequest holds details about calls to the AssociateVPCWithHostedZoneRequest method.
 		AssociateVPCWithHostedZoneRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.AssociateVPCWithHostedZoneInput
+			// AssociateVPCWithHostedZoneInput is the associateVPCWithHostedZoneInput argument value.
+			AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
 		}
 		// AssociateVPCWithHostedZoneWithContext holds details about calls to the AssociateVPCWithHostedZoneWithContext method.
 		AssociateVPCWithHostedZoneWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.AssociateVPCWithHostedZoneInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// AssociateVPCWithHostedZoneInput is the associateVPCWithHostedZoneInput argument value.
+			AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// ChangeCidrCollection holds details about calls to the ChangeCidrCollection method.
+		ChangeCidrCollection []struct {
+			// ChangeCidrCollectionInput is the changeCidrCollectionInput argument value.
+			ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
+		}
+		// ChangeCidrCollectionRequest holds details about calls to the ChangeCidrCollectionRequest method.
+		ChangeCidrCollectionRequest []struct {
+			// ChangeCidrCollectionInput is the changeCidrCollectionInput argument value.
+			ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
+		}
+		// ChangeCidrCollectionWithContext holds details about calls to the ChangeCidrCollectionWithContext method.
+		ChangeCidrCollectionWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ChangeCidrCollectionInput is the changeCidrCollectionInput argument value.
+			ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ChangeResourceRecordSets holds details about calls to the ChangeResourceRecordSets method.
 		ChangeResourceRecordSets []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ChangeResourceRecordSetsInput
+			// ChangeResourceRecordSetsInput is the changeResourceRecordSetsInput argument value.
+			ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
 		}
 		// ChangeResourceRecordSetsRequest holds details about calls to the ChangeResourceRecordSetsRequest method.
 		ChangeResourceRecordSetsRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ChangeResourceRecordSetsInput
+			// ChangeResourceRecordSetsInput is the changeResourceRecordSetsInput argument value.
+			ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
 		}
 		// ChangeResourceRecordSetsWithContext holds details about calls to the ChangeResourceRecordSetsWithContext method.
 		ChangeResourceRecordSetsWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ChangeResourceRecordSetsInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ChangeResourceRecordSetsInput is the changeResourceRecordSetsInput argument value.
+			ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ChangeTagsForResource holds details about calls to the ChangeTagsForResource method.
 		ChangeTagsForResource []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ChangeTagsForResourceInput
+			// ChangeTagsForResourceInput is the changeTagsForResourceInput argument value.
+			ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
 		}
 		// ChangeTagsForResourceRequest holds details about calls to the ChangeTagsForResourceRequest method.
 		ChangeTagsForResourceRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ChangeTagsForResourceInput
+			// ChangeTagsForResourceInput is the changeTagsForResourceInput argument value.
+			ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
 		}
 		// ChangeTagsForResourceWithContext holds details about calls to the ChangeTagsForResourceWithContext method.
 		ChangeTagsForResourceWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ChangeTagsForResourceInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ChangeTagsForResourceInput is the changeTagsForResourceInput argument value.
+			ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// CreateCidrCollection holds details about calls to the CreateCidrCollection method.
+		CreateCidrCollection []struct {
+			// CreateCidrCollectionInput is the createCidrCollectionInput argument value.
+			CreateCidrCollectionInput *route53.CreateCidrCollectionInput
+		}
+		// CreateCidrCollectionRequest holds details about calls to the CreateCidrCollectionRequest method.
+		CreateCidrCollectionRequest []struct {
+			// CreateCidrCollectionInput is the createCidrCollectionInput argument value.
+			CreateCidrCollectionInput *route53.CreateCidrCollectionInput
+		}
+		// CreateCidrCollectionWithContext holds details about calls to the CreateCidrCollectionWithContext method.
+		CreateCidrCollectionWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// CreateCidrCollectionInput is the createCidrCollectionInput argument value.
+			CreateCidrCollectionInput *route53.CreateCidrCollectionInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// CreateHealthCheck holds details about calls to the CreateHealthCheck method.
 		CreateHealthCheck []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateHealthCheckInput
+			// CreateHealthCheckInput is the createHealthCheckInput argument value.
+			CreateHealthCheckInput *route53.CreateHealthCheckInput
 		}
 		// CreateHealthCheckRequest holds details about calls to the CreateHealthCheckRequest method.
 		CreateHealthCheckRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateHealthCheckInput
+			// CreateHealthCheckInput is the createHealthCheckInput argument value.
+			CreateHealthCheckInput *route53.CreateHealthCheckInput
 		}
 		// CreateHealthCheckWithContext holds details about calls to the CreateHealthCheckWithContext method.
 		CreateHealthCheckWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.CreateHealthCheckInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// CreateHealthCheckInput is the createHealthCheckInput argument value.
+			CreateHealthCheckInput *route53.CreateHealthCheckInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// CreateHostedZone holds details about calls to the CreateHostedZone method.
 		CreateHostedZone []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateHostedZoneInput
+			// CreateHostedZoneInput is the createHostedZoneInput argument value.
+			CreateHostedZoneInput *route53.CreateHostedZoneInput
 		}
 		// CreateHostedZoneRequest holds details about calls to the CreateHostedZoneRequest method.
 		CreateHostedZoneRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateHostedZoneInput
+			// CreateHostedZoneInput is the createHostedZoneInput argument value.
+			CreateHostedZoneInput *route53.CreateHostedZoneInput
 		}
 		// CreateHostedZoneWithContext holds details about calls to the CreateHostedZoneWithContext method.
 		CreateHostedZoneWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.CreateHostedZoneInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// CreateHostedZoneInput is the createHostedZoneInput argument value.
+			CreateHostedZoneInput *route53.CreateHostedZoneInput
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// CreateKeySigningKey holds details about calls to the CreateKeySigningKey method.
+		CreateKeySigningKey []struct {
+			// CreateKeySigningKeyInput is the createKeySigningKeyInput argument value.
+			CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
+		}
+		// CreateKeySigningKeyRequest holds details about calls to the CreateKeySigningKeyRequest method.
+		CreateKeySigningKeyRequest []struct {
+			// CreateKeySigningKeyInput is the createKeySigningKeyInput argument value.
+			CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
+		}
+		// CreateKeySigningKeyWithContext holds details about calls to the CreateKeySigningKeyWithContext method.
+		CreateKeySigningKeyWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// CreateKeySigningKeyInput is the createKeySigningKeyInput argument value.
+			CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// CreateQueryLoggingConfig holds details about calls to the CreateQueryLoggingConfig method.
 		CreateQueryLoggingConfig []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateQueryLoggingConfigInput
+			// CreateQueryLoggingConfigInput is the createQueryLoggingConfigInput argument value.
+			CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
 		}
 		// CreateQueryLoggingConfigRequest holds details about calls to the CreateQueryLoggingConfigRequest method.
 		CreateQueryLoggingConfigRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateQueryLoggingConfigInput
+			// CreateQueryLoggingConfigInput is the createQueryLoggingConfigInput argument value.
+			CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
 		}
 		// CreateQueryLoggingConfigWithContext holds details about calls to the CreateQueryLoggingConfigWithContext method.
 		CreateQueryLoggingConfigWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.CreateQueryLoggingConfigInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// CreateQueryLoggingConfigInput is the createQueryLoggingConfigInput argument value.
+			CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// CreateReusableDelegationSet holds details about calls to the CreateReusableDelegationSet method.
 		CreateReusableDelegationSet []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateReusableDelegationSetInput
+			// CreateReusableDelegationSetInput is the createReusableDelegationSetInput argument value.
+			CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
 		}
 		// CreateReusableDelegationSetRequest holds details about calls to the CreateReusableDelegationSetRequest method.
 		CreateReusableDelegationSetRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateReusableDelegationSetInput
+			// CreateReusableDelegationSetInput is the createReusableDelegationSetInput argument value.
+			CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
 		}
 		// CreateReusableDelegationSetWithContext holds details about calls to the CreateReusableDelegationSetWithContext method.
 		CreateReusableDelegationSetWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.CreateReusableDelegationSetInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// CreateReusableDelegationSetInput is the createReusableDelegationSetInput argument value.
+			CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// CreateTrafficPolicy holds details about calls to the CreateTrafficPolicy method.
 		CreateTrafficPolicy []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateTrafficPolicyInput
+			// CreateTrafficPolicyInput is the createTrafficPolicyInput argument value.
+			CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
 		}
 		// CreateTrafficPolicyInstance holds details about calls to the CreateTrafficPolicyInstance method.
 		CreateTrafficPolicyInstance []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateTrafficPolicyInstanceInput
+			// CreateTrafficPolicyInstanceInput is the createTrafficPolicyInstanceInput argument value.
+			CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
 		}
 		// CreateTrafficPolicyInstanceRequest holds details about calls to the CreateTrafficPolicyInstanceRequest method.
 		CreateTrafficPolicyInstanceRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateTrafficPolicyInstanceInput
+			// CreateTrafficPolicyInstanceInput is the createTrafficPolicyInstanceInput argument value.
+			CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
 		}
 		// CreateTrafficPolicyInstanceWithContext holds details about calls to the CreateTrafficPolicyInstanceWithContext method.
 		CreateTrafficPolicyInstanceWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.CreateTrafficPolicyInstanceInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// CreateTrafficPolicyInstanceInput is the createTrafficPolicyInstanceInput argument value.
+			CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// CreateTrafficPolicyRequest holds details about calls to the CreateTrafficPolicyRequest method.
 		CreateTrafficPolicyRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateTrafficPolicyInput
+			// CreateTrafficPolicyInput is the createTrafficPolicyInput argument value.
+			CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
 		}
 		// CreateTrafficPolicyVersion holds details about calls to the CreateTrafficPolicyVersion method.
 		CreateTrafficPolicyVersion []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateTrafficPolicyVersionInput
+			// CreateTrafficPolicyVersionInput is the createTrafficPolicyVersionInput argument value.
+			CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
 		}
 		// CreateTrafficPolicyVersionRequest holds details about calls to the CreateTrafficPolicyVersionRequest method.
 		CreateTrafficPolicyVersionRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateTrafficPolicyVersionInput
+			// CreateTrafficPolicyVersionInput is the createTrafficPolicyVersionInput argument value.
+			CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
 		}
 		// CreateTrafficPolicyVersionWithContext holds details about calls to the CreateTrafficPolicyVersionWithContext method.
 		CreateTrafficPolicyVersionWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.CreateTrafficPolicyVersionInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// CreateTrafficPolicyVersionInput is the createTrafficPolicyVersionInput argument value.
+			CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// CreateTrafficPolicyWithContext holds details about calls to the CreateTrafficPolicyWithContext method.
 		CreateTrafficPolicyWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.CreateTrafficPolicyInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// CreateTrafficPolicyInput is the createTrafficPolicyInput argument value.
+			CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// CreateVPCAssociationAuthorization holds details about calls to the CreateVPCAssociationAuthorization method.
 		CreateVPCAssociationAuthorization []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateVPCAssociationAuthorizationInput
+			// CreateVPCAssociationAuthorizationInput is the createVPCAssociationAuthorizationInput argument value.
+			CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
 		}
 		// CreateVPCAssociationAuthorizationRequest holds details about calls to the CreateVPCAssociationAuthorizationRequest method.
 		CreateVPCAssociationAuthorizationRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.CreateVPCAssociationAuthorizationInput
+			// CreateVPCAssociationAuthorizationInput is the createVPCAssociationAuthorizationInput argument value.
+			CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
 		}
 		// CreateVPCAssociationAuthorizationWithContext holds details about calls to the CreateVPCAssociationAuthorizationWithContext method.
 		CreateVPCAssociationAuthorizationWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.CreateVPCAssociationAuthorizationInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// CreateVPCAssociationAuthorizationInput is the createVPCAssociationAuthorizationInput argument value.
+			CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// DeactivateKeySigningKey holds details about calls to the DeactivateKeySigningKey method.
+		DeactivateKeySigningKey []struct {
+			// DeactivateKeySigningKeyInput is the deactivateKeySigningKeyInput argument value.
+			DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
+		}
+		// DeactivateKeySigningKeyRequest holds details about calls to the DeactivateKeySigningKeyRequest method.
+		DeactivateKeySigningKeyRequest []struct {
+			// DeactivateKeySigningKeyInput is the deactivateKeySigningKeyInput argument value.
+			DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
+		}
+		// DeactivateKeySigningKeyWithContext holds details about calls to the DeactivateKeySigningKeyWithContext method.
+		DeactivateKeySigningKeyWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// DeactivateKeySigningKeyInput is the deactivateKeySigningKeyInput argument value.
+			DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// DeleteCidrCollection holds details about calls to the DeleteCidrCollection method.
+		DeleteCidrCollection []struct {
+			// DeleteCidrCollectionInput is the deleteCidrCollectionInput argument value.
+			DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
+		}
+		// DeleteCidrCollectionRequest holds details about calls to the DeleteCidrCollectionRequest method.
+		DeleteCidrCollectionRequest []struct {
+			// DeleteCidrCollectionInput is the deleteCidrCollectionInput argument value.
+			DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
+		}
+		// DeleteCidrCollectionWithContext holds details about calls to the DeleteCidrCollectionWithContext method.
+		DeleteCidrCollectionWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// DeleteCidrCollectionInput is the deleteCidrCollectionInput argument value.
+			DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// DeleteHealthCheck holds details about calls to the DeleteHealthCheck method.
 		DeleteHealthCheck []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteHealthCheckInput
+			// DeleteHealthCheckInput is the deleteHealthCheckInput argument value.
+			DeleteHealthCheckInput *route53.DeleteHealthCheckInput
 		}
 		// DeleteHealthCheckRequest holds details about calls to the DeleteHealthCheckRequest method.
 		DeleteHealthCheckRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteHealthCheckInput
+			// DeleteHealthCheckInput is the deleteHealthCheckInput argument value.
+			DeleteHealthCheckInput *route53.DeleteHealthCheckInput
 		}
 		// DeleteHealthCheckWithContext holds details about calls to the DeleteHealthCheckWithContext method.
 		DeleteHealthCheckWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.DeleteHealthCheckInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// DeleteHealthCheckInput is the deleteHealthCheckInput argument value.
+			DeleteHealthCheckInput *route53.DeleteHealthCheckInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// DeleteHostedZone holds details about calls to the DeleteHostedZone method.
 		DeleteHostedZone []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteHostedZoneInput
+			// DeleteHostedZoneInput is the deleteHostedZoneInput argument value.
+			DeleteHostedZoneInput *route53.DeleteHostedZoneInput
 		}
 		// DeleteHostedZoneRequest holds details about calls to the DeleteHostedZoneRequest method.
 		DeleteHostedZoneRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteHostedZoneInput
+			// DeleteHostedZoneInput is the deleteHostedZoneInput argument value.
+			DeleteHostedZoneInput *route53.DeleteHostedZoneInput
 		}
 		// DeleteHostedZoneWithContext holds details about calls to the DeleteHostedZoneWithContext method.
 		DeleteHostedZoneWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.DeleteHostedZoneInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// DeleteHostedZoneInput is the deleteHostedZoneInput argument value.
+			DeleteHostedZoneInput *route53.DeleteHostedZoneInput
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// DeleteKeySigningKey holds details about calls to the DeleteKeySigningKey method.
+		DeleteKeySigningKey []struct {
+			// DeleteKeySigningKeyInput is the deleteKeySigningKeyInput argument value.
+			DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
+		}
+		// DeleteKeySigningKeyRequest holds details about calls to the DeleteKeySigningKeyRequest method.
+		DeleteKeySigningKeyRequest []struct {
+			// DeleteKeySigningKeyInput is the deleteKeySigningKeyInput argument value.
+			DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
+		}
+		// DeleteKeySigningKeyWithContext holds details about calls to the DeleteKeySigningKeyWithContext method.
+		DeleteKeySigningKeyWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// DeleteKeySigningKeyInput is the deleteKeySigningKeyInput argument value.
+			DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// DeleteQueryLoggingConfig holds details about calls to the DeleteQueryLoggingConfig method.
 		DeleteQueryLoggingConfig []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteQueryLoggingConfigInput
+			// DeleteQueryLoggingConfigInput is the deleteQueryLoggingConfigInput argument value.
+			DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
 		}
 		// DeleteQueryLoggingConfigRequest holds details about calls to the DeleteQueryLoggingConfigRequest method.
 		DeleteQueryLoggingConfigRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteQueryLoggingConfigInput
+			// DeleteQueryLoggingConfigInput is the deleteQueryLoggingConfigInput argument value.
+			DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
 		}
 		// DeleteQueryLoggingConfigWithContext holds details about calls to the DeleteQueryLoggingConfigWithContext method.
 		DeleteQueryLoggingConfigWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.DeleteQueryLoggingConfigInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// DeleteQueryLoggingConfigInput is the deleteQueryLoggingConfigInput argument value.
+			DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// DeleteReusableDelegationSet holds details about calls to the DeleteReusableDelegationSet method.
 		DeleteReusableDelegationSet []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteReusableDelegationSetInput
+			// DeleteReusableDelegationSetInput is the deleteReusableDelegationSetInput argument value.
+			DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
 		}
 		// DeleteReusableDelegationSetRequest holds details about calls to the DeleteReusableDelegationSetRequest method.
 		DeleteReusableDelegationSetRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteReusableDelegationSetInput
+			// DeleteReusableDelegationSetInput is the deleteReusableDelegationSetInput argument value.
+			DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
 		}
 		// DeleteReusableDelegationSetWithContext holds details about calls to the DeleteReusableDelegationSetWithContext method.
 		DeleteReusableDelegationSetWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.DeleteReusableDelegationSetInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// DeleteReusableDelegationSetInput is the deleteReusableDelegationSetInput argument value.
+			DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// DeleteTrafficPolicy holds details about calls to the DeleteTrafficPolicy method.
 		DeleteTrafficPolicy []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteTrafficPolicyInput
+			// DeleteTrafficPolicyInput is the deleteTrafficPolicyInput argument value.
+			DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
 		}
 		// DeleteTrafficPolicyInstance holds details about calls to the DeleteTrafficPolicyInstance method.
 		DeleteTrafficPolicyInstance []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteTrafficPolicyInstanceInput
+			// DeleteTrafficPolicyInstanceInput is the deleteTrafficPolicyInstanceInput argument value.
+			DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
 		}
 		// DeleteTrafficPolicyInstanceRequest holds details about calls to the DeleteTrafficPolicyInstanceRequest method.
 		DeleteTrafficPolicyInstanceRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteTrafficPolicyInstanceInput
+			// DeleteTrafficPolicyInstanceInput is the deleteTrafficPolicyInstanceInput argument value.
+			DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
 		}
 		// DeleteTrafficPolicyInstanceWithContext holds details about calls to the DeleteTrafficPolicyInstanceWithContext method.
 		DeleteTrafficPolicyInstanceWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.DeleteTrafficPolicyInstanceInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// DeleteTrafficPolicyInstanceInput is the deleteTrafficPolicyInstanceInput argument value.
+			DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// DeleteTrafficPolicyRequest holds details about calls to the DeleteTrafficPolicyRequest method.
 		DeleteTrafficPolicyRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteTrafficPolicyInput
+			// DeleteTrafficPolicyInput is the deleteTrafficPolicyInput argument value.
+			DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
 		}
 		// DeleteTrafficPolicyWithContext holds details about calls to the DeleteTrafficPolicyWithContext method.
 		DeleteTrafficPolicyWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.DeleteTrafficPolicyInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// DeleteTrafficPolicyInput is the deleteTrafficPolicyInput argument value.
+			DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// DeleteVPCAssociationAuthorization holds details about calls to the DeleteVPCAssociationAuthorization method.
 		DeleteVPCAssociationAuthorization []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteVPCAssociationAuthorizationInput
+			// DeleteVPCAssociationAuthorizationInput is the deleteVPCAssociationAuthorizationInput argument value.
+			DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
 		}
 		// DeleteVPCAssociationAuthorizationRequest holds details about calls to the DeleteVPCAssociationAuthorizationRequest method.
 		DeleteVPCAssociationAuthorizationRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DeleteVPCAssociationAuthorizationInput
+			// DeleteVPCAssociationAuthorizationInput is the deleteVPCAssociationAuthorizationInput argument value.
+			DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
 		}
 		// DeleteVPCAssociationAuthorizationWithContext holds details about calls to the DeleteVPCAssociationAuthorizationWithContext method.
 		DeleteVPCAssociationAuthorizationWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.DeleteVPCAssociationAuthorizationInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// DeleteVPCAssociationAuthorizationInput is the deleteVPCAssociationAuthorizationInput argument value.
+			DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// DisableHostedZoneDNSSEC holds details about calls to the DisableHostedZoneDNSSEC method.
+		DisableHostedZoneDNSSEC []struct {
+			// DisableHostedZoneDNSSECInput is the disableHostedZoneDNSSECInput argument value.
+			DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
+		}
+		// DisableHostedZoneDNSSECRequest holds details about calls to the DisableHostedZoneDNSSECRequest method.
+		DisableHostedZoneDNSSECRequest []struct {
+			// DisableHostedZoneDNSSECInput is the disableHostedZoneDNSSECInput argument value.
+			DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
+		}
+		// DisableHostedZoneDNSSECWithContext holds details about calls to the DisableHostedZoneDNSSECWithContext method.
+		DisableHostedZoneDNSSECWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// DisableHostedZoneDNSSECInput is the disableHostedZoneDNSSECInput argument value.
+			DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// DisassociateVPCFromHostedZone holds details about calls to the DisassociateVPCFromHostedZone method.
 		DisassociateVPCFromHostedZone []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DisassociateVPCFromHostedZoneInput
+			// DisassociateVPCFromHostedZoneInput is the disassociateVPCFromHostedZoneInput argument value.
+			DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
 		}
 		// DisassociateVPCFromHostedZoneRequest holds details about calls to the DisassociateVPCFromHostedZoneRequest method.
 		DisassociateVPCFromHostedZoneRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.DisassociateVPCFromHostedZoneInput
+			// DisassociateVPCFromHostedZoneInput is the disassociateVPCFromHostedZoneInput argument value.
+			DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
 		}
 		// DisassociateVPCFromHostedZoneWithContext holds details about calls to the DisassociateVPCFromHostedZoneWithContext method.
 		DisassociateVPCFromHostedZoneWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.DisassociateVPCFromHostedZoneInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// DisassociateVPCFromHostedZoneInput is the disassociateVPCFromHostedZoneInput argument value.
+			DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// EnableHostedZoneDNSSEC holds details about calls to the EnableHostedZoneDNSSEC method.
+		EnableHostedZoneDNSSEC []struct {
+			// EnableHostedZoneDNSSECInput is the enableHostedZoneDNSSECInput argument value.
+			EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
+		}
+		// EnableHostedZoneDNSSECRequest holds details about calls to the EnableHostedZoneDNSSECRequest method.
+		EnableHostedZoneDNSSECRequest []struct {
+			// EnableHostedZoneDNSSECInput is the enableHostedZoneDNSSECInput argument value.
+			EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
+		}
+		// EnableHostedZoneDNSSECWithContext holds details about calls to the EnableHostedZoneDNSSECWithContext method.
+		EnableHostedZoneDNSSECWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// EnableHostedZoneDNSSECInput is the enableHostedZoneDNSSECInput argument value.
+			EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetAccountLimit holds details about calls to the GetAccountLimit method.
 		GetAccountLimit []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetAccountLimitInput
+			// GetAccountLimitInput is the getAccountLimitInput argument value.
+			GetAccountLimitInput *route53.GetAccountLimitInput
 		}
 		// GetAccountLimitRequest holds details about calls to the GetAccountLimitRequest method.
 		GetAccountLimitRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetAccountLimitInput
+			// GetAccountLimitInput is the getAccountLimitInput argument value.
+			GetAccountLimitInput *route53.GetAccountLimitInput
 		}
 		// GetAccountLimitWithContext holds details about calls to the GetAccountLimitWithContext method.
 		GetAccountLimitWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetAccountLimitInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetAccountLimitInput is the getAccountLimitInput argument value.
+			GetAccountLimitInput *route53.GetAccountLimitInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetChange holds details about calls to the GetChange method.
 		GetChange []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetChangeInput
+			// GetChangeInput is the getChangeInput argument value.
+			GetChangeInput *route53.GetChangeInput
 		}
 		// GetChangeRequest holds details about calls to the GetChangeRequest method.
 		GetChangeRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetChangeInput
+			// GetChangeInput is the getChangeInput argument value.
+			GetChangeInput *route53.GetChangeInput
 		}
 		// GetChangeWithContext holds details about calls to the GetChangeWithContext method.
 		GetChangeWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetChangeInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetChangeInput is the getChangeInput argument value.
+			GetChangeInput *route53.GetChangeInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetCheckerIpRanges holds details about calls to the GetCheckerIpRanges method.
 		GetCheckerIpRanges []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetCheckerIpRangesInput
+			// GetCheckerIpRangesInput is the getCheckerIpRangesInput argument value.
+			GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
 		}
 		// GetCheckerIpRangesRequest holds details about calls to the GetCheckerIpRangesRequest method.
 		GetCheckerIpRangesRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetCheckerIpRangesInput
+			// GetCheckerIpRangesInput is the getCheckerIpRangesInput argument value.
+			GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
 		}
 		// GetCheckerIpRangesWithContext holds details about calls to the GetCheckerIpRangesWithContext method.
 		GetCheckerIpRangesWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetCheckerIpRangesInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetCheckerIpRangesInput is the getCheckerIpRangesInput argument value.
+			GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// GetDNSSEC holds details about calls to the GetDNSSEC method.
+		GetDNSSEC []struct {
+			// GetDNSSECInput is the getDNSSECInput argument value.
+			GetDNSSECInput *route53.GetDNSSECInput
+		}
+		// GetDNSSECRequest holds details about calls to the GetDNSSECRequest method.
+		GetDNSSECRequest []struct {
+			// GetDNSSECInput is the getDNSSECInput argument value.
+			GetDNSSECInput *route53.GetDNSSECInput
+		}
+		// GetDNSSECWithContext holds details about calls to the GetDNSSECWithContext method.
+		GetDNSSECWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetDNSSECInput is the getDNSSECInput argument value.
+			GetDNSSECInput *route53.GetDNSSECInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetGeoLocation holds details about calls to the GetGeoLocation method.
 		GetGeoLocation []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetGeoLocationInput
+			// GetGeoLocationInput is the getGeoLocationInput argument value.
+			GetGeoLocationInput *route53.GetGeoLocationInput
 		}
 		// GetGeoLocationRequest holds details about calls to the GetGeoLocationRequest method.
 		GetGeoLocationRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetGeoLocationInput
+			// GetGeoLocationInput is the getGeoLocationInput argument value.
+			GetGeoLocationInput *route53.GetGeoLocationInput
 		}
 		// GetGeoLocationWithContext holds details about calls to the GetGeoLocationWithContext method.
 		GetGeoLocationWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetGeoLocationInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetGeoLocationInput is the getGeoLocationInput argument value.
+			GetGeoLocationInput *route53.GetGeoLocationInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetHealthCheck holds details about calls to the GetHealthCheck method.
 		GetHealthCheck []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHealthCheckInput
+			// GetHealthCheckInput is the getHealthCheckInput argument value.
+			GetHealthCheckInput *route53.GetHealthCheckInput
 		}
 		// GetHealthCheckCount holds details about calls to the GetHealthCheckCount method.
 		GetHealthCheckCount []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHealthCheckCountInput
+			// GetHealthCheckCountInput is the getHealthCheckCountInput argument value.
+			GetHealthCheckCountInput *route53.GetHealthCheckCountInput
 		}
 		// GetHealthCheckCountRequest holds details about calls to the GetHealthCheckCountRequest method.
 		GetHealthCheckCountRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHealthCheckCountInput
+			// GetHealthCheckCountInput is the getHealthCheckCountInput argument value.
+			GetHealthCheckCountInput *route53.GetHealthCheckCountInput
 		}
 		// GetHealthCheckCountWithContext holds details about calls to the GetHealthCheckCountWithContext method.
 		GetHealthCheckCountWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetHealthCheckCountInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetHealthCheckCountInput is the getHealthCheckCountInput argument value.
+			GetHealthCheckCountInput *route53.GetHealthCheckCountInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetHealthCheckLastFailureReason holds details about calls to the GetHealthCheckLastFailureReason method.
 		GetHealthCheckLastFailureReason []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHealthCheckLastFailureReasonInput
+			// GetHealthCheckLastFailureReasonInput is the getHealthCheckLastFailureReasonInput argument value.
+			GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
 		}
 		// GetHealthCheckLastFailureReasonRequest holds details about calls to the GetHealthCheckLastFailureReasonRequest method.
 		GetHealthCheckLastFailureReasonRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHealthCheckLastFailureReasonInput
+			// GetHealthCheckLastFailureReasonInput is the getHealthCheckLastFailureReasonInput argument value.
+			GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
 		}
 		// GetHealthCheckLastFailureReasonWithContext holds details about calls to the GetHealthCheckLastFailureReasonWithContext method.
 		GetHealthCheckLastFailureReasonWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetHealthCheckLastFailureReasonInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetHealthCheckLastFailureReasonInput is the getHealthCheckLastFailureReasonInput argument value.
+			GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetHealthCheckRequest holds details about calls to the GetHealthCheckRequest method.
 		GetHealthCheckRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHealthCheckInput
+			// GetHealthCheckInput is the getHealthCheckInput argument value.
+			GetHealthCheckInput *route53.GetHealthCheckInput
 		}
 		// GetHealthCheckStatus holds details about calls to the GetHealthCheckStatus method.
 		GetHealthCheckStatus []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHealthCheckStatusInput
+			// GetHealthCheckStatusInput is the getHealthCheckStatusInput argument value.
+			GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
 		}
 		// GetHealthCheckStatusRequest holds details about calls to the GetHealthCheckStatusRequest method.
 		GetHealthCheckStatusRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHealthCheckStatusInput
+			// GetHealthCheckStatusInput is the getHealthCheckStatusInput argument value.
+			GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
 		}
 		// GetHealthCheckStatusWithContext holds details about calls to the GetHealthCheckStatusWithContext method.
 		GetHealthCheckStatusWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetHealthCheckStatusInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetHealthCheckStatusInput is the getHealthCheckStatusInput argument value.
+			GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetHealthCheckWithContext holds details about calls to the GetHealthCheckWithContext method.
 		GetHealthCheckWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetHealthCheckInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetHealthCheckInput is the getHealthCheckInput argument value.
+			GetHealthCheckInput *route53.GetHealthCheckInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetHostedZone holds details about calls to the GetHostedZone method.
 		GetHostedZone []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHostedZoneInput
+			// GetHostedZoneInput is the getHostedZoneInput argument value.
+			GetHostedZoneInput *route53.GetHostedZoneInput
 		}
 		// GetHostedZoneCount holds details about calls to the GetHostedZoneCount method.
 		GetHostedZoneCount []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHostedZoneCountInput
+			// GetHostedZoneCountInput is the getHostedZoneCountInput argument value.
+			GetHostedZoneCountInput *route53.GetHostedZoneCountInput
 		}
 		// GetHostedZoneCountRequest holds details about calls to the GetHostedZoneCountRequest method.
 		GetHostedZoneCountRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHostedZoneCountInput
+			// GetHostedZoneCountInput is the getHostedZoneCountInput argument value.
+			GetHostedZoneCountInput *route53.GetHostedZoneCountInput
 		}
 		// GetHostedZoneCountWithContext holds details about calls to the GetHostedZoneCountWithContext method.
 		GetHostedZoneCountWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetHostedZoneCountInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetHostedZoneCountInput is the getHostedZoneCountInput argument value.
+			GetHostedZoneCountInput *route53.GetHostedZoneCountInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetHostedZoneLimit holds details about calls to the GetHostedZoneLimit method.
 		GetHostedZoneLimit []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHostedZoneLimitInput
+			// GetHostedZoneLimitInput is the getHostedZoneLimitInput argument value.
+			GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
 		}
 		// GetHostedZoneLimitRequest holds details about calls to the GetHostedZoneLimitRequest method.
 		GetHostedZoneLimitRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHostedZoneLimitInput
+			// GetHostedZoneLimitInput is the getHostedZoneLimitInput argument value.
+			GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
 		}
 		// GetHostedZoneLimitWithContext holds details about calls to the GetHostedZoneLimitWithContext method.
 		GetHostedZoneLimitWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetHostedZoneLimitInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetHostedZoneLimitInput is the getHostedZoneLimitInput argument value.
+			GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetHostedZoneRequest holds details about calls to the GetHostedZoneRequest method.
 		GetHostedZoneRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetHostedZoneInput
+			// GetHostedZoneInput is the getHostedZoneInput argument value.
+			GetHostedZoneInput *route53.GetHostedZoneInput
 		}
 		// GetHostedZoneWithContext holds details about calls to the GetHostedZoneWithContext method.
 		GetHostedZoneWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetHostedZoneInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetHostedZoneInput is the getHostedZoneInput argument value.
+			GetHostedZoneInput *route53.GetHostedZoneInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetQueryLoggingConfig holds details about calls to the GetQueryLoggingConfig method.
 		GetQueryLoggingConfig []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetQueryLoggingConfigInput
+			// GetQueryLoggingConfigInput is the getQueryLoggingConfigInput argument value.
+			GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
 		}
 		// GetQueryLoggingConfigRequest holds details about calls to the GetQueryLoggingConfigRequest method.
 		GetQueryLoggingConfigRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetQueryLoggingConfigInput
+			// GetQueryLoggingConfigInput is the getQueryLoggingConfigInput argument value.
+			GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
 		}
 		// GetQueryLoggingConfigWithContext holds details about calls to the GetQueryLoggingConfigWithContext method.
 		GetQueryLoggingConfigWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetQueryLoggingConfigInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetQueryLoggingConfigInput is the getQueryLoggingConfigInput argument value.
+			GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetReusableDelegationSet holds details about calls to the GetReusableDelegationSet method.
 		GetReusableDelegationSet []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetReusableDelegationSetInput
+			// GetReusableDelegationSetInput is the getReusableDelegationSetInput argument value.
+			GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
 		}
 		// GetReusableDelegationSetLimit holds details about calls to the GetReusableDelegationSetLimit method.
 		GetReusableDelegationSetLimit []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetReusableDelegationSetLimitInput
+			// GetReusableDelegationSetLimitInput is the getReusableDelegationSetLimitInput argument value.
+			GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
 		}
 		// GetReusableDelegationSetLimitRequest holds details about calls to the GetReusableDelegationSetLimitRequest method.
 		GetReusableDelegationSetLimitRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetReusableDelegationSetLimitInput
+			// GetReusableDelegationSetLimitInput is the getReusableDelegationSetLimitInput argument value.
+			GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
 		}
 		// GetReusableDelegationSetLimitWithContext holds details about calls to the GetReusableDelegationSetLimitWithContext method.
 		GetReusableDelegationSetLimitWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetReusableDelegationSetLimitInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetReusableDelegationSetLimitInput is the getReusableDelegationSetLimitInput argument value.
+			GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetReusableDelegationSetRequest holds details about calls to the GetReusableDelegationSetRequest method.
 		GetReusableDelegationSetRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetReusableDelegationSetInput
+			// GetReusableDelegationSetInput is the getReusableDelegationSetInput argument value.
+			GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
 		}
 		// GetReusableDelegationSetWithContext holds details about calls to the GetReusableDelegationSetWithContext method.
 		GetReusableDelegationSetWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetReusableDelegationSetInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetReusableDelegationSetInput is the getReusableDelegationSetInput argument value.
+			GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetTrafficPolicy holds details about calls to the GetTrafficPolicy method.
 		GetTrafficPolicy []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetTrafficPolicyInput
+			// GetTrafficPolicyInput is the getTrafficPolicyInput argument value.
+			GetTrafficPolicyInput *route53.GetTrafficPolicyInput
 		}
 		// GetTrafficPolicyInstance holds details about calls to the GetTrafficPolicyInstance method.
 		GetTrafficPolicyInstance []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetTrafficPolicyInstanceInput
+			// GetTrafficPolicyInstanceInput is the getTrafficPolicyInstanceInput argument value.
+			GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
 		}
 		// GetTrafficPolicyInstanceCount holds details about calls to the GetTrafficPolicyInstanceCount method.
 		GetTrafficPolicyInstanceCount []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetTrafficPolicyInstanceCountInput
+			// GetTrafficPolicyInstanceCountInput is the getTrafficPolicyInstanceCountInput argument value.
+			GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
 		}
 		// GetTrafficPolicyInstanceCountRequest holds details about calls to the GetTrafficPolicyInstanceCountRequest method.
 		GetTrafficPolicyInstanceCountRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetTrafficPolicyInstanceCountInput
+			// GetTrafficPolicyInstanceCountInput is the getTrafficPolicyInstanceCountInput argument value.
+			GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
 		}
 		// GetTrafficPolicyInstanceCountWithContext holds details about calls to the GetTrafficPolicyInstanceCountWithContext method.
 		GetTrafficPolicyInstanceCountWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetTrafficPolicyInstanceCountInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetTrafficPolicyInstanceCountInput is the getTrafficPolicyInstanceCountInput argument value.
+			GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetTrafficPolicyInstanceRequest holds details about calls to the GetTrafficPolicyInstanceRequest method.
 		GetTrafficPolicyInstanceRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetTrafficPolicyInstanceInput
+			// GetTrafficPolicyInstanceInput is the getTrafficPolicyInstanceInput argument value.
+			GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
 		}
 		// GetTrafficPolicyInstanceWithContext holds details about calls to the GetTrafficPolicyInstanceWithContext method.
 		GetTrafficPolicyInstanceWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetTrafficPolicyInstanceInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetTrafficPolicyInstanceInput is the getTrafficPolicyInstanceInput argument value.
+			GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// GetTrafficPolicyRequest holds details about calls to the GetTrafficPolicyRequest method.
 		GetTrafficPolicyRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetTrafficPolicyInput
+			// GetTrafficPolicyInput is the getTrafficPolicyInput argument value.
+			GetTrafficPolicyInput *route53.GetTrafficPolicyInput
 		}
 		// GetTrafficPolicyWithContext holds details about calls to the GetTrafficPolicyWithContext method.
 		GetTrafficPolicyWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetTrafficPolicyInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetTrafficPolicyInput is the getTrafficPolicyInput argument value.
+			GetTrafficPolicyInput *route53.GetTrafficPolicyInput
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// ListCidrBlocks holds details about calls to the ListCidrBlocks method.
+		ListCidrBlocks []struct {
+			// ListCidrBlocksInput is the listCidrBlocksInput argument value.
+			ListCidrBlocksInput *route53.ListCidrBlocksInput
+		}
+		// ListCidrBlocksPages holds details about calls to the ListCidrBlocksPages method.
+		ListCidrBlocksPages []struct {
+			// ListCidrBlocksInput is the listCidrBlocksInput argument value.
+			ListCidrBlocksInput *route53.ListCidrBlocksInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListCidrBlocksOutput, bool) bool
+		}
+		// ListCidrBlocksPagesWithContext holds details about calls to the ListCidrBlocksPagesWithContext method.
+		ListCidrBlocksPagesWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListCidrBlocksInput is the listCidrBlocksInput argument value.
+			ListCidrBlocksInput *route53.ListCidrBlocksInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListCidrBlocksOutput, bool) bool
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// ListCidrBlocksRequest holds details about calls to the ListCidrBlocksRequest method.
+		ListCidrBlocksRequest []struct {
+			// ListCidrBlocksInput is the listCidrBlocksInput argument value.
+			ListCidrBlocksInput *route53.ListCidrBlocksInput
+		}
+		// ListCidrBlocksWithContext holds details about calls to the ListCidrBlocksWithContext method.
+		ListCidrBlocksWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListCidrBlocksInput is the listCidrBlocksInput argument value.
+			ListCidrBlocksInput *route53.ListCidrBlocksInput
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// ListCidrCollections holds details about calls to the ListCidrCollections method.
+		ListCidrCollections []struct {
+			// ListCidrCollectionsInput is the listCidrCollectionsInput argument value.
+			ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+		}
+		// ListCidrCollectionsPages holds details about calls to the ListCidrCollectionsPages method.
+		ListCidrCollectionsPages []struct {
+			// ListCidrCollectionsInput is the listCidrCollectionsInput argument value.
+			ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListCidrCollectionsOutput, bool) bool
+		}
+		// ListCidrCollectionsPagesWithContext holds details about calls to the ListCidrCollectionsPagesWithContext method.
+		ListCidrCollectionsPagesWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListCidrCollectionsInput is the listCidrCollectionsInput argument value.
+			ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListCidrCollectionsOutput, bool) bool
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// ListCidrCollectionsRequest holds details about calls to the ListCidrCollectionsRequest method.
+		ListCidrCollectionsRequest []struct {
+			// ListCidrCollectionsInput is the listCidrCollectionsInput argument value.
+			ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+		}
+		// ListCidrCollectionsWithContext holds details about calls to the ListCidrCollectionsWithContext method.
+		ListCidrCollectionsWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListCidrCollectionsInput is the listCidrCollectionsInput argument value.
+			ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// ListCidrLocations holds details about calls to the ListCidrLocations method.
+		ListCidrLocations []struct {
+			// ListCidrLocationsInput is the listCidrLocationsInput argument value.
+			ListCidrLocationsInput *route53.ListCidrLocationsInput
+		}
+		// ListCidrLocationsPages holds details about calls to the ListCidrLocationsPages method.
+		ListCidrLocationsPages []struct {
+			// ListCidrLocationsInput is the listCidrLocationsInput argument value.
+			ListCidrLocationsInput *route53.ListCidrLocationsInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListCidrLocationsOutput, bool) bool
+		}
+		// ListCidrLocationsPagesWithContext holds details about calls to the ListCidrLocationsPagesWithContext method.
+		ListCidrLocationsPagesWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListCidrLocationsInput is the listCidrLocationsInput argument value.
+			ListCidrLocationsInput *route53.ListCidrLocationsInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListCidrLocationsOutput, bool) bool
+			// Options is the options argument value.
+			Options []request.Option
+		}
+		// ListCidrLocationsRequest holds details about calls to the ListCidrLocationsRequest method.
+		ListCidrLocationsRequest []struct {
+			// ListCidrLocationsInput is the listCidrLocationsInput argument value.
+			ListCidrLocationsInput *route53.ListCidrLocationsInput
+		}
+		// ListCidrLocationsWithContext holds details about calls to the ListCidrLocationsWithContext method.
+		ListCidrLocationsWithContext []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListCidrLocationsInput is the listCidrLocationsInput argument value.
+			ListCidrLocationsInput *route53.ListCidrLocationsInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListGeoLocations holds details about calls to the ListGeoLocations method.
 		ListGeoLocations []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListGeoLocationsInput
+			// ListGeoLocationsInput is the listGeoLocationsInput argument value.
+			ListGeoLocationsInput *route53.ListGeoLocationsInput
 		}
 		// ListGeoLocationsRequest holds details about calls to the ListGeoLocationsRequest method.
 		ListGeoLocationsRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListGeoLocationsInput
+			// ListGeoLocationsInput is the listGeoLocationsInput argument value.
+			ListGeoLocationsInput *route53.ListGeoLocationsInput
 		}
 		// ListGeoLocationsWithContext holds details about calls to the ListGeoLocationsWithContext method.
 		ListGeoLocationsWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListGeoLocationsInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListGeoLocationsInput is the listGeoLocationsInput argument value.
+			ListGeoLocationsInput *route53.ListGeoLocationsInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListHealthChecks holds details about calls to the ListHealthChecks method.
 		ListHealthChecks []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListHealthChecksInput
+			// ListHealthChecksInput is the listHealthChecksInput argument value.
+			ListHealthChecksInput *route53.ListHealthChecksInput
 		}
 		// ListHealthChecksPages holds details about calls to the ListHealthChecksPages method.
 		ListHealthChecksPages []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListHealthChecksInput
-			// In2 is the in2 argument value.
-			In2 func(*route53.ListHealthChecksOutput, bool) bool
+			// ListHealthChecksInput is the listHealthChecksInput argument value.
+			ListHealthChecksInput *route53.ListHealthChecksInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListHealthChecksOutput, bool) bool
 		}
 		// ListHealthChecksPagesWithContext holds details about calls to the ListHealthChecksPagesWithContext method.
 		ListHealthChecksPagesWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListHealthChecksInput
-			// In3 is the in3 argument value.
-			In3 func(*route53.ListHealthChecksOutput, bool) bool
-			// In4 is the in4 argument value.
-			In4 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListHealthChecksInput is the listHealthChecksInput argument value.
+			ListHealthChecksInput *route53.ListHealthChecksInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListHealthChecksOutput, bool) bool
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListHealthChecksRequest holds details about calls to the ListHealthChecksRequest method.
 		ListHealthChecksRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListHealthChecksInput
+			// ListHealthChecksInput is the listHealthChecksInput argument value.
+			ListHealthChecksInput *route53.ListHealthChecksInput
 		}
 		// ListHealthChecksWithContext holds details about calls to the ListHealthChecksWithContext method.
 		ListHealthChecksWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListHealthChecksInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListHealthChecksInput is the listHealthChecksInput argument value.
+			ListHealthChecksInput *route53.ListHealthChecksInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListHostedZones holds details about calls to the ListHostedZones method.
 		ListHostedZones []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListHostedZonesInput
+			// ListHostedZonesInput is the listHostedZonesInput argument value.
+			ListHostedZonesInput *route53.ListHostedZonesInput
 		}
 		// ListHostedZonesByName holds details about calls to the ListHostedZonesByName method.
 		ListHostedZonesByName []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListHostedZonesByNameInput
+			// ListHostedZonesByNameInput is the listHostedZonesByNameInput argument value.
+			ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
 		}
 		// ListHostedZonesByNameRequest holds details about calls to the ListHostedZonesByNameRequest method.
 		ListHostedZonesByNameRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListHostedZonesByNameInput
+			// ListHostedZonesByNameInput is the listHostedZonesByNameInput argument value.
+			ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
 		}
 		// ListHostedZonesByNameWithContext holds details about calls to the ListHostedZonesByNameWithContext method.
 		ListHostedZonesByNameWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListHostedZonesByNameInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListHostedZonesByNameInput is the listHostedZonesByNameInput argument value.
+			ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListHostedZonesByVPC holds details about calls to the ListHostedZonesByVPC method.
 		ListHostedZonesByVPC []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListHostedZonesByVPCInput
+			// ListHostedZonesByVPCInput is the listHostedZonesByVPCInput argument value.
+			ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
 		}
 		// ListHostedZonesByVPCRequest holds details about calls to the ListHostedZonesByVPCRequest method.
 		ListHostedZonesByVPCRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListHostedZonesByVPCInput
+			// ListHostedZonesByVPCInput is the listHostedZonesByVPCInput argument value.
+			ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
 		}
 		// ListHostedZonesByVPCWithContext holds details about calls to the ListHostedZonesByVPCWithContext method.
 		ListHostedZonesByVPCWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListHostedZonesByVPCInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListHostedZonesByVPCInput is the listHostedZonesByVPCInput argument value.
+			ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListHostedZonesPages holds details about calls to the ListHostedZonesPages method.
 		ListHostedZonesPages []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListHostedZonesInput
-			// In2 is the in2 argument value.
-			In2 func(*route53.ListHostedZonesOutput, bool) bool
+			// ListHostedZonesInput is the listHostedZonesInput argument value.
+			ListHostedZonesInput *route53.ListHostedZonesInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListHostedZonesOutput, bool) bool
 		}
 		// ListHostedZonesPagesWithContext holds details about calls to the ListHostedZonesPagesWithContext method.
 		ListHostedZonesPagesWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListHostedZonesInput
-			// In3 is the in3 argument value.
-			In3 func(*route53.ListHostedZonesOutput, bool) bool
-			// In4 is the in4 argument value.
-			In4 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListHostedZonesInput is the listHostedZonesInput argument value.
+			ListHostedZonesInput *route53.ListHostedZonesInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListHostedZonesOutput, bool) bool
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListHostedZonesRequest holds details about calls to the ListHostedZonesRequest method.
 		ListHostedZonesRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListHostedZonesInput
+			// ListHostedZonesInput is the listHostedZonesInput argument value.
+			ListHostedZonesInput *route53.ListHostedZonesInput
 		}
 		// ListHostedZonesWithContext holds details about calls to the ListHostedZonesWithContext method.
 		ListHostedZonesWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListHostedZonesInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListHostedZonesInput is the listHostedZonesInput argument value.
+			ListHostedZonesInput *route53.ListHostedZonesInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListQueryLoggingConfigs holds details about calls to the ListQueryLoggingConfigs method.
 		ListQueryLoggingConfigs []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListQueryLoggingConfigsInput
+			// ListQueryLoggingConfigsInput is the listQueryLoggingConfigsInput argument value.
+			ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
 		}
 		// ListQueryLoggingConfigsPages holds details about calls to the ListQueryLoggingConfigsPages method.
 		ListQueryLoggingConfigsPages []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListQueryLoggingConfigsInput
-			// In2 is the in2 argument value.
-			In2 func(*route53.ListQueryLoggingConfigsOutput, bool) bool
+			// ListQueryLoggingConfigsInput is the listQueryLoggingConfigsInput argument value.
+			ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListQueryLoggingConfigsOutput, bool) bool
 		}
 		// ListQueryLoggingConfigsPagesWithContext holds details about calls to the ListQueryLoggingConfigsPagesWithContext method.
 		ListQueryLoggingConfigsPagesWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListQueryLoggingConfigsInput
-			// In3 is the in3 argument value.
-			In3 func(*route53.ListQueryLoggingConfigsOutput, bool) bool
-			// In4 is the in4 argument value.
-			In4 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListQueryLoggingConfigsInput is the listQueryLoggingConfigsInput argument value.
+			ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListQueryLoggingConfigsOutput, bool) bool
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListQueryLoggingConfigsRequest holds details about calls to the ListQueryLoggingConfigsRequest method.
 		ListQueryLoggingConfigsRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListQueryLoggingConfigsInput
+			// ListQueryLoggingConfigsInput is the listQueryLoggingConfigsInput argument value.
+			ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
 		}
 		// ListQueryLoggingConfigsWithContext holds details about calls to the ListQueryLoggingConfigsWithContext method.
 		ListQueryLoggingConfigsWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListQueryLoggingConfigsInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListQueryLoggingConfigsInput is the listQueryLoggingConfigsInput argument value.
+			ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListResourceRecordSets holds details about calls to the ListResourceRecordSets method.
 		ListResourceRecordSets []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListResourceRecordSetsInput
+			// ListResourceRecordSetsInput is the listResourceRecordSetsInput argument value.
+			ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
 		}
 		// ListResourceRecordSetsPages holds details about calls to the ListResourceRecordSetsPages method.
 		ListResourceRecordSetsPages []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListResourceRecordSetsInput
-			// In2 is the in2 argument value.
-			In2 func(*route53.ListResourceRecordSetsOutput, bool) bool
+			// ListResourceRecordSetsInput is the listResourceRecordSetsInput argument value.
+			ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListResourceRecordSetsOutput, bool) bool
 		}
 		// ListResourceRecordSetsPagesWithContext holds details about calls to the ListResourceRecordSetsPagesWithContext method.
 		ListResourceRecordSetsPagesWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListResourceRecordSetsInput
-			// In3 is the in3 argument value.
-			In3 func(*route53.ListResourceRecordSetsOutput, bool) bool
-			// In4 is the in4 argument value.
-			In4 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListResourceRecordSetsInput is the listResourceRecordSetsInput argument value.
+			ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
+			// Fn is the fn argument value.
+			Fn func(*route53.ListResourceRecordSetsOutput, bool) bool
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListResourceRecordSetsRequest holds details about calls to the ListResourceRecordSetsRequest method.
 		ListResourceRecordSetsRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListResourceRecordSetsInput
+			// ListResourceRecordSetsInput is the listResourceRecordSetsInput argument value.
+			ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
 		}
 		// ListResourceRecordSetsWithContext holds details about calls to the ListResourceRecordSetsWithContext method.
 		ListResourceRecordSetsWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListResourceRecordSetsInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListResourceRecordSetsInput is the listResourceRecordSetsInput argument value.
+			ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListReusableDelegationSets holds details about calls to the ListReusableDelegationSets method.
 		ListReusableDelegationSets []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListReusableDelegationSetsInput
+			// ListReusableDelegationSetsInput is the listReusableDelegationSetsInput argument value.
+			ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
 		}
 		// ListReusableDelegationSetsRequest holds details about calls to the ListReusableDelegationSetsRequest method.
 		ListReusableDelegationSetsRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListReusableDelegationSetsInput
+			// ListReusableDelegationSetsInput is the listReusableDelegationSetsInput argument value.
+			ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
 		}
 		// ListReusableDelegationSetsWithContext holds details about calls to the ListReusableDelegationSetsWithContext method.
 		ListReusableDelegationSetsWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListReusableDelegationSetsInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListReusableDelegationSetsInput is the listReusableDelegationSetsInput argument value.
+			ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListTagsForResource holds details about calls to the ListTagsForResource method.
 		ListTagsForResource []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTagsForResourceInput
+			// ListTagsForResourceInput is the listTagsForResourceInput argument value.
+			ListTagsForResourceInput *route53.ListTagsForResourceInput
 		}
 		// ListTagsForResourceRequest holds details about calls to the ListTagsForResourceRequest method.
 		ListTagsForResourceRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTagsForResourceInput
+			// ListTagsForResourceInput is the listTagsForResourceInput argument value.
+			ListTagsForResourceInput *route53.ListTagsForResourceInput
 		}
 		// ListTagsForResourceWithContext holds details about calls to the ListTagsForResourceWithContext method.
 		ListTagsForResourceWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListTagsForResourceInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListTagsForResourceInput is the listTagsForResourceInput argument value.
+			ListTagsForResourceInput *route53.ListTagsForResourceInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListTagsForResources holds details about calls to the ListTagsForResources method.
 		ListTagsForResources []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTagsForResourcesInput
+			// ListTagsForResourcesInput is the listTagsForResourcesInput argument value.
+			ListTagsForResourcesInput *route53.ListTagsForResourcesInput
 		}
 		// ListTagsForResourcesRequest holds details about calls to the ListTagsForResourcesRequest method.
 		ListTagsForResourcesRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTagsForResourcesInput
+			// ListTagsForResourcesInput is the listTagsForResourcesInput argument value.
+			ListTagsForResourcesInput *route53.ListTagsForResourcesInput
 		}
 		// ListTagsForResourcesWithContext holds details about calls to the ListTagsForResourcesWithContext method.
 		ListTagsForResourcesWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListTagsForResourcesInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListTagsForResourcesInput is the listTagsForResourcesInput argument value.
+			ListTagsForResourcesInput *route53.ListTagsForResourcesInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListTrafficPolicies holds details about calls to the ListTrafficPolicies method.
 		ListTrafficPolicies []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTrafficPoliciesInput
+			// ListTrafficPoliciesInput is the listTrafficPoliciesInput argument value.
+			ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
 		}
 		// ListTrafficPoliciesRequest holds details about calls to the ListTrafficPoliciesRequest method.
 		ListTrafficPoliciesRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTrafficPoliciesInput
+			// ListTrafficPoliciesInput is the listTrafficPoliciesInput argument value.
+			ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
 		}
 		// ListTrafficPoliciesWithContext holds details about calls to the ListTrafficPoliciesWithContext method.
 		ListTrafficPoliciesWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListTrafficPoliciesInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListTrafficPoliciesInput is the listTrafficPoliciesInput argument value.
+			ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListTrafficPolicyInstances holds details about calls to the ListTrafficPolicyInstances method.
 		ListTrafficPolicyInstances []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTrafficPolicyInstancesInput
+			// ListTrafficPolicyInstancesInput is the listTrafficPolicyInstancesInput argument value.
+			ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
 		}
 		// ListTrafficPolicyInstancesByHostedZone holds details about calls to the ListTrafficPolicyInstancesByHostedZone method.
 		ListTrafficPolicyInstancesByHostedZone []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTrafficPolicyInstancesByHostedZoneInput
+			// ListTrafficPolicyInstancesByHostedZoneInput is the listTrafficPolicyInstancesByHostedZoneInput argument value.
+			ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
 		}
 		// ListTrafficPolicyInstancesByHostedZoneRequest holds details about calls to the ListTrafficPolicyInstancesByHostedZoneRequest method.
 		ListTrafficPolicyInstancesByHostedZoneRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTrafficPolicyInstancesByHostedZoneInput
+			// ListTrafficPolicyInstancesByHostedZoneInput is the listTrafficPolicyInstancesByHostedZoneInput argument value.
+			ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
 		}
 		// ListTrafficPolicyInstancesByHostedZoneWithContext holds details about calls to the ListTrafficPolicyInstancesByHostedZoneWithContext method.
 		ListTrafficPolicyInstancesByHostedZoneWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListTrafficPolicyInstancesByHostedZoneInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListTrafficPolicyInstancesByHostedZoneInput is the listTrafficPolicyInstancesByHostedZoneInput argument value.
+			ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListTrafficPolicyInstancesByPolicy holds details about calls to the ListTrafficPolicyInstancesByPolicy method.
 		ListTrafficPolicyInstancesByPolicy []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTrafficPolicyInstancesByPolicyInput
+			// ListTrafficPolicyInstancesByPolicyInput is the listTrafficPolicyInstancesByPolicyInput argument value.
+			ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
 		}
 		// ListTrafficPolicyInstancesByPolicyRequest holds details about calls to the ListTrafficPolicyInstancesByPolicyRequest method.
 		ListTrafficPolicyInstancesByPolicyRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTrafficPolicyInstancesByPolicyInput
+			// ListTrafficPolicyInstancesByPolicyInput is the listTrafficPolicyInstancesByPolicyInput argument value.
+			ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
 		}
 		// ListTrafficPolicyInstancesByPolicyWithContext holds details about calls to the ListTrafficPolicyInstancesByPolicyWithContext method.
 		ListTrafficPolicyInstancesByPolicyWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListTrafficPolicyInstancesByPolicyInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListTrafficPolicyInstancesByPolicyInput is the listTrafficPolicyInstancesByPolicyInput argument value.
+			ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListTrafficPolicyInstancesRequest holds details about calls to the ListTrafficPolicyInstancesRequest method.
 		ListTrafficPolicyInstancesRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTrafficPolicyInstancesInput
+			// ListTrafficPolicyInstancesInput is the listTrafficPolicyInstancesInput argument value.
+			ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
 		}
 		// ListTrafficPolicyInstancesWithContext holds details about calls to the ListTrafficPolicyInstancesWithContext method.
 		ListTrafficPolicyInstancesWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListTrafficPolicyInstancesInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListTrafficPolicyInstancesInput is the listTrafficPolicyInstancesInput argument value.
+			ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListTrafficPolicyVersions holds details about calls to the ListTrafficPolicyVersions method.
 		ListTrafficPolicyVersions []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTrafficPolicyVersionsInput
+			// ListTrafficPolicyVersionsInput is the listTrafficPolicyVersionsInput argument value.
+			ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
 		}
 		// ListTrafficPolicyVersionsRequest holds details about calls to the ListTrafficPolicyVersionsRequest method.
 		ListTrafficPolicyVersionsRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListTrafficPolicyVersionsInput
+			// ListTrafficPolicyVersionsInput is the listTrafficPolicyVersionsInput argument value.
+			ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
 		}
 		// ListTrafficPolicyVersionsWithContext holds details about calls to the ListTrafficPolicyVersionsWithContext method.
 		ListTrafficPolicyVersionsWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListTrafficPolicyVersionsInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListTrafficPolicyVersionsInput is the listTrafficPolicyVersionsInput argument value.
+			ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// ListVPCAssociationAuthorizations holds details about calls to the ListVPCAssociationAuthorizations method.
 		ListVPCAssociationAuthorizations []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListVPCAssociationAuthorizationsInput
+			// ListVPCAssociationAuthorizationsInput is the listVPCAssociationAuthorizationsInput argument value.
+			ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
 		}
 		// ListVPCAssociationAuthorizationsRequest holds details about calls to the ListVPCAssociationAuthorizationsRequest method.
 		ListVPCAssociationAuthorizationsRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.ListVPCAssociationAuthorizationsInput
+			// ListVPCAssociationAuthorizationsInput is the listVPCAssociationAuthorizationsInput argument value.
+			ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
 		}
 		// ListVPCAssociationAuthorizationsWithContext holds details about calls to the ListVPCAssociationAuthorizationsWithContext method.
 		ListVPCAssociationAuthorizationsWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.ListVPCAssociationAuthorizationsInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// ListVPCAssociationAuthorizationsInput is the listVPCAssociationAuthorizationsInput argument value.
+			ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// TestDNSAnswer holds details about calls to the TestDNSAnswer method.
 		TestDNSAnswer []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.TestDNSAnswerInput
+			// TestDNSAnswerInput is the testDNSAnswerInput argument value.
+			TestDNSAnswerInput *route53.TestDNSAnswerInput
 		}
 		// TestDNSAnswerRequest holds details about calls to the TestDNSAnswerRequest method.
 		TestDNSAnswerRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.TestDNSAnswerInput
+			// TestDNSAnswerInput is the testDNSAnswerInput argument value.
+			TestDNSAnswerInput *route53.TestDNSAnswerInput
 		}
 		// TestDNSAnswerWithContext holds details about calls to the TestDNSAnswerWithContext method.
 		TestDNSAnswerWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.TestDNSAnswerInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// TestDNSAnswerInput is the testDNSAnswerInput argument value.
+			TestDNSAnswerInput *route53.TestDNSAnswerInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// UpdateHealthCheck holds details about calls to the UpdateHealthCheck method.
 		UpdateHealthCheck []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.UpdateHealthCheckInput
+			// UpdateHealthCheckInput is the updateHealthCheckInput argument value.
+			UpdateHealthCheckInput *route53.UpdateHealthCheckInput
 		}
 		// UpdateHealthCheckRequest holds details about calls to the UpdateHealthCheckRequest method.
 		UpdateHealthCheckRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.UpdateHealthCheckInput
+			// UpdateHealthCheckInput is the updateHealthCheckInput argument value.
+			UpdateHealthCheckInput *route53.UpdateHealthCheckInput
 		}
 		// UpdateHealthCheckWithContext holds details about calls to the UpdateHealthCheckWithContext method.
 		UpdateHealthCheckWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.UpdateHealthCheckInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// UpdateHealthCheckInput is the updateHealthCheckInput argument value.
+			UpdateHealthCheckInput *route53.UpdateHealthCheckInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// UpdateHostedZoneComment holds details about calls to the UpdateHostedZoneComment method.
 		UpdateHostedZoneComment []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.UpdateHostedZoneCommentInput
+			// UpdateHostedZoneCommentInput is the updateHostedZoneCommentInput argument value.
+			UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
 		}
 		// UpdateHostedZoneCommentRequest holds details about calls to the UpdateHostedZoneCommentRequest method.
 		UpdateHostedZoneCommentRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.UpdateHostedZoneCommentInput
+			// UpdateHostedZoneCommentInput is the updateHostedZoneCommentInput argument value.
+			UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
 		}
 		// UpdateHostedZoneCommentWithContext holds details about calls to the UpdateHostedZoneCommentWithContext method.
 		UpdateHostedZoneCommentWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.UpdateHostedZoneCommentInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// UpdateHostedZoneCommentInput is the updateHostedZoneCommentInput argument value.
+			UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// UpdateTrafficPolicyComment holds details about calls to the UpdateTrafficPolicyComment method.
 		UpdateTrafficPolicyComment []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.UpdateTrafficPolicyCommentInput
+			// UpdateTrafficPolicyCommentInput is the updateTrafficPolicyCommentInput argument value.
+			UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
 		}
 		// UpdateTrafficPolicyCommentRequest holds details about calls to the UpdateTrafficPolicyCommentRequest method.
 		UpdateTrafficPolicyCommentRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.UpdateTrafficPolicyCommentInput
+			// UpdateTrafficPolicyCommentInput is the updateTrafficPolicyCommentInput argument value.
+			UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
 		}
 		// UpdateTrafficPolicyCommentWithContext holds details about calls to the UpdateTrafficPolicyCommentWithContext method.
 		UpdateTrafficPolicyCommentWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.UpdateTrafficPolicyCommentInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// UpdateTrafficPolicyCommentInput is the updateTrafficPolicyCommentInput argument value.
+			UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// UpdateTrafficPolicyInstance holds details about calls to the UpdateTrafficPolicyInstance method.
 		UpdateTrafficPolicyInstance []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.UpdateTrafficPolicyInstanceInput
+			// UpdateTrafficPolicyInstanceInput is the updateTrafficPolicyInstanceInput argument value.
+			UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
 		}
 		// UpdateTrafficPolicyInstanceRequest holds details about calls to the UpdateTrafficPolicyInstanceRequest method.
 		UpdateTrafficPolicyInstanceRequest []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.UpdateTrafficPolicyInstanceInput
+			// UpdateTrafficPolicyInstanceInput is the updateTrafficPolicyInstanceInput argument value.
+			UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
 		}
 		// UpdateTrafficPolicyInstanceWithContext holds details about calls to the UpdateTrafficPolicyInstanceWithContext method.
 		UpdateTrafficPolicyInstanceWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.UpdateTrafficPolicyInstanceInput
-			// In3 is the in3 argument value.
-			In3 []request.Option
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// UpdateTrafficPolicyInstanceInput is the updateTrafficPolicyInstanceInput argument value.
+			UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
+			// Options is the options argument value.
+			Options []request.Option
 		}
 		// WaitUntilResourceRecordSetsChanged holds details about calls to the WaitUntilResourceRecordSetsChanged method.
 		WaitUntilResourceRecordSetsChanged []struct {
-			// In1 is the in1 argument value.
-			In1 *route53.GetChangeInput
+			// GetChangeInput is the getChangeInput argument value.
+			GetChangeInput *route53.GetChangeInput
 		}
 		// WaitUntilResourceRecordSetsChangedWithContext holds details about calls to the WaitUntilResourceRecordSetsChangedWithContext method.
 		WaitUntilResourceRecordSetsChangedWithContext []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 *route53.GetChangeInput
-			// In3 is the in3 argument value.
-			In3 []request.WaiterOption
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// GetChangeInput is the getChangeInput argument value.
+			GetChangeInput *route53.GetChangeInput
+			// WaiterOptions is the waiterOptions argument value.
+			WaiterOptions []request.WaiterOption
 		}
 	}
+	lockActivateKeySigningKey                             sync.RWMutex
+	lockActivateKeySigningKeyRequest                      sync.RWMutex
+	lockActivateKeySigningKeyWithContext                  sync.RWMutex
 	lockAssociateVPCWithHostedZone                        sync.RWMutex
 	lockAssociateVPCWithHostedZoneRequest                 sync.RWMutex
 	lockAssociateVPCWithHostedZoneWithContext             sync.RWMutex
+	lockChangeCidrCollection                              sync.RWMutex
+	lockChangeCidrCollectionRequest                       sync.RWMutex
+	lockChangeCidrCollectionWithContext                   sync.RWMutex
 	lockChangeResourceRecordSets                          sync.RWMutex
 	lockChangeResourceRecordSetsRequest                   sync.RWMutex
 	lockChangeResourceRecordSetsWithContext               sync.RWMutex
 	lockChangeTagsForResource                             sync.RWMutex
 	lockChangeTagsForResourceRequest                      sync.RWMutex
 	lockChangeTagsForResourceWithContext                  sync.RWMutex
+	lockCreateCidrCollection                              sync.RWMutex
+	lockCreateCidrCollectionRequest                       sync.RWMutex
+	lockCreateCidrCollectionWithContext                   sync.RWMutex
 	lockCreateHealthCheck                                 sync.RWMutex
 	lockCreateHealthCheckRequest                          sync.RWMutex
 	lockCreateHealthCheckWithContext                      sync.RWMutex
 	lockCreateHostedZone                                  sync.RWMutex
 	lockCreateHostedZoneRequest                           sync.RWMutex
 	lockCreateHostedZoneWithContext                       sync.RWMutex
+	lockCreateKeySigningKey                               sync.RWMutex
+	lockCreateKeySigningKeyRequest                        sync.RWMutex
+	lockCreateKeySigningKeyWithContext                    sync.RWMutex
 	lockCreateQueryLoggingConfig                          sync.RWMutex
 	lockCreateQueryLoggingConfigRequest                   sync.RWMutex
 	lockCreateQueryLoggingConfigWithContext               sync.RWMutex
@@ -2318,12 +2902,21 @@ type Route53APIMock struct {
 	lockCreateVPCAssociationAuthorization                 sync.RWMutex
 	lockCreateVPCAssociationAuthorizationRequest          sync.RWMutex
 	lockCreateVPCAssociationAuthorizationWithContext      sync.RWMutex
+	lockDeactivateKeySigningKey                           sync.RWMutex
+	lockDeactivateKeySigningKeyRequest                    sync.RWMutex
+	lockDeactivateKeySigningKeyWithContext                sync.RWMutex
+	lockDeleteCidrCollection                              sync.RWMutex
+	lockDeleteCidrCollectionRequest                       sync.RWMutex
+	lockDeleteCidrCollectionWithContext                   sync.RWMutex
 	lockDeleteHealthCheck                                 sync.RWMutex
 	lockDeleteHealthCheckRequest                          sync.RWMutex
 	lockDeleteHealthCheckWithContext                      sync.RWMutex
 	lockDeleteHostedZone                                  sync.RWMutex
 	lockDeleteHostedZoneRequest                           sync.RWMutex
 	lockDeleteHostedZoneWithContext                       sync.RWMutex
+	lockDeleteKeySigningKey                               sync.RWMutex
+	lockDeleteKeySigningKeyRequest                        sync.RWMutex
+	lockDeleteKeySigningKeyWithContext                    sync.RWMutex
 	lockDeleteQueryLoggingConfig                          sync.RWMutex
 	lockDeleteQueryLoggingConfigRequest                   sync.RWMutex
 	lockDeleteQueryLoggingConfigWithContext               sync.RWMutex
@@ -2339,9 +2932,15 @@ type Route53APIMock struct {
 	lockDeleteVPCAssociationAuthorization                 sync.RWMutex
 	lockDeleteVPCAssociationAuthorizationRequest          sync.RWMutex
 	lockDeleteVPCAssociationAuthorizationWithContext      sync.RWMutex
+	lockDisableHostedZoneDNSSEC                           sync.RWMutex
+	lockDisableHostedZoneDNSSECRequest                    sync.RWMutex
+	lockDisableHostedZoneDNSSECWithContext                sync.RWMutex
 	lockDisassociateVPCFromHostedZone                     sync.RWMutex
 	lockDisassociateVPCFromHostedZoneRequest              sync.RWMutex
 	lockDisassociateVPCFromHostedZoneWithContext          sync.RWMutex
+	lockEnableHostedZoneDNSSEC                            sync.RWMutex
+	lockEnableHostedZoneDNSSECRequest                     sync.RWMutex
+	lockEnableHostedZoneDNSSECWithContext                 sync.RWMutex
 	lockGetAccountLimit                                   sync.RWMutex
 	lockGetAccountLimitRequest                            sync.RWMutex
 	lockGetAccountLimitWithContext                        sync.RWMutex
@@ -2351,6 +2950,9 @@ type Route53APIMock struct {
 	lockGetCheckerIpRanges                                sync.RWMutex
 	lockGetCheckerIpRangesRequest                         sync.RWMutex
 	lockGetCheckerIpRangesWithContext                     sync.RWMutex
+	lockGetDNSSEC                                         sync.RWMutex
+	lockGetDNSSECRequest                                  sync.RWMutex
+	lockGetDNSSECWithContext                              sync.RWMutex
 	lockGetGeoLocation                                    sync.RWMutex
 	lockGetGeoLocationRequest                             sync.RWMutex
 	lockGetGeoLocationWithContext                         sync.RWMutex
@@ -2393,6 +2995,21 @@ type Route53APIMock struct {
 	lockGetTrafficPolicyInstanceWithContext               sync.RWMutex
 	lockGetTrafficPolicyRequest                           sync.RWMutex
 	lockGetTrafficPolicyWithContext                       sync.RWMutex
+	lockListCidrBlocks                                    sync.RWMutex
+	lockListCidrBlocksPages                               sync.RWMutex
+	lockListCidrBlocksPagesWithContext                    sync.RWMutex
+	lockListCidrBlocksRequest                             sync.RWMutex
+	lockListCidrBlocksWithContext                         sync.RWMutex
+	lockListCidrCollections                               sync.RWMutex
+	lockListCidrCollectionsPages                          sync.RWMutex
+	lockListCidrCollectionsPagesWithContext               sync.RWMutex
+	lockListCidrCollectionsRequest                        sync.RWMutex
+	lockListCidrCollectionsWithContext                    sync.RWMutex
+	lockListCidrLocations                                 sync.RWMutex
+	lockListCidrLocationsPages                            sync.RWMutex
+	lockListCidrLocationsPagesWithContext                 sync.RWMutex
+	lockListCidrLocationsRequest                          sync.RWMutex
+	lockListCidrLocationsWithContext                      sync.RWMutex
 	lockListGeoLocations                                  sync.RWMutex
 	lockListGeoLocationsRequest                           sync.RWMutex
 	lockListGeoLocationsWithContext                       sync.RWMutex
@@ -2468,30 +3085,131 @@ type Route53APIMock struct {
 	lockWaitUntilResourceRecordSetsChangedWithContext     sync.RWMutex
 }
 
+// ActivateKeySigningKey calls ActivateKeySigningKeyFunc.
+func (mock *Route53APIMock) ActivateKeySigningKey(activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput) (*route53.ActivateKeySigningKeyOutput, error) {
+	if mock.ActivateKeySigningKeyFunc == nil {
+		panic("Route53APIMock.ActivateKeySigningKeyFunc: method is nil but Route53API.ActivateKeySigningKey was just called")
+	}
+	callInfo := struct {
+		ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
+	}{
+		ActivateKeySigningKeyInput: activateKeySigningKeyInput,
+	}
+	mock.lockActivateKeySigningKey.Lock()
+	mock.calls.ActivateKeySigningKey = append(mock.calls.ActivateKeySigningKey, callInfo)
+	mock.lockActivateKeySigningKey.Unlock()
+	return mock.ActivateKeySigningKeyFunc(activateKeySigningKeyInput)
+}
+
+// ActivateKeySigningKeyCalls gets all the calls that were made to ActivateKeySigningKey.
+// Check the length with:
+//     len(mockedRoute53API.ActivateKeySigningKeyCalls())
+func (mock *Route53APIMock) ActivateKeySigningKeyCalls() []struct {
+	ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
+} {
+	var calls []struct {
+		ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
+	}
+	mock.lockActivateKeySigningKey.RLock()
+	calls = mock.calls.ActivateKeySigningKey
+	mock.lockActivateKeySigningKey.RUnlock()
+	return calls
+}
+
+// ActivateKeySigningKeyRequest calls ActivateKeySigningKeyRequestFunc.
+func (mock *Route53APIMock) ActivateKeySigningKeyRequest(activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput) (*request.Request, *route53.ActivateKeySigningKeyOutput) {
+	if mock.ActivateKeySigningKeyRequestFunc == nil {
+		panic("Route53APIMock.ActivateKeySigningKeyRequestFunc: method is nil but Route53API.ActivateKeySigningKeyRequest was just called")
+	}
+	callInfo := struct {
+		ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
+	}{
+		ActivateKeySigningKeyInput: activateKeySigningKeyInput,
+	}
+	mock.lockActivateKeySigningKeyRequest.Lock()
+	mock.calls.ActivateKeySigningKeyRequest = append(mock.calls.ActivateKeySigningKeyRequest, callInfo)
+	mock.lockActivateKeySigningKeyRequest.Unlock()
+	return mock.ActivateKeySigningKeyRequestFunc(activateKeySigningKeyInput)
+}
+
+// ActivateKeySigningKeyRequestCalls gets all the calls that were made to ActivateKeySigningKeyRequest.
+// Check the length with:
+//     len(mockedRoute53API.ActivateKeySigningKeyRequestCalls())
+func (mock *Route53APIMock) ActivateKeySigningKeyRequestCalls() []struct {
+	ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
+} {
+	var calls []struct {
+		ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
+	}
+	mock.lockActivateKeySigningKeyRequest.RLock()
+	calls = mock.calls.ActivateKeySigningKeyRequest
+	mock.lockActivateKeySigningKeyRequest.RUnlock()
+	return calls
+}
+
+// ActivateKeySigningKeyWithContext calls ActivateKeySigningKeyWithContextFunc.
+func (mock *Route53APIMock) ActivateKeySigningKeyWithContext(contextMoqParam context.Context, activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput, options ...request.Option) (*route53.ActivateKeySigningKeyOutput, error) {
+	if mock.ActivateKeySigningKeyWithContextFunc == nil {
+		panic("Route53APIMock.ActivateKeySigningKeyWithContextFunc: method is nil but Route53API.ActivateKeySigningKeyWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam            context.Context
+		ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
+		Options                    []request.Option
+	}{
+		ContextMoqParam:            contextMoqParam,
+		ActivateKeySigningKeyInput: activateKeySigningKeyInput,
+		Options:                    options,
+	}
+	mock.lockActivateKeySigningKeyWithContext.Lock()
+	mock.calls.ActivateKeySigningKeyWithContext = append(mock.calls.ActivateKeySigningKeyWithContext, callInfo)
+	mock.lockActivateKeySigningKeyWithContext.Unlock()
+	return mock.ActivateKeySigningKeyWithContextFunc(contextMoqParam, activateKeySigningKeyInput, options...)
+}
+
+// ActivateKeySigningKeyWithContextCalls gets all the calls that were made to ActivateKeySigningKeyWithContext.
+// Check the length with:
+//     len(mockedRoute53API.ActivateKeySigningKeyWithContextCalls())
+func (mock *Route53APIMock) ActivateKeySigningKeyWithContextCalls() []struct {
+	ContextMoqParam            context.Context
+	ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
+	Options                    []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam            context.Context
+		ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
+		Options                    []request.Option
+	}
+	mock.lockActivateKeySigningKeyWithContext.RLock()
+	calls = mock.calls.ActivateKeySigningKeyWithContext
+	mock.lockActivateKeySigningKeyWithContext.RUnlock()
+	return calls
+}
+
 // AssociateVPCWithHostedZone calls AssociateVPCWithHostedZoneFunc.
-func (mock *Route53APIMock) AssociateVPCWithHostedZone(in1 *route53.AssociateVPCWithHostedZoneInput) (*route53.AssociateVPCWithHostedZoneOutput, error) {
+func (mock *Route53APIMock) AssociateVPCWithHostedZone(associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput) (*route53.AssociateVPCWithHostedZoneOutput, error) {
 	if mock.AssociateVPCWithHostedZoneFunc == nil {
 		panic("Route53APIMock.AssociateVPCWithHostedZoneFunc: method is nil but Route53API.AssociateVPCWithHostedZone was just called")
 	}
 	callInfo := struct {
-		In1 *route53.AssociateVPCWithHostedZoneInput
+		AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
 	}{
-		In1: in1,
+		AssociateVPCWithHostedZoneInput: associateVPCWithHostedZoneInput,
 	}
 	mock.lockAssociateVPCWithHostedZone.Lock()
 	mock.calls.AssociateVPCWithHostedZone = append(mock.calls.AssociateVPCWithHostedZone, callInfo)
 	mock.lockAssociateVPCWithHostedZone.Unlock()
-	return mock.AssociateVPCWithHostedZoneFunc(in1)
+	return mock.AssociateVPCWithHostedZoneFunc(associateVPCWithHostedZoneInput)
 }
 
 // AssociateVPCWithHostedZoneCalls gets all the calls that were made to AssociateVPCWithHostedZone.
 // Check the length with:
 //     len(mockedRoute53API.AssociateVPCWithHostedZoneCalls())
 func (mock *Route53APIMock) AssociateVPCWithHostedZoneCalls() []struct {
-	In1 *route53.AssociateVPCWithHostedZoneInput
+	AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
 } {
 	var calls []struct {
-		In1 *route53.AssociateVPCWithHostedZoneInput
+		AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
 	}
 	mock.lockAssociateVPCWithHostedZone.RLock()
 	calls = mock.calls.AssociateVPCWithHostedZone
@@ -2500,29 +3218,29 @@ func (mock *Route53APIMock) AssociateVPCWithHostedZoneCalls() []struct {
 }
 
 // AssociateVPCWithHostedZoneRequest calls AssociateVPCWithHostedZoneRequestFunc.
-func (mock *Route53APIMock) AssociateVPCWithHostedZoneRequest(in1 *route53.AssociateVPCWithHostedZoneInput) (*request.Request, *route53.AssociateVPCWithHostedZoneOutput) {
+func (mock *Route53APIMock) AssociateVPCWithHostedZoneRequest(associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput) (*request.Request, *route53.AssociateVPCWithHostedZoneOutput) {
 	if mock.AssociateVPCWithHostedZoneRequestFunc == nil {
 		panic("Route53APIMock.AssociateVPCWithHostedZoneRequestFunc: method is nil but Route53API.AssociateVPCWithHostedZoneRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.AssociateVPCWithHostedZoneInput
+		AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
 	}{
-		In1: in1,
+		AssociateVPCWithHostedZoneInput: associateVPCWithHostedZoneInput,
 	}
 	mock.lockAssociateVPCWithHostedZoneRequest.Lock()
 	mock.calls.AssociateVPCWithHostedZoneRequest = append(mock.calls.AssociateVPCWithHostedZoneRequest, callInfo)
 	mock.lockAssociateVPCWithHostedZoneRequest.Unlock()
-	return mock.AssociateVPCWithHostedZoneRequestFunc(in1)
+	return mock.AssociateVPCWithHostedZoneRequestFunc(associateVPCWithHostedZoneInput)
 }
 
 // AssociateVPCWithHostedZoneRequestCalls gets all the calls that were made to AssociateVPCWithHostedZoneRequest.
 // Check the length with:
 //     len(mockedRoute53API.AssociateVPCWithHostedZoneRequestCalls())
 func (mock *Route53APIMock) AssociateVPCWithHostedZoneRequestCalls() []struct {
-	In1 *route53.AssociateVPCWithHostedZoneInput
+	AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
 } {
 	var calls []struct {
-		In1 *route53.AssociateVPCWithHostedZoneInput
+		AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
 	}
 	mock.lockAssociateVPCWithHostedZoneRequest.RLock()
 	calls = mock.calls.AssociateVPCWithHostedZoneRequest
@@ -2531,37 +3249,37 @@ func (mock *Route53APIMock) AssociateVPCWithHostedZoneRequestCalls() []struct {
 }
 
 // AssociateVPCWithHostedZoneWithContext calls AssociateVPCWithHostedZoneWithContextFunc.
-func (mock *Route53APIMock) AssociateVPCWithHostedZoneWithContext(in1 context.Context, in2 *route53.AssociateVPCWithHostedZoneInput, in3 ...request.Option) (*route53.AssociateVPCWithHostedZoneOutput, error) {
+func (mock *Route53APIMock) AssociateVPCWithHostedZoneWithContext(contextMoqParam context.Context, associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput, options ...request.Option) (*route53.AssociateVPCWithHostedZoneOutput, error) {
 	if mock.AssociateVPCWithHostedZoneWithContextFunc == nil {
 		panic("Route53APIMock.AssociateVPCWithHostedZoneWithContextFunc: method is nil but Route53API.AssociateVPCWithHostedZoneWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.AssociateVPCWithHostedZoneInput
-		In3 []request.Option
+		ContextMoqParam                 context.Context
+		AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
+		Options                         []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                 contextMoqParam,
+		AssociateVPCWithHostedZoneInput: associateVPCWithHostedZoneInput,
+		Options:                         options,
 	}
 	mock.lockAssociateVPCWithHostedZoneWithContext.Lock()
 	mock.calls.AssociateVPCWithHostedZoneWithContext = append(mock.calls.AssociateVPCWithHostedZoneWithContext, callInfo)
 	mock.lockAssociateVPCWithHostedZoneWithContext.Unlock()
-	return mock.AssociateVPCWithHostedZoneWithContextFunc(in1, in2, in3...)
+	return mock.AssociateVPCWithHostedZoneWithContextFunc(contextMoqParam, associateVPCWithHostedZoneInput, options...)
 }
 
 // AssociateVPCWithHostedZoneWithContextCalls gets all the calls that were made to AssociateVPCWithHostedZoneWithContext.
 // Check the length with:
 //     len(mockedRoute53API.AssociateVPCWithHostedZoneWithContextCalls())
 func (mock *Route53APIMock) AssociateVPCWithHostedZoneWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.AssociateVPCWithHostedZoneInput
-	In3 []request.Option
+	ContextMoqParam                 context.Context
+	AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
+	Options                         []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.AssociateVPCWithHostedZoneInput
-		In3 []request.Option
+		ContextMoqParam                 context.Context
+		AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
+		Options                         []request.Option
 	}
 	mock.lockAssociateVPCWithHostedZoneWithContext.RLock()
 	calls = mock.calls.AssociateVPCWithHostedZoneWithContext
@@ -2569,30 +3287,131 @@ func (mock *Route53APIMock) AssociateVPCWithHostedZoneWithContextCalls() []struc
 	return calls
 }
 
+// ChangeCidrCollection calls ChangeCidrCollectionFunc.
+func (mock *Route53APIMock) ChangeCidrCollection(changeCidrCollectionInput *route53.ChangeCidrCollectionInput) (*route53.ChangeCidrCollectionOutput, error) {
+	if mock.ChangeCidrCollectionFunc == nil {
+		panic("Route53APIMock.ChangeCidrCollectionFunc: method is nil but Route53API.ChangeCidrCollection was just called")
+	}
+	callInfo := struct {
+		ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
+	}{
+		ChangeCidrCollectionInput: changeCidrCollectionInput,
+	}
+	mock.lockChangeCidrCollection.Lock()
+	mock.calls.ChangeCidrCollection = append(mock.calls.ChangeCidrCollection, callInfo)
+	mock.lockChangeCidrCollection.Unlock()
+	return mock.ChangeCidrCollectionFunc(changeCidrCollectionInput)
+}
+
+// ChangeCidrCollectionCalls gets all the calls that were made to ChangeCidrCollection.
+// Check the length with:
+//     len(mockedRoute53API.ChangeCidrCollectionCalls())
+func (mock *Route53APIMock) ChangeCidrCollectionCalls() []struct {
+	ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
+} {
+	var calls []struct {
+		ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
+	}
+	mock.lockChangeCidrCollection.RLock()
+	calls = mock.calls.ChangeCidrCollection
+	mock.lockChangeCidrCollection.RUnlock()
+	return calls
+}
+
+// ChangeCidrCollectionRequest calls ChangeCidrCollectionRequestFunc.
+func (mock *Route53APIMock) ChangeCidrCollectionRequest(changeCidrCollectionInput *route53.ChangeCidrCollectionInput) (*request.Request, *route53.ChangeCidrCollectionOutput) {
+	if mock.ChangeCidrCollectionRequestFunc == nil {
+		panic("Route53APIMock.ChangeCidrCollectionRequestFunc: method is nil but Route53API.ChangeCidrCollectionRequest was just called")
+	}
+	callInfo := struct {
+		ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
+	}{
+		ChangeCidrCollectionInput: changeCidrCollectionInput,
+	}
+	mock.lockChangeCidrCollectionRequest.Lock()
+	mock.calls.ChangeCidrCollectionRequest = append(mock.calls.ChangeCidrCollectionRequest, callInfo)
+	mock.lockChangeCidrCollectionRequest.Unlock()
+	return mock.ChangeCidrCollectionRequestFunc(changeCidrCollectionInput)
+}
+
+// ChangeCidrCollectionRequestCalls gets all the calls that were made to ChangeCidrCollectionRequest.
+// Check the length with:
+//     len(mockedRoute53API.ChangeCidrCollectionRequestCalls())
+func (mock *Route53APIMock) ChangeCidrCollectionRequestCalls() []struct {
+	ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
+} {
+	var calls []struct {
+		ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
+	}
+	mock.lockChangeCidrCollectionRequest.RLock()
+	calls = mock.calls.ChangeCidrCollectionRequest
+	mock.lockChangeCidrCollectionRequest.RUnlock()
+	return calls
+}
+
+// ChangeCidrCollectionWithContext calls ChangeCidrCollectionWithContextFunc.
+func (mock *Route53APIMock) ChangeCidrCollectionWithContext(contextMoqParam context.Context, changeCidrCollectionInput *route53.ChangeCidrCollectionInput, options ...request.Option) (*route53.ChangeCidrCollectionOutput, error) {
+	if mock.ChangeCidrCollectionWithContextFunc == nil {
+		panic("Route53APIMock.ChangeCidrCollectionWithContextFunc: method is nil but Route53API.ChangeCidrCollectionWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam           context.Context
+		ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
+		Options                   []request.Option
+	}{
+		ContextMoqParam:           contextMoqParam,
+		ChangeCidrCollectionInput: changeCidrCollectionInput,
+		Options:                   options,
+	}
+	mock.lockChangeCidrCollectionWithContext.Lock()
+	mock.calls.ChangeCidrCollectionWithContext = append(mock.calls.ChangeCidrCollectionWithContext, callInfo)
+	mock.lockChangeCidrCollectionWithContext.Unlock()
+	return mock.ChangeCidrCollectionWithContextFunc(contextMoqParam, changeCidrCollectionInput, options...)
+}
+
+// ChangeCidrCollectionWithContextCalls gets all the calls that were made to ChangeCidrCollectionWithContext.
+// Check the length with:
+//     len(mockedRoute53API.ChangeCidrCollectionWithContextCalls())
+func (mock *Route53APIMock) ChangeCidrCollectionWithContextCalls() []struct {
+	ContextMoqParam           context.Context
+	ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
+	Options                   []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam           context.Context
+		ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
+		Options                   []request.Option
+	}
+	mock.lockChangeCidrCollectionWithContext.RLock()
+	calls = mock.calls.ChangeCidrCollectionWithContext
+	mock.lockChangeCidrCollectionWithContext.RUnlock()
+	return calls
+}
+
 // ChangeResourceRecordSets calls ChangeResourceRecordSetsFunc.
-func (mock *Route53APIMock) ChangeResourceRecordSets(in1 *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
+func (mock *Route53APIMock) ChangeResourceRecordSets(changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
 	if mock.ChangeResourceRecordSetsFunc == nil {
 		panic("Route53APIMock.ChangeResourceRecordSetsFunc: method is nil but Route53API.ChangeResourceRecordSets was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ChangeResourceRecordSetsInput
+		ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
 	}{
-		In1: in1,
+		ChangeResourceRecordSetsInput: changeResourceRecordSetsInput,
 	}
 	mock.lockChangeResourceRecordSets.Lock()
 	mock.calls.ChangeResourceRecordSets = append(mock.calls.ChangeResourceRecordSets, callInfo)
 	mock.lockChangeResourceRecordSets.Unlock()
-	return mock.ChangeResourceRecordSetsFunc(in1)
+	return mock.ChangeResourceRecordSetsFunc(changeResourceRecordSetsInput)
 }
 
 // ChangeResourceRecordSetsCalls gets all the calls that were made to ChangeResourceRecordSets.
 // Check the length with:
 //     len(mockedRoute53API.ChangeResourceRecordSetsCalls())
 func (mock *Route53APIMock) ChangeResourceRecordSetsCalls() []struct {
-	In1 *route53.ChangeResourceRecordSetsInput
+	ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
 } {
 	var calls []struct {
-		In1 *route53.ChangeResourceRecordSetsInput
+		ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
 	}
 	mock.lockChangeResourceRecordSets.RLock()
 	calls = mock.calls.ChangeResourceRecordSets
@@ -2601,29 +3420,29 @@ func (mock *Route53APIMock) ChangeResourceRecordSetsCalls() []struct {
 }
 
 // ChangeResourceRecordSetsRequest calls ChangeResourceRecordSetsRequestFunc.
-func (mock *Route53APIMock) ChangeResourceRecordSetsRequest(in1 *route53.ChangeResourceRecordSetsInput) (*request.Request, *route53.ChangeResourceRecordSetsOutput) {
+func (mock *Route53APIMock) ChangeResourceRecordSetsRequest(changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput) (*request.Request, *route53.ChangeResourceRecordSetsOutput) {
 	if mock.ChangeResourceRecordSetsRequestFunc == nil {
 		panic("Route53APIMock.ChangeResourceRecordSetsRequestFunc: method is nil but Route53API.ChangeResourceRecordSetsRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ChangeResourceRecordSetsInput
+		ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
 	}{
-		In1: in1,
+		ChangeResourceRecordSetsInput: changeResourceRecordSetsInput,
 	}
 	mock.lockChangeResourceRecordSetsRequest.Lock()
 	mock.calls.ChangeResourceRecordSetsRequest = append(mock.calls.ChangeResourceRecordSetsRequest, callInfo)
 	mock.lockChangeResourceRecordSetsRequest.Unlock()
-	return mock.ChangeResourceRecordSetsRequestFunc(in1)
+	return mock.ChangeResourceRecordSetsRequestFunc(changeResourceRecordSetsInput)
 }
 
 // ChangeResourceRecordSetsRequestCalls gets all the calls that were made to ChangeResourceRecordSetsRequest.
 // Check the length with:
 //     len(mockedRoute53API.ChangeResourceRecordSetsRequestCalls())
 func (mock *Route53APIMock) ChangeResourceRecordSetsRequestCalls() []struct {
-	In1 *route53.ChangeResourceRecordSetsInput
+	ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
 } {
 	var calls []struct {
-		In1 *route53.ChangeResourceRecordSetsInput
+		ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
 	}
 	mock.lockChangeResourceRecordSetsRequest.RLock()
 	calls = mock.calls.ChangeResourceRecordSetsRequest
@@ -2632,37 +3451,37 @@ func (mock *Route53APIMock) ChangeResourceRecordSetsRequestCalls() []struct {
 }
 
 // ChangeResourceRecordSetsWithContext calls ChangeResourceRecordSetsWithContextFunc.
-func (mock *Route53APIMock) ChangeResourceRecordSetsWithContext(in1 context.Context, in2 *route53.ChangeResourceRecordSetsInput, in3 ...request.Option) (*route53.ChangeResourceRecordSetsOutput, error) {
+func (mock *Route53APIMock) ChangeResourceRecordSetsWithContext(contextMoqParam context.Context, changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput, options ...request.Option) (*route53.ChangeResourceRecordSetsOutput, error) {
 	if mock.ChangeResourceRecordSetsWithContextFunc == nil {
 		panic("Route53APIMock.ChangeResourceRecordSetsWithContextFunc: method is nil but Route53API.ChangeResourceRecordSetsWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ChangeResourceRecordSetsInput
-		In3 []request.Option
+		ContextMoqParam               context.Context
+		ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
+		Options                       []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:               contextMoqParam,
+		ChangeResourceRecordSetsInput: changeResourceRecordSetsInput,
+		Options:                       options,
 	}
 	mock.lockChangeResourceRecordSetsWithContext.Lock()
 	mock.calls.ChangeResourceRecordSetsWithContext = append(mock.calls.ChangeResourceRecordSetsWithContext, callInfo)
 	mock.lockChangeResourceRecordSetsWithContext.Unlock()
-	return mock.ChangeResourceRecordSetsWithContextFunc(in1, in2, in3...)
+	return mock.ChangeResourceRecordSetsWithContextFunc(contextMoqParam, changeResourceRecordSetsInput, options...)
 }
 
 // ChangeResourceRecordSetsWithContextCalls gets all the calls that were made to ChangeResourceRecordSetsWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ChangeResourceRecordSetsWithContextCalls())
 func (mock *Route53APIMock) ChangeResourceRecordSetsWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ChangeResourceRecordSetsInput
-	In3 []request.Option
+	ContextMoqParam               context.Context
+	ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
+	Options                       []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ChangeResourceRecordSetsInput
-		In3 []request.Option
+		ContextMoqParam               context.Context
+		ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
+		Options                       []request.Option
 	}
 	mock.lockChangeResourceRecordSetsWithContext.RLock()
 	calls = mock.calls.ChangeResourceRecordSetsWithContext
@@ -2671,29 +3490,29 @@ func (mock *Route53APIMock) ChangeResourceRecordSetsWithContextCalls() []struct 
 }
 
 // ChangeTagsForResource calls ChangeTagsForResourceFunc.
-func (mock *Route53APIMock) ChangeTagsForResource(in1 *route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
+func (mock *Route53APIMock) ChangeTagsForResource(changeTagsForResourceInput *route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
 	if mock.ChangeTagsForResourceFunc == nil {
 		panic("Route53APIMock.ChangeTagsForResourceFunc: method is nil but Route53API.ChangeTagsForResource was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ChangeTagsForResourceInput
+		ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
 	}{
-		In1: in1,
+		ChangeTagsForResourceInput: changeTagsForResourceInput,
 	}
 	mock.lockChangeTagsForResource.Lock()
 	mock.calls.ChangeTagsForResource = append(mock.calls.ChangeTagsForResource, callInfo)
 	mock.lockChangeTagsForResource.Unlock()
-	return mock.ChangeTagsForResourceFunc(in1)
+	return mock.ChangeTagsForResourceFunc(changeTagsForResourceInput)
 }
 
 // ChangeTagsForResourceCalls gets all the calls that were made to ChangeTagsForResource.
 // Check the length with:
 //     len(mockedRoute53API.ChangeTagsForResourceCalls())
 func (mock *Route53APIMock) ChangeTagsForResourceCalls() []struct {
-	In1 *route53.ChangeTagsForResourceInput
+	ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
 } {
 	var calls []struct {
-		In1 *route53.ChangeTagsForResourceInput
+		ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
 	}
 	mock.lockChangeTagsForResource.RLock()
 	calls = mock.calls.ChangeTagsForResource
@@ -2702,29 +3521,29 @@ func (mock *Route53APIMock) ChangeTagsForResourceCalls() []struct {
 }
 
 // ChangeTagsForResourceRequest calls ChangeTagsForResourceRequestFunc.
-func (mock *Route53APIMock) ChangeTagsForResourceRequest(in1 *route53.ChangeTagsForResourceInput) (*request.Request, *route53.ChangeTagsForResourceOutput) {
+func (mock *Route53APIMock) ChangeTagsForResourceRequest(changeTagsForResourceInput *route53.ChangeTagsForResourceInput) (*request.Request, *route53.ChangeTagsForResourceOutput) {
 	if mock.ChangeTagsForResourceRequestFunc == nil {
 		panic("Route53APIMock.ChangeTagsForResourceRequestFunc: method is nil but Route53API.ChangeTagsForResourceRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ChangeTagsForResourceInput
+		ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
 	}{
-		In1: in1,
+		ChangeTagsForResourceInput: changeTagsForResourceInput,
 	}
 	mock.lockChangeTagsForResourceRequest.Lock()
 	mock.calls.ChangeTagsForResourceRequest = append(mock.calls.ChangeTagsForResourceRequest, callInfo)
 	mock.lockChangeTagsForResourceRequest.Unlock()
-	return mock.ChangeTagsForResourceRequestFunc(in1)
+	return mock.ChangeTagsForResourceRequestFunc(changeTagsForResourceInput)
 }
 
 // ChangeTagsForResourceRequestCalls gets all the calls that were made to ChangeTagsForResourceRequest.
 // Check the length with:
 //     len(mockedRoute53API.ChangeTagsForResourceRequestCalls())
 func (mock *Route53APIMock) ChangeTagsForResourceRequestCalls() []struct {
-	In1 *route53.ChangeTagsForResourceInput
+	ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
 } {
 	var calls []struct {
-		In1 *route53.ChangeTagsForResourceInput
+		ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
 	}
 	mock.lockChangeTagsForResourceRequest.RLock()
 	calls = mock.calls.ChangeTagsForResourceRequest
@@ -2733,37 +3552,37 @@ func (mock *Route53APIMock) ChangeTagsForResourceRequestCalls() []struct {
 }
 
 // ChangeTagsForResourceWithContext calls ChangeTagsForResourceWithContextFunc.
-func (mock *Route53APIMock) ChangeTagsForResourceWithContext(in1 context.Context, in2 *route53.ChangeTagsForResourceInput, in3 ...request.Option) (*route53.ChangeTagsForResourceOutput, error) {
+func (mock *Route53APIMock) ChangeTagsForResourceWithContext(contextMoqParam context.Context, changeTagsForResourceInput *route53.ChangeTagsForResourceInput, options ...request.Option) (*route53.ChangeTagsForResourceOutput, error) {
 	if mock.ChangeTagsForResourceWithContextFunc == nil {
 		panic("Route53APIMock.ChangeTagsForResourceWithContextFunc: method is nil but Route53API.ChangeTagsForResourceWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ChangeTagsForResourceInput
-		In3 []request.Option
+		ContextMoqParam            context.Context
+		ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
+		Options                    []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:            contextMoqParam,
+		ChangeTagsForResourceInput: changeTagsForResourceInput,
+		Options:                    options,
 	}
 	mock.lockChangeTagsForResourceWithContext.Lock()
 	mock.calls.ChangeTagsForResourceWithContext = append(mock.calls.ChangeTagsForResourceWithContext, callInfo)
 	mock.lockChangeTagsForResourceWithContext.Unlock()
-	return mock.ChangeTagsForResourceWithContextFunc(in1, in2, in3...)
+	return mock.ChangeTagsForResourceWithContextFunc(contextMoqParam, changeTagsForResourceInput, options...)
 }
 
 // ChangeTagsForResourceWithContextCalls gets all the calls that were made to ChangeTagsForResourceWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ChangeTagsForResourceWithContextCalls())
 func (mock *Route53APIMock) ChangeTagsForResourceWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ChangeTagsForResourceInput
-	In3 []request.Option
+	ContextMoqParam            context.Context
+	ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
+	Options                    []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ChangeTagsForResourceInput
-		In3 []request.Option
+		ContextMoqParam            context.Context
+		ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
+		Options                    []request.Option
 	}
 	mock.lockChangeTagsForResourceWithContext.RLock()
 	calls = mock.calls.ChangeTagsForResourceWithContext
@@ -2771,30 +3590,131 @@ func (mock *Route53APIMock) ChangeTagsForResourceWithContextCalls() []struct {
 	return calls
 }
 
+// CreateCidrCollection calls CreateCidrCollectionFunc.
+func (mock *Route53APIMock) CreateCidrCollection(createCidrCollectionInput *route53.CreateCidrCollectionInput) (*route53.CreateCidrCollectionOutput, error) {
+	if mock.CreateCidrCollectionFunc == nil {
+		panic("Route53APIMock.CreateCidrCollectionFunc: method is nil but Route53API.CreateCidrCollection was just called")
+	}
+	callInfo := struct {
+		CreateCidrCollectionInput *route53.CreateCidrCollectionInput
+	}{
+		CreateCidrCollectionInput: createCidrCollectionInput,
+	}
+	mock.lockCreateCidrCollection.Lock()
+	mock.calls.CreateCidrCollection = append(mock.calls.CreateCidrCollection, callInfo)
+	mock.lockCreateCidrCollection.Unlock()
+	return mock.CreateCidrCollectionFunc(createCidrCollectionInput)
+}
+
+// CreateCidrCollectionCalls gets all the calls that were made to CreateCidrCollection.
+// Check the length with:
+//     len(mockedRoute53API.CreateCidrCollectionCalls())
+func (mock *Route53APIMock) CreateCidrCollectionCalls() []struct {
+	CreateCidrCollectionInput *route53.CreateCidrCollectionInput
+} {
+	var calls []struct {
+		CreateCidrCollectionInput *route53.CreateCidrCollectionInput
+	}
+	mock.lockCreateCidrCollection.RLock()
+	calls = mock.calls.CreateCidrCollection
+	mock.lockCreateCidrCollection.RUnlock()
+	return calls
+}
+
+// CreateCidrCollectionRequest calls CreateCidrCollectionRequestFunc.
+func (mock *Route53APIMock) CreateCidrCollectionRequest(createCidrCollectionInput *route53.CreateCidrCollectionInput) (*request.Request, *route53.CreateCidrCollectionOutput) {
+	if mock.CreateCidrCollectionRequestFunc == nil {
+		panic("Route53APIMock.CreateCidrCollectionRequestFunc: method is nil but Route53API.CreateCidrCollectionRequest was just called")
+	}
+	callInfo := struct {
+		CreateCidrCollectionInput *route53.CreateCidrCollectionInput
+	}{
+		CreateCidrCollectionInput: createCidrCollectionInput,
+	}
+	mock.lockCreateCidrCollectionRequest.Lock()
+	mock.calls.CreateCidrCollectionRequest = append(mock.calls.CreateCidrCollectionRequest, callInfo)
+	mock.lockCreateCidrCollectionRequest.Unlock()
+	return mock.CreateCidrCollectionRequestFunc(createCidrCollectionInput)
+}
+
+// CreateCidrCollectionRequestCalls gets all the calls that were made to CreateCidrCollectionRequest.
+// Check the length with:
+//     len(mockedRoute53API.CreateCidrCollectionRequestCalls())
+func (mock *Route53APIMock) CreateCidrCollectionRequestCalls() []struct {
+	CreateCidrCollectionInput *route53.CreateCidrCollectionInput
+} {
+	var calls []struct {
+		CreateCidrCollectionInput *route53.CreateCidrCollectionInput
+	}
+	mock.lockCreateCidrCollectionRequest.RLock()
+	calls = mock.calls.CreateCidrCollectionRequest
+	mock.lockCreateCidrCollectionRequest.RUnlock()
+	return calls
+}
+
+// CreateCidrCollectionWithContext calls CreateCidrCollectionWithContextFunc.
+func (mock *Route53APIMock) CreateCidrCollectionWithContext(contextMoqParam context.Context, createCidrCollectionInput *route53.CreateCidrCollectionInput, options ...request.Option) (*route53.CreateCidrCollectionOutput, error) {
+	if mock.CreateCidrCollectionWithContextFunc == nil {
+		panic("Route53APIMock.CreateCidrCollectionWithContextFunc: method is nil but Route53API.CreateCidrCollectionWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam           context.Context
+		CreateCidrCollectionInput *route53.CreateCidrCollectionInput
+		Options                   []request.Option
+	}{
+		ContextMoqParam:           contextMoqParam,
+		CreateCidrCollectionInput: createCidrCollectionInput,
+		Options:                   options,
+	}
+	mock.lockCreateCidrCollectionWithContext.Lock()
+	mock.calls.CreateCidrCollectionWithContext = append(mock.calls.CreateCidrCollectionWithContext, callInfo)
+	mock.lockCreateCidrCollectionWithContext.Unlock()
+	return mock.CreateCidrCollectionWithContextFunc(contextMoqParam, createCidrCollectionInput, options...)
+}
+
+// CreateCidrCollectionWithContextCalls gets all the calls that were made to CreateCidrCollectionWithContext.
+// Check the length with:
+//     len(mockedRoute53API.CreateCidrCollectionWithContextCalls())
+func (mock *Route53APIMock) CreateCidrCollectionWithContextCalls() []struct {
+	ContextMoqParam           context.Context
+	CreateCidrCollectionInput *route53.CreateCidrCollectionInput
+	Options                   []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam           context.Context
+		CreateCidrCollectionInput *route53.CreateCidrCollectionInput
+		Options                   []request.Option
+	}
+	mock.lockCreateCidrCollectionWithContext.RLock()
+	calls = mock.calls.CreateCidrCollectionWithContext
+	mock.lockCreateCidrCollectionWithContext.RUnlock()
+	return calls
+}
+
 // CreateHealthCheck calls CreateHealthCheckFunc.
-func (mock *Route53APIMock) CreateHealthCheck(in1 *route53.CreateHealthCheckInput) (*route53.CreateHealthCheckOutput, error) {
+func (mock *Route53APIMock) CreateHealthCheck(createHealthCheckInput *route53.CreateHealthCheckInput) (*route53.CreateHealthCheckOutput, error) {
 	if mock.CreateHealthCheckFunc == nil {
 		panic("Route53APIMock.CreateHealthCheckFunc: method is nil but Route53API.CreateHealthCheck was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateHealthCheckInput
+		CreateHealthCheckInput *route53.CreateHealthCheckInput
 	}{
-		In1: in1,
+		CreateHealthCheckInput: createHealthCheckInput,
 	}
 	mock.lockCreateHealthCheck.Lock()
 	mock.calls.CreateHealthCheck = append(mock.calls.CreateHealthCheck, callInfo)
 	mock.lockCreateHealthCheck.Unlock()
-	return mock.CreateHealthCheckFunc(in1)
+	return mock.CreateHealthCheckFunc(createHealthCheckInput)
 }
 
 // CreateHealthCheckCalls gets all the calls that were made to CreateHealthCheck.
 // Check the length with:
 //     len(mockedRoute53API.CreateHealthCheckCalls())
 func (mock *Route53APIMock) CreateHealthCheckCalls() []struct {
-	In1 *route53.CreateHealthCheckInput
+	CreateHealthCheckInput *route53.CreateHealthCheckInput
 } {
 	var calls []struct {
-		In1 *route53.CreateHealthCheckInput
+		CreateHealthCheckInput *route53.CreateHealthCheckInput
 	}
 	mock.lockCreateHealthCheck.RLock()
 	calls = mock.calls.CreateHealthCheck
@@ -2803,29 +3723,29 @@ func (mock *Route53APIMock) CreateHealthCheckCalls() []struct {
 }
 
 // CreateHealthCheckRequest calls CreateHealthCheckRequestFunc.
-func (mock *Route53APIMock) CreateHealthCheckRequest(in1 *route53.CreateHealthCheckInput) (*request.Request, *route53.CreateHealthCheckOutput) {
+func (mock *Route53APIMock) CreateHealthCheckRequest(createHealthCheckInput *route53.CreateHealthCheckInput) (*request.Request, *route53.CreateHealthCheckOutput) {
 	if mock.CreateHealthCheckRequestFunc == nil {
 		panic("Route53APIMock.CreateHealthCheckRequestFunc: method is nil but Route53API.CreateHealthCheckRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateHealthCheckInput
+		CreateHealthCheckInput *route53.CreateHealthCheckInput
 	}{
-		In1: in1,
+		CreateHealthCheckInput: createHealthCheckInput,
 	}
 	mock.lockCreateHealthCheckRequest.Lock()
 	mock.calls.CreateHealthCheckRequest = append(mock.calls.CreateHealthCheckRequest, callInfo)
 	mock.lockCreateHealthCheckRequest.Unlock()
-	return mock.CreateHealthCheckRequestFunc(in1)
+	return mock.CreateHealthCheckRequestFunc(createHealthCheckInput)
 }
 
 // CreateHealthCheckRequestCalls gets all the calls that were made to CreateHealthCheckRequest.
 // Check the length with:
 //     len(mockedRoute53API.CreateHealthCheckRequestCalls())
 func (mock *Route53APIMock) CreateHealthCheckRequestCalls() []struct {
-	In1 *route53.CreateHealthCheckInput
+	CreateHealthCheckInput *route53.CreateHealthCheckInput
 } {
 	var calls []struct {
-		In1 *route53.CreateHealthCheckInput
+		CreateHealthCheckInput *route53.CreateHealthCheckInput
 	}
 	mock.lockCreateHealthCheckRequest.RLock()
 	calls = mock.calls.CreateHealthCheckRequest
@@ -2834,37 +3754,37 @@ func (mock *Route53APIMock) CreateHealthCheckRequestCalls() []struct {
 }
 
 // CreateHealthCheckWithContext calls CreateHealthCheckWithContextFunc.
-func (mock *Route53APIMock) CreateHealthCheckWithContext(in1 context.Context, in2 *route53.CreateHealthCheckInput, in3 ...request.Option) (*route53.CreateHealthCheckOutput, error) {
+func (mock *Route53APIMock) CreateHealthCheckWithContext(contextMoqParam context.Context, createHealthCheckInput *route53.CreateHealthCheckInput, options ...request.Option) (*route53.CreateHealthCheckOutput, error) {
 	if mock.CreateHealthCheckWithContextFunc == nil {
 		panic("Route53APIMock.CreateHealthCheckWithContextFunc: method is nil but Route53API.CreateHealthCheckWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.CreateHealthCheckInput
-		In3 []request.Option
+		ContextMoqParam        context.Context
+		CreateHealthCheckInput *route53.CreateHealthCheckInput
+		Options                []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:        contextMoqParam,
+		CreateHealthCheckInput: createHealthCheckInput,
+		Options:                options,
 	}
 	mock.lockCreateHealthCheckWithContext.Lock()
 	mock.calls.CreateHealthCheckWithContext = append(mock.calls.CreateHealthCheckWithContext, callInfo)
 	mock.lockCreateHealthCheckWithContext.Unlock()
-	return mock.CreateHealthCheckWithContextFunc(in1, in2, in3...)
+	return mock.CreateHealthCheckWithContextFunc(contextMoqParam, createHealthCheckInput, options...)
 }
 
 // CreateHealthCheckWithContextCalls gets all the calls that were made to CreateHealthCheckWithContext.
 // Check the length with:
 //     len(mockedRoute53API.CreateHealthCheckWithContextCalls())
 func (mock *Route53APIMock) CreateHealthCheckWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.CreateHealthCheckInput
-	In3 []request.Option
+	ContextMoqParam        context.Context
+	CreateHealthCheckInput *route53.CreateHealthCheckInput
+	Options                []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.CreateHealthCheckInput
-		In3 []request.Option
+		ContextMoqParam        context.Context
+		CreateHealthCheckInput *route53.CreateHealthCheckInput
+		Options                []request.Option
 	}
 	mock.lockCreateHealthCheckWithContext.RLock()
 	calls = mock.calls.CreateHealthCheckWithContext
@@ -2873,29 +3793,29 @@ func (mock *Route53APIMock) CreateHealthCheckWithContextCalls() []struct {
 }
 
 // CreateHostedZone calls CreateHostedZoneFunc.
-func (mock *Route53APIMock) CreateHostedZone(in1 *route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
+func (mock *Route53APIMock) CreateHostedZone(createHostedZoneInput *route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
 	if mock.CreateHostedZoneFunc == nil {
 		panic("Route53APIMock.CreateHostedZoneFunc: method is nil but Route53API.CreateHostedZone was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateHostedZoneInput
+		CreateHostedZoneInput *route53.CreateHostedZoneInput
 	}{
-		In1: in1,
+		CreateHostedZoneInput: createHostedZoneInput,
 	}
 	mock.lockCreateHostedZone.Lock()
 	mock.calls.CreateHostedZone = append(mock.calls.CreateHostedZone, callInfo)
 	mock.lockCreateHostedZone.Unlock()
-	return mock.CreateHostedZoneFunc(in1)
+	return mock.CreateHostedZoneFunc(createHostedZoneInput)
 }
 
 // CreateHostedZoneCalls gets all the calls that were made to CreateHostedZone.
 // Check the length with:
 //     len(mockedRoute53API.CreateHostedZoneCalls())
 func (mock *Route53APIMock) CreateHostedZoneCalls() []struct {
-	In1 *route53.CreateHostedZoneInput
+	CreateHostedZoneInput *route53.CreateHostedZoneInput
 } {
 	var calls []struct {
-		In1 *route53.CreateHostedZoneInput
+		CreateHostedZoneInput *route53.CreateHostedZoneInput
 	}
 	mock.lockCreateHostedZone.RLock()
 	calls = mock.calls.CreateHostedZone
@@ -2904,29 +3824,29 @@ func (mock *Route53APIMock) CreateHostedZoneCalls() []struct {
 }
 
 // CreateHostedZoneRequest calls CreateHostedZoneRequestFunc.
-func (mock *Route53APIMock) CreateHostedZoneRequest(in1 *route53.CreateHostedZoneInput) (*request.Request, *route53.CreateHostedZoneOutput) {
+func (mock *Route53APIMock) CreateHostedZoneRequest(createHostedZoneInput *route53.CreateHostedZoneInput) (*request.Request, *route53.CreateHostedZoneOutput) {
 	if mock.CreateHostedZoneRequestFunc == nil {
 		panic("Route53APIMock.CreateHostedZoneRequestFunc: method is nil but Route53API.CreateHostedZoneRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateHostedZoneInput
+		CreateHostedZoneInput *route53.CreateHostedZoneInput
 	}{
-		In1: in1,
+		CreateHostedZoneInput: createHostedZoneInput,
 	}
 	mock.lockCreateHostedZoneRequest.Lock()
 	mock.calls.CreateHostedZoneRequest = append(mock.calls.CreateHostedZoneRequest, callInfo)
 	mock.lockCreateHostedZoneRequest.Unlock()
-	return mock.CreateHostedZoneRequestFunc(in1)
+	return mock.CreateHostedZoneRequestFunc(createHostedZoneInput)
 }
 
 // CreateHostedZoneRequestCalls gets all the calls that were made to CreateHostedZoneRequest.
 // Check the length with:
 //     len(mockedRoute53API.CreateHostedZoneRequestCalls())
 func (mock *Route53APIMock) CreateHostedZoneRequestCalls() []struct {
-	In1 *route53.CreateHostedZoneInput
+	CreateHostedZoneInput *route53.CreateHostedZoneInput
 } {
 	var calls []struct {
-		In1 *route53.CreateHostedZoneInput
+		CreateHostedZoneInput *route53.CreateHostedZoneInput
 	}
 	mock.lockCreateHostedZoneRequest.RLock()
 	calls = mock.calls.CreateHostedZoneRequest
@@ -2935,37 +3855,37 @@ func (mock *Route53APIMock) CreateHostedZoneRequestCalls() []struct {
 }
 
 // CreateHostedZoneWithContext calls CreateHostedZoneWithContextFunc.
-func (mock *Route53APIMock) CreateHostedZoneWithContext(in1 context.Context, in2 *route53.CreateHostedZoneInput, in3 ...request.Option) (*route53.CreateHostedZoneOutput, error) {
+func (mock *Route53APIMock) CreateHostedZoneWithContext(contextMoqParam context.Context, createHostedZoneInput *route53.CreateHostedZoneInput, options ...request.Option) (*route53.CreateHostedZoneOutput, error) {
 	if mock.CreateHostedZoneWithContextFunc == nil {
 		panic("Route53APIMock.CreateHostedZoneWithContextFunc: method is nil but Route53API.CreateHostedZoneWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.CreateHostedZoneInput
-		In3 []request.Option
+		ContextMoqParam       context.Context
+		CreateHostedZoneInput *route53.CreateHostedZoneInput
+		Options               []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:       contextMoqParam,
+		CreateHostedZoneInput: createHostedZoneInput,
+		Options:               options,
 	}
 	mock.lockCreateHostedZoneWithContext.Lock()
 	mock.calls.CreateHostedZoneWithContext = append(mock.calls.CreateHostedZoneWithContext, callInfo)
 	mock.lockCreateHostedZoneWithContext.Unlock()
-	return mock.CreateHostedZoneWithContextFunc(in1, in2, in3...)
+	return mock.CreateHostedZoneWithContextFunc(contextMoqParam, createHostedZoneInput, options...)
 }
 
 // CreateHostedZoneWithContextCalls gets all the calls that were made to CreateHostedZoneWithContext.
 // Check the length with:
 //     len(mockedRoute53API.CreateHostedZoneWithContextCalls())
 func (mock *Route53APIMock) CreateHostedZoneWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.CreateHostedZoneInput
-	In3 []request.Option
+	ContextMoqParam       context.Context
+	CreateHostedZoneInput *route53.CreateHostedZoneInput
+	Options               []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.CreateHostedZoneInput
-		In3 []request.Option
+		ContextMoqParam       context.Context
+		CreateHostedZoneInput *route53.CreateHostedZoneInput
+		Options               []request.Option
 	}
 	mock.lockCreateHostedZoneWithContext.RLock()
 	calls = mock.calls.CreateHostedZoneWithContext
@@ -2973,30 +3893,131 @@ func (mock *Route53APIMock) CreateHostedZoneWithContextCalls() []struct {
 	return calls
 }
 
+// CreateKeySigningKey calls CreateKeySigningKeyFunc.
+func (mock *Route53APIMock) CreateKeySigningKey(createKeySigningKeyInput *route53.CreateKeySigningKeyInput) (*route53.CreateKeySigningKeyOutput, error) {
+	if mock.CreateKeySigningKeyFunc == nil {
+		panic("Route53APIMock.CreateKeySigningKeyFunc: method is nil but Route53API.CreateKeySigningKey was just called")
+	}
+	callInfo := struct {
+		CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
+	}{
+		CreateKeySigningKeyInput: createKeySigningKeyInput,
+	}
+	mock.lockCreateKeySigningKey.Lock()
+	mock.calls.CreateKeySigningKey = append(mock.calls.CreateKeySigningKey, callInfo)
+	mock.lockCreateKeySigningKey.Unlock()
+	return mock.CreateKeySigningKeyFunc(createKeySigningKeyInput)
+}
+
+// CreateKeySigningKeyCalls gets all the calls that were made to CreateKeySigningKey.
+// Check the length with:
+//     len(mockedRoute53API.CreateKeySigningKeyCalls())
+func (mock *Route53APIMock) CreateKeySigningKeyCalls() []struct {
+	CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
+} {
+	var calls []struct {
+		CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
+	}
+	mock.lockCreateKeySigningKey.RLock()
+	calls = mock.calls.CreateKeySigningKey
+	mock.lockCreateKeySigningKey.RUnlock()
+	return calls
+}
+
+// CreateKeySigningKeyRequest calls CreateKeySigningKeyRequestFunc.
+func (mock *Route53APIMock) CreateKeySigningKeyRequest(createKeySigningKeyInput *route53.CreateKeySigningKeyInput) (*request.Request, *route53.CreateKeySigningKeyOutput) {
+	if mock.CreateKeySigningKeyRequestFunc == nil {
+		panic("Route53APIMock.CreateKeySigningKeyRequestFunc: method is nil but Route53API.CreateKeySigningKeyRequest was just called")
+	}
+	callInfo := struct {
+		CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
+	}{
+		CreateKeySigningKeyInput: createKeySigningKeyInput,
+	}
+	mock.lockCreateKeySigningKeyRequest.Lock()
+	mock.calls.CreateKeySigningKeyRequest = append(mock.calls.CreateKeySigningKeyRequest, callInfo)
+	mock.lockCreateKeySigningKeyRequest.Unlock()
+	return mock.CreateKeySigningKeyRequestFunc(createKeySigningKeyInput)
+}
+
+// CreateKeySigningKeyRequestCalls gets all the calls that were made to CreateKeySigningKeyRequest.
+// Check the length with:
+//     len(mockedRoute53API.CreateKeySigningKeyRequestCalls())
+func (mock *Route53APIMock) CreateKeySigningKeyRequestCalls() []struct {
+	CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
+} {
+	var calls []struct {
+		CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
+	}
+	mock.lockCreateKeySigningKeyRequest.RLock()
+	calls = mock.calls.CreateKeySigningKeyRequest
+	mock.lockCreateKeySigningKeyRequest.RUnlock()
+	return calls
+}
+
+// CreateKeySigningKeyWithContext calls CreateKeySigningKeyWithContextFunc.
+func (mock *Route53APIMock) CreateKeySigningKeyWithContext(contextMoqParam context.Context, createKeySigningKeyInput *route53.CreateKeySigningKeyInput, options ...request.Option) (*route53.CreateKeySigningKeyOutput, error) {
+	if mock.CreateKeySigningKeyWithContextFunc == nil {
+		panic("Route53APIMock.CreateKeySigningKeyWithContextFunc: method is nil but Route53API.CreateKeySigningKeyWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam          context.Context
+		CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
+		Options                  []request.Option
+	}{
+		ContextMoqParam:          contextMoqParam,
+		CreateKeySigningKeyInput: createKeySigningKeyInput,
+		Options:                  options,
+	}
+	mock.lockCreateKeySigningKeyWithContext.Lock()
+	mock.calls.CreateKeySigningKeyWithContext = append(mock.calls.CreateKeySigningKeyWithContext, callInfo)
+	mock.lockCreateKeySigningKeyWithContext.Unlock()
+	return mock.CreateKeySigningKeyWithContextFunc(contextMoqParam, createKeySigningKeyInput, options...)
+}
+
+// CreateKeySigningKeyWithContextCalls gets all the calls that were made to CreateKeySigningKeyWithContext.
+// Check the length with:
+//     len(mockedRoute53API.CreateKeySigningKeyWithContextCalls())
+func (mock *Route53APIMock) CreateKeySigningKeyWithContextCalls() []struct {
+	ContextMoqParam          context.Context
+	CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
+	Options                  []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam          context.Context
+		CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
+		Options                  []request.Option
+	}
+	mock.lockCreateKeySigningKeyWithContext.RLock()
+	calls = mock.calls.CreateKeySigningKeyWithContext
+	mock.lockCreateKeySigningKeyWithContext.RUnlock()
+	return calls
+}
+
 // CreateQueryLoggingConfig calls CreateQueryLoggingConfigFunc.
-func (mock *Route53APIMock) CreateQueryLoggingConfig(in1 *route53.CreateQueryLoggingConfigInput) (*route53.CreateQueryLoggingConfigOutput, error) {
+func (mock *Route53APIMock) CreateQueryLoggingConfig(createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput) (*route53.CreateQueryLoggingConfigOutput, error) {
 	if mock.CreateQueryLoggingConfigFunc == nil {
 		panic("Route53APIMock.CreateQueryLoggingConfigFunc: method is nil but Route53API.CreateQueryLoggingConfig was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateQueryLoggingConfigInput
+		CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
 	}{
-		In1: in1,
+		CreateQueryLoggingConfigInput: createQueryLoggingConfigInput,
 	}
 	mock.lockCreateQueryLoggingConfig.Lock()
 	mock.calls.CreateQueryLoggingConfig = append(mock.calls.CreateQueryLoggingConfig, callInfo)
 	mock.lockCreateQueryLoggingConfig.Unlock()
-	return mock.CreateQueryLoggingConfigFunc(in1)
+	return mock.CreateQueryLoggingConfigFunc(createQueryLoggingConfigInput)
 }
 
 // CreateQueryLoggingConfigCalls gets all the calls that were made to CreateQueryLoggingConfig.
 // Check the length with:
 //     len(mockedRoute53API.CreateQueryLoggingConfigCalls())
 func (mock *Route53APIMock) CreateQueryLoggingConfigCalls() []struct {
-	In1 *route53.CreateQueryLoggingConfigInput
+	CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
 } {
 	var calls []struct {
-		In1 *route53.CreateQueryLoggingConfigInput
+		CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
 	}
 	mock.lockCreateQueryLoggingConfig.RLock()
 	calls = mock.calls.CreateQueryLoggingConfig
@@ -3005,29 +4026,29 @@ func (mock *Route53APIMock) CreateQueryLoggingConfigCalls() []struct {
 }
 
 // CreateQueryLoggingConfigRequest calls CreateQueryLoggingConfigRequestFunc.
-func (mock *Route53APIMock) CreateQueryLoggingConfigRequest(in1 *route53.CreateQueryLoggingConfigInput) (*request.Request, *route53.CreateQueryLoggingConfigOutput) {
+func (mock *Route53APIMock) CreateQueryLoggingConfigRequest(createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput) (*request.Request, *route53.CreateQueryLoggingConfigOutput) {
 	if mock.CreateQueryLoggingConfigRequestFunc == nil {
 		panic("Route53APIMock.CreateQueryLoggingConfigRequestFunc: method is nil but Route53API.CreateQueryLoggingConfigRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateQueryLoggingConfigInput
+		CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
 	}{
-		In1: in1,
+		CreateQueryLoggingConfigInput: createQueryLoggingConfigInput,
 	}
 	mock.lockCreateQueryLoggingConfigRequest.Lock()
 	mock.calls.CreateQueryLoggingConfigRequest = append(mock.calls.CreateQueryLoggingConfigRequest, callInfo)
 	mock.lockCreateQueryLoggingConfigRequest.Unlock()
-	return mock.CreateQueryLoggingConfigRequestFunc(in1)
+	return mock.CreateQueryLoggingConfigRequestFunc(createQueryLoggingConfigInput)
 }
 
 // CreateQueryLoggingConfigRequestCalls gets all the calls that were made to CreateQueryLoggingConfigRequest.
 // Check the length with:
 //     len(mockedRoute53API.CreateQueryLoggingConfigRequestCalls())
 func (mock *Route53APIMock) CreateQueryLoggingConfigRequestCalls() []struct {
-	In1 *route53.CreateQueryLoggingConfigInput
+	CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
 } {
 	var calls []struct {
-		In1 *route53.CreateQueryLoggingConfigInput
+		CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
 	}
 	mock.lockCreateQueryLoggingConfigRequest.RLock()
 	calls = mock.calls.CreateQueryLoggingConfigRequest
@@ -3036,37 +4057,37 @@ func (mock *Route53APIMock) CreateQueryLoggingConfigRequestCalls() []struct {
 }
 
 // CreateQueryLoggingConfigWithContext calls CreateQueryLoggingConfigWithContextFunc.
-func (mock *Route53APIMock) CreateQueryLoggingConfigWithContext(in1 context.Context, in2 *route53.CreateQueryLoggingConfigInput, in3 ...request.Option) (*route53.CreateQueryLoggingConfigOutput, error) {
+func (mock *Route53APIMock) CreateQueryLoggingConfigWithContext(contextMoqParam context.Context, createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput, options ...request.Option) (*route53.CreateQueryLoggingConfigOutput, error) {
 	if mock.CreateQueryLoggingConfigWithContextFunc == nil {
 		panic("Route53APIMock.CreateQueryLoggingConfigWithContextFunc: method is nil but Route53API.CreateQueryLoggingConfigWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.CreateQueryLoggingConfigInput
-		In3 []request.Option
+		ContextMoqParam               context.Context
+		CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
+		Options                       []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:               contextMoqParam,
+		CreateQueryLoggingConfigInput: createQueryLoggingConfigInput,
+		Options:                       options,
 	}
 	mock.lockCreateQueryLoggingConfigWithContext.Lock()
 	mock.calls.CreateQueryLoggingConfigWithContext = append(mock.calls.CreateQueryLoggingConfigWithContext, callInfo)
 	mock.lockCreateQueryLoggingConfigWithContext.Unlock()
-	return mock.CreateQueryLoggingConfigWithContextFunc(in1, in2, in3...)
+	return mock.CreateQueryLoggingConfigWithContextFunc(contextMoqParam, createQueryLoggingConfigInput, options...)
 }
 
 // CreateQueryLoggingConfigWithContextCalls gets all the calls that were made to CreateQueryLoggingConfigWithContext.
 // Check the length with:
 //     len(mockedRoute53API.CreateQueryLoggingConfigWithContextCalls())
 func (mock *Route53APIMock) CreateQueryLoggingConfigWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.CreateQueryLoggingConfigInput
-	In3 []request.Option
+	ContextMoqParam               context.Context
+	CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
+	Options                       []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.CreateQueryLoggingConfigInput
-		In3 []request.Option
+		ContextMoqParam               context.Context
+		CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
+		Options                       []request.Option
 	}
 	mock.lockCreateQueryLoggingConfigWithContext.RLock()
 	calls = mock.calls.CreateQueryLoggingConfigWithContext
@@ -3075,29 +4096,29 @@ func (mock *Route53APIMock) CreateQueryLoggingConfigWithContextCalls() []struct 
 }
 
 // CreateReusableDelegationSet calls CreateReusableDelegationSetFunc.
-func (mock *Route53APIMock) CreateReusableDelegationSet(in1 *route53.CreateReusableDelegationSetInput) (*route53.CreateReusableDelegationSetOutput, error) {
+func (mock *Route53APIMock) CreateReusableDelegationSet(createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput) (*route53.CreateReusableDelegationSetOutput, error) {
 	if mock.CreateReusableDelegationSetFunc == nil {
 		panic("Route53APIMock.CreateReusableDelegationSetFunc: method is nil but Route53API.CreateReusableDelegationSet was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateReusableDelegationSetInput
+		CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
 	}{
-		In1: in1,
+		CreateReusableDelegationSetInput: createReusableDelegationSetInput,
 	}
 	mock.lockCreateReusableDelegationSet.Lock()
 	mock.calls.CreateReusableDelegationSet = append(mock.calls.CreateReusableDelegationSet, callInfo)
 	mock.lockCreateReusableDelegationSet.Unlock()
-	return mock.CreateReusableDelegationSetFunc(in1)
+	return mock.CreateReusableDelegationSetFunc(createReusableDelegationSetInput)
 }
 
 // CreateReusableDelegationSetCalls gets all the calls that were made to CreateReusableDelegationSet.
 // Check the length with:
 //     len(mockedRoute53API.CreateReusableDelegationSetCalls())
 func (mock *Route53APIMock) CreateReusableDelegationSetCalls() []struct {
-	In1 *route53.CreateReusableDelegationSetInput
+	CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
 } {
 	var calls []struct {
-		In1 *route53.CreateReusableDelegationSetInput
+		CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
 	}
 	mock.lockCreateReusableDelegationSet.RLock()
 	calls = mock.calls.CreateReusableDelegationSet
@@ -3106,29 +4127,29 @@ func (mock *Route53APIMock) CreateReusableDelegationSetCalls() []struct {
 }
 
 // CreateReusableDelegationSetRequest calls CreateReusableDelegationSetRequestFunc.
-func (mock *Route53APIMock) CreateReusableDelegationSetRequest(in1 *route53.CreateReusableDelegationSetInput) (*request.Request, *route53.CreateReusableDelegationSetOutput) {
+func (mock *Route53APIMock) CreateReusableDelegationSetRequest(createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput) (*request.Request, *route53.CreateReusableDelegationSetOutput) {
 	if mock.CreateReusableDelegationSetRequestFunc == nil {
 		panic("Route53APIMock.CreateReusableDelegationSetRequestFunc: method is nil but Route53API.CreateReusableDelegationSetRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateReusableDelegationSetInput
+		CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
 	}{
-		In1: in1,
+		CreateReusableDelegationSetInput: createReusableDelegationSetInput,
 	}
 	mock.lockCreateReusableDelegationSetRequest.Lock()
 	mock.calls.CreateReusableDelegationSetRequest = append(mock.calls.CreateReusableDelegationSetRequest, callInfo)
 	mock.lockCreateReusableDelegationSetRequest.Unlock()
-	return mock.CreateReusableDelegationSetRequestFunc(in1)
+	return mock.CreateReusableDelegationSetRequestFunc(createReusableDelegationSetInput)
 }
 
 // CreateReusableDelegationSetRequestCalls gets all the calls that were made to CreateReusableDelegationSetRequest.
 // Check the length with:
 //     len(mockedRoute53API.CreateReusableDelegationSetRequestCalls())
 func (mock *Route53APIMock) CreateReusableDelegationSetRequestCalls() []struct {
-	In1 *route53.CreateReusableDelegationSetInput
+	CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
 } {
 	var calls []struct {
-		In1 *route53.CreateReusableDelegationSetInput
+		CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
 	}
 	mock.lockCreateReusableDelegationSetRequest.RLock()
 	calls = mock.calls.CreateReusableDelegationSetRequest
@@ -3137,37 +4158,37 @@ func (mock *Route53APIMock) CreateReusableDelegationSetRequestCalls() []struct {
 }
 
 // CreateReusableDelegationSetWithContext calls CreateReusableDelegationSetWithContextFunc.
-func (mock *Route53APIMock) CreateReusableDelegationSetWithContext(in1 context.Context, in2 *route53.CreateReusableDelegationSetInput, in3 ...request.Option) (*route53.CreateReusableDelegationSetOutput, error) {
+func (mock *Route53APIMock) CreateReusableDelegationSetWithContext(contextMoqParam context.Context, createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput, options ...request.Option) (*route53.CreateReusableDelegationSetOutput, error) {
 	if mock.CreateReusableDelegationSetWithContextFunc == nil {
 		panic("Route53APIMock.CreateReusableDelegationSetWithContextFunc: method is nil but Route53API.CreateReusableDelegationSetWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.CreateReusableDelegationSetInput
-		In3 []request.Option
+		ContextMoqParam                  context.Context
+		CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
+		Options                          []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                  contextMoqParam,
+		CreateReusableDelegationSetInput: createReusableDelegationSetInput,
+		Options:                          options,
 	}
 	mock.lockCreateReusableDelegationSetWithContext.Lock()
 	mock.calls.CreateReusableDelegationSetWithContext = append(mock.calls.CreateReusableDelegationSetWithContext, callInfo)
 	mock.lockCreateReusableDelegationSetWithContext.Unlock()
-	return mock.CreateReusableDelegationSetWithContextFunc(in1, in2, in3...)
+	return mock.CreateReusableDelegationSetWithContextFunc(contextMoqParam, createReusableDelegationSetInput, options...)
 }
 
 // CreateReusableDelegationSetWithContextCalls gets all the calls that were made to CreateReusableDelegationSetWithContext.
 // Check the length with:
 //     len(mockedRoute53API.CreateReusableDelegationSetWithContextCalls())
 func (mock *Route53APIMock) CreateReusableDelegationSetWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.CreateReusableDelegationSetInput
-	In3 []request.Option
+	ContextMoqParam                  context.Context
+	CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
+	Options                          []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.CreateReusableDelegationSetInput
-		In3 []request.Option
+		ContextMoqParam                  context.Context
+		CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
+		Options                          []request.Option
 	}
 	mock.lockCreateReusableDelegationSetWithContext.RLock()
 	calls = mock.calls.CreateReusableDelegationSetWithContext
@@ -3176,29 +4197,29 @@ func (mock *Route53APIMock) CreateReusableDelegationSetWithContextCalls() []stru
 }
 
 // CreateTrafficPolicy calls CreateTrafficPolicyFunc.
-func (mock *Route53APIMock) CreateTrafficPolicy(in1 *route53.CreateTrafficPolicyInput) (*route53.CreateTrafficPolicyOutput, error) {
+func (mock *Route53APIMock) CreateTrafficPolicy(createTrafficPolicyInput *route53.CreateTrafficPolicyInput) (*route53.CreateTrafficPolicyOutput, error) {
 	if mock.CreateTrafficPolicyFunc == nil {
 		panic("Route53APIMock.CreateTrafficPolicyFunc: method is nil but Route53API.CreateTrafficPolicy was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateTrafficPolicyInput
+		CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
 	}{
-		In1: in1,
+		CreateTrafficPolicyInput: createTrafficPolicyInput,
 	}
 	mock.lockCreateTrafficPolicy.Lock()
 	mock.calls.CreateTrafficPolicy = append(mock.calls.CreateTrafficPolicy, callInfo)
 	mock.lockCreateTrafficPolicy.Unlock()
-	return mock.CreateTrafficPolicyFunc(in1)
+	return mock.CreateTrafficPolicyFunc(createTrafficPolicyInput)
 }
 
 // CreateTrafficPolicyCalls gets all the calls that were made to CreateTrafficPolicy.
 // Check the length with:
 //     len(mockedRoute53API.CreateTrafficPolicyCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyCalls() []struct {
-	In1 *route53.CreateTrafficPolicyInput
+	CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
 } {
 	var calls []struct {
-		In1 *route53.CreateTrafficPolicyInput
+		CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
 	}
 	mock.lockCreateTrafficPolicy.RLock()
 	calls = mock.calls.CreateTrafficPolicy
@@ -3207,29 +4228,29 @@ func (mock *Route53APIMock) CreateTrafficPolicyCalls() []struct {
 }
 
 // CreateTrafficPolicyInstance calls CreateTrafficPolicyInstanceFunc.
-func (mock *Route53APIMock) CreateTrafficPolicyInstance(in1 *route53.CreateTrafficPolicyInstanceInput) (*route53.CreateTrafficPolicyInstanceOutput, error) {
+func (mock *Route53APIMock) CreateTrafficPolicyInstance(createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput) (*route53.CreateTrafficPolicyInstanceOutput, error) {
 	if mock.CreateTrafficPolicyInstanceFunc == nil {
 		panic("Route53APIMock.CreateTrafficPolicyInstanceFunc: method is nil but Route53API.CreateTrafficPolicyInstance was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateTrafficPolicyInstanceInput
+		CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
 	}{
-		In1: in1,
+		CreateTrafficPolicyInstanceInput: createTrafficPolicyInstanceInput,
 	}
 	mock.lockCreateTrafficPolicyInstance.Lock()
 	mock.calls.CreateTrafficPolicyInstance = append(mock.calls.CreateTrafficPolicyInstance, callInfo)
 	mock.lockCreateTrafficPolicyInstance.Unlock()
-	return mock.CreateTrafficPolicyInstanceFunc(in1)
+	return mock.CreateTrafficPolicyInstanceFunc(createTrafficPolicyInstanceInput)
 }
 
 // CreateTrafficPolicyInstanceCalls gets all the calls that were made to CreateTrafficPolicyInstance.
 // Check the length with:
 //     len(mockedRoute53API.CreateTrafficPolicyInstanceCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyInstanceCalls() []struct {
-	In1 *route53.CreateTrafficPolicyInstanceInput
+	CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
 } {
 	var calls []struct {
-		In1 *route53.CreateTrafficPolicyInstanceInput
+		CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
 	}
 	mock.lockCreateTrafficPolicyInstance.RLock()
 	calls = mock.calls.CreateTrafficPolicyInstance
@@ -3238,29 +4259,29 @@ func (mock *Route53APIMock) CreateTrafficPolicyInstanceCalls() []struct {
 }
 
 // CreateTrafficPolicyInstanceRequest calls CreateTrafficPolicyInstanceRequestFunc.
-func (mock *Route53APIMock) CreateTrafficPolicyInstanceRequest(in1 *route53.CreateTrafficPolicyInstanceInput) (*request.Request, *route53.CreateTrafficPolicyInstanceOutput) {
+func (mock *Route53APIMock) CreateTrafficPolicyInstanceRequest(createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput) (*request.Request, *route53.CreateTrafficPolicyInstanceOutput) {
 	if mock.CreateTrafficPolicyInstanceRequestFunc == nil {
 		panic("Route53APIMock.CreateTrafficPolicyInstanceRequestFunc: method is nil but Route53API.CreateTrafficPolicyInstanceRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateTrafficPolicyInstanceInput
+		CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
 	}{
-		In1: in1,
+		CreateTrafficPolicyInstanceInput: createTrafficPolicyInstanceInput,
 	}
 	mock.lockCreateTrafficPolicyInstanceRequest.Lock()
 	mock.calls.CreateTrafficPolicyInstanceRequest = append(mock.calls.CreateTrafficPolicyInstanceRequest, callInfo)
 	mock.lockCreateTrafficPolicyInstanceRequest.Unlock()
-	return mock.CreateTrafficPolicyInstanceRequestFunc(in1)
+	return mock.CreateTrafficPolicyInstanceRequestFunc(createTrafficPolicyInstanceInput)
 }
 
 // CreateTrafficPolicyInstanceRequestCalls gets all the calls that were made to CreateTrafficPolicyInstanceRequest.
 // Check the length with:
 //     len(mockedRoute53API.CreateTrafficPolicyInstanceRequestCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyInstanceRequestCalls() []struct {
-	In1 *route53.CreateTrafficPolicyInstanceInput
+	CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
 } {
 	var calls []struct {
-		In1 *route53.CreateTrafficPolicyInstanceInput
+		CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
 	}
 	mock.lockCreateTrafficPolicyInstanceRequest.RLock()
 	calls = mock.calls.CreateTrafficPolicyInstanceRequest
@@ -3269,37 +4290,37 @@ func (mock *Route53APIMock) CreateTrafficPolicyInstanceRequestCalls() []struct {
 }
 
 // CreateTrafficPolicyInstanceWithContext calls CreateTrafficPolicyInstanceWithContextFunc.
-func (mock *Route53APIMock) CreateTrafficPolicyInstanceWithContext(in1 context.Context, in2 *route53.CreateTrafficPolicyInstanceInput, in3 ...request.Option) (*route53.CreateTrafficPolicyInstanceOutput, error) {
+func (mock *Route53APIMock) CreateTrafficPolicyInstanceWithContext(contextMoqParam context.Context, createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput, options ...request.Option) (*route53.CreateTrafficPolicyInstanceOutput, error) {
 	if mock.CreateTrafficPolicyInstanceWithContextFunc == nil {
 		panic("Route53APIMock.CreateTrafficPolicyInstanceWithContextFunc: method is nil but Route53API.CreateTrafficPolicyInstanceWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.CreateTrafficPolicyInstanceInput
-		In3 []request.Option
+		ContextMoqParam                  context.Context
+		CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
+		Options                          []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                  contextMoqParam,
+		CreateTrafficPolicyInstanceInput: createTrafficPolicyInstanceInput,
+		Options:                          options,
 	}
 	mock.lockCreateTrafficPolicyInstanceWithContext.Lock()
 	mock.calls.CreateTrafficPolicyInstanceWithContext = append(mock.calls.CreateTrafficPolicyInstanceWithContext, callInfo)
 	mock.lockCreateTrafficPolicyInstanceWithContext.Unlock()
-	return mock.CreateTrafficPolicyInstanceWithContextFunc(in1, in2, in3...)
+	return mock.CreateTrafficPolicyInstanceWithContextFunc(contextMoqParam, createTrafficPolicyInstanceInput, options...)
 }
 
 // CreateTrafficPolicyInstanceWithContextCalls gets all the calls that were made to CreateTrafficPolicyInstanceWithContext.
 // Check the length with:
 //     len(mockedRoute53API.CreateTrafficPolicyInstanceWithContextCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyInstanceWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.CreateTrafficPolicyInstanceInput
-	In3 []request.Option
+	ContextMoqParam                  context.Context
+	CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
+	Options                          []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.CreateTrafficPolicyInstanceInput
-		In3 []request.Option
+		ContextMoqParam                  context.Context
+		CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
+		Options                          []request.Option
 	}
 	mock.lockCreateTrafficPolicyInstanceWithContext.RLock()
 	calls = mock.calls.CreateTrafficPolicyInstanceWithContext
@@ -3308,29 +4329,29 @@ func (mock *Route53APIMock) CreateTrafficPolicyInstanceWithContextCalls() []stru
 }
 
 // CreateTrafficPolicyRequest calls CreateTrafficPolicyRequestFunc.
-func (mock *Route53APIMock) CreateTrafficPolicyRequest(in1 *route53.CreateTrafficPolicyInput) (*request.Request, *route53.CreateTrafficPolicyOutput) {
+func (mock *Route53APIMock) CreateTrafficPolicyRequest(createTrafficPolicyInput *route53.CreateTrafficPolicyInput) (*request.Request, *route53.CreateTrafficPolicyOutput) {
 	if mock.CreateTrafficPolicyRequestFunc == nil {
 		panic("Route53APIMock.CreateTrafficPolicyRequestFunc: method is nil but Route53API.CreateTrafficPolicyRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateTrafficPolicyInput
+		CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
 	}{
-		In1: in1,
+		CreateTrafficPolicyInput: createTrafficPolicyInput,
 	}
 	mock.lockCreateTrafficPolicyRequest.Lock()
 	mock.calls.CreateTrafficPolicyRequest = append(mock.calls.CreateTrafficPolicyRequest, callInfo)
 	mock.lockCreateTrafficPolicyRequest.Unlock()
-	return mock.CreateTrafficPolicyRequestFunc(in1)
+	return mock.CreateTrafficPolicyRequestFunc(createTrafficPolicyInput)
 }
 
 // CreateTrafficPolicyRequestCalls gets all the calls that were made to CreateTrafficPolicyRequest.
 // Check the length with:
 //     len(mockedRoute53API.CreateTrafficPolicyRequestCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyRequestCalls() []struct {
-	In1 *route53.CreateTrafficPolicyInput
+	CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
 } {
 	var calls []struct {
-		In1 *route53.CreateTrafficPolicyInput
+		CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
 	}
 	mock.lockCreateTrafficPolicyRequest.RLock()
 	calls = mock.calls.CreateTrafficPolicyRequest
@@ -3339,29 +4360,29 @@ func (mock *Route53APIMock) CreateTrafficPolicyRequestCalls() []struct {
 }
 
 // CreateTrafficPolicyVersion calls CreateTrafficPolicyVersionFunc.
-func (mock *Route53APIMock) CreateTrafficPolicyVersion(in1 *route53.CreateTrafficPolicyVersionInput) (*route53.CreateTrafficPolicyVersionOutput, error) {
+func (mock *Route53APIMock) CreateTrafficPolicyVersion(createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput) (*route53.CreateTrafficPolicyVersionOutput, error) {
 	if mock.CreateTrafficPolicyVersionFunc == nil {
 		panic("Route53APIMock.CreateTrafficPolicyVersionFunc: method is nil but Route53API.CreateTrafficPolicyVersion was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateTrafficPolicyVersionInput
+		CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
 	}{
-		In1: in1,
+		CreateTrafficPolicyVersionInput: createTrafficPolicyVersionInput,
 	}
 	mock.lockCreateTrafficPolicyVersion.Lock()
 	mock.calls.CreateTrafficPolicyVersion = append(mock.calls.CreateTrafficPolicyVersion, callInfo)
 	mock.lockCreateTrafficPolicyVersion.Unlock()
-	return mock.CreateTrafficPolicyVersionFunc(in1)
+	return mock.CreateTrafficPolicyVersionFunc(createTrafficPolicyVersionInput)
 }
 
 // CreateTrafficPolicyVersionCalls gets all the calls that were made to CreateTrafficPolicyVersion.
 // Check the length with:
 //     len(mockedRoute53API.CreateTrafficPolicyVersionCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyVersionCalls() []struct {
-	In1 *route53.CreateTrafficPolicyVersionInput
+	CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
 } {
 	var calls []struct {
-		In1 *route53.CreateTrafficPolicyVersionInput
+		CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
 	}
 	mock.lockCreateTrafficPolicyVersion.RLock()
 	calls = mock.calls.CreateTrafficPolicyVersion
@@ -3370,29 +4391,29 @@ func (mock *Route53APIMock) CreateTrafficPolicyVersionCalls() []struct {
 }
 
 // CreateTrafficPolicyVersionRequest calls CreateTrafficPolicyVersionRequestFunc.
-func (mock *Route53APIMock) CreateTrafficPolicyVersionRequest(in1 *route53.CreateTrafficPolicyVersionInput) (*request.Request, *route53.CreateTrafficPolicyVersionOutput) {
+func (mock *Route53APIMock) CreateTrafficPolicyVersionRequest(createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput) (*request.Request, *route53.CreateTrafficPolicyVersionOutput) {
 	if mock.CreateTrafficPolicyVersionRequestFunc == nil {
 		panic("Route53APIMock.CreateTrafficPolicyVersionRequestFunc: method is nil but Route53API.CreateTrafficPolicyVersionRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateTrafficPolicyVersionInput
+		CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
 	}{
-		In1: in1,
+		CreateTrafficPolicyVersionInput: createTrafficPolicyVersionInput,
 	}
 	mock.lockCreateTrafficPolicyVersionRequest.Lock()
 	mock.calls.CreateTrafficPolicyVersionRequest = append(mock.calls.CreateTrafficPolicyVersionRequest, callInfo)
 	mock.lockCreateTrafficPolicyVersionRequest.Unlock()
-	return mock.CreateTrafficPolicyVersionRequestFunc(in1)
+	return mock.CreateTrafficPolicyVersionRequestFunc(createTrafficPolicyVersionInput)
 }
 
 // CreateTrafficPolicyVersionRequestCalls gets all the calls that were made to CreateTrafficPolicyVersionRequest.
 // Check the length with:
 //     len(mockedRoute53API.CreateTrafficPolicyVersionRequestCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyVersionRequestCalls() []struct {
-	In1 *route53.CreateTrafficPolicyVersionInput
+	CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
 } {
 	var calls []struct {
-		In1 *route53.CreateTrafficPolicyVersionInput
+		CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
 	}
 	mock.lockCreateTrafficPolicyVersionRequest.RLock()
 	calls = mock.calls.CreateTrafficPolicyVersionRequest
@@ -3401,37 +4422,37 @@ func (mock *Route53APIMock) CreateTrafficPolicyVersionRequestCalls() []struct {
 }
 
 // CreateTrafficPolicyVersionWithContext calls CreateTrafficPolicyVersionWithContextFunc.
-func (mock *Route53APIMock) CreateTrafficPolicyVersionWithContext(in1 context.Context, in2 *route53.CreateTrafficPolicyVersionInput, in3 ...request.Option) (*route53.CreateTrafficPolicyVersionOutput, error) {
+func (mock *Route53APIMock) CreateTrafficPolicyVersionWithContext(contextMoqParam context.Context, createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput, options ...request.Option) (*route53.CreateTrafficPolicyVersionOutput, error) {
 	if mock.CreateTrafficPolicyVersionWithContextFunc == nil {
 		panic("Route53APIMock.CreateTrafficPolicyVersionWithContextFunc: method is nil but Route53API.CreateTrafficPolicyVersionWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.CreateTrafficPolicyVersionInput
-		In3 []request.Option
+		ContextMoqParam                 context.Context
+		CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
+		Options                         []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                 contextMoqParam,
+		CreateTrafficPolicyVersionInput: createTrafficPolicyVersionInput,
+		Options:                         options,
 	}
 	mock.lockCreateTrafficPolicyVersionWithContext.Lock()
 	mock.calls.CreateTrafficPolicyVersionWithContext = append(mock.calls.CreateTrafficPolicyVersionWithContext, callInfo)
 	mock.lockCreateTrafficPolicyVersionWithContext.Unlock()
-	return mock.CreateTrafficPolicyVersionWithContextFunc(in1, in2, in3...)
+	return mock.CreateTrafficPolicyVersionWithContextFunc(contextMoqParam, createTrafficPolicyVersionInput, options...)
 }
 
 // CreateTrafficPolicyVersionWithContextCalls gets all the calls that were made to CreateTrafficPolicyVersionWithContext.
 // Check the length with:
 //     len(mockedRoute53API.CreateTrafficPolicyVersionWithContextCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyVersionWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.CreateTrafficPolicyVersionInput
-	In3 []request.Option
+	ContextMoqParam                 context.Context
+	CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
+	Options                         []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.CreateTrafficPolicyVersionInput
-		In3 []request.Option
+		ContextMoqParam                 context.Context
+		CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
+		Options                         []request.Option
 	}
 	mock.lockCreateTrafficPolicyVersionWithContext.RLock()
 	calls = mock.calls.CreateTrafficPolicyVersionWithContext
@@ -3440,37 +4461,37 @@ func (mock *Route53APIMock) CreateTrafficPolicyVersionWithContextCalls() []struc
 }
 
 // CreateTrafficPolicyWithContext calls CreateTrafficPolicyWithContextFunc.
-func (mock *Route53APIMock) CreateTrafficPolicyWithContext(in1 context.Context, in2 *route53.CreateTrafficPolicyInput, in3 ...request.Option) (*route53.CreateTrafficPolicyOutput, error) {
+func (mock *Route53APIMock) CreateTrafficPolicyWithContext(contextMoqParam context.Context, createTrafficPolicyInput *route53.CreateTrafficPolicyInput, options ...request.Option) (*route53.CreateTrafficPolicyOutput, error) {
 	if mock.CreateTrafficPolicyWithContextFunc == nil {
 		panic("Route53APIMock.CreateTrafficPolicyWithContextFunc: method is nil but Route53API.CreateTrafficPolicyWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.CreateTrafficPolicyInput
-		In3 []request.Option
+		ContextMoqParam          context.Context
+		CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
+		Options                  []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:          contextMoqParam,
+		CreateTrafficPolicyInput: createTrafficPolicyInput,
+		Options:                  options,
 	}
 	mock.lockCreateTrafficPolicyWithContext.Lock()
 	mock.calls.CreateTrafficPolicyWithContext = append(mock.calls.CreateTrafficPolicyWithContext, callInfo)
 	mock.lockCreateTrafficPolicyWithContext.Unlock()
-	return mock.CreateTrafficPolicyWithContextFunc(in1, in2, in3...)
+	return mock.CreateTrafficPolicyWithContextFunc(contextMoqParam, createTrafficPolicyInput, options...)
 }
 
 // CreateTrafficPolicyWithContextCalls gets all the calls that were made to CreateTrafficPolicyWithContext.
 // Check the length with:
 //     len(mockedRoute53API.CreateTrafficPolicyWithContextCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.CreateTrafficPolicyInput
-	In3 []request.Option
+	ContextMoqParam          context.Context
+	CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
+	Options                  []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.CreateTrafficPolicyInput
-		In3 []request.Option
+		ContextMoqParam          context.Context
+		CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
+		Options                  []request.Option
 	}
 	mock.lockCreateTrafficPolicyWithContext.RLock()
 	calls = mock.calls.CreateTrafficPolicyWithContext
@@ -3479,29 +4500,29 @@ func (mock *Route53APIMock) CreateTrafficPolicyWithContextCalls() []struct {
 }
 
 // CreateVPCAssociationAuthorization calls CreateVPCAssociationAuthorizationFunc.
-func (mock *Route53APIMock) CreateVPCAssociationAuthorization(in1 *route53.CreateVPCAssociationAuthorizationInput) (*route53.CreateVPCAssociationAuthorizationOutput, error) {
+func (mock *Route53APIMock) CreateVPCAssociationAuthorization(createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput) (*route53.CreateVPCAssociationAuthorizationOutput, error) {
 	if mock.CreateVPCAssociationAuthorizationFunc == nil {
 		panic("Route53APIMock.CreateVPCAssociationAuthorizationFunc: method is nil but Route53API.CreateVPCAssociationAuthorization was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateVPCAssociationAuthorizationInput
+		CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
 	}{
-		In1: in1,
+		CreateVPCAssociationAuthorizationInput: createVPCAssociationAuthorizationInput,
 	}
 	mock.lockCreateVPCAssociationAuthorization.Lock()
 	mock.calls.CreateVPCAssociationAuthorization = append(mock.calls.CreateVPCAssociationAuthorization, callInfo)
 	mock.lockCreateVPCAssociationAuthorization.Unlock()
-	return mock.CreateVPCAssociationAuthorizationFunc(in1)
+	return mock.CreateVPCAssociationAuthorizationFunc(createVPCAssociationAuthorizationInput)
 }
 
 // CreateVPCAssociationAuthorizationCalls gets all the calls that were made to CreateVPCAssociationAuthorization.
 // Check the length with:
 //     len(mockedRoute53API.CreateVPCAssociationAuthorizationCalls())
 func (mock *Route53APIMock) CreateVPCAssociationAuthorizationCalls() []struct {
-	In1 *route53.CreateVPCAssociationAuthorizationInput
+	CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
 } {
 	var calls []struct {
-		In1 *route53.CreateVPCAssociationAuthorizationInput
+		CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
 	}
 	mock.lockCreateVPCAssociationAuthorization.RLock()
 	calls = mock.calls.CreateVPCAssociationAuthorization
@@ -3510,29 +4531,29 @@ func (mock *Route53APIMock) CreateVPCAssociationAuthorizationCalls() []struct {
 }
 
 // CreateVPCAssociationAuthorizationRequest calls CreateVPCAssociationAuthorizationRequestFunc.
-func (mock *Route53APIMock) CreateVPCAssociationAuthorizationRequest(in1 *route53.CreateVPCAssociationAuthorizationInput) (*request.Request, *route53.CreateVPCAssociationAuthorizationOutput) {
+func (mock *Route53APIMock) CreateVPCAssociationAuthorizationRequest(createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput) (*request.Request, *route53.CreateVPCAssociationAuthorizationOutput) {
 	if mock.CreateVPCAssociationAuthorizationRequestFunc == nil {
 		panic("Route53APIMock.CreateVPCAssociationAuthorizationRequestFunc: method is nil but Route53API.CreateVPCAssociationAuthorizationRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.CreateVPCAssociationAuthorizationInput
+		CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
 	}{
-		In1: in1,
+		CreateVPCAssociationAuthorizationInput: createVPCAssociationAuthorizationInput,
 	}
 	mock.lockCreateVPCAssociationAuthorizationRequest.Lock()
 	mock.calls.CreateVPCAssociationAuthorizationRequest = append(mock.calls.CreateVPCAssociationAuthorizationRequest, callInfo)
 	mock.lockCreateVPCAssociationAuthorizationRequest.Unlock()
-	return mock.CreateVPCAssociationAuthorizationRequestFunc(in1)
+	return mock.CreateVPCAssociationAuthorizationRequestFunc(createVPCAssociationAuthorizationInput)
 }
 
 // CreateVPCAssociationAuthorizationRequestCalls gets all the calls that were made to CreateVPCAssociationAuthorizationRequest.
 // Check the length with:
 //     len(mockedRoute53API.CreateVPCAssociationAuthorizationRequestCalls())
 func (mock *Route53APIMock) CreateVPCAssociationAuthorizationRequestCalls() []struct {
-	In1 *route53.CreateVPCAssociationAuthorizationInput
+	CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
 } {
 	var calls []struct {
-		In1 *route53.CreateVPCAssociationAuthorizationInput
+		CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
 	}
 	mock.lockCreateVPCAssociationAuthorizationRequest.RLock()
 	calls = mock.calls.CreateVPCAssociationAuthorizationRequest
@@ -3541,37 +4562,37 @@ func (mock *Route53APIMock) CreateVPCAssociationAuthorizationRequestCalls() []st
 }
 
 // CreateVPCAssociationAuthorizationWithContext calls CreateVPCAssociationAuthorizationWithContextFunc.
-func (mock *Route53APIMock) CreateVPCAssociationAuthorizationWithContext(in1 context.Context, in2 *route53.CreateVPCAssociationAuthorizationInput, in3 ...request.Option) (*route53.CreateVPCAssociationAuthorizationOutput, error) {
+func (mock *Route53APIMock) CreateVPCAssociationAuthorizationWithContext(contextMoqParam context.Context, createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput, options ...request.Option) (*route53.CreateVPCAssociationAuthorizationOutput, error) {
 	if mock.CreateVPCAssociationAuthorizationWithContextFunc == nil {
 		panic("Route53APIMock.CreateVPCAssociationAuthorizationWithContextFunc: method is nil but Route53API.CreateVPCAssociationAuthorizationWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.CreateVPCAssociationAuthorizationInput
-		In3 []request.Option
+		ContextMoqParam                        context.Context
+		CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
+		Options                                []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                        contextMoqParam,
+		CreateVPCAssociationAuthorizationInput: createVPCAssociationAuthorizationInput,
+		Options:                                options,
 	}
 	mock.lockCreateVPCAssociationAuthorizationWithContext.Lock()
 	mock.calls.CreateVPCAssociationAuthorizationWithContext = append(mock.calls.CreateVPCAssociationAuthorizationWithContext, callInfo)
 	mock.lockCreateVPCAssociationAuthorizationWithContext.Unlock()
-	return mock.CreateVPCAssociationAuthorizationWithContextFunc(in1, in2, in3...)
+	return mock.CreateVPCAssociationAuthorizationWithContextFunc(contextMoqParam, createVPCAssociationAuthorizationInput, options...)
 }
 
 // CreateVPCAssociationAuthorizationWithContextCalls gets all the calls that were made to CreateVPCAssociationAuthorizationWithContext.
 // Check the length with:
 //     len(mockedRoute53API.CreateVPCAssociationAuthorizationWithContextCalls())
 func (mock *Route53APIMock) CreateVPCAssociationAuthorizationWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.CreateVPCAssociationAuthorizationInput
-	In3 []request.Option
+	ContextMoqParam                        context.Context
+	CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
+	Options                                []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.CreateVPCAssociationAuthorizationInput
-		In3 []request.Option
+		ContextMoqParam                        context.Context
+		CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
+		Options                                []request.Option
 	}
 	mock.lockCreateVPCAssociationAuthorizationWithContext.RLock()
 	calls = mock.calls.CreateVPCAssociationAuthorizationWithContext
@@ -3579,30 +4600,232 @@ func (mock *Route53APIMock) CreateVPCAssociationAuthorizationWithContextCalls() 
 	return calls
 }
 
+// DeactivateKeySigningKey calls DeactivateKeySigningKeyFunc.
+func (mock *Route53APIMock) DeactivateKeySigningKey(deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput) (*route53.DeactivateKeySigningKeyOutput, error) {
+	if mock.DeactivateKeySigningKeyFunc == nil {
+		panic("Route53APIMock.DeactivateKeySigningKeyFunc: method is nil but Route53API.DeactivateKeySigningKey was just called")
+	}
+	callInfo := struct {
+		DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
+	}{
+		DeactivateKeySigningKeyInput: deactivateKeySigningKeyInput,
+	}
+	mock.lockDeactivateKeySigningKey.Lock()
+	mock.calls.DeactivateKeySigningKey = append(mock.calls.DeactivateKeySigningKey, callInfo)
+	mock.lockDeactivateKeySigningKey.Unlock()
+	return mock.DeactivateKeySigningKeyFunc(deactivateKeySigningKeyInput)
+}
+
+// DeactivateKeySigningKeyCalls gets all the calls that were made to DeactivateKeySigningKey.
+// Check the length with:
+//     len(mockedRoute53API.DeactivateKeySigningKeyCalls())
+func (mock *Route53APIMock) DeactivateKeySigningKeyCalls() []struct {
+	DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
+} {
+	var calls []struct {
+		DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
+	}
+	mock.lockDeactivateKeySigningKey.RLock()
+	calls = mock.calls.DeactivateKeySigningKey
+	mock.lockDeactivateKeySigningKey.RUnlock()
+	return calls
+}
+
+// DeactivateKeySigningKeyRequest calls DeactivateKeySigningKeyRequestFunc.
+func (mock *Route53APIMock) DeactivateKeySigningKeyRequest(deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput) (*request.Request, *route53.DeactivateKeySigningKeyOutput) {
+	if mock.DeactivateKeySigningKeyRequestFunc == nil {
+		panic("Route53APIMock.DeactivateKeySigningKeyRequestFunc: method is nil but Route53API.DeactivateKeySigningKeyRequest was just called")
+	}
+	callInfo := struct {
+		DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
+	}{
+		DeactivateKeySigningKeyInput: deactivateKeySigningKeyInput,
+	}
+	mock.lockDeactivateKeySigningKeyRequest.Lock()
+	mock.calls.DeactivateKeySigningKeyRequest = append(mock.calls.DeactivateKeySigningKeyRequest, callInfo)
+	mock.lockDeactivateKeySigningKeyRequest.Unlock()
+	return mock.DeactivateKeySigningKeyRequestFunc(deactivateKeySigningKeyInput)
+}
+
+// DeactivateKeySigningKeyRequestCalls gets all the calls that were made to DeactivateKeySigningKeyRequest.
+// Check the length with:
+//     len(mockedRoute53API.DeactivateKeySigningKeyRequestCalls())
+func (mock *Route53APIMock) DeactivateKeySigningKeyRequestCalls() []struct {
+	DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
+} {
+	var calls []struct {
+		DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
+	}
+	mock.lockDeactivateKeySigningKeyRequest.RLock()
+	calls = mock.calls.DeactivateKeySigningKeyRequest
+	mock.lockDeactivateKeySigningKeyRequest.RUnlock()
+	return calls
+}
+
+// DeactivateKeySigningKeyWithContext calls DeactivateKeySigningKeyWithContextFunc.
+func (mock *Route53APIMock) DeactivateKeySigningKeyWithContext(contextMoqParam context.Context, deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput, options ...request.Option) (*route53.DeactivateKeySigningKeyOutput, error) {
+	if mock.DeactivateKeySigningKeyWithContextFunc == nil {
+		panic("Route53APIMock.DeactivateKeySigningKeyWithContextFunc: method is nil but Route53API.DeactivateKeySigningKeyWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam              context.Context
+		DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
+		Options                      []request.Option
+	}{
+		ContextMoqParam:              contextMoqParam,
+		DeactivateKeySigningKeyInput: deactivateKeySigningKeyInput,
+		Options:                      options,
+	}
+	mock.lockDeactivateKeySigningKeyWithContext.Lock()
+	mock.calls.DeactivateKeySigningKeyWithContext = append(mock.calls.DeactivateKeySigningKeyWithContext, callInfo)
+	mock.lockDeactivateKeySigningKeyWithContext.Unlock()
+	return mock.DeactivateKeySigningKeyWithContextFunc(contextMoqParam, deactivateKeySigningKeyInput, options...)
+}
+
+// DeactivateKeySigningKeyWithContextCalls gets all the calls that were made to DeactivateKeySigningKeyWithContext.
+// Check the length with:
+//     len(mockedRoute53API.DeactivateKeySigningKeyWithContextCalls())
+func (mock *Route53APIMock) DeactivateKeySigningKeyWithContextCalls() []struct {
+	ContextMoqParam              context.Context
+	DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
+	Options                      []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam              context.Context
+		DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
+		Options                      []request.Option
+	}
+	mock.lockDeactivateKeySigningKeyWithContext.RLock()
+	calls = mock.calls.DeactivateKeySigningKeyWithContext
+	mock.lockDeactivateKeySigningKeyWithContext.RUnlock()
+	return calls
+}
+
+// DeleteCidrCollection calls DeleteCidrCollectionFunc.
+func (mock *Route53APIMock) DeleteCidrCollection(deleteCidrCollectionInput *route53.DeleteCidrCollectionInput) (*route53.DeleteCidrCollectionOutput, error) {
+	if mock.DeleteCidrCollectionFunc == nil {
+		panic("Route53APIMock.DeleteCidrCollectionFunc: method is nil but Route53API.DeleteCidrCollection was just called")
+	}
+	callInfo := struct {
+		DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
+	}{
+		DeleteCidrCollectionInput: deleteCidrCollectionInput,
+	}
+	mock.lockDeleteCidrCollection.Lock()
+	mock.calls.DeleteCidrCollection = append(mock.calls.DeleteCidrCollection, callInfo)
+	mock.lockDeleteCidrCollection.Unlock()
+	return mock.DeleteCidrCollectionFunc(deleteCidrCollectionInput)
+}
+
+// DeleteCidrCollectionCalls gets all the calls that were made to DeleteCidrCollection.
+// Check the length with:
+//     len(mockedRoute53API.DeleteCidrCollectionCalls())
+func (mock *Route53APIMock) DeleteCidrCollectionCalls() []struct {
+	DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
+} {
+	var calls []struct {
+		DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
+	}
+	mock.lockDeleteCidrCollection.RLock()
+	calls = mock.calls.DeleteCidrCollection
+	mock.lockDeleteCidrCollection.RUnlock()
+	return calls
+}
+
+// DeleteCidrCollectionRequest calls DeleteCidrCollectionRequestFunc.
+func (mock *Route53APIMock) DeleteCidrCollectionRequest(deleteCidrCollectionInput *route53.DeleteCidrCollectionInput) (*request.Request, *route53.DeleteCidrCollectionOutput) {
+	if mock.DeleteCidrCollectionRequestFunc == nil {
+		panic("Route53APIMock.DeleteCidrCollectionRequestFunc: method is nil but Route53API.DeleteCidrCollectionRequest was just called")
+	}
+	callInfo := struct {
+		DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
+	}{
+		DeleteCidrCollectionInput: deleteCidrCollectionInput,
+	}
+	mock.lockDeleteCidrCollectionRequest.Lock()
+	mock.calls.DeleteCidrCollectionRequest = append(mock.calls.DeleteCidrCollectionRequest, callInfo)
+	mock.lockDeleteCidrCollectionRequest.Unlock()
+	return mock.DeleteCidrCollectionRequestFunc(deleteCidrCollectionInput)
+}
+
+// DeleteCidrCollectionRequestCalls gets all the calls that were made to DeleteCidrCollectionRequest.
+// Check the length with:
+//     len(mockedRoute53API.DeleteCidrCollectionRequestCalls())
+func (mock *Route53APIMock) DeleteCidrCollectionRequestCalls() []struct {
+	DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
+} {
+	var calls []struct {
+		DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
+	}
+	mock.lockDeleteCidrCollectionRequest.RLock()
+	calls = mock.calls.DeleteCidrCollectionRequest
+	mock.lockDeleteCidrCollectionRequest.RUnlock()
+	return calls
+}
+
+// DeleteCidrCollectionWithContext calls DeleteCidrCollectionWithContextFunc.
+func (mock *Route53APIMock) DeleteCidrCollectionWithContext(contextMoqParam context.Context, deleteCidrCollectionInput *route53.DeleteCidrCollectionInput, options ...request.Option) (*route53.DeleteCidrCollectionOutput, error) {
+	if mock.DeleteCidrCollectionWithContextFunc == nil {
+		panic("Route53APIMock.DeleteCidrCollectionWithContextFunc: method is nil but Route53API.DeleteCidrCollectionWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam           context.Context
+		DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
+		Options                   []request.Option
+	}{
+		ContextMoqParam:           contextMoqParam,
+		DeleteCidrCollectionInput: deleteCidrCollectionInput,
+		Options:                   options,
+	}
+	mock.lockDeleteCidrCollectionWithContext.Lock()
+	mock.calls.DeleteCidrCollectionWithContext = append(mock.calls.DeleteCidrCollectionWithContext, callInfo)
+	mock.lockDeleteCidrCollectionWithContext.Unlock()
+	return mock.DeleteCidrCollectionWithContextFunc(contextMoqParam, deleteCidrCollectionInput, options...)
+}
+
+// DeleteCidrCollectionWithContextCalls gets all the calls that were made to DeleteCidrCollectionWithContext.
+// Check the length with:
+//     len(mockedRoute53API.DeleteCidrCollectionWithContextCalls())
+func (mock *Route53APIMock) DeleteCidrCollectionWithContextCalls() []struct {
+	ContextMoqParam           context.Context
+	DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
+	Options                   []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam           context.Context
+		DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
+		Options                   []request.Option
+	}
+	mock.lockDeleteCidrCollectionWithContext.RLock()
+	calls = mock.calls.DeleteCidrCollectionWithContext
+	mock.lockDeleteCidrCollectionWithContext.RUnlock()
+	return calls
+}
+
 // DeleteHealthCheck calls DeleteHealthCheckFunc.
-func (mock *Route53APIMock) DeleteHealthCheck(in1 *route53.DeleteHealthCheckInput) (*route53.DeleteHealthCheckOutput, error) {
+func (mock *Route53APIMock) DeleteHealthCheck(deleteHealthCheckInput *route53.DeleteHealthCheckInput) (*route53.DeleteHealthCheckOutput, error) {
 	if mock.DeleteHealthCheckFunc == nil {
 		panic("Route53APIMock.DeleteHealthCheckFunc: method is nil but Route53API.DeleteHealthCheck was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteHealthCheckInput
+		DeleteHealthCheckInput *route53.DeleteHealthCheckInput
 	}{
-		In1: in1,
+		DeleteHealthCheckInput: deleteHealthCheckInput,
 	}
 	mock.lockDeleteHealthCheck.Lock()
 	mock.calls.DeleteHealthCheck = append(mock.calls.DeleteHealthCheck, callInfo)
 	mock.lockDeleteHealthCheck.Unlock()
-	return mock.DeleteHealthCheckFunc(in1)
+	return mock.DeleteHealthCheckFunc(deleteHealthCheckInput)
 }
 
 // DeleteHealthCheckCalls gets all the calls that were made to DeleteHealthCheck.
 // Check the length with:
 //     len(mockedRoute53API.DeleteHealthCheckCalls())
 func (mock *Route53APIMock) DeleteHealthCheckCalls() []struct {
-	In1 *route53.DeleteHealthCheckInput
+	DeleteHealthCheckInput *route53.DeleteHealthCheckInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteHealthCheckInput
+		DeleteHealthCheckInput *route53.DeleteHealthCheckInput
 	}
 	mock.lockDeleteHealthCheck.RLock()
 	calls = mock.calls.DeleteHealthCheck
@@ -3611,29 +4834,29 @@ func (mock *Route53APIMock) DeleteHealthCheckCalls() []struct {
 }
 
 // DeleteHealthCheckRequest calls DeleteHealthCheckRequestFunc.
-func (mock *Route53APIMock) DeleteHealthCheckRequest(in1 *route53.DeleteHealthCheckInput) (*request.Request, *route53.DeleteHealthCheckOutput) {
+func (mock *Route53APIMock) DeleteHealthCheckRequest(deleteHealthCheckInput *route53.DeleteHealthCheckInput) (*request.Request, *route53.DeleteHealthCheckOutput) {
 	if mock.DeleteHealthCheckRequestFunc == nil {
 		panic("Route53APIMock.DeleteHealthCheckRequestFunc: method is nil but Route53API.DeleteHealthCheckRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteHealthCheckInput
+		DeleteHealthCheckInput *route53.DeleteHealthCheckInput
 	}{
-		In1: in1,
+		DeleteHealthCheckInput: deleteHealthCheckInput,
 	}
 	mock.lockDeleteHealthCheckRequest.Lock()
 	mock.calls.DeleteHealthCheckRequest = append(mock.calls.DeleteHealthCheckRequest, callInfo)
 	mock.lockDeleteHealthCheckRequest.Unlock()
-	return mock.DeleteHealthCheckRequestFunc(in1)
+	return mock.DeleteHealthCheckRequestFunc(deleteHealthCheckInput)
 }
 
 // DeleteHealthCheckRequestCalls gets all the calls that were made to DeleteHealthCheckRequest.
 // Check the length with:
 //     len(mockedRoute53API.DeleteHealthCheckRequestCalls())
 func (mock *Route53APIMock) DeleteHealthCheckRequestCalls() []struct {
-	In1 *route53.DeleteHealthCheckInput
+	DeleteHealthCheckInput *route53.DeleteHealthCheckInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteHealthCheckInput
+		DeleteHealthCheckInput *route53.DeleteHealthCheckInput
 	}
 	mock.lockDeleteHealthCheckRequest.RLock()
 	calls = mock.calls.DeleteHealthCheckRequest
@@ -3642,37 +4865,37 @@ func (mock *Route53APIMock) DeleteHealthCheckRequestCalls() []struct {
 }
 
 // DeleteHealthCheckWithContext calls DeleteHealthCheckWithContextFunc.
-func (mock *Route53APIMock) DeleteHealthCheckWithContext(in1 context.Context, in2 *route53.DeleteHealthCheckInput, in3 ...request.Option) (*route53.DeleteHealthCheckOutput, error) {
+func (mock *Route53APIMock) DeleteHealthCheckWithContext(contextMoqParam context.Context, deleteHealthCheckInput *route53.DeleteHealthCheckInput, options ...request.Option) (*route53.DeleteHealthCheckOutput, error) {
 	if mock.DeleteHealthCheckWithContextFunc == nil {
 		panic("Route53APIMock.DeleteHealthCheckWithContextFunc: method is nil but Route53API.DeleteHealthCheckWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.DeleteHealthCheckInput
-		In3 []request.Option
+		ContextMoqParam        context.Context
+		DeleteHealthCheckInput *route53.DeleteHealthCheckInput
+		Options                []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:        contextMoqParam,
+		DeleteHealthCheckInput: deleteHealthCheckInput,
+		Options:                options,
 	}
 	mock.lockDeleteHealthCheckWithContext.Lock()
 	mock.calls.DeleteHealthCheckWithContext = append(mock.calls.DeleteHealthCheckWithContext, callInfo)
 	mock.lockDeleteHealthCheckWithContext.Unlock()
-	return mock.DeleteHealthCheckWithContextFunc(in1, in2, in3...)
+	return mock.DeleteHealthCheckWithContextFunc(contextMoqParam, deleteHealthCheckInput, options...)
 }
 
 // DeleteHealthCheckWithContextCalls gets all the calls that were made to DeleteHealthCheckWithContext.
 // Check the length with:
 //     len(mockedRoute53API.DeleteHealthCheckWithContextCalls())
 func (mock *Route53APIMock) DeleteHealthCheckWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.DeleteHealthCheckInput
-	In3 []request.Option
+	ContextMoqParam        context.Context
+	DeleteHealthCheckInput *route53.DeleteHealthCheckInput
+	Options                []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.DeleteHealthCheckInput
-		In3 []request.Option
+		ContextMoqParam        context.Context
+		DeleteHealthCheckInput *route53.DeleteHealthCheckInput
+		Options                []request.Option
 	}
 	mock.lockDeleteHealthCheckWithContext.RLock()
 	calls = mock.calls.DeleteHealthCheckWithContext
@@ -3681,29 +4904,29 @@ func (mock *Route53APIMock) DeleteHealthCheckWithContextCalls() []struct {
 }
 
 // DeleteHostedZone calls DeleteHostedZoneFunc.
-func (mock *Route53APIMock) DeleteHostedZone(in1 *route53.DeleteHostedZoneInput) (*route53.DeleteHostedZoneOutput, error) {
+func (mock *Route53APIMock) DeleteHostedZone(deleteHostedZoneInput *route53.DeleteHostedZoneInput) (*route53.DeleteHostedZoneOutput, error) {
 	if mock.DeleteHostedZoneFunc == nil {
 		panic("Route53APIMock.DeleteHostedZoneFunc: method is nil but Route53API.DeleteHostedZone was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteHostedZoneInput
+		DeleteHostedZoneInput *route53.DeleteHostedZoneInput
 	}{
-		In1: in1,
+		DeleteHostedZoneInput: deleteHostedZoneInput,
 	}
 	mock.lockDeleteHostedZone.Lock()
 	mock.calls.DeleteHostedZone = append(mock.calls.DeleteHostedZone, callInfo)
 	mock.lockDeleteHostedZone.Unlock()
-	return mock.DeleteHostedZoneFunc(in1)
+	return mock.DeleteHostedZoneFunc(deleteHostedZoneInput)
 }
 
 // DeleteHostedZoneCalls gets all the calls that were made to DeleteHostedZone.
 // Check the length with:
 //     len(mockedRoute53API.DeleteHostedZoneCalls())
 func (mock *Route53APIMock) DeleteHostedZoneCalls() []struct {
-	In1 *route53.DeleteHostedZoneInput
+	DeleteHostedZoneInput *route53.DeleteHostedZoneInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteHostedZoneInput
+		DeleteHostedZoneInput *route53.DeleteHostedZoneInput
 	}
 	mock.lockDeleteHostedZone.RLock()
 	calls = mock.calls.DeleteHostedZone
@@ -3712,29 +4935,29 @@ func (mock *Route53APIMock) DeleteHostedZoneCalls() []struct {
 }
 
 // DeleteHostedZoneRequest calls DeleteHostedZoneRequestFunc.
-func (mock *Route53APIMock) DeleteHostedZoneRequest(in1 *route53.DeleteHostedZoneInput) (*request.Request, *route53.DeleteHostedZoneOutput) {
+func (mock *Route53APIMock) DeleteHostedZoneRequest(deleteHostedZoneInput *route53.DeleteHostedZoneInput) (*request.Request, *route53.DeleteHostedZoneOutput) {
 	if mock.DeleteHostedZoneRequestFunc == nil {
 		panic("Route53APIMock.DeleteHostedZoneRequestFunc: method is nil but Route53API.DeleteHostedZoneRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteHostedZoneInput
+		DeleteHostedZoneInput *route53.DeleteHostedZoneInput
 	}{
-		In1: in1,
+		DeleteHostedZoneInput: deleteHostedZoneInput,
 	}
 	mock.lockDeleteHostedZoneRequest.Lock()
 	mock.calls.DeleteHostedZoneRequest = append(mock.calls.DeleteHostedZoneRequest, callInfo)
 	mock.lockDeleteHostedZoneRequest.Unlock()
-	return mock.DeleteHostedZoneRequestFunc(in1)
+	return mock.DeleteHostedZoneRequestFunc(deleteHostedZoneInput)
 }
 
 // DeleteHostedZoneRequestCalls gets all the calls that were made to DeleteHostedZoneRequest.
 // Check the length with:
 //     len(mockedRoute53API.DeleteHostedZoneRequestCalls())
 func (mock *Route53APIMock) DeleteHostedZoneRequestCalls() []struct {
-	In1 *route53.DeleteHostedZoneInput
+	DeleteHostedZoneInput *route53.DeleteHostedZoneInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteHostedZoneInput
+		DeleteHostedZoneInput *route53.DeleteHostedZoneInput
 	}
 	mock.lockDeleteHostedZoneRequest.RLock()
 	calls = mock.calls.DeleteHostedZoneRequest
@@ -3743,37 +4966,37 @@ func (mock *Route53APIMock) DeleteHostedZoneRequestCalls() []struct {
 }
 
 // DeleteHostedZoneWithContext calls DeleteHostedZoneWithContextFunc.
-func (mock *Route53APIMock) DeleteHostedZoneWithContext(in1 context.Context, in2 *route53.DeleteHostedZoneInput, in3 ...request.Option) (*route53.DeleteHostedZoneOutput, error) {
+func (mock *Route53APIMock) DeleteHostedZoneWithContext(contextMoqParam context.Context, deleteHostedZoneInput *route53.DeleteHostedZoneInput, options ...request.Option) (*route53.DeleteHostedZoneOutput, error) {
 	if mock.DeleteHostedZoneWithContextFunc == nil {
 		panic("Route53APIMock.DeleteHostedZoneWithContextFunc: method is nil but Route53API.DeleteHostedZoneWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.DeleteHostedZoneInput
-		In3 []request.Option
+		ContextMoqParam       context.Context
+		DeleteHostedZoneInput *route53.DeleteHostedZoneInput
+		Options               []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:       contextMoqParam,
+		DeleteHostedZoneInput: deleteHostedZoneInput,
+		Options:               options,
 	}
 	mock.lockDeleteHostedZoneWithContext.Lock()
 	mock.calls.DeleteHostedZoneWithContext = append(mock.calls.DeleteHostedZoneWithContext, callInfo)
 	mock.lockDeleteHostedZoneWithContext.Unlock()
-	return mock.DeleteHostedZoneWithContextFunc(in1, in2, in3...)
+	return mock.DeleteHostedZoneWithContextFunc(contextMoqParam, deleteHostedZoneInput, options...)
 }
 
 // DeleteHostedZoneWithContextCalls gets all the calls that were made to DeleteHostedZoneWithContext.
 // Check the length with:
 //     len(mockedRoute53API.DeleteHostedZoneWithContextCalls())
 func (mock *Route53APIMock) DeleteHostedZoneWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.DeleteHostedZoneInput
-	In3 []request.Option
+	ContextMoqParam       context.Context
+	DeleteHostedZoneInput *route53.DeleteHostedZoneInput
+	Options               []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.DeleteHostedZoneInput
-		In3 []request.Option
+		ContextMoqParam       context.Context
+		DeleteHostedZoneInput *route53.DeleteHostedZoneInput
+		Options               []request.Option
 	}
 	mock.lockDeleteHostedZoneWithContext.RLock()
 	calls = mock.calls.DeleteHostedZoneWithContext
@@ -3781,30 +5004,131 @@ func (mock *Route53APIMock) DeleteHostedZoneWithContextCalls() []struct {
 	return calls
 }
 
+// DeleteKeySigningKey calls DeleteKeySigningKeyFunc.
+func (mock *Route53APIMock) DeleteKeySigningKey(deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput) (*route53.DeleteKeySigningKeyOutput, error) {
+	if mock.DeleteKeySigningKeyFunc == nil {
+		panic("Route53APIMock.DeleteKeySigningKeyFunc: method is nil but Route53API.DeleteKeySigningKey was just called")
+	}
+	callInfo := struct {
+		DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
+	}{
+		DeleteKeySigningKeyInput: deleteKeySigningKeyInput,
+	}
+	mock.lockDeleteKeySigningKey.Lock()
+	mock.calls.DeleteKeySigningKey = append(mock.calls.DeleteKeySigningKey, callInfo)
+	mock.lockDeleteKeySigningKey.Unlock()
+	return mock.DeleteKeySigningKeyFunc(deleteKeySigningKeyInput)
+}
+
+// DeleteKeySigningKeyCalls gets all the calls that were made to DeleteKeySigningKey.
+// Check the length with:
+//     len(mockedRoute53API.DeleteKeySigningKeyCalls())
+func (mock *Route53APIMock) DeleteKeySigningKeyCalls() []struct {
+	DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
+} {
+	var calls []struct {
+		DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
+	}
+	mock.lockDeleteKeySigningKey.RLock()
+	calls = mock.calls.DeleteKeySigningKey
+	mock.lockDeleteKeySigningKey.RUnlock()
+	return calls
+}
+
+// DeleteKeySigningKeyRequest calls DeleteKeySigningKeyRequestFunc.
+func (mock *Route53APIMock) DeleteKeySigningKeyRequest(deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput) (*request.Request, *route53.DeleteKeySigningKeyOutput) {
+	if mock.DeleteKeySigningKeyRequestFunc == nil {
+		panic("Route53APIMock.DeleteKeySigningKeyRequestFunc: method is nil but Route53API.DeleteKeySigningKeyRequest was just called")
+	}
+	callInfo := struct {
+		DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
+	}{
+		DeleteKeySigningKeyInput: deleteKeySigningKeyInput,
+	}
+	mock.lockDeleteKeySigningKeyRequest.Lock()
+	mock.calls.DeleteKeySigningKeyRequest = append(mock.calls.DeleteKeySigningKeyRequest, callInfo)
+	mock.lockDeleteKeySigningKeyRequest.Unlock()
+	return mock.DeleteKeySigningKeyRequestFunc(deleteKeySigningKeyInput)
+}
+
+// DeleteKeySigningKeyRequestCalls gets all the calls that were made to DeleteKeySigningKeyRequest.
+// Check the length with:
+//     len(mockedRoute53API.DeleteKeySigningKeyRequestCalls())
+func (mock *Route53APIMock) DeleteKeySigningKeyRequestCalls() []struct {
+	DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
+} {
+	var calls []struct {
+		DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
+	}
+	mock.lockDeleteKeySigningKeyRequest.RLock()
+	calls = mock.calls.DeleteKeySigningKeyRequest
+	mock.lockDeleteKeySigningKeyRequest.RUnlock()
+	return calls
+}
+
+// DeleteKeySigningKeyWithContext calls DeleteKeySigningKeyWithContextFunc.
+func (mock *Route53APIMock) DeleteKeySigningKeyWithContext(contextMoqParam context.Context, deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput, options ...request.Option) (*route53.DeleteKeySigningKeyOutput, error) {
+	if mock.DeleteKeySigningKeyWithContextFunc == nil {
+		panic("Route53APIMock.DeleteKeySigningKeyWithContextFunc: method is nil but Route53API.DeleteKeySigningKeyWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam          context.Context
+		DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
+		Options                  []request.Option
+	}{
+		ContextMoqParam:          contextMoqParam,
+		DeleteKeySigningKeyInput: deleteKeySigningKeyInput,
+		Options:                  options,
+	}
+	mock.lockDeleteKeySigningKeyWithContext.Lock()
+	mock.calls.DeleteKeySigningKeyWithContext = append(mock.calls.DeleteKeySigningKeyWithContext, callInfo)
+	mock.lockDeleteKeySigningKeyWithContext.Unlock()
+	return mock.DeleteKeySigningKeyWithContextFunc(contextMoqParam, deleteKeySigningKeyInput, options...)
+}
+
+// DeleteKeySigningKeyWithContextCalls gets all the calls that were made to DeleteKeySigningKeyWithContext.
+// Check the length with:
+//     len(mockedRoute53API.DeleteKeySigningKeyWithContextCalls())
+func (mock *Route53APIMock) DeleteKeySigningKeyWithContextCalls() []struct {
+	ContextMoqParam          context.Context
+	DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
+	Options                  []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam          context.Context
+		DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
+		Options                  []request.Option
+	}
+	mock.lockDeleteKeySigningKeyWithContext.RLock()
+	calls = mock.calls.DeleteKeySigningKeyWithContext
+	mock.lockDeleteKeySigningKeyWithContext.RUnlock()
+	return calls
+}
+
 // DeleteQueryLoggingConfig calls DeleteQueryLoggingConfigFunc.
-func (mock *Route53APIMock) DeleteQueryLoggingConfig(in1 *route53.DeleteQueryLoggingConfigInput) (*route53.DeleteQueryLoggingConfigOutput, error) {
+func (mock *Route53APIMock) DeleteQueryLoggingConfig(deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput) (*route53.DeleteQueryLoggingConfigOutput, error) {
 	if mock.DeleteQueryLoggingConfigFunc == nil {
 		panic("Route53APIMock.DeleteQueryLoggingConfigFunc: method is nil but Route53API.DeleteQueryLoggingConfig was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteQueryLoggingConfigInput
+		DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
 	}{
-		In1: in1,
+		DeleteQueryLoggingConfigInput: deleteQueryLoggingConfigInput,
 	}
 	mock.lockDeleteQueryLoggingConfig.Lock()
 	mock.calls.DeleteQueryLoggingConfig = append(mock.calls.DeleteQueryLoggingConfig, callInfo)
 	mock.lockDeleteQueryLoggingConfig.Unlock()
-	return mock.DeleteQueryLoggingConfigFunc(in1)
+	return mock.DeleteQueryLoggingConfigFunc(deleteQueryLoggingConfigInput)
 }
 
 // DeleteQueryLoggingConfigCalls gets all the calls that were made to DeleteQueryLoggingConfig.
 // Check the length with:
 //     len(mockedRoute53API.DeleteQueryLoggingConfigCalls())
 func (mock *Route53APIMock) DeleteQueryLoggingConfigCalls() []struct {
-	In1 *route53.DeleteQueryLoggingConfigInput
+	DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteQueryLoggingConfigInput
+		DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
 	}
 	mock.lockDeleteQueryLoggingConfig.RLock()
 	calls = mock.calls.DeleteQueryLoggingConfig
@@ -3813,29 +5137,29 @@ func (mock *Route53APIMock) DeleteQueryLoggingConfigCalls() []struct {
 }
 
 // DeleteQueryLoggingConfigRequest calls DeleteQueryLoggingConfigRequestFunc.
-func (mock *Route53APIMock) DeleteQueryLoggingConfigRequest(in1 *route53.DeleteQueryLoggingConfigInput) (*request.Request, *route53.DeleteQueryLoggingConfigOutput) {
+func (mock *Route53APIMock) DeleteQueryLoggingConfigRequest(deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput) (*request.Request, *route53.DeleteQueryLoggingConfigOutput) {
 	if mock.DeleteQueryLoggingConfigRequestFunc == nil {
 		panic("Route53APIMock.DeleteQueryLoggingConfigRequestFunc: method is nil but Route53API.DeleteQueryLoggingConfigRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteQueryLoggingConfigInput
+		DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
 	}{
-		In1: in1,
+		DeleteQueryLoggingConfigInput: deleteQueryLoggingConfigInput,
 	}
 	mock.lockDeleteQueryLoggingConfigRequest.Lock()
 	mock.calls.DeleteQueryLoggingConfigRequest = append(mock.calls.DeleteQueryLoggingConfigRequest, callInfo)
 	mock.lockDeleteQueryLoggingConfigRequest.Unlock()
-	return mock.DeleteQueryLoggingConfigRequestFunc(in1)
+	return mock.DeleteQueryLoggingConfigRequestFunc(deleteQueryLoggingConfigInput)
 }
 
 // DeleteQueryLoggingConfigRequestCalls gets all the calls that were made to DeleteQueryLoggingConfigRequest.
 // Check the length with:
 //     len(mockedRoute53API.DeleteQueryLoggingConfigRequestCalls())
 func (mock *Route53APIMock) DeleteQueryLoggingConfigRequestCalls() []struct {
-	In1 *route53.DeleteQueryLoggingConfigInput
+	DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteQueryLoggingConfigInput
+		DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
 	}
 	mock.lockDeleteQueryLoggingConfigRequest.RLock()
 	calls = mock.calls.DeleteQueryLoggingConfigRequest
@@ -3844,37 +5168,37 @@ func (mock *Route53APIMock) DeleteQueryLoggingConfigRequestCalls() []struct {
 }
 
 // DeleteQueryLoggingConfigWithContext calls DeleteQueryLoggingConfigWithContextFunc.
-func (mock *Route53APIMock) DeleteQueryLoggingConfigWithContext(in1 context.Context, in2 *route53.DeleteQueryLoggingConfigInput, in3 ...request.Option) (*route53.DeleteQueryLoggingConfigOutput, error) {
+func (mock *Route53APIMock) DeleteQueryLoggingConfigWithContext(contextMoqParam context.Context, deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput, options ...request.Option) (*route53.DeleteQueryLoggingConfigOutput, error) {
 	if mock.DeleteQueryLoggingConfigWithContextFunc == nil {
 		panic("Route53APIMock.DeleteQueryLoggingConfigWithContextFunc: method is nil but Route53API.DeleteQueryLoggingConfigWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.DeleteQueryLoggingConfigInput
-		In3 []request.Option
+		ContextMoqParam               context.Context
+		DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
+		Options                       []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:               contextMoqParam,
+		DeleteQueryLoggingConfigInput: deleteQueryLoggingConfigInput,
+		Options:                       options,
 	}
 	mock.lockDeleteQueryLoggingConfigWithContext.Lock()
 	mock.calls.DeleteQueryLoggingConfigWithContext = append(mock.calls.DeleteQueryLoggingConfigWithContext, callInfo)
 	mock.lockDeleteQueryLoggingConfigWithContext.Unlock()
-	return mock.DeleteQueryLoggingConfigWithContextFunc(in1, in2, in3...)
+	return mock.DeleteQueryLoggingConfigWithContextFunc(contextMoqParam, deleteQueryLoggingConfigInput, options...)
 }
 
 // DeleteQueryLoggingConfigWithContextCalls gets all the calls that were made to DeleteQueryLoggingConfigWithContext.
 // Check the length with:
 //     len(mockedRoute53API.DeleteQueryLoggingConfigWithContextCalls())
 func (mock *Route53APIMock) DeleteQueryLoggingConfigWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.DeleteQueryLoggingConfigInput
-	In3 []request.Option
+	ContextMoqParam               context.Context
+	DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
+	Options                       []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.DeleteQueryLoggingConfigInput
-		In3 []request.Option
+		ContextMoqParam               context.Context
+		DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
+		Options                       []request.Option
 	}
 	mock.lockDeleteQueryLoggingConfigWithContext.RLock()
 	calls = mock.calls.DeleteQueryLoggingConfigWithContext
@@ -3883,29 +5207,29 @@ func (mock *Route53APIMock) DeleteQueryLoggingConfigWithContextCalls() []struct 
 }
 
 // DeleteReusableDelegationSet calls DeleteReusableDelegationSetFunc.
-func (mock *Route53APIMock) DeleteReusableDelegationSet(in1 *route53.DeleteReusableDelegationSetInput) (*route53.DeleteReusableDelegationSetOutput, error) {
+func (mock *Route53APIMock) DeleteReusableDelegationSet(deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput) (*route53.DeleteReusableDelegationSetOutput, error) {
 	if mock.DeleteReusableDelegationSetFunc == nil {
 		panic("Route53APIMock.DeleteReusableDelegationSetFunc: method is nil but Route53API.DeleteReusableDelegationSet was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteReusableDelegationSetInput
+		DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
 	}{
-		In1: in1,
+		DeleteReusableDelegationSetInput: deleteReusableDelegationSetInput,
 	}
 	mock.lockDeleteReusableDelegationSet.Lock()
 	mock.calls.DeleteReusableDelegationSet = append(mock.calls.DeleteReusableDelegationSet, callInfo)
 	mock.lockDeleteReusableDelegationSet.Unlock()
-	return mock.DeleteReusableDelegationSetFunc(in1)
+	return mock.DeleteReusableDelegationSetFunc(deleteReusableDelegationSetInput)
 }
 
 // DeleteReusableDelegationSetCalls gets all the calls that were made to DeleteReusableDelegationSet.
 // Check the length with:
 //     len(mockedRoute53API.DeleteReusableDelegationSetCalls())
 func (mock *Route53APIMock) DeleteReusableDelegationSetCalls() []struct {
-	In1 *route53.DeleteReusableDelegationSetInput
+	DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteReusableDelegationSetInput
+		DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
 	}
 	mock.lockDeleteReusableDelegationSet.RLock()
 	calls = mock.calls.DeleteReusableDelegationSet
@@ -3914,29 +5238,29 @@ func (mock *Route53APIMock) DeleteReusableDelegationSetCalls() []struct {
 }
 
 // DeleteReusableDelegationSetRequest calls DeleteReusableDelegationSetRequestFunc.
-func (mock *Route53APIMock) DeleteReusableDelegationSetRequest(in1 *route53.DeleteReusableDelegationSetInput) (*request.Request, *route53.DeleteReusableDelegationSetOutput) {
+func (mock *Route53APIMock) DeleteReusableDelegationSetRequest(deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput) (*request.Request, *route53.DeleteReusableDelegationSetOutput) {
 	if mock.DeleteReusableDelegationSetRequestFunc == nil {
 		panic("Route53APIMock.DeleteReusableDelegationSetRequestFunc: method is nil but Route53API.DeleteReusableDelegationSetRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteReusableDelegationSetInput
+		DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
 	}{
-		In1: in1,
+		DeleteReusableDelegationSetInput: deleteReusableDelegationSetInput,
 	}
 	mock.lockDeleteReusableDelegationSetRequest.Lock()
 	mock.calls.DeleteReusableDelegationSetRequest = append(mock.calls.DeleteReusableDelegationSetRequest, callInfo)
 	mock.lockDeleteReusableDelegationSetRequest.Unlock()
-	return mock.DeleteReusableDelegationSetRequestFunc(in1)
+	return mock.DeleteReusableDelegationSetRequestFunc(deleteReusableDelegationSetInput)
 }
 
 // DeleteReusableDelegationSetRequestCalls gets all the calls that were made to DeleteReusableDelegationSetRequest.
 // Check the length with:
 //     len(mockedRoute53API.DeleteReusableDelegationSetRequestCalls())
 func (mock *Route53APIMock) DeleteReusableDelegationSetRequestCalls() []struct {
-	In1 *route53.DeleteReusableDelegationSetInput
+	DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteReusableDelegationSetInput
+		DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
 	}
 	mock.lockDeleteReusableDelegationSetRequest.RLock()
 	calls = mock.calls.DeleteReusableDelegationSetRequest
@@ -3945,37 +5269,37 @@ func (mock *Route53APIMock) DeleteReusableDelegationSetRequestCalls() []struct {
 }
 
 // DeleteReusableDelegationSetWithContext calls DeleteReusableDelegationSetWithContextFunc.
-func (mock *Route53APIMock) DeleteReusableDelegationSetWithContext(in1 context.Context, in2 *route53.DeleteReusableDelegationSetInput, in3 ...request.Option) (*route53.DeleteReusableDelegationSetOutput, error) {
+func (mock *Route53APIMock) DeleteReusableDelegationSetWithContext(contextMoqParam context.Context, deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput, options ...request.Option) (*route53.DeleteReusableDelegationSetOutput, error) {
 	if mock.DeleteReusableDelegationSetWithContextFunc == nil {
 		panic("Route53APIMock.DeleteReusableDelegationSetWithContextFunc: method is nil but Route53API.DeleteReusableDelegationSetWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.DeleteReusableDelegationSetInput
-		In3 []request.Option
+		ContextMoqParam                  context.Context
+		DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
+		Options                          []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                  contextMoqParam,
+		DeleteReusableDelegationSetInput: deleteReusableDelegationSetInput,
+		Options:                          options,
 	}
 	mock.lockDeleteReusableDelegationSetWithContext.Lock()
 	mock.calls.DeleteReusableDelegationSetWithContext = append(mock.calls.DeleteReusableDelegationSetWithContext, callInfo)
 	mock.lockDeleteReusableDelegationSetWithContext.Unlock()
-	return mock.DeleteReusableDelegationSetWithContextFunc(in1, in2, in3...)
+	return mock.DeleteReusableDelegationSetWithContextFunc(contextMoqParam, deleteReusableDelegationSetInput, options...)
 }
 
 // DeleteReusableDelegationSetWithContextCalls gets all the calls that were made to DeleteReusableDelegationSetWithContext.
 // Check the length with:
 //     len(mockedRoute53API.DeleteReusableDelegationSetWithContextCalls())
 func (mock *Route53APIMock) DeleteReusableDelegationSetWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.DeleteReusableDelegationSetInput
-	In3 []request.Option
+	ContextMoqParam                  context.Context
+	DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
+	Options                          []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.DeleteReusableDelegationSetInput
-		In3 []request.Option
+		ContextMoqParam                  context.Context
+		DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
+		Options                          []request.Option
 	}
 	mock.lockDeleteReusableDelegationSetWithContext.RLock()
 	calls = mock.calls.DeleteReusableDelegationSetWithContext
@@ -3984,29 +5308,29 @@ func (mock *Route53APIMock) DeleteReusableDelegationSetWithContextCalls() []stru
 }
 
 // DeleteTrafficPolicy calls DeleteTrafficPolicyFunc.
-func (mock *Route53APIMock) DeleteTrafficPolicy(in1 *route53.DeleteTrafficPolicyInput) (*route53.DeleteTrafficPolicyOutput, error) {
+func (mock *Route53APIMock) DeleteTrafficPolicy(deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput) (*route53.DeleteTrafficPolicyOutput, error) {
 	if mock.DeleteTrafficPolicyFunc == nil {
 		panic("Route53APIMock.DeleteTrafficPolicyFunc: method is nil but Route53API.DeleteTrafficPolicy was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteTrafficPolicyInput
+		DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
 	}{
-		In1: in1,
+		DeleteTrafficPolicyInput: deleteTrafficPolicyInput,
 	}
 	mock.lockDeleteTrafficPolicy.Lock()
 	mock.calls.DeleteTrafficPolicy = append(mock.calls.DeleteTrafficPolicy, callInfo)
 	mock.lockDeleteTrafficPolicy.Unlock()
-	return mock.DeleteTrafficPolicyFunc(in1)
+	return mock.DeleteTrafficPolicyFunc(deleteTrafficPolicyInput)
 }
 
 // DeleteTrafficPolicyCalls gets all the calls that were made to DeleteTrafficPolicy.
 // Check the length with:
 //     len(mockedRoute53API.DeleteTrafficPolicyCalls())
 func (mock *Route53APIMock) DeleteTrafficPolicyCalls() []struct {
-	In1 *route53.DeleteTrafficPolicyInput
+	DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteTrafficPolicyInput
+		DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
 	}
 	mock.lockDeleteTrafficPolicy.RLock()
 	calls = mock.calls.DeleteTrafficPolicy
@@ -4015,29 +5339,29 @@ func (mock *Route53APIMock) DeleteTrafficPolicyCalls() []struct {
 }
 
 // DeleteTrafficPolicyInstance calls DeleteTrafficPolicyInstanceFunc.
-func (mock *Route53APIMock) DeleteTrafficPolicyInstance(in1 *route53.DeleteTrafficPolicyInstanceInput) (*route53.DeleteTrafficPolicyInstanceOutput, error) {
+func (mock *Route53APIMock) DeleteTrafficPolicyInstance(deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput) (*route53.DeleteTrafficPolicyInstanceOutput, error) {
 	if mock.DeleteTrafficPolicyInstanceFunc == nil {
 		panic("Route53APIMock.DeleteTrafficPolicyInstanceFunc: method is nil but Route53API.DeleteTrafficPolicyInstance was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteTrafficPolicyInstanceInput
+		DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
 	}{
-		In1: in1,
+		DeleteTrafficPolicyInstanceInput: deleteTrafficPolicyInstanceInput,
 	}
 	mock.lockDeleteTrafficPolicyInstance.Lock()
 	mock.calls.DeleteTrafficPolicyInstance = append(mock.calls.DeleteTrafficPolicyInstance, callInfo)
 	mock.lockDeleteTrafficPolicyInstance.Unlock()
-	return mock.DeleteTrafficPolicyInstanceFunc(in1)
+	return mock.DeleteTrafficPolicyInstanceFunc(deleteTrafficPolicyInstanceInput)
 }
 
 // DeleteTrafficPolicyInstanceCalls gets all the calls that were made to DeleteTrafficPolicyInstance.
 // Check the length with:
 //     len(mockedRoute53API.DeleteTrafficPolicyInstanceCalls())
 func (mock *Route53APIMock) DeleteTrafficPolicyInstanceCalls() []struct {
-	In1 *route53.DeleteTrafficPolicyInstanceInput
+	DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteTrafficPolicyInstanceInput
+		DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
 	}
 	mock.lockDeleteTrafficPolicyInstance.RLock()
 	calls = mock.calls.DeleteTrafficPolicyInstance
@@ -4046,29 +5370,29 @@ func (mock *Route53APIMock) DeleteTrafficPolicyInstanceCalls() []struct {
 }
 
 // DeleteTrafficPolicyInstanceRequest calls DeleteTrafficPolicyInstanceRequestFunc.
-func (mock *Route53APIMock) DeleteTrafficPolicyInstanceRequest(in1 *route53.DeleteTrafficPolicyInstanceInput) (*request.Request, *route53.DeleteTrafficPolicyInstanceOutput) {
+func (mock *Route53APIMock) DeleteTrafficPolicyInstanceRequest(deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput) (*request.Request, *route53.DeleteTrafficPolicyInstanceOutput) {
 	if mock.DeleteTrafficPolicyInstanceRequestFunc == nil {
 		panic("Route53APIMock.DeleteTrafficPolicyInstanceRequestFunc: method is nil but Route53API.DeleteTrafficPolicyInstanceRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteTrafficPolicyInstanceInput
+		DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
 	}{
-		In1: in1,
+		DeleteTrafficPolicyInstanceInput: deleteTrafficPolicyInstanceInput,
 	}
 	mock.lockDeleteTrafficPolicyInstanceRequest.Lock()
 	mock.calls.DeleteTrafficPolicyInstanceRequest = append(mock.calls.DeleteTrafficPolicyInstanceRequest, callInfo)
 	mock.lockDeleteTrafficPolicyInstanceRequest.Unlock()
-	return mock.DeleteTrafficPolicyInstanceRequestFunc(in1)
+	return mock.DeleteTrafficPolicyInstanceRequestFunc(deleteTrafficPolicyInstanceInput)
 }
 
 // DeleteTrafficPolicyInstanceRequestCalls gets all the calls that were made to DeleteTrafficPolicyInstanceRequest.
 // Check the length with:
 //     len(mockedRoute53API.DeleteTrafficPolicyInstanceRequestCalls())
 func (mock *Route53APIMock) DeleteTrafficPolicyInstanceRequestCalls() []struct {
-	In1 *route53.DeleteTrafficPolicyInstanceInput
+	DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteTrafficPolicyInstanceInput
+		DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
 	}
 	mock.lockDeleteTrafficPolicyInstanceRequest.RLock()
 	calls = mock.calls.DeleteTrafficPolicyInstanceRequest
@@ -4077,37 +5401,37 @@ func (mock *Route53APIMock) DeleteTrafficPolicyInstanceRequestCalls() []struct {
 }
 
 // DeleteTrafficPolicyInstanceWithContext calls DeleteTrafficPolicyInstanceWithContextFunc.
-func (mock *Route53APIMock) DeleteTrafficPolicyInstanceWithContext(in1 context.Context, in2 *route53.DeleteTrafficPolicyInstanceInput, in3 ...request.Option) (*route53.DeleteTrafficPolicyInstanceOutput, error) {
+func (mock *Route53APIMock) DeleteTrafficPolicyInstanceWithContext(contextMoqParam context.Context, deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput, options ...request.Option) (*route53.DeleteTrafficPolicyInstanceOutput, error) {
 	if mock.DeleteTrafficPolicyInstanceWithContextFunc == nil {
 		panic("Route53APIMock.DeleteTrafficPolicyInstanceWithContextFunc: method is nil but Route53API.DeleteTrafficPolicyInstanceWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.DeleteTrafficPolicyInstanceInput
-		In3 []request.Option
+		ContextMoqParam                  context.Context
+		DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
+		Options                          []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                  contextMoqParam,
+		DeleteTrafficPolicyInstanceInput: deleteTrafficPolicyInstanceInput,
+		Options:                          options,
 	}
 	mock.lockDeleteTrafficPolicyInstanceWithContext.Lock()
 	mock.calls.DeleteTrafficPolicyInstanceWithContext = append(mock.calls.DeleteTrafficPolicyInstanceWithContext, callInfo)
 	mock.lockDeleteTrafficPolicyInstanceWithContext.Unlock()
-	return mock.DeleteTrafficPolicyInstanceWithContextFunc(in1, in2, in3...)
+	return mock.DeleteTrafficPolicyInstanceWithContextFunc(contextMoqParam, deleteTrafficPolicyInstanceInput, options...)
 }
 
 // DeleteTrafficPolicyInstanceWithContextCalls gets all the calls that were made to DeleteTrafficPolicyInstanceWithContext.
 // Check the length with:
 //     len(mockedRoute53API.DeleteTrafficPolicyInstanceWithContextCalls())
 func (mock *Route53APIMock) DeleteTrafficPolicyInstanceWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.DeleteTrafficPolicyInstanceInput
-	In3 []request.Option
+	ContextMoqParam                  context.Context
+	DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
+	Options                          []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.DeleteTrafficPolicyInstanceInput
-		In3 []request.Option
+		ContextMoqParam                  context.Context
+		DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
+		Options                          []request.Option
 	}
 	mock.lockDeleteTrafficPolicyInstanceWithContext.RLock()
 	calls = mock.calls.DeleteTrafficPolicyInstanceWithContext
@@ -4116,29 +5440,29 @@ func (mock *Route53APIMock) DeleteTrafficPolicyInstanceWithContextCalls() []stru
 }
 
 // DeleteTrafficPolicyRequest calls DeleteTrafficPolicyRequestFunc.
-func (mock *Route53APIMock) DeleteTrafficPolicyRequest(in1 *route53.DeleteTrafficPolicyInput) (*request.Request, *route53.DeleteTrafficPolicyOutput) {
+func (mock *Route53APIMock) DeleteTrafficPolicyRequest(deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput) (*request.Request, *route53.DeleteTrafficPolicyOutput) {
 	if mock.DeleteTrafficPolicyRequestFunc == nil {
 		panic("Route53APIMock.DeleteTrafficPolicyRequestFunc: method is nil but Route53API.DeleteTrafficPolicyRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteTrafficPolicyInput
+		DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
 	}{
-		In1: in1,
+		DeleteTrafficPolicyInput: deleteTrafficPolicyInput,
 	}
 	mock.lockDeleteTrafficPolicyRequest.Lock()
 	mock.calls.DeleteTrafficPolicyRequest = append(mock.calls.DeleteTrafficPolicyRequest, callInfo)
 	mock.lockDeleteTrafficPolicyRequest.Unlock()
-	return mock.DeleteTrafficPolicyRequestFunc(in1)
+	return mock.DeleteTrafficPolicyRequestFunc(deleteTrafficPolicyInput)
 }
 
 // DeleteTrafficPolicyRequestCalls gets all the calls that were made to DeleteTrafficPolicyRequest.
 // Check the length with:
 //     len(mockedRoute53API.DeleteTrafficPolicyRequestCalls())
 func (mock *Route53APIMock) DeleteTrafficPolicyRequestCalls() []struct {
-	In1 *route53.DeleteTrafficPolicyInput
+	DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteTrafficPolicyInput
+		DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
 	}
 	mock.lockDeleteTrafficPolicyRequest.RLock()
 	calls = mock.calls.DeleteTrafficPolicyRequest
@@ -4147,37 +5471,37 @@ func (mock *Route53APIMock) DeleteTrafficPolicyRequestCalls() []struct {
 }
 
 // DeleteTrafficPolicyWithContext calls DeleteTrafficPolicyWithContextFunc.
-func (mock *Route53APIMock) DeleteTrafficPolicyWithContext(in1 context.Context, in2 *route53.DeleteTrafficPolicyInput, in3 ...request.Option) (*route53.DeleteTrafficPolicyOutput, error) {
+func (mock *Route53APIMock) DeleteTrafficPolicyWithContext(contextMoqParam context.Context, deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput, options ...request.Option) (*route53.DeleteTrafficPolicyOutput, error) {
 	if mock.DeleteTrafficPolicyWithContextFunc == nil {
 		panic("Route53APIMock.DeleteTrafficPolicyWithContextFunc: method is nil but Route53API.DeleteTrafficPolicyWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.DeleteTrafficPolicyInput
-		In3 []request.Option
+		ContextMoqParam          context.Context
+		DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
+		Options                  []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:          contextMoqParam,
+		DeleteTrafficPolicyInput: deleteTrafficPolicyInput,
+		Options:                  options,
 	}
 	mock.lockDeleteTrafficPolicyWithContext.Lock()
 	mock.calls.DeleteTrafficPolicyWithContext = append(mock.calls.DeleteTrafficPolicyWithContext, callInfo)
 	mock.lockDeleteTrafficPolicyWithContext.Unlock()
-	return mock.DeleteTrafficPolicyWithContextFunc(in1, in2, in3...)
+	return mock.DeleteTrafficPolicyWithContextFunc(contextMoqParam, deleteTrafficPolicyInput, options...)
 }
 
 // DeleteTrafficPolicyWithContextCalls gets all the calls that were made to DeleteTrafficPolicyWithContext.
 // Check the length with:
 //     len(mockedRoute53API.DeleteTrafficPolicyWithContextCalls())
 func (mock *Route53APIMock) DeleteTrafficPolicyWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.DeleteTrafficPolicyInput
-	In3 []request.Option
+	ContextMoqParam          context.Context
+	DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
+	Options                  []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.DeleteTrafficPolicyInput
-		In3 []request.Option
+		ContextMoqParam          context.Context
+		DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
+		Options                  []request.Option
 	}
 	mock.lockDeleteTrafficPolicyWithContext.RLock()
 	calls = mock.calls.DeleteTrafficPolicyWithContext
@@ -4186,29 +5510,29 @@ func (mock *Route53APIMock) DeleteTrafficPolicyWithContextCalls() []struct {
 }
 
 // DeleteVPCAssociationAuthorization calls DeleteVPCAssociationAuthorizationFunc.
-func (mock *Route53APIMock) DeleteVPCAssociationAuthorization(in1 *route53.DeleteVPCAssociationAuthorizationInput) (*route53.DeleteVPCAssociationAuthorizationOutput, error) {
+func (mock *Route53APIMock) DeleteVPCAssociationAuthorization(deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput) (*route53.DeleteVPCAssociationAuthorizationOutput, error) {
 	if mock.DeleteVPCAssociationAuthorizationFunc == nil {
 		panic("Route53APIMock.DeleteVPCAssociationAuthorizationFunc: method is nil but Route53API.DeleteVPCAssociationAuthorization was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteVPCAssociationAuthorizationInput
+		DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
 	}{
-		In1: in1,
+		DeleteVPCAssociationAuthorizationInput: deleteVPCAssociationAuthorizationInput,
 	}
 	mock.lockDeleteVPCAssociationAuthorization.Lock()
 	mock.calls.DeleteVPCAssociationAuthorization = append(mock.calls.DeleteVPCAssociationAuthorization, callInfo)
 	mock.lockDeleteVPCAssociationAuthorization.Unlock()
-	return mock.DeleteVPCAssociationAuthorizationFunc(in1)
+	return mock.DeleteVPCAssociationAuthorizationFunc(deleteVPCAssociationAuthorizationInput)
 }
 
 // DeleteVPCAssociationAuthorizationCalls gets all the calls that were made to DeleteVPCAssociationAuthorization.
 // Check the length with:
 //     len(mockedRoute53API.DeleteVPCAssociationAuthorizationCalls())
 func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationCalls() []struct {
-	In1 *route53.DeleteVPCAssociationAuthorizationInput
+	DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteVPCAssociationAuthorizationInput
+		DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
 	}
 	mock.lockDeleteVPCAssociationAuthorization.RLock()
 	calls = mock.calls.DeleteVPCAssociationAuthorization
@@ -4217,29 +5541,29 @@ func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationCalls() []struct {
 }
 
 // DeleteVPCAssociationAuthorizationRequest calls DeleteVPCAssociationAuthorizationRequestFunc.
-func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationRequest(in1 *route53.DeleteVPCAssociationAuthorizationInput) (*request.Request, *route53.DeleteVPCAssociationAuthorizationOutput) {
+func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationRequest(deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput) (*request.Request, *route53.DeleteVPCAssociationAuthorizationOutput) {
 	if mock.DeleteVPCAssociationAuthorizationRequestFunc == nil {
 		panic("Route53APIMock.DeleteVPCAssociationAuthorizationRequestFunc: method is nil but Route53API.DeleteVPCAssociationAuthorizationRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DeleteVPCAssociationAuthorizationInput
+		DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
 	}{
-		In1: in1,
+		DeleteVPCAssociationAuthorizationInput: deleteVPCAssociationAuthorizationInput,
 	}
 	mock.lockDeleteVPCAssociationAuthorizationRequest.Lock()
 	mock.calls.DeleteVPCAssociationAuthorizationRequest = append(mock.calls.DeleteVPCAssociationAuthorizationRequest, callInfo)
 	mock.lockDeleteVPCAssociationAuthorizationRequest.Unlock()
-	return mock.DeleteVPCAssociationAuthorizationRequestFunc(in1)
+	return mock.DeleteVPCAssociationAuthorizationRequestFunc(deleteVPCAssociationAuthorizationInput)
 }
 
 // DeleteVPCAssociationAuthorizationRequestCalls gets all the calls that were made to DeleteVPCAssociationAuthorizationRequest.
 // Check the length with:
 //     len(mockedRoute53API.DeleteVPCAssociationAuthorizationRequestCalls())
 func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationRequestCalls() []struct {
-	In1 *route53.DeleteVPCAssociationAuthorizationInput
+	DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
 } {
 	var calls []struct {
-		In1 *route53.DeleteVPCAssociationAuthorizationInput
+		DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
 	}
 	mock.lockDeleteVPCAssociationAuthorizationRequest.RLock()
 	calls = mock.calls.DeleteVPCAssociationAuthorizationRequest
@@ -4248,37 +5572,37 @@ func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationRequestCalls() []st
 }
 
 // DeleteVPCAssociationAuthorizationWithContext calls DeleteVPCAssociationAuthorizationWithContextFunc.
-func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationWithContext(in1 context.Context, in2 *route53.DeleteVPCAssociationAuthorizationInput, in3 ...request.Option) (*route53.DeleteVPCAssociationAuthorizationOutput, error) {
+func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationWithContext(contextMoqParam context.Context, deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput, options ...request.Option) (*route53.DeleteVPCAssociationAuthorizationOutput, error) {
 	if mock.DeleteVPCAssociationAuthorizationWithContextFunc == nil {
 		panic("Route53APIMock.DeleteVPCAssociationAuthorizationWithContextFunc: method is nil but Route53API.DeleteVPCAssociationAuthorizationWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.DeleteVPCAssociationAuthorizationInput
-		In3 []request.Option
+		ContextMoqParam                        context.Context
+		DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
+		Options                                []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                        contextMoqParam,
+		DeleteVPCAssociationAuthorizationInput: deleteVPCAssociationAuthorizationInput,
+		Options:                                options,
 	}
 	mock.lockDeleteVPCAssociationAuthorizationWithContext.Lock()
 	mock.calls.DeleteVPCAssociationAuthorizationWithContext = append(mock.calls.DeleteVPCAssociationAuthorizationWithContext, callInfo)
 	mock.lockDeleteVPCAssociationAuthorizationWithContext.Unlock()
-	return mock.DeleteVPCAssociationAuthorizationWithContextFunc(in1, in2, in3...)
+	return mock.DeleteVPCAssociationAuthorizationWithContextFunc(contextMoqParam, deleteVPCAssociationAuthorizationInput, options...)
 }
 
 // DeleteVPCAssociationAuthorizationWithContextCalls gets all the calls that were made to DeleteVPCAssociationAuthorizationWithContext.
 // Check the length with:
 //     len(mockedRoute53API.DeleteVPCAssociationAuthorizationWithContextCalls())
 func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.DeleteVPCAssociationAuthorizationInput
-	In3 []request.Option
+	ContextMoqParam                        context.Context
+	DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
+	Options                                []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.DeleteVPCAssociationAuthorizationInput
-		In3 []request.Option
+		ContextMoqParam                        context.Context
+		DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
+		Options                                []request.Option
 	}
 	mock.lockDeleteVPCAssociationAuthorizationWithContext.RLock()
 	calls = mock.calls.DeleteVPCAssociationAuthorizationWithContext
@@ -4286,30 +5610,131 @@ func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationWithContextCalls() 
 	return calls
 }
 
+// DisableHostedZoneDNSSEC calls DisableHostedZoneDNSSECFunc.
+func (mock *Route53APIMock) DisableHostedZoneDNSSEC(disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput) (*route53.DisableHostedZoneDNSSECOutput, error) {
+	if mock.DisableHostedZoneDNSSECFunc == nil {
+		panic("Route53APIMock.DisableHostedZoneDNSSECFunc: method is nil but Route53API.DisableHostedZoneDNSSEC was just called")
+	}
+	callInfo := struct {
+		DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
+	}{
+		DisableHostedZoneDNSSECInput: disableHostedZoneDNSSECInput,
+	}
+	mock.lockDisableHostedZoneDNSSEC.Lock()
+	mock.calls.DisableHostedZoneDNSSEC = append(mock.calls.DisableHostedZoneDNSSEC, callInfo)
+	mock.lockDisableHostedZoneDNSSEC.Unlock()
+	return mock.DisableHostedZoneDNSSECFunc(disableHostedZoneDNSSECInput)
+}
+
+// DisableHostedZoneDNSSECCalls gets all the calls that were made to DisableHostedZoneDNSSEC.
+// Check the length with:
+//     len(mockedRoute53API.DisableHostedZoneDNSSECCalls())
+func (mock *Route53APIMock) DisableHostedZoneDNSSECCalls() []struct {
+	DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
+} {
+	var calls []struct {
+		DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
+	}
+	mock.lockDisableHostedZoneDNSSEC.RLock()
+	calls = mock.calls.DisableHostedZoneDNSSEC
+	mock.lockDisableHostedZoneDNSSEC.RUnlock()
+	return calls
+}
+
+// DisableHostedZoneDNSSECRequest calls DisableHostedZoneDNSSECRequestFunc.
+func (mock *Route53APIMock) DisableHostedZoneDNSSECRequest(disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput) (*request.Request, *route53.DisableHostedZoneDNSSECOutput) {
+	if mock.DisableHostedZoneDNSSECRequestFunc == nil {
+		panic("Route53APIMock.DisableHostedZoneDNSSECRequestFunc: method is nil but Route53API.DisableHostedZoneDNSSECRequest was just called")
+	}
+	callInfo := struct {
+		DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
+	}{
+		DisableHostedZoneDNSSECInput: disableHostedZoneDNSSECInput,
+	}
+	mock.lockDisableHostedZoneDNSSECRequest.Lock()
+	mock.calls.DisableHostedZoneDNSSECRequest = append(mock.calls.DisableHostedZoneDNSSECRequest, callInfo)
+	mock.lockDisableHostedZoneDNSSECRequest.Unlock()
+	return mock.DisableHostedZoneDNSSECRequestFunc(disableHostedZoneDNSSECInput)
+}
+
+// DisableHostedZoneDNSSECRequestCalls gets all the calls that were made to DisableHostedZoneDNSSECRequest.
+// Check the length with:
+//     len(mockedRoute53API.DisableHostedZoneDNSSECRequestCalls())
+func (mock *Route53APIMock) DisableHostedZoneDNSSECRequestCalls() []struct {
+	DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
+} {
+	var calls []struct {
+		DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
+	}
+	mock.lockDisableHostedZoneDNSSECRequest.RLock()
+	calls = mock.calls.DisableHostedZoneDNSSECRequest
+	mock.lockDisableHostedZoneDNSSECRequest.RUnlock()
+	return calls
+}
+
+// DisableHostedZoneDNSSECWithContext calls DisableHostedZoneDNSSECWithContextFunc.
+func (mock *Route53APIMock) DisableHostedZoneDNSSECWithContext(contextMoqParam context.Context, disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput, options ...request.Option) (*route53.DisableHostedZoneDNSSECOutput, error) {
+	if mock.DisableHostedZoneDNSSECWithContextFunc == nil {
+		panic("Route53APIMock.DisableHostedZoneDNSSECWithContextFunc: method is nil but Route53API.DisableHostedZoneDNSSECWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam              context.Context
+		DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
+		Options                      []request.Option
+	}{
+		ContextMoqParam:              contextMoqParam,
+		DisableHostedZoneDNSSECInput: disableHostedZoneDNSSECInput,
+		Options:                      options,
+	}
+	mock.lockDisableHostedZoneDNSSECWithContext.Lock()
+	mock.calls.DisableHostedZoneDNSSECWithContext = append(mock.calls.DisableHostedZoneDNSSECWithContext, callInfo)
+	mock.lockDisableHostedZoneDNSSECWithContext.Unlock()
+	return mock.DisableHostedZoneDNSSECWithContextFunc(contextMoqParam, disableHostedZoneDNSSECInput, options...)
+}
+
+// DisableHostedZoneDNSSECWithContextCalls gets all the calls that were made to DisableHostedZoneDNSSECWithContext.
+// Check the length with:
+//     len(mockedRoute53API.DisableHostedZoneDNSSECWithContextCalls())
+func (mock *Route53APIMock) DisableHostedZoneDNSSECWithContextCalls() []struct {
+	ContextMoqParam              context.Context
+	DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
+	Options                      []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam              context.Context
+		DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
+		Options                      []request.Option
+	}
+	mock.lockDisableHostedZoneDNSSECWithContext.RLock()
+	calls = mock.calls.DisableHostedZoneDNSSECWithContext
+	mock.lockDisableHostedZoneDNSSECWithContext.RUnlock()
+	return calls
+}
+
 // DisassociateVPCFromHostedZone calls DisassociateVPCFromHostedZoneFunc.
-func (mock *Route53APIMock) DisassociateVPCFromHostedZone(in1 *route53.DisassociateVPCFromHostedZoneInput) (*route53.DisassociateVPCFromHostedZoneOutput, error) {
+func (mock *Route53APIMock) DisassociateVPCFromHostedZone(disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput) (*route53.DisassociateVPCFromHostedZoneOutput, error) {
 	if mock.DisassociateVPCFromHostedZoneFunc == nil {
 		panic("Route53APIMock.DisassociateVPCFromHostedZoneFunc: method is nil but Route53API.DisassociateVPCFromHostedZone was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DisassociateVPCFromHostedZoneInput
+		DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
 	}{
-		In1: in1,
+		DisassociateVPCFromHostedZoneInput: disassociateVPCFromHostedZoneInput,
 	}
 	mock.lockDisassociateVPCFromHostedZone.Lock()
 	mock.calls.DisassociateVPCFromHostedZone = append(mock.calls.DisassociateVPCFromHostedZone, callInfo)
 	mock.lockDisassociateVPCFromHostedZone.Unlock()
-	return mock.DisassociateVPCFromHostedZoneFunc(in1)
+	return mock.DisassociateVPCFromHostedZoneFunc(disassociateVPCFromHostedZoneInput)
 }
 
 // DisassociateVPCFromHostedZoneCalls gets all the calls that were made to DisassociateVPCFromHostedZone.
 // Check the length with:
 //     len(mockedRoute53API.DisassociateVPCFromHostedZoneCalls())
 func (mock *Route53APIMock) DisassociateVPCFromHostedZoneCalls() []struct {
-	In1 *route53.DisassociateVPCFromHostedZoneInput
+	DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
 } {
 	var calls []struct {
-		In1 *route53.DisassociateVPCFromHostedZoneInput
+		DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
 	}
 	mock.lockDisassociateVPCFromHostedZone.RLock()
 	calls = mock.calls.DisassociateVPCFromHostedZone
@@ -4318,29 +5743,29 @@ func (mock *Route53APIMock) DisassociateVPCFromHostedZoneCalls() []struct {
 }
 
 // DisassociateVPCFromHostedZoneRequest calls DisassociateVPCFromHostedZoneRequestFunc.
-func (mock *Route53APIMock) DisassociateVPCFromHostedZoneRequest(in1 *route53.DisassociateVPCFromHostedZoneInput) (*request.Request, *route53.DisassociateVPCFromHostedZoneOutput) {
+func (mock *Route53APIMock) DisassociateVPCFromHostedZoneRequest(disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput) (*request.Request, *route53.DisassociateVPCFromHostedZoneOutput) {
 	if mock.DisassociateVPCFromHostedZoneRequestFunc == nil {
 		panic("Route53APIMock.DisassociateVPCFromHostedZoneRequestFunc: method is nil but Route53API.DisassociateVPCFromHostedZoneRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.DisassociateVPCFromHostedZoneInput
+		DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
 	}{
-		In1: in1,
+		DisassociateVPCFromHostedZoneInput: disassociateVPCFromHostedZoneInput,
 	}
 	mock.lockDisassociateVPCFromHostedZoneRequest.Lock()
 	mock.calls.DisassociateVPCFromHostedZoneRequest = append(mock.calls.DisassociateVPCFromHostedZoneRequest, callInfo)
 	mock.lockDisassociateVPCFromHostedZoneRequest.Unlock()
-	return mock.DisassociateVPCFromHostedZoneRequestFunc(in1)
+	return mock.DisassociateVPCFromHostedZoneRequestFunc(disassociateVPCFromHostedZoneInput)
 }
 
 // DisassociateVPCFromHostedZoneRequestCalls gets all the calls that were made to DisassociateVPCFromHostedZoneRequest.
 // Check the length with:
 //     len(mockedRoute53API.DisassociateVPCFromHostedZoneRequestCalls())
 func (mock *Route53APIMock) DisassociateVPCFromHostedZoneRequestCalls() []struct {
-	In1 *route53.DisassociateVPCFromHostedZoneInput
+	DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
 } {
 	var calls []struct {
-		In1 *route53.DisassociateVPCFromHostedZoneInput
+		DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
 	}
 	mock.lockDisassociateVPCFromHostedZoneRequest.RLock()
 	calls = mock.calls.DisassociateVPCFromHostedZoneRequest
@@ -4349,37 +5774,37 @@ func (mock *Route53APIMock) DisassociateVPCFromHostedZoneRequestCalls() []struct
 }
 
 // DisassociateVPCFromHostedZoneWithContext calls DisassociateVPCFromHostedZoneWithContextFunc.
-func (mock *Route53APIMock) DisassociateVPCFromHostedZoneWithContext(in1 context.Context, in2 *route53.DisassociateVPCFromHostedZoneInput, in3 ...request.Option) (*route53.DisassociateVPCFromHostedZoneOutput, error) {
+func (mock *Route53APIMock) DisassociateVPCFromHostedZoneWithContext(contextMoqParam context.Context, disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput, options ...request.Option) (*route53.DisassociateVPCFromHostedZoneOutput, error) {
 	if mock.DisassociateVPCFromHostedZoneWithContextFunc == nil {
 		panic("Route53APIMock.DisassociateVPCFromHostedZoneWithContextFunc: method is nil but Route53API.DisassociateVPCFromHostedZoneWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.DisassociateVPCFromHostedZoneInput
-		In3 []request.Option
+		ContextMoqParam                    context.Context
+		DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
+		Options                            []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                    contextMoqParam,
+		DisassociateVPCFromHostedZoneInput: disassociateVPCFromHostedZoneInput,
+		Options:                            options,
 	}
 	mock.lockDisassociateVPCFromHostedZoneWithContext.Lock()
 	mock.calls.DisassociateVPCFromHostedZoneWithContext = append(mock.calls.DisassociateVPCFromHostedZoneWithContext, callInfo)
 	mock.lockDisassociateVPCFromHostedZoneWithContext.Unlock()
-	return mock.DisassociateVPCFromHostedZoneWithContextFunc(in1, in2, in3...)
+	return mock.DisassociateVPCFromHostedZoneWithContextFunc(contextMoqParam, disassociateVPCFromHostedZoneInput, options...)
 }
 
 // DisassociateVPCFromHostedZoneWithContextCalls gets all the calls that were made to DisassociateVPCFromHostedZoneWithContext.
 // Check the length with:
 //     len(mockedRoute53API.DisassociateVPCFromHostedZoneWithContextCalls())
 func (mock *Route53APIMock) DisassociateVPCFromHostedZoneWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.DisassociateVPCFromHostedZoneInput
-	In3 []request.Option
+	ContextMoqParam                    context.Context
+	DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
+	Options                            []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.DisassociateVPCFromHostedZoneInput
-		In3 []request.Option
+		ContextMoqParam                    context.Context
+		DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
+		Options                            []request.Option
 	}
 	mock.lockDisassociateVPCFromHostedZoneWithContext.RLock()
 	calls = mock.calls.DisassociateVPCFromHostedZoneWithContext
@@ -4387,30 +5812,131 @@ func (mock *Route53APIMock) DisassociateVPCFromHostedZoneWithContextCalls() []st
 	return calls
 }
 
+// EnableHostedZoneDNSSEC calls EnableHostedZoneDNSSECFunc.
+func (mock *Route53APIMock) EnableHostedZoneDNSSEC(enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput) (*route53.EnableHostedZoneDNSSECOutput, error) {
+	if mock.EnableHostedZoneDNSSECFunc == nil {
+		panic("Route53APIMock.EnableHostedZoneDNSSECFunc: method is nil but Route53API.EnableHostedZoneDNSSEC was just called")
+	}
+	callInfo := struct {
+		EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
+	}{
+		EnableHostedZoneDNSSECInput: enableHostedZoneDNSSECInput,
+	}
+	mock.lockEnableHostedZoneDNSSEC.Lock()
+	mock.calls.EnableHostedZoneDNSSEC = append(mock.calls.EnableHostedZoneDNSSEC, callInfo)
+	mock.lockEnableHostedZoneDNSSEC.Unlock()
+	return mock.EnableHostedZoneDNSSECFunc(enableHostedZoneDNSSECInput)
+}
+
+// EnableHostedZoneDNSSECCalls gets all the calls that were made to EnableHostedZoneDNSSEC.
+// Check the length with:
+//     len(mockedRoute53API.EnableHostedZoneDNSSECCalls())
+func (mock *Route53APIMock) EnableHostedZoneDNSSECCalls() []struct {
+	EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
+} {
+	var calls []struct {
+		EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
+	}
+	mock.lockEnableHostedZoneDNSSEC.RLock()
+	calls = mock.calls.EnableHostedZoneDNSSEC
+	mock.lockEnableHostedZoneDNSSEC.RUnlock()
+	return calls
+}
+
+// EnableHostedZoneDNSSECRequest calls EnableHostedZoneDNSSECRequestFunc.
+func (mock *Route53APIMock) EnableHostedZoneDNSSECRequest(enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput) (*request.Request, *route53.EnableHostedZoneDNSSECOutput) {
+	if mock.EnableHostedZoneDNSSECRequestFunc == nil {
+		panic("Route53APIMock.EnableHostedZoneDNSSECRequestFunc: method is nil but Route53API.EnableHostedZoneDNSSECRequest was just called")
+	}
+	callInfo := struct {
+		EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
+	}{
+		EnableHostedZoneDNSSECInput: enableHostedZoneDNSSECInput,
+	}
+	mock.lockEnableHostedZoneDNSSECRequest.Lock()
+	mock.calls.EnableHostedZoneDNSSECRequest = append(mock.calls.EnableHostedZoneDNSSECRequest, callInfo)
+	mock.lockEnableHostedZoneDNSSECRequest.Unlock()
+	return mock.EnableHostedZoneDNSSECRequestFunc(enableHostedZoneDNSSECInput)
+}
+
+// EnableHostedZoneDNSSECRequestCalls gets all the calls that were made to EnableHostedZoneDNSSECRequest.
+// Check the length with:
+//     len(mockedRoute53API.EnableHostedZoneDNSSECRequestCalls())
+func (mock *Route53APIMock) EnableHostedZoneDNSSECRequestCalls() []struct {
+	EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
+} {
+	var calls []struct {
+		EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
+	}
+	mock.lockEnableHostedZoneDNSSECRequest.RLock()
+	calls = mock.calls.EnableHostedZoneDNSSECRequest
+	mock.lockEnableHostedZoneDNSSECRequest.RUnlock()
+	return calls
+}
+
+// EnableHostedZoneDNSSECWithContext calls EnableHostedZoneDNSSECWithContextFunc.
+func (mock *Route53APIMock) EnableHostedZoneDNSSECWithContext(contextMoqParam context.Context, enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput, options ...request.Option) (*route53.EnableHostedZoneDNSSECOutput, error) {
+	if mock.EnableHostedZoneDNSSECWithContextFunc == nil {
+		panic("Route53APIMock.EnableHostedZoneDNSSECWithContextFunc: method is nil but Route53API.EnableHostedZoneDNSSECWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam             context.Context
+		EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
+		Options                     []request.Option
+	}{
+		ContextMoqParam:             contextMoqParam,
+		EnableHostedZoneDNSSECInput: enableHostedZoneDNSSECInput,
+		Options:                     options,
+	}
+	mock.lockEnableHostedZoneDNSSECWithContext.Lock()
+	mock.calls.EnableHostedZoneDNSSECWithContext = append(mock.calls.EnableHostedZoneDNSSECWithContext, callInfo)
+	mock.lockEnableHostedZoneDNSSECWithContext.Unlock()
+	return mock.EnableHostedZoneDNSSECWithContextFunc(contextMoqParam, enableHostedZoneDNSSECInput, options...)
+}
+
+// EnableHostedZoneDNSSECWithContextCalls gets all the calls that were made to EnableHostedZoneDNSSECWithContext.
+// Check the length with:
+//     len(mockedRoute53API.EnableHostedZoneDNSSECWithContextCalls())
+func (mock *Route53APIMock) EnableHostedZoneDNSSECWithContextCalls() []struct {
+	ContextMoqParam             context.Context
+	EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
+	Options                     []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam             context.Context
+		EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
+		Options                     []request.Option
+	}
+	mock.lockEnableHostedZoneDNSSECWithContext.RLock()
+	calls = mock.calls.EnableHostedZoneDNSSECWithContext
+	mock.lockEnableHostedZoneDNSSECWithContext.RUnlock()
+	return calls
+}
+
 // GetAccountLimit calls GetAccountLimitFunc.
-func (mock *Route53APIMock) GetAccountLimit(in1 *route53.GetAccountLimitInput) (*route53.GetAccountLimitOutput, error) {
+func (mock *Route53APIMock) GetAccountLimit(getAccountLimitInput *route53.GetAccountLimitInput) (*route53.GetAccountLimitOutput, error) {
 	if mock.GetAccountLimitFunc == nil {
 		panic("Route53APIMock.GetAccountLimitFunc: method is nil but Route53API.GetAccountLimit was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetAccountLimitInput
+		GetAccountLimitInput *route53.GetAccountLimitInput
 	}{
-		In1: in1,
+		GetAccountLimitInput: getAccountLimitInput,
 	}
 	mock.lockGetAccountLimit.Lock()
 	mock.calls.GetAccountLimit = append(mock.calls.GetAccountLimit, callInfo)
 	mock.lockGetAccountLimit.Unlock()
-	return mock.GetAccountLimitFunc(in1)
+	return mock.GetAccountLimitFunc(getAccountLimitInput)
 }
 
 // GetAccountLimitCalls gets all the calls that were made to GetAccountLimit.
 // Check the length with:
 //     len(mockedRoute53API.GetAccountLimitCalls())
 func (mock *Route53APIMock) GetAccountLimitCalls() []struct {
-	In1 *route53.GetAccountLimitInput
+	GetAccountLimitInput *route53.GetAccountLimitInput
 } {
 	var calls []struct {
-		In1 *route53.GetAccountLimitInput
+		GetAccountLimitInput *route53.GetAccountLimitInput
 	}
 	mock.lockGetAccountLimit.RLock()
 	calls = mock.calls.GetAccountLimit
@@ -4419,29 +5945,29 @@ func (mock *Route53APIMock) GetAccountLimitCalls() []struct {
 }
 
 // GetAccountLimitRequest calls GetAccountLimitRequestFunc.
-func (mock *Route53APIMock) GetAccountLimitRequest(in1 *route53.GetAccountLimitInput) (*request.Request, *route53.GetAccountLimitOutput) {
+func (mock *Route53APIMock) GetAccountLimitRequest(getAccountLimitInput *route53.GetAccountLimitInput) (*request.Request, *route53.GetAccountLimitOutput) {
 	if mock.GetAccountLimitRequestFunc == nil {
 		panic("Route53APIMock.GetAccountLimitRequestFunc: method is nil but Route53API.GetAccountLimitRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetAccountLimitInput
+		GetAccountLimitInput *route53.GetAccountLimitInput
 	}{
-		In1: in1,
+		GetAccountLimitInput: getAccountLimitInput,
 	}
 	mock.lockGetAccountLimitRequest.Lock()
 	mock.calls.GetAccountLimitRequest = append(mock.calls.GetAccountLimitRequest, callInfo)
 	mock.lockGetAccountLimitRequest.Unlock()
-	return mock.GetAccountLimitRequestFunc(in1)
+	return mock.GetAccountLimitRequestFunc(getAccountLimitInput)
 }
 
 // GetAccountLimitRequestCalls gets all the calls that were made to GetAccountLimitRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetAccountLimitRequestCalls())
 func (mock *Route53APIMock) GetAccountLimitRequestCalls() []struct {
-	In1 *route53.GetAccountLimitInput
+	GetAccountLimitInput *route53.GetAccountLimitInput
 } {
 	var calls []struct {
-		In1 *route53.GetAccountLimitInput
+		GetAccountLimitInput *route53.GetAccountLimitInput
 	}
 	mock.lockGetAccountLimitRequest.RLock()
 	calls = mock.calls.GetAccountLimitRequest
@@ -4450,37 +5976,37 @@ func (mock *Route53APIMock) GetAccountLimitRequestCalls() []struct {
 }
 
 // GetAccountLimitWithContext calls GetAccountLimitWithContextFunc.
-func (mock *Route53APIMock) GetAccountLimitWithContext(in1 context.Context, in2 *route53.GetAccountLimitInput, in3 ...request.Option) (*route53.GetAccountLimitOutput, error) {
+func (mock *Route53APIMock) GetAccountLimitWithContext(contextMoqParam context.Context, getAccountLimitInput *route53.GetAccountLimitInput, options ...request.Option) (*route53.GetAccountLimitOutput, error) {
 	if mock.GetAccountLimitWithContextFunc == nil {
 		panic("Route53APIMock.GetAccountLimitWithContextFunc: method is nil but Route53API.GetAccountLimitWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetAccountLimitInput
-		In3 []request.Option
+		ContextMoqParam      context.Context
+		GetAccountLimitInput *route53.GetAccountLimitInput
+		Options              []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:      contextMoqParam,
+		GetAccountLimitInput: getAccountLimitInput,
+		Options:              options,
 	}
 	mock.lockGetAccountLimitWithContext.Lock()
 	mock.calls.GetAccountLimitWithContext = append(mock.calls.GetAccountLimitWithContext, callInfo)
 	mock.lockGetAccountLimitWithContext.Unlock()
-	return mock.GetAccountLimitWithContextFunc(in1, in2, in3...)
+	return mock.GetAccountLimitWithContextFunc(contextMoqParam, getAccountLimitInput, options...)
 }
 
 // GetAccountLimitWithContextCalls gets all the calls that were made to GetAccountLimitWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetAccountLimitWithContextCalls())
 func (mock *Route53APIMock) GetAccountLimitWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetAccountLimitInput
-	In3 []request.Option
+	ContextMoqParam      context.Context
+	GetAccountLimitInput *route53.GetAccountLimitInput
+	Options              []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetAccountLimitInput
-		In3 []request.Option
+		ContextMoqParam      context.Context
+		GetAccountLimitInput *route53.GetAccountLimitInput
+		Options              []request.Option
 	}
 	mock.lockGetAccountLimitWithContext.RLock()
 	calls = mock.calls.GetAccountLimitWithContext
@@ -4489,29 +6015,29 @@ func (mock *Route53APIMock) GetAccountLimitWithContextCalls() []struct {
 }
 
 // GetChange calls GetChangeFunc.
-func (mock *Route53APIMock) GetChange(in1 *route53.GetChangeInput) (*route53.GetChangeOutput, error) {
+func (mock *Route53APIMock) GetChange(getChangeInput *route53.GetChangeInput) (*route53.GetChangeOutput, error) {
 	if mock.GetChangeFunc == nil {
 		panic("Route53APIMock.GetChangeFunc: method is nil but Route53API.GetChange was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetChangeInput
+		GetChangeInput *route53.GetChangeInput
 	}{
-		In1: in1,
+		GetChangeInput: getChangeInput,
 	}
 	mock.lockGetChange.Lock()
 	mock.calls.GetChange = append(mock.calls.GetChange, callInfo)
 	mock.lockGetChange.Unlock()
-	return mock.GetChangeFunc(in1)
+	return mock.GetChangeFunc(getChangeInput)
 }
 
 // GetChangeCalls gets all the calls that were made to GetChange.
 // Check the length with:
 //     len(mockedRoute53API.GetChangeCalls())
 func (mock *Route53APIMock) GetChangeCalls() []struct {
-	In1 *route53.GetChangeInput
+	GetChangeInput *route53.GetChangeInput
 } {
 	var calls []struct {
-		In1 *route53.GetChangeInput
+		GetChangeInput *route53.GetChangeInput
 	}
 	mock.lockGetChange.RLock()
 	calls = mock.calls.GetChange
@@ -4520,29 +6046,29 @@ func (mock *Route53APIMock) GetChangeCalls() []struct {
 }
 
 // GetChangeRequest calls GetChangeRequestFunc.
-func (mock *Route53APIMock) GetChangeRequest(in1 *route53.GetChangeInput) (*request.Request, *route53.GetChangeOutput) {
+func (mock *Route53APIMock) GetChangeRequest(getChangeInput *route53.GetChangeInput) (*request.Request, *route53.GetChangeOutput) {
 	if mock.GetChangeRequestFunc == nil {
 		panic("Route53APIMock.GetChangeRequestFunc: method is nil but Route53API.GetChangeRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetChangeInput
+		GetChangeInput *route53.GetChangeInput
 	}{
-		In1: in1,
+		GetChangeInput: getChangeInput,
 	}
 	mock.lockGetChangeRequest.Lock()
 	mock.calls.GetChangeRequest = append(mock.calls.GetChangeRequest, callInfo)
 	mock.lockGetChangeRequest.Unlock()
-	return mock.GetChangeRequestFunc(in1)
+	return mock.GetChangeRequestFunc(getChangeInput)
 }
 
 // GetChangeRequestCalls gets all the calls that were made to GetChangeRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetChangeRequestCalls())
 func (mock *Route53APIMock) GetChangeRequestCalls() []struct {
-	In1 *route53.GetChangeInput
+	GetChangeInput *route53.GetChangeInput
 } {
 	var calls []struct {
-		In1 *route53.GetChangeInput
+		GetChangeInput *route53.GetChangeInput
 	}
 	mock.lockGetChangeRequest.RLock()
 	calls = mock.calls.GetChangeRequest
@@ -4551,37 +6077,37 @@ func (mock *Route53APIMock) GetChangeRequestCalls() []struct {
 }
 
 // GetChangeWithContext calls GetChangeWithContextFunc.
-func (mock *Route53APIMock) GetChangeWithContext(in1 context.Context, in2 *route53.GetChangeInput, in3 ...request.Option) (*route53.GetChangeOutput, error) {
+func (mock *Route53APIMock) GetChangeWithContext(contextMoqParam context.Context, getChangeInput *route53.GetChangeInput, options ...request.Option) (*route53.GetChangeOutput, error) {
 	if mock.GetChangeWithContextFunc == nil {
 		panic("Route53APIMock.GetChangeWithContextFunc: method is nil but Route53API.GetChangeWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetChangeInput
-		In3 []request.Option
+		ContextMoqParam context.Context
+		GetChangeInput  *route53.GetChangeInput
+		Options         []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam: contextMoqParam,
+		GetChangeInput:  getChangeInput,
+		Options:         options,
 	}
 	mock.lockGetChangeWithContext.Lock()
 	mock.calls.GetChangeWithContext = append(mock.calls.GetChangeWithContext, callInfo)
 	mock.lockGetChangeWithContext.Unlock()
-	return mock.GetChangeWithContextFunc(in1, in2, in3...)
+	return mock.GetChangeWithContextFunc(contextMoqParam, getChangeInput, options...)
 }
 
 // GetChangeWithContextCalls gets all the calls that were made to GetChangeWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetChangeWithContextCalls())
 func (mock *Route53APIMock) GetChangeWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetChangeInput
-	In3 []request.Option
+	ContextMoqParam context.Context
+	GetChangeInput  *route53.GetChangeInput
+	Options         []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetChangeInput
-		In3 []request.Option
+		ContextMoqParam context.Context
+		GetChangeInput  *route53.GetChangeInput
+		Options         []request.Option
 	}
 	mock.lockGetChangeWithContext.RLock()
 	calls = mock.calls.GetChangeWithContext
@@ -4590,29 +6116,29 @@ func (mock *Route53APIMock) GetChangeWithContextCalls() []struct {
 }
 
 // GetCheckerIpRanges calls GetCheckerIpRangesFunc.
-func (mock *Route53APIMock) GetCheckerIpRanges(in1 *route53.GetCheckerIpRangesInput) (*route53.GetCheckerIpRangesOutput, error) {
+func (mock *Route53APIMock) GetCheckerIpRanges(getCheckerIpRangesInput *route53.GetCheckerIpRangesInput) (*route53.GetCheckerIpRangesOutput, error) {
 	if mock.GetCheckerIpRangesFunc == nil {
 		panic("Route53APIMock.GetCheckerIpRangesFunc: method is nil but Route53API.GetCheckerIpRanges was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetCheckerIpRangesInput
+		GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
 	}{
-		In1: in1,
+		GetCheckerIpRangesInput: getCheckerIpRangesInput,
 	}
 	mock.lockGetCheckerIpRanges.Lock()
 	mock.calls.GetCheckerIpRanges = append(mock.calls.GetCheckerIpRanges, callInfo)
 	mock.lockGetCheckerIpRanges.Unlock()
-	return mock.GetCheckerIpRangesFunc(in1)
+	return mock.GetCheckerIpRangesFunc(getCheckerIpRangesInput)
 }
 
 // GetCheckerIpRangesCalls gets all the calls that were made to GetCheckerIpRanges.
 // Check the length with:
 //     len(mockedRoute53API.GetCheckerIpRangesCalls())
 func (mock *Route53APIMock) GetCheckerIpRangesCalls() []struct {
-	In1 *route53.GetCheckerIpRangesInput
+	GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
 } {
 	var calls []struct {
-		In1 *route53.GetCheckerIpRangesInput
+		GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
 	}
 	mock.lockGetCheckerIpRanges.RLock()
 	calls = mock.calls.GetCheckerIpRanges
@@ -4621,29 +6147,29 @@ func (mock *Route53APIMock) GetCheckerIpRangesCalls() []struct {
 }
 
 // GetCheckerIpRangesRequest calls GetCheckerIpRangesRequestFunc.
-func (mock *Route53APIMock) GetCheckerIpRangesRequest(in1 *route53.GetCheckerIpRangesInput) (*request.Request, *route53.GetCheckerIpRangesOutput) {
+func (mock *Route53APIMock) GetCheckerIpRangesRequest(getCheckerIpRangesInput *route53.GetCheckerIpRangesInput) (*request.Request, *route53.GetCheckerIpRangesOutput) {
 	if mock.GetCheckerIpRangesRequestFunc == nil {
 		panic("Route53APIMock.GetCheckerIpRangesRequestFunc: method is nil but Route53API.GetCheckerIpRangesRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetCheckerIpRangesInput
+		GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
 	}{
-		In1: in1,
+		GetCheckerIpRangesInput: getCheckerIpRangesInput,
 	}
 	mock.lockGetCheckerIpRangesRequest.Lock()
 	mock.calls.GetCheckerIpRangesRequest = append(mock.calls.GetCheckerIpRangesRequest, callInfo)
 	mock.lockGetCheckerIpRangesRequest.Unlock()
-	return mock.GetCheckerIpRangesRequestFunc(in1)
+	return mock.GetCheckerIpRangesRequestFunc(getCheckerIpRangesInput)
 }
 
 // GetCheckerIpRangesRequestCalls gets all the calls that were made to GetCheckerIpRangesRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetCheckerIpRangesRequestCalls())
 func (mock *Route53APIMock) GetCheckerIpRangesRequestCalls() []struct {
-	In1 *route53.GetCheckerIpRangesInput
+	GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
 } {
 	var calls []struct {
-		In1 *route53.GetCheckerIpRangesInput
+		GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
 	}
 	mock.lockGetCheckerIpRangesRequest.RLock()
 	calls = mock.calls.GetCheckerIpRangesRequest
@@ -4652,37 +6178,37 @@ func (mock *Route53APIMock) GetCheckerIpRangesRequestCalls() []struct {
 }
 
 // GetCheckerIpRangesWithContext calls GetCheckerIpRangesWithContextFunc.
-func (mock *Route53APIMock) GetCheckerIpRangesWithContext(in1 context.Context, in2 *route53.GetCheckerIpRangesInput, in3 ...request.Option) (*route53.GetCheckerIpRangesOutput, error) {
+func (mock *Route53APIMock) GetCheckerIpRangesWithContext(contextMoqParam context.Context, getCheckerIpRangesInput *route53.GetCheckerIpRangesInput, options ...request.Option) (*route53.GetCheckerIpRangesOutput, error) {
 	if mock.GetCheckerIpRangesWithContextFunc == nil {
 		panic("Route53APIMock.GetCheckerIpRangesWithContextFunc: method is nil but Route53API.GetCheckerIpRangesWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetCheckerIpRangesInput
-		In3 []request.Option
+		ContextMoqParam         context.Context
+		GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
+		Options                 []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:         contextMoqParam,
+		GetCheckerIpRangesInput: getCheckerIpRangesInput,
+		Options:                 options,
 	}
 	mock.lockGetCheckerIpRangesWithContext.Lock()
 	mock.calls.GetCheckerIpRangesWithContext = append(mock.calls.GetCheckerIpRangesWithContext, callInfo)
 	mock.lockGetCheckerIpRangesWithContext.Unlock()
-	return mock.GetCheckerIpRangesWithContextFunc(in1, in2, in3...)
+	return mock.GetCheckerIpRangesWithContextFunc(contextMoqParam, getCheckerIpRangesInput, options...)
 }
 
 // GetCheckerIpRangesWithContextCalls gets all the calls that were made to GetCheckerIpRangesWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetCheckerIpRangesWithContextCalls())
 func (mock *Route53APIMock) GetCheckerIpRangesWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetCheckerIpRangesInput
-	In3 []request.Option
+	ContextMoqParam         context.Context
+	GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
+	Options                 []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetCheckerIpRangesInput
-		In3 []request.Option
+		ContextMoqParam         context.Context
+		GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
+		Options                 []request.Option
 	}
 	mock.lockGetCheckerIpRangesWithContext.RLock()
 	calls = mock.calls.GetCheckerIpRangesWithContext
@@ -4690,30 +6216,131 @@ func (mock *Route53APIMock) GetCheckerIpRangesWithContextCalls() []struct {
 	return calls
 }
 
+// GetDNSSEC calls GetDNSSECFunc.
+func (mock *Route53APIMock) GetDNSSEC(getDNSSECInput *route53.GetDNSSECInput) (*route53.GetDNSSECOutput, error) {
+	if mock.GetDNSSECFunc == nil {
+		panic("Route53APIMock.GetDNSSECFunc: method is nil but Route53API.GetDNSSEC was just called")
+	}
+	callInfo := struct {
+		GetDNSSECInput *route53.GetDNSSECInput
+	}{
+		GetDNSSECInput: getDNSSECInput,
+	}
+	mock.lockGetDNSSEC.Lock()
+	mock.calls.GetDNSSEC = append(mock.calls.GetDNSSEC, callInfo)
+	mock.lockGetDNSSEC.Unlock()
+	return mock.GetDNSSECFunc(getDNSSECInput)
+}
+
+// GetDNSSECCalls gets all the calls that were made to GetDNSSEC.
+// Check the length with:
+//     len(mockedRoute53API.GetDNSSECCalls())
+func (mock *Route53APIMock) GetDNSSECCalls() []struct {
+	GetDNSSECInput *route53.GetDNSSECInput
+} {
+	var calls []struct {
+		GetDNSSECInput *route53.GetDNSSECInput
+	}
+	mock.lockGetDNSSEC.RLock()
+	calls = mock.calls.GetDNSSEC
+	mock.lockGetDNSSEC.RUnlock()
+	return calls
+}
+
+// GetDNSSECRequest calls GetDNSSECRequestFunc.
+func (mock *Route53APIMock) GetDNSSECRequest(getDNSSECInput *route53.GetDNSSECInput) (*request.Request, *route53.GetDNSSECOutput) {
+	if mock.GetDNSSECRequestFunc == nil {
+		panic("Route53APIMock.GetDNSSECRequestFunc: method is nil but Route53API.GetDNSSECRequest was just called")
+	}
+	callInfo := struct {
+		GetDNSSECInput *route53.GetDNSSECInput
+	}{
+		GetDNSSECInput: getDNSSECInput,
+	}
+	mock.lockGetDNSSECRequest.Lock()
+	mock.calls.GetDNSSECRequest = append(mock.calls.GetDNSSECRequest, callInfo)
+	mock.lockGetDNSSECRequest.Unlock()
+	return mock.GetDNSSECRequestFunc(getDNSSECInput)
+}
+
+// GetDNSSECRequestCalls gets all the calls that were made to GetDNSSECRequest.
+// Check the length with:
+//     len(mockedRoute53API.GetDNSSECRequestCalls())
+func (mock *Route53APIMock) GetDNSSECRequestCalls() []struct {
+	GetDNSSECInput *route53.GetDNSSECInput
+} {
+	var calls []struct {
+		GetDNSSECInput *route53.GetDNSSECInput
+	}
+	mock.lockGetDNSSECRequest.RLock()
+	calls = mock.calls.GetDNSSECRequest
+	mock.lockGetDNSSECRequest.RUnlock()
+	return calls
+}
+
+// GetDNSSECWithContext calls GetDNSSECWithContextFunc.
+func (mock *Route53APIMock) GetDNSSECWithContext(contextMoqParam context.Context, getDNSSECInput *route53.GetDNSSECInput, options ...request.Option) (*route53.GetDNSSECOutput, error) {
+	if mock.GetDNSSECWithContextFunc == nil {
+		panic("Route53APIMock.GetDNSSECWithContextFunc: method is nil but Route53API.GetDNSSECWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam context.Context
+		GetDNSSECInput  *route53.GetDNSSECInput
+		Options         []request.Option
+	}{
+		ContextMoqParam: contextMoqParam,
+		GetDNSSECInput:  getDNSSECInput,
+		Options:         options,
+	}
+	mock.lockGetDNSSECWithContext.Lock()
+	mock.calls.GetDNSSECWithContext = append(mock.calls.GetDNSSECWithContext, callInfo)
+	mock.lockGetDNSSECWithContext.Unlock()
+	return mock.GetDNSSECWithContextFunc(contextMoqParam, getDNSSECInput, options...)
+}
+
+// GetDNSSECWithContextCalls gets all the calls that were made to GetDNSSECWithContext.
+// Check the length with:
+//     len(mockedRoute53API.GetDNSSECWithContextCalls())
+func (mock *Route53APIMock) GetDNSSECWithContextCalls() []struct {
+	ContextMoqParam context.Context
+	GetDNSSECInput  *route53.GetDNSSECInput
+	Options         []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam context.Context
+		GetDNSSECInput  *route53.GetDNSSECInput
+		Options         []request.Option
+	}
+	mock.lockGetDNSSECWithContext.RLock()
+	calls = mock.calls.GetDNSSECWithContext
+	mock.lockGetDNSSECWithContext.RUnlock()
+	return calls
+}
+
 // GetGeoLocation calls GetGeoLocationFunc.
-func (mock *Route53APIMock) GetGeoLocation(in1 *route53.GetGeoLocationInput) (*route53.GetGeoLocationOutput, error) {
+func (mock *Route53APIMock) GetGeoLocation(getGeoLocationInput *route53.GetGeoLocationInput) (*route53.GetGeoLocationOutput, error) {
 	if mock.GetGeoLocationFunc == nil {
 		panic("Route53APIMock.GetGeoLocationFunc: method is nil but Route53API.GetGeoLocation was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetGeoLocationInput
+		GetGeoLocationInput *route53.GetGeoLocationInput
 	}{
-		In1: in1,
+		GetGeoLocationInput: getGeoLocationInput,
 	}
 	mock.lockGetGeoLocation.Lock()
 	mock.calls.GetGeoLocation = append(mock.calls.GetGeoLocation, callInfo)
 	mock.lockGetGeoLocation.Unlock()
-	return mock.GetGeoLocationFunc(in1)
+	return mock.GetGeoLocationFunc(getGeoLocationInput)
 }
 
 // GetGeoLocationCalls gets all the calls that were made to GetGeoLocation.
 // Check the length with:
 //     len(mockedRoute53API.GetGeoLocationCalls())
 func (mock *Route53APIMock) GetGeoLocationCalls() []struct {
-	In1 *route53.GetGeoLocationInput
+	GetGeoLocationInput *route53.GetGeoLocationInput
 } {
 	var calls []struct {
-		In1 *route53.GetGeoLocationInput
+		GetGeoLocationInput *route53.GetGeoLocationInput
 	}
 	mock.lockGetGeoLocation.RLock()
 	calls = mock.calls.GetGeoLocation
@@ -4722,29 +6349,29 @@ func (mock *Route53APIMock) GetGeoLocationCalls() []struct {
 }
 
 // GetGeoLocationRequest calls GetGeoLocationRequestFunc.
-func (mock *Route53APIMock) GetGeoLocationRequest(in1 *route53.GetGeoLocationInput) (*request.Request, *route53.GetGeoLocationOutput) {
+func (mock *Route53APIMock) GetGeoLocationRequest(getGeoLocationInput *route53.GetGeoLocationInput) (*request.Request, *route53.GetGeoLocationOutput) {
 	if mock.GetGeoLocationRequestFunc == nil {
 		panic("Route53APIMock.GetGeoLocationRequestFunc: method is nil but Route53API.GetGeoLocationRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetGeoLocationInput
+		GetGeoLocationInput *route53.GetGeoLocationInput
 	}{
-		In1: in1,
+		GetGeoLocationInput: getGeoLocationInput,
 	}
 	mock.lockGetGeoLocationRequest.Lock()
 	mock.calls.GetGeoLocationRequest = append(mock.calls.GetGeoLocationRequest, callInfo)
 	mock.lockGetGeoLocationRequest.Unlock()
-	return mock.GetGeoLocationRequestFunc(in1)
+	return mock.GetGeoLocationRequestFunc(getGeoLocationInput)
 }
 
 // GetGeoLocationRequestCalls gets all the calls that were made to GetGeoLocationRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetGeoLocationRequestCalls())
 func (mock *Route53APIMock) GetGeoLocationRequestCalls() []struct {
-	In1 *route53.GetGeoLocationInput
+	GetGeoLocationInput *route53.GetGeoLocationInput
 } {
 	var calls []struct {
-		In1 *route53.GetGeoLocationInput
+		GetGeoLocationInput *route53.GetGeoLocationInput
 	}
 	mock.lockGetGeoLocationRequest.RLock()
 	calls = mock.calls.GetGeoLocationRequest
@@ -4753,37 +6380,37 @@ func (mock *Route53APIMock) GetGeoLocationRequestCalls() []struct {
 }
 
 // GetGeoLocationWithContext calls GetGeoLocationWithContextFunc.
-func (mock *Route53APIMock) GetGeoLocationWithContext(in1 context.Context, in2 *route53.GetGeoLocationInput, in3 ...request.Option) (*route53.GetGeoLocationOutput, error) {
+func (mock *Route53APIMock) GetGeoLocationWithContext(contextMoqParam context.Context, getGeoLocationInput *route53.GetGeoLocationInput, options ...request.Option) (*route53.GetGeoLocationOutput, error) {
 	if mock.GetGeoLocationWithContextFunc == nil {
 		panic("Route53APIMock.GetGeoLocationWithContextFunc: method is nil but Route53API.GetGeoLocationWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetGeoLocationInput
-		In3 []request.Option
+		ContextMoqParam     context.Context
+		GetGeoLocationInput *route53.GetGeoLocationInput
+		Options             []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:     contextMoqParam,
+		GetGeoLocationInput: getGeoLocationInput,
+		Options:             options,
 	}
 	mock.lockGetGeoLocationWithContext.Lock()
 	mock.calls.GetGeoLocationWithContext = append(mock.calls.GetGeoLocationWithContext, callInfo)
 	mock.lockGetGeoLocationWithContext.Unlock()
-	return mock.GetGeoLocationWithContextFunc(in1, in2, in3...)
+	return mock.GetGeoLocationWithContextFunc(contextMoqParam, getGeoLocationInput, options...)
 }
 
 // GetGeoLocationWithContextCalls gets all the calls that were made to GetGeoLocationWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetGeoLocationWithContextCalls())
 func (mock *Route53APIMock) GetGeoLocationWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetGeoLocationInput
-	In3 []request.Option
+	ContextMoqParam     context.Context
+	GetGeoLocationInput *route53.GetGeoLocationInput
+	Options             []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetGeoLocationInput
-		In3 []request.Option
+		ContextMoqParam     context.Context
+		GetGeoLocationInput *route53.GetGeoLocationInput
+		Options             []request.Option
 	}
 	mock.lockGetGeoLocationWithContext.RLock()
 	calls = mock.calls.GetGeoLocationWithContext
@@ -4792,29 +6419,29 @@ func (mock *Route53APIMock) GetGeoLocationWithContextCalls() []struct {
 }
 
 // GetHealthCheck calls GetHealthCheckFunc.
-func (mock *Route53APIMock) GetHealthCheck(in1 *route53.GetHealthCheckInput) (*route53.GetHealthCheckOutput, error) {
+func (mock *Route53APIMock) GetHealthCheck(getHealthCheckInput *route53.GetHealthCheckInput) (*route53.GetHealthCheckOutput, error) {
 	if mock.GetHealthCheckFunc == nil {
 		panic("Route53APIMock.GetHealthCheckFunc: method is nil but Route53API.GetHealthCheck was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHealthCheckInput
+		GetHealthCheckInput *route53.GetHealthCheckInput
 	}{
-		In1: in1,
+		GetHealthCheckInput: getHealthCheckInput,
 	}
 	mock.lockGetHealthCheck.Lock()
 	mock.calls.GetHealthCheck = append(mock.calls.GetHealthCheck, callInfo)
 	mock.lockGetHealthCheck.Unlock()
-	return mock.GetHealthCheckFunc(in1)
+	return mock.GetHealthCheckFunc(getHealthCheckInput)
 }
 
 // GetHealthCheckCalls gets all the calls that were made to GetHealthCheck.
 // Check the length with:
 //     len(mockedRoute53API.GetHealthCheckCalls())
 func (mock *Route53APIMock) GetHealthCheckCalls() []struct {
-	In1 *route53.GetHealthCheckInput
+	GetHealthCheckInput *route53.GetHealthCheckInput
 } {
 	var calls []struct {
-		In1 *route53.GetHealthCheckInput
+		GetHealthCheckInput *route53.GetHealthCheckInput
 	}
 	mock.lockGetHealthCheck.RLock()
 	calls = mock.calls.GetHealthCheck
@@ -4823,29 +6450,29 @@ func (mock *Route53APIMock) GetHealthCheckCalls() []struct {
 }
 
 // GetHealthCheckCount calls GetHealthCheckCountFunc.
-func (mock *Route53APIMock) GetHealthCheckCount(in1 *route53.GetHealthCheckCountInput) (*route53.GetHealthCheckCountOutput, error) {
+func (mock *Route53APIMock) GetHealthCheckCount(getHealthCheckCountInput *route53.GetHealthCheckCountInput) (*route53.GetHealthCheckCountOutput, error) {
 	if mock.GetHealthCheckCountFunc == nil {
 		panic("Route53APIMock.GetHealthCheckCountFunc: method is nil but Route53API.GetHealthCheckCount was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHealthCheckCountInput
+		GetHealthCheckCountInput *route53.GetHealthCheckCountInput
 	}{
-		In1: in1,
+		GetHealthCheckCountInput: getHealthCheckCountInput,
 	}
 	mock.lockGetHealthCheckCount.Lock()
 	mock.calls.GetHealthCheckCount = append(mock.calls.GetHealthCheckCount, callInfo)
 	mock.lockGetHealthCheckCount.Unlock()
-	return mock.GetHealthCheckCountFunc(in1)
+	return mock.GetHealthCheckCountFunc(getHealthCheckCountInput)
 }
 
 // GetHealthCheckCountCalls gets all the calls that were made to GetHealthCheckCount.
 // Check the length with:
 //     len(mockedRoute53API.GetHealthCheckCountCalls())
 func (mock *Route53APIMock) GetHealthCheckCountCalls() []struct {
-	In1 *route53.GetHealthCheckCountInput
+	GetHealthCheckCountInput *route53.GetHealthCheckCountInput
 } {
 	var calls []struct {
-		In1 *route53.GetHealthCheckCountInput
+		GetHealthCheckCountInput *route53.GetHealthCheckCountInput
 	}
 	mock.lockGetHealthCheckCount.RLock()
 	calls = mock.calls.GetHealthCheckCount
@@ -4854,29 +6481,29 @@ func (mock *Route53APIMock) GetHealthCheckCountCalls() []struct {
 }
 
 // GetHealthCheckCountRequest calls GetHealthCheckCountRequestFunc.
-func (mock *Route53APIMock) GetHealthCheckCountRequest(in1 *route53.GetHealthCheckCountInput) (*request.Request, *route53.GetHealthCheckCountOutput) {
+func (mock *Route53APIMock) GetHealthCheckCountRequest(getHealthCheckCountInput *route53.GetHealthCheckCountInput) (*request.Request, *route53.GetHealthCheckCountOutput) {
 	if mock.GetHealthCheckCountRequestFunc == nil {
 		panic("Route53APIMock.GetHealthCheckCountRequestFunc: method is nil but Route53API.GetHealthCheckCountRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHealthCheckCountInput
+		GetHealthCheckCountInput *route53.GetHealthCheckCountInput
 	}{
-		In1: in1,
+		GetHealthCheckCountInput: getHealthCheckCountInput,
 	}
 	mock.lockGetHealthCheckCountRequest.Lock()
 	mock.calls.GetHealthCheckCountRequest = append(mock.calls.GetHealthCheckCountRequest, callInfo)
 	mock.lockGetHealthCheckCountRequest.Unlock()
-	return mock.GetHealthCheckCountRequestFunc(in1)
+	return mock.GetHealthCheckCountRequestFunc(getHealthCheckCountInput)
 }
 
 // GetHealthCheckCountRequestCalls gets all the calls that were made to GetHealthCheckCountRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetHealthCheckCountRequestCalls())
 func (mock *Route53APIMock) GetHealthCheckCountRequestCalls() []struct {
-	In1 *route53.GetHealthCheckCountInput
+	GetHealthCheckCountInput *route53.GetHealthCheckCountInput
 } {
 	var calls []struct {
-		In1 *route53.GetHealthCheckCountInput
+		GetHealthCheckCountInput *route53.GetHealthCheckCountInput
 	}
 	mock.lockGetHealthCheckCountRequest.RLock()
 	calls = mock.calls.GetHealthCheckCountRequest
@@ -4885,37 +6512,37 @@ func (mock *Route53APIMock) GetHealthCheckCountRequestCalls() []struct {
 }
 
 // GetHealthCheckCountWithContext calls GetHealthCheckCountWithContextFunc.
-func (mock *Route53APIMock) GetHealthCheckCountWithContext(in1 context.Context, in2 *route53.GetHealthCheckCountInput, in3 ...request.Option) (*route53.GetHealthCheckCountOutput, error) {
+func (mock *Route53APIMock) GetHealthCheckCountWithContext(contextMoqParam context.Context, getHealthCheckCountInput *route53.GetHealthCheckCountInput, options ...request.Option) (*route53.GetHealthCheckCountOutput, error) {
 	if mock.GetHealthCheckCountWithContextFunc == nil {
 		panic("Route53APIMock.GetHealthCheckCountWithContextFunc: method is nil but Route53API.GetHealthCheckCountWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetHealthCheckCountInput
-		In3 []request.Option
+		ContextMoqParam          context.Context
+		GetHealthCheckCountInput *route53.GetHealthCheckCountInput
+		Options                  []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:          contextMoqParam,
+		GetHealthCheckCountInput: getHealthCheckCountInput,
+		Options:                  options,
 	}
 	mock.lockGetHealthCheckCountWithContext.Lock()
 	mock.calls.GetHealthCheckCountWithContext = append(mock.calls.GetHealthCheckCountWithContext, callInfo)
 	mock.lockGetHealthCheckCountWithContext.Unlock()
-	return mock.GetHealthCheckCountWithContextFunc(in1, in2, in3...)
+	return mock.GetHealthCheckCountWithContextFunc(contextMoqParam, getHealthCheckCountInput, options...)
 }
 
 // GetHealthCheckCountWithContextCalls gets all the calls that were made to GetHealthCheckCountWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetHealthCheckCountWithContextCalls())
 func (mock *Route53APIMock) GetHealthCheckCountWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetHealthCheckCountInput
-	In3 []request.Option
+	ContextMoqParam          context.Context
+	GetHealthCheckCountInput *route53.GetHealthCheckCountInput
+	Options                  []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetHealthCheckCountInput
-		In3 []request.Option
+		ContextMoqParam          context.Context
+		GetHealthCheckCountInput *route53.GetHealthCheckCountInput
+		Options                  []request.Option
 	}
 	mock.lockGetHealthCheckCountWithContext.RLock()
 	calls = mock.calls.GetHealthCheckCountWithContext
@@ -4924,29 +6551,29 @@ func (mock *Route53APIMock) GetHealthCheckCountWithContextCalls() []struct {
 }
 
 // GetHealthCheckLastFailureReason calls GetHealthCheckLastFailureReasonFunc.
-func (mock *Route53APIMock) GetHealthCheckLastFailureReason(in1 *route53.GetHealthCheckLastFailureReasonInput) (*route53.GetHealthCheckLastFailureReasonOutput, error) {
+func (mock *Route53APIMock) GetHealthCheckLastFailureReason(getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput) (*route53.GetHealthCheckLastFailureReasonOutput, error) {
 	if mock.GetHealthCheckLastFailureReasonFunc == nil {
 		panic("Route53APIMock.GetHealthCheckLastFailureReasonFunc: method is nil but Route53API.GetHealthCheckLastFailureReason was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHealthCheckLastFailureReasonInput
+		GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
 	}{
-		In1: in1,
+		GetHealthCheckLastFailureReasonInput: getHealthCheckLastFailureReasonInput,
 	}
 	mock.lockGetHealthCheckLastFailureReason.Lock()
 	mock.calls.GetHealthCheckLastFailureReason = append(mock.calls.GetHealthCheckLastFailureReason, callInfo)
 	mock.lockGetHealthCheckLastFailureReason.Unlock()
-	return mock.GetHealthCheckLastFailureReasonFunc(in1)
+	return mock.GetHealthCheckLastFailureReasonFunc(getHealthCheckLastFailureReasonInput)
 }
 
 // GetHealthCheckLastFailureReasonCalls gets all the calls that were made to GetHealthCheckLastFailureReason.
 // Check the length with:
 //     len(mockedRoute53API.GetHealthCheckLastFailureReasonCalls())
 func (mock *Route53APIMock) GetHealthCheckLastFailureReasonCalls() []struct {
-	In1 *route53.GetHealthCheckLastFailureReasonInput
+	GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
 } {
 	var calls []struct {
-		In1 *route53.GetHealthCheckLastFailureReasonInput
+		GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
 	}
 	mock.lockGetHealthCheckLastFailureReason.RLock()
 	calls = mock.calls.GetHealthCheckLastFailureReason
@@ -4955,29 +6582,29 @@ func (mock *Route53APIMock) GetHealthCheckLastFailureReasonCalls() []struct {
 }
 
 // GetHealthCheckLastFailureReasonRequest calls GetHealthCheckLastFailureReasonRequestFunc.
-func (mock *Route53APIMock) GetHealthCheckLastFailureReasonRequest(in1 *route53.GetHealthCheckLastFailureReasonInput) (*request.Request, *route53.GetHealthCheckLastFailureReasonOutput) {
+func (mock *Route53APIMock) GetHealthCheckLastFailureReasonRequest(getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput) (*request.Request, *route53.GetHealthCheckLastFailureReasonOutput) {
 	if mock.GetHealthCheckLastFailureReasonRequestFunc == nil {
 		panic("Route53APIMock.GetHealthCheckLastFailureReasonRequestFunc: method is nil but Route53API.GetHealthCheckLastFailureReasonRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHealthCheckLastFailureReasonInput
+		GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
 	}{
-		In1: in1,
+		GetHealthCheckLastFailureReasonInput: getHealthCheckLastFailureReasonInput,
 	}
 	mock.lockGetHealthCheckLastFailureReasonRequest.Lock()
 	mock.calls.GetHealthCheckLastFailureReasonRequest = append(mock.calls.GetHealthCheckLastFailureReasonRequest, callInfo)
 	mock.lockGetHealthCheckLastFailureReasonRequest.Unlock()
-	return mock.GetHealthCheckLastFailureReasonRequestFunc(in1)
+	return mock.GetHealthCheckLastFailureReasonRequestFunc(getHealthCheckLastFailureReasonInput)
 }
 
 // GetHealthCheckLastFailureReasonRequestCalls gets all the calls that were made to GetHealthCheckLastFailureReasonRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetHealthCheckLastFailureReasonRequestCalls())
 func (mock *Route53APIMock) GetHealthCheckLastFailureReasonRequestCalls() []struct {
-	In1 *route53.GetHealthCheckLastFailureReasonInput
+	GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
 } {
 	var calls []struct {
-		In1 *route53.GetHealthCheckLastFailureReasonInput
+		GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
 	}
 	mock.lockGetHealthCheckLastFailureReasonRequest.RLock()
 	calls = mock.calls.GetHealthCheckLastFailureReasonRequest
@@ -4986,37 +6613,37 @@ func (mock *Route53APIMock) GetHealthCheckLastFailureReasonRequestCalls() []stru
 }
 
 // GetHealthCheckLastFailureReasonWithContext calls GetHealthCheckLastFailureReasonWithContextFunc.
-func (mock *Route53APIMock) GetHealthCheckLastFailureReasonWithContext(in1 context.Context, in2 *route53.GetHealthCheckLastFailureReasonInput, in3 ...request.Option) (*route53.GetHealthCheckLastFailureReasonOutput, error) {
+func (mock *Route53APIMock) GetHealthCheckLastFailureReasonWithContext(contextMoqParam context.Context, getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput, options ...request.Option) (*route53.GetHealthCheckLastFailureReasonOutput, error) {
 	if mock.GetHealthCheckLastFailureReasonWithContextFunc == nil {
 		panic("Route53APIMock.GetHealthCheckLastFailureReasonWithContextFunc: method is nil but Route53API.GetHealthCheckLastFailureReasonWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetHealthCheckLastFailureReasonInput
-		In3 []request.Option
+		ContextMoqParam                      context.Context
+		GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
+		Options                              []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                      contextMoqParam,
+		GetHealthCheckLastFailureReasonInput: getHealthCheckLastFailureReasonInput,
+		Options:                              options,
 	}
 	mock.lockGetHealthCheckLastFailureReasonWithContext.Lock()
 	mock.calls.GetHealthCheckLastFailureReasonWithContext = append(mock.calls.GetHealthCheckLastFailureReasonWithContext, callInfo)
 	mock.lockGetHealthCheckLastFailureReasonWithContext.Unlock()
-	return mock.GetHealthCheckLastFailureReasonWithContextFunc(in1, in2, in3...)
+	return mock.GetHealthCheckLastFailureReasonWithContextFunc(contextMoqParam, getHealthCheckLastFailureReasonInput, options...)
 }
 
 // GetHealthCheckLastFailureReasonWithContextCalls gets all the calls that were made to GetHealthCheckLastFailureReasonWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetHealthCheckLastFailureReasonWithContextCalls())
 func (mock *Route53APIMock) GetHealthCheckLastFailureReasonWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetHealthCheckLastFailureReasonInput
-	In3 []request.Option
+	ContextMoqParam                      context.Context
+	GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
+	Options                              []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetHealthCheckLastFailureReasonInput
-		In3 []request.Option
+		ContextMoqParam                      context.Context
+		GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
+		Options                              []request.Option
 	}
 	mock.lockGetHealthCheckLastFailureReasonWithContext.RLock()
 	calls = mock.calls.GetHealthCheckLastFailureReasonWithContext
@@ -5025,29 +6652,29 @@ func (mock *Route53APIMock) GetHealthCheckLastFailureReasonWithContextCalls() []
 }
 
 // GetHealthCheckRequest calls GetHealthCheckRequestFunc.
-func (mock *Route53APIMock) GetHealthCheckRequest(in1 *route53.GetHealthCheckInput) (*request.Request, *route53.GetHealthCheckOutput) {
+func (mock *Route53APIMock) GetHealthCheckRequest(getHealthCheckInput *route53.GetHealthCheckInput) (*request.Request, *route53.GetHealthCheckOutput) {
 	if mock.GetHealthCheckRequestFunc == nil {
 		panic("Route53APIMock.GetHealthCheckRequestFunc: method is nil but Route53API.GetHealthCheckRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHealthCheckInput
+		GetHealthCheckInput *route53.GetHealthCheckInput
 	}{
-		In1: in1,
+		GetHealthCheckInput: getHealthCheckInput,
 	}
 	mock.lockGetHealthCheckRequest.Lock()
 	mock.calls.GetHealthCheckRequest = append(mock.calls.GetHealthCheckRequest, callInfo)
 	mock.lockGetHealthCheckRequest.Unlock()
-	return mock.GetHealthCheckRequestFunc(in1)
+	return mock.GetHealthCheckRequestFunc(getHealthCheckInput)
 }
 
 // GetHealthCheckRequestCalls gets all the calls that were made to GetHealthCheckRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetHealthCheckRequestCalls())
 func (mock *Route53APIMock) GetHealthCheckRequestCalls() []struct {
-	In1 *route53.GetHealthCheckInput
+	GetHealthCheckInput *route53.GetHealthCheckInput
 } {
 	var calls []struct {
-		In1 *route53.GetHealthCheckInput
+		GetHealthCheckInput *route53.GetHealthCheckInput
 	}
 	mock.lockGetHealthCheckRequest.RLock()
 	calls = mock.calls.GetHealthCheckRequest
@@ -5056,29 +6683,29 @@ func (mock *Route53APIMock) GetHealthCheckRequestCalls() []struct {
 }
 
 // GetHealthCheckStatus calls GetHealthCheckStatusFunc.
-func (mock *Route53APIMock) GetHealthCheckStatus(in1 *route53.GetHealthCheckStatusInput) (*route53.GetHealthCheckStatusOutput, error) {
+func (mock *Route53APIMock) GetHealthCheckStatus(getHealthCheckStatusInput *route53.GetHealthCheckStatusInput) (*route53.GetHealthCheckStatusOutput, error) {
 	if mock.GetHealthCheckStatusFunc == nil {
 		panic("Route53APIMock.GetHealthCheckStatusFunc: method is nil but Route53API.GetHealthCheckStatus was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHealthCheckStatusInput
+		GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
 	}{
-		In1: in1,
+		GetHealthCheckStatusInput: getHealthCheckStatusInput,
 	}
 	mock.lockGetHealthCheckStatus.Lock()
 	mock.calls.GetHealthCheckStatus = append(mock.calls.GetHealthCheckStatus, callInfo)
 	mock.lockGetHealthCheckStatus.Unlock()
-	return mock.GetHealthCheckStatusFunc(in1)
+	return mock.GetHealthCheckStatusFunc(getHealthCheckStatusInput)
 }
 
 // GetHealthCheckStatusCalls gets all the calls that were made to GetHealthCheckStatus.
 // Check the length with:
 //     len(mockedRoute53API.GetHealthCheckStatusCalls())
 func (mock *Route53APIMock) GetHealthCheckStatusCalls() []struct {
-	In1 *route53.GetHealthCheckStatusInput
+	GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
 } {
 	var calls []struct {
-		In1 *route53.GetHealthCheckStatusInput
+		GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
 	}
 	mock.lockGetHealthCheckStatus.RLock()
 	calls = mock.calls.GetHealthCheckStatus
@@ -5087,29 +6714,29 @@ func (mock *Route53APIMock) GetHealthCheckStatusCalls() []struct {
 }
 
 // GetHealthCheckStatusRequest calls GetHealthCheckStatusRequestFunc.
-func (mock *Route53APIMock) GetHealthCheckStatusRequest(in1 *route53.GetHealthCheckStatusInput) (*request.Request, *route53.GetHealthCheckStatusOutput) {
+func (mock *Route53APIMock) GetHealthCheckStatusRequest(getHealthCheckStatusInput *route53.GetHealthCheckStatusInput) (*request.Request, *route53.GetHealthCheckStatusOutput) {
 	if mock.GetHealthCheckStatusRequestFunc == nil {
 		panic("Route53APIMock.GetHealthCheckStatusRequestFunc: method is nil but Route53API.GetHealthCheckStatusRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHealthCheckStatusInput
+		GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
 	}{
-		In1: in1,
+		GetHealthCheckStatusInput: getHealthCheckStatusInput,
 	}
 	mock.lockGetHealthCheckStatusRequest.Lock()
 	mock.calls.GetHealthCheckStatusRequest = append(mock.calls.GetHealthCheckStatusRequest, callInfo)
 	mock.lockGetHealthCheckStatusRequest.Unlock()
-	return mock.GetHealthCheckStatusRequestFunc(in1)
+	return mock.GetHealthCheckStatusRequestFunc(getHealthCheckStatusInput)
 }
 
 // GetHealthCheckStatusRequestCalls gets all the calls that were made to GetHealthCheckStatusRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetHealthCheckStatusRequestCalls())
 func (mock *Route53APIMock) GetHealthCheckStatusRequestCalls() []struct {
-	In1 *route53.GetHealthCheckStatusInput
+	GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
 } {
 	var calls []struct {
-		In1 *route53.GetHealthCheckStatusInput
+		GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
 	}
 	mock.lockGetHealthCheckStatusRequest.RLock()
 	calls = mock.calls.GetHealthCheckStatusRequest
@@ -5118,37 +6745,37 @@ func (mock *Route53APIMock) GetHealthCheckStatusRequestCalls() []struct {
 }
 
 // GetHealthCheckStatusWithContext calls GetHealthCheckStatusWithContextFunc.
-func (mock *Route53APIMock) GetHealthCheckStatusWithContext(in1 context.Context, in2 *route53.GetHealthCheckStatusInput, in3 ...request.Option) (*route53.GetHealthCheckStatusOutput, error) {
+func (mock *Route53APIMock) GetHealthCheckStatusWithContext(contextMoqParam context.Context, getHealthCheckStatusInput *route53.GetHealthCheckStatusInput, options ...request.Option) (*route53.GetHealthCheckStatusOutput, error) {
 	if mock.GetHealthCheckStatusWithContextFunc == nil {
 		panic("Route53APIMock.GetHealthCheckStatusWithContextFunc: method is nil but Route53API.GetHealthCheckStatusWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetHealthCheckStatusInput
-		In3 []request.Option
+		ContextMoqParam           context.Context
+		GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
+		Options                   []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:           contextMoqParam,
+		GetHealthCheckStatusInput: getHealthCheckStatusInput,
+		Options:                   options,
 	}
 	mock.lockGetHealthCheckStatusWithContext.Lock()
 	mock.calls.GetHealthCheckStatusWithContext = append(mock.calls.GetHealthCheckStatusWithContext, callInfo)
 	mock.lockGetHealthCheckStatusWithContext.Unlock()
-	return mock.GetHealthCheckStatusWithContextFunc(in1, in2, in3...)
+	return mock.GetHealthCheckStatusWithContextFunc(contextMoqParam, getHealthCheckStatusInput, options...)
 }
 
 // GetHealthCheckStatusWithContextCalls gets all the calls that were made to GetHealthCheckStatusWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetHealthCheckStatusWithContextCalls())
 func (mock *Route53APIMock) GetHealthCheckStatusWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetHealthCheckStatusInput
-	In3 []request.Option
+	ContextMoqParam           context.Context
+	GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
+	Options                   []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetHealthCheckStatusInput
-		In3 []request.Option
+		ContextMoqParam           context.Context
+		GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
+		Options                   []request.Option
 	}
 	mock.lockGetHealthCheckStatusWithContext.RLock()
 	calls = mock.calls.GetHealthCheckStatusWithContext
@@ -5157,37 +6784,37 @@ func (mock *Route53APIMock) GetHealthCheckStatusWithContextCalls() []struct {
 }
 
 // GetHealthCheckWithContext calls GetHealthCheckWithContextFunc.
-func (mock *Route53APIMock) GetHealthCheckWithContext(in1 context.Context, in2 *route53.GetHealthCheckInput, in3 ...request.Option) (*route53.GetHealthCheckOutput, error) {
+func (mock *Route53APIMock) GetHealthCheckWithContext(contextMoqParam context.Context, getHealthCheckInput *route53.GetHealthCheckInput, options ...request.Option) (*route53.GetHealthCheckOutput, error) {
 	if mock.GetHealthCheckWithContextFunc == nil {
 		panic("Route53APIMock.GetHealthCheckWithContextFunc: method is nil but Route53API.GetHealthCheckWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetHealthCheckInput
-		In3 []request.Option
+		ContextMoqParam     context.Context
+		GetHealthCheckInput *route53.GetHealthCheckInput
+		Options             []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:     contextMoqParam,
+		GetHealthCheckInput: getHealthCheckInput,
+		Options:             options,
 	}
 	mock.lockGetHealthCheckWithContext.Lock()
 	mock.calls.GetHealthCheckWithContext = append(mock.calls.GetHealthCheckWithContext, callInfo)
 	mock.lockGetHealthCheckWithContext.Unlock()
-	return mock.GetHealthCheckWithContextFunc(in1, in2, in3...)
+	return mock.GetHealthCheckWithContextFunc(contextMoqParam, getHealthCheckInput, options...)
 }
 
 // GetHealthCheckWithContextCalls gets all the calls that were made to GetHealthCheckWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetHealthCheckWithContextCalls())
 func (mock *Route53APIMock) GetHealthCheckWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetHealthCheckInput
-	In3 []request.Option
+	ContextMoqParam     context.Context
+	GetHealthCheckInput *route53.GetHealthCheckInput
+	Options             []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetHealthCheckInput
-		In3 []request.Option
+		ContextMoqParam     context.Context
+		GetHealthCheckInput *route53.GetHealthCheckInput
+		Options             []request.Option
 	}
 	mock.lockGetHealthCheckWithContext.RLock()
 	calls = mock.calls.GetHealthCheckWithContext
@@ -5196,29 +6823,29 @@ func (mock *Route53APIMock) GetHealthCheckWithContextCalls() []struct {
 }
 
 // GetHostedZone calls GetHostedZoneFunc.
-func (mock *Route53APIMock) GetHostedZone(in1 *route53.GetHostedZoneInput) (*route53.GetHostedZoneOutput, error) {
+func (mock *Route53APIMock) GetHostedZone(getHostedZoneInput *route53.GetHostedZoneInput) (*route53.GetHostedZoneOutput, error) {
 	if mock.GetHostedZoneFunc == nil {
 		panic("Route53APIMock.GetHostedZoneFunc: method is nil but Route53API.GetHostedZone was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHostedZoneInput
+		GetHostedZoneInput *route53.GetHostedZoneInput
 	}{
-		In1: in1,
+		GetHostedZoneInput: getHostedZoneInput,
 	}
 	mock.lockGetHostedZone.Lock()
 	mock.calls.GetHostedZone = append(mock.calls.GetHostedZone, callInfo)
 	mock.lockGetHostedZone.Unlock()
-	return mock.GetHostedZoneFunc(in1)
+	return mock.GetHostedZoneFunc(getHostedZoneInput)
 }
 
 // GetHostedZoneCalls gets all the calls that were made to GetHostedZone.
 // Check the length with:
 //     len(mockedRoute53API.GetHostedZoneCalls())
 func (mock *Route53APIMock) GetHostedZoneCalls() []struct {
-	In1 *route53.GetHostedZoneInput
+	GetHostedZoneInput *route53.GetHostedZoneInput
 } {
 	var calls []struct {
-		In1 *route53.GetHostedZoneInput
+		GetHostedZoneInput *route53.GetHostedZoneInput
 	}
 	mock.lockGetHostedZone.RLock()
 	calls = mock.calls.GetHostedZone
@@ -5227,29 +6854,29 @@ func (mock *Route53APIMock) GetHostedZoneCalls() []struct {
 }
 
 // GetHostedZoneCount calls GetHostedZoneCountFunc.
-func (mock *Route53APIMock) GetHostedZoneCount(in1 *route53.GetHostedZoneCountInput) (*route53.GetHostedZoneCountOutput, error) {
+func (mock *Route53APIMock) GetHostedZoneCount(getHostedZoneCountInput *route53.GetHostedZoneCountInput) (*route53.GetHostedZoneCountOutput, error) {
 	if mock.GetHostedZoneCountFunc == nil {
 		panic("Route53APIMock.GetHostedZoneCountFunc: method is nil but Route53API.GetHostedZoneCount was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHostedZoneCountInput
+		GetHostedZoneCountInput *route53.GetHostedZoneCountInput
 	}{
-		In1: in1,
+		GetHostedZoneCountInput: getHostedZoneCountInput,
 	}
 	mock.lockGetHostedZoneCount.Lock()
 	mock.calls.GetHostedZoneCount = append(mock.calls.GetHostedZoneCount, callInfo)
 	mock.lockGetHostedZoneCount.Unlock()
-	return mock.GetHostedZoneCountFunc(in1)
+	return mock.GetHostedZoneCountFunc(getHostedZoneCountInput)
 }
 
 // GetHostedZoneCountCalls gets all the calls that were made to GetHostedZoneCount.
 // Check the length with:
 //     len(mockedRoute53API.GetHostedZoneCountCalls())
 func (mock *Route53APIMock) GetHostedZoneCountCalls() []struct {
-	In1 *route53.GetHostedZoneCountInput
+	GetHostedZoneCountInput *route53.GetHostedZoneCountInput
 } {
 	var calls []struct {
-		In1 *route53.GetHostedZoneCountInput
+		GetHostedZoneCountInput *route53.GetHostedZoneCountInput
 	}
 	mock.lockGetHostedZoneCount.RLock()
 	calls = mock.calls.GetHostedZoneCount
@@ -5258,29 +6885,29 @@ func (mock *Route53APIMock) GetHostedZoneCountCalls() []struct {
 }
 
 // GetHostedZoneCountRequest calls GetHostedZoneCountRequestFunc.
-func (mock *Route53APIMock) GetHostedZoneCountRequest(in1 *route53.GetHostedZoneCountInput) (*request.Request, *route53.GetHostedZoneCountOutput) {
+func (mock *Route53APIMock) GetHostedZoneCountRequest(getHostedZoneCountInput *route53.GetHostedZoneCountInput) (*request.Request, *route53.GetHostedZoneCountOutput) {
 	if mock.GetHostedZoneCountRequestFunc == nil {
 		panic("Route53APIMock.GetHostedZoneCountRequestFunc: method is nil but Route53API.GetHostedZoneCountRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHostedZoneCountInput
+		GetHostedZoneCountInput *route53.GetHostedZoneCountInput
 	}{
-		In1: in1,
+		GetHostedZoneCountInput: getHostedZoneCountInput,
 	}
 	mock.lockGetHostedZoneCountRequest.Lock()
 	mock.calls.GetHostedZoneCountRequest = append(mock.calls.GetHostedZoneCountRequest, callInfo)
 	mock.lockGetHostedZoneCountRequest.Unlock()
-	return mock.GetHostedZoneCountRequestFunc(in1)
+	return mock.GetHostedZoneCountRequestFunc(getHostedZoneCountInput)
 }
 
 // GetHostedZoneCountRequestCalls gets all the calls that were made to GetHostedZoneCountRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetHostedZoneCountRequestCalls())
 func (mock *Route53APIMock) GetHostedZoneCountRequestCalls() []struct {
-	In1 *route53.GetHostedZoneCountInput
+	GetHostedZoneCountInput *route53.GetHostedZoneCountInput
 } {
 	var calls []struct {
-		In1 *route53.GetHostedZoneCountInput
+		GetHostedZoneCountInput *route53.GetHostedZoneCountInput
 	}
 	mock.lockGetHostedZoneCountRequest.RLock()
 	calls = mock.calls.GetHostedZoneCountRequest
@@ -5289,37 +6916,37 @@ func (mock *Route53APIMock) GetHostedZoneCountRequestCalls() []struct {
 }
 
 // GetHostedZoneCountWithContext calls GetHostedZoneCountWithContextFunc.
-func (mock *Route53APIMock) GetHostedZoneCountWithContext(in1 context.Context, in2 *route53.GetHostedZoneCountInput, in3 ...request.Option) (*route53.GetHostedZoneCountOutput, error) {
+func (mock *Route53APIMock) GetHostedZoneCountWithContext(contextMoqParam context.Context, getHostedZoneCountInput *route53.GetHostedZoneCountInput, options ...request.Option) (*route53.GetHostedZoneCountOutput, error) {
 	if mock.GetHostedZoneCountWithContextFunc == nil {
 		panic("Route53APIMock.GetHostedZoneCountWithContextFunc: method is nil but Route53API.GetHostedZoneCountWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetHostedZoneCountInput
-		In3 []request.Option
+		ContextMoqParam         context.Context
+		GetHostedZoneCountInput *route53.GetHostedZoneCountInput
+		Options                 []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:         contextMoqParam,
+		GetHostedZoneCountInput: getHostedZoneCountInput,
+		Options:                 options,
 	}
 	mock.lockGetHostedZoneCountWithContext.Lock()
 	mock.calls.GetHostedZoneCountWithContext = append(mock.calls.GetHostedZoneCountWithContext, callInfo)
 	mock.lockGetHostedZoneCountWithContext.Unlock()
-	return mock.GetHostedZoneCountWithContextFunc(in1, in2, in3...)
+	return mock.GetHostedZoneCountWithContextFunc(contextMoqParam, getHostedZoneCountInput, options...)
 }
 
 // GetHostedZoneCountWithContextCalls gets all the calls that were made to GetHostedZoneCountWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetHostedZoneCountWithContextCalls())
 func (mock *Route53APIMock) GetHostedZoneCountWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetHostedZoneCountInput
-	In3 []request.Option
+	ContextMoqParam         context.Context
+	GetHostedZoneCountInput *route53.GetHostedZoneCountInput
+	Options                 []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetHostedZoneCountInput
-		In3 []request.Option
+		ContextMoqParam         context.Context
+		GetHostedZoneCountInput *route53.GetHostedZoneCountInput
+		Options                 []request.Option
 	}
 	mock.lockGetHostedZoneCountWithContext.RLock()
 	calls = mock.calls.GetHostedZoneCountWithContext
@@ -5328,29 +6955,29 @@ func (mock *Route53APIMock) GetHostedZoneCountWithContextCalls() []struct {
 }
 
 // GetHostedZoneLimit calls GetHostedZoneLimitFunc.
-func (mock *Route53APIMock) GetHostedZoneLimit(in1 *route53.GetHostedZoneLimitInput) (*route53.GetHostedZoneLimitOutput, error) {
+func (mock *Route53APIMock) GetHostedZoneLimit(getHostedZoneLimitInput *route53.GetHostedZoneLimitInput) (*route53.GetHostedZoneLimitOutput, error) {
 	if mock.GetHostedZoneLimitFunc == nil {
 		panic("Route53APIMock.GetHostedZoneLimitFunc: method is nil but Route53API.GetHostedZoneLimit was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHostedZoneLimitInput
+		GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
 	}{
-		In1: in1,
+		GetHostedZoneLimitInput: getHostedZoneLimitInput,
 	}
 	mock.lockGetHostedZoneLimit.Lock()
 	mock.calls.GetHostedZoneLimit = append(mock.calls.GetHostedZoneLimit, callInfo)
 	mock.lockGetHostedZoneLimit.Unlock()
-	return mock.GetHostedZoneLimitFunc(in1)
+	return mock.GetHostedZoneLimitFunc(getHostedZoneLimitInput)
 }
 
 // GetHostedZoneLimitCalls gets all the calls that were made to GetHostedZoneLimit.
 // Check the length with:
 //     len(mockedRoute53API.GetHostedZoneLimitCalls())
 func (mock *Route53APIMock) GetHostedZoneLimitCalls() []struct {
-	In1 *route53.GetHostedZoneLimitInput
+	GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
 } {
 	var calls []struct {
-		In1 *route53.GetHostedZoneLimitInput
+		GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
 	}
 	mock.lockGetHostedZoneLimit.RLock()
 	calls = mock.calls.GetHostedZoneLimit
@@ -5359,29 +6986,29 @@ func (mock *Route53APIMock) GetHostedZoneLimitCalls() []struct {
 }
 
 // GetHostedZoneLimitRequest calls GetHostedZoneLimitRequestFunc.
-func (mock *Route53APIMock) GetHostedZoneLimitRequest(in1 *route53.GetHostedZoneLimitInput) (*request.Request, *route53.GetHostedZoneLimitOutput) {
+func (mock *Route53APIMock) GetHostedZoneLimitRequest(getHostedZoneLimitInput *route53.GetHostedZoneLimitInput) (*request.Request, *route53.GetHostedZoneLimitOutput) {
 	if mock.GetHostedZoneLimitRequestFunc == nil {
 		panic("Route53APIMock.GetHostedZoneLimitRequestFunc: method is nil but Route53API.GetHostedZoneLimitRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHostedZoneLimitInput
+		GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
 	}{
-		In1: in1,
+		GetHostedZoneLimitInput: getHostedZoneLimitInput,
 	}
 	mock.lockGetHostedZoneLimitRequest.Lock()
 	mock.calls.GetHostedZoneLimitRequest = append(mock.calls.GetHostedZoneLimitRequest, callInfo)
 	mock.lockGetHostedZoneLimitRequest.Unlock()
-	return mock.GetHostedZoneLimitRequestFunc(in1)
+	return mock.GetHostedZoneLimitRequestFunc(getHostedZoneLimitInput)
 }
 
 // GetHostedZoneLimitRequestCalls gets all the calls that were made to GetHostedZoneLimitRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetHostedZoneLimitRequestCalls())
 func (mock *Route53APIMock) GetHostedZoneLimitRequestCalls() []struct {
-	In1 *route53.GetHostedZoneLimitInput
+	GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
 } {
 	var calls []struct {
-		In1 *route53.GetHostedZoneLimitInput
+		GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
 	}
 	mock.lockGetHostedZoneLimitRequest.RLock()
 	calls = mock.calls.GetHostedZoneLimitRequest
@@ -5390,37 +7017,37 @@ func (mock *Route53APIMock) GetHostedZoneLimitRequestCalls() []struct {
 }
 
 // GetHostedZoneLimitWithContext calls GetHostedZoneLimitWithContextFunc.
-func (mock *Route53APIMock) GetHostedZoneLimitWithContext(in1 context.Context, in2 *route53.GetHostedZoneLimitInput, in3 ...request.Option) (*route53.GetHostedZoneLimitOutput, error) {
+func (mock *Route53APIMock) GetHostedZoneLimitWithContext(contextMoqParam context.Context, getHostedZoneLimitInput *route53.GetHostedZoneLimitInput, options ...request.Option) (*route53.GetHostedZoneLimitOutput, error) {
 	if mock.GetHostedZoneLimitWithContextFunc == nil {
 		panic("Route53APIMock.GetHostedZoneLimitWithContextFunc: method is nil but Route53API.GetHostedZoneLimitWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetHostedZoneLimitInput
-		In3 []request.Option
+		ContextMoqParam         context.Context
+		GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
+		Options                 []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:         contextMoqParam,
+		GetHostedZoneLimitInput: getHostedZoneLimitInput,
+		Options:                 options,
 	}
 	mock.lockGetHostedZoneLimitWithContext.Lock()
 	mock.calls.GetHostedZoneLimitWithContext = append(mock.calls.GetHostedZoneLimitWithContext, callInfo)
 	mock.lockGetHostedZoneLimitWithContext.Unlock()
-	return mock.GetHostedZoneLimitWithContextFunc(in1, in2, in3...)
+	return mock.GetHostedZoneLimitWithContextFunc(contextMoqParam, getHostedZoneLimitInput, options...)
 }
 
 // GetHostedZoneLimitWithContextCalls gets all the calls that were made to GetHostedZoneLimitWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetHostedZoneLimitWithContextCalls())
 func (mock *Route53APIMock) GetHostedZoneLimitWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetHostedZoneLimitInput
-	In3 []request.Option
+	ContextMoqParam         context.Context
+	GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
+	Options                 []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetHostedZoneLimitInput
-		In3 []request.Option
+		ContextMoqParam         context.Context
+		GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
+		Options                 []request.Option
 	}
 	mock.lockGetHostedZoneLimitWithContext.RLock()
 	calls = mock.calls.GetHostedZoneLimitWithContext
@@ -5429,29 +7056,29 @@ func (mock *Route53APIMock) GetHostedZoneLimitWithContextCalls() []struct {
 }
 
 // GetHostedZoneRequest calls GetHostedZoneRequestFunc.
-func (mock *Route53APIMock) GetHostedZoneRequest(in1 *route53.GetHostedZoneInput) (*request.Request, *route53.GetHostedZoneOutput) {
+func (mock *Route53APIMock) GetHostedZoneRequest(getHostedZoneInput *route53.GetHostedZoneInput) (*request.Request, *route53.GetHostedZoneOutput) {
 	if mock.GetHostedZoneRequestFunc == nil {
 		panic("Route53APIMock.GetHostedZoneRequestFunc: method is nil but Route53API.GetHostedZoneRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetHostedZoneInput
+		GetHostedZoneInput *route53.GetHostedZoneInput
 	}{
-		In1: in1,
+		GetHostedZoneInput: getHostedZoneInput,
 	}
 	mock.lockGetHostedZoneRequest.Lock()
 	mock.calls.GetHostedZoneRequest = append(mock.calls.GetHostedZoneRequest, callInfo)
 	mock.lockGetHostedZoneRequest.Unlock()
-	return mock.GetHostedZoneRequestFunc(in1)
+	return mock.GetHostedZoneRequestFunc(getHostedZoneInput)
 }
 
 // GetHostedZoneRequestCalls gets all the calls that were made to GetHostedZoneRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetHostedZoneRequestCalls())
 func (mock *Route53APIMock) GetHostedZoneRequestCalls() []struct {
-	In1 *route53.GetHostedZoneInput
+	GetHostedZoneInput *route53.GetHostedZoneInput
 } {
 	var calls []struct {
-		In1 *route53.GetHostedZoneInput
+		GetHostedZoneInput *route53.GetHostedZoneInput
 	}
 	mock.lockGetHostedZoneRequest.RLock()
 	calls = mock.calls.GetHostedZoneRequest
@@ -5460,37 +7087,37 @@ func (mock *Route53APIMock) GetHostedZoneRequestCalls() []struct {
 }
 
 // GetHostedZoneWithContext calls GetHostedZoneWithContextFunc.
-func (mock *Route53APIMock) GetHostedZoneWithContext(in1 context.Context, in2 *route53.GetHostedZoneInput, in3 ...request.Option) (*route53.GetHostedZoneOutput, error) {
+func (mock *Route53APIMock) GetHostedZoneWithContext(contextMoqParam context.Context, getHostedZoneInput *route53.GetHostedZoneInput, options ...request.Option) (*route53.GetHostedZoneOutput, error) {
 	if mock.GetHostedZoneWithContextFunc == nil {
 		panic("Route53APIMock.GetHostedZoneWithContextFunc: method is nil but Route53API.GetHostedZoneWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetHostedZoneInput
-		In3 []request.Option
+		ContextMoqParam    context.Context
+		GetHostedZoneInput *route53.GetHostedZoneInput
+		Options            []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:    contextMoqParam,
+		GetHostedZoneInput: getHostedZoneInput,
+		Options:            options,
 	}
 	mock.lockGetHostedZoneWithContext.Lock()
 	mock.calls.GetHostedZoneWithContext = append(mock.calls.GetHostedZoneWithContext, callInfo)
 	mock.lockGetHostedZoneWithContext.Unlock()
-	return mock.GetHostedZoneWithContextFunc(in1, in2, in3...)
+	return mock.GetHostedZoneWithContextFunc(contextMoqParam, getHostedZoneInput, options...)
 }
 
 // GetHostedZoneWithContextCalls gets all the calls that were made to GetHostedZoneWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetHostedZoneWithContextCalls())
 func (mock *Route53APIMock) GetHostedZoneWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetHostedZoneInput
-	In3 []request.Option
+	ContextMoqParam    context.Context
+	GetHostedZoneInput *route53.GetHostedZoneInput
+	Options            []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetHostedZoneInput
-		In3 []request.Option
+		ContextMoqParam    context.Context
+		GetHostedZoneInput *route53.GetHostedZoneInput
+		Options            []request.Option
 	}
 	mock.lockGetHostedZoneWithContext.RLock()
 	calls = mock.calls.GetHostedZoneWithContext
@@ -5499,29 +7126,29 @@ func (mock *Route53APIMock) GetHostedZoneWithContextCalls() []struct {
 }
 
 // GetQueryLoggingConfig calls GetQueryLoggingConfigFunc.
-func (mock *Route53APIMock) GetQueryLoggingConfig(in1 *route53.GetQueryLoggingConfigInput) (*route53.GetQueryLoggingConfigOutput, error) {
+func (mock *Route53APIMock) GetQueryLoggingConfig(getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput) (*route53.GetQueryLoggingConfigOutput, error) {
 	if mock.GetQueryLoggingConfigFunc == nil {
 		panic("Route53APIMock.GetQueryLoggingConfigFunc: method is nil but Route53API.GetQueryLoggingConfig was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetQueryLoggingConfigInput
+		GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
 	}{
-		In1: in1,
+		GetQueryLoggingConfigInput: getQueryLoggingConfigInput,
 	}
 	mock.lockGetQueryLoggingConfig.Lock()
 	mock.calls.GetQueryLoggingConfig = append(mock.calls.GetQueryLoggingConfig, callInfo)
 	mock.lockGetQueryLoggingConfig.Unlock()
-	return mock.GetQueryLoggingConfigFunc(in1)
+	return mock.GetQueryLoggingConfigFunc(getQueryLoggingConfigInput)
 }
 
 // GetQueryLoggingConfigCalls gets all the calls that were made to GetQueryLoggingConfig.
 // Check the length with:
 //     len(mockedRoute53API.GetQueryLoggingConfigCalls())
 func (mock *Route53APIMock) GetQueryLoggingConfigCalls() []struct {
-	In1 *route53.GetQueryLoggingConfigInput
+	GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
 } {
 	var calls []struct {
-		In1 *route53.GetQueryLoggingConfigInput
+		GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
 	}
 	mock.lockGetQueryLoggingConfig.RLock()
 	calls = mock.calls.GetQueryLoggingConfig
@@ -5530,29 +7157,29 @@ func (mock *Route53APIMock) GetQueryLoggingConfigCalls() []struct {
 }
 
 // GetQueryLoggingConfigRequest calls GetQueryLoggingConfigRequestFunc.
-func (mock *Route53APIMock) GetQueryLoggingConfigRequest(in1 *route53.GetQueryLoggingConfigInput) (*request.Request, *route53.GetQueryLoggingConfigOutput) {
+func (mock *Route53APIMock) GetQueryLoggingConfigRequest(getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput) (*request.Request, *route53.GetQueryLoggingConfigOutput) {
 	if mock.GetQueryLoggingConfigRequestFunc == nil {
 		panic("Route53APIMock.GetQueryLoggingConfigRequestFunc: method is nil but Route53API.GetQueryLoggingConfigRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetQueryLoggingConfigInput
+		GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
 	}{
-		In1: in1,
+		GetQueryLoggingConfigInput: getQueryLoggingConfigInput,
 	}
 	mock.lockGetQueryLoggingConfigRequest.Lock()
 	mock.calls.GetQueryLoggingConfigRequest = append(mock.calls.GetQueryLoggingConfigRequest, callInfo)
 	mock.lockGetQueryLoggingConfigRequest.Unlock()
-	return mock.GetQueryLoggingConfigRequestFunc(in1)
+	return mock.GetQueryLoggingConfigRequestFunc(getQueryLoggingConfigInput)
 }
 
 // GetQueryLoggingConfigRequestCalls gets all the calls that were made to GetQueryLoggingConfigRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetQueryLoggingConfigRequestCalls())
 func (mock *Route53APIMock) GetQueryLoggingConfigRequestCalls() []struct {
-	In1 *route53.GetQueryLoggingConfigInput
+	GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
 } {
 	var calls []struct {
-		In1 *route53.GetQueryLoggingConfigInput
+		GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
 	}
 	mock.lockGetQueryLoggingConfigRequest.RLock()
 	calls = mock.calls.GetQueryLoggingConfigRequest
@@ -5561,37 +7188,37 @@ func (mock *Route53APIMock) GetQueryLoggingConfigRequestCalls() []struct {
 }
 
 // GetQueryLoggingConfigWithContext calls GetQueryLoggingConfigWithContextFunc.
-func (mock *Route53APIMock) GetQueryLoggingConfigWithContext(in1 context.Context, in2 *route53.GetQueryLoggingConfigInput, in3 ...request.Option) (*route53.GetQueryLoggingConfigOutput, error) {
+func (mock *Route53APIMock) GetQueryLoggingConfigWithContext(contextMoqParam context.Context, getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput, options ...request.Option) (*route53.GetQueryLoggingConfigOutput, error) {
 	if mock.GetQueryLoggingConfigWithContextFunc == nil {
 		panic("Route53APIMock.GetQueryLoggingConfigWithContextFunc: method is nil but Route53API.GetQueryLoggingConfigWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetQueryLoggingConfigInput
-		In3 []request.Option
+		ContextMoqParam            context.Context
+		GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
+		Options                    []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:            contextMoqParam,
+		GetQueryLoggingConfigInput: getQueryLoggingConfigInput,
+		Options:                    options,
 	}
 	mock.lockGetQueryLoggingConfigWithContext.Lock()
 	mock.calls.GetQueryLoggingConfigWithContext = append(mock.calls.GetQueryLoggingConfigWithContext, callInfo)
 	mock.lockGetQueryLoggingConfigWithContext.Unlock()
-	return mock.GetQueryLoggingConfigWithContextFunc(in1, in2, in3...)
+	return mock.GetQueryLoggingConfigWithContextFunc(contextMoqParam, getQueryLoggingConfigInput, options...)
 }
 
 // GetQueryLoggingConfigWithContextCalls gets all the calls that were made to GetQueryLoggingConfigWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetQueryLoggingConfigWithContextCalls())
 func (mock *Route53APIMock) GetQueryLoggingConfigWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetQueryLoggingConfigInput
-	In3 []request.Option
+	ContextMoqParam            context.Context
+	GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
+	Options                    []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetQueryLoggingConfigInput
-		In3 []request.Option
+		ContextMoqParam            context.Context
+		GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
+		Options                    []request.Option
 	}
 	mock.lockGetQueryLoggingConfigWithContext.RLock()
 	calls = mock.calls.GetQueryLoggingConfigWithContext
@@ -5600,29 +7227,29 @@ func (mock *Route53APIMock) GetQueryLoggingConfigWithContextCalls() []struct {
 }
 
 // GetReusableDelegationSet calls GetReusableDelegationSetFunc.
-func (mock *Route53APIMock) GetReusableDelegationSet(in1 *route53.GetReusableDelegationSetInput) (*route53.GetReusableDelegationSetOutput, error) {
+func (mock *Route53APIMock) GetReusableDelegationSet(getReusableDelegationSetInput *route53.GetReusableDelegationSetInput) (*route53.GetReusableDelegationSetOutput, error) {
 	if mock.GetReusableDelegationSetFunc == nil {
 		panic("Route53APIMock.GetReusableDelegationSetFunc: method is nil but Route53API.GetReusableDelegationSet was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetReusableDelegationSetInput
+		GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
 	}{
-		In1: in1,
+		GetReusableDelegationSetInput: getReusableDelegationSetInput,
 	}
 	mock.lockGetReusableDelegationSet.Lock()
 	mock.calls.GetReusableDelegationSet = append(mock.calls.GetReusableDelegationSet, callInfo)
 	mock.lockGetReusableDelegationSet.Unlock()
-	return mock.GetReusableDelegationSetFunc(in1)
+	return mock.GetReusableDelegationSetFunc(getReusableDelegationSetInput)
 }
 
 // GetReusableDelegationSetCalls gets all the calls that were made to GetReusableDelegationSet.
 // Check the length with:
 //     len(mockedRoute53API.GetReusableDelegationSetCalls())
 func (mock *Route53APIMock) GetReusableDelegationSetCalls() []struct {
-	In1 *route53.GetReusableDelegationSetInput
+	GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
 } {
 	var calls []struct {
-		In1 *route53.GetReusableDelegationSetInput
+		GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
 	}
 	mock.lockGetReusableDelegationSet.RLock()
 	calls = mock.calls.GetReusableDelegationSet
@@ -5631,29 +7258,29 @@ func (mock *Route53APIMock) GetReusableDelegationSetCalls() []struct {
 }
 
 // GetReusableDelegationSetLimit calls GetReusableDelegationSetLimitFunc.
-func (mock *Route53APIMock) GetReusableDelegationSetLimit(in1 *route53.GetReusableDelegationSetLimitInput) (*route53.GetReusableDelegationSetLimitOutput, error) {
+func (mock *Route53APIMock) GetReusableDelegationSetLimit(getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput) (*route53.GetReusableDelegationSetLimitOutput, error) {
 	if mock.GetReusableDelegationSetLimitFunc == nil {
 		panic("Route53APIMock.GetReusableDelegationSetLimitFunc: method is nil but Route53API.GetReusableDelegationSetLimit was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetReusableDelegationSetLimitInput
+		GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
 	}{
-		In1: in1,
+		GetReusableDelegationSetLimitInput: getReusableDelegationSetLimitInput,
 	}
 	mock.lockGetReusableDelegationSetLimit.Lock()
 	mock.calls.GetReusableDelegationSetLimit = append(mock.calls.GetReusableDelegationSetLimit, callInfo)
 	mock.lockGetReusableDelegationSetLimit.Unlock()
-	return mock.GetReusableDelegationSetLimitFunc(in1)
+	return mock.GetReusableDelegationSetLimitFunc(getReusableDelegationSetLimitInput)
 }
 
 // GetReusableDelegationSetLimitCalls gets all the calls that were made to GetReusableDelegationSetLimit.
 // Check the length with:
 //     len(mockedRoute53API.GetReusableDelegationSetLimitCalls())
 func (mock *Route53APIMock) GetReusableDelegationSetLimitCalls() []struct {
-	In1 *route53.GetReusableDelegationSetLimitInput
+	GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
 } {
 	var calls []struct {
-		In1 *route53.GetReusableDelegationSetLimitInput
+		GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
 	}
 	mock.lockGetReusableDelegationSetLimit.RLock()
 	calls = mock.calls.GetReusableDelegationSetLimit
@@ -5662,29 +7289,29 @@ func (mock *Route53APIMock) GetReusableDelegationSetLimitCalls() []struct {
 }
 
 // GetReusableDelegationSetLimitRequest calls GetReusableDelegationSetLimitRequestFunc.
-func (mock *Route53APIMock) GetReusableDelegationSetLimitRequest(in1 *route53.GetReusableDelegationSetLimitInput) (*request.Request, *route53.GetReusableDelegationSetLimitOutput) {
+func (mock *Route53APIMock) GetReusableDelegationSetLimitRequest(getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput) (*request.Request, *route53.GetReusableDelegationSetLimitOutput) {
 	if mock.GetReusableDelegationSetLimitRequestFunc == nil {
 		panic("Route53APIMock.GetReusableDelegationSetLimitRequestFunc: method is nil but Route53API.GetReusableDelegationSetLimitRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetReusableDelegationSetLimitInput
+		GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
 	}{
-		In1: in1,
+		GetReusableDelegationSetLimitInput: getReusableDelegationSetLimitInput,
 	}
 	mock.lockGetReusableDelegationSetLimitRequest.Lock()
 	mock.calls.GetReusableDelegationSetLimitRequest = append(mock.calls.GetReusableDelegationSetLimitRequest, callInfo)
 	mock.lockGetReusableDelegationSetLimitRequest.Unlock()
-	return mock.GetReusableDelegationSetLimitRequestFunc(in1)
+	return mock.GetReusableDelegationSetLimitRequestFunc(getReusableDelegationSetLimitInput)
 }
 
 // GetReusableDelegationSetLimitRequestCalls gets all the calls that were made to GetReusableDelegationSetLimitRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetReusableDelegationSetLimitRequestCalls())
 func (mock *Route53APIMock) GetReusableDelegationSetLimitRequestCalls() []struct {
-	In1 *route53.GetReusableDelegationSetLimitInput
+	GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
 } {
 	var calls []struct {
-		In1 *route53.GetReusableDelegationSetLimitInput
+		GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
 	}
 	mock.lockGetReusableDelegationSetLimitRequest.RLock()
 	calls = mock.calls.GetReusableDelegationSetLimitRequest
@@ -5693,37 +7320,37 @@ func (mock *Route53APIMock) GetReusableDelegationSetLimitRequestCalls() []struct
 }
 
 // GetReusableDelegationSetLimitWithContext calls GetReusableDelegationSetLimitWithContextFunc.
-func (mock *Route53APIMock) GetReusableDelegationSetLimitWithContext(in1 context.Context, in2 *route53.GetReusableDelegationSetLimitInput, in3 ...request.Option) (*route53.GetReusableDelegationSetLimitOutput, error) {
+func (mock *Route53APIMock) GetReusableDelegationSetLimitWithContext(contextMoqParam context.Context, getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput, options ...request.Option) (*route53.GetReusableDelegationSetLimitOutput, error) {
 	if mock.GetReusableDelegationSetLimitWithContextFunc == nil {
 		panic("Route53APIMock.GetReusableDelegationSetLimitWithContextFunc: method is nil but Route53API.GetReusableDelegationSetLimitWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetReusableDelegationSetLimitInput
-		In3 []request.Option
+		ContextMoqParam                    context.Context
+		GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
+		Options                            []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                    contextMoqParam,
+		GetReusableDelegationSetLimitInput: getReusableDelegationSetLimitInput,
+		Options:                            options,
 	}
 	mock.lockGetReusableDelegationSetLimitWithContext.Lock()
 	mock.calls.GetReusableDelegationSetLimitWithContext = append(mock.calls.GetReusableDelegationSetLimitWithContext, callInfo)
 	mock.lockGetReusableDelegationSetLimitWithContext.Unlock()
-	return mock.GetReusableDelegationSetLimitWithContextFunc(in1, in2, in3...)
+	return mock.GetReusableDelegationSetLimitWithContextFunc(contextMoqParam, getReusableDelegationSetLimitInput, options...)
 }
 
 // GetReusableDelegationSetLimitWithContextCalls gets all the calls that were made to GetReusableDelegationSetLimitWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetReusableDelegationSetLimitWithContextCalls())
 func (mock *Route53APIMock) GetReusableDelegationSetLimitWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetReusableDelegationSetLimitInput
-	In3 []request.Option
+	ContextMoqParam                    context.Context
+	GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
+	Options                            []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetReusableDelegationSetLimitInput
-		In3 []request.Option
+		ContextMoqParam                    context.Context
+		GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
+		Options                            []request.Option
 	}
 	mock.lockGetReusableDelegationSetLimitWithContext.RLock()
 	calls = mock.calls.GetReusableDelegationSetLimitWithContext
@@ -5732,29 +7359,29 @@ func (mock *Route53APIMock) GetReusableDelegationSetLimitWithContextCalls() []st
 }
 
 // GetReusableDelegationSetRequest calls GetReusableDelegationSetRequestFunc.
-func (mock *Route53APIMock) GetReusableDelegationSetRequest(in1 *route53.GetReusableDelegationSetInput) (*request.Request, *route53.GetReusableDelegationSetOutput) {
+func (mock *Route53APIMock) GetReusableDelegationSetRequest(getReusableDelegationSetInput *route53.GetReusableDelegationSetInput) (*request.Request, *route53.GetReusableDelegationSetOutput) {
 	if mock.GetReusableDelegationSetRequestFunc == nil {
 		panic("Route53APIMock.GetReusableDelegationSetRequestFunc: method is nil but Route53API.GetReusableDelegationSetRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetReusableDelegationSetInput
+		GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
 	}{
-		In1: in1,
+		GetReusableDelegationSetInput: getReusableDelegationSetInput,
 	}
 	mock.lockGetReusableDelegationSetRequest.Lock()
 	mock.calls.GetReusableDelegationSetRequest = append(mock.calls.GetReusableDelegationSetRequest, callInfo)
 	mock.lockGetReusableDelegationSetRequest.Unlock()
-	return mock.GetReusableDelegationSetRequestFunc(in1)
+	return mock.GetReusableDelegationSetRequestFunc(getReusableDelegationSetInput)
 }
 
 // GetReusableDelegationSetRequestCalls gets all the calls that were made to GetReusableDelegationSetRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetReusableDelegationSetRequestCalls())
 func (mock *Route53APIMock) GetReusableDelegationSetRequestCalls() []struct {
-	In1 *route53.GetReusableDelegationSetInput
+	GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
 } {
 	var calls []struct {
-		In1 *route53.GetReusableDelegationSetInput
+		GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
 	}
 	mock.lockGetReusableDelegationSetRequest.RLock()
 	calls = mock.calls.GetReusableDelegationSetRequest
@@ -5763,37 +7390,37 @@ func (mock *Route53APIMock) GetReusableDelegationSetRequestCalls() []struct {
 }
 
 // GetReusableDelegationSetWithContext calls GetReusableDelegationSetWithContextFunc.
-func (mock *Route53APIMock) GetReusableDelegationSetWithContext(in1 context.Context, in2 *route53.GetReusableDelegationSetInput, in3 ...request.Option) (*route53.GetReusableDelegationSetOutput, error) {
+func (mock *Route53APIMock) GetReusableDelegationSetWithContext(contextMoqParam context.Context, getReusableDelegationSetInput *route53.GetReusableDelegationSetInput, options ...request.Option) (*route53.GetReusableDelegationSetOutput, error) {
 	if mock.GetReusableDelegationSetWithContextFunc == nil {
 		panic("Route53APIMock.GetReusableDelegationSetWithContextFunc: method is nil but Route53API.GetReusableDelegationSetWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetReusableDelegationSetInput
-		In3 []request.Option
+		ContextMoqParam               context.Context
+		GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
+		Options                       []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:               contextMoqParam,
+		GetReusableDelegationSetInput: getReusableDelegationSetInput,
+		Options:                       options,
 	}
 	mock.lockGetReusableDelegationSetWithContext.Lock()
 	mock.calls.GetReusableDelegationSetWithContext = append(mock.calls.GetReusableDelegationSetWithContext, callInfo)
 	mock.lockGetReusableDelegationSetWithContext.Unlock()
-	return mock.GetReusableDelegationSetWithContextFunc(in1, in2, in3...)
+	return mock.GetReusableDelegationSetWithContextFunc(contextMoqParam, getReusableDelegationSetInput, options...)
 }
 
 // GetReusableDelegationSetWithContextCalls gets all the calls that were made to GetReusableDelegationSetWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetReusableDelegationSetWithContextCalls())
 func (mock *Route53APIMock) GetReusableDelegationSetWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetReusableDelegationSetInput
-	In3 []request.Option
+	ContextMoqParam               context.Context
+	GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
+	Options                       []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetReusableDelegationSetInput
-		In3 []request.Option
+		ContextMoqParam               context.Context
+		GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
+		Options                       []request.Option
 	}
 	mock.lockGetReusableDelegationSetWithContext.RLock()
 	calls = mock.calls.GetReusableDelegationSetWithContext
@@ -5802,29 +7429,29 @@ func (mock *Route53APIMock) GetReusableDelegationSetWithContextCalls() []struct 
 }
 
 // GetTrafficPolicy calls GetTrafficPolicyFunc.
-func (mock *Route53APIMock) GetTrafficPolicy(in1 *route53.GetTrafficPolicyInput) (*route53.GetTrafficPolicyOutput, error) {
+func (mock *Route53APIMock) GetTrafficPolicy(getTrafficPolicyInput *route53.GetTrafficPolicyInput) (*route53.GetTrafficPolicyOutput, error) {
 	if mock.GetTrafficPolicyFunc == nil {
 		panic("Route53APIMock.GetTrafficPolicyFunc: method is nil but Route53API.GetTrafficPolicy was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetTrafficPolicyInput
+		GetTrafficPolicyInput *route53.GetTrafficPolicyInput
 	}{
-		In1: in1,
+		GetTrafficPolicyInput: getTrafficPolicyInput,
 	}
 	mock.lockGetTrafficPolicy.Lock()
 	mock.calls.GetTrafficPolicy = append(mock.calls.GetTrafficPolicy, callInfo)
 	mock.lockGetTrafficPolicy.Unlock()
-	return mock.GetTrafficPolicyFunc(in1)
+	return mock.GetTrafficPolicyFunc(getTrafficPolicyInput)
 }
 
 // GetTrafficPolicyCalls gets all the calls that were made to GetTrafficPolicy.
 // Check the length with:
 //     len(mockedRoute53API.GetTrafficPolicyCalls())
 func (mock *Route53APIMock) GetTrafficPolicyCalls() []struct {
-	In1 *route53.GetTrafficPolicyInput
+	GetTrafficPolicyInput *route53.GetTrafficPolicyInput
 } {
 	var calls []struct {
-		In1 *route53.GetTrafficPolicyInput
+		GetTrafficPolicyInput *route53.GetTrafficPolicyInput
 	}
 	mock.lockGetTrafficPolicy.RLock()
 	calls = mock.calls.GetTrafficPolicy
@@ -5833,29 +7460,29 @@ func (mock *Route53APIMock) GetTrafficPolicyCalls() []struct {
 }
 
 // GetTrafficPolicyInstance calls GetTrafficPolicyInstanceFunc.
-func (mock *Route53APIMock) GetTrafficPolicyInstance(in1 *route53.GetTrafficPolicyInstanceInput) (*route53.GetTrafficPolicyInstanceOutput, error) {
+func (mock *Route53APIMock) GetTrafficPolicyInstance(getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput) (*route53.GetTrafficPolicyInstanceOutput, error) {
 	if mock.GetTrafficPolicyInstanceFunc == nil {
 		panic("Route53APIMock.GetTrafficPolicyInstanceFunc: method is nil but Route53API.GetTrafficPolicyInstance was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetTrafficPolicyInstanceInput
+		GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
 	}{
-		In1: in1,
+		GetTrafficPolicyInstanceInput: getTrafficPolicyInstanceInput,
 	}
 	mock.lockGetTrafficPolicyInstance.Lock()
 	mock.calls.GetTrafficPolicyInstance = append(mock.calls.GetTrafficPolicyInstance, callInfo)
 	mock.lockGetTrafficPolicyInstance.Unlock()
-	return mock.GetTrafficPolicyInstanceFunc(in1)
+	return mock.GetTrafficPolicyInstanceFunc(getTrafficPolicyInstanceInput)
 }
 
 // GetTrafficPolicyInstanceCalls gets all the calls that were made to GetTrafficPolicyInstance.
 // Check the length with:
 //     len(mockedRoute53API.GetTrafficPolicyInstanceCalls())
 func (mock *Route53APIMock) GetTrafficPolicyInstanceCalls() []struct {
-	In1 *route53.GetTrafficPolicyInstanceInput
+	GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
 } {
 	var calls []struct {
-		In1 *route53.GetTrafficPolicyInstanceInput
+		GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
 	}
 	mock.lockGetTrafficPolicyInstance.RLock()
 	calls = mock.calls.GetTrafficPolicyInstance
@@ -5864,29 +7491,29 @@ func (mock *Route53APIMock) GetTrafficPolicyInstanceCalls() []struct {
 }
 
 // GetTrafficPolicyInstanceCount calls GetTrafficPolicyInstanceCountFunc.
-func (mock *Route53APIMock) GetTrafficPolicyInstanceCount(in1 *route53.GetTrafficPolicyInstanceCountInput) (*route53.GetTrafficPolicyInstanceCountOutput, error) {
+func (mock *Route53APIMock) GetTrafficPolicyInstanceCount(getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput) (*route53.GetTrafficPolicyInstanceCountOutput, error) {
 	if mock.GetTrafficPolicyInstanceCountFunc == nil {
 		panic("Route53APIMock.GetTrafficPolicyInstanceCountFunc: method is nil but Route53API.GetTrafficPolicyInstanceCount was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetTrafficPolicyInstanceCountInput
+		GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
 	}{
-		In1: in1,
+		GetTrafficPolicyInstanceCountInput: getTrafficPolicyInstanceCountInput,
 	}
 	mock.lockGetTrafficPolicyInstanceCount.Lock()
 	mock.calls.GetTrafficPolicyInstanceCount = append(mock.calls.GetTrafficPolicyInstanceCount, callInfo)
 	mock.lockGetTrafficPolicyInstanceCount.Unlock()
-	return mock.GetTrafficPolicyInstanceCountFunc(in1)
+	return mock.GetTrafficPolicyInstanceCountFunc(getTrafficPolicyInstanceCountInput)
 }
 
 // GetTrafficPolicyInstanceCountCalls gets all the calls that were made to GetTrafficPolicyInstanceCount.
 // Check the length with:
 //     len(mockedRoute53API.GetTrafficPolicyInstanceCountCalls())
 func (mock *Route53APIMock) GetTrafficPolicyInstanceCountCalls() []struct {
-	In1 *route53.GetTrafficPolicyInstanceCountInput
+	GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
 } {
 	var calls []struct {
-		In1 *route53.GetTrafficPolicyInstanceCountInput
+		GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
 	}
 	mock.lockGetTrafficPolicyInstanceCount.RLock()
 	calls = mock.calls.GetTrafficPolicyInstanceCount
@@ -5895,29 +7522,29 @@ func (mock *Route53APIMock) GetTrafficPolicyInstanceCountCalls() []struct {
 }
 
 // GetTrafficPolicyInstanceCountRequest calls GetTrafficPolicyInstanceCountRequestFunc.
-func (mock *Route53APIMock) GetTrafficPolicyInstanceCountRequest(in1 *route53.GetTrafficPolicyInstanceCountInput) (*request.Request, *route53.GetTrafficPolicyInstanceCountOutput) {
+func (mock *Route53APIMock) GetTrafficPolicyInstanceCountRequest(getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput) (*request.Request, *route53.GetTrafficPolicyInstanceCountOutput) {
 	if mock.GetTrafficPolicyInstanceCountRequestFunc == nil {
 		panic("Route53APIMock.GetTrafficPolicyInstanceCountRequestFunc: method is nil but Route53API.GetTrafficPolicyInstanceCountRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetTrafficPolicyInstanceCountInput
+		GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
 	}{
-		In1: in1,
+		GetTrafficPolicyInstanceCountInput: getTrafficPolicyInstanceCountInput,
 	}
 	mock.lockGetTrafficPolicyInstanceCountRequest.Lock()
 	mock.calls.GetTrafficPolicyInstanceCountRequest = append(mock.calls.GetTrafficPolicyInstanceCountRequest, callInfo)
 	mock.lockGetTrafficPolicyInstanceCountRequest.Unlock()
-	return mock.GetTrafficPolicyInstanceCountRequestFunc(in1)
+	return mock.GetTrafficPolicyInstanceCountRequestFunc(getTrafficPolicyInstanceCountInput)
 }
 
 // GetTrafficPolicyInstanceCountRequestCalls gets all the calls that were made to GetTrafficPolicyInstanceCountRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetTrafficPolicyInstanceCountRequestCalls())
 func (mock *Route53APIMock) GetTrafficPolicyInstanceCountRequestCalls() []struct {
-	In1 *route53.GetTrafficPolicyInstanceCountInput
+	GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
 } {
 	var calls []struct {
-		In1 *route53.GetTrafficPolicyInstanceCountInput
+		GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
 	}
 	mock.lockGetTrafficPolicyInstanceCountRequest.RLock()
 	calls = mock.calls.GetTrafficPolicyInstanceCountRequest
@@ -5926,37 +7553,37 @@ func (mock *Route53APIMock) GetTrafficPolicyInstanceCountRequestCalls() []struct
 }
 
 // GetTrafficPolicyInstanceCountWithContext calls GetTrafficPolicyInstanceCountWithContextFunc.
-func (mock *Route53APIMock) GetTrafficPolicyInstanceCountWithContext(in1 context.Context, in2 *route53.GetTrafficPolicyInstanceCountInput, in3 ...request.Option) (*route53.GetTrafficPolicyInstanceCountOutput, error) {
+func (mock *Route53APIMock) GetTrafficPolicyInstanceCountWithContext(contextMoqParam context.Context, getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput, options ...request.Option) (*route53.GetTrafficPolicyInstanceCountOutput, error) {
 	if mock.GetTrafficPolicyInstanceCountWithContextFunc == nil {
 		panic("Route53APIMock.GetTrafficPolicyInstanceCountWithContextFunc: method is nil but Route53API.GetTrafficPolicyInstanceCountWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetTrafficPolicyInstanceCountInput
-		In3 []request.Option
+		ContextMoqParam                    context.Context
+		GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
+		Options                            []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                    contextMoqParam,
+		GetTrafficPolicyInstanceCountInput: getTrafficPolicyInstanceCountInput,
+		Options:                            options,
 	}
 	mock.lockGetTrafficPolicyInstanceCountWithContext.Lock()
 	mock.calls.GetTrafficPolicyInstanceCountWithContext = append(mock.calls.GetTrafficPolicyInstanceCountWithContext, callInfo)
 	mock.lockGetTrafficPolicyInstanceCountWithContext.Unlock()
-	return mock.GetTrafficPolicyInstanceCountWithContextFunc(in1, in2, in3...)
+	return mock.GetTrafficPolicyInstanceCountWithContextFunc(contextMoqParam, getTrafficPolicyInstanceCountInput, options...)
 }
 
 // GetTrafficPolicyInstanceCountWithContextCalls gets all the calls that were made to GetTrafficPolicyInstanceCountWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetTrafficPolicyInstanceCountWithContextCalls())
 func (mock *Route53APIMock) GetTrafficPolicyInstanceCountWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetTrafficPolicyInstanceCountInput
-	In3 []request.Option
+	ContextMoqParam                    context.Context
+	GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
+	Options                            []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetTrafficPolicyInstanceCountInput
-		In3 []request.Option
+		ContextMoqParam                    context.Context
+		GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
+		Options                            []request.Option
 	}
 	mock.lockGetTrafficPolicyInstanceCountWithContext.RLock()
 	calls = mock.calls.GetTrafficPolicyInstanceCountWithContext
@@ -5965,29 +7592,29 @@ func (mock *Route53APIMock) GetTrafficPolicyInstanceCountWithContextCalls() []st
 }
 
 // GetTrafficPolicyInstanceRequest calls GetTrafficPolicyInstanceRequestFunc.
-func (mock *Route53APIMock) GetTrafficPolicyInstanceRequest(in1 *route53.GetTrafficPolicyInstanceInput) (*request.Request, *route53.GetTrafficPolicyInstanceOutput) {
+func (mock *Route53APIMock) GetTrafficPolicyInstanceRequest(getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput) (*request.Request, *route53.GetTrafficPolicyInstanceOutput) {
 	if mock.GetTrafficPolicyInstanceRequestFunc == nil {
 		panic("Route53APIMock.GetTrafficPolicyInstanceRequestFunc: method is nil but Route53API.GetTrafficPolicyInstanceRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetTrafficPolicyInstanceInput
+		GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
 	}{
-		In1: in1,
+		GetTrafficPolicyInstanceInput: getTrafficPolicyInstanceInput,
 	}
 	mock.lockGetTrafficPolicyInstanceRequest.Lock()
 	mock.calls.GetTrafficPolicyInstanceRequest = append(mock.calls.GetTrafficPolicyInstanceRequest, callInfo)
 	mock.lockGetTrafficPolicyInstanceRequest.Unlock()
-	return mock.GetTrafficPolicyInstanceRequestFunc(in1)
+	return mock.GetTrafficPolicyInstanceRequestFunc(getTrafficPolicyInstanceInput)
 }
 
 // GetTrafficPolicyInstanceRequestCalls gets all the calls that were made to GetTrafficPolicyInstanceRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetTrafficPolicyInstanceRequestCalls())
 func (mock *Route53APIMock) GetTrafficPolicyInstanceRequestCalls() []struct {
-	In1 *route53.GetTrafficPolicyInstanceInput
+	GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
 } {
 	var calls []struct {
-		In1 *route53.GetTrafficPolicyInstanceInput
+		GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
 	}
 	mock.lockGetTrafficPolicyInstanceRequest.RLock()
 	calls = mock.calls.GetTrafficPolicyInstanceRequest
@@ -5996,37 +7623,37 @@ func (mock *Route53APIMock) GetTrafficPolicyInstanceRequestCalls() []struct {
 }
 
 // GetTrafficPolicyInstanceWithContext calls GetTrafficPolicyInstanceWithContextFunc.
-func (mock *Route53APIMock) GetTrafficPolicyInstanceWithContext(in1 context.Context, in2 *route53.GetTrafficPolicyInstanceInput, in3 ...request.Option) (*route53.GetTrafficPolicyInstanceOutput, error) {
+func (mock *Route53APIMock) GetTrafficPolicyInstanceWithContext(contextMoqParam context.Context, getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput, options ...request.Option) (*route53.GetTrafficPolicyInstanceOutput, error) {
 	if mock.GetTrafficPolicyInstanceWithContextFunc == nil {
 		panic("Route53APIMock.GetTrafficPolicyInstanceWithContextFunc: method is nil but Route53API.GetTrafficPolicyInstanceWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetTrafficPolicyInstanceInput
-		In3 []request.Option
+		ContextMoqParam               context.Context
+		GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
+		Options                       []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:               contextMoqParam,
+		GetTrafficPolicyInstanceInput: getTrafficPolicyInstanceInput,
+		Options:                       options,
 	}
 	mock.lockGetTrafficPolicyInstanceWithContext.Lock()
 	mock.calls.GetTrafficPolicyInstanceWithContext = append(mock.calls.GetTrafficPolicyInstanceWithContext, callInfo)
 	mock.lockGetTrafficPolicyInstanceWithContext.Unlock()
-	return mock.GetTrafficPolicyInstanceWithContextFunc(in1, in2, in3...)
+	return mock.GetTrafficPolicyInstanceWithContextFunc(contextMoqParam, getTrafficPolicyInstanceInput, options...)
 }
 
 // GetTrafficPolicyInstanceWithContextCalls gets all the calls that were made to GetTrafficPolicyInstanceWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetTrafficPolicyInstanceWithContextCalls())
 func (mock *Route53APIMock) GetTrafficPolicyInstanceWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetTrafficPolicyInstanceInput
-	In3 []request.Option
+	ContextMoqParam               context.Context
+	GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
+	Options                       []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetTrafficPolicyInstanceInput
-		In3 []request.Option
+		ContextMoqParam               context.Context
+		GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
+		Options                       []request.Option
 	}
 	mock.lockGetTrafficPolicyInstanceWithContext.RLock()
 	calls = mock.calls.GetTrafficPolicyInstanceWithContext
@@ -6035,29 +7662,29 @@ func (mock *Route53APIMock) GetTrafficPolicyInstanceWithContextCalls() []struct 
 }
 
 // GetTrafficPolicyRequest calls GetTrafficPolicyRequestFunc.
-func (mock *Route53APIMock) GetTrafficPolicyRequest(in1 *route53.GetTrafficPolicyInput) (*request.Request, *route53.GetTrafficPolicyOutput) {
+func (mock *Route53APIMock) GetTrafficPolicyRequest(getTrafficPolicyInput *route53.GetTrafficPolicyInput) (*request.Request, *route53.GetTrafficPolicyOutput) {
 	if mock.GetTrafficPolicyRequestFunc == nil {
 		panic("Route53APIMock.GetTrafficPolicyRequestFunc: method is nil but Route53API.GetTrafficPolicyRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetTrafficPolicyInput
+		GetTrafficPolicyInput *route53.GetTrafficPolicyInput
 	}{
-		In1: in1,
+		GetTrafficPolicyInput: getTrafficPolicyInput,
 	}
 	mock.lockGetTrafficPolicyRequest.Lock()
 	mock.calls.GetTrafficPolicyRequest = append(mock.calls.GetTrafficPolicyRequest, callInfo)
 	mock.lockGetTrafficPolicyRequest.Unlock()
-	return mock.GetTrafficPolicyRequestFunc(in1)
+	return mock.GetTrafficPolicyRequestFunc(getTrafficPolicyInput)
 }
 
 // GetTrafficPolicyRequestCalls gets all the calls that were made to GetTrafficPolicyRequest.
 // Check the length with:
 //     len(mockedRoute53API.GetTrafficPolicyRequestCalls())
 func (mock *Route53APIMock) GetTrafficPolicyRequestCalls() []struct {
-	In1 *route53.GetTrafficPolicyInput
+	GetTrafficPolicyInput *route53.GetTrafficPolicyInput
 } {
 	var calls []struct {
-		In1 *route53.GetTrafficPolicyInput
+		GetTrafficPolicyInput *route53.GetTrafficPolicyInput
 	}
 	mock.lockGetTrafficPolicyRequest.RLock()
 	calls = mock.calls.GetTrafficPolicyRequest
@@ -6066,37 +7693,37 @@ func (mock *Route53APIMock) GetTrafficPolicyRequestCalls() []struct {
 }
 
 // GetTrafficPolicyWithContext calls GetTrafficPolicyWithContextFunc.
-func (mock *Route53APIMock) GetTrafficPolicyWithContext(in1 context.Context, in2 *route53.GetTrafficPolicyInput, in3 ...request.Option) (*route53.GetTrafficPolicyOutput, error) {
+func (mock *Route53APIMock) GetTrafficPolicyWithContext(contextMoqParam context.Context, getTrafficPolicyInput *route53.GetTrafficPolicyInput, options ...request.Option) (*route53.GetTrafficPolicyOutput, error) {
 	if mock.GetTrafficPolicyWithContextFunc == nil {
 		panic("Route53APIMock.GetTrafficPolicyWithContextFunc: method is nil but Route53API.GetTrafficPolicyWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetTrafficPolicyInput
-		In3 []request.Option
+		ContextMoqParam       context.Context
+		GetTrafficPolicyInput *route53.GetTrafficPolicyInput
+		Options               []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:       contextMoqParam,
+		GetTrafficPolicyInput: getTrafficPolicyInput,
+		Options:               options,
 	}
 	mock.lockGetTrafficPolicyWithContext.Lock()
 	mock.calls.GetTrafficPolicyWithContext = append(mock.calls.GetTrafficPolicyWithContext, callInfo)
 	mock.lockGetTrafficPolicyWithContext.Unlock()
-	return mock.GetTrafficPolicyWithContextFunc(in1, in2, in3...)
+	return mock.GetTrafficPolicyWithContextFunc(contextMoqParam, getTrafficPolicyInput, options...)
 }
 
 // GetTrafficPolicyWithContextCalls gets all the calls that were made to GetTrafficPolicyWithContext.
 // Check the length with:
 //     len(mockedRoute53API.GetTrafficPolicyWithContextCalls())
 func (mock *Route53APIMock) GetTrafficPolicyWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetTrafficPolicyInput
-	In3 []request.Option
+	ContextMoqParam       context.Context
+	GetTrafficPolicyInput *route53.GetTrafficPolicyInput
+	Options               []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetTrafficPolicyInput
-		In3 []request.Option
+		ContextMoqParam       context.Context
+		GetTrafficPolicyInput *route53.GetTrafficPolicyInput
+		Options               []request.Option
 	}
 	mock.lockGetTrafficPolicyWithContext.RLock()
 	calls = mock.calls.GetTrafficPolicyWithContext
@@ -6104,30 +7731,567 @@ func (mock *Route53APIMock) GetTrafficPolicyWithContextCalls() []struct {
 	return calls
 }
 
+// ListCidrBlocks calls ListCidrBlocksFunc.
+func (mock *Route53APIMock) ListCidrBlocks(listCidrBlocksInput *route53.ListCidrBlocksInput) (*route53.ListCidrBlocksOutput, error) {
+	if mock.ListCidrBlocksFunc == nil {
+		panic("Route53APIMock.ListCidrBlocksFunc: method is nil but Route53API.ListCidrBlocks was just called")
+	}
+	callInfo := struct {
+		ListCidrBlocksInput *route53.ListCidrBlocksInput
+	}{
+		ListCidrBlocksInput: listCidrBlocksInput,
+	}
+	mock.lockListCidrBlocks.Lock()
+	mock.calls.ListCidrBlocks = append(mock.calls.ListCidrBlocks, callInfo)
+	mock.lockListCidrBlocks.Unlock()
+	return mock.ListCidrBlocksFunc(listCidrBlocksInput)
+}
+
+// ListCidrBlocksCalls gets all the calls that were made to ListCidrBlocks.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrBlocksCalls())
+func (mock *Route53APIMock) ListCidrBlocksCalls() []struct {
+	ListCidrBlocksInput *route53.ListCidrBlocksInput
+} {
+	var calls []struct {
+		ListCidrBlocksInput *route53.ListCidrBlocksInput
+	}
+	mock.lockListCidrBlocks.RLock()
+	calls = mock.calls.ListCidrBlocks
+	mock.lockListCidrBlocks.RUnlock()
+	return calls
+}
+
+// ListCidrBlocksPages calls ListCidrBlocksPagesFunc.
+func (mock *Route53APIMock) ListCidrBlocksPages(listCidrBlocksInput *route53.ListCidrBlocksInput, fn func(*route53.ListCidrBlocksOutput, bool) bool) error {
+	if mock.ListCidrBlocksPagesFunc == nil {
+		panic("Route53APIMock.ListCidrBlocksPagesFunc: method is nil but Route53API.ListCidrBlocksPages was just called")
+	}
+	callInfo := struct {
+		ListCidrBlocksInput *route53.ListCidrBlocksInput
+		Fn                  func(*route53.ListCidrBlocksOutput, bool) bool
+	}{
+		ListCidrBlocksInput: listCidrBlocksInput,
+		Fn:                  fn,
+	}
+	mock.lockListCidrBlocksPages.Lock()
+	mock.calls.ListCidrBlocksPages = append(mock.calls.ListCidrBlocksPages, callInfo)
+	mock.lockListCidrBlocksPages.Unlock()
+	return mock.ListCidrBlocksPagesFunc(listCidrBlocksInput, fn)
+}
+
+// ListCidrBlocksPagesCalls gets all the calls that were made to ListCidrBlocksPages.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrBlocksPagesCalls())
+func (mock *Route53APIMock) ListCidrBlocksPagesCalls() []struct {
+	ListCidrBlocksInput *route53.ListCidrBlocksInput
+	Fn                  func(*route53.ListCidrBlocksOutput, bool) bool
+} {
+	var calls []struct {
+		ListCidrBlocksInput *route53.ListCidrBlocksInput
+		Fn                  func(*route53.ListCidrBlocksOutput, bool) bool
+	}
+	mock.lockListCidrBlocksPages.RLock()
+	calls = mock.calls.ListCidrBlocksPages
+	mock.lockListCidrBlocksPages.RUnlock()
+	return calls
+}
+
+// ListCidrBlocksPagesWithContext calls ListCidrBlocksPagesWithContextFunc.
+func (mock *Route53APIMock) ListCidrBlocksPagesWithContext(contextMoqParam context.Context, listCidrBlocksInput *route53.ListCidrBlocksInput, fn func(*route53.ListCidrBlocksOutput, bool) bool, options ...request.Option) error {
+	if mock.ListCidrBlocksPagesWithContextFunc == nil {
+		panic("Route53APIMock.ListCidrBlocksPagesWithContextFunc: method is nil but Route53API.ListCidrBlocksPagesWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam     context.Context
+		ListCidrBlocksInput *route53.ListCidrBlocksInput
+		Fn                  func(*route53.ListCidrBlocksOutput, bool) bool
+		Options             []request.Option
+	}{
+		ContextMoqParam:     contextMoqParam,
+		ListCidrBlocksInput: listCidrBlocksInput,
+		Fn:                  fn,
+		Options:             options,
+	}
+	mock.lockListCidrBlocksPagesWithContext.Lock()
+	mock.calls.ListCidrBlocksPagesWithContext = append(mock.calls.ListCidrBlocksPagesWithContext, callInfo)
+	mock.lockListCidrBlocksPagesWithContext.Unlock()
+	return mock.ListCidrBlocksPagesWithContextFunc(contextMoqParam, listCidrBlocksInput, fn, options...)
+}
+
+// ListCidrBlocksPagesWithContextCalls gets all the calls that were made to ListCidrBlocksPagesWithContext.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrBlocksPagesWithContextCalls())
+func (mock *Route53APIMock) ListCidrBlocksPagesWithContextCalls() []struct {
+	ContextMoqParam     context.Context
+	ListCidrBlocksInput *route53.ListCidrBlocksInput
+	Fn                  func(*route53.ListCidrBlocksOutput, bool) bool
+	Options             []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam     context.Context
+		ListCidrBlocksInput *route53.ListCidrBlocksInput
+		Fn                  func(*route53.ListCidrBlocksOutput, bool) bool
+		Options             []request.Option
+	}
+	mock.lockListCidrBlocksPagesWithContext.RLock()
+	calls = mock.calls.ListCidrBlocksPagesWithContext
+	mock.lockListCidrBlocksPagesWithContext.RUnlock()
+	return calls
+}
+
+// ListCidrBlocksRequest calls ListCidrBlocksRequestFunc.
+func (mock *Route53APIMock) ListCidrBlocksRequest(listCidrBlocksInput *route53.ListCidrBlocksInput) (*request.Request, *route53.ListCidrBlocksOutput) {
+	if mock.ListCidrBlocksRequestFunc == nil {
+		panic("Route53APIMock.ListCidrBlocksRequestFunc: method is nil but Route53API.ListCidrBlocksRequest was just called")
+	}
+	callInfo := struct {
+		ListCidrBlocksInput *route53.ListCidrBlocksInput
+	}{
+		ListCidrBlocksInput: listCidrBlocksInput,
+	}
+	mock.lockListCidrBlocksRequest.Lock()
+	mock.calls.ListCidrBlocksRequest = append(mock.calls.ListCidrBlocksRequest, callInfo)
+	mock.lockListCidrBlocksRequest.Unlock()
+	return mock.ListCidrBlocksRequestFunc(listCidrBlocksInput)
+}
+
+// ListCidrBlocksRequestCalls gets all the calls that were made to ListCidrBlocksRequest.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrBlocksRequestCalls())
+func (mock *Route53APIMock) ListCidrBlocksRequestCalls() []struct {
+	ListCidrBlocksInput *route53.ListCidrBlocksInput
+} {
+	var calls []struct {
+		ListCidrBlocksInput *route53.ListCidrBlocksInput
+	}
+	mock.lockListCidrBlocksRequest.RLock()
+	calls = mock.calls.ListCidrBlocksRequest
+	mock.lockListCidrBlocksRequest.RUnlock()
+	return calls
+}
+
+// ListCidrBlocksWithContext calls ListCidrBlocksWithContextFunc.
+func (mock *Route53APIMock) ListCidrBlocksWithContext(contextMoqParam context.Context, listCidrBlocksInput *route53.ListCidrBlocksInput, options ...request.Option) (*route53.ListCidrBlocksOutput, error) {
+	if mock.ListCidrBlocksWithContextFunc == nil {
+		panic("Route53APIMock.ListCidrBlocksWithContextFunc: method is nil but Route53API.ListCidrBlocksWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam     context.Context
+		ListCidrBlocksInput *route53.ListCidrBlocksInput
+		Options             []request.Option
+	}{
+		ContextMoqParam:     contextMoqParam,
+		ListCidrBlocksInput: listCidrBlocksInput,
+		Options:             options,
+	}
+	mock.lockListCidrBlocksWithContext.Lock()
+	mock.calls.ListCidrBlocksWithContext = append(mock.calls.ListCidrBlocksWithContext, callInfo)
+	mock.lockListCidrBlocksWithContext.Unlock()
+	return mock.ListCidrBlocksWithContextFunc(contextMoqParam, listCidrBlocksInput, options...)
+}
+
+// ListCidrBlocksWithContextCalls gets all the calls that were made to ListCidrBlocksWithContext.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrBlocksWithContextCalls())
+func (mock *Route53APIMock) ListCidrBlocksWithContextCalls() []struct {
+	ContextMoqParam     context.Context
+	ListCidrBlocksInput *route53.ListCidrBlocksInput
+	Options             []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam     context.Context
+		ListCidrBlocksInput *route53.ListCidrBlocksInput
+		Options             []request.Option
+	}
+	mock.lockListCidrBlocksWithContext.RLock()
+	calls = mock.calls.ListCidrBlocksWithContext
+	mock.lockListCidrBlocksWithContext.RUnlock()
+	return calls
+}
+
+// ListCidrCollections calls ListCidrCollectionsFunc.
+func (mock *Route53APIMock) ListCidrCollections(listCidrCollectionsInput *route53.ListCidrCollectionsInput) (*route53.ListCidrCollectionsOutput, error) {
+	if mock.ListCidrCollectionsFunc == nil {
+		panic("Route53APIMock.ListCidrCollectionsFunc: method is nil but Route53API.ListCidrCollections was just called")
+	}
+	callInfo := struct {
+		ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+	}{
+		ListCidrCollectionsInput: listCidrCollectionsInput,
+	}
+	mock.lockListCidrCollections.Lock()
+	mock.calls.ListCidrCollections = append(mock.calls.ListCidrCollections, callInfo)
+	mock.lockListCidrCollections.Unlock()
+	return mock.ListCidrCollectionsFunc(listCidrCollectionsInput)
+}
+
+// ListCidrCollectionsCalls gets all the calls that were made to ListCidrCollections.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrCollectionsCalls())
+func (mock *Route53APIMock) ListCidrCollectionsCalls() []struct {
+	ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+} {
+	var calls []struct {
+		ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+	}
+	mock.lockListCidrCollections.RLock()
+	calls = mock.calls.ListCidrCollections
+	mock.lockListCidrCollections.RUnlock()
+	return calls
+}
+
+// ListCidrCollectionsPages calls ListCidrCollectionsPagesFunc.
+func (mock *Route53APIMock) ListCidrCollectionsPages(listCidrCollectionsInput *route53.ListCidrCollectionsInput, fn func(*route53.ListCidrCollectionsOutput, bool) bool) error {
+	if mock.ListCidrCollectionsPagesFunc == nil {
+		panic("Route53APIMock.ListCidrCollectionsPagesFunc: method is nil but Route53API.ListCidrCollectionsPages was just called")
+	}
+	callInfo := struct {
+		ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+		Fn                       func(*route53.ListCidrCollectionsOutput, bool) bool
+	}{
+		ListCidrCollectionsInput: listCidrCollectionsInput,
+		Fn:                       fn,
+	}
+	mock.lockListCidrCollectionsPages.Lock()
+	mock.calls.ListCidrCollectionsPages = append(mock.calls.ListCidrCollectionsPages, callInfo)
+	mock.lockListCidrCollectionsPages.Unlock()
+	return mock.ListCidrCollectionsPagesFunc(listCidrCollectionsInput, fn)
+}
+
+// ListCidrCollectionsPagesCalls gets all the calls that were made to ListCidrCollectionsPages.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrCollectionsPagesCalls())
+func (mock *Route53APIMock) ListCidrCollectionsPagesCalls() []struct {
+	ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+	Fn                       func(*route53.ListCidrCollectionsOutput, bool) bool
+} {
+	var calls []struct {
+		ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+		Fn                       func(*route53.ListCidrCollectionsOutput, bool) bool
+	}
+	mock.lockListCidrCollectionsPages.RLock()
+	calls = mock.calls.ListCidrCollectionsPages
+	mock.lockListCidrCollectionsPages.RUnlock()
+	return calls
+}
+
+// ListCidrCollectionsPagesWithContext calls ListCidrCollectionsPagesWithContextFunc.
+func (mock *Route53APIMock) ListCidrCollectionsPagesWithContext(contextMoqParam context.Context, listCidrCollectionsInput *route53.ListCidrCollectionsInput, fn func(*route53.ListCidrCollectionsOutput, bool) bool, options ...request.Option) error {
+	if mock.ListCidrCollectionsPagesWithContextFunc == nil {
+		panic("Route53APIMock.ListCidrCollectionsPagesWithContextFunc: method is nil but Route53API.ListCidrCollectionsPagesWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam          context.Context
+		ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+		Fn                       func(*route53.ListCidrCollectionsOutput, bool) bool
+		Options                  []request.Option
+	}{
+		ContextMoqParam:          contextMoqParam,
+		ListCidrCollectionsInput: listCidrCollectionsInput,
+		Fn:                       fn,
+		Options:                  options,
+	}
+	mock.lockListCidrCollectionsPagesWithContext.Lock()
+	mock.calls.ListCidrCollectionsPagesWithContext = append(mock.calls.ListCidrCollectionsPagesWithContext, callInfo)
+	mock.lockListCidrCollectionsPagesWithContext.Unlock()
+	return mock.ListCidrCollectionsPagesWithContextFunc(contextMoqParam, listCidrCollectionsInput, fn, options...)
+}
+
+// ListCidrCollectionsPagesWithContextCalls gets all the calls that were made to ListCidrCollectionsPagesWithContext.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrCollectionsPagesWithContextCalls())
+func (mock *Route53APIMock) ListCidrCollectionsPagesWithContextCalls() []struct {
+	ContextMoqParam          context.Context
+	ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+	Fn                       func(*route53.ListCidrCollectionsOutput, bool) bool
+	Options                  []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam          context.Context
+		ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+		Fn                       func(*route53.ListCidrCollectionsOutput, bool) bool
+		Options                  []request.Option
+	}
+	mock.lockListCidrCollectionsPagesWithContext.RLock()
+	calls = mock.calls.ListCidrCollectionsPagesWithContext
+	mock.lockListCidrCollectionsPagesWithContext.RUnlock()
+	return calls
+}
+
+// ListCidrCollectionsRequest calls ListCidrCollectionsRequestFunc.
+func (mock *Route53APIMock) ListCidrCollectionsRequest(listCidrCollectionsInput *route53.ListCidrCollectionsInput) (*request.Request, *route53.ListCidrCollectionsOutput) {
+	if mock.ListCidrCollectionsRequestFunc == nil {
+		panic("Route53APIMock.ListCidrCollectionsRequestFunc: method is nil but Route53API.ListCidrCollectionsRequest was just called")
+	}
+	callInfo := struct {
+		ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+	}{
+		ListCidrCollectionsInput: listCidrCollectionsInput,
+	}
+	mock.lockListCidrCollectionsRequest.Lock()
+	mock.calls.ListCidrCollectionsRequest = append(mock.calls.ListCidrCollectionsRequest, callInfo)
+	mock.lockListCidrCollectionsRequest.Unlock()
+	return mock.ListCidrCollectionsRequestFunc(listCidrCollectionsInput)
+}
+
+// ListCidrCollectionsRequestCalls gets all the calls that were made to ListCidrCollectionsRequest.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrCollectionsRequestCalls())
+func (mock *Route53APIMock) ListCidrCollectionsRequestCalls() []struct {
+	ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+} {
+	var calls []struct {
+		ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+	}
+	mock.lockListCidrCollectionsRequest.RLock()
+	calls = mock.calls.ListCidrCollectionsRequest
+	mock.lockListCidrCollectionsRequest.RUnlock()
+	return calls
+}
+
+// ListCidrCollectionsWithContext calls ListCidrCollectionsWithContextFunc.
+func (mock *Route53APIMock) ListCidrCollectionsWithContext(contextMoqParam context.Context, listCidrCollectionsInput *route53.ListCidrCollectionsInput, options ...request.Option) (*route53.ListCidrCollectionsOutput, error) {
+	if mock.ListCidrCollectionsWithContextFunc == nil {
+		panic("Route53APIMock.ListCidrCollectionsWithContextFunc: method is nil but Route53API.ListCidrCollectionsWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam          context.Context
+		ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+		Options                  []request.Option
+	}{
+		ContextMoqParam:          contextMoqParam,
+		ListCidrCollectionsInput: listCidrCollectionsInput,
+		Options:                  options,
+	}
+	mock.lockListCidrCollectionsWithContext.Lock()
+	mock.calls.ListCidrCollectionsWithContext = append(mock.calls.ListCidrCollectionsWithContext, callInfo)
+	mock.lockListCidrCollectionsWithContext.Unlock()
+	return mock.ListCidrCollectionsWithContextFunc(contextMoqParam, listCidrCollectionsInput, options...)
+}
+
+// ListCidrCollectionsWithContextCalls gets all the calls that were made to ListCidrCollectionsWithContext.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrCollectionsWithContextCalls())
+func (mock *Route53APIMock) ListCidrCollectionsWithContextCalls() []struct {
+	ContextMoqParam          context.Context
+	ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+	Options                  []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam          context.Context
+		ListCidrCollectionsInput *route53.ListCidrCollectionsInput
+		Options                  []request.Option
+	}
+	mock.lockListCidrCollectionsWithContext.RLock()
+	calls = mock.calls.ListCidrCollectionsWithContext
+	mock.lockListCidrCollectionsWithContext.RUnlock()
+	return calls
+}
+
+// ListCidrLocations calls ListCidrLocationsFunc.
+func (mock *Route53APIMock) ListCidrLocations(listCidrLocationsInput *route53.ListCidrLocationsInput) (*route53.ListCidrLocationsOutput, error) {
+	if mock.ListCidrLocationsFunc == nil {
+		panic("Route53APIMock.ListCidrLocationsFunc: method is nil but Route53API.ListCidrLocations was just called")
+	}
+	callInfo := struct {
+		ListCidrLocationsInput *route53.ListCidrLocationsInput
+	}{
+		ListCidrLocationsInput: listCidrLocationsInput,
+	}
+	mock.lockListCidrLocations.Lock()
+	mock.calls.ListCidrLocations = append(mock.calls.ListCidrLocations, callInfo)
+	mock.lockListCidrLocations.Unlock()
+	return mock.ListCidrLocationsFunc(listCidrLocationsInput)
+}
+
+// ListCidrLocationsCalls gets all the calls that were made to ListCidrLocations.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrLocationsCalls())
+func (mock *Route53APIMock) ListCidrLocationsCalls() []struct {
+	ListCidrLocationsInput *route53.ListCidrLocationsInput
+} {
+	var calls []struct {
+		ListCidrLocationsInput *route53.ListCidrLocationsInput
+	}
+	mock.lockListCidrLocations.RLock()
+	calls = mock.calls.ListCidrLocations
+	mock.lockListCidrLocations.RUnlock()
+	return calls
+}
+
+// ListCidrLocationsPages calls ListCidrLocationsPagesFunc.
+func (mock *Route53APIMock) ListCidrLocationsPages(listCidrLocationsInput *route53.ListCidrLocationsInput, fn func(*route53.ListCidrLocationsOutput, bool) bool) error {
+	if mock.ListCidrLocationsPagesFunc == nil {
+		panic("Route53APIMock.ListCidrLocationsPagesFunc: method is nil but Route53API.ListCidrLocationsPages was just called")
+	}
+	callInfo := struct {
+		ListCidrLocationsInput *route53.ListCidrLocationsInput
+		Fn                     func(*route53.ListCidrLocationsOutput, bool) bool
+	}{
+		ListCidrLocationsInput: listCidrLocationsInput,
+		Fn:                     fn,
+	}
+	mock.lockListCidrLocationsPages.Lock()
+	mock.calls.ListCidrLocationsPages = append(mock.calls.ListCidrLocationsPages, callInfo)
+	mock.lockListCidrLocationsPages.Unlock()
+	return mock.ListCidrLocationsPagesFunc(listCidrLocationsInput, fn)
+}
+
+// ListCidrLocationsPagesCalls gets all the calls that were made to ListCidrLocationsPages.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrLocationsPagesCalls())
+func (mock *Route53APIMock) ListCidrLocationsPagesCalls() []struct {
+	ListCidrLocationsInput *route53.ListCidrLocationsInput
+	Fn                     func(*route53.ListCidrLocationsOutput, bool) bool
+} {
+	var calls []struct {
+		ListCidrLocationsInput *route53.ListCidrLocationsInput
+		Fn                     func(*route53.ListCidrLocationsOutput, bool) bool
+	}
+	mock.lockListCidrLocationsPages.RLock()
+	calls = mock.calls.ListCidrLocationsPages
+	mock.lockListCidrLocationsPages.RUnlock()
+	return calls
+}
+
+// ListCidrLocationsPagesWithContext calls ListCidrLocationsPagesWithContextFunc.
+func (mock *Route53APIMock) ListCidrLocationsPagesWithContext(contextMoqParam context.Context, listCidrLocationsInput *route53.ListCidrLocationsInput, fn func(*route53.ListCidrLocationsOutput, bool) bool, options ...request.Option) error {
+	if mock.ListCidrLocationsPagesWithContextFunc == nil {
+		panic("Route53APIMock.ListCidrLocationsPagesWithContextFunc: method is nil but Route53API.ListCidrLocationsPagesWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam        context.Context
+		ListCidrLocationsInput *route53.ListCidrLocationsInput
+		Fn                     func(*route53.ListCidrLocationsOutput, bool) bool
+		Options                []request.Option
+	}{
+		ContextMoqParam:        contextMoqParam,
+		ListCidrLocationsInput: listCidrLocationsInput,
+		Fn:                     fn,
+		Options:                options,
+	}
+	mock.lockListCidrLocationsPagesWithContext.Lock()
+	mock.calls.ListCidrLocationsPagesWithContext = append(mock.calls.ListCidrLocationsPagesWithContext, callInfo)
+	mock.lockListCidrLocationsPagesWithContext.Unlock()
+	return mock.ListCidrLocationsPagesWithContextFunc(contextMoqParam, listCidrLocationsInput, fn, options...)
+}
+
+// ListCidrLocationsPagesWithContextCalls gets all the calls that were made to ListCidrLocationsPagesWithContext.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrLocationsPagesWithContextCalls())
+func (mock *Route53APIMock) ListCidrLocationsPagesWithContextCalls() []struct {
+	ContextMoqParam        context.Context
+	ListCidrLocationsInput *route53.ListCidrLocationsInput
+	Fn                     func(*route53.ListCidrLocationsOutput, bool) bool
+	Options                []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam        context.Context
+		ListCidrLocationsInput *route53.ListCidrLocationsInput
+		Fn                     func(*route53.ListCidrLocationsOutput, bool) bool
+		Options                []request.Option
+	}
+	mock.lockListCidrLocationsPagesWithContext.RLock()
+	calls = mock.calls.ListCidrLocationsPagesWithContext
+	mock.lockListCidrLocationsPagesWithContext.RUnlock()
+	return calls
+}
+
+// ListCidrLocationsRequest calls ListCidrLocationsRequestFunc.
+func (mock *Route53APIMock) ListCidrLocationsRequest(listCidrLocationsInput *route53.ListCidrLocationsInput) (*request.Request, *route53.ListCidrLocationsOutput) {
+	if mock.ListCidrLocationsRequestFunc == nil {
+		panic("Route53APIMock.ListCidrLocationsRequestFunc: method is nil but Route53API.ListCidrLocationsRequest was just called")
+	}
+	callInfo := struct {
+		ListCidrLocationsInput *route53.ListCidrLocationsInput
+	}{
+		ListCidrLocationsInput: listCidrLocationsInput,
+	}
+	mock.lockListCidrLocationsRequest.Lock()
+	mock.calls.ListCidrLocationsRequest = append(mock.calls.ListCidrLocationsRequest, callInfo)
+	mock.lockListCidrLocationsRequest.Unlock()
+	return mock.ListCidrLocationsRequestFunc(listCidrLocationsInput)
+}
+
+// ListCidrLocationsRequestCalls gets all the calls that were made to ListCidrLocationsRequest.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrLocationsRequestCalls())
+func (mock *Route53APIMock) ListCidrLocationsRequestCalls() []struct {
+	ListCidrLocationsInput *route53.ListCidrLocationsInput
+} {
+	var calls []struct {
+		ListCidrLocationsInput *route53.ListCidrLocationsInput
+	}
+	mock.lockListCidrLocationsRequest.RLock()
+	calls = mock.calls.ListCidrLocationsRequest
+	mock.lockListCidrLocationsRequest.RUnlock()
+	return calls
+}
+
+// ListCidrLocationsWithContext calls ListCidrLocationsWithContextFunc.
+func (mock *Route53APIMock) ListCidrLocationsWithContext(contextMoqParam context.Context, listCidrLocationsInput *route53.ListCidrLocationsInput, options ...request.Option) (*route53.ListCidrLocationsOutput, error) {
+	if mock.ListCidrLocationsWithContextFunc == nil {
+		panic("Route53APIMock.ListCidrLocationsWithContextFunc: method is nil but Route53API.ListCidrLocationsWithContext was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam        context.Context
+		ListCidrLocationsInput *route53.ListCidrLocationsInput
+		Options                []request.Option
+	}{
+		ContextMoqParam:        contextMoqParam,
+		ListCidrLocationsInput: listCidrLocationsInput,
+		Options:                options,
+	}
+	mock.lockListCidrLocationsWithContext.Lock()
+	mock.calls.ListCidrLocationsWithContext = append(mock.calls.ListCidrLocationsWithContext, callInfo)
+	mock.lockListCidrLocationsWithContext.Unlock()
+	return mock.ListCidrLocationsWithContextFunc(contextMoqParam, listCidrLocationsInput, options...)
+}
+
+// ListCidrLocationsWithContextCalls gets all the calls that were made to ListCidrLocationsWithContext.
+// Check the length with:
+//     len(mockedRoute53API.ListCidrLocationsWithContextCalls())
+func (mock *Route53APIMock) ListCidrLocationsWithContextCalls() []struct {
+	ContextMoqParam        context.Context
+	ListCidrLocationsInput *route53.ListCidrLocationsInput
+	Options                []request.Option
+} {
+	var calls []struct {
+		ContextMoqParam        context.Context
+		ListCidrLocationsInput *route53.ListCidrLocationsInput
+		Options                []request.Option
+	}
+	mock.lockListCidrLocationsWithContext.RLock()
+	calls = mock.calls.ListCidrLocationsWithContext
+	mock.lockListCidrLocationsWithContext.RUnlock()
+	return calls
+}
+
 // ListGeoLocations calls ListGeoLocationsFunc.
-func (mock *Route53APIMock) ListGeoLocations(in1 *route53.ListGeoLocationsInput) (*route53.ListGeoLocationsOutput, error) {
+func (mock *Route53APIMock) ListGeoLocations(listGeoLocationsInput *route53.ListGeoLocationsInput) (*route53.ListGeoLocationsOutput, error) {
 	if mock.ListGeoLocationsFunc == nil {
 		panic("Route53APIMock.ListGeoLocationsFunc: method is nil but Route53API.ListGeoLocations was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListGeoLocationsInput
+		ListGeoLocationsInput *route53.ListGeoLocationsInput
 	}{
-		In1: in1,
+		ListGeoLocationsInput: listGeoLocationsInput,
 	}
 	mock.lockListGeoLocations.Lock()
 	mock.calls.ListGeoLocations = append(mock.calls.ListGeoLocations, callInfo)
 	mock.lockListGeoLocations.Unlock()
-	return mock.ListGeoLocationsFunc(in1)
+	return mock.ListGeoLocationsFunc(listGeoLocationsInput)
 }
 
 // ListGeoLocationsCalls gets all the calls that were made to ListGeoLocations.
 // Check the length with:
 //     len(mockedRoute53API.ListGeoLocationsCalls())
 func (mock *Route53APIMock) ListGeoLocationsCalls() []struct {
-	In1 *route53.ListGeoLocationsInput
+	ListGeoLocationsInput *route53.ListGeoLocationsInput
 } {
 	var calls []struct {
-		In1 *route53.ListGeoLocationsInput
+		ListGeoLocationsInput *route53.ListGeoLocationsInput
 	}
 	mock.lockListGeoLocations.RLock()
 	calls = mock.calls.ListGeoLocations
@@ -6136,29 +8300,29 @@ func (mock *Route53APIMock) ListGeoLocationsCalls() []struct {
 }
 
 // ListGeoLocationsRequest calls ListGeoLocationsRequestFunc.
-func (mock *Route53APIMock) ListGeoLocationsRequest(in1 *route53.ListGeoLocationsInput) (*request.Request, *route53.ListGeoLocationsOutput) {
+func (mock *Route53APIMock) ListGeoLocationsRequest(listGeoLocationsInput *route53.ListGeoLocationsInput) (*request.Request, *route53.ListGeoLocationsOutput) {
 	if mock.ListGeoLocationsRequestFunc == nil {
 		panic("Route53APIMock.ListGeoLocationsRequestFunc: method is nil but Route53API.ListGeoLocationsRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListGeoLocationsInput
+		ListGeoLocationsInput *route53.ListGeoLocationsInput
 	}{
-		In1: in1,
+		ListGeoLocationsInput: listGeoLocationsInput,
 	}
 	mock.lockListGeoLocationsRequest.Lock()
 	mock.calls.ListGeoLocationsRequest = append(mock.calls.ListGeoLocationsRequest, callInfo)
 	mock.lockListGeoLocationsRequest.Unlock()
-	return mock.ListGeoLocationsRequestFunc(in1)
+	return mock.ListGeoLocationsRequestFunc(listGeoLocationsInput)
 }
 
 // ListGeoLocationsRequestCalls gets all the calls that were made to ListGeoLocationsRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListGeoLocationsRequestCalls())
 func (mock *Route53APIMock) ListGeoLocationsRequestCalls() []struct {
-	In1 *route53.ListGeoLocationsInput
+	ListGeoLocationsInput *route53.ListGeoLocationsInput
 } {
 	var calls []struct {
-		In1 *route53.ListGeoLocationsInput
+		ListGeoLocationsInput *route53.ListGeoLocationsInput
 	}
 	mock.lockListGeoLocationsRequest.RLock()
 	calls = mock.calls.ListGeoLocationsRequest
@@ -6167,37 +8331,37 @@ func (mock *Route53APIMock) ListGeoLocationsRequestCalls() []struct {
 }
 
 // ListGeoLocationsWithContext calls ListGeoLocationsWithContextFunc.
-func (mock *Route53APIMock) ListGeoLocationsWithContext(in1 context.Context, in2 *route53.ListGeoLocationsInput, in3 ...request.Option) (*route53.ListGeoLocationsOutput, error) {
+func (mock *Route53APIMock) ListGeoLocationsWithContext(contextMoqParam context.Context, listGeoLocationsInput *route53.ListGeoLocationsInput, options ...request.Option) (*route53.ListGeoLocationsOutput, error) {
 	if mock.ListGeoLocationsWithContextFunc == nil {
 		panic("Route53APIMock.ListGeoLocationsWithContextFunc: method is nil but Route53API.ListGeoLocationsWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListGeoLocationsInput
-		In3 []request.Option
+		ContextMoqParam       context.Context
+		ListGeoLocationsInput *route53.ListGeoLocationsInput
+		Options               []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:       contextMoqParam,
+		ListGeoLocationsInput: listGeoLocationsInput,
+		Options:               options,
 	}
 	mock.lockListGeoLocationsWithContext.Lock()
 	mock.calls.ListGeoLocationsWithContext = append(mock.calls.ListGeoLocationsWithContext, callInfo)
 	mock.lockListGeoLocationsWithContext.Unlock()
-	return mock.ListGeoLocationsWithContextFunc(in1, in2, in3...)
+	return mock.ListGeoLocationsWithContextFunc(contextMoqParam, listGeoLocationsInput, options...)
 }
 
 // ListGeoLocationsWithContextCalls gets all the calls that were made to ListGeoLocationsWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListGeoLocationsWithContextCalls())
 func (mock *Route53APIMock) ListGeoLocationsWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListGeoLocationsInput
-	In3 []request.Option
+	ContextMoqParam       context.Context
+	ListGeoLocationsInput *route53.ListGeoLocationsInput
+	Options               []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListGeoLocationsInput
-		In3 []request.Option
+		ContextMoqParam       context.Context
+		ListGeoLocationsInput *route53.ListGeoLocationsInput
+		Options               []request.Option
 	}
 	mock.lockListGeoLocationsWithContext.RLock()
 	calls = mock.calls.ListGeoLocationsWithContext
@@ -6206,29 +8370,29 @@ func (mock *Route53APIMock) ListGeoLocationsWithContextCalls() []struct {
 }
 
 // ListHealthChecks calls ListHealthChecksFunc.
-func (mock *Route53APIMock) ListHealthChecks(in1 *route53.ListHealthChecksInput) (*route53.ListHealthChecksOutput, error) {
+func (mock *Route53APIMock) ListHealthChecks(listHealthChecksInput *route53.ListHealthChecksInput) (*route53.ListHealthChecksOutput, error) {
 	if mock.ListHealthChecksFunc == nil {
 		panic("Route53APIMock.ListHealthChecksFunc: method is nil but Route53API.ListHealthChecks was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListHealthChecksInput
+		ListHealthChecksInput *route53.ListHealthChecksInput
 	}{
-		In1: in1,
+		ListHealthChecksInput: listHealthChecksInput,
 	}
 	mock.lockListHealthChecks.Lock()
 	mock.calls.ListHealthChecks = append(mock.calls.ListHealthChecks, callInfo)
 	mock.lockListHealthChecks.Unlock()
-	return mock.ListHealthChecksFunc(in1)
+	return mock.ListHealthChecksFunc(listHealthChecksInput)
 }
 
 // ListHealthChecksCalls gets all the calls that were made to ListHealthChecks.
 // Check the length with:
 //     len(mockedRoute53API.ListHealthChecksCalls())
 func (mock *Route53APIMock) ListHealthChecksCalls() []struct {
-	In1 *route53.ListHealthChecksInput
+	ListHealthChecksInput *route53.ListHealthChecksInput
 } {
 	var calls []struct {
-		In1 *route53.ListHealthChecksInput
+		ListHealthChecksInput *route53.ListHealthChecksInput
 	}
 	mock.lockListHealthChecks.RLock()
 	calls = mock.calls.ListHealthChecks
@@ -6237,33 +8401,33 @@ func (mock *Route53APIMock) ListHealthChecksCalls() []struct {
 }
 
 // ListHealthChecksPages calls ListHealthChecksPagesFunc.
-func (mock *Route53APIMock) ListHealthChecksPages(in1 *route53.ListHealthChecksInput, in2 func(*route53.ListHealthChecksOutput, bool) bool) error {
+func (mock *Route53APIMock) ListHealthChecksPages(listHealthChecksInput *route53.ListHealthChecksInput, fn func(*route53.ListHealthChecksOutput, bool) bool) error {
 	if mock.ListHealthChecksPagesFunc == nil {
 		panic("Route53APIMock.ListHealthChecksPagesFunc: method is nil but Route53API.ListHealthChecksPages was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListHealthChecksInput
-		In2 func(*route53.ListHealthChecksOutput, bool) bool
+		ListHealthChecksInput *route53.ListHealthChecksInput
+		Fn                    func(*route53.ListHealthChecksOutput, bool) bool
 	}{
-		In1: in1,
-		In2: in2,
+		ListHealthChecksInput: listHealthChecksInput,
+		Fn:                    fn,
 	}
 	mock.lockListHealthChecksPages.Lock()
 	mock.calls.ListHealthChecksPages = append(mock.calls.ListHealthChecksPages, callInfo)
 	mock.lockListHealthChecksPages.Unlock()
-	return mock.ListHealthChecksPagesFunc(in1, in2)
+	return mock.ListHealthChecksPagesFunc(listHealthChecksInput, fn)
 }
 
 // ListHealthChecksPagesCalls gets all the calls that were made to ListHealthChecksPages.
 // Check the length with:
 //     len(mockedRoute53API.ListHealthChecksPagesCalls())
 func (mock *Route53APIMock) ListHealthChecksPagesCalls() []struct {
-	In1 *route53.ListHealthChecksInput
-	In2 func(*route53.ListHealthChecksOutput, bool) bool
+	ListHealthChecksInput *route53.ListHealthChecksInput
+	Fn                    func(*route53.ListHealthChecksOutput, bool) bool
 } {
 	var calls []struct {
-		In1 *route53.ListHealthChecksInput
-		In2 func(*route53.ListHealthChecksOutput, bool) bool
+		ListHealthChecksInput *route53.ListHealthChecksInput
+		Fn                    func(*route53.ListHealthChecksOutput, bool) bool
 	}
 	mock.lockListHealthChecksPages.RLock()
 	calls = mock.calls.ListHealthChecksPages
@@ -6272,41 +8436,41 @@ func (mock *Route53APIMock) ListHealthChecksPagesCalls() []struct {
 }
 
 // ListHealthChecksPagesWithContext calls ListHealthChecksPagesWithContextFunc.
-func (mock *Route53APIMock) ListHealthChecksPagesWithContext(in1 context.Context, in2 *route53.ListHealthChecksInput, in3 func(*route53.ListHealthChecksOutput, bool) bool, in4 ...request.Option) error {
+func (mock *Route53APIMock) ListHealthChecksPagesWithContext(contextMoqParam context.Context, listHealthChecksInput *route53.ListHealthChecksInput, fn func(*route53.ListHealthChecksOutput, bool) bool, options ...request.Option) error {
 	if mock.ListHealthChecksPagesWithContextFunc == nil {
 		panic("Route53APIMock.ListHealthChecksPagesWithContextFunc: method is nil but Route53API.ListHealthChecksPagesWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListHealthChecksInput
-		In3 func(*route53.ListHealthChecksOutput, bool) bool
-		In4 []request.Option
+		ContextMoqParam       context.Context
+		ListHealthChecksInput *route53.ListHealthChecksInput
+		Fn                    func(*route53.ListHealthChecksOutput, bool) bool
+		Options               []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
-		In4: in4,
+		ContextMoqParam:       contextMoqParam,
+		ListHealthChecksInput: listHealthChecksInput,
+		Fn:                    fn,
+		Options:               options,
 	}
 	mock.lockListHealthChecksPagesWithContext.Lock()
 	mock.calls.ListHealthChecksPagesWithContext = append(mock.calls.ListHealthChecksPagesWithContext, callInfo)
 	mock.lockListHealthChecksPagesWithContext.Unlock()
-	return mock.ListHealthChecksPagesWithContextFunc(in1, in2, in3, in4...)
+	return mock.ListHealthChecksPagesWithContextFunc(contextMoqParam, listHealthChecksInput, fn, options...)
 }
 
 // ListHealthChecksPagesWithContextCalls gets all the calls that were made to ListHealthChecksPagesWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListHealthChecksPagesWithContextCalls())
 func (mock *Route53APIMock) ListHealthChecksPagesWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListHealthChecksInput
-	In3 func(*route53.ListHealthChecksOutput, bool) bool
-	In4 []request.Option
+	ContextMoqParam       context.Context
+	ListHealthChecksInput *route53.ListHealthChecksInput
+	Fn                    func(*route53.ListHealthChecksOutput, bool) bool
+	Options               []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListHealthChecksInput
-		In3 func(*route53.ListHealthChecksOutput, bool) bool
-		In4 []request.Option
+		ContextMoqParam       context.Context
+		ListHealthChecksInput *route53.ListHealthChecksInput
+		Fn                    func(*route53.ListHealthChecksOutput, bool) bool
+		Options               []request.Option
 	}
 	mock.lockListHealthChecksPagesWithContext.RLock()
 	calls = mock.calls.ListHealthChecksPagesWithContext
@@ -6315,29 +8479,29 @@ func (mock *Route53APIMock) ListHealthChecksPagesWithContextCalls() []struct {
 }
 
 // ListHealthChecksRequest calls ListHealthChecksRequestFunc.
-func (mock *Route53APIMock) ListHealthChecksRequest(in1 *route53.ListHealthChecksInput) (*request.Request, *route53.ListHealthChecksOutput) {
+func (mock *Route53APIMock) ListHealthChecksRequest(listHealthChecksInput *route53.ListHealthChecksInput) (*request.Request, *route53.ListHealthChecksOutput) {
 	if mock.ListHealthChecksRequestFunc == nil {
 		panic("Route53APIMock.ListHealthChecksRequestFunc: method is nil but Route53API.ListHealthChecksRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListHealthChecksInput
+		ListHealthChecksInput *route53.ListHealthChecksInput
 	}{
-		In1: in1,
+		ListHealthChecksInput: listHealthChecksInput,
 	}
 	mock.lockListHealthChecksRequest.Lock()
 	mock.calls.ListHealthChecksRequest = append(mock.calls.ListHealthChecksRequest, callInfo)
 	mock.lockListHealthChecksRequest.Unlock()
-	return mock.ListHealthChecksRequestFunc(in1)
+	return mock.ListHealthChecksRequestFunc(listHealthChecksInput)
 }
 
 // ListHealthChecksRequestCalls gets all the calls that were made to ListHealthChecksRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListHealthChecksRequestCalls())
 func (mock *Route53APIMock) ListHealthChecksRequestCalls() []struct {
-	In1 *route53.ListHealthChecksInput
+	ListHealthChecksInput *route53.ListHealthChecksInput
 } {
 	var calls []struct {
-		In1 *route53.ListHealthChecksInput
+		ListHealthChecksInput *route53.ListHealthChecksInput
 	}
 	mock.lockListHealthChecksRequest.RLock()
 	calls = mock.calls.ListHealthChecksRequest
@@ -6346,37 +8510,37 @@ func (mock *Route53APIMock) ListHealthChecksRequestCalls() []struct {
 }
 
 // ListHealthChecksWithContext calls ListHealthChecksWithContextFunc.
-func (mock *Route53APIMock) ListHealthChecksWithContext(in1 context.Context, in2 *route53.ListHealthChecksInput, in3 ...request.Option) (*route53.ListHealthChecksOutput, error) {
+func (mock *Route53APIMock) ListHealthChecksWithContext(contextMoqParam context.Context, listHealthChecksInput *route53.ListHealthChecksInput, options ...request.Option) (*route53.ListHealthChecksOutput, error) {
 	if mock.ListHealthChecksWithContextFunc == nil {
 		panic("Route53APIMock.ListHealthChecksWithContextFunc: method is nil but Route53API.ListHealthChecksWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListHealthChecksInput
-		In3 []request.Option
+		ContextMoqParam       context.Context
+		ListHealthChecksInput *route53.ListHealthChecksInput
+		Options               []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:       contextMoqParam,
+		ListHealthChecksInput: listHealthChecksInput,
+		Options:               options,
 	}
 	mock.lockListHealthChecksWithContext.Lock()
 	mock.calls.ListHealthChecksWithContext = append(mock.calls.ListHealthChecksWithContext, callInfo)
 	mock.lockListHealthChecksWithContext.Unlock()
-	return mock.ListHealthChecksWithContextFunc(in1, in2, in3...)
+	return mock.ListHealthChecksWithContextFunc(contextMoqParam, listHealthChecksInput, options...)
 }
 
 // ListHealthChecksWithContextCalls gets all the calls that were made to ListHealthChecksWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListHealthChecksWithContextCalls())
 func (mock *Route53APIMock) ListHealthChecksWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListHealthChecksInput
-	In3 []request.Option
+	ContextMoqParam       context.Context
+	ListHealthChecksInput *route53.ListHealthChecksInput
+	Options               []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListHealthChecksInput
-		In3 []request.Option
+		ContextMoqParam       context.Context
+		ListHealthChecksInput *route53.ListHealthChecksInput
+		Options               []request.Option
 	}
 	mock.lockListHealthChecksWithContext.RLock()
 	calls = mock.calls.ListHealthChecksWithContext
@@ -6385,29 +8549,29 @@ func (mock *Route53APIMock) ListHealthChecksWithContextCalls() []struct {
 }
 
 // ListHostedZones calls ListHostedZonesFunc.
-func (mock *Route53APIMock) ListHostedZones(in1 *route53.ListHostedZonesInput) (*route53.ListHostedZonesOutput, error) {
+func (mock *Route53APIMock) ListHostedZones(listHostedZonesInput *route53.ListHostedZonesInput) (*route53.ListHostedZonesOutput, error) {
 	if mock.ListHostedZonesFunc == nil {
 		panic("Route53APIMock.ListHostedZonesFunc: method is nil but Route53API.ListHostedZones was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListHostedZonesInput
+		ListHostedZonesInput *route53.ListHostedZonesInput
 	}{
-		In1: in1,
+		ListHostedZonesInput: listHostedZonesInput,
 	}
 	mock.lockListHostedZones.Lock()
 	mock.calls.ListHostedZones = append(mock.calls.ListHostedZones, callInfo)
 	mock.lockListHostedZones.Unlock()
-	return mock.ListHostedZonesFunc(in1)
+	return mock.ListHostedZonesFunc(listHostedZonesInput)
 }
 
 // ListHostedZonesCalls gets all the calls that were made to ListHostedZones.
 // Check the length with:
 //     len(mockedRoute53API.ListHostedZonesCalls())
 func (mock *Route53APIMock) ListHostedZonesCalls() []struct {
-	In1 *route53.ListHostedZonesInput
+	ListHostedZonesInput *route53.ListHostedZonesInput
 } {
 	var calls []struct {
-		In1 *route53.ListHostedZonesInput
+		ListHostedZonesInput *route53.ListHostedZonesInput
 	}
 	mock.lockListHostedZones.RLock()
 	calls = mock.calls.ListHostedZones
@@ -6416,29 +8580,29 @@ func (mock *Route53APIMock) ListHostedZonesCalls() []struct {
 }
 
 // ListHostedZonesByName calls ListHostedZonesByNameFunc.
-func (mock *Route53APIMock) ListHostedZonesByName(in1 *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error) {
+func (mock *Route53APIMock) ListHostedZonesByName(listHostedZonesByNameInput *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error) {
 	if mock.ListHostedZonesByNameFunc == nil {
 		panic("Route53APIMock.ListHostedZonesByNameFunc: method is nil but Route53API.ListHostedZonesByName was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListHostedZonesByNameInput
+		ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
 	}{
-		In1: in1,
+		ListHostedZonesByNameInput: listHostedZonesByNameInput,
 	}
 	mock.lockListHostedZonesByName.Lock()
 	mock.calls.ListHostedZonesByName = append(mock.calls.ListHostedZonesByName, callInfo)
 	mock.lockListHostedZonesByName.Unlock()
-	return mock.ListHostedZonesByNameFunc(in1)
+	return mock.ListHostedZonesByNameFunc(listHostedZonesByNameInput)
 }
 
 // ListHostedZonesByNameCalls gets all the calls that were made to ListHostedZonesByName.
 // Check the length with:
 //     len(mockedRoute53API.ListHostedZonesByNameCalls())
 func (mock *Route53APIMock) ListHostedZonesByNameCalls() []struct {
-	In1 *route53.ListHostedZonesByNameInput
+	ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
 } {
 	var calls []struct {
-		In1 *route53.ListHostedZonesByNameInput
+		ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
 	}
 	mock.lockListHostedZonesByName.RLock()
 	calls = mock.calls.ListHostedZonesByName
@@ -6447,29 +8611,29 @@ func (mock *Route53APIMock) ListHostedZonesByNameCalls() []struct {
 }
 
 // ListHostedZonesByNameRequest calls ListHostedZonesByNameRequestFunc.
-func (mock *Route53APIMock) ListHostedZonesByNameRequest(in1 *route53.ListHostedZonesByNameInput) (*request.Request, *route53.ListHostedZonesByNameOutput) {
+func (mock *Route53APIMock) ListHostedZonesByNameRequest(listHostedZonesByNameInput *route53.ListHostedZonesByNameInput) (*request.Request, *route53.ListHostedZonesByNameOutput) {
 	if mock.ListHostedZonesByNameRequestFunc == nil {
 		panic("Route53APIMock.ListHostedZonesByNameRequestFunc: method is nil but Route53API.ListHostedZonesByNameRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListHostedZonesByNameInput
+		ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
 	}{
-		In1: in1,
+		ListHostedZonesByNameInput: listHostedZonesByNameInput,
 	}
 	mock.lockListHostedZonesByNameRequest.Lock()
 	mock.calls.ListHostedZonesByNameRequest = append(mock.calls.ListHostedZonesByNameRequest, callInfo)
 	mock.lockListHostedZonesByNameRequest.Unlock()
-	return mock.ListHostedZonesByNameRequestFunc(in1)
+	return mock.ListHostedZonesByNameRequestFunc(listHostedZonesByNameInput)
 }
 
 // ListHostedZonesByNameRequestCalls gets all the calls that were made to ListHostedZonesByNameRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListHostedZonesByNameRequestCalls())
 func (mock *Route53APIMock) ListHostedZonesByNameRequestCalls() []struct {
-	In1 *route53.ListHostedZonesByNameInput
+	ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
 } {
 	var calls []struct {
-		In1 *route53.ListHostedZonesByNameInput
+		ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
 	}
 	mock.lockListHostedZonesByNameRequest.RLock()
 	calls = mock.calls.ListHostedZonesByNameRequest
@@ -6478,37 +8642,37 @@ func (mock *Route53APIMock) ListHostedZonesByNameRequestCalls() []struct {
 }
 
 // ListHostedZonesByNameWithContext calls ListHostedZonesByNameWithContextFunc.
-func (mock *Route53APIMock) ListHostedZonesByNameWithContext(in1 context.Context, in2 *route53.ListHostedZonesByNameInput, in3 ...request.Option) (*route53.ListHostedZonesByNameOutput, error) {
+func (mock *Route53APIMock) ListHostedZonesByNameWithContext(contextMoqParam context.Context, listHostedZonesByNameInput *route53.ListHostedZonesByNameInput, options ...request.Option) (*route53.ListHostedZonesByNameOutput, error) {
 	if mock.ListHostedZonesByNameWithContextFunc == nil {
 		panic("Route53APIMock.ListHostedZonesByNameWithContextFunc: method is nil but Route53API.ListHostedZonesByNameWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListHostedZonesByNameInput
-		In3 []request.Option
+		ContextMoqParam            context.Context
+		ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
+		Options                    []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:            contextMoqParam,
+		ListHostedZonesByNameInput: listHostedZonesByNameInput,
+		Options:                    options,
 	}
 	mock.lockListHostedZonesByNameWithContext.Lock()
 	mock.calls.ListHostedZonesByNameWithContext = append(mock.calls.ListHostedZonesByNameWithContext, callInfo)
 	mock.lockListHostedZonesByNameWithContext.Unlock()
-	return mock.ListHostedZonesByNameWithContextFunc(in1, in2, in3...)
+	return mock.ListHostedZonesByNameWithContextFunc(contextMoqParam, listHostedZonesByNameInput, options...)
 }
 
 // ListHostedZonesByNameWithContextCalls gets all the calls that were made to ListHostedZonesByNameWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListHostedZonesByNameWithContextCalls())
 func (mock *Route53APIMock) ListHostedZonesByNameWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListHostedZonesByNameInput
-	In3 []request.Option
+	ContextMoqParam            context.Context
+	ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
+	Options                    []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListHostedZonesByNameInput
-		In3 []request.Option
+		ContextMoqParam            context.Context
+		ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
+		Options                    []request.Option
 	}
 	mock.lockListHostedZonesByNameWithContext.RLock()
 	calls = mock.calls.ListHostedZonesByNameWithContext
@@ -6517,29 +8681,29 @@ func (mock *Route53APIMock) ListHostedZonesByNameWithContextCalls() []struct {
 }
 
 // ListHostedZonesByVPC calls ListHostedZonesByVPCFunc.
-func (mock *Route53APIMock) ListHostedZonesByVPC(in1 *route53.ListHostedZonesByVPCInput) (*route53.ListHostedZonesByVPCOutput, error) {
+func (mock *Route53APIMock) ListHostedZonesByVPC(listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput) (*route53.ListHostedZonesByVPCOutput, error) {
 	if mock.ListHostedZonesByVPCFunc == nil {
 		panic("Route53APIMock.ListHostedZonesByVPCFunc: method is nil but Route53API.ListHostedZonesByVPC was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListHostedZonesByVPCInput
+		ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
 	}{
-		In1: in1,
+		ListHostedZonesByVPCInput: listHostedZonesByVPCInput,
 	}
 	mock.lockListHostedZonesByVPC.Lock()
 	mock.calls.ListHostedZonesByVPC = append(mock.calls.ListHostedZonesByVPC, callInfo)
 	mock.lockListHostedZonesByVPC.Unlock()
-	return mock.ListHostedZonesByVPCFunc(in1)
+	return mock.ListHostedZonesByVPCFunc(listHostedZonesByVPCInput)
 }
 
 // ListHostedZonesByVPCCalls gets all the calls that were made to ListHostedZonesByVPC.
 // Check the length with:
 //     len(mockedRoute53API.ListHostedZonesByVPCCalls())
 func (mock *Route53APIMock) ListHostedZonesByVPCCalls() []struct {
-	In1 *route53.ListHostedZonesByVPCInput
+	ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
 } {
 	var calls []struct {
-		In1 *route53.ListHostedZonesByVPCInput
+		ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
 	}
 	mock.lockListHostedZonesByVPC.RLock()
 	calls = mock.calls.ListHostedZonesByVPC
@@ -6548,29 +8712,29 @@ func (mock *Route53APIMock) ListHostedZonesByVPCCalls() []struct {
 }
 
 // ListHostedZonesByVPCRequest calls ListHostedZonesByVPCRequestFunc.
-func (mock *Route53APIMock) ListHostedZonesByVPCRequest(in1 *route53.ListHostedZonesByVPCInput) (*request.Request, *route53.ListHostedZonesByVPCOutput) {
+func (mock *Route53APIMock) ListHostedZonesByVPCRequest(listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput) (*request.Request, *route53.ListHostedZonesByVPCOutput) {
 	if mock.ListHostedZonesByVPCRequestFunc == nil {
 		panic("Route53APIMock.ListHostedZonesByVPCRequestFunc: method is nil but Route53API.ListHostedZonesByVPCRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListHostedZonesByVPCInput
+		ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
 	}{
-		In1: in1,
+		ListHostedZonesByVPCInput: listHostedZonesByVPCInput,
 	}
 	mock.lockListHostedZonesByVPCRequest.Lock()
 	mock.calls.ListHostedZonesByVPCRequest = append(mock.calls.ListHostedZonesByVPCRequest, callInfo)
 	mock.lockListHostedZonesByVPCRequest.Unlock()
-	return mock.ListHostedZonesByVPCRequestFunc(in1)
+	return mock.ListHostedZonesByVPCRequestFunc(listHostedZonesByVPCInput)
 }
 
 // ListHostedZonesByVPCRequestCalls gets all the calls that were made to ListHostedZonesByVPCRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListHostedZonesByVPCRequestCalls())
 func (mock *Route53APIMock) ListHostedZonesByVPCRequestCalls() []struct {
-	In1 *route53.ListHostedZonesByVPCInput
+	ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
 } {
 	var calls []struct {
-		In1 *route53.ListHostedZonesByVPCInput
+		ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
 	}
 	mock.lockListHostedZonesByVPCRequest.RLock()
 	calls = mock.calls.ListHostedZonesByVPCRequest
@@ -6579,37 +8743,37 @@ func (mock *Route53APIMock) ListHostedZonesByVPCRequestCalls() []struct {
 }
 
 // ListHostedZonesByVPCWithContext calls ListHostedZonesByVPCWithContextFunc.
-func (mock *Route53APIMock) ListHostedZonesByVPCWithContext(in1 context.Context, in2 *route53.ListHostedZonesByVPCInput, in3 ...request.Option) (*route53.ListHostedZonesByVPCOutput, error) {
+func (mock *Route53APIMock) ListHostedZonesByVPCWithContext(contextMoqParam context.Context, listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput, options ...request.Option) (*route53.ListHostedZonesByVPCOutput, error) {
 	if mock.ListHostedZonesByVPCWithContextFunc == nil {
 		panic("Route53APIMock.ListHostedZonesByVPCWithContextFunc: method is nil but Route53API.ListHostedZonesByVPCWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListHostedZonesByVPCInput
-		In3 []request.Option
+		ContextMoqParam           context.Context
+		ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
+		Options                   []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:           contextMoqParam,
+		ListHostedZonesByVPCInput: listHostedZonesByVPCInput,
+		Options:                   options,
 	}
 	mock.lockListHostedZonesByVPCWithContext.Lock()
 	mock.calls.ListHostedZonesByVPCWithContext = append(mock.calls.ListHostedZonesByVPCWithContext, callInfo)
 	mock.lockListHostedZonesByVPCWithContext.Unlock()
-	return mock.ListHostedZonesByVPCWithContextFunc(in1, in2, in3...)
+	return mock.ListHostedZonesByVPCWithContextFunc(contextMoqParam, listHostedZonesByVPCInput, options...)
 }
 
 // ListHostedZonesByVPCWithContextCalls gets all the calls that were made to ListHostedZonesByVPCWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListHostedZonesByVPCWithContextCalls())
 func (mock *Route53APIMock) ListHostedZonesByVPCWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListHostedZonesByVPCInput
-	In3 []request.Option
+	ContextMoqParam           context.Context
+	ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
+	Options                   []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListHostedZonesByVPCInput
-		In3 []request.Option
+		ContextMoqParam           context.Context
+		ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
+		Options                   []request.Option
 	}
 	mock.lockListHostedZonesByVPCWithContext.RLock()
 	calls = mock.calls.ListHostedZonesByVPCWithContext
@@ -6618,33 +8782,33 @@ func (mock *Route53APIMock) ListHostedZonesByVPCWithContextCalls() []struct {
 }
 
 // ListHostedZonesPages calls ListHostedZonesPagesFunc.
-func (mock *Route53APIMock) ListHostedZonesPages(in1 *route53.ListHostedZonesInput, in2 func(*route53.ListHostedZonesOutput, bool) bool) error {
+func (mock *Route53APIMock) ListHostedZonesPages(listHostedZonesInput *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool) error {
 	if mock.ListHostedZonesPagesFunc == nil {
 		panic("Route53APIMock.ListHostedZonesPagesFunc: method is nil but Route53API.ListHostedZonesPages was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListHostedZonesInput
-		In2 func(*route53.ListHostedZonesOutput, bool) bool
+		ListHostedZonesInput *route53.ListHostedZonesInput
+		Fn                   func(*route53.ListHostedZonesOutput, bool) bool
 	}{
-		In1: in1,
-		In2: in2,
+		ListHostedZonesInput: listHostedZonesInput,
+		Fn:                   fn,
 	}
 	mock.lockListHostedZonesPages.Lock()
 	mock.calls.ListHostedZonesPages = append(mock.calls.ListHostedZonesPages, callInfo)
 	mock.lockListHostedZonesPages.Unlock()
-	return mock.ListHostedZonesPagesFunc(in1, in2)
+	return mock.ListHostedZonesPagesFunc(listHostedZonesInput, fn)
 }
 
 // ListHostedZonesPagesCalls gets all the calls that were made to ListHostedZonesPages.
 // Check the length with:
 //     len(mockedRoute53API.ListHostedZonesPagesCalls())
 func (mock *Route53APIMock) ListHostedZonesPagesCalls() []struct {
-	In1 *route53.ListHostedZonesInput
-	In2 func(*route53.ListHostedZonesOutput, bool) bool
+	ListHostedZonesInput *route53.ListHostedZonesInput
+	Fn                   func(*route53.ListHostedZonesOutput, bool) bool
 } {
 	var calls []struct {
-		In1 *route53.ListHostedZonesInput
-		In2 func(*route53.ListHostedZonesOutput, bool) bool
+		ListHostedZonesInput *route53.ListHostedZonesInput
+		Fn                   func(*route53.ListHostedZonesOutput, bool) bool
 	}
 	mock.lockListHostedZonesPages.RLock()
 	calls = mock.calls.ListHostedZonesPages
@@ -6653,41 +8817,41 @@ func (mock *Route53APIMock) ListHostedZonesPagesCalls() []struct {
 }
 
 // ListHostedZonesPagesWithContext calls ListHostedZonesPagesWithContextFunc.
-func (mock *Route53APIMock) ListHostedZonesPagesWithContext(in1 context.Context, in2 *route53.ListHostedZonesInput, in3 func(*route53.ListHostedZonesOutput, bool) bool, in4 ...request.Option) error {
+func (mock *Route53APIMock) ListHostedZonesPagesWithContext(contextMoqParam context.Context, listHostedZonesInput *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool, options ...request.Option) error {
 	if mock.ListHostedZonesPagesWithContextFunc == nil {
 		panic("Route53APIMock.ListHostedZonesPagesWithContextFunc: method is nil but Route53API.ListHostedZonesPagesWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListHostedZonesInput
-		In3 func(*route53.ListHostedZonesOutput, bool) bool
-		In4 []request.Option
+		ContextMoqParam      context.Context
+		ListHostedZonesInput *route53.ListHostedZonesInput
+		Fn                   func(*route53.ListHostedZonesOutput, bool) bool
+		Options              []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
-		In4: in4,
+		ContextMoqParam:      contextMoqParam,
+		ListHostedZonesInput: listHostedZonesInput,
+		Fn:                   fn,
+		Options:              options,
 	}
 	mock.lockListHostedZonesPagesWithContext.Lock()
 	mock.calls.ListHostedZonesPagesWithContext = append(mock.calls.ListHostedZonesPagesWithContext, callInfo)
 	mock.lockListHostedZonesPagesWithContext.Unlock()
-	return mock.ListHostedZonesPagesWithContextFunc(in1, in2, in3, in4...)
+	return mock.ListHostedZonesPagesWithContextFunc(contextMoqParam, listHostedZonesInput, fn, options...)
 }
 
 // ListHostedZonesPagesWithContextCalls gets all the calls that were made to ListHostedZonesPagesWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListHostedZonesPagesWithContextCalls())
 func (mock *Route53APIMock) ListHostedZonesPagesWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListHostedZonesInput
-	In3 func(*route53.ListHostedZonesOutput, bool) bool
-	In4 []request.Option
+	ContextMoqParam      context.Context
+	ListHostedZonesInput *route53.ListHostedZonesInput
+	Fn                   func(*route53.ListHostedZonesOutput, bool) bool
+	Options              []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListHostedZonesInput
-		In3 func(*route53.ListHostedZonesOutput, bool) bool
-		In4 []request.Option
+		ContextMoqParam      context.Context
+		ListHostedZonesInput *route53.ListHostedZonesInput
+		Fn                   func(*route53.ListHostedZonesOutput, bool) bool
+		Options              []request.Option
 	}
 	mock.lockListHostedZonesPagesWithContext.RLock()
 	calls = mock.calls.ListHostedZonesPagesWithContext
@@ -6696,29 +8860,29 @@ func (mock *Route53APIMock) ListHostedZonesPagesWithContextCalls() []struct {
 }
 
 // ListHostedZonesRequest calls ListHostedZonesRequestFunc.
-func (mock *Route53APIMock) ListHostedZonesRequest(in1 *route53.ListHostedZonesInput) (*request.Request, *route53.ListHostedZonesOutput) {
+func (mock *Route53APIMock) ListHostedZonesRequest(listHostedZonesInput *route53.ListHostedZonesInput) (*request.Request, *route53.ListHostedZonesOutput) {
 	if mock.ListHostedZonesRequestFunc == nil {
 		panic("Route53APIMock.ListHostedZonesRequestFunc: method is nil but Route53API.ListHostedZonesRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListHostedZonesInput
+		ListHostedZonesInput *route53.ListHostedZonesInput
 	}{
-		In1: in1,
+		ListHostedZonesInput: listHostedZonesInput,
 	}
 	mock.lockListHostedZonesRequest.Lock()
 	mock.calls.ListHostedZonesRequest = append(mock.calls.ListHostedZonesRequest, callInfo)
 	mock.lockListHostedZonesRequest.Unlock()
-	return mock.ListHostedZonesRequestFunc(in1)
+	return mock.ListHostedZonesRequestFunc(listHostedZonesInput)
 }
 
 // ListHostedZonesRequestCalls gets all the calls that were made to ListHostedZonesRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListHostedZonesRequestCalls())
 func (mock *Route53APIMock) ListHostedZonesRequestCalls() []struct {
-	In1 *route53.ListHostedZonesInput
+	ListHostedZonesInput *route53.ListHostedZonesInput
 } {
 	var calls []struct {
-		In1 *route53.ListHostedZonesInput
+		ListHostedZonesInput *route53.ListHostedZonesInput
 	}
 	mock.lockListHostedZonesRequest.RLock()
 	calls = mock.calls.ListHostedZonesRequest
@@ -6727,37 +8891,37 @@ func (mock *Route53APIMock) ListHostedZonesRequestCalls() []struct {
 }
 
 // ListHostedZonesWithContext calls ListHostedZonesWithContextFunc.
-func (mock *Route53APIMock) ListHostedZonesWithContext(in1 context.Context, in2 *route53.ListHostedZonesInput, in3 ...request.Option) (*route53.ListHostedZonesOutput, error) {
+func (mock *Route53APIMock) ListHostedZonesWithContext(contextMoqParam context.Context, listHostedZonesInput *route53.ListHostedZonesInput, options ...request.Option) (*route53.ListHostedZonesOutput, error) {
 	if mock.ListHostedZonesWithContextFunc == nil {
 		panic("Route53APIMock.ListHostedZonesWithContextFunc: method is nil but Route53API.ListHostedZonesWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListHostedZonesInput
-		In3 []request.Option
+		ContextMoqParam      context.Context
+		ListHostedZonesInput *route53.ListHostedZonesInput
+		Options              []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:      contextMoqParam,
+		ListHostedZonesInput: listHostedZonesInput,
+		Options:              options,
 	}
 	mock.lockListHostedZonesWithContext.Lock()
 	mock.calls.ListHostedZonesWithContext = append(mock.calls.ListHostedZonesWithContext, callInfo)
 	mock.lockListHostedZonesWithContext.Unlock()
-	return mock.ListHostedZonesWithContextFunc(in1, in2, in3...)
+	return mock.ListHostedZonesWithContextFunc(contextMoqParam, listHostedZonesInput, options...)
 }
 
 // ListHostedZonesWithContextCalls gets all the calls that were made to ListHostedZonesWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListHostedZonesWithContextCalls())
 func (mock *Route53APIMock) ListHostedZonesWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListHostedZonesInput
-	In3 []request.Option
+	ContextMoqParam      context.Context
+	ListHostedZonesInput *route53.ListHostedZonesInput
+	Options              []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListHostedZonesInput
-		In3 []request.Option
+		ContextMoqParam      context.Context
+		ListHostedZonesInput *route53.ListHostedZonesInput
+		Options              []request.Option
 	}
 	mock.lockListHostedZonesWithContext.RLock()
 	calls = mock.calls.ListHostedZonesWithContext
@@ -6766,29 +8930,29 @@ func (mock *Route53APIMock) ListHostedZonesWithContextCalls() []struct {
 }
 
 // ListQueryLoggingConfigs calls ListQueryLoggingConfigsFunc.
-func (mock *Route53APIMock) ListQueryLoggingConfigs(in1 *route53.ListQueryLoggingConfigsInput) (*route53.ListQueryLoggingConfigsOutput, error) {
+func (mock *Route53APIMock) ListQueryLoggingConfigs(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput) (*route53.ListQueryLoggingConfigsOutput, error) {
 	if mock.ListQueryLoggingConfigsFunc == nil {
 		panic("Route53APIMock.ListQueryLoggingConfigsFunc: method is nil but Route53API.ListQueryLoggingConfigs was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListQueryLoggingConfigsInput
+		ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
 	}{
-		In1: in1,
+		ListQueryLoggingConfigsInput: listQueryLoggingConfigsInput,
 	}
 	mock.lockListQueryLoggingConfigs.Lock()
 	mock.calls.ListQueryLoggingConfigs = append(mock.calls.ListQueryLoggingConfigs, callInfo)
 	mock.lockListQueryLoggingConfigs.Unlock()
-	return mock.ListQueryLoggingConfigsFunc(in1)
+	return mock.ListQueryLoggingConfigsFunc(listQueryLoggingConfigsInput)
 }
 
 // ListQueryLoggingConfigsCalls gets all the calls that were made to ListQueryLoggingConfigs.
 // Check the length with:
 //     len(mockedRoute53API.ListQueryLoggingConfigsCalls())
 func (mock *Route53APIMock) ListQueryLoggingConfigsCalls() []struct {
-	In1 *route53.ListQueryLoggingConfigsInput
+	ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
 } {
 	var calls []struct {
-		In1 *route53.ListQueryLoggingConfigsInput
+		ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
 	}
 	mock.lockListQueryLoggingConfigs.RLock()
 	calls = mock.calls.ListQueryLoggingConfigs
@@ -6797,33 +8961,33 @@ func (mock *Route53APIMock) ListQueryLoggingConfigsCalls() []struct {
 }
 
 // ListQueryLoggingConfigsPages calls ListQueryLoggingConfigsPagesFunc.
-func (mock *Route53APIMock) ListQueryLoggingConfigsPages(in1 *route53.ListQueryLoggingConfigsInput, in2 func(*route53.ListQueryLoggingConfigsOutput, bool) bool) error {
+func (mock *Route53APIMock) ListQueryLoggingConfigsPages(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, fn func(*route53.ListQueryLoggingConfigsOutput, bool) bool) error {
 	if mock.ListQueryLoggingConfigsPagesFunc == nil {
 		panic("Route53APIMock.ListQueryLoggingConfigsPagesFunc: method is nil but Route53API.ListQueryLoggingConfigsPages was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListQueryLoggingConfigsInput
-		In2 func(*route53.ListQueryLoggingConfigsOutput, bool) bool
+		ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
+		Fn                           func(*route53.ListQueryLoggingConfigsOutput, bool) bool
 	}{
-		In1: in1,
-		In2: in2,
+		ListQueryLoggingConfigsInput: listQueryLoggingConfigsInput,
+		Fn:                           fn,
 	}
 	mock.lockListQueryLoggingConfigsPages.Lock()
 	mock.calls.ListQueryLoggingConfigsPages = append(mock.calls.ListQueryLoggingConfigsPages, callInfo)
 	mock.lockListQueryLoggingConfigsPages.Unlock()
-	return mock.ListQueryLoggingConfigsPagesFunc(in1, in2)
+	return mock.ListQueryLoggingConfigsPagesFunc(listQueryLoggingConfigsInput, fn)
 }
 
 // ListQueryLoggingConfigsPagesCalls gets all the calls that were made to ListQueryLoggingConfigsPages.
 // Check the length with:
 //     len(mockedRoute53API.ListQueryLoggingConfigsPagesCalls())
 func (mock *Route53APIMock) ListQueryLoggingConfigsPagesCalls() []struct {
-	In1 *route53.ListQueryLoggingConfigsInput
-	In2 func(*route53.ListQueryLoggingConfigsOutput, bool) bool
+	ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
+	Fn                           func(*route53.ListQueryLoggingConfigsOutput, bool) bool
 } {
 	var calls []struct {
-		In1 *route53.ListQueryLoggingConfigsInput
-		In2 func(*route53.ListQueryLoggingConfigsOutput, bool) bool
+		ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
+		Fn                           func(*route53.ListQueryLoggingConfigsOutput, bool) bool
 	}
 	mock.lockListQueryLoggingConfigsPages.RLock()
 	calls = mock.calls.ListQueryLoggingConfigsPages
@@ -6832,41 +8996,41 @@ func (mock *Route53APIMock) ListQueryLoggingConfigsPagesCalls() []struct {
 }
 
 // ListQueryLoggingConfigsPagesWithContext calls ListQueryLoggingConfigsPagesWithContextFunc.
-func (mock *Route53APIMock) ListQueryLoggingConfigsPagesWithContext(in1 context.Context, in2 *route53.ListQueryLoggingConfigsInput, in3 func(*route53.ListQueryLoggingConfigsOutput, bool) bool, in4 ...request.Option) error {
+func (mock *Route53APIMock) ListQueryLoggingConfigsPagesWithContext(contextMoqParam context.Context, listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, fn func(*route53.ListQueryLoggingConfigsOutput, bool) bool, options ...request.Option) error {
 	if mock.ListQueryLoggingConfigsPagesWithContextFunc == nil {
 		panic("Route53APIMock.ListQueryLoggingConfigsPagesWithContextFunc: method is nil but Route53API.ListQueryLoggingConfigsPagesWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListQueryLoggingConfigsInput
-		In3 func(*route53.ListQueryLoggingConfigsOutput, bool) bool
-		In4 []request.Option
+		ContextMoqParam              context.Context
+		ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
+		Fn                           func(*route53.ListQueryLoggingConfigsOutput, bool) bool
+		Options                      []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
-		In4: in4,
+		ContextMoqParam:              contextMoqParam,
+		ListQueryLoggingConfigsInput: listQueryLoggingConfigsInput,
+		Fn:                           fn,
+		Options:                      options,
 	}
 	mock.lockListQueryLoggingConfigsPagesWithContext.Lock()
 	mock.calls.ListQueryLoggingConfigsPagesWithContext = append(mock.calls.ListQueryLoggingConfigsPagesWithContext, callInfo)
 	mock.lockListQueryLoggingConfigsPagesWithContext.Unlock()
-	return mock.ListQueryLoggingConfigsPagesWithContextFunc(in1, in2, in3, in4...)
+	return mock.ListQueryLoggingConfigsPagesWithContextFunc(contextMoqParam, listQueryLoggingConfigsInput, fn, options...)
 }
 
 // ListQueryLoggingConfigsPagesWithContextCalls gets all the calls that were made to ListQueryLoggingConfigsPagesWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListQueryLoggingConfigsPagesWithContextCalls())
 func (mock *Route53APIMock) ListQueryLoggingConfigsPagesWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListQueryLoggingConfigsInput
-	In3 func(*route53.ListQueryLoggingConfigsOutput, bool) bool
-	In4 []request.Option
+	ContextMoqParam              context.Context
+	ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
+	Fn                           func(*route53.ListQueryLoggingConfigsOutput, bool) bool
+	Options                      []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListQueryLoggingConfigsInput
-		In3 func(*route53.ListQueryLoggingConfigsOutput, bool) bool
-		In4 []request.Option
+		ContextMoqParam              context.Context
+		ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
+		Fn                           func(*route53.ListQueryLoggingConfigsOutput, bool) bool
+		Options                      []request.Option
 	}
 	mock.lockListQueryLoggingConfigsPagesWithContext.RLock()
 	calls = mock.calls.ListQueryLoggingConfigsPagesWithContext
@@ -6875,29 +9039,29 @@ func (mock *Route53APIMock) ListQueryLoggingConfigsPagesWithContextCalls() []str
 }
 
 // ListQueryLoggingConfigsRequest calls ListQueryLoggingConfigsRequestFunc.
-func (mock *Route53APIMock) ListQueryLoggingConfigsRequest(in1 *route53.ListQueryLoggingConfigsInput) (*request.Request, *route53.ListQueryLoggingConfigsOutput) {
+func (mock *Route53APIMock) ListQueryLoggingConfigsRequest(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput) (*request.Request, *route53.ListQueryLoggingConfigsOutput) {
 	if mock.ListQueryLoggingConfigsRequestFunc == nil {
 		panic("Route53APIMock.ListQueryLoggingConfigsRequestFunc: method is nil but Route53API.ListQueryLoggingConfigsRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListQueryLoggingConfigsInput
+		ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
 	}{
-		In1: in1,
+		ListQueryLoggingConfigsInput: listQueryLoggingConfigsInput,
 	}
 	mock.lockListQueryLoggingConfigsRequest.Lock()
 	mock.calls.ListQueryLoggingConfigsRequest = append(mock.calls.ListQueryLoggingConfigsRequest, callInfo)
 	mock.lockListQueryLoggingConfigsRequest.Unlock()
-	return mock.ListQueryLoggingConfigsRequestFunc(in1)
+	return mock.ListQueryLoggingConfigsRequestFunc(listQueryLoggingConfigsInput)
 }
 
 // ListQueryLoggingConfigsRequestCalls gets all the calls that were made to ListQueryLoggingConfigsRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListQueryLoggingConfigsRequestCalls())
 func (mock *Route53APIMock) ListQueryLoggingConfigsRequestCalls() []struct {
-	In1 *route53.ListQueryLoggingConfigsInput
+	ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
 } {
 	var calls []struct {
-		In1 *route53.ListQueryLoggingConfigsInput
+		ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
 	}
 	mock.lockListQueryLoggingConfigsRequest.RLock()
 	calls = mock.calls.ListQueryLoggingConfigsRequest
@@ -6906,37 +9070,37 @@ func (mock *Route53APIMock) ListQueryLoggingConfigsRequestCalls() []struct {
 }
 
 // ListQueryLoggingConfigsWithContext calls ListQueryLoggingConfigsWithContextFunc.
-func (mock *Route53APIMock) ListQueryLoggingConfigsWithContext(in1 context.Context, in2 *route53.ListQueryLoggingConfigsInput, in3 ...request.Option) (*route53.ListQueryLoggingConfigsOutput, error) {
+func (mock *Route53APIMock) ListQueryLoggingConfigsWithContext(contextMoqParam context.Context, listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, options ...request.Option) (*route53.ListQueryLoggingConfigsOutput, error) {
 	if mock.ListQueryLoggingConfigsWithContextFunc == nil {
 		panic("Route53APIMock.ListQueryLoggingConfigsWithContextFunc: method is nil but Route53API.ListQueryLoggingConfigsWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListQueryLoggingConfigsInput
-		In3 []request.Option
+		ContextMoqParam              context.Context
+		ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
+		Options                      []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:              contextMoqParam,
+		ListQueryLoggingConfigsInput: listQueryLoggingConfigsInput,
+		Options:                      options,
 	}
 	mock.lockListQueryLoggingConfigsWithContext.Lock()
 	mock.calls.ListQueryLoggingConfigsWithContext = append(mock.calls.ListQueryLoggingConfigsWithContext, callInfo)
 	mock.lockListQueryLoggingConfigsWithContext.Unlock()
-	return mock.ListQueryLoggingConfigsWithContextFunc(in1, in2, in3...)
+	return mock.ListQueryLoggingConfigsWithContextFunc(contextMoqParam, listQueryLoggingConfigsInput, options...)
 }
 
 // ListQueryLoggingConfigsWithContextCalls gets all the calls that were made to ListQueryLoggingConfigsWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListQueryLoggingConfigsWithContextCalls())
 func (mock *Route53APIMock) ListQueryLoggingConfigsWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListQueryLoggingConfigsInput
-	In3 []request.Option
+	ContextMoqParam              context.Context
+	ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
+	Options                      []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListQueryLoggingConfigsInput
-		In3 []request.Option
+		ContextMoqParam              context.Context
+		ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
+		Options                      []request.Option
 	}
 	mock.lockListQueryLoggingConfigsWithContext.RLock()
 	calls = mock.calls.ListQueryLoggingConfigsWithContext
@@ -6945,29 +9109,29 @@ func (mock *Route53APIMock) ListQueryLoggingConfigsWithContextCalls() []struct {
 }
 
 // ListResourceRecordSets calls ListResourceRecordSetsFunc.
-func (mock *Route53APIMock) ListResourceRecordSets(in1 *route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error) {
+func (mock *Route53APIMock) ListResourceRecordSets(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error) {
 	if mock.ListResourceRecordSetsFunc == nil {
 		panic("Route53APIMock.ListResourceRecordSetsFunc: method is nil but Route53API.ListResourceRecordSets was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListResourceRecordSetsInput
+		ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
 	}{
-		In1: in1,
+		ListResourceRecordSetsInput: listResourceRecordSetsInput,
 	}
 	mock.lockListResourceRecordSets.Lock()
 	mock.calls.ListResourceRecordSets = append(mock.calls.ListResourceRecordSets, callInfo)
 	mock.lockListResourceRecordSets.Unlock()
-	return mock.ListResourceRecordSetsFunc(in1)
+	return mock.ListResourceRecordSetsFunc(listResourceRecordSetsInput)
 }
 
 // ListResourceRecordSetsCalls gets all the calls that were made to ListResourceRecordSets.
 // Check the length with:
 //     len(mockedRoute53API.ListResourceRecordSetsCalls())
 func (mock *Route53APIMock) ListResourceRecordSetsCalls() []struct {
-	In1 *route53.ListResourceRecordSetsInput
+	ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
 } {
 	var calls []struct {
-		In1 *route53.ListResourceRecordSetsInput
+		ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
 	}
 	mock.lockListResourceRecordSets.RLock()
 	calls = mock.calls.ListResourceRecordSets
@@ -6976,33 +9140,33 @@ func (mock *Route53APIMock) ListResourceRecordSetsCalls() []struct {
 }
 
 // ListResourceRecordSetsPages calls ListResourceRecordSetsPagesFunc.
-func (mock *Route53APIMock) ListResourceRecordSetsPages(in1 *route53.ListResourceRecordSetsInput, in2 func(*route53.ListResourceRecordSetsOutput, bool) bool) error {
+func (mock *Route53APIMock) ListResourceRecordSetsPages(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, fn func(*route53.ListResourceRecordSetsOutput, bool) bool) error {
 	if mock.ListResourceRecordSetsPagesFunc == nil {
 		panic("Route53APIMock.ListResourceRecordSetsPagesFunc: method is nil but Route53API.ListResourceRecordSetsPages was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListResourceRecordSetsInput
-		In2 func(*route53.ListResourceRecordSetsOutput, bool) bool
+		ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
+		Fn                          func(*route53.ListResourceRecordSetsOutput, bool) bool
 	}{
-		In1: in1,
-		In2: in2,
+		ListResourceRecordSetsInput: listResourceRecordSetsInput,
+		Fn:                          fn,
 	}
 	mock.lockListResourceRecordSetsPages.Lock()
 	mock.calls.ListResourceRecordSetsPages = append(mock.calls.ListResourceRecordSetsPages, callInfo)
 	mock.lockListResourceRecordSetsPages.Unlock()
-	return mock.ListResourceRecordSetsPagesFunc(in1, in2)
+	return mock.ListResourceRecordSetsPagesFunc(listResourceRecordSetsInput, fn)
 }
 
 // ListResourceRecordSetsPagesCalls gets all the calls that were made to ListResourceRecordSetsPages.
 // Check the length with:
 //     len(mockedRoute53API.ListResourceRecordSetsPagesCalls())
 func (mock *Route53APIMock) ListResourceRecordSetsPagesCalls() []struct {
-	In1 *route53.ListResourceRecordSetsInput
-	In2 func(*route53.ListResourceRecordSetsOutput, bool) bool
+	ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
+	Fn                          func(*route53.ListResourceRecordSetsOutput, bool) bool
 } {
 	var calls []struct {
-		In1 *route53.ListResourceRecordSetsInput
-		In2 func(*route53.ListResourceRecordSetsOutput, bool) bool
+		ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
+		Fn                          func(*route53.ListResourceRecordSetsOutput, bool) bool
 	}
 	mock.lockListResourceRecordSetsPages.RLock()
 	calls = mock.calls.ListResourceRecordSetsPages
@@ -7011,41 +9175,41 @@ func (mock *Route53APIMock) ListResourceRecordSetsPagesCalls() []struct {
 }
 
 // ListResourceRecordSetsPagesWithContext calls ListResourceRecordSetsPagesWithContextFunc.
-func (mock *Route53APIMock) ListResourceRecordSetsPagesWithContext(in1 context.Context, in2 *route53.ListResourceRecordSetsInput, in3 func(*route53.ListResourceRecordSetsOutput, bool) bool, in4 ...request.Option) error {
+func (mock *Route53APIMock) ListResourceRecordSetsPagesWithContext(contextMoqParam context.Context, listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, fn func(*route53.ListResourceRecordSetsOutput, bool) bool, options ...request.Option) error {
 	if mock.ListResourceRecordSetsPagesWithContextFunc == nil {
 		panic("Route53APIMock.ListResourceRecordSetsPagesWithContextFunc: method is nil but Route53API.ListResourceRecordSetsPagesWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListResourceRecordSetsInput
-		In3 func(*route53.ListResourceRecordSetsOutput, bool) bool
-		In4 []request.Option
+		ContextMoqParam             context.Context
+		ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
+		Fn                          func(*route53.ListResourceRecordSetsOutput, bool) bool
+		Options                     []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
-		In4: in4,
+		ContextMoqParam:             contextMoqParam,
+		ListResourceRecordSetsInput: listResourceRecordSetsInput,
+		Fn:                          fn,
+		Options:                     options,
 	}
 	mock.lockListResourceRecordSetsPagesWithContext.Lock()
 	mock.calls.ListResourceRecordSetsPagesWithContext = append(mock.calls.ListResourceRecordSetsPagesWithContext, callInfo)
 	mock.lockListResourceRecordSetsPagesWithContext.Unlock()
-	return mock.ListResourceRecordSetsPagesWithContextFunc(in1, in2, in3, in4...)
+	return mock.ListResourceRecordSetsPagesWithContextFunc(contextMoqParam, listResourceRecordSetsInput, fn, options...)
 }
 
 // ListResourceRecordSetsPagesWithContextCalls gets all the calls that were made to ListResourceRecordSetsPagesWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListResourceRecordSetsPagesWithContextCalls())
 func (mock *Route53APIMock) ListResourceRecordSetsPagesWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListResourceRecordSetsInput
-	In3 func(*route53.ListResourceRecordSetsOutput, bool) bool
-	In4 []request.Option
+	ContextMoqParam             context.Context
+	ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
+	Fn                          func(*route53.ListResourceRecordSetsOutput, bool) bool
+	Options                     []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListResourceRecordSetsInput
-		In3 func(*route53.ListResourceRecordSetsOutput, bool) bool
-		In4 []request.Option
+		ContextMoqParam             context.Context
+		ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
+		Fn                          func(*route53.ListResourceRecordSetsOutput, bool) bool
+		Options                     []request.Option
 	}
 	mock.lockListResourceRecordSetsPagesWithContext.RLock()
 	calls = mock.calls.ListResourceRecordSetsPagesWithContext
@@ -7054,29 +9218,29 @@ func (mock *Route53APIMock) ListResourceRecordSetsPagesWithContextCalls() []stru
 }
 
 // ListResourceRecordSetsRequest calls ListResourceRecordSetsRequestFunc.
-func (mock *Route53APIMock) ListResourceRecordSetsRequest(in1 *route53.ListResourceRecordSetsInput) (*request.Request, *route53.ListResourceRecordSetsOutput) {
+func (mock *Route53APIMock) ListResourceRecordSetsRequest(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput) (*request.Request, *route53.ListResourceRecordSetsOutput) {
 	if mock.ListResourceRecordSetsRequestFunc == nil {
 		panic("Route53APIMock.ListResourceRecordSetsRequestFunc: method is nil but Route53API.ListResourceRecordSetsRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListResourceRecordSetsInput
+		ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
 	}{
-		In1: in1,
+		ListResourceRecordSetsInput: listResourceRecordSetsInput,
 	}
 	mock.lockListResourceRecordSetsRequest.Lock()
 	mock.calls.ListResourceRecordSetsRequest = append(mock.calls.ListResourceRecordSetsRequest, callInfo)
 	mock.lockListResourceRecordSetsRequest.Unlock()
-	return mock.ListResourceRecordSetsRequestFunc(in1)
+	return mock.ListResourceRecordSetsRequestFunc(listResourceRecordSetsInput)
 }
 
 // ListResourceRecordSetsRequestCalls gets all the calls that were made to ListResourceRecordSetsRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListResourceRecordSetsRequestCalls())
 func (mock *Route53APIMock) ListResourceRecordSetsRequestCalls() []struct {
-	In1 *route53.ListResourceRecordSetsInput
+	ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
 } {
 	var calls []struct {
-		In1 *route53.ListResourceRecordSetsInput
+		ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
 	}
 	mock.lockListResourceRecordSetsRequest.RLock()
 	calls = mock.calls.ListResourceRecordSetsRequest
@@ -7085,37 +9249,37 @@ func (mock *Route53APIMock) ListResourceRecordSetsRequestCalls() []struct {
 }
 
 // ListResourceRecordSetsWithContext calls ListResourceRecordSetsWithContextFunc.
-func (mock *Route53APIMock) ListResourceRecordSetsWithContext(in1 context.Context, in2 *route53.ListResourceRecordSetsInput, in3 ...request.Option) (*route53.ListResourceRecordSetsOutput, error) {
+func (mock *Route53APIMock) ListResourceRecordSetsWithContext(contextMoqParam context.Context, listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, options ...request.Option) (*route53.ListResourceRecordSetsOutput, error) {
 	if mock.ListResourceRecordSetsWithContextFunc == nil {
 		panic("Route53APIMock.ListResourceRecordSetsWithContextFunc: method is nil but Route53API.ListResourceRecordSetsWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListResourceRecordSetsInput
-		In3 []request.Option
+		ContextMoqParam             context.Context
+		ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
+		Options                     []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:             contextMoqParam,
+		ListResourceRecordSetsInput: listResourceRecordSetsInput,
+		Options:                     options,
 	}
 	mock.lockListResourceRecordSetsWithContext.Lock()
 	mock.calls.ListResourceRecordSetsWithContext = append(mock.calls.ListResourceRecordSetsWithContext, callInfo)
 	mock.lockListResourceRecordSetsWithContext.Unlock()
-	return mock.ListResourceRecordSetsWithContextFunc(in1, in2, in3...)
+	return mock.ListResourceRecordSetsWithContextFunc(contextMoqParam, listResourceRecordSetsInput, options...)
 }
 
 // ListResourceRecordSetsWithContextCalls gets all the calls that were made to ListResourceRecordSetsWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListResourceRecordSetsWithContextCalls())
 func (mock *Route53APIMock) ListResourceRecordSetsWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListResourceRecordSetsInput
-	In3 []request.Option
+	ContextMoqParam             context.Context
+	ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
+	Options                     []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListResourceRecordSetsInput
-		In3 []request.Option
+		ContextMoqParam             context.Context
+		ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
+		Options                     []request.Option
 	}
 	mock.lockListResourceRecordSetsWithContext.RLock()
 	calls = mock.calls.ListResourceRecordSetsWithContext
@@ -7124,29 +9288,29 @@ func (mock *Route53APIMock) ListResourceRecordSetsWithContextCalls() []struct {
 }
 
 // ListReusableDelegationSets calls ListReusableDelegationSetsFunc.
-func (mock *Route53APIMock) ListReusableDelegationSets(in1 *route53.ListReusableDelegationSetsInput) (*route53.ListReusableDelegationSetsOutput, error) {
+func (mock *Route53APIMock) ListReusableDelegationSets(listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput) (*route53.ListReusableDelegationSetsOutput, error) {
 	if mock.ListReusableDelegationSetsFunc == nil {
 		panic("Route53APIMock.ListReusableDelegationSetsFunc: method is nil but Route53API.ListReusableDelegationSets was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListReusableDelegationSetsInput
+		ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
 	}{
-		In1: in1,
+		ListReusableDelegationSetsInput: listReusableDelegationSetsInput,
 	}
 	mock.lockListReusableDelegationSets.Lock()
 	mock.calls.ListReusableDelegationSets = append(mock.calls.ListReusableDelegationSets, callInfo)
 	mock.lockListReusableDelegationSets.Unlock()
-	return mock.ListReusableDelegationSetsFunc(in1)
+	return mock.ListReusableDelegationSetsFunc(listReusableDelegationSetsInput)
 }
 
 // ListReusableDelegationSetsCalls gets all the calls that were made to ListReusableDelegationSets.
 // Check the length with:
 //     len(mockedRoute53API.ListReusableDelegationSetsCalls())
 func (mock *Route53APIMock) ListReusableDelegationSetsCalls() []struct {
-	In1 *route53.ListReusableDelegationSetsInput
+	ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
 } {
 	var calls []struct {
-		In1 *route53.ListReusableDelegationSetsInput
+		ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
 	}
 	mock.lockListReusableDelegationSets.RLock()
 	calls = mock.calls.ListReusableDelegationSets
@@ -7155,29 +9319,29 @@ func (mock *Route53APIMock) ListReusableDelegationSetsCalls() []struct {
 }
 
 // ListReusableDelegationSetsRequest calls ListReusableDelegationSetsRequestFunc.
-func (mock *Route53APIMock) ListReusableDelegationSetsRequest(in1 *route53.ListReusableDelegationSetsInput) (*request.Request, *route53.ListReusableDelegationSetsOutput) {
+func (mock *Route53APIMock) ListReusableDelegationSetsRequest(listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput) (*request.Request, *route53.ListReusableDelegationSetsOutput) {
 	if mock.ListReusableDelegationSetsRequestFunc == nil {
 		panic("Route53APIMock.ListReusableDelegationSetsRequestFunc: method is nil but Route53API.ListReusableDelegationSetsRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListReusableDelegationSetsInput
+		ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
 	}{
-		In1: in1,
+		ListReusableDelegationSetsInput: listReusableDelegationSetsInput,
 	}
 	mock.lockListReusableDelegationSetsRequest.Lock()
 	mock.calls.ListReusableDelegationSetsRequest = append(mock.calls.ListReusableDelegationSetsRequest, callInfo)
 	mock.lockListReusableDelegationSetsRequest.Unlock()
-	return mock.ListReusableDelegationSetsRequestFunc(in1)
+	return mock.ListReusableDelegationSetsRequestFunc(listReusableDelegationSetsInput)
 }
 
 // ListReusableDelegationSetsRequestCalls gets all the calls that were made to ListReusableDelegationSetsRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListReusableDelegationSetsRequestCalls())
 func (mock *Route53APIMock) ListReusableDelegationSetsRequestCalls() []struct {
-	In1 *route53.ListReusableDelegationSetsInput
+	ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
 } {
 	var calls []struct {
-		In1 *route53.ListReusableDelegationSetsInput
+		ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
 	}
 	mock.lockListReusableDelegationSetsRequest.RLock()
 	calls = mock.calls.ListReusableDelegationSetsRequest
@@ -7186,37 +9350,37 @@ func (mock *Route53APIMock) ListReusableDelegationSetsRequestCalls() []struct {
 }
 
 // ListReusableDelegationSetsWithContext calls ListReusableDelegationSetsWithContextFunc.
-func (mock *Route53APIMock) ListReusableDelegationSetsWithContext(in1 context.Context, in2 *route53.ListReusableDelegationSetsInput, in3 ...request.Option) (*route53.ListReusableDelegationSetsOutput, error) {
+func (mock *Route53APIMock) ListReusableDelegationSetsWithContext(contextMoqParam context.Context, listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput, options ...request.Option) (*route53.ListReusableDelegationSetsOutput, error) {
 	if mock.ListReusableDelegationSetsWithContextFunc == nil {
 		panic("Route53APIMock.ListReusableDelegationSetsWithContextFunc: method is nil but Route53API.ListReusableDelegationSetsWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListReusableDelegationSetsInput
-		In3 []request.Option
+		ContextMoqParam                 context.Context
+		ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
+		Options                         []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                 contextMoqParam,
+		ListReusableDelegationSetsInput: listReusableDelegationSetsInput,
+		Options:                         options,
 	}
 	mock.lockListReusableDelegationSetsWithContext.Lock()
 	mock.calls.ListReusableDelegationSetsWithContext = append(mock.calls.ListReusableDelegationSetsWithContext, callInfo)
 	mock.lockListReusableDelegationSetsWithContext.Unlock()
-	return mock.ListReusableDelegationSetsWithContextFunc(in1, in2, in3...)
+	return mock.ListReusableDelegationSetsWithContextFunc(contextMoqParam, listReusableDelegationSetsInput, options...)
 }
 
 // ListReusableDelegationSetsWithContextCalls gets all the calls that were made to ListReusableDelegationSetsWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListReusableDelegationSetsWithContextCalls())
 func (mock *Route53APIMock) ListReusableDelegationSetsWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListReusableDelegationSetsInput
-	In3 []request.Option
+	ContextMoqParam                 context.Context
+	ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
+	Options                         []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListReusableDelegationSetsInput
-		In3 []request.Option
+		ContextMoqParam                 context.Context
+		ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
+		Options                         []request.Option
 	}
 	mock.lockListReusableDelegationSetsWithContext.RLock()
 	calls = mock.calls.ListReusableDelegationSetsWithContext
@@ -7225,29 +9389,29 @@ func (mock *Route53APIMock) ListReusableDelegationSetsWithContextCalls() []struc
 }
 
 // ListTagsForResource calls ListTagsForResourceFunc.
-func (mock *Route53APIMock) ListTagsForResource(in1 *route53.ListTagsForResourceInput) (*route53.ListTagsForResourceOutput, error) {
+func (mock *Route53APIMock) ListTagsForResource(listTagsForResourceInput *route53.ListTagsForResourceInput) (*route53.ListTagsForResourceOutput, error) {
 	if mock.ListTagsForResourceFunc == nil {
 		panic("Route53APIMock.ListTagsForResourceFunc: method is nil but Route53API.ListTagsForResource was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTagsForResourceInput
+		ListTagsForResourceInput *route53.ListTagsForResourceInput
 	}{
-		In1: in1,
+		ListTagsForResourceInput: listTagsForResourceInput,
 	}
 	mock.lockListTagsForResource.Lock()
 	mock.calls.ListTagsForResource = append(mock.calls.ListTagsForResource, callInfo)
 	mock.lockListTagsForResource.Unlock()
-	return mock.ListTagsForResourceFunc(in1)
+	return mock.ListTagsForResourceFunc(listTagsForResourceInput)
 }
 
 // ListTagsForResourceCalls gets all the calls that were made to ListTagsForResource.
 // Check the length with:
 //     len(mockedRoute53API.ListTagsForResourceCalls())
 func (mock *Route53APIMock) ListTagsForResourceCalls() []struct {
-	In1 *route53.ListTagsForResourceInput
+	ListTagsForResourceInput *route53.ListTagsForResourceInput
 } {
 	var calls []struct {
-		In1 *route53.ListTagsForResourceInput
+		ListTagsForResourceInput *route53.ListTagsForResourceInput
 	}
 	mock.lockListTagsForResource.RLock()
 	calls = mock.calls.ListTagsForResource
@@ -7256,29 +9420,29 @@ func (mock *Route53APIMock) ListTagsForResourceCalls() []struct {
 }
 
 // ListTagsForResourceRequest calls ListTagsForResourceRequestFunc.
-func (mock *Route53APIMock) ListTagsForResourceRequest(in1 *route53.ListTagsForResourceInput) (*request.Request, *route53.ListTagsForResourceOutput) {
+func (mock *Route53APIMock) ListTagsForResourceRequest(listTagsForResourceInput *route53.ListTagsForResourceInput) (*request.Request, *route53.ListTagsForResourceOutput) {
 	if mock.ListTagsForResourceRequestFunc == nil {
 		panic("Route53APIMock.ListTagsForResourceRequestFunc: method is nil but Route53API.ListTagsForResourceRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTagsForResourceInput
+		ListTagsForResourceInput *route53.ListTagsForResourceInput
 	}{
-		In1: in1,
+		ListTagsForResourceInput: listTagsForResourceInput,
 	}
 	mock.lockListTagsForResourceRequest.Lock()
 	mock.calls.ListTagsForResourceRequest = append(mock.calls.ListTagsForResourceRequest, callInfo)
 	mock.lockListTagsForResourceRequest.Unlock()
-	return mock.ListTagsForResourceRequestFunc(in1)
+	return mock.ListTagsForResourceRequestFunc(listTagsForResourceInput)
 }
 
 // ListTagsForResourceRequestCalls gets all the calls that were made to ListTagsForResourceRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListTagsForResourceRequestCalls())
 func (mock *Route53APIMock) ListTagsForResourceRequestCalls() []struct {
-	In1 *route53.ListTagsForResourceInput
+	ListTagsForResourceInput *route53.ListTagsForResourceInput
 } {
 	var calls []struct {
-		In1 *route53.ListTagsForResourceInput
+		ListTagsForResourceInput *route53.ListTagsForResourceInput
 	}
 	mock.lockListTagsForResourceRequest.RLock()
 	calls = mock.calls.ListTagsForResourceRequest
@@ -7287,37 +9451,37 @@ func (mock *Route53APIMock) ListTagsForResourceRequestCalls() []struct {
 }
 
 // ListTagsForResourceWithContext calls ListTagsForResourceWithContextFunc.
-func (mock *Route53APIMock) ListTagsForResourceWithContext(in1 context.Context, in2 *route53.ListTagsForResourceInput, in3 ...request.Option) (*route53.ListTagsForResourceOutput, error) {
+func (mock *Route53APIMock) ListTagsForResourceWithContext(contextMoqParam context.Context, listTagsForResourceInput *route53.ListTagsForResourceInput, options ...request.Option) (*route53.ListTagsForResourceOutput, error) {
 	if mock.ListTagsForResourceWithContextFunc == nil {
 		panic("Route53APIMock.ListTagsForResourceWithContextFunc: method is nil but Route53API.ListTagsForResourceWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListTagsForResourceInput
-		In3 []request.Option
+		ContextMoqParam          context.Context
+		ListTagsForResourceInput *route53.ListTagsForResourceInput
+		Options                  []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:          contextMoqParam,
+		ListTagsForResourceInput: listTagsForResourceInput,
+		Options:                  options,
 	}
 	mock.lockListTagsForResourceWithContext.Lock()
 	mock.calls.ListTagsForResourceWithContext = append(mock.calls.ListTagsForResourceWithContext, callInfo)
 	mock.lockListTagsForResourceWithContext.Unlock()
-	return mock.ListTagsForResourceWithContextFunc(in1, in2, in3...)
+	return mock.ListTagsForResourceWithContextFunc(contextMoqParam, listTagsForResourceInput, options...)
 }
 
 // ListTagsForResourceWithContextCalls gets all the calls that were made to ListTagsForResourceWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListTagsForResourceWithContextCalls())
 func (mock *Route53APIMock) ListTagsForResourceWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListTagsForResourceInput
-	In3 []request.Option
+	ContextMoqParam          context.Context
+	ListTagsForResourceInput *route53.ListTagsForResourceInput
+	Options                  []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListTagsForResourceInput
-		In3 []request.Option
+		ContextMoqParam          context.Context
+		ListTagsForResourceInput *route53.ListTagsForResourceInput
+		Options                  []request.Option
 	}
 	mock.lockListTagsForResourceWithContext.RLock()
 	calls = mock.calls.ListTagsForResourceWithContext
@@ -7326,29 +9490,29 @@ func (mock *Route53APIMock) ListTagsForResourceWithContextCalls() []struct {
 }
 
 // ListTagsForResources calls ListTagsForResourcesFunc.
-func (mock *Route53APIMock) ListTagsForResources(in1 *route53.ListTagsForResourcesInput) (*route53.ListTagsForResourcesOutput, error) {
+func (mock *Route53APIMock) ListTagsForResources(listTagsForResourcesInput *route53.ListTagsForResourcesInput) (*route53.ListTagsForResourcesOutput, error) {
 	if mock.ListTagsForResourcesFunc == nil {
 		panic("Route53APIMock.ListTagsForResourcesFunc: method is nil but Route53API.ListTagsForResources was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTagsForResourcesInput
+		ListTagsForResourcesInput *route53.ListTagsForResourcesInput
 	}{
-		In1: in1,
+		ListTagsForResourcesInput: listTagsForResourcesInput,
 	}
 	mock.lockListTagsForResources.Lock()
 	mock.calls.ListTagsForResources = append(mock.calls.ListTagsForResources, callInfo)
 	mock.lockListTagsForResources.Unlock()
-	return mock.ListTagsForResourcesFunc(in1)
+	return mock.ListTagsForResourcesFunc(listTagsForResourcesInput)
 }
 
 // ListTagsForResourcesCalls gets all the calls that were made to ListTagsForResources.
 // Check the length with:
 //     len(mockedRoute53API.ListTagsForResourcesCalls())
 func (mock *Route53APIMock) ListTagsForResourcesCalls() []struct {
-	In1 *route53.ListTagsForResourcesInput
+	ListTagsForResourcesInput *route53.ListTagsForResourcesInput
 } {
 	var calls []struct {
-		In1 *route53.ListTagsForResourcesInput
+		ListTagsForResourcesInput *route53.ListTagsForResourcesInput
 	}
 	mock.lockListTagsForResources.RLock()
 	calls = mock.calls.ListTagsForResources
@@ -7357,29 +9521,29 @@ func (mock *Route53APIMock) ListTagsForResourcesCalls() []struct {
 }
 
 // ListTagsForResourcesRequest calls ListTagsForResourcesRequestFunc.
-func (mock *Route53APIMock) ListTagsForResourcesRequest(in1 *route53.ListTagsForResourcesInput) (*request.Request, *route53.ListTagsForResourcesOutput) {
+func (mock *Route53APIMock) ListTagsForResourcesRequest(listTagsForResourcesInput *route53.ListTagsForResourcesInput) (*request.Request, *route53.ListTagsForResourcesOutput) {
 	if mock.ListTagsForResourcesRequestFunc == nil {
 		panic("Route53APIMock.ListTagsForResourcesRequestFunc: method is nil but Route53API.ListTagsForResourcesRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTagsForResourcesInput
+		ListTagsForResourcesInput *route53.ListTagsForResourcesInput
 	}{
-		In1: in1,
+		ListTagsForResourcesInput: listTagsForResourcesInput,
 	}
 	mock.lockListTagsForResourcesRequest.Lock()
 	mock.calls.ListTagsForResourcesRequest = append(mock.calls.ListTagsForResourcesRequest, callInfo)
 	mock.lockListTagsForResourcesRequest.Unlock()
-	return mock.ListTagsForResourcesRequestFunc(in1)
+	return mock.ListTagsForResourcesRequestFunc(listTagsForResourcesInput)
 }
 
 // ListTagsForResourcesRequestCalls gets all the calls that were made to ListTagsForResourcesRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListTagsForResourcesRequestCalls())
 func (mock *Route53APIMock) ListTagsForResourcesRequestCalls() []struct {
-	In1 *route53.ListTagsForResourcesInput
+	ListTagsForResourcesInput *route53.ListTagsForResourcesInput
 } {
 	var calls []struct {
-		In1 *route53.ListTagsForResourcesInput
+		ListTagsForResourcesInput *route53.ListTagsForResourcesInput
 	}
 	mock.lockListTagsForResourcesRequest.RLock()
 	calls = mock.calls.ListTagsForResourcesRequest
@@ -7388,37 +9552,37 @@ func (mock *Route53APIMock) ListTagsForResourcesRequestCalls() []struct {
 }
 
 // ListTagsForResourcesWithContext calls ListTagsForResourcesWithContextFunc.
-func (mock *Route53APIMock) ListTagsForResourcesWithContext(in1 context.Context, in2 *route53.ListTagsForResourcesInput, in3 ...request.Option) (*route53.ListTagsForResourcesOutput, error) {
+func (mock *Route53APIMock) ListTagsForResourcesWithContext(contextMoqParam context.Context, listTagsForResourcesInput *route53.ListTagsForResourcesInput, options ...request.Option) (*route53.ListTagsForResourcesOutput, error) {
 	if mock.ListTagsForResourcesWithContextFunc == nil {
 		panic("Route53APIMock.ListTagsForResourcesWithContextFunc: method is nil but Route53API.ListTagsForResourcesWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListTagsForResourcesInput
-		In3 []request.Option
+		ContextMoqParam           context.Context
+		ListTagsForResourcesInput *route53.ListTagsForResourcesInput
+		Options                   []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:           contextMoqParam,
+		ListTagsForResourcesInput: listTagsForResourcesInput,
+		Options:                   options,
 	}
 	mock.lockListTagsForResourcesWithContext.Lock()
 	mock.calls.ListTagsForResourcesWithContext = append(mock.calls.ListTagsForResourcesWithContext, callInfo)
 	mock.lockListTagsForResourcesWithContext.Unlock()
-	return mock.ListTagsForResourcesWithContextFunc(in1, in2, in3...)
+	return mock.ListTagsForResourcesWithContextFunc(contextMoqParam, listTagsForResourcesInput, options...)
 }
 
 // ListTagsForResourcesWithContextCalls gets all the calls that were made to ListTagsForResourcesWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListTagsForResourcesWithContextCalls())
 func (mock *Route53APIMock) ListTagsForResourcesWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListTagsForResourcesInput
-	In3 []request.Option
+	ContextMoqParam           context.Context
+	ListTagsForResourcesInput *route53.ListTagsForResourcesInput
+	Options                   []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListTagsForResourcesInput
-		In3 []request.Option
+		ContextMoqParam           context.Context
+		ListTagsForResourcesInput *route53.ListTagsForResourcesInput
+		Options                   []request.Option
 	}
 	mock.lockListTagsForResourcesWithContext.RLock()
 	calls = mock.calls.ListTagsForResourcesWithContext
@@ -7427,29 +9591,29 @@ func (mock *Route53APIMock) ListTagsForResourcesWithContextCalls() []struct {
 }
 
 // ListTrafficPolicies calls ListTrafficPoliciesFunc.
-func (mock *Route53APIMock) ListTrafficPolicies(in1 *route53.ListTrafficPoliciesInput) (*route53.ListTrafficPoliciesOutput, error) {
+func (mock *Route53APIMock) ListTrafficPolicies(listTrafficPoliciesInput *route53.ListTrafficPoliciesInput) (*route53.ListTrafficPoliciesOutput, error) {
 	if mock.ListTrafficPoliciesFunc == nil {
 		panic("Route53APIMock.ListTrafficPoliciesFunc: method is nil but Route53API.ListTrafficPolicies was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTrafficPoliciesInput
+		ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
 	}{
-		In1: in1,
+		ListTrafficPoliciesInput: listTrafficPoliciesInput,
 	}
 	mock.lockListTrafficPolicies.Lock()
 	mock.calls.ListTrafficPolicies = append(mock.calls.ListTrafficPolicies, callInfo)
 	mock.lockListTrafficPolicies.Unlock()
-	return mock.ListTrafficPoliciesFunc(in1)
+	return mock.ListTrafficPoliciesFunc(listTrafficPoliciesInput)
 }
 
 // ListTrafficPoliciesCalls gets all the calls that were made to ListTrafficPolicies.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPoliciesCalls())
 func (mock *Route53APIMock) ListTrafficPoliciesCalls() []struct {
-	In1 *route53.ListTrafficPoliciesInput
+	ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
 } {
 	var calls []struct {
-		In1 *route53.ListTrafficPoliciesInput
+		ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
 	}
 	mock.lockListTrafficPolicies.RLock()
 	calls = mock.calls.ListTrafficPolicies
@@ -7458,29 +9622,29 @@ func (mock *Route53APIMock) ListTrafficPoliciesCalls() []struct {
 }
 
 // ListTrafficPoliciesRequest calls ListTrafficPoliciesRequestFunc.
-func (mock *Route53APIMock) ListTrafficPoliciesRequest(in1 *route53.ListTrafficPoliciesInput) (*request.Request, *route53.ListTrafficPoliciesOutput) {
+func (mock *Route53APIMock) ListTrafficPoliciesRequest(listTrafficPoliciesInput *route53.ListTrafficPoliciesInput) (*request.Request, *route53.ListTrafficPoliciesOutput) {
 	if mock.ListTrafficPoliciesRequestFunc == nil {
 		panic("Route53APIMock.ListTrafficPoliciesRequestFunc: method is nil but Route53API.ListTrafficPoliciesRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTrafficPoliciesInput
+		ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
 	}{
-		In1: in1,
+		ListTrafficPoliciesInput: listTrafficPoliciesInput,
 	}
 	mock.lockListTrafficPoliciesRequest.Lock()
 	mock.calls.ListTrafficPoliciesRequest = append(mock.calls.ListTrafficPoliciesRequest, callInfo)
 	mock.lockListTrafficPoliciesRequest.Unlock()
-	return mock.ListTrafficPoliciesRequestFunc(in1)
+	return mock.ListTrafficPoliciesRequestFunc(listTrafficPoliciesInput)
 }
 
 // ListTrafficPoliciesRequestCalls gets all the calls that were made to ListTrafficPoliciesRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPoliciesRequestCalls())
 func (mock *Route53APIMock) ListTrafficPoliciesRequestCalls() []struct {
-	In1 *route53.ListTrafficPoliciesInput
+	ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
 } {
 	var calls []struct {
-		In1 *route53.ListTrafficPoliciesInput
+		ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
 	}
 	mock.lockListTrafficPoliciesRequest.RLock()
 	calls = mock.calls.ListTrafficPoliciesRequest
@@ -7489,37 +9653,37 @@ func (mock *Route53APIMock) ListTrafficPoliciesRequestCalls() []struct {
 }
 
 // ListTrafficPoliciesWithContext calls ListTrafficPoliciesWithContextFunc.
-func (mock *Route53APIMock) ListTrafficPoliciesWithContext(in1 context.Context, in2 *route53.ListTrafficPoliciesInput, in3 ...request.Option) (*route53.ListTrafficPoliciesOutput, error) {
+func (mock *Route53APIMock) ListTrafficPoliciesWithContext(contextMoqParam context.Context, listTrafficPoliciesInput *route53.ListTrafficPoliciesInput, options ...request.Option) (*route53.ListTrafficPoliciesOutput, error) {
 	if mock.ListTrafficPoliciesWithContextFunc == nil {
 		panic("Route53APIMock.ListTrafficPoliciesWithContextFunc: method is nil but Route53API.ListTrafficPoliciesWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListTrafficPoliciesInput
-		In3 []request.Option
+		ContextMoqParam          context.Context
+		ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
+		Options                  []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:          contextMoqParam,
+		ListTrafficPoliciesInput: listTrafficPoliciesInput,
+		Options:                  options,
 	}
 	mock.lockListTrafficPoliciesWithContext.Lock()
 	mock.calls.ListTrafficPoliciesWithContext = append(mock.calls.ListTrafficPoliciesWithContext, callInfo)
 	mock.lockListTrafficPoliciesWithContext.Unlock()
-	return mock.ListTrafficPoliciesWithContextFunc(in1, in2, in3...)
+	return mock.ListTrafficPoliciesWithContextFunc(contextMoqParam, listTrafficPoliciesInput, options...)
 }
 
 // ListTrafficPoliciesWithContextCalls gets all the calls that were made to ListTrafficPoliciesWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPoliciesWithContextCalls())
 func (mock *Route53APIMock) ListTrafficPoliciesWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListTrafficPoliciesInput
-	In3 []request.Option
+	ContextMoqParam          context.Context
+	ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
+	Options                  []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListTrafficPoliciesInput
-		In3 []request.Option
+		ContextMoqParam          context.Context
+		ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
+		Options                  []request.Option
 	}
 	mock.lockListTrafficPoliciesWithContext.RLock()
 	calls = mock.calls.ListTrafficPoliciesWithContext
@@ -7528,29 +9692,29 @@ func (mock *Route53APIMock) ListTrafficPoliciesWithContextCalls() []struct {
 }
 
 // ListTrafficPolicyInstances calls ListTrafficPolicyInstancesFunc.
-func (mock *Route53APIMock) ListTrafficPolicyInstances(in1 *route53.ListTrafficPolicyInstancesInput) (*route53.ListTrafficPolicyInstancesOutput, error) {
+func (mock *Route53APIMock) ListTrafficPolicyInstances(listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput) (*route53.ListTrafficPolicyInstancesOutput, error) {
 	if mock.ListTrafficPolicyInstancesFunc == nil {
 		panic("Route53APIMock.ListTrafficPolicyInstancesFunc: method is nil but Route53API.ListTrafficPolicyInstances was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTrafficPolicyInstancesInput
+		ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
 	}{
-		In1: in1,
+		ListTrafficPolicyInstancesInput: listTrafficPolicyInstancesInput,
 	}
 	mock.lockListTrafficPolicyInstances.Lock()
 	mock.calls.ListTrafficPolicyInstances = append(mock.calls.ListTrafficPolicyInstances, callInfo)
 	mock.lockListTrafficPolicyInstances.Unlock()
-	return mock.ListTrafficPolicyInstancesFunc(in1)
+	return mock.ListTrafficPolicyInstancesFunc(listTrafficPolicyInstancesInput)
 }
 
 // ListTrafficPolicyInstancesCalls gets all the calls that were made to ListTrafficPolicyInstances.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPolicyInstancesCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesCalls() []struct {
-	In1 *route53.ListTrafficPolicyInstancesInput
+	ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
 } {
 	var calls []struct {
-		In1 *route53.ListTrafficPolicyInstancesInput
+		ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
 	}
 	mock.lockListTrafficPolicyInstances.RLock()
 	calls = mock.calls.ListTrafficPolicyInstances
@@ -7559,29 +9723,29 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesCalls() []struct {
 }
 
 // ListTrafficPolicyInstancesByHostedZone calls ListTrafficPolicyInstancesByHostedZoneFunc.
-func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZone(in1 *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error) {
+func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZone(listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error) {
 	if mock.ListTrafficPolicyInstancesByHostedZoneFunc == nil {
 		panic("Route53APIMock.ListTrafficPolicyInstancesByHostedZoneFunc: method is nil but Route53API.ListTrafficPolicyInstancesByHostedZone was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTrafficPolicyInstancesByHostedZoneInput
+		ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
 	}{
-		In1: in1,
+		ListTrafficPolicyInstancesByHostedZoneInput: listTrafficPolicyInstancesByHostedZoneInput,
 	}
 	mock.lockListTrafficPolicyInstancesByHostedZone.Lock()
 	mock.calls.ListTrafficPolicyInstancesByHostedZone = append(mock.calls.ListTrafficPolicyInstancesByHostedZone, callInfo)
 	mock.lockListTrafficPolicyInstancesByHostedZone.Unlock()
-	return mock.ListTrafficPolicyInstancesByHostedZoneFunc(in1)
+	return mock.ListTrafficPolicyInstancesByHostedZoneFunc(listTrafficPolicyInstancesByHostedZoneInput)
 }
 
 // ListTrafficPolicyInstancesByHostedZoneCalls gets all the calls that were made to ListTrafficPolicyInstancesByHostedZone.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPolicyInstancesByHostedZoneCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneCalls() []struct {
-	In1 *route53.ListTrafficPolicyInstancesByHostedZoneInput
+	ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
 } {
 	var calls []struct {
-		In1 *route53.ListTrafficPolicyInstancesByHostedZoneInput
+		ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
 	}
 	mock.lockListTrafficPolicyInstancesByHostedZone.RLock()
 	calls = mock.calls.ListTrafficPolicyInstancesByHostedZone
@@ -7590,29 +9754,29 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneCalls() []stru
 }
 
 // ListTrafficPolicyInstancesByHostedZoneRequest calls ListTrafficPolicyInstancesByHostedZoneRequestFunc.
-func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneRequest(in1 *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*request.Request, *route53.ListTrafficPolicyInstancesByHostedZoneOutput) {
+func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneRequest(listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*request.Request, *route53.ListTrafficPolicyInstancesByHostedZoneOutput) {
 	if mock.ListTrafficPolicyInstancesByHostedZoneRequestFunc == nil {
 		panic("Route53APIMock.ListTrafficPolicyInstancesByHostedZoneRequestFunc: method is nil but Route53API.ListTrafficPolicyInstancesByHostedZoneRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTrafficPolicyInstancesByHostedZoneInput
+		ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
 	}{
-		In1: in1,
+		ListTrafficPolicyInstancesByHostedZoneInput: listTrafficPolicyInstancesByHostedZoneInput,
 	}
 	mock.lockListTrafficPolicyInstancesByHostedZoneRequest.Lock()
 	mock.calls.ListTrafficPolicyInstancesByHostedZoneRequest = append(mock.calls.ListTrafficPolicyInstancesByHostedZoneRequest, callInfo)
 	mock.lockListTrafficPolicyInstancesByHostedZoneRequest.Unlock()
-	return mock.ListTrafficPolicyInstancesByHostedZoneRequestFunc(in1)
+	return mock.ListTrafficPolicyInstancesByHostedZoneRequestFunc(listTrafficPolicyInstancesByHostedZoneInput)
 }
 
 // ListTrafficPolicyInstancesByHostedZoneRequestCalls gets all the calls that were made to ListTrafficPolicyInstancesByHostedZoneRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPolicyInstancesByHostedZoneRequestCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneRequestCalls() []struct {
-	In1 *route53.ListTrafficPolicyInstancesByHostedZoneInput
+	ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
 } {
 	var calls []struct {
-		In1 *route53.ListTrafficPolicyInstancesByHostedZoneInput
+		ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
 	}
 	mock.lockListTrafficPolicyInstancesByHostedZoneRequest.RLock()
 	calls = mock.calls.ListTrafficPolicyInstancesByHostedZoneRequest
@@ -7621,37 +9785,37 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneRequestCalls()
 }
 
 // ListTrafficPolicyInstancesByHostedZoneWithContext calls ListTrafficPolicyInstancesByHostedZoneWithContextFunc.
-func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneWithContext(in1 context.Context, in2 *route53.ListTrafficPolicyInstancesByHostedZoneInput, in3 ...request.Option) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error) {
+func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneWithContext(contextMoqParam context.Context, listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error) {
 	if mock.ListTrafficPolicyInstancesByHostedZoneWithContextFunc == nil {
 		panic("Route53APIMock.ListTrafficPolicyInstancesByHostedZoneWithContextFunc: method is nil but Route53API.ListTrafficPolicyInstancesByHostedZoneWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListTrafficPolicyInstancesByHostedZoneInput
-		In3 []request.Option
+		ContextMoqParam                             context.Context
+		ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
+		Options                                     []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam: contextMoqParam,
+		ListTrafficPolicyInstancesByHostedZoneInput: listTrafficPolicyInstancesByHostedZoneInput,
+		Options: options,
 	}
 	mock.lockListTrafficPolicyInstancesByHostedZoneWithContext.Lock()
 	mock.calls.ListTrafficPolicyInstancesByHostedZoneWithContext = append(mock.calls.ListTrafficPolicyInstancesByHostedZoneWithContext, callInfo)
 	mock.lockListTrafficPolicyInstancesByHostedZoneWithContext.Unlock()
-	return mock.ListTrafficPolicyInstancesByHostedZoneWithContextFunc(in1, in2, in3...)
+	return mock.ListTrafficPolicyInstancesByHostedZoneWithContextFunc(contextMoqParam, listTrafficPolicyInstancesByHostedZoneInput, options...)
 }
 
 // ListTrafficPolicyInstancesByHostedZoneWithContextCalls gets all the calls that were made to ListTrafficPolicyInstancesByHostedZoneWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPolicyInstancesByHostedZoneWithContextCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListTrafficPolicyInstancesByHostedZoneInput
-	In3 []request.Option
+	ContextMoqParam                             context.Context
+	ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
+	Options                                     []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListTrafficPolicyInstancesByHostedZoneInput
-		In3 []request.Option
+		ContextMoqParam                             context.Context
+		ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
+		Options                                     []request.Option
 	}
 	mock.lockListTrafficPolicyInstancesByHostedZoneWithContext.RLock()
 	calls = mock.calls.ListTrafficPolicyInstancesByHostedZoneWithContext
@@ -7660,29 +9824,29 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneWithContextCal
 }
 
 // ListTrafficPolicyInstancesByPolicy calls ListTrafficPolicyInstancesByPolicyFunc.
-func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicy(in1 *route53.ListTrafficPolicyInstancesByPolicyInput) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error) {
+func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicy(listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error) {
 	if mock.ListTrafficPolicyInstancesByPolicyFunc == nil {
 		panic("Route53APIMock.ListTrafficPolicyInstancesByPolicyFunc: method is nil but Route53API.ListTrafficPolicyInstancesByPolicy was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTrafficPolicyInstancesByPolicyInput
+		ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
 	}{
-		In1: in1,
+		ListTrafficPolicyInstancesByPolicyInput: listTrafficPolicyInstancesByPolicyInput,
 	}
 	mock.lockListTrafficPolicyInstancesByPolicy.Lock()
 	mock.calls.ListTrafficPolicyInstancesByPolicy = append(mock.calls.ListTrafficPolicyInstancesByPolicy, callInfo)
 	mock.lockListTrafficPolicyInstancesByPolicy.Unlock()
-	return mock.ListTrafficPolicyInstancesByPolicyFunc(in1)
+	return mock.ListTrafficPolicyInstancesByPolicyFunc(listTrafficPolicyInstancesByPolicyInput)
 }
 
 // ListTrafficPolicyInstancesByPolicyCalls gets all the calls that were made to ListTrafficPolicyInstancesByPolicy.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPolicyInstancesByPolicyCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyCalls() []struct {
-	In1 *route53.ListTrafficPolicyInstancesByPolicyInput
+	ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
 } {
 	var calls []struct {
-		In1 *route53.ListTrafficPolicyInstancesByPolicyInput
+		ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
 	}
 	mock.lockListTrafficPolicyInstancesByPolicy.RLock()
 	calls = mock.calls.ListTrafficPolicyInstancesByPolicy
@@ -7691,29 +9855,29 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyCalls() []struct {
 }
 
 // ListTrafficPolicyInstancesByPolicyRequest calls ListTrafficPolicyInstancesByPolicyRequestFunc.
-func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyRequest(in1 *route53.ListTrafficPolicyInstancesByPolicyInput) (*request.Request, *route53.ListTrafficPolicyInstancesByPolicyOutput) {
+func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyRequest(listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput) (*request.Request, *route53.ListTrafficPolicyInstancesByPolicyOutput) {
 	if mock.ListTrafficPolicyInstancesByPolicyRequestFunc == nil {
 		panic("Route53APIMock.ListTrafficPolicyInstancesByPolicyRequestFunc: method is nil but Route53API.ListTrafficPolicyInstancesByPolicyRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTrafficPolicyInstancesByPolicyInput
+		ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
 	}{
-		In1: in1,
+		ListTrafficPolicyInstancesByPolicyInput: listTrafficPolicyInstancesByPolicyInput,
 	}
 	mock.lockListTrafficPolicyInstancesByPolicyRequest.Lock()
 	mock.calls.ListTrafficPolicyInstancesByPolicyRequest = append(mock.calls.ListTrafficPolicyInstancesByPolicyRequest, callInfo)
 	mock.lockListTrafficPolicyInstancesByPolicyRequest.Unlock()
-	return mock.ListTrafficPolicyInstancesByPolicyRequestFunc(in1)
+	return mock.ListTrafficPolicyInstancesByPolicyRequestFunc(listTrafficPolicyInstancesByPolicyInput)
 }
 
 // ListTrafficPolicyInstancesByPolicyRequestCalls gets all the calls that were made to ListTrafficPolicyInstancesByPolicyRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPolicyInstancesByPolicyRequestCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyRequestCalls() []struct {
-	In1 *route53.ListTrafficPolicyInstancesByPolicyInput
+	ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
 } {
 	var calls []struct {
-		In1 *route53.ListTrafficPolicyInstancesByPolicyInput
+		ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
 	}
 	mock.lockListTrafficPolicyInstancesByPolicyRequest.RLock()
 	calls = mock.calls.ListTrafficPolicyInstancesByPolicyRequest
@@ -7722,37 +9886,37 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyRequestCalls() []s
 }
 
 // ListTrafficPolicyInstancesByPolicyWithContext calls ListTrafficPolicyInstancesByPolicyWithContextFunc.
-func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyWithContext(in1 context.Context, in2 *route53.ListTrafficPolicyInstancesByPolicyInput, in3 ...request.Option) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error) {
+func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyWithContext(contextMoqParam context.Context, listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error) {
 	if mock.ListTrafficPolicyInstancesByPolicyWithContextFunc == nil {
 		panic("Route53APIMock.ListTrafficPolicyInstancesByPolicyWithContextFunc: method is nil but Route53API.ListTrafficPolicyInstancesByPolicyWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListTrafficPolicyInstancesByPolicyInput
-		In3 []request.Option
+		ContextMoqParam                         context.Context
+		ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
+		Options                                 []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                         contextMoqParam,
+		ListTrafficPolicyInstancesByPolicyInput: listTrafficPolicyInstancesByPolicyInput,
+		Options:                                 options,
 	}
 	mock.lockListTrafficPolicyInstancesByPolicyWithContext.Lock()
 	mock.calls.ListTrafficPolicyInstancesByPolicyWithContext = append(mock.calls.ListTrafficPolicyInstancesByPolicyWithContext, callInfo)
 	mock.lockListTrafficPolicyInstancesByPolicyWithContext.Unlock()
-	return mock.ListTrafficPolicyInstancesByPolicyWithContextFunc(in1, in2, in3...)
+	return mock.ListTrafficPolicyInstancesByPolicyWithContextFunc(contextMoqParam, listTrafficPolicyInstancesByPolicyInput, options...)
 }
 
 // ListTrafficPolicyInstancesByPolicyWithContextCalls gets all the calls that were made to ListTrafficPolicyInstancesByPolicyWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPolicyInstancesByPolicyWithContextCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListTrafficPolicyInstancesByPolicyInput
-	In3 []request.Option
+	ContextMoqParam                         context.Context
+	ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
+	Options                                 []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListTrafficPolicyInstancesByPolicyInput
-		In3 []request.Option
+		ContextMoqParam                         context.Context
+		ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
+		Options                                 []request.Option
 	}
 	mock.lockListTrafficPolicyInstancesByPolicyWithContext.RLock()
 	calls = mock.calls.ListTrafficPolicyInstancesByPolicyWithContext
@@ -7761,29 +9925,29 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyWithContextCalls()
 }
 
 // ListTrafficPolicyInstancesRequest calls ListTrafficPolicyInstancesRequestFunc.
-func (mock *Route53APIMock) ListTrafficPolicyInstancesRequest(in1 *route53.ListTrafficPolicyInstancesInput) (*request.Request, *route53.ListTrafficPolicyInstancesOutput) {
+func (mock *Route53APIMock) ListTrafficPolicyInstancesRequest(listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput) (*request.Request, *route53.ListTrafficPolicyInstancesOutput) {
 	if mock.ListTrafficPolicyInstancesRequestFunc == nil {
 		panic("Route53APIMock.ListTrafficPolicyInstancesRequestFunc: method is nil but Route53API.ListTrafficPolicyInstancesRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTrafficPolicyInstancesInput
+		ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
 	}{
-		In1: in1,
+		ListTrafficPolicyInstancesInput: listTrafficPolicyInstancesInput,
 	}
 	mock.lockListTrafficPolicyInstancesRequest.Lock()
 	mock.calls.ListTrafficPolicyInstancesRequest = append(mock.calls.ListTrafficPolicyInstancesRequest, callInfo)
 	mock.lockListTrafficPolicyInstancesRequest.Unlock()
-	return mock.ListTrafficPolicyInstancesRequestFunc(in1)
+	return mock.ListTrafficPolicyInstancesRequestFunc(listTrafficPolicyInstancesInput)
 }
 
 // ListTrafficPolicyInstancesRequestCalls gets all the calls that were made to ListTrafficPolicyInstancesRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPolicyInstancesRequestCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesRequestCalls() []struct {
-	In1 *route53.ListTrafficPolicyInstancesInput
+	ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
 } {
 	var calls []struct {
-		In1 *route53.ListTrafficPolicyInstancesInput
+		ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
 	}
 	mock.lockListTrafficPolicyInstancesRequest.RLock()
 	calls = mock.calls.ListTrafficPolicyInstancesRequest
@@ -7792,37 +9956,37 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesRequestCalls() []struct {
 }
 
 // ListTrafficPolicyInstancesWithContext calls ListTrafficPolicyInstancesWithContextFunc.
-func (mock *Route53APIMock) ListTrafficPolicyInstancesWithContext(in1 context.Context, in2 *route53.ListTrafficPolicyInstancesInput, in3 ...request.Option) (*route53.ListTrafficPolicyInstancesOutput, error) {
+func (mock *Route53APIMock) ListTrafficPolicyInstancesWithContext(contextMoqParam context.Context, listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesOutput, error) {
 	if mock.ListTrafficPolicyInstancesWithContextFunc == nil {
 		panic("Route53APIMock.ListTrafficPolicyInstancesWithContextFunc: method is nil but Route53API.ListTrafficPolicyInstancesWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListTrafficPolicyInstancesInput
-		In3 []request.Option
+		ContextMoqParam                 context.Context
+		ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
+		Options                         []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                 contextMoqParam,
+		ListTrafficPolicyInstancesInput: listTrafficPolicyInstancesInput,
+		Options:                         options,
 	}
 	mock.lockListTrafficPolicyInstancesWithContext.Lock()
 	mock.calls.ListTrafficPolicyInstancesWithContext = append(mock.calls.ListTrafficPolicyInstancesWithContext, callInfo)
 	mock.lockListTrafficPolicyInstancesWithContext.Unlock()
-	return mock.ListTrafficPolicyInstancesWithContextFunc(in1, in2, in3...)
+	return mock.ListTrafficPolicyInstancesWithContextFunc(contextMoqParam, listTrafficPolicyInstancesInput, options...)
 }
 
 // ListTrafficPolicyInstancesWithContextCalls gets all the calls that were made to ListTrafficPolicyInstancesWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPolicyInstancesWithContextCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListTrafficPolicyInstancesInput
-	In3 []request.Option
+	ContextMoqParam                 context.Context
+	ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
+	Options                         []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListTrafficPolicyInstancesInput
-		In3 []request.Option
+		ContextMoqParam                 context.Context
+		ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
+		Options                         []request.Option
 	}
 	mock.lockListTrafficPolicyInstancesWithContext.RLock()
 	calls = mock.calls.ListTrafficPolicyInstancesWithContext
@@ -7831,29 +9995,29 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesWithContextCalls() []struc
 }
 
 // ListTrafficPolicyVersions calls ListTrafficPolicyVersionsFunc.
-func (mock *Route53APIMock) ListTrafficPolicyVersions(in1 *route53.ListTrafficPolicyVersionsInput) (*route53.ListTrafficPolicyVersionsOutput, error) {
+func (mock *Route53APIMock) ListTrafficPolicyVersions(listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput) (*route53.ListTrafficPolicyVersionsOutput, error) {
 	if mock.ListTrafficPolicyVersionsFunc == nil {
 		panic("Route53APIMock.ListTrafficPolicyVersionsFunc: method is nil but Route53API.ListTrafficPolicyVersions was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTrafficPolicyVersionsInput
+		ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
 	}{
-		In1: in1,
+		ListTrafficPolicyVersionsInput: listTrafficPolicyVersionsInput,
 	}
 	mock.lockListTrafficPolicyVersions.Lock()
 	mock.calls.ListTrafficPolicyVersions = append(mock.calls.ListTrafficPolicyVersions, callInfo)
 	mock.lockListTrafficPolicyVersions.Unlock()
-	return mock.ListTrafficPolicyVersionsFunc(in1)
+	return mock.ListTrafficPolicyVersionsFunc(listTrafficPolicyVersionsInput)
 }
 
 // ListTrafficPolicyVersionsCalls gets all the calls that were made to ListTrafficPolicyVersions.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPolicyVersionsCalls())
 func (mock *Route53APIMock) ListTrafficPolicyVersionsCalls() []struct {
-	In1 *route53.ListTrafficPolicyVersionsInput
+	ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
 } {
 	var calls []struct {
-		In1 *route53.ListTrafficPolicyVersionsInput
+		ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
 	}
 	mock.lockListTrafficPolicyVersions.RLock()
 	calls = mock.calls.ListTrafficPolicyVersions
@@ -7862,29 +10026,29 @@ func (mock *Route53APIMock) ListTrafficPolicyVersionsCalls() []struct {
 }
 
 // ListTrafficPolicyVersionsRequest calls ListTrafficPolicyVersionsRequestFunc.
-func (mock *Route53APIMock) ListTrafficPolicyVersionsRequest(in1 *route53.ListTrafficPolicyVersionsInput) (*request.Request, *route53.ListTrafficPolicyVersionsOutput) {
+func (mock *Route53APIMock) ListTrafficPolicyVersionsRequest(listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput) (*request.Request, *route53.ListTrafficPolicyVersionsOutput) {
 	if mock.ListTrafficPolicyVersionsRequestFunc == nil {
 		panic("Route53APIMock.ListTrafficPolicyVersionsRequestFunc: method is nil but Route53API.ListTrafficPolicyVersionsRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListTrafficPolicyVersionsInput
+		ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
 	}{
-		In1: in1,
+		ListTrafficPolicyVersionsInput: listTrafficPolicyVersionsInput,
 	}
 	mock.lockListTrafficPolicyVersionsRequest.Lock()
 	mock.calls.ListTrafficPolicyVersionsRequest = append(mock.calls.ListTrafficPolicyVersionsRequest, callInfo)
 	mock.lockListTrafficPolicyVersionsRequest.Unlock()
-	return mock.ListTrafficPolicyVersionsRequestFunc(in1)
+	return mock.ListTrafficPolicyVersionsRequestFunc(listTrafficPolicyVersionsInput)
 }
 
 // ListTrafficPolicyVersionsRequestCalls gets all the calls that were made to ListTrafficPolicyVersionsRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPolicyVersionsRequestCalls())
 func (mock *Route53APIMock) ListTrafficPolicyVersionsRequestCalls() []struct {
-	In1 *route53.ListTrafficPolicyVersionsInput
+	ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
 } {
 	var calls []struct {
-		In1 *route53.ListTrafficPolicyVersionsInput
+		ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
 	}
 	mock.lockListTrafficPolicyVersionsRequest.RLock()
 	calls = mock.calls.ListTrafficPolicyVersionsRequest
@@ -7893,37 +10057,37 @@ func (mock *Route53APIMock) ListTrafficPolicyVersionsRequestCalls() []struct {
 }
 
 // ListTrafficPolicyVersionsWithContext calls ListTrafficPolicyVersionsWithContextFunc.
-func (mock *Route53APIMock) ListTrafficPolicyVersionsWithContext(in1 context.Context, in2 *route53.ListTrafficPolicyVersionsInput, in3 ...request.Option) (*route53.ListTrafficPolicyVersionsOutput, error) {
+func (mock *Route53APIMock) ListTrafficPolicyVersionsWithContext(contextMoqParam context.Context, listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput, options ...request.Option) (*route53.ListTrafficPolicyVersionsOutput, error) {
 	if mock.ListTrafficPolicyVersionsWithContextFunc == nil {
 		panic("Route53APIMock.ListTrafficPolicyVersionsWithContextFunc: method is nil but Route53API.ListTrafficPolicyVersionsWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListTrafficPolicyVersionsInput
-		In3 []request.Option
+		ContextMoqParam                context.Context
+		ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
+		Options                        []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                contextMoqParam,
+		ListTrafficPolicyVersionsInput: listTrafficPolicyVersionsInput,
+		Options:                        options,
 	}
 	mock.lockListTrafficPolicyVersionsWithContext.Lock()
 	mock.calls.ListTrafficPolicyVersionsWithContext = append(mock.calls.ListTrafficPolicyVersionsWithContext, callInfo)
 	mock.lockListTrafficPolicyVersionsWithContext.Unlock()
-	return mock.ListTrafficPolicyVersionsWithContextFunc(in1, in2, in3...)
+	return mock.ListTrafficPolicyVersionsWithContextFunc(contextMoqParam, listTrafficPolicyVersionsInput, options...)
 }
 
 // ListTrafficPolicyVersionsWithContextCalls gets all the calls that were made to ListTrafficPolicyVersionsWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListTrafficPolicyVersionsWithContextCalls())
 func (mock *Route53APIMock) ListTrafficPolicyVersionsWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListTrafficPolicyVersionsInput
-	In3 []request.Option
+	ContextMoqParam                context.Context
+	ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
+	Options                        []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListTrafficPolicyVersionsInput
-		In3 []request.Option
+		ContextMoqParam                context.Context
+		ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
+		Options                        []request.Option
 	}
 	mock.lockListTrafficPolicyVersionsWithContext.RLock()
 	calls = mock.calls.ListTrafficPolicyVersionsWithContext
@@ -7932,29 +10096,29 @@ func (mock *Route53APIMock) ListTrafficPolicyVersionsWithContextCalls() []struct
 }
 
 // ListVPCAssociationAuthorizations calls ListVPCAssociationAuthorizationsFunc.
-func (mock *Route53APIMock) ListVPCAssociationAuthorizations(in1 *route53.ListVPCAssociationAuthorizationsInput) (*route53.ListVPCAssociationAuthorizationsOutput, error) {
+func (mock *Route53APIMock) ListVPCAssociationAuthorizations(listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput) (*route53.ListVPCAssociationAuthorizationsOutput, error) {
 	if mock.ListVPCAssociationAuthorizationsFunc == nil {
 		panic("Route53APIMock.ListVPCAssociationAuthorizationsFunc: method is nil but Route53API.ListVPCAssociationAuthorizations was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListVPCAssociationAuthorizationsInput
+		ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
 	}{
-		In1: in1,
+		ListVPCAssociationAuthorizationsInput: listVPCAssociationAuthorizationsInput,
 	}
 	mock.lockListVPCAssociationAuthorizations.Lock()
 	mock.calls.ListVPCAssociationAuthorizations = append(mock.calls.ListVPCAssociationAuthorizations, callInfo)
 	mock.lockListVPCAssociationAuthorizations.Unlock()
-	return mock.ListVPCAssociationAuthorizationsFunc(in1)
+	return mock.ListVPCAssociationAuthorizationsFunc(listVPCAssociationAuthorizationsInput)
 }
 
 // ListVPCAssociationAuthorizationsCalls gets all the calls that were made to ListVPCAssociationAuthorizations.
 // Check the length with:
 //     len(mockedRoute53API.ListVPCAssociationAuthorizationsCalls())
 func (mock *Route53APIMock) ListVPCAssociationAuthorizationsCalls() []struct {
-	In1 *route53.ListVPCAssociationAuthorizationsInput
+	ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
 } {
 	var calls []struct {
-		In1 *route53.ListVPCAssociationAuthorizationsInput
+		ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
 	}
 	mock.lockListVPCAssociationAuthorizations.RLock()
 	calls = mock.calls.ListVPCAssociationAuthorizations
@@ -7963,29 +10127,29 @@ func (mock *Route53APIMock) ListVPCAssociationAuthorizationsCalls() []struct {
 }
 
 // ListVPCAssociationAuthorizationsRequest calls ListVPCAssociationAuthorizationsRequestFunc.
-func (mock *Route53APIMock) ListVPCAssociationAuthorizationsRequest(in1 *route53.ListVPCAssociationAuthorizationsInput) (*request.Request, *route53.ListVPCAssociationAuthorizationsOutput) {
+func (mock *Route53APIMock) ListVPCAssociationAuthorizationsRequest(listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput) (*request.Request, *route53.ListVPCAssociationAuthorizationsOutput) {
 	if mock.ListVPCAssociationAuthorizationsRequestFunc == nil {
 		panic("Route53APIMock.ListVPCAssociationAuthorizationsRequestFunc: method is nil but Route53API.ListVPCAssociationAuthorizationsRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.ListVPCAssociationAuthorizationsInput
+		ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
 	}{
-		In1: in1,
+		ListVPCAssociationAuthorizationsInput: listVPCAssociationAuthorizationsInput,
 	}
 	mock.lockListVPCAssociationAuthorizationsRequest.Lock()
 	mock.calls.ListVPCAssociationAuthorizationsRequest = append(mock.calls.ListVPCAssociationAuthorizationsRequest, callInfo)
 	mock.lockListVPCAssociationAuthorizationsRequest.Unlock()
-	return mock.ListVPCAssociationAuthorizationsRequestFunc(in1)
+	return mock.ListVPCAssociationAuthorizationsRequestFunc(listVPCAssociationAuthorizationsInput)
 }
 
 // ListVPCAssociationAuthorizationsRequestCalls gets all the calls that were made to ListVPCAssociationAuthorizationsRequest.
 // Check the length with:
 //     len(mockedRoute53API.ListVPCAssociationAuthorizationsRequestCalls())
 func (mock *Route53APIMock) ListVPCAssociationAuthorizationsRequestCalls() []struct {
-	In1 *route53.ListVPCAssociationAuthorizationsInput
+	ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
 } {
 	var calls []struct {
-		In1 *route53.ListVPCAssociationAuthorizationsInput
+		ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
 	}
 	mock.lockListVPCAssociationAuthorizationsRequest.RLock()
 	calls = mock.calls.ListVPCAssociationAuthorizationsRequest
@@ -7994,37 +10158,37 @@ func (mock *Route53APIMock) ListVPCAssociationAuthorizationsRequestCalls() []str
 }
 
 // ListVPCAssociationAuthorizationsWithContext calls ListVPCAssociationAuthorizationsWithContextFunc.
-func (mock *Route53APIMock) ListVPCAssociationAuthorizationsWithContext(in1 context.Context, in2 *route53.ListVPCAssociationAuthorizationsInput, in3 ...request.Option) (*route53.ListVPCAssociationAuthorizationsOutput, error) {
+func (mock *Route53APIMock) ListVPCAssociationAuthorizationsWithContext(contextMoqParam context.Context, listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput, options ...request.Option) (*route53.ListVPCAssociationAuthorizationsOutput, error) {
 	if mock.ListVPCAssociationAuthorizationsWithContextFunc == nil {
 		panic("Route53APIMock.ListVPCAssociationAuthorizationsWithContextFunc: method is nil but Route53API.ListVPCAssociationAuthorizationsWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.ListVPCAssociationAuthorizationsInput
-		In3 []request.Option
+		ContextMoqParam                       context.Context
+		ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
+		Options                               []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                       contextMoqParam,
+		ListVPCAssociationAuthorizationsInput: listVPCAssociationAuthorizationsInput,
+		Options:                               options,
 	}
 	mock.lockListVPCAssociationAuthorizationsWithContext.Lock()
 	mock.calls.ListVPCAssociationAuthorizationsWithContext = append(mock.calls.ListVPCAssociationAuthorizationsWithContext, callInfo)
 	mock.lockListVPCAssociationAuthorizationsWithContext.Unlock()
-	return mock.ListVPCAssociationAuthorizationsWithContextFunc(in1, in2, in3...)
+	return mock.ListVPCAssociationAuthorizationsWithContextFunc(contextMoqParam, listVPCAssociationAuthorizationsInput, options...)
 }
 
 // ListVPCAssociationAuthorizationsWithContextCalls gets all the calls that were made to ListVPCAssociationAuthorizationsWithContext.
 // Check the length with:
 //     len(mockedRoute53API.ListVPCAssociationAuthorizationsWithContextCalls())
 func (mock *Route53APIMock) ListVPCAssociationAuthorizationsWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.ListVPCAssociationAuthorizationsInput
-	In3 []request.Option
+	ContextMoqParam                       context.Context
+	ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
+	Options                               []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.ListVPCAssociationAuthorizationsInput
-		In3 []request.Option
+		ContextMoqParam                       context.Context
+		ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
+		Options                               []request.Option
 	}
 	mock.lockListVPCAssociationAuthorizationsWithContext.RLock()
 	calls = mock.calls.ListVPCAssociationAuthorizationsWithContext
@@ -8033,29 +10197,29 @@ func (mock *Route53APIMock) ListVPCAssociationAuthorizationsWithContextCalls() [
 }
 
 // TestDNSAnswer calls TestDNSAnswerFunc.
-func (mock *Route53APIMock) TestDNSAnswer(in1 *route53.TestDNSAnswerInput) (*route53.TestDNSAnswerOutput, error) {
+func (mock *Route53APIMock) TestDNSAnswer(testDNSAnswerInput *route53.TestDNSAnswerInput) (*route53.TestDNSAnswerOutput, error) {
 	if mock.TestDNSAnswerFunc == nil {
 		panic("Route53APIMock.TestDNSAnswerFunc: method is nil but Route53API.TestDNSAnswer was just called")
 	}
 	callInfo := struct {
-		In1 *route53.TestDNSAnswerInput
+		TestDNSAnswerInput *route53.TestDNSAnswerInput
 	}{
-		In1: in1,
+		TestDNSAnswerInput: testDNSAnswerInput,
 	}
 	mock.lockTestDNSAnswer.Lock()
 	mock.calls.TestDNSAnswer = append(mock.calls.TestDNSAnswer, callInfo)
 	mock.lockTestDNSAnswer.Unlock()
-	return mock.TestDNSAnswerFunc(in1)
+	return mock.TestDNSAnswerFunc(testDNSAnswerInput)
 }
 
 // TestDNSAnswerCalls gets all the calls that were made to TestDNSAnswer.
 // Check the length with:
 //     len(mockedRoute53API.TestDNSAnswerCalls())
 func (mock *Route53APIMock) TestDNSAnswerCalls() []struct {
-	In1 *route53.TestDNSAnswerInput
+	TestDNSAnswerInput *route53.TestDNSAnswerInput
 } {
 	var calls []struct {
-		In1 *route53.TestDNSAnswerInput
+		TestDNSAnswerInput *route53.TestDNSAnswerInput
 	}
 	mock.lockTestDNSAnswer.RLock()
 	calls = mock.calls.TestDNSAnswer
@@ -8064,29 +10228,29 @@ func (mock *Route53APIMock) TestDNSAnswerCalls() []struct {
 }
 
 // TestDNSAnswerRequest calls TestDNSAnswerRequestFunc.
-func (mock *Route53APIMock) TestDNSAnswerRequest(in1 *route53.TestDNSAnswerInput) (*request.Request, *route53.TestDNSAnswerOutput) {
+func (mock *Route53APIMock) TestDNSAnswerRequest(testDNSAnswerInput *route53.TestDNSAnswerInput) (*request.Request, *route53.TestDNSAnswerOutput) {
 	if mock.TestDNSAnswerRequestFunc == nil {
 		panic("Route53APIMock.TestDNSAnswerRequestFunc: method is nil but Route53API.TestDNSAnswerRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.TestDNSAnswerInput
+		TestDNSAnswerInput *route53.TestDNSAnswerInput
 	}{
-		In1: in1,
+		TestDNSAnswerInput: testDNSAnswerInput,
 	}
 	mock.lockTestDNSAnswerRequest.Lock()
 	mock.calls.TestDNSAnswerRequest = append(mock.calls.TestDNSAnswerRequest, callInfo)
 	mock.lockTestDNSAnswerRequest.Unlock()
-	return mock.TestDNSAnswerRequestFunc(in1)
+	return mock.TestDNSAnswerRequestFunc(testDNSAnswerInput)
 }
 
 // TestDNSAnswerRequestCalls gets all the calls that were made to TestDNSAnswerRequest.
 // Check the length with:
 //     len(mockedRoute53API.TestDNSAnswerRequestCalls())
 func (mock *Route53APIMock) TestDNSAnswerRequestCalls() []struct {
-	In1 *route53.TestDNSAnswerInput
+	TestDNSAnswerInput *route53.TestDNSAnswerInput
 } {
 	var calls []struct {
-		In1 *route53.TestDNSAnswerInput
+		TestDNSAnswerInput *route53.TestDNSAnswerInput
 	}
 	mock.lockTestDNSAnswerRequest.RLock()
 	calls = mock.calls.TestDNSAnswerRequest
@@ -8095,37 +10259,37 @@ func (mock *Route53APIMock) TestDNSAnswerRequestCalls() []struct {
 }
 
 // TestDNSAnswerWithContext calls TestDNSAnswerWithContextFunc.
-func (mock *Route53APIMock) TestDNSAnswerWithContext(in1 context.Context, in2 *route53.TestDNSAnswerInput, in3 ...request.Option) (*route53.TestDNSAnswerOutput, error) {
+func (mock *Route53APIMock) TestDNSAnswerWithContext(contextMoqParam context.Context, testDNSAnswerInput *route53.TestDNSAnswerInput, options ...request.Option) (*route53.TestDNSAnswerOutput, error) {
 	if mock.TestDNSAnswerWithContextFunc == nil {
 		panic("Route53APIMock.TestDNSAnswerWithContextFunc: method is nil but Route53API.TestDNSAnswerWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.TestDNSAnswerInput
-		In3 []request.Option
+		ContextMoqParam    context.Context
+		TestDNSAnswerInput *route53.TestDNSAnswerInput
+		Options            []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:    contextMoqParam,
+		TestDNSAnswerInput: testDNSAnswerInput,
+		Options:            options,
 	}
 	mock.lockTestDNSAnswerWithContext.Lock()
 	mock.calls.TestDNSAnswerWithContext = append(mock.calls.TestDNSAnswerWithContext, callInfo)
 	mock.lockTestDNSAnswerWithContext.Unlock()
-	return mock.TestDNSAnswerWithContextFunc(in1, in2, in3...)
+	return mock.TestDNSAnswerWithContextFunc(contextMoqParam, testDNSAnswerInput, options...)
 }
 
 // TestDNSAnswerWithContextCalls gets all the calls that were made to TestDNSAnswerWithContext.
 // Check the length with:
 //     len(mockedRoute53API.TestDNSAnswerWithContextCalls())
 func (mock *Route53APIMock) TestDNSAnswerWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.TestDNSAnswerInput
-	In3 []request.Option
+	ContextMoqParam    context.Context
+	TestDNSAnswerInput *route53.TestDNSAnswerInput
+	Options            []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.TestDNSAnswerInput
-		In3 []request.Option
+		ContextMoqParam    context.Context
+		TestDNSAnswerInput *route53.TestDNSAnswerInput
+		Options            []request.Option
 	}
 	mock.lockTestDNSAnswerWithContext.RLock()
 	calls = mock.calls.TestDNSAnswerWithContext
@@ -8134,29 +10298,29 @@ func (mock *Route53APIMock) TestDNSAnswerWithContextCalls() []struct {
 }
 
 // UpdateHealthCheck calls UpdateHealthCheckFunc.
-func (mock *Route53APIMock) UpdateHealthCheck(in1 *route53.UpdateHealthCheckInput) (*route53.UpdateHealthCheckOutput, error) {
+func (mock *Route53APIMock) UpdateHealthCheck(updateHealthCheckInput *route53.UpdateHealthCheckInput) (*route53.UpdateHealthCheckOutput, error) {
 	if mock.UpdateHealthCheckFunc == nil {
 		panic("Route53APIMock.UpdateHealthCheckFunc: method is nil but Route53API.UpdateHealthCheck was just called")
 	}
 	callInfo := struct {
-		In1 *route53.UpdateHealthCheckInput
+		UpdateHealthCheckInput *route53.UpdateHealthCheckInput
 	}{
-		In1: in1,
+		UpdateHealthCheckInput: updateHealthCheckInput,
 	}
 	mock.lockUpdateHealthCheck.Lock()
 	mock.calls.UpdateHealthCheck = append(mock.calls.UpdateHealthCheck, callInfo)
 	mock.lockUpdateHealthCheck.Unlock()
-	return mock.UpdateHealthCheckFunc(in1)
+	return mock.UpdateHealthCheckFunc(updateHealthCheckInput)
 }
 
 // UpdateHealthCheckCalls gets all the calls that were made to UpdateHealthCheck.
 // Check the length with:
 //     len(mockedRoute53API.UpdateHealthCheckCalls())
 func (mock *Route53APIMock) UpdateHealthCheckCalls() []struct {
-	In1 *route53.UpdateHealthCheckInput
+	UpdateHealthCheckInput *route53.UpdateHealthCheckInput
 } {
 	var calls []struct {
-		In1 *route53.UpdateHealthCheckInput
+		UpdateHealthCheckInput *route53.UpdateHealthCheckInput
 	}
 	mock.lockUpdateHealthCheck.RLock()
 	calls = mock.calls.UpdateHealthCheck
@@ -8165,29 +10329,29 @@ func (mock *Route53APIMock) UpdateHealthCheckCalls() []struct {
 }
 
 // UpdateHealthCheckRequest calls UpdateHealthCheckRequestFunc.
-func (mock *Route53APIMock) UpdateHealthCheckRequest(in1 *route53.UpdateHealthCheckInput) (*request.Request, *route53.UpdateHealthCheckOutput) {
+func (mock *Route53APIMock) UpdateHealthCheckRequest(updateHealthCheckInput *route53.UpdateHealthCheckInput) (*request.Request, *route53.UpdateHealthCheckOutput) {
 	if mock.UpdateHealthCheckRequestFunc == nil {
 		panic("Route53APIMock.UpdateHealthCheckRequestFunc: method is nil but Route53API.UpdateHealthCheckRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.UpdateHealthCheckInput
+		UpdateHealthCheckInput *route53.UpdateHealthCheckInput
 	}{
-		In1: in1,
+		UpdateHealthCheckInput: updateHealthCheckInput,
 	}
 	mock.lockUpdateHealthCheckRequest.Lock()
 	mock.calls.UpdateHealthCheckRequest = append(mock.calls.UpdateHealthCheckRequest, callInfo)
 	mock.lockUpdateHealthCheckRequest.Unlock()
-	return mock.UpdateHealthCheckRequestFunc(in1)
+	return mock.UpdateHealthCheckRequestFunc(updateHealthCheckInput)
 }
 
 // UpdateHealthCheckRequestCalls gets all the calls that were made to UpdateHealthCheckRequest.
 // Check the length with:
 //     len(mockedRoute53API.UpdateHealthCheckRequestCalls())
 func (mock *Route53APIMock) UpdateHealthCheckRequestCalls() []struct {
-	In1 *route53.UpdateHealthCheckInput
+	UpdateHealthCheckInput *route53.UpdateHealthCheckInput
 } {
 	var calls []struct {
-		In1 *route53.UpdateHealthCheckInput
+		UpdateHealthCheckInput *route53.UpdateHealthCheckInput
 	}
 	mock.lockUpdateHealthCheckRequest.RLock()
 	calls = mock.calls.UpdateHealthCheckRequest
@@ -8196,37 +10360,37 @@ func (mock *Route53APIMock) UpdateHealthCheckRequestCalls() []struct {
 }
 
 // UpdateHealthCheckWithContext calls UpdateHealthCheckWithContextFunc.
-func (mock *Route53APIMock) UpdateHealthCheckWithContext(in1 context.Context, in2 *route53.UpdateHealthCheckInput, in3 ...request.Option) (*route53.UpdateHealthCheckOutput, error) {
+func (mock *Route53APIMock) UpdateHealthCheckWithContext(contextMoqParam context.Context, updateHealthCheckInput *route53.UpdateHealthCheckInput, options ...request.Option) (*route53.UpdateHealthCheckOutput, error) {
 	if mock.UpdateHealthCheckWithContextFunc == nil {
 		panic("Route53APIMock.UpdateHealthCheckWithContextFunc: method is nil but Route53API.UpdateHealthCheckWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.UpdateHealthCheckInput
-		In3 []request.Option
+		ContextMoqParam        context.Context
+		UpdateHealthCheckInput *route53.UpdateHealthCheckInput
+		Options                []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:        contextMoqParam,
+		UpdateHealthCheckInput: updateHealthCheckInput,
+		Options:                options,
 	}
 	mock.lockUpdateHealthCheckWithContext.Lock()
 	mock.calls.UpdateHealthCheckWithContext = append(mock.calls.UpdateHealthCheckWithContext, callInfo)
 	mock.lockUpdateHealthCheckWithContext.Unlock()
-	return mock.UpdateHealthCheckWithContextFunc(in1, in2, in3...)
+	return mock.UpdateHealthCheckWithContextFunc(contextMoqParam, updateHealthCheckInput, options...)
 }
 
 // UpdateHealthCheckWithContextCalls gets all the calls that were made to UpdateHealthCheckWithContext.
 // Check the length with:
 //     len(mockedRoute53API.UpdateHealthCheckWithContextCalls())
 func (mock *Route53APIMock) UpdateHealthCheckWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.UpdateHealthCheckInput
-	In3 []request.Option
+	ContextMoqParam        context.Context
+	UpdateHealthCheckInput *route53.UpdateHealthCheckInput
+	Options                []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.UpdateHealthCheckInput
-		In3 []request.Option
+		ContextMoqParam        context.Context
+		UpdateHealthCheckInput *route53.UpdateHealthCheckInput
+		Options                []request.Option
 	}
 	mock.lockUpdateHealthCheckWithContext.RLock()
 	calls = mock.calls.UpdateHealthCheckWithContext
@@ -8235,29 +10399,29 @@ func (mock *Route53APIMock) UpdateHealthCheckWithContextCalls() []struct {
 }
 
 // UpdateHostedZoneComment calls UpdateHostedZoneCommentFunc.
-func (mock *Route53APIMock) UpdateHostedZoneComment(in1 *route53.UpdateHostedZoneCommentInput) (*route53.UpdateHostedZoneCommentOutput, error) {
+func (mock *Route53APIMock) UpdateHostedZoneComment(updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput) (*route53.UpdateHostedZoneCommentOutput, error) {
 	if mock.UpdateHostedZoneCommentFunc == nil {
 		panic("Route53APIMock.UpdateHostedZoneCommentFunc: method is nil but Route53API.UpdateHostedZoneComment was just called")
 	}
 	callInfo := struct {
-		In1 *route53.UpdateHostedZoneCommentInput
+		UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
 	}{
-		In1: in1,
+		UpdateHostedZoneCommentInput: updateHostedZoneCommentInput,
 	}
 	mock.lockUpdateHostedZoneComment.Lock()
 	mock.calls.UpdateHostedZoneComment = append(mock.calls.UpdateHostedZoneComment, callInfo)
 	mock.lockUpdateHostedZoneComment.Unlock()
-	return mock.UpdateHostedZoneCommentFunc(in1)
+	return mock.UpdateHostedZoneCommentFunc(updateHostedZoneCommentInput)
 }
 
 // UpdateHostedZoneCommentCalls gets all the calls that were made to UpdateHostedZoneComment.
 // Check the length with:
 //     len(mockedRoute53API.UpdateHostedZoneCommentCalls())
 func (mock *Route53APIMock) UpdateHostedZoneCommentCalls() []struct {
-	In1 *route53.UpdateHostedZoneCommentInput
+	UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
 } {
 	var calls []struct {
-		In1 *route53.UpdateHostedZoneCommentInput
+		UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
 	}
 	mock.lockUpdateHostedZoneComment.RLock()
 	calls = mock.calls.UpdateHostedZoneComment
@@ -8266,29 +10430,29 @@ func (mock *Route53APIMock) UpdateHostedZoneCommentCalls() []struct {
 }
 
 // UpdateHostedZoneCommentRequest calls UpdateHostedZoneCommentRequestFunc.
-func (mock *Route53APIMock) UpdateHostedZoneCommentRequest(in1 *route53.UpdateHostedZoneCommentInput) (*request.Request, *route53.UpdateHostedZoneCommentOutput) {
+func (mock *Route53APIMock) UpdateHostedZoneCommentRequest(updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput) (*request.Request, *route53.UpdateHostedZoneCommentOutput) {
 	if mock.UpdateHostedZoneCommentRequestFunc == nil {
 		panic("Route53APIMock.UpdateHostedZoneCommentRequestFunc: method is nil but Route53API.UpdateHostedZoneCommentRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.UpdateHostedZoneCommentInput
+		UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
 	}{
-		In1: in1,
+		UpdateHostedZoneCommentInput: updateHostedZoneCommentInput,
 	}
 	mock.lockUpdateHostedZoneCommentRequest.Lock()
 	mock.calls.UpdateHostedZoneCommentRequest = append(mock.calls.UpdateHostedZoneCommentRequest, callInfo)
 	mock.lockUpdateHostedZoneCommentRequest.Unlock()
-	return mock.UpdateHostedZoneCommentRequestFunc(in1)
+	return mock.UpdateHostedZoneCommentRequestFunc(updateHostedZoneCommentInput)
 }
 
 // UpdateHostedZoneCommentRequestCalls gets all the calls that were made to UpdateHostedZoneCommentRequest.
 // Check the length with:
 //     len(mockedRoute53API.UpdateHostedZoneCommentRequestCalls())
 func (mock *Route53APIMock) UpdateHostedZoneCommentRequestCalls() []struct {
-	In1 *route53.UpdateHostedZoneCommentInput
+	UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
 } {
 	var calls []struct {
-		In1 *route53.UpdateHostedZoneCommentInput
+		UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
 	}
 	mock.lockUpdateHostedZoneCommentRequest.RLock()
 	calls = mock.calls.UpdateHostedZoneCommentRequest
@@ -8297,37 +10461,37 @@ func (mock *Route53APIMock) UpdateHostedZoneCommentRequestCalls() []struct {
 }
 
 // UpdateHostedZoneCommentWithContext calls UpdateHostedZoneCommentWithContextFunc.
-func (mock *Route53APIMock) UpdateHostedZoneCommentWithContext(in1 context.Context, in2 *route53.UpdateHostedZoneCommentInput, in3 ...request.Option) (*route53.UpdateHostedZoneCommentOutput, error) {
+func (mock *Route53APIMock) UpdateHostedZoneCommentWithContext(contextMoqParam context.Context, updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput, options ...request.Option) (*route53.UpdateHostedZoneCommentOutput, error) {
 	if mock.UpdateHostedZoneCommentWithContextFunc == nil {
 		panic("Route53APIMock.UpdateHostedZoneCommentWithContextFunc: method is nil but Route53API.UpdateHostedZoneCommentWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.UpdateHostedZoneCommentInput
-		In3 []request.Option
+		ContextMoqParam              context.Context
+		UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
+		Options                      []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:              contextMoqParam,
+		UpdateHostedZoneCommentInput: updateHostedZoneCommentInput,
+		Options:                      options,
 	}
 	mock.lockUpdateHostedZoneCommentWithContext.Lock()
 	mock.calls.UpdateHostedZoneCommentWithContext = append(mock.calls.UpdateHostedZoneCommentWithContext, callInfo)
 	mock.lockUpdateHostedZoneCommentWithContext.Unlock()
-	return mock.UpdateHostedZoneCommentWithContextFunc(in1, in2, in3...)
+	return mock.UpdateHostedZoneCommentWithContextFunc(contextMoqParam, updateHostedZoneCommentInput, options...)
 }
 
 // UpdateHostedZoneCommentWithContextCalls gets all the calls that were made to UpdateHostedZoneCommentWithContext.
 // Check the length with:
 //     len(mockedRoute53API.UpdateHostedZoneCommentWithContextCalls())
 func (mock *Route53APIMock) UpdateHostedZoneCommentWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.UpdateHostedZoneCommentInput
-	In3 []request.Option
+	ContextMoqParam              context.Context
+	UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
+	Options                      []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.UpdateHostedZoneCommentInput
-		In3 []request.Option
+		ContextMoqParam              context.Context
+		UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
+		Options                      []request.Option
 	}
 	mock.lockUpdateHostedZoneCommentWithContext.RLock()
 	calls = mock.calls.UpdateHostedZoneCommentWithContext
@@ -8336,29 +10500,29 @@ func (mock *Route53APIMock) UpdateHostedZoneCommentWithContextCalls() []struct {
 }
 
 // UpdateTrafficPolicyComment calls UpdateTrafficPolicyCommentFunc.
-func (mock *Route53APIMock) UpdateTrafficPolicyComment(in1 *route53.UpdateTrafficPolicyCommentInput) (*route53.UpdateTrafficPolicyCommentOutput, error) {
+func (mock *Route53APIMock) UpdateTrafficPolicyComment(updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput) (*route53.UpdateTrafficPolicyCommentOutput, error) {
 	if mock.UpdateTrafficPolicyCommentFunc == nil {
 		panic("Route53APIMock.UpdateTrafficPolicyCommentFunc: method is nil but Route53API.UpdateTrafficPolicyComment was just called")
 	}
 	callInfo := struct {
-		In1 *route53.UpdateTrafficPolicyCommentInput
+		UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
 	}{
-		In1: in1,
+		UpdateTrafficPolicyCommentInput: updateTrafficPolicyCommentInput,
 	}
 	mock.lockUpdateTrafficPolicyComment.Lock()
 	mock.calls.UpdateTrafficPolicyComment = append(mock.calls.UpdateTrafficPolicyComment, callInfo)
 	mock.lockUpdateTrafficPolicyComment.Unlock()
-	return mock.UpdateTrafficPolicyCommentFunc(in1)
+	return mock.UpdateTrafficPolicyCommentFunc(updateTrafficPolicyCommentInput)
 }
 
 // UpdateTrafficPolicyCommentCalls gets all the calls that were made to UpdateTrafficPolicyComment.
 // Check the length with:
 //     len(mockedRoute53API.UpdateTrafficPolicyCommentCalls())
 func (mock *Route53APIMock) UpdateTrafficPolicyCommentCalls() []struct {
-	In1 *route53.UpdateTrafficPolicyCommentInput
+	UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
 } {
 	var calls []struct {
-		In1 *route53.UpdateTrafficPolicyCommentInput
+		UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
 	}
 	mock.lockUpdateTrafficPolicyComment.RLock()
 	calls = mock.calls.UpdateTrafficPolicyComment
@@ -8367,29 +10531,29 @@ func (mock *Route53APIMock) UpdateTrafficPolicyCommentCalls() []struct {
 }
 
 // UpdateTrafficPolicyCommentRequest calls UpdateTrafficPolicyCommentRequestFunc.
-func (mock *Route53APIMock) UpdateTrafficPolicyCommentRequest(in1 *route53.UpdateTrafficPolicyCommentInput) (*request.Request, *route53.UpdateTrafficPolicyCommentOutput) {
+func (mock *Route53APIMock) UpdateTrafficPolicyCommentRequest(updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput) (*request.Request, *route53.UpdateTrafficPolicyCommentOutput) {
 	if mock.UpdateTrafficPolicyCommentRequestFunc == nil {
 		panic("Route53APIMock.UpdateTrafficPolicyCommentRequestFunc: method is nil but Route53API.UpdateTrafficPolicyCommentRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.UpdateTrafficPolicyCommentInput
+		UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
 	}{
-		In1: in1,
+		UpdateTrafficPolicyCommentInput: updateTrafficPolicyCommentInput,
 	}
 	mock.lockUpdateTrafficPolicyCommentRequest.Lock()
 	mock.calls.UpdateTrafficPolicyCommentRequest = append(mock.calls.UpdateTrafficPolicyCommentRequest, callInfo)
 	mock.lockUpdateTrafficPolicyCommentRequest.Unlock()
-	return mock.UpdateTrafficPolicyCommentRequestFunc(in1)
+	return mock.UpdateTrafficPolicyCommentRequestFunc(updateTrafficPolicyCommentInput)
 }
 
 // UpdateTrafficPolicyCommentRequestCalls gets all the calls that were made to UpdateTrafficPolicyCommentRequest.
 // Check the length with:
 //     len(mockedRoute53API.UpdateTrafficPolicyCommentRequestCalls())
 func (mock *Route53APIMock) UpdateTrafficPolicyCommentRequestCalls() []struct {
-	In1 *route53.UpdateTrafficPolicyCommentInput
+	UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
 } {
 	var calls []struct {
-		In1 *route53.UpdateTrafficPolicyCommentInput
+		UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
 	}
 	mock.lockUpdateTrafficPolicyCommentRequest.RLock()
 	calls = mock.calls.UpdateTrafficPolicyCommentRequest
@@ -8398,37 +10562,37 @@ func (mock *Route53APIMock) UpdateTrafficPolicyCommentRequestCalls() []struct {
 }
 
 // UpdateTrafficPolicyCommentWithContext calls UpdateTrafficPolicyCommentWithContextFunc.
-func (mock *Route53APIMock) UpdateTrafficPolicyCommentWithContext(in1 context.Context, in2 *route53.UpdateTrafficPolicyCommentInput, in3 ...request.Option) (*route53.UpdateTrafficPolicyCommentOutput, error) {
+func (mock *Route53APIMock) UpdateTrafficPolicyCommentWithContext(contextMoqParam context.Context, updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput, options ...request.Option) (*route53.UpdateTrafficPolicyCommentOutput, error) {
 	if mock.UpdateTrafficPolicyCommentWithContextFunc == nil {
 		panic("Route53APIMock.UpdateTrafficPolicyCommentWithContextFunc: method is nil but Route53API.UpdateTrafficPolicyCommentWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.UpdateTrafficPolicyCommentInput
-		In3 []request.Option
+		ContextMoqParam                 context.Context
+		UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
+		Options                         []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                 contextMoqParam,
+		UpdateTrafficPolicyCommentInput: updateTrafficPolicyCommentInput,
+		Options:                         options,
 	}
 	mock.lockUpdateTrafficPolicyCommentWithContext.Lock()
 	mock.calls.UpdateTrafficPolicyCommentWithContext = append(mock.calls.UpdateTrafficPolicyCommentWithContext, callInfo)
 	mock.lockUpdateTrafficPolicyCommentWithContext.Unlock()
-	return mock.UpdateTrafficPolicyCommentWithContextFunc(in1, in2, in3...)
+	return mock.UpdateTrafficPolicyCommentWithContextFunc(contextMoqParam, updateTrafficPolicyCommentInput, options...)
 }
 
 // UpdateTrafficPolicyCommentWithContextCalls gets all the calls that were made to UpdateTrafficPolicyCommentWithContext.
 // Check the length with:
 //     len(mockedRoute53API.UpdateTrafficPolicyCommentWithContextCalls())
 func (mock *Route53APIMock) UpdateTrafficPolicyCommentWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.UpdateTrafficPolicyCommentInput
-	In3 []request.Option
+	ContextMoqParam                 context.Context
+	UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
+	Options                         []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.UpdateTrafficPolicyCommentInput
-		In3 []request.Option
+		ContextMoqParam                 context.Context
+		UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
+		Options                         []request.Option
 	}
 	mock.lockUpdateTrafficPolicyCommentWithContext.RLock()
 	calls = mock.calls.UpdateTrafficPolicyCommentWithContext
@@ -8437,29 +10601,29 @@ func (mock *Route53APIMock) UpdateTrafficPolicyCommentWithContextCalls() []struc
 }
 
 // UpdateTrafficPolicyInstance calls UpdateTrafficPolicyInstanceFunc.
-func (mock *Route53APIMock) UpdateTrafficPolicyInstance(in1 *route53.UpdateTrafficPolicyInstanceInput) (*route53.UpdateTrafficPolicyInstanceOutput, error) {
+func (mock *Route53APIMock) UpdateTrafficPolicyInstance(updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput) (*route53.UpdateTrafficPolicyInstanceOutput, error) {
 	if mock.UpdateTrafficPolicyInstanceFunc == nil {
 		panic("Route53APIMock.UpdateTrafficPolicyInstanceFunc: method is nil but Route53API.UpdateTrafficPolicyInstance was just called")
 	}
 	callInfo := struct {
-		In1 *route53.UpdateTrafficPolicyInstanceInput
+		UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
 	}{
-		In1: in1,
+		UpdateTrafficPolicyInstanceInput: updateTrafficPolicyInstanceInput,
 	}
 	mock.lockUpdateTrafficPolicyInstance.Lock()
 	mock.calls.UpdateTrafficPolicyInstance = append(mock.calls.UpdateTrafficPolicyInstance, callInfo)
 	mock.lockUpdateTrafficPolicyInstance.Unlock()
-	return mock.UpdateTrafficPolicyInstanceFunc(in1)
+	return mock.UpdateTrafficPolicyInstanceFunc(updateTrafficPolicyInstanceInput)
 }
 
 // UpdateTrafficPolicyInstanceCalls gets all the calls that were made to UpdateTrafficPolicyInstance.
 // Check the length with:
 //     len(mockedRoute53API.UpdateTrafficPolicyInstanceCalls())
 func (mock *Route53APIMock) UpdateTrafficPolicyInstanceCalls() []struct {
-	In1 *route53.UpdateTrafficPolicyInstanceInput
+	UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
 } {
 	var calls []struct {
-		In1 *route53.UpdateTrafficPolicyInstanceInput
+		UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
 	}
 	mock.lockUpdateTrafficPolicyInstance.RLock()
 	calls = mock.calls.UpdateTrafficPolicyInstance
@@ -8468,29 +10632,29 @@ func (mock *Route53APIMock) UpdateTrafficPolicyInstanceCalls() []struct {
 }
 
 // UpdateTrafficPolicyInstanceRequest calls UpdateTrafficPolicyInstanceRequestFunc.
-func (mock *Route53APIMock) UpdateTrafficPolicyInstanceRequest(in1 *route53.UpdateTrafficPolicyInstanceInput) (*request.Request, *route53.UpdateTrafficPolicyInstanceOutput) {
+func (mock *Route53APIMock) UpdateTrafficPolicyInstanceRequest(updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput) (*request.Request, *route53.UpdateTrafficPolicyInstanceOutput) {
 	if mock.UpdateTrafficPolicyInstanceRequestFunc == nil {
 		panic("Route53APIMock.UpdateTrafficPolicyInstanceRequestFunc: method is nil but Route53API.UpdateTrafficPolicyInstanceRequest was just called")
 	}
 	callInfo := struct {
-		In1 *route53.UpdateTrafficPolicyInstanceInput
+		UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
 	}{
-		In1: in1,
+		UpdateTrafficPolicyInstanceInput: updateTrafficPolicyInstanceInput,
 	}
 	mock.lockUpdateTrafficPolicyInstanceRequest.Lock()
 	mock.calls.UpdateTrafficPolicyInstanceRequest = append(mock.calls.UpdateTrafficPolicyInstanceRequest, callInfo)
 	mock.lockUpdateTrafficPolicyInstanceRequest.Unlock()
-	return mock.UpdateTrafficPolicyInstanceRequestFunc(in1)
+	return mock.UpdateTrafficPolicyInstanceRequestFunc(updateTrafficPolicyInstanceInput)
 }
 
 // UpdateTrafficPolicyInstanceRequestCalls gets all the calls that were made to UpdateTrafficPolicyInstanceRequest.
 // Check the length with:
 //     len(mockedRoute53API.UpdateTrafficPolicyInstanceRequestCalls())
 func (mock *Route53APIMock) UpdateTrafficPolicyInstanceRequestCalls() []struct {
-	In1 *route53.UpdateTrafficPolicyInstanceInput
+	UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
 } {
 	var calls []struct {
-		In1 *route53.UpdateTrafficPolicyInstanceInput
+		UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
 	}
 	mock.lockUpdateTrafficPolicyInstanceRequest.RLock()
 	calls = mock.calls.UpdateTrafficPolicyInstanceRequest
@@ -8499,37 +10663,37 @@ func (mock *Route53APIMock) UpdateTrafficPolicyInstanceRequestCalls() []struct {
 }
 
 // UpdateTrafficPolicyInstanceWithContext calls UpdateTrafficPolicyInstanceWithContextFunc.
-func (mock *Route53APIMock) UpdateTrafficPolicyInstanceWithContext(in1 context.Context, in2 *route53.UpdateTrafficPolicyInstanceInput, in3 ...request.Option) (*route53.UpdateTrafficPolicyInstanceOutput, error) {
+func (mock *Route53APIMock) UpdateTrafficPolicyInstanceWithContext(contextMoqParam context.Context, updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput, options ...request.Option) (*route53.UpdateTrafficPolicyInstanceOutput, error) {
 	if mock.UpdateTrafficPolicyInstanceWithContextFunc == nil {
 		panic("Route53APIMock.UpdateTrafficPolicyInstanceWithContextFunc: method is nil but Route53API.UpdateTrafficPolicyInstanceWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.UpdateTrafficPolicyInstanceInput
-		In3 []request.Option
+		ContextMoqParam                  context.Context
+		UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
+		Options                          []request.Option
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam:                  contextMoqParam,
+		UpdateTrafficPolicyInstanceInput: updateTrafficPolicyInstanceInput,
+		Options:                          options,
 	}
 	mock.lockUpdateTrafficPolicyInstanceWithContext.Lock()
 	mock.calls.UpdateTrafficPolicyInstanceWithContext = append(mock.calls.UpdateTrafficPolicyInstanceWithContext, callInfo)
 	mock.lockUpdateTrafficPolicyInstanceWithContext.Unlock()
-	return mock.UpdateTrafficPolicyInstanceWithContextFunc(in1, in2, in3...)
+	return mock.UpdateTrafficPolicyInstanceWithContextFunc(contextMoqParam, updateTrafficPolicyInstanceInput, options...)
 }
 
 // UpdateTrafficPolicyInstanceWithContextCalls gets all the calls that were made to UpdateTrafficPolicyInstanceWithContext.
 // Check the length with:
 //     len(mockedRoute53API.UpdateTrafficPolicyInstanceWithContextCalls())
 func (mock *Route53APIMock) UpdateTrafficPolicyInstanceWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.UpdateTrafficPolicyInstanceInput
-	In3 []request.Option
+	ContextMoqParam                  context.Context
+	UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
+	Options                          []request.Option
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.UpdateTrafficPolicyInstanceInput
-		In3 []request.Option
+		ContextMoqParam                  context.Context
+		UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
+		Options                          []request.Option
 	}
 	mock.lockUpdateTrafficPolicyInstanceWithContext.RLock()
 	calls = mock.calls.UpdateTrafficPolicyInstanceWithContext
@@ -8538,29 +10702,29 @@ func (mock *Route53APIMock) UpdateTrafficPolicyInstanceWithContextCalls() []stru
 }
 
 // WaitUntilResourceRecordSetsChanged calls WaitUntilResourceRecordSetsChangedFunc.
-func (mock *Route53APIMock) WaitUntilResourceRecordSetsChanged(in1 *route53.GetChangeInput) error {
+func (mock *Route53APIMock) WaitUntilResourceRecordSetsChanged(getChangeInput *route53.GetChangeInput) error {
 	if mock.WaitUntilResourceRecordSetsChangedFunc == nil {
 		panic("Route53APIMock.WaitUntilResourceRecordSetsChangedFunc: method is nil but Route53API.WaitUntilResourceRecordSetsChanged was just called")
 	}
 	callInfo := struct {
-		In1 *route53.GetChangeInput
+		GetChangeInput *route53.GetChangeInput
 	}{
-		In1: in1,
+		GetChangeInput: getChangeInput,
 	}
 	mock.lockWaitUntilResourceRecordSetsChanged.Lock()
 	mock.calls.WaitUntilResourceRecordSetsChanged = append(mock.calls.WaitUntilResourceRecordSetsChanged, callInfo)
 	mock.lockWaitUntilResourceRecordSetsChanged.Unlock()
-	return mock.WaitUntilResourceRecordSetsChangedFunc(in1)
+	return mock.WaitUntilResourceRecordSetsChangedFunc(getChangeInput)
 }
 
 // WaitUntilResourceRecordSetsChangedCalls gets all the calls that were made to WaitUntilResourceRecordSetsChanged.
 // Check the length with:
 //     len(mockedRoute53API.WaitUntilResourceRecordSetsChangedCalls())
 func (mock *Route53APIMock) WaitUntilResourceRecordSetsChangedCalls() []struct {
-	In1 *route53.GetChangeInput
+	GetChangeInput *route53.GetChangeInput
 } {
 	var calls []struct {
-		In1 *route53.GetChangeInput
+		GetChangeInput *route53.GetChangeInput
 	}
 	mock.lockWaitUntilResourceRecordSetsChanged.RLock()
 	calls = mock.calls.WaitUntilResourceRecordSetsChanged
@@ -8569,37 +10733,37 @@ func (mock *Route53APIMock) WaitUntilResourceRecordSetsChangedCalls() []struct {
 }
 
 // WaitUntilResourceRecordSetsChangedWithContext calls WaitUntilResourceRecordSetsChangedWithContextFunc.
-func (mock *Route53APIMock) WaitUntilResourceRecordSetsChangedWithContext(in1 context.Context, in2 *route53.GetChangeInput, in3 ...request.WaiterOption) error {
+func (mock *Route53APIMock) WaitUntilResourceRecordSetsChangedWithContext(contextMoqParam context.Context, getChangeInput *route53.GetChangeInput, waiterOptions ...request.WaiterOption) error {
 	if mock.WaitUntilResourceRecordSetsChangedWithContextFunc == nil {
 		panic("Route53APIMock.WaitUntilResourceRecordSetsChangedWithContextFunc: method is nil but Route53API.WaitUntilResourceRecordSetsChangedWithContext was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
-		In2 *route53.GetChangeInput
-		In3 []request.WaiterOption
+		ContextMoqParam context.Context
+		GetChangeInput  *route53.GetChangeInput
+		WaiterOptions   []request.WaiterOption
 	}{
-		In1: in1,
-		In2: in2,
-		In3: in3,
+		ContextMoqParam: contextMoqParam,
+		GetChangeInput:  getChangeInput,
+		WaiterOptions:   waiterOptions,
 	}
 	mock.lockWaitUntilResourceRecordSetsChangedWithContext.Lock()
 	mock.calls.WaitUntilResourceRecordSetsChangedWithContext = append(mock.calls.WaitUntilResourceRecordSetsChangedWithContext, callInfo)
 	mock.lockWaitUntilResourceRecordSetsChangedWithContext.Unlock()
-	return mock.WaitUntilResourceRecordSetsChangedWithContextFunc(in1, in2, in3...)
+	return mock.WaitUntilResourceRecordSetsChangedWithContextFunc(contextMoqParam, getChangeInput, waiterOptions...)
 }
 
 // WaitUntilResourceRecordSetsChangedWithContextCalls gets all the calls that were made to WaitUntilResourceRecordSetsChangedWithContext.
 // Check the length with:
 //     len(mockedRoute53API.WaitUntilResourceRecordSetsChangedWithContextCalls())
 func (mock *Route53APIMock) WaitUntilResourceRecordSetsChangedWithContextCalls() []struct {
-	In1 context.Context
-	In2 *route53.GetChangeInput
-	In3 []request.WaiterOption
+	ContextMoqParam context.Context
+	GetChangeInput  *route53.GetChangeInput
+	WaiterOptions   []request.WaiterOption
 } {
 	var calls []struct {
-		In1 context.Context
-		In2 *route53.GetChangeInput
-		In3 []request.WaiterOption
+		ContextMoqParam context.Context
+		GetChangeInput  *route53.GetChangeInput
+		WaiterOptions   []request.WaiterOption
 	}
 	mock.lockWaitUntilResourceRecordSetsChangedWithContext.RLock()
 	calls = mock.calls.WaitUntilResourceRecordSetsChangedWithContext
