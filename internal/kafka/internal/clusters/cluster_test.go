@@ -121,7 +121,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 					builder.AWS(clusterAWS)
 					builder.MultiAZ(true)
 					builder.Version(clustersmgmtv1.NewVersion().ID(openshiftVersion))
-					builder.Nodes(clustersmgmtv1.NewClusterNodes().ComputeMachineType(clustersmgmtv1.NewMachineType().ID(ComputeMachineType)))
+					builder.Nodes(clustersmgmtv1.NewClusterNodes().AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(6).MaxReplicas(18).ID(ComputeMachineType)))
 				})
 				if err != nil {
 					panic(err)
@@ -158,7 +158,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 					builder.AWS(clusterAWS)
 					builder.MultiAZ(false)
 					builder.Version(clustersmgmtv1.NewVersion().ID(openshiftVersion))
-					builder.Nodes(clustersmgmtv1.NewClusterNodes().ComputeMachineType(clustersmgmtv1.NewMachineType().ID(ComputeMachineType)))
+					builder.Nodes(clustersmgmtv1.NewClusterNodes().AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(6).MaxReplicas(18).ID(ComputeMachineType)))
 				})
 				if err != nil {
 					panic(err)
