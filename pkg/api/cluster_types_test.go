@@ -781,3 +781,126 @@ func Test_ClusterStatus_String(t *testing.T) {
 		})
 	}
 }
+
+func Test_Cluster_SetDynamicCapacityInfo(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		arg     map[string]DynamicCapacityInfo
+		want    JSON
+		wantErr bool
+	}{
+		{
+			name:    "sets the capacity config to empty",
+			arg:     map[string]DynamicCapacityInfo{},
+			cluster: &Cluster{},
+			wantErr: false,
+			want:    JSON([]byte("{}")),
+		},
+		{
+			name:    "sets the capacity config to null",
+			arg:     nil,
+			cluster: &Cluster{},
+			wantErr: false,
+			want:    JSON([]byte("null")),
+		},
+		{
+			name: "sets the capacity config to the given marshelled value",
+			arg: map[string]DynamicCapacityInfo{
+				"key1": {
+					MaxNodes:       1,
+					RemainingUnits: 1,
+					MaxUnits:       1,
+				},
+			},
+			cluster: &Cluster{},
+			wantErr: false,
+			want:    JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
+		},
+	}
+
+	g := NewWithT(t)
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(test *testing.T) {
+			test.Parallel()
+			err := tt.cluster.SetDynamicCapacityInfo(tt.arg)
+			g.Expect(err != nil).To(Equal(tt.wantErr))
+			if !tt.wantErr {
+				g.Expect(tt.cluster.DynamicCapacityInfo).To(Equal(tt.want))
+			}
+		})
+	}
+}
+
+func Test_Cluster_RetrieveDynamicCapacityInfo(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    map[string]DynamicCapacityInfo
+		wantErr bool
+	}{
+
+		{
+			name: "returns parsing error error",
+			want: nil,
+			cluster: &Cluster{
+				DynamicCapacityInfo: JSON([]byte(`"key1":{"max_nodes"`)),
+			},
+			wantErr: true,
+		},
+		{
+			name: "returns empty map when json object is empty",
+			want: map[string]DynamicCapacityInfo{},
+			cluster: &Cluster{
+				DynamicCapacityInfo: JSON([]byte("{}")),
+			},
+			wantErr: false,
+		},
+		{
+			name: "returns an empty map when json object is nil",
+			want: map[string]DynamicCapacityInfo{},
+			cluster: &Cluster{
+				DynamicCapacityInfo: nil,
+			},
+			wantErr: false,
+		},
+		{
+			name: "return the capacity config to nil when it is null",
+			want: nil,
+			cluster: &Cluster{
+				DynamicCapacityInfo: JSON([]byte("null")),
+			},
+			wantErr: false,
+		},
+		{
+			name: "retrieves the capacity config from the given marshelled value",
+			want: map[string]DynamicCapacityInfo{
+				"key1": {
+					MaxNodes:       1,
+					RemainingUnits: 1,
+					MaxUnits:       1,
+				},
+			},
+			cluster: &Cluster{
+				DynamicCapacityInfo: JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
+			},
+			wantErr: false,
+		},
+	}
+
+	g := NewWithT(t)
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(test *testing.T) {
+			test.Parallel()
+			dynamicCapacityInfo, err := tt.cluster.RetrieveDynamicCapacityInfo()
+			g.Expect(err != nil).To(Equal(tt.wantErr))
+			if !tt.wantErr {
+				g.Expect(dynamicCapacityInfo).To(Equal(tt.want))
+			}
+		})
+	}
+}

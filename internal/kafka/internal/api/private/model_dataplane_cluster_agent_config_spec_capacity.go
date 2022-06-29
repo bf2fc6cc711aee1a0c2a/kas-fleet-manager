@@ -9,9 +9,8 @@
 
 package private
 
-// ObjectReference struct for ObjectReference
-type ObjectReference struct {
-	Id   string `json:"id,omitempty"`
-	Kind string `json:"kind,omitempty"`
-	Href string `json:"href,omitempty"`
+// DataplaneClusterAgentConfigSpecCapacity The reported capacity object
+type DataplaneClusterAgentConfigSpecCapacity struct {
+	// The maximum number of nodes configured for the instance type
+	MaxNodes int32 `json:"maxNodes,omitempty"`
 }

@@ -65,6 +65,7 @@ func BuildDataPlaneClusterConfig(modifyFn func(config *dbapi.DataPlaneClusterCon
 			Repository:  observabilityRepository,
 			Tag:         observabilityTag,
 		},
+		DynamicCapacityInfo: map[string]api.DynamicCapacityInfo{},
 	}
 	if modifyFn != nil {
 		modifyFn(config)
@@ -81,6 +82,7 @@ func BuildDataplaneClusterAgentConfig(modifyFn func(config private.DataplaneClus
 				Repository:  observabilityRepository,
 				Tag:         observabilityTag,
 			},
+			Capacity: map[string]private.DataplaneClusterAgentConfigSpecCapacity{},
 		},
 	}
 	if modifyFn != nil {

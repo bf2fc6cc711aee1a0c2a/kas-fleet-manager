@@ -134,9 +134,21 @@ func TestPresentDataPlaneClusterConfig(t *testing.T) {
 		{
 			name: "should return converted DataplaneClusterAgentConfig",
 			args: args{
-				config: mock.BuildDataPlaneClusterConfig(nil),
+				config: mock.BuildDataPlaneClusterConfig(func(config *dbapi.DataPlaneClusterConfig) {
+					config.DynamicCapacityInfo = map[string]api.DynamicCapacityInfo{
+						"key": {
+							MaxNodes:       4,
+							MaxUnits:       2,
+							RemainingUnits: 1,
+						},
+					}
+				}),
 			},
-			want: mock.BuildDataplaneClusterAgentConfig(nil),
+			want: mock.BuildDataplaneClusterAgentConfig(func(config private.DataplaneClusterAgentConfig) {
+				config.Spec.Capacity["key"] = private.DataplaneClusterAgentConfigSpecCapacity{
+					MaxNodes: 4,
+				}
+			}),
 		},
 	}
 

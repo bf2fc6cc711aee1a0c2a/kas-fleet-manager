@@ -30,8 +30,10 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
+	var dataplaneConfig *config.DataplaneClusterConfig
 	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *ocm.OCMConfig, d *config.DataplaneClusterConfig) {
 		d.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
+		dataplaneConfig = d
 	})
 	defer teardown()
 
@@ -57,6 +59,8 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		t.Fatalf("Failed to register cluster: %s", clusterRegisterError.Error())
 	}
 
+	// set scaling type to auto so that machine pools are created when the cluster starts to be terraformed
+	dataplaneConfig.DataPlaneClusterScalingType = config.AutoScaling
 	clusterID, err := common.WaitForClusterIDToBeAssigned(test.TestServices.DBFactory, &test.TestServices.ClusterService, &services.FindClusterCriteria{
 		Region:   mocks.MockCluster.Region().ID(),
 		Provider: mocks.MockCluster.CloudProvider().ID(),
@@ -78,6 +82,21 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	// waiting for cluster state to become `ready`
 	cluster, checkReadyErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterReady)
 	Expect(checkReadyErr).NotTo(HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ClusterID, checkReadyErr)
+
+	// check that the cluster has dynamic capacity info persisted
+
+	dynamicCapacityInfo, err := cluster.RetrieveDynamicCapacityInfo()
+	Expect(err).ToNot(HaveOccurred(), "Error retrieving dynamic capacity info")
+	Expect(dynamicCapacityInfo).To(HaveLen(2)) // the cluster supports two instance types so there should be two entries
+	standardCapacity, ok := dynamicCapacityInfo[api.StandardTypeSupport.String()]
+	Expect(ok).To(BeTrue())
+	Expect(standardCapacity.MaxUnits).To(Equal(kasfleetshardsync.StandardCapacityInfo.MaxUnits))
+	Expect(standardCapacity.RemainingUnits).To(Equal(kasfleetshardsync.StandardCapacityInfo.RemainingUnits))
+
+	developerCapacity, ok := dynamicCapacityInfo[api.DeveloperTypeSupport.String()]
+	Expect(ok).To(BeTrue())
+	Expect(developerCapacity.MaxUnits).To(Equal(kasfleetshardsync.DeveloperCapacityInfo.MaxUnits))
+	Expect(developerCapacity.RemainingUnits).To(Equal(kasfleetshardsync.DeveloperCapacityInfo.RemainingUnits))
 
 	// save cluster struct to be reused in subsequent tests and cleanup script
 	err = common.PersistClusterStruct(*cluster, api.ClusterProvisioned)

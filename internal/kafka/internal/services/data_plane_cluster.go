@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
@@ -50,6 +51,11 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 		return nil, errors.BadRequest("Cluster agent with ID '%s' not found", clusterID)
 	}
 
+	dynamicCapacityInfo := map[string]api.DynamicCapacityInfo{}
+	if d.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
+		dynamicCapacityInfo, _ = cluster.RetrieveDynamicCapacityInfo()
+	}
+
 	return &dbapi.DataPlaneClusterConfig{
 		Observability: dbapi.DataPlaneClusterConfigObservability{
 			AccessToken: d.ObservabilityConfig.ObservabilityConfigAccessToken,
@@ -57,6 +63,7 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 			Repository:  d.ObservabilityConfig.ObservabilityConfigRepo,
 			Tag:         d.ObservabilityConfig.ObservabilityConfigTag,
 		},
+		DynamicCapacityInfo: dynamicCapacityInfo,
 	}, nil
 }
 
@@ -104,29 +111,57 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 	if err != nil {
 		return err
 	}
+
+	dynamicCapacityInfo, err := cluster.RetrieveDynamicCapacityInfo()
+	if err != nil {
+		return err
+	}
+
+	glog.Infof("Received capacity info for cluster ID '%s'. status.DynamicCapacityInfo: '%v'\n", cluster.ClusterID, status.DynamicCapacityInfo)
+	glog.Infof("Current dynamic capacity info for cluster ID '%s'. DynamicCapacityInfo: '%v'\n", cluster.ClusterID, dynamicCapacityInfo)
+
+	for instanceType, capacity := range dynamicCapacityInfo {
+		newCapacity, ok := status.DynamicCapacityInfo[instanceType]
+		if !ok {
+			continue
+		}
+
+		dynamicCapacityInfo[instanceType] = api.DynamicCapacityInfo{
+			MaxNodes:       capacity.MaxNodes,
+			MaxUnits:       newCapacity.MaxUnits,
+			RemainingUnits: newCapacity.RemainingUnits,
+		}
+	}
+
+	glog.Infof("Updated dynamic capacity info for cluster ID '%s'. DynamicCapacityInfo: '%v'\n", cluster.ClusterID, dynamicCapacityInfo)
+
+	err = cluster.SetDynamicCapacityInfo(dynamicCapacityInfo)
+
+	if err != nil {
+		return err
+	}
+
 	if len(status.AvailableStrimziVersions) > 0 && !reflect.DeepEqual(prevAvailableStrimziVersions, status.AvailableStrimziVersions) {
 		err := cluster.SetAvailableStrimziVersions(status.AvailableStrimziVersions)
 		if err != nil {
 			return err
 		}
-
 		glog.Infof("Updating Strimzi operator available versions for cluster ID '%s'. Versions: '%v'\n", cluster.ClusterID, status.AvailableStrimziVersions)
-		svcErr := d.ClusterService.Update(*cluster)
-		if svcErr != nil {
-			return err
-		}
 	}
 
-	if cluster.Status != api.ClusterReady {
-		clusterIsWaitingForFleetShardOperator := cluster.Status == api.ClusterWaitingForKasFleetShardOperator
-		err := d.ClusterService.UpdateStatus(*cluster, api.ClusterReady)
-		if err != nil {
-			return err
-		}
-		if clusterIsWaitingForFleetShardOperator {
-			metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(cluster.CreatedAt))
-		}
+	if cluster.Status == api.ClusterWaitingForKasFleetShardOperator {
+		metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(cluster.CreatedAt))
+		metrics.IncreaseClusterTotalOperationsCountMetric(constants2.ClusterOperationCreate)
+		metrics.IncreaseClusterSuccessOperationsCountMetric(constants2.ClusterOperationCreate)
 		metrics.UpdateClusterStatusSinceCreatedMetric(*cluster, api.ClusterReady)
+	}
+
+	cluster.Status = api.ClusterReady
+
+	svcErr := d.ClusterService.Update(*cluster)
+
+	if svcErr != nil {
+		return svcErr
 	}
 
 	return nil
