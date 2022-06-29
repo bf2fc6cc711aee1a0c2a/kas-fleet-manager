@@ -11,6 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	mocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
+	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -26,7 +27,7 @@ var (
 	ctx = auth.SetTokenInContext(context.TODO(), &jwt.Token{
 		Claims: jwt.MapClaims{
 			"username":     "test-user",
-			"org_id":       "",
+			"org_id":       mocks.DefaultOrganisationId,
 			"is_org_admin": true,
 		},
 	})
@@ -209,7 +210,11 @@ func Test_KafkaHandler_List(t *testing.T) {
 			fields: fields{
 				service: &services.KafkaServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *s.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError) {
-						return dbapi.KafkaList{{Name: "list"}}, &api.PagingMeta{}, nil
+						return dbapi.KafkaList{
+							mocks.BuildKafkaRequest(
+								mocks.WithPredefinedTestValues(),
+							),
+						}, &api.PagingMeta{}, nil
 					},
 				},
 				kafkaConfig: &fullKafkaConfig,
@@ -392,6 +397,7 @@ func Test_KafkaHandler_Create(t *testing.T) {
 						return dbapi.KafkaList{}, &api.PagingMeta{}, nil
 					},
 					RegisterKafkaJobFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						kafkaRequest.KafkaStorageSize = mocksupportedinstancetypes.DefaultMaxDataRetentionSize
 						return nil
 					},
 					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
