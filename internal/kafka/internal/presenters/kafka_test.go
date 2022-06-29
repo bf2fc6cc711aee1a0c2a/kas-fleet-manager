@@ -128,7 +128,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.BootstrapServerHost = setBootstrapServerHost(bootstrapServer)
 				kafkaRequest.FailedReason = failedReason
 				kafkaRequest.InstanceType = mock.DefaultInstanceType
-				kafkaRequest.KafkaStorageSize = kafkaStorageSize
+				kafkaRequest.DeprecatedKafkaStorageSize = kafkaStorageSize
 				kafkaRequest.BrowserUrl = "//dashboard"
 				kafkaRequest.SizeId = defaultInstanceSize.Id
 				kafkaRequest.IngressThroughputPerSec = defaultInstanceSize.IngressThroughputPerSec.String()
@@ -140,6 +140,14 @@ func TestPresentKafkaRequest(t *testing.T) {
 
 				expireTime := kafkaRequest.CreatedAt.Add(time.Duration(*defaultInstanceSize.LifespanSeconds) * time.Second)
 				kafkaRequest.ExpiresAt = &expireTime
+
+				dataRetentionSizeQuantity := config.Quantity(kafkaStorageSize)
+				dataRetentionSizeBytes, err := dataRetentionSizeQuantity.ToInt64()
+				Expect(err).ToNot(HaveOccurred(), "failed to convert kafka data retention size '%s' to bytes", kafkaStorageSize)
+
+				kafkaRequest.MaxDataRetentionSize = public.SupportedKafkaSizeBytesValueItem{
+					Bytes: dataRetentionSizeBytes,
+				}
 			}),
 			config: config.KafkaConfig{
 				SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{

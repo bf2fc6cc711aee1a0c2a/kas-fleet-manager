@@ -41,56 +41,65 @@ func ConvertKafkaRequest(kafkaRequestPayload public.KafkaRequestPayload, dbKafka
 }
 
 // PresentKafkaRequest - create KafkaRequest in an appropriate format ready to be returned by the API
-func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, config *config.KafkaConfig) (public.KafkaRequest, *errors.ServiceError) {
+func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig) (public.KafkaRequest, *errors.ServiceError) {
 	reference := PresentReference(kafkaRequest.ID, kafkaRequest)
 
 	var ingressThroughputPerSec, egressThroughputPerSec, maxDataRetentionPeriod string
 	var totalMaxConnections, maxPartitions, maxConnectionAttemptsPerSec int
 	var expiresAt *time.Time
-	if config != nil {
-		kafkaConfig, err := config.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
+	if kafkaConfig != nil {
+		instanceSize, err := kafkaConfig.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
 		if err != nil {
 			logger.Logger.Error(err)
 		} else {
-			ingressThroughputPerSec = kafkaConfig.IngressThroughputPerSec.String()
-			egressThroughputPerSec = kafkaConfig.EgressThroughputPerSec.String()
-			totalMaxConnections = kafkaConfig.TotalMaxConnections
-			maxPartitions = kafkaConfig.MaxPartitions
-			maxDataRetentionPeriod = kafkaConfig.MaxDataRetentionPeriod
-			maxConnectionAttemptsPerSec = kafkaConfig.MaxConnectionAttemptsPerSec
-			if kafkaConfig.LifespanSeconds != nil {
-				expiresAt = kafkaRequest.GetExpirationTime(*kafkaConfig.LifespanSeconds)
+			ingressThroughputPerSec = instanceSize.IngressThroughputPerSec.String()
+			egressThroughputPerSec = instanceSize.EgressThroughputPerSec.String()
+			totalMaxConnections = instanceSize.TotalMaxConnections
+			maxPartitions = instanceSize.MaxPartitions
+			maxDataRetentionPeriod = instanceSize.MaxDataRetentionPeriod
+			maxConnectionAttemptsPerSec = instanceSize.MaxConnectionAttemptsPerSec
+			if instanceSize.LifespanSeconds != nil {
+				expiresAt = kafkaRequest.GetExpirationTime(*instanceSize.LifespanSeconds)
 			}
 		}
 	}
 
-	displayName, err := getDisplayName(kafkaRequest.InstanceType, config)
-
+	displayName, err := getDisplayName(kafkaRequest.InstanceType, kafkaConfig)
 	if err != nil {
 		return public.KafkaRequest{}, err
 	}
 
+	// convert kafka storage size to bytes
+	maxDataRetentionSizeQuantity := config.Quantity(kafkaRequest.KafkaStorageSize)
+	maxDataRetentionSizeBytes, conversionErr := maxDataRetentionSizeQuantity.ToInt64()
+	if conversionErr != nil {
+		return public.KafkaRequest{}, errors.NewWithCause(errors.ErrorGeneral, conversionErr, "failed to get bytes value for max_data_retention_size")
+	}
+
 	return public.KafkaRequest{
-		Id:                          reference.Id,
-		Kind:                        reference.Kind,
-		Href:                        reference.Href,
-		Region:                      kafkaRequest.Region,
-		Name:                        kafkaRequest.Name,
-		CloudProvider:               kafkaRequest.CloudProvider,
-		MultiAz:                     kafkaRequest.MultiAZ,
-		Owner:                       kafkaRequest.Owner,
-		BootstrapServerHost:         setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
-		AdminApiServerUrl:           kafkaRequest.AdminApiServerURL,
-		Status:                      kafkaRequest.Status,
-		CreatedAt:                   kafkaRequest.CreatedAt,
-		UpdatedAt:                   kafkaRequest.UpdatedAt,
-		ExpiresAt:                   expiresAt,
-		FailedReason:                kafkaRequest.FailedReason,
-		Version:                     kafkaRequest.ActualKafkaVersion,
-		InstanceType:                kafkaRequest.InstanceType,
-		ReauthenticationEnabled:     kafkaRequest.ReauthenticationEnabled,
-		KafkaStorageSize:            kafkaRequest.KafkaStorageSize,
-		BrowserUrl:                  fmt.Sprintf("%s/%s/dashboard", strings.TrimSuffix(config.BrowserUrl, "/"), reference.Id),
+		Id:                         reference.Id,
+		Kind:                       reference.Kind,
+		Href:                       reference.Href,
+		Region:                     kafkaRequest.Region,
+		Name:                       kafkaRequest.Name,
+		CloudProvider:              kafkaRequest.CloudProvider,
+		MultiAz:                    kafkaRequest.MultiAZ,
+		Owner:                      kafkaRequest.Owner,
+		BootstrapServerHost:        setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
+		AdminApiServerUrl:          kafkaRequest.AdminApiServerURL,
+		Status:                     kafkaRequest.Status,
+		CreatedAt:                  kafkaRequest.CreatedAt,
+		UpdatedAt:                  kafkaRequest.UpdatedAt,
+		ExpiresAt:                  expiresAt,
+		FailedReason:               kafkaRequest.FailedReason,
+		Version:                    kafkaRequest.ActualKafkaVersion,
+		InstanceType:               kafkaRequest.InstanceType,
+		ReauthenticationEnabled:    kafkaRequest.ReauthenticationEnabled,
+		DeprecatedKafkaStorageSize: kafkaRequest.KafkaStorageSize,
+		MaxDataRetentionSize: public.SupportedKafkaSizeBytesValueItem{
+			Bytes: maxDataRetentionSizeBytes,
+		},
+		BrowserUrl:                  fmt.Sprintf("%s/%s/dashboard", strings.TrimSuffix(kafkaConfig.BrowserUrl, "/"), reference.Id),
 		SizeId:                      kafkaRequest.SizeId,
 		InstanceTypeName:            displayName,
 		IngressThroughputPerSec:     ingressThroughputPerSec,

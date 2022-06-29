@@ -5,6 +5,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 
@@ -68,6 +69,7 @@ func TestPresentKafkaRequestAdminEndpoint(t *testing.T) {
 		accountService account.AccountService
 	}
 
+	storageSize := "1000Gi"
 	tests := []struct {
 		name    string
 		args    args
@@ -79,10 +81,22 @@ func TestPresentKafkaRequestAdminEndpoint(t *testing.T) {
 			args: args{
 				dbKafkaRequest: mock.BuildKafkaRequest(
 					mock.WithPredefinedTestValues(),
+					mock.With(mock.STORAGE_SIZE, storageSize),
 				),
 				accountService: account.NewMockAccountService(),
 			},
-			want: mock.BuildAdminKafkaRequest(nil),
+			want: mock.BuildAdminKafkaRequest(func(kafka *private.Kafka) {
+				kafka.DeprecatedKafkaStorageSize = storageSize
+				kafka.OrganisationId = mock.DefaultOrganisationId
+
+				dataRetentionSizeQuantity := config.Quantity(storageSize)
+				dataRetentionSizeBytes, err := dataRetentionSizeQuantity.ToInt64()
+				Expect(err).ToNot(HaveOccurred(), "failed to convert kafka data retention size '%s' to bytes", storageSize)
+
+				kafka.MaxDataRetentionSize = private.SupportedKafkaSizeBytesValueItem{
+					Bytes: dataRetentionSizeBytes,
+				}
+			}),
 		},
 	}
 

@@ -354,7 +354,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 	defer testServer.TearDown()
 
 	biggerStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
-		KafkaStorageSize: "70Gi",
+		DeprecatedKafkaStorageSize: "70Gi",
 	}
 
 	var testKafkas = []*dbapi.KafkaRequest{
@@ -425,7 +425,12 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			resp.Body.Close()
 		}
 		Expect(err).To(BeNil())
-		Expect(result.KafkaStorageSize).To(Equal(biggerStorageUpdateRequest.KafkaStorageSize))
+		Expect(result.DeprecatedKafkaStorageSize).To(Equal(biggerStorageUpdateRequest.DeprecatedKafkaStorageSize))
+
+		dataRetentionSizeQuantity := config.Quantity(biggerStorageUpdateRequest.DeprecatedKafkaStorageSize)
+		dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
+		Expect(convErr).ToNot(HaveOccurred())
+		Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)

@@ -24,6 +24,7 @@ const (
 	DefaultMultiAz              = true
 	DefaultBootstrapServerHost  = "test-bootstrap-server-host"
 	DefaultPlacementId          = "test-placement-id"
+	DefaultOrganisationId       = "13640203"
 )
 
 var (
@@ -51,6 +52,8 @@ const (
 	DESIRED_STRIMZI_VERSION
 	ACTUAL_KAFKA_IBP_VERSION
 	DESIRED_KAFKA_IBP_VERSION
+	ORGANISATION_ID
+	ID
 )
 
 type KafkaAttribute int
@@ -96,6 +99,10 @@ func With(attribute KafkaRequestAttribute, value string) KafkaRequestBuildOption
 			request.ActualKafkaIBPVersion = value
 		case DESIRED_KAFKA_IBP_VERSION:
 			request.DesiredKafkaIBPVersion = value
+		case ORGANISATION_ID:
+			request.OrganisationId = value
+		case ID:
+			request.Meta.ID = value
 		}
 	}
 }
@@ -146,6 +153,8 @@ func WithPredefinedTestValues() KafkaRequestBuildOption {
 		request.BootstrapServerHost = DefaultBootstrapServerHost
 		request.Owner = user
 		request.Status = constants.KafkaRequestStatusReady.String()
+		request.KafkaStorageSize = mocksupportedinstancetypes.DefaultMaxDataRetentionSize
+		request.OrganisationId = DefaultOrganisationId
 	}
 }
 

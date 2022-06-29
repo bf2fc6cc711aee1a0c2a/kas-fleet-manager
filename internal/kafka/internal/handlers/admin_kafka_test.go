@@ -12,6 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	mocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	s "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -44,7 +45,9 @@ func Test_Get(t *testing.T) {
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
-						return &dbapi.KafkaRequest{}, nil
+						return mocks.BuildKafkaRequest(
+							mocks.WithPredefinedTestValues(),
+						), nil
 					},
 				},
 				accountService: account.NewMockAccountService(),
@@ -119,9 +122,9 @@ func Test_List(t *testing.T) {
 				kafkaService: &services.KafkaServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *s.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError) {
 						return dbapi.KafkaList{
-							{
-								Name: "test",
-							},
+							mocks.BuildKafkaRequest(
+								mocks.WithPredefinedTestValues(),
+							),
 						}, &api.PagingMeta{}, nil
 					},
 				},
@@ -363,19 +366,17 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 				},
 				kafkaService: &services.KafkaServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
-						return &dbapi.KafkaRequest{
-							Status: constants.KafkaRequestStatusAccepted.String(),
-							Meta: api.Meta{
-								ID: "id",
-							},
-							ClusterID:              "cluster-id",
-							ActualKafkaIBPVersion:  "2.7",
-							DesiredKafkaIBPVersion: "2.7",
-							ActualKafkaVersion:     "2.7",
-							DesiredKafkaVersion:    "2.7",
-							DesiredStrimziVersion:  "2.7",
-							KafkaStorageSize:       "100",
-						}, nil
+						return mocks.BuildKafkaRequest(
+							mocks.With(mocks.STATUS, constants.KafkaRequestStatusAccepted.String()),
+							mocks.With(mocks.ID, "id"),
+							mocks.With(mocks.CLUSTER_ID, "cluster-id"),
+							mocks.With(mocks.ACTUAL_KAFKA_IBP_VERSION, "2.7"),
+							mocks.With(mocks.DESIRED_KAFKA_IBP_VERSION, "2.7"),
+							mocks.With(mocks.ACTUAL_KAFKA_VERSION, "2.7"),
+							mocks.With(mocks.DESIRED_KAFKA_VERSION, "2.7"),
+							mocks.With(mocks.DESIRED_STRIMZI_VERSION, "2.7"),
+							mocks.With(mocks.STORAGE_SIZE, "100"),
+						), nil
 					},
 					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil

@@ -9,9 +9,7 @@
 
 package private
 
-// ObjectReference struct for ObjectReference
-type ObjectReference struct {
-	Id   string `json:"id,omitempty"`
-	Kind string `json:"kind,omitempty"`
-	Href string `json:"href,omitempty"`
+// SupportedKafkaSizeBytesValueItem struct for SupportedKafkaSizeBytesValueItem
+type SupportedKafkaSizeBytesValueItem struct {
+	Bytes int64 `json:"bytes,omitempty"`
 }

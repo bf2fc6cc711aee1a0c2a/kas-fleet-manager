@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   description: The admin APIs for the fleet manager of Kafka service
   title: Kafka Service Fleet Manager Admin APIs
-  version: 0.0.4
+  version: 0.1.0
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -325,6 +325,7 @@ components:
       example:
         strimzi_version: strimzi_version
         kafka_ibp_version: kafka_ibp_version
+        max_data_retention_size: max_data_retention_size
         kafka_version: kafka_version
         kafka_storage_size: kafka_storage_size
       properties:
@@ -335,7 +336,19 @@ components:
         kafka_ibp_version:
           type: string
         kafka_storage_size:
+          deprecated: true
+          description: Maximum data storage available to this Kafka. This is now deprecated,
+            please use max_data_retention_size instead
           type: string
+        max_data_retention_size:
+          description: Maximum data storage available to this Kafka
+          type: string
+      type: object
+    SupportedKafkaSizeBytesValueItem:
+      properties:
+        bytes:
+          format: int64
+          type: integer
       type: object
     Error:
       allOf:
@@ -425,6 +438,9 @@ components:
         kafka_ibp_upgrading:
           type: boolean
         kafka_storage_size:
+          deprecated: true
+          description: Maximum data storage available to this Kafka. This is now deprecated,
+            please use max_data_retention_size instead.
           type: string
         organisation_id:
           type: string
@@ -450,6 +466,8 @@ components:
           type: string
         size_id:
           type: string
+        max_data_retention_size:
+          $ref: '#/components/schemas/SupportedKafkaSizeBytesValueItem'
     KafkaList_allOf:
       properties:
         items:
