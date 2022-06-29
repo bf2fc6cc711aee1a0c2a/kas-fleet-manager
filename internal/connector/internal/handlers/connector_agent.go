@@ -121,7 +121,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 
 			getList := func() (list private.ConnectorDeploymentList, err *errors.ServiceError) {
 
-				resources, paging, err := h.Service.ListConnectorDeployments(ctx, connectorClusterId, listArgs, gtVersion)
+				resources, paging, err := h.Service.ListConnectorDeployments(ctx, connectorClusterId, "", "", listArgs, gtVersion)
 				if err != nil {
 					return
 				}
@@ -134,7 +134,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 				}
 
 				for _, resource := range resources {
-					converted, serviceError := h.presentDeployment(r, resource)
+					converted, serviceError := h.resolveConnectorRefsAndPresentDeployment(resource)
 					if serviceError != nil {
 						sentry.CaptureException(serviceError)
 						glog.Errorf("failed to present connector deployment %s: %v", resource.ID, serviceError)
@@ -222,58 +222,24 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 	handlers.HandleList(w, r, cfg)
 }
 
-func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource dbapi.ConnectorDeployment) (private.ConnectorDeployment, *errors.ServiceError) {
-	converted, err := presenters.PresentConnectorDeployment(resource)
-	if err != nil {
-		return private.ConnectorDeployment{}, err
-	}
-
+func (h *ConnectorClusterHandler) resolveConnectorRefsAndPresentDeployment(connectorDeployment dbapi.ConnectorDeployment) (private.ConnectorDeployment, *errors.ServiceError) {
 	// avoid ignoring this deployment altogether if there is an issue in getting secrets from the vault
-	ctx := r.Context()
-	apiSpec, invalidSecrets, err := h.Service.GetConnectorWithBase64Secrets(ctx, resource)
+	invalidSecrets, err := h.Connectors.ResolveConnectorRefsWithBase64Secrets(&connectorDeployment.Connector)
 	if err != nil {
 		if invalidSecrets {
 			// log error in getting secrets and signal that connector spec doesn't have secrets
-			glog.Errorf("Error getting connector %s with base64 secrets: %s", apiSpec.ID, err)
-			apiSpec.ConnectorSpec = []byte("{}")
+			glog.Errorf("Error getting connector %s with base64 secrets: %s", connectorDeployment.Connector.ID, err)
+			connectorDeployment.Connector.ConnectorSpec = []byte("{}")
 		} else {
 			return private.ConnectorDeployment{}, err
 		}
 	}
-	converted.Metadata.ResolvedSecrets = !invalidSecrets
 
-	pc, err := presenters.PresentConnector(&apiSpec)
+	converted, err := presenters.PresentConnectorDeployment(connectorDeployment, !invalidSecrets)
 	if err != nil {
 		return private.ConnectorDeployment{}, err
 	}
 
-	shardMetadataJson, err := h.ConnectorTypes.GetConnectorShardMetadata(resource.ConnectorTypeChannelId)
-	if err != nil {
-		return private.ConnectorDeployment{}, err
-	}
-
-	shardMetadata, err2 := shardMetadataJson.ShardMetadata.Object()
-	if err2 != nil {
-		return private.ConnectorDeployment{}, errors.GeneralError("failed to convert shard metadata")
-	}
-
-	converted.Spec.ShardMetadata = shardMetadata
-	converted.Spec.ConnectorSpec = pc.Connector
-	converted.Spec.DesiredState = private.ConnectorDesiredState(pc.DesiredState)
-	converted.Spec.ConnectorId = pc.Id
-	converted.Spec.Kafka = private.KafkaConnectionSettings{
-		Id:  pc.Kafka.Id,
-		Url: pc.Kafka.Url,
-	}
-	converted.Spec.SchemaRegistry = private.SchemaRegistryConnectionSettings{
-		Id:  pc.SchemaRegistry.Id,
-		Url: pc.SchemaRegistry.Url,
-	}
-	converted.Spec.ServiceAccount = private.ServiceAccount{
-		ClientId:     pc.ServiceAccount.ClientId,
-		ClientSecret: pc.ServiceAccount.ClientSecret,
-	}
-	converted.Spec.ConnectorTypeId = pc.ConnectorTypeId
 	return converted, nil
 }
 
@@ -311,7 +277,7 @@ func (h *ConnectorClusterHandler) GetDeployment(w http.ResponseWriter, r *http.R
 				return nil, errors.NotFound("Connector deployment not found")
 			}
 
-			return h.presentDeployment(r, resource)
+			return h.resolveConnectorRefsAndPresentDeployment(resource)
 		},
 	}
 	handlers.HandleGet(w, r, cfg)

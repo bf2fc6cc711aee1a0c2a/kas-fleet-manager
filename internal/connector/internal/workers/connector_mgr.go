@@ -3,6 +3,7 @@ package workers
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"sync"
 	"time"
 
@@ -153,26 +154,45 @@ func (k *ConnectorManager) Reconcile() []error {
 	return errs
 }
 
-func (k *ConnectorManager) ReconcileConnectorCatalogEntry(id string, channel string, ccc *config.ConnectorChannelConfig) *serviceError.ServiceError {
+func (k *ConnectorManager) ReconcileConnectorCatalogEntry(id string, channel string, connectorChannelConfig *config.ConnectorChannelConfig) *serviceError.ServiceError {
 
-	ctc := dbapi.ConnectorShardMetadata{
+	connectorShardMetadata := dbapi.ConnectorShardMetadata{
 		ConnectorTypeId: id,
 		Channel:         channel,
 	}
+
 	var err error
-	ctc.ShardMetadata, err = json.Marshal(ccc.ShardMetadata)
+	connectorShardMetadata.Revision, err = GetShardMetadataRevision(connectorChannelConfig.ShardMetadata)
+	if err != nil {
+		return serviceError.GeneralError("failed to convert connector type %s, channel %s. Error in loaded connector type shard metadata %+v: %v", id, channel, connectorChannelConfig.ShardMetadata, err.Error())
+	}
+	connectorShardMetadata.ShardMetadata, err = json.Marshal(connectorChannelConfig.ShardMetadata)
 	if err != nil {
 		return serviceError.GeneralError("failed to convert connector type %s, channel %s: %v", id, channel, err.Error())
 	}
 
-	// We store connector type channels so we can track changes and trigger redeployment of
+	// We store connector type channels so that we can track changes and trigger redeployment of
 	// associated connectors upon connector type channel changes.
-	_, serr := k.connectorTypesService.PutConnectorShardMetadata(&ctc)
+	_, serr := k.connectorTypesService.PutConnectorShardMetadata(&connectorShardMetadata)
 	if serr != nil {
 		return serr
 	}
 
 	return nil
+}
+
+func GetShardMetadataRevision(connectorShardMetadata map[string]interface{}) (int64, error) {
+	revision, connectorRevisionFound := connectorShardMetadata["connector_revision"]
+	if connectorRevisionFound {
+		floatRevision, isfloat64 := revision.(float64)
+		if isfloat64 {
+			return int64(floatRevision), nil
+		} else {
+			return 0, errors.Errorf("connector_revision in shard metadata was not an int but a %v", reflect.TypeOf(revision).Kind())
+		}
+	} else {
+		return 0, errors.Errorf("connector_revision not found in shard metadata")
+	}
 }
 
 func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *dbapi.Connector) error {
@@ -186,7 +206,7 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *db
 		return nil
 	}
 
-	channelVersion, err := k.connectorTypesService.GetLatestConnectorShardMetadataID(connector.ConnectorTypeId, connector.Channel)
+	shardMetadata, err := k.connectorTypesService.GetLatestConnectorShardMetadata(connector.ConnectorTypeId, connector.Channel)
 	if err != nil {
 		return errors.Wrapf(err, "failed to get latest channel version for connector request %s", connector.ID)
 	}
@@ -203,12 +223,12 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *db
 		Model: db.Model{
 			ID: api.NewID(),
 		},
-		ConnectorID:            connector.ID,
-		ClusterID:              namespace.ClusterId,
-		NamespaceID:            namespace.ID,
-		ConnectorVersion:       connector.Version,
-		ConnectorTypeChannelId: channelVersion,
-		Status:                 dbapi.ConnectorDeploymentStatus{},
+		ConnectorID:              connector.ID,
+		ClusterID:                namespace.ClusterId,
+		NamespaceID:              namespace.ID,
+		ConnectorVersion:         connector.Version,
+		ConnectorShardMetadataID: shardMetadata.ID,
+		Status:                   dbapi.ConnectorDeploymentStatus{},
 	}
 
 	if err = k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {

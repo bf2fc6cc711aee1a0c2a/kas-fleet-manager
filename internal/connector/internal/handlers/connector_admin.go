@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
 	"gorm.io/gorm"
-	"strconv"
 
 	"net/http"
 
@@ -29,7 +31,7 @@ type ConnectorAdminHandler struct {
 	ConnectorsService     services.ConnectorsService
 	NamespaceService      services.ConnectorNamespaceService
 	QuotaConfig           *config.ConnectorsQuotaConfig
-	ConnectorCluster      *ConnectorClusterHandler // TODO eventually move deployent handling into a deployment service
+	ConnectorCluster      *ConnectorClusterHandler //TODO: eventually move deployment handling into a deployment service
 	ConnectorTypesService services.ConnectorTypesService
 }
 
@@ -84,59 +86,6 @@ func (h *ConnectorAdminHandler) ListConnectorClusters(w http.ResponseWriter, r *
 	}
 
 	handlers.HandleList(w, r, cfg)
-}
-
-func (h *ConnectorAdminHandler) GetConnectorUpgradesByType(writer http.ResponseWriter, request *http.Request) {
-
-	id := mux.Vars(request)["connector_cluster_id"]
-	listArgs := coreservices.NewListArguments(request.URL.Query())
-
-	cfg := handlers.HandlerConfig{
-		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
-		},
-		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-
-			upgrades, paging, serviceError := h.Service.GetAvailableDeploymentTypeUpgrades(listArgs)
-			if serviceError != nil {
-				return nil, serviceError
-			}
-			result := make([]private.ConnectorAvailableTypeUpgrade, len(upgrades))
-			for j := range upgrades {
-				result[j] = *presenters.PresentConnectorAvailableTypeUpgrade(&upgrades[j])
-			}
-
-			i = private.ConnectorAvailableTypeUpgradeList{
-				Page:  int32(paging.Page),
-				Size:  int32(paging.Size),
-				Total: int32(paging.Total),
-				Items: result,
-			}
-			return
-		},
-	}
-
-	handlers.HandleGet(writer, request, &cfg)
-}
-
-func (h *ConnectorAdminHandler) UpgradeConnectorsByType(writer http.ResponseWriter, request *http.Request) {
-	resource := make([]private.ConnectorAvailableTypeUpgrade, 0)
-	id := mux.Vars(request)["connector_cluster_id"]
-	cfg := handlers.HandlerConfig{
-		MarshalInto: &resource,
-		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
-		},
-		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-
-			upgrades := make([]dbapi.ConnectorDeploymentTypeUpgrade, len(resource))
-			for i2 := range resource {
-				upgrades[i2] = *presenters.ConvertConnectorAvailableTypeUpgrade(&resource[i2])
-			}
-			return nil, h.Service.UpgradeConnectorsByType(request.Context(), id, upgrades)
-		},
-	}
-	handlers.Handle(writer, request, &cfg, http.StatusNoContent)
 }
 
 func (h *ConnectorAdminHandler) GetConnectorUpgradesByOperator(writer http.ResponseWriter, request *http.Request) {
@@ -470,15 +419,17 @@ func (h *ConnectorAdminHandler) DeleteConnector(writer http.ResponseWriter, requ
 }
 
 func (h *ConnectorAdminHandler) GetClusterDeployments(writer http.ResponseWriter, request *http.Request) {
-	id := mux.Vars(request)["connector_cluster_id"]
+	clusterId := mux.Vars(request)["connector_cluster_id"]
+	channelUpdates := request.URL.Query().Get("channel_updates")
+	danglingDeployments := request.URL.Query().Get("dangling_deployments")
 	listArgs := coreservices.NewListArguments(request.URL.Query())
 	cfg := handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("connector_cluster_id", &clusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), id, listArgs, 0)
+			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), clusterId, channelUpdates, danglingDeployments, listArgs, 0)
 			if err != nil {
 				return nil, err
 			}
@@ -492,14 +443,11 @@ func (h *ConnectorAdminHandler) GetClusterDeployments(writer http.ResponseWriter
 
 			result.Items = make([]private.ConnectorDeploymentAdminView, len(deployments))
 			for i, deployment := range deployments {
-				pd, err := h.ConnectorCluster.presentDeployment(request, deployment)
+				deploymentAdminView, err := presenters.PresentConnectorDeploymentAdminView(deployment, clusterId)
 				if err != nil {
 					return nil, err
 				}
-				result.Items[i], err = presenters.PresentConnectorDeploymentAdminView(pd, deployment.ClusterID)
-				if err != nil {
-					return nil, err
-				}
+				result.Items[i] = deploymentAdminView
 			}
 
 			return result, nil
@@ -527,15 +475,7 @@ func (h *ConnectorAdminHandler) GetConnectorDeployment(writer http.ResponseWrite
 			if deployment.ClusterID != clusterId {
 				return nil, coreservices.HandleGetError(`Connector deployment`, `id`, deploymentId, gorm.ErrRecordNotFound)
 			}
-			pd, err := h.ConnectorCluster.presentDeployment(request, deployment)
-			if err != nil {
-				return nil, err
-			}
-			result, err := presenters.PresentConnectorDeploymentAdminView(pd, deployment.ClusterID)
-			if err != nil {
-				return nil, err
-			}
-			return result, nil
+			return presenters.PresentConnectorDeploymentAdminView(deployment, clusterId)
 		},
 	}
 
@@ -543,20 +483,22 @@ func (h *ConnectorAdminHandler) GetConnectorDeployment(writer http.ResponseWrite
 }
 
 func (h *ConnectorAdminHandler) GetNamespaceDeployments(writer http.ResponseWriter, request *http.Request) {
-	id := mux.Vars(request)["namespace_id"]
+	namespaceId := mux.Vars(request)["namespace_id"]
+	channelUpdates := request.URL.Query().Get("channel_updates")
 	listArgs := coreservices.NewListArguments(request.URL.Query())
+	danglingDeployments := request.URL.Query().Get("dangling_deployments")
 	cfg := handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.Validation("namespace_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
+			handlers.Validation("namespace_id", &namespaceId, handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
 			if len(listArgs.Search) == 0 {
-				listArgs.Search = fmt.Sprintf("namespace_id = %s", id)
+				listArgs.Search = fmt.Sprintf("namespace_id = %s", namespaceId)
 			} else {
-				listArgs.Search = fmt.Sprintf("namespace_id = %s AND (%s)", id, listArgs.Search)
+				listArgs.Search = fmt.Sprintf("namespace_id = %s AND (%s)", namespaceId, listArgs.Search)
 			}
-			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), "", listArgs, 0)
+			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), "", channelUpdates, danglingDeployments, listArgs, 0)
 			if err != nil {
 				return nil, err
 			}
@@ -570,14 +512,11 @@ func (h *ConnectorAdminHandler) GetNamespaceDeployments(writer http.ResponseWrit
 
 			result.Items = make([]private.ConnectorDeploymentAdminView, len(deployments))
 			for i, deployment := range deployments {
-				pd, err := h.ConnectorCluster.presentDeployment(request, deployment)
+				deploymentAdminView, err := presenters.PresentConnectorDeploymentAdminView(deployment, deployment.ClusterID)
 				if err != nil {
 					return nil, err
 				}
-				result.Items[i], err = presenters.PresentConnectorDeploymentAdminView(pd, deployment.ClusterID)
-				if err != nil {
-					return nil, err
-				}
+				result.Items[i] = deploymentAdminView
 			}
 
 			return result, nil
@@ -644,6 +583,65 @@ func (h *ConnectorAdminHandler) GetConnectorType(writer http.ResponseWriter, req
 	}
 
 	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorAdminHandler) PatchConnectorDeployment(writer http.ResponseWriter, request *http.Request) {
+	clusterId := mux.Vars(request)["connector_cluster_id"]
+	deploymentId := mux.Vars(request)["deployment_id"]
+	var resource private.ConnectorDeploymentAdminView
+	cfg := handlers.HandlerConfig{
+		MarshalInto: &resource,
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &clusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("deployment_id", &deploymentId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			// Get existing deployment
+			existingDeployment, serviceError := h.Service.GetDeployment(request.Context(), deploymentId)
+			if serviceError != nil {
+				return nil, serviceError
+			}
+			// check if the cluster ids match
+			if existingDeployment.ClusterID != clusterId {
+				return nil, coreservices.HandleGetError(`Connector existingDeployment`, `id`, deploymentId, gorm.ErrRecordNotFound)
+			}
+
+			// Handle the fields that support being updated...
+			var updatedDeployment dbapi.ConnectorDeployment
+			updatedDeployment.ID = existingDeployment.ID
+			if len(resource.Spec.ShardMetadata) != 0 {
+				// channel update
+				updateRevision, err := workers.GetShardMetadataRevision(resource.Spec.ShardMetadata)
+				if err != nil {
+					return nil, errors.GeneralError("Error in patching deployment, updateRevision not found in shardMetadata %+v: %v", resource.Spec.ShardMetadata, err.Error())
+				}
+				updateShardMetadata, serr := h.ConnectorTypesService.GetConnectorShardMetadata(existingDeployment.ConnectorShardMetadata.ConnectorTypeId, existingDeployment.ConnectorShardMetadata.Channel, updateRevision)
+				if serr != nil {
+					return nil, errors.GeneralError("Error in patching deployment, shardMetadata %+v not found: %v", resource.Spec.ShardMetadata, err.Error())
+				}
+				updatedDeployment.ConnectorShardMetadataID = updateShardMetadata.ID
+				updatedDeployment.ConnectorShardMetadata = *updateShardMetadata
+			} else {
+				// Spec.ShardMetadata is the only updatable field for now
+				return presenters.PresentConnectorDeploymentAdminView(existingDeployment, clusterId)
+			}
+
+			// update
+			uerr := h.Service.UpdateDeployment(&updatedDeployment)
+			if uerr != nil {
+				return nil, uerr
+			}
+
+			// read updated deployment back
+			existingDeployment, serviceError = h.Service.GetDeployment(request.Context(), deploymentId)
+			if serviceError != nil {
+				return nil, serviceError
+			}
+			return presenters.PresentConnectorDeploymentAdminView(existingDeployment, clusterId)
+		},
+	}
+
+	handlers.Handle(writer, request, &cfg, http.StatusAccepted)
 }
 
 func (h *ConnectorAdminHandler) isEvalOrg(id string) bool {

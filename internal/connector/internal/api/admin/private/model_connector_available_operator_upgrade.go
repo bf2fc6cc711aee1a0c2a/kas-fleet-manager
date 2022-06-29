@@ -11,9 +11,9 @@ package private
 
 // ConnectorAvailableOperatorUpgrade An available operator upgrade for a connector
 type ConnectorAvailableOperatorUpgrade struct {
-	ConnectorId     string                                    `json:"connector_id,omitempty"`
-	NamespaceId     string                                    `json:"namespace_id,omitempty"`
-	ConnectorTypeId string                                    `json:"connector_type_id,omitempty"`
-	Channel         string                                    `json:"channel,omitempty"`
-	Operator        ConnectorAvailableOperatorUpgradeOperator `json:"operator,omitempty"`
+	ConnectorId     string                 `json:"connector_id,omitempty"`
+	NamespaceId     string                 `json:"namespace_id,omitempty"`
+	ConnectorTypeId string                 `json:"connector_type_id,omitempty"`
+	Channel         string                 `json:"channel,omitempty"`
+	Operator        ConnectorUpgradeStatus `json:"operator,omitempty"`
 }
