@@ -139,21 +139,21 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *dbapi.KafkaRequest) 
 
 func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaRequest, status *dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError {
 	needsUpdate := false
-	prevActualKafkaVersion := status.KafkaVersion
+	prevActualKafkaVersion := kafka.ActualKafkaVersion
 	if status.KafkaVersion != "" && status.KafkaVersion != kafka.ActualKafkaVersion {
 		logger.Logger.Infof("Updating Kafka version for Kafka ID '%s' from '%s' to '%s'", kafka.ID, prevActualKafkaVersion, status.KafkaVersion)
 		kafka.ActualKafkaVersion = status.KafkaVersion
 		needsUpdate = true
 	}
 
-	prevActualKafkaIBPVersion := status.KafkaIBPVersion
+	prevActualKafkaIBPVersion := kafka.ActualKafkaIBPVersion
 	if status.KafkaIBPVersion != "" && status.KafkaIBPVersion != kafka.ActualKafkaIBPVersion {
 		logger.Logger.Infof("Updating Kafka IBP version for Kafka ID '%s' from '%s' to '%s'", kafka.ID, prevActualKafkaIBPVersion, status.KafkaIBPVersion)
 		kafka.ActualKafkaIBPVersion = status.KafkaIBPVersion
 		needsUpdate = true
 	}
 
-	prevActualStrimziVersion := status.StrimziVersion
+	prevActualStrimziVersion := kafka.ActualStrimziVersion
 	if status.StrimziVersion != "" && status.StrimziVersion != kafka.ActualStrimziVersion {
 		logger.Logger.Infof("Updating Strimzi version for Kafka ID '%s' from '%s' to '%s'", kafka.ID, prevActualStrimziVersion, status.StrimziVersion)
 		kafka.ActualStrimziVersion = status.StrimziVersion
