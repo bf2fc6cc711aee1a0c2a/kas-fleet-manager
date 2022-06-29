@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
@@ -1108,6 +1110,512 @@ func Test_Validation_validateBillingModel(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			validateFn := ValidateBillingModel(&tt.arg.kafkaRequest)
 			err := validateFn()
+			Expect(err != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func Test_validateVersionsCompatibility(t *testing.T) {
+	type args struct {
+		h              *adminKafkaHandler
+		kafkaRequest   dbapi.KafkaRequest
+		kafkaUpdateReq private.KafkaUpdateRequest
+	}
+
+	strimziOperatorVersion := "strimzi-cluster-operator.from-cluster"
+	availableStrimziVersions, err := json.Marshal([]api.StrimziVersion{
+		{
+			Version: strimziOperatorVersion,
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				{
+					Version: "2.7.0",
+				},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				{
+					Version: "2.7",
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal("failed to convert available strimzi versions to json")
+	}
+
+	tests := []struct {
+		name           string
+		args           args
+		wantErr        bool
+		wantStatusCode int
+	}{
+		{
+			name: "should return error if cluster associated with kafka request cannot be found.",
+			args: args{
+				h: &adminKafkaHandler{
+					clusterService: &services.ClusterServiceMock{
+						FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+							return nil, nil
+						},
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
+					Status: constants.KafkaRequestStatusPreparing.String(),
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID:              "test",
+					ActualKafkaIBPVersion:  "2.7",
+					DesiredKafkaIBPVersion: "2.7",
+					KafkaIBPUpgrading:      true,
+					ActualKafkaVersion:     "2.7",
+					DesiredKafkaVersion:    "2.7",
+					DesiredStrimziVersion:  "2.7",
+					KafkaStorageSize:       "100",
+				},
+				kafkaUpdateReq: private.KafkaUpdateRequest{
+					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+					KafkaVersion:    "2.8.2",
+					KafkaIbpVersion: "2.8.1",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error if IsStrimziKafkaVersionAvailableInCluster returns an error",
+			args: args{
+				h: &adminKafkaHandler{
+					clusterService: &services.ClusterServiceMock{
+						FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+							return &api.Cluster{
+								Meta: api.Meta{
+									ID: "id",
+								},
+								ClusterID:                "cluster-id",
+								AvailableStrimziVersions: availableStrimziVersions,
+							}, nil
+						},
+						IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+							return true, errors.GeneralError("test")
+						},
+						CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+							return true, nil
+						},
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
+					Status: constants.KafkaRequestStatusPreparing.String(),
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID:              "cluster-id",
+					ActualKafkaIBPVersion:  "2.7",
+					DesiredKafkaIBPVersion: "2.7",
+					ActualKafkaVersion:     "2.7",
+					DesiredKafkaVersion:    "2.7",
+					DesiredStrimziVersion:  "2.7",
+					KafkaStorageSize:       "100",
+				},
+				kafkaUpdateReq: private.KafkaUpdateRequest{
+					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+					KafkaVersion:    "2.8.2",
+					KafkaIbpVersion: "2.8.1",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error if strimzi version is not available",
+			args: args{
+				h: &adminKafkaHandler{
+					clusterService: &services.ClusterServiceMock{
+						FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+							return &api.Cluster{
+								Meta: api.Meta{
+									ID: "id",
+								},
+								ClusterID:                "cluster-id",
+								AvailableStrimziVersions: availableStrimziVersions,
+							}, nil
+						},
+						IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+							return false, nil
+						},
+						CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+							return true, nil
+						},
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
+					Status: constants.KafkaRequestStatusPreparing.String(),
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID:              "cluster-id",
+					ActualKafkaIBPVersion:  "2.7",
+					DesiredKafkaIBPVersion: "2.7",
+					ActualKafkaVersion:     "2.7",
+					DesiredKafkaVersion:    "2.7",
+					DesiredStrimziVersion:  "2.7",
+					KafkaStorageSize:       "100",
+				},
+				kafkaUpdateReq: private.KafkaUpdateRequest{
+					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+					KafkaVersion:    "2.8.2",
+					KafkaIbpVersion: "2.8.1",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error if strimzi verson is not ready",
+			args: args{
+				h: &adminKafkaHandler{
+					clusterService: &services.ClusterServiceMock{
+						FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+							return &api.Cluster{
+								Meta: api.Meta{
+									ID: "id",
+								},
+								ClusterID:                "cluster-id",
+								AvailableStrimziVersions: availableStrimziVersions,
+							}, nil
+						},
+						IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+							return true, nil
+						},
+						CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+							return false, nil
+						},
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
+					Status: constants.KafkaRequestStatusPreparing.String(),
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID:              "cluster-id",
+					ActualKafkaIBPVersion:  "2.7",
+					DesiredKafkaIBPVersion: "2.7",
+					ActualKafkaVersion:     "2.7",
+					DesiredKafkaVersion:    "2.7",
+					DesiredStrimziVersion:  "2.7",
+					KafkaStorageSize:       "100",
+				},
+				kafkaUpdateReq: private.KafkaUpdateRequest{
+					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+					KafkaVersion:    "2.8.2",
+					KafkaIbpVersion: "2.8.1",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error if CheckStrimziVersionReady returns error",
+			args: args{
+				h: &adminKafkaHandler{
+					clusterService: &services.ClusterServiceMock{
+						FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+							return &api.Cluster{
+								Meta: api.Meta{
+									ID: "id",
+								},
+								ClusterID:                "cluster-id",
+								AvailableStrimziVersions: availableStrimziVersions,
+							}, nil
+						},
+						IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+							return true, nil
+						},
+						CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+							return true, errors.GeneralError("test")
+						},
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
+					Status: constants.KafkaRequestStatusPreparing.String(),
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID:              "cluster-id",
+					ActualKafkaIBPVersion:  "2.7",
+					DesiredKafkaIBPVersion: "2.7",
+					ActualKafkaVersion:     "2.7",
+					DesiredKafkaVersion:    "2.7",
+					DesiredStrimziVersion:  "2.7",
+					KafkaStorageSize:       "100",
+				},
+				kafkaUpdateReq: private.KafkaUpdateRequest{
+					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+					KafkaVersion:    "2.8.2",
+					KafkaIbpVersion: "2.8.1",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error if actual ibp version is greater than desired ibp version",
+			args: args{
+				h: &adminKafkaHandler{
+					clusterService: &services.ClusterServiceMock{
+						FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+							return &api.Cluster{
+								Meta: api.Meta{
+									ID: "id",
+								},
+								ClusterID:                "cluster-id",
+								AvailableStrimziVersions: availableStrimziVersions,
+							}, nil
+						},
+						IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+							return true, nil
+						},
+						CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+							return true, nil
+						},
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
+					Status: constants.KafkaRequestStatusPreparing.String(),
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID:              "cluster-id",
+					ActualKafkaIBPVersion:  "2.8",
+					DesiredKafkaIBPVersion: "2.7",
+					ActualKafkaVersion:     "2.7",
+					DesiredKafkaVersion:    "2.7",
+					DesiredStrimziVersion:  "2.7",
+					KafkaStorageSize:       "100",
+				},
+				kafkaUpdateReq: private.KafkaUpdateRequest{
+					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+					KafkaVersion:    "2.8.2",
+					KafkaIbpVersion: "2.7",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error if actual ibp version and desired ibp version cannot be compared",
+			args: args{
+				h: &adminKafkaHandler{
+					clusterService: &services.ClusterServiceMock{
+						FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+							return &api.Cluster{
+								Meta: api.Meta{
+									ID: "id",
+								},
+								ClusterID:                "cluster-id",
+								AvailableStrimziVersions: availableStrimziVersions,
+							}, nil
+						},
+						IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+							return true, nil
+						},
+						CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+							return true, nil
+						},
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
+					Status: constants.KafkaRequestStatusPreparing.String(),
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID:             "cluster-id",
+					ActualKafkaIBPVersion: "2.8",
+					ActualKafkaVersion:    "2.7",
+					DesiredKafkaVersion:   "2.7",
+					DesiredStrimziVersion: "2.7",
+					KafkaStorageSize:      "100",
+				},
+				kafkaUpdateReq: private.KafkaUpdateRequest{
+					StrimziVersion: "strimzi-cluster-operator.v0.24.0-0",
+					KafkaVersion:   "2.8.2",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error if desired ibp version and desired kafka version cannot be compared.",
+			args: args{
+				h: &adminKafkaHandler{
+					clusterService: &services.ClusterServiceMock{
+						FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+							return &api.Cluster{
+								Meta: api.Meta{
+									ID: "id",
+								},
+								ClusterID:                "cluster-id",
+								AvailableStrimziVersions: availableStrimziVersions,
+							}, nil
+						},
+						IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+							return true, nil
+						},
+						CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+							return true, nil
+						},
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
+					Status: constants.KafkaRequestStatusPreparing.String(),
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID:              "cluster-id",
+					ActualKafkaIBPVersion:  "2.7",
+					DesiredKafkaIBPVersion: "2.7",
+					ActualKafkaVersion:     "2.7",
+					DesiredStrimziVersion:  "2.7",
+					KafkaStorageSize:       "100",
+				},
+				kafkaUpdateReq: private.KafkaUpdateRequest{
+					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+					KafkaIbpVersion: "2.8.1",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error if desired ibp version is greater than desired kafka version",
+			args: args{
+				h: &adminKafkaHandler{
+					clusterService: &services.ClusterServiceMock{
+						FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+							return &api.Cluster{
+								Meta: api.Meta{
+									ID: "id",
+								},
+								ClusterID:                "cluster-id",
+								AvailableStrimziVersions: availableStrimziVersions,
+							}, nil
+						},
+						IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+							return true, nil
+						},
+						CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+							return true, nil
+						},
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
+					Status: constants.KafkaRequestStatusPreparing.String(),
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID:              "cluster-id",
+					ActualKafkaIBPVersion:  "2.8",
+					DesiredKafkaIBPVersion: "2.7",
+					ActualKafkaVersion:     "2.7",
+					DesiredKafkaVersion:    "2.7",
+					DesiredStrimziVersion:  "2.7",
+					KafkaStorageSize:       "100",
+				},
+				kafkaUpdateReq: private.KafkaUpdateRequest{
+					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+					KafkaVersion:    "2.8.2",
+					KafkaIbpVersion: "2.9.1",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error if desired kafka version is a downgrade.",
+			args: args{
+				h: &adminKafkaHandler{
+					clusterService: &services.ClusterServiceMock{
+						FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+							return &api.Cluster{
+								Meta: api.Meta{
+									ID: "id",
+								},
+								ClusterID:                "cluster-id",
+								AvailableStrimziVersions: availableStrimziVersions,
+							}, nil
+						},
+						IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+							return true, nil
+						},
+						CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+							return true, nil
+						},
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
+					Status: constants.KafkaRequestStatusPreparing.String(),
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID:              "cluster-id",
+					ActualKafkaIBPVersion:  "2.4",
+					DesiredKafkaIBPVersion: "2.5",
+					ActualKafkaVersion:     "2.7",
+					DesiredKafkaVersion:    "2.6",
+					DesiredStrimziVersion:  "2.7",
+					KafkaStorageSize:       "100",
+				},
+				kafkaUpdateReq: private.KafkaUpdateRequest{
+					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+					KafkaVersion:    "2.6.2",
+					KafkaIbpVersion: "2.5.1",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return nil if it can Verify kafka",
+			args: args{
+				h: &adminKafkaHandler{
+					clusterService: &services.ClusterServiceMock{
+						FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+							return &api.Cluster{
+								Meta: api.Meta{
+									ID: "id",
+								},
+								ClusterID:                "cluster-id",
+								AvailableStrimziVersions: availableStrimziVersions,
+							}, nil
+						},
+						IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+							return true, nil
+						},
+						CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+							return true, nil
+						},
+					},
+				},
+				kafkaRequest: dbapi.KafkaRequest{
+					Status: constants.KafkaRequestStatusPreparing.String(),
+					Meta: api.Meta{
+						ID: "id",
+					},
+					ClusterID:              "cluster-id",
+					ActualKafkaIBPVersion:  "2.7",
+					DesiredKafkaIBPVersion: "2.7",
+					ActualKafkaVersion:     "2.7",
+					DesiredKafkaVersion:    "2.7",
+					DesiredStrimziVersion:  "2.7",
+					KafkaStorageSize:       "100",
+				},
+				kafkaUpdateReq: private.KafkaUpdateRequest{
+					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+					KafkaVersion:    "2.8.2",
+					KafkaIbpVersion: "2.8.1",
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	RegisterTestingT(t)
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			validate := validateVersionsCompatibility(tt.args.h, &tt.args.kafkaRequest, &tt.args.kafkaUpdateReq)
+			err := validate()
 			Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}

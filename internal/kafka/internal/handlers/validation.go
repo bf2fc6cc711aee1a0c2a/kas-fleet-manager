@@ -3,11 +3,14 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
-	"regexp"
-	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -87,6 +90,58 @@ func ValidateKafkaClusterNameIsUnique(name *string, kafkaService services.KafkaS
 
 		if pageMeta.Total > 0 {
 			return errors.DuplicateKafkaClusterName()
+		}
+
+		return nil
+	}
+}
+
+func validateVersionsCompatibility(h *adminKafkaHandler, kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *private.KafkaUpdateRequest) handlers.Validate {
+	return func() *errors.ServiceError { // Validate strimzi, kafka, and kafka IBP version
+		desiredStrimziVersion := arrays.FirstNonEmptyOrDefault(kafkaRequest.DesiredStrimziVersion, kafkaUpdateReq.StrimziVersion)
+		desiredKafkaVersion := arrays.FirstNonEmptyOrDefault(kafkaRequest.DesiredKafkaVersion, kafkaUpdateReq.KafkaVersion)
+		desiredKafkaIBPVersion := arrays.FirstNonEmptyOrDefault(kafkaRequest.DesiredKafkaIBPVersion, kafkaUpdateReq.KafkaIbpVersion)
+
+		cluster, err := h.clusterService.FindClusterByID(kafkaRequest.ClusterID)
+		if err != nil {
+			return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find cluster associated with kafka request: %s", kafkaRequest.ID)
+		}
+		if cluster == nil {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to get cluster for kafka %s", kafkaRequest.ID))
+		}
+
+		if kafkaVersionAvailable, err := h.clusterService.IsStrimziKafkaVersionAvailableInCluster(cluster, desiredStrimziVersion, desiredKafkaVersion, desiredKafkaIBPVersion); err != nil {
+			return errors.Validation(err.Error())
+		} else if !kafkaVersionAvailable {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with kafka version: %s", kafkaRequest.ID, desiredKafkaVersion))
+		}
+
+		if strimziVersionReady, err := h.clusterService.CheckStrimziVersionReady(cluster, desiredStrimziVersion); err != nil {
+			return errors.Validation(err.Error())
+		} else if !strimziVersionReady {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with strimzi version: %s", kafkaRequest.ID, desiredStrimziVersion))
+		}
+
+		currentIBPVersion, _ := arrays.FirstNonEmpty(kafkaRequest.ActualKafkaIBPVersion, desiredKafkaIBPVersion)
+
+		if vCompOldNewIbp, err := api.CompareBuildAwareSemanticVersions(currentIBPVersion, desiredKafkaIBPVersion); err != nil {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare actual ibp version: %s with desired ibp version: %s", currentIBPVersion, desiredKafkaIBPVersion))
+		} else if vCompOldNewIbp > 0 {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s ibp version: %s to a lower version: %s", kafkaRequest.ID, desiredKafkaIBPVersion, currentIBPVersion))
+		}
+
+		if vCompIbpKafka, err := api.CompareBuildAwareSemanticVersions(desiredKafkaIBPVersion, desiredKafkaVersion); err != nil {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare kafka ibp version: %s with kafka version: %s", desiredKafkaIBPVersion, desiredKafkaVersion))
+		} else if vCompIbpKafka > 0 {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s ibp version: %s with kafka version: %s", kafkaRequest.ID, desiredKafkaIBPVersion, desiredKafkaVersion))
+		}
+
+		currentKafkaVersion, _ := arrays.FirstNonEmpty(kafkaRequest.ActualKafkaVersion, desiredKafkaVersion)
+
+		if vCompKafka, err := api.CompareSemanticVersionsMajorAndMinor(currentKafkaVersion, desiredKafkaVersion); err != nil {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare desired kafka version: %s with actual kafka version: %s", desiredKafkaVersion, currentKafkaVersion))
+		} else if vCompKafka > 0 {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s version: %s to the following kafka version: %s", kafkaRequest.ID, currentKafkaVersion, desiredKafkaVersion))
 		}
 
 		return nil
