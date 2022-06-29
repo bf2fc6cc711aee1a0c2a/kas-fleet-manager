@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	SupportedProviders = config.ProviderConfig{
+	supportedProviders = config.ProviderConfig{
 		ProvidersConfig: config.ProviderConfiguration{
 			SupportedProviders: config.ProviderList{
 				config.Provider{
@@ -33,7 +33,7 @@ var (
 			},
 		},
 	}
-	FullKafkaConfig = config.KafkaConfig{
+	fullKafkaConfig = config.KafkaConfig{
 		SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
 			Configuration: config.SupportedKafkaInstanceTypesConfig{
 				SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
@@ -111,7 +111,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 				url: "/",
 			},
 			fields: fields{
-				providerConfig: &SupportedProviders,
+				providerConfig: &supportedProviders,
 			},
 			wantStatusCode: http.StatusBadRequest,
 		},
@@ -127,7 +127,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 						return nil, errors.GeneralError("test")
 					},
 				},
-				providerConfig: &SupportedProviders,
+				providerConfig: &supportedProviders,
 			},
 			wantStatusCode: http.StatusInternalServerError,
 		},
@@ -143,7 +143,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 						return nil, errors.GeneralError("test")
 					},
 				},
-				providerConfig: &SupportedProviders,
+				providerConfig: &supportedProviders,
 			},
 			wantStatusCode: http.StatusInternalServerError,
 		},
@@ -159,7 +159,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 						return []api.CloudRegion{}, nil
 					},
 				},
-				providerConfig: &SupportedProviders,
+				providerConfig: &supportedProviders,
 			},
 			wantStatusCode: http.StatusOK,
 		},
@@ -192,8 +192,8 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 						}, nil
 					},
 				},
-				providerConfig: &SupportedProviders,
-				kafkaConfig:    &FullKafkaConfig,
+				providerConfig: &supportedProviders,
+				kafkaConfig:    &fullKafkaConfig,
 			},
 			wantStatusCode: http.StatusOK,
 		},
@@ -226,8 +226,8 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 						}, nil
 					},
 				},
-				providerConfig: &SupportedProviders,
-				kafkaConfig:    &FullKafkaConfig,
+				providerConfig: &supportedProviders,
+				kafkaConfig:    &fullKafkaConfig,
 			},
 			wantStatusCode: http.StatusInternalServerError,
 		},
@@ -269,7 +269,7 @@ func Test_ListCloudProviders(t *testing.T) {
 		{
 			name: "should return empty cloud providers list",
 			fields: fields{
-				providerConfig: &SupportedProviders,
+				providerConfig: &supportedProviders,
 				cloudProvidersService: &services.CloudProvidersServiceMock{
 					ListCloudProvidersFunc: func() ([]api.CloudProvider, *errors.ServiceError) {
 						return []api.CloudProvider{}, nil
@@ -281,7 +281,7 @@ func Test_ListCloudProviders(t *testing.T) {
 		{
 			name: "should fail if listing cloud providers by the service fails",
 			fields: fields{
-				providerConfig: &SupportedProviders,
+				providerConfig: &supportedProviders,
 				cloudProvidersService: &services.CloudProvidersServiceMock{
 					ListCloudProvidersFunc: func() ([]api.CloudProvider, *errors.ServiceError) {
 						return nil, errors.GeneralError("test")
@@ -293,7 +293,7 @@ func Test_ListCloudProviders(t *testing.T) {
 		{
 			name: "should return a non-empty cloud providers list",
 			fields: fields{
-				providerConfig: &SupportedProviders,
+				providerConfig: &supportedProviders,
 				cloudProvidersService: &services.CloudProvidersServiceMock{
 					ListCloudProvidersFunc: func() ([]api.CloudProvider, *errors.ServiceError) {
 						return []api.CloudProvider{

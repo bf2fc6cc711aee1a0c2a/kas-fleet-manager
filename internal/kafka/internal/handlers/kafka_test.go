@@ -54,7 +54,7 @@ func Test_KafkaHandler_Get(t *testing.T) {
 						return mocks.BuildKafkaRequest(mocks.WithPredefinedTestValues()), nil
 					},
 				},
-				kafkaConfig: &FullKafkaConfig,
+				kafkaConfig: &fullKafkaConfig,
 			},
 			wantStatusCode: http.StatusOK,
 		},
@@ -200,7 +200,7 @@ func Test_KafkaHandler_List(t *testing.T) {
 						return dbapi.KafkaList{}, &api.PagingMeta{}, nil
 					},
 				},
-				kafkaConfig: &FullKafkaConfig,
+				kafkaConfig: &fullKafkaConfig,
 			},
 			wantStatusCode: http.StatusOK,
 		},
@@ -212,7 +212,7 @@ func Test_KafkaHandler_List(t *testing.T) {
 						return dbapi.KafkaList{{Name: "list"}}, &api.PagingMeta{}, nil
 					},
 				},
-				kafkaConfig: &FullKafkaConfig,
+				kafkaConfig: &fullKafkaConfig,
 			},
 			wantStatusCode: http.StatusOK,
 		},
@@ -224,7 +224,7 @@ func Test_KafkaHandler_List(t *testing.T) {
 						return dbapi.KafkaList{mocks.BuildKafkaRequest(mocks.WithPredefinedTestValues(), mocks.With(mocks.INSTANCE_TYPE, "invalid"))}, &api.PagingMeta{}, nil
 					},
 				},
-				kafkaConfig: &FullKafkaConfig,
+				kafkaConfig: &fullKafkaConfig,
 			},
 			wantStatusCode: http.StatusInternalServerError,
 		},
@@ -280,7 +280,7 @@ func Test_KafkaHandler_Update(t *testing.T) {
 						return nil
 					},
 				},
-				kafkaConfig: &FullKafkaConfig,
+				kafkaConfig: &fullKafkaConfig,
 			},
 			args: args{
 				body: []byte(`{"reauthentication_enabled": true}`),
@@ -307,7 +307,7 @@ func Test_KafkaHandler_Update(t *testing.T) {
 						return true, nil
 					},
 				},
-				kafkaConfig: &FullKafkaConfig,
+				kafkaConfig: &fullKafkaConfig,
 			},
 			args: args{
 				body: []byte(`{"owner": "owner"}`),
@@ -334,7 +334,7 @@ func Test_KafkaHandler_Update(t *testing.T) {
 						return true, nil
 					},
 				},
-				kafkaConfig: &FullKafkaConfig,
+				kafkaConfig: &fullKafkaConfig,
 			},
 			args: args{
 				body: []byte(`{"owner": "owner"}`),
@@ -398,8 +398,8 @@ func Test_KafkaHandler_Create(t *testing.T) {
 						return types.STANDARD, nil
 					},
 				},
-				providerConfig: &SupportedProviders,
-				kafkaConfig:    &FullKafkaConfig,
+				providerConfig: &supportedProviders,
+				kafkaConfig:    &fullKafkaConfig,
 			},
 			args: args{
 				url:  "/kafkas?async=true",
@@ -425,8 +425,8 @@ func Test_KafkaHandler_Create(t *testing.T) {
 						return types.STANDARD, nil
 					},
 				},
-				providerConfig: &SupportedProviders,
-				kafkaConfig:    &FullKafkaConfig,
+				providerConfig: &supportedProviders,
+				kafkaConfig:    &fullKafkaConfig,
 			},
 			args: args{
 				url:  "/kafkas?async=true",
@@ -490,7 +490,7 @@ func Test_KafkaHandler_Create(t *testing.T) {
 						},
 					},
 				},
-				kafkaConfig: &FullKafkaConfig,
+				kafkaConfig: &fullKafkaConfig,
 			},
 			args: args{
 				url:  "/kafkas?async=true",
@@ -513,8 +513,8 @@ func Test_KafkaHandler_Create(t *testing.T) {
 						return types.KafkaInstanceType("invalid"), errors.GeneralError("Unsupported plan provided")
 					},
 				},
-				providerConfig: &SupportedProviders,
-				kafkaConfig:    &FullKafkaConfig,
+				providerConfig: &supportedProviders,
+				kafkaConfig:    &fullKafkaConfig,
 			},
 			args: args{
 				url:  "/kafkas?async=true",
@@ -537,8 +537,8 @@ func Test_KafkaHandler_Create(t *testing.T) {
 						return types.STANDARD, nil
 					},
 				},
-				providerConfig: &SupportedProviders,
-				kafkaConfig:    &FullKafkaConfig,
+				providerConfig: &supportedProviders,
+				kafkaConfig:    &fullKafkaConfig,
 			},
 			args: args{
 				url:  "/kafkas?async=true",
@@ -561,8 +561,8 @@ func Test_KafkaHandler_Create(t *testing.T) {
 						return types.STANDARD, nil
 					},
 				},
-				providerConfig: &SupportedProviders,
-				kafkaConfig:    &FullKafkaConfig,
+				providerConfig: &supportedProviders,
+				kafkaConfig:    &fullKafkaConfig,
 			},
 			args: args{
 				url:  "/kafkas?async=true",
