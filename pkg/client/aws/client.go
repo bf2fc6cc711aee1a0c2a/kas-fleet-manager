@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
-	errors "github.com/zgalor/weberr"
+	errors "github.com/pkg/errors"
 )
 
 type Route53API route53iface.Route53API
@@ -155,7 +155,7 @@ func (client *awsCl) ChangeResourceRecordSets(dnsName string, recordChangeBatch 
 func wrapAWSError(err error, msg string) error {
 	switch err.(type) {
 	case awserr.RequestFailure:
-		return errors.BadRequest.UserWrapf(err, msg)
+		return errors.Wrapf(err, msg)
 	default:
 		return err
 	}

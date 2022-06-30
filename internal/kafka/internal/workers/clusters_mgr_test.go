@@ -23,7 +23,7 @@ import (
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
-	errors "github.com/zgalor/weberr"
+	errors "github.com/pkg/errors"
 
 	k8sCoreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
