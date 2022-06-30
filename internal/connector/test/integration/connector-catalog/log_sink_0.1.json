@@ -151,7 +151,7 @@
   "channels" : {
     "stable" : {
       "shard_metadata" : {
-        "connector_revision" : 5,
+        "connector_revision" : "5",
         "connector_type" : "sink",
         "connector_image" : "quay.io/mcs_dev/log-sink:0.0.1",
         "operators" : [ {

@@ -2,10 +2,9 @@ package queryparser
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/state_machine"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/stringscanner"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -39,7 +38,6 @@ type DBQuery struct {
 	Query        string
 	Values       []interface{}
 	ValidColumns []string
-	ColumnPrefix string
 }
 
 // QueryParser - This object is to be used to parse and validate WHERE clauses (only portion after the `WHERE` is supported)
@@ -143,9 +141,6 @@ func (p *queryParser) initStateMachine() (*state_machine.State, checkUnbalancedB
 			if !contains(p.dbqry.ValidColumns, columnName) {
 				return fmt.Errorf("invalid column name: '%s'", token.Value)
 			}
-			if p.dbqry.ColumnPrefix != "" && !strings.HasPrefix(columnName, p.dbqry.ColumnPrefix+".") {
-				columnName = p.dbqry.ColumnPrefix + "." + columnName
-			}
 			p.dbqry.Query += columnName
 			return nil
 		default:
@@ -222,16 +217,11 @@ func (p *queryParser) Parse(sql string) (*DBQuery, error) {
 }
 
 func NewQueryParser(columns ...string) QueryParser {
-	return NewQueryParserWithColumnPrefix("", columns...)
-}
-
-func NewQueryParserWithColumnPrefix(columnsPrefix string, columns ...string) QueryParser {
 	query := DBQuery{}
 	if len(columns) == 0 {
 		query.ValidColumns = validColumns
 	} else {
 		query.ValidColumns = columns
 	}
-	query.ColumnPrefix = columnsPrefix
 	return &queryParser{dbqry: query}
 }

@@ -4,13 +4,12 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/files"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/files"
 
 	gherrors "github.com/pkg/errors"
 
@@ -36,6 +35,7 @@ type ConnectorsConfig struct {
 var _ environments.ConfigModule = &ConnectorsConfig{}
 
 type ConnectorChannelConfig struct {
+	Revision      int64                  `json:"revision,omitempty"`
 	ShardMetadata map[string]interface{} `json:"shard_metadata,omitempty"`
 }
 

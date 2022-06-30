@@ -398,7 +398,7 @@ Feature: connector agent API
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
-              "connector_revision": 5,
+              "connector_revision": "5",
               "connector_type": "source",
               "kamelets": {
                 "adapter": {
@@ -496,7 +496,7 @@ Feature: connector agent API
               },
               "shard_metadata": {
                 "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
-                "connector_revision": 5,
+                "connector_revision": "5",
                 "connector_type": "source",
                 "kamelets": {
                   "adapter": {
@@ -583,7 +583,7 @@ Feature: connector agent API
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
-              "connector_revision": 5,
+              "connector_revision": "5",
               "connector_type": "source",
               "kamelets": {
                 "adapter": {
@@ -837,7 +837,7 @@ Feature: connector agent API
             },
             "shard_metadata": {
               "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
-              "connector_revision": 5,
+              "connector_revision": "5",
               "connector_type": "source",
               "kamelets": {
                 "adapter": {
@@ -965,7 +965,7 @@ Feature: connector agent API
       "kind": "ConnectorDeploymentAdminView",
       "metadata": {
         "created_at": "${response.metadata.created_at}",
-        "resolved_secrets": false,
+        "resolved_secrets": true,
         "resource_version": ${response.metadata.resource_version},
         "updated_at": "${response.metadata.updated_at}"
       },
@@ -978,7 +978,7 @@ Feature: connector agent API
         "namespace_id": "${connector_namespace_id}",
         "shard_metadata": {
           "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
-          "connector_revision": 5,
+          "connector_revision": "5",
           "connector_type": "source",
           "kamelets": {
             "adapter": {
@@ -1005,28 +1005,8 @@ Feature: connector agent API
         }
       },
       "status": {
-        "conditions": [
-          {
-            "last_transition_time": "2018-01-01T00:00:00Z",
-            "type": "Ready"
-          }
-        ],
         "operators": {
-          "assigned": {
-           "id": "camel-k-1.0.0",
-           "type": "camel-k",
-           "version": "1.0.0"
-          },
-          "available": {}
-        },
-        "phase": "ready",
-        "resource_version": 45,
-        "shard_metadata": {
-          "assigned": {
-            "channel": "stable",
-            "connector_type_id": "aws-sqs-source-v1alpha1",
-            "revision": 5
-          },
+          "assigned": {},
           "available": {}
         }
       }
@@ -1122,14 +1102,14 @@ Feature: connector agent API
 
     # Now lets verify connector upgrades due to catalog updates
     Given I am logged in as "Ricky Bobby"
-    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments?channel_updates=true"
+    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
     And the response code should be 200
     And the response should match json:
       """
       {
        "items": [],
-       "kind": "ConnectorDeploymentAdminViewList",
-       "page": 1,
+       "kind": "",
+       "page": 0,
        "size": 0,
        "total": 0
       }
@@ -1142,7 +1122,7 @@ Feature: connector agent API
       {
        "items": [],
        "kind": "",
-       "page": 1,
+       "page": 0,
        "size": 0,
        "total": 0
       }
@@ -1153,194 +1133,55 @@ Feature: connector agent API
       """
       {
         "connector_image": "quay.io/mock-image:1.0.0",
-        "connector_revision": 42,
         "operators": [
           {
             "type": "camel-k",
-            "version": "[2.0.0]"
+            "versions": "[2.0.0]"
           }
         ]
       }
       """
-    Then I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments?channel_updates=true"
+    Then I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
     And the response code should be 200
     And the response should match json:
       """
       {
-        "items": [
-          {
-            "href": "${response.items[0].href}",
-            "id": "${response.items[0].id}",
-            "kind": "ConnectorDeploymentAdminView",
-            "metadata": {
-              "created_at": "${response.items[0].metadata.created_at}",
-              "resolved_secrets": false,
-              "resource_version": ${response.items[0].metadata.resource_version},
-              "updated_at": "${response.items[0].metadata.updated_at}"
-            },
-            "spec": {
-              "cluster_id": "${connector_cluster_id}",
-              "connector_id": "${connector_id}",
-              "connector_resource_version": ${response.items[0].spec.connector_resource_version},
-              "connector_type_id": "aws-sqs-source-v1alpha1",
-              "desired_state": "ready",
-              "namespace_id": "${response.items[0].spec.namespace_id}",
-              "shard_metadata": {
-                "connector_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
-                "connector_revision": 5,
-                "connector_type": "source",
-                "kamelets": {
-                  "adapter": {
-                    "name": "aws-sqs-source",
-                    "prefix": "aws"
-                  },
-                  "kafka": {
-                    "name": "managed-kafka-sink",
-                    "prefix": "kafka"
-                  },
-                  "processors": {
-                    "extract_field": "extract-field-action",
-                    "has_header_filter": "has-header-filter-action",
-                    "insert_field": "insert-field-action",
-                    "throttle": "throttle-action"
-                  }
-                },
-                "operators": [
-                  {
-                    "type": "camel-k",
-                    "version": "[1.0.0,2.0.0)"
-                  }
-                ]
-              }
-            },
-            "status": {
-              "conditions": [
-                {
-                  "last_transition_time": "${response.items[0].status.conditions[0].last_transition_time}",
-                  "type": "Ready"
-                }
-              ],
-              "operators": {
-                "assigned": {
-                  "id": "camel-k-1.0.0",
-                  "type": "camel-k",
-                  "version": "1.0.0"
-                },
-                "available": {}
-              },
-              "phase": "ready",
-              "resource_version": 45,
-              "shard_metadata": {
-                "assigned": {
-                  "channel": "stable",
-                  "connector_type_id": "aws-sqs-source-v1alpha1",
-                  "revision": 5
-                },
-                "available": {
-                  "channel": "stable",
-                  "connector_type_id": "aws-sqs-source-v1alpha1",
-                  "revision": 42
-                }
-              }
+       "items":
+          [{
+            "connector_id": "${connector_id}",
+            "namespace_id": "${connector_namespace_id}",
+            "connector_type_id": "aws-sqs-source-v1alpha1",
+            "channel": "stable",
+            "shard_metadata": {
+              "assigned_id": ${response.items[0].shard_metadata.assigned_id},
+              "available_id": ${response.items[0].shard_metadata.available_id}
             }
           }],
-       "kind": "ConnectorDeploymentAdminViewList",
-       "page": 1,
+       "kind": "",
+       "page": 0,
        "size": 1,
        "total": 1
       }
       """
-    And I store the ".items[0].status.shard_metadata.available.revision" selection from the response as ${shard_metadata_latest_revision}
-    And I store the ".items[0].id" selection from the response as ${upgradable_deployment_id}
-    And I store the ".items" selection from the response as ${upgradable_deployments}
+    And I store the ".items[0].shard_metadata.available_id" selection from the response as ${connector_resource_version}
+    And I store the ".items" selection from the response as ${upgrade_items}
 
     # Upgrade by type
     # Should fail for Carley, who can't write
-    Given I set the "Content-Type" header to "application/merge-patch+json"
-    When I PATCH path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments/${upgradable_deployment_id}" with json body:
+    Then I PUT path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type" with json body:
       """
-      {
-        "spec": {
-          "shard_metadata": {
-            "connector_revision": ${shard_metadata_latest_revision}
-          }
-        }
-      }
+      ${upgrade_items}
       """
-    Then the response code should be 404
+    And the response code should be 404
 
     # Should work for Cal, who can write
     Given I am logged in as "Cal Naughton Jr."
-    Given I set the "Content-Type" header to "application/merge-patch+json"
-    When I PATCH path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments/${upgradable_deployment_id}" with json body:
+    Then I PUT path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type" with json body:
       """
-     {
-        "spec": {
-          "shard_metadata": {
-            "connector_revision": ${shard_metadata_latest_revision}
-          }
-        }
-      }
+      ${upgrade_items}
       """
-    Then the response code should be 202
-    And the response should match json:
-      """
-      {
-        "href": "${response.href}",
-        "id": "${response.id}",
-        "kind": "ConnectorDeploymentAdminView",
-        "metadata": {
-          "created_at": "${response.metadata.created_at}",
-          "resolved_secrets": false,
-          "resource_version": ${response.metadata.resource_version},
-          "updated_at": "${response.metadata.updated_at}"
-        },
-        "spec": {
-          "cluster_id": "${connector_cluster_id}",
-          "connector_id": "${connector_id}",
-          "connector_resource_version": ${response.spec.connector_resource_version},
-          "connector_type_id": "aws-sqs-source-v1alpha1",
-          "desired_state": "ready",
-          "namespace_id": "${response.spec.namespace_id}",
-          "shard_metadata": {
-            "connector_image": "quay.io/mock-image:1.0.0",
-            "connector_revision": 42,
-            "operators": [
-              {
-                "type": "camel-k",
-                "version": "[2.0.0]"
-              }
-            ]
-          }
-        },
-        "status": {
-          "conditions": [
-            {
-              "last_transition_time": "${response.status.conditions[0].last_transition_time}",
-              "type": "Ready"
-            }
-          ],
-          "operators": {
-            "assigned": {
-              "id": "camel-k-1.0.0",
-              "type": "camel-k",
-              "version": "1.0.0"
-            },
-            "available": {}
-          },
-          "phase": "ready",
-          "resource_version": 45,
-          "shard_metadata": {
-            "assigned": {
-              "channel": "stable",
-              "connector_type_id": "aws-sqs-source-v1alpha1",
-              "revision": 42
-            },
-            "available": {}
-          }
-        }
-      }
-      """
+    And the response code should be 204
+    And the response should match ""
 
     # agent should get updated connector type version
     Given I am logged in as "Shard"
@@ -1350,12 +1191,11 @@ Feature: connector agent API
     And the ".items[0].spec.shard_metadata" selection from the response should match json:
       """"
       {
-       "connector_image": "quay.io/mock-image:1.0.0",
-       "connector_revision": 42,
+        "connector_image": "quay.io/mock-image:1.0.0",
         "operators": [
           {
             "type": "camel-k",
-            "version": "[2.0.0]"
+            "versions": "[2.0.0]"
           }
         ]
       }
@@ -1363,14 +1203,14 @@ Feature: connector agent API
 
     # type upgrade is not available anymore
     Then I am logged in as "Ricky Bobby"
-    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments?channel_updates=true"
+    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/type"
     And the response code should be 200
     And the response should match json:
       """
       {
        "items": [],
-       "kind": "ConnectorDeploymentAdminViewList",
-       "page": 1,
+       "kind": "",
+       "page": 0,
        "size": 0,
        "total": 0
       }
@@ -1424,7 +1264,7 @@ Feature: connector agent API
             }
           }],
        "kind": "",
-       "page": 1,
+       "page": 0,
        "size": 1,
        "total": 1
       }
@@ -1474,7 +1314,7 @@ Feature: connector agent API
       {
        "items": [],
        "kind": "",
-       "page": 1,
+       "page": 0,
        "size": 0,
        "total": 0
       }
@@ -2079,78 +1919,18 @@ Feature: connector agent API
       }
       """
 
-      # listing deployments as Admin with dangling_deployments=true returns the list of dangling deployments
-      When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments?dangling_deployments=true"
-      Then the response code should be 200
+      # listing deployments as Admin returns a not found error for the missing connector
+      When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments"
+      Then the response code should be 404
       And the response should match json:
       """
       {
-        "items": [
-          {
-            "href": "${response.items[0].href}",
-            "id": "${response.items[0].id}",
-            "kind": "ConnectorDeploymentAdminView",
-            "metadata": {
-              "created_at": "${response.items[0].metadata.created_at}",
-              "resolved_secrets": false,
-              "resource_version": ${response.items[0].metadata.resource_version},
-              "updated_at": "${response.items[0].metadata.updated_at}"
-            },
-            "spec": {
-              "cluster_id": "${connector_cluster_id}",
-              "connector_id": "${connector_id}",
-              "connector_resource_version": ${response.items[0].spec.connector_resource_version},
-              "connector_type_id": "log_sink_0.1",
-              "desired_state": "ready",
-              "namespace_id": "${response.items[0].spec.namespace_id}",
-              "shard_metadata": {
-                "connector_image": "quay.io/mcs_dev/log-sink:0.0.1",
-                "connector_revision": 5,
-                "connector_type": "sink",
-                "kamelets": {
-                  "adapter": {
-                    "name": "log-sink",
-                    "prefix": "log"
-                  },
-                  "kafka": {
-                    "name": "managed-kafka-source",
-                    "prefix": "kafka"
-                  },
-                  "processors": {
-                    "extract_field": "extract-field-action",
-                    "has_header_filter": "has-header-filter-action",
-                    "insert_field": "insert-field-action",
-                    "throttle": "throttle-action"
-                  }
-                },
-                "operators": [
-                  {
-                    "type": "camel-connector-operator",
-                    "version": "[1.0.0,2.0.0)"
-                  }
-                ]
-              }
-            },
-            "status": {
-              "operators": {
-                "assigned": {},
-                "available": {}
-              },
-              "shard_metadata": {
-                "assigned": {
-                  "channel": "stable",
-                  "connector_type_id": "log_sink_0.1",
-                  "revision": 5
-                },
-                "available": {}
-              }
-            }
-          }
-        ],
-        "kind": "ConnectorDeploymentAdminViewList",
-        "page": 1,
-        "size": 1,
-        "total": 1
+        "id": "7",
+        "kind": "Error",
+        "href": "/api/connector_mgmt/v1/errors/7",
+        "code": "CONNECTOR-MGMT-7",
+        "reason": "Connector with id='${connector_id}' not found",
+        "operation_id": "${response.operation_id}"
       }
       """
 

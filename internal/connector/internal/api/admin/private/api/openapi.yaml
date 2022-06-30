@@ -453,22 +453,6 @@ paths:
         schema:
           type: string
         style: simple
-      - description: include only deployments that have channel updates
-        explode: true
-        in: query
-        name: channel_updates
-        required: false
-        schema:
-          type: boolean
-        style: form
-      - description: include only not deleted deployments belonging to a deleted connector
-        explode: true
-        in: query
-        name: dangling_deployments
-        required: false
-        schema:
-          type: boolean
-        style: form
       - description: Page index
         examples:
           page:
@@ -612,81 +596,6 @@ paths:
       security:
       - Bearer: []
       summary: Get a connector deployment
-      tags:
-      - Connector Clusters Admin
-    patch:
-      description: Patch a deployment
-      operationId: patchConnectorClusterDeploymentAdmi
-      parameters:
-      - description: The id of the connector cluster
-        explode: false
-        in: path
-        name: connector_cluster_id
-        required: true
-        schema:
-          type: string
-        style: simple
-      - description: The id of the connector deployment
-        explode: false
-        in: path
-        name: deployment_id
-        required: true
-        schema:
-          type: string
-        style: simple
-      requestBody:
-        content:
-          application/merge-patch+json:
-            schema:
-              type: object
-        description: Data to patch the deployment with
-        required: true
-      responses:
-        "202":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConnectorDeploymentAdminView'
-          description: The deployment matching the request
-        "401":
-          content:
-            application/json:
-              examples:
-                "401Example":
-                  $ref: '#/components/examples/401Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Auth token is invalid
-        "404":
-          content:
-            application/json:
-              examples:
-                "404Example":
-                  $ref: '#/components/examples/404Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: No matching resource exists
-        "410":
-          content:
-            application/json:
-              examples:
-                "404Example":
-                  $ref: '#/components/examples/410Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: The requested resource doesn't exist anymore
-        "500":
-          content:
-            application/json:
-              examples:
-                "500Example":
-                  $ref: '#/components/examples/500Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error occurred
-      security:
-      - Bearer: []
-      summary: Patch a deployment
       tags:
       - Connector Clusters Admin
   /api/connector_mgmt/v1/admin/kafka_connector_namespaces:
@@ -1109,22 +1018,6 @@ paths:
         schema:
           type: string
         style: simple
-      - description: include only deployments that have channel updates
-        explode: true
-        in: query
-        name: channel_updates
-        required: false
-        schema:
-          type: boolean
-        style: form
-      - description: include only not deleted deployments belonging to a deleted connector
-        explode: true
-        in: query
-        name: dangling_deployments
-        required: false
-        schema:
-          type: boolean
-        style: form
       - description: Page index
         examples:
           page:
@@ -1167,6 +1060,42 @@ paths:
         explode: true
         in: query
         name: orderBy
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: |
+          Search criteria.
+
+          The syntax of this parameter is similar to the syntax of the `where` clause of a
+          SQL statement. Allowed fields in the search are `name`, `description`, `version`, `label`, and `channel`.
+          Allowed operators are `<>`, `=`, or `LIKE`.
+          Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
+
+          Examples:
+
+          To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:
+
+          ```
+          name = aws-sqs-source and channel = stable
+          ```[p-]
+
+          To return a Kafka instance with a name that starts with `aws`, use the following syntax:
+
+          ```
+          name like aws%25
+          ```
+
+          If the parameter isn't provided, or if the value is empty, then all the Connector Type
+          that the user has permission to see are returned.
+
+          Note. If the query is invalid, an error is returned.
+        examples:
+          search:
+            value: name = aws-sqs-source and channel = stable
+        explode: true
+        in: query
+        name: search
         required: false
         schema:
           type: string
@@ -1318,6 +1247,148 @@ paths:
       security:
       - Bearer: []
       summary: Get a connector
+      tags:
+      - Connector Clusters Admin
+  /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/upgrades/type:
+    get:
+      operationId: getConnectorUpgradesByType
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorAvailableTypeUpgradeList'
+          description: The connectors that have available type upgrades
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector cluster type exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Get a list of available connector type upgrades
+      tags:
+      - Connector Clusters Admin
+    put:
+      operationId: upgradeConnectorsByType
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/ConnectorAvailableTypeUpgrade'
+              type: array
+        description: List of connectors to upgrade
+        required: true
+      responses:
+        "204":
+          description: Connectors are upgraded
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector cluster exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: upgrade a connector cluster
       tags:
       - Connector Clusters Admin
   /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/upgrades/operator:
@@ -1648,6 +1719,32 @@ components:
         code: CONNECTOR-MGMT-7
         reason: The requested resource doesn't exist
   schemas:
+    ConnectorAvailableTypeUpgradeList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ConnectorAvailableTypeUpgradeList_allOf'
+    ConnectorAvailableTypeUpgrade:
+      description: An available type upgrade for a connector
+      example:
+        namespace_id: namespace_id
+        shard_metadata:
+          available_id: 6
+          assigned_id: 0
+        connector_id: connector_id
+        channel: channel
+        connector_type_id: connector_type_id
+      properties:
+        connector_id:
+          type: string
+        namespace_id:
+          type: string
+        connector_type_id:
+          type: string
+        channel:
+          type: string
+        shard_metadata:
+          $ref: '#/components/schemas/ConnectorAvailableTypeUpgrade_shard_metadata'
+      type: object
     ConnectorAvailableOperatorUpgradeList:
       allOf:
       - $ref: '#/components/schemas/List'
@@ -1672,18 +1769,7 @@ components:
         channel:
           type: string
         operator:
-          $ref: '#/components/schemas/ConnectorUpgradeStatus'
-      type: object
-    ConnectorUpgradeStatus:
-      description: Assigned and available update ids
-      example:
-        available_id: available_id
-        assigned_id: assigned_id
-      properties:
-        assigned_id:
-          type: string
-        available_id:
-          type: string
+          $ref: '#/components/schemas/ConnectorAvailableOperatorUpgrade_operator'
       type: object
     ConnectorNamespaceWithTenantRequest:
       allOf:
@@ -1733,36 +1819,6 @@ components:
         shard_metadata:
           type: object
       type: object
-    ConnectorDeploymentAdminStatus:
-      description: The status of connector deployment
-      properties:
-        phase:
-          $ref: '#/components/schemas/ConnectorState'
-        resource_version:
-          format: int64
-          type: integer
-        shard_metadata:
-          $ref: '#/components/schemas/ConnectorDeploymentAdminStatus_shard_metadata'
-        operators:
-          $ref: '#/components/schemas/ConnectorDeploymentAdminStatus_operators'
-        conditions:
-          items:
-            $ref: '#/components/schemas/MetaV1Condition'
-          type: array
-      type: object
-    ConnectorShardMetadata:
-      description: identifies a shard metadata of a connector type.
-      properties:
-        channel:
-          description: the channel of the shard metadata
-          type: string
-        connector_type_id:
-          description: the connector type id this shard metadata refers to
-          type: string
-        revision:
-          description: the revision of the shard metadate
-          format: int64
-          type: integer
     ConnectorDeploymentAdminViewList:
       allOf:
       - $ref: '#/components/schemas/List'
@@ -2001,6 +2057,21 @@ components:
       - provisioning
       - deprovisioning
       type: string
+    ConnectorDeploymentStatus:
+      description: The status of connector deployment
+      properties:
+        phase:
+          $ref: '#/components/schemas/ConnectorState'
+        resource_version:
+          format: int64
+          type: integer
+        operators:
+          $ref: '#/components/schemas/ConnectorDeploymentStatus_operators'
+        conditions:
+          items:
+            $ref: '#/components/schemas/MetaV1Condition'
+          type: array
+      type: object
     ConnectorOperator:
       description: identifies an operator that runs on the fleet shards used to manage
         connectors.
@@ -2041,12 +2112,38 @@ components:
         - json_schema
         - name
         - version
+    ConnectorAvailableTypeUpgradeList_allOf:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ConnectorAvailableTypeUpgrade'
+          type: array
+    ConnectorAvailableTypeUpgrade_shard_metadata:
+      example:
+        available_id: 6
+        assigned_id: 0
+      properties:
+        assigned_id:
+          format: int64
+          type: integer
+        available_id:
+          format: int64
+          type: integer
     ConnectorAvailableOperatorUpgradeList_allOf:
       properties:
         items:
           items:
             $ref: '#/components/schemas/ConnectorAvailableOperatorUpgrade'
           type: array
+    ConnectorAvailableOperatorUpgrade_operator:
+      example:
+        available_id: available_id
+        assigned_id: assigned_id
+      properties:
+        assigned_id:
+          type: string
+        available_id:
+          type: string
     ConnectorNamespaceWithTenantRequest_allOf:
       properties:
         cluster_id:
@@ -2087,20 +2184,7 @@ components:
         spec:
           $ref: '#/components/schemas/ConnectorDeploymentAdminSpec'
         status:
-          $ref: '#/components/schemas/ConnectorDeploymentAdminStatus'
-    ConnectorDeploymentAdminStatus_shard_metadata:
-      description: latest available revision of deployment shared metadata
-      properties:
-        assigned:
-          $ref: '#/components/schemas/ConnectorShardMetadata'
-        available:
-          $ref: '#/components/schemas/ConnectorShardMetadata'
-    ConnectorDeploymentAdminStatus_operators:
-      properties:
-        assigned:
-          $ref: '#/components/schemas/ConnectorOperator'
-        available:
-          $ref: '#/components/schemas/ConnectorOperator'
+          $ref: '#/components/schemas/ConnectorDeploymentStatus'
     ConnectorDeploymentAdminViewList_allOf:
       properties:
         items:
@@ -2184,6 +2268,12 @@ components:
           $ref: '#/components/schemas/ConnectorState'
         error:
           type: string
+    ConnectorDeploymentStatus_operators:
+      properties:
+        assigned:
+          $ref: '#/components/schemas/ConnectorOperator'
+        available:
+          $ref: '#/components/schemas/ConnectorOperator'
     ConnectorType_allOf:
       properties:
         name:

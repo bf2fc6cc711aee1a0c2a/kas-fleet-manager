@@ -9,8 +9,8 @@
 
 package private
 
-// ConnectorUpgradeStatus Assigned and available update ids
-type ConnectorUpgradeStatus struct {
+// ConnectorAvailableOperatorUpgradeOperator struct for ConnectorAvailableOperatorUpgradeOperator
+type ConnectorAvailableOperatorUpgradeOperator struct {
 	AssignedId  string `json:"assigned_id,omitempty"`
 	AvailableId string `json:"available_id,omitempty"`
 }

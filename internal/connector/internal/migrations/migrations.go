@@ -42,7 +42,6 @@ var migrations = []*gormigrate.Migration{
 	addConnectorTypeChecksum("202204050000"),
 	removeConnectorsDeployedColumn("202204270000"),
 	fixConnectorNamespaceVersionTrigger("202206060000"),
-	refactorChannelAndShardMetadata("202206130000"),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

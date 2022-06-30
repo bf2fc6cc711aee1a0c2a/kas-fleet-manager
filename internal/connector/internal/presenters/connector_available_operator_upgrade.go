@@ -11,7 +11,7 @@ func PresentConnectorAvailableOperatorUpgrade(req *dbapi.ConnectorDeploymentOper
 		ConnectorTypeId: req.ConnectorTypeId,
 		NamespaceId:     req.NamespaceID,
 		Channel:         req.Channel,
-		Operator: private.ConnectorUpgradeStatus{
+		Operator: private.ConnectorAvailableOperatorUpgradeOperator{
 			AssignedId:  req.Operator.Assigned.Id,
 			AvailableId: req.Operator.Available.Id,
 		},

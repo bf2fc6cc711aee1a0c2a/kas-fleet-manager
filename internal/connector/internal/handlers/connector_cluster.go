@@ -1,9 +1,6 @@
 package handlers
 
 import (
-	"net/http"
-	"net/url"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -11,6 +8,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/golang/glog"
+	"net/http"
+	"net/url"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 
@@ -36,7 +35,7 @@ type ConnectorClusterHandler struct {
 	Bus                signalbus.SignalBus
 	Service            services.ConnectorClusterService
 	Keycloak           sso.KafkaKeycloakService
-	Connectors         services.ConnectorsService
+	ConnectorTypes     services.ConnectorTypesService
 	ConnectorNamespace services.ConnectorNamespaceService
 	Vault              vault.VaultService
 	ServerConfig       *server.ServerConfig

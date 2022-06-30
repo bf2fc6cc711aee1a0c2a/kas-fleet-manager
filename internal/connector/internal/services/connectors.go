@@ -2,8 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/base64"
-	"fmt"
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
@@ -33,8 +31,6 @@ type ConnectorsService interface {
 	Delete(ctx context.Context, id string) *errors.ServiceError
 	ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) []error
 	ForceDelete(ctx context.Context, id string) *errors.ServiceError
-
-	ResolveConnectorRefsWithBase64Secrets(resource *dbapi.Connector) (bool, *errors.ServiceError)
 }
 
 var _ ConnectorsService = &connectorsService{}
@@ -218,7 +214,7 @@ func GetValidConnectorColumns() []string {
 // List returns all connectors visible to the user within the requested paging window.
 func (k *connectorsService) List(ctx context.Context, listArgs *services.ListArguments, clusterId string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
 	if err := listArgs.Validate(GetValidConnectorColumns()); err != nil {
-		return nil, nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list connector requests: %s", err.Error())
+		return nil, nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list connector type requests: %s", err.Error())
 	}
 
 	dbConn := k.connectionFactory.New()
@@ -392,70 +388,6 @@ func (k *connectorsService) ForceDelete(ctx context.Context, id string) *errors.
 	// delete connector in a separate transaction to allow deleting dangling deployments
 	if err := k.Delete(ctx, id); err != nil {
 		return err
-	}
-	return nil
-}
-
-func (k *connectorsService) ResolveConnectorRefsWithBase64Secrets(connector *dbapi.Connector) (bool, *errors.ServiceError) {
-	err := getSecretsFromVaultAsBase64(connector, k.connectorTypesService, k.vaultService)
-	if err != nil {
-		return err.Code == errors.ErrorGeneral, err
-	}
-
-	return false, nil
-}
-
-func getSecretsFromVaultAsBase64(connector *dbapi.Connector, cts ConnectorTypesService, vault vault.VaultService) *errors.ServiceError {
-	ct, err := cts.Get(connector.ConnectorTypeId)
-	if err != nil {
-		return errors.BadRequest("invalid connector type id: %s", connector.ConnectorTypeId)
-	}
-	// move secrets to a vault.
-
-	if connector.ServiceAccount.ClientSecretRef != "" {
-		v, err := vault.GetSecretString(connector.ServiceAccount.ClientSecretRef)
-		if err != nil {
-			return errors.GeneralError("could not get kafka client secrets from the vault: %v", err.Error())
-		}
-		encoded := base64.StdEncoding.EncodeToString([]byte(v))
-		connector.ServiceAccount.ClientSecret = encoded
-	}
-
-	if len(connector.ConnectorSpec) != 0 {
-		updated, err := secrets.ModifySecrets(ct.JsonSchema, connector.ConnectorSpec, func(node *ajson.Node) error {
-			if node.Type() == ajson.Object {
-				ref, err := node.GetKey("ref")
-				if err != nil {
-					return err
-				}
-				r, err := ref.GetString()
-				if err != nil {
-					return err
-				}
-				v, err := vault.GetSecretString(r)
-				if err != nil {
-					return err
-				}
-
-				encoded := base64.StdEncoding.EncodeToString([]byte(v))
-				err = node.SetObject(map[string]*ajson.Node{
-					"kind":  ajson.StringNode("", "base64"),
-					"value": ajson.StringNode("", encoded),
-				})
-				if err != nil {
-					return err
-				}
-			} else if node.Type() == ajson.Null {
-				// don't change..
-			} else {
-				return fmt.Errorf("secret field must be set to an object: " + node.Path())
-			}
-			return nil
-		})
-		if err != nil {
-			return errors.GeneralError("could not get connectors secrets from the vault: %v", err.Error())
-		}
-		connector.ConnectorSpec = updated
 	}
 	return nil
 }

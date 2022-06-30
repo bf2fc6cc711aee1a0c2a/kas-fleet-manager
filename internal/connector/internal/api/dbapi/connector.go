@@ -84,17 +84,15 @@ type ConnectorWithConditionsList []*ConnectorWithConditions
 // ConnectorDeployment Holds the deployment configuration of a connector
 type ConnectorDeployment struct {
 	db.Model
-	Version                  int64
-	ConnectorID              string
-	Connector                Connector
-	OperatorID               string
-	ConnectorVersion         int64
-	ConnectorShardMetadataID int64
-	ConnectorShardMetadata   ConnectorShardMetadata
-	ClusterID                string
-	NamespaceID              string
-	AllowUpgrade             bool
-	Status                   ConnectorDeploymentStatus `gorm:"foreignKey:ID;references:ID"`
+	Version                int64
+	ConnectorID            string
+	OperatorID             string
+	ConnectorVersion       int64
+	ConnectorTypeChannelId int64
+	ClusterID              string
+	NamespaceID            string
+	AllowUpgrade           bool
+	Status                 ConnectorDeploymentStatus `gorm:"foreignKey:ID"`
 }
 
 type ConnectorDeploymentList []ConnectorDeployment
@@ -123,6 +121,22 @@ type ServiceAccount struct {
 	ClientSecret    string `gorm:"-"`
 	ClientSecretRef string `gorm:"column:client_secret"`
 }
+
+type ConnectorDeploymentTypeUpgrade struct {
+	ConnectorID     string                `json:"connector_id,omitempty"`
+	DeploymentID    string                `json:"deployment_id,omitempty"`
+	ConnectorTypeId string                `json:"connector_type_id,omitempty"`
+	NamespaceID     string                `json:"namespace_id,omitempty"`
+	Channel         string                `json:"channel,omitempty"`
+	ShardMetadata   *ConnectorTypeUpgrade `json:"shard_metadata,omitempty"`
+}
+
+type ConnectorTypeUpgrade struct {
+	AssignedId  int64 `json:"assigned_id,omitempty"`
+	AvailableId int64 `json:"available_id,omitempty"`
+}
+
+type ConnectorDeploymentTypeUpgradeList []ConnectorDeploymentTypeUpgrade
 
 type ConnectorDeploymentOperatorUpgrade struct {
 	ConnectorID     string                    `json:"connector_id,omitempty"`
