@@ -198,8 +198,14 @@ type StrimziVersion struct {
 }
 
 type DynamicCapacityInfo struct {
-	MaxNodes       int32 `json:"max_nodes"`
-	MaxUnits       int32 `json:"max_units"`
+	//MaxNodes is the maximum number of worker nodes assigned to the corresponding machine pool.
+	//The value is read from the configuration and updated once the machine pool has been created
+	MaxNodes int32 `json:"max_nodes"`
+	//MaxUnits is the maximum number of streaming units that can fit into the given MaxNodes value.
+	//The value is updated each time by kas-fleetshard-sync cluster status update API call
+	MaxUnits int32 `json:"max_units"`
+	//RemainingUnits is the remaining number of streaming units to be placed into the machine pool.
+	// The value is updated each time by kas-fleetshard-sync cluster status update API call
 	RemainingUnits int32 `json:"remaining_units"`
 }
 
