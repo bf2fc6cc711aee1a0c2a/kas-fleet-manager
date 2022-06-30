@@ -184,12 +184,7 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 // RelatedResource with "cost" 0 are considered. Only
 // "standard" and "marketplace" billing models are considered. If both are
 // detected "standard" is returned.
-func (q amsQuotaService) getAvailableBillingModelFromKafkaInstanceType(externalID string, instanceType types.KafkaInstanceType, sizeRequired int) (string, error) {
-	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(externalID)
-	if err != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", externalID))
-	}
-
+func (q amsQuotaService) getAvailableBillingModelFromKafkaInstanceType(orgId string, instanceType types.KafkaInstanceType, sizeRequired int) (string, error) {
 	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgId, instanceType.GetQuotaType().GetResourceName(), instanceType.GetQuotaType().GetProduct())
 	if err != nil {
 		return "", errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, instanceType.GetQuotaType().GetProduct())
@@ -253,7 +248,7 @@ func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType
 	// if marketplace was picked and there is a single cloud account of type aws, then we change the billing model to marketplace-aws and
 	// assign the account id
 	if kafka.BillingCloudAccountId == "" && kafka.Marketplace == "" {
-		billingModel, err := q.getAvailableBillingModelFromKafkaInstanceType(kafka.OrganisationId, instanceType, kafkaInstanceSize.CapacityConsumed)
+		billingModel, err := q.getAvailableBillingModelFromKafkaInstanceType(orgId, instanceType, kafkaInstanceSize.CapacityConsumed)
 		if err != nil {
 			return "", err
 		}
