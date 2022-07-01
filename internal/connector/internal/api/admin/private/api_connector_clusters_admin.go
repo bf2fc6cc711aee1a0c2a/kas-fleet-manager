@@ -1573,7 +1573,7 @@ func (a *ConnectorClustersAdminApiService) ListConnectorClusters(ctx _context.Co
 }
 
 /*
-PatchConnectorClusterDeploymentAdmi Patch a deployment
+PatchConnectorClusterDeploymentAdmin Patch a deployment
 Patch a deployment
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param connectorClusterId The id of the connector cluster
@@ -1581,7 +1581,7 @@ Patch a deployment
  * @param body Data to patch the deployment with
 @return ConnectorDeploymentAdminView
 */
-func (a *ConnectorClustersAdminApiService) PatchConnectorClusterDeploymentAdmi(ctx _context.Context, connectorClusterId string, deploymentId string, body map[string]interface{}) (ConnectorDeploymentAdminView, *_nethttp.Response, error) {
+func (a *ConnectorClustersAdminApiService) PatchConnectorClusterDeploymentAdmin(ctx _context.Context, connectorClusterId string, deploymentId string, body map[string]interface{}) (ConnectorDeploymentAdminView, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
@@ -1602,7 +1602,7 @@ func (a *ConnectorClustersAdminApiService) PatchConnectorClusterDeploymentAdmi(c
 	localVarFormParams := _neturl.Values{}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/merge-patch+json"}
+	localVarHTTPContentTypes := []string{"application/merge-patch+json", "application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
