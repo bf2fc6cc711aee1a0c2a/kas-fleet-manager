@@ -708,3 +708,143 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 		})
 	}
 }
+
+func Test_DataPlaneKafkaStatus_getStatus(t *testing.T) {
+	type args struct {
+		status *dbapi.DataPlaneKafkaStatus
+	}
+	tests := []struct {
+		name string
+		args args
+		want kafkaStatus
+	}{
+		{
+			name: "should return statusInstalling if status condition Type is not ready.",
+			args: args{
+				status: &dbapi.DataPlaneKafkaStatus{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type: "Test",
+						},
+					},
+				},
+			},
+			want: statusInstalling,
+		},
+		{
+			name: "should return statusReady if kafka status is true.",
+			args: args{
+				status: &dbapi.DataPlaneKafkaStatus{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type:   "Ready",
+							Status: "True",
+						},
+					},
+				},
+			},
+			want: statusReady,
+		},
+		{
+			name: "should return statusUnknown if if kafka status is unknown.",
+			args: args{
+				status: &dbapi.DataPlaneKafkaStatus{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type:   "Ready",
+							Status: "Unknown",
+						},
+					},
+				},
+			},
+			want: statusUnknown,
+		},
+		{
+			name: "should return statusInstalling if kafka is Installing.",
+			args: args{
+				status: &dbapi.DataPlaneKafkaStatus{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type:   "Ready",
+							Status: "False",
+							Reason: "Installing",
+						},
+					},
+				},
+			},
+			want: statusInstalling,
+		},
+		{
+			name: "should return statusDeleted if kafka is Deleted.",
+			args: args{
+				status: &dbapi.DataPlaneKafkaStatus{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type:   "Ready",
+							Status: "False",
+							Reason: "Deleted",
+						},
+					},
+				},
+			},
+			want: statusDeleted,
+		},
+		{
+			name: "should return statusError if Error.",
+			args: args{
+				status: &dbapi.DataPlaneKafkaStatus{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type:   "Ready",
+							Status: "False",
+							Reason: "Error",
+						},
+					},
+				},
+			},
+			want: statusError,
+		},
+		{
+			name: "should return statusRejectedClusterFull if cluster is full.",
+			args: args{
+				status: &dbapi.DataPlaneKafkaStatus{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type:    "Ready",
+							Status:  "False",
+							Reason:  "Rejected",
+							Message: "Cluster has insufficient resources",
+						},
+					},
+				},
+			},
+			want: statusRejectedClusterFull,
+		},
+		{
+			name: "should return statusRejected if Rejected.",
+			args: args{
+				status: &dbapi.DataPlaneKafkaStatus{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type:   "Ready",
+							Status: "False",
+							Reason: "Rejected",
+						},
+					},
+				},
+			},
+			want: statusRejected,
+		},
+	}
+
+	g := NewWithT(t)
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := getStatus(tt.args.status)
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
