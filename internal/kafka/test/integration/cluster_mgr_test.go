@@ -6,7 +6,6 @@ import (
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -30,12 +29,28 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	var dataplaneConfig *config.DataplaneClusterConfig
-	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *ocm.OCMConfig, d *config.DataplaneClusterConfig) {
-		d.ClusterConfig = config.NewClusterConfig([]config.ManualCluster{test.NewMockDataplaneCluster(mockKafkaClusterName, 1)})
-		dataplaneConfig = d
+	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, p *config.ProviderConfig) {
+		p.ProvidersConfig.SupportedProviders = config.ProviderList{
+			config.Provider{
+				Default: true,
+				Name:    mocks.MockCluster.CloudProvider().ID(),
+				Regions: config.RegionList{
+					config.Region{
+						Default: true,
+						Name:    mocks.MockCluster.Region().ID(),
+						SupportedInstanceTypes: config.InstanceTypeMap{
+							api.StandardTypeSupport.String(): config.InstanceTypeConfig{
+								Limit: nil,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		// turn auto scaling on to enable cluster auto creation
+		d.DataPlaneClusterScalingType = config.AutoScaling
 	})
-	defer teardown()
 
 	// setup required services
 	ocmClient := test.TestServices.OCMClient
@@ -43,29 +58,33 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
 	kasfFleetshardSync.Start()
-	defer kasfFleetshardSync.Stop()
 
-	// create a cluster - this will need to be done manually until cluster creation is implemented in the cluster manager reconcile
-	clusterRegisterError := test.TestServices.ClusterService.RegisterClusterJob(&api.Cluster{
-		CloudProvider:         mocks.MockCluster.CloudProvider().ID(),
-		Region:                mocks.MockCluster.Region().ID(),
-		MultiAZ:               testMultiAZ,
-		Status:                api.ClusterAccepted,
-		IdentityProviderID:    "some-identity-provider-id",
-		SupportedInstanceType: api.AllInstanceTypeSupport.String(),
-	})
+	defer func() {
+		teardown()
+		kasfFleetshardSync.Stop()
 
-	if clusterRegisterError != nil {
-		t.Fatalf("Failed to register cluster: %s", clusterRegisterError.Error())
-	}
+		list, _ := test.TestServices.ClusterService.FindAllClusters(services.FindClusterCriteria{
+			Region:   mocks.MockCluster.Region().ID(),
+			Provider: mocks.MockCluster.CloudProvider().ID(),
+		})
 
-	// set scaling type to auto so that machine pools are created when the cluster starts to be terraformed
-	dataplaneConfig.DataPlaneClusterScalingType = config.AutoScaling
+		for _, clusters := range list {
+			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil {
+				t.Fatalf("Failed to delete service account with client id: %v", clusters.ClientID)
+			}
+			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil {
+				t.Fatalf("Failed to delete service account with cluster id: %v", clusters.ID)
+			}
+		}
+	}()
+
+	// checks that there is a cluster created
 	clusterID, err := common.WaitForClusterIDToBeAssigned(test.TestServices.DBFactory, &test.TestServices.ClusterService, &services.FindClusterCriteria{
-		Region:   mocks.MockCluster.Region().ID(),
-		Provider: mocks.MockCluster.CloudProvider().ID(),
-	},
-	)
+		Region:                mocks.MockCluster.Region().ID(),
+		Provider:              mocks.MockCluster.CloudProvider().ID(),
+		SupportedInstanceType: api.StandardTypeSupport.String(),
+		MultiAZ:               true,
+	})
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
 
@@ -84,19 +103,12 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	Expect(checkReadyErr).NotTo(HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ClusterID, checkReadyErr)
 
 	// check that the cluster has dynamic capacity info persisted
-
 	dynamicCapacityInfo, err := cluster.RetrieveDynamicCapacityInfo()
 	Expect(err).ToNot(HaveOccurred(), "Error retrieving dynamic capacity info")
-	Expect(dynamicCapacityInfo).To(HaveLen(2)) // the cluster supports two instance types so there should be two entries
 	standardCapacity, ok := dynamicCapacityInfo[api.StandardTypeSupport.String()]
 	Expect(ok).To(BeTrue())
 	Expect(standardCapacity.MaxUnits).To(Equal(kasfleetshardsync.StandardCapacityInfo.MaxUnits))
 	Expect(standardCapacity.RemainingUnits).To(Equal(kasfleetshardsync.StandardCapacityInfo.RemainingUnits))
-
-	developerCapacity, ok := dynamicCapacityInfo[api.DeveloperTypeSupport.String()]
-	Expect(ok).To(BeTrue())
-	Expect(developerCapacity.MaxUnits).To(Equal(kasfleetshardsync.DeveloperCapacityInfo.MaxUnits))
-	Expect(developerCapacity.RemainingUnits).To(Equal(kasfleetshardsync.DeveloperCapacityInfo.RemainingUnits))
 
 	// save cluster struct to be reused in subsequent tests and cleanup script
 	err = common.PersistClusterStruct(*cluster, api.ClusterProvisioned)
@@ -133,7 +145,9 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	common.CheckMetricExposed(h, t, metrics.ClusterCreateRequestDuration)
 	common.CheckMetricExposed(h, t, metrics.ClusterStatusSinceCreated)
-	common.CheckMetricExposed(h, t, metrics.ClusterStatusCapacityMax)
+	common.CheckMetricExposed(h, t, metrics.ClusterStatusCapacityUsed)
+	// TODO enable this once we have the max capacity metric for autoscaling
+	// common.CheckMetricExposed(h, t, metrics.ClusterStatusCapacityMax)
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsSuccessCount, constants2.ClusterOperationCreate.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsTotalCount, constants2.ClusterOperationCreate.String()))
 	common.CheckMetric(h, t, fmt.Sprintf("%s_%s{worker_type=\"%s\"}", metrics.KasFleetManager, metrics.ReconcilerDuration, "cluster"), true)

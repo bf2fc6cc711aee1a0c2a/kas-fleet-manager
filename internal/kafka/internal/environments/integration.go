@@ -42,7 +42,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"allow-developer-instance":          "true",
 		"quota-type":                        "quota-management-list",
 		"enable-deletion-of-expired-kafka":  "true",
-		"dataplane-cluster-scaling-type":    "auto", // need to set this to 'auto' for integration environment as some tests rely on this
+		"dataplane-cluster-scaling-type":    "manual",
 		"strimzi-operator-addon-id":         "managed-kafka-qe",
 		"kas-fleetshard-addon-id":           "kas-fleetshard-operator-qe",
 	}
