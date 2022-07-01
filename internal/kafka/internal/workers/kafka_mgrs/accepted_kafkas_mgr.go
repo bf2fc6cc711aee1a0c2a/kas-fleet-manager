@@ -112,15 +112,17 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 
 	kafka.DesiredStrimziVersion = selectedStrimziVersion.Version
 
-	if len(selectedStrimziVersion.KafkaVersions) == 0 {
+	desiredKafkaVersion := selectedStrimziVersion.GetLatestKafkaVersion()
+	if desiredKafkaVersion == nil {
 		return errors.New(fmt.Sprintf("failed to get Kafka version %s", kafka.ID))
 	}
-	kafka.DesiredKafkaVersion = selectedStrimziVersion.KafkaVersions[len(selectedStrimziVersion.KafkaVersions)-1].Version
+	kafka.DesiredKafkaVersion = desiredKafkaVersion.Version
 
-	if len(selectedStrimziVersion.KafkaIBPVersions) == 0 {
+	desiredKafkaIBPVersion := selectedStrimziVersion.GetLatestKafkaIBPVersion()
+	if desiredKafkaIBPVersion == nil {
 		return errors.New(fmt.Sprintf("failed to get Kafka IBP version %s", kafka.ID))
 	}
-	kafka.DesiredKafkaIBPVersion = selectedStrimziVersion.KafkaIBPVersions[len(selectedStrimziVersion.KafkaIBPVersions)-1].Version
+	kafka.DesiredKafkaIBPVersion = desiredKafkaIBPVersion.Version
 
 	glog.Infof("Kafka instance with id %s is assigned to cluster with id %s", kafka.ID, kafka.ClusterID)
 	kafka.Status = constants2.KafkaRequestStatusPreparing.String()
