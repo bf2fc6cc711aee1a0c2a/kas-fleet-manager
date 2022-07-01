@@ -20,6 +20,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const ManagedKafkaBf2DeploymentLabelKey = "bf2.org/deployment"
+const ManagedKafkaBf2DeploymentLabelValueReserved = "reserved"
+
 type Capacity struct {
 	IngressPerSec               string `json:"ingressPerSec"`
 	EgressPerSec                string `json:"egressPerSec"`

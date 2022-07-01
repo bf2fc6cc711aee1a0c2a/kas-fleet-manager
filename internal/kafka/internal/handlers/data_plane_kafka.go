@@ -54,6 +54,12 @@ func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
+			reservedManagedKafkas, err := h.kafkaService.GenerateReservedManagedKafkasByClusterID(clusterID)
+			if err != nil {
+				return nil, err
+			}
+			managedKafkas = append(managedKafkas, reservedManagedKafkas...)
+
 			managedKafkaList := private.ManagedKafkaList{
 				Kind:  "ManagedKafkaList",
 				Items: []private.ManagedKafka{},
@@ -64,6 +70,7 @@ func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 				converted := presenters.PresentManagedKafka(&mk)
 				managedKafkaList.Items = append(managedKafkaList.Items, converted)
 			}
+
 			return managedKafkaList, nil
 		},
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strings"
 
 	kasfleetmanagererrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/pkg/errors"
@@ -277,6 +278,34 @@ func (s *StrimziVersion) DeepCopy() *StrimziVersion {
 	return &res
 }
 
+// GetLatestKafkaVersion returns the latest (most recent) Kafka version
+// in the StrimziVersion. If there are no Kafka versions nil is returned.
+// This method does not perform any sorting of the Kafka versions, it simply
+// returns the latest stored element. Use the StrimziVersionsDeepSort method
+// to get a semantically sorted StrimziVersion beforehand
+func (s *StrimziVersion) GetLatestKafkaVersion() *KafkaVersion {
+	kafkaVersionsLength := len(s.KafkaVersions)
+	if kafkaVersionsLength == 0 {
+		return nil
+	}
+
+	return &s.KafkaVersions[kafkaVersionsLength-1]
+}
+
+// GetLatestKafkaIBPVersion returns the latest (most recent) Kafka IBP version
+// in the StrimziVersion s. If there are no Kafka IBP versions nil is returned.
+// This method does not perform any sorting of the Kafka IBP versions, it simply
+// returns the latest stored element. Use the StrimziVersionsDeepSort method
+// to get a semantically sorted StrimziVersion beorehand
+func (s *StrimziVersion) GetLatestKafkaIBPVersion() *KafkaIBPVersion {
+	kafkaIBPVersionsLength := len(s.KafkaIBPVersions)
+	if kafkaIBPVersionsLength == 0 {
+		return nil
+	}
+
+	return &s.KafkaIBPVersions[kafkaIBPVersionsLength-1]
+}
+
 // GetAvailableAndReadyStrimziVersions returns the cluster's list of available
 // and ready versions or an error. An empty list is returned if there are no
 // available and ready versions
@@ -292,6 +321,27 @@ func (cluster *Cluster) GetAvailableAndReadyStrimziVersions() ([]StrimziVersion,
 			res = append(res, val)
 		}
 	}
+	return res, nil
+}
+
+// GetLatestAvailableAndReadyStrimziVersion returns the latest available and ready
+// strimzi version in the cluster or an error. If there are no available and
+// ready strimzi versions nil is returned.
+// This method does not perform any sorting of the Strimzi versions, it simply
+// returns the latest stored element. Make sure you set the strimzi versions
+// of the cluster using the SetAvailableStrimziVersions method to have
+// a sorted list beforehand
+func (cluster *Cluster) GetLatestAvailableAndReadyStrimziVersion() (*StrimziVersion, error) {
+	strimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
+	if err != nil {
+		return nil, err
+	}
+	strimziVersionsLength := len(strimziVersions)
+	if strimziVersionsLength == 0 {
+		return nil, nil
+	}
+	latestStrimziVersion := strimziVersions[strimziVersionsLength-1]
+	res := latestStrimziVersion.DeepCopy()
 	return res, nil
 }
 
@@ -312,6 +362,27 @@ func (cluster *Cluster) GetAvailableStrimziVersions() ([]StrimziVersion, error) 
 	}
 
 	return versions, nil
+}
+
+// GetLatestAvailableStrimziVersion returns the latest available
+// strimzi version in the cluster or an error. If there are no available
+// strimzi versions nil is returned.
+// This method does not perform any sorting of the Strimzi versions, it simply
+// returns the latest stored element. Make sure you set the strimzi versions
+// of the cluster using the SetAvailableStrimziVersions method to have
+// a sorted list beforehand
+func (cluster *Cluster) GetLatestAvailableStrimziVersion() (*StrimziVersion, error) {
+	strimziVersions, err := cluster.GetAvailableStrimziVersions()
+	if err != nil {
+		return nil, err
+	}
+	strimziVersionsLength := len(strimziVersions)
+	if strimziVersionsLength == 0 {
+		return nil, nil
+	}
+	latestStrimziVersion := strimziVersions[strimziVersionsLength-1]
+	res := latestStrimziVersion.DeepCopy()
+	return res, nil
 }
 
 // StrimziVersionsDeepSort returns a sorted copy of the provided StrimziVersions
@@ -431,4 +502,20 @@ func (cluster *Cluster) RetrieveDynamicCapacityInfo() (map[string]DynamicCapacit
 	}
 
 	return dynamicCapacityInfo, nil
+}
+
+// GetSupportedInstanceTypes returns a list of the supported instance types for
+// the cluster. If there are no supported instance types the result is
+// an empty list
+func (cluster *Cluster) GetSupportedInstanceTypes() []string {
+	if cluster.SupportedInstanceType == "" {
+		return []string{}
+	}
+	return strings.Split(cluster.SupportedInstanceType, ",")
+}
+
+// GetRawSupportedInstanceTypes returns the supported instance types for the
+// cluster. The result is a comma separated string of supported instance types
+func (cluster *Cluster) GetRawSupportedInstanceTypes() string {
+	return cluster.SupportedInstanceType
 }

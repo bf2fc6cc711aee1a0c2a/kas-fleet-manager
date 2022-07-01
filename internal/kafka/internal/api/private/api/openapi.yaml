@@ -3,7 +3,7 @@ info:
   description: Kafka Service Fleet Manager APIs that are used by internal services
     e.g kas-fleetshard operators.
   title: Kafka Service Fleet Manager
-  version: 1.6.0
+  version: 1.7.0
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -455,6 +455,8 @@ components:
         bf2.org/kafkaInstanceProfileType:
           type: string
         bf2.org/kafkaInstanceProfileQuotaConsumed:
+          type: string
+        bf2.org/deployment:
           type: string
       required:
       - bf2.org/kafkaInstanceProfileQuotaConsumed

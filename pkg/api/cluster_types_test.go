@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 )
 
-func TestGetAvailableStrimziVersions(t *testing.T) {
+func Test_Cluster_GetAvailableStrimziVersions(t *testing.T) {
 	tests := []struct {
 		name    string
 		cluster func() *Cluster
@@ -69,22 +70,88 @@ func TestGetAvailableStrimziVersions(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			res, err := tt.cluster().GetAvailableStrimziVersions()
-			gotErr := err != nil
-			if gotErr != tt.wantErr {
-				t.Errorf("wantErr: %v got: %v", tt.wantErr, err)
-			}
-			Expect(res).To(Equal(tt.want))
+			g.Expect(err != nil).To(Equal(tt.wantErr), "wantErr: %v got: %v", tt.wantErr, err)
+			g.Expect(res).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestGetAvailableAndReadyStrimziVersions(t *testing.T) {
+func Test_Cluster_GetLatestAvailableStrimziVersion(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster func() *Cluster
+		want    *StrimziVersion
+		wantErr bool
+	}{
+		{
+			name: "When cluster has a non empty list of available strimzi versions the latest one is returned",
+			cluster: func() *Cluster {
+				inputStrimziVersions := []StrimziVersion{
+					{Version: "v3", Ready: true},
+					{Version: "v6", Ready: false},
+					{Version: "v7", Ready: false},
+				}
+				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersions)
+				if err != nil {
+					panic(err)
+				}
+				res := Cluster{AvailableStrimziVersions: inputStrimziVersionsJSON}
+				return &res
+			},
+			want:    &StrimziVersion{Version: "v7", Ready: false},
+			wantErr: false,
+		},
+		{
+			name: "When cluster has an empty list of available strimzi nil is returned",
+			cluster: func() *Cluster {
+				inputStrimziVersions := []StrimziVersion{}
+				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersions)
+				if err != nil {
+					panic(err)
+				}
+				res := Cluster{AvailableStrimziVersions: inputStrimziVersionsJSON}
+				return &res
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name: "When cluster has a nil list of available strimzi the empty list is returned",
+			cluster: func() *Cluster {
+				res := Cluster{AvailableStrimziVersions: nil}
+				return &res
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name: "When cluster has an invalid JSON an error is returned",
+			cluster: func() *Cluster {
+				res := Cluster{AvailableStrimziVersions: []byte(`"keyone": valueone`)}
+				return &res
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			res, err := tt.cluster().GetLatestAvailableStrimziVersion()
+			g.Expect(err != nil).To(Equal(tt.wantErr), "wantErr: %v got: %v", tt.wantErr, err)
+			g.Expect(res).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_Cluster_GetAvailableAndReadyStrimziVersions(t *testing.T) {
 	tests := []struct {
 		name    string
 		cluster func() *Cluster
@@ -153,6 +220,76 @@ func TestGetAvailableAndReadyStrimziVersions(t *testing.T) {
 			res, err := tt.cluster().GetAvailableAndReadyStrimziVersions()
 			Expect(err != nil).To(Equal(tt.wantErr))
 			Expect(res).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_Cluster_GetLatestAvailableAndReadyStrimziVersion(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster func() *Cluster
+		want    *StrimziVersion
+		wantErr bool
+	}{
+		{
+			name: "When cluster has a non empty list of available strimzi versions those ready returned",
+			cluster: func() *Cluster {
+				inputStrimziVersions := []StrimziVersion{
+					{Version: "v3", Ready: true},
+					{Version: "v7", Ready: true},
+					{Version: "v9", Ready: false},
+				}
+				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersions)
+				if err != nil {
+					panic(err)
+				}
+				res := Cluster{AvailableStrimziVersions: inputStrimziVersionsJSON}
+				return &res
+			},
+			want:    &StrimziVersion{Version: "v7", Ready: true},
+			wantErr: false,
+		},
+		{
+			name: "When cluster has an empty list of available strimzi nil is returned",
+			cluster: func() *Cluster {
+				inputStrimziVersions := []StrimziVersion{}
+				inputStrimziVersionsJSON, err := json.Marshal(inputStrimziVersions)
+				if err != nil {
+					panic(err)
+				}
+				res := Cluster{AvailableStrimziVersions: inputStrimziVersionsJSON}
+				return &res
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name: "When cluster has a nil list of available strimzi nil is returned",
+			cluster: func() *Cluster {
+				res := Cluster{AvailableStrimziVersions: nil}
+				return &res
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name: "When cluster has an invalid JSON an error is returned",
+			cluster: func() *Cluster {
+				res := Cluster{AvailableStrimziVersions: []byte(`"keyone": valueone`)}
+				return &res
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			res, err := tt.cluster().GetLatestAvailableAndReadyStrimziVersion()
+			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(res).To(Equal(tt.want))
 		})
 	}
 }
@@ -601,6 +738,100 @@ func Test_CompareSemanticVersionsMajorAndMinor(t *testing.T) {
 	}
 }
 
+func Test_Cluster_GetLatestKafkaVersion(t *testing.T) {
+	tests := []struct {
+		name                  string
+		strimziVersionFactory func() *StrimziVersion
+		want                  *KafkaVersion
+	}{
+		{
+			name: "returns the latest element in the kafka versions list",
+			strimziVersionFactory: func() *StrimziVersion {
+				strimziVersion := &StrimziVersion{
+					KafkaVersions: []KafkaVersion{
+						KafkaVersion{Version: "1.5.3"},
+						KafkaVersion{Version: "2.3.6"},
+						KafkaVersion{Version: "1.2.0"},
+						KafkaVersion{Version: "0.6.2"},
+					},
+				}
+				versions := []StrimziVersion{*strimziVersion}
+				sortedVersions, err := StrimziVersionsDeepSort(versions)
+				if err != nil || len(sortedVersions) != 1 {
+					panic("unexpected test error")
+				}
+				return &sortedVersions[0]
+			},
+			want: &KafkaVersion{Version: "2.3.6"},
+		},
+		{
+			name: "returns an nil if there are no kafka versions in the strimzi version",
+			strimziVersionFactory: func() *StrimziVersion {
+				return &StrimziVersion{}
+			},
+			want: nil,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(test *testing.T) {
+			test.Parallel()
+			g := NewWithT(t)
+			strimziVersion := tt.strimziVersionFactory()
+			res := strimziVersion.GetLatestKafkaVersion()
+			g.Expect(res).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_Cluster_GetLatestKafkaIBPVersion(t *testing.T) {
+	tests := []struct {
+		name                  string
+		strimziVersionFactory func() *StrimziVersion
+		want                  *KafkaIBPVersion
+	}{
+		{
+			name: "returns the latest element in the kafka versions list",
+			strimziVersionFactory: func() *StrimziVersion {
+				strimziVersion := &StrimziVersion{
+					KafkaIBPVersions: []KafkaIBPVersion{
+						KafkaIBPVersion{Version: "1.5.3"},
+						KafkaIBPVersion{Version: "2.3.6"},
+						KafkaIBPVersion{Version: "1.2.0"},
+						KafkaIBPVersion{Version: "0.6.2"},
+					},
+				}
+				versions := []StrimziVersion{*strimziVersion}
+				sortedVersions, err := StrimziVersionsDeepSort(versions)
+				if err != nil || len(sortedVersions) != 1 {
+					panic("unexpected test error")
+				}
+				return &sortedVersions[0]
+			},
+			want: &KafkaIBPVersion{Version: "2.3.6"},
+		},
+		{
+			name: "returns an nil if there are no kafka versions in the strimzi version",
+			strimziVersionFactory: func() *StrimziVersion {
+				return &StrimziVersion{}
+			},
+			want: nil,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(test *testing.T) {
+			test.Parallel()
+			g := NewWithT(t)
+			strimziVersion := tt.strimziVersionFactory()
+			res := strimziVersion.GetLatestKafkaIBPVersion()
+			g.Expect(res).To(Equal(tt.want))
+		})
+	}
+}
+
 func Test_ClusterTypes_Index(t *testing.T) {
 	cluster := &Cluster{
 		Meta: Meta{
@@ -901,6 +1132,80 @@ func Test_Cluster_RetrieveDynamicCapacityInfo(t *testing.T) {
 			if !tt.wantErr {
 				g.Expect(dynamicCapacityInfo).To(Equal(tt.want))
 			}
+		})
+	}
+}
+
+func Test_Cluster_GetSupportedInstanceTypes(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    []string
+	}{
+		{
+			name: "returns correct result when there is only a supported instance type",
+			cluster: &Cluster{
+				SupportedInstanceType: "exampleinstancetype",
+			},
+			want: []string{"exampleinstancetype"},
+		},
+		{
+			name: "returns correct result when there are multiple supported instance types",
+			cluster: &Cluster{
+				SupportedInstanceType: "exampleinstancetype3,exampleinstancetype2,exampleinstancetype6",
+			},
+			want: []string{"exampleinstancetype3", "exampleinstancetype2", "exampleinstancetype6"},
+		},
+		{
+			name:    "returns an empty list when there are no supported instance types",
+			cluster: &Cluster{},
+			want:    []string{},
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(test *testing.T) {
+			g := NewWithT(t)
+			res := tt.cluster.GetSupportedInstanceTypes()
+			g.Expect(res).To(Equal(tt.want))
+		})
+	}
+}
+
+func Test_Cluster_GetRawSupportedInstanceTypes(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    string
+	}{
+		{
+			name: "returns correct result when there is only a supported instance type",
+			cluster: &Cluster{
+				SupportedInstanceType: "exampleinstancetype",
+			},
+			want: "exampleinstancetype",
+		},
+		{
+			name: "returns correct result when there are multiple supported instance types",
+			cluster: &Cluster{
+				SupportedInstanceType: "exampleinstancetype3,exampleinstancetype2,exampleinstancetype6",
+			},
+			want: "exampleinstancetype3,exampleinstancetype2,exampleinstancetype6",
+		},
+		{
+			name:    "returns an empty string when there are no supported instance types",
+			cluster: &Cluster{},
+			want:    "",
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(test *testing.T) {
+			g := NewWithT(t)
+			res := tt.cluster.GetRawSupportedInstanceTypes()
+			g.Expect(res).To(Equal(tt.want))
 		})
 	}
 }

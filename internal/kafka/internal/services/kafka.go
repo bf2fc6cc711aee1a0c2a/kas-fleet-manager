@@ -68,6 +68,17 @@ type KafkaService interface {
 	Delete(*dbapi.KafkaRequest) *errors.ServiceError
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
+	// GenerateReservedManagedKafkasByClusterID returns a list of reserved managed
+	// kafkas for a given clusterID. The number of generated reserved managed kafkas
+	// is the sum of the reserved streaming units among all instance types supported
+	// by the cluster.
+	// If dynamic scaling is disabled the result is an empty list.
+	// If the cluster is not in ready status the result is an empty list.
+	// Generated kafka names have the following naming schema:
+	// reserved-kafka-<instance_type>-<kafka_number> where kafka_number goes from
+	// 1..<number_of_reserved_streaming_units_for_the_given_instance_type>
+	// Each generated reserved kafka has a namespace equal to its name
+	GenerateReservedManagedKafkasByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
 	ListByStatus(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError)
 	// UpdateStatus change the status of the Kafka cluster
@@ -776,6 +787,56 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 	return res, nil
 }
 
+func (k *kafkaService) GenerateReservedManagedKafkasByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError) {
+	reservedKafkas := []managedkafka.ManagedKafka{}
+
+	if !k.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
+		return reservedKafkas, nil
+	}
+
+	cluster, svcErr := k.clusterService.FindClusterByID(clusterID)
+	if svcErr != nil {
+		return nil, svcErr
+	}
+	if cluster == nil {
+		return nil, apiErrors.GeneralError("failed to generate reserved managed kafkas for clusterID %s: clusterID not found", clusterID)
+	}
+	if cluster.Status != api.ClusterReady {
+		logger.Logger.Warningf("ClusterID '%s' is not ready. Its status is '%s'. Returning an empty list of reserved managed kafkas", clusterID, cluster.Status)
+		return reservedKafkas, nil
+	}
+
+	latestStrimziVersion, err := cluster.GetLatestAvailableAndReadyStrimziVersion()
+	if err != nil {
+		return nil, errors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to generate reserved managed kafkas for clusterID %s: error finding ready strimzi versions", clusterID)
+	}
+	if latestStrimziVersion == nil {
+		return nil, apiErrors.GeneralError("failed to generate reserved managed kafkas for clusterID %s: no ready strimzi versions found", clusterID)
+	}
+
+	supportedInstanceTypes := cluster.GetSupportedInstanceTypes()
+
+	for _, supportedInstanceType := range supportedInstanceTypes {
+		instanceTypeDynamicScalingConfig, ok := k.dataplaneClusterConfig.DynamicScalingConfig.ForInstanceType(supportedInstanceType)
+		if !ok {
+			return nil, apiErrors.GeneralError("failed to generate reserved managed kafkas for clusterID %s: dynamic scaling config for instance type '%s' not found", clusterID, supportedInstanceType)
+		}
+		numReservedInstances := instanceTypeDynamicScalingConfig.ReservedStreamingUnits
+		for i := 1; i <= numReservedInstances; i++ {
+			generatedKafkaID := fmt.Sprintf("reserved-kafka-%s-%d", supportedInstanceType, i)
+			res, err := k.buildReservedManagedKafkaCR(generatedKafkaID, supportedInstanceType, *latestStrimziVersion)
+			if err != nil {
+				return nil, err
+			}
+
+			reservedKafkas = append(reservedKafkas, *res)
+		}
+
+	}
+
+	return reservedKafkas, nil
+}
+
 func (k *kafkaService) Update(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
 		Model(kafkaRequest).
@@ -1147,6 +1208,73 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		}
 	}
 
+	return managedKafkaCR, nil
+}
+
+// buildReservedManagedKafkaCR builds a Reserved Managed Kafka CR.
+// The ID, K8s object ID, K8s namespace and PlacementID are all set to
+// the provided kafkaID.
+func (k *kafkaService) buildReservedManagedKafkaCR(kafkaID string, instanceType string, desiredStrimziVersion api.StrimziVersion) (*managedkafka.ManagedKafka, *errors.ServiceError) {
+	// Reserved instances always make use of the streaming base unit which is x1.
+	// For now we hardcode it but there might be a better alternative to it.
+	streamingBaseUnit := "x1"
+	kafkaInstanceSize, err := k.kafkaConfig.GetKafkaInstanceSize(instanceType, streamingBaseUnit)
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka request")
+	}
+	labels := map[string]string{
+		"bf2.org/kafkaInstanceProfileQuotaConsumed":    strconv.Itoa(kafkaInstanceSize.QuotaConsumed),
+		"bf2.org/kafkaInstanceProfileType":             instanceType,
+		managedkafka.ManagedKafkaBf2DeploymentLabelKey: managedkafka.ManagedKafkaBf2DeploymentLabelValueReserved,
+	}
+
+	desiredKafkaVersion := desiredStrimziVersion.GetLatestKafkaVersion()
+	if desiredKafkaVersion == nil {
+		return nil, errors.GeneralError("no available Kafka versions in Strimzi version %s", desiredStrimziVersion.Version)
+	}
+	desiredKafkaIBPVersion := desiredStrimziVersion.GetLatestKafkaIBPVersion()
+	if desiredKafkaIBPVersion == nil {
+		return nil, errors.GeneralError("no available Kafka IBP versions in Strimzi version %s", desiredStrimziVersion.Version)
+	}
+
+	managedKafkaCR := &managedkafka.ManagedKafka{
+		Id: kafkaID,
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ManagedKafka",
+			APIVersion: "managedkafka.bf2.org/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kafkaID,
+			Namespace: kafkaID,
+			Annotations: map[string]string{
+				"bf2.org/id":          kafkaID,
+				"bf2.org/placementId": kafkaID,
+			},
+			Labels: labels,
+		},
+		Spec: managedkafka.ManagedKafkaSpec{
+			Capacity: managedkafka.Capacity{
+				IngressPerSec:               kafkaInstanceSize.IngressThroughputPerSec.String(),
+				EgressPerSec:                kafkaInstanceSize.EgressThroughputPerSec.String(),
+				TotalMaxConnections:         kafkaInstanceSize.TotalMaxConnections,
+				MaxDataRetentionSize:        kafkaInstanceSize.MaxDataRetentionSize.String(),
+				MaxPartitions:               kafkaInstanceSize.MaxPartitions,
+				MaxDataRetentionPeriod:      kafkaInstanceSize.MaxDataRetentionPeriod,
+				MaxConnectionAttemptsPerSec: kafkaInstanceSize.MaxConnectionAttemptsPerSec,
+			},
+			Endpoint: managedkafka.EndpointSpec{
+				BootstrapServerHost: fmt.Sprintf("%s-dummyhost", kafkaID),
+			},
+			Versions: managedkafka.VersionsSpec{
+				Kafka:    desiredKafkaVersion.Version,
+				Strimzi:  desiredStrimziVersion.Version,
+				KafkaIBP: desiredKafkaIBPVersion.Version,
+			},
+			Deleted: false,
+			Owners:  []string{}, // TODO is this enough?
+		},
+		Status: managedkafka.ManagedKafkaStatus{},
+	}
 	return managedKafkaCR, nil
 }
 
