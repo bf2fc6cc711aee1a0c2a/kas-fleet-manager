@@ -21,15 +21,16 @@ import (
 type kafkaStatus string
 
 const (
-	statusInstalling kafkaStatus = "installing"
-	statusReady      kafkaStatus = "ready"
-	statusError      kafkaStatus = "error"
-	statusRejected   kafkaStatus = "rejected"
-	statusDeleted    kafkaStatus = "deleted"
-	statusUnknown    kafkaStatus = "unknown"
-	strimziUpdating  string      = "StrimziUpdating"
-	kafkaUpdating    string      = "KafkaUpdating"
-	kafkaIBPUpdating string      = "KafkaIbpUpdating"
+	statusInstalling          kafkaStatus = "installing"
+	statusReady               kafkaStatus = "ready"
+	statusError               kafkaStatus = "error"
+	statusRejected            kafkaStatus = "rejected"
+	statusRejectedClusterFull kafkaStatus = "rejectedClusterFull"
+	statusDeleted             kafkaStatus = "deleted"
+	statusUnknown             kafkaStatus = "unknown"
+	strimziUpdating           string      = "StrimziUpdating"
+	kafkaUpdating             string      = "KafkaUpdating"
+	kafkaIBPUpdating          string      = "KafkaIbpUpdating"
 )
 
 //go:generate moq -out data_plane_kafka_service_moq.go . DataPlaneKafkaService
@@ -298,6 +299,9 @@ func getStatus(status *dbapi.DataPlaneKafkaStatus) kafkaStatus {
 				return statusError
 			}
 			if strings.EqualFold(c.Reason, "Rejected") {
+				if strings.EqualFold(c.Message, "Cluster has insufficient resources") {
+					return statusRejectedClusterFull
+				}
 				return statusRejected
 			}
 		}
