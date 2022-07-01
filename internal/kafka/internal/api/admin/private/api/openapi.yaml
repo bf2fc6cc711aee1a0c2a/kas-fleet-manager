@@ -1,6 +1,12 @@
 openapi: 3.0.0
 info:
+  contact:
+    email: rhosak-support@redhat.com
+    name: Red Hat Hybrid Cloud Console
   description: The admin APIs for the fleet manager of Kafka service
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
   title: Kafka Service Fleet Manager Admin APIs
   version: 0.1.0
 servers:
@@ -17,6 +23,7 @@ tags:
 paths:
   /api/kafkas_mgmt/v1/admin/kafkas:
     get:
+      description: Returns a list of Kafkas
       operationId: getKafkas
       parameters:
       - description: Page index
@@ -154,9 +161,9 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-      summary: Returns a list of Kafkas
   /api/kafkas_mgmt/v1/admin/kafkas/{id}:
     delete:
+      description: Delete a Kafka by ID
       operationId: deleteKafkaById
       parameters:
       - description: The ID of record
@@ -206,8 +213,8 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-      summary: Delete a Kafka by ID
     get:
+      description: Return the details of Kafka instance by id
       operationId: getKafkaById
       parameters:
       - description: The ID of record
@@ -249,8 +256,8 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-      summary: Return the details of Kafka instance by id
     patch:
+      description: Update a Kafka instance by id
       operationId: updateKafkaById
       parameters:
       - description: The ID of record
@@ -305,7 +312,6 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-      summary: Update a Kafka instance by id
 components:
   schemas:
     Kafka:
@@ -351,9 +357,26 @@ components:
           type: integer
       type: object
     Error:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/Error_allOf'
+      properties:
+        reason:
+          type: string
+        operation_id:
+          type: string
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+        code:
+          type: string
+      required:
+      - code
+      - href
+      - id
+      - kind
+      - reason
+      type: object
     ObjectReference:
       properties:
         id:
@@ -362,6 +385,10 @@ components:
           type: string
         href:
           type: string
+      required:
+      - href
+      - id
+      - kind
       type: object
     List:
       properties:
@@ -475,14 +502,6 @@ components:
             allOf:
             - $ref: '#/components/schemas/Kafka'
           type: array
-    Error_allOf:
-      properties:
-        code:
-          type: string
-        reason:
-          type: string
-        operation_id:
-          type: string
   securitySchemes:
     Bearer:
       bearerFormat: JWT

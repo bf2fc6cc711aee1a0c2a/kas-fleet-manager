@@ -146,14 +146,15 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/spectral 2> /dev/null))
 	mkdir -p ${LOCAL_BIN_PATH} ;\
 	mkdir -p ${LOCAL_BIN_PATH}/spectral-installation ;\
 	cd ${LOCAL_BIN_PATH} ;\
-	${NPM} install --prefix ${LOCAL_BIN_PATH}/spectral-installation @stoplight/spectral ;\
-	${NPM} i --prefix ${LOCAL_BIN_PATH}/spectral-installation @rhoas/spectral-ruleset ;\
+	${NPM} install --prefix ${LOCAL_BIN_PATH}/spectral-installation @stoplight/spectral@5.9.2 ;\
+	${NPM} i --prefix ${LOCAL_BIN_PATH}/spectral-installation @rhoas/spectral-ruleset@0.1.4 ;\
 	ln -s spectral-installation/node_modules/.bin/spectral spectral ;\
 	}
 endif
-openapi/spec/validate: specinstall
-	spectral lint openapi/kas-fleet-manager.yaml openapi/kas-fleet-manager-private-admin.yaml
 
+openapi/spec/validate: specinstall
+	spectral lint openapi/kas-fleet-manager.yaml
+	spectral lint -s 'rhoas-external-$$ref' -s rhoas-list-schema -s rhoas-object-schema -s rhoas-error-schema openapi/kas-fleet-manager-private-admin.yaml
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
         PGHOST:="127.0.0.1"
