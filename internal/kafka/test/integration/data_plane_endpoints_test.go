@@ -1211,3 +1211,104 @@ func findManagedKafkaByID(slice []private.ManagedKafka, kafkaId string) *private
 	}
 	return nil
 }
+
+func TestKafka_unassignKafkaFromDataplaneCluster(t *testing.T) {
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
+		username, _ := account.GetUsername()
+		return jwt.MapClaims{
+			"username": username,
+			"iss":      test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
+			"realm_access": map[string][]string{
+				"roles": {"kas_fleetshard_operator"},
+			},
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
+		}
+	}, nil)
+
+	t.Cleanup(func() {
+		testServer.TearDown()
+	})
+
+	db := test.TestServices.DBFactory.New()
+	var cluster api.Cluster
+	if err := db.Where("cluster_id = ?", testServer.ClusterID).First(&cluster).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
+	bootstrapServerHost := "prefix.some-bootstrap⁻host"
+	adminApiServerUrl := "https://test-url.com"
+
+	var testKafkas = []*dbapi.KafkaRequest{
+		{
+			ClusterID:              testServer.ClusterID,
+			MultiAZ:                false,
+			Name:                   mockKafkaName1,
+			Status:                 constants2.KafkaRequestStatusProvisioning.String(),
+			BootstrapServerHost:    bootstrapServerHost,
+			DesiredKafkaVersion:    "2.6.0",
+			DesiredKafkaIBPVersion: "2.6",
+			DesiredStrimziVersion:  "2.6",
+			InstanceType:           types.DEVELOPER.String(),
+			SizeId:                 "x1",
+		},
+		{
+			ClusterID:              testServer.ClusterID,
+			MultiAZ:                true,
+			Name:                   mockKafkaName2,
+			Status:                 constants2.KafkaRequestStatusProvisioning.String(),
+			BootstrapServerHost:    bootstrapServerHost,
+			DesiredKafkaVersion:    "2.5.0",
+			DesiredKafkaIBPVersion: "2.5",
+			DesiredStrimziVersion:  "2.5",
+			InstanceType:           types.STANDARD.String(),
+			SizeId:                 "x1",
+		},
+	}
+
+	// create dummy kafkas
+	if err := db.Create(&testKafkas).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(list.Items).To(HaveLen(2)) // only count valid Managed Kafka CR
+
+	var provisioningKafkas []string
+	updates := map[string]private.DataPlaneKafkaStatus{}
+	for _, item := range list.Items {
+		updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlaneKafkaStatus{
+			AdminServerURI: adminApiServerUrl,
+			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
+				Type:    "Ready",
+				Reason:  "Rejected",
+				Message: "Cluster has insufficient resources",
+			}},
+		}
+		provisioningKafkas = append(provisioningKafkas, item.Metadata.Annotations.Bf2OrgId)
+	}
+
+	resp, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	Expect(err).NotTo(HaveOccurred())
+
+	for _, cid := range provisioningKafkas {
+		c := &dbapi.KafkaRequest{}
+		err := db.First(c, "id = ?", cid).Error
+		Expect(err).ToNot(HaveOccurred(), "failed to find kafka cluster with id %s due to error: %v", cid, err)
+		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusProvisioning.String()))
+		Expect(c.ClusterID).To(Equal(""))
+		Expect(c.BootstrapServerHost).To(Equal(""))
+		Expect(c.DesiredKafkaVersion).To(Equal(""))
+		Expect(c.DesiredKafkaIBPVersion).To(Equal(""))
+		Expect(c.DesiredStrimziVersion).To(Equal(""))
+	}
+}
