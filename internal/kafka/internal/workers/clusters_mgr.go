@@ -519,7 +519,7 @@ func (c *ClusterManager) reconcileDynamicCapacityInfo(cluster api.Cluster) error
 			return nil
 		}
 
-		supportedInstanceTypes := strings.Split(cluster.SupportedInstanceType, ",")
+		supportedInstanceTypes := cluster.GetSupportedInstanceTypes()
 		for _, supportedInstanceType := range supportedInstanceTypes {
 			config, ok := c.DataplaneClusterConfig.DynamicScalingConfig.ForInstanceType(supportedInstanceType)
 			if !ok {
@@ -1193,7 +1193,7 @@ func (c *ClusterManager) reconcileClusterMachinePools(cluster api.Cluster) (bool
 	}
 
 	glog.V(10).Infof("Reconciling MachinePools for clusterID '%s'", cluster.ClusterID)
-	supportedInstanceTypes := strings.Split(cluster.SupportedInstanceType, ",")
+	supportedInstanceTypes := cluster.GetSupportedInstanceTypes()
 	// Ensure a MachinePool is created for each supported instance type
 	dynamicCapacityInfo := map[string]api.DynamicCapacityInfo{}
 
