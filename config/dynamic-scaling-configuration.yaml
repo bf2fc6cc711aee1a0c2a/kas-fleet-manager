@@ -8,10 +8,10 @@
 
 ---
 developer:
-  reserved_streaming_units: 3 
+  reserved_streaming_units: 1 
   compute_nodes_config:
     max_compute_nodes: 3
 standard:
-  reserved_streaming_units: 10 
+  reserved_streaming_units: 1 
   compute_nodes_config:
     max_compute_nodes: 9
