@@ -8,7 +8,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/google/uuid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -83,16 +82,15 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 	if cluster == nil || e != nil {
 		return errors.Wrapf(e, "failed to find cluster with '%s' for kafka request '%s'", kafka.ClusterID, kafka.ID)
 	}
-	var selectedStrimziVersion *api.StrimziVersion
 
-	readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
-	if err != nil || len(readyStrimziVersions) == 0 {
+	latestReadyStrimziVersion, err := cluster.GetLatestAvailableAndReadyStrimziVersion()
+	if err != nil || latestReadyStrimziVersion == nil {
 		// Strimzi version may not be available at the start (i.e. during upgrade of Strimzi operator).
 		// We need to allow the reconciler to retry getting and setting of the desired strimzi version for a Kafka request
 		// until the max retry duration is reached before updating its status to 'failed'.
 		durationSinceCreation := time.Since(kafka.CreatedAt)
 		if durationSinceCreation < constants2.AcceptedKafkaMaxRetryDuration {
-			glog.V(10).Infof("No available strimzi version found for Kafka '%s' in Cluster ID '%s'", kafka.ID, kafka.ClusterID)
+			glog.V(10).Infof("No available and ready strimzi version found for Kafka '%s' in Cluster ID '%s'", kafka.ID, kafka.ClusterID)
 			return nil
 		}
 		kafka.Status = constants2.KafkaRequestStatusFailed.String()
@@ -107,18 +105,15 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 		}
 		return err
 	}
+	kafka.DesiredStrimziVersion = latestReadyStrimziVersion.Version
 
-	selectedStrimziVersion = &readyStrimziVersions[len(readyStrimziVersions)-1]
-
-	kafka.DesiredStrimziVersion = selectedStrimziVersion.Version
-
-	desiredKafkaVersion := selectedStrimziVersion.GetLatestKafkaVersion()
+	desiredKafkaVersion := latestReadyStrimziVersion.GetLatestKafkaVersion()
 	if desiredKafkaVersion == nil {
 		return errors.New(fmt.Sprintf("failed to get Kafka version %s", kafka.ID))
 	}
 	kafka.DesiredKafkaVersion = desiredKafkaVersion.Version
 
-	desiredKafkaIBPVersion := selectedStrimziVersion.GetLatestKafkaIBPVersion()
+	desiredKafkaIBPVersion := latestReadyStrimziVersion.GetLatestKafkaIBPVersion()
 	if desiredKafkaIBPVersion == nil {
 		return errors.New(fmt.Sprintf("failed to get Kafka IBP version %s", kafka.ID))
 	}
