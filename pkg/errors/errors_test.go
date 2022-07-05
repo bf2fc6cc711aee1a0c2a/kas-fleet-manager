@@ -1764,7 +1764,7 @@ func Test_InSufficientQuota(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return  false if the error is InSufficientQuota() code does not match",
+			name: "should return false if the error is InSufficientQuota() code does not match",
 			fields: fields{
 				err: &e,
 			},
