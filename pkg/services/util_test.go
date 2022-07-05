@@ -198,7 +198,7 @@ func TestHandleUpdateError(t *testing.T) {
 			want: errors.Conflict("Changes to resourceType conflict with existing records"),
 		},
 		{
-			name: "should return create error",
+			name: "should return general error",
 			args: args{
 				resourceType: "resourceType",
 				err:          errors.GeneralError("error"),
