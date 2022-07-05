@@ -1308,14 +1308,14 @@ func Test_IsConflict(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return  false if the error IsConflict() code does not match",
+			name: "should return false if the error IsConflict() code does not match",
 			fields: fields{
 				err: &e,
 			},
 			want: false,
 		},
 		{
-			name: "should return  true if the error IsConflict()",
+			name: "should return true if the error IsConflict()",
 			fields: fields{
 				err: &ServiceError{
 					Code: Conflict("").Code,
@@ -1346,14 +1346,14 @@ func Test_IsForbidden(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return  false if the error IsForbidden() code does not match",
+			name: "should return false if the error IsForbidden() code does not match",
 			fields: fields{
 				err: &e,
 			},
 			want: false,
 		},
 		{
-			name: "should return  true if the error IsForbidden()",
+			name: "should return true if the error IsForbidden()",
 			fields: fields{
 				err: &ServiceError{
 					Code: Forbidden("").Code,
@@ -1384,14 +1384,14 @@ func Test_IsFailedToCreateSSOClient(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return  false if the error IsFailedToCreateSSOClient() code does not match",
+			name: "should return false if the error IsFailedToCreateSSOClient() code does not match",
 			fields: fields{
 				err: &e,
 			},
 			want: false,
 		},
 		{
-			name: "should return  true if the error IsFailedToCreateSSOClient()",
+			name: "should return true if the error IsFailedToCreateSSOClient()",
 			fields: fields{
 				err: &ServiceError{
 					Code: FailedToCreateSSOClient("").Code,
@@ -1422,14 +1422,14 @@ func Test_IsFailedToGetSSOClientSecret(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return  false if the error IsFailedToGetSSOClientSecret() code does not match",
+			name: "should return false if the error IsFailedToGetSSOClientSecret() code does not match",
 			fields: fields{
 				err: &e,
 			},
 			want: false,
 		},
 		{
-			name: "should return  true if the error IsFailedToGetSSOClientSecret()",
+			name: "should return true if the error IsFailedToGetSSOClientSecret()",
 			fields: fields{
 				err: &ServiceError{
 					Code: FailedToGetSSOClientSecret("").Code,
@@ -1460,14 +1460,14 @@ func Test_IsFailedToGetSSOClient(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return  false if the error IsFailedToGetSSOClient() code does not match",
+			name: "should return false if the error IsFailedToGetSSOClient() code does not match",
 			fields: fields{
 				err: &e,
 			},
 			want: false,
 		},
 		{
-			name: "should return  true if the error IsFailedToGetSSOClient()",
+			name: "should return true if the error IsFailedToGetSSOClient()",
 			fields: fields{
 				err: &ServiceError{
 					Code: FailedToGetSSOClient("").Code,
@@ -1498,14 +1498,14 @@ func Test_IsFailedToDeleteSSOClient(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return  false if the error IsFailedToDeleteSSOClient() code does not match",
+			name: "should return false if the error IsFailedToDeleteSSOClient() code does not match",
 			fields: fields{
 				err: &e,
 			},
 			want: false,
 		},
 		{
-			name: "should return  true if the error IsFailedToDeleteSSOClient()",
+			name: "should return true if the error IsFailedToDeleteSSOClient()",
 			fields: fields{
 				err: &ServiceError{
 					Code: FailedToDeleteSSOClient("").Code,
@@ -1536,14 +1536,14 @@ func Test_IsFailedToCreateServiceAccount(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return  false if the error IsFailedToCreateServiceAccount() code does not match",
+			name: "should return false if the error IsFailedToCreateServiceAccount() code does not match",
 			fields: fields{
 				err: &e,
 			},
 			want: false,
 		},
 		{
-			name: "should return  true if the error IsFailedToCreateServiceAccount()",
+			name: "should return true if the error IsFailedToCreateServiceAccount()",
 			fields: fields{
 				err: &ServiceError{
 					Code: FailedToCreateServiceAccount("").Code,
@@ -1574,14 +1574,14 @@ func Test_IsFailedToGetServiceAccount(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return  false if the error IsFailedToGetServiceAccount() code does not match",
+			name: "should return false if the error IsFailedToGetServiceAccount() code does not match",
 			fields: fields{
 				err: &e,
 			},
 			want: false,
 		},
 		{
-			name: "should return  true if the error IsFailedToGetServiceAccount()",
+			name: "should return true if the error IsFailedToGetServiceAccount()",
 			fields: fields{
 				err: &ServiceError{
 					Code: FailedToGetServiceAccount("").Code,
@@ -1612,14 +1612,14 @@ func Test_IsFailedToDeleteServiceAccount(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return  false if the error IsFailedToDeleteServiceAccount() code does not match",
+			name: "should return false if the error IsFailedToDeleteServiceAccount() code does not match",
 			fields: fields{
 				err: &e,
 			},
 			want: false,
 		},
 		{
-			name: "should return  true if the error IsFailedToDeleteServiceAccount()",
+			name: "should return true if the error IsFailedToDeleteServiceAccount()",
 			fields: fields{
 				err: &ServiceError{
 					Code: FailedToDeleteServiceAccount("").Code,
@@ -1650,14 +1650,14 @@ func Test_IsServiceAccountNotFound(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return  false if the error IsServiceAccountNotFound() code does not match",
+			name: "should return false if the error IsServiceAccountNotFound() code does not match",
 			fields: fields{
 				err: &e,
 			},
 			want: false,
 		},
 		{
-			name: "should return  true if the error IsServiceAccountNotFound()",
+			name: "should return true if the error IsServiceAccountNotFound()",
 			fields: fields{
 				err: &ServiceError{
 					Code: ServiceAccountNotFound("").Code,
@@ -1688,14 +1688,14 @@ func Test_IsMaxLimitForServiceAccountReached(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return  false if the error IsMaxLimitForServiceAccountReached() code does not match",
+			name: "should return false if the error IsMaxLimitForServiceAccountReached() code does not match",
 			fields: fields{
 				err: &e,
 			},
 			want: false,
 		},
 		{
-			name: "should return  true if the error IsMaxLimitForServiceAccountReached()",
+			name: "should return true if the error IsMaxLimitForServiceAccountReached()",
 			fields: fields{
 				err: &ServiceError{
 					Code: ErrorMaxLimitForServiceAccountsReached,
@@ -1726,14 +1726,14 @@ func Test_IsBadRequest(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return  false if the error IsBadRequest() code does not match",
+			name: "should return false if the error IsBadRequest() code does not match",
 			fields: fields{
 				err: &e,
 			},
 			want: false,
 		},
 		{
-			name: "should return  true if the error IsBadRequest()",
+			name: "should return true if the error IsBadRequest()",
 			fields: fields{
 				err: &ServiceError{
 					Code: BadRequest("").Code,
@@ -1771,7 +1771,7 @@ func Test_InSufficientQuota(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "should return  true if the error is InSufficientQuota()",
+			name: "should return true if the error is InSufficientQuota()",
 			fields: fields{
 				err: &ServiceError{
 					Code: InsufficientQuotaError("").Code,
@@ -1840,7 +1840,7 @@ func Test_IsInstanceTypeNotSupported(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return alse if the error IsInstanceTypeNotSupported() code does not match",
+			name: "should return false if the error IsInstanceTypeNotSupported() code does not match",
 			fields: fields{
 				err: &e,
 			},
