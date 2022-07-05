@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 )
 
 type DynamicScalingConfig struct {
@@ -52,12 +54,19 @@ func (c *DynamicScalingConfig) validate() error {
 }
 
 type InstanceTypeDynamicScalingConfig struct {
-	ComputeNodesConfig *DynamicScalingComputeNodesConfig `yaml:"compute_nodes_config"`
+	ComputeNodesConfig     *DynamicScalingComputeNodesConfig `yaml:"compute_nodes_config"`
+	ReservedStreamingUnits int                               `yaml:"reserved_streaming_units"`
 }
 
 func (c *InstanceTypeDynamicScalingConfig) validate() error {
 	if c.ComputeNodesConfig == nil {
 		return fmt.Errorf("compute_nodes_config is mandatory")
+	}
+
+	if c.ReservedStreamingUnits == 0 {
+		logger.Logger.Warningf("no capacity reservation will be applied.")
+	} else if c.ReservedStreamingUnits < 0 {
+		return fmt.Errorf("reserved_streaming_units cannot be a negative number")
 	}
 
 	err := c.ComputeNodesConfig.validate()
