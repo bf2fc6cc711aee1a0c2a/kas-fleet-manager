@@ -40,13 +40,6 @@ func TestErrorFind(t *testing.T) {
 }
 
 func Test_NewErrorFromHTTPStatusCode(t *testing.T) {
-	badRequestReason := "bad request reason"
-	unauthorizedReason := "unauthorised reason"
-	forbiddenReason := "forbidden reason"
-	notFoundReason := "not found reason"
-	notImplementedReason := "not implemented reason"
-	conflictReason := "conflict reason"
-	generalReason := "general reason"
 	type args struct {
 		httpCode int
 		reason   string
@@ -61,57 +54,57 @@ func Test_NewErrorFromHTTPStatusCode(t *testing.T) {
 			name: "should return bad request error",
 			args: args{
 				httpCode: http.StatusBadRequest,
-				reason:   badRequestReason,
+				reason:   genericErrorMessage,
 			},
-			want: BadRequest(badRequestReason),
+			want: BadRequest(genericErrorMessage),
 		},
 		{
 			name: "should return unauthorised error",
 			args: args{
 				httpCode: http.StatusUnauthorized,
-				reason:   unauthorizedReason,
+				reason:   genericErrorMessage,
 			},
-			want: Unauthorized(unauthorizedReason),
+			want: Unauthorized(genericErrorMessage),
 		},
 		{
 			name: "should return forbidden error",
 			args: args{
 				httpCode: http.StatusForbidden,
-				reason:   forbiddenReason,
+				reason:   genericErrorMessage,
 			},
-			want: Forbidden(forbiddenReason),
+			want: Forbidden(genericErrorMessage),
 		},
 		{
 			name: "should return not found error",
 			args: args{
 				httpCode: http.StatusNotFound,
-				reason:   notFoundReason,
+				reason:   genericErrorMessage,
 			},
-			want: NotFound(notFoundReason),
+			want: NotFound(genericErrorMessage),
 		},
 		{
 			name: "should return not implemented error",
 			args: args{
 				httpCode: http.StatusMethodNotAllowed,
-				reason:   notImplementedReason,
+				reason:   genericErrorMessage,
 			},
-			want: NotImplemented(notImplementedReason),
+			want: NotImplemented(genericErrorMessage),
 		},
 		{
 			name: "should return conflict error",
 			args: args{
 				httpCode: http.StatusConflict,
-				reason:   conflictReason,
+				reason:   genericErrorMessage,
 			},
-			want: Conflict(conflictReason),
+			want: Conflict(genericErrorMessage),
 		},
 		{
 			name: "should return general error",
 			args: args{
 				httpCode: http.StatusInternalServerError,
-				reason:   generalReason,
+				reason:   genericErrorMessage,
 			},
-			want: GeneralError(generalReason),
+			want: GeneralError(genericErrorMessage),
 		},
 		{
 			name: "general case, should return general error",
@@ -125,7 +118,7 @@ func Test_NewErrorFromHTTPStatusCode(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(NewErrorFromHTTPStatusCode(tt.args.httpCode, tt.args.reason)).To(Equal(tt.want))
+			Expect(NewErrorFromHTTPStatusCode(tt.args.httpCode, tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -201,7 +194,7 @@ func Test_FailedToCreateSSOClient(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorFailedToCreateSSOClient",
+			name: "should return new ErrorFailedToCreateSSOClient error",
 			args: args{
 				reason: "Failed to create kafka client in the mas sso",
 			},
@@ -215,7 +208,7 @@ func Test_FailedToCreateSSOClient(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToCreateSSOClient(tt.args.reason)).To(Equal(tt.want))
+			Expect(FailedToCreateSSOClient(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -230,7 +223,7 @@ func Test_FailedToGetSSOClientSecret(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorFailedToGetSSOClientSecret",
+			name: "should return new ErrorFailedToGetSSOClientSecret error",
 			args: args{
 				reason: "Failed to get kafka client secret from the mas sso",
 			},
@@ -244,7 +237,7 @@ func Test_FailedToGetSSOClientSecret(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToGetSSOClientSecret(tt.args.reason)).To(Equal(tt.want))
+			Expect(FailedToGetSSOClientSecret(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -259,7 +252,7 @@ func Test_FailedToGetSSOClient(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorFailedToGetSSOClient",
+			name: "should return new ErrorFailedToGetSSOClient error",
 			args: args{
 				reason: "Failed to get kafka client from the mas sso",
 			},
@@ -273,7 +266,7 @@ func Test_FailedToGetSSOClient(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToGetSSOClient(tt.args.reason)).To(Equal(tt.want))
+			Expect(FailedToGetSSOClient(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -288,7 +281,7 @@ func Test_FailedToDeleteSSOClient(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorFailedToDeleteSSOClient",
+			name: "should return new ErrorFailedToDeleteSSOClient error",
 			args: args{
 				reason: "Failed to delete kafka client from the mas sso",
 			},
@@ -302,7 +295,7 @@ func Test_FailedToDeleteSSOClient(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToDeleteSSOClient(tt.args.reason)).To(Equal(tt.want))
+			Expect(FailedToDeleteSSOClient(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -317,7 +310,7 @@ func Test_FailedToCreateServiceAccount(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorFailedToCreateServiceAccount",
+			name: "should return new ErrorFailedToCreateServiceAccount error",
 			args: args{
 				reason: "Failed to create service account",
 			},
@@ -331,7 +324,7 @@ func Test_FailedToCreateServiceAccount(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToCreateServiceAccount(tt.args.reason)).To(Equal(tt.want))
+			Expect(FailedToCreateServiceAccount(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -346,7 +339,7 @@ func Test_FailedToDeleteServiceAccount(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorFailedToDeleteServiceAccount",
+			name: "should return new ErrorFailedToDeleteServiceAccount error",
 			args: args{
 				reason: "Failed to delete service account",
 			},
@@ -360,7 +353,7 @@ func Test_FailedToDeleteServiceAccount(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToDeleteServiceAccount(tt.args.reason)).To(Equal(tt.want))
+			Expect(FailedToDeleteServiceAccount(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -375,7 +368,7 @@ func Test_MaxLimitForServiceAccountReached(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorMaxLimitForServiceAccountsReached",
+			name: "should return new ErrorMaxLimitForServiceAccountsReached error",
 			args: args{
 				reason: "Max limit for the service account creation has reached",
 			},
@@ -389,7 +382,7 @@ func Test_MaxLimitForServiceAccountReached(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MaxLimitForServiceAccountReached(tt.args.reason)).To(Equal(tt.want))
+			Expect(MaxLimitForServiceAccountReached(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -404,7 +397,7 @@ func Test_FailedToGetServiceAccount(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorFailedToGetServiceAccount",
+			name: "should return new ErrorFailedToGetServiceAccount error",
 			args: args{
 				reason: "Failed to get service account",
 			},
@@ -418,7 +411,7 @@ func Test_FailedToGetServiceAccount(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToGetServiceAccount(tt.args.reason)).To(Equal(tt.want))
+			Expect(FailedToGetServiceAccount(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -433,7 +426,7 @@ func Test_ServiceAccountNotFound(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorServiceAccountNotFound",
+			name: "should return new ErrorServiceAccountNotFound error",
 			args: args{
 				reason: "Failed to find service account",
 			},
@@ -447,7 +440,7 @@ func Test_ServiceAccountNotFound(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(ServiceAccountNotFound(tt.args.reason)).To(Equal(tt.want))
+			Expect(ServiceAccountNotFound(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -462,7 +455,7 @@ func Test_RegionNotSupported(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorRegionNotSupported",
+			name: "should return new ErrorRegionNotSupported error",
 			args: args{
 				reason: "Region not supported",
 			},
@@ -476,7 +469,7 @@ func Test_RegionNotSupported(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(RegionNotSupported(tt.args.reason)).To(Equal(tt.want))
+			Expect(RegionNotSupported(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -491,7 +484,7 @@ func Test_InstanceTypeNotSupported(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorInstanceTypeNotSupported",
+			name: "should return new ErrorInstanceTypeNotSupported error",
 			args: args{
 				reason: "Instance Type not supported",
 			},
@@ -505,7 +498,7 @@ func Test_InstanceTypeNotSupported(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(InstanceTypeNotSupported(tt.args.reason)).To(Equal(tt.want))
+			Expect(InstanceTypeNotSupported(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -520,7 +513,7 @@ func Test_ProviderNotSupported(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorProviderNotSupported",
+			name: "should return new ErrorProviderNotSupported error",
 			args: args{
 				reason: "Provider not supported",
 			},
@@ -534,7 +527,7 @@ func Test_ProviderNotSupported(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(ProviderNotSupported(tt.args.reason)).To(Equal(tt.want))
+			Expect(ProviderNotSupported(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -549,7 +542,7 @@ func Test_InstancePlanNotSupported(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorInstancePlanNotSupported",
+			name: "should return new ErrorInstancePlanNotSupported error",
 			args: args{
 				reason: "Instance plan not supported",
 			},
@@ -563,7 +556,7 @@ func Test_InstancePlanNotSupported(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(InstancePlanNotSupported(tt.args.reason)).To(Equal(tt.want))
+			Expect(InstancePlanNotSupported(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -578,7 +571,7 @@ func Test_MalformedKafkaClusterName(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorMalformedKafkaClusterName",
+			name: "should return new ErrorMalformedKafkaClusterName error",
 			args: args{
 				reason: "Kafka cluster name is invalid",
 			},
@@ -592,7 +585,7 @@ func Test_MalformedKafkaClusterName(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MalformedKafkaClusterName(tt.args.reason)).To(Equal(tt.want))
+			Expect(MalformedKafkaClusterName(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -607,7 +600,7 @@ func Test_MalformedServiceAccountName(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorMalformedServiceAccountName",
+			name: "should return new ErrorMalformedServiceAccountName error",
 			args: args{
 				reason: "Service account name is invalid",
 			},
@@ -621,7 +614,7 @@ func Test_MalformedServiceAccountName(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MalformedServiceAccountName(tt.args.reason)).To(Equal(tt.want))
+			Expect(MalformedServiceAccountName(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -636,7 +629,7 @@ func Test_MalformedServiceAccountDesc(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorMalformedServiceAccountDesc",
+			name: "should return new ErrorMalformedServiceAccountDesc error",
 			args: args{
 				reason: "Service account desc is invalid",
 			},
@@ -650,7 +643,7 @@ func Test_MalformedServiceAccountDesc(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MalformedServiceAccountDesc(tt.args.reason)).To(Equal(tt.want))
+			Expect(MalformedServiceAccountDesc(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -665,7 +658,7 @@ func Test_MalformedServiceAccountId(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorMalformedServiceAccountId",
+			name: "should return new ErrorMalformedServiceAccountId error",
 			args: args{
 				reason: "Service account id is invalid",
 			},
@@ -679,7 +672,7 @@ func Test_MalformedServiceAccountId(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MalformedServiceAccountId(tt.args.reason)).To(Equal(tt.want))
+			Expect(MalformedServiceAccountId(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -690,7 +683,7 @@ func Test_DuplicateKafkaClusterName(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorDuplicateKafkaClusterName",
+			name: "should return new ErrorDuplicateKafkaClusterName error",
 			want: New(ErrorDuplicateKafkaClusterName, ErrorDuplicateKafkaClusterNameReason),
 		},
 	}
@@ -701,7 +694,7 @@ func Test_DuplicateKafkaClusterName(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(DuplicateKafkaClusterName()).To(Equal(tt.want))
+			Expect(DuplicateKafkaClusterName()).To(MatchError(tt.want))
 		})
 	}
 }
@@ -716,7 +709,7 @@ func Test_MinimumFieldLengthNotReached(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorMinimumFieldLength",
+			name: "should return new ErrorMinimumFieldLength error",
 			args: args{
 				reason: "Minimum field length not reached",
 			},
@@ -730,7 +723,7 @@ func Test_MinimumFieldLengthNotReached(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MinimumFieldLengthNotReached(tt.args.reason)).To(Equal(tt.want))
+			Expect(MinimumFieldLengthNotReached(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -745,7 +738,7 @@ func Test_MaximumFieldLengthExceeded(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorMaximumFieldLength",
+			name: "should return new MaximumFieldLength error",
 			args: args{
 				reason: "Maximum field length has been depassed",
 			},
@@ -759,7 +752,7 @@ func Test_MaximumFieldLengthExceeded(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MaximumFieldLengthExceeded(tt.args.reason)).To(Equal(tt.want))
+			Expect(MaximumFieldLengthExceeded(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -770,7 +763,7 @@ func Test_UnableToSendErrorResponse(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorUnableToSendErrorResponse",
+			name: "should return new ErrorUnableToSendErrorResponse error",
 			want: New(ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason),
 		},
 	}
@@ -781,7 +774,7 @@ func Test_UnableToSendErrorResponse(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(UnableToSendErrorResponse()).To(Equal(tt.want))
+			Expect(UnableToSendErrorResponse()).To(MatchError(tt.want))
 		})
 	}
 }
@@ -796,7 +789,7 @@ func Test_FailedToParseQueryParms(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new bad request error",
+			name: "should return new BadRequest error",
 			args: args{
 				reason: "Bad request",
 			},
@@ -810,7 +803,7 @@ func Test_FailedToParseQueryParms(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToParseQueryParms(tt.args.reason)).To(Equal(tt.want))
+			Expect(FailedToParseQueryParms(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -825,10 +818,7 @@ func Test_FieldValidationError(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorFieldValidationError",
-			args: args{
-				reason: "",
-			},
+			name: "should return a new service error if ErrorFieldValidationError is returned",
 			want: New(ErrorFieldValidationError, "Field validation failed: "),
 		},
 	}
@@ -839,7 +829,7 @@ func Test_FieldValidationError(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FieldValidationError(tt.args.reason)).To(Equal(tt.want))
+			Expect(FieldValidationError(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -854,10 +844,7 @@ func Test_InsufficientQuotaError(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorInsufficientQuota",
-			args: args{
-				reason: "",
-			},
+			name: "should return a new service error if ErrorInsufficientQuota is returned",
 			want: New(ErrorInsufficientQuota, "Insufficient quota: "),
 		},
 	}
@@ -868,7 +855,7 @@ func Test_InsufficientQuotaError(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(InsufficientQuotaError(tt.args.reason)).To(Equal(tt.want))
+			Expect(InsufficientQuotaError(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -883,10 +870,7 @@ func Test_FailedToCheckQuota(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorFailedToCheckQuota",
-			args: args{
-				reason: "",
-			},
+			name: "should return new ErrorFailedToCheckQuota error",
 			want: New(ErrorFailedToCheckQuota, "Failed to check quota: "),
 		},
 	}
@@ -897,7 +881,7 @@ func Test_FailedToCheckQuota(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToCheckQuota(tt.args.reason)).To(Equal(tt.want))
+			Expect(FailedToCheckQuota(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -912,10 +896,7 @@ func Test_InvalidBillingAccount(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorBillingAccountInvalid",
-			args: args{
-				reason: "",
-			},
+			name: "should return new ErrorBillingAccountInvalid error",
 			want: New(ErrorBillingAccountInvalid, "Billing account id missing or invalid: "),
 		},
 	}
@@ -926,7 +907,7 @@ func Test_InvalidBillingAccount(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(InvalidBillingAccount(tt.args.reason)).To(Equal(tt.want))
+			Expect(InvalidBillingAccount(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -941,7 +922,7 @@ func Test_TermsNotAccepted(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorTermsNotAccepted",
+			name: "should return new ErrorTermsNotAccepted error",
 			args: args{
 				reason: "Required terms have not been accepted",
 			},
@@ -955,7 +936,7 @@ func Test_TermsNotAccepted(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(TermsNotAccepted(tt.args.reason)).To(Equal(tt.want))
+			Expect(TermsNotAccepted(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -970,7 +951,7 @@ func Test_Unauthenticated(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorUnauthenticated",
+			name: "should return new ErrorUnauthenticated error",
 			args: args{
 				reason: "Account authentication could not be verified",
 			},
@@ -984,7 +965,7 @@ func Test_Unauthenticated(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(Unauthenticated(tt.args.reason)).To(Equal(tt.want))
+			Expect(Unauthenticated(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -999,7 +980,7 @@ func Test_Maintenance(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorServiceIsUnderMaintenance",
+			name: "should return new ErrorServiceIsUnderMaintenance error",
 			args: args{
 				reason: "Unable to perform this action, as the service is currently under maintenance",
 			},
@@ -1013,7 +994,7 @@ func Test_Maintenance(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(Maintenance(tt.args.reason)).To(Equal(tt.want))
+			Expect(Maintenance(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -1028,7 +1009,7 @@ func Test_MaximumAllowedInstanceReached(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorMaxAllowedInstanceReached",
+			name: "should return new ErrorMaxAllowedInstanceReached error",
 			args: args{
 				reason: "Forbidden to create more instances than the maximum allowed",
 			},
@@ -1042,7 +1023,7 @@ func Test_MaximumAllowedInstanceReached(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MaximumAllowedInstanceReached(tt.args.reason)).To(Equal(tt.want))
+			Expect(MaximumAllowedInstanceReached(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -1057,7 +1038,7 @@ func Test_TooManyKafkaInstancesReached(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorTooManyKafkaInstancesReached",
+			name: "should return new ErrorTooManyKafkaInstancesReached error",
 			args: args{
 				reason: "The maximum number of allowed kafka instances has been reached",
 			},
@@ -1071,7 +1052,7 @@ func Test_TooManyKafkaInstancesReached(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(TooManyKafkaInstancesReached(tt.args.reason)).To(Equal(tt.want))
+			Expect(TooManyKafkaInstancesReached(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -1086,7 +1067,7 @@ func Test_Validation(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorValidation",
+			name: "should return new ErrorValidation error",
 			args: args{
 				reason: "General validation failure",
 			},
@@ -1100,7 +1081,7 @@ func Test_Validation(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(Validation(tt.args.reason)).To(Equal(tt.want))
+			Expect(Validation(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -1115,7 +1096,7 @@ func Test_MalformedRequest(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorMalformedRequest",
+			name: "should return new ErrorMalformedRequest error",
 			args: args{
 				reason: "Unable to read request body",
 			},
@@ -1129,7 +1110,7 @@ func Test_MalformedRequest(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MalformedRequest(tt.args.reason)).To(Equal(tt.want))
+			Expect(MalformedRequest(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -1144,10 +1125,7 @@ func Test_FailedToParseSearch(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorFailedToParseSearch",
-			args: args{
-				reason: "",
-			},
+			name: "should return new ErrorFailedToParseSearch error",
 			want: New(ErrorFailedToParseSearch, "Failed to parse search query: "),
 		},
 	}
@@ -1158,7 +1136,7 @@ func Test_FailedToParseSearch(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToParseSearch(tt.args.reason)).To(Equal(tt.want))
+			Expect(FailedToParseSearch(tt.args.reason)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -1169,7 +1147,7 @@ func Test_SyncActionNotSupported(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a new service error if ErrorSyncActionNotSupported",
+			name: "should return new ErrorSyncActionNotSupported error",
 			want: New(ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason),
 		},
 	}
@@ -1180,7 +1158,7 @@ func Test_SyncActionNotSupported(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(SyncActionNotSupported()).To(Equal(tt.want))
+			Expect(SyncActionNotSupported()).To(MatchError(tt.want))
 		})
 	}
 }
@@ -1263,7 +1241,7 @@ func Test_ToServiceError(t *testing.T) {
 			want: BadRequest(""),
 		},
 		{
-			name: "should retun a servis error if a on servce error occured",
+			name: "should convert non-service error to service error and return it",
 			args: args{
 				err: sampleNonServiceError,
 			},
@@ -1277,7 +1255,7 @@ func Test_ToServiceError(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(ToServiceError(tt.args.err)).To(Equal(tt.want))
+			Expect(ToServiceError(tt.args.err)).To(MatchError(tt.want))
 		})
 	}
 }
@@ -1292,11 +1270,20 @@ func Test_Is404(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error Is404()",
+			name: "should return false if the error Is404() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == NotFound(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return true if the error Is404()",
+			fields: fields{
+				err: &ServiceError{
+					Code: NotFound("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1321,11 +1308,20 @@ func Test_IsConflict(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsConflict()",
+			name: "should return  false if the error IsConflict() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == Conflict(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return  true if the error IsConflict()",
+			fields: fields{
+				err: &ServiceError{
+					Code: Conflict("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1350,11 +1346,20 @@ func Test_IsForbidden(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsForbidden()",
+			name: "should return  false if the error IsForbidden() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == Forbidden(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return  true if the error IsForbidden()",
+			fields: fields{
+				err: &ServiceError{
+					Code: Forbidden("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1379,11 +1384,20 @@ func Test_IsFailedToCreateSSOClient(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsFailedToCreateSSOClient()",
+			name: "should return  false if the error IsFailedToCreateSSOClient() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == FailedToCreateSSOClient(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return  true if the error IsFailedToCreateSSOClient()",
+			fields: fields{
+				err: &ServiceError{
+					Code: FailedToCreateSSOClient("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1408,11 +1422,20 @@ func Test_IsFailedToGetSSOClientSecret(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsFailedToGetSSOClientSecret()",
+			name: "should return  false if the error IsFailedToGetSSOClientSecret() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == FailedToGetSSOClientSecret(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return  true if the error IsFailedToGetSSOClientSecret()",
+			fields: fields{
+				err: &ServiceError{
+					Code: FailedToGetSSOClientSecret("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1437,11 +1460,20 @@ func Test_IsFailedToGetSSOClient(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsFailedToGetSSOClient()",
+			name: "should return  false if the error IsFailedToGetSSOClient() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == FailedToGetSSOClient(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return  true if the error IsFailedToGetSSOClient()",
+			fields: fields{
+				err: &ServiceError{
+					Code: FailedToGetSSOClient("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1466,11 +1498,20 @@ func Test_IsFailedToDeleteSSOClient(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsFailedToDeleteSSOClient()",
+			name: "should return  false if the error IsFailedToDeleteSSOClient() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == FailedToDeleteSSOClient(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return  true if the error IsFailedToDeleteSSOClient()",
+			fields: fields{
+				err: &ServiceError{
+					Code: FailedToDeleteSSOClient("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1495,11 +1536,20 @@ func Test_IsFailedToCreateServiceAccount(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsFailedToCreateServiceAccount()",
+			name: "should return  false if the error IsFailedToCreateServiceAccount() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == FailedToCreateServiceAccount(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return  true if the error IsFailedToCreateServiceAccount()",
+			fields: fields{
+				err: &ServiceError{
+					Code: FailedToCreateServiceAccount("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1524,11 +1574,20 @@ func Test_IsFailedToGetServiceAccount(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsFailedToGetServiceAccount()",
+			name: "should return  false if the error IsFailedToGetServiceAccount() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == FailedToGetServiceAccount(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return  true if the error IsFailedToGetServiceAccount()",
+			fields: fields{
+				err: &ServiceError{
+					Code: FailedToGetServiceAccount("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1553,11 +1612,20 @@ func Test_IsFailedToDeleteServiceAccount(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsFailedToDeleteServiceAccount()",
+			name: "should return  false if the error IsFailedToDeleteServiceAccount() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == FailedToDeleteServiceAccount(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return  true if the error IsFailedToDeleteServiceAccount()",
+			fields: fields{
+				err: &ServiceError{
+					Code: FailedToDeleteServiceAccount("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1582,11 +1650,20 @@ func Test_IsServiceAccountNotFound(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsServiceAccountNotFound()",
+			name: "should return  false if the error IsServiceAccountNotFound() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == ServiceAccountNotFound(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return  true if the error IsServiceAccountNotFound()",
+			fields: fields{
+				err: &ServiceError{
+					Code: ServiceAccountNotFound("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1611,11 +1688,20 @@ func Test_IsMaxLimitForServiceAccountReached(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsMaxLimitForServiceAccountReached()",
+			name: "should return  false if the error IsMaxLimitForServiceAccountReached() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == MaxLimitForServiceAccountReached(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return  true if the error IsMaxLimitForServiceAccountReached()",
+			fields: fields{
+				err: &ServiceError{
+					Code: ErrorMaxLimitForServiceAccountsReached,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1640,11 +1726,20 @@ func Test_IsBadRequest(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsBadRequest()",
+			name: "should return  false if the error IsBadRequest() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == BadRequest(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return  true if the error IsBadRequest()",
+			fields: fields{
+				err: &ServiceError{
+					Code: BadRequest("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1669,11 +1764,20 @@ func Test_InSufficientQuota(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error is InSufficientQuota()",
+			name: "should return  false if the error is InSufficientQuota() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == InsufficientQuotaError(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return  true if the error is InSufficientQuota()",
+			fields: fields{
+				err: &ServiceError{
+					Code: InsufficientQuotaError("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1698,11 +1802,20 @@ func Test_IsFailedToCheckQuota(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsFailedToCheckQuota()",
+			name: "should return false if the error IsFailedToCheckQuota() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == FailedToCheckQuota(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return true if the error IsFailedToCheckQuota()",
+			fields: fields{
+				err: &ServiceError{
+					Code: FailedToCheckQuota("").Code,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1727,11 +1840,20 @@ func Test_IsInstanceTypeNotSupported(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsInstanceTypeNotSupported()",
+			name: "should return alse if the error IsInstanceTypeNotSupported() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.Code == InstanceTypeNotSupported(genericErrorMessage).Code,
+			want: false,
+		},
+		{
+			name: "should return true if the error IsInstanceTypeNotSupported()",
+			fields: fields{
+				err: &ServiceError{
+					Code: ErrorInstanceTypeNotSupported,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1756,11 +1878,29 @@ func Test_IsClientErrorClass(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsClientErrorClass()",
+			name: "should return false if the error IsClientErrorClass() code does not match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.HttpCode >= http.StatusBadRequest && e.HttpCode < http.StatusInternalServerError,
+			want: false,
+		},
+		{
+			name: "should return true if the error IsClientErrorClass() code is BadRequest",
+			fields: fields{
+				err: &ServiceError{
+					HttpCode: http.StatusBadRequest,
+				},
+			},
+			want: true,
+		},
+		{
+			name: "should return true if the error IsClientErrorClass() code is Conflict",
+			fields: fields{
+				err: &ServiceError{
+					HttpCode: http.StatusConflict,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1785,11 +1925,20 @@ func Test_IsServerErrorClass(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "should return a boolean value true if the error IsServerErrorClass()",
+			name: "should return false if the error IsServerErrorClass() code doesn't match",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
-			want: e.HttpCode >= http.StatusInternalServerError,
+			want: false,
+		},
+		{
+			name: "should return true if the error IsServerErrorClass() code is InternalServerError",
+			fields: fields{
+				err: &ServiceError{
+					HttpCode: http.StatusInternalServerError,
+				},
+			},
+			want: true,
 		},
 	}
 
@@ -1821,7 +1970,7 @@ func Test_AsOpenapiError(t *testing.T) {
 		{
 			name: "should return compat.Error",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
 			want: compat.Error{
 				Id:          strconv.Itoa(int(e.Code)),
@@ -1833,9 +1982,9 @@ func Test_AsOpenapiError(t *testing.T) {
 			},
 		},
 		{
-			name: "should return compat.Error",
+			name: "should return properly formatted compat.Error when basePath is specified",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
 			args: args{
 				basePath: "/api/connector_mgmt/",
@@ -1874,12 +2023,12 @@ func Test_StackTrace(t *testing.T) {
 		{
 			name: "should return error stacktrace if error cause is nil",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
 			want: nil,
 		},
 		{
-			name: "should return error stacktrace if cause defined",
+			name: "should return error stacktrace if cause is defined",
 			fields: fields{
 				err: &ServiceError{
 					cause: errorWithCause.cause,
@@ -1921,12 +2070,7 @@ func Test_AsError(t *testing.T) {
 		{
 			name: "should return a formatted error",
 			fields: fields{
-				err: &ServiceError{
-					Code:     ServiceErrorCode(e.HttpCode),
-					Reason:   e.Reason,
-					HttpCode: e.HttpCode,
-					cause:    e.cause,
-				},
+				err: &e,
 			},
 			want: fmt.Errorf(e.Error()),
 		},
@@ -1938,12 +2082,12 @@ func Test_AsError(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.AsError()).To(Equal(tt.want))
+			Expect(tt.fields.err.AsError()).To(MatchError(tt.want))
 		})
 	}
 }
 
-func Test_Error(t *testing.T) {
+func Test_ErrorListToString(t *testing.T) {
 	errList := make(ErrorList, 10)
 	var res string
 	for _, err := range errList {
@@ -1960,7 +2104,7 @@ func Test_Error(t *testing.T) {
 		{
 			name: "should return a formatted error list",
 			fields: fields{
-				err: make(ErrorList, 10),
+				err: errList,
 			},
 			want: fmt.Sprintf("[%s]", res),
 		},
@@ -2001,12 +2145,12 @@ func Test_Unwrap(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.Unwrap()).To(BeEquivalentTo(tt.want))
+			Expect(tt.fields.err.Unwrap()).To(MatchError(tt.want))
 		})
 	}
 }
 
-func Test_Error2(t *testing.T) {
+func Test_Test_ErrorToString(t *testing.T) {
 	type fields struct {
 		err *ServiceError
 	}
@@ -2018,7 +2162,7 @@ func Test_Error2(t *testing.T) {
 		{
 			name: "should return formatted error details",
 			fields: fields{
-				err: &ServiceError{},
+				err: &e,
 			},
 			want: fmt.Sprintf("%s: %s", CodeStr(e.Code), e.Reason),
 		},
