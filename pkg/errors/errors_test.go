@@ -1234,7 +1234,7 @@ func Test_ToServiceError(t *testing.T) {
 		want *ServiceError
 	}{
 		{
-			name: "should return a service error if a service error occured",
+			name: "should return a service error if a service error occurred",
 			args: args{
 				err: BadRequest(""),
 			},
