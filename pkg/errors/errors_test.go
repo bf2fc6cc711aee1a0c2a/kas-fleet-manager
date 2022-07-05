@@ -2150,7 +2150,7 @@ func Test_Unwrap(t *testing.T) {
 	}
 }
 
-func Test_Test_ErrorToString(t *testing.T) {
+func Test_ErrorToString(t *testing.T) {
 	type fields struct {
 		err *ServiceError
 	}
