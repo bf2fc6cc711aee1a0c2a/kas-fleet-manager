@@ -161,7 +161,7 @@ func TestHandleCreateError(t *testing.T) {
 			want: errors.Conflict("This resourceType already exists"),
 		},
 		{
-			name: "should return create error",
+			name: "should return general error",
 			args: args{
 				resourceType: "resourceType",
 				err:          errors.GeneralError("error"),
