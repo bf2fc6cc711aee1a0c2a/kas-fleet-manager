@@ -94,6 +94,8 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 			e = d.setKafkaClusterDeleting(kafka)
 		case statusRejected:
 			e = d.reassignKafkaCluster(kafka)
+		case statusRejectedClusterFull:
+			e = d.unassignKafkaFromDataplaneCluster(kafka)
 		case statusUnknown:
 			log.Infof("kafka cluster %s status is unknown", ks.KafkaClusterId)
 		default:
@@ -272,6 +274,27 @@ func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *dbapi.KafkaRequest) 
 		if err := d.kafkaService.Update(kafka); err != nil {
 			return err
 		}
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+	} else {
+		logger.Logger.Infof("kafka cluster %s is rejected and current status is %s", kafka.ID, kafka.Status)
+	}
+
+	return nil
+}
+
+func (d *dataPlaneKafkaService) unassignKafkaFromDataplaneCluster(kafka *dbapi.KafkaRequest) *serviceError.ServiceError {
+	if kafka.Status == constants2.KafkaRequestStatusProvisioning.String() {
+		logger.Logger.Infof("kafka %s is being unassigned from cluster %s", kafka.ID, kafka.ClusterID)
+		if err := d.kafkaService.Updates(kafka, map[string]interface{}{
+			"cluster_id":                "",
+			"bootstrap_server_host":     "",
+			"desired_strimzi_version":   "",
+			"desired_kafka_version":     "",
+			"desired_kafka_ibp_version": "",
+		}); err != nil {
+			return serviceError.NewWithCause(err.Code, err, "failed to reset fields for kafka cluster %s", kafka.ID)
+		}
+
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 	} else {
 		logger.Logger.Infof("kafka cluster %s is rejected and current status is %s", kafka.ID, kafka.Status)

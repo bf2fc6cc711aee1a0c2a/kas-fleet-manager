@@ -848,3 +848,76 @@ func Test_DataPlaneKafkaStatus_getStatus(t *testing.T) {
 		})
 	}
 }
+
+func Test_dataPlaneKafkaService_unassignKafkaFromDataplaneCluster(t *testing.T) {
+	type fields struct {
+		kafkaService *KafkaServiceMock
+	}
+	type args struct {
+		kafka *dbapi.KafkaRequest
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *serviceError.ServiceError
+	}{
+		{
+			name: "should remove the kafka from the current assigned cluster",
+			fields: fields{
+				kafkaService: &KafkaServiceMock{
+					UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+						return nil
+					},
+				},
+			},
+			args: args{
+				kafka: &dbapi.KafkaRequest{
+					Status:    "provisioning",
+					ClusterID: "test-cluster-id",
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "should return nil if kafka status is not provisioning",
+			args: args{
+				kafka: &dbapi.KafkaRequest{
+					Status:    "ready",
+					ClusterID: "test-cluster-id",
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "should return error if updateFunc returns error",
+			fields: fields{
+				kafkaService: &KafkaServiceMock{
+					UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+						return errors.GeneralError("test")
+					},
+				},
+			},
+			args: args{
+				kafka: &dbapi.KafkaRequest{
+					Status:    "provisioning",
+					ClusterID: "test-cluster-id",
+				},
+			},
+			want: errors.NewWithCause(errors.ErrorGeneral, errors.GeneralError("test"), "failed to reset fields for kafka cluster "),
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			t.Parallel()
+			d := &dataPlaneKafkaService{
+				kafkaService: tt.fields.kafkaService,
+			}
+			got := d.unassignKafkaFromDataplaneCluster(tt.args.kafka)
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
