@@ -1,9 +1,11 @@
 package services
 
 import (
+	"net/url"
 	"testing"
 
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 )
 
 func makeParams(orderByAry []string) map[string][]string {
@@ -85,17 +87,133 @@ func Test_ValidateOrderBy(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
+	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			la := NewListArguments(tt.params)
 			err := la.Validate(tt.validParams)
-			if tt.wantErr {
-				Expect(err).To(HaveOccurred())
-			} else {
-				Expect(err).NotTo(HaveOccurred())
+			g.Expect(err != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+func Test_NewListArguments(t *testing.T) {
+	page := "5"
+	size := "-1"
+	search := "search"
+	overriddenListArgs := &ListArguments{
+		Page:   5,
+		Size:   65500,
+		Search: "search",
+	}
+	type args struct {
+		params url.Values
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want *ListArguments
+	}{
+		{
+			name: "should override default param",
+			args: args{
+				params: url.Values{
+					"page":   []string{page},
+					"size":   []string{size},
+					"search": []string{search},
+				},
+			},
+			want: overriddenListArgs,
+		},
+	}
+	g := NewWithT(t)
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			g.Expect(NewListArguments(tt.args.params)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestListArguments_Validate(t *testing.T) {
+	type fields struct {
+		Page    int
+		Size    int
+		Search  string
+		OrderBy []string
+	}
+	type args struct {
+		acceptedOrderByParams []string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   error
+	}{
+		{
+			name: "should return an error if page is < 0",
+			fields: fields{
+				Page: -1,
+			},
+			args: args{
+				acceptedOrderByParams: getValidTestParams(),
+			},
+			want: errors.Errorf("page must be equal or greater than 0"),
+		},
+		{
+			name: "should return an error if page is < 1",
+			fields: fields{
+				Page: 0,
+			},
+			args: args{
+				acceptedOrderByParams: getValidTestParams(),
+			},
+			want: errors.Errorf("size must be equal or greater than 1"),
+		},
+		{
+			name: "should return an error if there are too many keywords in orderBy",
+			fields: fields{
+				Page:    1,
+				Size:    100,
+				OrderBy: []string{"region desc name owner"},
+			},
+			args: args{
+				acceptedOrderByParams: getValidTestParams(),
+			},
+			want: errors.Errorf("invalid order by clause 'region desc name owner'"),
+		},
+		{
+			name: "should return nil if the validation is completed",
+			fields: fields{
+				Page:    1,
+				Size:    100,
+				Search:  "",
+				OrderBy: []string{"name asc"},
+			},
+			args: args{
+				acceptedOrderByParams: getValidTestParams(),
+			},
+			want: nil,
+		},
+	}
+	g := NewWithT(t)
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			la := &ListArguments{
+				Page:    tt.fields.Page,
+				Size:    tt.fields.Size,
+				Search:  tt.fields.Search,
+				OrderBy: tt.fields.OrderBy,
+			}
+			err := la.Validate(tt.args.acceptedOrderByParams)
+			if err != nil {
+				g.Expect(err.Error()).To(Equal(tt.want.Error()))
 			}
 		})
 	}
