@@ -82,13 +82,9 @@ The CLI is built using [Cobra](https://github.com/spf13/cobra).  All of the comm
 
 * [`cmd`](../cmd) - main binary entry points
 * [`pkg/cmd`](../pkg/cmd) - common sub commands
-* [`internal/kafka/internal/cmd`](../internal/kafka/internal/cmd) - kafka sub commands
 
 ```
-/cloudprovider - command definition for the /cloudprovider endpoint
-/cluster - command definition for the /cluster endpoint
 /flags - util functions for flags validation
-/kafka - command definition for the /kafka endpoint
 ```
 
 If your endpoint is using a new resource, a new folder should be created here with the following files:
