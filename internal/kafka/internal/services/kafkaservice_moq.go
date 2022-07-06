@@ -47,6 +47,9 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			DeprovisionKafkaForUsersFunc: func(users []string) *serviceError.ServiceError {
 // 				panic("mock out the DeprovisionKafkaForUsers method")
 // 			},
+// 			GenerateReservedManagedKafkasByClusterIDFunc: func(clusterID string) ([]managedkafka.ManagedKafka, *serviceError.ServiceError) {
+// 				panic("mock out the GenerateReservedManagedKafkasByClusterID method")
+// 			},
 // 			GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *serviceError.ServiceError) {
 // 				panic("mock out the Get method")
 // 			},
@@ -128,6 +131,9 @@ type KafkaServiceMock struct {
 
 	// DeprovisionKafkaForUsersFunc mocks the DeprovisionKafkaForUsers method.
 	DeprovisionKafkaForUsersFunc func(users []string) *serviceError.ServiceError
+
+	// GenerateReservedManagedKafkasByClusterIDFunc mocks the GenerateReservedManagedKafkasByClusterID method.
+	GenerateReservedManagedKafkasByClusterIDFunc func(clusterID string) ([]managedkafka.ManagedKafka, *serviceError.ServiceError)
 
 	// GetFunc mocks the Get method.
 	GetFunc func(ctx context.Context, id string) (*dbapi.KafkaRequest, *serviceError.ServiceError)
@@ -219,6 +225,11 @@ type KafkaServiceMock struct {
 		DeprovisionKafkaForUsers []struct {
 			// Users is the users argument value.
 			Users []string
+		}
+		// GenerateReservedManagedKafkasByClusterID holds details about calls to the GenerateReservedManagedKafkasByClusterID method.
+		GenerateReservedManagedKafkasByClusterID []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
 		}
 		// Get holds details about calls to the Get method.
 		Get []struct {
@@ -332,6 +343,7 @@ type KafkaServiceMock struct {
 	lockDelete                                    sync.RWMutex
 	lockDeprovisionExpiredKafkas                  sync.RWMutex
 	lockDeprovisionKafkaForUsers                  sync.RWMutex
+	lockGenerateReservedManagedKafkasByClusterID  sync.RWMutex
 	lockGet                                       sync.RWMutex
 	lockGetAvailableSizesInRegion                 sync.RWMutex
 	lockGetById                                   sync.RWMutex
@@ -564,6 +576,37 @@ func (mock *KafkaServiceMock) DeprovisionKafkaForUsersCalls() []struct {
 	mock.lockDeprovisionKafkaForUsers.RLock()
 	calls = mock.calls.DeprovisionKafkaForUsers
 	mock.lockDeprovisionKafkaForUsers.RUnlock()
+	return calls
+}
+
+// GenerateReservedManagedKafkasByClusterID calls GenerateReservedManagedKafkasByClusterIDFunc.
+func (mock *KafkaServiceMock) GenerateReservedManagedKafkasByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *serviceError.ServiceError) {
+	if mock.GenerateReservedManagedKafkasByClusterIDFunc == nil {
+		panic("KafkaServiceMock.GenerateReservedManagedKafkasByClusterIDFunc: method is nil but KafkaService.GenerateReservedManagedKafkasByClusterID was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	mock.lockGenerateReservedManagedKafkasByClusterID.Lock()
+	mock.calls.GenerateReservedManagedKafkasByClusterID = append(mock.calls.GenerateReservedManagedKafkasByClusterID, callInfo)
+	mock.lockGenerateReservedManagedKafkasByClusterID.Unlock()
+	return mock.GenerateReservedManagedKafkasByClusterIDFunc(clusterID)
+}
+
+// GenerateReservedManagedKafkasByClusterIDCalls gets all the calls that were made to GenerateReservedManagedKafkasByClusterID.
+// Check the length with:
+//     len(mockedKafkaService.GenerateReservedManagedKafkasByClusterIDCalls())
+func (mock *KafkaServiceMock) GenerateReservedManagedKafkasByClusterIDCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	mock.lockGenerateReservedManagedKafkasByClusterID.RLock()
+	calls = mock.calls.GenerateReservedManagedKafkasByClusterID
+	mock.lockGenerateReservedManagedKafkasByClusterID.RUnlock()
 	return calls
 }
 

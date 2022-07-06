@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -32,6 +33,7 @@ import (
 	goerrors "github.com/pkg/errors"
 	mocket "github.com/selvatico/go-mocket"
 	"gorm.io/gorm"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -3002,6 +3004,487 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 			got, err := k.GetManagedKafkaByClusterID(tt.args.clusterID)
 			g.Expect(got).To(Equal(tt.want))
 			g.Expect(err).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
+	type fields struct {
+		connectionFactory      *db.ConnectionFactory
+		kafkaConfig            *config.KafkaConfig
+		clusterService         ClusterService
+		dataplaneClusterConfig *config.DataplaneClusterConfig
+	}
+	type args struct {
+		clusterID string
+	}
+
+	strimziOperatorVersion := "strimzi-cluster-operator.from-cluster"
+
+	testDeveloperInstanceType, err := kafkaSupportedInstanceTypesConfig.Configuration.GetKafkaInstanceTypeByID("developer")
+	if err != nil {
+		panic("unexpected test error")
+	}
+	testDeveloperX1InstanceSize, err := testDeveloperInstanceType.GetKafkaInstanceSizeByID("x1")
+	if err != nil {
+		panic("unexpected test error")
+	}
+	testStandardInstanceType, err := kafkaSupportedInstanceTypesConfig.Configuration.GetKafkaInstanceTypeByID("standard")
+	if err != nil {
+		panic("unexpected test error")
+	}
+	testStandardX1InstanceSize, err := testStandardInstanceType.GetKafkaInstanceSizeByID("x1")
+	if err != nil {
+		panic("unexpected test error")
+	}
+
+	testAvailableStrimziVersions := []api.StrimziVersion{
+		{
+			Version: strimziOperatorVersion,
+			Ready:   true,
+			KafkaVersions: []api.KafkaVersion{
+				{
+					Version: "2.7.0",
+				},
+			},
+			KafkaIBPVersions: []api.KafkaIBPVersion{
+				{
+					Version: "2.7",
+				},
+			},
+		},
+	}
+	marshaledTestAvailableStrimziVersions, err := json.Marshal(testAvailableStrimziVersions)
+	if err != nil {
+		panic("unexpected test error")
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []managedkafka.ManagedKafka
+		wantErr bool
+	}{
+		{
+			name: "returns generated managed kafkas",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaExternalCertificate: true,
+					SupportedInstanceTypes:         &kafkaSupportedInstanceTypesConfig,
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
+							"developer": config.InstanceTypeDynamicScalingConfig{
+								ReservedStreamingUnits: 1,
+							},
+							"standard": config.InstanceTypeDynamicScalingConfig{
+								ReservedStreamingUnits: 2,
+							},
+						},
+					},
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							ClusterID:                clusterID,
+							Status:                   api.ClusterReady,
+							SupportedInstanceType:    "developer,standard",
+							AvailableStrimziVersions: marshaledTestAvailableStrimziVersions,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			wantErr: false,
+			want: []managedkafka.ManagedKafka{
+				managedkafka.ManagedKafka{
+					Id: "reserved-kafka-developer-1",
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ManagedKafka",
+						APIVersion: "managedkafka.bf2.org/v1alpha1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "reserved-kafka-developer-1",
+						Namespace: "reserved-kafka-developer-1",
+						Annotations: map[string]string{
+							"bf2.org/id":          "reserved-kafka-developer-1",
+							"bf2.org/placementId": "reserved-kafka-developer-1",
+						},
+						Labels: map[string]string{
+							"bf2.org/kafkaInstanceProfileQuotaConsumed":    strconv.Itoa(testDeveloperX1InstanceSize.QuotaConsumed),
+							"bf2.org/kafkaInstanceProfileType":             "developer",
+							managedkafka.ManagedKafkaBf2DeploymentLabelKey: managedkafka.ManagedKafkaBf2DeploymentLabelValueReserved,
+						},
+					},
+					Spec: managedkafka.ManagedKafkaSpec{
+						Capacity: managedkafka.Capacity{
+							IngressPerSec:               testDeveloperX1InstanceSize.IngressThroughputPerSec.String(),
+							EgressPerSec:                testDeveloperX1InstanceSize.EgressThroughputPerSec.String(),
+							TotalMaxConnections:         testDeveloperX1InstanceSize.TotalMaxConnections,
+							MaxDataRetentionSize:        testDeveloperX1InstanceSize.MaxDataRetentionSize.String(),
+							MaxPartitions:               testDeveloperX1InstanceSize.MaxPartitions,
+							MaxDataRetentionPeriod:      testDeveloperX1InstanceSize.MaxDataRetentionPeriod,
+							MaxConnectionAttemptsPerSec: testDeveloperX1InstanceSize.MaxConnectionAttemptsPerSec,
+						},
+						Endpoint: managedkafka.EndpointSpec{
+							BootstrapServerHost: fmt.Sprintf("%s-dummyhost", "reserved-kafka-developer-1"),
+						},
+						Versions: managedkafka.VersionsSpec{
+							Strimzi:  testAvailableStrimziVersions[0].Version,
+							Kafka:    testAvailableStrimziVersions[0].KafkaVersions[0].Version,
+							KafkaIBP: testAvailableStrimziVersions[0].GetLatestKafkaIBPVersion().Version,
+						},
+						Deleted: false,
+						Owners:  []string{},
+					},
+					Status: managedkafka.ManagedKafkaStatus{},
+				},
+				managedkafka.ManagedKafka{
+					Id: "reserved-kafka-standard-1",
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ManagedKafka",
+						APIVersion: "managedkafka.bf2.org/v1alpha1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "reserved-kafka-standard-1",
+						Namespace: "reserved-kafka-standard-1",
+						Annotations: map[string]string{
+							"bf2.org/id":          "reserved-kafka-standard-1",
+							"bf2.org/placementId": "reserved-kafka-standard-1",
+						},
+						Labels: map[string]string{
+							"bf2.org/kafkaInstanceProfileQuotaConsumed":    strconv.Itoa(testStandardX1InstanceSize.QuotaConsumed),
+							"bf2.org/kafkaInstanceProfileType":             "standard",
+							managedkafka.ManagedKafkaBf2DeploymentLabelKey: managedkafka.ManagedKafkaBf2DeploymentLabelValueReserved,
+						},
+					},
+					Spec: managedkafka.ManagedKafkaSpec{
+						Capacity: managedkafka.Capacity{
+							IngressPerSec:               testStandardX1InstanceSize.IngressThroughputPerSec.String(),
+							EgressPerSec:                testStandardX1InstanceSize.EgressThroughputPerSec.String(),
+							TotalMaxConnections:         testStandardX1InstanceSize.TotalMaxConnections,
+							MaxDataRetentionSize:        testStandardX1InstanceSize.MaxDataRetentionSize.String(),
+							MaxPartitions:               testStandardX1InstanceSize.MaxPartitions,
+							MaxDataRetentionPeriod:      testStandardX1InstanceSize.MaxDataRetentionPeriod,
+							MaxConnectionAttemptsPerSec: testStandardX1InstanceSize.MaxConnectionAttemptsPerSec,
+						},
+						Endpoint: managedkafka.EndpointSpec{
+							BootstrapServerHost: fmt.Sprintf("%s-dummyhost", "reserved-kafka-standard-1"),
+						},
+						Versions: managedkafka.VersionsSpec{
+							Strimzi:  testAvailableStrimziVersions[0].Version,
+							Kafka:    testAvailableStrimziVersions[0].KafkaVersions[0].Version,
+							KafkaIBP: testAvailableStrimziVersions[0].GetLatestKafkaIBPVersion().Version,
+						},
+						Deleted: false,
+						Owners:  []string{},
+					},
+					Status: managedkafka.ManagedKafkaStatus{},
+				},
+				managedkafka.ManagedKafka{
+					Id: "reserved-kafka-standard-2",
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ManagedKafka",
+						APIVersion: "managedkafka.bf2.org/v1alpha1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "reserved-kafka-standard-2",
+						Namespace: "reserved-kafka-standard-2",
+						Annotations: map[string]string{
+							"bf2.org/id":          "reserved-kafka-standard-2",
+							"bf2.org/placementId": "reserved-kafka-standard-2",
+						},
+						Labels: map[string]string{
+							"bf2.org/kafkaInstanceProfileQuotaConsumed":    strconv.Itoa(testStandardX1InstanceSize.QuotaConsumed),
+							"bf2.org/kafkaInstanceProfileType":             "standard",
+							managedkafka.ManagedKafkaBf2DeploymentLabelKey: managedkafka.ManagedKafkaBf2DeploymentLabelValueReserved,
+						},
+					},
+					Spec: managedkafka.ManagedKafkaSpec{
+						Capacity: managedkafka.Capacity{
+							IngressPerSec:               testStandardX1InstanceSize.IngressThroughputPerSec.String(),
+							EgressPerSec:                testStandardX1InstanceSize.EgressThroughputPerSec.String(),
+							TotalMaxConnections:         testStandardX1InstanceSize.TotalMaxConnections,
+							MaxDataRetentionSize:        testStandardX1InstanceSize.MaxDataRetentionSize.String(),
+							MaxPartitions:               testStandardX1InstanceSize.MaxPartitions,
+							MaxDataRetentionPeriod:      testStandardX1InstanceSize.MaxDataRetentionPeriod,
+							MaxConnectionAttemptsPerSec: testStandardX1InstanceSize.MaxConnectionAttemptsPerSec,
+						},
+						Endpoint: managedkafka.EndpointSpec{
+							BootstrapServerHost: fmt.Sprintf("%s-dummyhost", "reserved-kafka-standard-2"),
+						},
+						Versions: managedkafka.VersionsSpec{
+							Strimzi:  testAvailableStrimziVersions[0].Version,
+							Kafka:    testAvailableStrimziVersions[0].KafkaVersions[0].Version,
+							KafkaIBP: testAvailableStrimziVersions[0].GetLatestKafkaIBPVersion().Version,
+						},
+						Deleted: false,
+						Owners:  []string{},
+					},
+					Status: managedkafka.ManagedKafkaStatus{},
+				},
+			},
+		},
+		{
+			name: "returns an empty list when dynamic scaling is not enabled",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.ManualScaling,
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			want: []managedkafka.ManagedKafka{},
+		},
+		{
+			name: "an error is returned when the provided ClusterID does not exist",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			wantErr: true,
+		},
+		{
+			name: "an error is returned when trying to get the provided cluster returns an error",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, errors.GeneralError("test error")
+					},
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			wantErr: true,
+		},
+		{
+			name: "an empty list is returned when the provided ClusterID is not in ready status",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							ClusterID: clusterID,
+							Status:    api.ClusterWaitingForKasFleetShardOperator,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			want: []managedkafka.ManagedKafka{},
+		},
+		{
+			name: "an error is returned when there are no ready strimzi versions",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						availableStrimziVersions, err := json.Marshal([]api.StrimziVersion{
+							{
+								Version: strimziOperatorVersion,
+								Ready:   false,
+								KafkaVersions: []api.KafkaVersion{
+									{
+										Version: "2.7.0",
+									},
+								},
+								KafkaIBPVersions: []api.KafkaIBPVersion{
+									{
+										Version: "2.7",
+									},
+								},
+							},
+						})
+						if err != nil {
+							t.Fatal("failed to convert available strimzi versions to json")
+						}
+						return &api.Cluster{
+							ClusterID:                clusterID,
+							Status:                   api.ClusterReady,
+							AvailableStrimziVersions: availableStrimziVersions,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			wantErr: true,
+		},
+		{
+			name: "an error is returned when there are no kafka versions in the latest ready strimzi version",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
+							"developer": config.InstanceTypeDynamicScalingConfig{
+								ReservedStreamingUnits: 1,
+							},
+							"standard": config.InstanceTypeDynamicScalingConfig{
+								ReservedStreamingUnits: 1,
+							},
+						},
+					},
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						availableStrimziVersions, err := json.Marshal([]api.StrimziVersion{
+							{
+								Version:       strimziOperatorVersion,
+								Ready:         true,
+								KafkaVersions: []api.KafkaVersion{},
+								KafkaIBPVersions: []api.KafkaIBPVersion{
+									{
+										Version: "2.7",
+									},
+								},
+							},
+						})
+						if err != nil {
+							t.Fatal("failed to convert available strimzi versions to json")
+						}
+						return &api.Cluster{
+							ClusterID:                clusterID,
+							Status:                   api.ClusterReady,
+							AvailableStrimziVersions: availableStrimziVersions,
+							SupportedInstanceType:    "developer",
+						}, nil
+					},
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			wantErr: true,
+		},
+		{
+			name: "an error is returned when there are no kafka ibp versions in the latest ready strimzi version",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
+							"developer": config.InstanceTypeDynamicScalingConfig{
+								ReservedStreamingUnits: 1,
+							},
+							"standard": config.InstanceTypeDynamicScalingConfig{
+								ReservedStreamingUnits: 1,
+							},
+						},
+					},
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						availableStrimziVersions, err := json.Marshal([]api.StrimziVersion{
+							{
+								Version: strimziOperatorVersion,
+								Ready:   true,
+								KafkaVersions: []api.KafkaVersion{
+									api.KafkaVersion{
+										Version: "2.7.0",
+									},
+								},
+								KafkaIBPVersions: []api.KafkaIBPVersion{},
+							},
+						})
+						if err != nil {
+							t.Fatal("failed to convert available strimzi versions to json")
+						}
+						return &api.Cluster{
+							ClusterID:                clusterID,
+							Status:                   api.ClusterReady,
+							AvailableStrimziVersions: availableStrimziVersions,
+							SupportedInstanceType:    "developer",
+						}, nil
+					},
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			wantErr: true,
+		},
+		{
+			name: "an error is returned when a supported kafka instance type in the cluster does not have corresponding dynamic configuration",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
+							"standard": config.InstanceTypeDynamicScalingConfig{
+								ReservedStreamingUnits: 1,
+							},
+						},
+					},
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							ClusterID:                clusterID,
+							Status:                   api.ClusterReady,
+							AvailableStrimziVersions: marshaledTestAvailableStrimziVersions,
+							SupportedInstanceType:    "developer",
+						}, nil
+					},
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			wantErr: true,
+		},
+	}
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			g := NewWithT(t)
+			k := &kafkaService{
+				connectionFactory:      tt.fields.connectionFactory,
+				clusterService:         tt.fields.clusterService,
+				kafkaConfig:            tt.fields.kafkaConfig,
+				dataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
+			}
+			got, err := k.GenerateReservedManagedKafkasByClusterID(tt.args.clusterID)
+			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).Should(HaveLen(len(tt.want)))
+			g.Expect(got).To(Equal(tt.want))
 		})
 	}
 }

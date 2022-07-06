@@ -19,6 +19,7 @@ func PresentManagedKafka(from *v1.ManagedKafka) private.ManagedKafka {
 			Labels: private.ManagedKafkaAllOfMetadataLabels{
 				Bf2OrgKafkaInstanceProfileType:          from.Labels["bf2.org/kafkaInstanceProfileType"],
 				Bf2OrgKafkaInstanceProfileQuotaConsumed: from.Labels["bf2.org/kafkaInstanceProfileQuotaConsumed"],
+				Bf2OrgDeployment:                        from.Labels[v1.ManagedKafkaBf2DeploymentLabelKey],
 			},
 		},
 		Spec: private.ManagedKafkaAllOfSpec{

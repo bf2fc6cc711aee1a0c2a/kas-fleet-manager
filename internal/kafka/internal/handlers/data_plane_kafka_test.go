@@ -3,15 +3,19 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	v1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 )
 
@@ -99,6 +103,7 @@ func Test_GetAll(t *testing.T) {
 		args           args
 		fields         fields
 		wantStatusCode int
+		wantKafkaIDs   []string
 	}{
 		{
 			name:           "empty cluster ID should fail validation",
@@ -119,6 +124,23 @@ func Test_GetAll(t *testing.T) {
 			wantStatusCode: http.StatusInternalServerError,
 		},
 		{
+			name: "should fail when generation of reserved managed kafka instances fails",
+			args: args{
+				clusterId: testId,
+			},
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					GetManagedKafkaByClusterIDFunc: func(clusterID string) ([]v1.ManagedKafka, *errors.ServiceError) {
+						return []v1.ManagedKafka{{Id: testId}}, nil
+					},
+					GenerateReservedManagedKafkasByClusterIDFunc: func(clusterID string) ([]v1.ManagedKafka, *errors.ServiceError) {
+						return nil, errors.GeneralError("test fail")
+					},
+				},
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
 			name: "should successfully return ManagedKafkaList",
 			args: args{
 				clusterId: testId,
@@ -129,12 +151,30 @@ func Test_GetAll(t *testing.T) {
 						return []v1.ManagedKafka{
 							{
 								Id: testId,
+								ObjectMeta: metav1.ObjectMeta{
+									Annotations: map[string]string{
+										"bf2.org/id": testId,
+									},
+								},
+							},
+						}, nil
+					},
+					GenerateReservedManagedKafkasByClusterIDFunc: func(clusterID string) ([]v1.ManagedKafka, *errors.ServiceError) {
+						return []v1.ManagedKafka{
+							v1.ManagedKafka{
+								Id: "reserved-kafka-test-1",
+								ObjectMeta: metav1.ObjectMeta{
+									Annotations: map[string]string{
+										"bf2.org/id": "reserved-kafka-test-1",
+									},
+								},
 							},
 						}, nil
 					},
 				},
 			},
 			wantStatusCode: http.StatusOK,
+			wantKafkaIDs:   []string{testId, "reserved-kafka-test-1"},
 		},
 	}
 
@@ -143,6 +183,8 @@ func Test_GetAll(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
 			h := NewDataPlaneKafkaHandler(tt.fields.dataplaneKafkaService, tt.fields.kafkaService)
 
 			req, rw := GetHandlerParams("GET", "/{id}", nil)
@@ -150,7 +192,15 @@ func Test_GetAll(t *testing.T) {
 
 			h.GetAll(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			var respBody private.ManagedKafkaList
+			g.Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			decodeErr := json.NewDecoder(resp.Body).Decode(&respBody)
+			g.Expect(decodeErr).NotTo(HaveOccurred())
+			g.Expect(respBody.Items).Should(HaveLen(len(tt.wantKafkaIDs)))
+			for idx, managedkafka := range respBody.Items {
+				g.Expect(managedkafka.Id).To(Equal(tt.wantKafkaIDs[idx]))
+			}
+
 			resp.Body.Close()
 		})
 	}
