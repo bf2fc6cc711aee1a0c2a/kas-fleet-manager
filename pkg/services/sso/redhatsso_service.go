@@ -304,9 +304,9 @@ func (r *redhatssoService) DeleteServiceAccountInternal(accessToken string, clie
 			if err != nil {
 				return errors.NewWithCause(errors.ErrorGeneral, err, "failed to collect internal service accounts")
 			}
-			for i := range accounts {
-				if clientId == shared.SafeString(accounts[i].ClientId) {
-					return r.DeleteServiceAccount(accessToken, context.Background(), shared.SafeString(accounts[i].Id))
+			for _, account := range accounts {
+				if clientId == shared.SafeString(account.ClientId) {
+					return r.DeleteServiceAccount(accessToken, context.Background(), shared.SafeString(account.Id))
 				}
 			}
 			first = first + max
