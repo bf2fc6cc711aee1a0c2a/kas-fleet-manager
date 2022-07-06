@@ -273,8 +273,6 @@ func Errors() ServiceErrors {
 func NewErrorFromHTTPStatusCode(httpCode int, reason string, values ...interface{}) *ServiceError {
 	if httpCode >= http.StatusBadRequest && httpCode < http.StatusInternalServerError {
 		switch httpCode {
-		case http.StatusBadRequest:
-			return BadRequest(reason, values...)
 		case http.StatusUnauthorized:
 			return Unauthorized(reason, values...)
 		case http.StatusForbidden:
@@ -285,6 +283,7 @@ func NewErrorFromHTTPStatusCode(httpCode int, reason string, values ...interface
 			return NotImplemented(reason, values...)
 		case http.StatusConflict:
 			return Conflict(reason, values...)
+		//StatusBadRequest and all other errors will result in BadRequest error being created
 		default:
 			return BadRequest(reason, values...)
 		}
@@ -292,8 +291,7 @@ func NewErrorFromHTTPStatusCode(httpCode int, reason string, values ...interface
 
 	if httpCode >= http.StatusInternalServerError {
 		switch httpCode {
-		case http.StatusInternalServerError:
-			return GeneralError(reason, values...)
+		//StatusInternalServerError and all other errors will result in GeneralError() error being created
 		default:
 			return GeneralError(reason, values...)
 		}
