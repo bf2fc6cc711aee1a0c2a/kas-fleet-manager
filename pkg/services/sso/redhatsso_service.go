@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -290,6 +291,27 @@ func (r *redhatssoService) CreateServiceAccountInternal(accessToken string, requ
 }
 
 func (r *redhatssoService) DeleteServiceAccountInternal(accessToken string, clientId string) *errors.ServiceError {
+	// This is code can be removed once the migrated canary & kas-fleetshard are removed. Performance impact would be less as the number of canary & kas-fleetshard are low.
+	// Once the existing canary or kas-fleetshard are deleted. This logic can be removed.
+	if strings.HasPrefix(clientId, "canary") || strings.HasPrefix(clientId, "kas-fleetshard-agent") {
+		first := 0
+		max := 100
+		for {
+			accounts, err := r.client.GetServiceAccounts(accessToken, first, max)
+			if len(accounts) == 0 {
+				return nil
+			}
+			if err != nil {
+				return errors.NewWithCause(errors.ErrorGeneral, err, "failed to collect internal service accounts")
+			}
+			for i := range accounts {
+				if clientId == shared.SafeString(accounts[i].ClientId) {
+					return r.DeleteServiceAccount(accessToken, context.Background(), shared.SafeString(accounts[i].Id))
+				}
+			}
+			first = first + max
+		}
+	}
 	return r.DeleteServiceAccount(accessToken, context.Background(), clientId)
 }
 
