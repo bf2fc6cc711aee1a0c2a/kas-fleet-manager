@@ -20,7 +20,7 @@ const (
 	defaultKafkaReadyTimeout             = 30 * time.Minute
 	defaultKafkaClusterAssignmentTimeout = 2 * time.Minute
 	metricPollInterval                   = 1 * time.Second
-	metricPollTimeout                    = 10 * time.Second
+	metricPollTimeout                    = 1 * time.Minute // make it 1 minute to take into account the reconciler run interval which can be 30 seconds in some environments
 )
 
 // WaitForNumberOfKafkaToBeGivenCount - Awaits for the number of kafkas to be exactly X

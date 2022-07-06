@@ -126,36 +126,79 @@ func (k *KafkaManager) setKafkaStatusCountMetric() []error {
 }
 
 func (k *KafkaManager) setClusterStatusCapacityMetrics() error {
-	streamingUnitsByRegion, err := k.kafkaService.CountStreamingUnitByRegionAndInstanceType()
+	usedStreamingUnitsCountByRegion, err := k.kafkaService.CountStreamingUnitByRegionAndInstanceType()
 	if err != nil {
 		return errors.Wrap(err, "failed to count Kafkas by region")
 	}
 
-	for _, region := range streamingUnitsByRegion {
-		used := float64(region.Count)
-		metrics.UpdateClusterStatusCapacityUsedCount(region.CloudProvider, region.Region, region.InstanceType, region.ClusterId, used)
+	// always publish used capacity irrespective of scaling mode
+	for _, usedStreamingUnitCount := range usedStreamingUnitsCountByRegion {
+		metrics.UpdateClusterStatusCapacityUsedCount(usedStreamingUnitCount.CloudProvider, usedStreamingUnitCount.Region, usedStreamingUnitCount.InstanceType, usedStreamingUnitCount.ClusterId, float64(usedStreamingUnitCount.Count))
 	}
 
-	availableCapacities, err := k.calculateAvailableCapacityByRegionAndInstanceType(streamingUnitsByRegion)
-	if err != nil {
-		return err
+	if k.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
+		for _, usedStreamingUnitCount := range usedStreamingUnitsCountByRegion {
+			availableAndMaxCapacityCounts, err := k.calculateAvailableAndMaxCapacityForDynamicScaling(usedStreamingUnitCount)
+			if err != nil {
+				return err
+			}
+			k.setClusterStatusCapacityAvailableMetric(availableAndMaxCapacityCounts)
+			k.setClusterStatusCapacityMaxMetric(availableAndMaxCapacityCounts)
+		}
 	}
 
-	for i := range availableCapacities {
-		k.setClusterStatusCapacityAvailableMetric(&availableCapacities[i])
+	if k.dataplaneClusterConfig.IsDataPlaneManualScalingEnabled() {
+		availableAndMaxCapacitiesCounts, err := k.calculateCapacityByRegionAndInstanceTypeForManualClusters(usedStreamingUnitsCountByRegion)
+		if err != nil {
+			return err
+		}
+
+		for _, availableAndMaxCapacityCounts := range availableAndMaxCapacitiesCounts {
+			k.setClusterStatusCapacityAvailableMetric(availableAndMaxCapacityCounts)
+			k.setClusterStatusCapacityMaxMetric(availableAndMaxCapacityCounts)
+		}
 	}
 
 	return nil
 }
 
-func (k *KafkaManager) calculateAvailableCapacityByRegionAndInstanceType(streamingUnitsByRegion []services.KafkaStreamingUnitCountPerRegion) ([]services.KafkaStreamingUnitCountPerRegion, error) {
+//calculateAvailableAndMaxCapacityForDynamicScaling takes in used capacity and compute available and max capacity by taking into consideration region limits and dynamic capacity info
+//i.e MaxUnits value. Once the computation is completed, MaxUnits will indicate the maximum capacity which takes in region limits. And Count will indicate available capacity
+func (k *KafkaManager) calculateAvailableAndMaxCapacityForDynamicScaling(streamingUnitsByRegion services.KafkaStreamingUnitCountPerRegion) (services.KafkaStreamingUnitCountPerRegion, error) {
+	limit, err := k.getRegionInstanceTypeLimit(streamingUnitsByRegion.Region, streamingUnitsByRegion.CloudProvider, streamingUnitsByRegion.InstanceType)
+	if err != nil {
+		return services.KafkaStreamingUnitCountPerRegion{}, err
+	}
+
+	// The maximum available number of instances of this type is either the
+	// cluster's own instance limit or the cloud provider's (depending on
+	// which is reached sooner).
+	maxAvailable := math.Min(float64(streamingUnitsByRegion.MaxUnits), limit)
+
+	// A negative number could be the result of lowering the kafka instance limit after a higher number
+	// of Kafkas have already been created. In this case we limit the metric to 0 anyways.
+	available := math.Max(0, maxAvailable-float64(streamingUnitsByRegion.Count))
+
+	return services.KafkaStreamingUnitCountPerRegion{
+		Region:        streamingUnitsByRegion.Region,
+		InstanceType:  streamingUnitsByRegion.InstanceType,
+		ClusterId:     streamingUnitsByRegion.ClusterId,
+		Count:         int32(available),
+		CloudProvider: streamingUnitsByRegion.CloudProvider,
+		MaxUnits:      int32(maxAvailable),
+	}, nil
+}
+
+//calculateCapacityByRegionAndInstanceTypeForManualClusters compute the available capacity and maximum streaming unit capacity for each schedulable manual cluster,
+//in a given cloud provider, region and for an instance type. Once the computation is done, Count will indicate the available capacity and MaxUnits will indicate the maximum streaming units
+func (k *KafkaManager) calculateCapacityByRegionAndInstanceTypeForManualClusters(streamingUnitsByRegion []services.KafkaStreamingUnitCountPerRegion) ([]services.KafkaStreamingUnitCountPerRegion, error) {
 	var result []services.KafkaStreamingUnitCountPerRegion
 
 	// helper function that returns the sum of existing kafka instances for a clusterId split by
 	// all existing on cluster vs. instance type existing on cluster
-	findUsedCapacityForCluster := func(clusterId string, instanceType string) (float64, float64) {
-		var totalUsed float64 = 0
-		var instanceTypeUsed float64 = 0
+	findUsedCapacityForCluster := func(clusterId string, instanceType string) (int32, int32) {
+		var totalUsed int32 = 0
+		var instanceTypeUsed int32 = 0
 		for _, kafkaInRegion := range streamingUnitsByRegion {
 			if kafkaInRegion.ClusterId == clusterId {
 				totalUsed += kafkaInRegion.Count
@@ -179,21 +222,15 @@ func (k *KafkaManager) calculateAvailableCapacityByRegionAndInstanceType(streami
 				continue
 			}
 
-			instanceTypeLimit, err := k.cloudProviders.GetInstanceLimit(cluster.Region, cluster.CloudProvider, instanceType)
+			limit, err := k.getRegionInstanceTypeLimit(cluster.Region, cluster.CloudProvider, instanceType)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to get instance limit for %v on %v and instance type %v",
-					cluster.Region, cluster.CloudProvider, instanceType)
-			}
-
-			var limit = math.MaxInt64
-			if instanceTypeLimit != nil {
-				limit = *instanceTypeLimit
+				return nil, err
 			}
 
 			// The maximum available number of instances of this type is either the
 			// cluster's own instance limit or the cloud provider's (depending on
 			// which is reached sooner).
-			maxAvailable := math.Min(float64(cluster.KafkaInstanceLimit), float64(limit))
+			maxAvailable := math.Min(float64(cluster.KafkaInstanceLimit), limit)
 
 			// Current number of all instances and current number of given instance type (on the cluster)
 			totalUsed, instanceTypeUsed := findUsedCapacityForCluster(cluster.ClusterId, instanceType)
@@ -212,8 +249,9 @@ func (k *KafkaManager) calculateAvailableCapacityByRegionAndInstanceType(streami
 				Region:        cluster.Region,
 				InstanceType:  instanceType,
 				ClusterId:     cluster.ClusterId,
-				Count:         availableByInstanceType,
+				Count:         int32(availableByInstanceType),
 				CloudProvider: cluster.CloudProvider,
+				MaxUnits:      int32(maxAvailable),
 			})
 		}
 	}
@@ -222,6 +260,24 @@ func (k *KafkaManager) calculateAvailableCapacityByRegionAndInstanceType(streami
 	return result, nil
 }
 
-func (k *KafkaManager) setClusterStatusCapacityAvailableMetric(c *services.KafkaStreamingUnitCountPerRegion) {
-	metrics.UpdateClusterStatusCapacityAvailableCount(c.CloudProvider, c.Region, c.InstanceType, c.ClusterId, c.Count)
+func (k *KafkaManager) getRegionInstanceTypeLimit(region, cloudProvider, instanceType string) (float64, error) {
+	instanceTypeLimit, err := k.cloudProviders.GetInstanceLimit(region, cloudProvider, instanceType)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to get instance limit for %v on %v and instance type %v", region, cloudProvider, instanceType)
+	}
+
+	limit := math.MaxInt64
+	if instanceTypeLimit != nil {
+		limit = *instanceTypeLimit
+	}
+
+	return float64(limit), nil
+}
+
+func (k *KafkaManager) setClusterStatusCapacityAvailableMetric(c services.KafkaStreamingUnitCountPerRegion) {
+	metrics.UpdateClusterStatusCapacityAvailableCount(c.CloudProvider, c.Region, c.InstanceType, c.ClusterId, float64(c.Count))
+}
+
+func (k *KafkaManager) setClusterStatusCapacityMaxMetric(c services.KafkaStreamingUnitCountPerRegion) {
+	metrics.UpdateClusterStatusCapacityMaxCount(c.CloudProvider, c.Region, c.InstanceType, c.ClusterId, float64(c.MaxUnits))
 }

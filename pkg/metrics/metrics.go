@@ -719,6 +719,7 @@ func ResetMetricsForKafkaManagers() {
 	KafkaStatusCountMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
 	clusterStatusCapacityAvailableMetric.Reset()
+	clusterStatusCapacityMaxMetric.Reset()
 }
 
 // ResetMetricsForClusterManagers will reset the metrics for the ClusterManager background reconciler
@@ -727,7 +728,6 @@ func ResetMetricsForClusterManagers() {
 	clusterStatusSinceCreatedMetric.Reset()
 	clusterStatusCountMetric.Reset()
 	kafkaPerClusterCountMetric.Reset()
-	clusterStatusCapacityMaxMetric.Reset()
 }
 
 // ResetMetricsForReconcilers will reset the metrics related to the reconcilers
