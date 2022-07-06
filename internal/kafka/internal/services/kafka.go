@@ -100,8 +100,6 @@ type KafkaService interface {
 	DeprovisionKafkaForUsers(users []string) *errors.ServiceError
 	DeprovisionExpiredKafkas() *errors.ServiceError
 	CountByStatus(status []constants2.KafkaStatus) ([]KafkaStatusCount, error)
-	// CountStreamingUnitByRegionAndInstanceType returns streaming unit counts per regions and instance type
-	CountStreamingUnitByRegionAndInstanceType() ([]KafkaStreamingUnitCountPerRegion, error)
 	ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, *errors.ServiceError)
 	VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
 	ListComponentVersions() ([]KafkaComponentVersions, error)
@@ -952,111 +950,6 @@ func (k *kafkaService) GetCNAMERecordStatus(kafkaRequest *dbapi.KafkaRequest) (*
 type KafkaStatusCount struct {
 	Status constants2.KafkaStatus
 	Count  int
-}
-
-type KafkaStreamingUnitCountPerRegion struct {
-	Region        string
-	InstanceType  string
-	ClusterId     string
-	Count         int32
-	CloudProvider string
-	MaxUnits      int32
-}
-
-func (kafkaStreamingUnitCountPerRegion KafkaStreamingUnitCountPerRegion) isSame(kafkaPerRegionFromDB *KafkaPerRegionCount) bool {
-	return kafkaStreamingUnitCountPerRegion.CloudProvider == kafkaPerRegionFromDB.CloudProvider &&
-		kafkaStreamingUnitCountPerRegion.ClusterId == kafkaPerRegionFromDB.ClusterId &&
-		kafkaStreamingUnitCountPerRegion.InstanceType == kafkaPerRegionFromDB.InstanceType &&
-		kafkaStreamingUnitCountPerRegion.Region == kafkaPerRegionFromDB.Region
-}
-
-// KafkaPerRegionCount is a struct used to query the database using a "group by" clause
-type KafkaPerRegionCount struct {
-	Region        string
-	InstanceType  string
-	ClusterId     string
-	Count         int32
-	CloudProvider string
-	SizeId        string
-}
-
-type ClusterSelection struct {
-	CloudProvider         string
-	ClusterID             string
-	Region                string
-	SupportedInstanceType string
-	DynamicCapacityInfo   api.JSON
-}
-
-func (k *kafkaService) CountStreamingUnitByRegionAndInstanceType() ([]KafkaStreamingUnitCountPerRegion, error) {
-
-	var clusters []*ClusterSelection
-	dbConn := k.connectionFactory.New().
-		Model(&api.Cluster{}).
-		Where("cluster_id != ''")
-
-	if err := dbConn.Scan(&clusters).Error; err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to list clusters")
-	}
-
-	streamingUnitsCountPerRegion := []KafkaStreamingUnitCountPerRegion{}
-
-	// pre-populate regions count with zero count values.
-	// This is useful and it ensures that the count drops to 0 for each instance type and region when all the kafkas are removed
-	for _, clusterSelection := range clusters {
-		supportedInstanceTypes := strings.Split(clusterSelection.SupportedInstanceType, ",")
-
-		c := &api.Cluster{DynamicCapacityInfo: clusterSelection.DynamicCapacityInfo}
-		clusterDynamicCapacityInfo, _ := c.RetrieveDynamicCapacityInfo()
-
-		for _, supportedInstanceType := range supportedInstanceTypes {
-			instanceType := strings.TrimSpace(supportedInstanceType)
-			if instanceType == "" {
-				continue
-			}
-
-			var maxUnits int32 = 0
-			instanceCapacityInfo, ok := clusterDynamicCapacityInfo[instanceType]
-			if ok {
-				maxUnits = instanceCapacityInfo.MaxUnits
-			}
-
-			streamingUnitsCountPerRegion = append(streamingUnitsCountPerRegion, KafkaStreamingUnitCountPerRegion{
-				CloudProvider: clusterSelection.CloudProvider,
-				ClusterId:     clusterSelection.ClusterID,
-				InstanceType:  instanceType,
-				Region:        clusterSelection.Region,
-				Count:         0,
-				MaxUnits:      maxUnits,
-			})
-		}
-	}
-
-	dbConn = k.connectionFactory.New()
-	var kafkasPerRegion []*KafkaPerRegionCount
-	if err := dbConn.Model(&dbapi.KafkaRequest{}).
-		Select("cloud_provider, region, count(1) as Count, size_id, cluster_id, instance_type").
-		Group("size_id, cluster_id, cloud_provider, region, instance_type").
-		Scan(&kafkasPerRegion).Error; err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count kafkas when setting capacity metrics")
-	}
-
-	for _, kafkaCountPerRegion := range kafkasPerRegion {
-		instSize, err := k.kafkaConfig.GetKafkaInstanceSize(kafkaCountPerRegion.InstanceType, kafkaCountPerRegion.SizeId)
-		if err != nil {
-			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count kafkas of '%s' instance type and '%s' size_id when setting capacity metrics", kafkaCountPerRegion.InstanceType, kafkaCountPerRegion.SizeId)
-		}
-
-		streamingUnitCount := int32(instSize.CapacityConsumed) * kafkaCountPerRegion.Count
-		for i, streamingUnitCountPerRegion := range streamingUnitsCountPerRegion {
-			if streamingUnitCountPerRegion.isSame(kafkaCountPerRegion) {
-				streamingUnitsCountPerRegion[i].Count += streamingUnitCount
-				break
-			}
-		}
-	}
-
-	return streamingUnitsCountPerRegion, nil
 }
 
 func (k *kafkaService) CountByStatus(status []constants2.KafkaStatus) ([]KafkaStatusCount, error) {
