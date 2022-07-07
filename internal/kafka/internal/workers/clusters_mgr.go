@@ -2,7 +2,6 @@ package workers
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
@@ -198,10 +197,6 @@ func (c *ClusterManager) processMetrics() []error {
 
 	if err := c.setKafkaPerClusterCountMetrics(); err != nil {
 		return []error{errors.Wrapf(err, "failed to set kafka per cluster count metrics")}
-	}
-
-	if err := c.setClusterStatusMaxCapacityMetrics(); err != nil {
-		return []error{errors.Wrapf(err, "failed to set kafka max capacity metrics")}
 	}
 
 	return []error{}
@@ -1270,37 +1265,6 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 		return err
 	}
 	glog.Infof("Identity provider is set up for cluster %s", cluster.ClusterID)
-	return nil
-}
-
-func (c *ClusterManager) setClusterStatusMaxCapacityMetrics() error {
-	for _, cluster := range c.DataplaneClusterConfig.ClusterConfig.GetManualClusters() {
-		if !cluster.Schedulable {
-			continue
-		}
-
-		supportedInstanceTypes := strings.Split(cluster.SupportedInstanceType, ",")
-		for _, instanceType := range supportedInstanceTypes {
-			if instanceType != "" {
-				instanceTypeLimit, err := c.SupportedProviders.GetInstanceLimit(cluster.Region, cluster.CloudProvider, instanceType)
-				if err != nil {
-					return errors.Wrapf(err, "failed to get instance limit for %v on %v and instance type %v",
-						cluster.Region, cluster.CloudProvider, instanceType)
-				}
-
-				var limit = math.MaxInt64
-				if instanceTypeLimit != nil {
-					limit = *instanceTypeLimit
-				}
-
-				// take the cloud providers instance limit into account when calculating maximum capacity:
-				// minimum of (cluster limit, provider limit)
-				capacity := math.Min(float64(cluster.KafkaInstanceLimit), float64(limit))
-				metrics.UpdateClusterStatusCapacityMaxCount(cluster.CloudProvider, cluster.Region, instanceType, cluster.ClusterId, capacity)
-			}
-		}
-	}
-
 	return nil
 }
 
