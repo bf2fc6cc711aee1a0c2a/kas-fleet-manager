@@ -347,6 +347,7 @@ test: gotestsum
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db/connection.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db/migrations.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db/transaction_middleware.go" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db/logger.go" \
 	cover.out > coverage.out
 .PHONY: test
 
