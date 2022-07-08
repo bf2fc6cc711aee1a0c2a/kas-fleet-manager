@@ -89,11 +89,7 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 			// when getStatus returns statusError we know that the ready
 			// condition will be there so there's no need to check for it
 			readyCondition, _ := ks.GetReadyCondition()
-			if strings.Contains(strings.ToLower(readyCondition.Message), "secret") {
-				e = d.setKafkaClusterFailed(kafka, "failed to update kafka")
-			} else {
-				e = d.setKafkaClusterFailed(kafka, readyCondition.Message)
-			}
+			e = d.setKafkaClusterFailed(kafka, readyCondition.Message)
 		case statusDeleted:
 			e = d.setKafkaClusterDeleting(kafka)
 		case statusRejected:
@@ -236,6 +232,8 @@ func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *dbapi.KafkaRequest,
 		return nil
 	}
 
+	logger.Logger.Errorf("Kafka status for Kafka ID '%s' in ClusterID '%s' reported as failed by KAS Fleet Shard Operator: '%s'", kafka.ID, kafka.ClusterID, errMessage)
+
 	// only send metrics data if the current kafka request is in "provisioning" status as this is the only case we want to report
 	shouldSendMetric, err := d.checkKafkaRequestCurrentStatus(kafka, constants2.KafkaRequestStatusProvisioning)
 	if err != nil {
@@ -243,7 +241,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *dbapi.KafkaRequest,
 	}
 
 	kafka.Status = string(constants2.KafkaRequestStatusFailed)
-	kafka.FailedReason = fmt.Sprintf("Kafka reported as failed: '%s'", errMessage)
+	kafka.FailedReason = fmt.Sprintf("Kafka reported as failed from the data plane")
 	err = d.kafkaService.Update(kafka)
 	if err != nil {
 		return serviceError.NewWithCause(err.Code, err, "failed to update kafka cluster to %s status for kafka cluster %s", constants2.KafkaRequestStatusFailed, kafka.ID)
@@ -252,7 +250,6 @@ func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *dbapi.KafkaRequest,
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationCreate)
 	}
-	logger.Logger.Errorf("Kafka status for Kafka ID '%s' in ClusterID '%s' reported as failed by KAS Fleet Shard Operator: '%s'", kafka.ID, kafka.ClusterID, errMessage)
 
 	return nil
 }
