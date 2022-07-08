@@ -20,20 +20,20 @@ func TestInitialize(t *testing.T) {
 		want error
 	}{
 		{
-			name: "Return error when sentry error monitoring is enabled and project config is invalid",
+			name: "Return error when sentry error monitoring is enabled and project id is not specified",
 			args: args{
 				envName: environments.EnvName("testEnv"),
 				c: &Config{
 					Enabled: true,
 					Key:     "1234",
 					URL:     "test.url",
-					Project: "invalid-id",
+					Project: "",
 					Debug:   true,
 					Timeout: time.Hour,
 					KeyFile: "secrets/sentry.key",
 				},
 			},
-			want: &sentry.DsnParseError{Message: "invalid project id"},
+			want: &sentry.DsnParseError{Message: "empty project id"},
 		},
 		{
 			name: "Return nil with sentry error monitoring disabled",
