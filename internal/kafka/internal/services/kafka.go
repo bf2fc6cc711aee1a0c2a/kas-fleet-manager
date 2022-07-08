@@ -669,7 +669,7 @@ func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
 		}
 		// Only delete the routes when they are set
-		if routes != nil && k.kafkaConfig.EnableKafkaExternalCertificate {
+		if routes != nil && k.kafkaConfig.EnableKafkaCNAMERegistration {
 			_, err := k.ChangeKafkaCNAMErecords(kafkaRequest, KafkaRoutesActionDelete)
 			if err != nil {
 				return err
@@ -1328,7 +1328,7 @@ func (k *kafkaService) AssignBootstrapServerHost(kafkaRequest *dbapi.KafkaReques
 
 	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedKafkaIngressDnsNamePrefix, 1)
 
-	if k.kafkaConfig.EnableKafkaExternalCertificate {
+	if k.kafkaConfig.EnableKafkaCNAMERegistration {
 		// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
 		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, k.kafkaConfig.KafkaDomainName)
 	} else {

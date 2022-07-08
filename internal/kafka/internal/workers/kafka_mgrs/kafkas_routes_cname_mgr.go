@@ -49,7 +49,7 @@ func (k *KafkaRoutesCNAMEManager) Reconcile() []error {
 	}
 
 	for _, kafka := range kafkas {
-		if k.kafkaConfig.EnableKafkaExternalCertificate {
+		if k.kafkaConfig.EnableKafkaCNAMERegistration {
 			if kafka.RoutesCreationId == "" {
 				glog.Infof("creating CNAME records for kafka %s", kafka.ID)
 

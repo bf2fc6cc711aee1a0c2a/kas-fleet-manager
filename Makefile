@@ -751,6 +751,7 @@ deploy/service: IMAGE_REPOSITORY ?= $(image_repository)
 deploy/service: FLEET_MANAGER_ENV ?= "development"
 deploy/service: REPLICAS ?= "1"
 deploy/service: ENABLE_KAFKA_EXTERNAL_CERTIFICATE ?= "false"
+deploy/service: ENABLE_KAFKA_CNAME_REGISTRATION ?= "false"
 deploy/service: ENABLE_KAFKA_LIFE_SPAN ?= "false"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
 deploy/service: AMS_URL ?= "https://api.stage.openshift.com"
@@ -813,6 +814,7 @@ deploy/service: deploy/envoy deploy/route
 		-p ENABLE_KAFKA_OWNER="${ENABLE_KAFKA_OWNER}" \
 		-p KAFKA_OWNERS="${KAFKA_OWNERS}" \
 		-p ENABLE_KAFKA_EXTERNAL_CERTIFICATE="${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}" \
+		-p ENABLE_KAFKA_CNAME_REGISTRATION="${ENABLE_KAFKA_CNAME_REGISTRATION}" \
 		-p ENABLE_KAFKA_LIFE_SPAN="${ENABLE_KAFKA_LIFE_SPAN}" \
 		-p ENABLE_OCM_MOCK=$(ENABLE_OCM_MOCK) \
 		-p OCM_MOCK_MODE=$(OCM_MOCK_MODE) \
