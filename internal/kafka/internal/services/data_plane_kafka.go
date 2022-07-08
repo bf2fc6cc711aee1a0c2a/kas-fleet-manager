@@ -89,7 +89,11 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 			// when getStatus returns statusError we know that the ready
 			// condition will be there so there's no need to check for it
 			readyCondition, _ := ks.GetReadyCondition()
-			e = d.setKafkaClusterFailed(kafka, readyCondition.Message)
+			if strings.Contains(strings.ToLower(readyCondition.Message), "secret") {
+				e = d.setKafkaClusterFailed(kafka, "failed to update kafka")
+			} else {
+				e = d.setKafkaClusterFailed(kafka, readyCondition.Message)
+			}
 		case statusDeleted:
 			e = d.setKafkaClusterDeleting(kafka)
 		case statusRejected:

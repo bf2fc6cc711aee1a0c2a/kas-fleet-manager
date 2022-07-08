@@ -60,6 +60,84 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 		},
 		{
+			name: "should return an error if failed to update kafka cluster with a secret",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{}, nil
+					},
+				},
+				kafkaService: func(c map[string]int) KafkaService {
+					return &KafkaServiceMock{
+						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+							return &dbapi.KafkaRequest{
+								ClusterID:     "test-cluster-id",
+								Status:        constants2.KafkaRequestStatusProvisioning.String(),
+								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+								RoutesCreated: true,
+							}, nil
+						},
+						UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+							if kafkaRequest.Status == string(constants2.KafkaRequestStatusFailed) {
+								c["failed"]++
+								return errors.GeneralError("failed to update kafka cluster")
+							} else if kafkaRequest.Status == string(constants2.KafkaRequestStatusReady) {
+								c["ready"]++
+							} else if kafkaRequest.Status == string(constants2.KafkaRequestStatusDeleting) {
+								c["deleting"]++
+							} else {
+								c["rejected"]++
+							}
+							return nil
+						},
+						UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+							v, ok := values["status"]
+							if ok {
+								statusValue := v.(string)
+								c[statusValue]++
+							}
+							return nil
+						},
+						UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
+							if status == constants2.KafkaRequestStatusReady {
+								c["ready"]++
+							} else if status == constants2.KafkaRequestStatusDeleting {
+								c["deleting"]++
+							} else if status == constants2.KafkaRequestStatusFailed {
+								c["failed"]++
+							}
+							return true, nil
+						},
+						DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
+							return nil
+						},
+					}
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+				status: []*dbapi.DataPlaneKafkaStatus{
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Status:  "False",
+								Reason:  "Error",
+								Message: "'secret': some-secret",
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+			expectCounters: map[string]int{
+				"ready":    0,
+				"failed":   1,
+				"deleting": 0,
+				"rejected": 0,
+			},
+		},
+		{
 			name: "should success",
 			fields: fields{
 				clusterService: &ClusterServiceMock{
