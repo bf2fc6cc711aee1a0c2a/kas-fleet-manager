@@ -60,7 +60,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 		},
 		{
-			name: "should return an error if failed to update kafka cluster with a secret",
+			name: "should return no error and don't assign secret value to FailedReason kafka field",
 			fields: fields{
 				clusterService: &ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
