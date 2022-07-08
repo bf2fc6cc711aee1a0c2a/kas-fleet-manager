@@ -249,28 +249,6 @@ func TestClusterManager_processMetrics(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should return an error if GetInstanceLimit called by setClusterStatusMaxCapacityMetrics fails in SupportedProviders",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
-						return []services.ClusterStatusCount{}, nil
-					},
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
-						return []services.ResKafkaInstanceCount{}, nil
-					},
-				},
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: config.AutoScaling,
-					ClusterConfig: config.NewClusterConfig(
-						config.ClusterList{
-							dpMock.BuildManualCluster(supportedInstanceType),
-						}),
-				},
-				supportedProviders: &config.ProviderConfig{},
-			},
-			wantErr: true,
-		},
-		{
 			name: "should succeed if no errors occur during the execution",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
@@ -294,11 +272,10 @@ func TestClusterManager_processMetrics(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:         tt.fields.clusterService,
@@ -306,7 +283,9 @@ func TestClusterManager_processMetrics(t *testing.T) {
 					SupportedProviders:     tt.fields.supportedProviders,
 				},
 			}
-			Expect(len(c.processMetrics()) > 0).To(Equal(tt.wantErr))
+			// processMetrics accumulates all the errors encountered during metrics processing in an array.
+			// If that array is non empty then an error should be expected. Otherwise, no errors should be expected.
+			g.Expect(len(c.processMetrics()) > 0).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -3498,57 +3477,6 @@ func TestClusterManager_reconcileClusterInstanceType(t *testing.T) {
 				},
 			}
 			Expect(c.reconcileClusterInstanceType(tt.fields.cluster) != nil).To(Equal(tt.wantErr))
-		})
-	}
-}
-
-func TestClusterManager_setClusterStatusMaxCapacityMetrics(t *testing.T) {
-	type fields struct {
-		dataplaneClusterConfig *config.DataplaneClusterConfig
-		providersConfig        config.ProviderConfig
-	}
-	testOsdConfig := config.NewDataplaneClusterConfig()
-	testOsdConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
-		dpMock.BuildManualCluster(supportedInstanceType),
-		config.ManualCluster{
-			Schedulable: false,
-		},
-	})
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-	}{
-		{
-			name: "Should return no error and set metrics for supported instance type for given cluster config",
-			fields: fields{
-				dataplaneClusterConfig: testOsdConfig,
-				providersConfig:        supportedProviders,
-			},
-			wantErr: false,
-		},
-		{
-			name: "Should return error when providersConfig doesn't support instance type from dataplaneClusterConfig",
-			fields: fields{
-				dataplaneClusterConfig: testOsdConfig,
-				providersConfig:        config.ProviderConfig{},
-			},
-			wantErr: true,
-		},
-	}
-
-	RegisterTestingT(t)
-
-	for _, testcase := range tests {
-		tt := testcase
-		t.Run(tt.name, func(t *testing.T) {
-			c := &ClusterManager{
-				ClusterManagerOptions: ClusterManagerOptions{
-					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
-					SupportedProviders:     &tt.fields.providersConfig,
-				},
-			}
-			Expect(c.setClusterStatusMaxCapacityMetrics() != nil).To(Equal(tt.wantErr))
 		})
 	}
 }

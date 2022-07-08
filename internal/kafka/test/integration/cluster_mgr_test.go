@@ -2,6 +2,7 @@ package integration
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -29,6 +30,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
+	zeroDeveloperLimit := 0
 	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, p *config.ProviderConfig) {
 		p.ProvidersConfig.SupportedProviders = config.ProviderList{
 			config.Provider{
@@ -41,6 +43,9 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 						SupportedInstanceTypes: config.InstanceTypeMap{
 							api.StandardTypeSupport.String(): config.InstanceTypeConfig{
 								Limit: nil,
+							},
+							api.DeveloperTypeSupport.String(): config.InstanceTypeConfig{
+								Limit: &zeroDeveloperLimit,
 							},
 						},
 					},
@@ -145,9 +150,18 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	common.CheckMetricExposed(h, t, metrics.ClusterCreateRequestDuration)
 	common.CheckMetricExposed(h, t, metrics.ClusterStatusSinceCreated)
-	common.CheckMetricExposed(h, t, metrics.ClusterStatusCapacityUsed)
-	// TODO enable this once we have the max capacity metric for autoscaling
-	// common.CheckMetricExposed(h, t, metrics.ClusterStatusCapacityMax)
+
+	// check that no capacity is used
+	checkMetricsError := common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityUsed, "0", api.StandardTypeSupport.String(), cluster.ClusterID, cluster.Region, cluster.CloudProvider)
+	Expect(checkMetricsError).NotTo(HaveOccurred())
+
+	// available and max capacity metrics should have a value of standard max capacity
+	metricValue := strconv.FormatInt(int64(standardCapacity.MaxUnits), 10)
+	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityMax, metricValue, api.StandardTypeSupport.String(), cluster.ClusterID, cluster.Region, cluster.CloudProvider)
+	Expect(checkMetricsError).NotTo(HaveOccurred())
+	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityAvailable, metricValue, api.StandardTypeSupport.String(), cluster.ClusterID, cluster.Region, cluster.CloudProvider)
+	Expect(checkMetricsError).NotTo(HaveOccurred())
+
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsSuccessCount, constants2.ClusterOperationCreate.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsTotalCount, constants2.ClusterOperationCreate.String()))
 	common.CheckMetric(h, t, fmt.Sprintf("%s_%s{worker_type=\"%s\"}", metrics.KasFleetManager, metrics.ReconcilerDuration, "cluster"), true)

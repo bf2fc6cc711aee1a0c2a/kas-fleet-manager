@@ -255,7 +255,7 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should return an error if calculateAvailableCapacityByRegionAndInstanceType fails",
+			name: "should return an error if calculateCapacityByRegionAndInstanceTypeForManualClusters fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					CountStreamingUnitByRegionAndInstanceTypeFunc: func() ([]services.KafkaStreamingUnitCountPerRegion, error) {
@@ -271,6 +271,7 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 					},
 				},
 				dataplaneClusterConfig: config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.ManualScaling,
 					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
 						dpMock.BuildManualCluster("invalid"),
 					}),
@@ -299,7 +300,47 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should successfully assign metrics",
+			name: "should return an error if calculateAvailableAndMaxCapacityForDynamicScaling fails",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CountStreamingUnitByRegionAndInstanceTypeFunc: func() ([]services.KafkaStreamingUnitCountPerRegion, error) {
+						return []services.KafkaStreamingUnitCountPerRegion{
+							{
+								Region:        "us-east-1",
+								InstanceType:  "standard",
+								ClusterId:     "a",
+								Count:         5,
+								CloudProvider: "aws",
+								MaxUnits:      10,
+							},
+						}, nil
+					},
+				},
+				dataplaneClusterConfig: config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+				},
+				cloudProviders: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: []config.Provider{
+							{
+								Name:    "aws",
+								Default: true,
+								Regions: []config.Region{
+									{
+										Name:                   "us-east-1",
+										Default:                true,
+										SupportedInstanceTypes: map[string]config.InstanceTypeConfig{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should successfully assign metrics for manual clusters",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					CountStreamingUnitByRegionAndInstanceTypeFunc: func() ([]services.KafkaStreamingUnitCountPerRegion, error) {
@@ -315,6 +356,7 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 					},
 				},
 				dataplaneClusterConfig: config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.ManualScaling,
 					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
 						dpMock.BuildManualCluster("standard,developer"),
 					}),
@@ -342,21 +384,60 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "should successfully assign metrics for autoscaling mode",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CountStreamingUnitByRegionAndInstanceTypeFunc: func() ([]services.KafkaStreamingUnitCountPerRegion, error) {
+						return []services.KafkaStreamingUnitCountPerRegion{
+							{
+								Region:        "us-east-1",
+								InstanceType:  "standard",
+								ClusterId:     "a",
+								Count:         5,
+								CloudProvider: "aws",
+							},
+						}, nil
+					},
+				},
+				dataplaneClusterConfig: config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+				},
+				cloudProviders: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: []config.Provider{
+							{
+								Name:    "aws",
+								Default: true,
+								Regions: []config.Region{
+									{
+										Name:    "us-east-1",
+										Default: true,
+										SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
+											"standard":  {Limit: &cloudProviderStandardLimit},
+											"developer": {Limit: nil},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
-
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
 			k := &KafkaManager{
 				kafkaService:           tt.fields.kafkaService,
 				dataplaneClusterConfig: &tt.fields.dataplaneClusterConfig,
 				cloudProviders:         &tt.fields.cloudProviders,
 			}
-
-			Expect(k.setClusterStatusCapacityMetrics() != nil).To(Equal(tt.wantErr))
+			g.Expect(k.setClusterStatusCapacityMetrics() != nil).To(Equal(tt.wantErr))
 		})
 	}
 }
@@ -365,17 +446,23 @@ var (
 	cloudProviderStandardLimit = 5
 )
 
-func TestKafkaManager_capacityMetrics(t *testing.T) {
+func TestKafkaManager_calculateCapacityByRegionAndInstanceTypeForManualClusters(t *testing.T) {
 	type fields struct {
-		kafkaService           services.KafkaService
-		dataplaneClusterConfig config.DataplaneClusterConfig
-		cloudProviders         config.ProviderConfig
-		existingKafkas         []services.KafkaStreamingUnitCountPerRegion
+		kafkaService                 services.KafkaService
+		dataplaneClusterConfig       config.DataplaneClusterConfig
+		cloudProviders               config.ProviderConfig
+		streamingUnitsCountPerRegion []services.KafkaStreamingUnitCountPerRegion
 	}
+
+	type counts struct {
+		available int32
+		max       int32
+	}
+
 	tests := []struct {
 		name     string
 		fields   fields
-		expected map[string]map[string]float64
+		expected map[string]map[string]counts
 	}{
 		{
 			name: "expected available capacity with no cloud provider limit",
@@ -407,7 +494,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 						},
 					},
 				},
-				existingKafkas: []services.KafkaStreamingUnitCountPerRegion{
+				streamingUnitsCountPerRegion: []services.KafkaStreamingUnitCountPerRegion{
 					{
 						Region:        "us-east-1",
 						InstanceType:  "standard",
@@ -421,9 +508,12 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 			// no cloud provider limits
 			// 5 standard instances used, 3 developer instances used
 			// ==> expect 5 more standard instances to be available
-			expected: map[string]map[string]float64{
+			expected: map[string]map[string]counts{
 				"us-east-1": {
-					"standard": 5,
+					"standard": counts{
+						available: 5,
+						max:       10,
+					},
 				},
 			},
 		},
@@ -458,7 +548,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 						},
 					},
 				},
-				existingKafkas: []services.KafkaStreamingUnitCountPerRegion{
+				streamingUnitsCountPerRegion: []services.KafkaStreamingUnitCountPerRegion{
 					{
 						Region:        "us-east-1",
 						InstanceType:  "standard",
@@ -481,10 +571,16 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 			// 3 developer instances used
 			// ==> expect 2 more standard instances to be available
 			// ==> expect 2 more developer instances to be available
-			expected: map[string]map[string]float64{
+			expected: map[string]map[string]counts{
 				"us-east-1": {
-					"standard":  2,
-					"developer": 2,
+					"standard": counts{
+						available: 2,
+						max:       10,
+					},
+					"developer": counts{
+						available: 2,
+						max:       10,
+					},
 				},
 			},
 		},
@@ -518,7 +614,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 						},
 					},
 				},
-				existingKafkas: []services.KafkaStreamingUnitCountPerRegion{
+				streamingUnitsCountPerRegion: []services.KafkaStreamingUnitCountPerRegion{
 					{
 						Region:        "us-east-1",
 						InstanceType:  "standard",
@@ -532,9 +628,12 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 			// cloud provider limit of 5 standard instances
 			// 4 standard instances used
 			// ==> expect 1 more standard instance to be available
-			expected: map[string]map[string]float64{
+			expected: map[string]map[string]counts{
 				"us-east-1": {
-					"standard": 1,
+					"standard": counts{
+						available: 1,
+						max:       5,
+					},
 				},
 			},
 		},
@@ -569,7 +668,7 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 						},
 					},
 				},
-				existingKafkas: []services.KafkaStreamingUnitCountPerRegion{
+				streamingUnitsCountPerRegion: []services.KafkaStreamingUnitCountPerRegion{
 					{
 						Region:        "us-east-1",
 						InstanceType:  "standard",
@@ -592,33 +691,189 @@ func TestKafkaManager_capacityMetrics(t *testing.T) {
 			// 4 developer instances used
 			// ==> expect 1 more standard instance to be available
 			// ==> expect 2 more developer instance to be available
-			expected: map[string]map[string]float64{
+			expected: map[string]map[string]counts{
 				"us-east-1": {
-					"standard":  1,
-					"developer": 2,
+					"standard": counts{
+						available: 1,
+						max:       5,
+					},
+					"developer": counts{
+						available: 2,
+						max:       10,
+					},
 				},
 			},
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			t.Parallel()
 			k := &KafkaManager{
 				kafkaService:           tt.fields.kafkaService,
 				dataplaneClusterConfig: &tt.fields.dataplaneClusterConfig,
 				cloudProviders:         &tt.fields.cloudProviders,
 			}
 
-			results, err := k.calculateAvailableCapacityByRegionAndInstanceType(tt.fields.existingKafkas)
-			Expect(err).To(BeNil())
+			results, err := k.calculateCapacityByRegionAndInstanceTypeForManualClusters(tt.fields.streamingUnitsCountPerRegion)
+			g.Expect(err).To(BeNil())
 
 			for _, result := range results {
-				Expect(result.Count).To(Equal(tt.expected[result.Region][result.InstanceType]))
+				count := tt.expected[result.Region][result.InstanceType]
+				g.Expect(result.Count).To(Equal(count.available))
+				g.Expect(result.MaxUnits).To(Equal(count.max))
 			}
+		})
+	}
+}
+
+func TestKafkaManager_calculateAvailableAndMaxCapacityForDynamicScaling(t *testing.T) {
+	type fields struct {
+		kafkaService                services.KafkaService
+		dataplaneClusterConfig      config.DataplaneClusterConfig
+		cloudProviders              config.ProviderConfig
+		streamingUnitCountPerRegion services.KafkaStreamingUnitCountPerRegion
+	}
+
+	type counts struct {
+		available int32
+		max       int32
+	}
+
+	tests := []struct {
+		name     string
+		fields   fields
+		expected map[string]map[string]counts
+	}{
+		{
+			name: "expected available capacity with no cloud provider limit",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					DeprovisionKafkaForUsersFunc: nil,
+				},
+				dataplaneClusterConfig: config.DataplaneClusterConfig{
+					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
+						dpMock.BuildManualCluster("standard"),
+					}),
+				},
+				cloudProviders: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: []config.Provider{
+							{
+								Name:    "aws",
+								Default: true,
+								Regions: []config.Region{
+									{
+										Name:    "us-east-1",
+										Default: true,
+										SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
+											"standard": {Limit: nil},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				streamingUnitCountPerRegion: services.KafkaStreamingUnitCountPerRegion{
+
+					Region:        "us-east-1",
+					InstanceType:  "standard",
+					ClusterId:     "cluster-id",
+					Count:         9,
+					MaxUnits:      10,
+					CloudProvider: "aws",
+				},
+			},
+			// 10 total capacity
+			// no cloud provider limits
+			// 9 instances used,
+			// ==> expect 1 available and max 10
+			expected: map[string]map[string]counts{
+				"us-east-1": {
+					"standard": counts{
+						available: 1,
+						max:       10,
+					},
+				},
+			},
+		},
+		{
+			name: "expected available capacity with cloud provider limit",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					DeprovisionKafkaForUsersFunc: nil,
+				},
+				dataplaneClusterConfig: config.DataplaneClusterConfig{
+					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
+						dpMock.BuildManualCluster("standard"),
+					}),
+				},
+				cloudProviders: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: []config.Provider{
+							{
+								Name:    "aws",
+								Default: true,
+								Regions: []config.Region{
+									{
+										Name:    "us-east-1",
+										Default: true,
+										SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
+											"standard": {Limit: &cloudProviderStandardLimit},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				streamingUnitCountPerRegion: services.KafkaStreamingUnitCountPerRegion{
+
+					Region:        "us-east-1",
+					InstanceType:  "standard",
+					ClusterId:     "cluster-id",
+					Count:         5,
+					MaxUnits:      9,
+					CloudProvider: "aws",
+				},
+			},
+			// 9 total capacity
+			// 5 cloud provider limits
+			// 5 instances used,
+			// ==> expect 0 available and max 5
+			expected: map[string]map[string]counts{
+				"us-east-1": {
+					"standard": counts{
+						available: 0,
+						max:       5,
+					},
+				},
+			},
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			t.Parallel()
+			k := &KafkaManager{
+				kafkaService:           tt.fields.kafkaService,
+				dataplaneClusterConfig: &tt.fields.dataplaneClusterConfig,
+				cloudProviders:         &tt.fields.cloudProviders,
+			}
+
+			result, err := k.calculateAvailableAndMaxCapacityForDynamicScaling(tt.fields.streamingUnitCountPerRegion)
+			g.Expect(err).To(BeNil())
+
+			count := tt.expected[result.Region][result.InstanceType]
+			g.Expect(result.Count).To(Equal(count.available))
+			g.Expect(result.MaxUnits).To(Equal(count.max))
 		})
 	}
 }

@@ -2391,18 +2391,21 @@ func Test_KafkaService_CountStreamingUnitByRegionAndInstanceType(t *testing.T) {
 							"cloud_provider":          testKafkaRequestProvider,
 							"cluster_id":              testClusterID,
 							"supported_instance_type": api.StandardTypeSupport.String(),
+							"dynamic_capacity_info":   []byte(`{"standard":{"max_nodes":20,"max_units":20,"remaining_units":8}}`),
 						},
 						{
 							"region":                  "eu-west-1",
 							"cloud_provider":          testKafkaRequestProvider,
 							"cluster_id":              testClusterID2,
 							"supported_instance_type": api.DeveloperTypeSupport.String(),
+							"dynamic_capacity_info":   []byte(`{"developer":{"max_nodes":1,"max_units":2,"remaining_units":1}}`),
 						},
 						{
 							"region":                  "eu-west-2",
 							"cloud_provider":          testKafkaRequestProvider,
 							"cluster_id":              testClusterID2,
 							"supported_instance_type": api.AllInstanceTypeSupport.String(),
+							"dynamic_capacity_info":   []byte(`{}`), // set to empty to mimick cluster that do not have dynamic capacity info e.g during manual scaling
 						},
 					})
 
@@ -2414,6 +2417,7 @@ func Test_KafkaService_CountStreamingUnitByRegionAndInstanceType(t *testing.T) {
 					InstanceType:  "standard",
 					ClusterId:     "test-cluster-id",
 					Count:         12,
+					MaxUnits:      20,
 					CloudProvider: "aws",
 				},
 				{
@@ -2421,6 +2425,7 @@ func Test_KafkaService_CountStreamingUnitByRegionAndInstanceType(t *testing.T) {
 					InstanceType:  "developer",
 					ClusterId:     "test-cluster-id-2",
 					Count:         1,
+					MaxUnits:      2,
 					CloudProvider: "aws",
 				},
 				{
@@ -2429,6 +2434,7 @@ func Test_KafkaService_CountStreamingUnitByRegionAndInstanceType(t *testing.T) {
 					ClusterId:     "test-cluster-id-2",
 					Count:         0,
 					CloudProvider: "aws",
+					MaxUnits:      0,
 				},
 				{
 					Region:        "eu-west-2",
@@ -2436,15 +2442,16 @@ func Test_KafkaService_CountStreamingUnitByRegionAndInstanceType(t *testing.T) {
 					ClusterId:     "test-cluster-id-2",
 					Count:         0,
 					CloudProvider: "aws",
+					MaxUnits:      0,
 				},
 			},
 		},
 	}
 
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(testing *testing.T) {
+			g := NewWithT(testing)
 			if tt.setupFunc != nil {
 				tt.setupFunc()
 			}
@@ -2455,9 +2462,9 @@ func Test_KafkaService_CountStreamingUnitByRegionAndInstanceType(t *testing.T) {
 				},
 			}
 			streamingUnitsCountPerRegion, err := k.CountStreamingUnitByRegionAndInstanceType()
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(Equal(tt.wantErr))
 			if !tt.wantErr {
-				Expect(streamingUnitsCountPerRegion).To(Equal(tt.want))
+				g.Expect(streamingUnitsCountPerRegion).To(Equal(tt.want))
 			}
 
 		})
