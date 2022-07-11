@@ -1136,7 +1136,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 		t.Errorf("failed to find kafka cluster with id %s due to error: %v", kafkaReqID, err)
 	}
 	Expect(c.Status).To(Equal(constants2.KafkaRequestStatusFailed.String()))
-	Expect(c.FailedReason).To(ContainSubstring(errMessage))
+	Expect(c.FailedReason).To(Equal("Kafka reported as failed from the data plane"))
 }
 
 func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) {

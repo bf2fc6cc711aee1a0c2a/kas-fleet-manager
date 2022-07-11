@@ -12,12 +12,13 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	. "github.com/onsi/gomega"
 )
 
 func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
-	testErrorCondMessage := "test failed message"
+	nonSecretKafkaStatus := "test failed message"
+	secretError := "'secret': leaked secret"
+	testErrorCondMessage := fmt.Sprintf("test failed message including '%s", secretError)
 	bootstrapServer := "test.kafka.example.com"
 	ingress := fmt.Sprintf("elb.%s", bootstrapServer)
 	type fields struct {
@@ -33,7 +34,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 		fields         fields
 		args           args
 		expectCounters map[string]int
-		want           *serviceError.ServiceError
+		want           *errors.ServiceError
 	}{
 		{
 			name: "should return error when cluster id is not valid",
@@ -60,7 +61,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 		},
 		{
-			name: "should success",
+			name: "should return no error and update dataplane kafkas with various conditions",
 			fields: fields{
 				clusterService: &ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
@@ -79,7 +80,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						},
 						UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 							if kafkaRequest.Status == string(constants2.KafkaRequestStatusFailed) {
-								if !strings.Contains(kafkaRequest.FailedReason, testErrorCondMessage) {
+								if strings.Contains(kafkaRequest.FailedReason, secretError) {
 									return errors.GeneralError("Test failure error. Expected FailedReason is empty")
 								}
 								c["failed"]++
@@ -342,12 +343,12 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 								Status:        constants2.KafkaRequestStatusProvisioning.String(),
 								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
 								RoutesCreated: true,
-								FailedReason:  testErrorCondMessage,
+								FailedReason:  nonSecretKafkaStatus,
 							}, nil
 						},
 						UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 							if kafkaRequest.Status == string(constants2.KafkaRequestStatusFailed) {
-								if !strings.Contains(kafkaRequest.FailedReason, testErrorCondMessage) {
+								if !strings.Contains(kafkaRequest.FailedReason, nonSecretKafkaStatus) {
 									return errors.GeneralError("Test failure error. Expected FailedReason is empty")
 								}
 								c["failed"]++
@@ -860,7 +861,7 @@ func Test_dataPlaneKafkaService_unassignKafkaFromDataplaneCluster(t *testing.T) 
 		name   string
 		fields fields
 		args   args
-		want   *serviceError.ServiceError
+		want   *errors.ServiceError
 	}{
 		{
 			name: "should remove the kafka from the current assigned cluster",
