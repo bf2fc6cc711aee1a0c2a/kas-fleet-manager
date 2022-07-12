@@ -26,6 +26,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //
 // 		// make and configure a mocked KafkaService
 // 		mockedKafkaService := &KafkaServiceMock{
+// 			AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
+// 				panic("mock out the AssignBootstrapServerHost method")
+// 			},
 // 			AssignInstanceTypeFunc: func(owner string, organisationID string) (types.KafkaInstanceType, *serviceError.ServiceError) {
 // 				panic("mock out the AssignInstanceType method")
 // 			},
@@ -111,6 +114,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //
 // 	}
 type KafkaServiceMock struct {
+	// AssignBootstrapServerHostFunc mocks the AssignBootstrapServerHost method.
+	AssignBootstrapServerHostFunc func(kafkaRequest *dbapi.KafkaRequest) error
+
 	// AssignInstanceTypeFunc mocks the AssignInstanceType method.
 	AssignInstanceTypeFunc func(owner string, organisationID string) (types.KafkaInstanceType, *serviceError.ServiceError)
 
@@ -191,6 +197,11 @@ type KafkaServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// AssignBootstrapServerHost holds details about calls to the AssignBootstrapServerHost method.
+		AssignBootstrapServerHost []struct {
+			// KafkaRequest is the kafkaRequest argument value.
+			KafkaRequest *dbapi.KafkaRequest
+		}
 		// AssignInstanceType holds details about calls to the AssignInstanceType method.
 		AssignInstanceType []struct {
 			// Owner is the owner argument value.
@@ -336,6 +347,7 @@ type KafkaServiceMock struct {
 			KafkaRequest *dbapi.KafkaRequest
 		}
 	}
+	lockAssignBootstrapServerHost                 sync.RWMutex
 	lockAssignInstanceType                        sync.RWMutex
 	lockChangeKafkaCNAMErecords                   sync.RWMutex
 	lockCountByStatus                             sync.RWMutex
@@ -362,6 +374,37 @@ type KafkaServiceMock struct {
 	lockUpdates                                   sync.RWMutex
 	lockValidateBillingAccount                    sync.RWMutex
 	lockVerifyAndUpdateKafkaAdmin                 sync.RWMutex
+}
+
+// AssignBootstrapServerHost calls AssignBootstrapServerHostFunc.
+func (mock *KafkaServiceMock) AssignBootstrapServerHost(kafkaRequest *dbapi.KafkaRequest) error {
+	if mock.AssignBootstrapServerHostFunc == nil {
+		panic("KafkaServiceMock.AssignBootstrapServerHostFunc: method is nil but KafkaService.AssignBootstrapServerHost was just called")
+	}
+	callInfo := struct {
+		KafkaRequest *dbapi.KafkaRequest
+	}{
+		KafkaRequest: kafkaRequest,
+	}
+	mock.lockAssignBootstrapServerHost.Lock()
+	mock.calls.AssignBootstrapServerHost = append(mock.calls.AssignBootstrapServerHost, callInfo)
+	mock.lockAssignBootstrapServerHost.Unlock()
+	return mock.AssignBootstrapServerHostFunc(kafkaRequest)
+}
+
+// AssignBootstrapServerHostCalls gets all the calls that were made to AssignBootstrapServerHost.
+// Check the length with:
+//     len(mockedKafkaService.AssignBootstrapServerHostCalls())
+func (mock *KafkaServiceMock) AssignBootstrapServerHostCalls() []struct {
+	KafkaRequest *dbapi.KafkaRequest
+} {
+	var calls []struct {
+		KafkaRequest *dbapi.KafkaRequest
+	}
+	mock.lockAssignBootstrapServerHost.RLock()
+	calls = mock.calls.AssignBootstrapServerHost
+	mock.lockAssignBootstrapServerHost.RUnlock()
+	return calls
 }
 
 // AssignInstanceType calls AssignInstanceTypeFunc.

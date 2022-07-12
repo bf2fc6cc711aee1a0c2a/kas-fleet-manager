@@ -109,6 +109,7 @@ type KafkaService interface {
 	// GetAvailableSizesInRegion returns a list of ids of the Kafka instance sizes that can still be created according to the specified criteria
 	GetAvailableSizesInRegion(criteria *FindClusterCriteria) ([]string, *errors.ServiceError)
 	ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError
+	AssignBootstrapServerHost(kafkaRequest *dbapi.KafkaRequest) error
 }
 
 var _ KafkaService = &kafkaService{}
@@ -392,24 +393,11 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 }
 
 func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-	truncatedKafkaIdentifier := buildTruncateKafkaIdentifier(kafkaRequest)
-	truncatedKafkaIdentifier, replaceErr := replaceHostSpecialChar(truncatedKafkaIdentifier)
-	if replaceErr != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, replaceErr, "generated host is not valid")
-	}
-
-	clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
-	}
-
 	kafkaRequest.Namespace = fmt.Sprintf("kafka-%s", strings.ToLower(kafkaRequest.ID))
-	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedKafkaIngressDnsNamePrefix, 1)
-	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
 
-	if k.kafkaConfig.EnableKafkaExternalCertificate {
-		// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
-		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, k.kafkaConfig.KafkaDomainName)
+	err := k.AssignBootstrapServerHost(kafkaRequest)
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "error assigning bootstrap server host to kafka %s", kafkaRequest.ID)
 	}
 
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
@@ -1324,4 +1312,28 @@ func buildResourceRecordChange(recordName string, clusterIngress string, action 
 	}
 
 	return resourceRecordChange
+}
+
+func (k *kafkaService) AssignBootstrapServerHost(kafkaRequest *dbapi.KafkaRequest) error {
+	truncatedKafkaIdentifier := buildTruncateKafkaIdentifier(kafkaRequest)
+	truncatedKafkaIdentifier, replaceErr := replaceHostSpecialChar(truncatedKafkaIdentifier)
+	if replaceErr != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, replaceErr, "generated host is not valid")
+	}
+
+	clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
+	}
+
+	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedKafkaIngressDnsNamePrefix, 1)
+
+	if k.kafkaConfig.EnableKafkaExternalCertificate {
+		// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
+		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, k.kafkaConfig.KafkaDomainName)
+	} else {
+		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
+	}
+
+	return nil
 }
