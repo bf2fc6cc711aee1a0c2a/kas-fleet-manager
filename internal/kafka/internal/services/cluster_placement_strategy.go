@@ -168,10 +168,7 @@ func (f *FirstReadyWithCapacity) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cl
 	// Find first ready cluster that has remaining capacity (total streaming unit used by existing and requested kafka is within the cluster maxUnit limit)
 	for _, cluster := range clusters {
 		currentStreamingUnitsUsed := streamingUnitCountPerRegionList.GetStreamingUnitCountForClusterAndInstanceType(cluster.ClusterID, kafka.InstanceType)
-		capacityInfo, getCapacityInfoErr := cluster.RetrieveDynamicCapacityInfo()
-		if getCapacityInfoErr != nil {
-			return nil, errors.NewWithCause(errors.ErrorGeneral, getCapacityInfoErr, "failed to retrieve capacity information for cluster %s", cluster.ClusterID)
-		}
+		capacityInfo := cluster.RetrieveDynamicCapacityInfo()
 		maxStreamingUnits := capacityInfo[kafka.InstanceType].MaxUnits
 
 		if currentStreamingUnitsUsed+instanceSize.CapacityConsumed <= int(maxStreamingUnits) {

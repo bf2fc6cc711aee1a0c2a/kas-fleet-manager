@@ -734,10 +734,7 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 		supportedInstanceTypes := strings.Split(clusterSelection.SupportedInstanceType, ",")
 
 		c := &api.Cluster{DynamicCapacityInfo: clusterSelection.DynamicCapacityInfo}
-		clusterDynamicCapacityInfo, err := c.RetrieveDynamicCapacityInfo()
-		if err != nil {
-			return nil, err
-		}
+		clusterDynamicCapacityInfo := c.RetrieveDynamicCapacityInfo()
 
 		for _, supportedInstanceType := range supportedInstanceTypes {
 			instanceType := strings.TrimSpace(supportedInstanceType)

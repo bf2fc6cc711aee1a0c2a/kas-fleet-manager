@@ -2662,29 +2662,6 @@ func Test_clusterService_FindStreamingUnitCountByClusterAndInstanceType(t *testi
 			want: nil,
 		},
 		{
-			name: "return an error when retrieval of dynamic capacity info fails",
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-			},
-			wantErr: true,
-			setupFunc: func() {
-				mocket.Catcher.Reset().NewMock().
-					WithQuery(`SELECT * FROM "clusters"`).
-					WithReply([]map[string]interface{}{
-						{
-							"region":                  "us-east-1",
-							"cloud_provider":          testKafkaRequestProvider,
-							"cluster_id":              testClusterID1,
-							"supported_instance_type": api.StandardTypeSupport.String(),
-							"dynamic_capacity_info":   []byte(`{"invalid-key": "invalid-value"}`),
-						},
-					})
-
-				mocket.Catcher.NewMock().WithQueryException().WithExecException()
-			},
-			want: nil,
-		},
-		{
 			name: "should return an empty list when there are no data plane clusters",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),

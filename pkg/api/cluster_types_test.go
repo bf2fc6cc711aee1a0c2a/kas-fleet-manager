@@ -1058,24 +1058,13 @@ func Test_Cluster_RetrieveDynamicCapacityInfo(t *testing.T) {
 		name    string
 		cluster *Cluster
 		want    map[string]DynamicCapacityInfo
-		wantErr bool
 	}{
-
-		{
-			name: "returns parsing error error",
-			want: nil,
-			cluster: &Cluster{
-				DynamicCapacityInfo: JSON([]byte(`"key1":{"max_nodes"`)),
-			},
-			wantErr: true,
-		},
 		{
 			name: "returns empty map when json object is empty",
 			want: map[string]DynamicCapacityInfo{},
 			cluster: &Cluster{
 				DynamicCapacityInfo: JSON([]byte("{}")),
 			},
-			wantErr: false,
 		},
 		{
 			name: "returns an empty map when json object is nil",
@@ -1083,7 +1072,6 @@ func Test_Cluster_RetrieveDynamicCapacityInfo(t *testing.T) {
 			cluster: &Cluster{
 				DynamicCapacityInfo: nil,
 			},
-			wantErr: false,
 		},
 		{
 			name: "return the capacity config to nil when it is null",
@@ -1091,7 +1079,6 @@ func Test_Cluster_RetrieveDynamicCapacityInfo(t *testing.T) {
 			cluster: &Cluster{
 				DynamicCapacityInfo: JSON([]byte("null")),
 			},
-			wantErr: false,
 		},
 		{
 			name: "retrieves the capacity config from the given marshelled value",
@@ -1105,7 +1092,6 @@ func Test_Cluster_RetrieveDynamicCapacityInfo(t *testing.T) {
 			cluster: &Cluster{
 				DynamicCapacityInfo: JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
 			},
-			wantErr: false,
 		},
 	}
 
@@ -1115,11 +1101,8 @@ func Test_Cluster_RetrieveDynamicCapacityInfo(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(test *testing.T) {
 			test.Parallel()
-			dynamicCapacityInfo, err := tt.cluster.RetrieveDynamicCapacityInfo()
-			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
-			if !tt.wantErr {
-				g.Expect(dynamicCapacityInfo).To(gomega.Equal(tt.want))
-			}
+			dynamicCapacityInfo := tt.cluster.RetrieveDynamicCapacityInfo()
+			g.Expect(dynamicCapacityInfo).To(gomega.Equal(tt.want))
 		})
 	}
 }

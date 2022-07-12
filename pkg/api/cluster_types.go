@@ -490,18 +490,14 @@ func (cluster *Cluster) SetDynamicCapacityInfo(dynamicCapacityInfo map[string]Dy
 }
 
 // RetrieveDynamicCapacityInfo returns the dynamic scaling info per instance type
-func (cluster *Cluster) RetrieveDynamicCapacityInfo() (map[string]DynamicCapacityInfo, error) {
+func (cluster *Cluster) RetrieveDynamicCapacityInfo() map[string]DynamicCapacityInfo {
 	dynamicCapacityInfo := map[string]DynamicCapacityInfo{}
-	if cluster.DynamicCapacityInfo == nil {
-		return dynamicCapacityInfo, nil
+	if cluster.DynamicCapacityInfo != nil {
+		// ignore error returned by Unmarshal as the json stored in the cluster object will always be a valid DynamicCapacityInfo json object.
+		_ = json.Unmarshal(cluster.DynamicCapacityInfo, &dynamicCapacityInfo)
 	}
 
-	err := json.Unmarshal(cluster.DynamicCapacityInfo, &dynamicCapacityInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	return dynamicCapacityInfo, nil
+	return dynamicCapacityInfo
 }
 
 // GetSupportedInstanceTypes returns a list of the supported instance types for

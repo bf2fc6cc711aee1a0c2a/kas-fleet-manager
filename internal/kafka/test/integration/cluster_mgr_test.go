@@ -110,8 +110,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	g.Expect(checkReadyErr).NotTo(gomega.HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ClusterID, checkReadyErr)
 
 	// check that the cluster has dynamic capacity info persisted
-	dynamicCapacityInfo, err := cluster.RetrieveDynamicCapacityInfo()
-	g.Expect(err).ToNot(gomega.HaveOccurred(), "Error retrieving dynamic capacity info")
+	dynamicCapacityInfo := cluster.RetrieveDynamicCapacityInfo()
 	standardCapacity, ok := dynamicCapacityInfo[api.StandardTypeSupport.String()]
 	g.Expect(ok).To(gomega.BeTrue())
 	g.Expect(standardCapacity.MaxUnits).To(gomega.Equal(kasfleetshardsync.StandardCapacityInfo.MaxUnits))

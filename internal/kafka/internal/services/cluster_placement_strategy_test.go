@@ -389,59 +389,6 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 			},
 		},
 		{
-			name: "should return an error if retrieving cluster capacity information fails",
-			fields: fields{
-				ClusterService: &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *errors.ServiceError) {
-						return []*api.Cluster{
-							{
-								ClusterID:           mockkafkas.DefaultClusterID,
-								DynamicCapacityInfo: api.JSON([]byte(`{"invalid-json"}`)),
-							},
-						}, nil
-					},
-					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (KafkaStreamingUnitCountPerClusterList, error) {
-						return KafkaStreamingUnitCountPerClusterList{
-							{
-								ClusterId:    mockkafkas.DefaultClusterID,
-								InstanceType: types.STANDARD.String(),
-								Count:        0,
-							},
-						}, nil
-					},
-				},
-				KafkaConfig: &config.KafkaConfig{
-					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
-						Configuration: config.SupportedKafkaInstanceTypesConfig{
-							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
-								{
-									Id: types.STANDARD.String(),
-									Sizes: []config.KafkaInstanceSize{
-										{
-											Id:               "x1",
-											CapacityConsumed: 1,
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			args: args{
-				kafka: mockkafkas.BuildKafkaRequest(
-					mockkafkas.With(mockkafkas.ID, mockkafkas.DefaultKafkaID),
-					mockkafkas.With(mockkafkas.INSTANCE_TYPE, types.STANDARD.String()),
-					mockkafkas.With(mockkafkas.SIZE_ID, "x1"),
-				),
-			},
-			want: nil,
-			wantErr: &wantErr{
-				code:   errors.ErrorGeneral,
-				reason: fmt.Sprintf("failed to retrieve capacity information for cluster %s", mockkafkas.DefaultClusterID),
-			},
-		},
-		{
 			name: "should return nil if no clusters matches the given criteria",
 			fields: fields{
 				ClusterService: &ClusterServiceMock{
