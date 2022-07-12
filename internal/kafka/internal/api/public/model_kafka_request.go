@@ -30,28 +30,42 @@ type KafkaRequest struct {
 	Name                string `json:"name,omitempty"`
 	BootstrapServerHost string `json:"bootstrap_server_host,omitempty"`
 	// The kafka admin server url to perform kafka admin operations e.g acl management etc. The value will be available when the Kafka has been fully provisioned i.e it reaches a 'ready' state
-	AdminApiServerUrl       string     `json:"admin_api_server_url,omitempty"`
-	CreatedAt               time.Time  `json:"created_at,omitempty"`
-	ExpiresAt               *time.Time `json:"expires_at,omitempty"`
-	UpdatedAt               time.Time  `json:"updated_at,omitempty"`
-	FailedReason            string     `json:"failed_reason,omitempty"`
-	Version                 string     `json:"version,omitempty"`
-	InstanceType            string     `json:"instance_type,omitempty"`
-	InstanceTypeName        string     `json:"instance_type_name,omitempty"`
-	ReauthenticationEnabled bool       `json:"reauthentication_enabled"`
+	AdminApiServerUrl string     `json:"admin_api_server_url,omitempty"`
+	CreatedAt         time.Time  `json:"created_at,omitempty"`
+	ExpiresAt         *time.Time `json:"expires_at,omitempty"`
+	UpdatedAt         time.Time  `json:"updated_at,omitempty"`
+	FailedReason      string     `json:"failed_reason,omitempty"`
+	Version           string     `json:"version,omitempty"`
+	InstanceType      string     `json:"instance_type,omitempty"`
+	// This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region} endpoint to retrieve the field instead.
+	// Deprecated
+	DeprecatedInstanceTypeName string `json:"instance_type_name,omitempty"`
+	ReauthenticationEnabled    bool   `json:"reauthentication_enabled"`
 	// Maximum data storage available to this Kafka. This is now deprecated, please use max_data_retention_size instead.
 	// Deprecated
-	DeprecatedKafkaStorageSize  string                           `json:"kafka_storage_size,omitempty"`
-	MaxDataRetentionSize        SupportedKafkaSizeBytesValueItem `json:"max_data_retention_size,omitempty"`
-	BrowserUrl                  string                           `json:"browser_url,omitempty"`
-	SizeId                      string                           `json:"size_id,omitempty"`
-	IngressThroughputPerSec     string                           `json:"ingress_throughput_per_sec,omitempty"`
-	EgressThroughputPerSec      string                           `json:"egress_throughput_per_sec,omitempty"`
-	TotalMaxConnections         int32                            `json:"total_max_connections,omitempty"`
-	MaxPartitions               int32                            `json:"max_partitions,omitempty"`
-	MaxDataRetentionPeriod      string                           `json:"max_data_retention_period,omitempty"`
-	MaxConnectionAttemptsPerSec int32                            `json:"max_connection_attempts_per_sec,omitempty"`
-	BillingCloudAccountId       string                           `json:"billing_cloud_account_id,omitempty"`
-	Marketplace                 string                           `json:"marketplace,omitempty"`
-	BillingModel                string                           `json:"billing_model,omitempty"`
+	DeprecatedKafkaStorageSize string                           `json:"kafka_storage_size,omitempty"`
+	MaxDataRetentionSize       SupportedKafkaSizeBytesValueItem `json:"max_data_retention_size,omitempty"`
+	BrowserUrl                 string                           `json:"browser_url,omitempty"`
+	SizeId                     string                           `json:"size_id,omitempty"`
+	// This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region} endpoint to retrieve the field instead.
+	// Deprecated
+	DeprecatedIngressThroughputPerSec string `json:"ingress_throughput_per_sec,omitempty"`
+	// This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region} endpoint to retrieve the field instead.
+	// Deprecated
+	DeprecatedEgressThroughputPerSec string `json:"egress_throughput_per_sec,omitempty"`
+	// This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region} endpoint to retrieve the field instead.
+	// Deprecated
+	DeprecatedTotalMaxConnections int32 `json:"total_max_connections,omitempty"`
+	// This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region} endpoint to retrieve the field instead.
+	// Deprecated
+	DeprecatedMaxPartitions int32 `json:"max_partitions,omitempty"`
+	// This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region} endpoint to retrieve the field instead.
+	// Deprecated
+	DeprecatedMaxDataRetentionPeriod string `json:"max_data_retention_period,omitempty"`
+	// This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region} endpoint to retrieve the field instead.
+	// Deprecated
+	DeprecatedMaxConnectionAttemptsPerSec int32  `json:"max_connection_attempts_per_sec,omitempty"`
+	BillingCloudAccountId                 string `json:"billing_cloud_account_id,omitempty"`
+	Marketplace                           string `json:"marketplace,omitempty"`
+	BillingModel                          string `json:"billing_model,omitempty"`
 }

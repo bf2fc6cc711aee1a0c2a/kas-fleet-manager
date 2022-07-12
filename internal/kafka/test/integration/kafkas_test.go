@@ -118,7 +118,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	g.Expect(kafka.InstanceType).To(gomega.Equal(types.STANDARD.String()))
 	g.Expect(kafka.ReauthenticationEnabled).To(gomega.BeTrue())
 	g.Expect(kafka.BrowserUrl).To(gomega.Equal(fmt.Sprintf("%s%s/dashboard", test.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
-	g.Expect(kafka.InstanceTypeName).To(gomega.Equal("Standard"))
+	g.Expect(kafka.DeprecatedInstanceTypeName).To(gomega.Equal("Standard"))
 	g.Expect(kafka.ExpiresAt).To(gomega.BeNil())
 	g.Expect(kafka.AdminApiServerUrl).To(gomega.BeEmpty())
 
