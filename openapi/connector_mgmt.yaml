@@ -1284,17 +1284,11 @@ components:
     #
 
     ConnectorType:
-      description: >-
-        Represents a connector type supported by the API
-      oneOf:
-        - required:
-            - name
-            - version
-            - schema
-        - required:
-            - name
-            - version
-            - json_schema
+      description: Represents a connector type supported by the API
+      required:
+        - name
+        - version
+        - schema
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
         - type: object
@@ -1327,11 +1321,6 @@ components:
               items:
                 type: string
             schema:
-              description: >-
-                A json schema that can be used to validate a ConnectorRequest
-                connector field.
-              type: object
-            json_schema:
               description: >-
                 A json schema that can be used to validate a ConnectorRequest
                 connector field.

@@ -482,7 +482,8 @@ Feature: create a connector
             "href": "/api/connector_mgmt/v1/kafka_connector_types/OldConnectorTypeStillInUseId",
             "id": "OldConnectorTypeStillInUseId",
             "kind": "ConnectorType",
-            "name": "Old Connector Type still in use"
+            "name": "Old Connector Type still in use",
+            "version": ""
           }
         ],
         "kind": "ConnectorTypeList",
