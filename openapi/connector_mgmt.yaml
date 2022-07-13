@@ -1000,6 +1000,7 @@ components:
 
     Error:
         type: object
+        nullable: true
         required: [id, kind, href, code, reason]
         properties:
           reason:

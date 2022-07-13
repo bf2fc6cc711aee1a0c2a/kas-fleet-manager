@@ -1859,6 +1859,7 @@ components:
         operation_id: operation_id
         id: id
         href: href
+      nullable: true
       properties:
         reason:
           type: string

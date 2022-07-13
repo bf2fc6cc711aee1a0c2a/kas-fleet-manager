@@ -738,6 +738,7 @@ components:
       - version
       type: object
     Error:
+      nullable: true
       properties:
         reason:
           type: string

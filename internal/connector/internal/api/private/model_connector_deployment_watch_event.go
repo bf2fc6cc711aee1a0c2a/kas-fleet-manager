@@ -12,6 +12,6 @@ package private
 // ConnectorDeploymentWatchEvent struct for ConnectorDeploymentWatchEvent
 type ConnectorDeploymentWatchEvent struct {
 	Type   string              `json:"type"`
-	Error  Error               `json:"error,omitempty"`
+	Error  *Error              `json:"error,omitempty"`
 	Object ConnectorDeployment `json:"object,omitempty"`
 }

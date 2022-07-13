@@ -431,8 +431,8 @@ components:
         type:
           type: string
         error:
-          nullable: true
           $ref: "connector_mgmt.yaml#/components/schemas/Error"
+          nullable: true
         object:
           type: object
           nullable: true
