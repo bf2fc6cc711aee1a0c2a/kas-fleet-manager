@@ -11,7 +11,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
@@ -175,6 +175,8 @@ func setupOcmServerWithMockRegionsResp() (*httptest.Server, error) {
 }
 
 func TestCloudProviderRegions(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	// setup ocm server
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	ocmServer := ocmServerBuilder.Build()
@@ -191,28 +193,30 @@ func TestCloudProviderRegions(t *testing.T) {
 	}
 
 	cloudProviderRegions, err := test.TestServices.CloudProvidersService.GetCloudProvidersWithRegions()
-	Expect(err).NotTo(HaveOccurred(), "Error:  %v", err)
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error:  %v", err)
 
 	for _, regions := range cloudProviderRegions {
 		// regions.ID == "baremetal" | "libvirt" | "openstack" | "vsphere" have empty region list
 		if regions.ID == aws || regions.ID == azure || regions.ID == gcp {
-			Expect(len(regions.RegionList.Items)).NotTo(Equal(0))
+			g.Expect(len(regions.RegionList.Items)).NotTo(gomega.Equal(0))
 		}
 		for _, r := range regions.RegionList.Items {
 			id := r.ID
 			name := r.DisplayName
 			multiAz := r.SupportsMultiAZ
 
-			Expect(regions.ID).NotTo(Equal(nil))
-			Expect(id).NotTo(Equal(nil))
-			Expect(name).NotTo(Equal(nil))
-			Expect(multiAz).NotTo(Equal(nil))
+			g.Expect(regions.ID).NotTo(gomega.Equal(nil))
+			g.Expect(id).NotTo(gomega.Equal(nil))
+			g.Expect(name).NotTo(gomega.Equal(nil))
+			g.Expect(multiAz).NotTo(gomega.Equal(nil))
 		}
 	}
 
 }
 
 func TestCachedCloudProviderRegions(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	// setup ocm server
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	ocmServer := ocmServerBuilder.Build()
@@ -229,28 +233,30 @@ func TestCachedCloudProviderRegions(t *testing.T) {
 	}
 
 	cloudProviderRegions, err := test.TestServices.CloudProvidersService.GetCachedCloudProvidersWithRegions()
-	Expect(err).NotTo(HaveOccurred(), "Error:  %v", err)
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error:  %v", err)
 
 	for _, regions := range cloudProviderRegions {
 		// regions.ID == "baremetal" | "libvirt" | "openstack" | "vsphere" have empty region list
 		if regions.ID == aws || regions.ID == azure || regions.ID == gcp {
-			Expect(len(regions.RegionList.Items)).NotTo(Equal(0))
+			g.Expect(len(regions.RegionList.Items)).NotTo(gomega.Equal(0))
 		}
 		for _, r := range regions.RegionList.Items {
 			id := r.ID
 			name := r.DisplayName
 			multiAz := r.SupportsMultiAZ
 
-			Expect(regions.ID).NotTo(Equal(nil))
-			Expect(id).NotTo(Equal(nil))
-			Expect(name).NotTo(Equal(nil))
-			Expect(multiAz).NotTo(Equal(nil))
+			g.Expect(regions.ID).NotTo(gomega.Equal(nil))
+			g.Expect(id).NotTo(gomega.Equal(nil))
+			g.Expect(name).NotTo(gomega.Equal(nil))
+			g.Expect(multiAz).NotTo(gomega.Equal(nil))
 		}
 	}
 
 }
 
 func TestListCloudProviders(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -270,9 +276,9 @@ func TestListCloudProviders(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers: %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(cloudProviderList.Items).NotTo(BeEmpty(), "Expected cloud providers list")
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers: %v", err)
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(cloudProviderList.Items).NotTo(gomega.BeEmpty(), "g.Expected cloud providers list")
 
 	// verify that the cloud providers list should contain atleast "gcp" which comes from standalone provider type
 	hasGcp := false
@@ -282,10 +288,12 @@ func TestListCloudProviders(t *testing.T) {
 			break
 		}
 	}
-	Expect(hasGcp).To(BeTrue())
+	g.Expect(hasGcp).To(gomega.BeTrue())
 }
 
 func TestListCloudProviderRegions(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer, err := setupOcmServerWithMockRegionsResp()
 	if err != nil {
 		t.Errorf("Failed to set mock ocm region list response")
@@ -364,27 +372,27 @@ func TestListCloudProviderRegions(t *testing.T) {
 	if resp1 != nil {
 		resp1.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
-	Expect(resp1.StatusCode).To(Equal(http.StatusOK))
-	Expect(cloudProviderRegionsList.Items).NotTo(BeEmpty(), "Expected aws cloud provider regions to return a non-empty list")
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
+	g.Expect(resp1.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(cloudProviderRegionsList.Items).NotTo(gomega.BeEmpty(), "g.Expected aws cloud provider regions to return a non-empty list")
 
 	// enabled should only be set to true for regions that support at least one instance type in the providers config
 	for _, cpr := range cloudProviderRegionsList.Items {
 		if cpr.Id == "us-east-1" {
-			Expect(cpr.Enabled).To(BeTrue())
-			Expect(cpr.Capacity).To(HaveLen(2))
+			g.Expect(cpr.Enabled).To(gomega.BeTrue())
+			g.Expect(cpr.Capacity).To(gomega.HaveLen(2))
 
 			for _, c := range cpr.Capacity {
-				Expect(c.AvailableSizes).To(HaveLen(1))
-				Expect(c.AvailableSizes[0]).To(Equal("x1"))
+				g.Expect(c.AvailableSizes).To(gomega.HaveLen(1))
+				g.Expect(c.AvailableSizes[0]).To(gomega.Equal("x1"))
 			}
 		} else if cpr.Id == "af-south-1" {
-			Expect(cpr.Enabled).To(BeTrue())
-			Expect(cpr.Capacity).To(HaveLen(1))                   // only supports standard
-			Expect(cpr.Capacity[0].AvailableSizes).To(HaveLen(0)) // no cluster has been created in this region so capacity should be empty
+			g.Expect(cpr.Enabled).To(gomega.BeTrue())
+			g.Expect(cpr.Capacity).To(gomega.HaveLen(1))                   // only supports standard
+			g.Expect(cpr.Capacity[0].AvailableSizes).To(gomega.HaveLen(0)) // no cluster has been created in this region so capacity should be empty
 		} else {
-			Expect(cpr.Enabled).To(BeFalse())
-			Expect(cpr.Capacity).To(HaveLen(0))
+			g.Expect(cpr.Enabled).To(gomega.BeFalse())
+			g.Expect(cpr.Capacity).To(gomega.HaveLen(0))
 		}
 	}
 
@@ -396,26 +404,26 @@ func TestListCloudProviderRegions(t *testing.T) {
 		InstanceType:  "standard",
 		SizeId:        "x1",
 	}).Error
-	Expect(err).NotTo(HaveOccurred(), "failed to create dummy kafka")
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create dummy kafka")
 
 	// ensure capacity has changed for us-east-1
 	cloudProviderRegionsList, resp1, err = client.DefaultApi.GetCloudProviderRegions(ctx, mocks.MockCluster.CloudProvider().ID(), nil)
 	if resp1 != nil {
 		resp1.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
-	Expect(resp1.StatusCode).To(Equal(http.StatusOK))
-	Expect(cloudProviderRegionsList.Items).NotTo(BeEmpty(), "Expected aws cloud provider regions to return a non-empty list")
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
+	g.Expect(resp1.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(cloudProviderRegionsList.Items).NotTo(gomega.BeEmpty(), "g.Expected aws cloud provider regions to return a non-empty list")
 
 	for _, cpr := range cloudProviderRegionsList.Items {
 		if cpr.Id == "us-east-1" {
-			Expect(cpr.Capacity).To(HaveLen(2))
+			g.Expect(cpr.Capacity).To(gomega.HaveLen(2))
 
 			for _, c := range cpr.Capacity {
 				if c.InstanceType == "standard" {
-					Expect(c.AvailableSizes).To(HaveLen(0)) // dummy Kafka created above has used up all capacity for standard Kafka instances in this region
+					g.Expect(c.AvailableSizes).To(gomega.HaveLen(0)) // dummy Kafka created above has used up all capacity for standard Kafka instances in this region
 				} else {
-					Expect(c.AvailableSizes).To(HaveLen(1)) // other Kafka instance types should not have been affected
+					g.Expect(c.AvailableSizes).To(gomega.HaveLen(1)) // other Kafka instance types should not have been affected
 				}
 			}
 			break
@@ -428,13 +436,13 @@ func TestListCloudProviderRegions(t *testing.T) {
 		gcpResp.Body.Close()
 	}
 
-	Expect(gcpErr).NotTo(HaveOccurred(), "Error occurred when attempting to list gcp cloud providers regions:  %v", gcpErr)
-	Expect(gcpResp.StatusCode).To(Equal(http.StatusOK))
-	Expect(gcpCloudProviderRegions.Items).NotTo(BeEmpty(), "Expected gcp cloud provider regions to return a non-empty list")
+	g.Expect(gcpErr).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list gcp cloud providers regions:  %v", gcpErr)
+	g.Expect(gcpResp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(gcpCloudProviderRegions.Items).NotTo(gomega.BeEmpty(), "g.Expected gcp cloud provider regions to return a non-empty list")
 
 	// all gcp regions returned should have enabled set to false as they do not support any instance types as specified in the providers config
 	for _, cpr := range gcpCloudProviderRegions.Items {
-		Expect(cpr.Enabled).To(BeFalse())
+		g.Expect(cpr.Enabled).To(gomega.BeFalse())
 	}
 
 	//test with wrong provider id
@@ -442,7 +450,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 	if respFromWrongID != nil {
 		respFromWrongID.Body.Close()
 	}
-	Expect(errFromWrongId).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", errFromWrongId)
-	Expect(respFromWrongID.StatusCode).To(Equal(http.StatusOK))
-	Expect(wrongCloudProviderList.Items).To(BeEmpty(), "Expected cloud providers regions list empty")
+	g.Expect(errFromWrongId).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", errFromWrongId)
+	g.Expect(respFromWrongID.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(wrongCloudProviderList.Items).To(gomega.BeEmpty(), "g.Expected cloud providers regions list empty")
 }

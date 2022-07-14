@@ -14,7 +14,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	w "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestDeletingKafkaManager_Reconcile(t *testing.T) {
@@ -110,12 +110,11 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := NewDeletingKafkaManager(tt.fields.kafkaService,
 				tt.fields.keycloakConfig,
 				&services.QuotaServiceFactoryMock{
@@ -124,7 +123,7 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 					},
 				},
 				w.Reconciler{})
-			Expect(len(k.Reconcile()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(k.Reconcile()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -201,12 +200,11 @@ func TestDeletingKafkaManager_reconcileDeletingKafkas(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := &DeletingKafkaManager{
 				kafkaService: tt.fields.kafkaService,
 				quotaServiceFactory: &services.QuotaServiceFactoryMock{
@@ -215,7 +213,7 @@ func TestDeletingKafkaManager_reconcileDeletingKafkas(t *testing.T) {
 					},
 				},
 			}
-			Expect(k.reconcileDeletingKafkas(tt.args.kafka) != nil).To(Equal(tt.wantErr))
+			g.Expect(k.reconcileDeletingKafkas(tt.args.kafka) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

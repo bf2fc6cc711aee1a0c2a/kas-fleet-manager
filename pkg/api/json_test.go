@@ -4,7 +4,7 @@ import (
 	"database/sql/driver"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_JSON_Scan(t *testing.T) {
@@ -35,13 +35,12 @@ func Test_JSON_Scan(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			err := tt.json.Scan(tt.value)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -81,14 +80,13 @@ func Test_JSON_Object(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			object, err := tt.json.Object()
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(object).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(object).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -114,14 +112,13 @@ func Test_JSON_MarshalJSON(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			object, err := tt.json.MarshalJSON()
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(object).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(object).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -146,13 +143,12 @@ func Test_JSON_UnmarshalJSON(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			err := tt.json.UnmarshalJSON(tt.data)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -185,16 +181,15 @@ func Test_JSON_Value(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got, err := tt.json.Value()
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(got == nil).To(Equal(tt.want == nil))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got == nil).To(gomega.Equal(tt.want == nil))
 			if got != nil {
-				Expect(got).To(Equal(tt.want))
+				g.Expect(got).To(gomega.Equal(tt.want))
 			}
 		})
 	}

@@ -3,7 +3,7 @@ package api
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_QuotaService(t *testing.T) {
@@ -31,14 +31,13 @@ func Test_QuotaService(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			res := tt.quotatype.String()
-			Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }

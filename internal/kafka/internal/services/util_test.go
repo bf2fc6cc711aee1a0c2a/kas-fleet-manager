@@ -17,7 +17,7 @@ import (
 	pkgErr "github.com/pkg/errors"
 	"gorm.io/gorm"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 const (
@@ -109,14 +109,13 @@ func Test_HandleGetError(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got := services.HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err)
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -152,8 +151,9 @@ func Test_handleCreateError(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got := services.HandleCreateError(tt.args.resourceType, tt.args.err)
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -189,8 +189,9 @@ func Test_handleUpdateError(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got := services.HandleUpdateError(tt.args.resourceType, tt.args.err)
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -223,13 +224,14 @@ func Test_TruncateString(t *testing.T) {
 			want: exampleString,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got := TruncateString(tt.args.str, tt.args.num)
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -265,14 +267,15 @@ func Test_buildTruncateKafkaIdentifier(t *testing.T) {
 			want: fmt.Sprintf("%s-%s", mockLongKafkaName[0:truncatedNameLen], strings.ToLower(mockKafkaRequestID)),
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			tt.args.kafkaRequest.ID = mockKafkaRequestID
 			got := buildTruncateKafkaIdentifier(tt.args.kafkaRequest)
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -301,13 +304,13 @@ func Test_MaskProceedingandTrailingDash(t *testing.T) {
 			want: "example-name",
 		},
 	}
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got := MaskProceedingandTrailingDash(tt.args.name)
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -344,17 +347,18 @@ func Test_replaceHostSpecialChar(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got, err := replaceHostSpecialChar(tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("replaceHostSpecialChar() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -398,13 +402,14 @@ func Test_contains(t *testing.T) {
 			want: true,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got := arrays.Contains(tt.args.slice, tt.args.s)
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -437,13 +442,14 @@ func Test_BuildCustomClaimCheck(t *testing.T) {
 			expectedCustomClaim: fmt.Sprintf("@.rh-org-id == '%s'|| @.org_id == '%s' || @.clientId == '%s'", kafkaRequest.OrganisationId, kafkaRequest.OrganisationId, kafkaRequest.CanaryServiceAccountClientID),
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			receivedBuiltCustomClaimCheck := BuildCustomClaimCheck(tt.args.kafkaRequest, tt.args.ssoconfigProvider)
-			Expect(receivedBuiltCustomClaimCheck).To(Equal(tt.expectedCustomClaim))
+			g.Expect(receivedBuiltCustomClaimCheck).To(gomega.Equal(tt.expectedCustomClaim))
 		})
 	}
 }

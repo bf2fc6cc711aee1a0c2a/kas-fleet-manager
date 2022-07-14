@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_LeaderLeaseTypes_BeforeCreate(t *testing.T) {
@@ -18,15 +18,14 @@ func Test_LeaderLeaseTypes_BeforeCreate(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			err := tt.leaderLease.BeforeCreate(nil)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(tt.leaderLease.ID).ToNot(BeEmpty()) // a new id is generated each time, we only care for the ID value to contain something and not the actual value that it holds
+			g.Expect(err).ToNot(gomega.HaveOccurred())
+			g.Expect(tt.leaderLease.ID).ToNot(gomega.BeEmpty()) // a new id is generated each time, we only care for the ID value to contain something and not the actual value that it holds
 		})
 	}
 }
@@ -62,14 +61,13 @@ func Test_LeaderLeaseTypes_Index(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			index := tt.leaderLeases.Index()
-			Expect(index).To(Equal(tt.want))
+			g.Expect(index).To(gomega.Equal(tt.want))
 		})
 	}
 }

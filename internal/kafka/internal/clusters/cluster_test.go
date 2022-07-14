@@ -10,7 +10,7 @@ import (
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 const openshiftVersion = "openshift-v4.6.1"
@@ -173,8 +173,6 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		if tt.wantFn == nil {
@@ -183,6 +181,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 			}
 		}
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			r := clusterBuilder{
 				idGenerator:            tt.fields.idGenerator,
 				awsConfig:              tt.fields.awsConfig,
@@ -193,7 +192,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 				t.Errorf("NewOCMClusterFromCluster() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.wantFn()))
+			g.Expect(got).To(gomega.Equal(tt.wantFn()))
 		})
 	}
 }

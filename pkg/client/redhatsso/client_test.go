@@ -6,7 +6,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"github.com/patrickmn/go-cache"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
 )
@@ -77,13 +77,14 @@ func TestNewSSOClient(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			ssoClient := NewSSOClient(tt.args.config, tt.args.realmConfig)
-			g.Expect(ssoClient.GetConfig()).To(Equal(tt.want.GetConfig()))
-			g.Expect(ssoClient.GetRealmConfig()).To(Equal(tt.want.GetRealmConfig()))
+			g.Expect(ssoClient.GetConfig()).To(gomega.Equal(tt.want.GetConfig()))
+			g.Expect(ssoClient.GetRealmConfig()).To(gomega.Equal(tt.want.GetRealmConfig()))
 		})
 	}
 }
@@ -130,18 +131,18 @@ func Test_rhSSOClient_getConfiguration(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
 
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &rhSSOClient{
 				config:        tt.fields.config,
 				realmConfig:   tt.fields.realmConfig,
 				configuration: tt.fields.configuration,
 				cache:         tt.fields.cache,
 			}
-			g.Expect(c.getConfiguration(tt.args.accessToken)).To(Equal(tt.want))
+			g.Expect(c.getConfiguration(tt.args.accessToken)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -204,7 +205,7 @@ func Test_rhSSOClient_getCachedToken(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
@@ -212,6 +213,7 @@ func Test_rhSSOClient_getCachedToken(t *testing.T) {
 			tt.setupFn(&tt.fields)
 		}
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &rhSSOClient{
 				config:        tt.fields.config,
 				realmConfig:   tt.fields.realmConfig,
@@ -219,8 +221,8 @@ func Test_rhSSOClient_getCachedToken(t *testing.T) {
 				cache:         tt.fields.cache,
 			}
 			got, err := c.getCachedToken(tt.args.tokenKey)
-			g.Expect(err != nil).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -300,11 +302,12 @@ func Test_rhSSOClient_GetToken(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &rhSSOClient{
 				config:        tt.fields.config,
 				realmConfig:   tt.fields.realmConfig,
@@ -312,8 +315,8 @@ func Test_rhSSOClient_GetToken(t *testing.T) {
 				cache:         tt.fields.cache,
 			}
 			got, err := c.GetToken()
-			g.Expect(err != nil).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 
 	}
@@ -336,15 +339,16 @@ func Test_rhSSOClient_GetConfig(t *testing.T) {
 			want: &keycloak.KeycloakConfig{},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &rhSSOClient{
 				config: tt.fields.config,
 			}
-			g.Expect(c.GetConfig()).To(Equal(tt.want))
+			g.Expect(c.GetConfig()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -366,15 +370,16 @@ func Test_rhSSOClient_GetRealmConfig(t *testing.T) {
 			want: &keycloak.KeycloakRealmConfig{},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &rhSSOClient{
 				realmConfig: tt.fields.realmConfig,
 			}
-			g.Expect(c.GetRealmConfig()).To(Equal(tt.want))
+			g.Expect(c.GetRealmConfig()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -469,11 +474,12 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &rhSSOClient{
 				config:        tt.fields.config,
 				realmConfig:   tt.fields.realmConfig,
@@ -481,8 +487,8 @@ func Test_rhSSOClient_GetServiceAccounts(t *testing.T) {
 				cache:         tt.fields.cache,
 			}
 			got, err := c.GetServiceAccounts(tt.args.accessToken, tt.args.first, tt.args.max)
-			g.Expect(err != nil).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -574,11 +580,12 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &rhSSOClient{
 				config:        tt.fields.config,
 				realmConfig:   tt.fields.realmConfig,
@@ -586,9 +593,9 @@ func Test_rhSSOClient_GetServiceAccount(t *testing.T) {
 				cache:         tt.fields.cache,
 			}
 			got, httpStatus, err := c.GetServiceAccount(tt.args.accessToken, tt.args.clientId)
-			g.Expect(err != nil).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
-			g.Expect(httpStatus).To(Equal(tt.found))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
+			g.Expect(httpStatus).To(gomega.Equal(tt.found))
 		})
 	}
 }
@@ -682,11 +689,12 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &rhSSOClient{
 				config:        tt.fields.config,
 				realmConfig:   tt.fields.realmConfig,
@@ -694,9 +702,9 @@ func Test_rhSSOClient_CreateServiceAccount(t *testing.T) {
 				cache:         tt.fields.cache,
 			}
 			got, err := c.CreateServiceAccount(tt.args.accessToken, tt.args.name, tt.args.description)
-			g.Expect(err != nil).To(Equal(tt.wantErr))
-			g.Expect(got.Name).To(Equal(tt.want.Name))
-			g.Expect(got.Description).To(Equal(tt.want.Description))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got.Name).To(gomega.Equal(tt.want.Name))
+			g.Expect(got.Description).To(gomega.Equal(tt.want.Description))
 		})
 	}
 }
@@ -782,18 +790,19 @@ func Test_rhSSOClient_DeleteServiceAccount(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &rhSSOClient{
 				config:        tt.fields.config,
 				realmConfig:   tt.fields.realmConfig,
 				configuration: tt.fields.configuration,
 				cache:         tt.fields.cache,
 			}
-			g.Expect(c.DeleteServiceAccount(tt.args.accessToken, tt.args.clientId) != nil).To(Equal(tt.wantErr))
+			g.Expect(c.DeleteServiceAccount(tt.args.accessToken, tt.args.clientId) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -899,11 +908,12 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &rhSSOClient{
 				config:        tt.fields.config,
 				realmConfig:   tt.fields.realmConfig,
@@ -911,8 +921,8 @@ func Test_rhSSOClient_UpdateServiceAccount(t *testing.T) {
 				cache:         tt.fields.cache,
 			}
 			got, err := c.UpdateServiceAccount(tt.args.accessToken, tt.args.clientId, tt.args.name, tt.args.description)
-			g.Expect(err != nil).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1005,11 +1015,12 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &rhSSOClient{
 				config:        tt.fields.config,
 				realmConfig:   tt.fields.realmConfig,
@@ -1017,8 +1028,8 @@ func Test_rhSSOClient_RegenerateClientSecret(t *testing.T) {
 				cache:         tt.fields.cache,
 			}
 			got, err := c.RegenerateClientSecret(tt.args.accessToken, tt.args.id)
-			g.Expect(err != nil).To(Equal(tt.wantErr))
-			g.Expect(got).To(Not(Equal(tt.want)))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Not(gomega.Equal(tt.want)))
 		})
 	}
 }

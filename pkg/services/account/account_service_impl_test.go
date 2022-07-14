@@ -3,7 +3,7 @@ package account
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
@@ -27,11 +27,12 @@ func TestNewAccountService(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			g.Expect(NewAccountService(tt.args.connection)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(NewAccountService(tt.args.connection)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -53,11 +54,12 @@ func Test_convertOrganization(t *testing.T) {
 			want: &Organization{},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			g.Expect(convertOrganization(tt.args.o)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(convertOrganization(tt.args.o)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -79,11 +81,12 @@ func Test_convertOrganizationList(t *testing.T) {
 			want: &OrganizationList{},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			g.Expect(convertOrganizationList(tt.args.organizationList)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(convertOrganizationList(tt.args.organizationList)).To(gomega.Equal(tt.want))
 		})
 	}
 }

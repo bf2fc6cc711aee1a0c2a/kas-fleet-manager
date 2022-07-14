@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
 )
 
@@ -87,14 +87,14 @@ func Test_ValidateOrderBy(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			la := NewListArguments(tt.params)
 			err := la.Validate(tt.validParams)
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -128,12 +128,13 @@ func Test_NewListArguments(t *testing.T) {
 			want: overriddenListArgs,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			g.Expect(NewListArguments(tt.args.params)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(NewListArguments(tt.args.params)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -200,11 +201,12 @@ func TestListArguments_Validate(t *testing.T) {
 			want: nil,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			la := &ListArguments{
 				Page:    tt.fields.Page,
 				Size:    tt.fields.Size,
@@ -213,7 +215,7 @@ func TestListArguments_Validate(t *testing.T) {
 			}
 			err := la.Validate(tt.args.acceptedOrderByParams)
 			if err != nil {
-				g.Expect(err.Error()).To(Equal(tt.want.Error()))
+				g.Expect(err.Error()).To(gomega.Equal(tt.want.Error()))
 			}
 		})
 	}

@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_ValidKafkaInstanceTypes(t *testing.T) {
-	RegisterTestingT(t)
-	Expect(ValidKafkaInstanceTypes).To(Equal([]string{DEVELOPER.String(), STANDARD.String()}))
+	g := gomega.NewWithT(t)
+	g.Expect(ValidKafkaInstanceTypes).To(gomega.Equal([]string{DEVELOPER.String(), STANDARD.String()}))
 }
 
 func Test_GetQuotaType(t *testing.T) {
@@ -38,13 +38,12 @@ func Test_GetQuotaType(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.t.GetQuotaType()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.t.GetQuotaType()).To(gomega.Equal(tt.want))
 		})
 	}
 }

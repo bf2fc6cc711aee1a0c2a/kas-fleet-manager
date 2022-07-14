@@ -8,7 +8,7 @@ import (
 	mockSa "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/service_accounts"
 	v1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestPresentManagedKafka(t *testing.T) {
@@ -32,13 +32,12 @@ func TestPresentManagedKafka(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(PresentManagedKafka(tt.args.from)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(PresentManagedKafka(tt.args.from)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -62,13 +61,12 @@ func TestGetOpenAPIManagedKafkaEndpointTLS(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(getOpenAPIManagedKafkaEndpointTLS(tt.args.from)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(getOpenAPIManagedKafkaEndpointTLS(tt.args.from)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -92,13 +90,12 @@ func TestGetOpenAPIManagedKafkaOAuthTLSTrustedCertificate(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(getOpenAPIManagedKafkaOAuthTLSTrustedCertificate(tt.args.from)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(getOpenAPIManagedKafkaOAuthTLSTrustedCertificate(tt.args.from)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -122,13 +119,12 @@ func TestGetServiceAccounts(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(getServiceAccounts(tt.args.from)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(getServiceAccounts(tt.args.from)).To(gomega.Equal(tt.want))
 		})
 	}
 }

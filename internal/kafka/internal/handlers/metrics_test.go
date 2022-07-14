@@ -9,7 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestNewMetricsHandler(t *testing.T) {
@@ -31,12 +31,12 @@ func TestNewMetricsHandler(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(NewMetricsHandler(tt.args.service)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(NewMetricsHandler(tt.args.service)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -111,12 +111,13 @@ func Test_metricsHandler_FederateMetrics(t *testing.T) {
 			wantStatusCode: http.StatusNotFound,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			req, rw := GetHandlerParams("GET", tt.args.url, nil)
+			g := gomega.NewWithT(t)
+			req, rw := GetHandlerParams("GET", tt.args.url, nil, t)
 
 			if tt.wantStatusCode != http.StatusBadRequest {
 				req = mux.SetURLVars(req, map[string]string{"id": "id"})
@@ -126,7 +127,7 @@ func Test_metricsHandler_FederateMetrics(t *testing.T) {
 			h.FederateMetrics(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -173,12 +174,13 @@ func Test_metricsHandler_GetMetricsByRangeQuery(t *testing.T) {
 			wantStatusCode: http.StatusNotFound,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			req, rw := GetHandlerParams("GET", tt.args.url, nil)
+			g := gomega.NewWithT(t)
+			req, rw := GetHandlerParams("GET", tt.args.url, nil, t)
 			req = mux.SetURLVars(req, map[string]string{"id": "id"})
 
 			parameters := req.URL.Query()
@@ -190,7 +192,7 @@ func Test_metricsHandler_GetMetricsByRangeQuery(t *testing.T) {
 			h.GetMetricsByRangeQuery(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -237,19 +239,20 @@ func Test_metricsHandler_GetMetricsByInstantQuery(t *testing.T) {
 			wantStatusCode: http.StatusNotFound,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			req, rw := GetHandlerParams("GET", tt.args.url, nil)
+			g := gomega.NewWithT(t)
+			req, rw := GetHandlerParams("GET", tt.args.url, nil, t)
 			req = mux.SetURLVars(req, map[string]string{"id": "id"})
 
 			h := NewMetricsHandler(tt.fields.service)
 			h.GetMetricsByInstantQuery(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }

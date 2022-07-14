@@ -12,7 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
@@ -408,12 +408,11 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			counter := map[string]int{
 				"ready":    0,
 				"failed":   0,
@@ -422,8 +421,8 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			}
 			s := NewDataPlaneKafkaService(tt.fields.kafkaService(counter), tt.fields.clusterService, &config.KafkaConfig{})
 			err := s.UpdateDataPlaneKafkaService(context.TODO(), tt.args.clusterId, tt.args.status)
-			Expect(err).To(Equal(tt.want))
-			Expect(counter).To(Equal(tt.expectCounters))
+			g.Expect(err).To(gomega.Equal(tt.want))
+			g.Expect(counter).To(gomega.Equal(tt.expectCounters))
 		})
 	}
 }
@@ -693,19 +692,18 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			v := versions{}
 			s := NewDataPlaneKafkaService(tt.kafkaService(&v), tt.clusterService, &config.KafkaConfig{})
 			err := s.UpdateDataPlaneKafkaService(context.TODO(), tt.clusterId, tt.status)
 			if err != nil && !tt.wantErr {
 				t.Errorf("unexpected error %v", err)
 			}
-			Expect(v).To(Equal(tt.expectedVersions))
+			g.Expect(v).To(gomega.Equal(tt.expectedVersions))
 		})
 	}
 }
@@ -838,14 +836,13 @@ func Test_DataPlaneKafkaStatus_getStatus(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			got := getStatus(tt.args.status)
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -912,13 +909,13 @@ func Test_dataPlaneKafkaService_unassignKafkaFromDataplaneCluster(t *testing.T) 
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			d := &dataPlaneKafkaService{
 				kafkaService: tt.fields.kafkaService,
 			}
 			got := d.unassignKafkaFromDataplaneCluster(tt.args.kafka)
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }

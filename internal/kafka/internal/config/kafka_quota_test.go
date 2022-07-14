@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_NewKafkaQuotaConfig(t *testing.T) {
@@ -21,13 +21,12 @@ func Test_NewKafkaQuotaConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(NewKafkaQuotaConfig()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(NewKafkaQuotaConfig()).To(gomega.Equal(tt.want))
 		})
 	}
 }

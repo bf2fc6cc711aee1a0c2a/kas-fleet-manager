@@ -3,7 +3,7 @@ package ocm
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_GetProduct(t *testing.T) {
@@ -32,12 +32,11 @@ func Test_GetProduct(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.t.GetProduct()).To(BeEquivalentTo(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.t.GetProduct()).To(gomega.BeEquivalentTo(tt.want))
 		})
 	}
 }
@@ -68,12 +67,11 @@ func Test_GetResourceName(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.t.GetResourceName()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.t.GetResourceName()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -125,12 +123,11 @@ func Test_Equals(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.t.Equals(tt.args.t1)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.t.Equals(tt.args.t1)).To(gomega.Equal(tt.want))
 		})
 	}
 }

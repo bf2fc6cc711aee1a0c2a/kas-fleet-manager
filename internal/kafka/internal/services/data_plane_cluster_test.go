@@ -11,7 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
@@ -225,10 +225,10 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			f := tt.dataPlaneClusterServiceFactory()
 			if f == nil {
 				t.Fatalf("dataPlaneClusterService is nil")
@@ -239,7 +239,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 				t.Errorf("isFleetShardOperatorReady() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -330,19 +330,18 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			f := tt.dataPlaneClusterServiceFactory()
 			if f == nil {
 				t.Fatalf("dataPlaneClusterService is nil")
 			}
 
 			res := f.clusterCanProcessStatusReports(tt.apiCluster)
-			g.Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(gomega.Equal(tt.want))
 
 		})
 	}
@@ -464,11 +463,12 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 			want:    nil,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			s := NewDataPlaneClusterService(dataPlaneClusterService{
 				ClusterService:         tt.fields.clusterService,
 				ObservabilityConfig:    tt.fields.ObservabilityConfiguration,
@@ -478,7 +478,7 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 			if err != nil && !tt.wantErr {
 				t.Fatalf("unexpected error %v", err)
 			}
-			g.Expect(config).To(Equal(tt.want))
+			g.Expect(config).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -564,27 +564,26 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
-
 	for _, testcase := range cases {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			f := tt.inputFactory()
-			g.Expect(f).ToNot(BeNil(), "dataPlaneClusterService is nil")
+			g.Expect(f).ToNot(gomega.BeNil(), "dataPlaneClusterService is nil")
 
 			res := f.dataPlaneClusterService.setClusterStatus(f.cluster, f.status)
 
 			updateCalls := f.clusterService.calls.Update
-			g.Expect(updateCalls).To(HaveLen(1))
+			g.Expect(updateCalls).To(gomega.HaveLen(1))
 			if res != nil != tt.wantErr {
 				t.Errorf("setClusterStatus() got = %+v, expected %+v", res, tt.wantErr)
 			}
 
 			if !tt.wantErr {
 				updatedCluster := updateCalls[0].Cluster
-				g.Expect(updatedCluster.Status).To(Equal(tt.wantStatus))
-				g.Expect(updatedCluster.DynamicCapacityInfo).To(Equal(tt.wantDynamicCapacityInfo))
-				g.Expect(updatedCluster.AvailableStrimziVersions).To(Equal(tt.wantAvailableStrimziVersions))
+				g.Expect(updatedCluster.Status).To(gomega.Equal(tt.wantStatus))
+				g.Expect(updatedCluster.DynamicCapacityInfo).To(gomega.Equal(tt.wantDynamicCapacityInfo))
+				g.Expect(updatedCluster.AvailableStrimziVersions).To(gomega.Equal(tt.wantAvailableStrimziVersions))
 			}
 
 		})

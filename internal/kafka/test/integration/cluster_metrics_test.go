@@ -15,10 +15,11 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestClusterCapacityUsedMetric(t *testing.T) {
+	g := gomega.NewWithT(t)
 	// create a mock ocm api server, keep all endpoints as defaults
 	// see the mocks package for more information on the configurable mock server
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -57,22 +58,22 @@ func TestClusterCapacityUsedMetric(t *testing.T) {
 	})
 
 	err := db.Create(kafka).Error
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	err = db.Create(cluster).Error
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	// check that there is "1" streaming unit capacity used
 	metricValue := "1"
 	checkMetricsError := common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityUsed, metricValue, kafka.InstanceType, kafka.ClusterID, kafka.Region, kafka.CloudProvider)
-	Expect(checkMetricsError).NotTo(HaveOccurred())
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
 
 	// now delete the kafka and make verify that the capacity used goes down from "1" to "0"
 	err = db.Unscoped().Delete(kafka).Error
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	// now verify that the metric value has gone down to "0" after the kafka deletion
 	metricValue = "0"
 	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityUsed, metricValue, kafka.InstanceType, kafka.ClusterID, kafka.Region, kafka.CloudProvider)
-	Expect(checkMetricsError).NotTo(HaveOccurred())
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
 }

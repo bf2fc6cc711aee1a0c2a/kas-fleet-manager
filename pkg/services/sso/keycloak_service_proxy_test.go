@@ -3,13 +3,14 @@ package sso
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/golang-jwt/jwt/v4"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
-	"testing"
 )
 
 var (
@@ -54,8 +55,6 @@ func Test_keycloakServiceProxy_DeRegisterClientInSSO(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, tc := range tests {
 		tt := tc
 
@@ -74,18 +73,19 @@ func Test_keycloakServiceProxy_DeRegisterClientInSSO(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			err := proxy.DeRegisterClientInSSO(tt.args.clientID)
-			Expect(getTokenCalled).To(BeTrue())
+			g.Expect(getTokenCalled).To(gomega.BeTrue())
 			if tt.tokenProviderFail {
-				Expect(err).To(HaveOccurred())
-				Expect(mock.calls.DeRegisterClientInSSO).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(mock.calls.DeRegisterClientInSSO).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(mock.calls.DeRegisterClientInSSO).To(HaveLen(1))
-				Expect(mock.calls.DeRegisterClientInSSO[0].AccessToken).To(Equal(token))
-				Expect(mock.calls.DeRegisterClientInSSO[0].KafkaNamespace).To(Equal(tt.args.clientID))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(mock.calls.DeRegisterClientInSSO).To(gomega.HaveLen(1))
+				g.Expect(mock.calls.DeRegisterClientInSSO[0].AccessToken).To(gomega.Equal(token))
+				g.Expect(mock.calls.DeRegisterClientInSSO[0].KafkaNamespace).To(gomega.Equal(tt.args.clientID))
 			}
 		})
 	}
@@ -93,9 +93,6 @@ func Test_keycloakServiceProxy_DeRegisterClientInSSO(t *testing.T) {
 
 func Test_keycloakServiceProxy_RegisterClientInSSO(t *testing.T) {
 	testClusterCallbackURI := "testClusterCallbackURI"
-
-	RegisterTestingT(t)
-
 	type args struct {
 		clientID           string
 		clusterCallbackURI string
@@ -143,19 +140,21 @@ func Test_keycloakServiceProxy_RegisterClientInSSO(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
+
 			_, err := proxy.RegisterClientInSSO(testClientID, testClusterCallbackURI)
-			Expect(getTokenCalled).To(BeTrue())
+			g.Expect(getTokenCalled).To(gomega.BeTrue())
 			if tt.tokenProviderFail {
-				Expect(err).To(HaveOccurred())
-				Expect(mock.calls.RegisterClientInSSO).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(mock.calls.RegisterClientInSSO).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(mock.calls.RegisterClientInSSO).To(HaveLen(1))
-				Expect(mock.calls.RegisterClientInSSO[0].AccessToken).To(Equal(token))
-				Expect(mock.calls.RegisterClientInSSO[0].ClusterId).To(Equal(testClientID))
-				Expect(mock.calls.RegisterClientInSSO[0].ClusterOathCallbackURI).To(Equal(testClusterCallbackURI))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(mock.calls.RegisterClientInSSO).To(gomega.HaveLen(1))
+				g.Expect(mock.calls.RegisterClientInSSO[0].AccessToken).To(gomega.Equal(token))
+				g.Expect(mock.calls.RegisterClientInSSO[0].ClusterId).To(gomega.Equal(testClientID))
+				g.Expect(mock.calls.RegisterClientInSSO[0].ClusterOathCallbackURI).To(gomega.Equal(testClusterCallbackURI))
 			}
 
 		})
@@ -175,10 +174,10 @@ func Test_keycloakServiceProxy_GetConfig(t *testing.T) {
 		getToken: testTokenProvider(token, &getTokenCalled, false),
 		service:  mock,
 	}
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 	_ = proxy.GetConfig()
-	Expect(mock.calls.GetConfig).To(HaveLen(1))
-	Expect(getTokenCalled).To(BeFalse())
+	g.Expect(mock.calls.GetConfig).To(gomega.HaveLen(1))
+	g.Expect(getTokenCalled).To(gomega.BeFalse())
 }
 
 func Test_keycloakServiceProxy_GetRealmConfig(t *testing.T) {
@@ -194,15 +193,13 @@ func Test_keycloakServiceProxy_GetRealmConfig(t *testing.T) {
 		getToken: testTokenProvider(token, &getTokenCalled, false),
 		service:  mock,
 	}
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 	_ = proxy.GetRealmConfig()
-	Expect(mock.calls.GetRealmConfig).To(HaveLen(1))
-	Expect(getTokenCalled).To(BeFalse())
+	g.Expect(mock.calls.GetRealmConfig).To(gomega.HaveLen(1))
+	g.Expect(getTokenCalled).To(gomega.BeFalse())
 }
 
 func Test_keycloakServiceProxy_IsKafkaClientExist(t *testing.T) {
-	RegisterTestingT(t)
-
 	type args struct {
 		clientID string
 	}
@@ -247,17 +244,19 @@ func Test_keycloakServiceProxy_IsKafkaClientExist(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
+
 			err := proxy.IsKafkaClientExist(tt.args.clientID)
 			if tt.tokenProviderFail {
-				Expect(err).To(HaveOccurred())
-				Expect(mock.calls.IsKafkaClientExist).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(mock.calls.IsKafkaClientExist).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(mock.calls.IsKafkaClientExist).To(HaveLen(1))
-				Expect(mock.calls.IsKafkaClientExist[0].ClientId).To(Equal(testClientID))
-				Expect(getTokenCalled).To(BeTrue())
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(mock.calls.IsKafkaClientExist).To(gomega.HaveLen(1))
+				g.Expect(mock.calls.IsKafkaClientExist[0].ClientId).To(gomega.Equal(testClientID))
+				g.Expect(getTokenCalled).To(gomega.BeTrue())
 			}
 		})
 	}
@@ -315,12 +314,12 @@ func Test_keycloakServiceProxy_CreateServiceAccount(t *testing.T) {
 			wantErr:                  testTokenProviderError,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			getTokenCalled := false
 
 			proxy := keycloakServiceProxy{
@@ -333,17 +332,17 @@ func Test_keycloakServiceProxy_CreateServiceAccount(t *testing.T) {
 				Description: "saTest Description",
 			}
 			_, err := proxy.CreateServiceAccount(&req, tt.ctx)
-			Expect(getTokenCalled).To(Equal(tt.expectGetTokenToBeCalled))
+			g.Expect(getTokenCalled).To(gomega.Equal(tt.expectGetTokenToBeCalled))
 			if tt.expectGetTokenToFail {
-				Expect(err).To(HaveOccurred())
-				Expect(tt.mock.calls.CreateServiceAccount).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.CreateServiceAccount).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(tt.mock.calls.CreateServiceAccount).To(HaveLen(1))
-				Expect(tt.mock.calls.CreateServiceAccount[0].ServiceAccountRequest).To(Equal(&req))
-				Expect(tt.mock.calls.CreateServiceAccount[0].Ctx).To(Equal(tt.ctx))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.CreateServiceAccount).To(gomega.HaveLen(1))
+				g.Expect(tt.mock.calls.CreateServiceAccount[0].ServiceAccountRequest).To(gomega.Equal(&req))
+				g.Expect(tt.mock.calls.CreateServiceAccount[0].Ctx).To(gomega.Equal(tt.ctx))
 			}
 		})
 	}
@@ -416,12 +415,12 @@ func Test_keycloakServiceProxy_DeleteServiceAccount(t *testing.T) {
 			wantErr:                  testTokenProviderError,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			getTokenCalled := false
 
 			proxy := keycloakServiceProxy{
@@ -430,16 +429,16 @@ func Test_keycloakServiceProxy_DeleteServiceAccount(t *testing.T) {
 			}
 			err := proxy.DeleteServiceAccount(tt.args.ctx, tt.args.clientID)
 			if tt.expectGetTokenToFail {
-				Expect(err).To(HaveOccurred())
-				Expect(tt.mock.calls.DeleteServiceAccount).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.DeleteServiceAccount).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(tt.mock.calls.DeleteServiceAccount).To(HaveLen(1))
-				Expect(tt.mock.calls.DeleteServiceAccount[0].ClientId).To(Equal(tt.args.clientID))
-				Expect(tt.mock.calls.DeleteServiceAccount[0].Ctx).To(Equal(tt.args.ctx))
-				Expect(getTokenCalled).To(Equal(tt.expectGetTokenToBeCalled))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.DeleteServiceAccount).To(gomega.HaveLen(1))
+				g.Expect(tt.mock.calls.DeleteServiceAccount[0].ClientId).To(gomega.Equal(tt.args.clientID))
+				g.Expect(tt.mock.calls.DeleteServiceAccount[0].Ctx).To(gomega.Equal(tt.args.ctx))
+				g.Expect(getTokenCalled).To(gomega.Equal(tt.expectGetTokenToBeCalled))
 			}
 		})
 	}
@@ -512,12 +511,12 @@ func Test_keycloakServiceProxy_ResetServiceAccountCredentials(t *testing.T) {
 			wantErr:                  testTokenProviderError,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			getTokenCalled := false
 
 			proxy := keycloakServiceProxy{
@@ -526,17 +525,17 @@ func Test_keycloakServiceProxy_ResetServiceAccountCredentials(t *testing.T) {
 			}
 			_, err := proxy.ResetServiceAccountCredentials(tt.args.ctx, tt.args.clientID)
 			if tt.expectGetTokenToFail {
-				Expect(err).To(HaveOccurred())
-				Expect(tt.mock.calls.ResetServiceAccountCredentials).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.ResetServiceAccountCredentials).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(tt.mock.calls.ResetServiceAccountCredentials).To(HaveLen(1))
-				Expect(tt.mock.calls.ResetServiceAccountCredentials[0].ClientId).To(Equal(tt.args.clientID))
-				Expect(tt.mock.calls.ResetServiceAccountCredentials[0].Ctx).To(Equal(tt.args.ctx))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.ResetServiceAccountCredentials).To(gomega.HaveLen(1))
+				g.Expect(tt.mock.calls.ResetServiceAccountCredentials[0].ClientId).To(gomega.Equal(tt.args.clientID))
+				g.Expect(tt.mock.calls.ResetServiceAccountCredentials[0].Ctx).To(gomega.Equal(tt.args.ctx))
 			}
-			Expect(getTokenCalled).To(Equal(tt.expectGetTokenToBeCalled))
+			g.Expect(getTokenCalled).To(gomega.Equal(tt.expectGetTokenToBeCalled))
 		})
 	}
 }
@@ -612,12 +611,13 @@ func Test_keycloakServiceProxy_ListServiceAcc(t *testing.T) {
 			wantErr:                  testTokenProviderError,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
+
 			getTokenCalled := false
 
 			proxy := keycloakServiceProxy{
@@ -627,18 +627,18 @@ func Test_keycloakServiceProxy_ListServiceAcc(t *testing.T) {
 
 			_, err := proxy.ListServiceAcc(tt.args.ctx, tt.args.first, tt.args.max)
 			if tt.expectGetTokenToBeFail {
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
-				Expect(tt.mock.calls.ListServiceAcc).To(HaveLen(0))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
+				g.Expect(tt.mock.calls.ListServiceAcc).To(gomega.HaveLen(0))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(tt.mock.calls.ListServiceAcc).To(HaveLen(1))
-				Expect(tt.mock.calls.ListServiceAcc[0].First).To(Equal(tt.args.first))
-				Expect(tt.mock.calls.ListServiceAcc[0].Max).To(Equal(tt.args.max))
-				Expect(tt.mock.calls.ListServiceAcc[0].Ctx).To(Equal(tt.args.ctx))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.ListServiceAcc).To(gomega.HaveLen(1))
+				g.Expect(tt.mock.calls.ListServiceAcc[0].First).To(gomega.Equal(tt.args.first))
+				g.Expect(tt.mock.calls.ListServiceAcc[0].Max).To(gomega.Equal(tt.args.max))
+				g.Expect(tt.mock.calls.ListServiceAcc[0].Ctx).To(gomega.Equal(tt.args.ctx))
 			}
-			Expect(getTokenCalled).To(Equal(tt.expectGetTokenToBeCalled))
+			g.Expect(getTokenCalled).To(gomega.Equal(tt.expectGetTokenToBeCalled))
 		})
 	}
 }
@@ -704,12 +704,12 @@ func Test_keycloakServiceProxy_RegisterKasFleetshardOperatorServiceAccount(t *te
 			wantErr:                  testTokenProviderError,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			getTokenCalled := false
 
 			proxy := keycloakServiceProxy{
@@ -719,15 +719,15 @@ func Test_keycloakServiceProxy_RegisterKasFleetshardOperatorServiceAccount(t *te
 
 			_, err := proxy.RegisterKasFleetshardOperatorServiceAccount(tt.args.clusterID)
 			if tt.expectGetTokenToFail {
-				Expect(err).To(HaveOccurred())
-				Expect(tt.mock.calls.RegisterKasFleetshardOperatorServiceAccount).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.RegisterKasFleetshardOperatorServiceAccount).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).NotTo(HaveOccurred())
-				Expect(tt.mock.calls.RegisterKasFleetshardOperatorServiceAccount).To(HaveLen(1))
-				Expect(tt.mock.calls.RegisterKasFleetshardOperatorServiceAccount[0].AgentClusterId).To(Equal(tt.args.clusterID))
-				Expect(getTokenCalled).To(Equal(tt.expectGetTokenToBeCalled))
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.RegisterKasFleetshardOperatorServiceAccount).To(gomega.HaveLen(1))
+				g.Expect(tt.mock.calls.RegisterKasFleetshardOperatorServiceAccount[0].AgentClusterId).To(gomega.Equal(tt.args.clusterID))
+				g.Expect(getTokenCalled).To(gomega.Equal(tt.expectGetTokenToBeCalled))
 			}
 		})
 	}
@@ -794,12 +794,12 @@ func Test_keycloakServiceProxy_DeRegisterKasFleetshardOperatorServiceAccount(t *
 			wantErr:                  testTokenProviderError,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			getTokenCalled := false
 
 			proxy := keycloakServiceProxy{
@@ -809,16 +809,16 @@ func Test_keycloakServiceProxy_DeRegisterKasFleetshardOperatorServiceAccount(t *
 
 			err := proxy.DeRegisterKasFleetshardOperatorServiceAccount(tt.args.clusterID)
 			if tt.expectGetTokenToFail {
-				Expect(err).To(HaveOccurred())
-				Expect(tt.mock.calls.DeRegisterKasFleetshardOperatorServiceAccount).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.DeRegisterKasFleetshardOperatorServiceAccount).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(tt.mock.calls.DeRegisterKasFleetshardOperatorServiceAccount).To(HaveLen(1))
-				Expect(tt.mock.calls.DeRegisterKasFleetshardOperatorServiceAccount[0].AgentClusterId).To(Equal(tt.args.clusterID))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.DeRegisterKasFleetshardOperatorServiceAccount).To(gomega.HaveLen(1))
+				g.Expect(tt.mock.calls.DeRegisterKasFleetshardOperatorServiceAccount[0].AgentClusterId).To(gomega.Equal(tt.args.clusterID))
 			}
-			Expect(getTokenCalled).To(Equal(tt.expectGetTokenToBeCalled))
+			g.Expect(getTokenCalled).To(gomega.Equal(tt.expectGetTokenToBeCalled))
 		})
 	}
 }
@@ -890,12 +890,12 @@ func Test_keycloakServiceProxy_GetServiceAccountById(t *testing.T) {
 			wantErr:                  testTokenProviderError,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			getTokenCalled := false
 
 			proxy := keycloakServiceProxy{
@@ -905,18 +905,17 @@ func Test_keycloakServiceProxy_GetServiceAccountById(t *testing.T) {
 
 			_, err := proxy.GetServiceAccountById(tt.args.ctx, tt.args.clientID)
 			if tt.expectGetTokenToFail {
-				Expect(err).To(HaveOccurred())
-				Expect(tt.mock.calls.GetServiceAccountById).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.GetServiceAccountById).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).NotTo(HaveOccurred())
-				Expect(tt.mock.calls.GetServiceAccountById).To(HaveLen(1))
-				Expect(tt.mock.calls.GetServiceAccountById[0].ID).To(Equal(tt.args.clientID))
-				Expect(tt.mock.calls.GetServiceAccountById[0].Ctx).To(Equal(tt.args.ctx))
-
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.GetServiceAccountById).To(gomega.HaveLen(1))
+				g.Expect(tt.mock.calls.GetServiceAccountById[0].ID).To(gomega.Equal(tt.args.clientID))
+				g.Expect(tt.mock.calls.GetServiceAccountById[0].Ctx).To(gomega.Equal(tt.args.ctx))
 			}
-			Expect(getTokenCalled).To(Equal(tt.expectGetTokenToBeCalled))
+			g.Expect(getTokenCalled).To(gomega.Equal(tt.expectGetTokenToBeCalled))
 		})
 	}
 }
@@ -988,12 +987,12 @@ func Test_keycloakServiceProxy_GetServiceAccountByClientId(t *testing.T) {
 			wantErr:                  testTokenProviderError,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			getTokenCalled := false
 
 			proxy := keycloakServiceProxy{
@@ -1003,17 +1002,17 @@ func Test_keycloakServiceProxy_GetServiceAccountByClientId(t *testing.T) {
 
 			_, err := proxy.GetServiceAccountByClientId(tt.args.ctx, tt.args.clientID)
 			if tt.expectGetTokenToFail {
-				Expect(err).To(HaveOccurred())
-				Expect(tt.mock.calls.GetServiceAccountByClientId).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.GetServiceAccountByClientId).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(tt.mock.calls.GetServiceAccountByClientId).To(HaveLen(1))
-				Expect(tt.mock.calls.GetServiceAccountByClientId[0].ClientId).To(Equal(tt.args.clientID))
-				Expect(tt.mock.calls.GetServiceAccountByClientId[0].Ctx).To(Equal(tt.args.ctx))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.GetServiceAccountByClientId).To(gomega.HaveLen(1))
+				g.Expect(tt.mock.calls.GetServiceAccountByClientId[0].ClientId).To(gomega.Equal(tt.args.clientID))
+				g.Expect(tt.mock.calls.GetServiceAccountByClientId[0].Ctx).To(gomega.Equal(tt.args.ctx))
 			}
-			Expect(getTokenCalled).To(Equal(tt.expectGetTokenToBeCalled))
+			g.Expect(getTokenCalled).To(gomega.Equal(tt.expectGetTokenToBeCalled))
 		})
 	}
 }
@@ -1079,12 +1078,12 @@ func Test_keycloakServiceProxy_RegisterConnectorFleetshardOperatorServiceAccount
 			wantErr:                  testTokenProviderError,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			getTokenCalled := false
 
 			proxy := keycloakServiceProxy{
@@ -1094,16 +1093,16 @@ func Test_keycloakServiceProxy_RegisterConnectorFleetshardOperatorServiceAccount
 
 			_, err := proxy.RegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterID)
 			if tt.expectGetTokenToFail {
-				Expect(err).To(HaveOccurred())
-				Expect(tt.mock.calls.RegisterConnectorFleetshardOperatorServiceAccount).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.RegisterConnectorFleetshardOperatorServiceAccount).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(tt.mock.calls.RegisterConnectorFleetshardOperatorServiceAccount).To(HaveLen(1))
-				Expect(tt.mock.calls.RegisterConnectorFleetshardOperatorServiceAccount[0].AgentClusterId).To(Equal(tt.args.clusterID))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.RegisterConnectorFleetshardOperatorServiceAccount).To(gomega.HaveLen(1))
+				g.Expect(tt.mock.calls.RegisterConnectorFleetshardOperatorServiceAccount[0].AgentClusterId).To(gomega.Equal(tt.args.clusterID))
 			}
-			Expect(getTokenCalled).To(Equal(tt.expectGetTokenToBeCalled))
+			g.Expect(getTokenCalled).To(gomega.Equal(tt.expectGetTokenToBeCalled))
 		})
 	}
 }
@@ -1169,12 +1168,12 @@ func Test_keycloakServiceProxy_DeRegisterConnectorFleetshardOperatorServiceAccou
 			wantErr:                  testTokenProviderError,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			getTokenCalled := false
 
 			proxy := keycloakServiceProxy{
@@ -1184,16 +1183,16 @@ func Test_keycloakServiceProxy_DeRegisterConnectorFleetshardOperatorServiceAccou
 
 			err := proxy.DeRegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterID)
 			if tt.expectGetTokenToFail {
-				Expect(err).To(HaveOccurred())
-				Expect(tt.mock.calls.DeRegisterConnectorFleetshardOperatorServiceAccount).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.DeRegisterConnectorFleetshardOperatorServiceAccount).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(tt.mock.calls.DeRegisterConnectorFleetshardOperatorServiceAccount).To(HaveLen(1))
-				Expect(tt.mock.calls.DeRegisterConnectorFleetshardOperatorServiceAccount[0].AgentClusterId).To(Equal(tt.args.clusterID))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.DeRegisterConnectorFleetshardOperatorServiceAccount).To(gomega.HaveLen(1))
+				g.Expect(tt.mock.calls.DeRegisterConnectorFleetshardOperatorServiceAccount[0].AgentClusterId).To(gomega.Equal(tt.args.clusterID))
 			}
-			Expect(getTokenCalled).To(Equal(tt.expectGetTokenToBeCalled))
+			g.Expect(getTokenCalled).To(gomega.Equal(tt.expectGetTokenToBeCalled))
 		})
 	}
 }
@@ -1259,12 +1258,12 @@ func Test_keycloakServiceProxy_GetKafkaClientSecret(t *testing.T) {
 			wantErr:                  errors.NewWithCause(errors.ErrorGeneral, nil, "error getting access token\n caused by: failure retrieving token"),
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			getTokenCalled := false
 
 			proxy := keycloakServiceProxy{
@@ -1274,17 +1273,17 @@ func Test_keycloakServiceProxy_GetKafkaClientSecret(t *testing.T) {
 
 			_, err := proxy.GetKafkaClientSecret(tt.args.clusterID)
 			if tt.args.tokenProviderFail {
-				Expect(err).To(HaveOccurred())
-				Expect(tt.mock.calls.GetKafkaClientSecret).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.GetKafkaClientSecret).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(tt.mock.calls.GetKafkaClientSecret).To(HaveLen(1))
-				Expect(tt.mock.calls.GetKafkaClientSecret[0].ClientId).To(Equal(tt.args.clusterID))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.GetKafkaClientSecret).To(gomega.HaveLen(1))
+				g.Expect(tt.mock.calls.GetKafkaClientSecret[0].ClientId).To(gomega.Equal(tt.args.clusterID))
 			}
 
-			Expect(getTokenCalled).To(Equal(tt.expectGetTokenToBeCalled))
+			g.Expect(getTokenCalled).To(gomega.Equal(tt.expectGetTokenToBeCalled))
 		})
 	}
 }
@@ -1350,12 +1349,12 @@ func Test_keycloakServiceProxy_CreateServiceAccountInternal(t *testing.T) {
 			wantErr:                  errors.NewWithCause(errors.ErrorGeneral, nil, "error getting access token\n caused by: failure retrieving token"),
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			getTokenCalled := false
 
 			proxy := keycloakServiceProxy{
@@ -1365,17 +1364,17 @@ func Test_keycloakServiceProxy_CreateServiceAccountInternal(t *testing.T) {
 
 			_, err := proxy.CreateServiceAccountInternal(tt.args.request)
 			if tt.args.tokenProviderFail {
-				Expect(err).To(HaveOccurred())
-				Expect(tt.mock.calls.CreateServiceAccountInternal).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.CreateServiceAccountInternal).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(tt.mock.calls.CreateServiceAccountInternal).To(HaveLen(1))
-				Expect(tt.mock.calls.CreateServiceAccountInternal[0].Request).To(Equal(tt.args.request))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.CreateServiceAccountInternal).To(gomega.HaveLen(1))
+				g.Expect(tt.mock.calls.CreateServiceAccountInternal[0].Request).To(gomega.Equal(tt.args.request))
 			}
 
-			Expect(getTokenCalled).To(Equal(tt.expectGetTokenToBeCalled))
+			g.Expect(getTokenCalled).To(gomega.Equal(tt.expectGetTokenToBeCalled))
 		})
 	}
 }
@@ -1441,12 +1440,12 @@ func Test_keycloakServiceProxy_DeleteServiceAccountInternal(t *testing.T) {
 			wantErr:                  errors.NewWithCause(errors.ErrorGeneral, nil, "error getting access token\n caused by: failure retrieving token"),
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			getTokenCalled := false
 
 			proxy := keycloakServiceProxy{
@@ -1456,17 +1455,17 @@ func Test_keycloakServiceProxy_DeleteServiceAccountInternal(t *testing.T) {
 
 			err := proxy.DeleteServiceAccountInternal(tt.args.clientID)
 			if tt.args.tokenProviderFail {
-				Expect(err).To(HaveOccurred())
-				Expect(tt.mock.calls.DeleteServiceAccountInternal).To(HaveLen(0))
-				Expect(err.Error()).To(Equal(tt.wantErr.Error()))
-				Expect(err.Code).To(Equal(tt.wantErr.Code))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.DeleteServiceAccountInternal).To(gomega.HaveLen(0))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
+				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.Code))
 			} else {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(tt.mock.calls.DeleteServiceAccountInternal).To(HaveLen(1))
-				Expect(tt.mock.calls.DeleteServiceAccountInternal[0].ClientId).To(Equal(tt.args.clientID))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(tt.mock.calls.DeleteServiceAccountInternal).To(gomega.HaveLen(1))
+				g.Expect(tt.mock.calls.DeleteServiceAccountInternal[0].ClientId).To(gomega.Equal(tt.args.clientID))
 			}
 
-			Expect(getTokenCalled).To(Equal(tt.expectGetTokenToBeCalled))
+			g.Expect(getTokenCalled).To(gomega.Equal(tt.expectGetTokenToBeCalled))
 		})
 	}
 }

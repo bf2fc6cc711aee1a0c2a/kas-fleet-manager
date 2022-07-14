@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
 )
 
 func Test_Cluster_GetAvailableStrimziVersions(t *testing.T) {
@@ -75,8 +74,8 @@ func Test_Cluster_GetAvailableStrimziVersions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			res, err := tt.cluster().GetAvailableStrimziVersions()
-			g.Expect(err != nil).To(Equal(tt.wantErr), "wantErr: %v got: %v", tt.wantErr, err)
-			g.Expect(res).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr), "wantErr: %v got: %v", tt.wantErr, err)
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -145,8 +144,8 @@ func Test_Cluster_GetLatestAvailableStrimziVersion(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
 			res, err := tt.cluster().GetLatestAvailableStrimziVersion()
-			g.Expect(err != nil).To(Equal(tt.wantErr), "wantErr: %v got: %v", tt.wantErr, err)
-			g.Expect(res).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr), "wantErr: %v got: %v", tt.wantErr, err)
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -212,14 +211,13 @@ func Test_Cluster_GetAvailableAndReadyStrimziVersions(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			res, err := tt.cluster().GetAvailableAndReadyStrimziVersions()
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(res).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -288,8 +286,8 @@ func Test_Cluster_GetLatestAvailableAndReadyStrimziVersion(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
 			res, err := tt.cluster().GetLatestAvailableAndReadyStrimziVersion()
-			g.Expect(err != nil).To(Equal(tt.wantErr))
-			g.Expect(res).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -437,11 +435,10 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			cluster := &Cluster{}
 			err := cluster.SetAvailableStrimziVersions(tt.inputStrimziVersions)
 			gotErr := err != nil
@@ -457,7 +454,7 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 				panic(err)
 			}
 
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -536,14 +533,13 @@ func TestCompare(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got, err := tt.inputStrimziVersion1.Compare(tt.inputStrimziVersion2)
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -670,14 +666,13 @@ func Test_StrimziVersionsDeepSort(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got, err := StrimziVersionsDeepSort(tt.args.versions)
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -698,14 +693,13 @@ func Test_CompareBuildAwareSemanticVersions(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got, err := CompareBuildAwareSemanticVersions(tt.version1, tt.version2)
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -726,14 +720,13 @@ func Test_CompareSemanticVersionsMajorAndMinor(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got, err := CompareSemanticVersionsMajorAndMinor(tt.current, tt.desired)
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -777,10 +770,10 @@ func Test_Cluster_GetLatestKafkaVersion(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(test *testing.T) {
 			test.Parallel()
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			strimziVersion := tt.strimziVersionFactory()
 			res := strimziVersion.GetLatestKafkaVersion()
-			g.Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -824,10 +817,10 @@ func Test_Cluster_GetLatestKafkaIBPVersion(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(test *testing.T) {
 			test.Parallel()
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			strimziVersion := tt.strimziVersionFactory()
 			res := strimziVersion.GetLatestKafkaIBPVersion()
-			g.Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -876,20 +869,18 @@ func Test_ClusterTypes_Index(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			index := tt.cluster.Index()
-			Expect(index).To(Equal(tt.want))
+			g.Expect(index).To(gomega.Equal(tt.want))
 		})
 	}
 }
 
 func Test_ClusterTypes_BeforeCreate(t *testing.T) {
-	RegisterTestingT(t)
-
+	g := gomega.NewWithT(t)
 	id := "some-id"
 	status := ClusterCleanup
 	supportedInstanceType := "standard"
@@ -903,10 +894,10 @@ func Test_ClusterTypes_BeforeCreate(t *testing.T) {
 
 	t.Run("do not modify the values if they are set", func(t *testing.T) {
 		err := clusterWithFieldsSet.BeforeCreate(nil)
-		Expect(clusterWithFieldsSet.ID).To(Equal(id))
-		Expect(clusterWithFieldsSet.Status).To(Equal(status))
-		Expect(clusterWithFieldsSet.SupportedInstanceType).To(Equal(supportedInstanceType))
-		Expect(err).ToNot(HaveOccurred())
+		g.Expect(clusterWithFieldsSet.ID).To(gomega.Equal(id))
+		g.Expect(clusterWithFieldsSet.Status).To(gomega.Equal(status))
+		g.Expect(clusterWithFieldsSet.SupportedInstanceType).To(gomega.Equal(supportedInstanceType))
+		g.Expect(err).ToNot(gomega.HaveOccurred())
 	})
 
 	clusterWithEmptyValue := &Cluster{
@@ -919,10 +910,10 @@ func Test_ClusterTypes_BeforeCreate(t *testing.T) {
 
 	t.Run("set the default values if empty", func(t *testing.T) {
 		err := clusterWithEmptyValue.BeforeCreate(nil)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(clusterWithEmptyValue.ID).ToNot(BeEmpty())
-		Expect(clusterWithEmptyValue.Status).To(Equal(ClusterAccepted))
-		Expect(clusterWithEmptyValue.SupportedInstanceType).To(Equal(AllInstanceTypeSupport.String()))
+		g.Expect(err).ToNot(gomega.HaveOccurred())
+		g.Expect(clusterWithEmptyValue.ID).ToNot(gomega.BeEmpty())
+		g.Expect(clusterWithEmptyValue.Status).To(gomega.Equal(ClusterAccepted))
+		g.Expect(clusterWithEmptyValue.SupportedInstanceType).To(gomega.Equal(AllInstanceTypeSupport.String()))
 	})
 }
 
@@ -954,13 +945,12 @@ func Test_CompareTo(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			res := tt.k.CompareTo(tt.k1)
-			Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -978,13 +968,12 @@ func Test_ClusterProviderType_String(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			res := tt.providerType.String()
-			Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1002,13 +991,12 @@ func Test_ClusterStatus_String(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			res := tt.status.String()
-			Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1050,16 +1038,16 @@ func Test_Cluster_SetDynamicCapacityInfo(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
+	g := gomega.NewWithT(t)
 
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(test *testing.T) {
 			test.Parallel()
 			err := tt.cluster.SetDynamicCapacityInfo(tt.arg)
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if !tt.wantErr {
-				g.Expect(tt.cluster.DynamicCapacityInfo).To(Equal(tt.want))
+				g.Expect(tt.cluster.DynamicCapacityInfo).To(gomega.Equal(tt.want))
 			}
 		})
 	}
@@ -1121,16 +1109,16 @@ func Test_Cluster_RetrieveDynamicCapacityInfo(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
+	g := gomega.NewWithT(t)
 
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(test *testing.T) {
 			test.Parallel()
 			dynamicCapacityInfo, err := tt.cluster.RetrieveDynamicCapacityInfo()
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if !tt.wantErr {
-				g.Expect(dynamicCapacityInfo).To(Equal(tt.want))
+				g.Expect(dynamicCapacityInfo).To(gomega.Equal(tt.want))
 			}
 		})
 	}
@@ -1166,9 +1154,9 @@ func Test_Cluster_GetSupportedInstanceTypes(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(test *testing.T) {
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			res := tt.cluster.GetSupportedInstanceTypes()
-			g.Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1203,9 +1191,9 @@ func Test_Cluster_GetRawSupportedInstanceTypes(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(test *testing.T) {
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			res := tt.cluster.GetRawSupportedInstanceTypes()
-			g.Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }

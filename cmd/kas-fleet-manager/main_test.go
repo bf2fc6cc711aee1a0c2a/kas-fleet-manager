@@ -8,36 +8,36 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestInjections(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 
 	env, err := environments.New(environments.DevelopmentEnv,
 		kafka.ConfigProviders(),
 	)
-	Expect(err).To(BeNil())
+	g.Expect(err).To(gomega.BeNil())
 	err = env.CreateServices()
-	Expect(err).To(BeNil())
+	g.Expect(err).To(gomega.BeNil())
 
 	var bootList []environments.BootService
 	env.MustResolve(&bootList)
-	Expect(len(bootList)).To(Equal(5))
+	g.Expect(len(bootList)).To(gomega.Equal(5))
 
 	_, ok := bootList[0].(signalbus.SignalBus)
-	Expect(ok).To(Equal(true))
+	g.Expect(ok).To(gomega.Equal(true))
 	_, ok = bootList[1].(*server.ApiServer)
-	Expect(ok).To(Equal(true))
+	g.Expect(ok).To(gomega.Equal(true))
 	_, ok = bootList[2].(*server.MetricsServer)
-	Expect(ok).To(Equal(true))
+	g.Expect(ok).To(gomega.Equal(true))
 	_, ok = bootList[3].(*server.HealthCheckServer)
-	Expect(ok).To(Equal(true))
+	g.Expect(ok).To(gomega.Equal(true))
 	_, ok = bootList[4].(*workers.LeaderElectionManager)
-	Expect(ok).To(Equal(true))
+	g.Expect(ok).To(gomega.Equal(true))
 
 	var workerList []workers.Worker
 	env.MustResolve(&workerList)
-	Expect(workerList).To(HaveLen(8))
+	g.Expect(workerList).To(gomega.HaveLen(8))
 
 }

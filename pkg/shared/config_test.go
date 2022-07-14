@@ -6,11 +6,11 @@ import (
 	"os"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_Config_ReadStringFile(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 
 	stringFile, err := createConfigFile("string", "example\n")
 	defer os.Remove(stringFile.Name())
@@ -20,20 +20,20 @@ func Test_Config_ReadStringFile(t *testing.T) {
 
 	var stringConfig string
 	err = ReadFileValueString(stringFile.Name(), &stringConfig)
-	Expect(err).NotTo(HaveOccurred())
-	Expect(stringConfig).To(Equal("example"))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(stringConfig).To(gomega.Equal("example"))
 }
 
 func Test_Config_ReadEmptyFile(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
+
 	res, err := ReadFile("")
-	Expect(err).NotTo(HaveOccurred())
-	Expect(res).To(Equal(""))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(res).To(gomega.Equal(""))
 }
 
 func Test_Config_ReadIntFile(t *testing.T) {
-	RegisterTestingT(t)
-
+	g := gomega.NewWithT(t)
 	intFile, err := createConfigFile("int", "123")
 	defer os.Remove(intFile.Name())
 	if err != nil {
@@ -42,12 +42,12 @@ func Test_Config_ReadIntFile(t *testing.T) {
 
 	var intConfig int
 	err = ReadFileValueInt(intFile.Name(), &intConfig)
-	Expect(err).NotTo(HaveOccurred())
-	Expect(intConfig).To(Equal(123))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(intConfig).To(gomega.Equal(123))
 }
 
 func Test_Config_ReadBoolFile(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 
 	boolFile, err := createConfigFile("bool", "true")
 	defer os.Remove(boolFile.Name())
@@ -57,13 +57,12 @@ func Test_Config_ReadBoolFile(t *testing.T) {
 
 	var boolConfig bool = false
 	err = ReadFileValueBool(boolFile.Name(), &boolConfig)
-	Expect(err).NotTo(HaveOccurred())
-	Expect(boolConfig).To(Equal(true))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(boolConfig).To(gomega.Equal(true))
 }
 
 func Test_Config_ReadQuotedFile(t *testing.T) {
-	RegisterTestingT(t)
-
+	g := gomega.NewWithT(t)
 	stringFile, err := createConfigFile("string", "example")
 	defer os.Remove(stringFile.Name())
 	if err != nil {
@@ -72,8 +71,8 @@ func Test_Config_ReadQuotedFile(t *testing.T) {
 
 	quotedFileName := "\"" + stringFile.Name() + "\""
 	val, err := ReadFile(quotedFileName)
-	Expect(err).NotTo(HaveOccurred())
-	Expect(val).To(Equal("example"))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(val).To(gomega.Equal("example"))
 }
 
 func createConfigFile(namePrefix, contents string) (*os.File, error) {
@@ -101,7 +100,7 @@ func createYamlFilefromStringData(namePrefix string, contents string) (*os.File,
 }
 
 func Test_ReadYamlFile(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 
 	yamlFile, err := createYamlFilefromStringData("skiplist.yaml", "---\n- 01234\n- 56789")
 	defer os.Remove(yamlFile.Name())
@@ -113,6 +112,6 @@ func Test_ReadYamlFile(t *testing.T) {
 	expectedSkipList := []string{"01234", "56789"}
 	quotedFileName := "\"" + yamlFile.Name() + "\""
 	err = ReadYamlFile(quotedFileName, &skiplist)
-	Expect(err).NotTo(HaveOccurred())
-	Expect(expectedSkipList).To(Equal(skiplist))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(expectedSkipList).To(gomega.Equal(skiplist))
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
@@ -93,12 +93,11 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := &KafkaManager{
 				kafkaService:            tt.fields.kafkaService,
 				dataplaneClusterConfig:  &tt.fields.dataplaneClusterConfig,
@@ -107,7 +106,7 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 				kafkaConfig:             &tt.fields.kafkaConfig,
 			}
 
-			Expect(len(k.Reconcile()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(k.Reconcile()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -167,16 +166,15 @@ func TestKafkaManager_reconcileDeniedKafkaOwners(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := &KafkaManager{
 				kafkaService: tt.fields.kafkaService,
 			}
-			Expect(k.reconcileDeniedKafkaOwners(tt.args.deniedAccounts) != nil).To(Equal(tt.wantErr))
+			g.Expect(k.reconcileDeniedKafkaOwners(tt.args.deniedAccounts) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -219,15 +217,14 @@ func TestKafkaManager_setKafkaStatusCountMetric(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := NewKafkaManager(tt.fields.kafkaService, nil, nil, nil, nil, workers.Reconciler{})
 
-			Expect(k.setKafkaStatusCountMetric() != nil).To(Equal(tt.wantErr))
+			g.Expect(k.setKafkaStatusCountMetric() != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -431,13 +428,14 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			k := &KafkaManager{
 				kafkaService:           tt.fields.kafkaService,
 				dataplaneClusterConfig: &tt.fields.dataplaneClusterConfig,
 				cloudProviders:         &tt.fields.cloudProviders,
 			}
-			g.Expect(k.setClusterStatusCapacityMetrics() != nil).To(Equal(tt.wantErr))
+
+			g.Expect(k.setClusterStatusCapacityMetrics() != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -710,8 +708,8 @@ func TestKafkaManager_calculateCapacityByRegionAndInstanceTypeForManualClusters(
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			k := &KafkaManager{
 				kafkaService:           tt.fields.kafkaService,
 				dataplaneClusterConfig: &tt.fields.dataplaneClusterConfig,
@@ -719,12 +717,12 @@ func TestKafkaManager_calculateCapacityByRegionAndInstanceTypeForManualClusters(
 			}
 
 			results, err := k.calculateCapacityByRegionAndInstanceTypeForManualClusters(tt.fields.streamingUnitsCountPerRegion)
-			g.Expect(err).To(BeNil())
+			g.Expect(err).To(gomega.BeNil())
 
 			for _, result := range results {
 				count := tt.expected[result.Region][result.InstanceType]
-				g.Expect(result.Count).To(Equal(count.available))
-				g.Expect(result.MaxUnits).To(Equal(count.max))
+				g.Expect(result.Count).To(gomega.Equal(count.available))
+				g.Expect(result.MaxUnits).To(gomega.Equal(count.max))
 			}
 		})
 	}
@@ -860,7 +858,7 @@ func TestKafkaManager_calculateAvailableAndMaxCapacityForDynamicScaling(t *testi
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			t.Parallel()
 			k := &KafkaManager{
 				kafkaService:           tt.fields.kafkaService,
@@ -869,11 +867,11 @@ func TestKafkaManager_calculateAvailableAndMaxCapacityForDynamicScaling(t *testi
 			}
 
 			result, err := k.calculateAvailableAndMaxCapacityForDynamicScaling(tt.fields.streamingUnitCountPerRegion)
-			g.Expect(err).To(BeNil())
+			g.Expect(err).To(gomega.BeNil())
 
 			count := tt.expected[result.Region][result.InstanceType]
-			g.Expect(result.Count).To(Equal(count.available))
-			g.Expect(result.MaxUnits).To(Equal(count.max))
+			g.Expect(result.Count).To(gomega.Equal(count.available))
+			g.Expect(result.MaxUnits).To(gomega.Equal(count.max))
 		})
 	}
 }

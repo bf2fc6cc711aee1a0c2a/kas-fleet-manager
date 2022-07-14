@@ -3,7 +3,7 @@ package config
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
@@ -860,8 +860,9 @@ func TestKafkaInstanceType_HasAnInstanceSizeWithLifespan(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			res := tt.kafkaInstanceType.HasAnInstanceSizeWithLifespan()
-			Expect(res).To(Equal(tt.want))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 

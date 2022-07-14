@@ -9,7 +9,7 @@ import (
 	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestGetRoutesFromKafkaRequest(t *testing.T) {
@@ -53,17 +53,17 @@ func TestGetRoutesFromKafkaRequest(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(GetRoutesFromKafkaRequest(tt.args.dbKafkaRequest)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(GetRoutesFromKafkaRequest(tt.args.dbKafkaRequest)).To(gomega.Equal(tt.want))
 		})
 	}
 }
 
 func TestPresentKafkaRequestAdminEndpoint(t *testing.T) {
+	g := gomega.NewWithT(t)
 	type args struct {
 		dbKafkaRequest *dbapi.KafkaRequest
 		accountService account.AccountService
@@ -91,7 +91,7 @@ func TestPresentKafkaRequestAdminEndpoint(t *testing.T) {
 
 				dataRetentionSizeQuantity := config.Quantity(storageSize)
 				dataRetentionSizeBytes, err := dataRetentionSizeQuantity.ToInt64()
-				Expect(err).ToNot(HaveOccurred(), "failed to convert kafka data retention size '%s' to bytes", storageSize)
+				g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to convert kafka data retention size '%s' to bytes", storageSize)
 
 				kafka.MaxDataRetentionSize = private.SupportedKafkaSizeBytesValueItem{
 					Bytes: dataRetentionSizeBytes,
@@ -100,17 +100,16 @@ func TestPresentKafkaRequestAdminEndpoint(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			converted, err := PresentKafkaRequestAdminEndpoint(tt.args.dbKafkaRequest, tt.args.accountService)
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for PresentKafkaRequestAdminEndpoint: %v", err)
 				return
 			}
-			Expect(converted).To(Equal(tt.want))
+			g.Expect(converted).To(gomega.Equal(tt.want))
 		})
 	}
 }

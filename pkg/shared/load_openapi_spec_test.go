@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_LoadOpenAPISpec(t *testing.T) {
@@ -50,14 +50,13 @@ func Test_LoadOpenAPISpec(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got, err := LoadOpenAPISpec(tt.args.assetFunc, tt.args.asset)
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }

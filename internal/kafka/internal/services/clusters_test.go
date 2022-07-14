@@ -13,7 +13,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	mocket "github.com/selvatico/go-mocket"
 	"gorm.io/gorm"
@@ -362,11 +362,11 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -378,7 +378,7 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 				t.Errorf("FindClusterByID() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -455,11 +455,11 @@ func Test_FindCluster(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -473,7 +473,7 @@ func Test_FindCluster(t *testing.T) {
 				t.Errorf("FindCluster() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -566,11 +566,11 @@ func Test_ListByStatus(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -583,7 +583,7 @@ func Test_ListByStatus(t *testing.T) {
 				t.Errorf("ListByStatus() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -862,11 +862,11 @@ func Test_clusterService_ListGroupByProviderAndRegion(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			tt.setupFn()
 			k := &clusterService{
 				connectionFactory: tt.fields.connectionFactory,
@@ -876,7 +876,7 @@ func Test_clusterService_ListGroupByProviderAndRegion(t *testing.T) {
 				t.Errorf("ListGroupByProviderAndRegion err = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -922,11 +922,12 @@ func Test_DeleteByClusterId(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -934,7 +935,7 @@ func Test_DeleteByClusterId(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			err := k.DeleteByClusterID(tt.args.clusterID)
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1001,11 +1002,12 @@ func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -1013,8 +1015,8 @@ func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			got, err := k.FindNonEmptyClusterById(tt.args.clusterId)
-			g.Expect(got).To(Equal(tt.want))
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1062,11 +1064,11 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -1078,7 +1080,7 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 				t.Errorf("ListAllClusterIds() err = %v, want %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1144,11 +1146,11 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -1161,7 +1163,7 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 				return
 			}
 			for i, res := range got {
-				g.Expect(res).To(Equal(tt.want[i]))
+				g.Expect(res).To(gomega.Equal(tt.want[i]))
 			}
 		})
 	}
@@ -1225,11 +1227,12 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -1242,7 +1245,7 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 				return
 			}
 			for i, res := range got {
-				g.Expect(*res).To(Equal(*tt.want[i]))
+				g.Expect(*res).To(gomega.Equal(*tt.want[i]))
 			}
 		})
 	}
@@ -1392,11 +1395,11 @@ func Test_clusterService_CountByStatus(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFunc != nil {
 				tt.setupFunc()
 			}
@@ -1407,7 +1410,7 @@ func Test_clusterService_CountByStatus(t *testing.T) {
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for CountByStatus: %v", err)
 			}
-			g.Expect(status).To(Equal(tt.want))
+			g.Expect(status).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1517,11 +1520,12 @@ func Test_clusterService_CheckClusterStatus(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -1536,7 +1540,7 @@ func Test_clusterService_CheckClusterStatus(t *testing.T) {
 				t.Errorf("CheckClusterStatus() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1622,11 +1626,12 @@ func Test_clusterService_RemoveClusterFromProvider(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -1641,7 +1646,7 @@ func Test_clusterService_RemoveClusterFromProvider(t *testing.T) {
 				t.Errorf("Delete() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1762,11 +1767,12 @@ func Test_clusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -1781,7 +1787,7 @@ func Test_clusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 				t.Errorf("ConfigureAndSaveIdentityProvider() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1980,11 +1986,12 @@ func Test_clusterService_InstallStrimzi(t *testing.T) {
 			want:    false,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -1999,7 +2006,7 @@ func Test_clusterService_InstallStrimzi(t *testing.T) {
 				t.Errorf("InstallStrimzi() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -2094,11 +2101,12 @@ func Test_clusterService_ClusterLogging(t *testing.T) {
 			want:    false,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -2113,7 +2121,7 @@ func Test_clusterService_ClusterLogging(t *testing.T) {
 				t.Errorf("InstallClusterLogging() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -2208,11 +2216,11 @@ func Test_clusterService_GetExternalID(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -2227,7 +2235,7 @@ func Test_clusterService_GetExternalID(t *testing.T) {
 				t.Errorf("GetExternalID() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -2288,7 +2296,7 @@ func Test_clusterService_GetClientId(t *testing.T) {
 			setupFn: func() {},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
@@ -2296,13 +2304,14 @@ func Test_clusterService_GetClientId(t *testing.T) {
 			tt.setupFn()
 		}
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := clusterService{
 				connectionFactory: tt.fields.connectionFactory,
 				providerFactory:   tt.fields.clusterProviderFactory,
 			}
 			got, err := c.GetClientId(tt.args.clusterId)
-			g.Expect(got).To(Equal(tt.want))
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -2381,18 +2390,19 @@ func Test_clusterService_CheckStrimziVersionReady(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := clusterService{
 				connectionFactory: tt.fields.connectionFactory,
 				providerFactory:   tt.fields.providerFactory,
 			}
 			got, err := c.CheckStrimziVersionReady(tt.args.cluster, tt.args.strimziVersion)
-			g.Expect(got).To(Equal(tt.want))
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -2543,18 +2553,18 @@ func Test_clusterService_IsStrimziKafkaVersionAvailableInCluster(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := clusterService{
 				connectionFactory: tt.fields.connectionFactory,
 				providerFactory:   tt.fields.providerFactory,
 			}
 			got, err := c.IsStrimziKafkaVersionAvailableInCluster(tt.args.cluster, tt.args.strimziVersion, tt.args.kafkaVersion, tt.args.ibpVersion)
-			g.Expect(got).To(Equal(tt.want))
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

@@ -3,7 +3,7 @@ package quota_management
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_NewQuotaManagementListConfig(t *testing.T) {
@@ -23,11 +23,12 @@ func Test_NewQuotaManagementListConfig(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(NewQuotaManagementListConfig()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(NewQuotaManagementListConfig()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -68,16 +69,17 @@ func Test_QuotaManagementListConfig_ReadFiles(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &QuotaManagementListConfig{
 				QuotaList:                  tt.fields.QuotaList,
 				QuotaListConfigFile:        tt.fields.QuotaListConfigFile,
 				EnableInstanceLimitControl: tt.fields.EnableInstanceLimitControl,
 			}
-			Expect(c.ReadFiles() != nil).To(Equal(tt.wantErr))
+			g.Expect(c.ReadFiles() != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -133,18 +135,19 @@ func Test_QuotaManagementListConfig_GetAllowedAccountByUsernameAndOrgId(t *testi
 			found: true,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &QuotaManagementListConfig{
 				QuotaList:                  tt.fields.QuotaList,
 				QuotaListConfigFile:        tt.fields.QuotaListConfigFile,
 				EnableInstanceLimitControl: tt.fields.EnableInstanceLimitControl,
 			}
 			got, found := c.GetAllowedAccountByUsernameAndOrgId(tt.args.username, tt.args.orgId)
-			Expect(got).To(Equal(tt.want))
-			Expect(found).To(Equal(tt.found))
+			g.Expect(got).To(gomega.Equal(tt.want))
+			g.Expect(found).To(gomega.Equal(tt.found))
 		})
 	}
 }

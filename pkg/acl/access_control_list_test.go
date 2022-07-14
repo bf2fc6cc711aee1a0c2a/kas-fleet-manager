@@ -3,7 +3,7 @@ package acl
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_DeniedUsers_IsUserDenied(t *testing.T) {
@@ -35,14 +35,13 @@ func Test_DeniedUsers_IsUserDenied(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, rangevar := range tests {
 		tt := rangevar
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			ok := tt.deniedAccounts.IsUserDenied(tt.arg)
-			Expect(ok).To(Equal(tt.want))
+			g.Expect(ok).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -76,14 +75,13 @@ func Test_AcceptedOrg_IsOrganisationAccepted(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, rangevar := range tests {
 		tt := rangevar
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			ok := tt.acceptedOrganisations.IsOrganisationAccepted(tt.arg)
-			Expect(ok).To(Equal(tt.want))
+			g.Expect(ok).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -117,13 +115,12 @@ func Test_ReadDenyListConfigFile(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			err := readDenyListConfigFile(tt.args.file, tt.args.deniedUsers)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -225,11 +222,10 @@ func Test_AccessControlListConfig_ReadFiles(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			aclConfig := &AccessControlListConfig{
 				DenyList:             tt.fields.denyList,
 				AccessList:           tt.fields.accessList,
@@ -239,7 +235,7 @@ func Test_AccessControlListConfig_ReadFiles(t *testing.T) {
 				EnableAccessList:     tt.fields.enableAccessList,
 			}
 			err := aclConfig.ReadFiles()
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -273,13 +269,12 @@ func Test_ReadAccessListConfigFile(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			err := readAccessListConfigFile(tt.args.file, tt.args.acceptedOrganisations)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

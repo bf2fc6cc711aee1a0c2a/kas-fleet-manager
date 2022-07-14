@@ -6,7 +6,7 @@ import (
 	"github.com/spyzhov/ajson"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 const exampleSchema1 = `
@@ -75,24 +75,22 @@ func Test_getSecretPaths(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got, err := getPathsToPasswordFields([]byte(tt.args.schemaText))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("getPathsToPasswordFields() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
-			Expect(sets.NewString(got...)).To(Equal(sets.NewString(tt.want...)))
+			g.Expect(sets.NewString(got...)).To(gomega.Equal(sets.NewString(tt.want...)))
 		})
 	}
 }
 
 func Test_changePasswordFields(t *testing.T) {
-	RegisterTestingT(t)
 	type args struct {
 		schemaText string
 		doc        string
@@ -132,11 +130,12 @@ func Test_changePasswordFields(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got, err := modifySecrets([]byte(tt.args.schemaText), []byte(tt.args.doc), tt.args.f)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("modifySecrets() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			Expect(got).Should(MatchJSON(tt.want))
+			g.Expect(got).Should(gomega.MatchJSON(tt.want))
 		})
 	}
 }

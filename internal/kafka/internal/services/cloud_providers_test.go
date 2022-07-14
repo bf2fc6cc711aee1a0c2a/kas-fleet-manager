@@ -11,9 +11,9 @@ import (
 	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/cloud_providers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/onsi/gomega"
 
 	svcErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	. "github.com/onsi/gomega"
 	"github.com/patrickmn/go-cache"
 	mocket "github.com/selvatico/go-mocket"
 )
@@ -165,18 +165,19 @@ func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 			setupFn: func() {},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			tt.setupFn()
 			p := cloudProvidersService{
 				providerFactory:   tt.fields.providerFactory,
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			got, err := p.ListCloudProviders()
-			g.Expect(tt.wantErr).To(Equal(err != nil))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(tt.wantErr).To(gomega.Equal(err != nil))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -338,10 +339,11 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			tt.setupFn()
 			p := cloudProvidersService{
 				providerFactory:   tt.fields.providerFactory,
@@ -349,8 +351,8 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			got, err := p.GetCachedCloudProvidersWithRegions()
-			g.Expect(tt.wantErr).To(Equal(err != nil))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(tt.wantErr).To(gomega.Equal(err != nil))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -510,10 +512,11 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			tt.setupFn()
 			p := cloudProvidersService{
 				providerFactory:   tt.fields.providerFactory,
@@ -521,8 +524,8 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			got, err := p.ListCloudProviderRegions("aws")
-			g.Expect(tt.wantErr).To(Equal(err != nil))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(tt.wantErr).To(gomega.Equal(err != nil))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -606,19 +609,20 @@ func Test_cloudProvidersService_ListCachedCloudProviderRegions(t *testing.T) {
 			wantErr: nil,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		tt.setupFn()
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			p := cloudProvidersService{
 				providerFactory:   tt.fields.providerFactory,
 				connectionFactory: tt.fields.connectionFactory,
 				cache:             tt.fields.cache,
 			}
 			got, err := p.ListCachedCloudProviderRegions(tt.args.id)
-			g.Expect(got).To(Equal(tt.want))
-			g.Expect(err).To(Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

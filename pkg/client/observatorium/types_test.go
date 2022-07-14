@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_FillDefaults(t *testing.T) {
@@ -25,14 +25,13 @@ func Test_FillDefaults(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			tt.fields.config.FillDefaults()
-			Expect(tt.fields.config.Step).To(Equal(30 * time.Second))
+			g.Expect(tt.fields.config.Step).To(gomega.Equal(30 * time.Second))
 		})
 	}
 }

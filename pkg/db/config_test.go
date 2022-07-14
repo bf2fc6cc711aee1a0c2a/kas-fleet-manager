@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/onsi/gomega"
 	"github.com/spf13/pflag"
-
-	. "github.com/onsi/gomega"
 )
 
 const (
@@ -27,14 +26,14 @@ func Test_AddFlags(t *testing.T) {
 	config := NewDatabaseConfig()
 	config.AddFlags(emptyFlagSet)
 
-	g := NewWithT(t)
+	g := gomega.NewWithT(t)
 
 	// confirming that adding flags worked
 	flag, err := emptyFlagSet.GetString("db-ssl-certificate-file")
 
-	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	g.Expect(flag).To(Equal("secrets/db.ca_cert"))
+	g.Expect(flag).To(gomega.Equal("secrets/db.ca_cert"))
 }
 
 func Test_ReadFiles(t *testing.T) {
@@ -110,13 +109,13 @@ func Test_ReadFiles(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			config := tt.fields.config
 			if tt.modifyFn != nil {
 				tt.modifyFn(config)
 			}
-			g.Expect(config.ReadFiles() != nil).To(Equal(tt.wantErr))
+			g.Expect(config.ReadFiles() != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -167,13 +166,13 @@ func Test_ConnectionString(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			config := tt.fields.config
 			if tt.modifyFn != nil {
 				tt.modifyFn(config)
 			}
-			g.Expect(config.ConnectionString()).To(Equal(tt.want))
+			g.Expect(config.ConnectionString()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -224,13 +223,13 @@ func Test_LogSafeConnectionString(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			config := tt.fields.config
 			if tt.modifyFn != nil {
 				tt.modifyFn(config)
 			}
-			g.Expect(config.LogSafeConnectionString()).To(Equal(tt.want))
+			g.Expect(config.LogSafeConnectionString()).To(gomega.Equal(tt.want))
 		})
 	}
 }

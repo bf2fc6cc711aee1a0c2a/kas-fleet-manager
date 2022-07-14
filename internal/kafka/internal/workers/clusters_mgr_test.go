@@ -18,7 +18,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	authv1 "github.com/openshift/api/authorization/v1"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -86,14 +86,13 @@ func TestClusterManager_GetID(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{}
 
-			Expect(c.GetID()).To(Equal(tt.want))
+			g.Expect(c.GetID()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -109,14 +108,13 @@ func TestClusterManager_GetWorkerType(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := NewClusterManager(ClusterManagerOptions{})
 
-			Expect(c.GetWorkerType()).To(Equal(tt.want))
+			g.Expect(c.GetWorkerType()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -142,14 +140,13 @@ func TestClusterManager_IsRunning(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := NewClusterManager(ClusterManagerOptions{})
 			c.SetIsRunning(tt.args.isRunning)
-			Expect(c.IsRunning()).To(Equal(tt.want))
+			g.Expect(c.IsRunning()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -194,11 +191,11 @@ func TestClusterManager_reconcile(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:         tt.fields.clusterService,
@@ -207,7 +204,7 @@ func TestClusterManager_reconcile(t *testing.T) {
 				},
 			}
 
-			Expect(len(c.Reconcile()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(c.Reconcile()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -275,7 +272,7 @@ func TestClusterManager_processMetrics(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:         tt.fields.clusterService,
@@ -285,7 +282,7 @@ func TestClusterManager_processMetrics(t *testing.T) {
 			}
 			// processMetrics accumulates all the errors encountered during metrics processing in an array.
 			// If that array is non empty then an error should be expected. Otherwise, no errors should be expected.
-			g.Expect(len(c.processMetrics()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(c.processMetrics()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -356,18 +353,17 @@ func TestClusterManager_processDeprovisioningClusters(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:         tt.fields.clusterService,
 					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
 				},
 			}
-			Expect(len(c.processDeprovisioningClusters()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(c.processDeprovisioningClusters()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -448,11 +444,10 @@ func TestClusterManager_processCleanupClusters(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
@@ -460,7 +455,7 @@ func TestClusterManager_processCleanupClusters(t *testing.T) {
 					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
 				},
 			}
-			Expect(len(c.processCleanupClusters()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(c.processCleanupClusters()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -519,17 +514,16 @@ func TestClusterManager_processAcceptedClusters(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService: tt.fields.clusterService,
 				},
 			}
-			Expect(len(c.processAcceptedClusters()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(c.processAcceptedClusters()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -588,17 +582,16 @@ func TestClusterManager_processProvisioningClusters(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService: tt.fields.clusterService,
 				},
 			}
-			Expect(len(c.processProvisioningClusters()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(c.processProvisioningClusters()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -724,11 +717,10 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
@@ -741,7 +733,7 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 					ProviderFactory:            tt.fields.providerFactory,
 				},
 			}
-			Expect(len(c.processProvisionedClusters()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(c.processProvisionedClusters()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -806,18 +798,17 @@ func TestClusterManager_processReadyClusters(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:         tt.fields.clusterService,
 					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
 				},
 			}
-			Expect(len(c.processReadyClusters()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(c.processReadyClusters()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1012,11 +1003,10 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
@@ -1027,7 +1017,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
 				},
 			}
-			Expect(c.reconcileReadyCluster(tt.args.cluster) != nil).To(Equal(tt.wantErr))
+			g.Expect(c.reconcileReadyCluster(tt.args.cluster) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1194,10 +1184,9 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
+		g := gomega.NewWithT(t)
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
@@ -1209,7 +1198,7 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
 				},
 			}
-			Expect(c.reconcileWaitingForKasFleetshardOperatorCluster(tt.args.cluster) != nil).To(Equal(tt.wantErr))
+			g.Expect(c.reconcileWaitingForKasFleetshardOperatorCluster(tt.args.cluster) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1483,11 +1472,10 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
@@ -1499,7 +1487,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 					ProviderFactory:            tt.fields.providerFactory,
 				},
 			}
-			Expect(c.reconcileProvisionedCluster(tt.args.cluster) != nil).To(Equal(tt.wantErr))
+			g.Expect(c.reconcileProvisionedCluster(tt.args.cluster) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1588,11 +1576,10 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
@@ -1603,7 +1590,7 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
 				},
 			}
-			Expect(len(c.processWaitingForKasFleetshardOperatorClusters()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(c.processWaitingForKasFleetshardOperatorClusters()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1678,11 +1665,10 @@ func TestClusterManager_reconcileKasFleetshardOperator(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
@@ -1690,7 +1676,7 @@ func TestClusterManager_reconcileKasFleetshardOperator(t *testing.T) {
 				},
 			}
 
-			Expect(c.reconcileKasFleetshardOperator(tt.arg) != nil).To(Equal(tt.wantErr))
+			g.Expect(c.reconcileKasFleetshardOperator(tt.arg) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1758,18 +1744,17 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService: tt.fields.clusterService,
 				},
 			}
 			_, err := c.reconcileClusterStatus(tt.args.cluster)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1807,11 +1792,10 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
@@ -1824,7 +1808,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			_, err := c.reconcileStrimziOperator(api.Cluster{
 				ClusterID: "clusterId",
 			})
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1862,11 +1846,10 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
@@ -1879,7 +1862,7 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 			_, err := c.reconcileClusterLoggingOperator(api.Cluster{
 				ClusterID: "clusterId",
 			})
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1918,11 +1901,10 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
@@ -1931,7 +1913,7 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 				},
 			}
 
-			Expect(c.reconcileAcceptedCluster(&acceptedCluster) != nil).To(Equal(tt.wantErr))
+			g.Expect(c.reconcileAcceptedCluster(&acceptedCluster) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -2035,11 +2017,10 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
@@ -2048,7 +2029,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 					DataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
 				},
 			}
-			Expect(c.reconcileClustersForRegions() != nil && !tt.wantErr).To(BeFalse())
+			g.Expect(c.reconcileClustersForRegions() != nil && !tt.wantErr).To(gomega.BeFalse())
 		})
 	}
 }
@@ -2508,6 +2489,8 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 }
 
 func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	const ingressDNS = "foo.bar.example.com"
 	observabilityConfig := buildObservabilityConfig()
 	clusterConfig := config.DataplaneClusterConfig{
@@ -2534,7 +2517,7 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 				clusterService: &services.ClusterServiceMock{
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
 						want, _ := buildResourceSet(observabilityConfig, clusterConfig, ingressDNS, cluster)
-						Expect(resources).To(Equal(want))
+						g.Expect(resources).To(gomega.Equal(want))
 						return nil
 					},
 				},
@@ -2547,7 +2530,7 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 				clusterService: &services.ClusterServiceMock{
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
 						want, _ := buildResourceSet(observabilityConfig, clusterConfig, ingressDNS, cluster)
-						Expect(resources).To(Equal(want))
+						g.Expect(resources).To(gomega.Equal(want))
 						return nil
 					},
 				},
@@ -2567,11 +2550,10 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
@@ -2582,7 +2564,7 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 				},
 			}
 
-			Expect(c.reconcileClusterResources(tt.arg) != nil).To(Equal(tt.wantErr))
+			g.Expect(c.reconcileClusterResources(tt.arg) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -2749,11 +2731,10 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:         tt.fields.clusterService,
@@ -2762,7 +2743,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 				},
 			}
 
-			Expect(c.reconcileClusterIdentityProvider(tt.arg) != nil).To(Equal(tt.wantErr))
+			g.Expect(c.reconcileClusterIdentityProvider(tt.arg) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -2808,18 +2789,17 @@ func TestClusterManager_reconcileClusterDNS(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService: tt.fields.clusterService,
 				},
 			}
 
-			Expect(c.reconcileClusterDNS(tt.arg) != nil).To(Equal(tt.wantErr))
+			g.Expect(c.reconcileClusterDNS(tt.arg) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -2945,11 +2925,10 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:         tt.fields.clusterService,
@@ -2957,7 +2936,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 				},
 			}
 
-			Expect(c.reconcileDeprovisioningCluster(&tt.arg) != nil).To(Equal(tt.wantErr))
+			g.Expect(c.reconcileDeprovisioningCluster(&tt.arg) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -3039,11 +3018,10 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
@@ -3051,7 +3029,7 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
 				},
 			}
-			Expect(c.reconcileCleanupCluster(tt.arg) != nil).To(Equal(tt.wantErr))
+			g.Expect(c.reconcileCleanupCluster(tt.arg) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -3164,11 +3142,10 @@ func TestClusterManager_reconcileEmptyCluster(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService: tt.fields.clusterService,
@@ -3180,8 +3157,8 @@ func TestClusterManager_reconcileEmptyCluster(t *testing.T) {
 					ID: "cluster-id",
 				},
 			})
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(emptyClusterReconciled).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(emptyClusterReconciled).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -3329,18 +3306,17 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					DataplaneClusterConfig: tt.fields.DataplaneClusterConfig,
 					ClusterService:         tt.fields.clusterService,
 				},
 			}
-			Expect(len(c.reconcileClusterWithManualConfig()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(c.reconcileClusterWithManualConfig()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -3465,18 +3441,17 @@ func TestClusterManager_reconcileClusterInstanceType(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
 					ClusterService:         tt.fields.clusterService,
 				},
 			}
-			Expect(c.reconcileClusterInstanceType(tt.fields.cluster) != nil).To(Equal(tt.wantErr))
+			g.Expect(c.reconcileClusterInstanceType(tt.fields.cluster) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -3519,17 +3494,16 @@ func TestClusterManager_setClusterStatusCountMetrics(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService: tt.fields.clusterService,
 				},
 			}
-			Expect(c.setClusterStatusCountMetrics() != nil).To(Equal(tt.wantErr))
+			g.Expect(c.setClusterStatusCountMetrics() != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -3601,17 +3575,16 @@ func TestClusterManager_setKafkaPerClusterCountMetrics(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService: tt.fields.clusterService,
 				},
 			}
-			Expect(c.setKafkaPerClusterCountMetrics() != nil).To(Equal(tt.wantErr))
+			g.Expect(c.setKafkaPerClusterCountMetrics() != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -3839,7 +3812,7 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 	for _, tc := range tests {
 		test := tc
 		t.Run(test.name, func(t *testing.T) {
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					DataplaneClusterConfig: test.fields.dataplaneClusterConfig,
@@ -3849,8 +3822,8 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 			}
 			reconciled, err := c.reconcileClusterMachinePools(test.arg)
 			gotErr := err != nil
-			g.Expect(gotErr).To(Equal(test.wantErr))
-			g.Expect(reconciled).To(Equal(test.want))
+			g.Expect(gotErr).To(gomega.Equal(test.wantErr))
+			g.Expect(reconciled).To(gomega.Equal(test.want))
 		})
 	}
 
@@ -4048,10 +4021,11 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, tc := range tests {
 		test := tc
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					DataplaneClusterConfig: test.fields.dataplaneClusterConfig,
@@ -4060,8 +4034,7 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 			}
 			err := c.reconcileDynamicCapacityInfo(test.arg)
 			gotErr := err != nil
-			g.Expect(gotErr).To(Equal(test.wantErr))
+			g.Expect(gotErr).To(gomega.Equal(test.wantErr))
 		})
 	}
-
 }

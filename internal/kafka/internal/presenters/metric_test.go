@@ -9,7 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	pModel "github.com/prometheus/common/model"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestConvertMatrix(t *testing.T) {
@@ -31,13 +31,12 @@ func TestConvertMatrix(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(convertMatrix(tt.args.from)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(convertMatrix(tt.args.from)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -61,13 +60,12 @@ func TestConvertVector(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(convertVector(tt.args.from)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(convertVector(tt.args.from)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -98,13 +96,12 @@ func TestConvertSampleStream(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(convertSampleStream(tt.args.from)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(convertSampleStream(tt.args.from)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -135,13 +132,12 @@ func TestConvertSample(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(convertSample(tt.args.from)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(convertSample(tt.args.from)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -165,13 +161,12 @@ func TestConvertSamplePair(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(convertSamplePair(tt.args.from)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(convertSamplePair(tt.args.from)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -204,18 +199,17 @@ func TestPresentMetricsByRangeQuery(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			firstQuery, err := PresentMetricsByRangeQuery(tt.args.metrics)
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for PresentMetricsByRangeQuery: %v", err)
 			}
 			if !tt.wantErr {
-				Expect(tt.want[0].Metric["__name__"]).To(Equal(firstQuery[0].Metric["__name__"]))
+				g.Expect(tt.want[0].Metric["__name__"]).To(gomega.Equal(firstQuery[0].Metric["__name__"]))
 			}
 		})
 	}
@@ -249,19 +243,18 @@ func TestPresentMetricsByInstantQuery(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			query, err := PresentMetricsByInstantQuery(tt.args.metrics)
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for PresentMetricsByInstantQuery: %v", err)
 				return
 			}
-			Expect(tt.wantErr).To(Equal(err != nil), "unexpected error for PresentMetricsByInstantQuery")
-			Expect(query).To(Equal(tt.want))
+			g.Expect(tt.wantErr).To(gomega.Equal(err != nil), "unexpected error for PresentMetricsByInstantQuery")
+			g.Expect(query).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -296,13 +289,12 @@ func TestIsAllowedLabel(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(isAllowedLabel(tt.args.label)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(isAllowedLabel(tt.args.label)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -318,13 +310,12 @@ func TestGetSupportedLabels(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(getSupportedLabels()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(getSupportedLabels()).To(gomega.Equal(tt.want))
 		})
 	}
 }

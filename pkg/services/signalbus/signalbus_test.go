@@ -1,9 +1,10 @@
 package signalbus
 
 import (
-	g "github.com/onsi/gomega"
 	"testing"
 	"time"
+
+	"github.com/onsi/gomega"
 )
 
 func notifyAfter(bus *signalBus, name string, d time.Duration) {
@@ -14,7 +15,7 @@ func notifyAfter(bus *signalBus, name string, d time.Duration) {
 }
 
 func TestNewSignalBus(t *testing.T) {
-	g.RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 
 	bus := NewSignalBus().(*signalBus)
 
@@ -25,25 +26,25 @@ func TestNewSignalBus(t *testing.T) {
 
 	// in about a second the subscription should get signaled..
 	notifyAfter(bus, "a", 1*time.Second)
-	g.Expect(aSub1.IsSignaled()).Should(g.Equal(false))
-	g.Eventually(aSub1.IsSignaled, 2*time.Second).Should(g.Equal(true))
+	g.Expect(aSub1.IsSignaled()).Should(gomega.Equal(false))
+	g.Eventually(aSub1.IsSignaled, 2*time.Second).Should(gomega.Equal(true))
 
 	// Verify that the same subs share memory structs...
-	g.Expect(len(bus.signals)).Should(g.Equal(1))
+	g.Expect(len(bus.signals)).Should(gomega.Equal(1))
 	aSub2 := bus.Subscribe("a")
-	g.Expect(len(bus.signals)).Should(g.Equal(1))
+	g.Expect(len(bus.signals)).Should(gomega.Equal(1))
 
 	// Verify that notifications work on both subs...
 	notifyAfter(bus, "a", 1*time.Second)
-	g.Expect(aSub1.IsSignaled()).Should(g.Equal(false))
-	g.Expect(aSub2.IsSignaled()).Should(g.Equal(false))
-	g.Eventually(aSub1.IsSignaled, 2*time.Second).Should(g.Equal(true))
-	g.Eventually(aSub2.IsSignaled, 2*time.Second).Should(g.Equal(true))
+	g.Expect(aSub1.IsSignaled()).Should(gomega.Equal(false))
+	g.Expect(aSub2.IsSignaled()).Should(gomega.Equal(false))
+	g.Eventually(aSub1.IsSignaled, 2*time.Second).Should(gomega.Equal(true))
+	g.Eventually(aSub2.IsSignaled, 2*time.Second).Should(gomega.Equal(true))
 
 	// Closing all the subs to the same named signal will release memory..
 	aSub1.Close()
-	g.Expect(len(bus.signals)).Should(g.Equal(1))
+	g.Expect(len(bus.signals)).Should(gomega.Equal(1))
 	aSub2.Close()
-	g.Expect(len(bus.signals)).Should(g.Equal(0))
+	g.Expect(len(bus.signals)).Should(gomega.Equal(0))
 
 }

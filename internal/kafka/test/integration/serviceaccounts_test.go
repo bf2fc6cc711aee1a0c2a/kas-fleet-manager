@@ -19,7 +19,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/bxcodec/faker/v3"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func getAuthenticatedContext(h *kafkatest.Helper, claims jwt.MapClaims) context.Context {
@@ -38,6 +38,7 @@ func getAuthenticatedContext(h *kafkatest.Helper, claims jwt.MapClaims) context.
 }
 
 func TestServiceAccounts_GetByClientID(t *testing.T) {
+	g := gomega.NewWithT(t)
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -56,9 +57,9 @@ func TestServiceAccounts_GetByClientID(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(list.Items).To(HaveLen(0))
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(list.Items).To(gomega.HaveLen(0))
 
 	// Create one Service Account
 	r := public.ServiceAccountRequest{
@@ -69,8 +70,8 @@ func TestServiceAccounts_GetByClientID(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
 
 	// Find service account by clientid
 	opts.ClientId = optional.NewString(sa.ClientId)
@@ -79,20 +80,22 @@ func TestServiceAccounts_GetByClientID(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(list.Items).To(HaveLen(1))
-	Expect(list.Items[0].ClientId == sa.ClientId)
-	Expect(list.Items[0].Id == sa.Id)
-	Expect(list.Items[0].Name == sa.Name)
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(list.Items).To(gomega.HaveLen(1))
+	g.Expect(list.Items[0].ClientId == sa.ClientId)
+	g.Expect(list.Items[0].Id == sa.Id)
+	g.Expect(list.Items[0].Name == sa.Name)
 	_, resp, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
 }
 
 func TestServiceAccounts_Success(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -104,25 +107,25 @@ func TestServiceAccounts_Success(t *testing.T) {
 	// get username from the access token to verify service account owner
 	ctx := getAuthenticatedContext(h, nil)
 	accessTokenValue := fmt.Sprintf("%s", ctx.Value(compat.ContextAccessToken))
-	Expect(accessTokenValue).ToNot(BeEmpty(), "failed to get access token from context")
+	g.Expect(accessTokenValue).ToNot(gomega.BeEmpty(), "failed to get access token from context")
 
 	claims := jwt.MapClaims{}
 	_, _, err := jwt.NewParser().ParseUnverified(accessTokenValue, claims)
-	Expect(err).ToNot(HaveOccurred(), "failed to parse access token")
-	Expect(claims).ToNot(BeEmpty(), "access token does not have any claims")
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to parse access token")
+	g.Expect(claims).ToNot(gomega.BeEmpty(), "access token does not have any claims")
 
 	kfmClaims := auth.KFMClaims(claims)
 	username, err := kfmClaims.GetUsername()
-	Expect(err).ToNot(HaveOccurred(), "failed to get username from claims")
-	Expect(username).ToNot(BeEmpty(), "username is empty in claims")
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to get username from claims")
+	g.Expect(username).ToNot(gomega.BeEmpty(), "username is empty in claims")
 
 	//verify list
 	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx, nil)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 	currTime := time.Now().Format(time.RFC3339)
 	createdAt, _ := time.Parse(time.RFC3339, currTime)
 
@@ -135,13 +138,13 @@ func TestServiceAccounts_Success(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
-	Expect(sa.ClientId).NotTo(BeEmpty())
-	Expect(sa.ClientSecret).NotTo(BeEmpty())
-	Expect(sa.Id).NotTo(BeEmpty())
-	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
-	Expect(sa.CreatedBy).Should(Equal(username))
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
+	g.Expect(sa.ClientId).NotTo(gomega.BeEmpty())
+	g.Expect(sa.ClientSecret).NotTo(gomega.BeEmpty())
+	g.Expect(sa.Id).NotTo(gomega.BeEmpty())
+	g.Expect(sa.CreatedAt).Should(gomega.BeTemporally(">=", createdAt))
+	g.Expect(sa.CreatedBy).Should(gomega.Equal(username))
 
 	// verify get by id
 	id := sa.Id
@@ -149,12 +152,12 @@ func TestServiceAccounts_Success(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(sa.ClientId).NotTo(BeEmpty())
-	Expect(sa.Id).NotTo(BeEmpty())
-	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
-	Expect(sa.CreatedBy).Should(Equal(username))
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(sa.ClientId).NotTo(gomega.BeEmpty())
+	g.Expect(sa.Id).NotTo(gomega.BeEmpty())
+	g.Expect(sa.CreatedAt).Should(gomega.BeTemporally(">=", createdAt))
+	g.Expect(sa.CreatedBy).Should(gomega.Equal(username))
 
 	//verify reset
 	oldSecret := sa.ClientSecret
@@ -162,27 +165,27 @@ func TestServiceAccounts_Success(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
-	Expect(sa.ClientSecret).NotTo(BeEmpty())
-	Expect(sa.ClientSecret).NotTo(Equal(oldSecret))
-	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
-	Expect(sa.CreatedBy).Should(Equal(username))
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	g.Expect(sa.ClientSecret).NotTo(gomega.BeEmpty())
+	g.Expect(sa.ClientSecret).NotTo(gomega.Equal(oldSecret))
+	g.Expect(sa.CreatedAt).Should(gomega.BeTemporally(">=", createdAt))
+	g.Expect(sa.CreatedBy).Should(gomega.Equal(username))
 
 	//verify delete
 	_, resp, err = client.SecurityApi.DeleteServiceAccountById(ctx, id)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
 
 	// verify deletion of non-existent service account throws http status code 404
 	_, resp, err = client.SecurityApi.DeleteServiceAccountById(ctx, id)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).To(HaveOccurred())
+	g.Expect(err).To(gomega.HaveOccurred())
 	// skipping for now as mas sso and rhsso service returns different http codes: mas sso returns 404, rhsso returns 500.
-	// Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+	// g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 
 	f := false
 	accounts, resp, _ := client.SecurityApi.GetServiceAccounts(ctx, nil)
@@ -194,10 +197,12 @@ func TestServiceAccounts_Success(t *testing.T) {
 			f = true
 		}
 	}
-	Expect(f).To(BeFalse())
+	g.Expect(f).To(gomega.BeFalse())
 }
 
 func TestServiceAccounts_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -219,11 +224,13 @@ func TestServiceAccounts_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).Should(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+	g.Expect(err).Should(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusUnauthorized))
 }
 
 func TestServiceAccounts_CorrectTokenIssuer_AuthzSuccess(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -238,11 +245,13 @@ func TestServiceAccounts_CorrectTokenIssuer_AuthzSuccess(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 }
 
 func TestServiceAccounts_InputValidation(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -262,8 +271,8 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).Should(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+	g.Expect(err).Should(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
 
 	//xss prevention
 	r = public.ServiceAccountRequest{
@@ -274,8 +283,8 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).Should(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+	g.Expect(err).Should(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
 
 	//description length can not be more than 255
 	r = public.ServiceAccountRequest{
@@ -286,8 +295,8 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).Should(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+	g.Expect(err).Should(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
 
 	//min length required for name
 	r = public.ServiceAccountRequest{
@@ -298,8 +307,8 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).Should(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+	g.Expect(err).Should(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
 
 	var keycloakConfig *keycloak.KeycloakConfig
 	h.Env.MustResolve(&keycloakConfig)
@@ -315,18 +324,18 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		if resp != nil {
 			resp.Body.Close()
 		}
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
-		Expect(sa.ClientId).NotTo(BeEmpty())
-		Expect(sa.ClientSecret).NotTo(BeEmpty())
-		Expect(sa.Id).NotTo(BeEmpty())
+		g.Expect(err).ShouldNot(gomega.HaveOccurred())
+		g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
+		g.Expect(sa.ClientId).NotTo(gomega.BeEmpty())
+		g.Expect(sa.ClientSecret).NotTo(gomega.BeEmpty())
+		g.Expect(sa.Id).NotTo(gomega.BeEmpty())
 
 		// verify delete
 		_, resp, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
 		if resp != nil {
 			resp.Body.Close()
 		}
-		Expect(err).ShouldNot(HaveOccurred())
+		g.Expect(err).ShouldNot(gomega.HaveOccurred())
 	}
 
 	// certain characters are allowed in the description
@@ -338,18 +347,18 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
-	Expect(sa.ClientId).NotTo(BeEmpty())
-	Expect(sa.ClientSecret).NotTo(BeEmpty())
-	Expect(sa.Id).NotTo(BeEmpty())
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
+	g.Expect(sa.ClientId).NotTo(gomega.BeEmpty())
+	g.Expect(sa.ClientSecret).NotTo(gomega.BeEmpty())
+	g.Expect(sa.Id).NotTo(gomega.BeEmpty())
 
 	//verify delete
 	_, resp, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
 
 	//xss prevention
 	r = public.ServiceAccountRequest{
@@ -360,8 +369,8 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).Should(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+	g.Expect(err).Should(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
 
 	// verify malformed  id
 	id := faker.ID
@@ -369,11 +378,13 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).Should(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+	g.Expect(err).Should(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
 }
 
 func TestServiceAccounts_SsoProvider_MAS_SSO(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -388,14 +399,16 @@ func TestServiceAccounts_SsoProvider_MAS_SSO(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(sp.Name).To(Equal("mas_sso"))
-	Expect(sp.BaseUrl).To(Equal(test.TestServices.KeycloakConfig.SSOProviderRealm().BaseURL))
-	Expect(sp.TokenUrl).To(Equal(test.TestServices.KeycloakConfig.SSOProviderRealm().TokenEndpointURI))
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(sp.Name).To(gomega.Equal("mas_sso"))
+	g.Expect(sp.BaseUrl).To(gomega.Equal(test.TestServices.KeycloakConfig.SSOProviderRealm().BaseURL))
+	g.Expect(sp.TokenUrl).To(gomega.Equal(test.TestServices.KeycloakConfig.SSOProviderRealm().TokenEndpointURI))
 }
 
 func TestServiceAccounts_SsoProvider_SSO(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -410,64 +423,66 @@ func TestServiceAccounts_SsoProvider_SSO(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ShouldNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(sp.Name).To(Equal("redhat_sso"))
-	Expect(sp.BaseUrl).To(Equal(test.TestServices.KeycloakConfig.SSOProviderRealm().BaseURL))
-	Expect(sp.TokenUrl).To(Equal(test.TestServices.KeycloakConfig.SSOProviderRealm().TokenEndpointURI))
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(sp.Name).To(gomega.Equal("redhat_sso"))
+	g.Expect(sp.BaseUrl).To(gomega.Equal(test.TestServices.KeycloakConfig.SSOProviderRealm().BaseURL))
+	g.Expect(sp.TokenUrl).To(gomega.Equal(test.TestServices.KeycloakConfig.SSOProviderRealm().TokenEndpointURI))
 }
 
-//Todo Temporary commenting out the test
-//func TestServiceAccount_CreationLimits(t *testing.T) {
-//	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-//	defer ocmServer.Close()
-//
-//	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
-//	// ocm
-//	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
-//	defer teardown()
-//
-//	account := h.NewRandAccount()
-//	ctx := h.NewAuthenticatedContext(account, nil)
-//
-//	r := public.ServiceAccountRequest{
-//		Name:        "test-account-acc-1",
-//		Description: "created by the managed service integration tests",
-//	}
-//
-//	sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
-//	Expect(err).ShouldNot(HaveOccurred())
-//	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
-//	Expect(sa.ClientId).NotTo(BeEmpty())
-//	Expect(sa.ClientSecret).NotTo(BeEmpty())
-//	Expect(sa.CreatedBy).Should(Equal(account.Username()))
-//	Expect(sa.Id).NotTo(BeEmpty())
-//
-//	r = public.ServiceAccountRequest{
-//		Name:        "test-account-acc-2",
-//		Description: "created by the managed service integration tests",
-//	}
-//	sa2, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
-//	Expect(err).ShouldNot(HaveOccurred())
-//	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
-//	Expect(sa2.ClientId).NotTo(BeEmpty())
-//	Expect(sa2.ClientSecret).NotTo(BeEmpty())
-//	Expect(sa2.CreatedBy).Should(Equal(account.Username()))
-//	Expect(sa2.Id).NotTo(BeEmpty())
-//
-//	// limit has reached for 2 service accounts
-//	r = public.ServiceAccountRequest{
-//		Name:        "test-account-acc-3",
-//		Description: "created by the managed service integration tests",
-//	}
-//	_, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
-//	Expect(err).Should(HaveOccurred())
-//	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
-//
-//	//cleanup
-//	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
-//	Expect(err).ShouldNot(HaveOccurred())
-//
-//	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa2.Id)
-//	Expect(err).ShouldNot(HaveOccurred())
-//}
+// Todo Temporary commenting out the test
+// func TestServiceAccount_CreationLimits(t *testing.T) {
+// 	g := gomega.NewWithT(t)
+
+// 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+// 	defer ocmServer.Close()
+
+// 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
+// 	// ocm
+// 	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
+// 	defer teardown()
+
+// 	account := h.NewRandAccount()
+// 	ctx := h.NewAuthenticatedContext(account, nil)
+
+// 	r := public.ServiceAccountRequest{
+// 		Name:        "test-account-acc-1",
+// 		Description: "created by the managed service integration tests",
+// 	}
+
+// 	sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
+// 	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+// 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
+// 	g.Expect(sa.ClientId).NotTo(gomega.BeEmpty())
+// 	g.Expect(sa.ClientSecret).NotTo(gomega.BeEmpty())
+// 	g.Expect(sa.CreatedBy).Should(gomega.Equal(account.Username()))
+// 	g.Expect(sa.Id).NotTo(gomega.BeEmpty())
+
+// 	r = public.ServiceAccountRequest{
+// 		Name:        "test-account-acc-2",
+// 		Description: "created by the managed service integration tests",
+// 	}
+// 	sa2, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
+// 	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+// 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
+// 	g.Expect(sa2.ClientId).NotTo(gomega.BeEmpty())
+// 	g.Expect(sa2.ClientSecret).NotTo(gomega.BeEmpty())
+// 	g.Expect(sa2.CreatedBy).Should(gomega.Equal(account.Username()))
+// 	g.Expect(sa2.Id).NotTo(gomega.BeEmpty())
+
+// 	// limit has reached for 2 service accounts
+// 	r = public.ServiceAccountRequest{
+// 		Name:        "test-account-acc-3",
+// 		Description: "created by the managed service integration tests",
+// 	}
+// 	_, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
+// 	g.Expect(err).Should(gomega.HaveOccurred())
+// 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusForbidden))
+
+// 	//cleanup
+// 	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
+// 	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+
+// 	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa2.Id)
+// 	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+// }

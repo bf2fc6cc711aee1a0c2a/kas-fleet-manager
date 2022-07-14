@@ -7,7 +7,7 @@ import (
 	mocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/service_accounts"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestConvertServiceAccountRequest(t *testing.T) {
@@ -29,13 +29,12 @@ func TestConvertServiceAccountRequest(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(ConvertServiceAccountRequest(tt.args.from)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(ConvertServiceAccountRequest(tt.args.from)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -59,13 +58,12 @@ func TestPresentServiceAccount(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(PresentServiceAccount(tt.args.from)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(PresentServiceAccount(tt.args.from)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -89,13 +87,12 @@ func TestPresentServiceAccountListItem(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(PresentServiceAccountListItem(tt.args.from)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(PresentServiceAccountListItem(tt.args.from)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -119,13 +116,12 @@ func TestPresentSsoProvider(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(PresentSsoProvider(tt.args.from)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(PresentSsoProvider(tt.args.from)).To(gomega.Equal(tt.want))
 		})
 	}
 }

@@ -19,7 +19,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 var (
@@ -72,19 +72,18 @@ func Test_KafkaHandler_Get(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			h := NewKafkaHandler(tt.fields.service, tt.fields.providerConfig, tt.fields.authService, tt.fields.kafkaConfig)
-			req, rw := GetHandlerParams("GET", "/{id}", nil)
+			req, rw := GetHandlerParams("GET", "/{id}", nil, t)
 			req = mux.SetURLVars(req, map[string]string{"id": id})
 			h.Get(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -141,18 +140,17 @@ func Test_KafkaHandler_Delete(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			h := NewKafkaHandler(tt.fields.service, tt.fields.providerConfig, tt.fields.authService, tt.fields.kafkaConfig)
-			req, rw := GetHandlerParams("DELETE", tt.args.url, nil)
+			req, rw := GetHandlerParams("DELETE", tt.args.url, nil, t)
 			h.Delete(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -235,18 +233,17 @@ func Test_KafkaHandler_List(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			h := NewKafkaHandler(tt.fields.service, tt.fields.providerConfig, tt.fields.authService, tt.fields.kafkaConfig)
-			req, rw := GetHandlerParams("GET", tt.args.url, nil)
+			req, rw := GetHandlerParams("GET", tt.args.url, nil, t)
 			h.List(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -349,19 +346,18 @@ func Test_KafkaHandler_Update(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			h := NewKafkaHandler(tt.fields.service, tt.fields.providerConfig, tt.fields.authService, tt.fields.kafkaConfig)
-			req, rw := GetHandlerParams("PATCH", tt.args.url, bytes.NewBuffer(tt.args.body))
+			req, rw := GetHandlerParams("PATCH", tt.args.url, bytes.NewBuffer(tt.args.body), t)
 			req = req.WithContext(tt.args.ctx)
 			h.Update(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -579,19 +575,18 @@ func Test_KafkaHandler_Create(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			h := NewKafkaHandler(tt.fields.service, tt.fields.providerConfig, tt.fields.authService, tt.fields.kafkaConfig)
-			req, rw := GetHandlerParams("CREATE", tt.args.url, bytes.NewBuffer(tt.args.body))
+			req, rw := GetHandlerParams("CREATE", tt.args.url, bytes.NewBuffer(tt.args.body), t)
 			req = req.WithContext(tt.args.ctx)
 			h.Create(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }

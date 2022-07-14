@@ -15,7 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/golang/glog"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 const (
@@ -39,9 +39,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestAccessControlListMiddleware_Authorize(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, serverConfig.TokenIssuerURL)
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 	type fields struct {
 		accessControlListConfig *acl.AccessControlListConfig
 	}
@@ -128,9 +128,10 @@ func TestAccessControlListMiddleware_Authorize(t *testing.T) {
 	}
 
 	for _, testcase := range tests {
+		g := gomega.NewWithT(t)
 		tt := testcase
 		req, err := http.NewRequest("GET", "/api/kafkas_mgmt/kafkas", nil)
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 
 		rr := httptest.NewRecorder()
 
@@ -140,28 +141,28 @@ func TestAccessControlListMiddleware_Authorize(t *testing.T) {
 		// create a jwt and set it in the context
 		ctx := req.Context()
 		acc, err := authHelper.NewAccount("username", "test-user", "", "org-id-test")
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 
 		token, err := authHelper.CreateJWTWithClaims(acc, nil)
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 
 		ctx = auth.SetTokenInContext(ctx, token)
 		req = req.WithContext(ctx)
 		handler.ServeHTTP(rr, req)
 
 		body, err := ioutil.ReadAll(rr.Body)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(rr.Code).To(Equal(tt.wantHttpStatus))
+		g.Expect(err).NotTo(gomega.HaveOccurred())
+		g.Expect(rr.Code).To(gomega.Equal(tt.wantHttpStatus))
 
 		if tt.wantErr {
-			Expect(rr.Header().Get("Content-Type")).To(Equal("application/json"))
+			g.Expect(rr.Header().Get("Content-Type")).To(gomega.Equal("application/json"))
 			var data map[string]string
 			err = json.Unmarshal(body, &data)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(data["kind"]).To(Equal("Error"))
+			g.Expect(err).NotTo(gomega.HaveOccurred())
+			g.Expect(data["kind"]).To(gomega.Equal("Error"))
 			// verify that context about user being allowed as service account is set to false always
 			ctxAfterMiddleware := req.Context()
-			Expect(auth.GetFilterByOrganisationFromContext(ctxAfterMiddleware)).To(Equal(false))
+			g.Expect(auth.GetFilterByOrganisationFromContext(ctxAfterMiddleware)).To(gomega.Equal(false))
 		}
 	}
 }
@@ -170,5 +171,7 @@ func TestAccessControlListMiddleware_Authorize(t *testing.T) {
 func NextHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK) //nolint
 	_, err := io.WriteString(w, "OK")
-	Expect(err).NotTo(HaveOccurred())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

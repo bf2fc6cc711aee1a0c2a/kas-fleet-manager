@@ -3,7 +3,7 @@ package handlers
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_DetermineListRange(t *testing.T) {
@@ -39,13 +39,13 @@ func Test_DetermineListRange(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			_, count := DetermineListRange(tt.args.obj, tt.args.page, tt.args.size)
-			Expect(count).To(Equal(tt.wantSize))
+			g.Expect(count).To(gomega.Equal(tt.wantSize))
 		})
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 var (
@@ -74,16 +74,15 @@ func Test_PresentReferenceWith(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			ref := PresentReferenceWith(tt.args.id, tt.args.obj, tt.args.objectKind, tt.args.objectPath)
-			Expect(ref.Id).To(Equal(tt.wantId))
-			Expect(ref.Kind).To(Equal(tt.wantKind))
-			Expect(ref.Href).To(Equal(tt.wantHref))
+			g.Expect(ref.Id).To(gomega.Equal(tt.wantId))
+			g.Expect(ref.Kind).To(gomega.Equal(tt.wantKind))
+			g.Expect(ref.Href).To(gomega.Equal(tt.wantHref))
 		})
 	}
 }

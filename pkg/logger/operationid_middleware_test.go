@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func getTestCtxWithOpId() context.Context {
@@ -40,14 +40,13 @@ func Test_WithOpID(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			context := WithOpID(tt.args.ctx)
-			Expect(context.Value(OpIDKey)).ToNot(Equal(""))
-			Expect(context.Value(OpIDKey) == tt.wantOpId).To(Equal(tt.opIdSet))
+			g.Expect(context.Value(OpIDKey)).ToNot(gomega.Equal(""))
+			g.Expect(context.Value(OpIDKey) == tt.wantOpId).To(gomega.Equal(tt.opIdSet))
 		})
 	}
 }
@@ -77,24 +76,23 @@ func Test_GetOperationID(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(GetOperationID(tt.args.ctx)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(GetOperationID(tt.args.ctx)).To(gomega.Equal(tt.want))
 		})
 	}
 }
 
 func Test_OperationIDMiddleware(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 	h := http.NewServeMux()
 	opIdHandler := OperationIDMiddleware(h)
 	req, err := http.NewRequest("GET", "/", nil)
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 	opIdHandler.ServeHTTP(httptest.NewRecorder(), req)
 
 	// after creating middleware handler, value of OpIDKey key in the context should be set
-	Expect(req.Context().Value(OpIDKey)).ToNot(Equal(""))
+	g.Expect(req.Context().Value(OpIDKey)).ToNot(gomega.Equal(""))
 }

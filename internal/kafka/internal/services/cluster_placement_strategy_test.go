@@ -11,7 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestFirstReadyCluster_FindCluster(t *testing.T) {
@@ -83,12 +83,11 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			f := &FirstReadyCluster{
 				ClusterService: tt.fields.ClusterService,
 			}
@@ -97,7 +96,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 				t.Errorf("FindReadyCluster() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -266,12 +265,11 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			f := &FirstSchedulableWithinLimit{
 				DataplaneClusterConfig: tt.fields.DataplaneClusterConfig,
 				ClusterService:         tt.fields.ClusterService,
@@ -282,7 +280,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				t.Errorf("FindAvailableCluster() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }

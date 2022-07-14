@@ -29,7 +29,7 @@ import (
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/golang-jwt/jwt/v4"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/pkg/errors"
 	"gopkg.in/resty.v1"
@@ -111,6 +111,8 @@ func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer 
 }
 
 func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	clusterId := "test-cluster-id"
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
@@ -133,8 +135,8 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 		SetBody(body).
 		Put(testServer.Helper.RestURL("/agent-clusters/" + clusterId + "/kafkas/status"))
 
-	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound)) //the clusterId is not valid
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusNotFound)) //the clusterId is not valid
 
 	clusterStatusUpdateRequest := private.DataPlaneClusterUpdateStatusRequest{}
 	restyResp, err = resty.R().
@@ -143,11 +145,13 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 		SetBody(clusterStatusUpdateRequest).
 		Put(testServer.Helper.RestURL("/agent-clusters/" + clusterId + "/status"))
 
-	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound)) //the clusterId is not valid
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusNotFound)) //the clusterId is not valid
 }
 
 func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
 			"iss":                                test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
@@ -166,8 +170,8 @@ func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 		SetBody(body).
 		Put(testServer.Helper.RestURL("/agent-clusters/" + testServer.ClusterID + "/kafkas/status"))
 
-	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusNotFound))
 
 	clusterStatusUpdateRequest := private.DataPlaneClusterUpdateStatusRequest{}
 	restyResp, err = resty.R().
@@ -176,11 +180,13 @@ func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 		SetBody(clusterStatusUpdateRequest).
 		Put(testServer.Helper.RestURL("/agent-clusters/" + testServer.ClusterID + "/status"))
 
-	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusNotFound))
 }
 
 func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
 			"iss": test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
@@ -201,8 +207,8 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 		SetBody(body).
 		Put(testServer.Helper.RestURL("/agent-clusters/" + testServer.ClusterID + "/kafkas/status"))
 
-	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusNotFound))
 
 	clusterStatusUpdateRequest := private.DataPlaneClusterUpdateStatusRequest{}
 	restyResp, err = resty.R().
@@ -211,11 +217,13 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 		SetBody(clusterStatusUpdateRequest).
 		Put(testServer.Helper.RestURL("/agent-clusters/" + testServer.ClusterID + "/status"))
 
-	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusNotFound))
 }
 
 func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
@@ -232,7 +240,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	})
 	defer testServer.TearDown()
 
-	// the following kafkas are expected to be returned by the endpoint
+	// the following kafkas are g.Expected to be returned by the endpoint
 	validKafkas := []*dbapi.KafkaRequest{
 		kafkamocks.BuildKafkaRequest(
 			kafkamocks.WithPredefinedTestValues(),
@@ -294,7 +302,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	// create dummy kafkas
 	db := test.TestServices.DBFactory.New()
 	if err := db.Create(&dummyKafkas).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -302,9 +310,9 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(list.Items).To(HaveLen(4)) // only count valid Managed Kafka CR
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(list.Items).To(gomega.HaveLen(4)) // only count valid Managed Kafka CR
 
 	var kafkaConfig *config.KafkaConfig
 	testServer.Helper.Env.MustResolve(&kafkaConfig)
@@ -316,22 +324,22 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 				t.Errorf("failed to retrieve instance size for kafka '%s': %v", mk.Metadata.Name, err.Error())
 				break
 			}
-			Expect(mk.Metadata.Name).To(Equal(k.Name))
-			Expect(mk.Metadata.Annotations.Bf2OrgPlacementId).To(Equal(k.PlacementId))
-			Expect(mk.Metadata.Annotations.Bf2OrgId).To(Equal(k.ID))
-			Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileType).To(Equal(k.InstanceType))
-			Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileQuotaConsumed).To(Equal(strconv.Itoa(instanceSize.QuotaConsumed)))
-			Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
-			Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
-			Expect(mk.Spec.Versions.Kafka).To(Equal(k.DesiredKafkaVersion))
-			Expect(mk.Spec.Versions.KafkaIbp).To(Equal(k.DesiredKafkaIBPVersion))
-			Expect(mk.Spec.Endpoint.Tls).To(BeNil())
-			Expect(mk.Spec.Capacity.IngressPerSec).To(Equal(instanceSize.IngressThroughputPerSec.String()))
-			Expect(mk.Spec.Capacity.EgressPerSec).To(Equal(instanceSize.EgressThroughputPerSec.String()))
-			Expect(mk.Spec.Capacity.TotalMaxConnections).To(Equal(int32(instanceSize.TotalMaxConnections)))
-			Expect(mk.Spec.Capacity.MaxConnectionAttemptsPerSec).To(Equal(int32(instanceSize.MaxConnectionAttemptsPerSec)))
-			Expect(mk.Spec.Capacity.MaxDataRetentionPeriod).To(Equal(instanceSize.MaxDataRetentionPeriod))
-			Expect(mk.Spec.Capacity.MaxPartitions).To(Equal(int32(instanceSize.MaxPartitions)))
+			g.Expect(mk.Metadata.Name).To(gomega.Equal(k.Name))
+			g.Expect(mk.Metadata.Annotations.Bf2OrgPlacementId).To(gomega.Equal(k.PlacementId))
+			g.Expect(mk.Metadata.Annotations.Bf2OrgId).To(gomega.Equal(k.ID))
+			g.Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileType).To(gomega.Equal(k.InstanceType))
+			g.Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileQuotaConsumed).To(gomega.Equal(strconv.Itoa(instanceSize.QuotaConsumed)))
+			g.Expect(mk.Metadata.Namespace).NotTo(gomega.BeEmpty())
+			g.Expect(mk.Spec.Deleted).To(gomega.Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
+			g.Expect(mk.Spec.Versions.Kafka).To(gomega.Equal(k.DesiredKafkaVersion))
+			g.Expect(mk.Spec.Versions.KafkaIbp).To(gomega.Equal(k.DesiredKafkaIBPVersion))
+			g.Expect(mk.Spec.Endpoint.Tls).To(gomega.BeNil())
+			g.Expect(mk.Spec.Capacity.IngressPerSec).To(gomega.Equal(instanceSize.IngressThroughputPerSec.String()))
+			g.Expect(mk.Spec.Capacity.EgressPerSec).To(gomega.Equal(instanceSize.EgressThroughputPerSec.String()))
+			g.Expect(mk.Spec.Capacity.TotalMaxConnections).To(gomega.Equal(int32(instanceSize.TotalMaxConnections)))
+			g.Expect(mk.Spec.Capacity.MaxConnectionAttemptsPerSec).To(gomega.Equal(int32(instanceSize.MaxConnectionAttemptsPerSec)))
+			g.Expect(mk.Spec.Capacity.MaxDataRetentionPeriod).To(gomega.Equal(instanceSize.MaxDataRetentionPeriod))
+			g.Expect(mk.Spec.Capacity.MaxPartitions).To(gomega.Equal(int32(instanceSize.MaxPartitions)))
 		} else {
 			t.Error("failed matching managedkafka id with kafkarequest id")
 			break
@@ -340,6 +348,8 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 }
 
 func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
@@ -412,7 +422,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 	// create dummy kafkas
 	db := test.TestServices.DBFactory.New()
 	if err := db.Create(&testKafkas).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -424,21 +434,21 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 		if resp != nil {
 			resp.Body.Close()
 		}
-		Expect(err).To(BeNil())
-		Expect(result.DeprecatedKafkaStorageSize).To(Equal(biggerStorageUpdateRequest.DeprecatedKafkaStorageSize))
+		g.Expect(err).To(gomega.BeNil())
+		g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(biggerStorageUpdateRequest.DeprecatedKafkaStorageSize))
 
 		dataRetentionSizeQuantity := config.Quantity(biggerStorageUpdateRequest.DeprecatedKafkaStorageSize)
 		dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
-		Expect(convErr).ToNot(HaveOccurred())
-		Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
+		g.Expect(convErr).ToNot(gomega.HaveOccurred())
+		g.Expect(result.MaxDataRetentionSize.Bytes).To(gomega.Equal(dataRetentionSizeBytes))
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 
 	var readyClusters, deletedClusters []string
 	updates := map[string]private.DataPlaneKafkaStatus{}
@@ -487,7 +497,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	// wait for the CNAMEs for routes to be created
 	waitErr := common.NewPollerBuilder(test.TestServices.DBFactory).
@@ -501,14 +511,14 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			// if one route is created, it is safe to assume all routes are created
 			return c.RoutesCreated, nil
 		}).Build().Poll()
-	Expect(waitErr).To(BeNil())
+	g.Expect(waitErr).To(gomega.BeNil())
 
 	// Send the requests again, this time the instances should be ready because routes are created
 	resp, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	for _, cid := range readyClusters {
 		c := &dbapi.KafkaRequest{}
@@ -527,16 +537,16 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 				sentReadyCondition = cond.Reason
 			}
 		}
-		Expect(sentReadyCondition).NotTo(BeEmpty())
+		g.Expect(sentReadyCondition).NotTo(gomega.BeEmpty())
 
 		// Test version related reported fields
-		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
-		Expect(c.ActualKafkaVersion).To(Equal(sentUpdate.Versions.Kafka))
-		Expect(c.ActualKafkaIBPVersion).To(Equal(sentUpdate.Versions.KafkaIbp))
-		Expect(c.ActualStrimziVersion).To(Equal(sentUpdate.Versions.Strimzi))
-		Expect(c.StrimziUpgrading).To(Equal(sentReadyCondition == "StrimziUpdating"))
-		Expect(c.KafkaUpgrading).To(Equal(sentReadyCondition == "KafkaUpdating"))
-		Expect(c.KafkaIBPUpgrading).To(Equal(sentReadyCondition == "KafkaIbpUpdating"))
+		g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusReady.String()))
+		g.Expect(c.ActualKafkaVersion).To(gomega.Equal(sentUpdate.Versions.Kafka))
+		g.Expect(c.ActualKafkaIBPVersion).To(gomega.Equal(sentUpdate.Versions.KafkaIbp))
+		g.Expect(c.ActualStrimziVersion).To(gomega.Equal(sentUpdate.Versions.Strimzi))
+		g.Expect(c.StrimziUpgrading).To(gomega.Equal(sentReadyCondition == "StrimziUpdating"))
+		g.Expect(c.KafkaUpgrading).To(gomega.Equal(sentReadyCondition == "KafkaUpdating"))
+		g.Expect(c.KafkaIBPUpgrading).To(gomega.Equal(sentReadyCondition == "KafkaIbpUpdating"))
 
 		// TODO test when kafka is being upgraded when kas fleet shard operator side
 		// appropriately reports it
@@ -548,7 +558,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 		if err := db.Unscoped().Where("id = ?", cid).First(c).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
-		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusDeleting.String()))
+		g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusDeleting.String()))
 	}
 
 	for _, cid := range readyClusters {
@@ -569,7 +579,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 		if resp != nil {
 			resp.Body.Close()
 		}
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 
 		c := &dbapi.KafkaRequest{}
 		if err := db.First(c, "id = ?", cid).Error; err != nil {
@@ -577,12 +587,14 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 		}
 
 		// Make sure that the kafka stays in ready state and status of strimzi upgrade is false.
-		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
-		Expect(c.StrimziUpgrading).To(BeFalse())
+		g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusReady.String()))
+		g.Expect(c.StrimziUpgrading).To(gomega.BeFalse())
 	}
 }
 
 func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	cert := "some-fake-cert"
 	key := "some-fake-key"
 	startHook := func(c *config.KafkaConfig) {
@@ -625,7 +637,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -633,19 +645,21 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(len(list.Items)).To(gomega.Equal(1)) // we should have one managed kafka cr
 
 	if mk := findManagedKafkaByID(list.Items, testKafka.ID); mk != nil {
-		Expect(mk.Spec.Endpoint.Tls.Cert).To(Equal(cert))
-		Expect(mk.Spec.Endpoint.Tls.Key).To(Equal(key))
+		g.Expect(mk.Spec.Endpoint.Tls.Cert).To(gomega.Equal(cert))
+		g.Expect(mk.Spec.Endpoint.Tls.Key).To(gomega.Equal(key))
 	} else {
 		t.Error("failed matching managedkafka id with kafkarequest id")
 	}
 }
 
 func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	startHook := func(keycloakConfig *keycloak.KeycloakConfig) {
 		keycloakConfig.EnableAuthenticationOnKafka = true
 	}
@@ -684,7 +698,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -692,22 +706,24 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(len(list.Items)).To(gomega.Equal(1)) // we should have one managed kafka cr
 
 	if mk := findManagedKafkaByID(list.Items, testKafka.ID); mk != nil {
 		// check canary service account
-		Expect(mk.Spec.ServiceAccounts).To(HaveLen(1))
+		g.Expect(mk.Spec.ServiceAccounts).To(gomega.HaveLen(1))
 		canaryServiceAccount := mk.Spec.ServiceAccounts[0]
-		Expect(canaryServiceAccount.Name).To(Equal("canary"))
-		Expect(canaryServiceAccount.Principal).To(Equal(canaryServiceAccountClientId))
-		Expect(canaryServiceAccount.Password).To(Equal(canaryServiceAccountClientSecret))
+		g.Expect(canaryServiceAccount.Name).To(gomega.Equal("canary"))
+		g.Expect(canaryServiceAccount.Principal).To(gomega.Equal(canaryServiceAccountClientId))
+		g.Expect(canaryServiceAccount.Password).To(gomega.Equal(canaryServiceAccountClientSecret))
 	} else {
 		t.Error("failed matching managedkafka id with kafkarequest id")
 	}
 }
 func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	startHook := func(c *keycloak.KeycloakConfig) {
 		c.TLSTrustedCertificatesValue = ""
 	}
@@ -744,7 +760,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -752,18 +768,20 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(len(list.Items)).To(gomega.Equal(1)) // we should have one managed kafka cr
 
 	if mk := findManagedKafkaByID(list.Items, testKafka.ID); mk != nil {
-		Expect(mk.Spec.Oauth.TlsTrustedCertificate).To(BeNil())
+		g.Expect(mk.Spec.Oauth.TlsTrustedCertificate).To(gomega.BeNil())
 	} else {
 		t.Error("failed matching managedkafka id with kafkarequest id")
 	}
 }
 
 func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	startHook := func(c *keycloak.KeycloakConfig) {
 		c.TLSTrustedCertificatesValue = ""
 	}
@@ -801,7 +819,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -809,21 +827,21 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(len(list.Items)).To(gomega.Equal(1)) // we should have one managed kafka cr
 
 	// check session lifetime value when reauthentication is enabled
 	if mk := findManagedKafkaByID(list.Items, testKafka.ID); mk != nil {
-		Expect(mk.Spec.Oauth.MaximumSessionLifetime).ToNot(BeNil())
-		Expect(mk.Spec.Oauth.MaximumSessionLifetime).To(Equal(int64(299000)))
+		g.Expect(mk.Spec.Oauth.MaximumSessionLifetime).ToNot(gomega.BeNil())
+		g.Expect(mk.Spec.Oauth.MaximumSessionLifetime).To(gomega.Equal(int64(299000)))
 	} else {
 		t.Error("failed matching managedkafka id with kafkarequest id")
 	}
 
 	// now disable and check that session lifetime is set to false for first kafka
 	if err := db.Model(testKafka).UpdateColumn("reauthentication_enabled", false).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -843,7 +861,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 	}
 
 	if err := db.Create(anotherTestKafka).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -851,21 +869,21 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 
 	// check session lifetime value when reauthentication is disabled
 	if mk := findManagedKafkaByID(list.Items, testKafka.ID); mk != nil {
-		Expect(mk.Spec.Oauth.MaximumSessionLifetime).ToNot(BeNil())
-		Expect(mk.Spec.Oauth.MaximumSessionLifetime).To(Equal(int64(0)))
+		g.Expect(mk.Spec.Oauth.MaximumSessionLifetime).ToNot(gomega.BeNil())
+		g.Expect(mk.Spec.Oauth.MaximumSessionLifetime).To(gomega.Equal(int64(0)))
 	} else {
 		t.Fatalf("failed matching managedkafka id with kafkarequest id")
 	}
 
 	// check that session lifetime value is set
 	if mk := findManagedKafkaByID(list.Items, anotherTestKafka.ID); mk != nil {
-		Expect(mk.Spec.Oauth.MaximumSessionLifetime).ToNot(BeNil())
-		Expect(mk.Spec.Oauth.MaximumSessionLifetime).To(Equal(int64(299000)))
+		g.Expect(mk.Spec.Oauth.MaximumSessionLifetime).ToNot(gomega.BeNil())
+		g.Expect(mk.Spec.Oauth.MaximumSessionLifetime).To(gomega.Equal(int64(299000)))
 	} else {
 		t.Fatalf("failed matching managedkafka id with kafkarequest id")
 	}
@@ -873,6 +891,8 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 }
 
 func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
@@ -888,7 +908,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 	db := test.TestServices.DBFactory.New()
 	var cluster api.Cluster
 	if err := db.Where("cluster_id = ?", testServer.ClusterID).First(&cluster).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -911,7 +931,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 
 	// create dummy kafkas
 	if err := db.Create(&testKafkas).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -919,9 +939,9 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(len(list.Items)).To(Equal(1)) // only count valid Managed Kafka CR
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(len(list.Items)).To(gomega.Equal(1)) // only count valid Managed Kafka CR
 
 	var readyClusters []string
 	updates := map[string]private.DataPlaneKafkaStatus{}
@@ -953,7 +973,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	// wait for the CNAMEs for routes to be created
 	waitErr := common.NewPollerBuilder(test.TestServices.DBFactory).
@@ -969,7 +989,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 				return false, err
 			}
 			if len(routes) != 2 {
-				return false, errors.Errorf("expected length of routes array to be 1")
+				return false, errors.Errorf("g.Expected length of routes array to be 1")
 			}
 			wantDomain1 := "admin-api-prefix.some-bootstrap⁻host"
 			if routes[0].Domain != wantDomain1 {
@@ -984,22 +1004,22 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 			return c.RoutesCreated, nil
 		}).Build().Poll()
 
-	Expect(waitErr).NotTo(HaveOccurred())
+	g.Expect(waitErr).NotTo(gomega.HaveOccurred())
 
 	// Send the requests again, this time the instances should be ready because routes are created
 	resp, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	for _, cid := range readyClusters {
 		c := &dbapi.KafkaRequest{}
 		if err := db.First(c, "id = ?", cid).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
-		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
-		Expect(c.AdminApiServerURL).To(Equal(adminApiServerUrl))
+		g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusReady.String()))
+		g.Expect(c.AdminApiServerURL).To(gomega.Equal(adminApiServerUrl))
 	}
 
 	db = test.TestServices.DBFactory.New()
@@ -1007,13 +1027,15 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 		ClusterID: testServer.ClusterID,
 	}
 	err = db.Unscoped().Where(clusterDetails).First(clusterDetails).Error
-	Expect(err).NotTo(HaveOccurred(), "failed to find kafka request")
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "failed to find kafka request")
 	if err := getAndDeleteServiceAccounts(clusterDetails.ClientID, testServer.Helper.Env); err != nil {
 		t.Fatalf("Failed to delete service account with client id: %v", clusterDetails.ClientID)
 	}
 }
 
 func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	cert := "some-fake-cert"
 	startHook := func(c *keycloak.KeycloakConfig) {
 		c.TLSTrustedCertificatesValue = cert
@@ -1052,7 +1074,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -1060,12 +1082,12 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(len(list.Items)).To(gomega.Equal(1)) // we should have one managed kafka cr
 
 	if mk := findManagedKafkaByID(list.Items, testKafka.ID); mk != nil {
-		Expect(mk.Spec.Oauth.TlsTrustedCertificate).ToNot(BeNil())
+		g.Expect(mk.Spec.Oauth.TlsTrustedCertificate).ToNot(gomega.BeNil())
 	} else {
 		t.Error("failed matching managedkafka id with kafkarequest id")
 	}
@@ -1078,6 +1100,8 @@ func KeycloakConfig(helper *coreTest.Helper) (c *keycloak.KeycloakConfig) {
 }
 
 func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
@@ -1108,7 +1132,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 
 	// create dummy kafkas
 	if err := db.Create(&testKafka).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -1116,9 +1140,9 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(len(list.Items)).To(gomega.Equal(1)) // we should have one managed kafka cr
 	kafkaReqID := list.Items[0].Metadata.Annotations.Bf2OrgId
 
 	errMessage := "test-err-message"
@@ -1129,17 +1153,19 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	c := &dbapi.KafkaRequest{}
 	if err := db.First(c, "id = ?", kafkaReqID).Error; err != nil {
 		t.Errorf("failed to find kafka cluster with id %s due to error: %v", kafkaReqID, err)
 	}
-	Expect(c.Status).To(Equal(constants2.KafkaRequestStatusFailed.String()))
-	Expect(c.FailedReason).To(Equal("Kafka reported as failed from the data plane"))
+	g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusFailed.String()))
+	g.Expect(c.FailedReason).To(gomega.Equal("Kafka reported as failed from the data plane"))
 }
 
 func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
@@ -1172,7 +1198,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 
 	// create dummy kafkas
 	if err := db.Create(&testKafka).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -1180,9 +1206,9 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(len(list.Items)).To(gomega.Equal(1)) // we should have one managed kafka cr
 	kafkaReqID := list.Items[0].Metadata.Annotations.Bf2OrgId
 
 	updateReq := map[string]private.DataPlaneKafkaStatus{
@@ -1192,14 +1218,14 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	c := &dbapi.KafkaRequest{}
 	if err := db.First(c, "id = ?", kafkaReqID).Error; err != nil {
 		t.Errorf("failed to find kafka cluster with id %s due to error: %v", kafkaReqID, err)
 	}
-	Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
-	Expect(c.FailedReason).To(BeEmpty())
+	g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusReady.String()))
+	g.Expect(c.FailedReason).To(gomega.BeEmpty())
 }
 
 func findManagedKafkaByID(slice []private.ManagedKafka, kafkaId string) *private.ManagedKafka {
@@ -1213,6 +1239,8 @@ func findManagedKafkaByID(slice []private.ManagedKafka, kafkaId string) *private
 }
 
 func TestKafka_unassignKafkaFromDataplaneCluster(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
@@ -1232,7 +1260,7 @@ func TestKafka_unassignKafkaFromDataplaneCluster(t *testing.T) {
 	db := test.TestServices.DBFactory.New()
 	var cluster api.Cluster
 	if err := db.Where("cluster_id = ?", testServer.ClusterID).First(&cluster).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -1268,7 +1296,7 @@ func TestKafka_unassignKafkaFromDataplaneCluster(t *testing.T) {
 
 	// create dummy kafkas
 	if err := db.Create(&testKafkas).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
 
@@ -1276,9 +1304,9 @@ func TestKafka_unassignKafkaFromDataplaneCluster(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(list.Items).To(HaveLen(2)) // only count valid Managed Kafka CR
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(list.Items).To(gomega.HaveLen(2)) // only count valid Managed Kafka CR
 
 	var provisioningKafkas []string
 	updates := map[string]private.DataPlaneKafkaStatus{}
@@ -1298,17 +1326,17 @@ func TestKafka_unassignKafkaFromDataplaneCluster(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	for _, cid := range provisioningKafkas {
 		c := &dbapi.KafkaRequest{}
 		err := db.First(c, "id = ?", cid).Error
-		Expect(err).ToNot(HaveOccurred(), "failed to find kafka cluster with id %s due to error: %v", cid, err)
-		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusProvisioning.String()))
-		Expect(c.ClusterID).To(Equal(""))
-		Expect(c.BootstrapServerHost).To(Equal(""))
-		Expect(c.DesiredKafkaVersion).To(Equal(""))
-		Expect(c.DesiredKafkaIBPVersion).To(Equal(""))
-		Expect(c.DesiredStrimziVersion).To(Equal(""))
+		g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to find kafka cluster with id %s due to error: %v", cid, err)
+		g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusProvisioning.String()))
+		g.Expect(c.ClusterID).To(gomega.Equal(""))
+		g.Expect(c.BootstrapServerHost).To(gomega.Equal(""))
+		g.Expect(c.DesiredKafkaVersion).To(gomega.Equal(""))
+		g.Expect(c.DesiredKafkaIBPVersion).To(gomega.Equal(""))
+		g.Expect(c.DesiredStrimziVersion).To(gomega.Equal(""))
 	}
 }

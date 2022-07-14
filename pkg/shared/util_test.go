@@ -3,7 +3,7 @@ package shared
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_SafeString(t *testing.T) {
@@ -32,13 +32,13 @@ func Test_SafeString(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(SafeString(tt.args.ptr)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+
+			g.Expect(SafeString(tt.args.ptr)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -69,13 +69,14 @@ func Test_SafeInt64(t *testing.T) {
 			want: int64(10),
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(SafeInt64(tt.args.ptr)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+
+			g.Expect(SafeInt64(tt.args.ptr)).To(gomega.Equal(tt.want))
 		})
 	}
 }

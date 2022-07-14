@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	ocmErrors "github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/pkg/errors"
 )
@@ -22,21 +22,21 @@ var (
 )
 
 func TestErrorFormatting(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 	err := New(ErrorGeneral, "test %s, %d", "errors", 1)
-	Expect(err.Reason).To(Equal("test errors, 1"))
+	g.Expect(err.Reason).To(gomega.Equal("test errors, 1"))
 }
 
 func TestErrorFind(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 	exists, err := Find(ErrorNotFound)
-	Expect(exists).To(Equal(true))
-	Expect(err.Code).To(Equal(ErrorNotFound))
+	g.Expect(exists).To(gomega.Equal(true))
+	g.Expect(err.Code).To(gomega.Equal(ErrorNotFound))
 
 	// Hopefully we never reach 91,823,719 error codes or this test will fail
 	exists, err = Find(ServiceErrorCode(91823719))
-	Expect(exists).To(Equal(false))
-	Expect(err).To(BeNil())
+	g.Expect(exists).To(gomega.Equal(false))
+	g.Expect(err).To(gomega.BeNil())
 }
 
 func Test_NewErrorFromHTTPStatusCode(t *testing.T) {
@@ -112,13 +112,12 @@ func Test_NewErrorFromHTTPStatusCode(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(NewErrorFromHTTPStatusCode(tt.args.httpCode, tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(NewErrorFromHTTPStatusCode(tt.args.httpCode, tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -166,19 +165,18 @@ func Test_NewWithCause(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			err := NewWithCause(tt.args.code, tt.args.cause, tt.args.reason)
-			Expect(err.Code).To(Equal(tt.want.Code))
-			Expect(err.Reason).To(Equal(tt.want.Reason))
-			Expect(err.HttpCode).To(Equal(tt.want.HttpCode))
+			g.Expect(err.Code).To(gomega.Equal(tt.want.Code))
+			g.Expect(err.Reason).To(gomega.Equal(tt.want.Reason))
+			g.Expect(err.HttpCode).To(gomega.Equal(tt.want.HttpCode))
 			if err.cause != nil {
 				_, ok := err.cause.(stackTracer)
-				Expect((ok)).To(BeTrue())
+				g.Expect((ok)).To(gomega.BeTrue())
 			}
 		})
 	}
@@ -202,13 +200,12 @@ func Test_FailedToCreateSSOClient(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToCreateSSOClient(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(FailedToCreateSSOClient(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -231,13 +228,12 @@ func Test_FailedToGetSSOClientSecret(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToGetSSOClientSecret(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(FailedToGetSSOClientSecret(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -260,13 +256,12 @@ func Test_FailedToGetSSOClient(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToGetSSOClient(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(FailedToGetSSOClient(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -289,13 +284,12 @@ func Test_FailedToDeleteSSOClient(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToDeleteSSOClient(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(FailedToDeleteSSOClient(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -318,13 +312,12 @@ func Test_FailedToCreateServiceAccount(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToCreateServiceAccount(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(FailedToCreateServiceAccount(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -347,13 +340,12 @@ func Test_FailedToDeleteServiceAccount(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToDeleteServiceAccount(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(FailedToDeleteServiceAccount(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -376,13 +368,12 @@ func Test_MaxLimitForServiceAccountReached(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MaxLimitForServiceAccountReached(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(MaxLimitForServiceAccountReached(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -405,13 +396,12 @@ func Test_FailedToGetServiceAccount(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToGetServiceAccount(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(FailedToGetServiceAccount(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -434,13 +424,12 @@ func Test_ServiceAccountNotFound(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(ServiceAccountNotFound(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(ServiceAccountNotFound(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -463,13 +452,12 @@ func Test_RegionNotSupported(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(RegionNotSupported(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(RegionNotSupported(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -492,13 +480,12 @@ func Test_InstanceTypeNotSupported(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(InstanceTypeNotSupported(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(InstanceTypeNotSupported(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -521,13 +508,12 @@ func Test_ProviderNotSupported(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(ProviderNotSupported(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(ProviderNotSupported(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -550,13 +536,12 @@ func Test_InstancePlanNotSupported(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(InstancePlanNotSupported(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(InstancePlanNotSupported(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -579,13 +564,12 @@ func Test_MalformedKafkaClusterName(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MalformedKafkaClusterName(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(MalformedKafkaClusterName(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -608,13 +592,12 @@ func Test_MalformedServiceAccountName(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MalformedServiceAccountName(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(MalformedServiceAccountName(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -637,13 +620,12 @@ func Test_MalformedServiceAccountDesc(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MalformedServiceAccountDesc(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(MalformedServiceAccountDesc(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -666,13 +648,12 @@ func Test_MalformedServiceAccountId(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MalformedServiceAccountId(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(MalformedServiceAccountId(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -688,13 +669,12 @@ func Test_DuplicateKafkaClusterName(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(DuplicateKafkaClusterName()).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(DuplicateKafkaClusterName()).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -717,13 +697,12 @@ func Test_MinimumFieldLengthNotReached(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MinimumFieldLengthNotReached(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(MinimumFieldLengthNotReached(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -746,13 +725,12 @@ func Test_MaximumFieldLengthExceeded(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MaximumFieldLengthExceeded(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(MaximumFieldLengthExceeded(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -768,13 +746,12 @@ func Test_UnableToSendErrorResponse(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(UnableToSendErrorResponse()).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(UnableToSendErrorResponse()).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -797,13 +774,12 @@ func Test_FailedToParseQueryParms(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToParseQueryParms(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(FailedToParseQueryParms(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -823,13 +799,12 @@ func Test_FieldValidationError(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FieldValidationError(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(FieldValidationError(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -849,13 +824,12 @@ func Test_InsufficientQuotaError(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(InsufficientQuotaError(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(InsufficientQuotaError(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -875,13 +849,12 @@ func Test_FailedToCheckQuota(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToCheckQuota(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(FailedToCheckQuota(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -901,13 +874,12 @@ func Test_InvalidBillingAccount(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(InvalidBillingAccount(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(InvalidBillingAccount(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -930,13 +902,12 @@ func Test_TermsNotAccepted(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(TermsNotAccepted(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(TermsNotAccepted(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -959,13 +930,12 @@ func Test_Unauthenticated(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(Unauthenticated(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(Unauthenticated(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -988,13 +958,12 @@ func Test_Maintenance(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(Maintenance(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(Maintenance(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -1017,13 +986,12 @@ func Test_MaximumAllowedInstanceReached(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MaximumAllowedInstanceReached(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(MaximumAllowedInstanceReached(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -1046,13 +1014,12 @@ func Test_TooManyKafkaInstancesReached(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(TooManyKafkaInstancesReached(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(TooManyKafkaInstancesReached(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -1075,13 +1042,12 @@ func Test_Validation(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(Validation(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(Validation(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -1104,13 +1070,12 @@ func Test_MalformedRequest(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(MalformedRequest(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(MalformedRequest(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -1130,13 +1095,12 @@ func Test_FailedToParseSearch(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(FailedToParseSearch(tt.args.reason)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(FailedToParseSearch(tt.args.reason)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -1152,13 +1116,12 @@ func Test_SyncActionNotSupported(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(SyncActionNotSupported()).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(SyncActionNotSupported()).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -1181,13 +1144,12 @@ func Test_CodeStr(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(CodeStr(tt.args.code)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(CodeStr(tt.args.code)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1210,21 +1172,20 @@ func Test_Href(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(Href(tt.args.code)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(Href(tt.args.code)).To(gomega.Equal(tt.want))
 		})
 	}
 }
 
 func Test_ToServiceError(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 	sampleNonServiceError, err := ocmErrors.NewError().Reason("Unspecified error").Build()
-	Expect(err).To(BeNil())
+	g.Expect(err).To(gomega.BeNil())
 	type args struct {
 		err error
 	}
@@ -1249,13 +1210,12 @@ func Test_ToServiceError(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(ToServiceError(tt.args.err)).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(ToServiceError(tt.args.err)).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -1287,13 +1247,12 @@ func Test_Is404(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.Is404()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.Is404()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1325,13 +1284,12 @@ func Test_IsConflict(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsConflict()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsConflict()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1363,13 +1321,12 @@ func Test_IsForbidden(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsForbidden()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsForbidden()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1401,13 +1358,12 @@ func Test_IsFailedToCreateSSOClient(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsFailedToCreateSSOClient()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsFailedToCreateSSOClient()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1439,13 +1395,12 @@ func Test_IsFailedToGetSSOClientSecret(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsFailedToGetSSOClientSecret()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsFailedToGetSSOClientSecret()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1477,13 +1432,12 @@ func Test_IsFailedToGetSSOClient(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsFailedToGetSSOClient()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsFailedToGetSSOClient()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1515,13 +1469,12 @@ func Test_IsFailedToDeleteSSOClient(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsFailedToDeleteSSOClient()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsFailedToDeleteSSOClient()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1553,13 +1506,12 @@ func Test_IsFailedToCreateServiceAccount(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsFailedToCreateServiceAccount()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsFailedToCreateServiceAccount()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1591,13 +1543,12 @@ func Test_IsFailedToGetServiceAccount(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsFailedToGetServiceAccount()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsFailedToGetServiceAccount()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1629,13 +1580,12 @@ func Test_IsFailedToDeleteServiceAccount(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsFailedToDeleteServiceAccount()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsFailedToDeleteServiceAccount()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1667,13 +1617,12 @@ func Test_IsServiceAccountNotFound(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsServiceAccountNotFound()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsServiceAccountNotFound()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1705,13 +1654,12 @@ func Test_IsMaxLimitForServiceAccountReached(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsMaxLimitForServiceAccountReached()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsMaxLimitForServiceAccountReached()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1743,13 +1691,12 @@ func Test_IsBadRequest(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsBadRequest()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsBadRequest()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1781,13 +1728,12 @@ func Test_InSufficientQuota(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.InSufficientQuota()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.InSufficientQuota()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1819,13 +1765,12 @@ func Test_IsFailedToCheckQuota(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsFailedToCheckQuota()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsFailedToCheckQuota()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1857,13 +1802,12 @@ func Test_IsInstanceTypeNotSupported(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsInstanceTypeNotSupported()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsInstanceTypeNotSupported()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1904,13 +1848,12 @@ func Test_IsClientErrorClass(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsClientErrorClass()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsClientErrorClass()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1942,13 +1885,12 @@ func Test_IsServerErrorClass(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.IsServerErrorClass()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.IsServerErrorClass()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -2000,13 +1942,12 @@ func Test_AsOpenapiError(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.AsOpenapiError(tt.args.operationID, tt.args.basePath)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.AsOpenapiError(tt.args.operationID, tt.args.basePath)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -2047,13 +1988,12 @@ func Test_StackTrace(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.StackTrace()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.StackTrace()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -2076,13 +2016,12 @@ func Test_AsError(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.AsError()).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.AsError()).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -2110,13 +2049,12 @@ func Test_ErrorListToString(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.Error()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.Error()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -2139,13 +2077,12 @@ func Test_Unwrap(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.Unwrap()).To(MatchError(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.Unwrap()).To(gomega.MatchError(tt.want))
 		})
 	}
 }
@@ -2175,13 +2112,12 @@ func Test_ErrorToString(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(tt.fields.err.Error()).To(BeEquivalentTo(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.err.Error()).To(gomega.BeEquivalentTo(tt.want))
 		})
 	}
 }

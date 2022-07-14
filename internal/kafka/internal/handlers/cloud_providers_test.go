@@ -11,7 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 var (
@@ -233,21 +233,20 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			h := NewCloudProviderHandler(tt.fields.cloudProvidersService, tt.fields.providerConfig, tt.fields.kafkaService,
 				tt.fields.clusterPlacementStrategy, tt.fields.kafkaConfig)
 
-			req, rw := GetHandlerParams("GET", tt.args.url, nil)
+			req, rw := GetHandlerParams("GET", tt.args.url, nil, t)
 			if tt.args.id != "" {
 				req = mux.SetURLVars(req, map[string]string{"id": tt.args.id})
 			}
 			h.ListCloudProviderRegions(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 			resp.Body.Close()
 		})
 	}
@@ -306,18 +305,17 @@ func Test_ListCloudProviders(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			h := NewCloudProviderHandler(tt.fields.cloudProvidersService, tt.fields.providerConfig, tt.fields.kafkaService,
 				nil, tt.fields.kafkaConfig)
 
-			req, rw := GetHandlerParams("GET", "/", nil)
+			req, rw := GetHandlerParams("GET", "/", nil, t)
 			h.ListCloudProviders(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 			resp.Body.Close()
 		})
 	}

@@ -11,7 +11,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
 
@@ -547,20 +547,20 @@ func Test_AMSGetBillingModel(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, tt.fields.kafkaConfig)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 
 			billingModel, err := quotaService.(*amsQuotaService).getBillingModel(&tt.args.request, types.STANDARD)
-			Expect(billingModel).To(Equal(tt.wantBillingModel))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(billingModel).To(gomega.Equal(tt.wantBillingModel))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 
 			match, bm := quotaService.(*amsQuotaService).billingModelMatches(billingModel, tt.args.request.BillingModel)
-			Expect(match).To(Equal(tt.wantMatch))
-			Expect(bm).To(Equal(tt.wantInferredBillingModel))
+			g.Expect(match).To(gomega.Equal(tt.wantMatch))
+			g.Expect(bm).To(gomega.Equal(tt.wantInferredBillingModel))
 		})
 	}
 
@@ -687,14 +687,14 @@ func Test_AMSValidateBillingAccount(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, tt.fields.kafkaConfig)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			err := quotaService.ValidateBillingAccount(tt.args.orgId, types.STANDARD, tt.args.billingAccountId, tt.args.marketplace)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -856,10 +856,10 @@ func Test_AMSCheckQuota(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, tt.fields.kafkaConfig)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
@@ -873,15 +873,15 @@ func Test_AMSCheckQuota(t *testing.T) {
 			}
 
 			sq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, types.STANDARD)
-			Expect(err).ToNot(HaveOccurred())
+			g.Expect(err).ToNot(gomega.HaveOccurred())
 			eq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, types.DEVELOPER)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(sq).To(Equal(tt.args.hasStandardQuota))
+			g.Expect(err).ToNot(gomega.HaveOccurred())
+			g.Expect(sq).To(gomega.Equal(tt.args.hasStandardQuota))
 			fmt.Printf("eq is %v\n", eq)
-			Expect(eq).To(Equal(tt.args.hasDeveloperQuota))
+			g.Expect(eq).To(gomega.Equal(tt.args.hasDeveloperQuota))
 
 			_, err = quotaService.ReserveQuota(kafka, tt.args.kafkaInstanceType)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1181,10 +1181,11 @@ func Test_AMSReserveQuota(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, tt.fields.kafkaConfig)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
@@ -1196,17 +1197,17 @@ func Test_AMSReserveQuota(t *testing.T) {
 				InstanceType: string(tt.args.kafkaInstanceType),
 			}
 			subId, err := quotaService.ReserveQuota(kafka, types.STANDARD)
-			Expect(subId).To(Equal(tt.want))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(subId).To(gomega.Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 
 			if tt.wantBillingModel != "" {
 				ocmClientMock := tt.fields.ocmClient.(*ocm.ClientMock)
 				clusterAuthorizationCalls := ocmClientMock.ClusterAuthorizationCalls()
-				Expect(len(clusterAuthorizationCalls)).To(Equal(1))
+				g.Expect(len(clusterAuthorizationCalls)).To(gomega.Equal(1))
 				clusterAuthorizationResources := clusterAuthorizationCalls[0].Cb.Resources()
-				Expect(clusterAuthorizationResources).To(HaveLen(1))
+				g.Expect(clusterAuthorizationResources).To(gomega.HaveLen(1))
 				clusterAuthorizationResource := clusterAuthorizationResources[0]
-				Expect(clusterAuthorizationResource.BillingModel()).To(BeEquivalentTo(tt.wantBillingModel))
+				g.Expect(clusterAuthorizationResource.BillingModel()).To(gomega.BeEquivalentTo(tt.wantBillingModel))
 			}
 		})
 	}
@@ -1438,15 +1439,15 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.ocmClient, nil, nil, &defaultKafkaConf)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
 			res, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(tt.args.kafkaRequest.Owner, tt.args.kafkaRequest.OrganisationId, tt.args.kafkaInstanceType)
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(res).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }

@@ -3,7 +3,7 @@ package arrays
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_FindFirst(t *testing.T) {
@@ -61,15 +61,14 @@ func Test_FindFirst(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			gotIndex, gotVal := FindFirst(tt.args.predicate, tt.args.values...)
-			Expect(gotIndex).To(Equal(tt.expectedIndex))
+			g.Expect(gotIndex).To(gomega.Equal(tt.expectedIndex))
 			if gotVal != nil {
-				Expect(gotVal).To(Equal(tt.expectedValue))
+				g.Expect(gotVal).To(gomega.Equal(tt.expectedValue))
 			}
 		})
 	}

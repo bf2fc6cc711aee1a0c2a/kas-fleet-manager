@@ -9,7 +9,7 @@ import (
 	mockKafkas "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	w "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestProvisioningKafkaManager_Reconcile(t *testing.T) {
@@ -61,13 +61,12 @@ func TestProvisioningKafkaManager_Reconcile(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(len(NewProvisioningKafkaManager(tt.fields.kafkaService, w.Reconciler{}).Reconcile()) > 0).To(Equal(tt.wantErr))
+			g := gomega.NewWithT(t)
+			g.Expect(len(NewProvisioningKafkaManager(tt.fields.kafkaService, w.Reconciler{}).Reconcile()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

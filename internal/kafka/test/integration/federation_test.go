@@ -14,10 +14,11 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/golang-jwt/jwt/v4"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestFederation_GetFederatedMetrics(t *testing.T) {
+	g := gomega.NewWithT(t)
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -75,14 +76,16 @@ func TestFederation_GetFederatedMetrics(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to call federation endpoint:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(federatedMetrics).NotTo(BeEmpty())
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to call federation endpoint:  %v", err)
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(federatedMetrics).NotTo(gomega.BeEmpty())
 }
 
 // NOTE: MAS SSO auth support for the /federate endpoint is only a temporary solution.
 // This should be removed once we migrate to sso.redhat.com (TODO: to be removed as part of MGDSTRM-6159)
 func TestFederation_GetFederatedMetricsUsingMasSsoToken(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -150,7 +153,7 @@ func TestFederation_GetFederatedMetricsUsingMasSsoToken(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to call federation endpoint:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(federatedMetrics).NotTo(BeEmpty())
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to call federation endpoint:  %v", err)
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(federatedMetrics).NotTo(gomega.BeEmpty())
 }

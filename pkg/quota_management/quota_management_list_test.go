@@ -3,7 +3,7 @@ package quota_management
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_OrganisationList_GetById(t *testing.T) {
@@ -65,14 +65,14 @@ func Test_OrganisationList_GetById(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			organisation, ok := tt.orgs.GetById(tt.arg)
-			Expect(organisation).To(Equal(tt.want.organisation))
-			Expect(ok).To(Equal(tt.want.ok))
+			g.Expect(organisation).To(gomega.Equal(tt.want.organisation))
+			g.Expect(ok).To(gomega.Equal(tt.want.ok))
 		})
 	}
 }
@@ -130,13 +130,14 @@ func Test_Organisation_IsUserAllowed(t *testing.T) {
 			want: false,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			ok := tt.org.IsUserRegistered(tt.arg)
-			Expect(ok).To(Equal(tt.want))
+			g.Expect(ok).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -166,13 +167,14 @@ func Test_Organisation_HasAllowedAccounts(t *testing.T) {
 			want: true,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			ok := tt.org.HasUsersRegistered()
-			Expect(ok).To(Equal(tt.want))
+			g.Expect(ok).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -221,14 +223,15 @@ func Test_AllowedAccounts_GetByUsername(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			user, found := tt.allowedAccounts.GetByUsername(tt.arg)
-			Expect(user).To(Equal(tt.want.allowedAccount))
-			Expect(found).To(Equal(tt.want.found))
+			g.Expect(user).To(gomega.Equal(tt.want.allowedAccount))
+			g.Expect(found).To(gomega.Equal(tt.want.found))
 		})
 	}
 }
@@ -291,13 +294,13 @@ func Test_AllowedAccount_IsInstanceCountWithinLimit(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			ok := tt.item.IsInstanceCountWithinLimit(tt.count)
-			Expect(ok).To(Equal(tt.want))
+			g.Expect(ok).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -321,13 +324,13 @@ func Test_AllowedAccount_GetMaxAllowedInstances(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			ok := tt.allowedAccount.GetMaxAllowedInstances()
-			Expect(ok).To(Equal(tt.want))
+			g.Expect(ok).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -342,11 +345,12 @@ func Test_GetDefaultMaxAllowedInstances(t *testing.T) {
 			want: 1,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(GetDefaultMaxAllowedInstances()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(GetDefaultMaxAllowedInstances()).To(gomega.Equal(tt.want))
 		})
 	}
 }

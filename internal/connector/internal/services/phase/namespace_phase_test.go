@@ -1,9 +1,10 @@
 package phase
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
-	. "github.com/onsi/gomega"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/onsi/gomega"
 )
 
 func Test_PerformNamespaceOperation(t *testing.T) {
@@ -49,9 +50,8 @@ func Test_PerformNamespaceOperation(t *testing.T) {
 
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.scenario, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 
 			cluster := &dbapi.ConnectorCluster{
 				Status: dbapi.ConnectorClusterStatus{
@@ -65,11 +65,11 @@ func Test_PerformNamespaceOperation(t *testing.T) {
 			}
 			updated, err := PerformNamespaceOperation(cluster, namespace, tt.operation)
 
-			Expect(updated).Should(Equal(tt.updated), "PerformNamespaceOperation phase updated=%v, expect updated=%v", updated, tt.updated)
-			Expect(err != nil).Should(Equal(tt.expectError), "PerformNamespaceOperation error=%v, expectError=%v", err, tt.expectError)
+			g.Expect(updated).Should(gomega.Equal(tt.updated), "PerformNamespaceOperation phase updated=%v, expect updated=%v", updated, tt.updated)
+			g.Expect(err != nil).Should(gomega.Equal(tt.expectError), "PerformNamespaceOperation error=%v, expectError=%v", err, tt.expectError)
 
 			phase := namespace.Status.Phase
-			Expect(phase).Should(Equal(tt.result), "PerformNamespaceOperation phase=%v, expect phase=%v", phase, tt.result)
+			g.Expect(phase).Should(gomega.Equal(tt.result), "PerformNamespaceOperation phase=%v, expect phase=%v", phase, tt.result)
 		})
 	}
 }

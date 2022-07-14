@@ -3,7 +3,7 @@ package config
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_NewKafkaConfig(t *testing.T) {
@@ -28,13 +28,12 @@ func Test_NewKafkaConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(NewKafkaConfig()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(NewKafkaConfig()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -89,17 +88,16 @@ func Test_ReadFilesKafkaConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			config := tt.fields.config
 			if tt.modifyFn != nil {
 				tt.modifyFn(config)
 			}
-			Expect(config.ReadFiles() != nil).To(Equal(tt.wantErr))
+			g.Expect(config.ReadFiles() != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

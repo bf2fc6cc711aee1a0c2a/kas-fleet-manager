@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 var (
@@ -42,8 +42,8 @@ var (
 )
 
 func Test_InstanceTypeMapAsSlice(t *testing.T) {
-	RegisterTestingT(t)
-	Expect(instTypeMap.AsSlice()).To(Equal([]string{"standard"}))
+	g := gomega.NewWithT(t)
+	g.Expect(instTypeMap.AsSlice()).To(gomega.Equal([]string{"standard"}))
 }
 
 func Test_IsInstanceTypeSupported(t *testing.T) {
@@ -72,13 +72,12 @@ func Test_IsInstanceTypeSupported(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(region.IsInstanceTypeSupported(InstanceType(tt.args.instanceType))).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(region.IsInstanceTypeSupported(InstanceType(tt.args.instanceType))).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -112,15 +111,14 @@ func Test_getLimitSetForInstanceTypeInRegion(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			limit, err := region.getLimitSetForInstanceTypeInRegion(tt.args.instanceType)
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(limit).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(limit).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -154,15 +152,14 @@ func Test_GetByName(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			region, found := regionList.GetByName(tt.fields.regionName)
-			Expect(region).To(Equal(tt.want))
-			Expect(found).To(Equal(tt.found))
+			g.Expect(region).To(gomega.Equal(tt.want))
+			g.Expect(found).To(gomega.Equal(tt.found))
 		})
 	}
 }
@@ -193,13 +190,12 @@ func Test_String_RegionList(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.regionList.String()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.regionList.String()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -230,13 +226,12 @@ func Test_String_ProviderList(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.providerList.String()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.providerList.String()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -254,13 +249,12 @@ func Test_NewSupportedProvidersConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(NewSupportedProvidersConfig()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(NewSupportedProvidersConfig()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -276,13 +270,12 @@ func Test_ReadFilesProviderConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(NewSupportedProvidersConfig().ReadFiles() != nil).To(Equal(tt.wantErr))
+			g := gomega.NewWithT(t)
+			g.Expect(NewSupportedProvidersConfig().ReadFiles() != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -355,15 +348,14 @@ func Test_GetInstanceLimit(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			limit, err := tt.fields.providerConfig.GetInstanceLimit(tt.args.region, tt.args.providerName, tt.args.InstanceType)
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(limit).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(limit).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -397,14 +389,13 @@ func Test_readFileProvidersConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			err := readFileProvidersConfig(tt.args.file, tt.args.val)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -445,13 +436,12 @@ func Test_IsRegionSupported(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.provider.IsRegionSupported(tt.args.region)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.provider.IsRegionSupported(tt.args.region)).To(gomega.Equal(tt.want))
 		})
 	}
 }

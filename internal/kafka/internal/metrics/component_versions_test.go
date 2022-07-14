@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -49,14 +49,14 @@ func TestVersionsMetrics_Collect(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			m := newVersionMetrics(tt.fields.kafkaService)
 			ch := tt.args.ch
 			m.Collect(ch)
-			Expect(ch).To(HaveLen(tt.want))
+			g.Expect(ch).To(gomega.HaveLen(tt.want))
 		})
 	}
 }
@@ -96,14 +96,14 @@ func TestVersionsMetrics_Describe(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			m := newVersionMetrics(tt.fields.kafkaService)
 			ch := tt.args.ch
 			m.Describe(ch)
-			Expect(ch).To(HaveLen(tt.want))
+			g.Expect(ch).To(gomega.HaveLen(tt.want))
 		})
 	}
 }

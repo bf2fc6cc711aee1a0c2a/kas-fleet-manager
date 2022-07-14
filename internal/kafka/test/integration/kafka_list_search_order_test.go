@@ -14,7 +14,7 @@ import (
 
 	"github.com/antihax/optional"
 	"github.com/bxcodec/faker/v3"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 const (
@@ -35,6 +35,8 @@ type testEnv struct {
 }
 
 func setUp(t *testing.T) *testEnv {
+	g := gomega.NewWithT(t)
+
 	// create a mock ocm api server, keep all endpoints as defaults
 	// see the mocks package for more information on the configurable mock server
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -71,11 +73,11 @@ func setUp(t *testing.T) *testEnv {
 	}
 
 	if err := db.Create(&kafkas).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 	}
 
 	if err := db.Find(&kafkas).Error; err != nil {
-		Expect(err).NotTo(HaveOccurred())
+		g.Expect(err).NotTo(gomega.HaveOccurred())
 	}
 
 	env := testEnv{
@@ -244,41 +246,41 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 			expectedErr: "400 Bad Request",
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range testCases {
 		tc := testcase
 		t.Run(tc.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			list, resp, err := env.client.DefaultApi.GetKafkas(env.ctx, tc.searchOpts)
 			if resp != nil {
 				resp.Body.Close()
 			}
 			if tc.wantErr {
-				Expect(err).To(HaveOccurred(), "Error wantErr: %v : %v", tc.wantErr, err)
+				g.Expect(err).To(gomega.HaveOccurred(), "Error wantErr: %v : %v", tc.wantErr, err)
 
 				if tc.expectedErr != "" {
-					Expect(err.Error()).To(Equal(tc.expectedErr))
+					g.Expect(err.Error()).To(gomega.Equal(tc.expectedErr))
 				}
 			} else {
-				Expect(err).NotTo(HaveOccurred(), "Error wantErr: %v : %v", tc.wantErr, err)
+				g.Expect(err).NotTo(gomega.HaveOccurred(), "Error wantErr: %v : %v", tc.wantErr, err)
 			}
 
 			if err == nil {
-				Expect(list.Size).To(Equal(tc.expectedSize))
-				Expect(list.Total).To(Equal(tc.expectedTotal))
+				g.Expect(list.Size).To(gomega.Equal(tc.expectedSize))
+				g.Expect(list.Total).To(gomega.Equal(tc.expectedTotal))
 
 				if tc.validateResult != nil {
 					err := tc.validateResult(&list)
-					Expect(err).ToNot(HaveOccurred(), "Returned list didn't pass validation: %v", err)
+					g.Expect(err).ToNot(gomega.HaveOccurred(), "Returned list didn't pass validation: %v", err)
 				}
 
 				for i := 0; i < len(tc.expectedOrder); i++ {
-					Expect(list.Items[i].Name).To(Equal(tc.expectedOrder[i]))
+					g.Expect(list.Items[i].Name).To(gomega.Equal(tc.expectedOrder[i]))
 				}
 
 				for i := 0; i < len(tc.notContains); i++ {
 					for _, item := range list.Items {
-						Expect(item.Name).NotTo(Equal(tc.notContains[i]))
+						g.Expect(item.Name).NotTo(gomega.Equal(tc.notContains[i]))
 					}
 				}
 			}

@@ -3,7 +3,7 @@ package stringscanner
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_SQLStringScanner(t *testing.T) {
@@ -72,14 +72,15 @@ func Test_SQLStringScanner(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
+
 			scanner := NewSQLScanner()
 			scanner.Init(tt.value)
 			var allTokens []Token
 			for scanner.Next() {
 				allTokens = append(allTokens, *scanner.Token())
 			}
-			Expect(allTokens).To(Equal(tt.expectedTokens))
+			g.Expect(allTokens).To(gomega.Equal(tt.expectedTokens))
 		})
 	}
 }
@@ -132,15 +133,14 @@ func Test_scanner_Peek(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got, gotVal := tt.s.Peek()
-			Expect(got).To(Equal(tt.want))
-			Expect(gotVal).To(Equal(tt.wantVal))
+			g.Expect(got).To(gomega.Equal(tt.want))
+			g.Expect(gotVal).To(gomega.Equal(tt.wantVal))
 		})
 	}
 }

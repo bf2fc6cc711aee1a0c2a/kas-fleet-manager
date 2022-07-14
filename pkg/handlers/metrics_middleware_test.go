@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_MetricsMiddleware(t *testing.T) {
@@ -18,18 +18,17 @@ func Test_MetricsMiddleware(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			req, rw := GetHandlerParams("GET", "/", nil)
+			g := gomega.NewWithT(t)
+			req, rw := GetHandlerParams("GET", "/", nil, t)
 			m := http.NewServeMux()
 			handler := MetricsMiddleware(m)
-			Expect(handler == nil).To(Equal(tt.wantNil))
+			g.Expect(handler == nil).To(gomega.Equal(tt.wantNil))
 			handler.ServeHTTP(rw, req)
-			Expect(rw.Code).ToNot(Equal(0))
+			g.Expect(rw.Code).ToNot(gomega.Equal(0))
 		})
 	}
 }

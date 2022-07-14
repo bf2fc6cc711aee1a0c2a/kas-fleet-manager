@@ -18,7 +18,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 const (
@@ -27,6 +27,8 @@ const (
 )
 
 func TestObservatorium_ResourceStateMetric(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
@@ -37,11 +39,12 @@ func TestObservatorium_ResourceStateMetric(t *testing.T) {
 
 	service := services.NewObservatoriumService(test.TestServices.ObservatoriumClient, test.TestServices.KafkaService)
 	kafkaState, err := service.GetKafkaState(mockKafkaClusterName, mockResourceNamespace)
-	Expect(err).NotTo(HaveOccurred(), "Error getting kafka state:  %v", err)
-	Expect(kafkaState.State).NotTo(BeEmpty(), "Should return state")
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error getting kafka state:  %v", err)
+	g.Expect(kafkaState.State).NotTo(gomega.BeEmpty(), "Should return state")
 }
 
 func TestObservatorium_GetMetrics(t *testing.T) {
+	g := gomega.NewWithT(t)
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
@@ -90,14 +93,16 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	}
 	context := auth.SetTokenInContext(context.Background(), token)
 	_, err = service.GetMetricsByKafkaId(context, metricsList, seedKafka.Id, q)
-	Expect(err).NotTo(HaveOccurred(), "Error getting kafka metrics:  %v", err)
-	Expect(len(*metricsList)).NotTo(Equal(0), "Should return length greater then zero")
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error getting kafka metrics:  %v", err)
+	g.Expect(len(*metricsList)).NotTo(gomega.Equal(0), "Should return length greater then zero")
 
 	// Delete created kafkas
 	deleteTestKafka(t, h, ctx, client, seedKafka.Id)
 }
 
 func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -140,22 +145,22 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
-	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
-	Expect(kafka.Region).To(Equal(mocks.MockCluster.Region().ID()))
-	Expect(kafka.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
-	Expect(kafka.Name).To(Equal(mockKafkaName))
-	Expect(kafka.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.Kind).To(gomega.Equal(presenters.KindKafka))
+	g.Expect(kafka.Href).To(gomega.Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
+	g.Expect(kafka.Region).To(gomega.Equal(mocks.MockCluster.Region().ID()))
+	g.Expect(kafka.CloudProvider).To(gomega.Equal(mocks.MockCluster.CloudProvider().ID()))
+	g.Expect(kafka.Name).To(gomega.Equal(mockKafkaName))
+	g.Expect(kafka.Status).To(gomega.Equal(constants2.KafkaRequestStatusReady.String()))
 
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 
 	// different account but same org, should be able to read the Kafka cluster
 	acc := h.NewRandAccount()
@@ -164,24 +169,26 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
-	Expect(kafka.Id).NotTo(BeEmpty())
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when loading clients: %v", err)
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty())
 	filters := public.GetMetricsByRangeQueryOpts{}
 	metrics, resp, err := client.DefaultApi.GetMetricsByRangeQuery(context, kafka.Id, 5, 30, &filters)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(len(metrics.Items)).NotTo(Equal(0))
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(len(metrics.Items)).NotTo(gomega.Equal(0))
 
 	firstMetric := metrics.Items[0]
-	Expect(firstMetric.Values[0].Timestamp).NotTo(BeNil())
-	Expect(firstMetric.Values[0].Value).NotTo(BeNil())
+	g.Expect(firstMetric.Values[0].Timestamp).NotTo(gomega.BeNil())
+	g.Expect(firstMetric.Values[0].Value).NotTo(gomega.BeNil())
 
 	deleteTestKafka(t, h, ctx, client, foundKafka.Id)
 }
 func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -218,28 +225,28 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	}
 
 	foundKafka, err := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, seedKafka.Id, constants2.KafkaRequestStatusReady)
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka to be ready")
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for kafka to be ready")
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
-	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
-	Expect(kafka.Region).To(Equal(mocks.MockCluster.Region().ID()))
-	Expect(kafka.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
-	Expect(kafka.Name).To(Equal(mockKafkaName))
-	Expect(kafka.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.Kind).To(gomega.Equal(presenters.KindKafka))
+	g.Expect(kafka.Href).To(gomega.Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
+	g.Expect(kafka.Region).To(gomega.Equal(mocks.MockCluster.Region().ID()))
+	g.Expect(kafka.CloudProvider).To(gomega.Equal(mocks.MockCluster.CloudProvider().ID()))
+	g.Expect(kafka.Name).To(gomega.Equal(mockKafkaName))
+	g.Expect(kafka.Status).To(gomega.Equal(constants2.KafkaRequestStatusReady.String()))
 
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 
 	// different account but same org, should be able to read the Kafka cluster
 	acc := h.NewRandAccount()
@@ -248,20 +255,20 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(kafka.Id).NotTo(BeEmpty())
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty())
 
 	filters := public.GetMetricsByInstantQueryOpts{}
 	metrics, resp, err := client.DefaultApi.GetMetricsByInstantQuery(context, kafka.Id, &filters)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(len(metrics.Items)).NotTo(Equal(0))
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(len(metrics.Items)).NotTo(gomega.Equal(0))
 
 	firstMetric := metrics.Items[0]
-	Expect(firstMetric.Timestamp).NotTo(BeNil())
-	Expect(firstMetric.Value).NotTo(BeNil())
+	g.Expect(firstMetric.Timestamp).NotTo(gomega.BeNil())
+	g.Expect(firstMetric.Value).NotTo(gomega.BeNil())
 
 	deleteTestKafka(t, h, ctx, client, foundKafka.Id)
 }

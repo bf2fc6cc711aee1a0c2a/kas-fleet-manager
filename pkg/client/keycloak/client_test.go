@@ -12,7 +12,7 @@ import (
 
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/golang-jwt/jwt/v4"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"github.com/patrickmn/go-cache"
 )
 
@@ -60,12 +60,11 @@ func Test_kcClient_NewClient(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(NewClient(tt.args.config, tt.args.realmConfig)).NotTo(BeNil())
+			g := gomega.NewWithT(t)
+			g.Expect(NewClient(tt.args.config, tt.args.realmConfig)).NotTo(gomega.BeNil())
 		})
 	}
 }
@@ -94,12 +93,11 @@ func Test_kcClient_ClientConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.kc.ClientConfig(tt.args.client)).NotTo(BeNil())
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.kc.ClientConfig(tt.args.client)).NotTo(gomega.BeNil())
 		})
 	}
 }
@@ -143,12 +141,11 @@ func Test_kcClient_CreateProtocolMapperConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.kc.CreateProtocolMapperConfig(tt.args.name)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.kc.CreateProtocolMapperConfig(tt.args.name)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -194,30 +191,29 @@ func Test_kcClient_CreateClient(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
 				ctx:         context.Background(),
 				realmConfig: &KeycloakRealmConfig{},
 			}
 			id, err := kc.CreateClient(tt.args.client, tt.args.accessToken)
-			Expect(id).To(Equal(tt.want))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(id).To(gomega.Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
 
 func Test_kcClient_GetToken(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, issuerURL)
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	acc, err := authHelper.NewAccount("username", "test-user", "", "org-id-0")
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	type fields struct {
 		goCloakClient gocloak.GoCloak
@@ -317,6 +313,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn(&tt.fields)
 			}
@@ -329,9 +326,9 @@ func Test_kcClient_GetToken(t *testing.T) {
 			}
 			cachedToken, err := kc.GetToken()
 
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if cachedToken != "" && tt.wantNewToken {
-				Expect(goCloakToken.AccessToken).To(Equal(tt.want))
+				g.Expect(goCloakToken.AccessToken).To(gomega.Equal(tt.want))
 			}
 		})
 	}
@@ -443,19 +440,18 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient:    tt.fields.goCloakClient,
 				realmConfig: tt.fields.realmConfig,
 			}
 			internalId, err := kc.IsClientExist(tt.args.requestClientId, tt.args.accessToken)
 
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(internalId).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(internalId).To(gomega.Equal(tt.want))
 
 		})
 	}
@@ -554,20 +550,19 @@ func Test_kcClient_GetClient(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient:    tt.fields.goCloakClient,
 				realmConfig: tt.fields.realmConfig,
 			}
 			client, err := kc.GetClient(tt.args.requestClientId, tt.args.accessToken)
 
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if client != nil {
-				Expect(*client.ID).To(Equal(tt.want))
+				g.Expect(*client.ID).To(gomega.Equal(tt.want))
 			}
 		})
 	}
@@ -640,19 +635,18 @@ func Test_kcClient_GetClientSecret(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
 				ctx:         context.Background(),
 				realmConfig: &KeycloakRealmConfig{},
 			}
 			id, err := kc.GetClientSecret(tt.args.clientID, tt.args.accessToken)
-			Expect(id).To(Equal(tt.want))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(id).To(gomega.Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -703,17 +697,16 @@ func Test_kcClient_DeleteClient(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
 				ctx:         context.Background(),
 				realmConfig: &KeycloakRealmConfig{},
 			}
-			Expect(kc.DeleteClient(clientID, tt.args.accessToken) != nil).To(Equal(tt.wantErr))
+			g.Expect(kc.DeleteClient(clientID, tt.args.accessToken) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -767,19 +760,18 @@ func Test_kcClient_GetClientById(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
 				ctx:         context.Background(),
 				realmConfig: &KeycloakRealmConfig{},
 			}
 			client, err := kc.GetClientById(tt.args.clientID, tt.args.accessToken)
-			Expect(client == nil).To(Equal(tt.wantErr))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(client == nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -795,15 +787,14 @@ func Test_kcClient_GetConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				config: &KeycloakConfig{},
 			}
-			Expect(kc.GetConfig()).To(Equal(tt.want))
+			g.Expect(kc.GetConfig()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -819,13 +810,12 @@ func Test_kcClient_KeycloakRealmConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{realmConfig: &KeycloakRealmConfig{}}
-			Expect(kc.GetRealmConfig()).To(Equal(tt.want))
+			g.Expect(kc.GetRealmConfig()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -878,19 +868,18 @@ func Test_kcClient_GetClientServiceAccount(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
 				ctx:         context.Background(),
 				realmConfig: &KeycloakRealmConfig{},
 			}
 			svcAcc, err := kc.GetClientServiceAccount(tt.args.accessToken, tt.args.internalClient)
-			Expect(svcAcc == nil).To(Equal(tt.wantErr))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(svcAcc == nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -941,17 +930,16 @@ func Test_kcClient_UpdateUser(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
 				ctx:         context.Background(),
 				realmConfig: &KeycloakRealmConfig{},
 			}
-			Expect(kc.UpdateServiceAccountUser(tt.args.accessToken, tt.args.serviceAccountUser) != nil).To(Equal(tt.wantErr))
+			g.Expect(kc.UpdateServiceAccountUser(tt.args.accessToken, tt.args.serviceAccountUser) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1025,11 +1013,11 @@ func Test_kcClient_GetClients(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient: tt.fields.kc,
 				config: &KeycloakConfig{
@@ -1039,8 +1027,8 @@ func Test_kcClient_GetClients(t *testing.T) {
 				realmConfig: &KeycloakRealmConfig{},
 			}
 			clients, err := kc.GetClients(tt.args.accessToken, tt.args.first, tt.args.max, tt.args.attribute)
-			Expect(clients == nil).To(Equal(tt.wantErr))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(clients == nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1087,13 +1075,12 @@ func Test_kcClient_IsSameOrg(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{}
-			Expect(kc.IsSameOrg(tt.args.client, tt.args.orgId)).To(Equal(tt.want))
+			g.Expect(kc.IsSameOrg(tt.args.client, tt.args.orgId)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1140,13 +1127,12 @@ func Test_kcClient_IsOwner(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{}
-			Expect(kc.IsOwner(tt.args.client, tt.args.userId)).To(Equal(tt.want))
+			g.Expect(kc.IsOwner(tt.args.client, tt.args.userId)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1199,19 +1185,18 @@ func Test_kcClient_RegenerateClientSecret(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
 				ctx:         context.Background(),
 				realmConfig: &KeycloakRealmConfig{},
 			}
 			credentials, err := kc.RegenerateClientSecret(tt.args.accessToken, tt.args.id)
-			Expect(credentials).To(Equal(tt.want))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(credentials).To(gomega.Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1279,19 +1264,18 @@ func Test_kcClient_GetRealmRole(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
 				ctx:         context.Background(),
 				realmConfig: &KeycloakRealmConfig{},
 			}
 			role, err := kc.GetRealmRole(tt.args.accessToken, tt.args.roleName)
-			Expect(role).To(Equal(tt.want))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(role).To(gomega.Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1365,19 +1349,18 @@ func Test_kcClient_CreateRealmRole(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
 				ctx:         context.Background(),
 				realmConfig: &KeycloakRealmConfig{},
 			}
 			role, err := kc.CreateRealmRole(tt.args.accessToken, tt.args.roleName)
-			Expect(role).To(Equal(tt.want))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(role).To(gomega.Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1451,19 +1434,18 @@ func Test_kcClient_UserHasRealmRole(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
 				ctx:         context.Background(),
 				realmConfig: &KeycloakRealmConfig{},
 			}
 			role, err := kc.UserHasRealmRole(tt.args.accessToken, tt.args.userId, tt.args.roleName)
-			Expect(role).To(Equal(tt.want))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(role).To(gomega.Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1517,17 +1499,16 @@ func Test_kcClient_AddRealmRoleToUser(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &kcClient{
 				kcClient:    tt.fields.kc,
 				ctx:         context.Background(),
 				realmConfig: &KeycloakRealmConfig{},
 			}
-			Expect(kc.AddRealmRoleToUser(tt.args.accessToken, tt.args.userId, tt.args.role) != nil).To(Equal(tt.wantErr))
+			g.Expect(kc.AddRealmRoleToUser(tt.args.accessToken, tt.args.userId, tt.args.role) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1565,39 +1546,38 @@ func Test_kcClient_isNotFoundError(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(isNotFoundError(tt.args.err)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(isNotFoundError(tt.args.err)).To(gomega.Equal(tt.want))
 		})
 	}
 }
 
 func Test_IsJWTTokenExpired(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 
 	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, "")
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	account, err := authHelper.NewAccount("testuser", "user", "user@email.com", "orgId")
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	nilExpToken, err := authHelper.CreateSignedJWT(account, jwt.MapClaims{
 		"exp": nil,
 	})
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	expiredToken, err := authHelper.CreateSignedJWT(account, jwt.MapClaims{
 		"exp": time.Now().Add(-1 * time.Minute * time.Duration(5)).Unix(),
 	})
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	unExpiredToken, err := authHelper.CreateSignedJWT(account, jwt.MapClaims{
 		"exp": time.Now().Add(time.Minute * time.Duration(5)).Unix(),
 	})
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	type args struct {
 		accessToken string
@@ -1647,7 +1627,8 @@ func Test_IsJWTTokenExpired(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(IsJWTTokenExpired(tt.args.accessToken)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(IsJWTTokenExpired(tt.args.accessToken)).To(gomega.Equal(tt.want))
 		})
 	}
 }

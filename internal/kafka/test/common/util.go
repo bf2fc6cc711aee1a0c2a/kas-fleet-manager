@@ -13,10 +13,9 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
+	"github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-
-	. "github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -231,8 +230,10 @@ func getMetrics(t *testing.T) string {
 
 // CheckMetricExposed - checks whether metric is exposed in the metrics URL
 func CheckMetricExposed(h *test.Helper, t *testing.T, metric string) {
+	g := gomega.NewWithT(t)
+
 	resp := getMetrics(t)
-	Expect(strings.Contains(resp, metric)).To(Equal(true))
+	g.Expect(strings.Contains(resp, metric)).To(gomega.Equal(true))
 }
 
 // IsMetricExposedWithValue - checks whether metric is exposed in the metrics URL and the metric value(s)
@@ -263,6 +264,8 @@ func IsMetricExposedWithValue(t *testing.T, metric string, values ...string) boo
 
 // CheckMetric - check if the given metric exists in the metrics data
 func CheckMetric(h *test.Helper, t *testing.T, metric string, exist bool) {
+	g := gomega.NewWithT(t)
+
 	resp := getMetrics(t)
-	Expect(strings.Contains(resp, metric)).To(Equal(exist))
+	g.Expect(strings.Contains(resp, metric)).To(gomega.Equal(exist))
 }

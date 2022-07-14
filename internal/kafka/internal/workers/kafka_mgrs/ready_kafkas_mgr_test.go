@@ -12,7 +12,7 @@ import (
 	mockKafkas "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	mockServiceAccounts "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/service_accounts"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -95,15 +95,14 @@ func TestReadyKafkaManager_Reconcile(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := NewReadyKafkaManager(tt.fields.kafkaService, tt.fields.keycloakService, tt.fields.keycloakConfig, w.Reconciler{})
 
-			Expect(len(k.Reconcile()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(k.Reconcile()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -199,22 +198,21 @@ func TestReadyKafkaManager_reconcileCanaryServiceAccount(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := &ReadyKafkaManager{
 				kafkaService:    tt.fields.kafkaService,
 				keycloakService: tt.fields.keycloakService,
 			}
 
-			Expect(k.reconcileCanaryServiceAccount(tt.args.kafka) != nil).To(Equal(tt.wantErr))
+			g.Expect(k.reconcileCanaryServiceAccount(tt.args.kafka) != nil).To(gomega.Equal(tt.wantErr))
 
 			if !tt.wantErr {
-				Expect(tt.args.kafka.CanaryServiceAccountClientID).NotTo(BeEmpty())
-				Expect(tt.args.kafka.CanaryServiceAccountClientSecret).NotTo(BeEmpty())
+				g.Expect(tt.args.kafka.CanaryServiceAccountClientID).NotTo(gomega.BeEmpty())
+				g.Expect(tt.args.kafka.CanaryServiceAccountClientSecret).NotTo(gomega.BeEmpty())
 			}
 		})
 	}

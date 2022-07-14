@@ -18,7 +18,7 @@ import (
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/golang-jwt/jwt/v4"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []string) context.Context {
@@ -40,6 +40,7 @@ func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []s
 }
 
 func TestAdminKafka_Get(t *testing.T) {
+	g := gomega.NewWithT(t)
 	sampleKafkaID := api.NewID()
 	desiredStrimziVersion := "test"
 	type args struct {
@@ -60,8 +61,8 @@ func TestAdminKafka_Get(t *testing.T) {
 				kafkaID: sampleKafkaID,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+				g.Expect(err).NotTo(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 			},
 		},
 		{
@@ -73,8 +74,8 @@ func TestAdminKafka_Get(t *testing.T) {
 				kafkaID: sampleKafkaID,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+				g.Expect(err).NotTo(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 			},
 		},
 		{
@@ -86,12 +87,12 @@ func TestAdminKafka_Get(t *testing.T) {
 				kafkaID: sampleKafkaID,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID))
-				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
-				Expect(result.AccountNumber).ToNot(BeEmpty())
-				Expect(result.Namespace).ToNot(BeEmpty())
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID))
+				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal(desiredStrimziVersion))
+				g.Expect(result.AccountNumber).ToNot(gomega.BeEmpty())
+				g.Expect(result.Namespace).ToNot(gomega.BeEmpty())
 			},
 		},
 		{
@@ -103,12 +104,12 @@ func TestAdminKafka_Get(t *testing.T) {
 				kafkaID: sampleKafkaID,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID))
-				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
-				Expect(result.ClusterId).ShouldNot(BeNil())
-				Expect(result.Namespace).ToNot(BeEmpty())
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID))
+				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal(desiredStrimziVersion))
+				g.Expect(result.ClusterId).ShouldNot(gomega.BeNil())
+				g.Expect(result.Namespace).ToNot(gomega.BeEmpty())
 			},
 		},
 		{
@@ -120,12 +121,12 @@ func TestAdminKafka_Get(t *testing.T) {
 				kafkaID: sampleKafkaID,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID))
-				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
-				Expect(result.ClusterId).ShouldNot(BeNil())
-				Expect(result.Namespace).ToNot(BeEmpty())
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID))
+				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal(desiredStrimziVersion))
+				g.Expect(result.ClusterId).ShouldNot(gomega.BeNil())
+				g.Expect(result.Namespace).ToNot(gomega.BeEmpty())
 			},
 		},
 		{
@@ -137,8 +138,8 @@ func TestAdminKafka_Get(t *testing.T) {
 				kafkaID: "unexistingkafkaID",
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(HaveOccurred())
-				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 			},
 		},
 		{
@@ -159,8 +160,8 @@ func TestAdminKafka_Get(t *testing.T) {
 				kafkaID: sampleKafkaID,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(HaveOccurred())
-				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 			},
 		},
 	}
@@ -203,6 +204,7 @@ func TestAdminKafka_Get(t *testing.T) {
 }
 
 func TestAdminKafka_Delete(t *testing.T) {
+	g := gomega.NewWithT(t)
 	type args struct {
 		ctx func(h *coreTest.Helper) context.Context
 	}
@@ -219,8 +221,8 @@ func TestAdminKafka_Delete(t *testing.T) {
 				},
 			},
 			verifyResponse: func(resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+				g.Expect(err).NotTo(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 			},
 		},
 		{
@@ -231,8 +233,8 @@ func TestAdminKafka_Delete(t *testing.T) {
 				},
 			},
 			verifyResponse: func(resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+				g.Expect(err).NotTo(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 			},
 		},
 		{
@@ -243,8 +245,8 @@ func TestAdminKafka_Delete(t *testing.T) {
 				},
 			},
 			verifyResponse: func(resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
 			},
 		},
 	}
@@ -294,6 +296,7 @@ func TestAdminKafka_Delete(t *testing.T) {
 }
 
 func TestAdminKafka_List(t *testing.T) {
+	g := gomega.NewWithT(t)
 	type args struct {
 		ctx           func(h *coreTest.Helper) context.Context
 		kafkaListSize int
@@ -301,7 +304,7 @@ func TestAdminKafka_List(t *testing.T) {
 	tests := []struct {
 		name           string
 		args           args
-		verifyResponse func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, expectedSize int)
+		verifyResponse func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, ExpectedSize int)
 	}{
 		{
 			name: "should fail authentication when there is no role defined in the request",
@@ -311,10 +314,10 @@ func TestAdminKafka_List(t *testing.T) {
 				},
 				kafkaListSize: 0,
 			},
-			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, expectedSize int) {
-				Expect(err).NotTo(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
-				Expect(len(kafkaList.Items)).To(Equal(expectedSize))
+			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, ExpectedSize int) {
+				g.Expect(err).NotTo(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
+				g.Expect(len(kafkaList.Items)).To(gomega.Equal(ExpectedSize))
 			},
 		},
 		{
@@ -325,10 +328,10 @@ func TestAdminKafka_List(t *testing.T) {
 				},
 				kafkaListSize: 2,
 			},
-			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, expectedSize int) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(len(kafkaList.Items)).To(Equal(expectedSize))
+			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, ExpectedSize int) {
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(len(kafkaList.Items)).To(gomega.Equal(ExpectedSize))
 			},
 		},
 		{
@@ -339,10 +342,10 @@ func TestAdminKafka_List(t *testing.T) {
 				},
 				kafkaListSize: 2,
 			},
-			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, expectedSize int) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(len(kafkaList.Items)).To(Equal(expectedSize))
+			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, ExpectedSize int) {
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(len(kafkaList.Items)).To(gomega.Equal(ExpectedSize))
 			},
 		},
 		{
@@ -353,10 +356,10 @@ func TestAdminKafka_List(t *testing.T) {
 				},
 				kafkaListSize: 2,
 			},
-			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, expectedSize int) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(len(kafkaList.Items)).To(Equal(expectedSize))
+			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, ExpectedSize int) {
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(len(kafkaList.Items)).To(gomega.Equal(ExpectedSize))
 			},
 		},
 	}
@@ -407,6 +410,7 @@ func TestAdminKafka_List(t *testing.T) {
 }
 
 func TestAdminKafka_Update(t *testing.T) {
+	g := gomega.NewWithT(t)
 	sampleKafkaID1 := api.NewID()
 	sampleKafkaID2 := api.NewID()
 	sampleKafkaID3 := api.NewID()
@@ -447,7 +451,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -466,7 +470,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -479,8 +483,8 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(HaveOccurred())
-				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 			},
 		},
 		{
@@ -493,18 +497,18 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.DesiredKafkaVersion).To(Equal(allFieldsUpdateRequest.KafkaVersion))
-				Expect(result.DesiredKafkaIbpVersion).To(Equal(allFieldsUpdateRequest.KafkaIbpVersion))
-				Expect(result.DesiredStrimziVersion).To(Equal(allFieldsUpdateRequest.StrimziVersion))
-				Expect(result.DeprecatedKafkaStorageSize).To(Equal(allFieldsUpdateRequest.MaxDataRetentionSize))
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
+				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal(allFieldsUpdateRequest.KafkaVersion))
+				g.Expect(result.DesiredKafkaIbpVersion).To(gomega.Equal(allFieldsUpdateRequest.KafkaIbpVersion))
+				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal(allFieldsUpdateRequest.StrimziVersion))
+				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(allFieldsUpdateRequest.MaxDataRetentionSize))
 
 				dataRetentionSizeQuantity := config.Quantity(allFieldsUpdateRequest.MaxDataRetentionSize)
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
-				Expect(convErr).ToNot(HaveOccurred())
-				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
+				g.Expect(convErr).ToNot(gomega.HaveOccurred())
+				g.Expect(result.MaxDataRetentionSize.Bytes).To(gomega.Equal(dataRetentionSizeBytes))
 			},
 		},
 		// Auth tests
@@ -517,8 +521,8 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaID: sampleKafkaID1,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+				g.Expect(err).NotTo(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 			},
 		},
 		{
@@ -530,8 +534,8 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaID: sampleKafkaID1,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+				g.Expect(err).NotTo(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 			},
 		},
 		{
@@ -543,8 +547,8 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaID: sampleKafkaID1,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+				g.Expect(err).NotTo(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 			},
 		},
 		{
@@ -557,9 +561,9 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID1))
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 			},
 		},
 		{
@@ -572,9 +576,9 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID1))
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 			},
 		},
 		{
@@ -596,8 +600,8 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(HaveOccurred())
-				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 			},
 		},
 		// Kafka ibp downgrade/upgrade tests
@@ -614,7 +618,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -630,7 +634,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -645,7 +649,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -661,10 +665,10 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.DesiredKafkaIbpVersion).To(Equal("2.8.2"))
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
+				g.Expect(result.DesiredKafkaIbpVersion).To(gomega.Equal("2.8.2"))
 			},
 		},
 		// Kafka version downgrade/upgrade tests
@@ -681,7 +685,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -696,7 +700,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -711,7 +715,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -726,7 +730,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -741,7 +745,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -757,10 +761,10 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.DesiredKafkaVersion).To(Equal("2.8.2"))
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
+				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal("2.8.2"))
 			},
 		},
 		{
@@ -776,10 +780,10 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.DesiredKafkaVersion).To(Equal("2.9.0"))
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
+				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal("2.9.0"))
 			},
 		},
 		// Strimzi version downgrade/upgrade tests
@@ -795,7 +799,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -810,7 +814,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -827,7 +831,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -842,7 +846,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		// all version upgrades
@@ -860,12 +864,12 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.DesiredKafkaVersion).To(Equal("2.9.1"))
-				Expect(result.DesiredKafkaIbpVersion).To(Equal("2.9.0"))
-				Expect(result.DesiredStrimziVersion).To(Equal("strimzi-cluster-operator.v0.26.0-0"))
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
+				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal("2.9.1"))
+				g.Expect(result.DesiredKafkaIbpVersion).To(gomega.Equal("2.9.0"))
+				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal("strimzi-cluster-operator.v0.26.0-0"))
 			},
 		},
 		// Storage update tests - using kafka_storage_size (to be removed once kafka_storage_size has been removed)
@@ -883,14 +887,14 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.DeprecatedKafkaStorageSize).To(Equal(allFieldsUpdateRequest.MaxDataRetentionSize))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(allFieldsUpdateRequest.MaxDataRetentionSize))
 
 				dataRetentionSizeQuantity := config.Quantity(allFieldsUpdateRequest.MaxDataRetentionSize)
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
-				Expect(convErr).ToNot(HaveOccurred())
-				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
+				g.Expect(convErr).ToNot(gomega.HaveOccurred())
+				g.Expect(result.MaxDataRetentionSize.Bytes).To(gomega.Equal(dataRetentionSizeBytes))
 			},
 		},
 		{
@@ -905,7 +909,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -920,7 +924,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -935,7 +939,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -950,15 +954,15 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.DeprecatedKafkaStorageSize).To(Equal(biggerStorageSizeDifferentFormat))
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
+				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(biggerStorageSizeDifferentFormat))
 
 				dataRetentionSizeQuantity := config.Quantity(biggerStorageSizeDifferentFormat)
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
-				Expect(convErr).ToNot(HaveOccurred())
-				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
+				g.Expect(convErr).ToNot(gomega.HaveOccurred())
+				g.Expect(result.MaxDataRetentionSize.Bytes).To(gomega.Equal(dataRetentionSizeBytes))
 			},
 		},
 		{
@@ -973,7 +977,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		// Storage update tests - using max_data_retention_size
@@ -989,14 +993,14 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).ToNot(HaveOccurred())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.DeprecatedKafkaStorageSize).To(Equal(initialStorageSize))
+				g.Expect(err).ToNot(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(initialStorageSize))
 
 				dataRetentionSizeQuantity := config.Quantity(initialStorageSize)
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
-				Expect(convErr).ToNot(HaveOccurred())
-				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
+				g.Expect(convErr).ToNot(gomega.HaveOccurred())
+				g.Expect(result.MaxDataRetentionSize.Bytes).To(gomega.Equal(dataRetentionSizeBytes))
 			},
 		},
 		{
@@ -1011,7 +1015,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -1026,7 +1030,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -1041,7 +1045,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -1056,15 +1060,15 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID2))
-				Expect(result.DeprecatedKafkaStorageSize).To(Equal(biggerStorageSizeDifferentFormat))
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID2))
+				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(biggerStorageSizeDifferentFormat))
 
 				dataRetentionSizeQuantity := config.Quantity(biggerStorageSizeDifferentFormat)
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
-				Expect(convErr).ToNot(HaveOccurred())
-				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
+				g.Expect(convErr).ToNot(gomega.HaveOccurred())
+				g.Expect(result.MaxDataRetentionSize.Bytes).To(gomega.Equal(dataRetentionSizeBytes))
 			},
 		},
 		{
@@ -1079,7 +1083,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -1094,7 +1098,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -1109,7 +1113,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			},
 		},
 		{
@@ -1125,15 +1129,15 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID1))
-				Expect(result.DeprecatedKafkaStorageSize).To(Equal("100Gi"))
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
+				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal("100Gi"))
 
 				dataRetentionSizeQuantity := config.Quantity("100Gi")
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
-				Expect(convErr).ToNot(HaveOccurred())
-				Expect(result.MaxDataRetentionSize.Bytes).To(Equal(dataRetentionSizeBytes))
+				g.Expect(convErr).ToNot(gomega.HaveOccurred())
+				g.Expect(result.MaxDataRetentionSize.Bytes).To(gomega.Equal(dataRetentionSizeBytes))
 			},
 		},
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	svcErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_NewObservatoriumService(t *testing.T) {
@@ -34,12 +34,13 @@ func Test_NewObservatoriumService(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			g.Expect(NewObservatoriumService(tt.args.observatorium, tt.args.kafkaService)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(NewObservatoriumService(tt.args.observatorium, tt.args.kafkaService)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -93,18 +94,18 @@ func Test_ObservatoriumService_GetKafkaState(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			o := tt.fields.observatorium
 			got, err := o.GetKafkaState(tt.args.name, tt.args.namespaceName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetKafkaState() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -198,18 +199,19 @@ func Test_observatoriumService_GetMetricsByKafkaId(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			obs := observatoriumService{
 				observatorium: tt.fields.observatorium,
 				kafkaService:  tt.fields.kafkaService,
 			}
 			got, err := obs.GetMetricsByKafkaId(tt.args.ctx, tt.args.kafkasMetrics, tt.args.id, tt.args.query)
-			g.Expect(got).To(Equal(tt.want))
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

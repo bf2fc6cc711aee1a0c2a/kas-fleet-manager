@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"gorm.io/gorm"
 )
 
@@ -51,12 +51,13 @@ func TestHandleGetError(t *testing.T) {
 			want: errors.New(errors.ErrorGeneral, "Unable to find resourceType with username='<redacted>'"),
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			g.Expect(HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -91,12 +92,13 @@ func TestHandleGoneError(t *testing.T) {
 			want: errors.New(errors.ErrorGone, "resourceType with username='<redacted>' has been deleted"),
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			g.Expect(HandleGoneError(tt.args.resourceType, tt.args.field, tt.args.value)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(HandleGoneError(tt.args.resourceType, tt.args.field, tt.args.value)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -132,12 +134,13 @@ func TestHandleDeleteError(t *testing.T) {
 			want: errors.New(errors.ErrorGeneral, "Unable to delete resourceType with username='<redacted>'"),
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			g.Expect(HandleDeleteError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(HandleDeleteError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -169,12 +172,13 @@ func TestHandleCreateError(t *testing.T) {
 			want: errors.GeneralError("Unable to create resourceType: KAFKAS-MGMT-9: error"),
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			g.Expect(HandleCreateError(tt.args.resourceType, tt.args.err)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(HandleCreateError(tt.args.resourceType, tt.args.err)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -206,12 +210,13 @@ func TestHandleUpdateError(t *testing.T) {
 			want: errors.GeneralError("Unable to update resourceType: KAFKAS-MGMT-9: error"),
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			g.Expect(HandleUpdateError(tt.args.resourceType, tt.args.err)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(HandleUpdateError(tt.args.resourceType, tt.args.err)).To(gomega.Equal(tt.want))
 		})
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -44,12 +44,12 @@ func TestFlags_MustGetDefinedString(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(MustGetDefinedString(tt.args.flagName, tt.args.flags)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+
+			g.Expect(MustGetDefinedString(tt.args.flagName, tt.args.flags)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -74,12 +74,11 @@ func TestFlags_MustGetString(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(MustGetString(tt.args.flagName, tt.args.flags)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(MustGetString(tt.args.flagName, tt.args.flags)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -110,12 +109,11 @@ func TestFlags_MustGetBool(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(MustGetBool(tt.args.flagName, tt.args.flags)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(MustGetBool(tt.args.flagName, tt.args.flags)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -138,12 +136,11 @@ func TestFlags_undefinedValueMessage(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(undefinedValueMessage(tt.args.flagName)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(undefinedValueMessage(tt.args.flagName)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -169,13 +166,12 @@ func TestFlags_notFoundMessage(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			errorMessage := notFoundMessage(tt.args.flagName, tt.args.e)
-			Expect(errorMessage).To(Equal(tt.want))
+			g.Expect(errorMessage).To(gomega.Equal(tt.want))
 		})
 	}
 }
