@@ -14,8 +14,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
-
-	. "github.com/onsi/gomega"
 )
 
 func TestConvertKafkaRequest(t *testing.T) {
@@ -81,18 +79,19 @@ func TestConvertKafkaRequest(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(ConvertKafkaRequest(tt.args.kafkaRequestPayload, tt.args.dbKafkaRequests...)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(ConvertKafkaRequest(tt.args.kafkaRequestPayload, tt.args.dbKafkaRequests...)).To(gomega.Equal(tt.want))
 		})
 	}
 }
 
 func TestPresentKafkaRequest(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	type args struct {
 		dbKafkaRequest *dbapi.KafkaRequest
 	}
@@ -143,7 +142,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 
 				dataRetentionSizeQuantity := config.Quantity(kafkaStorageSize)
 				dataRetentionSizeBytes, err := dataRetentionSizeQuantity.ToInt64()
-				Expect(err).ToNot(HaveOccurred(), "failed to convert kafka data retention size '%s' to bytes", kafkaStorageSize)
+				g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to convert kafka data retention size '%s' to bytes", kafkaStorageSize)
 
 				kafkaRequest.MaxDataRetentionSize = public.SupportedKafkaSizeBytesValueItem{
 					Bytes: dataRetentionSizeBytes,
@@ -166,13 +165,12 @@ func TestPresentKafkaRequest(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(PresentKafkaRequest(tt.args.dbKafkaRequest, &tt.config)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(PresentKafkaRequest(tt.args.dbKafkaRequest, &tt.config)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -204,13 +202,12 @@ func TestSetBootstrapServerHost(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(setBootstrapServerHost(tt.args.bootstrapServerHost)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(setBootstrapServerHost(tt.args.bootstrapServerHost)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -367,26 +364,26 @@ func TestCapacityLimitReports(t *testing.T) {
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			kafkaRequest, err := PresentKafkaRequest(&test.request, &test.config)
 			if !test.errExpected {
 				if !test.negative {
-					gomega.Expect(kafkaRequest.IngressThroughputPerSec).ToNot(gomega.BeNil())
-					gomega.Expect(kafkaRequest.EgressThroughputPerSec).ToNot(gomega.BeNil())
-					gomega.Expect(kafkaRequest.TotalMaxConnections).ToNot(gomega.BeNil())
-					gomega.Expect(kafkaRequest.MaxConnectionAttemptsPerSec).ToNot(gomega.BeNil())
-					gomega.Expect(kafkaRequest.MaxDataRetentionPeriod).ToNot(gomega.BeNil())
-					gomega.Expect(kafkaRequest.MaxPartitions).ToNot(gomega.BeNil())
+					g.Expect(kafkaRequest.IngressThroughputPerSec).ToNot(gomega.BeNil())
+					g.Expect(kafkaRequest.EgressThroughputPerSec).ToNot(gomega.BeNil())
+					g.Expect(kafkaRequest.TotalMaxConnections).ToNot(gomega.BeNil())
+					g.Expect(kafkaRequest.MaxConnectionAttemptsPerSec).ToNot(gomega.BeNil())
+					g.Expect(kafkaRequest.MaxDataRetentionPeriod).ToNot(gomega.BeNil())
+					g.Expect(kafkaRequest.MaxPartitions).ToNot(gomega.BeNil())
 				} else {
-					gomega.Expect(kafkaRequest.IngressThroughputPerSec).To(gomega.BeEmpty())
-					gomega.Expect(kafkaRequest.EgressThroughputPerSec).To(gomega.BeEmpty())
-					gomega.Expect(kafkaRequest.TotalMaxConnections).To(gomega.BeZero())
-					gomega.Expect(kafkaRequest.MaxConnectionAttemptsPerSec).To(gomega.BeZero())
-					gomega.Expect(kafkaRequest.MaxDataRetentionPeriod).To(gomega.BeEmpty())
-					gomega.Expect(kafkaRequest.MaxPartitions).To(gomega.BeZero())
+					g.Expect(kafkaRequest.IngressThroughputPerSec).To(gomega.BeEmpty())
+					g.Expect(kafkaRequest.EgressThroughputPerSec).To(gomega.BeEmpty())
+					g.Expect(kafkaRequest.TotalMaxConnections).To(gomega.BeZero())
+					g.Expect(kafkaRequest.MaxConnectionAttemptsPerSec).To(gomega.BeZero())
+					g.Expect(kafkaRequest.MaxDataRetentionPeriod).To(gomega.BeEmpty())
+					g.Expect(kafkaRequest.MaxPartitions).To(gomega.BeZero())
 				}
 			} else {
-				gomega.Expect(err).ToNot(gomega.BeNil())
+				g.Expect(err).ToNot(gomega.BeNil())
 			}
 		})
 	}

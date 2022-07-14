@@ -8,7 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 const mockKafkaRequestID = "1ilzo99dVkVAoQNJeovhP8pFIzS"
@@ -42,17 +42,16 @@ func Test_buildOldKafkaNamespace(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got, err := buildOldKafkaNamespace(tt.args.kafkaRequest)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildOldKafkaNamespace() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }

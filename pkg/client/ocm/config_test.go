@@ -3,7 +3,7 @@ package ocm
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_ReadFiles(t *testing.T) {
@@ -32,16 +32,15 @@ func Test_ReadFiles(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			config := NewOCMConfig()
 			if tt.modifyFn != nil {
 				tt.modifyFn(config)
 			}
-			Expect(config.ReadFiles() != nil).To(Equal(tt.wantErr))
+			g.Expect(config.ReadFiles() != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

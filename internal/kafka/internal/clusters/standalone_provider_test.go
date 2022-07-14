@@ -7,7 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha2 "github.com/operator-framework/api/pkg/operators/v1alpha2"
 	"github.com/pkg/errors"
@@ -82,17 +82,17 @@ func TestStandaloneProvider_GetCloudProviders(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			test.setupFn()
 			provider := newStandaloneProvider(test.fields.connectionFactory, config.NewDataplaneClusterConfig())
 			resp, err := provider.GetCloudProviders()
-			Expect(test.wantErr).To(Equal(err != nil))
+			g.Expect(test.wantErr).To(gomega.Equal(err != nil))
 			if !test.wantErr {
-				Expect(resp.Items).To(Equal(test.want.Items))
+				g.Expect(resp.Items).To(gomega.Equal(test.want.Items))
 			}
 		})
 	}
@@ -166,17 +166,17 @@ func TestStandaloneProvider_GetCloudProviderRegions(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			test.setupFn()
 			provider := newStandaloneProvider(test.fields.connectionFactory, config.NewDataplaneClusterConfig())
 			resp, err := provider.GetCloudProviderRegions(types.CloudProviderInfo{ID: "aws"})
-			Expect(test.wantErr).To(Equal(err != nil))
+			g.Expect(test.wantErr).To(gomega.Equal(err != nil))
 			if !test.wantErr {
-				Expect(resp.Items).To(Equal(test.want.Items))
+				g.Expect(resp.Items).To(gomega.Equal(test.want.Items))
 			}
 		})
 	}
@@ -241,14 +241,14 @@ func TestStandaloneProvider_buildOpenIDPClientSecret(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(db.NewMockConnectionFactory(nil), config.NewDataplaneClusterConfig())
 			secret := provider.buildOpenIDPClientSecret(test.args.idpProviderInfo)
-			Expect(secret).To(Equal(test.want))
+			g.Expect(secret).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -348,14 +348,14 @@ func TestStandaloneProvider_buildIdentityProviderResource(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(db.NewMockConnectionFactory(nil), config.NewDataplaneClusterConfig())
 			secret := provider.buildIdentityProviderResource(test.args.idpProviderInfo)
-			Expect(secret).To(Equal(test.want))
+			g.Expect(secret).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -412,14 +412,14 @@ func TestStandaloneProvider_buildStrimziOperatorNamespace(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			namespace := provider.buildStrimziOperatorNamespace()
-			Expect(namespace).To(Equal(test.want))
+			g.Expect(namespace).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -462,14 +462,14 @@ func TestStandaloneProvider_buildStrimziCatalogSource(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			catalogSource := provider.buildStrimziOperatorCatalogSource()
-			Expect(catalogSource).To(Equal(test.want))
+			g.Expect(catalogSource).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -533,14 +533,13 @@ func TestStandaloneProvider_buildStrimziOperatorGroup(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			operatorGroup := provider.buildStrimziOperatorOperatorGroup()
-			Expect(operatorGroup).To(Equal(test.want))
+			g.Expect(operatorGroup).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -620,14 +619,13 @@ func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			subscription := provider.buildStrimziOperatorSubscription()
-			Expect(subscription).To(Equal(test.want))
+			g.Expect(subscription).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -685,14 +683,13 @@ func TestStandaloneProvider_buildKasFleetshardOperatorNamespace(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			namespace := provider.buildKASFleetShardOperatorNamespace()
-			Expect(namespace).To(Equal(test.want))
+			g.Expect(namespace).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -784,14 +781,13 @@ func TestStandaloneProvider_buildKasFleetshardSyncSecret(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			secret := provider.buildKASFleetShardSyncSecret(test.args.params)
-			Expect(secret).To(Equal(test.want))
+			g.Expect(secret).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -835,14 +831,13 @@ func TestStandaloneProvider_buildKasFleetshardCatalogSource(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			catalogSource := provider.buildKASFleetShardOperatorCatalogSource()
-			Expect(catalogSource).To(Equal(test.want))
+			g.Expect(catalogSource).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -906,14 +901,13 @@ func TestStandaloneProvider_buildKasFleetshardOperatorGroup(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			operatorGroup := provider.buildKASFleetShardOperatorOperatorGroup()
-			Expect(operatorGroup).To(Equal(test.want))
+			g.Expect(operatorGroup).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -986,14 +980,13 @@ func TestStandaloneProvider_buildKasFleetshardOperatorSubscription(t *testing.T)
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			subscription := provider.buildKASFleetShardOperatorSubscription()
-			Expect(subscription).To(Equal(test.want))
+			g.Expect(subscription).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -1025,15 +1018,15 @@ func TestStandaloneProvider_InstallStrimzi(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			ok, err := provider.InstallStrimzi(test.args.clusterSpec)
-			Expect(err != nil).To(Equal(test.wantErr))
-			Expect(ok).To(Equal(test.want))
+			g.Expect(err != nil).To(gomega.Equal(test.wantErr))
+			g.Expect(ok).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -1073,15 +1066,15 @@ func TestStandaloneProvider_InstallKasFleetshard(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			ok, err := provider.InstallKasFleetshard(test.args.clusterSpec, test.args.params)
-			Expect(err != nil).To(Equal(test.wantErr))
-			Expect(ok).To(Equal(test.want))
+			g.Expect(err != nil).To(gomega.Equal(test.wantErr))
+			g.Expect(ok).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -1130,15 +1123,14 @@ func TestStandaloneProvider_AddIdentityProvider(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			provider := newStandaloneProvider(test.fields.connectionFactory, test.fields.dataplaneClusterConfig)
 			ok, err := provider.AddIdentityProvider(test.args.clusterSpec, test.args.identityProvider)
-			Expect(err != nil).To(Equal(test.wantErr))
-			Expect(ok).To(Equal(test.want))
+			g.Expect(err != nil).To(gomega.Equal(test.wantErr))
+			g.Expect(ok).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -1199,13 +1191,13 @@ func Test_shouldApplyChanges(t *testing.T) {
 			want: false,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got := shouldApplyChanges(tt.args.dynamicClient, tt.args.existingObj, tt.args.newConfiguration)
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1238,13 +1230,12 @@ func TestStandaloneProvider_GetMachinePool(t *testing.T) {
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			standaloneProvider := newStandaloneProvider(nil, nil)
-
 			got, err := standaloneProvider.GetMachinePool(tt.args.clusterID, tt.args.machinePoolID)
 			gotErr := err != nil
-			g.Expect(gotErr).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(gotErr).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1272,13 +1263,13 @@ func TestStandaloneProvider_CreateMachinePool(t *testing.T) {
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			standaloneProvider := newStandaloneProvider(nil, nil)
 
 			got, err := standaloneProvider.CreateMachinePool(&tt.args.machinePoolRequest)
 			gotErr := err != nil
-			g.Expect(gotErr).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(gotErr).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }

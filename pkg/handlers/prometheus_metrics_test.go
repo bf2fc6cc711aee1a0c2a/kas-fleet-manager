@@ -3,7 +3,7 @@ package handlers
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_PrometheusHandler(t *testing.T) {
@@ -17,17 +17,16 @@ func Test_PrometheusHandler(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			handler := NewPrometheusMetricsHandler().Handler()
-			Expect(handler == nil).To(Equal(tt.wantNil))
-			req, rw := GetHandlerParams("GET", "/", nil)
+			g.Expect(handler == nil).To(gomega.Equal(tt.wantNil))
+			req, rw := GetHandlerParams("GET", "/", nil, t)
 			handler.ServeHTTP(rw, req)
-			Expect(rw.Code).ToNot(Equal(0))
+			g.Expect(rw.Code).ToNot(gomega.Equal(0))
 		})
 	}
 }

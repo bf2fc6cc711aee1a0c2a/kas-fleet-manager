@@ -3,7 +3,7 @@ package config
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_NewKasFleetshardConfig(t *testing.T) {
@@ -20,13 +20,12 @@ func Test_NewKasFleetshardConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(NewKasFleetshardConfig()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(NewKasFleetshardConfig()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -50,13 +49,12 @@ func Test_ReadFilesKasFleetshardConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.config.ReadFiles() != nil).To(Equal(tt.wantErr))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.config.ReadFiles() != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

@@ -3,7 +3,7 @@ package queryparser
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_QueryParser(t *testing.T) {
@@ -144,7 +144,7 @@ func Test_QueryParser(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			qry, err := tt.qryParser.Parse(tt.qry)
 
 			if err != nil && !tt.wantErr {
@@ -154,14 +154,14 @@ func Test_QueryParser(t *testing.T) {
 				t.Logf("qry: %s", tt.qry)
 				t.Logf("err: %v", err)
 			}
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 
 			if err == nil && tt.outQry != "" {
 				if tt.outQry != "" {
-					Expect(qry.Query).To(Equal(tt.outQry))
+					g.Expect(qry.Query).To(gomega.Equal(tt.outQry))
 				}
 				if tt.outValues != nil {
-					Expect(qry.Values).To(Equal(tt.outValues))
+					g.Expect(qry.Values).To(gomega.Equal(tt.outValues))
 				}
 			}
 		})

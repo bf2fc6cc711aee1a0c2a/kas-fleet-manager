@@ -19,15 +19,15 @@ import (
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/golang-jwt/jwt/v4"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testing.T) {
-	g := NewWithT(t)
+	g := gomega.NewWithT(t)
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
-	g.Expect(err).ToNot(HaveOccurred(), "failed to build mock cluster object")
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to build mock cluster object")
 
 	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
 
@@ -57,11 +57,11 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testin
 	})
 	db := test.TestServices.DBFactory.New()
 	err = db.Create(cluster).Error
-	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	privateAPIClient := test.NewPrivateAPIClient(h)
 	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, cluster.ClusterID)
-	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	// turn on autoscaling and observe that the node capacity info are sent
 	dataplaneConfig.DataPlaneClusterScalingType = config.AutoScaling
@@ -70,12 +70,12 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testin
 	if resp != nil {
 		resp.Body.Close()
 	}
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	g.Expect(managedKafkaAgentCR.Spec.Capacity).To(HaveLen(1))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(managedKafkaAgentCR.Spec.Capacity).To(gomega.HaveLen(1))
 	capacity, ok := managedKafkaAgentCR.Spec.Capacity[cluster.SupportedInstanceType]
-	g.Expect(ok).To(BeTrue())
-	g.Expect(capacity.MaxNodes).To(Equal(int32(1)))
+	g.Expect(ok).To(gomega.BeTrue())
+	g.Expect(capacity.MaxNodes).To(gomega.Equal(int32(1)))
 
 	// turn off autoscaling and observe that capacity info is now empty
 	dataplaneConfig.DataPlaneClusterScalingType = config.NoScaling
@@ -83,15 +83,17 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testin
 	if resp != nil {
 		resp.Body.Close()
 	}
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	g.Expect(managedKafkaAgentCR.Spec.Capacity).To(HaveLen(0))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(managedKafkaAgentCR.Spec.Capacity).To(gomega.HaveLen(0))
 }
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
-	Expect(err).ToNot(HaveOccurred(), "failed to build mock cluster object")
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to build mock cluster object")
 
 	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
 
@@ -102,11 +104,11 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
-	Expect(getClusterErr).ToNot(HaveOccurred(), "failed to retrieve cluster details")
-	Expect(testDataPlaneclusterID).ToNot(BeEmpty(), "cluster not found")
+	g.Expect(getClusterErr).ToNot(gomega.HaveOccurred(), "failed to retrieve cluster details")
+	g.Expect(testDataPlaneclusterID).ToNot(gomega.BeEmpty(), "cluster not found")
 
 	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	commonKafkaVersions := []string{"2.8.0", "1.3.6", "2.7.0"}
@@ -151,20 +153,22 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ToNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNoContent))
 
 	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(cluster).ToNot(BeNil())
-	Expect(cluster.Status).To(Equal(api.ClusterReady))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(cluster).ToNot(gomega.BeNil())
+	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterReady))
 
 	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
-	Expect(err).ToNot(HaveOccurred())
-	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(availableStrimziVersions).To(gomega.Equal(expectedAvailableStrimziVersions))
 }
 
 func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -173,25 +177,27 @@ func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
 
 	testDataPlaneclusterID := "test-cluster-id"
 	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *dataplanemocks.BuildValidDataPlaneClusterUpdateStatusRequest(nil))
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).To(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest)) // We expect 400 error in this test because the cluster ID does not exist
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest)) // We Expect 400 error in this test because the cluster ID does not exist
 
 	_, resp, err = privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).To(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest)) // We expect 400 error in this test because the cluster ID does not exist
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest)) // We expect 400 error in this test because the cluster ID does not exist
 }
 
 func TestDataPlaneCluster_UnauthorizedWhenNoAuthProvided(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -206,18 +212,20 @@ func TestDataPlaneCluster_UnauthorizedWhenNoAuthProvided(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).To(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusUnauthorized))
 
 	_, resp, err = privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).To(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusUnauthorized))
 }
 
 func TestDataPlaneCluster_NotFoundWhenNoProperAuthRole(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -232,18 +240,20 @@ func TestDataPlaneCluster_NotFoundWhenNoProperAuthRole(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).To(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 
 	_, resp, err = privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).To(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 }
 
 func TestDataPlaneCluster_NotFoundWhenNotAllowedClusterID(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -258,18 +268,20 @@ func TestDataPlaneCluster_NotFoundWhenNotAllowedClusterID(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).To(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 
 	_, resp, err = privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).To(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNotFound))
 }
 
 func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -277,25 +289,27 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
-	Expect(getClusterErr).ToNot(HaveOccurred(), "failed to retrieve cluster details")
-	Expect(testDataPlaneclusterID).ToNot(BeEmpty(), "cluster not found")
+	g.Expect(getClusterErr).ToNot(gomega.HaveOccurred(), "failed to retrieve cluster details")
+	g.Expect(testDataPlaneclusterID).ToNot(gomega.BeEmpty(), "cluster not found")
 
 	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	privateAPIClient := test.NewPrivateAPIClient(h)
 	config, resp, err := privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(config.Spec.Observability.Repository).ShouldNot(BeEmpty())
-	Expect(config.Spec.Observability.Channel).ShouldNot(BeEmpty())
-	Expect(config.Spec.Observability.AccessToken).ShouldNot(BeNil())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(config.Spec.Observability.Repository).ShouldNot(gomega.BeEmpty())
+	g.Expect(config.Spec.Observability.Channel).ShouldNot(gomega.BeEmpty())
+	g.Expect(config.Spec.Observability.AccessToken).ShouldNot(gomega.BeNil())
 }
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWhenOperatorIsNotReady(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -303,14 +317,14 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
-	Expect(getClusterErr).ToNot(HaveOccurred(), "failed to retrieve cluster details")
-	Expect(testDataPlaneclusterID).ToNot(BeEmpty(), "cluster not found")
+	g.Expect(getClusterErr).ToNot(gomega.HaveOccurred(), "failed to retrieve cluster details")
+	g.Expect(testDataPlaneclusterID).ToNot(gomega.BeEmpty(), "cluster not found")
 
 	// enable dynamic autoscaling
 	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
@@ -320,13 +334,13 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ToNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNoContent))
 
 	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(cluster).ToNot(BeNil())
-	Expect(cluster.Status).To(Equal(api.ClusterWaitingForKasFleetShardOperator))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(cluster).ToNot(gomega.BeNil())
+	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterWaitingForKasFleetShardOperator))
 }
 
 func DataplaneClusterConfig(h *coreTest.Helper) (dataplaneClusterConfig *config.DataplaneClusterConfig) {
@@ -335,9 +349,11 @@ func DataplaneClusterConfig(h *coreTest.Helper) (dataplaneClusterConfig *config.
 }
 
 func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVersionsIsEmptyItRemainsEmpty(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
-	Expect(err).ToNot(HaveOccurred(), "failed to build mock cluster object")
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to build mock cluster object")
 
 	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
 
@@ -348,11 +364,11 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
-	Expect(getClusterErr).ToNot(HaveOccurred(), "failed to retrieve cluster details")
-	Expect(testDataPlaneclusterID).ToNot(BeEmpty(), "cluster not found")
+	g.Expect(getClusterErr).ToNot(gomega.HaveOccurred(), "failed to retrieve cluster details")
+	g.Expect(testDataPlaneclusterID).ToNot(gomega.BeEmpty(), "cluster not found")
 
 	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
@@ -363,24 +379,26 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ToNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNoContent))
 
 	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(cluster).ToNot(BeNil())
-	Expect(cluster.Status).To(Equal(api.ClusterReady))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(cluster).ToNot(gomega.BeNil())
+	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterReady))
 
 	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
-	Expect(err).ToNot(HaveOccurred())
-	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(availableStrimziVersions).To(gomega.Equal(expectedAvailableStrimziVersions))
 
 }
 
 func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersionsIsEmptyItRemainsEmpty(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
-	Expect(err).ToNot(HaveOccurred(), "failed to build mock cluster object")
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to build mock cluster object")
 
 	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
 
@@ -391,11 +409,11 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
-	Expect(getClusterErr).ToNot(HaveOccurred(), "failed to retrieve cluster details")
-	Expect(testDataPlaneclusterID).ToNot(BeEmpty(), "cluster not found")
+	g.Expect(getClusterErr).ToNot(gomega.HaveOccurred(), "failed to retrieve cluster details")
+	g.Expect(testDataPlaneclusterID).ToNot(gomega.BeEmpty(), "cluster not found")
 
 	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
@@ -406,23 +424,25 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ToNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNoContent))
 
 	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(cluster).ToNot(BeNil())
-	Expect(cluster.Status).To(Equal(api.ClusterReady))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(cluster).ToNot(gomega.BeNil())
+	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterReady))
 
 	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
-	Expect(err).ToNot(HaveOccurred())
-	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(availableStrimziVersions).To(gomega.Equal(expectedAvailableStrimziVersions))
 }
 
 func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVersionsIsNotEmptyItRemainsUnchanged(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
-	Expect(err).ToNot(HaveOccurred(), "failed to build mock cluster object")
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to build mock cluster object")
 
 	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
 
@@ -433,11 +453,11 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
-	Expect(getClusterErr).ToNot(HaveOccurred(), "failed to retrieve cluster details")
-	Expect(testDataPlaneclusterID).ToNot(BeEmpty(), "cluster not found")
+	g.Expect(getClusterErr).ToNot(gomega.HaveOccurred(), "failed to retrieve cluster details")
+	g.Expect(testDataPlaneclusterID).ToNot(gomega.BeEmpty(), "cluster not found")
 
 	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
@@ -451,33 +471,35 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 	db := test.TestServices.DBFactory.New()
 	initialAvailableStrimziVersionsStr := `[{"version": "strimzi-cluster-operator.v.8.0.0-0", "ready": true}, {"version": "strimzi-cluster-operator.v.9.0.0-0", "ready": false}, {"version": "strimzi-cluster-operator.v.10.0.0-0", "ready": true}]`
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("available_strimzi_versions", initialAvailableStrimziVersionsStr).Error
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
-	Expect(err).NotTo(HaveOccurred())
-	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(availableStrimziVersions).To(gomega.Equal(expectedAvailableStrimziVersions))
 
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ToNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNoContent))
 
 	cluster, err = test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(cluster).ToNot(BeNil())
-	Expect(cluster.Status).To(Equal(api.ClusterReady))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(cluster).ToNot(gomega.BeNil())
+	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterReady))
 	availableStrimziVersions, err = cluster.GetAvailableStrimziVersions()
-	Expect(err).ToNot(HaveOccurred())
-	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(availableStrimziVersions).To(gomega.Equal(expectedAvailableStrimziVersions))
 }
 
 func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersionsIsNotEmptyItRemainsUnchanged(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
-	Expect(err).ToNot(HaveOccurred(), "failed to build mock cluster object")
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to build mock cluster object")
 
 	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
 
@@ -488,11 +510,11 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
-	Expect(getClusterErr).ToNot(HaveOccurred(), "failed to retrieve cluster details")
-	Expect(testDataPlaneclusterID).ToNot(BeEmpty(), "cluster not found")
+	g.Expect(getClusterErr).ToNot(gomega.HaveOccurred(), "failed to retrieve cluster details")
+	g.Expect(testDataPlaneclusterID).ToNot(gomega.BeEmpty(), "cluster not found")
 
 	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
@@ -506,33 +528,35 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 	db := test.TestServices.DBFactory.New()
 	initialAvailableStrimziVersionsStr := `[{"version": "strimzi-cluster-operator.v.8.0.0-0", "ready": true}, {"version": "strimzi-cluster-operator.v.9.0.0-0", "ready": false}, {"version": "strimzi-cluster-operator.v.10.0.0-0", "ready": true}]`
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("available_strimzi_versions", initialAvailableStrimziVersionsStr).Error
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
-	Expect(err).NotTo(HaveOccurred())
-	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(availableStrimziVersions).To(gomega.Equal(expectedAvailableStrimziVersions))
 
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ToNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNoContent))
 
 	cluster, err = test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(cluster).ToNot(BeNil())
-	Expect(cluster.Status).To(Equal(api.ClusterReady))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(cluster).ToNot(gomega.BeNil())
+	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterReady))
 	availableStrimziVersions, err = cluster.GetAvailableStrimziVersions()
-	Expect(err).ToNot(HaveOccurred())
-	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(availableStrimziVersions).To(gomega.Equal(expectedAvailableStrimziVersions))
 }
 
 func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziVersionsIsUpdated(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
-	Expect(err).ToNot(HaveOccurred(), "failed to build mock cluster object")
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to build mock cluster object")
 
 	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
 
@@ -543,8 +567,8 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziV
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
-	Expect(getClusterErr).ToNot(HaveOccurred(), "failed to retrieve cluster details")
-	Expect(testDataPlaneclusterID).ToNot(BeEmpty(), "cluster not found")
+	g.Expect(getClusterErr).ToNot(gomega.HaveOccurred(), "failed to retrieve cluster details")
+	g.Expect(testDataPlaneclusterID).ToNot(gomega.BeEmpty(), "cluster not found")
 
 	db := test.TestServices.DBFactory.New()
 
@@ -581,13 +605,13 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziV
 		},
 	})
 
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("available_strimzi_versions", initialAvailableStrimziVersionsStr).Error
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
@@ -616,9 +640,9 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziV
 		},
 	}
 	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
-	Expect(availableStrimziVersions).To(Equal([]api.StrimziVersion{
+	g.Expect(availableStrimziVersions).To(gomega.Equal([]api.StrimziVersion{
 		{
 			Version: "strimzi-cluster-operator.v.8.0.0-0",
 			Ready:   true,
@@ -650,21 +674,21 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziV
 			},
 		},
 	}))
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).ToNot(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusNoContent))
 
 	cluster, err = test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(cluster).ToNot(BeNil())
-	Expect(cluster.Status).To(Equal(api.ClusterReady))
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(cluster).ToNot(gomega.BeNil())
+	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterReady))
 	availableStrimziVersions, err = cluster.GetAvailableStrimziVersions()
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	expectedCommonKafkaVersions := []api.KafkaVersion{
 		{Version: "2.7.0"},
@@ -694,7 +718,7 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziV
 			KafkaIBPVersions: expectedCommonKafkaIBPVersions,
 		},
 	}
-	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+	g.Expect(availableStrimziVersions).To(gomega.Equal(expectedAvailableStrimziVersions))
 }
 
 func KafkaConfig(h *coreTest.Helper) (c *config.KafkaConfig) {

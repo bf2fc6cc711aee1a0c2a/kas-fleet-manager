@@ -17,7 +17,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
 	mocket "github.com/selvatico/go-mocket"
 )
 
@@ -144,11 +143,11 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList, &defaultKafkaConf)
 			quotaService, _ := factory.GetQuotaService(api.QuotaManagementListQuotaType)
 			kafka := &dbapi.KafkaRequest{
@@ -156,7 +155,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 				OrganisationId: "org-id",
 			}
 			allowed, _ := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, tt.args.instanceType)
-			gomega.Expect(tt.want).To(gomega.Equal(allowed))
+			g.Expect(tt.want).To(gomega.Equal(allowed))
 		})
 	}
 }
@@ -449,11 +448,12 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			wantErr: nil,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -466,7 +466,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 				InstanceType:   tt.args.instanceType.String(),
 			}
 			_, err := quotaService.ReserveQuota(kafka, tt.args.instanceType)
-			Expect(tt.wantErr).To(Equal(err))
+			g.Expect(tt.wantErr).To(gomega.Equal(err))
 		})
 	}
 }
@@ -496,17 +496,18 @@ func Test_DefaultQuotaServiceFactory_GetQuotaService(t *testing.T) {
 			wantErr: errors.GeneralError("invalid quota service type: %v", api.QuotaManagementListQuotaType),
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			factory := &DefaultQuotaServiceFactory{
 				quotaServiceContainer: map[api.QuotaType]services.QuotaService{},
 			}
 			quotaService, err := factory.GetQuotaService(tt.args.quoataType)
-			Expect(quotaService).To(BeNil())
-			Expect(err).To(Equal(tt.wantErr))
+			g.Expect(quotaService).To(gomega.BeNil())
+			g.Expect(err).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

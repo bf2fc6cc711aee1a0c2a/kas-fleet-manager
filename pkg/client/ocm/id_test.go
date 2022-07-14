@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_idGenerator_Generate(t *testing.T) {
@@ -31,14 +31,13 @@ func Test_idGenerator_Generate(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got := NewIDGenerator(tt.fields.prefix).Generate()
-			Expect(tt.validateFn(got)).To(Succeed())
-			Expect(len(got)).To(BeNumerically("<=", MaxClusterNameLength))
+			g.Expect(tt.validateFn(got)).To(gomega.Succeed())
+			g.Expect(len(got)).To(gomega.BeNumerically("<=", MaxClusterNameLength))
 		})
 	}
 }

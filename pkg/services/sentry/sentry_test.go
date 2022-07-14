@@ -6,7 +6,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/getsentry/sentry-go"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestInitialize(t *testing.T) {
@@ -63,15 +63,14 @@ func TestInitialize(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got := Initialize(tt.args.envName, tt.args.c)
-			Expect(got == nil).To(Equal(tt.want == nil))
+			g.Expect(got == nil).To(gomega.Equal(tt.want == nil))
 			if got != nil {
-				Expect(got).To(Equal(tt.want))
+				g.Expect(got).To(gomega.Equal(tt.want))
 			}
 		})
 	}

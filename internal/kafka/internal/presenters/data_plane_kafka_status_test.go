@@ -8,7 +8,7 @@ import (
 
 	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestConvertDataPlaneKafkaStatus(t *testing.T) {
@@ -30,13 +30,12 @@ func TestConvertDataPlaneKafkaStatus(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(ConvertDataPlaneKafkaStatus(tt.args.status)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(ConvertDataPlaneKafkaStatus(tt.args.status)).To(gomega.Equal(tt.want))
 		})
 	}
 }

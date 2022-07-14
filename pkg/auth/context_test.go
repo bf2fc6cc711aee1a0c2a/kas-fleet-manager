@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestContext_GetAccountIdFromClaims(t *testing.T) {
@@ -27,13 +27,12 @@ func TestContext_GetAccountIdFromClaims(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			accountId, _ := tt.claims.GetAccountId()
-			Expect(accountId).To(Equal(tt.want))
+			g.Expect(accountId).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -65,14 +64,11 @@ func TestContext_GetIsOrgAdminFromClaims(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.claims.IsOrgAdmin()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.claims.IsOrgAdmin()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -104,13 +100,12 @@ func TestContext_GetUsernameFromClaims(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			username, _ := tt.claims.GetUsername()
-			Expect(username).To(Equal(tt.want))
+			g.Expect(username).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -142,13 +137,12 @@ func TestContext_GetOrgIdFromClaims(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			orgId, _ := tt.claims.GetOrgId()
-			Expect(orgId).To(Equal(tt.want))
+			g.Expect(orgId).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -176,12 +170,11 @@ func TestContext_GetIsAdminFromContext(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(GetIsAdminFromContext(tt.ctx)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(GetIsAdminFromContext(tt.ctx)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -209,14 +202,11 @@ func TestContext_GetFilterByOrganisationFromContext(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(GetFilterByOrganisationFromContext(tt.ctx)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(GetFilterByOrganisationFromContext(tt.ctx)).To(gomega.Equal(tt.want))
 		})
 	}
 }

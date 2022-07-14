@@ -9,7 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestDataplaneClusterConfig_IsDataPlaneAutoScalingEnabled(t *testing.T) {
@@ -38,16 +38,14 @@ func TestDataplaneClusterConfig_IsDataPlaneAutoScalingEnabled(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			conf := DataplaneClusterConfig{
 				DataPlaneClusterScalingType: tt.fields.DataPlaneClusterScalingType,
 			}
-			Expect(conf.IsDataPlaneAutoScalingEnabled()).To(Equal(tt.want))
+			g.Expect(conf.IsDataPlaneAutoScalingEnabled()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -78,17 +76,15 @@ func TestDataplaneClusterConfig_IsDataPlaneManualScalingEnabled(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			conf := DataplaneClusterConfig{
 				DataPlaneClusterScalingType: tt.fields.DataPlaneClusterScalingType,
 			}
 			got := conf.IsDataPlaneManualScalingEnabled()
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -153,14 +149,12 @@ func TestDataplaneClusterConfig_IsWithinClusterLimit(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			conf := NewClusterConfig(tt.fields.ClusterList)
-			Expect(conf.IsNumberOfKafkaWithinClusterLimit(tt.args.clusterId, tt.args.count)).To(Equal(tt.want))
+			g.Expect(conf.IsNumberOfKafkaWithinClusterLimit(tt.args.clusterId, tt.args.count)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -216,14 +210,12 @@ func TestDataplaneClusterConfig_IsClusterSchedulable(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			conf := NewClusterConfig(tt.fields.ClusterList)
-			Expect(conf.IsClusterSchedulable(tt.args.clusterId)).To(Equal(tt.want))
+			g.Expect(conf.IsClusterSchedulable(tt.args.clusterId)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -278,14 +270,12 @@ func TestDataplaneClusterConfig_MissingClusters(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			conf := NewClusterConfig(tt.fields.ClusterList)
-			Expect(conf.MissingClusters(tt.args.clusterList)).To(Equal(tt.want))
+			g.Expect(conf.MissingClusters(tt.args.clusterList)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -336,14 +326,12 @@ func TestDataplaneClusterConfig_ExcessClusters(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			conf := NewClusterConfig(tt.fields.ClusterList)
-			Expect(conf.ExcessClusters(tt.args.clusterList)).To(Equal(tt.want))
+			g.Expect(conf.ExcessClusters(tt.args.clusterList)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -586,18 +574,16 @@ provider_type: "invalid"
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			var v ManualCluster
 			err := yaml.Unmarshal([]byte(tt.input), &v)
 			if err != nil && !tt.wantErr {
 				t.Errorf("unexpected error %v", err)
 			}
-			Expect(v).To(Equal(tt.output))
+			g.Expect(v).To(gomega.Equal(tt.output))
 		})
 	}
 }
@@ -648,17 +634,15 @@ func TestFindClusterNameByClusterId(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			clusterConfig := NewClusterConfig(tt.fields.ClusterList)
 			dataplaneClusterConfig := &DataplaneClusterConfig{
 				ClusterConfig: clusterConfig,
 			}
-			Expect(dataplaneClusterConfig.FindClusterNameByClusterId(tt.args.clusterId)).To(Equal(tt.want))
+			g.Expect(dataplaneClusterConfig.FindClusterNameByClusterId(tt.args.clusterId)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -705,14 +689,12 @@ func TestValidateClusterIsInKubeContext(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			err := validateClusterIsInKubeconfigContext(tt.args.rawKubeconfig, tt.args.cluster)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -772,16 +754,14 @@ func Test_GetClusterSupportedInstanceType(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			conf := NewClusterConfig(tt.fields.ClusterList)
 			instType, found := conf.GetClusterSupportedInstanceType(tt.args.clusterId)
-			Expect(instType).To(Equal(tt.wantInstType))
-			Expect(found).To(Equal(tt.want))
+			g.Expect(instType).To(gomega.Equal(tt.wantInstType))
+			g.Expect(found).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -815,14 +795,13 @@ func Test_GetManualClusters(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			conf := NewClusterConfig(tt.fields.ClusterList)
-			Expect(conf.GetManualClusters()).To(Equal(tt.want))
+			g.Expect(conf.GetManualClusters()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -845,15 +824,14 @@ func Test_IsReadyDataPlaneClustersReconcileEnabled(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			conf := NewDataplaneClusterConfig()
 			conf.EnableReadyDataPlaneClustersReconcile = tt.enableReadyDataPlaneClustersReconcile
-			Expect(conf.IsReadyDataPlaneClustersReconcileEnabled()).To(Equal(tt.want))
+			g.Expect(conf.IsReadyDataPlaneClustersReconcileEnabled()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -924,18 +902,16 @@ func Test_ReadFiles(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			config := tt.fields.config
 			if tt.modifyFn != nil {
 				tt.modifyFn(config)
 			}
 			err := config.ReadFiles()
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -963,18 +939,16 @@ func Test_readKubeconfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			config := tt.fields.config
 			if tt.modifyFn != nil {
 				tt.modifyFn(config)
 			}
 			err := config.readKubeconfig()
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

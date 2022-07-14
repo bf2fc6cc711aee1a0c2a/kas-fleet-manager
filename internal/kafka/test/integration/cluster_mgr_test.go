@@ -18,12 +18,14 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 // Tests a successful cluster reconcile
 func TestClusterManager_SuccessfulReconcile(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	// setup ocm server
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	ocmServer := ocmServerBuilder.Build()
@@ -91,11 +93,11 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		MultiAZ:               true,
 	})
 
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
 
 	// waiting for cluster state to become `cluster_provisioning`, so that its struct can be persisted
 	cluster, checkProvisioningErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterProvisioning)
-	Expect(checkProvisioningErr).NotTo(HaveOccurred(), "Error waiting for cluster to start provisioning: %s %v", cluster.ClusterID, checkProvisioningErr)
+	g.Expect(checkProvisioningErr).NotTo(gomega.HaveOccurred(), "Error waiting for cluster to start provisioning: %s %v", cluster.ClusterID, checkProvisioningErr)
 
 	// save cluster struct to be reused in by the cleanup script if the cluster won't become ready before the timeout
 	err = common.PersistClusterStruct(*cluster, api.ClusterProvisioning)
@@ -105,62 +107,62 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	// waiting for cluster state to become `ready`
 	cluster, checkReadyErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterReady)
-	Expect(checkReadyErr).NotTo(HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ClusterID, checkReadyErr)
+	g.Expect(checkReadyErr).NotTo(gomega.HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ClusterID, checkReadyErr)
 
 	// check that the cluster has dynamic capacity info persisted
 	dynamicCapacityInfo, err := cluster.RetrieveDynamicCapacityInfo()
-	Expect(err).ToNot(HaveOccurred(), "Error retrieving dynamic capacity info")
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "Error retrieving dynamic capacity info")
 	standardCapacity, ok := dynamicCapacityInfo[api.StandardTypeSupport.String()]
-	Expect(ok).To(BeTrue())
-	Expect(standardCapacity.MaxUnits).To(Equal(kasfleetshardsync.StandardCapacityInfo.MaxUnits))
-	Expect(standardCapacity.RemainingUnits).To(Equal(kasfleetshardsync.StandardCapacityInfo.RemainingUnits))
+	g.Expect(ok).To(gomega.BeTrue())
+	g.Expect(standardCapacity.MaxUnits).To(gomega.Equal(kasfleetshardsync.StandardCapacityInfo.MaxUnits))
+	g.Expect(standardCapacity.RemainingUnits).To(gomega.Equal(kasfleetshardsync.StandardCapacityInfo.RemainingUnits))
 
 	// save cluster struct to be reused in subsequent tests and cleanup script
 	err = common.PersistClusterStruct(*cluster, api.ClusterProvisioned)
 	if err != nil {
 		t.Fatalf("failed to persist cluster struct %v", err)
 	}
-	Expect(cluster.DeletedAt.Valid).To(Equal(false), fmt.Sprintf("Expected deleted_at property to be non valid meaning cluster not soft deleted, instead got %v", cluster.DeletedAt))
-	Expect(cluster.Status).To(Equal(api.ClusterReady), fmt.Sprintf("Expected status property to be %s, instead got %s ", api.ClusterReady, cluster.Status))
-	Expect(cluster.IdentityProviderID).ToNot(BeEmpty(), "Expected identity_provider_id property to be defined")
+	g.Expect(cluster.DeletedAt.Valid).To(gomega.Equal(false), fmt.Sprintf("g.Expected deleted_at property to be non valid meaning cluster not soft deleted, instead got %v", cluster.DeletedAt))
+	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterReady), fmt.Sprintf("g.Expected status property to be %s, instead got %s ", api.ClusterReady, cluster.Status))
+	g.Expect(cluster.IdentityProviderID).ToNot(gomega.BeEmpty(), "g.Expected identity_provider_id property to be defined")
 
 	// check the state of cluster on ocm to ensure cluster was provisioned successfully
 	ocmCluster, err := ocmClient.GetCluster(cluster.ClusterID)
 	if err != nil {
 		t.Fatalf("failed to get cluster from ocm")
 	}
-	Expect(ocmCluster.Status().State()).To(Equal(clustersmgmtv1.ClusterStateReady))
+	g.Expect(ocmCluster.Status().State()).To(gomega.Equal(clustersmgmtv1.ClusterStateReady))
 	// check the state of externalID in the DB to check that it has been set appropriately
-	Expect(cluster.ExternalID).NotTo(Equal(""))
-	Expect(cluster.ExternalID).To(Equal(ocmCluster.ExternalID()))
+	g.Expect(cluster.ExternalID).NotTo(gomega.Equal(""))
+	g.Expect(cluster.ExternalID).To(gomega.Equal(ocmCluster.ExternalID()))
 
 	// check the state of the managed kafka addon on ocm to ensure it was installed successfully
 	strimziOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, test.TestServices.OCMConfig.StrimziOperatorAddonID)
 	if err != nil {
 		t.Fatalf("failed to get the strimzi operator addon for cluster %s", cluster.ClusterID)
 	}
-	Expect(strimziOperatorAddonInstallation.State()).To(Equal(clustersmgmtv1.AddOnInstallationStateReady))
+	g.Expect(strimziOperatorAddonInstallation.State()).To(gomega.Equal(clustersmgmtv1.AddOnInstallationStateReady))
 
 	// The cluster DNS should have been persisted
 	ocmClusterDNS, err := ocmClient.GetClusterDNS(cluster.ClusterID)
 	if err != nil {
 		t.Fatalf("failed to get cluster DNS from ocm")
 	}
-	Expect(cluster.ClusterDNS).To(Equal(ocmClusterDNS))
+	g.Expect(cluster.ClusterDNS).To(gomega.Equal(ocmClusterDNS))
 
 	common.CheckMetricExposed(h, t, metrics.ClusterCreateRequestDuration)
 	common.CheckMetricExposed(h, t, metrics.ClusterStatusSinceCreated)
 
 	// check that no capacity is used
 	checkMetricsError := common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityUsed, "0", api.StandardTypeSupport.String(), cluster.ClusterID, cluster.Region, cluster.CloudProvider)
-	Expect(checkMetricsError).NotTo(HaveOccurred())
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
 
 	// available and max capacity metrics should have a value of standard max capacity
 	metricValue := strconv.FormatInt(int64(standardCapacity.MaxUnits), 10)
 	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityMax, metricValue, api.StandardTypeSupport.String(), cluster.ClusterID, cluster.Region, cluster.CloudProvider)
-	Expect(checkMetricsError).NotTo(HaveOccurred())
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
 	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityAvailable, metricValue, api.StandardTypeSupport.String(), cluster.ClusterID, cluster.Region, cluster.CloudProvider)
-	Expect(checkMetricsError).NotTo(HaveOccurred())
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
 
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsSuccessCount, constants2.ClusterOperationCreate.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsTotalCount, constants2.ClusterOperationCreate.String()))
@@ -168,6 +170,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 }
 
 func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
+	g := gomega.NewWithT(t)
 
 	// setup ocm server
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
@@ -237,5 +240,5 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	// checking that cluster has been deleted
 	err := common.WaitForClusterToBeDeleted(test.TestServices.DBFactory, &test.TestServices.ClusterService, dummyCluster.ClusterID)
 
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for cluster deletion: %v", err)
 }

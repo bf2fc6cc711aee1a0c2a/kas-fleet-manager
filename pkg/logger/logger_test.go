@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 var (
@@ -49,12 +49,11 @@ func Test_NewLogEventFromString(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(NewLogEventFromString(tt.args.eventTypeAndDescription)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(NewLogEventFromString(tt.args.eventTypeAndDescription)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -89,12 +88,11 @@ func Test_NewLogEvent(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(NewLogEvent(tt.args.eventType, tt.args.eventDescription)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(NewLogEvent(tt.args.eventType, tt.args.eventDescription)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -129,12 +127,11 @@ func Test_ToString(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.l.ToString()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.l.ToString()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -179,12 +176,11 @@ func Test_prepareLogPrefix(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.l.prepareLogPrefix(tt.args.format, tt.args.arguments)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.l.prepareLogPrefix(tt.args.format, tt.args.arguments)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -227,12 +223,11 @@ func Test_Verbosity(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.l.V(tt.args.level)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.l.V(tt.args.level)).To(gomega.Equal(tt.want))
 		})
 	}
 }

@@ -1,23 +1,23 @@
 package config
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	"github.com/rs/xid"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/rs/xid"
+
 	"github.com/onsi/gomega"
 )
 
 func TestConnectorsConfig_ReadFiles(t *testing.T) {
-
-	gomega.RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 
 	tmpCatalog, err := createSymLinkedCatalogDir()
-	gomega.Expect(err).To(gomega.BeNil())
+	g.Expect(err).To(gomega.BeNil())
 
 	defer func() {
 		_ = os.RemoveAll(tmpCatalog)
@@ -83,6 +83,7 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := &ConnectorsConfig{
 				ConnectorEvalDuration:               tt.fields.ConnectorEvalDuration,
 				ConnectorEvalOrganizations:          tt.fields.ConnectorEvalOrganizations,
@@ -95,13 +96,13 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 			if err := c.ReadFiles(); (err != nil) != tt.wantErr {
 				t.Errorf("ReadFiles() error = %v, wantErr %v", err, tt.wantErr)
 			} else if tt.wantErr {
-				gomega.Expect(err.Error()).To(gomega.MatchRegexp(tt.err))
+				g.Expect(err.Error()).To(gomega.MatchRegexp(tt.err))
 			}
 
-			gomega.Expect(c.CatalogEntries).To(gomega.HaveLen(len(tt.connectorsIDs)))
+			g.Expect(c.CatalogEntries).To(gomega.HaveLen(len(tt.connectorsIDs)))
 
 			for _, connectorID := range tt.connectorsIDs {
-				gomega.Expect(c.CatalogEntries).To(gomega.Satisfy(func(entries []ConnectorCatalogEntry) bool {
+				g.Expect(c.CatalogEntries).To(gomega.Satisfy(func(entries []ConnectorCatalogEntry) bool {
 					for i := range entries {
 						//nolint:scopelint
 						if entries[i].ConnectorType.Id == connectorID {

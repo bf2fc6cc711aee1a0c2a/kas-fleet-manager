@@ -1,28 +1,30 @@
 package vault_test
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	. "github.com/onsi/gomega"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 	"io/ioutil"
 	"strings"
 	"testing"
 	"text/template"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/onsi/gomega"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
 func TestNewVaultService(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
+
 	vc := vault.NewConfig()
 
 	// Enable testing against aws if the access keys are configured..
 	if content, err := ioutil.ReadFile(shared.BuildFullFilePath(vc.AccessKeyFile)); err == nil && len(content) > 0 {
 		vc.Kind = vault.KindAws
 	}
-	Expect(vc.ReadFiles()).To(BeNil())
+	g.Expect(vc.ReadFiles()).To(gomega.BeNil())
 
 	tests := []struct {
 		numSecrets   int // allow testing using aws vault with existing secrets
@@ -49,49 +51,50 @@ func TestNewVaultService(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.config.Kind, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+
 			svc, err := vault.NewVaultService(tt.config)
-			Expect(err != nil).Should(Equal(tt.wantErrOnNew), "NewVaultService() error = %v, wantErr %v", err, tt.wantErrOnNew)
+			g.Expect(err != nil).Should(gomega.Equal(tt.wantErrOnNew), "NewVaultService() error = %v, wantErr %v", err, tt.wantErrOnNew)
 			if err == nil {
 				if tt.skip {
 					t.SkipNow()
 				}
-				happyPath(svc, tt.numSecrets)
+				happyPath(svc, tt.numSecrets, t)
 			}
 		})
 	}
 }
 
-func happyPath(vault vault.VaultService, numSecrets int) {
+func happyPath(vault vault.VaultService, numSecrets int, t *testing.T) {
+	g := gomega.NewWithT(t)
 
 	counter := 0
 	err := vault.ForEachSecret(func(name string, owningResource string) bool {
 		counter += 1
 		return true
 	})
-	Expect(err).Should(BeNil())
-	Expect(counter).Should(Equal(numSecrets))
+	g.Expect(err).Should(gomega.BeNil())
+	g.Expect(counter).Should(gomega.Equal(numSecrets))
 
 	keyName := api.NewID()
 	err = vault.SetSecretString(keyName, "hello", "thistest")
-	Expect(err).Should(BeNil())
+	g.Expect(err).Should(gomega.BeNil())
 
 	value, err := vault.GetSecretString(keyName)
-	Expect(err).Should(BeNil())
-	Expect(value).Should(Equal("hello"))
+	g.Expect(err).Should(gomega.BeNil())
+	g.Expect(value).Should(gomega.Equal("hello"))
 
 	err = vault.DeleteSecretString(keyName)
-	Expect(err).Should(BeNil())
+	g.Expect(err).Should(gomega.BeNil())
 
 	_, err = vault.GetSecretString("missing")
-	Expect(err).ShouldNot(BeNil())
+	g.Expect(err).ShouldNot(gomega.BeNil())
 
 	err = vault.DeleteSecretString("missing")
-	Expect(err).ShouldNot(BeNil())
+	g.Expect(err).ShouldNot(gomega.BeNil())
 
 	var builder strings.Builder
 	err = tmpl.Execute(&builder, struct {
@@ -100,9 +103,9 @@ func happyPath(vault vault.VaultService, numSecrets int) {
 		TotalGetCount    int
 		TotalDeleteCount int
 	}{numSecrets + 1, 1, numSecrets + 2, 2})
-	Expect(err).Should(BeNil())
+	g.Expect(err).Should(gomega.BeNil())
 	err = testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(builder.String()), vaultMetrics...)
-	Expect(err).Should(BeNil())
+	g.Expect(err).Should(gomega.BeNil())
 }
 
 var vaultMetrics []string = getMetricNames()

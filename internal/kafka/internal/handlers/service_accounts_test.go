@@ -12,7 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/gorilla/mux"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 var (
@@ -38,12 +38,13 @@ func TestNewServiceAccountHandler(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			Expect(NewServiceAccountHandler(tt.args.service)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(NewServiceAccountHandler(tt.args.service)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -103,18 +104,19 @@ func Test_serviceAccountsHandler_ListServiceAccounts(t *testing.T) {
 			wantStatusCode: http.StatusInternalServerError,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			req, rw := GetHandlerParams("GET", tt.args.url, nil)
+			g := gomega.NewWithT(t)
+			req, rw := GetHandlerParams("GET", tt.args.url, nil, t)
 
 			h := NewServiceAccountHandler(tt.fields.service)
 			h.ListServiceAccounts(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -160,18 +162,19 @@ func Test_serviceAccountsHandler_CreateServiceAccount(t *testing.T) {
 			wantStatusCode: http.StatusInternalServerError,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			req, rw := GetHandlerParams("POST", tt.args.url, bytes.NewBuffer(tt.args.body))
+			g := gomega.NewWithT(t)
+			req, rw := GetHandlerParams("POST", tt.args.url, bytes.NewBuffer(tt.args.body), t)
 
 			h := NewServiceAccountHandler(tt.fields.service)
 			h.CreateServiceAccount(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -218,19 +221,20 @@ func Test_serviceAccountsHandler_DeleteServiceAccount(t *testing.T) {
 			wantStatusCode: http.StatusInternalServerError,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			req, rw := GetHandlerParams("DELETE", tt.args.url, nil)
+			g := gomega.NewWithT(t)
+			req, rw := GetHandlerParams("DELETE", tt.args.url, nil, t)
 			req = mux.SetURLVars(req, map[string]string{"id": "b5843c4b-a702-100d-fc77-70e9b20e554f"})
 
 			h := NewServiceAccountHandler(tt.fields.service)
 			h.DeleteServiceAccount(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -277,19 +281,20 @@ func Test_serviceAccountsHandler_ResetServiceAccountCredential(t *testing.T) {
 			wantStatusCode: http.StatusInternalServerError,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			req, rw := GetHandlerParams("POST", tt.args.url, nil)
+			g := gomega.NewWithT(t)
+			req, rw := GetHandlerParams("POST", tt.args.url, nil, t)
 			req = mux.SetURLVars(req, map[string]string{"id": "b5843c4b-a702-100d-fc77-70e9b20e554f"})
 
 			h := NewServiceAccountHandler(tt.fields.service)
 			h.ResetServiceAccountCredential(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -346,12 +351,13 @@ func Test_serviceAccountsHandler_GetServiceAccountByClientId(t *testing.T) {
 			wantStatusCode: http.StatusInternalServerError,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			req, rw := GetHandlerParams("GET", tt.args.url, nil)
+			g := gomega.NewWithT(t)
+			req, rw := GetHandlerParams("GET", tt.args.url, nil, t)
 
 			req.Form = url.Values{}
 			req.Form.Add("client_id", "srvc-acct-7f4f2226-f0cc-7f40-8d74-9b38934d2be0")
@@ -360,7 +366,7 @@ func Test_serviceAccountsHandler_GetServiceAccountByClientId(t *testing.T) {
 			h.GetServiceAccountByClientId(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -407,19 +413,20 @@ func Test_serviceAccountsHandler_GetServiceAccountById(t *testing.T) {
 			wantStatusCode: http.StatusInternalServerError,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			req, rw := GetHandlerParams("GET", tt.args.url, nil)
+			g := gomega.NewWithT(t)
+			req, rw := GetHandlerParams("GET", tt.args.url, nil, t)
 			req = mux.SetURLVars(req, map[string]string{"id": "b5843c4b-a702-100d-fc77-70e9b20e554f"})
 
 			h := NewServiceAccountHandler(tt.fields.service)
 			h.GetServiceAccountById(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -455,18 +462,19 @@ func Test_serviceAccountsHandler_GetSsoProviders(t *testing.T) {
 			wantStatusCode: http.StatusOK,
 		},
 	}
-	RegisterTestingT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			req, rw := GetHandlerParams("GET", tt.args.url, nil)
+			g := gomega.NewWithT(t)
+			req, rw := GetHandlerParams("GET", tt.args.url, nil, t)
 
 			h := NewServiceAccountHandler(tt.fields.service)
 			h.GetSsoProviders(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }

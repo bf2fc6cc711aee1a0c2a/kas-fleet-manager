@@ -3,13 +3,13 @@ package authorization
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_NewOCMAuthorization(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 
 	auth := NewOCMAuthorization(nil)
 	_, isExpectedType := auth.(*authorization)
-	Expect(isExpectedType).To(BeTrue())
+	g.Expect(isExpectedType).To(gomega.BeTrue())
 }

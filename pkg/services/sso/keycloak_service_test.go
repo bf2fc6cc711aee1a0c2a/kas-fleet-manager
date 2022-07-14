@@ -11,7 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/google/uuid"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	pkgErr "github.com/pkg/errors"
 )
 
@@ -174,19 +174,18 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			keycloakService := keycloakServiceProxy{
 				getToken: tt.fields.kcClient.GetToken,
 				service:  &masService{kcClient: tt.fields.kcClient},
 			}
 			got, err := keycloakService.RegisterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
-			Expect(got).To(Equal(tt.want))
-			Expect(err).To(Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.wantErr))
 		})
 	}
 
@@ -326,12 +325,11 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			keycloakService := keycloakServiceProxy{
 				getToken: tt.fields.kcClient.GetToken,
 				service:  &masService{kcClient: tt.fields.kcClient},
@@ -340,7 +338,7 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterKasFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -443,13 +441,13 @@ func TestKeycloakService_DeRegisterKasFleetshardOperatorServiceAccount(t *testin
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			keycloakService := keycloakServiceProxy{
 				getToken: tt.fields.kcClient.GetToken,
 				service:  &masService{kcClient: tt.fields.kcClient},
 			}
 			err := keycloakService.DeRegisterKasFleetshardOperatorServiceAccount(tt.args.clusterId)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -592,12 +590,11 @@ func TestKeycloakService_RegisterConnectorFleetshardOperatorServiceAccount(t *te
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			keycloakService := keycloakServiceProxy{
 				getToken: tt.fields.kcClient.GetToken,
 				service:  &masService{kcClient: tt.fields.kcClient},
@@ -606,7 +603,7 @@ func TestKeycloakService_RegisterConnectorFleetshardOperatorServiceAccount(t *te
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterConnectorFleetshardOperatorServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -709,13 +706,13 @@ func TestKeycloakService_DeRegisterConnectorFleetshardOperatorServiceAccount(t *
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			keycloakService := keycloakServiceProxy{
 				getToken: tt.fields.kcClient.GetToken,
 				service:  &masService{kcClient: tt.fields.kcClient},
 			}
 			err := keycloakService.DeRegisterConnectorFleetshardOperatorServiceAccount(tt.args.clusterId)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -803,13 +800,13 @@ func TestKeycloakService_DeleteServiceAccountInternal(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			keycloakService := keycloakServiceProxy{
 				getToken: tt.fields.kcClient.GetToken,
 				service:  &masService{kcClient: tt.fields.kcClient},
 			}
 			err := keycloakService.DeleteServiceAccountInternal("account-id")
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 
@@ -909,18 +906,18 @@ func TestKeycloakService_CreateServiceAccountInternal(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			keycloakService := keycloakServiceProxy{
 				getToken: tt.fields.kcClient.GetToken,
 				service:  &masService{kcClient: tt.fields.kcClient},
 			}
 			serviceAccount, err := keycloakService.CreateServiceAccountInternal(request)
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(serviceAccount != nil).To(Equal(tt.serviceAccountCreated))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(serviceAccount != nil).To(gomega.Equal(tt.serviceAccountCreated))
 			if tt.serviceAccountCreated {
-				Expect(serviceAccount.ClientSecret).To(Equal("secret"))
-				Expect(serviceAccount.ClientID).To(Equal(request.ClientId))
-				Expect(serviceAccount.ID).To(Equal("dsd"))
+				g.Expect(serviceAccount.ClientSecret).To(gomega.Equal("secret"))
+				g.Expect(serviceAccount.ClientID).To(gomega.Equal(request.ClientId))
+				g.Expect(serviceAccount.ID).To(gomega.Equal("dsd"))
 			}
 		})
 	}
@@ -1046,18 +1043,17 @@ func TestKeycloakService_checkAllowedServiceAccountsLimits(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			service := masService{
 				kcClient: tt.fields.kcClient,
 			}
 			got, err := service.checkAllowedServiceAccountsLimits(tt.args.accessToken, tt.args.maxAllowed, tt.args.orgId)
-			Expect(err != nil).To(Equal(tt.wantErr), "checkAllowedServiceAccountsLimits() error = %v, wantErr %v", err, tt.wantErr)
-			Expect(tt.want).To(Equal(got))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr), "checkAllowedServiceAccountsLimits() error = %v, wantErr %v", err, tt.wantErr)
+			g.Expect(tt.want).To(gomega.Equal(got))
 		})
 	}
 }
@@ -1087,15 +1083,15 @@ func Test_newKeycloakService(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			keycloakService := NewKeycloakServiceBuilder().
 				ForKFM().WithConfiguration(tt.args.config).WithRealmConfig(tt.args.realmConfig).Build()
-			g.Expect(keycloakService.GetConfig()).To(Equal(tt.want.GetConfig()))
-			g.Expect(keycloakService.GetRealmConfig()).To(Equal(tt.want.GetRealmConfig()))
+			g.Expect(keycloakService.GetConfig()).To(gomega.Equal(tt.want.GetConfig()))
+			g.Expect(keycloakService.GetRealmConfig()).To(gomega.Equal(tt.want.GetRealmConfig()))
 		})
 	}
 }
@@ -1166,15 +1162,15 @@ func Test_masService_DeRegisterClientInSSO(t *testing.T) {
 			want: errors.NewWithCause(errors.ErrorFailedToDeleteSSOClient, errors.FailedToDeleteSSOClient("failed to delete the sso client"), "failed to delete the sso client"),
 		},
 	}
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
 			}
-			g.Expect(kc.DeRegisterClientInSSO(tt.args.accessToken, tt.args.clientId)).To(Equal(tt.want))
+			g.Expect(kc.DeRegisterClientInSSO(tt.args.accessToken, tt.args.clientId)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1224,15 +1220,15 @@ func Test_masService_IsKafkaClientExist(t *testing.T) {
 			want: errors.NewWithCause(errors.ErrorFailedToGetSSOClient, errors.FailedToGetSSOClient("failed to get sso client with id: %s", testClientID), "failed to get sso client with id: %s", testClientID),
 		},
 	}
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := masService{
 				kcClient: tt.fields.kcClient,
 			}
-			g.Expect(kc.IsKafkaClientExist(tt.args.accessToken, tt.args.clientId)).To(Equal(tt.want))
+			g.Expect(kc.IsKafkaClientExist(tt.args.accessToken, tt.args.clientId)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1307,17 +1303,17 @@ func Test_masService_GetKafkaClientSecret(t *testing.T) {
 			wantErr: errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, errors.FailedToGetSSOClientSecret("failed to get sso client secret"), "failed to get sso client secret"),
 		},
 	}
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := masService{
 				kcClient: tt.fields.kcClient,
 			}
 			got, err := kc.GetKafkaClientSecret(tt.args.accessToken, tt.args.clientId)
-			g.Expect(err).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1426,21 +1422,22 @@ func Test_masService_CreateServiceAccount(t *testing.T) {
 			wantErr: errors.MaxLimitForServiceAccountReached("Max allowed number:0 of service accounts for user in org: has reached"),
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
 			}
 			got, err := kc.CreateServiceAccount(tt.args.accessToken, tt.args.serviceAccountRequest, tt.args.ctx)
-			g.Expect(err).To(Equal(tt.wantErr))
+			g.Expect(err).To(gomega.Equal(tt.wantErr))
 
 			if tt.want != nil {
-				g.Expect(got.ID).To(Equal(tt.want.ID))
-				g.Expect(got.ClientSecret).To(Equal(tt.want.ClientSecret))
-				g.Expect(got.Name).To(Equal(tt.want.Name))
+				g.Expect(got.ID).To(gomega.Equal(tt.want.ID))
+				g.Expect(got.ClientSecret).To(gomega.Equal(tt.want.ClientSecret))
+				g.Expect(got.Name).To(gomega.Equal(tt.want.Name))
 			}
 		})
 	}
@@ -1520,17 +1517,18 @@ func Test_masService_ListServiceAcc(t *testing.T) {
 			wantErr: errors.NewWithCause(errors.ErrorGeneral, errors.GeneralError("failed to collect service accounts"), "failed to collect service accounts"),
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
 			}
 			got, err := kc.ListServiceAcc(tt.args.accessToken, tt.args.ctx, tt.args.first, tt.args.max)
-			g.Expect(err).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1606,15 +1604,16 @@ func Test_masService_DeleteServiceAccount(t *testing.T) {
 			want: errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, errors.FailedToDeleteServiceAccount("failed to delete service account"), "failed to delete service account"),
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
 			}
-			g.Expect(kc.DeleteServiceAccount(tt.args.accessToken, tt.args.ctx, tt.args.id)).To(Equal(tt.want))
+			g.Expect(kc.DeleteServiceAccount(tt.args.accessToken, tt.args.ctx, tt.args.id)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1703,17 +1702,18 @@ func Test_masService_ResetServiceAccountCredentials(t *testing.T) {
 			wantErr: errors.NewWithCause(errors.ErrorGeneral, errors.GeneralError("failed to reset service account credentials"), "failed to reset service account credentials"),
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
 			}
 			got, err := kc.ResetServiceAccountCredentials(tt.args.accessToken, tt.args.ctx, tt.args.id)
-			g.Expect(err).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1794,17 +1794,19 @@ func Test_masService_getServiceAccount(t *testing.T) {
 			wantErr: errors.New(errors.ErrorServiceAccountNotFound, "service account not found %s", key),
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
 			}
 			got, err := kc.getServiceAccount(tt.args.accessToken, tt.args.ctx, tt.args.getClientFunc, tt.args.key)
-			g.Expect(err).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1857,17 +1859,18 @@ func Test_masService_GetServiceAccountByClientId(t *testing.T) {
 			wantErr: nil,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
 			}
 			got, err := kc.GetServiceAccountByClientId(tt.args.accessToken, tt.args.ctx, tt.args.clientId)
-			g.Expect(err).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1920,17 +1923,18 @@ func Test_masService_GetServiceAccountById(t *testing.T) {
 			wantErr: nil,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			kc := &masService{
 				kcClient: tt.fields.kcClient,
 			}
 			got, err := kc.GetServiceAccountById(tt.args.accessToken, tt.args.ctx, tt.args.id)
-			g.Expect(err).To(Equal(tt.wantErr))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }

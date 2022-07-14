@@ -16,7 +16,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
 )
 
 var (
@@ -70,19 +69,18 @@ func Test_UpdateUpdateKafkaStatuses(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			h := NewDataPlaneKafkaHandler(tt.fields.dataplaneKafkaService, tt.fields.kafkaService)
 
-			req, rw := GetHandlerParams("GET", "/{id}", bytes.NewBuffer(tt.args.body))
+			req, rw := GetHandlerParams("GET", "/{id}", bytes.NewBuffer(tt.args.body), t)
 			req = mux.SetURLVars(req, map[string]string{"id": testId})
 
 			h.UpdateKafkaStatuses(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 			resp.Body.Close()
 		})
 	}
@@ -178,8 +176,6 @@ func Test_GetAll(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
@@ -187,18 +183,18 @@ func Test_GetAll(t *testing.T) {
 			g := gomega.NewWithT(t)
 			h := NewDataPlaneKafkaHandler(tt.fields.dataplaneKafkaService, tt.fields.kafkaService)
 
-			req, rw := GetHandlerParams("GET", "/{id}", nil)
+			req, rw := GetHandlerParams("GET", "/{id}", nil, t)
 			req = mux.SetURLVars(req, map[string]string{"id": tt.args.clusterId})
 
 			h.GetAll(rw, req)
 			resp := rw.Result()
 			var respBody private.ManagedKafkaList
-			g.Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 			decodeErr := json.NewDecoder(resp.Body).Decode(&respBody)
-			g.Expect(decodeErr).NotTo(HaveOccurred())
-			g.Expect(respBody.Items).Should(HaveLen(len(tt.wantKafkaIDs)))
+			g.Expect(decodeErr).NotTo(gomega.HaveOccurred())
+			g.Expect(respBody.Items).Should(gomega.HaveLen(len(tt.wantKafkaIDs)))
 			for idx, managedkafka := range respBody.Items {
-				g.Expect(managedkafka.Id).To(Equal(tt.wantKafkaIDs[idx]))
+				g.Expect(managedkafka.Id).To(gomega.Equal(tt.wantKafkaIDs[idx]))
 			}
 
 			resp.Body.Close()

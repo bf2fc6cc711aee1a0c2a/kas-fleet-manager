@@ -18,11 +18,50 @@
 Import the package using
 ```go
 import (
+  "github.com/onsi/gomega"
+)
+```
+
+Don't import the gomega's package symbols in the file you are working on.
+This is, don't do the following:
+```go
+import (
   . "github.com/onsi/gomega"
 )
 ```
 
-This way you won't need to specify the package name when making an assertion.
+The reason for that is that although it might be convenient (less typing needed
+for some of gomega's methods) it could also introduce issues like using
+gomega's package level `Expect` method which is deprecated. In this case we favour
+safety over convenience.
+
+## Using Expectations
+
+To use gomega's Expect in your tests, get a gomega's `WithT` instance by calling
+the NewWithT(t) method and saving the returned result in a variable. Then call
+the Expect method by using the obtained variable:
+```go
+import (
+  "github.com/onsi/gomega"
+)
+...
+
+g := NewWithT(t)
+...
+g.Expect(x).To(gomega.Equal(y))
+```
+
+If the tests you are writing are table-driven tests with subtests make sure
+that you get a new instance of `WithT` for every subtest. For example:
+```go
+for _, test := range tests {
+  t.Run(test.name, func(t *testing.T) {
+    g := NewWithT(t)
+    ...
+    g.Expect(gotErr).To(gomega.Equal(test.wantErr))
+    g.Expect(res).To(gomega.Equal(test.want))
+  })
+```
 
 ## Assertions
 In Kas Fleet Manager, we make extensive usage of the [gomega](https://onsi.github.io/gomega/) framework.
@@ -38,7 +77,9 @@ if reflect.DeepEqual(x, y) {
 ```
 the following should be used:
 ```go
-Expect(x).To(Equal(y), "optional error description")
+g := gomega.NewWithT(t)
+...
+g.Expect(x).To(gomega.Equal(y), "optional error description")
 ```
 
 #### Checking array size
@@ -50,7 +91,9 @@ if len(array) != xx {
 ```
 the following should be used:
 ```go
-Expect(array).To(HaveLen(xx), "error message")
+g := gomega.NewWithT(t)
+...
+g.Expect(array).To(gomega.HaveLen(xx), "error message")
 ```
 ## Polling
 If you need to poll to wait for some event to happen, avoid using directly the `wait.PollImmediate` function: Kas Fleet Manager provides a rich set of utilities that will handle for you all the caveats of polling when dealing with it.

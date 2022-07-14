@@ -3,7 +3,7 @@ package state_machine
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_TokenTransitions_toStateTransitions(t *testing.T) {
@@ -25,12 +25,11 @@ func Test_TokenTransitions_toStateTransitions(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.transitions.toStateTransitions()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.transitions.toStateTransitions()).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -81,12 +80,11 @@ func Test_Grammar_toStateMachineDefinition(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.grammar.toStateMachineDefinition()).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.grammar.toStateMachineDefinition()).To(gomega.Equal(tt.want))
 		})
 	}
 }

@@ -17,12 +17,13 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	s "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
-func GetHandlerParams(method string, url string, body io.Reader) (*http.Request, *httptest.ResponseRecorder) {
+func GetHandlerParams(method string, url string, body io.Reader, t *testing.T) (*http.Request, *httptest.ResponseRecorder) {
+	g := gomega.NewWithT(t)
 	req, err := http.NewRequest(method, url, body)
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	return req, httptest.NewRecorder()
 }
@@ -68,16 +69,15 @@ func Test_Get(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig, tt.fields.clusterService)
-			req, rw := GetHandlerParams("GET", "/{id}", nil)
+			req, rw := GetHandlerParams("GET", "/{id}", nil, t)
 			h.Get(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 			resp.Body.Close()
 		})
 	}
@@ -158,16 +158,15 @@ func Test_List(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig, tt.fields.clusterService)
-			req, rw := GetHandlerParams("GET", tt.args.url, nil)
+			req, rw := GetHandlerParams("GET", tt.args.url, nil, t)
 			h.List(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 			resp.Body.Close()
 		})
 	}
@@ -214,16 +213,15 @@ func Test_Delete(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig, tt.fields.clusterService)
-			req, rw := GetHandlerParams("DELETE", tt.args.url, nil)
+			req, rw := GetHandlerParams("DELETE", tt.args.url, nil, t)
 			h.Delete(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 			resp.Body.Close()
 		})
 	}
@@ -486,16 +484,15 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig, tt.fields.clusterService)
-			req, rw := GetHandlerParams("PATCH", tt.args.url, bytes.NewBuffer(tt.args.body))
+			req, rw := GetHandlerParams("PATCH", tt.args.url, bytes.NewBuffer(tt.args.body), t)
 			h.Update(rw, req)
 			resp := rw.Result()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 			resp.Body.Close()
 		})
 	}

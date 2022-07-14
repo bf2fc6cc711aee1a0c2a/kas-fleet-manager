@@ -18,11 +18,13 @@ import (
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/golang-jwt/jwt/v4"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"gopkg.in/resty.v1"
 )
 
 func TestAuth_success(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -37,12 +39,14 @@ func TestAuth_success(t *testing.T) {
 		SetAuthToken(h.CreateJWTString(serviceAccount)).
 		Get(h.RestURL("/"))
 
-	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusOK))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusOK))
 
 }
 
 func TestAuthSucess_publicUrls(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -51,16 +55,16 @@ func TestAuthSucess_publicUrls(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		Get(h.RestURL("/"))
-	Expect(err).To(BeNil())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusOK))
+	g.Expect(err).To(gomega.BeNil())
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusOK))
 
 	errorsList, resp, err := client.ErrorsApi.GetErrors(context.Background())
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).To(BeNil())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(errorsList.Items).NotTo(BeEmpty())
+	g.Expect(err).To(gomega.BeNil())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+	g.Expect(errorsList.Items).NotTo(gomega.BeEmpty())
 
 	errorCode := "7"
 	_, notFoundErrorResp, err := client.ErrorsApi.GetErrorById(context.Background(), errorCode)
@@ -68,11 +72,13 @@ func TestAuthSucess_publicUrls(t *testing.T) {
 	if notFoundErrorResp != nil {
 		notFoundErrorResp.Body.Close()
 	}
-	Expect(err).To(BeNil())
-	Expect(notFoundErrorResp.StatusCode).To(Equal(http.StatusOK))
+	g.Expect(err).To(gomega.BeNil())
+	g.Expect(notFoundErrorResp.StatusCode).To(gomega.Equal(http.StatusOK))
 }
 
 func TestAuthSuccess_usingSSORHToken(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -90,11 +96,13 @@ func TestAuthSuccess_usingSSORHToken(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(token).
 		Get(h.RestURL("/kafkas"))
-	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusOK))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusOK))
 }
 
 func TestAuthFailure_withoutToken(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -104,14 +112,16 @@ func TestAuthFailure_withoutToken(t *testing.T) {
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		Get(h.RestURL("/kafkas"))
-	Expect(err).To(BeNil())
+	g.Expect(err).To(gomega.BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
-	Expect(re.Reason).To(Equal("Request doesn't contain the 'Authorization' header or the 'cs_jwt' cookie"))
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
+	g.Expect(re.Code).To(gomega.Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	g.Expect(re.Reason).To(gomega.Equal("Request doesn't contain the 'Authorization' header or the 'cs_jwt' cookie"))
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusUnauthorized))
 }
 
 func TestAuthFailure_invalidTokenWithInvalidTyp(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -128,14 +138,16 @@ func TestAuthFailure_invalidTokenWithInvalidTyp(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(token).
 		Get(h.RestURL("/kafkas"))
-	Expect(err).To(BeNil())
+	g.Expect(err).To(gomega.BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
-	Expect(re.Reason).To(Equal("Bearer token type 'Invalid' isn't allowed"))
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
+	g.Expect(re.Code).To(gomega.Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	g.Expect(re.Reason).To(gomega.Equal("Bearer token type 'Invalid' isn't allowed"))
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusUnauthorized))
 }
 
 func TestAuthFailure_ExpiredToken(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -151,14 +163,16 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(token).
 		Get(h.RestURL("/kafkas"))
-	Expect(err).To(BeNil())
+	g.Expect(err).To(gomega.BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
-	Expect(re.Reason).To(Equal("Bearer token is expired"))
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
+	g.Expect(re.Code).To(gomega.Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	g.Expect(re.Reason).To(gomega.Equal("Bearer token is expired"))
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusUnauthorized))
 }
 
 func TestAuthFailure_invalidTokenMissingIat(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -174,14 +188,16 @@ func TestAuthFailure_invalidTokenMissingIat(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(token).
 		Get(h.RestURL("/kafkas"))
-	Expect(err).To(BeNil())
+	g.Expect(err).To(gomega.BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
-	Expect(re.Reason).To(Equal("Bearer token doesn't contain required claim 'iat'"))
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
+	g.Expect(re.Code).To(gomega.Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	g.Expect(re.Reason).To(gomega.Equal("Bearer token doesn't contain required claim 'iat'"))
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusUnauthorized))
 }
 
 func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -205,15 +221,17 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(strToken).
 		Get(h.RestURL("/kafkas"))
-	Expect(err).To(BeNil())
+	g.Expect(err).To(gomega.BeNil())
 
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
-	Expect(re.Reason).To(Equal("Bearer token can't be verified"))
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
+	g.Expect(re.Code).To(gomega.Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	g.Expect(re.Reason).To(gomega.Equal("Bearer token can't be verified"))
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusUnauthorized))
 }
 
 func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -236,14 +254,16 @@ func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(strToken).
 		Get(h.RestURL("/kafkas"))
-	Expect(err).To(BeNil())
+	g.Expect(err).To(gomega.BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
-	Expect(re.Reason).To(Equal("Request doesn't contain the 'Authorization' header or the 'cs_jwt' cookie"))
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
+	g.Expect(re.Code).To(gomega.Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	g.Expect(re.Reason).To(gomega.Equal("Request doesn't contain the 'Authorization' header or the 'cs_jwt' cookie"))
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusUnauthorized))
 }
 
 func TestAuthFailure_usingMasSsoTokenOnKafkasGet(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -270,12 +290,12 @@ func TestAuthFailure_usingMasSsoTokenOnKafkasGet(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(token).
 		Get(h.RestURL("/kafkas"))
-	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusUnauthorized))
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
-	Expect(re.Reason).To(Equal("Account authentication could not be verified"))
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
+	g.Expect(re.Code).To(gomega.Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	g.Expect(re.Reason).To(gomega.Equal("Account authentication could not be verified"))
+	g.Expect(restyResp.StatusCode()).To(gomega.Equal(http.StatusUnauthorized))
 }
 
 func parseResponse(restyResp *resty.Response) public.Error {

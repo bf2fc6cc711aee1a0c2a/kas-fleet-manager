@@ -6,7 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_configService_GetDefaultProvider(t *testing.T) {
@@ -75,19 +75,18 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := tt.fields.providersConfig
 			got, err := c.ProvidersConfig.SupportedProviders.GetDefault()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetDefaultProvider() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -152,18 +151,17 @@ func Test_configService_GetDefaultRegionForProvider(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got, err := tt.args.provider.GetDefaultRegion()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetDefaultRegionForProvider() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -198,14 +196,13 @@ func Test_configService_GetSupportedProviders(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			c := tt.fields.providersConfig
-			Expect(c.ProvidersConfig.SupportedProviders).To(Equal(tt.want))
+			g.Expect(c.ProvidersConfig.SupportedProviders).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -321,10 +318,10 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			org, found := tt.QuotaManagementList.QuotaList.Organisations.GetById(tt.arg)
-			Expect(org).To(Equal(tt.want.organisation))
-			Expect(found).To(Equal(tt.want.found))
+			g.Expect(org).To(gomega.Equal(tt.want.organisation))
+			g.Expect(found).To(gomega.Equal(tt.want.found))
 		})
 	}
 }
@@ -422,10 +419,10 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			user, ok := tt.QuotaManagementList.GetAllowedAccountByUsernameAndOrgId(tt.arg.username, tt.arg.orgId)
-			Expect(user).To(Equal(tt.want.AllowedAccount))
-			Expect(ok).To(Equal(tt.want.found))
+			g.Expect(user).To(gomega.Equal(tt.want.AllowedAccount))
+			g.Expect(ok).To(gomega.Equal(tt.want.found))
 		})
 	}
 }
@@ -502,10 +499,10 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			user, ok := tt.QuotaManagementList.QuotaList.ServiceAccounts.GetByUsername(tt.arg.username)
-			Expect(user).To(Equal(tt.want.AllowedAccount))
-			Expect(ok).To(Equal(tt.want.found))
+			g.Expect(user).To(gomega.Equal(tt.want.AllowedAccount))
+			g.Expect(ok).To(gomega.Equal(tt.want.found))
 		})
 	}
 }

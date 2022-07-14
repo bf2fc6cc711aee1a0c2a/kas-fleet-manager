@@ -13,7 +13,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
 	"github.com/pkg/errors"
@@ -89,16 +89,16 @@ func TestOCMProvider_Create(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			p := newOCMProvider(test.fields.ocmClient, cb, &ocm.OCMConfig{})
 			resp, err := p.Create(&test.args.clusterReq)
-			Expect(resp).To(Equal(test.want))
+			g.Expect(resp).To(gomega.Equal(test.want))
 			if test.wantErr {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			}
 		})
 	}
@@ -194,12 +194,12 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.CheckClusterStatus(test.args.clusterSpec)
-			Expect(resp).To(Equal(test.want))
+			g.Expect(resp).To(gomega.Equal(test.want))
 			if test.wantErr {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			}
 		})
 	}
@@ -275,17 +275,16 @@ func TestOCMProvider_Delete(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-
+			g := gomega.NewWithT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.Delete(test.args.clusterSpec)
-			Expect(resp).To(Equal(test.want))
+			g.Expect(resp).To(gomega.Equal(test.want))
 			if test.wantErr {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			}
 		})
 	}
@@ -348,16 +347,16 @@ func TestOCMProvider_GetClusterDNS(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.GetClusterDNS(test.args.clusterSpec)
-			Expect(resp).To(Equal(test.want))
+			g.Expect(resp).To(gomega.Equal(test.want))
 			if test.wantErr {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			}
 		})
 	}
@@ -479,18 +478,19 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.AddIdentityProvider(test.args.clusterSpec, test.args.identityProviderInfo)
-			Expect(resp).To(Equal(test.want))
+			g.Expect(resp).To(gomega.Equal(test.want))
 			if test.wantErr {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			}
 		})
 	}
 }
 
 func TestOCMProvider_ApplyResources(t *testing.T) {
+	g := gomega.NewWithT(t)
 	type fields struct {
 		ocmClient ocm.Client
 	}
@@ -529,8 +529,8 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 						return nil, apiErrors.NotFound("not found error")
 					},
 					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						Expect(syncset.ID()).To(Equal(resources.Name))
-						Expect(syncset.Resources()).To(Equal(resources.Resources))
+						g.Expect(syncset.ID()).To(gomega.Equal(resources.Name))
+						g.Expect(syncset.Resources()).To(gomega.Equal(resources.Resources))
 						return nil, nil
 					},
 					UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
@@ -560,7 +560,7 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 						return nil, errors.New("CreateSyncSet should not be called")
 					},
 					UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						Expect(syncset.Resources()).To(Equal(resources.Resources))
+						g.Expect(syncset.Resources()).To(gomega.Equal(resources.Resources))
 						return nil, nil
 					},
 				},
@@ -626,21 +626,22 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.ApplyResources(test.args.clusterSpec, test.args.resources)
-			Expect(resp).To(Equal(test.want))
+			g.Expect(resp).To(gomega.Equal(test.want))
 			if test.wantErr {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			}
 		})
 	}
 }
 
 func TestOCMProvider_InstallAddon(t *testing.T) {
+	g := gomega.NewWithT(t)
 	type fields struct {
 		ocmClient ocm.Client
 	}
@@ -675,7 +676,7 @@ func TestOCMProvider_InstallAddon(t *testing.T) {
 						return clustersmgmtv1.NewAddOnInstallation().Build()
 					},
 					CreateAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-						Expect(addonId).To(Equal(testAddonId))
+						g.Expect(addonId).To(gomega.Equal(testAddonId))
 						return clustersmgmtv1.NewAddOnInstallation().State(clustersmgmtv1.AddOnInstallationStateInstalling).Build()
 					},
 				},
@@ -692,7 +693,7 @@ func TestOCMProvider_InstallAddon(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-						Expect(addonId).To(Equal(testAddonId))
+						g.Expect(addonId).To(gomega.Equal(testAddonId))
 						return clustersmgmtv1.NewAddOnInstallation().ID("test-addon-id").State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 					},
 					CreateAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
@@ -725,21 +726,22 @@ func TestOCMProvider_InstallAddon(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.installAddon(test.args.clusterSpec, test.args.addonID)
-			Expect(resp).To(Equal(test.want))
+			g.Expect(resp).To(gomega.Equal(test.want))
 			if test.wantErr {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			}
 		})
 	}
 }
 
 func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
+	g := gomega.NewWithT(t)
 	type fields struct {
 		ocmClient ocm.Client
 	}
@@ -781,8 +783,8 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 						return clustersmgmtv1.NewAddOnInstallation().Build()
 					},
 					CreateAddonWithParamsFunc: func(clusterId string, addonId string, params []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
-						Expect(addonId).To(Equal(testAddonId))
-						Expect(params).To(Equal(testParams))
+						g.Expect(addonId).To(gomega.Equal(testAddonId))
+						g.Expect(params).To(gomega.Equal(testParams))
 						return clustersmgmtv1.NewAddOnInstallation().State(clustersmgmtv1.AddOnInstallationStateInstalling).Build()
 					},
 				},
@@ -803,8 +805,8 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 						return clustersmgmtv1.NewAddOnInstallation().ID("test-addon-id").State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 					},
 					UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
-						Expect(addonId).To(Equal(testAddonId))
-						Expect(parameters).To(Equal(testParams))
+						g.Expect(addonId).To(gomega.Equal(testAddonId))
+						g.Expect(parameters).To(gomega.Equal(testParams))
 						return clustersmgmtv1.NewAddOnInstallation().State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 					},
 				},
@@ -837,12 +839,12 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.installAddonWithParams(test.args.clusterSpec, test.args.addonID, test.args.params)
-			Expect(resp).To(Equal(test.want))
+			g.Expect(resp).To(gomega.Equal(test.want))
 			if test.wantErr {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			}
 		})
 	}
@@ -909,18 +911,20 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.GetCloudProviders()
-			Expect(resp).To(Equal(test.want))
+			g.Expect(resp).To(gomega.Equal(test.want))
 			if test.wantErr {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			}
 		})
 	}
 }
 
 func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	type fields struct {
 		ocmClient ocm.Client
 	}
@@ -950,9 +954,9 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
-						Expect(provider.ID()).To(Equal(providerId1))
-						Expect(provider.Name()).To(Equal(providerName1))
-						Expect(provider.DisplayName()).To(Equal(providerDisplayName1))
+						g.Expect(provider.ID()).To(gomega.Equal(providerId1))
+						g.Expect(provider.Name()).To(gomega.Equal(providerName1))
+						g.Expect(provider.DisplayName()).To(gomega.Equal(providerDisplayName1))
 						return clustersmgmtv1.NewCloudRegionList().Build()
 					},
 				},
@@ -970,9 +974,9 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
-						Expect(provider.ID()).To(Equal(providerId1))
-						Expect(provider.Name()).To(Equal(providerName1))
-						Expect(provider.DisplayName()).To(Equal(providerDisplayName1))
+						g.Expect(provider.ID()).To(gomega.Equal(providerId1))
+						g.Expect(provider.Name()).To(gomega.Equal(providerName1))
+						g.Expect(provider.DisplayName()).To(gomega.Equal(providerDisplayName1))
 						p := clustersmgmtv1.NewCloudProvider().ID(providerId1)
 						r := clustersmgmtv1.NewCloudRegion().ID(regionId1).CloudProvider(p).Name(regionName1).DisplayName(regionDisplayName1).SupportsMultiAZ(regionSupportsMultiAZ1)
 						return clustersmgmtv1.NewCloudRegionList().Items(r).Build()
@@ -1014,12 +1018,12 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 	for _, testcase := range tests {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			resp, err := p.GetCloudProviderRegions(test.args.providerInfo)
-			Expect(resp).To(Equal(test.want))
+			g.Expect(resp).To(gomega.Equal(test.want))
 			if test.wantErr {
-				Expect(err).NotTo(BeNil())
+				g.Expect(err).NotTo(gomega.BeNil())
 			}
 		})
 	}
@@ -1141,12 +1145,12 @@ func TestOCMProvider_GetMachinePool(t *testing.T) {
 	for _, tc := range tests {
 		test := tc
 		t.Run(test.name, func(t *testing.T) {
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			ocmProvider := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			res, err := ocmProvider.GetMachinePool(test.args.clusterID, test.args.machinePoolID)
 			gotErr := err != nil
-			g.Expect(gotErr).To(Equal(test.wantErr))
-			g.Expect(res).To(Equal(test.want))
+			g.Expect(gotErr).To(gomega.Equal(test.wantErr))
+			g.Expect(res).To(gomega.Equal(test.want))
 		})
 	}
 }
@@ -1349,12 +1353,12 @@ func TestOCMProvider_CreateMachinePool(t *testing.T) {
 	for _, tc := range tests {
 		test := tc
 		t.Run(test.name, func(t *testing.T) {
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			ocmProvider := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
 			res, err := ocmProvider.CreateMachinePool(&test.args.machinePoolRequest)
 			gotErr := err != nil
-			g.Expect(gotErr).To(Equal(test.wantErr))
-			g.Expect(res).To(Equal(test.want))
+			g.Expect(gotErr).To(gomega.Equal(test.wantErr))
+			g.Expect(res).To(gomega.Equal(test.want))
 		})
 	}
 }

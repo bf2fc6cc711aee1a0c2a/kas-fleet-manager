@@ -18,7 +18,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/goava/di"
 	"github.com/golang/glog"
-	gm "github.com/onsi/gomega"
 	"github.com/spf13/pflag"
 
 	"github.com/bxcodec/faker/v3"
@@ -68,10 +67,6 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 // NewHelperWithHooksAndDBsetup will also init the DB state  executing the sql statement provided as setupDBsqlStatements after the DB has been reset.
 func NewHelperWithHooksAndDBsetup(t *testing.T, httpServer *httptest.Server, setupDBsqlStatements []string, configurationHook interface{}, envProviders ...di.Option) (*Helper, func()) {
-
-	// Register the test with gomega
-	gm.RegisterTestingT(t)
-
 	// Manually set environment name, ignoring environment variables
 	validTestEnv := false
 	envName := environments.GetEnvironmentStrFromEnv()

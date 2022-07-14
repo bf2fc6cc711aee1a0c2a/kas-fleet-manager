@@ -3,7 +3,7 @@ package dbapi
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestDataPlaneKafkastatus_GetReadyCondition(t *testing.T) {
@@ -32,15 +32,14 @@ func TestDataPlaneKafkastatus_GetReadyCondition(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			input := DataPlaneKafkaStatus{Conditions: tt.statusConds}
 			res, ok := input.GetReadyCondition()
-			Expect(ok).To(Equal(tt.wantOK))
-			Expect(res.Type).To(Equal(tt.wantCondType))
+			g.Expect(ok).To(gomega.Equal(tt.wantOK))
+			g.Expect(res.Type).To(gomega.Equal(tt.wantCondType))
 		})
 	}
 }

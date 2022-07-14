@@ -13,7 +13,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	w "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 
 	mockClusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	mockKafkas "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
@@ -105,12 +105,11 @@ func TestAcceptedKafkaManager_Reconcile(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := NewAcceptedKafkaManager(
 				tt.fields.kafkaService,
 				&services.QuotaServiceFactoryMock{
@@ -122,7 +121,7 @@ func TestAcceptedKafkaManager_Reconcile(t *testing.T) {
 				config.NewDataplaneClusterConfig(),
 				tt.fields.clusterService,
 				w.Reconciler{})
-			Expect(len(k.Reconcile()) > 0).To(Equal(tt.wantErr))
+			g.Expect(len(k.Reconcile()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -296,12 +295,11 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := &AcceptedKafkaManager{
 				kafkaService:   tt.fields.kafkaService,
 				clusterService: tt.fields.clusterService,
@@ -312,10 +310,10 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 				},
 				dataPlaneClusterConfig: config.NewDataplaneClusterConfig(),
 			}
-			Expect(k.reconcileAcceptedKafka(tt.args.kafka) != nil).To(Equal(tt.wantErr))
-			Expect(tt.args.kafka.Status).To(Equal(tt.wantStatus))
-			Expect(tt.args.kafka.DesiredStrimziVersion).To(Equal(tt.wantStrimziOperatorVersion))
-			Expect(tt.args.kafka.ClusterID).ToNot(Equal(""))
+			g.Expect(k.reconcileAcceptedKafka(tt.args.kafka) != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(tt.args.kafka.Status).To(gomega.Equal(tt.wantStatus))
+			g.Expect(tt.args.kafka.DesiredStrimziVersion).To(gomega.Equal(tt.wantStrimziOperatorVersion))
+			g.Expect(tt.args.kafka.ClusterID).ToNot(gomega.Equal(""))
 		})
 	}
 }

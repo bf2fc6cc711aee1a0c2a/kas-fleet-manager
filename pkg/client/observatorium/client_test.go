@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	pAPI "github.com/prometheus/client_golang/api"
 	pV1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
@@ -74,17 +74,17 @@ func Test_NewObservatoriumClient(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			config := tt.args.c
 			if tt.modifyFn != nil {
 				tt.modifyFn(config)
 			}
 			_, err := NewObservatoriumClient(config)
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -112,26 +112,26 @@ func Test_NewClient(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			config := tt.args.c
 			if tt.modifyFn != nil {
 				tt.modifyFn(config)
 			}
-			Expect(NewClient(config)).Error().Should(HaveOccurred())
+			g.Expect(NewClient(config)).Error().Should(gomega.HaveOccurred())
 		})
 	}
 }
 
 func Test_RoundTrip(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 
 	req, err := http.NewRequest(http.MethodGet, "https://httpbin.org/get", nil)
-	Expect(err).To(BeNil())
+	g.Expect(err).To(gomega.BeNil())
 
 	config := ClientConfiguration{
 		Timeout:    configuration.Timeout,
@@ -236,6 +236,7 @@ func Test_RoundTrip(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			p := tt.fields.p
 			if tt.modifyFn != nil {
 				tt.modifyFn(&p)
@@ -244,7 +245,7 @@ func Test_RoundTrip(t *testing.T) {
 			if resp != nil {
 				_ = resp.Body.Close()
 			}
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -252,10 +253,10 @@ func Test_RoundTrip(t *testing.T) {
 func Test_Query(t *testing.T) {
 	c := observabilityConfiguration
 	c.EnableMock = true
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 
 	client, err := NewObservatoriumClient(c)
-	Expect(err).To(BeNil())
+	g.Expect(err).To(gomega.BeNil())
 	type fields struct {
 		c *Client
 	}
@@ -285,7 +286,8 @@ func Test_Query(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.c.Query(tt.args.queryTemplate, tt.args.label).Err).ToNot(HaveOccurred())
+			g := gomega.NewWithT(t)
+			g.Expect(tt.fields.c.Query(tt.args.queryTemplate, tt.args.label).Err).ToNot(gomega.HaveOccurred())
 		})
 	}
 }
@@ -293,10 +295,10 @@ func Test_Query(t *testing.T) {
 func Test_QueryRange(t *testing.T) {
 	c := observabilityConfiguration
 	c.EnableMock = true
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 
 	client, err := NewObservatoriumClient(c)
-	Expect(err).To(BeNil())
+	g.Expect(err).To(gomega.BeNil())
 	type fields struct {
 		c *Client
 	}
@@ -328,7 +330,9 @@ func Test_QueryRange(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(tt.fields.c.QueryRange(tt.args.queryTemplate, tt.args.label, tt.args.bounds).Err).ToNot(HaveOccurred())
+			g := gomega.NewWithT(t)
+
+			g.Expect(tt.fields.c.QueryRange(tt.args.queryTemplate, tt.args.label, tt.args.bounds).Err).ToNot(gomega.HaveOccurred())
 		})
 	}
 }
@@ -367,13 +371,12 @@ func Test_all(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(all(tt.args.items, tt.args.conjunction)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(all(tt.args.items, tt.args.conjunction)).To(gomega.Equal(tt.want))
 		})
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 
 	"testing"
 )
@@ -118,14 +118,13 @@ func Test_ListSupportedKafkaInstanceTypes(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			h := NewSupportedKafkaInstanceTypesHandler(tt.fields.supportedKafkaInstanceTypesService)
-			req, rw := GetHandlerParams("GET", "/cloud_provider=aws", nil)
+			req, rw := GetHandlerParams("GET", "/cloud_provider=aws", nil, t)
 			muxVars := map[string]string{
 				"cloud_provider": tt.args.cloudProvider,
 				"cloud_region":   tt.args.cloudRegion,
@@ -134,7 +133,7 @@ func Test_ListSupportedKafkaInstanceTypes(t *testing.T) {
 			h.ListSupportedKafkaInstanceTypes(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }

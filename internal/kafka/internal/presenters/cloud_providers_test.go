@@ -7,7 +7,7 @@ import (
 	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/cloud_providers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestGetRegionCapacityItems(t *testing.T) {
@@ -29,12 +29,11 @@ func TestGetRegionCapacityItems(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(GetRegionCapacityItems(tt.args.capacityItems)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(GetRegionCapacityItems(tt.args.capacityItems)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -58,12 +57,11 @@ func TestPresentCloudProvider(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(PresentCloudProvider(tt.args.cloudProvider)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(PresentCloudProvider(tt.args.cloudProvider)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -91,13 +89,12 @@ func TestPresentCloudRegion(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			cloudRegion := PresentCloudRegion(tt.args.cloudRegion)
-			Expect(&cloudRegion).To(Equal(tt.want))
+			g.Expect(&cloudRegion).To(gomega.Equal(tt.want))
 		})
 	}
 }

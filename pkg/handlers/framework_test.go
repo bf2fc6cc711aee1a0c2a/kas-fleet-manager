@@ -8,12 +8,11 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_errorHandler(t *testing.T) {
-	RegisterTestingT(t)
-	req, rw := GetHandlerParams("GET", "/", nil)
+	req, rw := GetHandlerParams("GET", "/", nil, t)
 	type args struct {
 		w   http.ResponseWriter
 		r   *http.Request
@@ -41,16 +40,16 @@ func Test_errorHandler(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			errorHandler(tt.args.r, tt.args.w, tt.args.cfg, tt.args.err)
-			Expect(rw.Code).To(Equal(tt.wantStatusCode))
+			g.Expect(rw.Code).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
 
 func Test_Handle(t *testing.T) {
-	RegisterTestingT(t)
 	var regionCapacityListItem api.RegionCapacityListItem
-	req, rw := GetHandlerParams("GET", "/", nil)
+	req, rw := GetHandlerParams("GET", "/", nil, t)
 
 	pReq, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte(`{"instance_type":"test"}`)))
 
@@ -143,15 +142,15 @@ func Test_Handle(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			Handle(tt.args.w, tt.args.r, tt.args.cfg, tt.args.httpStatus)
-			Expect(rw.Code).ToNot(Equal(0))
+			g.Expect(rw.Code).ToNot(gomega.Equal(0))
 		})
 	}
 }
 
 func Test_HandleDelete(t *testing.T) {
-	RegisterTestingT(t)
-	req, rw := GetHandlerParams("DELETE", "/", nil)
+	req, rw := GetHandlerParams("DELETE", "/", nil, t)
 	type args struct {
 		w          http.ResponseWriter
 		r          *http.Request
@@ -228,15 +227,15 @@ func Test_HandleDelete(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			HandleDelete(tt.args.w, tt.args.r, tt.args.cfg, tt.args.httpStatus)
-			Expect(rw.Code).ToNot(Equal(0))
+			g.Expect(rw.Code).ToNot(gomega.Equal(0))
 		})
 	}
 }
 
 func Test_HandleGet(t *testing.T) {
-	RegisterTestingT(t)
-	req, rw := GetHandlerParams("GET", "/{id}", nil)
+	req, rw := GetHandlerParams("GET", "/{id}", nil, t)
 	type args struct {
 		w          http.ResponseWriter
 		r          *http.Request
@@ -313,15 +312,15 @@ func Test_HandleGet(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			HandleGet(tt.args.w, tt.args.r, tt.args.cfg)
-			Expect(rw.Code).ToNot(Equal(0))
+			g.Expect(rw.Code).ToNot(gomega.Equal(0))
 		})
 	}
 }
 
 func Test_HandleList(t *testing.T) {
-	RegisterTestingT(t)
-	req, rw := GetHandlerParams("GET", "/", nil)
+	req, rw := GetHandlerParams("GET", "/", nil, t)
 	type args struct {
 		w          http.ResponseWriter
 		r          *http.Request
@@ -400,8 +399,9 @@ func Test_HandleList(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			HandleList(tt.args.w, tt.args.r, tt.args.cfg)
-			Expect(rw.Code).ToNot(Equal(0))
+			g.Expect(rw.Code).ToNot(gomega.Equal(0))
 		})
 	}
 }
@@ -425,13 +425,12 @@ func Test_ConvertToPrivateError(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(ConvertToPrivateError(tt.args.e)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(ConvertToPrivateError(tt.args.e)).To(gomega.Equal(tt.want))
 		})
 	}
 }

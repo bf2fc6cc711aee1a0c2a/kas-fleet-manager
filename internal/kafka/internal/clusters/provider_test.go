@@ -7,7 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestNewDefaultProviderFactory(t *testing.T) {
@@ -38,13 +38,12 @@ func TestNewDefaultProviderFactory(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got := NewDefaultProviderFactory(tt.args.ocmClient, tt.args.connectionFactory, tt.args.ocmConfig, tt.args.awsConfig, tt.args.dataplaneClusterConfig)
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -103,19 +102,19 @@ func TestDefaultProviderFactory_GetProvider(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	RegisterTestingT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			d := &DefaultProviderFactory{
 				providerContainer: tt.fields.providerContainer,
 			}
 			got, err := d.GetProvider(tt.args.providerType)
-			Expect(err != nil).To(Equal(tt.wantErr))
-			Expect(got == nil).To(Equal(tt.want == nil))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got == nil).To(gomega.Equal(tt.want == nil))
 			if got != nil {
-				Expect(got).To(Equal(tt.want))
+				g.Expect(got).To(gomega.Equal(tt.want))
 			}
 		})
 	}

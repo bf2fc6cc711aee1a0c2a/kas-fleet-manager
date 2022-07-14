@@ -8,11 +8,11 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestReconciler_Wakeup(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 	r := Reconciler{
 		SignalBus:        signalbus.NewSignalBus(),
 		ReconcilerConfig: NewReconcilerConfig(),
@@ -66,16 +66,16 @@ func TestReconciler_Wakeup(t *testing.T) {
 	defer r.Stop(worker)
 
 	// initial reconcile should happen right away... this should not timeout
-	Expect(waitForReconcile(1 * time.Second)).Should(Equal(false))
+	g.Expect(waitForReconcile(1 * time.Second)).Should(gomega.Equal(false))
 
 	// Next reconcile will take a while since it runs every 30 seconds.. lets timeout after 3 seconds of waiting..
-	Expect(waitForReconcile(3 * time.Second)).Should(Equal(true))
+	g.Expect(waitForReconcile(3 * time.Second)).Should(gomega.Equal(true))
 
 	// Now lets try to wake it up before those 30 seconds have passed...
 	r.Wakeup(false)
-	Expect(waitForReconcile(1 * time.Second)).Should(Equal(false))
+	g.Expect(waitForReconcile(1 * time.Second)).Should(gomega.Equal(false))
 
 	r.Wakeup(true)
 	// We can use a 0 timeout here because Wakeup will wait for the reconcile to occur first.
-	Expect(waitForReconcile(0)).Should(Equal(false))
+	g.Expect(waitForReconcile(0)).Should(gomega.Equal(false))
 }

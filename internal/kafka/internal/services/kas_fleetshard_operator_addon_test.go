@@ -12,7 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_AgentOperatorAddon_Provision(t *testing.T) {
@@ -70,11 +70,13 @@ func Test_AgentOperatorAddon_Provision(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				SsoService:          tt.fields.ssoService,
 				ProviderFactory:     tt.fields.providerFactory,
@@ -92,7 +94,7 @@ func Test_AgentOperatorAddon_Provision(t *testing.T) {
 			if err != nil && !tt.wantErr {
 				t.Errorf("Provision() error = %v, want = %v", err, tt.wantErr)
 			}
-			g.Expect(ready).To(Equal(tt.result))
+			g.Expect(ready).To(gomega.Equal(tt.result))
 		})
 	}
 }
@@ -129,11 +131,12 @@ func Test_AgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				SsoService: tt.fields.ssoService,
 			}
@@ -141,7 +144,7 @@ func Test_AgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 				ClusterID:    "test-cluster-id",
 				ProviderType: api.ClusterProviderOCM,
 			})
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -261,12 +264,13 @@ func Test_ParameterList_GetParam(t *testing.T) {
 			want: "",
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			g.Expect(tt.p.GetParam(tt.args.name)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(tt.p.GetParam(tt.args.name)).To(gomega.Equal(tt.want))
 		})
 	}
 }

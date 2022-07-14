@@ -1,8 +1,9 @@
 package state_machine
 
 import (
-	. "github.com/onsi/gomega"
 	"testing"
+
+	"github.com/onsi/gomega"
 )
 
 // createStateMachine - creates a simple StateMachine that validates transitions for an issue state
@@ -57,19 +58,19 @@ func Test_StateMachine_ValidPaths(t *testing.T) {
 			path: []string{"NEW", "ASSIGNED", "IN PROGRESS", "WAITING FOR REVIEW", "IN PROGRESS", "WAITING FOR REVIEW", "REVIEWING", "WAITING FOR RELEASE", "DONE"},
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			initialState := createStateMachine()
 			currentState := initialState
 			var err error
 			for _, s := range tt.path {
 				currentState, err = currentState.Move(s)
-				Expect(err).ToNot(HaveOccurred())
+				g.Expect(err).ToNot(gomega.HaveOccurred())
 			}
-			Expect(currentState.Eof()).To(BeTrue())
+			g.Expect(currentState.Eof()).To(gomega.BeTrue())
 		})
 	}
 }
@@ -99,18 +100,18 @@ func Test_StateMachine_InvalidPaths(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
+			g := gomega.NewWithT(t)
 			initialState := createStateMachine()
 			currentState := initialState
 			var err error
 			for _, s := range tt.path {
 				currentState, err = currentState.Move(s)
 				if err != nil {
-					Expect(err.Error()).To(Equal(tt.error))
+					g.Expect(err.Error()).To(gomega.Equal(tt.error))
 				}
 			}
 			if currentState != nil {
-				Expect(currentState.Eof()).To(BeFalse()) // in this test we never end successfully
+				g.Expect(currentState.Eof()).To(gomega.BeFalse()) // in this test we never end successfully
 			}
 		})
 	}

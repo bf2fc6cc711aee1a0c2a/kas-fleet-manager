@@ -15,7 +15,7 @@ import (
 
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 type TestEnv struct {
@@ -63,6 +63,8 @@ func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
 }
 
 func TestTermsRequired_CreateKafkaTermsRequired(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	env := termsRequiredSetup(true, t)
 	defer env.teardown()
 
@@ -85,11 +87,13 @@ func TestTermsRequired_CreateKafkaTermsRequired(t *testing.T) {
 		resp.Body.Close()
 	}
 
-	Expect(err).To(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusForbidden))
 }
 
 func TestTermsRequired_CreateKafka_TermsNotRequired(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	env := termsRequiredSetup(false, t)
 	defer env.teardown()
 
@@ -112,11 +116,13 @@ func TestTermsRequired_CreateKafka_TermsNotRequired(t *testing.T) {
 		resp.Body.Close()
 	}
 
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
 }
 
 func TestTermsRequired_ListKafkaTermsRequired(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	env := termsRequiredSetup(true, t)
 	defer env.teardown()
 
@@ -128,21 +134,21 @@ func TestTermsRequired_ListKafkaTermsRequired(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 
 	clusterID, getClusterErr := common.GetRunningOsdClusterID(env.helper, t)
 	if getClusterErr != nil {
 		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
-	Expect(clusterID).ToNot(Equal(""))
+	g.Expect(clusterID).ToNot(gomega.Equal(""))
 
 	db := test.TestServices.DBFactory.New()
 	clusterDetails := &api.Cluster{
 		ClusterID: clusterID,
 	}
 	err = db.Unscoped().Where(clusterDetails).First(clusterDetails).Error
-	Expect(err).NotTo(HaveOccurred(), "failed to find kafka request")
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "failed to find kafka request")
 	if err := getAndDeleteServiceAccounts(clusterDetails.ClientID, env.helper.Env); err != nil {
 		t.Fatalf("Failed to delete service account with client id: %v", clusterDetails.ClientID)
 	}

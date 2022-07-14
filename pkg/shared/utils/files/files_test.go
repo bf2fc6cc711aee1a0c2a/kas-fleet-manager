@@ -1,26 +1,27 @@
 package files_test
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/files"
-	"github.com/onsi/gomega"
-	"github.com/rs/xid"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/files"
+	"github.com/onsi/gomega"
+	"github.com/rs/xid"
 )
 
 func Test_WalkSymLinks(t *testing.T) {
-	gomega.RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 
 	root, err := createSymLinkedDirectory([]source{
 		{name: "foo.txt", content: xid.New().String()},
 		{name: "bar.txt", content: xid.New().String()},
 	})
 
-	gomega.Expect(err).To(gomega.BeNil())
+	g.Expect(err).To(gomega.BeNil())
 
 	defer func() {
 		_ = os.RemoveAll(root)
@@ -37,8 +38,8 @@ func Test_WalkSymLinks(t *testing.T) {
 		return nil
 	})
 
-	gomega.Expect(err).To(gomega.BeNil())
-	gomega.Expect(results).To(gomega.ContainElements("foo.txt", "bar.txt"))
+	g.Expect(err).To(gomega.BeNil())
+	g.Expect(results).To(gomega.ContainElements("foo.txt", "bar.txt"))
 }
 
 type source struct {

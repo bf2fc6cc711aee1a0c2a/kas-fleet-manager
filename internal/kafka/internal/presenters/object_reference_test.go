@@ -9,7 +9,7 @@ import (
 	mockServAcc "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/service_accounts"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestPresentReference(t *testing.T) {
@@ -58,13 +58,12 @@ func TestPresentReference(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(PresentReference(tt.args.id, tt.args.obj)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(PresentReference(tt.args.id, tt.args.obj)).To(gomega.Equal(tt.want))
 		})
 	}
 }

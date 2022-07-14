@@ -8,7 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 
 	mockKafkas "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -90,13 +90,12 @@ func TestPreparingKafkaManager_Reconcile(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(len(NewPreparingKafkaManager(tt.fields.kafkaService, w.Reconciler{}).Reconcile()) > 0).To(Equal(tt.wantErr))
+			g := gomega.NewWithT(t)
+			g.Expect(len(NewPreparingKafkaManager(tt.fields.kafkaService, w.Reconciler{}).Reconcile()) > 0).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -241,19 +240,18 @@ func TestPreparingKafkaManager_reconcilePreparingKafkas(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := &PreparingKafkaManager{
 				kafkaService: tt.fields.kafkaService,
 			}
 
-			Expect(k.reconcilePreparingKafka(tt.args.kafka) != nil).To(Equal(tt.wantErr))
-			Expect(tt.expectedKafkaStatus.String()).Should(Equal(tt.args.kafka.Status))
-			Expect(tt.args.kafka.FailedReason).Should(Equal(tt.wantErrMsg))
+			g.Expect(k.reconcilePreparingKafka(tt.args.kafka) != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(tt.expectedKafkaStatus.String()).Should(gomega.Equal(tt.args.kafka.Status))
+			g.Expect(tt.args.kafka.FailedReason).Should(gomega.Equal(tt.wantErrMsg))
 		})
 	}
 }

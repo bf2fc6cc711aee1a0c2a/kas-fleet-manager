@@ -11,7 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 
 	dataplanemocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
 )
@@ -65,19 +65,18 @@ func Test_UpdateDataPlaneClusterStatus(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			h := NewDataPlaneClusterHandler(tt.fields.dataplaneClusterService)
-			req, rw := GetHandlerParams("GET", "/{id}", bytes.NewBuffer(tt.args.body))
+			req, rw := GetHandlerParams("GET", "/{id}", bytes.NewBuffer(tt.args.body), t)
 			req = mux.SetURLVars(req, map[string]string{"id": "test-id"})
 			h.UpdateDataPlaneClusterStatus(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -116,19 +115,18 @@ func Test_GetDataPlaneClusterConfig(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			h := NewDataPlaneClusterHandler(tt.fields.dataplaneClusterService)
-			req, rw := GetHandlerParams("GET", "/{id}", nil)
+			req, rw := GetHandlerParams("GET", "/{id}", nil, t)
 			req = mux.SetURLVars(req, map[string]string{"id": "test-id"})
 			h.GetDataPlaneClusterConfig(rw, req)
 			resp := rw.Result()
 			resp.Body.Close()
-			Expect(resp.StatusCode).To(Equal(tt.wantStatusCode))
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -179,15 +177,14 @@ func Test_validateBody(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			h := NewDataPlaneClusterHandler(tt.fields.dataplaneClusterService)
 			err := h.validateBody(tt.args.request)()
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -276,14 +273,13 @@ func Test_validateStrimzi(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			h := NewDataPlaneClusterHandler(tt.fields.dataplaneClusterService)
-			Expect(h.validateStrimzi(tt.args.request) != nil).To(Equal(tt.wantErr))
+			g.Expect(h.validateStrimzi(tt.args.request) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

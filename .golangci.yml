@@ -12,3 +12,11 @@ linters:
   enable:
     - bodyclose
     - scopelint
+    - forbidigo
+linters-settings:
+  forbidigo:
+    forbid:
+      # gomega (https://onsi.github.io/gomega/) library's RegisterTestingT method is now deprecated and NewWithT() should be used instead.
+      # When having table-driven tests it should be instantiated in each subtest.
+      # See https://pkg.go.dev/github.com/onsi/gomega#NewWithT for an example
+      - 'RegisterTestingT(# RegisterTestingT is deprecated. Use https://pkg.go.dev/github.com/onsi/gomega#NewWithT instead)?'

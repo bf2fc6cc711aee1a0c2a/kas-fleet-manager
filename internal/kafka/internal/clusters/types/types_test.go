@@ -3,7 +3,7 @@ package types
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_CloudProviderRegionInfoList_Merge(t *testing.T) {
@@ -118,13 +118,13 @@ func Test_CloudProviderRegionInfoList_Merge(t *testing.T) {
 			},
 		},
 	}
-	RegisterTestingT(t)
 
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			tt.fields.target.Merge(tt.args.source)
-			Expect(tt.want).To(Equal(tt.fields.target.Items))
+			g.Expect(tt.want).To(gomega.Equal(tt.fields.target.Items))
 		})
 	}
 }

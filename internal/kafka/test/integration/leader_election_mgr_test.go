@@ -7,7 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -17,6 +17,7 @@ const (
 )
 
 func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
+	g := gomega.NewWithT(t)
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -29,8 +30,8 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 		clusterState = test.TestServices.ClusterManager.IsRunning()
 		return clusterState, nil
 	})
-	Expect(err).NotTo(HaveOccurred(), "", clusterState, err)
-	Expect(clusterState).To(Equal(true))
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "", clusterState, err)
+	g.Expect(clusterState).To(gomega.Equal(true))
 
 	kafkaState := false
 	err = wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
@@ -46,8 +47,8 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 		return kafkaState, nil
 	})
 
-	Expect(err).NotTo(HaveOccurred(), "", kafkaState, err)
-	Expect(kafkaState).To(Equal(true))
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "", kafkaState, err)
+	g.Expect(kafkaState).To(gomega.Equal(true))
 
 	// Take down a worker and valid it is really down
 	test.TestServices.LeaderElectionManager.Stop()
@@ -55,8 +56,8 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 		clusterState = test.TestServices.ClusterManager.IsRunning()
 		return !clusterState, nil
 	})
-	Expect(err).NotTo(HaveOccurred(), "", clusterState, err)
-	Expect(clusterState).To(Equal(false))
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "", clusterState, err)
+	g.Expect(clusterState).To(gomega.Equal(false))
 
 	test.TestServices.LeaderElectionManager.Start()
 	// Wait for Leader Election Manager to start it up again
@@ -64,6 +65,6 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 		clusterState = test.TestServices.ClusterManager.IsRunning()
 		return clusterState, nil
 	})
-	Expect(err).NotTo(HaveOccurred(), "", clusterState, err)
-	Expect(clusterState).To(Equal(true))
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "", clusterState, err)
+	g.Expect(clusterState).To(gomega.Equal(true))
 }

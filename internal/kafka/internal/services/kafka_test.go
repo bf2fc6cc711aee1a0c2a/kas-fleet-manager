@@ -29,7 +29,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
 	goerrors "github.com/pkg/errors"
 	mocket "github.com/selvatico/go-mocket"
 	"gorm.io/gorm"
@@ -283,7 +282,6 @@ func Test_kafkaService_Get(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
 	// we loop through each test case defined in the list above and start a new test invocation, using the testing
 	// t.Run function
 	for _, testcase := range tests {
@@ -292,6 +290,7 @@ func Test_kafkaService_Get(t *testing.T) {
 		// tt now contains our test case, we can use the 'fields' to construct the struct that we want to test and the
 		// 'args' to pass to the function we want to test
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			// invoke any pre-req logic if needed
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -310,7 +309,7 @@ func Test_kafkaService_Get(t *testing.T) {
 			}
 			// in our test case we used 'want' to define the output api.KafkaRequest that we expect to be returned, we
 			// can use Equal function to compare expected and received result
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -374,12 +373,11 @@ func Test_kafkaService_GetById(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -391,7 +389,7 @@ func Test_kafkaService_GetById(t *testing.T) {
 				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1711,12 +1709,11 @@ func Test_kafkaService_List(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			tt.setupFn(tt.want.kafkaList)
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
@@ -1733,7 +1730,7 @@ func Test_kafkaService_List(t *testing.T) {
 			}
 
 			// compare wanted vs actual pagingMeta result
-			g.Expect(pagingMeta).To(Equal(tt.want.pagingMeta))
+			g.Expect(pagingMeta).To(gomega.Equal(tt.want.pagingMeta))
 
 			// compare wanted vs actual results
 			if len(result) != len(tt.want.kafkaList) {
@@ -1741,7 +1738,7 @@ func Test_kafkaService_List(t *testing.T) {
 			}
 
 			for i, got := range result {
-				g.Expect(got).To(Equal(tt.want.kafkaList[i]))
+				g.Expect(got).To(gomega.Equal(tt.want.kafkaList[i]))
 			}
 		})
 	}
@@ -1790,12 +1787,11 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			tt.setupFn()
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
@@ -1808,7 +1804,7 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 				t.Errorf("kafkaService.ListByStatus() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -2098,17 +2094,18 @@ func Test_kafkaService_DeprovisionKafkaForUsers(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			tt.setupFn()
 			k := kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			err := k.DeprovisionKafkaForUsers(tt.args.users)
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -2152,11 +2149,12 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -2176,7 +2174,7 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 				},
 			}
 			err := k.DeprovisionExpiredKafkas()
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -2247,12 +2245,11 @@ func Test_KafkaService_CountByStatus(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFunc != nil {
 				tt.setupFunc()
 			}
@@ -2263,7 +2260,7 @@ func Test_KafkaService_CountByStatus(t *testing.T) {
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for CountByStatus: %v", err)
 			}
-			g.Expect(status).To(Equal(tt.want))
+			g.Expect(status).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -2481,7 +2478,7 @@ func Test_KafkaService_CountStreamingUnitByRegionAndInstanceType(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(testing *testing.T) {
-			g := NewWithT(testing)
+			g := gomega.NewWithT(t)
 			if tt.setupFunc != nil {
 				tt.setupFunc()
 			}
@@ -2492,9 +2489,9 @@ func Test_KafkaService_CountStreamingUnitByRegionAndInstanceType(t *testing.T) {
 				},
 			}
 			streamingUnitsCountPerRegion, err := k.CountStreamingUnitByRegionAndInstanceType()
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if !tt.wantErr {
-				g.Expect(streamingUnitsCountPerRegion).To(Equal(tt.want))
+				g.Expect(streamingUnitsCountPerRegion).To(gomega.Equal(tt.want))
 			}
 
 		})
@@ -2721,11 +2718,11 @@ func Test_KafkaService_ListComponentVersions(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFunc != nil {
 				tt.setupFunc()
 			}
@@ -2736,7 +2733,7 @@ func Test_KafkaService_ListComponentVersions(t *testing.T) {
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error for ListComponentVersions: %v", err)
 			}
-			g.Expect(result).To(Equal(tt.want))
+			g.Expect(result).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -2922,11 +2919,12 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -3028,19 +3026,20 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		tt.setupFn()
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 				keycloakService:   tt.fields.keycloakService,
 				kafkaConfig:       tt.fields.kafkaConfig,
 			}
 			got, err := k.GetManagedKafkaByClusterID(tt.args.clusterID)
-			g.Expect(got).To(Equal(tt.want))
-			g.Expect(err).To(Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -3511,7 +3510,7 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			k := &kafkaService{
 				connectionFactory:      tt.fields.connectionFactory,
 				clusterService:         tt.fields.clusterService,
@@ -3519,9 +3518,9 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 				dataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
 			}
 			got, err := k.GenerateReservedManagedKafkasByClusterID(tt.args.clusterID)
-			g.Expect(err != nil).To(Equal(tt.wantErr))
-			g.Expect(got).Should(HaveLen(len(tt.want)))
-			g.Expect(got).To(Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).Should(gomega.HaveLen(len(tt.want)))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -3635,17 +3634,17 @@ func Test_kafkaService_VerifyAndUpdateKafkaAdmin(t *testing.T) {
 		},
 	}
 
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		tt.setupFunc()
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 				clusterService:    tt.fields.clusterService,
 				authService:       tt.fields.authService,
 			}
-			g.Expect(k.VerifyAndUpdateKafkaAdmin(tt.args.ctx, tt.args.kafkaRequest)).To(Equal(tt.want))
+			g.Expect(k.VerifyAndUpdateKafkaAdmin(tt.args.ctx, tt.args.kafkaRequest)).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -3720,17 +3719,18 @@ func Test_kafkaService_GetCNAMERecordStatus(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := &kafkaService{
 				awsConfig:        tt.fields.awsConfig,
 				awsClientFactory: tt.fields.awsClientFactory,
 			}
 			got, err := k.GetCNAMERecordStatus(tt.args.kafkaRequest)
-			g.Expect(got).To(Equal(tt.want))
-			g.Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -3782,10 +3782,11 @@ func Test_NewKafkaService(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
+		g := gomega.NewWithT(t)
 		tt := testcase
-		g.Expect(NewKafkaService(tt.args.connectionFactory, tt.args.clusterService, tt.args.keycloakService, tt.args.kafkaConfig, tt.args.dataplaneClusterConfig, tt.args.awsConfig, tt.args.quotaServiceFactory, tt.args.awsClientFactory, tt.args.authorizationService, tt.args.providerConfig, tt.args.clusterPlacementStrategy)).To(Equal(tt.want))
+		g.Expect(NewKafkaService(tt.args.connectionFactory, tt.args.clusterService, tt.args.keycloakService, tt.args.kafkaConfig, tt.args.dataplaneClusterConfig, tt.args.awsConfig, tt.args.quotaServiceFactory, tt.args.awsClientFactory, tt.args.authorizationService, tt.args.providerConfig, tt.args.clusterPlacementStrategy)).To(gomega.Equal(tt.want))
 	}
 }
 
@@ -3815,15 +3816,16 @@ func Test_kafkaService_ListKafkasWithRoutesNotCreated(t *testing.T) {
 			},
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		tt.setupFn()
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
-			g.Expect(k.ListKafkasWithRoutesNotCreated()).To(Equal(tt.want))
+			g.Expect(k.ListKafkasWithRoutesNotCreated()).To(gomega.Equal(tt.want))
 		})
 	}
 }

@@ -10,12 +10,13 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
-func GetHandlerParams(method string, url string, body io.Reader) (*http.Request, *httptest.ResponseRecorder) {
+func GetHandlerParams(method string, url string, body io.Reader, t *testing.T) (*http.Request, *httptest.ResponseRecorder) {
+	g := gomega.NewWithT(t)
 	req, err := http.NewRequest(method, url, body)
-	Expect(err).NotTo(HaveOccurred())
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	return req, httptest.NewRecorder()
 }
@@ -31,21 +32,20 @@ func Test_ListErrors(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for i := range tests {
 		tt := tests[i]
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			errorsLen := strconv.Itoa(len(errors.Errors()))
-			req, rw := GetHandlerParams("GET", "/", nil)
+			req, rw := GetHandlerParams("GET", "/", nil, t)
 			handler := NewErrorsHandler()
-			Expect(handler == nil).To(Equal(tt.wantNil))
+			g.Expect(handler == nil).To(gomega.Equal(tt.wantNil))
 			handler.List(rw, req) //nolint
-			Expect(rw.Code).To(Equal(http.StatusOK))
+			g.Expect(rw.Code).To(gomega.Equal(http.StatusOK))
 			bodyStr, err := io.ReadAll(rw.Body)
-			Expect(err).ToNot(HaveOccurred())
+			g.Expect(err).ToNot(gomega.HaveOccurred())
 			// body response should contain the size (len) of the errors
-			Expect(bodyStr).To(ContainSubstring(errorsLen))
+			g.Expect(bodyStr).To(gomega.ContainSubstring(errorsLen))
 		})
 	}
 }
@@ -85,16 +85,15 @@ func Test_GetError(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			handler := NewErrorsHandler()
-			req, rw := GetHandlerParams("GET", fmt.Sprintf("/%s", tt.args.id), nil)
+			req, rw := GetHandlerParams("GET", fmt.Sprintf("/%s", tt.args.id), nil, t)
 			req = mux.SetURLVars(req, map[string]string{"id": tt.args.id})
 			handler.Get(rw, req)
-			Expect(rw.Code).To(Equal(tt.wantStatusCode))
+			g.Expect(rw.Code).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -110,15 +109,14 @@ func Test_CreateError(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			handler := NewErrorsHandler()
-			req, rw := GetHandlerParams("POST", "/", nil)
+			req, rw := GetHandlerParams("POST", "/", nil, t)
 			handler.Create(rw, req)
-			Expect(rw.Code).To(Equal(tt.wantStatusCode))
+			g.Expect(rw.Code).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -134,15 +132,14 @@ func Test_DeleteError(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			handler := NewErrorsHandler()
-			req, rw := GetHandlerParams("DELETE", "/", nil)
+			req, rw := GetHandlerParams("DELETE", "/", nil, t)
 			handler.Delete(rw, req)
-			Expect(rw.Code).To(Equal(tt.wantStatusCode))
+			g.Expect(rw.Code).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }
@@ -158,16 +155,15 @@ func Test_PatchError(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			handler := NewErrorsHandler()
-			req, rw := GetHandlerParams("PATCH", "/", nil)
+			req, rw := GetHandlerParams("PATCH", "/", nil, t)
 			handler.Patch(rw, req)
-			Expect(rw.Code).To(Equal(tt.wantStatusCode))
+			g.Expect(rw.Code).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }

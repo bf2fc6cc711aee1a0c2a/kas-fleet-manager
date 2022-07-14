@@ -22,7 +22,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 
 	"github.com/golang-jwt/jwt/v4"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
@@ -82,15 +82,14 @@ func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			validateFn := ValidateKafkaClusterNameIsUnique(&tt.arg.name, tt.arg.kafkaService, tt.arg.context)
 			err := validateFn()
-			Expect(err).To(Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -133,18 +132,17 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			validateFn := ValidKafkaClusterName(&tt.name, "name")
 			err := validateFn()
 			if tt.expectError {
-				Expect(err).Should(HaveOccurred())
+				g.Expect(err).Should(gomega.HaveOccurred())
 			} else {
-				Expect(err).ShouldNot(HaveOccurred())
+				g.Expect(err).ShouldNot(gomega.HaveOccurred())
 			}
 		})
 	}
@@ -396,22 +394,21 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			validateFn := ValidateCloudProvider(context.Background(), &tt.arg.kafkaService, &tt.arg.kafkaRequest, tt.arg.ProviderConfig, "creating-kafka")
 			err := validateFn()
 			if !tt.want.wantErr && err != nil {
 				t.Errorf("validatedCloudProvider() expected not to throw error but threw %v", err)
 			} else if tt.want.wantErr {
-				Expect(err.Reason).To(Equal(tt.want.reason))
+				g.Expect(err.Reason).To(gomega.Equal(tt.want.reason))
 				return
 			}
 
-			Expect(err != nil).To(Equal(tt.want.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.want.wantErr))
 		})
 	}
 }
@@ -603,17 +600,16 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			validateFn := ValidateKafkaUserFacingUpdateFields(tt.arg.ctx, tt.arg.authService, tt.arg.kafka, &tt.arg.kafkaUpdateRequest)
 			err := validateFn()
-			Expect(err != nil).To(Equal(tt.want.wantErr), "ValidateKafkaUserFacingUpdateFields() expected not to throw error but threw %v", err)
+			g.Expect(err != nil).To(gomega.Equal(tt.want.wantErr), "ValidateKafkaUserFacingUpdateFields() expected not to throw error but threw %v", err)
 			if tt.want.wantErr {
-				Expect(err.Reason).To(Equal(tt.want.reason))
+				g.Expect(err.Reason).To(gomega.Equal(tt.want.reason))
 				return
 			}
 		})
@@ -710,14 +706,14 @@ func TestValidateBillingCloudAccountIdAndMarketplace(t *testing.T) {
 			want: errors.NewWithCause(errors.ErrorGeneral, errors.GeneralError("error assigning instance type: "), "error assigning instance type: KAFKAS-MGMT-9: error assigning instance type: "),
 		},
 	}
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			validateFn := ValidateBillingCloudAccountIdAndMarketplace(tt.args.ctx, &tt.args.kafkaService, tt.args.kafkaRequestPayload)
 			err := validateFn()
-			g.Expect(err).To(Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -929,14 +925,15 @@ func TestValidateKafkaPlan(t *testing.T) {
 			want: errors.InstancePlanNotSupported("Unsupported plan provided: 'developer.invalidPlan'"),
 		},
 	}
-	g := NewWithT(t)
+
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			validateFn := ValidateKafkaPlan(tt.args.ctx, &tt.args.kafkaService, tt.args.kafkaConfig, tt.args.kafkaRequestPayload)
 			err := validateFn()
-			g.Expect(err).To(Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -975,14 +972,14 @@ func TestValidateKafkaUpdateFields(t *testing.T) {
 			want: errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version, kafka_storage_size or max_data_retention_size to be provided"),
 		},
 	}
-	g := NewWithT(t)
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			g := gomega.NewWithT(t)
 			validateFn := ValidateKafkaUpdateFields(tt.args.kafkaUpdateRequest)
 			err := validateFn()
-			g.Expect(err).To(Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1109,13 +1106,13 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 		},
 	}
 	for _, testcase := range tests {
-		g := NewWithT(t)
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			t.Parallel()
 			validateFn := ValidateKafkaStorageSize(tt.args.kafkaRequest, tt.args.kafkaUpdateReq)
 			err := validateFn()
-			g.Expect(err).To(Equal(tt.want))
+			g.Expect(err).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -1169,14 +1166,14 @@ func Test_Validation_validateBillingModel(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+
 			validateFn := ValidateBillingModel(&tt.arg.kafkaRequest)
 			err := validateFn()
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -1675,14 +1672,13 @@ func Test_validateVersionsCompatibility(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			validate := validateVersionsCompatibility(tt.args.h, &tt.args.kafkaRequest, &tt.args.kafkaUpdateReq)
 			err := validate()
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

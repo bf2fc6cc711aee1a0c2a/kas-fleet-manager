@@ -3,11 +3,11 @@ package observatorium
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_GetKafkaState(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 	type fields struct {
 		client *Client
 	}
@@ -18,7 +18,7 @@ func Test_GetKafkaState(t *testing.T) {
 	}
 
 	obsClientMock, err := NewClientMock(&Configuration{})
-	Expect(err).ToNot(HaveOccurred())
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	tests := []struct {
 		name   string
@@ -44,19 +44,19 @@ func Test_GetKafkaState(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			obs := &ServiceObservatorium{
 				client: tt.fields.client,
 			}
 			state, err := obs.GetKafkaState(tt.args.name, tt.args.resourceNamespace)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(state).To(Equal(tt.want))
+			g.Expect(err).ToNot(gomega.HaveOccurred())
+			g.Expect(state).To(gomega.Equal(tt.want))
 		})
 	}
 }
 
 func TestServiceObservatorium_GetMetrics(t *testing.T) {
-	RegisterTestingT(t)
-
+	g := gomega.NewWithT(t)
 	type fields struct {
 		client *Client
 	}
@@ -68,7 +68,7 @@ func TestServiceObservatorium_GetMetrics(t *testing.T) {
 	}
 
 	obsClientMock, err := NewClientMock(&Configuration{})
-	Expect(err).ToNot(HaveOccurred(), "failed to create a mock observatorium client")
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to create a mock observatorium client")
 
 	tests := []struct {
 		name    string
@@ -153,10 +153,11 @@ func TestServiceObservatorium_GetMetrics(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			obs := &ServiceObservatorium{
 				client: tt.fields.client,
 			}
-			Expect(obs.GetMetrics(tt.args.metrics, tt.args.namespace, tt.args.rq) != nil).To(Equal(tt.wantErr))
+			g.Expect(obs.GetMetrics(tt.args.metrics, tt.args.namespace, tt.args.rq) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

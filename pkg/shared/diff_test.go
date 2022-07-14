@@ -3,7 +3,7 @@ package shared
 import (
 	"testing"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_DiffAsJson(t *testing.T) {
@@ -80,13 +80,12 @@ func Test_DiffAsJson(t *testing.T) {
 		},
 	}
 
-	RegisterTestingT(t)
-
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got := DiffAsJson(tt.args.a, tt.args.b, tt.args.aName, tt.args.bName)
-			Expect(got).To(Equal(tt.want))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }

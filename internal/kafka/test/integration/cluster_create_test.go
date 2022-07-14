@@ -9,10 +9,12 @@ import (
 	api "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
+	g := gomega.NewWithT(t)
+
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	ocmServerBuilder.SetClustersPostResponse(nil, errors.Validation("The provided AWS credentials are not valid"))
 	ocmServer := ocmServerBuilder.Build()
@@ -30,6 +32,6 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 		MultiAZ:            true,
 		IdentityProviderID: "some-identity-provider-id",
 	})
-	Expect(err).To(HaveOccurred())
-	Expect(cluster).To(BeNil())
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(cluster).To(gomega.BeNil())
 }

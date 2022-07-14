@@ -4,11 +4,10 @@ import (
 	"testing"
 	"unicode"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 )
 
 func Test_StringFindFirst(t *testing.T) {
-	RegisterTestingT(t)
 	type args struct {
 		ary       []string
 		val       string
@@ -43,20 +42,20 @@ func Test_StringFindFirst(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(FindFirstString(tt.args.ary, tt.args.predicate)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(FindFirstString(tt.args.ary, tt.args.predicate)).To(gomega.Equal(tt.want))
 		})
 	}
 }
 
 func Test_FilterStringSlice(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 	res := FilterStringSlice([]string{"this", "is", "Red", "Hat"}, func(x string) bool { return x != "" && unicode.IsUpper([]rune(x)[0]) })
-	Expect(res).To(HaveLen(2))
-	Expect(res).To(Equal([]string{"Red", "Hat"}))
+	g.Expect(res).To(gomega.HaveLen(2))
+	g.Expect(res).To(gomega.Equal([]string{"Red", "Hat"}))
 }
 
 func Test_StringFirstNonEmpty(t *testing.T) {
-	RegisterTestingT(t)
 	type args struct {
 		ary []string
 	}
@@ -96,15 +95,15 @@ func Test_StringFirstNonEmpty(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			val, err := FirstNonEmpty(tt.args.ary...)
-			Expect(val).To(Equal(tt.wants))
-			Expect(err != nil).To(Equal(tt.wantErr))
+			g.Expect(val).To(gomega.Equal(tt.wants))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
 
 func Test_StringFirstNonEmptyOrDefault(t *testing.T) {
-	RegisterTestingT(t)
 	type args struct {
 		ary          []string
 		defaultValue string
@@ -136,13 +135,13 @@ func Test_StringFirstNonEmptyOrDefault(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(FirstNonEmptyOrDefault(tt.args.defaultValue, tt.args.ary...)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(FirstNonEmptyOrDefault(tt.args.defaultValue, tt.args.ary...)).To(gomega.Equal(tt.want))
 		})
 	}
 }
 
 func Test_Contains(t *testing.T) {
-	RegisterTestingT(t)
 	type args struct {
 		ary   []string
 		value string
@@ -189,7 +188,8 @@ func Test_Contains(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			Expect(Contains(tt.args.ary, tt.args.value)).To(Equal(tt.want))
+			g := gomega.NewWithT(t)
+			g.Expect(Contains(tt.args.ary, tt.args.value)).To(gomega.Equal(tt.want))
 		})
 	}
 }
