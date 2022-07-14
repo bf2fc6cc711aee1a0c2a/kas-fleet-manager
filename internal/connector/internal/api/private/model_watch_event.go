@@ -12,6 +12,6 @@ package private
 // WatchEvent struct for WatchEvent
 type WatchEvent struct {
 	Type   string                  `json:"type"`
-	Error  Error                   `json:"error,omitempty"`
+	Error  *Error                  `json:"error,omitempty"`
 	Object *map[string]interface{} `json:"object,omitempty"`
 }

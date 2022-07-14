@@ -222,7 +222,6 @@ Feature: connector agent API
     Then the response should match json:
       """
       {
-        "error": {},
         "object": {
           "metadata": {
             "created_at": "0001-01-01T00:00:00Z",
@@ -372,7 +371,6 @@ Feature: connector agent API
       """
       {
         "type": "CHANGE",
-        "error": {},
         "object": {
           "href": "/api/connector_mgmt/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
           "id": "${connector_deployment_id}",
@@ -811,7 +809,6 @@ Feature: connector agent API
       """
       {
         "type": "CHANGE",
-        "error": {},
         "object": {
           "href": "/api/connector_mgmt/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${response.object.id}",
           "id": "${response.object.id}",

@@ -738,9 +738,27 @@ components:
       - version
       type: object
     Error:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/Error_allOf'
+      nullable: true
+      properties:
+        reason:
+          type: string
+        operation_id:
+          type: string
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+        code:
+          type: string
+      required:
+      - code
+      - href
+      - id
+      - kind
+      - reason
+      type: object
     ObjectReference:
       properties:
         id:
@@ -806,6 +824,10 @@ components:
           type: integer
         total:
           type: integer
+        items:
+          items:
+            $ref: '#/components/schemas/ObjectReference'
+          type: array
       required:
       - items
       - kind
@@ -1010,14 +1032,6 @@ components:
       - resource_version
       - status
       - tenant
-    Error_allOf:
-      properties:
-        code:
-          type: string
-        reason:
-          type: string
-        operation_id:
-          type: string
     ConnectorNamespaceMeta_allOf:
       properties:
         resource_version:
