@@ -804,6 +804,36 @@ func Test_kafkaService_Delete(t *testing.T) {
 			},
 			wantErr: false,
 		},
+
+		{
+			name: "successfully deletes a Kafka request when canary service account is not found",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				keycloakService: &sso.KeycloakServiceMock{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+					DeleteServiceAccountInternalFunc: func(clientId string) *errors.ServiceError {
+						return &errors.ServiceError{
+							Code: errors.ErrorServiceAccountNotFound,
+						}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.ID = testID
+					kafkaRequest.CanaryServiceAccountClientID = "canary-id"
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests" SET "deleted_at"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
 	}
 	for _, testcase := range tests {
 		tt := testcase
