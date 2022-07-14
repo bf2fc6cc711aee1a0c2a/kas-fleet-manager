@@ -664,8 +664,14 @@ func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 		if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
 			if kafkaRequest.CanaryServiceAccountClientID != "" {
 				keycloakErr := k.keycloakService.DeleteServiceAccountInternal(kafkaRequest.CanaryServiceAccountClientID)
+
 				if keycloakErr != nil {
-					return errors.NewWithCause(errors.ErrorGeneral, keycloakErr, "error deleting canary service account")
+					// Log the info for not found and proceed - not an error if service account is not found
+					if keycloakErr.Code == errors.ErrorServiceAccountNotFound {
+						glog.V(10).Infof("Service account with ID '%s' not found. Skipping deletion", kafkaRequest.CanaryServiceAccountClientID)
+					} else {
+						return errors.NewWithCause(errors.ErrorGeneral, keycloakErr, "error deleting canary service account")
+					}
 				}
 			}
 		}
