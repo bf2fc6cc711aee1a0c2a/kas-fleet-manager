@@ -114,15 +114,19 @@ if [[ -n "$AUTHOR_EMAIL" ]] && [[ -n "$AUTHOR_NAME" ]] && [[ -n "$GITLAB_TOKEN" 
   cd managed-kafka-versions
   BRANCH_NAME="kas-fleet-manager-${VERSION}"
   # only update the config, if different
-  CURRENT_COMMIT_SHA=$(yq '.service.scm.commitSha' services/kas-fleet-manager.yaml)
+  # CURRENT_COMMIT_SHA=$(yq '.service.scm.commitSha' services/kas-fleet-manager.yaml)
+  CURRENT_COMMIT_SHA=$(cat services/kas-fleet-manager.yaml | grep commitSha | awk '{print $2}' | tr -d '"')
+  CURRENT_TAG=$(cat services/kas-fleet-manager.yaml | grep tag | awk '{print $2}' | tr -d '"')
   echo "Checking if the latest commit sha: $LATEST_COMMIT is different than current config commit sha: $CURRENT_COMMIT_SHA"
   if [[ "${CURRENT_COMMIT_SHA}" != "${LATEST_COMMIT}" ]]; then
     git checkout -b "$BRANCH_NAME"
     echo "Updating commit sha and image tag for kas-fleet-manager configuration"
     # update commitSha
-    yq -i ".service.scm.commitSha = \"$LATEST_COMMIT\"" services/kas-fleet-manager.yaml
+    sed -i "s/${CURRENT_COMMIT_SHA}/${LATEST_COMMIT}/g" services/kas-fleet-manager.yaml
+    # yq -i ".service.scm.commitSha = \"$LATEST_COMMIT\"" services/kas-fleet-manager.yaml
     # update image tag
-    yq -i ".service.image.tag = \"$VERSION\"" services/kas-fleet-manager.yaml
+    sed -i "s/${CURRENT_TAG}/${VERSION}/g" services/kas-fleet-manager.yaml
+    # yq -i ".service.image.tag = \"$VERSION\"" services/kas-fleet-manager.yaml
     git config user.name "${AUTHOR_NAME}"
     git config user.email "${AUTHOR_EMAIL}"
     git commit -a -m "kas-fleet-manager stage release $VERSION"
