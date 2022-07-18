@@ -1,26 +1,39 @@
 # This file contains the configuration for cloud providers supported by KAS Fleet Manager
 # KAS Fleet Manager will allow for Kafkas to be created using the cloud provider(s) and region(s) listed here.
-# 
-# supported_instance_type: This contains the list of Kafka instance types supported by the cloud provider and region. KAS Fleet Manager will not allow you
-# to create any Kafka instances with types that is not listed here.
-#   - Limits for each instance type can be set here (limit value: 0-n)
-# 
-#     Example configuration:
-#     ...
-#     - name: us-east-1
-#       supported_instance_type:
-#           standard:
-#             limit: 5
-#           developer: {}
-#     ...
-#     
-#     With the above configuration, up to 5 'standard' Kafka instances can be created in the us-east-1 region. Since there is no region limit set for 'developer',
-#     KAS Fleet Manager will allow creation of 'developer' Kafka instances in the us-east-1 region as long as a data plane cluster is available in this region 
-#     (i.e. is schedulable, has remaining capacity and supports this Kafka instance type)
-#     
-#     Note: If manual scaling is enabled, please ensure that the limits you configure here matches/must not exceed the kafka_instance_limits of your data
-#           plane clusters in the dataplane-cluster-configuration.yaml file
-# 
+#
+# supported_instance_type: This contains a map of Kafka instance types supported
+# by the cloud provider and region. KAS Fleet Manager will not allow you
+# to create any Kafka instance with a type that is not listed here. The attributes
+# of each value in the supported_instance_type map are:
+#   - [optional] limit: Limit in number of streaming units
+#     If not specified, there is no limit enforced at region level.
+#     Accepted values: [0-n]
+#   - [optional] min_available_capacity_slack_streaming_units: Minimum capacity
+#     in number of kafka streaming units that should be available (free) at any
+#     given moment for a supported instance type in a region.
+#     If not specified, its default value is 0 which means that there is
+#     no minimum available capacity required.
+#     Accepted values: [0-n] where n <= limit.
+
+#     Used for dynamic scaling evaluation.
+#
+# Example configuration of a `regions` element:
+#   ...
+#   - name: us-east-1
+#     supported_instance_type:
+#         standard:
+#           limit: 5
+#           min_available_capacity_slack_streaming_units: 3
+#         developer: {}
+#   ...
+#
+#   With the above configuration, up to 5 'standard' Kafka instances can be created in the us-east-1 region. Since there is no region limit set for 'developer',
+#   KAS Fleet Manager will allow creation of 'developer' Kafka instances in the us-east-1 region as long as a data plane cluster is available in this region
+#   (i.e. is schedulable, has remaining capacity and supports this Kafka instance type)
+#
+#   Note: If manual scaling is enabled, please ensure that the limits you configure here matches/must not exceed the kafka_instance_limits of your data
+#         plane clusters in the dataplane-cluster-configuration.yaml file
+#
 ---
 supported_providers:
   - name: aws # name of the cloud provider
