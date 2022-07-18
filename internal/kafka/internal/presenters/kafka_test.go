@@ -130,12 +130,12 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.DeprecatedKafkaStorageSize = kafkaStorageSize
 				kafkaRequest.BrowserUrl = "//dashboard"
 				kafkaRequest.SizeId = defaultInstanceSize.Id
-				kafkaRequest.IngressThroughputPerSec = defaultInstanceSize.IngressThroughputPerSec.String()
-				kafkaRequest.EgressThroughputPerSec = defaultInstanceSize.EgressThroughputPerSec.String()
-				kafkaRequest.TotalMaxConnections = int32(defaultInstanceSize.TotalMaxConnections)
-				kafkaRequest.MaxPartitions = int32(defaultInstanceSize.MaxPartitions)
-				kafkaRequest.MaxDataRetentionPeriod = defaultInstanceSize.MaxDataRetentionPeriod
-				kafkaRequest.MaxConnectionAttemptsPerSec = int32(defaultInstanceSize.MaxConnectionAttemptsPerSec)
+				kafkaRequest.DeprecatedIngressThroughputPerSec = defaultInstanceSize.IngressThroughputPerSec.String()
+				kafkaRequest.DeprecatedEgressThroughputPerSec = defaultInstanceSize.EgressThroughputPerSec.String()
+				kafkaRequest.DeprecatedTotalMaxConnections = int32(defaultInstanceSize.TotalMaxConnections)
+				kafkaRequest.DeprecatedMaxPartitions = int32(defaultInstanceSize.MaxPartitions)
+				kafkaRequest.DeprecatedMaxDataRetentionPeriod = defaultInstanceSize.MaxDataRetentionPeriod
+				kafkaRequest.DeprecatedMaxConnectionAttemptsPerSec = int32(defaultInstanceSize.MaxConnectionAttemptsPerSec)
 
 				expireTime := kafkaRequest.CreatedAt.Add(time.Duration(*defaultInstanceSize.LifespanSeconds) * time.Second)
 				kafkaRequest.ExpiresAt = &expireTime
@@ -368,19 +368,19 @@ func TestCapacityLimitReports(t *testing.T) {
 			kafkaRequest, err := PresentKafkaRequest(&test.request, &test.config)
 			if !test.errExpected {
 				if !test.negative {
-					g.Expect(kafkaRequest.IngressThroughputPerSec).ToNot(gomega.BeNil())
-					g.Expect(kafkaRequest.EgressThroughputPerSec).ToNot(gomega.BeNil())
-					g.Expect(kafkaRequest.TotalMaxConnections).ToNot(gomega.BeNil())
-					g.Expect(kafkaRequest.MaxConnectionAttemptsPerSec).ToNot(gomega.BeNil())
-					g.Expect(kafkaRequest.MaxDataRetentionPeriod).ToNot(gomega.BeNil())
-					g.Expect(kafkaRequest.MaxPartitions).ToNot(gomega.BeNil())
+					g.Expect(kafkaRequest.DeprecatedIngressThroughputPerSec).ToNot(gomega.BeNil())
+					g.Expect(kafkaRequest.DeprecatedEgressThroughputPerSec).ToNot(gomega.BeNil())
+					g.Expect(kafkaRequest.DeprecatedTotalMaxConnections).ToNot(gomega.BeNil())
+					g.Expect(kafkaRequest.DeprecatedMaxConnectionAttemptsPerSec).ToNot(gomega.BeNil())
+					g.Expect(kafkaRequest.DeprecatedMaxDataRetentionPeriod).ToNot(gomega.BeNil())
+					g.Expect(kafkaRequest.DeprecatedMaxPartitions).ToNot(gomega.BeNil())
 				} else {
-					g.Expect(kafkaRequest.IngressThroughputPerSec).To(gomega.BeEmpty())
-					g.Expect(kafkaRequest.EgressThroughputPerSec).To(gomega.BeEmpty())
-					g.Expect(kafkaRequest.TotalMaxConnections).To(gomega.BeZero())
-					g.Expect(kafkaRequest.MaxConnectionAttemptsPerSec).To(gomega.BeZero())
-					g.Expect(kafkaRequest.MaxDataRetentionPeriod).To(gomega.BeEmpty())
-					g.Expect(kafkaRequest.MaxPartitions).To(gomega.BeZero())
+					g.Expect(kafkaRequest.DeprecatedIngressThroughputPerSec).To(gomega.BeEmpty())
+					g.Expect(kafkaRequest.DeprecatedEgressThroughputPerSec).To(gomega.BeEmpty())
+					g.Expect(kafkaRequest.DeprecatedTotalMaxConnections).To(gomega.BeZero())
+					g.Expect(kafkaRequest.DeprecatedMaxConnectionAttemptsPerSec).To(gomega.BeZero())
+					g.Expect(kafkaRequest.DeprecatedMaxDataRetentionPeriod).To(gomega.BeEmpty())
+					g.Expect(kafkaRequest.DeprecatedMaxPartitions).To(gomega.BeZero())
 				}
 			} else {
 				g.Expect(err).ToNot(gomega.BeNil())

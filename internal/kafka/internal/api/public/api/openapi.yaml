@@ -2065,6 +2065,9 @@ components:
         instance_type:
           type: string
         instance_type_name:
+          deprecated: true
+          description: This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region}
+            endpoint to retrieve the field instead.
           type: string
         reauthentication_enabled:
           type: boolean
@@ -2080,16 +2083,34 @@ components:
         size_id:
           type: string
         ingress_throughput_per_sec:
+          deprecated: true
+          description: This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region}
+            endpoint to retrieve the field instead.
           type: string
         egress_throughput_per_sec:
+          deprecated: true
+          description: This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region}
+            endpoint to retrieve the field instead.
           type: string
         total_max_connections:
+          deprecated: true
+          description: This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region}
+            endpoint to retrieve the field instead.
           type: integer
         max_partitions:
+          deprecated: true
+          description: This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region}
+            endpoint to retrieve the field instead.
           type: integer
         max_data_retention_period:
+          deprecated: true
+          description: This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region}
+            endpoint to retrieve the field instead.
           type: string
         max_connection_attempts_per_sec:
+          deprecated: true
+          description: This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region}
+            endpoint to retrieve the field instead.
           type: integer
         billing_cloud_account_id:
           type: string
