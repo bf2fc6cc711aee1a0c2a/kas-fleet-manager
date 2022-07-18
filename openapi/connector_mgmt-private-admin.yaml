@@ -336,13 +336,16 @@ paths:
         - Connector Clusters Admin
       security:
         - Bearer: [ ]
-      operationId: patchConnectorClusterDeploymentAdmi
+      operationId: patchConnectorClusterDeploymentAdmin
       summary: Patch a deployment
       description: Patch a deployment
       requestBody:
         description: Data to patch the deployment with
         content:
           application/merge-patch+json:
+            schema:
+              type: object
+          application/json:
             schema:
               type: object
         required: true

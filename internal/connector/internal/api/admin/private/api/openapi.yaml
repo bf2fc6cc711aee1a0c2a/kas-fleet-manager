@@ -616,7 +616,7 @@ paths:
       - Connector Clusters Admin
     patch:
       description: Patch a deployment
-      operationId: patchConnectorClusterDeploymentAdmi
+      operationId: patchConnectorClusterDeploymentAdmin
       parameters:
       - description: The id of the connector cluster
         explode: false
@@ -637,6 +637,9 @@ paths:
       requestBody:
         content:
           application/merge-patch+json:
+            schema:
+              type: object
+          application/json:
             schema:
               type: object
         description: Data to patch the deployment with
