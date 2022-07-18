@@ -78,7 +78,7 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 
 			if err = h.Service.Create(r.Context(), &convResource); err != nil {
 				// deregister service account on creation error
-				if derr := h.Keycloak.DeRegisterConnectorFleetshardOperatorServiceAccount(convResource.ID); derr != nil {
+				if derr := h.Keycloak.DeleteServiceAccountInternal(convResource.ClientId); derr != nil {
 					// just log the error
 					glog.Errorf("Error de-registering unused service account %s: %v", convResource.ClientId, derr)
 				}
