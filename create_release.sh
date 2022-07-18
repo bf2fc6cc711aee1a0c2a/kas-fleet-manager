@@ -1,6 +1,5 @@
 #!/bin/bash -ex
 
-LATEST_COMMIT=$(git rev-parse HEAD)
 git clone -c http.sslVerify=false "https://gitlab-ci-token:$GITLAB_TOKEN@gitlab.cee.redhat.com/mk-ci-cd/managed-kafka-versions.git" managed-kafka-versions
 cd managed-kafka-versions
 BRANCH_NAME="kas-fleet-manager-${VERSION}"

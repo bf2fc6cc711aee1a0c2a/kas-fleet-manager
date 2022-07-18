@@ -5,7 +5,7 @@ RUN curl -Lo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download
 
 RUN microdnf install git
 
-COPY . /src/
+COPY ./create_release.sh /src/
 
 WORKDIR /src
 
