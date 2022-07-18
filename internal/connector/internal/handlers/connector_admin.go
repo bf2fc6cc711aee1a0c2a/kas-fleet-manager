@@ -283,7 +283,32 @@ func (h *ConnectorAdminHandler) DeleteConnectorNamespace(writer http.ResponseWri
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
-			serviceError = h.NamespaceService.Delete(request.Context(), namespaceId)
+			// check force flag to force deletion of connector and deployments
+			force := false
+			forceFlag := request.URL.Query().Get("force")
+			if forceFlag != "" {
+				var err error
+				force, err = strconv.ParseBool(forceFlag)
+				if err != nil {
+					return nil, errors.BadRequest("invalid force query param %s", forceFlag)
+				}
+			}
+			ctx := request.Context()
+			if force {
+				// get namespace and make sure it has 0 connectors and is in deleting phase
+				namespace, err := h.NamespaceService.Get(ctx, namespaceId)
+				if err != nil {
+					return nil, err
+				}
+				if namespace.Status.ConnectorsDeployed != 0 || namespace.Status.Phase != dbapi.ConnectorNamespacePhaseDeleting {
+					return nil, errors.BadRequest("namespace %s is not empty or deleting, force delete all connectors and delete namespace first", namespaceId)
+				}
+				// set namespace status to deleted
+				namespace.Status.Phase = dbapi.ConnectorNamespacePhaseDeleted
+				h.NamespaceService.UpdateConnectorNamespaceStatus(ctx, namespaceId, &namespace.Status)
+			} else {
+				serviceError = h.NamespaceService.Delete(ctx, namespaceId)
+			}
 			return nil, serviceError
 		},
 	}

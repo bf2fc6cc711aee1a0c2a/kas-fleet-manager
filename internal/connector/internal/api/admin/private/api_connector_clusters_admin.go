@@ -142,13 +142,20 @@ func (a *ConnectorClustersAdminApiService) DeleteConnector(ctx _context.Context,
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+// DeleteConnectorNamespaceOpts Optional parameters for the method 'DeleteConnectorNamespace'
+type DeleteConnectorNamespaceOpts struct {
+	Force optional.String
+}
+
 /*
 DeleteConnectorNamespace Delete a connector namespace
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param namespaceId The id of the namespace to delete
+ * @param optional nil or *DeleteConnectorNamespaceOpts - Optional Parameters:
+ * @param "Force" (optional.String) -  Flag to force deletion of namespace in Fleet manager if true
 @return Error
 */
-func (a *ConnectorClustersAdminApiService) DeleteConnectorNamespace(ctx _context.Context, namespaceId string) (Error, *_nethttp.Response, error) {
+func (a *ConnectorClustersAdminApiService) DeleteConnectorNamespace(ctx _context.Context, namespaceId string, localVarOptionals *DeleteConnectorNamespaceOpts) (Error, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodDelete
 		localVarPostBody     interface{}
@@ -166,6 +173,9 @@ func (a *ConnectorClustersAdminApiService) DeleteConnectorNamespace(ctx _context
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
+	if localVarOptionals != nil && localVarOptionals.Force.IsSet() {
+		localVarQueryParams.Add("force", parameterToString(localVarOptionals.Force.Value(), ""))
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -963,7 +973,7 @@ func (a *ConnectorClustersAdminApiService) GetConnectorDeployment(ctx _context.C
 GetConnectorNamespace Get a connector namespace
 Get a connector namespace
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param namespaceId The id of the namespace to delete
+ * @param namespaceId The id of the namespace
 @return ConnectorNamespace
 */
 func (a *ConnectorClustersAdminApiService) GetConnectorNamespace(ctx _context.Context, namespaceId string) (ConnectorNamespace, *_nethttp.Response, error) {
