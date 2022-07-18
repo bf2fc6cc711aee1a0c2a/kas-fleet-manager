@@ -1238,9 +1238,25 @@ func findManagedKafkaByID(slice []private.ManagedKafka, kafkaId string) *private
 	return nil
 }
 
-func TestKafka_unassignKafkaFromDataplaneCluster(t *testing.T) {
+func TestDataPlaneEndpoints_ReassignRejectedKafkaDueToInsufficientResources(t *testing.T) {
 	g := gomega.NewWithT(t)
+	region := "us-east-1"
+	cloudProvider := "aws"
 
+	standardClusterID := "standard"
+	developerClusterID := "developer"
+
+	standardClusterDNS := "standard-cluster-dns.org"
+	developerClusterDNS := "developer-cluster-dns.org"
+
+	configHook := func(clusterConfig *config.DataplaneClusterConfig, reconcilerConfig *workers.ReconcilerConfig) {
+		reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Second
+		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+		clusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
+			config.ManualCluster{ClusterId: standardClusterID, ClusterDNS: standardClusterDNS, Status: api.ClusterWaitingForKasFleetShardOperator, KafkaInstanceLimit: 1, Region: region, MultiAZ: true, CloudProvider: cloudProvider, Schedulable: true, SupportedInstanceType: "standard", ProviderType: api.ClusterProviderStandalone},
+			config.ManualCluster{ClusterId: developerClusterID, ClusterDNS: developerClusterDNS, Status: api.ClusterWaitingForKasFleetShardOperator, KafkaInstanceLimit: 1, Region: region, MultiAZ: false, CloudProvider: cloudProvider, Schedulable: true, SupportedInstanceType: "developer", ProviderType: api.ClusterProviderStandalone},
+		})
+	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
@@ -1251,9 +1267,18 @@ func TestKafka_unassignKafkaFromDataplaneCluster(t *testing.T) {
 			},
 			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
 		}
-	}, nil)
+	}, configHook)
+
+	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(testServer.Helper, t)
+	kasFleetshardSyncBuilder.SetUpdateKafkaStatusFunc(func(helper *coreTest.Helper, privateClient *private.APIClient) error {
+		// We don't need to update the status of the kafka as it will be updated by the test itself
+		return nil
+	})
+	kasFleetshardSync := kasFleetshardSyncBuilder.Build()
+	kasFleetshardSync.Start()
 
 	t.Cleanup(func() {
+		kasFleetshardSync.Stop()
 		testServer.TearDown()
 	})
 
@@ -1263,7 +1288,6 @@ func TestKafka_unassignKafkaFromDataplaneCluster(t *testing.T) {
 		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
 	}
-
 	bootstrapServerHost := "prefix.some-bootstrap⁻host"
 	adminApiServerUrl := "https://test-url.com"
 
@@ -1272,6 +1296,8 @@ func TestKafka_unassignKafkaFromDataplaneCluster(t *testing.T) {
 			ClusterID:              testServer.ClusterID,
 			MultiAZ:                false,
 			Name:                   mockKafkaName1,
+			CloudProvider:          cloudProvider,
+			Region:                 region,
 			Status:                 constants2.KafkaRequestStatusProvisioning.String(),
 			BootstrapServerHost:    bootstrapServerHost,
 			DesiredKafkaVersion:    "2.6.0",
@@ -1284,6 +1310,8 @@ func TestKafka_unassignKafkaFromDataplaneCluster(t *testing.T) {
 			ClusterID:              testServer.ClusterID,
 			MultiAZ:                true,
 			Name:                   mockKafkaName2,
+			CloudProvider:          cloudProvider,
+			Region:                 region,
 			Status:                 constants2.KafkaRequestStatusProvisioning.String(),
 			BootstrapServerHost:    bootstrapServerHost,
 			DesiredKafkaVersion:    "2.5.0",
@@ -1306,7 +1334,7 @@ func TestKafka_unassignKafkaFromDataplaneCluster(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(list.Items).To(gomega.HaveLen(2)) // only count valid Managed Kafka CR
+	g.Expect(list.Items).To(gomega.HaveLen(2))
 
 	var provisioningKafkas []string
 	updates := map[string]private.DataPlaneKafkaStatus{}
@@ -1328,15 +1356,34 @@ func TestKafka_unassignKafkaFromDataplaneCluster(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
+	// Check that the kafkas have been unassigned from the current cluster.
 	for _, cid := range provisioningKafkas {
 		c := &dbapi.KafkaRequest{}
 		err := db.First(c, "id = ?", cid).Error
 		g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to find kafka cluster with id %s due to error: %v", cid, err)
 		g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusProvisioning.String()))
-		g.Expect(c.ClusterID).To(gomega.Equal(""))
-		g.Expect(c.BootstrapServerHost).To(gomega.Equal(""))
-		g.Expect(c.DesiredKafkaVersion).To(gomega.Equal(""))
-		g.Expect(c.DesiredKafkaIBPVersion).To(gomega.Equal(""))
-		g.Expect(c.DesiredStrimziVersion).To(gomega.Equal(""))
+		g.Expect(c.ClusterID).To(gomega.BeEmpty())
+		g.Expect(c.BootstrapServerHost).To(gomega.BeEmpty())
+		g.Expect(c.DesiredKafkaVersion).To(gomega.BeEmpty())
+		g.Expect(c.DesiredKafkaIBPVersion).To(gomega.BeEmpty())
+		g.Expect(c.DesiredStrimziVersion).To(gomega.BeEmpty())
 	}
+
+	// Check that the developer kafka has been reassigned into a developer data plane cluster.
+	developerKafka, err := common.WaitForKafkaClusterIDToBeAssigned(testServer.Helper.DBFactory(), mockKafkaName1)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(developerKafka.ClusterID).To(gomega.Equal(developerClusterID))
+	g.Expect(developerKafka.BootstrapServerHost).To(gomega.HaveSuffix(developerClusterDNS))
+	g.Expect(developerKafka.DesiredKafkaVersion).ToNot(gomega.BeEmpty())
+	g.Expect(developerKafka.DesiredKafkaIBPVersion).ToNot(gomega.BeEmpty())
+	g.Expect(developerKafka.DesiredStrimziVersion).ToNot(gomega.BeEmpty())
+
+	// Check that the standard kafka has been reassigned into a standard data plane cluster.
+	standardKafka, err := common.WaitForKafkaClusterIDToBeAssigned(testServer.Helper.DBFactory(), mockKafkaName2)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(standardKafka.ClusterID).To(gomega.Equal(standardClusterID))
+	g.Expect(standardKafka.BootstrapServerHost).To(gomega.HaveSuffix(standardClusterDNS))
+	g.Expect(standardKafka.DesiredKafkaVersion).ToNot(gomega.BeEmpty())
+	g.Expect(standardKafka.DesiredKafkaIBPVersion).ToNot(gomega.BeEmpty())
+	g.Expect(standardKafka.DesiredStrimziVersion).ToNot(gomega.BeEmpty())
 }

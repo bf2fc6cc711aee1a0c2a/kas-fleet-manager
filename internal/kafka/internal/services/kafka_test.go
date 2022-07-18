@@ -400,6 +400,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 		clusterService    ClusterService
 		keycloakService   sso.KeycloakService
 		kafkaConfig       *config.KafkaConfig
+		kafkaService      KafkaService
 	}
 	type args struct {
 		kafkaRequest *dbapi.KafkaRequest
@@ -436,6 +437,11 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
+				kafkaService: &KafkaServiceMock{
+					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
+						return nil
+					},
+				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
@@ -450,10 +456,9 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 		{
 			name: "failed clusterDNS retrieval",
 			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
-						return "", errors.New(errors.ErrorBadRequest, "")
+						return "", errors.GeneralError("test")
 					},
 				},
 				keycloakService: &sso.KeycloakServiceMock{
@@ -463,6 +468,11 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 								ClientID: "test",
 							},
 						}
+					},
+				},
+				kafkaService: &KafkaServiceMock{
+					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
+						return nil
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{},
@@ -488,6 +498,11 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 								ClientID: "test",
 							},
 						}
+					},
+				},
+				kafkaService: &KafkaServiceMock{
+					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
+						return nil
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{},
@@ -525,6 +540,11 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return nil, errors.FailedToCreateSSOClient("failed to create the sso client")
 					},
 				},
+				kafkaService: &KafkaServiceMock{
+					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
+						return nil
+					},
+				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
@@ -551,6 +571,11 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 							},
 							EnableAuthenticationOnKafka: true,
 						}
+					},
+				},
+				kafkaService: &KafkaServiceMock{
+					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
+						return nil
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{},
@@ -3826,6 +3851,82 @@ func Test_kafkaService_ListKafkasWithRoutesNotCreated(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			g.Expect(k.ListKafkasWithRoutesNotCreated()).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
+func Test_kafkaService_AssignBootstrapServerHost(t *testing.T) {
+	type fields struct {
+		clusterService ClusterService
+		kafkaConfig    *config.KafkaConfig
+	}
+	type args struct {
+		kafkaRequest *dbapi.KafkaRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "should return error if failed clusterDNS retrieval",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
+						return "", errors.New(errors.ErrorBadRequest, "")
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			wantErr: true,
+		},
+		{
+			name: "should use external certificate if kafkaconfig specifies",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
+						return "clusterDNS", nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaExternalCertificate: true,
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			wantErr: false,
+		},
+		{
+			name: "should successfully assign BootstrapServerHost",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
+						return "clusterDNS", nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			wantErr: false,
+		},
+	}
+	for _, testcase := range tests {
+		test := testcase
+		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			k := &kafkaService{
+				clusterService: test.fields.clusterService,
+				kafkaConfig:    test.fields.kafkaConfig,
+			}
+			err := k.AssignBootstrapServerHost(test.args.kafkaRequest)
+			g.Expect(err != nil).To(gomega.Equal(test.wantErr))
 		})
 	}
 }
