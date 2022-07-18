@@ -65,26 +65,26 @@ func (r Region) Validate(dataplaneClusterConfig *DataplaneClusterConfig) error {
 	regionCapacity := dataplaneClusterConfig.ClusterConfig.GetCapacityForRegion(r.Name)
 
 	// verify that Limits set in this configuration matches the capacity of clusters listed in the data plane configuration
-	for k, v := range r.SupportedInstanceTypes {
-		if v.MinAvailableCapacitySlackStreamingUnits < 0 {
-			return fmt.Errorf("kafka minimum available capacity slack for instance type '%s' in region '%s' cannot be negative", k, r.Name)
+	for regionInstanceTypeName, regionInstanceType := range r.SupportedInstanceTypes {
+		if regionInstanceType.MinAvailableCapacitySlackStreamingUnits < 0 {
+			return fmt.Errorf("kafka minimum available capacity slack for instance type '%s' in region '%s' cannot be negative", regionInstanceTypeName, r.Name)
 		}
 
 		// skip if limit is not set or is explicitly set to 0
-		if v.Limit == nil || v.Limit != nil && *v.Limit == 0 {
+		if regionInstanceType.Limit == nil || regionInstanceType.Limit != nil && *regionInstanceType.Limit == 0 {
 			continue
 		}
 
-		if v.Limit != nil && v.MinAvailableCapacitySlackStreamingUnits > *v.Limit {
-			return fmt.Errorf("Configured kafka minimum available capacity slack '%d' for instance type '%s' in region '%s' cannot be bigger than its region limit '%v'", v.MinAvailableCapacitySlackStreamingUnits, k, r.Name, *v.Limit)
+		if regionInstanceType.Limit != nil && regionInstanceType.MinAvailableCapacitySlackStreamingUnits > *regionInstanceType.Limit {
+			return fmt.Errorf("Configured kafka minimum available capacity slack '%d' for instance type '%s' in region '%s' cannot be bigger than its region limit '%v'", regionInstanceType.MinAvailableCapacitySlackStreamingUnits, regionInstanceTypeName, r.Name, *regionInstanceType.Limit)
 		}
 
 		// validate instance type limits with the data plane cluster configuration when manual scaling is enabled
 		if dataplaneClusterConfig.IsDataPlaneManualScalingEnabled() {
 			if len(r.SupportedInstanceTypes) == 1 {
-				capacity := dataplaneClusterConfig.ClusterConfig.GetCapacityForRegionAndInstanceType(r.Name, k, false)
-				if *v.Limit != capacity {
-					return fmt.Errorf("limit for instance type '%s'(%d) does not match the capacity in region %s(%d)", k, *v.Limit, r.Name, capacity)
+				capacity := dataplaneClusterConfig.ClusterConfig.GetCapacityForRegionAndInstanceType(r.Name, regionInstanceTypeName, false)
+				if *regionInstanceType.Limit != capacity {
+					return fmt.Errorf("limit for instance type '%s'(%d) does not match the capacity in region %s(%d)", regionInstanceTypeName, *regionInstanceType.Limit, r.Name, capacity)
 				}
 				return nil
 			}
@@ -92,15 +92,15 @@ func (r Region) Validate(dataplaneClusterConfig *DataplaneClusterConfig) error {
 			// ensure that limit is within min and max capacity
 			// min: the total capacity of clusters that support only this instance type
 			// max: the total capacity of clusters that supports this instance type
-			minCapacity := dataplaneClusterConfig.ClusterConfig.GetCapacityForRegionAndInstanceType(r.Name, k, true)
-			maxCapacity := dataplaneClusterConfig.ClusterConfig.GetCapacityForRegionAndInstanceType(r.Name, k, false)
-			if minCapacity > *v.Limit || maxCapacity < *v.Limit {
-				return fmt.Errorf("limit for %s instance type (%d) does not match cluster capacity configuration in region '%s': min(%d), max(%d)", k, *v.Limit, r.Name, minCapacity, maxCapacity)
+			minCapacity := dataplaneClusterConfig.ClusterConfig.GetCapacityForRegionAndInstanceType(r.Name, regionInstanceTypeName, true)
+			maxCapacity := dataplaneClusterConfig.ClusterConfig.GetCapacityForRegionAndInstanceType(r.Name, regionInstanceTypeName, false)
+			if minCapacity > *regionInstanceType.Limit || maxCapacity < *regionInstanceType.Limit {
+				return fmt.Errorf("limit for %s instance type (%d) does not match cluster capacity configuration in region '%s': min(%d), max(%d)", regionInstanceTypeName, *regionInstanceType.Limit, r.Name, minCapacity, maxCapacity)
 			}
 
 			// when all limits are set, ensure its total adds up to total capacity of the region.
 			if !r.RegionHasZeroOrNoLimitInstanceType() {
-				totalCapacityUsed += *v.Limit
+				totalCapacityUsed += *regionInstanceType.Limit
 
 				// when we reach the last item, ensure limits for all instance types adds up to the total capacity of the region
 				if counter == len(r.SupportedInstanceTypes) && totalCapacityUsed != regionCapacity {
@@ -208,12 +208,12 @@ func (c *ProviderConfig) Validate(env *environments.Env) error {
 func (provider Provider) Validate(dataplaneClusterConfig *DataplaneClusterConfig) error {
 	// verify that there is only one default region
 	defaultCount := 0
-	for _, p := range provider.Regions {
-		if p.Default {
+	for _, r := range provider.Regions {
+		if r.Default {
 			defaultCount++
 		}
 
-		if err := p.Validate(dataplaneClusterConfig); err != nil {
+		if err := r.Validate(dataplaneClusterConfig); err != nil {
 			return err
 		}
 	}
