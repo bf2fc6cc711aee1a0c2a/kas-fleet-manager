@@ -1,0 +1,12 @@
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.6
+
+RUN curl -Lo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.18.1/yq_linux_amd64 && \
+    chmod +x /usr/local/bin/yq
+
+RUN microdnf install git
+
+COPY ./create_release.sh /src/
+
+WORKDIR /src
+
+CMD ["./create_release.sh"]
