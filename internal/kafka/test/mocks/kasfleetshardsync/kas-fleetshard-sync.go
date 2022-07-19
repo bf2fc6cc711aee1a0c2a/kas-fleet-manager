@@ -35,7 +35,7 @@ var DeveloperCapacityInfo private.DataPlaneClusterUpdateStatusRequestCapacity = 
 
 // defaultUpdateDataplaneClusterStatusFunc - The default behaviour for updating data plane cluster status in each Kas Fleetshard Sync reconcile.
 // Retrieves all clusters in the database in a 'waiting_for_kas_fleetshard_operator' state and updates it to 'ready' once all of the addons are installed.
-var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error {
+var defaultUpdateDataplaneClusterStatusFunc mockKasFleetshardSyncUpdateDataPlaneClusterStatusFunc = func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error {
 	var clusterService services.ClusterService
 	var ocmConfig *ocm.OCMConfig
 	var kasFleetshardConfig *config.KasFleetshardConfig
@@ -77,7 +77,7 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, priv
 // This function retrieves and updates Kafkas in all ready and full data plane clusters.
 // Any Kafkas marked for deletion are updated to 'deleting'
 // Kafkas with any other status are updated to 'ready'
-var defaultUpdateKafkaStatusFunc = func(helper *coreTest.Helper, privateClient *private.APIClient) error {
+var defaultUpdateKafkaStatusFunc mockKasFleetshardSyncupdateKafkaClusterStatusFunc = func(helper *coreTest.Helper, privateClient *private.APIClient) error {
 	var clusterService services.ClusterService
 	helper.Env.MustResolveAll(&clusterService)
 
@@ -131,9 +131,9 @@ var defaultUpdateKafkaStatusFunc = func(helper *coreTest.Helper, privateClient *
 
 type MockKasFleetshardSyncBuilder interface {
 	// SetUpdateDataplaneClusterStatusFunc - Sets behaviour for updating dataplane clusters in each KAS Fleetshard sync reconcile
-	SetUpdateDataplaneClusterStatusFunc(func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error)
+	SetUpdateDataplaneClusterStatusFunc(mockKasFleetshardSyncUpdateDataPlaneClusterStatusFunc)
 	// SetUpdateKafkaStatusFunc - Sets behaviour for updating kafka clusters in each KAS Fleetshard sync reconcile
-	SetUpdateKafkaStatusFunc(func(helper *coreTest.Helper, privateClient *private.APIClient) error)
+	SetUpdateKafkaStatusFunc(mockKasFleetshardSyncupdateKafkaClusterStatusFunc)
 	// SetInterval - Sets the repeat interval for the mock KAS Fleetshard sync
 	SetInterval(interval time.Duration)
 	// Build - Builds a mock KAS Fleetshard sync
@@ -163,11 +163,11 @@ func NewMockKasFleetshardSyncBuilder(helper *coreTest.Helper, t *testing.T) Mock
 	}
 }
 
-func (m *mockKasFleetshardSyncBuilder) SetUpdateDataplaneClusterStatusFunc(updateDataplaneClusterStatusFunc func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error) {
+func (m *mockKasFleetshardSyncBuilder) SetUpdateDataplaneClusterStatusFunc(updateDataplaneClusterStatusFunc mockKasFleetshardSyncUpdateDataPlaneClusterStatusFunc) {
 	m.kfsync.updateDataplaneClusterStatus = updateDataplaneClusterStatusFunc
 }
 
-func (m *mockKasFleetshardSyncBuilder) SetUpdateKafkaStatusFunc(updateKafkaStatusFunc func(helper *coreTest.Helper, privateClient *private.APIClient) error) {
+func (m *mockKasFleetshardSyncBuilder) SetUpdateKafkaStatusFunc(updateKafkaStatusFunc mockKasFleetshardSyncupdateKafkaClusterStatusFunc) {
 	m.kfsync.updateKafkaClusterStatus = updateKafkaStatusFunc
 }
 
@@ -186,6 +186,9 @@ type MockKasFleetshardSync interface {
 	Stop()
 }
 
+type mockKasFleetshardSyncUpdateDataPlaneClusterStatusFunc func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error
+type mockKasFleetshardSyncupdateKafkaClusterStatusFunc func(helper *coreTest.Helper, privateClient *private.APIClient) error
+
 type mockKasFleetshardSync struct {
 	helper                       *coreTest.Helper
 	t                            *testing.T
@@ -193,8 +196,8 @@ type mockKasFleetshardSync struct {
 	ticker                       *time.Ticker
 	privateClient                *private.APIClient
 	interval                     time.Duration
-	updateDataplaneClusterStatus func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error
-	updateKafkaClusterStatus     func(helper *coreTest.Helper, privateClient *private.APIClient) error
+	updateDataplaneClusterStatus mockKasFleetshardSyncUpdateDataPlaneClusterStatusFunc
+	updateKafkaClusterStatus     mockKasFleetshardSyncupdateKafkaClusterStatusFunc
 }
 
 var _ MockKasFleetshardSync = &mockKasFleetshardSync{}
