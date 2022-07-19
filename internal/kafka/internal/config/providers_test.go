@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/onsi/gomega"
 )
 
@@ -442,6 +443,157 @@ func Test_IsRegionSupported(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			g.Expect(tt.fields.provider.IsRegionSupported(tt.args.region)).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
+func Test_Region_Validate(t *testing.T) {
+	type args struct {
+		dataplaneClusterConfig *DataplaneClusterConfig
+	}
+	type fields struct {
+		region Region
+	}
+
+	instTypeStandard := types.STANDARD.String()
+
+	testClusterList := ClusterList{
+		ManualCluster{
+			Name:                  "cluster-1",
+			SupportedInstanceType: "standard",
+			Region:                "us-east-1",
+			CloudProvider:         "aws",
+			Schedulable:           true,
+			MultiAZ:               true,
+			Status:                "ready",
+			ClusterId:             "cluster-id-1",
+			KafkaInstanceLimit:    10,
+			ProviderType:          api.ClusterProviderOCM,
+		},
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "It should succeed when cluster-level limits match with region-level limits",
+			fields: fields{
+				region: Region{
+					Name:    regionName,
+					Default: true,
+					SupportedInstanceTypes: InstanceTypeMap{
+						instTypeStandard: InstanceTypeConfig{
+							Limit: &[]int{10}[0],
+						},
+					},
+				},
+			},
+			args: args{
+				dataplaneClusterConfig: &DataplaneClusterConfig{
+					DataPlaneClusterScalingType: ManualScaling,
+					ClusterConfig:               NewClusterConfig(testClusterList),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "It should return an error when cluster-level limit is not equal than the region-level limit",
+			fields: fields{
+				region: Region{
+					Name:    regionName,
+					Default: true,
+					SupportedInstanceTypes: InstanceTypeMap{
+						instTypeStandard: InstanceTypeConfig{
+							Limit: &[]int{11}[0],
+						},
+					},
+				},
+			},
+			args: args{
+				dataplaneClusterConfig: &DataplaneClusterConfig{
+					DataPlaneClusterScalingType: ManualScaling,
+					ClusterConfig:               NewClusterConfig(testClusterList),
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "When dynamic scaling is enabled the manual data plane cluster level limits are not evaluated",
+			fields: fields{
+				region: Region{
+					Name:    regionName,
+					Default: true,
+					SupportedInstanceTypes: InstanceTypeMap{
+						instTypeStandard: InstanceTypeConfig{
+							Limit: &[]int{11}[0],
+						},
+					},
+				},
+			},
+			args: args{
+				dataplaneClusterConfig: &DataplaneClusterConfig{
+					DataPlaneClusterScalingType: AutoScaling,
+					ClusterConfig:               NewClusterConfig(testClusterList),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "It should return an error when minimum available capacity slack is greater than the region limit",
+			fields: fields{
+				region: Region{
+					Name:    regionName,
+					Default: true,
+					SupportedInstanceTypes: InstanceTypeMap{
+						instTypeStandard: InstanceTypeConfig{
+							Limit:                                   &[]int{10}[0],
+							MinAvailableCapacitySlackStreamingUnits: 11,
+						},
+					},
+				},
+			},
+			args: args{
+				dataplaneClusterConfig: &DataplaneClusterConfig{
+					DataPlaneClusterScalingType: AutoScaling,
+					ClusterConfig:               NewClusterConfig(testClusterList),
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "It should return an error when minimum available capacity slack is negative",
+			fields: fields{
+				region: Region{
+					Name:    regionName,
+					Default: true,
+					SupportedInstanceTypes: InstanceTypeMap{
+						instTypeStandard: InstanceTypeConfig{
+							Limit:                                   &[]int{10}[0],
+							MinAvailableCapacitySlackStreamingUnits: -1,
+						},
+					},
+				},
+			},
+			args: args{
+				dataplaneClusterConfig: &DataplaneClusterConfig{
+					DataPlaneClusterScalingType: AutoScaling,
+					ClusterConfig:               NewClusterConfig(testClusterList),
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			err := tt.fields.region.Validate(tt.args.dataplaneClusterConfig)
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
