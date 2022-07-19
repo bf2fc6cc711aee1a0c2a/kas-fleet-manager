@@ -48,26 +48,30 @@ var defaultUpdateDataplaneClusterStatusFunc mockKasFleetshardSyncUpdateDataPlane
 	}
 
 	for _, cluster := range clusters {
-		managedKafkaAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.StrimziOperatorAddonID)
-		if err != nil {
-			return err
-		}
-
-		kasFleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.KasFleetshardAddonID)
-		if err != nil {
-			return err
-		}
-
-		if managedKafkaAddon.State() == clustersmgmtv1.AddOnInstallationStateReady && (kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateReady || kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateInstalling) {
-			ctx, err := NewAuthenticatedContextForDataPlaneCluster(helper, cluster.ClusterID)
+		if cluster.ProviderType == api.ClusterProviderOCM {
+			managedKafkaAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.StrimziOperatorAddonID)
 			if err != nil {
 				return err
 			}
 
-			clusterStatusUpdateRequest := SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-			if _, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, cluster.ClusterID, *clusterStatusUpdateRequest); err != nil {
-				return fmt.Errorf("failed to update cluster status via agent endpoint: %v", err)
+			kasFleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.KasFleetshardAddonID)
+			if err != nil {
+				return err
 			}
+
+			if !(managedKafkaAddon.State() == clustersmgmtv1.AddOnInstallationStateReady && (kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateReady || kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateInstalling)) {
+				continue
+			}
+		}
+
+		ctx, err := NewAuthenticatedContextForDataPlaneCluster(helper, cluster.ClusterID)
+		if err != nil {
+			return err
+		}
+
+		clusterStatusUpdateRequest := SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+		if _, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, cluster.ClusterID, *clusterStatusUpdateRequest); err != nil {
+			return fmt.Errorf("failed to update cluster status via agent endpoint: %v", err)
 		}
 	}
 	return nil
