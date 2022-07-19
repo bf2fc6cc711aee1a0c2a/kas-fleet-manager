@@ -172,6 +172,11 @@ parameters:
   description: Enable the Kafka TLS certificate
   value: "false"
 
+- name: ENABLE_KAFKA_CNAME_REGISTRATION
+  displayName: Enable Kafka CNAME Registration
+  description: Enable Kafka DNS CNAME Registration
+  value: "false"
+
 - name: RECONCILER_REPEAT_INTERVAL
   displayName: Repeat Interval
   description: The interval between cluster reconciliations.
@@ -918,6 +923,7 @@ objects:
             - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
             - --enable-kafka-external-certificate=${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}
+            - --enable-kafka-cname-registration=${ENABLE_KAFKA_CNAME_REGISTRATION}
             - --providers-config-file=/config/provider-configuration.yaml
             - --quota-management-list-config-file=/config/quota-management-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml

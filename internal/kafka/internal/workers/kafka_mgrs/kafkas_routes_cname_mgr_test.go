@@ -51,7 +51,10 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 						return nil
 					},
 				},
-				kafkaConfig: &config.KafkaConfig{EnableKafkaExternalCertificate: true},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaExternalCertificate: true,
+					EnableKafkaCNAMERegistration:   true,
+				},
 			},
 			wantErr: false,
 		},
@@ -84,7 +87,10 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 						}, nil
 					},
 				},
-				kafkaConfig: &config.KafkaConfig{EnableKafkaExternalCertificate: true},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaExternalCertificate: true,
+					EnableKafkaCNAMERegistration:   true,
+				},
 			},
 			wantErr: false,
 		},
@@ -115,7 +121,10 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 						return nil, errors.GeneralError("failed to get cname record status")
 					},
 				},
-				kafkaConfig: &config.KafkaConfig{EnableKafkaExternalCertificate: true},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaExternalCertificate: true,
+					EnableKafkaCNAMERegistration:   true,
+				},
 			},
 			wantErr: true,
 		},
@@ -134,7 +143,10 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 						return nil
 					},
 				},
-				kafkaConfig: &config.KafkaConfig{EnableKafkaExternalCertificate: false},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaExternalCertificate: false,
+					EnableKafkaCNAMERegistration:   false,
+				},
 			},
 			wantErr: false,
 		},
@@ -161,7 +173,10 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 						return errors.GeneralError("failed to list kafkas")
 					},
 				},
-				kafkaConfig: &config.KafkaConfig{EnableKafkaExternalCertificate: true},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaExternalCertificate: true,
+					EnableKafkaCNAMERegistration:   true,
+				},
 			},
 			wantErr: true,
 		},
@@ -173,7 +188,10 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 						return nil, errors.GeneralError("failed to list kafkas")
 					},
 				},
-				kafkaConfig: &config.KafkaConfig{EnableKafkaExternalCertificate: true},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaExternalCertificate: true,
+					EnableKafkaCNAMERegistration:   true,
+				},
 			},
 			wantErr: true,
 		},
@@ -192,7 +210,10 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 						return nil, errors.GeneralError("failed to create CNAME")
 					},
 				},
-				kafkaConfig: &config.KafkaConfig{EnableKafkaExternalCertificate: true},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaExternalCertificate: true,
+					EnableKafkaCNAMERegistration:   true,
+				},
 			},
 			wantErr: true,
 		},

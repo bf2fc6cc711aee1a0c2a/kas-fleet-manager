@@ -138,6 +138,7 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `IMAGE_REPOSITORY`: Image repository. Defaults to '\<namespace\>/kas-fleet-manager'.
 - `REPLICAS`: Number of replicas of the KAS Fleet Manager deployment. Defaults to `1`.
 - `ENABLE_KAFKA_EXTERNAL_CERTIFICATE`: Enable Kafka TLS Certificate. Defaults to `false`.
+- `ENABLE_KAFKA_CNAME_REGISTRATION`: Enable Kafka DNS CNAME Registration. Defaults to `false`.
 - `ENABLE_KAFKA_LIFE_SPAN`: Enables Kafka expiration. Defaults to `false`.
 - `ENABLE_OCM_MOCK`: Enables use of a mocked ocm client. Defaults to `false`.
 - `OCM_MOCK_MODE`: The type of mock to use when ocm mock is enabled.Options: `emulate-server` and `stub-server`. Defaults to `emulate-server`.

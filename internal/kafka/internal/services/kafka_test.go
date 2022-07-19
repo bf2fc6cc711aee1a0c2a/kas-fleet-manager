@@ -2997,6 +2997,7 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 		},
 		&config.KafkaConfig{
 			EnableKafkaExternalCertificate: true,
+			EnableKafkaCNAMERegistration:   true,
 			SupportedInstanceTypes:         &kafkaSupportedInstanceTypesConfig,
 		},
 		&sso.KeycloakServiceMock{
@@ -3034,6 +3035,7 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 				},
 				kafkaConfig: &config.KafkaConfig{
 					EnableKafkaExternalCertificate: true,
+					EnableKafkaCNAMERegistration:   true,
 					SupportedInstanceTypes:         &kafkaSupportedInstanceTypesConfig,
 				},
 			},
@@ -3133,6 +3135,7 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				kafkaConfig: &config.KafkaConfig{
 					EnableKafkaExternalCertificate: true,
+					EnableKafkaCNAMERegistration:   true,
 					SupportedInstanceTypes:         &kafkaSupportedInstanceTypesConfig,
 				},
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
