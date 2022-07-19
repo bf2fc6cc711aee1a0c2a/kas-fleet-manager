@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -437,4 +438,91 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, nil)
+	defer teardown()
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
+
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account, nil)
+
+	k := public.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockKafkaName,
+		Plan:          fmt.Sprintf("%s.x1", types.STANDARD.String()),
+	}
+
+	kafka, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	// successful creation of kafka with a valid "standard" plan format
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error posting object:  %v", err)
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.InstanceType).To(gomega.Equal(types.STANDARD.String()))
+	g.Expect(kafka.MultiAz).To(gomega.BeTrue())
+	g.Expect(kafka.ExpiresAt).To(gomega.BeNil())
+
+	// successful creation of kafka with valid "developer plan format
+	k2 := public.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          "test-kafka-2",
+		Plan:          fmt.Sprintf("%s.x1", types.DEVELOPER.String()),
+	}
+	accountWithoutStandardInstances := h.NewAccountWithNameAndOrg("test-nameacc-2", "123456")
+	ctx2 := h.NewAuthenticatedContext(accountWithoutStandardInstances, nil)
+	kafka, resp, err = client.DefaultApi.CreateKafka(ctx2, true, k2)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error posting object:  %v", err)
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.InstanceType).To(gomega.Equal(types.DEVELOPER.String()))
+	g.Expect(kafka.MultiAz).To(gomega.BeFalse())
+	// Verify that developer instances should have an expiration time set
+	g.Expect(kafka.ExpiresAt).NotTo(gomega.BeNil())
+	instanceTypeConfig, err := kafkatest.TestServices.KafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafka.InstanceType)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	instanceTypeSizeConfig, err := instanceTypeConfig.GetKafkaInstanceSizeByID("x1")
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(*kafka.ExpiresAt).To(gomega.Equal(kafka.CreatedAt.Add(time.Duration(*instanceTypeSizeConfig.LifespanSeconds) * time.Second)))
+
+	// unsuccessful creation of kafka with invalid instance type provided in the "plan" parameter
+	k.Plan = "invalid.x1"
+	kafka, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).To(gomega.HaveOccurred(), "Error should have occurred when attempting to create kafka with invalid instance type provided in the plan")
+
+	// unsuccessful creation of kafka with invalid size_id provided in the "plan" parameter
+	k.Plan = fmt.Sprintf("%s.x9999", types.STANDARD.String())
+	kafka, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).To(gomega.HaveOccurred(), "Error should have occurred when attempting to create kafka unsupported size_id")
 }
