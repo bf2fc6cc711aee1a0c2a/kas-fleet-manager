@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
@@ -26,37 +28,59 @@ import (
 func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testing.T) {
 	g := gomega.NewWithT(t)
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
-	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
-	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to build mock cluster object")
-
-	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
 
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 	var dataplaneConfig *config.DataplaneClusterConfig
-	h, _, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig) {
+	reconcilerInterval := 1 * time.Millisecond
+	h, _, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, reconcilerConfig *workers.ReconcilerConfig, p *config.ProviderConfig) {
 		dataplaneConfig = d
+		// disable identity provider configuration as it is not needed
+		dataplaneConfig.EnableKafkaSreIdentityProviderConfiguration = false
+
+		// change the interval to millisecond to speed the test up
+		reconcilerConfig.ReconcilerRepeatInterval = reconcilerInterval
+
+		// control the list of cloud providers used in test
+		p.ProvidersConfig.SupportedProviders = config.ProviderList{
+			config.Provider{
+				Default: true,
+				Name:    mocks.MockCluster.CloudProvider().ID(),
+				Regions: config.RegionList{
+					config.Region{
+						Default: true,
+						Name:    mocks.MockCluster.Region().ID(),
+						SupportedInstanceTypes: config.InstanceTypeMap{
+							api.StandardTypeSupport.String(): config.InstanceTypeConfig{
+								Limit: nil,
+							},
+						},
+					},
+				},
+			},
+		}
 	})
+
 	defer tearDown()
 
 	cluster := clusterMocks.BuildCluster(func(cluster *api.Cluster) {
 		cluster.Meta = api.Meta{
 			ID: api.NewID(),
 		}
-		cluster.ProviderType = api.ClusterProviderOCM
-		cluster.SupportedInstanceType = "standard"
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.StandardTypeSupport.String()
 		cluster.ClientID = "some-client-id"
 		cluster.ClientSecret = "some-client-secret"
-		cluster.ClusterID = "some-cluster-id"
-		cluster.CloudProvider = "aws"
-		cluster.Region = "us-east-1"
-		cluster.Status = "ready"
-		cluster.ProviderSpec = nil
-		cluster.ClusterSpec = nil
+		cluster.CloudProvider = mocks.MockCluster.CloudProvider().ID()
+		cluster.Region = mocks.MockCluster.Region().ID()
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
 		cluster.DynamicCapacityInfo = api.JSON([]byte(`{"standard":{"max_nodes":1,"max_units":1,"remaining_units":1}}`))
 	})
+
 	db := test.TestServices.DBFactory.New()
-	err = db.Create(cluster).Error
+	err := db.Create(cluster).Error
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	privateAPIClient := test.NewPrivateAPIClient(h)
@@ -64,14 +88,30 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testin
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	// turn on autoscaling and observe that the node capacity info are sent
+	pollTimeout := 10 * reconcilerInterval
 	dataplaneConfig.DataPlaneClusterScalingType = config.AutoScaling
+	var managedKafkaAgentCR private.DataplaneClusterAgentConfig
+	err = common.NewPollerBuilder(test.TestServices.DBFactory).
+		IntervalAndTimeout(reconcilerInterval, pollTimeout).
+		RetryLogMessagef("Waiting for cluster dynamic capacity to show up in ManagedKafkaAgentCR").
+		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
+			cr, resp, err := privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, cluster.ClusterID)
+			if resp != nil {
+				resp.Body.Close()
+			}
 
-	managedKafkaAgentCR, resp, err := privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, cluster.ClusterID)
-	if resp != nil {
-		resp.Body.Close()
-	}
-	g.Expect(err).NotTo(gomega.HaveOccurred())
-	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+			if err != nil {
+				return false, err
+			}
+
+			managedKafkaAgentCR = cr
+
+			return resp.StatusCode == http.StatusOK && len(cr.Spec.Capacity) > 0, nil
+		}).
+		Build().Poll()
+
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "ManagedKafkaAgentCR should have capacity info when dynamic scaling is turned on")
+
 	g.Expect(managedKafkaAgentCR.Spec.Capacity).To(gomega.HaveLen(1))
 	capacity, ok := managedKafkaAgentCR.Spec.Capacity[cluster.SupportedInstanceType]
 	g.Expect(ok).To(gomega.BeTrue())
@@ -79,13 +119,25 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testin
 
 	// turn off autoscaling and observe that capacity info is now empty
 	dataplaneConfig.DataPlaneClusterScalingType = config.NoScaling
-	managedKafkaAgentCR, resp, err = privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, cluster.ClusterID)
-	if resp != nil {
-		resp.Body.Close()
-	}
-	g.Expect(err).NotTo(gomega.HaveOccurred())
-	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(managedKafkaAgentCR.Spec.Capacity).To(gomega.HaveLen(0))
+
+	err = common.NewPollerBuilder(test.TestServices.DBFactory).
+		IntervalAndTimeout(reconcilerInterval, pollTimeout).
+		RetryLogMessagef("Waiting for cluster dynamic capacity to disappear from ManagedKafkaAgentCR").
+		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
+			cr, resp, err := privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, cluster.ClusterID)
+			if resp != nil {
+				resp.Body.Close()
+			}
+
+			if err != nil {
+				return false, err
+			}
+
+			return resp.StatusCode == http.StatusOK && len(cr.Spec.Capacity) == 0, nil
+		}).
+		Build().Poll()
+
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "ManagedKafkaAgentCR should not have capacity info when dynamic scaling is turned off")
 }
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing.T) {
