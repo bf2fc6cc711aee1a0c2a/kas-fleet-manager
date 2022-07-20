@@ -133,7 +133,7 @@ func (s *LeaderElectionManager) acquireLeaderLease(workerId string, workerType s
 
 	// we failed to read the current lease, we always expect a single lease to exist, create one so that worker can proceed.
 	if len(leaseList) == 0 {
-		return nil, errors.Errorf("expected to find a lease entry, found none for :%s", workerType)
+		return nil, errors.Errorf("expected to find a lease entry, found none for : %s", workerType)
 	}
 
 	// the lease will be the first entry returned
