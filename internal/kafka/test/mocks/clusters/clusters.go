@@ -17,6 +17,7 @@ var (
 	testStatus                  = api.ClusterProvisioned
 	TestClusterID               = "123"
 	StrimziOperatorVersion      = "strimzi-cluster-operator.from-cluster"
+	DefaultKafkaVersion         = "2.7.0"
 	AvailableStrimziVersions, _ = json.Marshal([]api.StrimziVersion{
 		{
 			Version: StrimziOperatorVersion,

@@ -16,6 +16,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	kafkatest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	mockclusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	mockkafkas "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -32,14 +33,23 @@ func TestKafkaCreate_ManualScaling(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	var enableManualScaling bool
-	clusterList := config.ClusterList{}
+	clusterList := config.ClusterList{
+		{
+			Name:                  "test-cluster",
+			ClusterId:             "test-cluster-id",
+			CloudProvider:         mocks.MockCloudProviderID,
+			Region:                mocks.MockCloudRegionID,
+			MultiAZ:               true,
+			Schedulable:           true,
+			KafkaInstanceLimit:    2,
+			Status:                api.ClusterWaitingForKasFleetShardOperator,
+			ProviderType:          api.ClusterProviderStandalone, // ensures there will be no errors with this test cluster not being available in ocm
+			SupportedInstanceType: api.AllInstanceTypeSupport.String(),
+		},
+	}
 	h, client, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig) {
-		if enableManualScaling {
-			// Enable manual scaling and register data plane cluster to cluster config
-			d.DataPlaneClusterScalingType = config.ManualScaling
-			d.ClusterConfig = config.NewClusterConfig(clusterList)
-		}
+		d.DataPlaneClusterScalingType = config.ManualScaling
+		d.ClusterConfig = config.NewClusterConfig(clusterList)
 	})
 	defer teardown()
 
@@ -49,39 +59,8 @@ func TestKafkaCreate_ManualScaling(t *testing.T) {
 	mockKasFleetshardSync.Start()
 	defer mockKasFleetshardSync.Stop()
 
-	// set up data plane cluster
-	clusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterReady)
-	g.Expect(getClusterErr).ToNot(gomega.HaveOccurred(), "failed to get dataplane cluster details: %v", getClusterErr)
-	g.Expect(clusterID).ToNot(gomega.BeEmpty(), "no dataplane cluster found")
-
-	// reload services with manual scaling enabled
-	h.Env.Stop()
-
-	// register existing cluster to the data plane cluster config
-	db := h.DBFactory().New()
-	cluster := api.Cluster{
-		ClusterID: clusterID,
-	}
-	err := db.First(&cluster).Error
-	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to get data plane cluster from database: %v", err)
-
-	clusterList = append(clusterList, config.ManualCluster{
-		Name:                  "test-cluster",
-		ClusterId:             cluster.ClusterID,
-		CloudProvider:         cluster.CloudProvider,
-		Region:                cluster.Region,
-		MultiAZ:               cluster.MultiAZ,
-		Schedulable:           true,
-		KafkaInstanceLimit:    2,
-		Status:                cluster.Status,
-		SupportedInstanceType: cluster.SupportedInstanceType,
-	})
-	enableManualScaling = true
-
-	err = h.Env.CreateServices()
-	g.Expect(err).ToNot(gomega.HaveOccurred(), "unable to initialize testing environment: %v", err)
-
-	h.Env.Start()
+	_, err := common.WaitForClusterStatus(h.DBFactory(), &kafkatest.TestServices.ClusterService, clusterList[0].ClusterId, api.ClusterReady)
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "data plane cluster failed to reach status ready")
 
 	// setup pre-requisites for performing requests
 	account := h.NewRandAccount()
@@ -181,7 +160,7 @@ func TestKafkaCreate_ManualScaling(t *testing.T) {
 					dummyKafkas = append(dummyKafkas, mockkafkas.BuildKafkaRequest(
 						mockkafkas.WithPredefinedTestValues(),
 						mockkafkas.With(mockkafkas.NAME, fmt.Sprintf("dummy-kafka-%d", i)),
-						mockkafkas.With(mockkafkas.CLUSTER_ID, clusterID),
+						mockkafkas.With(mockkafkas.CLUSTER_ID, clusterList[0].ClusterId),
 						mockkafkas.With(mockkafkas.CLOUD_PROVIDER, kafkaRequestPayload.CloudProvider),
 						mockkafkas.With(mockkafkas.REGION, kafkaRequestPayload.Region),
 						mockkafkas.With(mockkafkas.OWNER, account2.Username()),
@@ -262,17 +241,33 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 	defer teardown()
 
 	// set up data plane cluster
-	// The mock fleetshard sync only updates the cluster if it's in a non-ready state. Only wait until the cluster has status
-	// waiting_for_kas_fleetshard_operator to ensure that the mock fleetshard sync updates the dynamic capacity info correctly.
-	clusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
-	g.Expect(getClusterErr).ToNot(gomega.HaveOccurred(), "failed to get dataplane cluster details: %v", getClusterErr)
-	g.Expect(clusterID).ToNot(gomega.BeEmpty(), "no dataplane cluster found")
+	testCluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		dynamicCapacityInfoString := fmt.Sprintf("{\"standard\":{\"max_nodes\":1,\"max_units\":%[1]d,\"remaining_units\":%[1]d}}", kasfleetshardsync.StandardCapacityInfo.MaxUnits)
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone // ensures no errors will occur due to it not being available on ocm
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = "test-cluster"
+		cluster.CloudProvider = mocks.MockCloudProviderID
+		cluster.Region = mocks.MockCloudRegionID
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.AvailableStrimziVersions = api.JSON(mockclusters.AvailableStrimziVersions)
+		cluster.DynamicCapacityInfo = api.JSON([]byte(dynamicCapacityInfoString))
+	})
+	db := h.DBFactory().New()
+	err := db.Create(testCluster).Error
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create data plane cluster")
 
 	// reload services with auto scaling enabled
 	h.Env.Stop()
 
 	enableAutoscale = true
-	err := h.Env.CreateServices()
+	err = h.Env.CreateServices()
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "unable to initialize testing environment: %v", err)
 
 	h.Env.Start()
@@ -282,10 +277,6 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 	mockKasFleetshardSync := mockKasFleetshardSyncBuilder.Build()
 	mockKasFleetshardSync.Start()
 	defer mockKasFleetshardSync.Stop()
-
-	// wait for data plane cluster to reach a ready state
-	_, err = common.WaitForClusterStatus(h.DBFactory(), &kafkatest.TestServices.ClusterService, clusterID, api.ClusterReady)
-	g.Expect(err).ToNot(gomega.HaveOccurred(), "dataplane cluster failed to reach ready status: %v", err)
 
 	// setup pre-requisites for performing requests
 	account := h.NewRandAccount()
@@ -333,7 +324,7 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 				g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
 				g.Expect(readyKafka.BootstrapServerHost).ToNot(gomega.BeEmpty())
 				g.Expect(strings.HasSuffix(readyKafka.BootstrapServerHost, ":443")).To(gomega.Equal(true))
-				g.Expect(readyKafka.Version).To(gomega.Equal(kasfleetshardsync.GetDefaultReportedKafkaVersion()))
+				g.Expect(readyKafka.Version).To(gomega.Equal(mockclusters.DefaultKafkaVersion))
 				g.Expect(readyKafka.AdminApiServerUrl).To(gomega.Equal(kasfleetshardsync.AdminServerURI))
 
 				// default kafka max data retention size should be set on creation
@@ -357,8 +348,7 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 				g.Expect(kafkaRequest.QuotaType).To(gomega.Equal(KafkaConfig(h).Quota.Type))
 				g.Expect(kafkaRequest.PlacementId).ToNot(gomega.BeEmpty())
 				g.Expect(kafkaRequest.Namespace).To(gomega.Equal(fmt.Sprintf("kafka-%s", strings.ToLower(kafkaRequest.ID))))
-				// this is set by the mockKasfFleetshardSync
-				g.Expect(kafkaRequest.DesiredStrimziVersion).To(gomega.Equal(kasfleetshardsync.GetDefaultReportedStrimziVersion()))
+				g.Expect(kafkaRequest.DesiredStrimziVersion).To(gomega.Equal(mockclusters.StrimziOperatorVersion))
 
 				common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
 				common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants2.KafkaOperationCreate.String()))
@@ -385,7 +375,7 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 					dummyKafkas = append(dummyKafkas, mockkafkas.BuildKafkaRequest(
 						mockkafkas.WithPredefinedTestValues(),
 						mockkafkas.With(mockkafkas.NAME, fmt.Sprintf("dummy-kafka-%d", i)),
-						mockkafkas.With(mockkafkas.CLUSTER_ID, clusterID),
+						mockkafkas.With(mockkafkas.CLUSTER_ID, testCluster.ClusterID),
 						mockkafkas.With(mockkafkas.CLOUD_PROVIDER, kafkaRequestPayload.CloudProvider),
 						mockkafkas.With(mockkafkas.REGION, kafkaRequestPayload.Region),
 						mockkafkas.With(mockkafkas.OWNER, account2.Username()),
@@ -454,13 +444,26 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 	mockKasfFleetshardSync.Start()
 	defer mockKasfFleetshardSync.Stop()
 
-	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
-	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
+	clusterID := "test-cluster"
+	cluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = clusterID
+		cluster.Region = mocks.MockCloudRegionID
+		cluster.CloudProvider = mocks.MockCloudProviderID
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+	})
+
+	db := h.DBFactory().New()
+	err := db.Create(cluster).Error
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
