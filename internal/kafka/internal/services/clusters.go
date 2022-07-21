@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -65,6 +66,8 @@ type ClusterService interface {
 	InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
 	CheckStrimziVersionReady(cluster *api.Cluster, strimziVersion string) (bool, error)
 	IsStrimziKafkaVersionAvailableInCluster(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error)
+	// FindStreamingUnitCountByClusterAndInstanceType returns kafka streaming unit counts per region, cloud provider, cluster and instance type
+	FindStreamingUnitCountByClusterAndInstanceType() (KafkaStreamingUnitCountPerClusterList, error)
 }
 
 type clusterService struct {
@@ -664,4 +667,121 @@ func (c clusterService) IsStrimziKafkaVersionAvailableInCluster(cluster *api.Clu
 		}
 	}
 	return false, nil
+}
+
+type KafkaStreamingUnitCountPerCluster struct {
+	Region        string
+	InstanceType  string
+	ClusterId     string
+	Count         int32
+	CloudProvider string
+	MaxUnits      int32
+}
+
+func (KafkaStreamingUnitCountPerCluster KafkaStreamingUnitCountPerCluster) isSame(kafkaPerRegionFromDB *KafkaPerClusterCount) bool {
+	return KafkaStreamingUnitCountPerCluster.CloudProvider == kafkaPerRegionFromDB.CloudProvider &&
+		KafkaStreamingUnitCountPerCluster.ClusterId == kafkaPerRegionFromDB.ClusterId &&
+		KafkaStreamingUnitCountPerCluster.InstanceType == kafkaPerRegionFromDB.InstanceType &&
+		KafkaStreamingUnitCountPerCluster.Region == kafkaPerRegionFromDB.Region
+}
+
+type KafkaStreamingUnitCountPerClusterList []KafkaStreamingUnitCountPerCluster
+
+func (kafkaStreamingUnitCountPerClusterList KafkaStreamingUnitCountPerClusterList) GetStreamingUnitCountForClusterAndInstanceType(clusterId, instanceType string) int {
+	for _, KafkaStreamingUnitCountPerCluster := range kafkaStreamingUnitCountPerClusterList {
+		if KafkaStreamingUnitCountPerCluster.ClusterId == clusterId && KafkaStreamingUnitCountPerCluster.InstanceType == instanceType {
+			return int(KafkaStreamingUnitCountPerCluster.Count)
+		}
+	}
+
+	return 0
+}
+
+// KafkaPerClusterCount is a struct used to query the database using a "group by" clause
+type KafkaPerClusterCount struct {
+	Region        string
+	InstanceType  string
+	ClusterId     string
+	Count         int32
+	CloudProvider string
+	SizeId        string
+}
+
+type ClusterSelection struct {
+	CloudProvider         string
+	ClusterID             string
+	Region                string
+	SupportedInstanceType string
+	DynamicCapacityInfo   api.JSON
+}
+
+func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (KafkaStreamingUnitCountPerClusterList, error) {
+
+	var clusters []*ClusterSelection
+	dbConn := c.connectionFactory.New().
+		Model(&api.Cluster{}).
+		Where("cluster_id != ''")
+
+	if err := dbConn.Scan(&clusters).Error; err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to list clusters")
+	}
+
+	streamingUnitsCountPerCluster := KafkaStreamingUnitCountPerClusterList{}
+
+	// pre-populate regions count with zero count values.
+	// This is useful and it ensures that the count drops to 0 for each instance type and region when all the kafkas are removed
+	for _, clusterSelection := range clusters {
+		supportedInstanceTypes := strings.Split(clusterSelection.SupportedInstanceType, ",")
+
+		c := &api.Cluster{DynamicCapacityInfo: clusterSelection.DynamicCapacityInfo}
+		clusterDynamicCapacityInfo := c.RetrieveDynamicCapacityInfo()
+
+		for _, supportedInstanceType := range supportedInstanceTypes {
+			instanceType := strings.TrimSpace(supportedInstanceType)
+			if instanceType == "" {
+				continue
+			}
+
+			var maxUnits int32 = 0
+			instanceCapacityInfo, ok := clusterDynamicCapacityInfo[instanceType]
+			if ok {
+				maxUnits = instanceCapacityInfo.MaxUnits
+			}
+
+			streamingUnitsCountPerCluster = append(streamingUnitsCountPerCluster, KafkaStreamingUnitCountPerCluster{
+				CloudProvider: clusterSelection.CloudProvider,
+				ClusterId:     clusterSelection.ClusterID,
+				InstanceType:  instanceType,
+				Region:        clusterSelection.Region,
+				Count:         0,
+				MaxUnits:      maxUnits,
+			})
+		}
+	}
+
+	dbConn = c.connectionFactory.New()
+	var kafkasPerCluster []*KafkaPerClusterCount
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).
+		Select("cloud_provider, region, count(1) as Count, size_id, cluster_id, instance_type").
+		Group("size_id, cluster_id, cloud_provider, region, instance_type").
+		Scan(&kafkasPerCluster).Error; err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to perform count query on kafkas table")
+	}
+
+	for _, kafkaCountPerCluster := range kafkasPerCluster {
+		instSize, err := c.kafkaConfig.GetKafkaInstanceSize(kafkaCountPerCluster.InstanceType, kafkaCountPerCluster.SizeId)
+		if err != nil {
+			return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get kafka instance size for type '%s' and size '%s'", kafkaCountPerCluster.InstanceType, kafkaCountPerCluster.SizeId)
+		}
+
+		streamingUnitCount := int32(instSize.CapacityConsumed) * kafkaCountPerCluster.Count
+		for i, streamingUnitCountPerRegion := range streamingUnitsCountPerCluster {
+			if streamingUnitCountPerRegion.isSame(kafkaCountPerCluster) {
+				streamingUnitsCountPerCluster[i].Count += streamingUnitCount
+				break
+			}
+		}
+	}
+
+	return streamingUnitsCountPerCluster, nil
 }

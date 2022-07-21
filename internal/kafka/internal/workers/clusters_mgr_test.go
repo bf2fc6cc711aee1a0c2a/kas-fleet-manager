@@ -3849,10 +3849,7 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 				},
 				clusterService: &services.ClusterServiceMock{
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
-						capacityInfoToBePersisted, err := cluster.RetrieveDynamicCapacityInfo()
-						if err != nil {
-							t.Error(err)
-						}
+						capacityInfoToBePersisted := cluster.RetrieveDynamicCapacityInfo()
 
 						if len(capacityInfoToBePersisted) != 0 {
 							t.Errorf("Persisted dynamic capacity size should be 0")
@@ -3924,10 +3921,7 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 				},
 				clusterService: &services.ClusterServiceMock{
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
-						capacityInfoToBePersisted, err := cluster.RetrieveDynamicCapacityInfo()
-						if err != nil {
-							t.Error(err)
-						}
+						capacityInfoToBePersisted := cluster.RetrieveDynamicCapacityInfo()
 
 						if len(capacityInfoToBePersisted) != 2 {
 							t.Errorf("Persisted dynamic capacity size should be 2")
@@ -3985,10 +3979,7 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 				},
 				clusterService: &services.ClusterServiceMock{
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
-						capacityInfoToBePersisted, err := cluster.RetrieveDynamicCapacityInfo()
-						if err != nil {
-							t.Error(err)
-						}
+						capacityInfoToBePersisted := cluster.RetrieveDynamicCapacityInfo()
 
 						if len(capacityInfoToBePersisted) != 1 {
 							t.Errorf("Persisted dynamic capacity size should be 1")

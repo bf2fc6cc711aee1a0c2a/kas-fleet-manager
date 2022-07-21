@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	kasfleetmanagererrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -490,18 +491,16 @@ func (cluster *Cluster) SetDynamicCapacityInfo(dynamicCapacityInfo map[string]Dy
 }
 
 // RetrieveDynamicCapacityInfo returns the dynamic scaling info per instance type
-func (cluster *Cluster) RetrieveDynamicCapacityInfo() (map[string]DynamicCapacityInfo, error) {
+func (cluster *Cluster) RetrieveDynamicCapacityInfo() map[string]DynamicCapacityInfo {
 	dynamicCapacityInfo := map[string]DynamicCapacityInfo{}
-	if cluster.DynamicCapacityInfo == nil {
-		return dynamicCapacityInfo, nil
+	if cluster.DynamicCapacityInfo != nil {
+		// only log error returned by Unmarshal as the json stored in the cluster object should always be a valid DynamicCapacityInfo json object.
+		if err := json.Unmarshal(cluster.DynamicCapacityInfo, &dynamicCapacityInfo); err != nil {
+			glog.Errorf("failed to retrieve dynamic capacity info: %s", err.Error())
+		}
 	}
 
-	err := json.Unmarshal(cluster.DynamicCapacityInfo, &dynamicCapacityInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	return dynamicCapacityInfo, nil
+	return dynamicCapacityInfo
 }
 
 // GetSupportedInstanceTypes returns a list of the supported instance types for

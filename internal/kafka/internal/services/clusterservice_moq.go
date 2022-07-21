@@ -60,6 +60,9 @@ var _ ClusterService = &ClusterServiceMock{}
 // 			FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *serviceError.ServiceError) {
 // 				panic("mock out the FindNonEmptyClusterById method")
 // 			},
+// 			FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (KafkaStreamingUnitCountPerClusterList, error) {
+// 				panic("mock out the FindStreamingUnitCountByClusterAndInstanceType method")
+// 			},
 // 			GetClientIdFunc: func(clusterId string) (string, error) {
 // 				panic("mock out the GetClientId method")
 // 			},
@@ -144,6 +147,9 @@ type ClusterServiceMock struct {
 
 	// FindNonEmptyClusterByIdFunc mocks the FindNonEmptyClusterById method.
 	FindNonEmptyClusterByIdFunc func(clusterID string) (*api.Cluster, *serviceError.ServiceError)
+
+	// FindStreamingUnitCountByClusterAndInstanceTypeFunc mocks the FindStreamingUnitCountByClusterAndInstanceType method.
+	FindStreamingUnitCountByClusterAndInstanceTypeFunc func() (KafkaStreamingUnitCountPerClusterList, error)
 
 	// GetClientIdFunc mocks the GetClientId method.
 	GetClientIdFunc func(clusterId string) (string, error)
@@ -257,6 +263,9 @@ type ClusterServiceMock struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
+		// FindStreamingUnitCountByClusterAndInstanceType holds details about calls to the FindStreamingUnitCountByClusterAndInstanceType method.
+		FindStreamingUnitCountByClusterAndInstanceType []struct {
+		}
 		// GetClientId holds details about calls to the GetClientId method.
 		GetClientId []struct {
 			// ClusterId is the clusterId argument value.
@@ -337,32 +346,33 @@ type ClusterServiceMock struct {
 			Status api.ClusterStatus
 		}
 	}
-	lockApplyResources                          sync.RWMutex
-	lockCheckClusterStatus                      sync.RWMutex
-	lockCheckStrimziVersionReady                sync.RWMutex
-	lockConfigureAndSaveIdentityProvider        sync.RWMutex
-	lockCountByStatus                           sync.RWMutex
-	lockCreate                                  sync.RWMutex
-	lockDelete                                  sync.RWMutex
-	lockDeleteByClusterID                       sync.RWMutex
-	lockFindAllClusters                         sync.RWMutex
-	lockFindCluster                             sync.RWMutex
-	lockFindClusterByID                         sync.RWMutex
-	lockFindKafkaInstanceCount                  sync.RWMutex
-	lockFindNonEmptyClusterById                 sync.RWMutex
-	lockGetClientId                             sync.RWMutex
-	lockGetClusterDNS                           sync.RWMutex
-	lockGetExternalID                           sync.RWMutex
-	lockInstallClusterLogging                   sync.RWMutex
-	lockInstallStrimzi                          sync.RWMutex
-	lockIsStrimziKafkaVersionAvailableInCluster sync.RWMutex
-	lockListAllClusterIds                       sync.RWMutex
-	lockListByStatus                            sync.RWMutex
-	lockListGroupByProviderAndRegion            sync.RWMutex
-	lockRegisterClusterJob                      sync.RWMutex
-	lockUpdate                                  sync.RWMutex
-	lockUpdateMultiClusterStatus                sync.RWMutex
-	lockUpdateStatus                            sync.RWMutex
+	lockApplyResources                                 sync.RWMutex
+	lockCheckClusterStatus                             sync.RWMutex
+	lockCheckStrimziVersionReady                       sync.RWMutex
+	lockConfigureAndSaveIdentityProvider               sync.RWMutex
+	lockCountByStatus                                  sync.RWMutex
+	lockCreate                                         sync.RWMutex
+	lockDelete                                         sync.RWMutex
+	lockDeleteByClusterID                              sync.RWMutex
+	lockFindAllClusters                                sync.RWMutex
+	lockFindCluster                                    sync.RWMutex
+	lockFindClusterByID                                sync.RWMutex
+	lockFindKafkaInstanceCount                         sync.RWMutex
+	lockFindNonEmptyClusterById                        sync.RWMutex
+	lockFindStreamingUnitCountByClusterAndInstanceType sync.RWMutex
+	lockGetClientId                                    sync.RWMutex
+	lockGetClusterDNS                                  sync.RWMutex
+	lockGetExternalID                                  sync.RWMutex
+	lockInstallClusterLogging                          sync.RWMutex
+	lockInstallStrimzi                                 sync.RWMutex
+	lockIsStrimziKafkaVersionAvailableInCluster        sync.RWMutex
+	lockListAllClusterIds                              sync.RWMutex
+	lockListByStatus                                   sync.RWMutex
+	lockListGroupByProviderAndRegion                   sync.RWMutex
+	lockRegisterClusterJob                             sync.RWMutex
+	lockUpdate                                         sync.RWMutex
+	lockUpdateMultiClusterStatus                       sync.RWMutex
+	lockUpdateStatus                                   sync.RWMutex
 }
 
 // ApplyResources calls ApplyResourcesFunc.
@@ -777,6 +787,32 @@ func (mock *ClusterServiceMock) FindNonEmptyClusterByIdCalls() []struct {
 	mock.lockFindNonEmptyClusterById.RLock()
 	calls = mock.calls.FindNonEmptyClusterById
 	mock.lockFindNonEmptyClusterById.RUnlock()
+	return calls
+}
+
+// FindStreamingUnitCountByClusterAndInstanceType calls FindStreamingUnitCountByClusterAndInstanceTypeFunc.
+func (mock *ClusterServiceMock) FindStreamingUnitCountByClusterAndInstanceType() (KafkaStreamingUnitCountPerClusterList, error) {
+	if mock.FindStreamingUnitCountByClusterAndInstanceTypeFunc == nil {
+		panic("ClusterServiceMock.FindStreamingUnitCountByClusterAndInstanceTypeFunc: method is nil but ClusterService.FindStreamingUnitCountByClusterAndInstanceType was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockFindStreamingUnitCountByClusterAndInstanceType.Lock()
+	mock.calls.FindStreamingUnitCountByClusterAndInstanceType = append(mock.calls.FindStreamingUnitCountByClusterAndInstanceType, callInfo)
+	mock.lockFindStreamingUnitCountByClusterAndInstanceType.Unlock()
+	return mock.FindStreamingUnitCountByClusterAndInstanceTypeFunc()
+}
+
+// FindStreamingUnitCountByClusterAndInstanceTypeCalls gets all the calls that were made to FindStreamingUnitCountByClusterAndInstanceType.
+// Check the length with:
+//     len(mockedClusterService.FindStreamingUnitCountByClusterAndInstanceTypeCalls())
+func (mock *ClusterServiceMock) FindStreamingUnitCountByClusterAndInstanceTypeCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockFindStreamingUnitCountByClusterAndInstanceType.RLock()
+	calls = mock.calls.FindStreamingUnitCountByClusterAndInstanceType
+	mock.lockFindStreamingUnitCountByClusterAndInstanceType.RUnlock()
 	return calls
 }
 

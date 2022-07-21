@@ -503,10 +503,7 @@ func (c *ClusterManager) reconcileDynamicCapacityInfo(cluster api.Cluster) error
 	updatedDynamicCapacityInfo := map[string]api.DynamicCapacityInfo{}
 
 	if c.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
-		previousDynamicCapacityInfo, err := cluster.RetrieveDynamicCapacityInfo()
-		if err != nil {
-			return err
-		}
+		previousDynamicCapacityInfo := cluster.RetrieveDynamicCapacityInfo()
 
 		if len(previousDynamicCapacityInfo) > 0 {
 			return nil

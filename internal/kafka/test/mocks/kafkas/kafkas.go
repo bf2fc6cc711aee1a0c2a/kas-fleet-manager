@@ -25,6 +25,7 @@ const (
 	DefaultBootstrapServerHost  = "test-bootstrap-server-host"
 	DefaultPlacementId          = "test-placement-id"
 	DefaultOrganisationId       = "13640203"
+	DefaultKafkaID              = "test-kafka-id"
 )
 
 var (

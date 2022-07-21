@@ -53,7 +53,7 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 
 	dynamicCapacityInfo := map[string]api.DynamicCapacityInfo{}
 	if d.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
-		dynamicCapacityInfo, _ = cluster.RetrieveDynamicCapacityInfo()
+		dynamicCapacityInfo = cluster.RetrieveDynamicCapacityInfo()
 	}
 
 	return &dbapi.DataPlaneClusterConfig{
@@ -112,10 +112,7 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 		return err
 	}
 
-	dynamicCapacityInfo, err := cluster.RetrieveDynamicCapacityInfo()
-	if err != nil {
-		return err
-	}
+	dynamicCapacityInfo := cluster.RetrieveDynamicCapacityInfo()
 
 	glog.Infof("Received capacity info for cluster ID '%s'. status.DynamicCapacityInfo: '%v'\n", cluster.ClusterID, status.DynamicCapacityInfo)
 	glog.Infof("Current dynamic capacity info for cluster ID '%s'. DynamicCapacityInfo: '%v'\n", cluster.ClusterID, dynamicCapacityInfo)
