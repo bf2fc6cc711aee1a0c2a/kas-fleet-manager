@@ -170,7 +170,6 @@ func (c *ClusterManager) Reconcile() []error {
 	processors := []processor{
 		c.processMetrics,
 		c.reconcileClusterWithManualConfig,
-		c.reconcileClustersForRegions,
 		c.processDeprovisioningClusters,
 		c.processCleanupClusters,
 		c.processAcceptedClusters,
@@ -805,61 +804,6 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	}
 
 	return []error{}
-}
-
-// reconcileClustersForRegions creates an OSD cluster for each supported cloud provider and region where no cluster exists.
-func (c *ClusterManager) reconcileClustersForRegions() []error {
-	var errs []error
-	if !c.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
-		return errs
-	}
-	glog.Infoln("reconcile cloud providers and regions")
-	var providers []string
-	var regions []string
-	status := api.StatusForValidCluster
-	//gather the supported providers and regions
-	providerList := c.SupportedProviders.ProvidersConfig.SupportedProviders
-	for _, v := range providerList {
-		providers = append(providers, v.Name)
-		for _, r := range v.Regions {
-			regions = append(regions, r.Name)
-		}
-	}
-
-	// get a list of clusters in Map group by their provider and region.
-	grpResult, err := c.ClusterService.ListGroupByProviderAndRegion(providers, regions, status)
-	if err != nil {
-		errs = append(errs, errors.Wrapf(err, "failed to find cluster with criteria"))
-		return errs
-	}
-
-	grpResultMap := make(map[string]*services.ResGroupCPRegion)
-	for _, v := range grpResult {
-		grpResultMap[v.Provider+"."+v.Region] = v
-	}
-
-	// create all the missing clusters in the supported provider and regions.
-	for _, p := range providerList {
-		for _, v := range p.Regions {
-			if _, exist := grpResultMap[p.Name+"."+v.Name]; !exist {
-				clusterRequest := api.Cluster{
-					CloudProvider:         p.Name,
-					Region:                v.Name,
-					MultiAZ:               true,
-					Status:                api.ClusterAccepted,
-					ProviderType:          api.ClusterProviderOCM,
-					SupportedInstanceType: api.AllInstanceTypeSupport.String(), // TODO - make sure we use the appropriate instance type.
-				}
-				if err := c.ClusterService.RegisterClusterJob(&clusterRequest); err != nil {
-					errs = append(errs, errors.Wrapf(err, "Failed to auto-create cluster request in %s, region: %s", p.Name, v.Name))
-					return errs
-				} else {
-					glog.Infof("Auto-created cluster request in %s, region: %s, Id: %s ", p.Name, v.Name, clusterRequest.ID)
-				}
-			} //
-		} //region
-	} //provider
-	return errs
 }
 
 func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet {
