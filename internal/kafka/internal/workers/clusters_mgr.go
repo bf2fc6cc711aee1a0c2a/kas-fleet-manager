@@ -70,8 +70,6 @@ var clusterMetricsStatuses = []api.ClusterStatus{
 	api.ClusterDeprovisioning,
 }
 
-type Worker = workers.Worker
-
 var clusterLoggingOperatorAddonParams = []types.Parameter{
 	{
 		Id:    "use-cloudwatch",
