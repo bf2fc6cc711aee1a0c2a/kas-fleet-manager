@@ -32,14 +32,13 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testin
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 	var dataplaneConfig *config.DataplaneClusterConfig
-	reconcilerInterval := 1 * time.Millisecond
 	h, _, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, reconcilerConfig *workers.ReconcilerConfig, p *config.ProviderConfig) {
 		dataplaneConfig = d
 		// disable identity provider configuration as it is not needed
 		dataplaneConfig.EnableKafkaSreIdentityProviderConfiguration = false
 
-		// change the interval to millisecond to speed the test up
-		reconcilerConfig.ReconcilerRepeatInterval = reconcilerInterval
+		// change the interval to second to speed the test up in dev & integration environment
+		reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Second
 
 		// control the list of cloud providers used in test
 		p.ProvidersConfig.SupportedProviders = config.ProviderList{
@@ -88,11 +87,12 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testin
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	// turn on autoscaling and observe that the node capacity info are sent
-	pollTimeout := 10 * reconcilerInterval
+	pollInterval := 2 * time.Second
+	pollTimeout := 10 * time.Second
 	dataplaneConfig.DataPlaneClusterScalingType = config.AutoScaling
 	var managedKafkaAgentCR private.DataplaneClusterAgentConfig
 	err = common.NewPollerBuilder(test.TestServices.DBFactory).
-		IntervalAndTimeout(reconcilerInterval, pollTimeout).
+		IntervalAndTimeout(pollInterval, pollTimeout).
 		RetryLogMessagef("Waiting for cluster dynamic capacity to show up in ManagedKafkaAgentCR").
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			cr, resp, err := privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, cluster.ClusterID)
@@ -112,7 +112,6 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testin
 
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "ManagedKafkaAgentCR should have capacity info when dynamic scaling is turned on")
 
-	g.Expect(managedKafkaAgentCR.Spec.Capacity).To(gomega.HaveLen(1))
 	capacity, ok := managedKafkaAgentCR.Spec.Capacity[cluster.SupportedInstanceType]
 	g.Expect(ok).To(gomega.BeTrue())
 	g.Expect(capacity.MaxNodes).To(gomega.Equal(int32(1)))
@@ -121,7 +120,7 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testin
 	dataplaneConfig.DataPlaneClusterScalingType = config.NoScaling
 
 	err = common.NewPollerBuilder(test.TestServices.DBFactory).
-		IntervalAndTimeout(reconcilerInterval, pollTimeout).
+		IntervalAndTimeout(pollInterval, pollTimeout).
 		RetryLogMessagef("Waiting for cluster dynamic capacity to disappear from ManagedKafkaAgentCR").
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			cr, resp, err := privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, cluster.ClusterID)
