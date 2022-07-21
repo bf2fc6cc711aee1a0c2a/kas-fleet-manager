@@ -295,17 +295,15 @@ func (h *ConnectorAdminHandler) DeleteConnectorNamespace(writer http.ResponseWri
 			}
 			ctx := request.Context()
 			if force {
-				// get namespace and make sure it has 0 connectors and is in deleting phase
+				// set namespace status to deleted
 				namespace, err := h.NamespaceService.Get(ctx, namespaceId)
 				if err != nil {
 					return nil, err
 				}
-				if namespace.Status.ConnectorsDeployed != 0 || namespace.Status.Phase != dbapi.ConnectorNamespacePhaseDeleting {
-					return nil, errors.BadRequest("namespace %s is not empty or deleting, force delete all connectors and delete namespace first", namespaceId)
-				}
-				// set namespace status to deleted
 				namespace.Status.Phase = dbapi.ConnectorNamespacePhaseDeleted
-				h.NamespaceService.UpdateConnectorNamespaceStatus(ctx, namespaceId, &namespace.Status)
+				if err := h.NamespaceService.UpdateConnectorNamespaceStatus(ctx, namespaceId, &namespace.Status); err != nil {
+					return nil, err
+				}
 			} else {
 				serviceError = h.NamespaceService.Delete(ctx, namespaceId)
 			}

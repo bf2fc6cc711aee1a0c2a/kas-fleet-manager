@@ -390,13 +390,17 @@ func (k *connectorNamespaceService) UpdateConnectorNamespaceStatus(ctx context.C
 
 		// check if status update is deleted
 		if status.Phase == dbapi.ConnectorNamespacePhaseDeleted {
+			// get connectors count
+			if serr := k.setConnectorsDeployed(dbapi.ConnectorNamespaceList{&namespace}); serr != nil {
+				return serr
+			}
 			if namespace.Status.Phase == dbapi.ConnectorNamespacePhaseDeleting &&
 				namespace.Status.ConnectorsDeployed == 0 {
 				namespace.Status.Phase = dbapi.ConnectorNamespacePhaseDeleted
 				updated = true
 			} else {
 				// phase update is invalid
-				return errors.BadRequest("invalid namespace phase update from %s to %s",
+				return errors.BadRequest("invalid namespace phase update from %s to %s, or namespace not empty",
 					namespace.Status.Phase, status.Phase)
 			}
 		}

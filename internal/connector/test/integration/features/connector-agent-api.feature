@@ -1477,9 +1477,68 @@ Feature: connector agent API
       }
       """
 
-    #--------------------------------------------------------------
-    # In this part of the Scenario we test admin connector deletion
-    #--------------------------------------------------------------
+    #----------------------------------------------------------------------------
+    # In this part of the Scenario we test admin connector and namespace deletion
+    #----------------------------------------------------------------------------
+    # create namespace to force delete
+    Given I am logged in as "Bobby"
+    When I POST path "/v1/kafka_connector_namespaces/" with json body:
+    """
+    {
+      "cluster_id": "${connector_cluster_id}",
+      "kind": "organisation",
+      "annotations": { "connector_mgmt.bf2.org/profile": "default-profile" }
+    }
+    """
+    Then the response code should be 201
+    And I store the ".id" selection from the response as ${forced_namespace_id}
+    # agent deploys the new namespace
+    Given I am logged in as "Shard"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
+      """
+      {
+        "phase":"ready",
+        "version": "0.0.1",
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }],
+        "namespaces": [
+          {
+            "id": "${connector_namespace_id}",
+            "phase": "ready",
+            "version": "0.0.1",
+            "connectors_deployed": 0,
+            "conditions": [{
+              "type": "Ready",
+              "status": "True",
+              "lastTransitionTime": "2018-01-01T00:00:00Z"
+            }]
+          },
+          {
+            "id": "${forced_namespace_id}",
+            "phase": "ready",
+            "version": "0.0.1",
+            "connectors_deployed": 0,
+            "conditions": [{
+              "type": "Ready",
+              "status": "True",
+              "lastTransitionTime": "2018-01-01T00:00:00Z"
+            }]
+          }
+        ],
+        "operators": [{
+          "id":"camelk",
+          "version": "1.0",
+          "namespace": "openshift-mcs-camelk-1.0",
+          "status": "ready"
+        }]
+      }
+      """
+    Then the response code should be 204
+
     # create connector to test force delete
     Given I am logged in as "Jimmy"
     When I POST path "/v1/kafka_connectors?async=true" with json body:
@@ -1487,7 +1546,7 @@ Feature: connector agent API
       {
         "kind": "Connector",
         "name": "example 2",
-        "namespace_id": "${connector_namespace_id}",
+        "namespace_id": "${forced_namespace_id}",
         "channel":"stable",
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "kafka": {
@@ -1525,6 +1584,22 @@ Feature: connector agent API
     When I DELETE path "/v1/admin/kafka_connectors/${forced_connector_id}"
     Then the response code should be 204
 
+    # force delete namespace using admin API should fail if namespace is not empty
+    Given I am logged in as "Ricky Bobby"
+    When I DELETE path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}?force=true"
+    Then the response code should be 500
+    And the response should match json:
+    """
+    {
+      "code": "CONNECTOR-MGMT-9",
+      "href": "/api/connector_mgmt/v1/errors/9",
+      "id": "9",
+      "kind": "Error",
+      "operation_id": "${response.operation_id}",
+      "reason": "Unable to update Connector namespace: KAFKAS-MGMT-21: invalid namespace phase update from ready to deleted, or namespace not empty"
+    }
+    """
+
     # assigned connector and deployment should get marked for deletion
     When I GET path "/v1/admin/kafka_connectors/${forced_connector_id}"
     Then the ".desired_state" selection from the response should match "deleted"
@@ -1545,9 +1620,35 @@ Feature: connector agent API
     And the ".items[0].id" selection from the response should match "${connector_deployment_id}"
 
     # Validate that there exists 1 connector deployment in the DB...
-    Given I run SQL "SELECT count(*) FROM connector_deployments WHERE connector_id='${connector_id}' AND deleted_at IS NULL" gives results:
+    Given I run SQL "SELECT count(*) FROM connector_deployments WHERE cluster_id='${connector_cluster_id}' AND deleted_at IS NULL" gives results:
       | count |
       | 1     |
+
+    # force delete namespace using admin API should fail if namespace is not in deleting phase,
+    # this is to block creating new connectors in the namespace being force deleted
+    When I DELETE path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}?force=true"
+    Then the response code should be 500
+    And the response should match json:
+    """
+    {
+      "code": "CONNECTOR-MGMT-9",
+      "href": "/api/connector_mgmt/v1/errors/9",
+      "id": "9",
+      "kind": "Error",
+      "operation_id": "${response.operation_id}",
+      "reason": "Unable to update Connector namespace: KAFKAS-MGMT-21: invalid namespace phase update from ready to deleted, or namespace not empty"
+    }
+    """
+
+    # force delete namespace using admin API should work if namespace is empty and deleting
+    When I DELETE path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}"
+    Then the response code should be 204
+    When I DELETE path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}?force=true"
+    Then the response code should be 204
+    # deleted namespace should get reconciled
+    When I wait up to "10" seconds for a GET on path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}" response code to match "410"
+    When I GET path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}"
+    Then the response code should be 410
 
     # Bobby should be able to delete cluster as an org admin
     Given I am logged in as "Bobby"
