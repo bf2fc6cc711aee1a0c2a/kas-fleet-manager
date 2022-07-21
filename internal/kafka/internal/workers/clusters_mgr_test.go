@@ -53,10 +53,10 @@ var (
 		ProvidersConfig: config.ProviderConfiguration{
 			SupportedProviders: config.ProviderList{
 				config.Provider{
-					Name: "aws",
+					Name: testProvider,
 					Regions: config.RegionList{
 						config.Region{
-							Name: "us-east-1",
+							Name: testRegion,
 							SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
 								"standard":  {Limit: nil},
 								"developer": {Limit: nil},
@@ -1914,122 +1914,6 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 			}
 
 			g.Expect(c.reconcileAcceptedCluster(&acceptedCluster) != nil).To(gomega.Equal(tt.wantErr))
-		})
-	}
-}
-
-func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
-	type fields struct {
-		providerLst            []string
-		clusterService         services.ClusterService
-		providersConfig        config.ProviderConfig
-		dataplaneClusterConfig *config.DataplaneClusterConfig
-	}
-
-	tests := []struct {
-		name    string
-		wantErr bool
-		fields  fields
-	}{
-		{
-			name: "creates a missing OSD cluster request automatically when autoscaling is enabled",
-			fields: fields{
-				dataplaneClusterConfig: autoScalingDataPlaneConfig,
-				providerLst:            []string{testRegion},
-				clusterService: &services.ClusterServiceMock{
-					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *apiErrors.ServiceError) {
-						res := []*services.ResGroupCPRegion{
-							{
-								Provider: testProvider,
-								Region:   testRegion,
-								Count:    1,
-							},
-						}
-						return res, nil
-					},
-					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-				providersConfig: supportedProviders,
-			},
-			wantErr: false,
-		},
-		{
-			name: "skips reconciliation if autoscaling is disabled",
-			fields: fields{
-				dataplaneClusterConfig: config.NewDataplaneClusterConfig(),
-			},
-			wantErr: false,
-		},
-		{
-			name: "should return an error if ListGroupByProviderAndRegion fails",
-			fields: fields{
-				dataplaneClusterConfig: autoScalingDataPlaneConfig,
-				providerLst:            []string{"us-east-1"},
-				clusterService: &services.ClusterServiceMock{
-					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *apiErrors.ServiceError) {
-						res := []*services.ResGroupCPRegion{}
-						return res, nil
-					},
-					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
-						return apiErrors.GeneralError("failed to register cluster job")
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "failed to create OSD request with empty services.ResGroupCPRegion",
-			fields: fields{
-				dataplaneClusterConfig: autoScalingDataPlaneConfig,
-				providerLst:            []string{"us-east-1"},
-				clusterService: &services.ClusterServiceMock{
-					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *apiErrors.ServiceError) {
-						var res []*services.ResGroupCPRegion
-						return res, nil
-					},
-					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-				providersConfig: supportedProviders,
-			},
-			wantErr: false,
-		},
-		{
-			name: "should create OSD request ",
-			fields: fields{
-				dataplaneClusterConfig: autoScalingDataPlaneConfig,
-				providerLst:            []string{"us-east-1"},
-				clusterService: &services.ClusterServiceMock{
-					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *apiErrors.ServiceError) {
-						var res []*services.ResGroupCPRegion
-						return res, nil
-					},
-					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
-						return apiErrors.GeneralError("failed to create cluster request")
-					},
-				},
-				providersConfig: supportedProviders,
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, testcase := range tests {
-		tt := testcase
-		t.Run(tt.name, func(t *testing.T) {
-			g := gomega.NewWithT(t)
-			c := ClusterManager{
-				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService:             tt.fields.clusterService,
-					SupportedProviders:         &tt.fields.providersConfig,
-					ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{},
-					DataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
-				},
-			}
-			g.Expect(c.reconcileClustersForRegions() != nil && !tt.wantErr).To(gomega.BeFalse())
 		})
 	}
 }
