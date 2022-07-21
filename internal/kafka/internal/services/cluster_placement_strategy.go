@@ -43,7 +43,7 @@ func (f *FirstReadyCluster) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster
 
 	cluster, err := f.ClusterService.FindCluster(criteria)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find all clusters with criteria: %v", criteria)
 	}
 
 	return cluster, nil

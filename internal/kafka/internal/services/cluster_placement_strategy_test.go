@@ -39,7 +39,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 				Kafka:                  config.NewKafkaConfig(),
 				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 				ClusterService: &ClusterServiceMock{
-					FindClusterFunc: func(criteria FindClusterCriteria) (cluster *api.Cluster, serviceError *svcError.ServiceError) {
+					FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, error) {
 						return &api.Cluster{}, nil
 					},
 				},
@@ -56,7 +56,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 				Kafka:                  config.NewKafkaConfig(),
 				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 				ClusterService: &ClusterServiceMock{
-					FindClusterFunc: func(criteria FindClusterCriteria) (cluster *api.Cluster, serviceError *svcError.ServiceError) {
+					FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, error) {
 						return nil, nil
 					},
 				},
@@ -73,8 +73,8 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 				Kafka:                  config.NewKafkaConfig(),
 				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 				ClusterService: &ClusterServiceMock{
-					FindClusterFunc: func(criteria FindClusterCriteria) (cluster *api.Cluster, serviceError *svcError.ServiceError) {
-						return nil, svcError.NotFound("not found")
+					FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, error) {
+						return nil, errors.New("not found")
 					},
 				},
 			},

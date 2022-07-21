@@ -317,7 +317,7 @@ func TestClusterManager_processDeprovisioningClusters(t *testing.T) {
 							deprovisionCluster,
 						}, nil
 					},
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
 						return &deprovisionCluster, nil
 					},
 					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
@@ -337,7 +337,7 @@ func TestClusterManager_processDeprovisioningClusters(t *testing.T) {
 							deprovisionCluster,
 						}, nil
 					},
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
 						return &deprovisionCluster, nil
 					},
 					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
@@ -2703,8 +2703,8 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 			name: "should receive error when FindCluster to retrieve sibling cluster returns error",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, &apiErrors.ServiceError{}
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
+						return nil, errors.New("failed to find cluster")
 					},
 					UpdateStatusFunc: nil, // set to nil as it should not be called
 				},
@@ -2716,7 +2716,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 			name: "should update the status back to ready when no sibling cluster found",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
 						return nil, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -2731,7 +2731,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 			name: "receives an error when delete OCM cluster fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
 						return &api.Cluster{ClusterID: "dummy cluster"}, nil
 					},
 					UpdateStatusFunc: nil,
@@ -2747,7 +2747,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 			name: "successful deletion of an OSD cluster when auto configuration is enabled",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
 						return &api.Cluster{ClusterID: "dummy cluster"}, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {

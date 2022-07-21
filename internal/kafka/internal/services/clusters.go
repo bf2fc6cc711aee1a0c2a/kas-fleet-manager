@@ -32,7 +32,7 @@ type ClusterService interface {
 	// Update updates a Cluster. Only fields whose value is different than the
 	// zero-value of their corresponding type will be updated
 	Update(cluster api.Cluster) *apiErrors.ServiceError
-	FindCluster(criteria FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError)
+	FindCluster(criteria FindClusterCriteria) (*api.Cluster, error)
 	// FindClusterByID returns the cluster corresponding to the provided clusterID.
 	// If the cluster has not been found nil is returned. If there has been an issue
 	// finding the cluster an error is set
@@ -261,7 +261,7 @@ type FindClusterCriteria struct {
 	SupportedInstanceType string
 }
 
-func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster, error) {
 	dbConn := c.connectionFactory.New()
 
 	var cluster api.Cluster
@@ -286,7 +286,7 @@ func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster,
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to find cluster with criteria")
+		return nil, err
 	}
 
 	return &cluster, nil

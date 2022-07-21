@@ -48,7 +48,7 @@ var _ ClusterService = &ClusterServiceMock{}
 // 			FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 // 				panic("mock out the FindAllClusters method")
 // 			},
-// 			FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, *serviceError.ServiceError) {
+// 			FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, error) {
 // 				panic("mock out the FindCluster method")
 // 			},
 // 			FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *serviceError.ServiceError) {
@@ -137,7 +137,7 @@ type ClusterServiceMock struct {
 	FindAllClustersFunc func(criteria FindClusterCriteria) ([]*api.Cluster, error)
 
 	// FindClusterFunc mocks the FindCluster method.
-	FindClusterFunc func(criteria FindClusterCriteria) (*api.Cluster, *serviceError.ServiceError)
+	FindClusterFunc func(criteria FindClusterCriteria) (*api.Cluster, error)
 
 	// FindClusterByIDFunc mocks the FindClusterByID method.
 	FindClusterByIDFunc func(clusterID string) (*api.Cluster, *serviceError.ServiceError)
@@ -667,7 +667,7 @@ func (mock *ClusterServiceMock) FindAllClustersCalls() []struct {
 }
 
 // FindCluster calls FindClusterFunc.
-func (mock *ClusterServiceMock) FindCluster(criteria FindClusterCriteria) (*api.Cluster, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) FindCluster(criteria FindClusterCriteria) (*api.Cluster, error) {
 	if mock.FindClusterFunc == nil {
 		panic("ClusterServiceMock.FindClusterFunc: method is nil but ClusterService.FindCluster was just called")
 	}
