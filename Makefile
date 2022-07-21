@@ -37,6 +37,7 @@ internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 # Test image name that will be used for PR checks
 test_image:=test/kas-fleet-manager
 
+DOCKER ?= docker
 DOCKER_CONFIG="${PWD}/.docker"
 
 # Default Variables
@@ -60,13 +61,21 @@ LOCAL_BIN_PATH := ${PROJECT_PATH}/bin
 # for `go generate` to use project-level bin directory binaries first
 export PATH := ${LOCAL_BIN_PATH}:$(PATH)
 
+GIT ?= git
+
+XMLLINT ?= xmllint
+CURL ?= curl
+
+OC ?= oc
+OCM ?= ocm
+
 GOLANGCI_LINT ?= $(LOCAL_BIN_PATH)/golangci-lint
 golangci-lint:
 ifeq (, $(shell which $(LOCAL_BIN_PATH)/golangci-lint 2> /dev/null))
 	@{ \
 	set -e ;\
 	VERSION="v1.46.2" ;\
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/$${VERSION}/install.sh | sh -s -- -b ${LOCAL_BIN_PATH} $${VERSION} ;\
+	$(CURL) -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/$${VERSION}/install.sh | sh -s -- -b ${LOCAL_BIN_PATH} $${VERSION} ;\
 	}
 endif
 
@@ -153,8 +162,8 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/spectral 2> /dev/null))
 endif
 
 openapi/spec/validate: specinstall
-	spectral lint openapi/kas-fleet-manager.yaml
-	spectral lint -s 'rhoas-external-$$ref' -s rhoas-list-schema -s rhoas-object-schema -s rhoas-error-schema openapi/kas-fleet-manager-private-admin.yaml
+	$(SPECTRAL) lint openapi/kas-fleet-manager.yaml
+	$(SPECTRAL) lint -s 'rhoas-external-$$ref' -s rhoas-list-schema -s rhoas-object-schema -s rhoas-error-schema openapi/kas-fleet-manager-private-admin.yaml
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
         PGHOST:="127.0.0.1"
@@ -256,7 +265,7 @@ help:
 # Set git hook path to .githooks/
 .PHONY: setup/git/hooks
 setup/git/hooks:
-	git config core.hooksPath .githooks
+	$(GIT) config core.hooksPath .githooks
 
 # Checks if a GOPATH is set, or emits an error message
 check-gopath:
@@ -285,7 +294,7 @@ lint: golangci-lint specinstall
 		./internal/... \
 		./test/...
 
-	spectral lint templates/*.yml templates/*.yaml --ignore-unknown-format --ruleset .validate-templates.yaml
+	$(SPECTRAL) lint templates/*.yml templates/*.yaml --ignore-unknown-format --ruleset .validate-templates.yaml
 .PHONY: lint
 
 # Build binaries
@@ -308,7 +317,7 @@ install: verify lint
 #   make test TESTFLAGS="-run TestSomething"
 test: gotestsum
 	OCM_ENV=testing $(GOTESTSUM) --junitfile data/results/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 -coverprofile cover.out $(TESTFLAGS) \
-		$(shell go list ./... | grep -v /test)
+		$(shell $(GO) list ./... | grep -v /test)
 
 # filter out mocked, generated, and other files which do not need to be tested from the coverage results
 	grep -v -e "_moq.go" \
@@ -394,14 +403,14 @@ test/integration: test/integration/kafka test/integration/connector
 
 test/report-portal-format-results:
 ifeq ($(OCM_ENV), development)
-	@xmllint --xpath '//testsuite[position()<=1]' data/results/kas-fleet-manager-integration-tests.xml > data/results/kas-fleet-manager-integration-tests-stage.xml
+	@$(XMLLINT) --xpath '//testsuite[position()<=1]' data/results/kas-fleet-manager-integration-tests.xml > data/results/kas-fleet-manager-integration-tests-stage.xml
 endif
 .PHONY: test/report-portal-format-results
 
 # push results to report-portal
 test/report-portal/push: test/report-portal-format-results
 ifeq ($(OCM_ENV), development)
-	@curl -k -X POST "$(REPORTPORTAL_ENDPOINT)/api/v1/$(REPORTPORTAL_PROJECT)/launch/import" \
+	@$(CURL) -k -X POST "$(REPORTPORTAL_ENDPOINT)/api/v1/$(REPORTPORTAL_PROJECT)/launch/import" \
 		-H "accept: */*" -H "Content-Type: multipart/form-data" -H "Authorization: bearer $(REPORTPORTAL_ACCESS_TOKEN)" \
 			-F "file=@data/results/kas-fleet-manager-integration-tests-stage.xml;type=text/xml"
 else
@@ -504,7 +513,7 @@ run: install
 
 # Run Swagger and host the api docs
 run/docs:
-	docker run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 8082:8080 -e URLS="[ \
+	$(DOCKER) run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 8082:8080 -e URLS="[ \
 		{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },\
 		{ url: \"./openapi/connector_mgmt.yaml\", name: \"Connector Management API\"},\
 		{ url: \"./openapi/connector_mgmt-private.yaml\", name: \"Connector Management Private API\"},\
@@ -517,18 +526,18 @@ run/docs:
 
 # Remove Swagger container
 run/docs/teardown:
-	docker container stop swagger_ui_docs
-	docker container rm swagger_ui_docs
+	$(DOCKER) container stop swagger_ui_docs
+	$(DOCKER) container rm swagger_ui_docs
 .PHONY: run/docs/teardown
 
 cos-fleet-catalog-camel/setup:
-	docker run --name cos-fleet-catalog-camel --rm -d -p 9091:8080 quay.io/lburgazzoli/ccs:latest
+	$(DOCKER) run --name cos-fleet-catalog-camel --rm -d -p 9091:8080 quay.io/lburgazzoli/ccs:latest
 	mkdir -p config/connector-types
 	echo -n "http://localhost:9091" > config/connector-types/cos-fleet-catalog-camel
 .PHONY: cos-fleet-catalog-camel/setup
 
 cos-fleet-catalog-camel/teardown:
-	docker stop cos-fleet-catalog-camel
+	$(DOCKER) stop cos-fleet-catalog-camel
 	rm config/connector-types/cos-fleet-catalog-camel
 .PHONY: cos-fleet-catalog-camel/teardown
 
@@ -563,44 +572,44 @@ sso/teardown:
 .PHONY: sso/teardown
 
 db/login:
-	docker exec -u $(shell id -u) -it kas-fleet-manager-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"
+	$(DOCKER) exec -u $(shell id -u) -it kas-fleet-manager-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"
 .PHONY: db/login
 
 db/generate/insert/cluster:
-	@read -r id external_id provider region multi_az<<<"$(shell ocm get /api/clusters_mgmt/v1/clusters/${CLUSTER_ID} | jq '.id, .external_id, .cloud_provider.id, .region.id, .multi_az' | tr -d \" | xargs -n2 echo)";\
+	read -r id external_id provider region multi_az<<<"$(shell $(OCM) get /api/clusters_mgmt/v1/clusters/${CLUSTER_ID} | jq '.id, .external_id, .cloud_provider.id, .region.id, .multi_az' | tr -d \" | xargs -n2 echo)";\
 	echo -e "Run this command in your database:\n\nINSERT INTO clusters (id, created_at, updated_at, cloud_provider, cluster_id, external_id, multi_az, region, status, provider_type) VALUES ('"$$id"', current_timestamp, current_timestamp, '"$$provider"', '"$$id"', '"$$external_id"', "$$multi_az", '"$$region"', 'cluster_provisioned', 'ocm');";
 .PHONY: db/generate/insert/cluster
 
 # Login to docker
 docker/login:
-	docker --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
+	$(DOCKER) --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
 .PHONY: docker/login
 
 # Login to the OpenShift internal registry
 docker/login/internal:
-	docker login -u kubeadmin -p $(shell oc whoami -t) $(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
+	$(DOCKER) login -u kubeadmin -p $(shell $(OC) whoami -t) $(shell $(OC) get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")
 .PHONY: docker/login/internal
 
 # Build the binary and image
 image/build:
-	docker --config="${DOCKER_CONFIG}" build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
+	$(DOCKER) --config="${DOCKER_CONFIG}" build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
 .PHONY: image/build
 
 # Build and push the image
 image/push: image/build
-	docker --config="${DOCKER_CONFIG}" push "$(external_image_registry)/$(image_repository):$(image_tag)"
+	$(DOCKER) --config="${DOCKER_CONFIG}" push "$(external_image_registry)/$(image_repository):$(image_tag)"
 .PHONY: image/push
 
 # build binary and image for OpenShift deployment
 image/build/internal: IMAGE_TAG ?= $(image_tag)
 image/build/internal:
-	docker build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
+	$(DOCKER) build -t "$(shell $(OC) get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
 .PHONY: image/build/internal
 
 # push the image to the OpenShift internal registry
 image/push/internal: IMAGE_TAG ?= $(image_tag)
 image/push/internal: docker/login/internal
-	docker push "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)"
+	$(DOCKER) push "$(shell $(OC) get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)"
 .PHONY: image/push/internal
 
 # build and push the image to an OpenShift cluster's internal registry
@@ -610,12 +619,12 @@ image/build/push/internal: image/build/internal image/push/internal
 
 # Build the binary and test image
 image/build/test: binary
-	docker build -t "$(test_image)" -f Dockerfile.integration.test .
+	$(DOCKER) build -t "$(test_image)" -f Dockerfile.integration.test .
 .PHONY: image/build/test
 
 # Run the test container
 test/run: image/build/test
-	docker run -u $(shell id -u) --net=host -p 9876:9876 -i "$(test_image)"
+	$(DOCKER) run -u $(shell id -u) --net=host -p 9876:9876 -i "$(test_image)"
 .PHONY: test/run
 
 # Setup for AWS credentials
@@ -659,7 +668,7 @@ observatorium/token-refresher/setup: IMAGE_TAG ?= latest
 observatorium/token-refresher/setup: ISSUER_URL ?= https://sso.redhat.com/auth/realms/redhat-external
 observatorium/token-refresher/setup: OBSERVATORIUM_URL ?= https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/managedkafka
 observatorium/token-refresher/setup:
-	@docker run -d -p ${PORT}:${PORT} \
+	@$(DOCKER) run -d -p ${PORT}:${PORT} \
 		--restart always \
 		--name observatorium-token-refresher quay.io/rhoas/mk-token-refresher:${IMAGE_TAG} \
 		/bin/token-refresher \
@@ -673,7 +682,7 @@ observatorium/token-refresher/setup:
 
 # OCM login
 ocm/login:
-	@ocm login --url="$(SERVER_URL)" --token="$(OCM_OFFLINE_TOKEN)"
+	@$(OCM) login --url="$(SERVER_URL)" --token="$(OCM_OFFLINE_TOKEN)"
 .PHONY: ocm/login
 
 # Setup OCM_OFFLINE_TOKEN and
@@ -691,19 +700,19 @@ endif
 
 # create project where the service will be deployed in an OpenShift cluster
 deploy/project:
-	@-oc new-project $(NAMESPACE)
+	@-$(OC) new-project $(NAMESPACE)
 .PHONY: deploy/project
 
 # deploy the postgres database required by the service to an OpenShift cluster
 deploy/db:
-	oc process -f ./templates/db-template.yml | oc apply -f - -n $(NAMESPACE)
-	@time timeout --foreground 3m bash -c "until oc get pods -n $(NAMESPACE) | grep kas-fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
+	$(OC) process -f ./templates/db-template.yml | $(OC) apply -f - -n $(NAMESPACE)
+	@time timeout --foreground 3m bash -c "until $(OC) get pods -n $(NAMESPACE) | grep kas-fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
 .PHONY: deploy/db
 
 # deploys the secrets required by the service to an OpenShift cluster
 deploy/secrets:
-	@oc get service/kas-fleet-manager-db -n $(NAMESPACE) || (echo "Database is not deployed, please run 'make deploy/db'"; exit 1)
-	@oc process -f ./templates/secrets-template.yml \
+	@$(OC) get service/kas-fleet-manager-db -n $(NAMESPACE) || (echo "Database is not deployed, please run 'make deploy/db'"; exit 1)
+	@$(OC) process -f ./templates/secrets-template.yml \
 		-p OCM_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-service.clientId' ] && [ -z '${OCM_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-service.clientId || echo '${OCM_SERVICE_CLIENT_ID}')" \
 		-p OCM_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-service.clientSecret' ] && [ -z '${OCM_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-service.clientSecret || echo '${OCM_SERVICE_CLIENT_SECRET}')" \
 		-p OCM_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-service.token' ] && [ -z '${OCM_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-service.token || echo '${OCM_SERVICE_TOKEN}')" \
@@ -734,15 +743,15 @@ deploy/secrets:
 		-p OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET="${OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET}" \
 		-p REDHAT_SSO_CLIENT_ID="$(shell ([ -s './secrets/redhatsso-service.clientId' ] && [ -z '${REDHAT_SSO_CLIENT_ID}' ]) && cat ./secrets/redhatsso-service.clientId || echo '${REDHAT_SSO_CLIENT_ID}')" \
 		-p REDHAT_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/redhatsso-service.clientSecret' ] && [ -z '${REDHAT_SSO_CLIENT_SECRET}' ]) && cat ./secrets/redhatsso-service.clientSecret || echo '${REDHAT_SSO_CLIENT_SECRET}')" \
-		| oc apply -f - -n $(NAMESPACE)
+		| $(OC) apply -f - -n $(NAMESPACE)
 .PHONY: deploy/secrets
 
 deploy/envoy:
-	@oc apply -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
+	@$(OC) apply -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
 .PHONY: deploy/envoy
 
 deploy/route:
-	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
+	@$(OC) process -f ./templates/route-template.yml | $(OC) apply -f - -n $(NAMESPACE)
 .PHONY: deploy/route
 
 # deploy service via templates to an OpenShift cluster
@@ -804,8 +813,8 @@ deploy/service: REGISTERED_USERS_PER_ORGANISATION ?= "[{id: 13640203, max_allowe
 deploy/service: DYNAMIC_SCALING_CONFIG ?= "{developer: {reserved_streaming_units: 3, compute_nodes_config: {max_compute_nodes: 3}}, standard: {reserved_streaming_units: 10, compute_nodes_config: {max_compute_nodes: 9}}}"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
-	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
-	@oc process -f ./templates/service-template.yml \
+	@time timeout --foreground 3m bash -c "until $(OC) get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
+	@$(OC) process -f ./templates/service-template.yml \
 		-p ENVIRONMENT="$(FLEET_MANAGER_ENV)" \
 		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
 		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
@@ -840,7 +849,7 @@ deploy/service: deploy/envoy deploy/route
 		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
 		-p ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION="${ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION}" \
 		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \
-		-p SERVICE_PUBLIC_HOST_URL="https://$(shell oc get routes/kas-fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
+		-p SERVICE_PUBLIC_HOST_URL="https://$(shell $(OC) get routes/kas-fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
 		-p OBSERVATORIUM_AUTH_TYPE="${OBSERVATORIUM_AUTH_TYPE}" \
 		-p DEX_USERNAME="${DEX_USERNAME}" \
 		-p DEX_URL="${DEX_URL}" \
@@ -873,24 +882,22 @@ deploy/service: deploy/envoy deploy/route
 		-p SSO_PROVIDER_TYPE=${SSO_PROVIDER_TYPE} \
 		-p REGISTERED_USERS_PER_ORGANISATION=${REGISTERED_USERS_PER_ORGANISATION} \
 		-p DYNAMIC_SCALING_CONFIG=${DYNAMIC_SCALING_CONFIG} \
-		| oc apply -f - -n $(NAMESPACE)
+		| $(OC) apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
-
-
 
 # remove service deployments from an OpenShift cluster
 undeploy: IMAGE_REGISTRY ?= $(internal_image_registry)
 undeploy: IMAGE_REPOSITORY ?= $(image_repository)
 undeploy:
-	@-oc process -f ./templates/observatorium-token-refresher.yml | oc delete -f - -n $(NAMESPACE)
-	@-oc process -f ./templates/db-template.yml | oc delete -f - -n $(NAMESPACE)
-	@-oc process -f ./templates/secrets-template.yml | oc delete -f - -n $(NAMESPACE)
-	@-oc process -f ./templates/route-template.yml | oc delete -f - -n $(NAMESPACE)
-	@-oc delete -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
-	@-oc process -f ./templates/service-template.yml \
+	@-$(OC) process -f ./templates/observatorium-token-refresher.yml | $(OC) delete -f - -n $(NAMESPACE)
+	@-$(OC) process -f ./templates/db-template.yml | $(OC) delete -f - -n $(NAMESPACE)
+	@-$(OC) process -f ./templates/secrets-template.yml | $(OC) delete -f - -n $(NAMESPACE)
+	@-$(OC) process -f ./templates/route-template.yml | $(OC) delete -f - -n $(NAMESPACE)
+	@-$(OC) delete -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
+	@-$(OC) process -f ./templates/service-template.yml \
 		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
 		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
-		| oc delete -f - -n $(NAMESPACE)
+		| $(OC) delete -f - -n $(NAMESPACE)
 .PHONY: undeploy
 
 # Deploys an Observatorium token refresher on an OpenShift cluster
@@ -899,18 +906,18 @@ deploy/token-refresher: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE ?= "quay.io/rhoas/mk
 deploy/token-refresher: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG ?= "latest"
 deploy/token-refresher: OBSERVATORIUM_URL ?= "https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/managedkafka"
 deploy/token-refresher:
-	@-oc process -f ./templates/observatorium-token-refresher.yml \
+	@-$(OC) process -f ./templates/observatorium-token-refresher.yml \
 		-p ISSUER_URL=${ISSUER_URL} \
 		-p OBSERVATORIUM_URL=${OBSERVATORIUM_URL} \
 		-p OBSERVATORIUM_TOKEN_REFRESHER_IMAGE=${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE} \
 		-p OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG=${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG} \
-		 | oc apply -f - -n $(NAMESPACE)
+		 | $(OC) apply -f - -n $(NAMESPACE)
 .PHONY: deploy/token-refresher
 
 docs/generate/mermaid:
 	@for f in $(shell ls $(DOCS_DIR)/mermaid-diagrams-source/*.mmd); do \
 		echo Generating diagram for `basename $${f}`; \
-		docker run -it -v $(DOCS_DIR)/mermaid-diagrams-source:/data -v $(DOCS_DIR)/images:/output minlag/mermaid-cli -i /data/`basename $${f}` -o /output/`basename $${f} .mmd`.png; \
+		$(DOCKER) run -it -v $(DOCS_DIR)/mermaid-diagrams-source:/data -v $(DOCS_DIR)/images:/output minlag/mermaid-cli -i /data/`basename $${f}` -o /output/`basename $${f} .mmd`.png; \
 	done
 .PHONY: docs/generate/mermaid
 
