@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	kasfleetmanagererrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -493,8 +494,10 @@ func (cluster *Cluster) SetDynamicCapacityInfo(dynamicCapacityInfo map[string]Dy
 func (cluster *Cluster) RetrieveDynamicCapacityInfo() map[string]DynamicCapacityInfo {
 	dynamicCapacityInfo := map[string]DynamicCapacityInfo{}
 	if cluster.DynamicCapacityInfo != nil {
-		// ignore error returned by Unmarshal as the json stored in the cluster object will always be a valid DynamicCapacityInfo json object.
-		_ = json.Unmarshal(cluster.DynamicCapacityInfo, &dynamicCapacityInfo)
+		// only log error returned by Unmarshal as the json stored in the cluster object should always be a valid DynamicCapacityInfo json object.
+		if err := json.Unmarshal(cluster.DynamicCapacityInfo, &dynamicCapacityInfo); err != nil {
+			glog.Errorf("failed to retrieve dynamic capacity info: %s", err.Error())
+		}
 	}
 
 	return dynamicCapacityInfo
