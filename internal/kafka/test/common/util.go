@@ -62,10 +62,11 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 
 	// get cluster details from database when running against an emulated server and the cluster in cluster file doesn't exist
 	if foundCluster == nil && ocmConfig.MockMode == ocm.MockModeEmulateServer {
-		foundCluster, err = findFirstValidCluster(h)
+		cluster, err := findFirstValidCluster(h)
 		if err != nil {
-			return "", err
+			return "", ocmErrors.GeneralError("failed to find cluster: %s", err.Error())
 		}
+		foundCluster = cluster
 	}
 
 	// No existing cluster found
@@ -116,17 +117,17 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 	return foundCluster.ClusterID, nil
 }
 
-func findFirstValidCluster(h *test.Helper) (*api.Cluster, *ocmErrors.ServiceError) {
+func findFirstValidCluster(h *test.Helper) (*api.Cluster, error) {
 	var clusterService services.ClusterService
 	h.Env.MustResolveAll(&clusterService)
 
-	foundClusters, svcErr := clusterService.FindAllClusters(services.FindClusterCriteria{
+	foundClusters, err := clusterService.FindAllClusters(services.FindClusterCriteria{
 		Region:   mocks.MockCluster.Region().ID(),
 		Provider: mocks.MockCluster.CloudProvider().ID(),
 		MultiAZ:  mocks.MockMultiAZ,
 	})
-	if svcErr != nil {
-		return nil, svcErr
+	if err != nil {
+		return nil, err
 	}
 	var foundCluster *api.Cluster
 	for _, c := range foundClusters {

@@ -48,7 +48,7 @@ type ClusterService interface {
 	// ListAllClusterIds returns all the valid cluster ids in array
 	ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError)
 	// FindAllClusters return all the valid clusters in array
-	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *apiErrors.ServiceError)
+	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, error)
 	// FindKafkaInstanceCount returns the kafka instance counts associated with the list of clusters. If the list is empty, it will list all clusterIds that have Kafka instances assigned.
 	FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, *apiErrors.ServiceError)
 	// UpdateMultiClusterStatus updates a list of clusters' status to a status
@@ -438,7 +438,7 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 	return res, nil
 }
 
-func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *apiErrors.ServiceError) {
+func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 	dbConn := c.connectionFactory.New().
 		Model(&api.Cluster{})
 
@@ -463,7 +463,7 @@ func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cl
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to find all clusters with criteria: %v", clusterDetails)
+		return nil, err
 	}
 
 	return cluster, nil

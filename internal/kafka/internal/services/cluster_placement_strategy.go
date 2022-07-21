@@ -74,7 +74,7 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 	//#1
 	clusterObj, err := f.ClusterService.FindAllClusters(criteria)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find all clusters with criteria: %v", criteria)
 	}
 
 	dataplaneClusterConfig := f.DataplaneClusterConfig.ClusterConfig
@@ -150,29 +150,31 @@ func (f *FirstReadyWithCapacity) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cl
 	}
 
 	clusters, findAllClusterErr := f.ClusterService.FindAllClusters(criteria)
-	if findAllClusterErr != nil || len(clusters) == 0 {
-		return nil, findAllClusterErr
+	if findAllClusterErr != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, findAllClusterErr, "failed to find clusters with criteria: %v", criteria)
 	}
 
-	// Get total number of streaming unit used per region and instance type
-	streamingUnitCountPerRegionList, countStreamingUnitErr := f.ClusterService.FindStreamingUnitCountByClusterAndInstanceType()
-	if countStreamingUnitErr != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, countStreamingUnitErr, "failed to get count of streaming units by region and instance type")
-	}
+	if len(clusters) != 0 {
+		// Get total number of streaming unit used per region and instance type
+		streamingUnitCountPerRegionList, countStreamingUnitErr := f.ClusterService.FindStreamingUnitCountByClusterAndInstanceType()
+		if countStreamingUnitErr != nil {
+			return nil, errors.NewWithCause(errors.ErrorGeneral, countStreamingUnitErr, "failed to get count of streaming units by region and instance type")
+		}
 
-	instanceSize, getInstanceSizeErr := f.KafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
-	if getInstanceSizeErr != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, getInstanceSizeErr, "failed to get instance size for kafka '%s'", kafka.ID)
-	}
+		instanceSize, getInstanceSizeErr := f.KafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+		if getInstanceSizeErr != nil {
+			return nil, errors.NewWithCause(errors.ErrorGeneral, getInstanceSizeErr, "failed to get instance size for kafka '%s'", kafka.ID)
+		}
 
-	// Find first ready cluster that has remaining capacity (total streaming unit used by existing and requested kafka is within the cluster maxUnit limit)
-	for _, cluster := range clusters {
-		currentStreamingUnitsUsed := streamingUnitCountPerRegionList.GetStreamingUnitCountForClusterAndInstanceType(cluster.ClusterID, kafka.InstanceType)
-		capacityInfo := cluster.RetrieveDynamicCapacityInfo()
-		maxStreamingUnits := capacityInfo[kafka.InstanceType].MaxUnits
+		// Find first ready cluster that has remaining capacity (total streaming unit used by existing and requested kafka is within the cluster maxUnit limit)
+		for _, cluster := range clusters {
+			currentStreamingUnitsUsed := streamingUnitCountPerRegionList.GetStreamingUnitCountForClusterAndInstanceType(cluster.ClusterID, kafka.InstanceType)
+			capacityInfo := cluster.RetrieveDynamicCapacityInfo()
+			maxStreamingUnits := capacityInfo[kafka.InstanceType].MaxUnits
 
-		if currentStreamingUnitsUsed+instanceSize.CapacityConsumed <= int(maxStreamingUnits) {
-			return cluster, nil
+			if currentStreamingUnitsUsed+instanceSize.CapacityConsumed <= int(maxStreamingUnits) {
+				return cluster, nil
+			}
 		}
 	}
 
