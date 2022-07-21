@@ -50,7 +50,7 @@ type ClusterService interface {
 	// FindAllClusters return all the valid clusters in array
 	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, error)
 	// FindKafkaInstanceCount returns the kafka instance counts associated with the list of clusters. If the list is empty, it will list all clusterIds that have Kafka instances assigned.
-	FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, *apiErrors.ServiceError)
+	FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, error)
 	// UpdateMultiClusterStatus updates a list of clusters' status to a status
 	UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
 	// CountByStatus returns the count of clusters for each given status in the database
@@ -393,7 +393,7 @@ func (c clusterService) GetExternalID(clusterID string) (string, *apiErrors.Serv
 	return cluster.ExternalID, nil
 }
 
-func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, *apiErrors.ServiceError) {
+func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, error) {
 	var kafkas []*dbapi.KafkaRequest
 
 	query := c.connectionFactory.New().
@@ -406,7 +406,7 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 	query = query.Scan(&kafkas)
 
 	if err := query.Error; err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to query by cluster info")
+		return nil, err
 	}
 
 	clusterIdCountMap := map[string]int{}
@@ -416,7 +416,7 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 	for _, k := range kafkas {
 		kafkaInstanceSize, e := c.kafkaConfig.GetKafkaInstanceSize(k.InstanceType, k.SizeId)
 		if e != nil {
-			return nil, apiErrors.NewWithCause(apiErrors.ErrorInstancePlanNotSupported, e, "failed to query kafkas")
+			return nil, e
 		}
 		clusterIdCountMap[k.ClusterID] += kafkaInstanceSize.CapacityConsumed
 	}

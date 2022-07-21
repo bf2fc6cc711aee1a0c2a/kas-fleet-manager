@@ -777,9 +777,9 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 		return nil
 	}
 
-	kafkaInstanceCount, err := c.ClusterService.FindKafkaInstanceCount(excessClusterIds)
-	if err != nil {
-		return []error{errors.Wrapf(err, "Failed to find kafka count a cluster: %s", excessClusterIds)}
+	kafkaInstanceCount, findKafkaInstanceCountErr := c.ClusterService.FindKafkaInstanceCount(excessClusterIds)
+	if findKafkaInstanceCountErr != nil {
+		return []error{errors.Wrapf(findKafkaInstanceCountErr, "Failed to find kafka count for cluster: %s", excessClusterIds)}
 	}
 
 	var idsOfClustersToDeprovision []string

@@ -123,7 +123,7 @@ func searchClusterObjInArray(clusters []*api.Cluster, clusterId string) *api.Clu
 // findClusterKafkaInstanceCount searches DB for the number of Kafka instance associated with each OSD Clusters
 func (f *FirstSchedulableWithinLimit) findClusterKafkaInstanceCount(clusterIDs []string) (map[string]int, *errors.ServiceError) {
 	if instanceLst, err := f.ClusterService.FindKafkaInstanceCount(clusterIDs); err != nil {
-		return nil, errors.NewWithCause(err.Code, err, "failed to find kafka instance count for clusters '%v'", clusterIDs)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find kafka instance count for clusters '%v'", clusterIDs)
 	} else {
 		clusterWithinLimitMap := make(map[string]int)
 		for _, c := range instanceLst {
