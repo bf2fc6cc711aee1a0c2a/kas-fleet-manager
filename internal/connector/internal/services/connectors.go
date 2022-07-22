@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
@@ -95,7 +96,7 @@ func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*db
 
 	dbConn := k.connectionFactory.New()
 	var resource dbapi.ConnectorWithConditions
-	dbConn = selectConnectorWithConditions(dbConn)
+	dbConn = selectConnectorWithConditions(dbConn, false)
 	dbConn = dbConn.Where("connectors.id = ?", id)
 
 	var err *errors.ServiceError
@@ -212,8 +213,11 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 }
 
 func GetValidConnectorColumns() []string {
-	return []string{"name", "owner", "kafka_id", "connector_type_id", "desired_state", "channel", "namespace_id"}
+	// state should be replaced with column name connector_statuses.phase
+	return []string{"id", "created_at", "updated_at", "name", "owner", "organisation_id", "kafka_id", "connector_type_id", "desired_state", "state", "channel", "kafka_bootstrap_server", "service_account_client_id", "schema_registry_id", "schema_registry_url", "namespace_id"}
 }
+
+var columnRegex = regexp.MustCompile("^(" + strings.Join(GetValidConnectorColumns(), "|") + ")")
 
 // List returns all connectors visible to the user within the requested paging window.
 func (k *connectorsService) List(ctx context.Context, listArgs *services.ListArguments, clusterId string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
@@ -243,15 +247,20 @@ func (k *connectorsService) List(ctx context.Context, listArgs *services.ListArg
 		dbConn = dbConn.Joins("JOIN connector_namespaces ON connectors.namespace_id = connector_namespaces.id and connector_namespaces.cluster_id = ?", clusterId)
 	}
 
+	joinedStatus := false
 	// Apply search query
 	if len(listArgs.Search) > 0 {
-		queryParser := coreServices.NewQueryParser(GetValidConnectorColumns()...)
+		queryParser := coreServices.NewQueryParserWithColumnPrefix("connectors", GetValidConnectorColumns()...)
 		searchDbQuery, err := queryParser.Parse(listArgs.Search)
 		if err != nil {
 			return nil, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector requests: %s", err.Error())
 		}
-		// add connectors. prefix to namespace_id
-		searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "namespace_id", "connectors.namespace_id")
+		if strings.Contains(searchDbQuery.Query, "connectors.state") {
+			joinedStatus = true
+			dbConn = dbConn.Joins("left join connector_statuses on connector_statuses.id = connectors.id")
+			// replace connectors.state with connector_statuses.phase
+			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "connectors.state", "connector_statuses.phase")
+		}
 		dbConn = dbConn.Where(searchDbQuery.Query, searchDbQuery.Values...)
 	}
 
@@ -264,17 +273,27 @@ func (k *connectorsService) List(ctx context.Context, listArgs *services.ListArg
 	}
 	dbConn = dbConn.Offset((pagingMeta.Page - 1) * pagingMeta.Size).Limit(pagingMeta.Size)
 
-	// default the order by name
-	dbConn = dbConn.Order("name")
-
 	// Set the order by arguments if any
-	for _, orderByArg := range listArgs.OrderBy {
-		dbConn = dbConn.Order(orderByArg)
+	if len(listArgs.OrderBy) == 0 {
+		// default orderBy name
+		dbConn = dbConn.Order("name ASC")
+	} else {
+		for _, orderByArg := range listArgs.OrderBy {
+			// add connectors. prefix to all orderBy columns
+			orderByArg = columnRegex.ReplaceAllString(orderByArg, "connectors.$1")
+			if strings.Contains(orderByArg, "connectors.state") {
+				if !joinedStatus {
+					dbConn = dbConn.Joins("left join connector_statuses on connector_statuses.id = connectors.id")
+				}
+				orderByArg = strings.ReplaceAll(orderByArg, "connectors.state", "connector_statuses.phase")
+			}
+			dbConn = dbConn.Order(orderByArg)
+		}
 	}
 
 	var resourcesWithConditions dbapi.ConnectorWithConditionsList
 	// execute query
-	dbConn = selectConnectorWithConditions(dbConn)
+	dbConn = selectConnectorWithConditions(dbConn, joinedStatus)
 
 	if err := dbConn.Find(&resourcesWithConditions).Error; err != nil {
 		return resourcesWithConditions, pagingMeta, errors.GeneralError("Unable to list connectors: %s", err)
@@ -283,9 +302,11 @@ func (k *connectorsService) List(ctx context.Context, listArgs *services.ListArg
 	return resourcesWithConditions, pagingMeta, nil
 }
 
-func selectConnectorWithConditions(dbConn *gorm.DB) *gorm.DB {
+func selectConnectorWithConditions(dbConn *gorm.DB, joinedStatus bool) *gorm.DB {
+	if !joinedStatus {
+		dbConn = dbConn.Joins("Status")
+	}
 	return dbConn.Model(&dbapi.Connector{}).Select("connectors.*, connector_deployment_statuses.conditions").
-		Joins("Status").
 		Joins("left join connector_deployments on connector_deployments.connector_id = connectors.id " +
 			"and connector_deployments.deleted_at IS NULL").
 		Joins("left join connector_deployment_statuses on connector_deployment_statuses.id = connector_deployments.id " +

@@ -375,7 +375,7 @@ Feature: connector namespaces API
         "kind":"Error",
         "href":"/api/connector_mgmt/v1/errors/17",
         "code":"CONNECTOR-MGMT-17",
-        "reason":"Unable to list connector type requests: invalid order by clause 'CAST(CHR(32)||(SELECT version()) AS NUMERIC)'",
+        "reason":"Unable to list connector namespace requests: invalid order by clause 'CAST(CHR(32)||(SELECT version()) AS NUMERIC)'",
         "operation_id": "${response.operation_id}"
       }
       """

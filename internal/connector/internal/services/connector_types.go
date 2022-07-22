@@ -124,7 +124,7 @@ func (cts *connectorTypesService) Get(id string) (*dbapi.ConnectorType, *errors.
 }
 
 func GetValidConnectorTypeColumns() []string {
-	return []string{"name", "description", "version", "label", "channel"}
+	return []string{"id", "created_at", "updated_at", "version", "name", "description", "label", "channel"}
 }
 
 // List returns all connector types
