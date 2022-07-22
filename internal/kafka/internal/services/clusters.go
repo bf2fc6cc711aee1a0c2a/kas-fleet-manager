@@ -681,7 +681,7 @@ type KafkaStreamingUnitCountPerCluster struct {
 	Status        string
 }
 
-func (KafkaStreamingUnitCountPerCluster KafkaStreamingUnitCountPerCluster) isSame(kafkaPerRegionFromDB *KafkaPerClusterCount) bool {
+func (k KafkaStreamingUnitCountPerCluster) isSame(kafkaPerRegionFromDB *KafkaPerClusterCount) bool {
 	// A KafkaPerClusterCount instance that doesn't have a ClusterID set
 	// means that it contains information about kafka instances that have not
 	// been allocated to any cluster yet. In that case, it can never be the same
@@ -690,10 +690,10 @@ func (KafkaStreamingUnitCountPerCluster KafkaStreamingUnitCountPerCluster) isSam
 		return false
 	}
 
-	return KafkaStreamingUnitCountPerCluster.CloudProvider == kafkaPerRegionFromDB.CloudProvider &&
-		KafkaStreamingUnitCountPerCluster.ClusterId == kafkaPerRegionFromDB.ClusterId &&
-		KafkaStreamingUnitCountPerCluster.InstanceType == kafkaPerRegionFromDB.InstanceType &&
-		KafkaStreamingUnitCountPerCluster.Region == kafkaPerRegionFromDB.Region
+	return k.CloudProvider == kafkaPerRegionFromDB.CloudProvider &&
+		k.ClusterId == kafkaPerRegionFromDB.ClusterId &&
+		k.InstanceType == kafkaPerRegionFromDB.InstanceType &&
+		k.Region == kafkaPerRegionFromDB.Region
 }
 
 type KafkaStreamingUnitCountPerClusterList []KafkaStreamingUnitCountPerCluster
