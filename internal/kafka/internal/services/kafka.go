@@ -244,7 +244,7 @@ func (k *kafkaService) GetAvailableSizesInRegion(criteria *FindClusterCriteria) 
 			cluster, err := k.clusterPlacementStrategy.FindCluster(kafka)
 			if err != nil {
 				logger.Logger.Error(err)
-				return nil, err
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find data plane cluster for kafka with criteria '%v'", criteria)
 			}
 
 			if cluster != nil {

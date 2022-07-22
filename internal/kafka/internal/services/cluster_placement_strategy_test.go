@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
@@ -12,9 +11,9 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	svcError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
 	"github.com/onsi/gomega"
+	"github.com/pkg/errors"
 )
 
 func TestFirstReadyCluster_FindCluster(t *testing.T) {
@@ -296,17 +295,13 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 	type args struct {
 		kafka *dbapi.KafkaRequest
 	}
-	type wantErr struct {
-		code   svcError.ServiceErrorCode
-		reason string
-	}
 
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
 		want    *api.Cluster
-		wantErr *wantErr
+		wantErr error
 	}{
 		{
 			name: "should return an error if getting clusters that matches the given criteria fails",
@@ -321,13 +316,10 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 				kafka: mockkafkas.BuildKafkaRequest(),
 			},
 			want: nil,
-			wantErr: &wantErr{
-				code: svcError.ErrorGeneral,
-				reason: fmt.Sprintf("failed to find clusters with criteria: %v", FindClusterCriteria{
-					MultiAZ: mockkafkas.BuildKafkaRequest().MultiAZ,
-					Status:  api.ClusterReady,
-				}),
-			},
+			wantErr: errors.Wrapf(errors.New("failed to find clusters"), fmt.Sprintf("failed to find all clusters with criteria '%v'", FindClusterCriteria{
+				MultiAZ: mockkafkas.BuildKafkaRequest().MultiAZ,
+				Status:  api.ClusterReady,
+			})),
 		},
 		{
 			name: "should return an error if getting streaming unit count per region and instance type fails",
@@ -342,7 +334,7 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 						}, nil
 					},
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (KafkaStreamingUnitCountPerClusterList, error) {
-						return KafkaStreamingUnitCountPerClusterList{}, svcError.GeneralError("failed to retrieve streaming unit count per region and instance type")
+						return KafkaStreamingUnitCountPerClusterList{}, errors.New("failed to retrieve streaming unit count per region and instance type")
 					},
 				},
 			},
@@ -350,10 +342,10 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 				kafka: mockkafkas.BuildKafkaRequest(),
 			},
 			want: nil,
-			wantErr: &wantErr{
-				code:   svcError.ErrorGeneral,
-				reason: "failed to get count of streaming units by region and instance type",
-			},
+			wantErr: errors.Wrapf(errors.New("failed to retrieve streaming unit count per region and instance type"), fmt.Sprintf("failed to get count of streaming units by cluster and instance type for criteria '%v'", FindClusterCriteria{
+				MultiAZ: mockkafkas.BuildKafkaRequest().MultiAZ,
+				Status:  api.ClusterReady,
+			})),
 		},
 		{
 			name: "should return an error if getting the requested kafka instance size fails",
@@ -387,10 +379,11 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 				),
 			},
 			want: nil,
-			wantErr: &wantErr{
-				code:   svcError.ErrorGeneral,
-				reason: fmt.Sprintf("failed to get instance size for kafka '%s'", mockkafkas.DefaultKafkaID),
-			},
+			wantErr: errors.Wrapf(errors.New("Unable to find kafka instance type for 'unsupported'"), fmt.Sprintf("failed to get kafka instance size for cluster with criteria '%v'", FindClusterCriteria{
+				MultiAZ:               mockkafkas.BuildKafkaRequest().MultiAZ,
+				Status:                api.ClusterReady,
+				SupportedInstanceType: "unsupported",
+			})),
 		},
 		{
 			name: "should return nil if no clusters matches the given criteria",
@@ -575,8 +568,7 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 			got, err := f.FindCluster(tt.args.kafka)
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr != nil))
 			if tt.wantErr != nil {
-				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.code))
-				g.Expect(err.Reason).To(gomega.Equal(tt.wantErr.reason))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
 			}
 			g.Expect(got).To(gomega.Equal(tt.want))
 		})

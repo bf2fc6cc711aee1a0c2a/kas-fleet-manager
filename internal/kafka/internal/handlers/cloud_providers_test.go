@@ -186,7 +186,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 					},
 				},
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{
 							ClusterID: "test",
 						}, nil
@@ -220,7 +220,7 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 					},
 				},
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{
 							ClusterID: "test",
 						}, nil

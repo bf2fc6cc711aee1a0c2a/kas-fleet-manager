@@ -958,7 +958,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaConfig:            defaultKafkaConf,
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return mockCluster, nil
 					},
 				},
@@ -1001,7 +1001,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaConfig:            defaultKafkaConf,
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return mockCluster, nil
 					},
 				},
@@ -1053,7 +1053,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaConfig:            defaultKafkaConf,
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return mockCluster, nil
 					},
 				},
@@ -1096,7 +1096,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaConfig:            defaultKafkaConf,
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return nil, nil
 					},
 				},
@@ -1142,7 +1142,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, 0, false),
 				kafkaConfig:            defaultKafkaConf,
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return nil, nil
 					},
 				},
@@ -1184,7 +1184,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
 				},
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return mockCluster, nil
 					},
 				},
@@ -1224,7 +1224,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaConfig:            defaultKafkaConf,
 				clusterService:         nil,
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return nil, nil
 					},
 				},
@@ -2567,7 +2567,7 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				providerConfig:         buildProviderConfiguration("us-east-1", 1000, 1000, false),
 				clusterPlacementStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return mocks.BuildCluster(nil), nil
 					},
 				},
@@ -2594,7 +2594,7 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				providerConfig:         buildProviderConfiguration("us-east-1", 1000, 1000, false),
 				clusterPlacementStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return nil, nil
 					},
 				},
@@ -2621,7 +2621,7 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				providerConfig:         buildProviderConfiguration("us-east-1", 1, 1, false),
 				clusterPlacementStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return mocks.BuildCluster(nil), nil
 					},
 				},
@@ -2686,7 +2686,7 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				providerConfig:         buildProviderConfiguration("us-east-1", 1000, 1000, false),
 				clusterPlacementStrategy: &ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return nil, nil
 					},
 				},
