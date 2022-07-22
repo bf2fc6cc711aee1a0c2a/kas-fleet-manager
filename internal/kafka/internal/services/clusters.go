@@ -676,6 +676,7 @@ type KafkaStreamingUnitCountPerCluster struct {
 	Count         int32
 	CloudProvider string
 	MaxUnits      int32
+	Status        string
 }
 
 func (KafkaStreamingUnitCountPerCluster KafkaStreamingUnitCountPerCluster) isSame(kafkaPerRegionFromDB *KafkaPerClusterCount) bool {
@@ -713,6 +714,7 @@ type ClusterSelection struct {
 	Region                string
 	SupportedInstanceType string
 	DynamicCapacityInfo   api.JSON
+	Status                string
 }
 
 func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (KafkaStreamingUnitCountPerClusterList, error) {
@@ -755,6 +757,7 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 				Region:        clusterSelection.Region,
 				Count:         0,
 				MaxUnits:      maxUnits,
+				Status:        clusterSelection.Status,
 			})
 		}
 	}
