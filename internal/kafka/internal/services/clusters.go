@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -11,15 +10,15 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/golang/glog"
-
-	"gorm.io/gorm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+
+	"github.com/golang/glog"
+	"github.com/pkg/errors"
+	"gorm.io/gorm"
 )
 
 //go:generate moq -out clusterservice_moq.go . ClusterService
@@ -740,7 +739,7 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 		Where("status != ?", api.ClusterFailed)
 
 	if err := dbConn.Scan(&clusters).Error; err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to list clusters")
+		return nil, errors.Wrap(err, "failed to list data plane clusters")
 	}
 
 	streamingUnitsCountPerCluster := KafkaStreamingUnitCountPerClusterList{}
@@ -784,13 +783,13 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 		Select("cloud_provider, region, count(1) as Count, size_id, cluster_id, instance_type").
 		Group("size_id, cluster_id, cloud_provider, region, instance_type").
 		Scan(&kafkasPerCluster).Error; err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to perform count query on kafkas table")
+		return nil, errors.Wrap(err, "failed to perform count query on kafkas table")
 	}
 
 	for _, kafkaCountPerCluster := range kafkasPerCluster {
 		instSize, err := c.kafkaConfig.GetKafkaInstanceSize(kafkaCountPerCluster.InstanceType, kafkaCountPerCluster.SizeId)
 		if err != nil {
-			return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get kafka instance size for type '%s' and size '%s'", kafkaCountPerCluster.InstanceType, kafkaCountPerCluster.SizeId)
+			return nil, err
 		}
 
 		streamingUnitCount := int32(instSize.CapacityConsumed) * kafkaCountPerCluster.Count
