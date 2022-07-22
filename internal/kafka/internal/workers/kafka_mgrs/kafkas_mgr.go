@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	serviceErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -135,17 +136,21 @@ func (k *KafkaManager) setClusterStatusCapacityMetrics() error {
 
 	// always publish used capacity irrespective of scaling mode
 	for _, usedStreamingUnitCount := range usedStreamingUnitsCountByRegion {
-		metrics.UpdateClusterStatusCapacityUsedCount(usedStreamingUnitCount.CloudProvider, usedStreamingUnitCount.Region, usedStreamingUnitCount.InstanceType, usedStreamingUnitCount.ClusterId, float64(usedStreamingUnitCount.Count))
+		if usedStreamingUnitCount.Status != api.ClusterAccepted.String() {
+			metrics.UpdateClusterStatusCapacityUsedCount(usedStreamingUnitCount.CloudProvider, usedStreamingUnitCount.Region, usedStreamingUnitCount.InstanceType, usedStreamingUnitCount.ClusterId, float64(usedStreamingUnitCount.Count))
+		}
 	}
 
 	if k.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		for _, usedStreamingUnitCount := range usedStreamingUnitsCountByRegion {
-			availableAndMaxCapacityCounts, err := k.calculateAvailableAndMaxCapacityForDynamicScaling(usedStreamingUnitCount)
-			if err != nil {
-				return err
+			if usedStreamingUnitCount.Status != api.ClusterAccepted.String() {
+				availableAndMaxCapacityCounts, err := k.calculateAvailableAndMaxCapacityForDynamicScaling(usedStreamingUnitCount)
+				if err != nil {
+					return err
+				}
+				k.setClusterStatusCapacityAvailableMetric(availableAndMaxCapacityCounts)
+				k.setClusterStatusCapacityMaxMetric(availableAndMaxCapacityCounts)
 			}
-			k.setClusterStatusCapacityAvailableMetric(availableAndMaxCapacityCounts)
-			k.setClusterStatusCapacityMaxMetric(availableAndMaxCapacityCounts)
 		}
 	}
 
@@ -156,8 +161,10 @@ func (k *KafkaManager) setClusterStatusCapacityMetrics() error {
 		}
 
 		for _, availableAndMaxCapacityCounts := range availableAndMaxCapacitiesCounts {
-			k.setClusterStatusCapacityAvailableMetric(availableAndMaxCapacityCounts)
-			k.setClusterStatusCapacityMaxMetric(availableAndMaxCapacityCounts)
+			if availableAndMaxCapacityCounts.Status != api.ClusterAccepted.String() {
+				k.setClusterStatusCapacityAvailableMetric(availableAndMaxCapacityCounts)
+				k.setClusterStatusCapacityMaxMetric(availableAndMaxCapacityCounts)
+			}
 		}
 	}
 

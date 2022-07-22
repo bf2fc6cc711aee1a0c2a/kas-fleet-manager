@@ -66,7 +66,8 @@ type ClusterService interface {
 	InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
 	CheckStrimziVersionReady(cluster *api.Cluster, strimziVersion string) (bool, error)
 	IsStrimziKafkaVersionAvailableInCluster(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error)
-	// FindStreamingUnitCountByClusterAndInstanceType returns kafka streaming unit counts per region, cloud provider, cluster and instance type
+	// FindStreamingUnitCountByClusterAndInstanceType returns kafka streaming unit counts per region, cloud provider, cluster id and instance type.
+	// Data Plane clusters that are in 'failed' state are not included in the response
 	FindStreamingUnitCountByClusterAndInstanceType() (KafkaStreamingUnitCountPerClusterList, error)
 }
 
@@ -672,6 +673,7 @@ func (c clusterService) IsStrimziKafkaVersionAvailableInCluster(cluster *api.Clu
 type KafkaStreamingUnitCountPerCluster struct {
 	Region        string
 	InstanceType  string
+	ID            string
 	ClusterId     string
 	Count         int32
 	CloudProvider string
@@ -680,6 +682,14 @@ type KafkaStreamingUnitCountPerCluster struct {
 }
 
 func (KafkaStreamingUnitCountPerCluster KafkaStreamingUnitCountPerCluster) isSame(kafkaPerRegionFromDB *KafkaPerClusterCount) bool {
+	// A KafkaPerClusterCount instance that doesn't have a ClusterID set
+	// means that it contains information about kafka instances that have not
+	// been allocated to any cluster yet. In that case, it can never be the same
+	// as any existing Cluster. Thus, in that case we always return false.
+	if kafkaPerRegionFromDB.ClusterId == "" {
+		return false
+	}
+
 	return KafkaStreamingUnitCountPerCluster.CloudProvider == kafkaPerRegionFromDB.CloudProvider &&
 		KafkaStreamingUnitCountPerCluster.ClusterId == kafkaPerRegionFromDB.ClusterId &&
 		KafkaStreamingUnitCountPerCluster.InstanceType == kafkaPerRegionFromDB.InstanceType &&
@@ -710,6 +720,7 @@ type KafkaPerClusterCount struct {
 
 type ClusterSelection struct {
 	CloudProvider         string
+	ID                    string
 	ClusterID             string
 	Region                string
 	SupportedInstanceType string
@@ -722,7 +733,7 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 	var clusters []*ClusterSelection
 	dbConn := c.connectionFactory.New().
 		Model(&api.Cluster{}).
-		Where("cluster_id != ''")
+		Where("status != ?", api.ClusterFailed)
 
 	if err := dbConn.Scan(&clusters).Error; err != nil {
 		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to list clusters")
@@ -752,6 +763,7 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 
 			streamingUnitsCountPerCluster = append(streamingUnitsCountPerCluster, KafkaStreamingUnitCountPerCluster{
 				CloudProvider: clusterSelection.CloudProvider,
+				ID:            clusterSelection.ID,
 				ClusterId:     clusterSelection.ClusterID,
 				InstanceType:  instanceType,
 				Region:        clusterSelection.Region,
