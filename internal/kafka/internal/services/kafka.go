@@ -72,7 +72,6 @@ type KafkaService interface {
 	// kafkas for a given clusterID. The number of generated reserved managed kafkas
 	// is the sum of the reserved streaming units among all instance types supported
 	// by the cluster.
-	// If dynamic scaling is disabled the result is an empty list.
 	// If the cluster is not in ready status the result is an empty list.
 	// Generated kafka names have the following naming schema:
 	// reserved-kafka-<instance_type>-<kafka_number> where kafka_number goes from
@@ -781,11 +780,6 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 
 func (k *kafkaService) GenerateReservedManagedKafkasByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError) {
 	reservedKafkas := []managedkafka.ManagedKafka{}
-
-	if !k.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
-		return reservedKafkas, nil
-	}
-
 	cluster, svcErr := k.clusterService.FindClusterByID(clusterID)
 	if svcErr != nil {
 		return nil, svcErr
@@ -809,14 +803,14 @@ func (k *kafkaService) GenerateReservedManagedKafkasByClusterID(clusterID string
 	supportedInstanceTypes := cluster.GetSupportedInstanceTypes()
 
 	for _, supportedInstanceType := range supportedInstanceTypes {
-		instanceTypeDynamicScalingConfig, ok := k.dataplaneClusterConfig.DynamicScalingConfig.ForInstanceType(supportedInstanceType)
+		instanceTypeDynamicScalingConfig, ok := k.dataplaneClusterConfig.NodePrewarmingConfig.ForInstanceType(supportedInstanceType)
 		if !ok {
-			return nil, apiErrors.GeneralError("failed to generate reserved managed kafkas for clusterID %s: dynamic scaling config for instance type '%s' not found", clusterID, supportedInstanceType)
+			continue
 		}
 		numReservedInstances := instanceTypeDynamicScalingConfig.ReservedStreamingUnits
 		for i := 1; i <= numReservedInstances; i++ {
 			generatedKafkaID := fmt.Sprintf("reserved-kafka-%s-%d", supportedInstanceType, i)
-			res, err := k.buildReservedManagedKafkaCR(generatedKafkaID, supportedInstanceType, *latestStrimziVersion)
+			res, err := k.buildReservedManagedKafkaCR(generatedKafkaID, supportedInstanceType, instanceTypeDynamicScalingConfig.BaseStreamingUnitSize, *latestStrimziVersion)
 			if err != nil {
 				return nil, err
 			}
@@ -1100,10 +1094,7 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 // buildReservedManagedKafkaCR builds a Reserved Managed Kafka CR.
 // The ID, K8s object ID, K8s namespace and PlacementID are all set to
 // the provided kafkaID.
-func (k *kafkaService) buildReservedManagedKafkaCR(kafkaID string, instanceType string, desiredStrimziVersion api.StrimziVersion) (*managedkafka.ManagedKafka, *errors.ServiceError) {
-	// Reserved instances always make use of the streaming base unit which is x1.
-	// For now we hardcode it but there might be a better alternative to it.
-	streamingBaseUnit := "x1"
+func (k *kafkaService) buildReservedManagedKafkaCR(kafkaID, instanceType, streamingBaseUnit string, desiredStrimziVersion api.StrimziVersion) (*managedkafka.ManagedKafka, *errors.ServiceError) {
 	kafkaInstanceSize, err := k.kafkaConfig.GetKafkaInstanceSize(instanceType, streamingBaseUnit)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka request")

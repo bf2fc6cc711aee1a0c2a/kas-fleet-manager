@@ -2904,13 +2904,12 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 					SupportedInstanceTypes:         &kafkaSupportedInstanceTypesConfig,
 				},
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: config.AutoScaling,
-					DynamicScalingConfig: config.DynamicScalingConfig{
-						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
-							"developer": config.InstanceTypeDynamicScalingConfig{
+					NodePrewarmingConfig: config.NodePrewarmingConfig{
+						Configuration: map[string]config.InstanceTypeNodePrewarmingConfig{
+							"developer": {
 								ReservedStreamingUnits: 1,
 							},
-							"standard": config.InstanceTypeDynamicScalingConfig{
+							"standard": {
 								ReservedStreamingUnits: 2,
 							},
 						},
@@ -3061,10 +3060,22 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 			},
 		},
 		{
-			name: "returns an empty list when dynamic scaling is not enabled",
+			name: "returns an empty list when pre warming is not enabled for any instance type",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: config.ManualScaling,
+					NodePrewarmingConfig: config.NodePrewarmingConfig{
+						Configuration: map[string]config.InstanceTypeNodePrewarmingConfig{},
+					},
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							ClusterID:                clusterID,
+							Status:                   api.ClusterReady,
+							SupportedInstanceType:    "developer,standard",
+							AvailableStrimziVersions: marshaledTestAvailableStrimziVersions,
+						}, nil
+					},
 				},
 			},
 			args: args{
@@ -3129,9 +3140,7 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 		{
 			name: "an error is returned when there are no ready strimzi versions",
 			fields: fields{
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: config.AutoScaling,
-				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{},
 				clusterService: &ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						availableStrimziVersions, err := json.Marshal([]api.StrimziVersion{
@@ -3174,12 +3183,12 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 				},
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					DataPlaneClusterScalingType: config.AutoScaling,
-					DynamicScalingConfig: config.DynamicScalingConfig{
-						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
-							"developer": config.InstanceTypeDynamicScalingConfig{
+					NodePrewarmingConfig: config.NodePrewarmingConfig{
+						Configuration: map[string]config.InstanceTypeNodePrewarmingConfig{
+							"developer": {
 								ReservedStreamingUnits: 1,
 							},
-							"standard": config.InstanceTypeDynamicScalingConfig{
+							"standard": {
 								ReservedStreamingUnits: 1,
 							},
 						},
@@ -3223,13 +3232,12 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
 				},
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: config.AutoScaling,
-					DynamicScalingConfig: config.DynamicScalingConfig{
-						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
-							"developer": config.InstanceTypeDynamicScalingConfig{
+					NodePrewarmingConfig: config.NodePrewarmingConfig{
+						Configuration: map[string]config.InstanceTypeNodePrewarmingConfig{
+							"developer": {
 								ReservedStreamingUnits: 1,
 							},
-							"standard": config.InstanceTypeDynamicScalingConfig{
+							"standard": {
 								ReservedStreamingUnits: 1,
 							},
 						},
@@ -3256,38 +3264,6 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 							ClusterID:                clusterID,
 							Status:                   api.ClusterReady,
 							AvailableStrimziVersions: availableStrimziVersions,
-							SupportedInstanceType:    "developer",
-						}, nil
-					},
-				},
-			},
-			args: args{
-				clusterID: testClusterID,
-			},
-			wantErr: true,
-		},
-		{
-			name: "an error is returned when a supported kafka instance type in the cluster does not have corresponding dynamic configuration",
-			fields: fields{
-				kafkaConfig: &config.KafkaConfig{
-					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
-				},
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: config.AutoScaling,
-					DynamicScalingConfig: config.DynamicScalingConfig{
-						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
-							"standard": config.InstanceTypeDynamicScalingConfig{
-								ReservedStreamingUnits: 1,
-							},
-						},
-					},
-				},
-				clusterService: &ClusterServiceMock{
-					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return &api.Cluster{
-							ClusterID:                clusterID,
-							Status:                   api.ClusterReady,
-							AvailableStrimziVersions: marshaledTestAvailableStrimziVersions,
 							SupportedInstanceType:    "developer",
 						}, nil
 					},
