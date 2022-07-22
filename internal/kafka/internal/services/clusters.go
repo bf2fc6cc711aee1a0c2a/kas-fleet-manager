@@ -696,6 +696,10 @@ func (k KafkaStreamingUnitCountPerCluster) isSame(kafkaPerRegionFromDB *KafkaPer
 		k.Region == kafkaPerRegionFromDB.Region
 }
 
+func (k KafkaStreamingUnitCountPerCluster) FreeStreamingUnits() int32 {
+	return k.MaxUnits - k.Count
+}
+
 type KafkaStreamingUnitCountPerClusterList []KafkaStreamingUnitCountPerCluster
 
 func (kafkaStreamingUnitCountPerClusterList KafkaStreamingUnitCountPerClusterList) GetStreamingUnitCountForClusterAndInstanceType(clusterId, instanceType string) int {
