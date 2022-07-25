@@ -39,6 +39,23 @@ func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(sizeId string) (*KafkaInst
 	return nil, fmt.Errorf("Kafka instance size id: '%s' not found for '%s' instance type", sizeId, kp.Id)
 }
 
+// GetBiggestCapacityConsumedSize gets the Kafka instance size of the kafka
+// instance size that has the biggest capacity consumed defined. If there are
+// two sizes with the same capacity consumed the first one defined is returned.
+// If there are no kafka instance sizes for the instance type nil is returned.
+func (kp *KafkaInstanceType) GetBiggestCapacityConsumedSize() *KafkaInstanceSize {
+	var res *KafkaInstanceSize
+	maxSizeConsumption := -1
+	for i, kafkaSize := range kp.Sizes {
+		if kafkaSize.CapacityConsumed > maxSizeConsumption {
+			maxSizeConsumption = kafkaSize.CapacityConsumed
+			res = &kp.Sizes[i]
+		}
+	}
+
+	return res
+}
+
 // HasAnInstanceSizeWithLifespan returns true if kp contains at least one Kafka
 // size with a non-nil LifespanSeconds value
 func (kp *KafkaInstanceType) HasAnInstanceSizeWithLifespan() bool {
