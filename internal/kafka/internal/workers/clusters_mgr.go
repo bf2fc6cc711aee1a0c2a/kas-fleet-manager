@@ -1103,7 +1103,9 @@ func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supported
 		MultiAZ:            cluster.MultiAZ,
 		AutoScalingEnabled: true,
 		AutoScaling: types.MachinePoolAutoScaling{
-			MinNodes: 0,
+			// explicitely set min nodes to 1 to allow the autoscaler to consider this machine pool for scaling.
+			// The value will be rounded up to 3 on the ocm cluster provider dependending on whether the cluster is single az or multi az
+			MinNodes: 1,
 			MaxNodes: dynamicScalingConfig.ComputeNodesConfig.MaxComputeNodes,
 		},
 		ClusterID:  cluster.ClusterID,
