@@ -3,6 +3,7 @@ package cluster_mgrs
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	fleeterrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 
@@ -61,7 +62,7 @@ func (m *DynamicScaleUpManager) Stop() {
 }
 
 func (m *DynamicScaleUpManager) Reconcile() []error {
-	var errs []error
+	var errList fleeterrors.ErrorList
 	if !m.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		glog.Infoln("dynamic scaling is disabled. Dynamic scale up reconcile event skipped")
 		return nil
@@ -73,7 +74,7 @@ func (m *DynamicScaleUpManager) Reconcile() []error {
 	// logic is ready
 	err := m.reconcileClustersForRegions()
 	if err != nil {
-		errs = append(errs, err...)
+		errList.AddErrors(err...)
 	}
 
 	// TODO remove the "if false" condition once the new dynamic scale up
@@ -81,11 +82,11 @@ func (m *DynamicScaleUpManager) Reconcile() []error {
 	if false {
 		err := m.processDynamicScaleUpReconcileEvent()
 		if err != nil {
-			errs = append(errs, err)
+			errList.AddErrors(err)
 		}
 	}
 
-	return errs
+	return errList.ToErrorSlice()
 }
 
 // reconcileClustersForRegions creates an OSD cluster for each supported cloud provider and region where no cluster exists.
@@ -141,9 +142,11 @@ func (m *DynamicScaleUpManager) reconcileClustersForRegions() []error {
 }
 
 func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
+	var errList fleeterrors.ErrorList
 	kafkaStreamingUnitCountPerClusterList, err := m.ClusterService.FindStreamingUnitCountByClusterAndInstanceType()
 	if err != nil {
-		return err
+		errList.AddErrors(err)
+		return errList
 	}
 
 	for _, provider := range m.ClusterProvidersConfig.ProvidersConfig.SupportedProviders {
@@ -165,12 +168,14 @@ func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
 
 				shouldScaleUp, err := dynamicScaleUpProcessor.ShouldScaleUp()
 				if err != nil {
-					return err
+					errList.AddErrors(err)
+					continue
 				}
 				if shouldScaleUp {
 					err := dynamicScaleUpProcessor.ScaleUp()
 					if err != nil {
-						return err
+						errList.AddErrors(err)
+						continue
 					}
 				}
 			}

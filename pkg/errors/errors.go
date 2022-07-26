@@ -201,12 +201,40 @@ type ErrorList []error
 
 func (e ErrorList) Error() string {
 	var res string
+
+	firstElem := true
 	for _, err := range e {
-		res = res + fmt.Sprintf(";%s", err)
+		if firstElem {
+			res = err.Error()
+			firstElem = false
+		} else {
+			res = fmt.Sprintf("%s;%s", res, err)
+		}
 	}
 
 	res = fmt.Sprintf("[%s]", res)
 	return res
+}
+
+// AddErrors adds the provided list of errors to the ErrorList.
+// If the provided list of errors contain error elements that are of type
+// ErrorList those are recursively "unrolled" so the result does not contain
+// appended ErrorList elements.
+// The method modifies the underlying slice.
+func (e *ErrorList) AddErrors(errs ...error) {
+	for _, err := range errs {
+		var errList ErrorList
+		if errors.As(err, &errList) {
+			e.AddErrors(errList...)
+		} else {
+			*e = append(*e, err)
+		}
+	}
+}
+
+// ToErrorSlice returns the ErrorList as a slice of error
+func (e ErrorList) ToErrorSlice() []error {
+	return []error(e)
 }
 
 type ServiceErrorCode int
