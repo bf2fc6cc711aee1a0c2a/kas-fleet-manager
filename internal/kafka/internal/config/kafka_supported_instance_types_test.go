@@ -868,6 +868,67 @@ func TestKafkaInstanceType_HasAnInstanceSizeWithLifespan(t *testing.T) {
 
 }
 
+func TestKafkaInstanceType_GetBiggestCapacityConsumedSize(t *testing.T) {
+	tests := []struct {
+		name              string
+		kafkaInstanceType KafkaInstanceType
+		want              *KafkaInstanceSize
+	}{
+		{
+			name: "The kafka instance size with the biggest capacity consumed attribute is returned",
+			kafkaInstanceType: KafkaInstanceType{
+				Id: "t1",
+				Sizes: []KafkaInstanceSize{
+					KafkaInstanceSize{Id: "s1", CapacityConsumed: 2},
+					KafkaInstanceSize{Id: "s2", CapacityConsumed: 7},
+					KafkaInstanceSize{Id: "s3", CapacityConsumed: 5},
+				},
+			},
+			want: &KafkaInstanceSize{Id: "s2", CapacityConsumed: 7},
+		},
+		{
+			name: "When there are multiple kafka instance sizes with the highest capacity consumed the first one is returned",
+			kafkaInstanceType: KafkaInstanceType{
+				Id: "t1",
+				Sizes: []KafkaInstanceSize{
+					KafkaInstanceSize{Id: "s1", CapacityConsumed: 2},
+					KafkaInstanceSize{Id: "s2", CapacityConsumed: 7},
+					KafkaInstanceSize{Id: "s3", CapacityConsumed: 7},
+					KafkaInstanceSize{Id: "s4", CapacityConsumed: 6},
+				},
+			},
+			want: &KafkaInstanceSize{Id: "s2", CapacityConsumed: 7},
+		},
+		{
+			name: "When the sizes list of the type is empty nil is returned",
+			kafkaInstanceType: KafkaInstanceType{
+				Id:    "t1",
+				Sizes: []KafkaInstanceSize{},
+			},
+			want: nil,
+		},
+		{
+			name: "When the sizes list of the type is nil nil is returned",
+			kafkaInstanceType: KafkaInstanceType{
+				Id:    "t1",
+				Sizes: nil,
+			},
+			want: nil,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			res := tt.kafkaInstanceType.GetBiggestCapacityConsumedSize()
+			g.Expect(res).To(gomega.Equal(tt.want))
+		})
+	}
+
+}
+
 func buildTestStandardKafkaInstanceSize() KafkaInstanceSize {
 	return KafkaInstanceSize{
 		Id:                          "x1",
