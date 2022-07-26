@@ -3457,6 +3457,23 @@ func TestClusterManager_setKafkaPerClusterCountMetrics(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "should not call GetExternalIDFunc when Clusterid is empty",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return []services.ResKafkaInstanceCount{
+							{
+								Clusterid: "",
+								Count:     1,
+							},
+						}, nil
+					},
+					GetExternalIDFunc: nil, // set to nil as it never be called
+				},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, testcase := range tests {

@@ -1221,16 +1221,26 @@ func (c *ClusterManager) setClusterStatusCountMetrics() error {
 }
 
 func (c *ClusterManager) setKafkaPerClusterCountMetrics() error {
-	if counters, err := c.ClusterService.FindKafkaInstanceCount([]string{}); err != nil {
+	counters, err := c.ClusterService.FindKafkaInstanceCount([]string{})
+	if err != nil {
 		return err
-	} else {
-		for _, counter := range counters {
-			clusterExternalID, err := c.ClusterService.GetExternalID(counter.Clusterid)
-			if err != nil {
-				return err
-			}
-			metrics.UpdateKafkaPerClusterCountMetric(counter.Clusterid, clusterExternalID, counter.Count)
-		}
 	}
+
+	for _, counter := range counters {
+		// Ignore counters that do not have the cluster id set as they'll err when retrieving the cluster external id with not found
+		// For this to occur, either the counter included:
+		// 1. rejected kafkas but not re-assigned
+		// 2. or accepted kafkas but have not assigned in an OSD cluster
+		if counter.Clusterid == "" {
+			continue
+		}
+
+		clusterExternalID, err := c.ClusterService.GetExternalID(counter.Clusterid)
+		if err != nil {
+			return err
+		}
+		metrics.UpdateKafkaPerClusterCountMetric(counter.Clusterid, clusterExternalID, counter.Count)
+	}
+
 	return nil
 }
