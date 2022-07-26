@@ -1742,6 +1742,12 @@ Feature: connector agent API
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the ".status.state" selection from the response should match "ready"
 
+   # verify user can search for connector using name, state, and ilike
+    When I GET path "/v1/kafka_connectors/?search=id+like+${connector_id}+and+name+ilike+Example%25+and+state+ilike+Ready&orderBy=id%2Cnamespace_id%2Cdesired_state%2Cstate+asc%2Cupdated_at+desc"
+    Then the response code should be 200
+    And the ".items[0].id" selection from the response should match "${connector_id}"
+    And the ".items[0].namespace_id" selection from the response should match "${connector_namespace_id}"
+
     #-----------------------------------------------------------------------------------------------------------------
     # Bobby sets desired state to stopped.. Agent sees deployment stopped, it updates status to stopped,, Bobby then see stopped status
     #-----------------------------------------------------------------------------------------------------------------
