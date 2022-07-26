@@ -447,14 +447,14 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 		return errors.WithMessagef(err, "failed to reconcile ready cluster resources %s ", cluster.ClusterID)
 	}
 
-	err = c.reconcileClusterIdentityProvider(cluster)
-	if err != nil {
-		return errors.WithMessagef(err, "failed to reconcile identity provider of ready cluster %s: %s", cluster.ClusterID, err.Error())
-	}
-
 	err = c.reconcileClusterDNS(cluster)
 	if err != nil {
 		return errors.WithMessagef(err, "failed to reconcile cluster dns of ready cluster %s: %s", cluster.ClusterID, err.Error())
+	}
+
+	err = c.reconcileClusterIdentityProvider(cluster)
+	if err != nil {
+		return errors.WithMessagef(err, "failed to reconcile identity provider of ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 
 	err = c.reconcileKasFleetshardOperator(cluster)
@@ -585,11 +585,11 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	}
 	glog.V(10).Infof("status of Machine Pools reconciling is %v", machinePoolsReconciled)
 
-	if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
+	if err := c.reconcileClusterDNS(cluster); err != nil {
 		return err
 	}
 
-	if err := c.reconcileClusterDNS(cluster); err != nil {
+	if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
 		return err
 	}
 
