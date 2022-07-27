@@ -316,8 +316,9 @@ install: verify lint
 # Examples:
 #   make test TESTFLAGS="-run TestSomething"
 test: gotestsum
-	OCM_ENV=testing $(GOTESTSUM) --junitfile data/results/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 -coverprofile cover.out $(TESTFLAGS) \
-		$(shell $(GO) list ./... | grep -v /test)
+	OCM_ENV=testing $(GOTESTSUM) --junitfile data/results/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 -coverprofile cover.out \
+		$(shell $(GO) list ./... | grep -v /test) \
+		$(TESTFLAGS)
 
 # filter out mocked, generated, and other files which do not need to be tested from the coverage results
 	grep -v -e "_moq.go" \
@@ -384,13 +385,15 @@ test/prepare:
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
 test/integration/kafka: test/prepare gotestsum
-	$(GOTESTSUM) --junitfile data/results/kas-fleet-manager-integration-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
-				./internal/kafka/test/integration/...
+	$(GOTESTSUM) --junitfile data/results/kas-fleet-manager-integration-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 \
+				./internal/kafka/test/integration/... \
+				$(TESTFLAGS)
 .PHONY: test/integration/kafka
 
 test/integration/connector: test/prepare gotestsum
-	$(GOTESTSUM) --junitfile data/results/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
-				./internal/connector/test/integration/...
+	$(GOTESTSUM) --junitfile data/results/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 \
+				./internal/connector/test/integration/... \
+				$(TESTFLAGS)
 .PHONY: test/integration/connector
 
 test/integration/connector/cleanup:
