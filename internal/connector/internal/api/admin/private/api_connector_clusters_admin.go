@@ -28,7 +28,7 @@ type ConnectorClustersAdminApiService service
 
 // DeleteConnectorOpts Optional parameters for the method 'DeleteConnector'
 type DeleteConnectorOpts struct {
-	Force optional.String
+	Force optional.Bool
 }
 
 /*
@@ -36,7 +36,7 @@ DeleteConnector Delete a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param connectorId The id of the connector to delete
  * @param optional nil or *DeleteConnectorOpts - Optional Parameters:
- * @param "Force" (optional.String) -  Flag to force deletion of connector in Fleet manager if true
+ * @param "Force" (optional.Bool) -  Flag to force deletion of connector in Fleet manager if true
 @return Error
 */
 func (a *ConnectorClustersAdminApiService) DeleteConnector(ctx _context.Context, connectorId string, localVarOptionals *DeleteConnectorOpts) (Error, *_nethttp.Response, error) {
@@ -144,7 +144,7 @@ func (a *ConnectorClustersAdminApiService) DeleteConnector(ctx _context.Context,
 
 // DeleteConnectorNamespaceOpts Optional parameters for the method 'DeleteConnectorNamespace'
 type DeleteConnectorNamespaceOpts struct {
-	Force optional.String
+	Force optional.Bool
 }
 
 /*
@@ -152,7 +152,7 @@ DeleteConnectorNamespace Delete a connector namespace
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param namespaceId The id of the namespace to delete
  * @param optional nil or *DeleteConnectorNamespaceOpts - Optional Parameters:
- * @param "Force" (optional.String) -  Flag to force deletion of namespace in Fleet manager if true
+ * @param "Force" (optional.Bool) -  Flag to force deletion of namespace in Fleet manager if true
 @return Error
 */
 func (a *ConnectorClustersAdminApiService) DeleteConnectorNamespace(ctx _context.Context, namespaceId string, localVarOptionals *DeleteConnectorNamespaceOpts) (Error, *_nethttp.Response, error) {

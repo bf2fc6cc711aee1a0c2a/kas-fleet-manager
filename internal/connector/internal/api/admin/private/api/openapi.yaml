@@ -939,7 +939,7 @@ paths:
         name: force
         required: false
         schema:
-          type: string
+          type: boolean
         style: form
       responses:
         "204":
@@ -1309,7 +1309,7 @@ paths:
         name: force
         required: false
         schema:
-          type: string
+          type: boolean
         style: form
       responses:
         "204":

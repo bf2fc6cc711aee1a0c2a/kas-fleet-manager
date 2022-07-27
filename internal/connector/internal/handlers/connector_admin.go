@@ -283,18 +283,8 @@ func (h *ConnectorAdminHandler) DeleteConnectorNamespace(writer http.ResponseWri
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
-			// check force flag to force deletion of connector and deployments
-			force := false
-			forceFlag := request.URL.Query().Get("force")
-			if forceFlag != "" {
-				var err error
-				force, err = strconv.ParseBool(forceFlag)
-				if err != nil {
-					return nil, errors.BadRequest("invalid force query param %s", forceFlag)
-				}
-			}
 			ctx := request.Context()
-			if force {
+			if parseBoolParam(request.URL.Query().Get("force")) {
 				// set namespace status to deleted
 				namespace, err := h.NamespaceService.Get(ctx, namespaceId)
 				if err != nil {
@@ -419,16 +409,7 @@ func (h *ConnectorAdminHandler) DeleteConnector(writer http.ResponseWriter, requ
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
 			// check force flag to force deletion of connector and deployments
-			force := false
-			forceFlag := request.URL.Query().Get("force")
-			if forceFlag != "" {
-				var err error
-				force, err = strconv.ParseBool(forceFlag)
-				if err != nil {
-					return nil, errors.BadRequest("Invalid force query param %s", forceFlag)
-				}
-			}
-			if force {
+			if parseBoolParam(request.URL.Query().Get("force")) {
 				serviceError = h.ConnectorsService.ForceDelete(request.Context(), connectorId)
 			} else {
 				ctx := request.Context()
@@ -452,7 +433,7 @@ func (h *ConnectorAdminHandler) GetClusterDeployments(writer http.ResponseWriter
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), clusterId, channelUpdates, danglingDeployments, listArgs, 0)
+			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), clusterId, parseBoolParam(channelUpdates), parseBoolParam(danglingDeployments), listArgs, 0)
 			if err != nil {
 				return nil, err
 			}
@@ -478,6 +459,11 @@ func (h *ConnectorAdminHandler) GetClusterDeployments(writer http.ResponseWriter
 	}
 
 	handlers.HandleGet(writer, request, &cfg)
+}
+
+func parseBoolParam(channelUpdates string) bool {
+	result, _ := strconv.ParseBool(channelUpdates)
+	return result
 }
 
 func (h *ConnectorAdminHandler) GetConnectorDeployment(writer http.ResponseWriter, request *http.Request) {
@@ -521,7 +507,7 @@ func (h *ConnectorAdminHandler) GetNamespaceDeployments(writer http.ResponseWrit
 			} else {
 				listArgs.Search = fmt.Sprintf("namespace_id = %s AND (%s)", namespaceId, listArgs.Search)
 			}
-			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), "", channelUpdates, danglingDeployments, listArgs, 0)
+			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), "", parseBoolParam(channelUpdates), parseBoolParam(danglingDeployments), listArgs, 0)
 			if err != nil {
 				return nil, err
 			}

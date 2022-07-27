@@ -553,7 +553,7 @@ paths:
         - name: force
           description: Flag to force deletion of namespace in Fleet manager if true
           schema:
-            type: string
+            type: boolean
           in: query
           required: false
       responses:
@@ -778,7 +778,7 @@ paths:
         - name: force
           description: Flag to force deletion of connector in Fleet manager if true
           schema:
-            type: string
+            type: boolean
           in: query
           required: false
       responses:
