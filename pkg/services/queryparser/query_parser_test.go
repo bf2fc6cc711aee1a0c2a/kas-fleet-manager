@@ -56,6 +56,14 @@ func Test_QueryParser(t *testing.T) {
 			wantErr:   false,
 		},
 		{
+			name:      "Complex query with ilike",
+			qry:       "((cloud_provider = Value and name = value1) and (owner <> value2 or region=b ) ) or owner=c or name=e and region ILIKE '%TEST%'",
+			qryParser: NewQueryParser(),
+			outQry:    "((cloud_provider = ? and name = ?) and (owner <> ? or region = ?)) or owner = ? or name = ? and region ILIKE ?",
+			outValues: []interface{}{"Value", "value1", "value2", "b", "c", "e", "%TEST%"},
+			wantErr:   false,
+		},
+		{
 			name:      "Complex query with braces and quoted values with escaped quote",
 			qry:       `((cloud_provider = 'Value' and name = 'val\'ue1') and (owner = value2 or region='b' ) ) or owner=c or name=e and region LIKE '%test%'`,
 			qryParser: NewQueryParser(),

@@ -375,7 +375,7 @@ Feature: connector namespaces API
         "kind":"Error",
         "href":"/api/connector_mgmt/v1/errors/17",
         "code":"CONNECTOR-MGMT-17",
-        "reason":"Unable to list connector type requests: invalid order by clause 'CAST(CHR(32)||(SELECT version()) AS NUMERIC)'",
+        "reason":"Unable to list connector namespace requests: invalid order by clause 'CAST(CHR(32)||(SELECT version()) AS NUMERIC)'",
         "operation_id": "${response.operation_id}"
       }
       """
@@ -409,6 +409,11 @@ Feature: connector namespaces API
     Then the response code should be 200
     And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
     And I remember keycloak client for cleanup with clientID: ${clientID}
+
+   # verify user can search for cluster using state and ilike
+    When I GET path "/v1/kafka_connector_clusters/?search=id=${connector_cluster_id}+and+name+ilike+dusty%25+and+state+ilike+Disconnected&orderBy=id%2Cstate+desc%2Ccreated_at+asc"
+    Then the response code should be 200
+    And the ".items[0].id" selection from the response should match "${connector_cluster_id}"
 
    # There should be default namespace at first for organization 13640230
     Given I am logged in as "Lucky"
@@ -552,6 +557,12 @@ Feature: connector namespaces API
     }
     """
     And I store the ".id" selection from the response as ${user_namespace_id}
+
+   # verify user can search for namespace using name, state, and ilike
+    When I GET path "/v1/kafka_connector_namespaces/?search=id=${user_namespace_id}+and+name+ilike+lucky%25+and+state+ilike+Disconnected&orderBy=id%2Cstate+desc%2Cupdated_at+asc"
+    Then the response code should be 200
+    And the ".items[0].id" selection from the response should match "${user_namespace_id}"
+    And the ".items[0].cluster_id" selection from the response should match "${connector_cluster_id}"
 
    # All organization members MUST be able to see the org tenant namespaces
     Given I am logged in as "Ned"

@@ -492,6 +492,12 @@ Feature: create a connector
       }
       """
 
+  Scenario: Gary searches for connector types using name and ilike
+    Given I am logged in as "Gary"
+    When I GET path "/v1/kafka_connector_types/?search=name+ilike+%25AWS%25&orderBy=id%2Ccreated_at+desc"
+    Then the response code should be 200
+    And the ".items[0].name" selection from the response should match "aws-sqs-source"
+
   Scenario: Gary searches for sink connector types
     Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types?search=label=sink"

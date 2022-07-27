@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
@@ -213,8 +214,16 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 	return nil
 }
 
+func GetValidClusterColumns() []string {
+	// property state will be replaced with column name status_phase
+	return []string{"id", "created_at", "updated_at", "owner", "organisation_id", "name", "state", "client_id"}
+}
+
 // List returns all connector clusters visible to the user within the requested paging window.
 func (k *connectorClusterService) List(ctx context.Context, listArgs *services.ListArguments) (dbapi.ConnectorClusterList, *api.PagingMeta, *errors.ServiceError) {
+	if err := listArgs.Validate(GetValidClusterColumns()); err != nil {
+		return nil, nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list connector cluster requests: %s", err.Error())
+	}
 	var resourceList dbapi.ConnectorClusterList
 	dbConn := k.connectionFactory.New()
 	pagingMeta := &api.PagingMeta{
@@ -235,6 +244,16 @@ func (k *connectorClusterService) List(ctx context.Context, listArgs *services.L
 		}
 	}
 
+	// Apply search query
+	if len(listArgs.Search) > 0 {
+		queryParser := coreServices.NewQueryParser(GetValidClusterColumns()...)
+		searchDbQuery, err := queryParser.Parse(listArgs.Search)
+		if err != nil {
+			return resourceList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector cluster requests: %s", err.Error())
+		}
+		dbConn = dbConn.Where(strings.ReplaceAll(searchDbQuery.Query, "state", "status_phase"), searchDbQuery.Values...)
+	}
+
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
 	total := int64(pagingMeta.Total)
 	dbConn.Model(&resourceList).Count(&total)
@@ -245,8 +264,15 @@ func (k *connectorClusterService) List(ctx context.Context, listArgs *services.L
 	}
 	dbConn = dbConn.Offset((pagingMeta.Page - 1) * pagingMeta.Size).Limit(pagingMeta.Size)
 
-	// default the order by name
-	dbConn = dbConn.Order("name")
+	// Set the order by arguments if any
+	if len(listArgs.OrderBy) == 0 {
+		// default orderBy name
+		dbConn = dbConn.Order("name ASC")
+	} else {
+		for _, orderByArg := range listArgs.OrderBy {
+			dbConn = dbConn.Order(strings.ReplaceAll(orderByArg, "state", "status_phase"))
+		}
+	}
 
 	// execute query
 	if err := dbConn.Find(&resourceList).Error; err != nil {

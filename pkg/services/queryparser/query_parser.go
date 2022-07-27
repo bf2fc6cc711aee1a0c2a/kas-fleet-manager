@@ -28,6 +28,7 @@ const (
 	eq          = "EQ"
 	notEq       = "NOT_EQ"
 	like        = "LIKE"
+	ilike       = "ILIKE"
 	and         = "AND"
 	or          = "OR"
 )
@@ -64,16 +65,18 @@ var _ QueryParser = &queryParser{}
 // EQ               = =
 // NOT_EQ           = <>
 // LIKE             = [Ll][Ii][Kk][Ee]
+// ILIKE             = [Ii][Ll][Ii][Kk][Ee]
 // AND              = [Aa][Nn][Dd]
 // OR               = [Oo][Rr]
 //
 // VALID TRANSITIONS:
 // START        -> COLUMN | OPEN_BRACE
 // OPEN_BRACE   -> OPEN_BRACE | COLUMN
-// COLUMN       -> EQ | NOT_EQ | LIKE
+// COLUMN       -> EQ | NOT_EQ | LIKE | ILIKE
 // EQ           -> VALUE | QUOTED_VALUE
 // NOT_EQ       -> VALUE | QUOTED_VALUE
 // LIKE         -> VALUE | QUOTED_VALUE
+// ILIKE        -> VALUE | QUOTED_VALUE
 // VALUE        -> OR | AND | CLOSED_BRACE | [END]
 // QUOTED_VALUE -> OR | AND | CLOSED_BRACE | [END]
 // CLOSED_BRACE -> OR | AND | CLOSED_BRACE | [END]
@@ -164,16 +167,18 @@ func (p *queryParser) initStateMachine() (*state_machine.State, checkUnbalancedB
 			{Name: eq, Family: opTokenFamily, AcceptPattern: `=`},
 			{Name: notEq, Family: opTokenFamily, AcceptPattern: `<>`},
 			{Name: like, Family: opTokenFamily, AcceptPattern: `[Ll][Ii][Kk][Ee]`},
+			{Name: ilike, Family: opTokenFamily, AcceptPattern: `[Ii][Ll][Ii][Kk][Ee]`},
 			{Name: and, Family: logicalOpTokenFamily, AcceptPattern: `[Aa][Nn][Dd]`},
 			{Name: or, Family: logicalOpTokenFamily, AcceptPattern: `[Oo][Rr]`},
 		},
 		Transitions: []state_machine.TokenTransitions{
 			{TokenName: state_machine.StartState, ValidTransitions: []string{column, openBrace}},
 			{TokenName: openBrace, ValidTransitions: []string{column, openBrace}},
-			{TokenName: column, ValidTransitions: []string{eq, notEq, like}},
+			{TokenName: column, ValidTransitions: []string{eq, notEq, like, ilike}},
 			{TokenName: eq, ValidTransitions: []string{quotedValue, value}},
 			{TokenName: notEq, ValidTransitions: []string{quotedValue, value}},
 			{TokenName: like, ValidTransitions: []string{quotedValue, value}},
+			{TokenName: ilike, ValidTransitions: []string{quotedValue, value}},
 			{TokenName: quotedValue, ValidTransitions: []string{or, and, closedBrace, state_machine.EndState}},
 			{TokenName: value, ValidTransitions: []string{or, and, closedBrace, state_machine.EndState}},
 			{TokenName: closedBrace, ValidTransitions: []string{or, and, closedBrace, state_machine.EndState}},

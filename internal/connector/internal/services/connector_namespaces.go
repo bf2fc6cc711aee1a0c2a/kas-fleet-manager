@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/profiles"
 	"math/rand"
+	"strings"
 	"time"
 
 	"reflect"
@@ -234,12 +235,12 @@ func (k *connectorNamespaceService) setConnectorsDeployed(namespaces dbapi.Conne
 }
 
 func GetValidNamespaceColumns() []string {
-	return []string{`name`, `cluster_id`, `owner`, `expiration`, `tenant_user_id`, `tenant_organisation_id`, `status_phase`}
+	return []string{"id", "created_at", "updated_at", "name", "cluster_id", "owner", "expiration", "tenant_user_id", "tenant_organisation_id", "state"}
 }
 
 func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []string, listArguments *services.ListArguments, gtVersion int64) (dbapi.ConnectorNamespaceList, *api.PagingMeta, *errors.ServiceError) {
 	if err := listArguments.Validate(GetValidNamespaceColumns()); err != nil {
-		return nil, nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list connector type requests: %s", err.Error())
+		return nil, nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list connector namespace requests: %s", err.Error())
 	}
 
 	var resourceList dbapi.ConnectorNamespaceList
@@ -255,12 +256,12 @@ func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []strin
 
 	// Apply search query
 	if len(listArguments.Search) > 0 {
-		queryParser := queryparser.NewQueryParser(GetValidNamespaceColumns()...)
+		queryParser := queryparser.NewQueryParserWithColumnPrefix("connector_namespaces", GetValidNamespaceColumns()...)
 		searchDbQuery, err := queryParser.Parse(listArguments.Search)
 		if err != nil {
 			return resourceList, &pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector namespace requests: %s", err.Error())
 		}
-		dbConn = dbConn.Where(searchDbQuery.Query, searchDbQuery.Values...)
+		dbConn = dbConn.Where(strings.ReplaceAll(searchDbQuery.Query, "connector_namespaces.state", "connector_namespaces.status_phase"), searchDbQuery.Values...)
 	}
 
 	// check if a minimum resource version is provided
@@ -277,14 +278,14 @@ func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []strin
 	}
 	dbConn = dbConn.Offset((pagingMeta.Page - 1) * pagingMeta.Size).Limit(pagingMeta.Size)
 
+	// Set the order by arguments if any
 	if len(listArguments.OrderBy) == 0 {
 		// default orderBy name
 		dbConn = dbConn.Order("name ASC")
-	}
-
-	// Set the order by arguments if any
-	for _, orderByArg := range listArguments.OrderBy {
-		dbConn = dbConn.Order(orderByArg)
+	} else {
+		for _, orderByArg := range listArguments.OrderBy {
+			dbConn = dbConn.Order(strings.ReplaceAll(orderByArg, "state", "status_phase"))
+		}
 	}
 
 	// execute query
