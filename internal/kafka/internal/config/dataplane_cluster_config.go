@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/pkg/errors"
@@ -46,6 +47,7 @@ type DataplaneClusterConfig struct {
 	StrimziOperatorOLMConfig                    OperatorInstallationConfig
 	KasFleetshardOperatorOLMConfig              OperatorInstallationConfig
 	DynamicScalingConfig                        DynamicScalingConfig
+	NodePrewarmingConfig                        NodePrewarmingConfig
 }
 
 type OperatorInstallationConfig struct {
@@ -106,6 +108,7 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 			SubscriptionConfig:     operatorsv1alpha1.SubscriptionConfig{},
 		},
 		DynamicScalingConfig: NewDynamicScalingConfig(),
+		NodePrewarmingConfig: NewNodePrewarmingConfig(),
 	}
 }
 
@@ -290,6 +293,22 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionChannel, "kas-fleetshard-operator-sub-channel", c.KasFleetshardOperatorOLMConfig.SubscriptionChannel, "kas-fleetshard operator subscription channel")
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile, "kas-fleetshard-operator-subscription-config-file", c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile, "kas-fleetshard operator subscription config. This is applied for standalone clusters only. The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig")
 	fs.StringVar(&c.DynamicScalingConfig.filePath, "dynamic-scaling-config-file", c.DynamicScalingConfig.filePath, "File path to a file containing the dynamic scaling configuration")
+	fs.StringVar(&c.NodePrewarmingConfig.filePath, "node-prewarming-config-file", c.NodePrewarmingConfig.filePath, "File path to a file containing the node prewarming configuration")
+}
+
+func (c *DataplaneClusterConfig) Validate(env *environments.Env) error {
+
+	var kafkaConfig *KafkaConfig
+	env.MustResolve(&kafkaConfig)
+
+	if c.IsDataPlaneAutoScalingEnabled() {
+		err := c.DynamicScalingConfig.validate()
+		if err != nil {
+			return err
+		}
+	}
+
+	return c.NodePrewarmingConfig.validate(kafkaConfig)
 }
 
 func (c *DataplaneClusterConfig) ReadFiles() error {
@@ -354,10 +373,6 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 		if err != nil {
 			return err
 		}
-		err = c.DynamicScalingConfig.validate()
-		if err != nil {
-			return err
-		}
 	}
 
 	err := readOnlyUserListFile(c.ReadOnlyUserListFile, &c.ReadOnlyUserList)
@@ -366,6 +381,11 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 	}
 
 	err = readKafkaSREUserFile(c.KafkaSREUsersFile, &c.KafkaSREUsers)
+	if err != nil {
+		return err
+	}
+
+	err = c.NodePrewarmingConfig.readFile()
 	if err != nil {
 		return err
 	}

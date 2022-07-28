@@ -43,7 +43,7 @@ func ConfigProviders() di.Option {
 		di.Provide(config.NewSupportedProvidersConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
 		di.Provide(observatoriumClient.NewObservabilityConfigurationConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewKafkaConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
-		di.Provide(config.NewDataplaneClusterConfig, di.As(new(environments2.ConfigModule))),
+		di.Provide(config.NewDataplaneClusterConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
 		di.Provide(config.NewKasFleetshardConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(quota_management.NewQuotaManagementListConfig, di.As(new(environments2.ConfigModule))),
 

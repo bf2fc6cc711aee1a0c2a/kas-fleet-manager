@@ -226,16 +226,6 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 	h, client, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig) {
 		if enableAutoscale {
 			d.DataPlaneClusterScalingType = config.AutoScaling
-			d.DynamicScalingConfig = config.DynamicScalingConfig{
-				Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
-					"standard": {
-						ReservedStreamingUnits: 0,
-					},
-					"developer": {
-						ReservedStreamingUnits: 0,
-					},
-				},
-			}
 		}
 	})
 	defer teardown()
