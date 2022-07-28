@@ -2025,15 +2025,9 @@ func Test_AsError(t *testing.T) {
 		})
 	}
 }
-
-func Test_ErrorListToString(t *testing.T) {
-	errList := make(ErrorList, 10)
-	var res string
-	for _, err := range errList {
-		res = res + fmt.Sprintf(";%s", err)
-	}
+func Test_ErrorList_Error(t *testing.T) {
 	type fields struct {
-		err ErrorList
+		errListFactory func() ErrorList
 	}
 	tests := []struct {
 		name   string
@@ -2043,9 +2037,63 @@ func Test_ErrorListToString(t *testing.T) {
 		{
 			name: "should return a formatted error list",
 			fields: fields{
-				err: errList,
+				errListFactory: func() ErrorList {
+					var innerErrorList1 ErrorList = []error{
+						fmt.Errorf("e1l1"),
+						fmt.Errorf("e2l1"),
+					}
+
+					var innerErroListInInnerErrorList2 ErrorList = []error{
+						fmt.Errorf("e3"),
+					}
+
+					var innerErrorList2 ErrorList = []error{
+						innerErroListInInnerErrorList2,
+						fmt.Errorf("e1l2"),
+					}
+
+					var errList ErrorList = []error{
+						innerErrorList1,
+						fmt.Errorf("e4"),
+						innerErrorList2,
+					}
+
+					return errList
+				},
 			},
-			want: fmt.Sprintf("[%s]", res),
+			want: "[[e1l1;e2l1];e4;[[e3];e1l2]]",
+		},
+		{
+			name: "an error list with one element is formatted correctly",
+			fields: fields{
+				errListFactory: func() ErrorList {
+					var errList ErrorList = []error{
+						fmt.Errorf("e1"),
+					}
+					return errList
+				},
+			},
+			want: "[e1]",
+		},
+		{
+			name: "an error list that is empty returns empty square brackets",
+			fields: fields{
+				errListFactory: func() ErrorList {
+					var errList ErrorList = []error{}
+					return errList
+				},
+			},
+			want: "[]",
+		},
+		{
+			name: "an error list that is nil returns empty square brackets",
+			fields: fields{
+				errListFactory: func() ErrorList {
+					var errList ErrorList
+					return errList
+				},
+			},
+			want: "[]",
 		},
 	}
 
@@ -2054,12 +2102,320 @@ func Test_ErrorListToString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			g.Expect(tt.fields.err.Error()).To(gomega.Equal(tt.want))
+			errList := tt.fields.errListFactory()
+			g.Expect(errList.Error()).To(gomega.Equal(tt.want))
 		})
 	}
 }
 
-func Test_Unwrap(t *testing.T) {
+func Test_ErrorList_AddErrors(t *testing.T) {
+	type args struct {
+		errorsFactory func() []error
+	}
+	type fields struct {
+		errListFactory func() ErrorList
+	}
+	tests := []struct {
+		name               string
+		fields             fields
+		args               args
+		wantErrListFactory func() ErrorList
+	}{
+		{
+			name: "a slice of errors with simple errors is correctly added to an ErrorList",
+			fields: fields{
+				errListFactory: func() ErrorList {
+					var errList ErrorList = []error{
+						fmt.Errorf("e1"),
+					}
+					return errList
+				},
+			},
+			args: args{
+				errorsFactory: func() []error {
+					var errs = []error{
+						fmt.Errorf("e5"),
+						fmt.Errorf("e2"),
+					}
+					return errs
+				},
+			},
+			wantErrListFactory: func() ErrorList {
+				var errList ErrorList = []error{
+					fmt.Errorf("e1"),
+					fmt.Errorf("e5"),
+					fmt.Errorf("e2"),
+				}
+				return errList
+			},
+		},
+		{
+			name: "a slice of errors containing nested ErrorList errors is correctly added to an ErrorList",
+			fields: fields{
+				errListFactory: func() ErrorList {
+					var errList ErrorList = []error{
+						fmt.Errorf("e1"),
+					}
+					return errList
+				},
+			},
+			args: args{
+				errorsFactory: func() []error {
+					var innerErrorList1 ErrorList = []error{
+						fmt.Errorf("e1l1"),
+						fmt.Errorf("e2l1"),
+					}
+
+					var innerErroListInInnerErrorList2 ErrorList = []error{
+						fmt.Errorf("e3"),
+					}
+
+					var innerErrorList2 ErrorList = []error{
+						innerErroListInInnerErrorList2,
+						fmt.Errorf("e1l2"),
+					}
+
+					var errList ErrorList = []error{
+						innerErrorList1,
+						fmt.Errorf("e4"),
+						innerErrorList2,
+					}
+					return errList
+				},
+			},
+			wantErrListFactory: func() ErrorList {
+				var errList ErrorList = []error{
+					fmt.Errorf("e1"),
+					fmt.Errorf("e1l1"),
+					fmt.Errorf("e2l1"),
+					fmt.Errorf("e4"),
+					fmt.Errorf("e3"),
+					fmt.Errorf("e1l2"),
+				}
+				return errList
+			},
+		},
+		{
+			name: "an empty slice of errors does not have any effect when appended to the ErrorList",
+			fields: fields{
+				errListFactory: func() ErrorList {
+					var errList ErrorList = []error{
+						fmt.Errorf("e1"),
+					}
+					return errList
+				},
+			},
+			args: args{
+				errorsFactory: func() []error {
+					var errs = []error{}
+					return errs
+				},
+			},
+			wantErrListFactory: func() ErrorList {
+				var errList ErrorList = []error{
+					fmt.Errorf("e1"),
+				}
+				return errList
+			},
+		},
+		{
+			name: "an nil slice of errors does not have any effect when appended to the ErrorList",
+			fields: fields{
+				errListFactory: func() ErrorList {
+					var errList ErrorList = []error{
+						fmt.Errorf("e1"),
+					}
+					return errList
+				},
+			},
+			args: args{
+				errorsFactory: func() []error {
+					var errs []error
+					return errs
+				},
+			},
+			wantErrListFactory: func() ErrorList {
+				var errList ErrorList = []error{
+					fmt.Errorf("e1"),
+				}
+				return errList
+			},
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			errList := tt.fields.errListFactory()
+			inputErrs := tt.args.errorsFactory()
+			errList.AddErrors(inputErrs...)
+			want := tt.wantErrListFactory()
+			g.Expect(errList).To(gomega.Equal(want))
+		})
+	}
+
+	type additionalArgs struct {
+		errorFactory func() error
+	}
+	type additionalFields struct {
+		errListFactory func() ErrorList
+	}
+	additionalTests := []struct {
+		name               string
+		fields             additionalFields
+		args               additionalArgs
+		wantErrListFactory func() ErrorList
+	}{
+		{
+			name: "an error containing simple errors is correctly added to an ErrorList",
+			fields: additionalFields{
+				errListFactory: func() ErrorList {
+					var errList ErrorList = []error{
+						fmt.Errorf("e1"),
+					}
+					return errList
+				},
+			},
+			args: additionalArgs{
+				errorFactory: func() error {
+					var errs ErrorList = []error{
+						fmt.Errorf("e5"),
+						fmt.Errorf("e2"),
+					}
+					return errs
+				},
+			},
+			wantErrListFactory: func() ErrorList {
+				var errList ErrorList = []error{
+					fmt.Errorf("e1"),
+					fmt.Errorf("e5"),
+					fmt.Errorf("e2"),
+				}
+				return errList
+			},
+		},
+		{
+			name: "an error containing nested ErrorList errors is correctly added to an ErrorList",
+			fields: additionalFields{
+				errListFactory: func() ErrorList {
+					var errList ErrorList = []error{
+						fmt.Errorf("e1"),
+					}
+					return errList
+				},
+			},
+			args: additionalArgs{
+				errorFactory: func() error {
+					var innerErrorList1 ErrorList = []error{
+						fmt.Errorf("e1l1"),
+						fmt.Errorf("e2l1"),
+					}
+
+					var innerErroListInInnerErrorList2 ErrorList = []error{
+						fmt.Errorf("e3"),
+					}
+
+					var innerErrorList2 ErrorList = []error{
+						innerErroListInInnerErrorList2,
+						fmt.Errorf("e1l2"),
+					}
+
+					var errList ErrorList = []error{
+						innerErrorList1,
+						fmt.Errorf("e4"),
+						innerErrorList2,
+					}
+					return errList
+				},
+			},
+			wantErrListFactory: func() ErrorList {
+				var errList ErrorList = []error{
+					fmt.Errorf("e1"),
+					fmt.Errorf("e1l1"),
+					fmt.Errorf("e2l1"),
+					fmt.Errorf("e4"),
+					fmt.Errorf("e3"),
+					fmt.Errorf("e1l2"),
+				}
+				return errList
+			},
+		},
+		{
+			name: "an error which is an empty ErrorList does not have any effect when appended to the ErrorList",
+			fields: additionalFields{
+				errListFactory: func() ErrorList {
+					var errList ErrorList = []error{
+						fmt.Errorf("e1"),
+					}
+					return errList
+				},
+			},
+			args: additionalArgs{
+				errorFactory: func() error {
+					var errs ErrorList = []error{}
+					return errs
+				},
+			},
+			wantErrListFactory: func() ErrorList {
+				var errList ErrorList = []error{
+					fmt.Errorf("e1"),
+				}
+				return errList
+			},
+		},
+		{
+			name: "an error which is a nil ErrorList does not have any effect when appended to the ErrorList",
+			fields: additionalFields{
+				errListFactory: func() ErrorList {
+					var errList ErrorList = []error{
+						fmt.Errorf("e1"),
+					}
+					return errList
+				},
+			},
+			args: additionalArgs{
+				errorFactory: func() error {
+					var errs ErrorList
+					return errs
+				},
+			},
+			wantErrListFactory: func() ErrorList {
+				var errList ErrorList = []error{
+					fmt.Errorf("e1"),
+				}
+				return errList
+			},
+		},
+	}
+
+	for _, testcase := range additionalTests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			errList := tt.fields.errListFactory()
+			inputErr := tt.args.errorFactory()
+			errList.AddErrors(inputErr)
+			want := tt.wantErrListFactory()
+			g.Expect(errList).To(gomega.Equal(want))
+		})
+	}
+}
+
+func Test_ErrorList_ToErrorSlice(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	inputErrList := ErrorList{
+		fmt.Errorf("e1"),
+	}
+
+	res := inputErrList.ToErrorSlice()
+	g.Expect([]error(inputErrList)).To(gomega.Equal(res))
+}
+
+func Test_ServiceError_Unwrap(t *testing.T) {
 	type fields struct {
 		err *ServiceError
 	}
@@ -2087,7 +2443,7 @@ func Test_Unwrap(t *testing.T) {
 	}
 }
 
-func Test_ErrorToString(t *testing.T) {
+func Test_ServiceError_String(t *testing.T) {
 	type fields struct {
 		err *ServiceError
 	}

@@ -3,6 +3,7 @@ package cluster_mgrs
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	fleeterrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 
@@ -33,7 +34,6 @@ func NewDynamicScaleUpManager(
 	dataplaneClusterConfig *config.DataplaneClusterConfig,
 	clusterProvidersConfig *config.ProviderConfig,
 	kafkaConfig *config.KafkaConfig,
-
 	clusterService services.ClusterService,
 ) *DynamicScaleUpManager {
 
@@ -62,7 +62,7 @@ func (m *DynamicScaleUpManager) Stop() {
 }
 
 func (m *DynamicScaleUpManager) Reconcile() []error {
-	var errs []error
+	var errList fleeterrors.ErrorList
 	if !m.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		glog.Infoln("dynamic scaling is disabled. Dynamic scale up reconcile event skipped")
 		return nil
@@ -74,7 +74,7 @@ func (m *DynamicScaleUpManager) Reconcile() []error {
 	// logic is ready
 	err := m.reconcileClustersForRegions()
 	if err != nil {
-		errs = append(errs, err...)
+		errList.AddErrors(err...)
 	}
 
 	// TODO remove the "if false" condition once the new dynamic scale up
@@ -82,15 +82,11 @@ func (m *DynamicScaleUpManager) Reconcile() []error {
 	if false {
 		err := m.processDynamicScaleUpReconcileEvent()
 		if err != nil {
-			errs = append(errs, err)
+			errList.AddErrors(err)
 		}
 	}
 
-	return errs
-}
-
-func (m *DynamicScaleUpManager) logReconcileEventEnd() {
-	glog.Infoln("dynamic scale up reconcile event finished")
+	return errList.ToErrorSlice()
 }
 
 // reconcileClustersForRegions creates an OSD cluster for each supported cloud provider and region where no cluster exists.
@@ -146,23 +142,40 @@ func (m *DynamicScaleUpManager) reconcileClustersForRegions() []error {
 }
 
 func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
+	var errList fleeterrors.ErrorList
 	kafkaStreamingUnitCountPerClusterList, err := m.ClusterService.FindStreamingUnitCountByClusterAndInstanceType()
 	if err != nil {
-		return err
+		errList.AddErrors(err)
+		return errList
 	}
 
 	for _, provider := range m.ClusterProvidersConfig.ProvidersConfig.SupportedProviders {
 		for _, region := range provider.Regions {
 			for supportedInstanceTypeName := range region.SupportedInstanceTypes {
 				supportedInstanceTypeConfig := region.SupportedInstanceTypes[supportedInstanceTypeName]
-				shouldScaleUp, err := m.shouldScaleUpNewClusterForInstanceType(provider.Name, region.Name, supportedInstanceTypeName, &supportedInstanceTypeConfig, kafkaStreamingUnitCountPerClusterList)
+				var dynamicScaleUpProcessor dynamicScaleUpProcessor = &standardDynamicScaleUpProcessor{
+					locator: supportedInstanceTypeLocator{
+						provider:         provider.Name,
+						region:           region.Name,
+						instanceTypeName: supportedInstanceTypeName,
+					},
+					instanceTypeConfig:                    &supportedInstanceTypeConfig,
+					kafkaStreamingUnitCountPerClusterList: kafkaStreamingUnitCountPerClusterList,
+					supportedKafkaInstanceTypesConfig:     &m.KafkaConfig.SupportedInstanceTypes.Configuration,
+					clusterService:                        m.ClusterService,
+					dryRun:                                false,
+				}
+
+				shouldScaleUp, err := dynamicScaleUpProcessor.ShouldScaleUp()
 				if err != nil {
-					return err
+					errList.AddErrors(err)
+					continue
 				}
 				if shouldScaleUp {
-					err := m.registerNewClusterForInstanceType(provider.Name, region.Name, supportedInstanceTypeName)
+					err := dynamicScaleUpProcessor.ScaleUp()
 					if err != nil {
-						return err
+						errList.AddErrors(err)
+						continue
 					}
 				}
 			}
@@ -172,7 +185,82 @@ func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
 	return nil
 }
 
-// shouldScaleUpNewClusterForInstanceType indicates whether a new data plane
+func (m *DynamicScaleUpManager) logReconcileEventEnd() {
+	glog.Infoln("dynamic scale up reconcile event finished")
+}
+
+// supportedInstanceTypeLocator is a data structure
+// that contains all the information to help locate a
+// supported instance type in a region's cluster
+type supportedInstanceTypeLocator struct {
+	provider         string
+	region           string
+	instanceTypeName string
+}
+
+func (l *supportedInstanceTypeLocator) Equal(other supportedInstanceTypeLocator) bool {
+	return l.provider == other.provider &&
+		l.region == other.region &&
+		l.instanceTypeName == other.instanceTypeName
+}
+
+// dynamicScaleUpExecutor is able to perform dynamic ScaleUp execution actions
+type dynamicScaleUpExecutor interface {
+	ScaleUp() error
+}
+
+// dynamicScaleUpEvaluator is able to perform dynamic ScaleUp evaluation actions
+type dynamicScaleUpEvaluator interface {
+	ShouldScaleUp() (bool, error)
+}
+
+// dynamicScaleUpProcessor is able to process dynamic ScaleUp reconcile events
+type dynamicScaleUpProcessor interface {
+	dynamicScaleUpExecutor
+	dynamicScaleUpEvaluator
+}
+
+// noopDynamicScaleUpProcessor is a dynamicScaleUpProcessor where
+// the scale up is a noop and it always returns that no scale up action
+// is needed
+type noopDynamicScaleUpProcessor struct {
+}
+
+var _ dynamicScaleUpEvaluator = &noopDynamicScaleUpProcessor{}
+var _ dynamicScaleUpExecutor = &noopDynamicScaleUpProcessor{}
+var _ dynamicScaleUpProcessor = &noopDynamicScaleUpProcessor{}
+
+func (p *noopDynamicScaleUpProcessor) ScaleUp() error {
+	return nil
+}
+
+func (p *noopDynamicScaleUpProcessor) ShouldScaleUp() (bool, error) {
+	return false, nil
+}
+
+// standardDynamicScaleUpProcessor is the default dynamicScaleUpProcessor
+// used when dynamic scaling is enabled.
+// It assumes the provided kafkaStreamingUnitCountPerClusterList does not
+// contain any element with a Status attribute with value 'failed'
+type standardDynamicScaleUpProcessor struct {
+	locator            supportedInstanceTypeLocator
+	instanceTypeConfig *config.InstanceTypeConfig
+	// kafkaStreamingUnitCountPerClusterList must not contain any element
+	// with a Status attribute with value 'failed'
+	kafkaStreamingUnitCountPerClusterList services.KafkaStreamingUnitCountPerClusterList
+	supportedKafkaInstanceTypesConfig     *config.SupportedKafkaInstanceTypesConfig
+	clusterService                        services.ClusterService
+
+	// dryRun controls whether the ScaleUp method performs real actions.
+	// Useful when you don't want to trigger a real scale up.
+	dryRun bool
+}
+
+var _ dynamicScaleUpEvaluator = &standardDynamicScaleUpProcessor{}
+var _ dynamicScaleUpExecutor = &standardDynamicScaleUpProcessor{}
+var _ dynamicScaleUpProcessor = &standardDynamicScaleUpProcessor{}
+
+// ShouldScaleUp indicates whether a new data plane
 // cluster should be created for a given instance type in the given provider
 // and region.
 // It returns true if all the following conditions happen:
@@ -195,96 +283,206 @@ func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
 //          should eventually accept them (like accepted state for example)
 //          are included
 // Otherwise false is returned.
-// Note: Clusters in the 'failed' state are excluded from the calculations.
-func (m *DynamicScaleUpManager) shouldScaleUpNewClusterForInstanceType(
-	provider string, region string,
-	instanceTypeName string,
-	instanceTypeConfig *config.InstanceTypeConfig,
-	kafkaStreamingUnitCountPerClusterList services.KafkaStreamingUnitCountPerClusterList) (bool, error) {
+// Note: This method assumes kafkaStreamingUnitCountPerClusterList does not
+//       contain elements with the Status attribute with the 'failed' value.
+//       Thus, if the type is constructed with the assumptions being true, it
+//       can be considered as the 'failed' state Clusters are not included in
+//       the calculations.
+func (p *standardDynamicScaleUpProcessor) ShouldScaleUp() (bool, error) {
+	summaryCalculator := instanceTypeConsumptionSummaryCalculator{
+		locator:                               p.locator,
+		kafkaStreamingUnitCountPerClusterList: p.kafkaStreamingUnitCountPerClusterList,
+		supportedKafkaInstanceTypesConfig:     p.supportedKafkaInstanceTypesConfig,
+	}
 
-	kafkaInstanceTypeConfig, err := m.KafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceTypeName)
+	instanceTypeConsumptionInRegionSummary, err := summaryCalculator.Calculate()
 	if err != nil {
 		return false, err
+	}
+
+	regionLimitReached := p.regionLimitReached(instanceTypeConsumptionInRegionSummary)
+	if regionLimitReached {
+		return false, nil
+	}
+
+	ongoingScaleUpActionInRegion := p.ongoingScaleUpAction(instanceTypeConsumptionInRegionSummary)
+	if ongoingScaleUpActionInRegion {
+		return false, nil
+	}
+
+	freeCapacityForBiggestInstanceSizeInRegion := p.freeCapacityForBiggestInstanceSize(instanceTypeConsumptionInRegionSummary)
+	if !freeCapacityForBiggestInstanceSizeInRegion {
+		return true, nil
+	}
+
+	enoughCapacitySlackInRegion := p.enoughCapacitySlackInRegion(instanceTypeConsumptionInRegionSummary)
+	if !enoughCapacitySlackInRegion {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// ScaleUp triggers a new data plane cluster
+// registration for a given instance type in a provider region.
+func (p *standardDynamicScaleUpProcessor) ScaleUp() error {
+	if p.dryRun {
+		return nil
+	}
+
+	// If the provided instance type to support is standard the new cluster
+	// to register will be MultiAZ. Otherwise will be single AZ
+	newClusterMultiAZ := p.locator.instanceTypeName == api.StandardTypeSupport.String()
+
+	clusterRequest := &api.Cluster{
+		CloudProvider:         p.locator.provider,
+		Region:                p.locator.region,
+		SupportedInstanceType: p.locator.instanceTypeName,
+		MultiAZ:               newClusterMultiAZ,
+		Status:                api.ClusterAccepted,
+		ProviderType:          api.ClusterProviderOCM,
+	}
+
+	err := p.clusterService.RegisterClusterJob(clusterRequest)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *standardDynamicScaleUpProcessor) enoughCapacitySlackInRegion(summary instanceTypeConsumptionSummary) bool {
+	freeStreamingUnitsInRegion := summary.freeStreamingUnits
+	capacitySlackInRegion := p.instanceTypeConfig.MinAvailableCapacitySlackStreamingUnits
+
+	// Note: if capacitySlackInRegion is 0 we always return that there is enough
+	// capacity slack in region.
+	return freeStreamingUnitsInRegion >= capacitySlackInRegion
+}
+
+func (p *standardDynamicScaleUpProcessor) regionLimitReached(summary instanceTypeConsumptionSummary) bool {
+	streamingUnitsLimitInRegion := p.instanceTypeConfig.Limit
+	consumedStreamingUnitsInRegion := summary.consumedStreamingUnits
+
+	if streamingUnitsLimitInRegion == nil {
+		return false
+	}
+
+	return consumedStreamingUnitsInRegion >= *streamingUnitsLimitInRegion
+}
+
+func (p *standardDynamicScaleUpProcessor) freeCapacityForBiggestInstanceSize(summary instanceTypeConsumptionSummary) bool {
+	return summary.biggestInstanceSizeCapacityAvailable
+}
+
+func (p *standardDynamicScaleUpProcessor) ongoingScaleUpAction(summary instanceTypeConsumptionSummary) bool {
+	return summary.ongoingScaleUpAction
+}
+
+// instanceTypeConsumptionSummary contains a consumption summary
+// of an instance in a provider's region
+type instanceTypeConsumptionSummary struct {
+	// maxStreamingUnits is the total capacity for the instance type in
+	// streaming units
+	maxStreamingUnits int
+	// freeStreamingUnits is the free capacity for the instance type in
+	// streaming units
+	freeStreamingUnits int
+	// consumedStreamingUnits is the consumed capacity for the instance type in
+	// streaming units
+	consumedStreamingUnits int
+	// ongoingScaleUpAction designates whether a data plane cluster in the
+	// provider's region, which supports the instance type, is being created
+	ongoingScaleUpAction bool
+	// biggestInstanceSizeCapacityAvailable indicates whether there is capacity
+	// to allocate at least one unit of the biggest kafka instance size of
+	// the instance type
+	biggestInstanceSizeCapacityAvailable bool
+}
+
+// instanceTypeConsumptionSummaryCalculator calculates a consumption summary
+// for the provided supportedInstanceTypeLocator based on the
+// provided KafkaStreamingUnitCountPerClusterList
+type instanceTypeConsumptionSummaryCalculator struct {
+	locator                               supportedInstanceTypeLocator
+	kafkaStreamingUnitCountPerClusterList services.KafkaStreamingUnitCountPerClusterList
+	supportedKafkaInstanceTypesConfig     *config.SupportedKafkaInstanceTypesConfig
+}
+
+// Calculate returns a instanceTypeConsumptionSummary containing a consumption
+// summary for the provided supportedInstanceTypeLocator
+// For the calculation of the max streaming units capacity:
+//   * Clusters in deprovisioning and cleanup state are excluded, as
+//     clusters into those states don't accept kafka instances anymore.
+//   * Clusters that are still not ready to accept kafka instance but that
+//     should eventually accept them (like accepted state for example)
+//     are included
+// For the calculation of whether a scale up actions is ongoing:
+//   * A scale up action is ongoing if there is at least one cluster in the
+//     following states: 'provisioning', 'provisioned', 'accepted',
+//     'waiting_for_kas_fleetshard_operator'
+func (i *instanceTypeConsumptionSummaryCalculator) Calculate() (instanceTypeConsumptionSummary, error) {
+	biggestKafkaInstanceSizeCapacityConsumption, err := i.getBiggestCapacityConsumedSize()
+	if err != nil {
+		return instanceTypeConsumptionSummary{}, err
+	}
+
+	consumedStreamingUnitsInRegion := 0
+	maxStreamingUnitsInRegion := 0
+	atLeastOneClusterHasCapacityForBiggestInstanceType := false
+	scaleUpActionIsOngoing := false
+
+	clusterStatesTowardReadyState := []string{
+		api.ClusterProvisioning.String(), api.ClusterProvisioned.String(),
+		api.ClusterAccepted.String(), api.ClusterWaitingForKasFleetShardOperator.String(),
+	}
+	clusterStatesTowardDeletion := []string{api.ClusterDeprovisioning.String(), api.ClusterCleanup.String()}
+
+	for _, kafkaStreamingUnitCountPerCluster := range i.kafkaStreamingUnitCountPerClusterList {
+		currLocator := supportedInstanceTypeLocator{
+			provider:         kafkaStreamingUnitCountPerCluster.CloudProvider,
+			region:           kafkaStreamingUnitCountPerCluster.Region,
+			instanceTypeName: kafkaStreamingUnitCountPerCluster.InstanceType,
+		}
+
+		if !i.locator.Equal(currLocator) {
+			continue
+		}
+
+		if arrays.Contains(clusterStatesTowardReadyState, kafkaStreamingUnitCountPerCluster.Status) {
+			scaleUpActionIsOngoing = true
+		}
+
+		if kafkaStreamingUnitCountPerCluster.FreeStreamingUnits() >= int32(biggestKafkaInstanceSizeCapacityConsumption) {
+			atLeastOneClusterHasCapacityForBiggestInstanceType = true
+		}
+
+		consumedStreamingUnitsInRegion = consumedStreamingUnitsInRegion + int(kafkaStreamingUnitCountPerCluster.Count)
+		if !arrays.Contains(clusterStatesTowardDeletion, kafkaStreamingUnitCountPerCluster.Status) {
+			maxStreamingUnitsInRegion = maxStreamingUnitsInRegion + int(kafkaStreamingUnitCountPerCluster.MaxUnits)
+		}
+	}
+
+	freeStreamingUnitsInRegion := maxStreamingUnitsInRegion - consumedStreamingUnitsInRegion
+
+	return instanceTypeConsumptionSummary{
+		maxStreamingUnits:                    maxStreamingUnitsInRegion,
+		consumedStreamingUnits:               consumedStreamingUnitsInRegion,
+		freeStreamingUnits:                   freeStreamingUnitsInRegion,
+		ongoingScaleUpAction:                 scaleUpActionIsOngoing,
+		biggestInstanceSizeCapacityAvailable: atLeastOneClusterHasCapacityForBiggestInstanceType,
+	}, nil
+}
+
+func (i *instanceTypeConsumptionSummaryCalculator) getBiggestCapacityConsumedSize() (int, error) {
+	kafkaInstanceTypeConfig, err := i.supportedKafkaInstanceTypesConfig.GetKafkaInstanceTypeByID(i.locator.instanceTypeName)
+	if err != nil {
+		return -1, err
 	}
 	biggestKafkaInstanceSizeCapacityConsumption := -1
 	maxKafkaInstanceSizeConfig := kafkaInstanceTypeConfig.GetBiggestCapacityConsumedSize()
 	if maxKafkaInstanceSizeConfig != nil {
 		biggestKafkaInstanceSizeCapacityConsumption = maxKafkaInstanceSizeConfig.CapacityConsumed
 	}
-
-	consumedStreamingUnitsInRegion := 0
-	maxStreamingUnitsInRegion := 0
-	atLeastOneClusterHasCapacityForLargestInstanceType := false
-
-	scaleUpActionIsOngoing := false
-	clusterStatesTowardReadyState := []string{
-		api.ClusterProvisioning.String(), api.ClusterProvisioned.String(),
-		api.ClusterAccepted.String(), api.ClusterWaitingForKasFleetShardOperator.String(),
-	}
-
-	for _, kafkaStreamingUnitCountPerCluster := range kafkaStreamingUnitCountPerClusterList {
-		if kafkaStreamingUnitCountPerCluster.CloudProvider == provider &&
-			kafkaStreamingUnitCountPerCluster.Region == region &&
-			kafkaStreamingUnitCountPerCluster.InstanceType == instanceTypeName {
-
-			if arrays.Contains(clusterStatesTowardReadyState, kafkaStreamingUnitCountPerCluster.Status) {
-				scaleUpActionIsOngoing = true
-			}
-
-			if kafkaStreamingUnitCountPerCluster.FreeStreamingUnits() >= int32(biggestKafkaInstanceSizeCapacityConsumption) {
-				atLeastOneClusterHasCapacityForLargestInstanceType = true
-			}
-
-			consumedStreamingUnitsInRegion = consumedStreamingUnitsInRegion + int(kafkaStreamingUnitCountPerCluster.Count)
-			if kafkaStreamingUnitCountPerCluster.Status != api.ClusterDeprovisioning.String() &&
-				kafkaStreamingUnitCountPerCluster.Status != api.ClusterCleanup.String() {
-				maxStreamingUnitsInRegion = maxStreamingUnitsInRegion + int(kafkaStreamingUnitCountPerCluster.MaxUnits)
-			}
-		}
-	}
-
-	freeStreamingUnitsInRegion := maxStreamingUnitsInRegion - consumedStreamingUnitsInRegion
-	capacitySlackInRegion := instanceTypeConfig.MinAvailableCapacitySlackStreamingUnits
-	notEnoughCapacitySlackInRegion := false
-	if freeStreamingUnitsInRegion < capacitySlackInRegion { // TODO is it <= or < ?
-		notEnoughCapacitySlackInRegion = true
-	}
-
-	streamingUnitsLimitInRegion := instanceTypeConfig.Limit
-	regionLimitReached := false
-	if streamingUnitsLimitInRegion != nil && consumedStreamingUnitsInRegion >= *streamingUnitsLimitInRegion {
-		regionLimitReached = true
-	}
-
-	if !regionLimitReached && !scaleUpActionIsOngoing {
-		if !atLeastOneClusterHasCapacityForLargestInstanceType || (atLeastOneClusterHasCapacityForLargestInstanceType && notEnoughCapacitySlackInRegion) {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-// registerNewClusterForInstanceType triggers a new data plane cluster
-// registration for a given instance type in a provider region.
-func (m *DynamicScaleUpManager) registerNewClusterForInstanceType(provider string, region string, instanceTypeName string) error {
-	// If the provided instance type to support is standard the new cluster
-	// to register will be MultiAZ. Otherwise will be single AZ
-	newClusterMultiAZ := instanceTypeName == api.StandardTypeSupport.String()
-
-	clusterRequest := &api.Cluster{
-		CloudProvider:         provider,
-		Region:                region,
-		SupportedInstanceType: instanceTypeName,
-		MultiAZ:               newClusterMultiAZ,
-		Status:                api.ClusterAccepted,
-		ProviderType:          api.ClusterProviderOCM,
-	}
-
-	err := m.ClusterService.RegisterClusterJob(clusterRequest)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return biggestKafkaInstanceSizeCapacityConsumption, nil
 }
