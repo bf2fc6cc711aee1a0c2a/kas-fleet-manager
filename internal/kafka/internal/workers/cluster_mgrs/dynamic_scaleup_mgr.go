@@ -152,26 +152,28 @@ func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
 	for _, provider := range m.ClusterProvidersConfig.ProvidersConfig.SupportedProviders {
 		for _, region := range provider.Regions {
 			for supportedInstanceTypeName := range region.SupportedInstanceTypes {
+				currLocator := supportedInstanceTypeLocator{
+					provider:         provider.Name,
+					region:           region.Name,
+					instanceTypeName: supportedInstanceTypeName,
+				}
 				supportedInstanceTypeConfig := region.SupportedInstanceTypes[supportedInstanceTypeName]
 				var dynamicScaleUpProcessor dynamicScaleUpProcessor = &standardDynamicScaleUpProcessor{
-					locator: supportedInstanceTypeLocator{
-						provider:         provider.Name,
-						region:           region.Name,
-						instanceTypeName: supportedInstanceTypeName,
-					},
+					locator:                               currLocator,
 					instanceTypeConfig:                    &supportedInstanceTypeConfig,
 					kafkaStreamingUnitCountPerClusterList: kafkaStreamingUnitCountPerClusterList,
 					supportedKafkaInstanceTypesConfig:     &m.KafkaConfig.SupportedInstanceTypes.Configuration,
 					clusterService:                        m.ClusterService,
 					dryRun:                                false,
 				}
-
+				glog.Infof("evaluating dynamic scale up for locator '%+v'", currLocator)
 				shouldScaleUp, err := dynamicScaleUpProcessor.ShouldScaleUp()
 				if err != nil {
 					errList.AddErrors(err)
 					continue
 				}
 				if shouldScaleUp {
+					glog.Infof("data plane scale up need detected for locator '%+v'", currLocator)
 					err := dynamicScaleUpProcessor.ScaleUp()
 					if err != nil {
 						errList.AddErrors(err)
@@ -299,27 +301,33 @@ func (p *standardDynamicScaleUpProcessor) ShouldScaleUp() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	glog.Infof("consumption summary for locator '%+v': '%+v'", p.locator, instanceTypeConsumptionInRegionSummary)
 
 	regionLimitReached := p.regionLimitReached(instanceTypeConsumptionInRegionSummary)
 	if regionLimitReached {
+		glog.Infof("region limit for locator '%+v' reached. No cluster scale up action should be performed", p.locator)
 		return false, nil
 	}
 
 	ongoingScaleUpActionInRegion := p.ongoingScaleUpAction(instanceTypeConsumptionInRegionSummary)
 	if ongoingScaleUpActionInRegion {
+		glog.Infof("ongoing data plane cluster scale up action limit for locator '%+v' reached. No cluster scale up action should be performed", p.locator)
 		return false, nil
 	}
 
 	freeCapacityForBiggestInstanceSizeInRegion := p.freeCapacityForBiggestInstanceSize(instanceTypeConsumptionInRegionSummary)
 	if !freeCapacityForBiggestInstanceSizeInRegion {
+		glog.Infof("biggest kafka instance size for locator '%+v' cannot fit in any cluster. Cluster scale up action should be performed", p.locator)
 		return true, nil
 	}
 
 	enoughCapacitySlackInRegion := p.enoughCapacitySlackInRegion(instanceTypeConsumptionInRegionSummary)
 	if !enoughCapacitySlackInRegion {
+		glog.Infof("there is not enough capacity slack for locator '%+v'. Cluster scale up action should be performed", p.locator)
 		return true, nil
 	}
 
+	glog.Infof("no conditions for cluster scale up action have been detected for locator '%+v'. No cluster scale up action should be performed", p.locator)
 	return false, nil
 }
 
@@ -327,9 +335,11 @@ func (p *standardDynamicScaleUpProcessor) ShouldScaleUp() (bool, error) {
 // registration for a given instance type in a provider region.
 func (p *standardDynamicScaleUpProcessor) ScaleUp() error {
 	if p.dryRun {
+		glog.Infoln("scale up running in dryRun mode. No action is taken.")
 		return nil
 	}
 
+	glog.Infof("registering new data plane cluster for locator '%+v'", p.locator)
 	// If the provided instance type to support is standard the new cluster
 	// to register will be MultiAZ. Otherwise will be single AZ
 	newClusterMultiAZ := p.locator.instanceTypeName == api.StandardTypeSupport.String()
@@ -342,11 +352,13 @@ func (p *standardDynamicScaleUpProcessor) ScaleUp() error {
 		Status:                api.ClusterAccepted,
 		ProviderType:          api.ClusterProviderOCM,
 	}
+	glog.V(10).Infof("registering new cluster job creation with attributes: %+v", clusterRequest)
 
 	err := p.clusterService.RegisterClusterJob(clusterRequest)
 	if err != nil {
 		return err
 	}
+	glog.Infof("cluster creation job for locator '%+v' registered successfully", p.locator)
 
 	return nil
 }
@@ -354,6 +366,7 @@ func (p *standardDynamicScaleUpProcessor) ScaleUp() error {
 func (p *standardDynamicScaleUpProcessor) enoughCapacitySlackInRegion(summary instanceTypeConsumptionSummary) bool {
 	freeStreamingUnitsInRegion := summary.freeStreamingUnits
 	capacitySlackInRegion := p.instanceTypeConfig.MinAvailableCapacitySlackStreamingUnits
+	glog.V(10).Infof("configured minimum capacity slack for locator %+v is: '%v'", p.locator, capacitySlackInRegion)
 
 	// Note: if capacitySlackInRegion is 0 we always return that there is enough
 	// capacity slack in region.
@@ -365,9 +378,11 @@ func (p *standardDynamicScaleUpProcessor) regionLimitReached(summary instanceTyp
 	consumedStreamingUnitsInRegion := summary.consumedStreamingUnits
 
 	if streamingUnitsLimitInRegion == nil {
+		glog.V(10).Infof("region limit for locator '%+v' is nil", p.locator)
 		return false
 	}
 
+	glog.V(10).Infof("region limit in streaming units for locator '%+v': '%+v'", p.locator, *streamingUnitsLimitInRegion)
 	return consumedStreamingUnitsInRegion >= *streamingUnitsLimitInRegion
 }
 
@@ -446,8 +461,10 @@ func (i *instanceTypeConsumptionSummaryCalculator) Calculate() (instanceTypeCons
 		}
 
 		if !i.locator.Equal(currLocator) {
+			glog.V(10).Infof("cluster consumption '%+v' does not match locator '%+v'. Discarded from summary consumption calculation", kafkaStreamingUnitCountPerCluster, i.locator)
 			continue
 		}
+		glog.V(10).Infof("summary consumption evaluation of cluster consumption '%+v' for locator '%+v'", kafkaStreamingUnitCountPerCluster, i.locator)
 
 		if arrays.Contains(clusterStatesTowardReadyState, kafkaStreamingUnitCountPerCluster.Status) {
 			scaleUpActionIsOngoing = true
@@ -484,5 +501,6 @@ func (i *instanceTypeConsumptionSummaryCalculator) getBiggestCapacityConsumedSiz
 	if maxKafkaInstanceSizeConfig != nil {
 		biggestKafkaInstanceSizeCapacityConsumption = maxKafkaInstanceSizeConfig.CapacityConsumed
 	}
+	glog.V(10).Infof("capacity consumption value of biggest kafka size of locator '%+v': '%v'", i.locator, biggestKafkaInstanceSizeCapacityConsumption)
 	return biggestKafkaInstanceSizeCapacityConsumption, nil
 }
