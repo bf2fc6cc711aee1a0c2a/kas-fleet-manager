@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
@@ -20,6 +21,8 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
+
+var kafkaStatusesThatNoLongerConsumeResourcesInTheDataPlane = []string{constants.KafkaRequestStatusDeleting.String()}
 
 //go:generate moq -out clusterservice_moq.go . ClusterService
 type ClusterService interface {
@@ -49,6 +52,7 @@ type ClusterService interface {
 	// FindAllClusters return all the valid clusters in array
 	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, error)
 	// FindKafkaInstanceCount returns the kafka instance counts associated with the list of clusters. If the list is empty, it will list all clusterIds that have Kafka instances assigned.
+	// Kafkas that are in deleting state won't be included in the count as they no longer consume resources in the data plane cluster.
 	FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, error)
 	// UpdateMultiClusterStatus updates a list of clusters' status to a status
 	UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
@@ -66,7 +70,8 @@ type ClusterService interface {
 	CheckStrimziVersionReady(cluster *api.Cluster, strimziVersion string) (bool, error)
 	IsStrimziKafkaVersionAvailableInCluster(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error)
 	// FindStreamingUnitCountByClusterAndInstanceType returns kafka streaming unit counts per region, cloud provider, cluster id and instance type.
-	// Data Plane clusters that are in 'failed' state are not included in the response
+	// Data Plane clusters that are in 'failed' state are not included in the response.
+	// Kafkas that are in deleting state won't be included in the count as they no longer consume resources in the data plane cluster.
 	FindStreamingUnitCountByClusterAndInstanceType() (KafkaStreamingUnitCountPerClusterList, error)
 }
 
@@ -396,7 +401,8 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 	var kafkas []*dbapi.KafkaRequest
 
 	query := c.connectionFactory.New().
-		Model(&dbapi.KafkaRequest{})
+		Model(&dbapi.KafkaRequest{}).
+		Where("status not in (?)", kafkaStatusesThatNoLongerConsumeResourcesInTheDataPlane)
 
 	if len(clusterIDs) > 0 {
 		query = query.Where("cluster_id in (?)", clusterIDs)
@@ -782,6 +788,7 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 	if err := dbConn.Model(&dbapi.KafkaRequest{}).
 		Select("cloud_provider, region, count(1) as Count, size_id, cluster_id, instance_type").
 		Group("size_id, cluster_id, cloud_provider, region, instance_type").
+		Where("status not in (?)", kafkaStatusesThatNoLongerConsumeResourcesInTheDataPlane).
 		Scan(&kafkasPerCluster).Error; err != nil {
 		return nil, errors.Wrap(err, "failed to perform count query on kafkas table")
 	}
