@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
@@ -35,7 +34,7 @@ type ConnectorClusterService interface {
 
 	SaveDeployment(ctx context.Context, resource *dbapi.ConnectorDeployment) *errors.ServiceError
 	UpdateDeployment(resource *dbapi.ConnectorDeployment) *errors.ServiceError
-	ListConnectorDeployments(ctx context.Context, clusterId string, filterChannelUpdates string, includeDanglingDeploymentsOnly string, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError)
+	ListConnectorDeployments(ctx context.Context, clusterId string, filterChannelUpdates bool, includeDanglingDeploymentsOnly bool, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError)
 	UpdateConnectorDeploymentStatus(ctx context.Context, status dbapi.ConnectorDeploymentStatus) *errors.ServiceError
 	FindAvailableNamespace(owner string, orgId string, namespaceId *string) (*dbapi.ConnectorNamespace, *errors.ServiceError)
 	GetDeploymentByConnectorId(ctx context.Context, connectorID string) (dbapi.ConnectorDeployment, *errors.ServiceError)
@@ -403,7 +402,7 @@ func GetValidDeploymentColumns() []string {
 }
 
 // ListConnectorDeployments returns all deployments assigned to the cluster
-func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, clusterId string, filterChannelUpdates string, includeDanglingDeploymentsOnly string, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError) {
+func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, clusterId string, filterChannelUpdates bool, includeDanglingDeploymentsOnly bool, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError) {
 	var resourceList dbapi.ConnectorDeploymentList
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector")
@@ -419,10 +418,10 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 	if gtVersion != 0 {
 		dbConn = dbConn.Where("connector_deployments.version > ?", gtVersion)
 	}
-	if boolFilterChannelUpdates, _ := strconv.ParseBool(filterChannelUpdates); boolFilterChannelUpdates {
+	if filterChannelUpdates {
 		dbConn = dbConn.Where("\"ConnectorShardMetadata\".\"latest_revision\" IS NOT NULL")
 	}
-	if boolIncludeDanglingDeploymentsOnly, _ := strconv.ParseBool(includeDanglingDeploymentsOnly); boolIncludeDanglingDeploymentsOnly {
+	if includeDanglingDeploymentsOnly {
 		dbConn = dbConn.Where("\"Connector\".\"deleted_at\" IS NOT NULL")
 	} else {
 		dbConn = dbConn.Where("\"Connector\".\"deleted_at\" IS NULL")
@@ -454,7 +453,8 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 	// execute query
 	if err := dbConn.Find(&resourceList).Error; err != nil {
 		return resourceList, pagingMeta, services.HandleGetError("Connector deployment",
-			fmt.Sprintf("filterChannelUpdates='%s' listArgs='%+v' cluster_id", filterChannelUpdates, listArgs), clusterId, err)
+			fmt.Sprintf("filterChannelUpdates='%v' includeDanglingDeploymentsOnly=%v listArgs='%+v' cluster_id",
+				filterChannelUpdates, includeDanglingDeploymentsOnly, listArgs), clusterId, err)
 	}
 
 	return resourceList, pagingMeta, nil

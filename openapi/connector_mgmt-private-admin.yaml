@@ -493,7 +493,7 @@ paths:
   /api/connector_mgmt/v1/admin/kafka_connector_namespaces/{namespace_id}:
     parameters:
       - name: namespace_id
-        description: The id of the namespace to delete
+        description: The id of the namespace
         schema:
           type: string
         in: path
@@ -543,6 +543,19 @@ paths:
     delete:
       tags:
         - Connector Clusters Admin
+      parameters:
+        - name: namespace_id
+          description: The id of the namespace to delete
+          schema:
+            type: string
+          in: path
+          required: true
+        - name: force
+          description: Flag to force deletion of namespace in Fleet manager if true
+          schema:
+            type: boolean
+          in: query
+          required: false
       responses:
         "204":
           content:
@@ -765,7 +778,7 @@ paths:
         - name: force
           description: Flag to force deletion of connector in Fleet manager if true
           schema:
-            type: string
+            type: boolean
           in: query
           required: false
       responses:

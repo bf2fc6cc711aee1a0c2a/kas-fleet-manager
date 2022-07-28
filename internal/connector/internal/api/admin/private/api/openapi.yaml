@@ -933,6 +933,14 @@ paths:
         schema:
           type: string
         style: simple
+      - description: Flag to force deletion of namespace in Fleet manager if true
+        explode: true
+        in: query
+        name: force
+        required: false
+        schema:
+          type: boolean
+        style: form
       responses:
         "204":
           content:
@@ -976,7 +984,7 @@ paths:
       description: Get a connector namespace
       operationId: getConnectorNamespace
       parameters:
-      - description: The id of the namespace to delete
+      - description: The id of the namespace
         explode: false
         in: path
         name: namespace_id
@@ -1301,7 +1309,7 @@ paths:
         name: force
         required: false
         schema:
-          type: string
+          type: boolean
         style: form
       responses:
         "204":
