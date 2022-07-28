@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -11,15 +10,15 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/golang/glog"
-
-	"gorm.io/gorm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+
+	"github.com/golang/glog"
+	"github.com/pkg/errors"
+	"gorm.io/gorm"
 )
 
 //go:generate moq -out clusterservice_moq.go . ClusterService
@@ -32,7 +31,7 @@ type ClusterService interface {
 	// Update updates a Cluster. Only fields whose value is different than the
 	// zero-value of their corresponding type will be updated
 	Update(cluster api.Cluster) *apiErrors.ServiceError
-	FindCluster(criteria FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError)
+	FindCluster(criteria FindClusterCriteria) (*api.Cluster, error)
 	// FindClusterByID returns the cluster corresponding to the provided clusterID.
 	// If the cluster has not been found nil is returned. If there has been an issue
 	// finding the cluster an error is set
@@ -48,9 +47,9 @@ type ClusterService interface {
 	// ListAllClusterIds returns all the valid cluster ids in array
 	ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError)
 	// FindAllClusters return all the valid clusters in array
-	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *apiErrors.ServiceError)
+	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, error)
 	// FindKafkaInstanceCount returns the kafka instance counts associated with the list of clusters. If the list is empty, it will list all clusterIds that have Kafka instances assigned.
-	FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, *apiErrors.ServiceError)
+	FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, error)
 	// UpdateMultiClusterStatus updates a list of clusters' status to a status
 	UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
 	// CountByStatus returns the count of clusters for each given status in the database
@@ -261,7 +260,7 @@ type FindClusterCriteria struct {
 	SupportedInstanceType string
 }
 
-func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster, error) {
 	dbConn := c.connectionFactory.New()
 
 	var cluster api.Cluster
@@ -286,7 +285,7 @@ func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster,
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to find cluster with criteria")
+		return nil, err
 	}
 
 	return &cluster, nil
@@ -393,7 +392,7 @@ func (c clusterService) GetExternalID(clusterID string) (string, *apiErrors.Serv
 	return cluster.ExternalID, nil
 }
 
-func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, *apiErrors.ServiceError) {
+func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, error) {
 	var kafkas []*dbapi.KafkaRequest
 
 	query := c.connectionFactory.New().
@@ -406,7 +405,7 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 	query = query.Scan(&kafkas)
 
 	if err := query.Error; err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to query by cluster info")
+		return nil, err
 	}
 
 	clusterIdCountMap := map[string]int{}
@@ -416,7 +415,7 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 	for _, k := range kafkas {
 		kafkaInstanceSize, e := c.kafkaConfig.GetKafkaInstanceSize(k.InstanceType, k.SizeId)
 		if e != nil {
-			return nil, apiErrors.NewWithCause(apiErrors.ErrorInstancePlanNotSupported, e, "failed to query kafkas")
+			return nil, e
 		}
 		clusterIdCountMap[k.ClusterID] += kafkaInstanceSize.CapacityConsumed
 	}
@@ -438,7 +437,7 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 	return res, nil
 }
 
-func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *apiErrors.ServiceError) {
+func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 	dbConn := c.connectionFactory.New().
 		Model(&api.Cluster{})
 
@@ -463,7 +462,7 @@ func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cl
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to find all clusters with criteria: %v", clusterDetails)
+		return nil, err
 	}
 
 	return cluster, nil
@@ -740,7 +739,7 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 		Where("status != ?", api.ClusterFailed)
 
 	if err := dbConn.Scan(&clusters).Error; err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to list clusters")
+		return nil, errors.Wrap(err, "failed to list data plane clusters")
 	}
 
 	streamingUnitsCountPerCluster := KafkaStreamingUnitCountPerClusterList{}
@@ -784,13 +783,13 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 		Select("cloud_provider, region, count(1) as Count, size_id, cluster_id, instance_type").
 		Group("size_id, cluster_id, cloud_provider, region, instance_type").
 		Scan(&kafkasPerCluster).Error; err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to perform count query on kafkas table")
+		return nil, errors.Wrap(err, "failed to perform count query on kafkas table")
 	}
 
 	for _, kafkaCountPerCluster := range kafkasPerCluster {
 		instSize, err := c.kafkaConfig.GetKafkaInstanceSize(kafkaCountPerCluster.InstanceType, kafkaCountPerCluster.SizeId)
 		if err != nil {
-			return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get kafka instance size for type '%s' and size '%s'", kafkaCountPerCluster.InstanceType, kafkaCountPerCluster.SizeId)
+			return nil, err
 		}
 
 		streamingUnitCount := int32(instSize.CapacityConsumed) * kafkaCountPerCluster.Count

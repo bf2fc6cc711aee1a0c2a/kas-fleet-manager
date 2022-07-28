@@ -11,9 +11,9 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
 	"github.com/onsi/gomega"
+	"github.com/pkg/errors"
 )
 
 func TestFirstReadyCluster_FindCluster(t *testing.T) {
@@ -38,7 +38,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 				Kafka:                  config.NewKafkaConfig(),
 				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 				ClusterService: &ClusterServiceMock{
-					FindClusterFunc: func(criteria FindClusterCriteria) (cluster *api.Cluster, serviceError *errors.ServiceError) {
+					FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, error) {
 						return &api.Cluster{}, nil
 					},
 				},
@@ -55,7 +55,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 				Kafka:                  config.NewKafkaConfig(),
 				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 				ClusterService: &ClusterServiceMock{
-					FindClusterFunc: func(criteria FindClusterCriteria) (cluster *api.Cluster, serviceError *errors.ServiceError) {
+					FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, error) {
 						return nil, nil
 					},
 				},
@@ -72,8 +72,8 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 				Kafka:                  config.NewKafkaConfig(),
 				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 				ClusterService: &ClusterServiceMock{
-					FindClusterFunc: func(criteria FindClusterCriteria) (cluster *api.Cluster, serviceError *errors.ServiceError) {
-						return nil, errors.NotFound("not found")
+					FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, error) {
+						return nil, errors.New("not found")
 					},
 				},
 			},
@@ -127,12 +127,12 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 					ClusterConfig:               config.NewClusterConfig(config.ClusterList{config.ManualCluster{ClusterId: "test01", Schedulable: true, KafkaInstanceLimit: 3}}),
 				},
 				ClusterService: &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) (cluster []*api.Cluster, serviceError *errors.ServiceError) {
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 						var res []*api.Cluster
 						res = append(res, &api.Cluster{ClusterID: "test01"})
 						return res, nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []ResKafkaInstanceCount, error *errors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIds []string) ([]ResKafkaInstanceCount, error) {
 						var res2 []ResKafkaInstanceCount
 						res2 = append(res2, ResKafkaInstanceCount{Clusterid: "test01", Count: 1})
 						return res2, nil
@@ -157,12 +157,12 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 					ClusterConfig:               config.NewClusterConfig(config.ClusterList{config.ManualCluster{ClusterId: "test01", Schedulable: true, KafkaInstanceLimit: 1}}),
 				},
 				ClusterService: &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) (cluster []*api.Cluster, serviceError *errors.ServiceError) {
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 						var res []*api.Cluster
 						res = append(res, &api.Cluster{ClusterID: "test01"})
 						return res, nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []ResKafkaInstanceCount, error *errors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIds []string) ([]ResKafkaInstanceCount, error) {
 						var res2 []ResKafkaInstanceCount
 						res2 = append(res2, ResKafkaInstanceCount{Clusterid: "test01", Count: 1})
 						return res2, nil
@@ -188,13 +188,13 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 						config.ManualCluster{ClusterId: "test01", Schedulable: true, KafkaInstanceLimit: 1},
 						config.ManualCluster{ClusterId: "test02", Schedulable: true, KafkaInstanceLimit: 3}})},
 				ClusterService: &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) (cluster []*api.Cluster, serviceError *errors.ServiceError) {
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 						var res []*api.Cluster
 						res = append(res, &api.Cluster{ClusterID: "test01"})
 						res = append(res, &api.Cluster{ClusterID: "test02"})
 						return res, nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []ResKafkaInstanceCount, error *errors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIds []string) ([]ResKafkaInstanceCount, error) {
 						var res2 []ResKafkaInstanceCount
 						res2 = append(res2, ResKafkaInstanceCount{Clusterid: "test01", Count: 1})
 						res2 = append(res2, ResKafkaInstanceCount{Clusterid: "test02", Count: 1})
@@ -220,12 +220,12 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 					ClusterConfig:               config.NewClusterConfig(config.ClusterList{config.ManualCluster{ClusterId: "test01", Schedulable: false, KafkaInstanceLimit: 1}}),
 				},
 				ClusterService: &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) (cluster []*api.Cluster, serviceError *errors.ServiceError) {
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 						var res []*api.Cluster
 						res = append(res, &api.Cluster{ClusterID: "test01"})
 						return res, nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []ResKafkaInstanceCount, error *errors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIds []string) ([]ResKafkaInstanceCount, error) {
 						return nil, nil
 					},
 				},
@@ -247,10 +247,10 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 					DataPlaneClusterScalingType: "manual",
 				},
 				ClusterService: &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) (cluster []*api.Cluster, serviceError *errors.ServiceError) {
-						return nil, errors.NotFound("not found")
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
+						return nil, errors.New("not found")
 					},
-					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []ResKafkaInstanceCount, error *errors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIds []string) ([]ResKafkaInstanceCount, error) {
 						return nil, nil
 					},
 				},
@@ -295,24 +295,20 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 	type args struct {
 		kafka *dbapi.KafkaRequest
 	}
-	type wantErr struct {
-		code   errors.ServiceErrorCode
-		reason string
-	}
 
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
 		want    *api.Cluster
-		wantErr *wantErr
+		wantErr error
 	}{
 		{
 			name: "should return an error if getting clusters that matches the given criteria fails",
 			fields: fields{
 				ClusterService: &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *errors.ServiceError) {
-						return nil, errors.GeneralError("failed to find clusters")
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
+						return nil, errors.New("failed to find clusters")
 					},
 				},
 			},
@@ -320,16 +316,16 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 				kafka: mockkafkas.BuildKafkaRequest(),
 			},
 			want: nil,
-			wantErr: &wantErr{
-				code:   errors.ErrorGeneral,
-				reason: "failed to find clusters",
-			},
+			wantErr: errors.Wrapf(errors.New("failed to find clusters"), fmt.Sprintf("failed to find all clusters with criteria '%v'", FindClusterCriteria{
+				MultiAZ: mockkafkas.BuildKafkaRequest().MultiAZ,
+				Status:  api.ClusterReady,
+			})),
 		},
 		{
 			name: "should return an error if getting streaming unit count per region and instance type fails",
 			fields: fields{
 				ClusterService: &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *errors.ServiceError) {
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 						return []*api.Cluster{
 							{
 								ClusterID:           mockkafkas.DefaultClusterID,
@@ -338,7 +334,7 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 						}, nil
 					},
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (KafkaStreamingUnitCountPerClusterList, error) {
-						return KafkaStreamingUnitCountPerClusterList{}, errors.GeneralError("failed to retrieve streaming unit count per region and instance type")
+						return KafkaStreamingUnitCountPerClusterList{}, errors.New("failed to retrieve streaming unit count per region and instance type")
 					},
 				},
 			},
@@ -346,16 +342,16 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 				kafka: mockkafkas.BuildKafkaRequest(),
 			},
 			want: nil,
-			wantErr: &wantErr{
-				code:   errors.ErrorGeneral,
-				reason: "failed to get count of streaming units by region and instance type",
-			},
+			wantErr: errors.Wrapf(errors.New("failed to retrieve streaming unit count per region and instance type"), fmt.Sprintf("failed to get count of streaming units by cluster and instance type for criteria '%v'", FindClusterCriteria{
+				MultiAZ: mockkafkas.BuildKafkaRequest().MultiAZ,
+				Status:  api.ClusterReady,
+			})),
 		},
 		{
 			name: "should return an error if getting the requested kafka instance size fails",
 			fields: fields{
 				ClusterService: &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *errors.ServiceError) {
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 						return []*api.Cluster{
 							{
 								ClusterID:           mockkafkas.DefaultClusterID,
@@ -383,16 +379,17 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 				),
 			},
 			want: nil,
-			wantErr: &wantErr{
-				code:   errors.ErrorGeneral,
-				reason: fmt.Sprintf("failed to get instance size for kafka '%s'", mockkafkas.DefaultKafkaID),
-			},
+			wantErr: errors.Wrapf(errors.New("Unable to find kafka instance type for 'unsupported'"), fmt.Sprintf("failed to get kafka instance size for cluster with criteria '%v'", FindClusterCriteria{
+				MultiAZ:               mockkafkas.BuildKafkaRequest().MultiAZ,
+				Status:                api.ClusterReady,
+				SupportedInstanceType: "unsupported",
+			})),
 		},
 		{
 			name: "should return nil if no clusters matches the given criteria",
 			fields: fields{
 				ClusterService: &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *errors.ServiceError) {
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 						return nil, nil
 					},
 				},
@@ -407,7 +404,7 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 			name: "should return a cluster if it has remaining capacity",
 			fields: fields{
 				ClusterService: &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *errors.ServiceError) {
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 						return []*api.Cluster{
 							{
 								ClusterID:           mockkafkas.DefaultClusterID,
@@ -460,7 +457,7 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 			name: "should return nil if cluster has no remaining capacity",
 			fields: fields{
 				ClusterService: &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *errors.ServiceError) {
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 						return []*api.Cluster{
 							{
 								ClusterID:           mockkafkas.DefaultClusterID,
@@ -510,7 +507,7 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 			name: "should return nil if current and requested kafka goes over cluster capacity limit",
 			fields: fields{
 				ClusterService: &ClusterServiceMock{
-					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *errors.ServiceError) {
+					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 						return []*api.Cluster{
 							{
 								ClusterID:           mockkafkas.DefaultClusterID,
@@ -571,8 +568,7 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 			got, err := f.FindCluster(tt.args.kafka)
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr != nil))
 			if tt.wantErr != nil {
-				g.Expect(err.Code).To(gomega.Equal(tt.wantErr.code))
-				g.Expect(err.Reason).To(gomega.Equal(tt.wantErr.reason))
+				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
 			}
 			g.Expect(got).To(gomega.Equal(tt.want))
 		})

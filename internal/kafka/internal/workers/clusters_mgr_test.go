@@ -171,7 +171,7 @@ func TestClusterManager_reconcile(t *testing.T) {
 					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
 						return []services.ClusterStatusCount{}, nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{}, nil
 					},
 					ListByStatusFunc: func(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
@@ -238,8 +238,8 @@ func TestClusterManager_processMetrics(t *testing.T) {
 					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
 						return []services.ClusterStatusCount{}, nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
-						return nil, apiErrors.GeneralError("failed to find kafka instances count")
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
+						return nil, errors.New("failed to find kafka instances count")
 					},
 				},
 			},
@@ -252,7 +252,7 @@ func TestClusterManager_processMetrics(t *testing.T) {
 					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
 						return []services.ClusterStatusCount{}, nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{}, nil
 					},
 				},
@@ -317,7 +317,7 @@ func TestClusterManager_processDeprovisioningClusters(t *testing.T) {
 							deprovisionCluster,
 						}, nil
 					},
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
 						return &deprovisionCluster, nil
 					},
 					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
@@ -337,7 +337,7 @@ func TestClusterManager_processDeprovisioningClusters(t *testing.T) {
 							deprovisionCluster,
 						}, nil
 					},
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
 						return &deprovisionCluster, nil
 					},
 					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
@@ -661,7 +661,7 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
 						return []services.ClusterStatusCount{}, nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{}, nil
 					},
 					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
@@ -2703,8 +2703,8 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 			name: "should receive error when FindCluster to retrieve sibling cluster returns error",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, &apiErrors.ServiceError{}
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
+						return nil, errors.New("failed to find cluster")
 					},
 					UpdateStatusFunc: nil, // set to nil as it should not be called
 				},
@@ -2716,7 +2716,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 			name: "should update the status back to ready when no sibling cluster found",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
 						return nil, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -2731,7 +2731,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 			name: "receives an error when delete OCM cluster fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
 						return &api.Cluster{ClusterID: "dummy cluster"}, nil
 					},
 					UpdateStatusFunc: nil,
@@ -2747,7 +2747,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 			name: "successful deletion of an OSD cluster when auto configuration is enabled",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
 						return &api.Cluster{ClusterID: "dummy cluster"}, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -3069,7 +3069,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
 								Clusterid: "test02",
@@ -3095,7 +3095,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
 						return nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
 								Clusterid: "test02",
@@ -3121,7 +3121,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
 						return apiErrors.GeneralError("failed to update multi cluster status")
 					},
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
 								Clusterid: "test02",
@@ -3159,7 +3159,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return nil, apiErrors.GeneralError("failed to find kafka instance count")
 					},
 				},
@@ -3180,7 +3180,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
 						return nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{}, nil
 					},
 				},
@@ -3404,7 +3404,7 @@ func TestClusterManager_setKafkaPerClusterCountMetrics(t *testing.T) {
 		{
 			name: "should not return an error with nil counters and no error returned from FindKafkaInstanceCount",
 			fields: fields{
-				clusterService: &services.ClusterServiceMock{FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+				clusterService: &services.ClusterServiceMock{FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 					return nil, nil
 				}},
 			},
@@ -3413,7 +3413,7 @@ func TestClusterManager_setKafkaPerClusterCountMetrics(t *testing.T) {
 		{
 			name: "should return an error when error is returned from FindKafkaInstanceCount",
 			fields: fields{
-				clusterService: &services.ClusterServiceMock{FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+				clusterService: &services.ClusterServiceMock{FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 					return nil, apiErrors.GeneralError("failed to find kafka instance count")
 				}},
 			},
@@ -3423,7 +3423,7 @@ func TestClusterManager_setKafkaPerClusterCountMetrics(t *testing.T) {
 			name: "should return an error when error is returned from GetExternalID",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
 								Clusterid: "test02",
@@ -3442,7 +3442,7 @@ func TestClusterManager_setKafkaPerClusterCountMetrics(t *testing.T) {
 			name: "should successfully set kafka per cluster count metrics",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
 								Clusterid: "test02",
@@ -3461,7 +3461,7 @@ func TestClusterManager_setKafkaPerClusterCountMetrics(t *testing.T) {
 			name: "should not call GetExternalIDFunc when Clusterid is empty",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
 								Clusterid: "",

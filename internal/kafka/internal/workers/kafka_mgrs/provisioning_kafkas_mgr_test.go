@@ -2,6 +2,7 @@ package kafka_mgrs
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -10,7 +11,7 @@ import (
 	mockClusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	mockKafkas "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	svcErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	w "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/onsi/gomega"
 )
@@ -29,8 +30,8 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 			name: "Should throw an error if listing kafkas fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
-						return nil, errors.GeneralError("failed to list kafka requests")
+					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
+						return nil, svcErrors.GeneralError("failed to list kafka requests")
 					},
 				},
 			},
@@ -40,7 +41,7 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 			name: "Should throw an error when updating metrics for reassigning kafka returns an error",
 			fields: fields{
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{
 							ClusterID:                "",
 							AvailableStrimziVersions: mockClusters.AvailableStrimziVersions,
@@ -48,7 +49,7 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
 						return []*dbapi.KafkaRequest{
 							mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 								kafkaRequest.ClusterID = ""
@@ -57,9 +58,9 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 						}, nil
 					},
 					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
-						return errors.GeneralError("test")
+						return svcErrors.GeneralError("test")
 					},
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *svcErrors.ServiceError {
 						return nil
 					},
 				},
@@ -70,7 +71,7 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 			name: "Should not throw an error if listing kafkas returns an empty list",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
 						return []*dbapi.KafkaRequest{}, nil
 					},
 				},
@@ -81,7 +82,7 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 			name: "Should not throw an error when updating metrics for returned kafkas list",
 			fields: fields{
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{
 							ClusterID:                "",
 							AvailableStrimziVersions: mockClusters.AvailableStrimziVersions,
@@ -89,7 +90,7 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
 						return []*dbapi.KafkaRequest{
 							mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 								kafkaRequest.ClusterID = ""
@@ -97,7 +98,7 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 							}),
 						}, nil
 					},
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *svcErrors.ServiceError {
 						return nil
 					},
 					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
@@ -198,7 +199,7 @@ func Test_ProvisioningKafkaManager_reassignProvisioningKafka(t *testing.T) {
 			name: "should return error if no available cluster can be found",
 			fields: fields{
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return nil, nil
 					},
 				},
@@ -215,8 +216,8 @@ func Test_ProvisioningKafkaManager_reassignProvisioningKafka(t *testing.T) {
 			name: "should return error if ClusterPlacementStrategy returns error",
 			fields: fields{
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
-						return nil, errors.GeneralError("test")
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return nil, errors.New("test")
 					},
 				},
 			},
@@ -232,7 +233,7 @@ func Test_ProvisioningKafkaManager_reassignProvisioningKafka(t *testing.T) {
 			name: "should return error if there is an error finding new kafka version",
 			fields: fields{
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{
 							ClusterID:                "test-id",
 							AvailableStrimziVersions: versionsWOkafkaVersion,
@@ -257,7 +258,7 @@ func Test_ProvisioningKafkaManager_reassignProvisioningKafka(t *testing.T) {
 			name: "should return error if there is an error finding new strimzi versions",
 			fields: fields{
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{
 							ClusterID:                "test-id",
 							AvailableStrimziVersions: produceErrorForStrimziVersion,
@@ -282,7 +283,7 @@ func Test_ProvisioningKafkaManager_reassignProvisioningKafka(t *testing.T) {
 			name: "should return an error if available strimzi versions is nil",
 			fields: fields{
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{
 							ClusterID:                "test-id",
 							AvailableStrimziVersions: nil,
@@ -290,7 +291,7 @@ func Test_ProvisioningKafkaManager_reassignProvisioningKafka(t *testing.T) {
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *svcErrors.ServiceError {
 						return nil
 					},
 					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
@@ -310,7 +311,7 @@ func Test_ProvisioningKafkaManager_reassignProvisioningKafka(t *testing.T) {
 			name: "should return error if there is an error finding new kafka IBP version",
 			fields: fields{
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{
 							ClusterID:                "test-id",
 							AvailableStrimziVersions: versionsWOIBPVersion,
@@ -335,7 +336,7 @@ func Test_ProvisioningKafkaManager_reassignProvisioningKafka(t *testing.T) {
 			name: "should return an error if kafka values fail to update.",
 			fields: fields{
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{
 							ClusterID:                "test-id",
 							AvailableStrimziVersions: mockClusters.AvailableStrimziVersions,
@@ -343,8 +344,8 @@ func Test_ProvisioningKafkaManager_reassignProvisioningKafka(t *testing.T) {
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-						return errors.GeneralError("test")
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *svcErrors.ServiceError {
+						return svcErrors.GeneralError("test")
 					},
 					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
 						return nil
@@ -363,7 +364,7 @@ func Test_ProvisioningKafkaManager_reassignProvisioningKafka(t *testing.T) {
 			name: "should successfully assign new field values to kafka",
 			fields: fields{
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{
 							ClusterID:                "test-id",
 							AvailableStrimziVersions: mockClusters.AvailableStrimziVersions,
@@ -371,7 +372,7 @@ func Test_ProvisioningKafkaManager_reassignProvisioningKafka(t *testing.T) {
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *svcErrors.ServiceError {
 						return nil
 					},
 					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {

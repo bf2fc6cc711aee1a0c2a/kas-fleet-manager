@@ -45,16 +45,16 @@ var _ ClusterService = &ClusterServiceMock{}
 // 			DeleteByClusterIDFunc: func(clusterID string) *serviceError.ServiceError {
 // 				panic("mock out the DeleteByClusterID method")
 // 			},
-// 			FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceError.ServiceError) {
+// 			FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 // 				panic("mock out the FindAllClusters method")
 // 			},
-// 			FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, *serviceError.ServiceError) {
+// 			FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, error) {
 // 				panic("mock out the FindCluster method")
 // 			},
 // 			FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *serviceError.ServiceError) {
 // 				panic("mock out the FindClusterByID method")
 // 			},
-// 			FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]ResKafkaInstanceCount, *serviceError.ServiceError) {
+// 			FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]ResKafkaInstanceCount, error) {
 // 				panic("mock out the FindKafkaInstanceCount method")
 // 			},
 // 			FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *serviceError.ServiceError) {
@@ -134,16 +134,16 @@ type ClusterServiceMock struct {
 	DeleteByClusterIDFunc func(clusterID string) *serviceError.ServiceError
 
 	// FindAllClustersFunc mocks the FindAllClusters method.
-	FindAllClustersFunc func(criteria FindClusterCriteria) ([]*api.Cluster, *serviceError.ServiceError)
+	FindAllClustersFunc func(criteria FindClusterCriteria) ([]*api.Cluster, error)
 
 	// FindClusterFunc mocks the FindCluster method.
-	FindClusterFunc func(criteria FindClusterCriteria) (*api.Cluster, *serviceError.ServiceError)
+	FindClusterFunc func(criteria FindClusterCriteria) (*api.Cluster, error)
 
 	// FindClusterByIDFunc mocks the FindClusterByID method.
 	FindClusterByIDFunc func(clusterID string) (*api.Cluster, *serviceError.ServiceError)
 
 	// FindKafkaInstanceCountFunc mocks the FindKafkaInstanceCount method.
-	FindKafkaInstanceCountFunc func(clusterIDs []string) ([]ResKafkaInstanceCount, *serviceError.ServiceError)
+	FindKafkaInstanceCountFunc func(clusterIDs []string) ([]ResKafkaInstanceCount, error)
 
 	// FindNonEmptyClusterByIdFunc mocks the FindNonEmptyClusterById method.
 	FindNonEmptyClusterByIdFunc func(clusterID string) (*api.Cluster, *serviceError.ServiceError)
@@ -636,7 +636,7 @@ func (mock *ClusterServiceMock) DeleteByClusterIDCalls() []struct {
 }
 
 // FindAllClusters calls FindAllClustersFunc.
-func (mock *ClusterServiceMock) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 	if mock.FindAllClustersFunc == nil {
 		panic("ClusterServiceMock.FindAllClustersFunc: method is nil but ClusterService.FindAllClusters was just called")
 	}
@@ -667,7 +667,7 @@ func (mock *ClusterServiceMock) FindAllClustersCalls() []struct {
 }
 
 // FindCluster calls FindClusterFunc.
-func (mock *ClusterServiceMock) FindCluster(criteria FindClusterCriteria) (*api.Cluster, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) FindCluster(criteria FindClusterCriteria) (*api.Cluster, error) {
 	if mock.FindClusterFunc == nil {
 		panic("ClusterServiceMock.FindClusterFunc: method is nil but ClusterService.FindCluster was just called")
 	}
@@ -729,7 +729,7 @@ func (mock *ClusterServiceMock) FindClusterByIDCalls() []struct {
 }
 
 // FindKafkaInstanceCount calls FindKafkaInstanceCountFunc.
-func (mock *ClusterServiceMock) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, error) {
 	if mock.FindKafkaInstanceCountFunc == nil {
 		panic("ClusterServiceMock.FindKafkaInstanceCountFunc: method is nil but ClusterService.FindKafkaInstanceCount was just called")
 	}

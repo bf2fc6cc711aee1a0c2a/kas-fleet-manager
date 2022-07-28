@@ -6,7 +6,6 @@ package services
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -20,7 +19,7 @@ var _ ClusterPlacementStrategy = &ClusterPlacementStrategyMock{}
 //
 // 		// make and configure a mocked ClusterPlacementStrategy
 // 		mockedClusterPlacementStrategy := &ClusterPlacementStrategyMock{
-// 			FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, *serviceError.ServiceError) {
+// 			FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 // 				panic("mock out the FindCluster method")
 // 			},
 // 		}
@@ -31,7 +30,7 @@ var _ ClusterPlacementStrategy = &ClusterPlacementStrategyMock{}
 // 	}
 type ClusterPlacementStrategyMock struct {
 	// FindClusterFunc mocks the FindCluster method.
-	FindClusterFunc func(kafka *dbapi.KafkaRequest) (*api.Cluster, *serviceError.ServiceError)
+	FindClusterFunc func(kafka *dbapi.KafkaRequest) (*api.Cluster, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -45,7 +44,7 @@ type ClusterPlacementStrategyMock struct {
 }
 
 // FindCluster calls FindClusterFunc.
-func (mock *ClusterPlacementStrategyMock) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, *serviceError.ServiceError) {
+func (mock *ClusterPlacementStrategyMock) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 	if mock.FindClusterFunc == nil {
 		panic("ClusterPlacementStrategyMock.FindClusterFunc: method is nil but ClusterPlacementStrategy.FindCluster was just called")
 	}

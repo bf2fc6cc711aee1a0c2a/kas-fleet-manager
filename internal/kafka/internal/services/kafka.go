@@ -244,7 +244,7 @@ func (k *kafkaService) GetAvailableSizesInRegion(criteria *FindClusterCriteria) 
 			cluster, err := k.clusterPlacementStrategy.FindCluster(kafka)
 			if err != nil {
 				logger.Logger.Error(err)
-				return nil, err
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find data plane cluster for kafka with criteria '%v'", criteria)
 			}
 
 			if cluster != nil {
@@ -347,8 +347,13 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 
 	cluster, e := k.clusterPlacementStrategy.FindCluster(kafkaRequest)
 	if e != nil || cluster == nil {
-		msg := fmt.Sprintf("No available cluster found for '%s' Kafka instance in region: '%s'", kafkaRequest.InstanceType, kafkaRequest.Region)
-		logger.Logger.Infof(msg)
+		msg := fmt.Sprintf("No available cluster found for Kafka instance type '%s' in region '%s'", kafkaRequest.InstanceType, kafkaRequest.Region)
+		if e != nil {
+			logger.Logger.Error(fmt.Errorf("%s:%w", msg, e))
+		} else {
+			logger.Logger.Infof(msg)
+		}
+
 		return errors.TooManyKafkaInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType))
 	}
 
