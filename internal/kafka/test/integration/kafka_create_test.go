@@ -219,13 +219,35 @@ func TestKafkaCreate_ManualScaling(t *testing.T) {
 func TestKafkaCreate_DynamicScaling(t *testing.T) {
 	g := gomega.NewWithT(t)
 
+	standardInstanceTypeRegionLimit := 2
+	developerInstanceTypeRegionLimit := 0
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
-
 	var enableAutoscale bool
-	h, client, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig) {
+	h, client, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, providerConfig *config.ProviderConfig) {
 		if enableAutoscale {
 			d.DataPlaneClusterScalingType = config.AutoScaling
+		}
+
+		providerConfig.ProvidersConfig.SupportedProviders = config.ProviderList{
+			config.Provider{
+				Name:    "aws",
+				Default: true,
+				Regions: config.RegionList{
+					config.Region{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: config.InstanceTypeMap{
+							"standard": config.InstanceTypeConfig{
+								Limit: &standardInstanceTypeRegionLimit,
+							},
+							"developer": config.InstanceTypeConfig{
+								Limit: &developerInstanceTypeRegionLimit,
+							},
+						},
+					},
+				},
+			},
 		}
 	})
 	defer teardown()
@@ -361,7 +383,7 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 			setup: func() {
 				// Create dummy Kafkas to fill up the cluster capacity
 				dummyKafkas := []*dbapi.KafkaRequest{}
-				for i := 1; i <= int(kasfleetshardsync.StandardCapacityInfo.MaxUnits); i++ {
+				for i := 1; i <= int(standardInstanceTypeRegionLimit); i++ {
 					dummyKafkas = append(dummyKafkas, mockkafkas.BuildKafkaRequest(
 						mockkafkas.WithPredefinedTestValues(),
 						mockkafkas.With(mockkafkas.NAME, fmt.Sprintf("dummy-kafka-%d", i)),

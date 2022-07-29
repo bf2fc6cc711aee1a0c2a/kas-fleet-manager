@@ -24,6 +24,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	clusterMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
@@ -1224,13 +1225,26 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	mockKasfFleetshardSync.Start()
 	defer mockKasfFleetshardSync.Stop()
 
-	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
-	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
+	cluster := clusterMocks.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = "standard,developer"
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = "some-cluster-id"
+		cluster.Status = api.ClusterReady
+		cluster.Region = mocks.MockCluster.Region().ID()
+		cluster.CloudProvider = mocks.MockCluster.CloudProvider().ID()
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+	})
+
+	// setup pre-requisites to performing requests
+	db := test.TestServices.DBFactory.New()
+	err := db.Create(cluster).Error
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	// this value is taken from config/quota-management-list-configuration.yaml
 	orgIdWithLimitOfOne := "12147054"
