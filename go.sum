@@ -722,8 +722,8 @@ github.com/onsi/gomega v1.17.0/go.mod h1:HnhC7FXeEQY45zxNK3PPoIUhzk/80Xly9PcubAl
 github.com/onsi/gomega v1.19.0/go.mod h1:LY+I3pBVzYsTBU1AnDwOSxaYi9WoWiqgwooUqq9yPro=
 github.com/onsi/gomega v1.20.0 h1:8W0cWlwFkflGPLltQvLRB7ZVD5HuP6ng320w2IS245Q=
 github.com/onsi/gomega v1.20.0/go.mod h1:DtrZpjmvpn2mPm4YWQa0/ALMDj9v4YxLgojwPeREyVo=
-github.com/openshift-online/ocm-sdk-go v0.1.275 h1:GGtz0cR5OR9GhAxJc/Xsm1aTMzv+GUeLVOlQAEmxXOI=
-github.com/openshift-online/ocm-sdk-go v0.1.275/go.mod h1:KYOw8kAKAHyPrJcQoVR82CneQ4ofC02Na4cXXaTq4Nw=
+github.com/openshift-online/ocm-sdk-go v0.1.278 h1:TvEQRK2qlZEyKPpV7a++llw/VHJyWg2q2XZSc5NAedQ=
+github.com/openshift-online/ocm-sdk-go v0.1.278/go.mod h1:KYOw8kAKAHyPrJcQoVR82CneQ4ofC02Na4cXXaTq4Nw=
 github.com/openshift/api v3.9.0+incompatible h1:fJ/KsefYuZAjmrr3+5U9yZIZbTOpVkDDLDLFresAeYs=
 github.com/openshift/api v3.9.0+incompatible/go.mod h1:dh9o4Fs58gpFXGSYfnVxGR9PnV53I8TW84pQaJDdGiY=
 github.com/opentracing/opentracing-go v1.2.0 h1:uEJPy/1a5RIPAJ0Ov+OIO8OxWu77jEv+1B0VhjKrZUs=
