@@ -33,6 +33,11 @@ Feature: create a connector
       }
       """
 
+    When I GET path "/v1/kafka_connector_clusters/${cluster_id}/addon_parameters"
+    Then the response code should be 200
+    And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
+    And I remember keycloak client for cleanup with clientID: ${clientID}
+
     When I GET path "/v1/kafka_connector_clusters"
     Then the response code should be 200
     And the ".kind" selection from the response should match "ConnectorClusterList"
@@ -116,7 +121,7 @@ Feature: create a connector
     Then the response code should be 204
     And the response should match ""
 
-    # wait for cluster namespaces to be deleted first
+    # wait for cluster cleanup
     Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${cluster_id}" response code to match "410"
     When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 410
@@ -131,3 +136,4 @@ Feature: create a connector
         "reason": "Connector cluster with id='${cluster_id}' has been deleted"
       }
       """
+    And I can forget keycloak clientID: ${clientID}

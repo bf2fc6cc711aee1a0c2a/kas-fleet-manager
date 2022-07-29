@@ -3,13 +3,13 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
+	"github.com/golang/glog"
 	"net/url"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
-
-	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
@@ -128,6 +128,26 @@ func (s *extender) rememberKeycloakClientForCleanup(clientID string) error {
 	return nil
 }
 
+func (s *extender) forgetKeycloakClientForCleanup(clientID string) error {
+	clientIDValue, ok := s.Variables[clientID]
+	if !ok {
+		return fmt.Errorf("unknown variable %s", clientID)
+	}
+	missing := true
+	s.Variables[clientIdList] = arrays.FilterStringSlice(s.Variables[clientIdList].([]string), func(s string) bool {
+		if s != clientIDValue {
+			return true
+		} else {
+			missing = false
+		}
+		return false
+	})
+	if missing {
+		return fmt.Errorf("unknown clientId %s", clientID)
+	}
+	return nil
+}
+
 func (s *extender) updateConnectorCatalogOfTypeAndChannelWithShardMetadata(connectorTypeId, channel string, metadata *godog.DocString) error {
 	content, err := s.Expand(metadata.Content, []string{"defs", "ref"})
 	if err != nil {
@@ -175,6 +195,7 @@ func init() {
 		ctx.Step(`^I reset the vault counters$`, e.iResetTheVaultCounters)
 		ctx.Step(`^update connector catalog of type "([^"]*)" and channel "([^"]*)" with shard metadata:$`, e.updateConnectorCatalogOfTypeAndChannelWithShardMetadata)
 		ctx.Step(`I remember keycloak client for cleanup with clientID: \${([^"]*)}$`, e.rememberKeycloakClientForCleanup)
+		ctx.Step(`I can forget keycloak clientID: \${([^"]*)}$`, e.forgetKeycloakClientForCleanup)
 		ctx.Step(`^I delete the unused and not in catalog connector types$`, e.iDeleteUnusedAndNotInCatalogConnectorTypes)
 
 		ctx.AfterScenario(e.deleteKeycloakClients)
