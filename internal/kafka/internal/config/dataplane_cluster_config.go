@@ -42,6 +42,7 @@ type DataplaneClusterConfig struct {
 	ClusterConfig                               *ClusterConfig
 	EnableReadyDataPlaneClustersReconcile       bool
 	EnableKafkaSreIdentityProviderConfiguration bool
+	EnableDynamicScaleUpManagerScaleUpTrigger   bool
 	Kubeconfig                                  string
 	RawKubernetesConfig                         *clientcmdapi.Config
 	StrimziOperatorOLMConfig                    OperatorInstallationConfig
@@ -90,6 +91,7 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 		ClusterConfig:                               &ClusterConfig{},
 		EnableReadyDataPlaneClustersReconcile:       true,
 		EnableKafkaSreIdentityProviderConfiguration: true,
+		EnableDynamicScaleUpManagerScaleUpTrigger:   true,
 		Kubeconfig:                                  getDefaultKubeconfig(),
 		StrimziOperatorOLMConfig: OperatorInstallationConfig{
 			IndexImage:             "quay.io/osd-addons/managed-kafka:production-82b42db",
