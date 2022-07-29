@@ -93,10 +93,10 @@ func (m *ClusterManager) doReconcile(errs *[]error, kind string,
 		}
 
 		if len(serrs) != 0 {
-			return errors.GeneralError("Error reconciling %s clusters: %s", kind, serrs)
+			return errors.GeneralError("Error reconciling %s clusters: %v", kind, serrs)
 		}
 		return nil
 	}); derr != nil {
-		glog.Errorf("Error reconciling %s clusters: %s", kind, err)
+		glog.Errorf("Error reconciling %s clusters: %v", kind, derr)
 	}
 }

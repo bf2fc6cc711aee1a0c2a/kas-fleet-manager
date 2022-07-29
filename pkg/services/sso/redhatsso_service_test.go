@@ -696,8 +696,14 @@ func TestRedhatSSOService__DeRegisterConnectorFleetshardOperatorServiceAccount(t
 
 func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
 
+	testAcctId := "test-id"
+	testCanaryClientId := "canary-test"
+	testKasClientId := "kas-fleetshard-agent-test"
+	testCosClientId := "connector-fleetshard-agent-test"
+
 	type fields struct {
 		kcClient redhatsso.SSOClient
+		clientId string
 	}
 	tests := []struct {
 		name       string
@@ -714,6 +720,7 @@ func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
 						return "", pkgErr.New("token error")
 					},
 				},
+				clientId: "account-id",
 			},
 			wantErr: true,
 		},
@@ -728,6 +735,7 @@ func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
 						return nil
 					},
 				},
+				clientId: "account-id",
 			},
 			wantErr: false,
 		},
@@ -742,6 +750,7 @@ func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
 						return nil
 					},
 				},
+				clientId: "account-id",
 			},
 			wantErr: false,
 		},
@@ -756,8 +765,86 @@ func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
 						return fmt.Errorf("internal server error")
 					},
 				},
+				clientId: "account-id",
 			},
 			wantErr: true,
+		},
+		{
+			name: "looks up service account by client id for prefix canary",
+			fields: fields{
+				kcClient: &redhatsso.SSOClientMock{
+					GetTokenFunc: func() (string, error) {
+						return "", nil
+					},
+					GetServiceAccountsFunc: func(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error) {
+						return []serviceaccountsclient.ServiceAccountData{{
+							Id:          &testAcctId,
+							ClientId:    &testCanaryClientId,
+							Secret:      nil,
+							Name:        nil,
+							Description: nil,
+							CreatedBy:   nil,
+							CreatedAt:   nil,
+						}}, nil
+					},
+					DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
+						if clientId != testAcctId {
+							return fmt.Errorf("unexpected client id %s", clientId)
+						}
+						return nil
+					},
+				},
+				clientId: testCanaryClientId,
+			},
+			wantErr: false,
+		},
+		{
+			name: "looks up service account by client id for prefix kas-fleetshard-agent",
+			fields: fields{
+				kcClient: &redhatsso.SSOClientMock{
+					GetTokenFunc: func() (string, error) {
+						return "", nil
+					},
+					GetServiceAccountsFunc: func(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error) {
+						return []serviceaccountsclient.ServiceAccountData{{
+							Id:       &testAcctId,
+							ClientId: &testKasClientId,
+						}}, nil
+					},
+					DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
+						if clientId != testAcctId {
+							return fmt.Errorf("unexpected client id %s", clientId)
+						}
+						return nil
+					},
+				},
+				clientId: testKasClientId,
+			},
+			wantErr: false,
+		},
+		{
+			name: "looks up service account by client id for prefix connector-fleetshard-agent",
+			fields: fields{
+				kcClient: &redhatsso.SSOClientMock{
+					GetTokenFunc: func() (string, error) {
+						return "", nil
+					},
+					GetServiceAccountsFunc: func(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error) {
+						return []serviceaccountsclient.ServiceAccountData{{
+							Id:       &testAcctId,
+							ClientId: &testCosClientId,
+						}}, nil
+					},
+					DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
+						if clientId != testAcctId {
+							return fmt.Errorf("unexpected client id %s", clientId)
+						}
+						return nil
+					},
+				},
+				clientId: testCosClientId,
+			},
+			wantErr: false,
 		},
 	}
 
@@ -770,7 +857,7 @@ func TestRedhatSSOService_DeleteServiceAccountInternal(t *testing.T) {
 				getToken: tt.fields.kcClient.GetToken,
 				service:  &redhatssoService{client: tt.fields.kcClient},
 			}
-			err := keycloakService.DeleteServiceAccountInternal("account-id")
+			err := keycloakService.DeleteServiceAccountInternal(tt.fields.clientId)
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
