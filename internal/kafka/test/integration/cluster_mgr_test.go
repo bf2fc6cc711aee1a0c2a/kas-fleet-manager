@@ -57,6 +57,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 		// turn auto scaling on to enable cluster auto creation
 		d.DataPlaneClusterScalingType = config.AutoScaling
+		d.EnableDynamicScaleUpManagerScaleUpTrigger = true
 	})
 
 	// setup required services

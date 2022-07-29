@@ -49,7 +49,6 @@ func NewDynamicScaleUpManager(
 
 		ClusterService: clusterService,
 	}
-
 }
 
 func (m *DynamicScaleUpManager) Start() {
@@ -100,7 +99,7 @@ func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
 					kafkaStreamingUnitCountPerClusterList: kafkaStreamingUnitCountPerClusterList,
 					supportedKafkaInstanceTypesConfig:     &m.KafkaConfig.SupportedInstanceTypes.Configuration,
 					clusterService:                        m.ClusterService,
-					dryRun:                                false,
+					dryRun:                                !m.DataplaneClusterConfig.EnableDynamicScaleUpManagerScaleUpTrigger,
 				}
 				glog.Infof("evaluating dynamic scale up for locator '%+v'", currLocator)
 				shouldScaleUp, err := dynamicScaleUpProcessor.ShouldScaleUp()
