@@ -56,6 +56,7 @@ const (
 	mkSRERoleBindingName            = "kafka-sre-cluster-admin"
 	dedicatedReadersRoleBindingName = "dedicated-readers"
 	clusterAdminRoleName            = "cluster-admin"
+	kafkaInstanceProfileType        = "bf2.org/kafkaInstanceProfileType"
 )
 
 var clusterMetricsStatuses = []api.ClusterStatus{
@@ -1089,11 +1090,11 @@ func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supported
 		return nil, fmt.Errorf("No dynamic scaling configuration found for instance type '%s'", supportedInstanceType)
 	}
 	machinePoolLabels := map[string]string{
-		"bf2.org/kafkaInstanceProfile": supportedInstanceType,
+		kafkaInstanceProfileType: supportedInstanceType,
 	}
 	machinePoolTaint := types.CluserNodeTaint{
 		Effect: "NoExecute",
-		Key:    "bf2.org/kafkaInstanceProfileType",
+		Key:    kafkaInstanceProfileType,
 		Value:  supportedInstanceType,
 	}
 	machinePoolTaints := []types.CluserNodeTaint{machinePoolTaint}
