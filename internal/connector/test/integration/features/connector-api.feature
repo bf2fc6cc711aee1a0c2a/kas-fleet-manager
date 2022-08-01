@@ -483,6 +483,7 @@ Feature: create a connector
             "id": "OldConnectorTypeStillInUseId",
             "kind": "ConnectorType",
             "name": "Old Connector Type still in use",
+            "schema": null,
             "version": ""
           }
         ],
