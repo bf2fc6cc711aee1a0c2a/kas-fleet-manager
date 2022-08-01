@@ -220,6 +220,7 @@ func (k *kafkaService) GetAvailableSizesInRegion(criteria *FindClusterCriteria) 
 		return nil, err
 	}
 
+	indexOfBiggestKafkaSizeAllowed := -1
 	// The kafka size list configuration must always be ordered starting with the smallest unit.
 	// The following finds the largest Kafka size that is still available in this region. Anything smaller than this
 	// size will also be considered as available to create with the remaining capacity.
@@ -239,24 +240,31 @@ func (k *kafkaService) GetAvailableSizesInRegion(criteria *FindClusterCriteria) 
 			return nil, err
 		}
 
-		if hasCapacity {
+		if hasCapacity && k.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
+			indexOfBiggestKafkaSizeAllowed = i
+			break
+		}
+		if hasCapacity && !k.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
 			// Check if there is an available cluster in the region that can fit this Kafka instance type and size
 			cluster, err := k.clusterPlacementStrategy.FindCluster(kafka)
 			if err != nil {
 				logger.Logger.Error(err)
 				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find data plane cluster for kafka with criteria '%v'", criteria)
 			}
-
 			if cluster != nil {
-				var availableSizes []string
-				for _, size := range instanceType.Sizes[0 : i+1] {
-					availableSizes = append(availableSizes, size.Id)
-				}
-				return availableSizes, nil
+				indexOfBiggestKafkaSizeAllowed = i
+				break
 			}
 		}
 	}
-	return nil, nil
+
+	var availableSizes []string
+	if indexOfBiggestKafkaSizeAllowed != -1 {
+		for _, size := range instanceType.Sizes[0 : indexOfBiggestKafkaSizeAllowed+1] {
+			availableSizes = append(availableSizes, size.Id)
+		}
+	}
+	return availableSizes, nil
 }
 
 func (k *kafkaService) AssignInstanceType(owner string, organisationId string) (types.KafkaInstanceType, *errors.ServiceError) {
