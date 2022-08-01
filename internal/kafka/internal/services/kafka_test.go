@@ -77,6 +77,13 @@ func buildDataplaneClusterConfig(clusters []config.ManualCluster) *config.Datapl
 	return dataplane
 }
 
+func buildDataplaneClusterConfigWithAutoscalingOn() *config.DataplaneClusterConfig {
+	dataplane := config.NewDataplaneClusterConfig()
+	dataplane.DataPlaneClusterScalingType = config.AutoScaling
+	dataplane.ClusterConfig = config.NewClusterConfig(config.ClusterList{})
+	return dataplane
+}
+
 func buildManualCluster(kafkaInstanceLimit int, supportedInstanceType, region string) config.ManualCluster {
 	return config.ManualCluster{
 		Name:                  api.NewID(),
@@ -1221,6 +1228,94 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
 				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, 0, 0, false),
+				kafkaConfig:            defaultKafkaConf,
+				clusterService:         nil,
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return nil, nil
+					},
+				},
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "fake-subscription-id", nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.STANDARD.String()
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.InstanceType = types.STANDARD.String()
+					})))
+				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			error: errorCheck{
+				wantErr:  true,
+				code:     errors.ErrorTooManyKafkaInstancesReached,
+				httpCode: http.StatusForbidden,
+			},
+		},
+		{
+			name: "registering kafka successfully when we are on dynamic scaling mode, region limits have not been reached but there is no cluster found to assign the Kafka to",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				dataplaneClusterConfig: buildDataplaneClusterConfigWithAutoscalingOn(),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, 2, 0, false),
+				kafkaConfig:            defaultKafkaConf,
+				clusterService:         nil,
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return nil, nil
+					},
+				},
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "fake-subscription-id", nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.STANDARD.String()
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.InstanceType = types.STANDARD.String()
+					})))
+				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			error: errorCheck{
+				wantErr: false,
+			},
+		},
+		{
+			name: "registering kafka fails when we are on dynamic scaling mode and region limits have been reached",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				dataplaneClusterConfig: buildDataplaneClusterConfigWithAutoscalingOn(),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, 1, 0, false),
 				kafkaConfig:            defaultKafkaConf,
 				clusterService:         nil,
 				clusterPlmtStrategy: &ClusterPlacementStrategyMock{

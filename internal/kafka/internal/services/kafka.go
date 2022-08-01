@@ -314,7 +314,14 @@ func (k *kafkaService) reserveQuota(kafkaRequest *dbapi.KafkaRequest) (subscript
 	return subscriptionId, err
 }
 
-// RegisterKafkaJob registers a new job in the kafka table
+// RegisterKafkaJob registers a new job in the kafka table.
+// Before accepting the Kafka, the following checks are performed:
+// That the user has quota to create the requested instance type. If not the Kafka registration is rejected.
+// That the region limits have not been reached. If yes, then the Kafka registration is rejected.
+// If region limits have not been reached and if the scaling mode is dynamic scaling, then the kafka registration is accepted.
+// This means that kafka will be assigned to the data plane cluster when there is one available in the reconciliation step.
+// If region limits have not been reached and if the scaling mode is manual, then we check if there is a cluster that has capacity left
+// to accomodate this Kafka. If so, the registration of the kafka is accepted. Otherwise, it is rejected.
 func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -345,19 +352,22 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 		return errors.TooManyKafkaInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType))
 	}
 
-	cluster, e := k.clusterPlacementStrategy.FindCluster(kafkaRequest)
-	if e != nil || cluster == nil {
-		msg := fmt.Sprintf("No available cluster found for Kafka instance type '%s' in region '%s'", kafkaRequest.InstanceType, kafkaRequest.Region)
-		if e != nil {
-			logger.Logger.Error(fmt.Errorf("%s:%w", msg, e))
-		} else {
-			logger.Logger.Infof(msg)
+	if !k.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
+		cluster, e := k.clusterPlacementStrategy.FindCluster(kafkaRequest)
+		if e != nil || cluster == nil {
+			msg := fmt.Sprintf("No available cluster found for Kafka instance type '%s' in region '%s'", kafkaRequest.InstanceType, kafkaRequest.Region)
+			if e != nil {
+				logger.Logger.Error(fmt.Errorf("%s:%w", msg, e))
+			} else {
+				logger.Logger.Infof(msg)
+			}
+
+			return errors.TooManyKafkaInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType))
 		}
 
-		return errors.TooManyKafkaInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType))
+		kafkaRequest.ClusterID = cluster.ClusterID
 	}
 
-	kafkaRequest.ClusterID = cluster.ClusterID
 	subscriptionId, err := k.reserveQuota(kafkaRequest)
 
 	if err != nil {

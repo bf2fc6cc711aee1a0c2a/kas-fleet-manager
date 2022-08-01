@@ -42,9 +42,13 @@ const (
 	// might be in provisioning state while receiving 5XX errors
 	KafkaMaxDurationWithProvisioningErrs = 5 * time.Minute
 
-	// AcceptedKafkaMaxRetryDuration the maximum duration, in minutes, where KAS Fleet Manager
-	// will retry reconciliation of a Kafka request in an 'accepted' state
-	AcceptedKafkaMaxRetryDuration = 5 * time.Minute
+	// AcceptedKafkaMaxRetryDurationWhileWaitingForStrimziVersion the maximum duration, in minutes, where KAS Fleet Manager
+	// will retry reconciliation of a Kafka request in an 'accepted' state in order to assign strimzi, kafka and kafka ibp versions
+	AcceptedKafkaMaxRetryDurationWhileWaitingForStrimziVersion = 5 * time.Minute
+
+	// AcceptedKafkaMaxRetryDurationWhileWaitingForClusterAssignment the maximum duration, in hours, where KAS Fleet Manager
+	// will retry reconciliation of a Kafka request in an 'accepted' state in order to assign it into a data plane cluster.
+	AcceptedKafkaMaxRetryDurationWhileWaitingForClusterAssignment = 1 * time.Hour
 )
 
 // ordinals - Used to decide if a status comes after or before a given state
