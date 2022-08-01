@@ -2543,6 +2543,8 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 	defaultCluster := buildManualCluster(1, api.AllInstanceTypeSupport.String(), testKafkaRequestRegion)
 	defaultDataplaneClusterConfig := []config.ManualCluster{defaultCluster}
 
+	dynamicScalingEnabledDataplaneClusterConfig := config.NewDataplaneClusterConfig()
+	dynamicScalingEnabledDataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 	testCriteria := &FindClusterCriteria{
 		Provider:              defaultCluster.CloudProvider,
 		Region:                defaultCluster.Region,
@@ -2560,7 +2562,7 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 		setupFn     func()
 	}{
 		{
-			name: "should return all available sizes in region if capacity and limit has not been reached",
+			name: "when dynamic scaling is disabled, should return all available sizes in region if capacity and limit have not been reached",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				kafkaConfig:            &defaultKafkaConf,
@@ -2583,6 +2585,89 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
 					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
 					WithReply(nil)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "when dynamic scaling is enabled, should return all available sizes in region if limit has not been reached even when there is no cluster capacity",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: api.StandardTypeSupport.String(),
+									Sizes: []config.KafkaInstanceSize{
+										config.KafkaInstanceSize{
+											Id:               "x1",
+											CapacityConsumed: 1,
+										},
+										config.KafkaInstanceSize{
+											Id:               "x2",
+											CapacityConsumed: 2,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				dataplaneClusterConfig: dynamicScalingEnabledDataplaneClusterConfig,
+				providerConfig:         buildProviderConfiguration("us-east-1", 1000, 1000, false),
+				clusterPlacementStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return nil, nil
+					},
+				},
+			},
+			args: args{
+				criteria: testCriteria,
+			},
+			result:  []string{"x1", "x2"},
+			wantErr: false,
+			setupFn: func() {
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
+					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
+					WithReply(nil)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "when dynamic scaling is enabled, should return nil if region limit has been reached",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				kafkaConfig:            &defaultKafkaConf,
+				dataplaneClusterConfig: dynamicScalingEnabledDataplaneClusterConfig,
+				providerConfig:         buildProviderConfiguration("us-east-1", 1, 1, false),
+				clusterPlacementStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return mocks.BuildCluster(nil), nil
+					},
+				},
+			},
+			args: args{
+				criteria: testCriteria,
+			},
+			result:  nil,
+			wantErr: false,
+			setupFn: func() {
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
+					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
+					WithReply([]map[string]interface{}{
+						{
+							"region":         testCriteria.Region,
+							"cloud_provider": testCriteria.Provider,
+							"multi_az":       testCriteria.MultiAZ,
+							"name":           testKafkaRequestName,
+							"size_id":        "x1",
+							"instance_type":  testCriteria.SupportedInstanceType,
+						},
+					})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
