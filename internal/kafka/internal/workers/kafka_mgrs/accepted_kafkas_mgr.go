@@ -8,6 +8,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/google/uuid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -20,26 +22,24 @@ import (
 // AcceptedKafkaManager represents a kafka manager that periodically reconciles accepted kafka requests.
 type AcceptedKafkaManager struct {
 	workers.BaseWorker
-	kafkaService           services.KafkaService
-	quotaServiceFactory    services.QuotaServiceFactory
-	dataPlaneClusterConfig *config.DataplaneClusterConfig
-	clusterPlmtStrategy    services.ClusterPlacementStrategy
-	clusterService         services.ClusterService
+	kafkaService             services.KafkaService
+	dataPlaneClusterConfig   *config.DataplaneClusterConfig
+	clusterPlacementStrategy services.ClusterPlacementStrategy
+	clusterService           services.ClusterService
 }
 
 // NewAcceptedKafkaManager creates a new kafka manager to reconcile accepted kafkas.
-func NewAcceptedKafkaManager(kafkaService services.KafkaService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, dataPlaneClusterConfig *config.DataplaneClusterConfig, clusterService services.ClusterService, reconciler workers.Reconciler) *AcceptedKafkaManager {
+func NewAcceptedKafkaManager(kafkaService services.KafkaService, clusterPlacementStrategy services.ClusterPlacementStrategy, dataPlaneClusterConfig *config.DataplaneClusterConfig, clusterService services.ClusterService, reconciler workers.Reconciler) *AcceptedKafkaManager {
 	return &AcceptedKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "accepted_kafka",
 			Reconciler: reconciler,
 		},
-		kafkaService:           kafkaService,
-		quotaServiceFactory:    quotaServiceFactory,
-		clusterPlmtStrategy:    clusterPlmtStrategy,
-		dataPlaneClusterConfig: dataPlaneClusterConfig,
-		clusterService:         clusterService,
+		kafkaService:             kafkaService,
+		clusterPlacementStrategy: clusterPlacementStrategy,
+		dataPlaneClusterConfig:   dataPlaneClusterConfig,
+		clusterService:           clusterService,
 	}
 }
 
@@ -78,35 +78,86 @@ func (k *AcceptedKafkaManager) Reconcile() []error {
 }
 
 func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest) error {
-	cluster, e := k.clusterService.FindClusterByID(kafka.ClusterID)
-	if cluster == nil || e != nil {
-		return errors.Wrapf(e, "failed to find cluster with '%s' for kafka request '%s'", kafka.ClusterID, kafka.ID)
+	var cluster *api.Cluster
+	kafkaAlreadyAssignedInADataPlaneCluster := kafka.ClusterID != ""
+	if !kafkaAlreadyAssignedInADataPlaneCluster {
+		assignedCluster, err := k.clusterPlacementStrategy.FindCluster(kafka)
+		if err != nil {
+			return errors.Wrapf(err, "failed to find cluster for kafka request %s", kafka.ID)
+		}
+		if assignedCluster == nil {
+			return k.markTheUnassignedKafkaAsFailedOrAllowRetryClusterPlacementReconciliation(kafka)
+		}
+		kafka.ClusterID = assignedCluster.ClusterID
+		cluster = assignedCluster
+	} else {
+		foundCluster, e := k.clusterService.FindClusterByID(kafka.ClusterID)
+		if foundCluster == nil || e != nil {
+			return errors.Wrapf(e, "failed to find cluster with '%s' for kafka request '%s'", kafka.ClusterID, kafka.ID)
+		}
+		cluster = foundCluster
 	}
 
 	latestReadyStrimziVersion, err := cluster.GetLatestAvailableAndReadyStrimziVersion()
-	if err != nil || latestReadyStrimziVersion == nil {
-		// Strimzi version may not be available at the start (i.e. during upgrade of Strimzi operator).
-		// We need to allow the reconciler to retry getting and setting of the desired strimzi version for a Kafka request
-		// until the max retry duration is reached before updating its status to 'failed'.
-		durationSinceCreation := time.Since(kafka.CreatedAt)
-		if durationSinceCreation < constants2.AcceptedKafkaMaxRetryDuration {
-			glog.V(10).Infof("No available and ready strimzi version found for Kafka '%s' in Cluster ID '%s'", kafka.ID, kafka.ClusterID)
-			return nil
-		}
-		kafka.Status = constants2.KafkaRequestStatusFailed.String()
-		if err != nil {
-			err = errors.Wrapf(err, "failed to get desired Strimzi version %s", kafka.ID)
-		} else {
-			err = errors.New(fmt.Sprintf("failed to get desired Strimzi version %s", kafka.ID))
-		}
-		kafka.FailedReason = err.Error()
-		if err2 := k.kafkaService.Update(kafka); err2 != nil {
-			return errors.Wrapf(err2, "failed to update failed kafka %s", kafka.ID)
-		}
-		return err
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get latest available ready strimzi version for cluster %s", cluster.ClusterID)
 	}
-	kafka.DesiredStrimziVersion = latestReadyStrimziVersion.Version
 
+	noLatestReadyStrimziVersionFound := latestReadyStrimziVersion == nil
+	if noLatestReadyStrimziVersionFound {
+		return k.markTheAssignedKafkaAsFailedOrAllowRetryStrimziVersionPickingReconciliation(kafka)
+	}
+
+	versionAssignementError := k.assignDesiredKafkaVersions(kafka, latestReadyStrimziVersion)
+	if versionAssignementError != nil {
+		return versionAssignementError
+	}
+
+	glog.Infof("Kafka instance with id %s is assigned to cluster with id %s", kafka.ID, kafka.ClusterID)
+	kafka.Status = constants2.KafkaRequestStatusPreparing.String()
+	if err2 := k.kafkaService.Update(kafka); err2 != nil {
+		return errors.Wrapf(err2, "failed to update kafka %s with cluster details", kafka.ID)
+	}
+	return nil
+}
+
+func (k *AcceptedKafkaManager) markTheUnassignedKafkaAsFailedOrAllowRetryClusterPlacementReconciliation(kafka *dbapi.KafkaRequest) error {
+	durationSinceCreation := time.Since(kafka.CreatedAt)
+	logger.Logger.Warningf("No available cluster found for Kafka %s instance of size %s in region %s and cloud provider %s", kafka.InstanceType, kafka.SizeId, kafka.Region, kafka.CloudProvider)
+	if durationSinceCreation < constants2.AcceptedKafkaMaxRetryDurationWhileWaitingForClusterAssignment {
+		return nil
+	}
+	kafka.Status = constants2.KafkaRequestStatusFailed.String()
+	kafka.FailedReason = fmt.Sprintf("Region %s in cloud provider %s cannot accept %s Kafka of size %s at the moment.", kafka.Region, kafka.CloudProvider, kafka.InstanceType, kafka.SizeId)
+	if err2 := k.kafkaService.Update(kafka); err2 != nil {
+		return errors.Wrapf(err2, "failed to update failed kafka %s", kafka.ID)
+	}
+	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, durationSinceCreation)
+	metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationCreate)
+	return nil
+}
+
+func (k *AcceptedKafkaManager) markTheAssignedKafkaAsFailedOrAllowRetryStrimziVersionPickingReconciliation(kafka *dbapi.KafkaRequest) error {
+	durationSinceCreation := time.Since(kafka.CreatedAt)
+	// Strimzi version may not be available at the start (i.e. during upgrade of Strimzi operator).
+	// We need to allow the reconciler to retry getting and setting of the desired strimzi version for a Kafka request
+	// until the max retry duration is reached before updating its status to 'failed'.
+	if durationSinceCreation < constants2.AcceptedKafkaMaxRetryDurationWhileWaitingForStrimziVersion {
+		glog.V(10).Infof("No available and ready strimzi version found for Kafka '%s' in Cluster ID '%s'", kafka.ID, kafka.ClusterID)
+		return nil
+	}
+	kafka.Status = constants2.KafkaRequestStatusFailed.String()
+	kafka.FailedReason = "Failed to get desired Strimzi version"
+	if err := k.kafkaService.Update(kafka); err != nil {
+		return errors.Wrapf(err, "failed to update failed kafka %s", kafka.ID)
+	}
+	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, durationSinceCreation)
+	metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationCreate)
+	return nil
+}
+
+func (*AcceptedKafkaManager) assignDesiredKafkaVersions(kafka *dbapi.KafkaRequest, latestReadyStrimziVersion *api.StrimziVersion) error {
+	kafka.DesiredStrimziVersion = latestReadyStrimziVersion.Version
 	desiredKafkaVersion := latestReadyStrimziVersion.GetLatestKafkaVersion()
 	if desiredKafkaVersion == nil {
 		return errors.New(fmt.Sprintf("failed to get Kafka version %s", kafka.ID))
@@ -118,11 +169,5 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 		return errors.New(fmt.Sprintf("failed to get Kafka IBP version %s", kafka.ID))
 	}
 	kafka.DesiredKafkaIBPVersion = desiredKafkaIBPVersion.Version
-
-	glog.Infof("Kafka instance with id %s is assigned to cluster with id %s", kafka.ID, kafka.ClusterID)
-	kafka.Status = constants2.KafkaRequestStatusPreparing.String()
-	if err2 := k.kafkaService.Update(kafka); err2 != nil {
-		return errors.Wrapf(err2, "failed to update kafka %s with cluster details", kafka.ID)
-	}
 	return nil
 }
