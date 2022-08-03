@@ -1177,6 +1177,66 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 		{
+			name: "registering kafka job when unsuccessful when max-allowed-trial-instances reached limit more than one",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				clusterService:         nil,
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
+				kafkaConfig: config.KafkaConfig{
+					Quota: &config.KafkaQuotaConfig{
+						Type:                    api.QuotaManagementListQuotaType.String(),
+						AllowDeveloperInstance:  true,
+						MaxAllowedTrialInstance: 1,
+					},
+					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
+				},
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return mockCluster, nil
+					},
+				},
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "subscription-id", nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.DEVELOPER.String()
+					kafkaRequest.SizeId = "x1"
+					kafkaRequest.Owner = testUser
+					kafkaRequest.OrganisationId = "org-id"
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "developer").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.ID = ""
+						kafkaRequest.InstanceType = types.DEVELOPER.String()
+						kafkaRequest.SizeId = "x1"
+						kafkaRequest.Owner = testUser
+						kafkaRequest.OrganisationId = "org-id"
+					})))
+				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			error: errorCheck{
+				wantErr:  true,
+				code:     errors.ErrorTooManyKafkaInstancesReached,
+				httpCode: http.StatusForbidden,
+			},
+		},
+		{
 			name: "registering kafka job unsucessful when wrong plan is selected",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),

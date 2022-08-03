@@ -568,6 +568,11 @@ parameters:
   displayName: Kas-fleetshard operator subscription starting config
   description: Kas-fleetshard operator subscription starting config
 
+- name: MAX_ALLOWED_TRIAL_INSTANCES
+  displayName: Max allowed trial instances config 
+  description: Max allowed trial instances config
+  value: "1"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -1082,6 +1087,7 @@ objects:
             - --redhat-sso-client-id-file=/secrets/service/redhatsso-service.clientId
             - --redhat-sso-client-secret-file=/secrets/service/redhatsso-service.clientSecret
             - --redhat-sso-base-url=${REDHAT_SSO_BASE_URL}
+            - --max-allowed-trial-instances=${MAX_ALLOWED_TRIAL_INSTANCES}
             - -v=${GLOG_V}
             resources:
               requests:

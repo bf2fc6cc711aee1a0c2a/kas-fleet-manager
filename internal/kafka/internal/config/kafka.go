@@ -56,6 +56,7 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.BrowserUrl, "browser-url", c.BrowserUrl, "Browser url to kafka admin UI")
 	fs.BoolVar(&c.EnableKafkaOwnerConfig, "enable-kafka-owner-config", c.EnableKafkaOwnerConfig, "Enable configuration for setting kafka owners")
 	fs.StringVar(&c.KafkaOwnerListFile, "kafka-owner-list-file", c.KafkaOwnerListFile, "File containing list of kafka owners")
+	fs.IntVar(&c.Quota.MaxAllowedTrialInstance, "max-allowed-trial-instances", c.Quota.MaxAllowedTrialInstance, "Max allowed trial instances")
 }
 
 func (c *KafkaConfig) ReadFiles() error {

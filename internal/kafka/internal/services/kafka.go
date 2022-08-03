@@ -309,8 +309,10 @@ func (k *kafkaService) reserveQuota(kafkaRequest *dbapi.KafkaRequest) (subscript
 			return "", errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka %s instances", instType.DisplayName)
 		}
 
-		if count > 0 {
-			return "", errors.TooManyKafkaInstancesReached("only one %s instance is allowed", instType.DisplayName)
+		maxAllowedTrialInstances := k.kafkaConfig.Quota.MaxAllowedTrialInstance
+
+		if count > int64(maxAllowedTrialInstances) {
+			return "", errors.TooManyKafkaInstancesReached(fmt.Sprintf("only %d %s instance is allowed", maxAllowedTrialInstances, instType.DisplayName))
 		}
 	}
 
