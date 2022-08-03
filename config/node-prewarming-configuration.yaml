@@ -1,13 +1,19 @@
 #This configuration file contains information about each Kafka instance types, the pre-warming configuration
 #
 #The following properties must be defined for each Kafka instance type:
-#   - reserved_streaming_units: the number of streaming unit reservations to be made on each data plane cluster. If set to zero, no pre-warming applied on the cluster
-#   - base_streaming_unit_size: the base streaming unit size as defined in the supported types. In most cases it is "x1" which is the default if not defined.   
+#   - num_reserved_instances: the number of kafka instances to be reserved on
+#     each data plane cluster. The size of each reserved kafka instances will be
+#     the size specified by the `base_streaming_unit_size`` attribute`
+#     If not defined or set to zero no pre-warming applied on the cluster
+#   - base_streaming_unit_size: the base streaming unit size as defined in the
+#     supported types configuration. If not defined it defaults to "x1". It
+#     is assumed that "x1" is a defined size for the instance type in the
+#     supported types configuration.
 
 ---
 developer:
-  reserved_streaming_units: 0 # no pre-warming
+  num_reserved_instances: 0 # no pre-warming
   base_streaming_unit_size: x1 
 standard:
-  reserved_streaming_units: 0 # no pre-warming
+  num_reserved_instances: 0 # no pre-warming
   base_streaming_unit_size: x1

@@ -69,13 +69,13 @@ type KafkaService interface {
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
 	// GenerateReservedManagedKafkasByClusterID returns a list of reserved managed
-	// kafkas for a given clusterID. The number of generated reserved managed kafkas
-	// is the sum of the reserved streaming units among all instance types supported
-	// by the cluster.
+	// kafkas for a given clusterID. The number of generated reserved managed
+	// kafkas in the cluster is the sum of the specified number of reserved
+	// instances among all instance types supported by the cluster.
 	// If the cluster is not in ready status the result is an empty list.
 	// Generated kafka names have the following naming schema:
 	// reserved-kafka-<instance_type>-<kafka_number> where kafka_number goes from
-	// 1..<number_of_reserved_streaming_units_for_the_given_instance_type>
+	// 1..<num_reserved_instances>_for_the_given_instance_type>
 	// Each generated reserved kafka has a namespace equal to its name
 	GenerateReservedManagedKafkasByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
@@ -830,7 +830,7 @@ func (k *kafkaService) GenerateReservedManagedKafkasByClusterID(clusterID string
 		if !ok {
 			continue
 		}
-		numReservedInstances := instanceTypeDynamicScalingConfig.ReservedStreamingUnits
+		numReservedInstances := instanceTypeDynamicScalingConfig.NumReservedInstances
 		for i := 1; i <= numReservedInstances; i++ {
 			generatedKafkaID := fmt.Sprintf("reserved-kafka-%s-%d", supportedInstanceType, i)
 			res, err := k.buildReservedManagedKafkaCR(generatedKafkaID, supportedInstanceType, instanceTypeDynamicScalingConfig.BaseStreamingUnitSize, *latestStrimziVersion)
