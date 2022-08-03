@@ -3087,10 +3087,10 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 					NodePrewarmingConfig: config.NodePrewarmingConfig{
 						Configuration: map[string]config.InstanceTypeNodePrewarmingConfig{
 							"developer": {
-								ReservedStreamingUnits: 1,
+								NumReservedInstances: 1,
 							},
 							"standard": {
-								ReservedStreamingUnits: 2,
+								NumReservedInstances: 2,
 							},
 						},
 					},
@@ -3366,10 +3366,10 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 					NodePrewarmingConfig: config.NodePrewarmingConfig{
 						Configuration: map[string]config.InstanceTypeNodePrewarmingConfig{
 							"developer": {
-								ReservedStreamingUnits: 1,
+								NumReservedInstances: 1,
 							},
 							"standard": {
-								ReservedStreamingUnits: 1,
+								NumReservedInstances: 1,
 							},
 						},
 					},
@@ -3415,10 +3415,10 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 					NodePrewarmingConfig: config.NodePrewarmingConfig{
 						Configuration: map[string]config.InstanceTypeNodePrewarmingConfig{
 							"developer": {
-								ReservedStreamingUnits: 1,
+								NumReservedInstances: 1,
 							},
 							"standard": {
-								ReservedStreamingUnits: 1,
+								NumReservedInstances: 1,
 							},
 						},
 					},

@@ -63,8 +63,8 @@ func (c *NodePrewarmingConfig) readFile() error {
 }
 
 type InstanceTypeNodePrewarmingConfig struct {
-	BaseStreamingUnitSize  string `yaml:"base_streaming_unit_size"`
-	ReservedStreamingUnits int    `yaml:"reserved_streaming_units"`
+	BaseStreamingUnitSize string `yaml:"base_streaming_unit_size"`
+	NumReservedInstances  int    `yaml:"num_reserved_instances"`
 }
 
 func (c *InstanceTypeNodePrewarmingConfig) validate(instanceType string, kafkaConfig *KafkaConfig) error {
@@ -80,10 +80,10 @@ func (c *InstanceTypeNodePrewarmingConfig) validate(instanceType string, kafkaCo
 	}
 
 	switch {
-	case c.ReservedStreamingUnits == 0:
+	case c.NumReservedInstances == 0:
 		logger.Logger.Warningf("no capacity reservation will be applied for instance type: %s.", instanceType)
-	case c.ReservedStreamingUnits < 0:
-		return fmt.Errorf("reserved_streaming_units cannot be a negative number for instance type: %s", instanceType)
+	case c.NumReservedInstances < 0:
+		return fmt.Errorf("num_reserved_instances cannot be a negative number for instance type: %s", instanceType)
 	}
 
 	return nil

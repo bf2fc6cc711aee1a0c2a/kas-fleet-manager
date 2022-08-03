@@ -34,8 +34,8 @@ func TestNodePrewarmingConfig_Validate(t *testing.T) {
 			nodePrewarmingConfig: NodePrewarmingConfig{
 				Configuration: map[string]InstanceTypeNodePrewarmingConfig{
 					"instance-type": {
-						BaseStreamingUnitSize:  "x1",
-						ReservedStreamingUnits: 9,
+						BaseStreamingUnitSize: "x1",
+						NumReservedInstances:  9,
 					},
 				},
 			},
@@ -62,8 +62,8 @@ func TestNodePrewarmingConfig_Validate(t *testing.T) {
 			nodePrewarmingConfig: NodePrewarmingConfig{
 				Configuration: map[string]InstanceTypeNodePrewarmingConfig{
 					"instance-type": {
-						BaseStreamingUnitSize:  "x2",
-						ReservedStreamingUnits: 10,
+						BaseStreamingUnitSize: "x2",
+						NumReservedInstances:  10,
 					},
 				},
 			},
@@ -90,8 +90,8 @@ func TestNodePrewarmingConfig_Validate(t *testing.T) {
 			nodePrewarmingConfig: NodePrewarmingConfig{
 				Configuration: map[string]InstanceTypeNodePrewarmingConfig{
 					"instance-type": {
-						BaseStreamingUnitSize:  "x2",
-						ReservedStreamingUnits: -10,
+						BaseStreamingUnitSize: "x2",
+						NumReservedInstances:  -10,
 					},
 				},
 			},
@@ -118,8 +118,8 @@ func TestNodePrewarmingConfig_Validate(t *testing.T) {
 			nodePrewarmingConfig: NodePrewarmingConfig{
 				Configuration: map[string]InstanceTypeNodePrewarmingConfig{
 					"instance-type": {
-						BaseStreamingUnitSize:  "x2",
-						ReservedStreamingUnits: 10,
+						BaseStreamingUnitSize: "x2",
+						NumReservedInstances:  10,
 					},
 				},
 			},
@@ -146,8 +146,8 @@ func TestNodePrewarmingConfig_Validate(t *testing.T) {
 			nodePrewarmingConfig: NodePrewarmingConfig{
 				Configuration: map[string]InstanceTypeNodePrewarmingConfig{
 					"instance-type": {
-						BaseStreamingUnitSize:  "", // base default streaming unit size of x1 will be used instead
-						ReservedStreamingUnits: 10,
+						BaseStreamingUnitSize: "", // base default streaming unit size of x1 will be used instead
+						NumReservedInstances:  10,
 					},
 				},
 			},
