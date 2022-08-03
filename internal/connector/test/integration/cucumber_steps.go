@@ -135,12 +135,11 @@ func (s *extender) forgetKeycloakClientForCleanup(clientID string) error {
 	}
 	missing := true
 	s.Variables[clientIdList] = arrays.FilterStringSlice(s.Variables[clientIdList].([]string), func(s string) bool {
-		if s != clientIDValue {
-			return true
-		} else {
+		if s == clientIDValue {
 			missing = false
+			return false
 		}
-		return false
+		return true
 	})
 	if missing {
 		return fmt.Errorf("unknown clientId %s", clientID)
