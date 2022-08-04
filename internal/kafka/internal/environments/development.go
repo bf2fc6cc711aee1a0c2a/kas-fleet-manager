@@ -35,6 +35,6 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"observability-red-hat-sso-observatorium-gateway": "https://observatorium-mst.api.stage.openshift.com",
 		"observability-red-hat-sso-tenant":                "managedkafka",
 		"observatorium-auth-type":                         "dex",
-		"max-allowed-trial-instances":                     "1",
+		"max-allowed-developer-instances":                 "1",
 	}
 }

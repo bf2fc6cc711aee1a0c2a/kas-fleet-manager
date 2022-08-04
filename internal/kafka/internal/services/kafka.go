@@ -297,7 +297,7 @@ func (k *kafkaService) reserveQuota(kafkaRequest *dbapi.KafkaRequest) (subscript
 			return "", errors.NewWithCause(errors.ErrorForbidden, err, "kafka %s instances are not allowed", instType.DisplayName)
 		}
 
-		// Only one DEVELOPER instance is admitted. Let's check if the user already owns one
+		//N DEVELOPER instance is admitted. Let's check if the user already owns N instances
 		dbConn := k.connectionFactory.New()
 		var count int64
 		if err := dbConn.Model(&dbapi.KafkaRequest{}).
@@ -309,10 +309,10 @@ func (k *kafkaService) reserveQuota(kafkaRequest *dbapi.KafkaRequest) (subscript
 			return "", errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka %s instances", instType.DisplayName)
 		}
 
-		maxAllowedTrialInstances := k.kafkaConfig.Quota.MaxAllowedTrialInstance
+		maxAllowedDeveloperInstances := k.kafkaConfig.Quota.MaxAllowedDeveloperInstances
 
-		if count > int64(maxAllowedTrialInstances) {
-			return "", errors.TooManyKafkaInstancesReached(fmt.Sprintf("only %d %s instance is allowed", maxAllowedTrialInstances, instType.DisplayName))
+		if count >= int64(maxAllowedDeveloperInstances) {
+			return "", errors.TooManyKafkaInstancesReached(fmt.Sprintf("only %d %s instance is allowed", maxAllowedDeveloperInstances, instType.DisplayName))
 		}
 	}
 

@@ -1177,7 +1177,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 		{
-			name: "registering kafka job when unsuccessful when max-allowed-trial-instances reached limit more than one",
+			name: "should register kafka job successful when max-allowed-developer-instances is one",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				clusterService:         nil,
@@ -1185,9 +1185,9 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
 				kafkaConfig: config.KafkaConfig{
 					Quota: &config.KafkaQuotaConfig{
-						Type:                    api.QuotaManagementListQuotaType.String(),
-						AllowDeveloperInstance:  true,
-						MaxAllowedTrialInstance: 1,
+						Type:                         api.QuotaManagementListQuotaType.String(),
+						AllowDeveloperInstance:       true,
+						MaxAllowedDeveloperInstances: 1,
 					},
 					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
 				},
@@ -1216,7 +1216,15 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().
+				mocket.Catcher.Reset()
+				totalCountResponse := []map[string]interface{}{{"count": 0}}
+
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND (organisation_id = $3) AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.DEVELOPER.String(), testUser, "org-id").
+					WithReply(totalCountResponse)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+
+				mocket.Catcher.NewMock().
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs("us-east-1", "aws", "developer").
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -1227,6 +1235,71 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 						kafkaRequest.OrganisationId = "org-id"
 					})))
 				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQuery(``)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			error: errorCheck{
+				wantErr: false,
+			},
+		},
+		{
+			name: "should register kafka job unsuccessful when max-allowed-developer-instances reached limit more than one",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				clusterService:         nil,
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
+				kafkaConfig: config.KafkaConfig{
+					Quota: &config.KafkaQuotaConfig{
+						Type:                         api.QuotaManagementListQuotaType.String(),
+						AllowDeveloperInstance:       true,
+						MaxAllowedDeveloperInstances: 2,
+					},
+					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
+				},
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return mockCluster, nil
+					},
+				},
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "subscription-id", nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.DEVELOPER.String()
+					kafkaRequest.SizeId = "x1"
+					kafkaRequest.Owner = testUser
+					kafkaRequest.OrganisationId = "org-id"
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				totalCountResponse := []map[string]interface{}{{"count": 2}}
+
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND (organisation_id = $3) AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.DEVELOPER.String(), testUser, "org-id").
+					WithReply(totalCountResponse)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", types.DEVELOPER.String()).
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.ID = ""
+						kafkaRequest.InstanceType = types.DEVELOPER.String()
+						kafkaRequest.SizeId = "x1"
+						kafkaRequest.Owner = testUser
+						kafkaRequest.OrganisationId = "org-id"
+					})))
 				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
 				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
