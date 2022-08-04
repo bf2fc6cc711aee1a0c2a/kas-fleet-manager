@@ -421,9 +421,8 @@ func StrimziVersionsDeepSort(versions []StrimziVersion) ([]StrimziVersion, error
 	}
 
 	for idx := range versionsToSet {
-
+		idx := idx
 		// Sort KafkaVersions
-		//nolint:scopelint
 		sort.Slice(versionsToSet[idx].KafkaVersions, func(i, j int) bool {
 			res, err := versionsToSet[idx].KafkaVersions[i].Compare(versionsToSet[idx].KafkaVersions[j])
 			if err != nil {
@@ -438,7 +437,6 @@ func StrimziVersionsDeepSort(versions []StrimziVersion) ([]StrimziVersion, error
 
 		// Sort KafkaIBPVersions
 		sort.Slice(versionsToSet[idx].KafkaIBPVersions, func(i, j int) bool {
-			//nolint:scopelint
 			res, err := versionsToSet[idx].KafkaIBPVersions[i].Compare(versionsToSet[idx].KafkaIBPVersions[j])
 			if err != nil {
 				errors = append(errors, err)

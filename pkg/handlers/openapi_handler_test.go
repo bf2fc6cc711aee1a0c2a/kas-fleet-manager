@@ -27,7 +27,7 @@ func Test_OpenapiHandler(t *testing.T) {
 
 			req, rw := GetHandlerParams("GET", "/", nil, t)
 
-			handler.Get(rw, req) //nolint
+			handler.Get(rw, req)
 			g.Expect(rw.Code).ToNot(gomega.Equal(0))
 		})
 	}

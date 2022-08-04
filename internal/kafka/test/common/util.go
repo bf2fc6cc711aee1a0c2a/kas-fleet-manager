@@ -243,13 +243,13 @@ func IsMetricExposedWithValue(t *testing.T, metric string, values ...string) boo
 	resp := getMetrics(t)
 	metricLines := strings.Split(resp, "\n")
 	for _, metricLine := range metricLines {
+		metricLine := metricLine
 		if !strings.Contains(metricLine, metric) {
 			continue
 		}
 
 		// reference to range variables should not be used inside function literals. However, this function
 		// runs into the same thread of the for loop, so there is no harm. We can safely ignore the lint warning
-		// nolint: scopelint
 		allValuesFound := arrays.FindFirstString(values, func(value string) bool {
 			return !strings.Contains(metricLine, value)
 		}) == -1

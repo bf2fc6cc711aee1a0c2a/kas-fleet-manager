@@ -834,10 +834,3 @@ func mockedClusterWithMetricsInfo(computeNodes int) (*clustersmgmtv1.Cluster, er
 	clusterBuilder.Nodes(clusterNodeBuilder)
 	return clusterBuilder.Build()
 }
-
-// nolint
-func mockedClusterWithClusterID(clusterID string) (*clustersmgmtv1.Cluster, error) {
-	clusterBuilder := mocks.GetMockClusterBuilder(nil)
-	clusterBuilder.ID(clusterID)
-	return clusterBuilder.Build()
-}
