@@ -1289,19 +1289,6 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					WithArgs(types.DEVELOPER.String(), testUser, "org-id").
 					WithReply(totalCountResponse)
 				mocket.Catcher.NewMock().WithQueryException().WithExecException()
-
-				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs("us-east-1", "aws", types.DEVELOPER.String()).
-					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-						kafkaRequest.ID = ""
-						kafkaRequest.InstanceType = types.DEVELOPER.String()
-						kafkaRequest.SizeId = "x1"
-						kafkaRequest.Owner = testUser
-						kafkaRequest.OrganisationId = "org-id"
-					})))
-				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
-				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 			error: errorCheck{
 				wantErr:  true,
