@@ -1222,7 +1222,6 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND (organisation_id = $3) AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs(types.DEVELOPER.String(), testUser, "org-id").
 					WithReply(totalCountResponse)
-				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 
 				mocket.Catcher.NewMock().
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
@@ -1288,7 +1287,6 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND (organisation_id = $3) AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs(types.DEVELOPER.String(), testUser, "org-id").
 					WithReply(totalCountResponse)
-				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 			error: errorCheck{
 				wantErr:  true,
