@@ -146,24 +146,26 @@ SPECTRAL ?= ${LOCAL_BIN_PATH}/spectral
 NPM ?= "$(shell which npm)"
 specinstall:
 ifeq (, $(shell which ${NPM} 2> /dev/null))
-	@echo "npm is not available please install it to be able to install spectral"
-	exit 1
+       @echo "npm is not available please install it to be able to install spectral"
+       exit 1
 endif
-ifeq (, $(shell which ${LOCAL_BIN_PATH}/spectral 2> /dev/null))
+ifeq (, $(shell which ${LOCAL_BIN_PATH}/rhoasapi 2> /dev/null))
 	@{ \
-	set -e ;\
-	mkdir -p ${LOCAL_BIN_PATH} ;\
-	mkdir -p ${LOCAL_BIN_PATH}/spectral-installation ;\
-	cd ${LOCAL_BIN_PATH} ;\
-	${NPM} install --prefix ${LOCAL_BIN_PATH}/spectral-installation @stoplight/spectral@5.9.2 ;\
-	${NPM} i --prefix ${LOCAL_BIN_PATH}/spectral-installation @rhoas/spectral-ruleset@0.1.4 ;\
-	ln -s spectral-installation/node_modules/.bin/spectral spectral ;\
+    set -e ;\
+    mkdir -p ${LOCAL_BIN_PATH} ;\
+    mkdir -p ${LOCAL_BIN_PATH}/rhoasapi-installation ;\
+	if [ -d ${LOCAL_BIN_PATH}/spectral-installation ]; then rm -r ${LOCAL_BIN_PATH}/spectral-installation; fi ;\
+	if [ -L ${LOCAL_BIN_PATH}/spectral ]; then rm ${LOCAL_BIN_PATH}/spectral; fi ;\
+     ${NPM} i --prefix ${LOCAL_BIN_PATH}/rhoasapi-installation @rhoas/spectral-ruleset@0.3.0-dev6 ;\
+    if ! [ -L ${LOCAL_BIN_PATH}/rhoasapi ]; then ln -s ${LOCAL_BIN_PATH}/rhoasapi-installation/node_modules/@rhoas/spectral-ruleset/rhoasapi ${LOCAL_BIN_PATH}/rhoasapi; fi ;\
 	}
 endif
 
+
+.PHONY: openapi/spec/validate
 openapi/spec/validate: specinstall
-	$(SPECTRAL) lint openapi/kas-fleet-manager.yaml
-	$(SPECTRAL) lint -s 'rhoas-external-$$ref' -s rhoas-list-schema -s rhoas-object-schema -s rhoas-error-schema openapi/kas-fleet-manager-private-admin.yaml
+	@npx ${LOCAL_BIN_PATH}/rhoasapi lint openapi/kas-fleet-manager.yaml openapi/kas-fleet-manager-private-admin.yaml
+	
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
         PGHOST:="127.0.0.1"
