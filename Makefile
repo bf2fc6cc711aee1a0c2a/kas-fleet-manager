@@ -815,6 +815,7 @@ deploy/service: SSO_PROVIDER_TYPE ?= "mas_sso"
 deploy/service: REGISTERED_USERS_PER_ORGANISATION ?= "[{id: 13640203, max_allowed_instances: 5, any_user: true, registered_users: []}, {id: 12147054, max_allowed_instances: 1, any_user: true, registered_users: []}, {id: 13639843, max_allowed_instances: 1, any_user: true, registered_users: []}]"
 deploy/service: DYNAMIC_SCALING_CONFIG ?= "{developer: {compute_nodes_config: {max_compute_nodes: 3}}, standard: {compute_nodes_config: {max_compute_nodes: 9}}}"
 deploy/service: NODE_PREWARMING_CONFIG ?= "{}"
+deploy/service: MAX_ALLOWED_DEVELOPER_INSTANCES ?= "1"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until $(OC) get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
@@ -887,6 +888,7 @@ deploy/service: deploy/envoy deploy/route
 		-p REGISTERED_USERS_PER_ORGANISATION=${REGISTERED_USERS_PER_ORGANISATION} \
 		-p DYNAMIC_SCALING_CONFIG=${DYNAMIC_SCALING_CONFIG} \
 		-p NODE_PREWARMING_CONFIG=${NODE_PREWARMING_CONFIG} \
+		-p MAX_ALLOWED_DEVELOPER_INSTANCES="${MAX_ALLOWED_DEVELOPER_INSTANCES}" \
 		| $(OC) apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 
