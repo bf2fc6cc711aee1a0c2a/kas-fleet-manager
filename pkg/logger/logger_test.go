@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/onsi/gomega"
 )
 
@@ -141,7 +142,7 @@ func Test_prepareLogPrefix(t *testing.T) {
 	ctx = context.WithValue(ctx, ActionKey, testAction)
 	ctx = context.WithValue(ctx, RemoteAddrKey, testAddr)
 	ctx = context.WithValue(ctx, ActionResultKey, testResult)
-	ctx = context.WithValue(ctx, TxIdKey, testId)
+	ctx = context.WithValue(ctx, constants.TransactionIDkey, testId)
 	ctx = context.WithValue(ctx, OpIDKey, testOpId)
 	type args struct {
 		format    string

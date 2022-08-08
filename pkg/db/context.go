@@ -5,14 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
-)
-
-type contextKey int
-
-const (
-	transactionKey contextKey = iota
 )
 
 // NewContext returns a new context with transaction stored in it.
@@ -23,10 +18,8 @@ func (c *ConnectionFactory) NewContext(ctx context.Context) (context.Context, er
 		return ctx, err
 	}
 
-	// adding txid explicitly to context with a simple string key and int value
-	// due to a cyclical import cycle between pkg/db and pkg/logging
-	ctx = context.WithValue(ctx, "txid", tx.txid) //nolint
-	ctx = context.WithValue(ctx, transactionKey, tx)
+	ctx = context.WithValue(ctx, constants.TransactionIDkey, tx.txid)
+	ctx = context.WithValue(ctx, constants.TransactionKey, tx)
 
 	return ctx, nil
 }
@@ -38,7 +31,7 @@ func (c *ConnectionFactory) TxContext() (ctx context.Context, err error) {
 
 // Resolve resolves the current transaction according to the rollback flag.
 func Resolve(ctx context.Context) error {
-	tx, ok := ctx.Value(transactionKey).(*txFactory)
+	tx, ok := ctx.Value(constants.TransactionKey).(*txFactory)
 	if !ok {
 		return fmt.Errorf("Could not retrieve transaction from context")
 	}
@@ -67,7 +60,7 @@ func Resolve(ctx context.Context) error {
 }
 
 func Begin(ctx context.Context) error {
-	tx, ok := ctx.Value(transactionKey).(*txFactory)
+	tx, ok := ctx.Value(constants.TransactionKey).(*txFactory)
 	if !ok {
 		return fmt.Errorf("Could not retrieve transaction from context")
 	}
@@ -80,7 +73,7 @@ func Begin(ctx context.Context) error {
 }
 
 func AddPostCommitAction(ctx context.Context, f func()) error {
-	tx, ok := ctx.Value(transactionKey).(*txFactory)
+	tx, ok := ctx.Value(constants.TransactionKey).(*txFactory)
 	if !ok {
 		return fmt.Errorf("Could not retrieve transaction from context")
 	}
@@ -91,7 +84,7 @@ func AddPostCommitAction(ctx context.Context, f func()) error {
 
 // FromContext Retrieves the transaction from the context.
 func FromContext(ctx context.Context) (*sql.Tx, error) {
-	transaction, ok := ctx.Value(transactionKey).(*txFactory)
+	transaction, ok := ctx.Value(constants.TransactionKey).(*txFactory)
 	if !ok {
 		return nil, errors.GeneralError("Could not retrieve transaction from context")
 	}
@@ -101,7 +94,7 @@ func FromContext(ctx context.Context) (*sql.Tx, error) {
 // MarkForRollback flags the transaction stored in the context for rollback and logs whatever error caused the rollback
 func MarkForRollback(ctx context.Context, err error) {
 	ulog := logger.NewUHCLogger(ctx)
-	transaction, ok := ctx.Value(transactionKey).(*txFactory)
+	transaction, ok := ctx.Value(constants.TransactionKey).(*txFactory)
 	if !ok {
 		ulog.Errorf("failed to mark transaction for rollback: could not retrieve transaction from context")
 		return
