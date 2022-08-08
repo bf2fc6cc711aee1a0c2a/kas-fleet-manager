@@ -1177,6 +1177,134 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 		{
+			name: "should register kafka job successful when developer instances count for the user is less than max-allowed-developer-instances",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				clusterService:         nil,
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
+				kafkaConfig: config.KafkaConfig{
+					Quota: &config.KafkaQuotaConfig{
+						Type:                         api.QuotaManagementListQuotaType.String(),
+						AllowDeveloperInstance:       true,
+						MaxAllowedDeveloperInstances: 1,
+					},
+					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
+				},
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return mockCluster, nil
+					},
+				},
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "subscription-id", nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.DEVELOPER.String()
+					kafkaRequest.SizeId = "x1"
+					kafkaRequest.Owner = testUser
+					kafkaRequest.OrganisationId = "org-id"
+				}),
+			},
+			setupFn: func() {
+				totalCountResponse := []map[string]interface{}{{"count": 0}}
+
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND (organisation_id = $3) AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.DEVELOPER.String(), testUser, "org-id").
+					WithReply(totalCountResponse)
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "developer").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.ID = ""
+						kafkaRequest.InstanceType = types.DEVELOPER.String()
+						kafkaRequest.SizeId = "x1"
+						kafkaRequest.Owner = testUser
+						kafkaRequest.OrganisationId = "org-id"
+					})))
+				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			error: errorCheck{
+				wantErr: false,
+			},
+		},
+		{
+			name: "should register kafka job unsuccessful when developer kafka instances count for the user has reached the max-allowed-developer-instances limit",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				clusterService:         nil,
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, MaxClusterCapacity, MaxClusterCapacity, false),
+				kafkaConfig: config.KafkaConfig{
+					Quota: &config.KafkaQuotaConfig{
+						Type:                         api.QuotaManagementListQuotaType.String(),
+						AllowDeveloperInstance:       true,
+						MaxAllowedDeveloperInstances: 2,
+					},
+					SupportedInstanceTypes: &kafkaSupportedInstanceTypesConfig,
+				},
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return mockCluster, nil
+					},
+				},
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "subscription-id", nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+					kafkaRequest.InstanceType = types.DEVELOPER.String()
+					kafkaRequest.SizeId = "x1"
+					kafkaRequest.Owner = testUser
+					kafkaRequest.OrganisationId = "org-id"
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "developer").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.ID = ""
+						kafkaRequest.InstanceType = types.DEVELOPER.String()
+						kafkaRequest.SizeId = "x1"
+						kafkaRequest.Owner = testUser
+						kafkaRequest.OrganisationId = "org-id"
+					})))
+
+				totalCountResponse := []map[string]interface{}{{"count": 2}}
+
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND (organisation_id = $3) AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.DEVELOPER.String(), testUser, "org-id").
+					WithReply(totalCountResponse)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			error: errorCheck{
+				wantErr:  true,
+				code:     errors.ErrorTooManyKafkaInstancesReached,
+				httpCode: http.StatusForbidden,
+			},
+		},
+		{
 			name: "registering kafka job unsucessful when wrong plan is selected",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
