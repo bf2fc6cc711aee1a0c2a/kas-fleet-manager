@@ -9,7 +9,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/patrickmn/go-cache"
 )
@@ -32,18 +31,16 @@ type CloudProvidersService interface {
 	ListCachedCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError)
 }
 
-func NewCloudProvidersService(providerFactory clusters.ProviderFactory, connectionFactory *db.ConnectionFactory) CloudProvidersService {
+func NewCloudProvidersService(providerFactory clusters.ProviderFactory) CloudProvidersService {
 	return &cloudProvidersService{
-		providerFactory:   providerFactory,
-		connectionFactory: connectionFactory,
-		cache:             cache.New(5*time.Minute, 10*time.Minute),
+		providerFactory: providerFactory,
+		cache:           cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
 type cloudProvidersService struct {
-	providerFactory   clusters.ProviderFactory
-	connectionFactory *db.ConnectionFactory
-	cache             *cache.Cache
+	providerFactory clusters.ProviderFactory
+	cache           *cache.Cache
 }
 
 type CloudProviderWithRegions struct {
@@ -51,20 +48,13 @@ type CloudProviderWithRegions struct {
 	RegionList *types.CloudProviderRegionInfoList
 }
 
-type Cluster struct {
-	ProviderType api.ClusterProviderType `json:"provider_type"`
-}
-
 func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError) {
-	results, dbErr := p.getAvailableClusterProviderTypes()
-	if dbErr != nil {
-		return nil, dbErr
-	}
+	providerTypes := p.providerFactory.ListClusterProviderTypes()
 
 	cloudProvidersToRegions := map[string]*types.CloudProviderRegionInfoList{}
 
-	for _, result := range results {
-		provider, err := p.providerFactory.GetProvider(result.ProviderType)
+	for _, providerType := range providerTypes {
+		provider, err := p.providerFactory.GetProvider(providerType)
 		if err != nil {
 			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find implementation")
 		}
@@ -126,15 +116,12 @@ func convertToCloudProviderWithRegionsType(cachedCloudProviderWithRegions interf
 }
 
 func (p cloudProvidersService) ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError) {
-	results, err := p.getAvailableClusterProviderTypes()
-	if err != nil {
-		return nil, err
-	}
+	providerTypes := p.providerFactory.ListClusterProviderTypes()
 
 	alreadyVisitedCloudProviders := map[string]bool{}
 	cloudProviderList := []api.CloudProvider{}
-	for _, result := range results {
-		provider, err := p.providerFactory.GetProvider(result.ProviderType)
+	for _, providerType := range providerTypes {
+		provider, err := p.providerFactory.GetProvider(providerType)
 		if err != nil {
 			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find implementation")
 		}
@@ -201,21 +188,6 @@ func convertToCloudProviderRegions(cachedCloudProviderRegions interface{}) ([]ap
 		return cloudProviderRegions, nil
 	}
 	return nil, nil
-}
-
-func (p cloudProvidersService) getAvailableClusterProviderTypes() ([]Cluster, *errors.ServiceError) {
-	dbConn := p.connectionFactory.New().
-		Model(&Cluster{}).
-		Distinct("provider_type").
-		Where("status NOT IN (?)", api.ClusterDeletionStatuses)
-
-	var results []Cluster
-	err := dbConn.Find(&results).Error
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to list clusters providers")
-	}
-
-	return results, nil
 }
 
 func setDisplayName(providerId string, defaultDisplayName string) string {

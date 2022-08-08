@@ -43,6 +43,7 @@ type Provider interface {
 //go:generate moq -out provider_factory_moq.go . ProviderFactory
 type ProviderFactory interface {
 	GetProvider(providerType api.ClusterProviderType) (Provider, error)
+	ListClusterProviderTypes() []api.ClusterProviderType
 }
 
 // DefaultProviderFactory the default implementation for ProviderFactory
@@ -78,4 +79,8 @@ func (d *DefaultProviderFactory) GetProvider(providerType api.ClusterProviderTyp
 	}
 
 	return provider, nil
+}
+
+func (d *DefaultProviderFactory) ListClusterProviderTypes() []api.ClusterProviderType {
+	return []api.ClusterProviderType{api.ClusterProviderOCM, api.ClusterProviderStandalone}
 }

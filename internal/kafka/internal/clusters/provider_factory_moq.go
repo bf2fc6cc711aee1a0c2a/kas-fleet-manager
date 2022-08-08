@@ -21,6 +21,9 @@ var _ ProviderFactory = &ProviderFactoryMock{}
 // 			GetProviderFunc: func(providerType api.ClusterProviderType) (Provider, error) {
 // 				panic("mock out the GetProvider method")
 // 			},
+// 			ListClusterProviderTypesFunc: func() []api.ClusterProviderType {
+// 				panic("mock out the ListClusterProviderTypes method")
+// 			},
 // 		}
 //
 // 		// use mockedProviderFactory in code that requires ProviderFactory
@@ -31,6 +34,9 @@ type ProviderFactoryMock struct {
 	// GetProviderFunc mocks the GetProvider method.
 	GetProviderFunc func(providerType api.ClusterProviderType) (Provider, error)
 
+	// ListClusterProviderTypesFunc mocks the ListClusterProviderTypes method.
+	ListClusterProviderTypesFunc func() []api.ClusterProviderType
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// GetProvider holds details about calls to the GetProvider method.
@@ -38,8 +44,12 @@ type ProviderFactoryMock struct {
 			// ProviderType is the providerType argument value.
 			ProviderType api.ClusterProviderType
 		}
+		// ListClusterProviderTypes holds details about calls to the ListClusterProviderTypes method.
+		ListClusterProviderTypes []struct {
+		}
 	}
-	lockGetProvider sync.RWMutex
+	lockGetProvider              sync.RWMutex
+	lockListClusterProviderTypes sync.RWMutex
 }
 
 // GetProvider calls GetProviderFunc.
@@ -70,5 +80,31 @@ func (mock *ProviderFactoryMock) GetProviderCalls() []struct {
 	mock.lockGetProvider.RLock()
 	calls = mock.calls.GetProvider
 	mock.lockGetProvider.RUnlock()
+	return calls
+}
+
+// ListClusterProviderTypes calls ListClusterProviderTypesFunc.
+func (mock *ProviderFactoryMock) ListClusterProviderTypes() []api.ClusterProviderType {
+	if mock.ListClusterProviderTypesFunc == nil {
+		panic("ProviderFactoryMock.ListClusterProviderTypesFunc: method is nil but ProviderFactory.ListClusterProviderTypes was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockListClusterProviderTypes.Lock()
+	mock.calls.ListClusterProviderTypes = append(mock.calls.ListClusterProviderTypes, callInfo)
+	mock.lockListClusterProviderTypes.Unlock()
+	return mock.ListClusterProviderTypesFunc()
+}
+
+// ListClusterProviderTypesCalls gets all the calls that were made to ListClusterProviderTypes.
+// Check the length with:
+//     len(mockedProviderFactory.ListClusterProviderTypesCalls())
+func (mock *ProviderFactoryMock) ListClusterProviderTypesCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockListClusterProviderTypes.RLock()
+	calls = mock.calls.ListClusterProviderTypes
+	mock.lockListClusterProviderTypes.RUnlock()
 	return calls
 }
