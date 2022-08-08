@@ -284,17 +284,22 @@ verify: check-gopath openapi/validate
 		./test/...
 .PHONY: verify
 
+# Lint OpenShift templates
+
+lint/templates: specinstall
+	$(SPECTRAL) lint templates/*.yml templates/*.yaml --ignore-unknown-format --ruleset .validate-templates.yaml
+.PHONY: lint/templates
+
+
 # Runs linter against go files and .y(a)ml files in the templates directory
 # Requires golangci-lint to be installed @ $(go env GOPATH)/bin/golangci-lint
 # and spectral installed via npm
-lint: golangci-lint specinstall
+lint: golangci-lint lint/templates
 	$(GOLANGCI_LINT) run \
 		./cmd/... \
 		./pkg/... \
 		./internal/... \
 		./test/...
-
-	$(SPECTRAL) lint templates/*.yml templates/*.yaml --ignore-unknown-format --ruleset .validate-templates.yaml
 .PHONY: lint
 
 # Build binaries
