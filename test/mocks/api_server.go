@@ -530,7 +530,7 @@ func buildMockRequestHandler(successType interface{}, serviceErr *ocmErrors.Serv
 
 // marshalOCMType marshals known ocm types to a provided io.Writer using the ocm sdk marshallers
 func marshalOCMType(t interface{}, w io.Writer) error {
-	switch v := t.(type) { //nolint
+	switch v := t.(type) {
 	// handle cluster types
 	case *clustersmgmtv1.Cluster:
 		return clustersmgmtv1.MarshalCluster(v, w)

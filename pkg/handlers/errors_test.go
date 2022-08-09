@@ -40,7 +40,7 @@ func Test_ListErrors(t *testing.T) {
 			req, rw := GetHandlerParams("GET", "/", nil, t)
 			handler := NewErrorsHandler()
 			g.Expect(handler == nil).To(gomega.Equal(tt.wantNil))
-			handler.List(rw, req) //nolint
+			handler.List(rw, req)
 			g.Expect(rw.Code).To(gomega.Equal(http.StatusOK))
 			bodyStr, err := io.ReadAll(rw.Body)
 			g.Expect(err).ToNot(gomega.HaveOccurred())

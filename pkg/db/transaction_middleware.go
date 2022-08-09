@@ -8,6 +8,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/pkg/errors"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 )
@@ -39,7 +40,7 @@ func transactionMiddleware(db *ConnectionFactory, next http.Handler) http.Handle
 
 		if hub := sentry.GetHubFromContext(ctx); hub != nil {
 			hub.ConfigureScope(func(scope *sentry.Scope) {
-				txid := ctx.Value("txid").(int64)
+				txid := ctx.Value(constants.TransactionIDkey).(int64)
 				scope.SetTag("db_transaction_id", fmt.Sprintf("%d", txid))
 			})
 		}

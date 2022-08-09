@@ -169,7 +169,7 @@ func TestAccessControlListMiddleware_Authorize(t *testing.T) {
 
 // NextHandler is a dummy handler that returns OK when QuotaList middleware has passed
 func NextHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK) //nolint
+	w.WriteHeader(http.StatusOK)
 	_, err := io.WriteString(w, "OK")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

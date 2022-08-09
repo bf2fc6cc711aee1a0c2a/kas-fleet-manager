@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/glog"
@@ -17,7 +18,6 @@ const (
 	ActionKey       LoggerKeys = "Action"
 	ActionResultKey LoggerKeys = "EventResult"
 	RemoteAddrKey   LoggerKeys = "RemoteAddr"
-	TxIdKey         LoggerKeys = "txid"
 
 	ActionFailed  LoggerKeys = "failed"
 	ActionSuccess LoggerKeys = "success"
@@ -123,7 +123,7 @@ func (l *logger) prepareLogPrefix(format string, args ...interface{}) string {
 		prefix = strings.Join([]string{prefix, "session='", l.session, "' "}, "")
 	}
 
-	if txid, ok := l.context.Value(TxIdKey).(int64); ok {
+	if txid, ok := l.context.Value(constants.TransactionIDkey).(int64); ok {
 		prefix = strings.Join([]string{prefix, "tx_id='", fmt.Sprintf("%v", txid), "' "}, "")
 	}
 

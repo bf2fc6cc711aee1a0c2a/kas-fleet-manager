@@ -102,9 +102,9 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 			g.Expect(c.CatalogEntries).To(gomega.HaveLen(len(tt.connectorsIDs)))
 
 			for _, connectorID := range tt.connectorsIDs {
+				connectorID := connectorID
 				g.Expect(c.CatalogEntries).To(gomega.Satisfy(func(entries []ConnectorCatalogEntry) bool {
 					for i := range entries {
-						//nolint:scopelint
 						if entries[i].ConnectorType.Id == connectorID {
 							return true
 						}
