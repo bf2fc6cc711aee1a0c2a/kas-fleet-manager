@@ -40,6 +40,8 @@ func ConfigProviders() di.Option {
 
 		// Configuration for the Kafka service...
 		di.Provide(config.NewAWSConfig, di.As(new(environments2.ConfigModule))),
+		di.Provide(config.NewGCPConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
+
 		di.Provide(config.NewSupportedProvidersConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
 		di.Provide(observatoriumClient.NewObservabilityConfigurationConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewKafkaConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),

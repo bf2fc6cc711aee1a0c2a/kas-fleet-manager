@@ -731,6 +731,7 @@ deploy/secrets:
 		-p AWS_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.secretaccesskey' ] && [ -z '${AWS_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.secretaccesskey || echo '${AWS_SECRET_ACCESS_KEY}')" \
 		-p ROUTE53_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53accesskey' ] && [ -z '${ROUTE53_ACCESS_KEY}' ]) && cat ./secrets/aws.route53accesskey || echo '${ROUTE53_ACCESS_KEY}')" \
 		-p ROUTE53_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53secretaccesskey' ] && [ -z '${ROUTE53_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.route53secretaccesskey || echo '${ROUTE53_SECRET_ACCESS_KEY}')" \
+		-p GCP_API_CREDENTIALS="$(shell ([ -s './secrets/gcp.api-credentials' ] && [ -z '${GCP_API_CREDENTIALS}' ]) && cat ./secrets/gcp.api-credentials | base64 -w 0 ||  echo '${GCP_API_CREDENTIALS}')" \
 		-p DEX_SECRET="$(shell ([ -s './secrets/dex.secret' ] && [ -z '${DEX_SECRET}' ]) && cat ./secrets/dex.secret || echo '${DEX_SECRET}')" \
 		-p DEX_PASSWORD="$(shell ([ -s './secrets/dex.password' ] && [ -z '${DEX_PASSWORD}' ]) && cat ./secrets/dex.password || echo '${DEX_PASSWORD}')" \
 		-p MAS_SSO_CLIENT_ID="$(shell ([ -s './secrets/keycloak-service.clientId' ] && [ -z '${MAS_SSO_CLIENT_ID}' ]) && cat ./secrets/keycloak-service.clientId || echo '${MAS_SSO_CLIENT_ID}')" \
