@@ -128,3 +128,13 @@ func (target *CloudProviderRegionInfoList) Merge(source *CloudProviderRegionInfo
 		}
 	}
 }
+
+// QuotaCost represents the quota cost information of a provider resource.
+type QuotaCost struct {
+	// The quota ID
+	ID string
+	// The maximum allowed quota for this resource
+	MaxAllowed int
+	// The number of quota currently consumed by this resource
+	Consumed int
+}

@@ -6,6 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+
 	"github.com/pkg/errors"
 )
 
@@ -37,6 +38,8 @@ type Provider interface {
 	InstallKasFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error)
 	GetMachinePool(clusterID string, id string) (*types.MachinePoolInfo, error)
 	CreateMachinePool(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error)
+	// GetQuotaCosts returns a list of resource quota cost information for the authenticated user
+	GetQuotaCosts() ([]types.QuotaCost, error)
 }
 
 // ProviderFactory used to return an instance of Provider implementation

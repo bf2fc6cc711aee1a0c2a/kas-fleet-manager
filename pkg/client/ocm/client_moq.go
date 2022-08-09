@@ -74,6 +74,9 @@ var _ Client = &ClientMock{}
 // 			GetClusterStatusFunc: func(id string) (*clustersmgmtv1.ClusterStatus, error) {
 // 				panic("mock out the GetClusterStatus method")
 // 			},
+// 			GetCurrentAccountFunc: func() (*amsv1.Account, error) {
+// 				panic("mock out the GetCurrentAccount method")
+// 			},
 // 			GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
 // 				panic("mock out the GetIdentityProviderList method")
 // 			},
@@ -164,6 +167,9 @@ type ClientMock struct {
 
 	// GetClusterStatusFunc mocks the GetClusterStatus method.
 	GetClusterStatusFunc func(id string) (*clustersmgmtv1.ClusterStatus, error)
+
+	// GetCurrentAccountFunc mocks the GetCurrentAccount method.
+	GetCurrentAccountFunc func() (*amsv1.Account, error)
 
 	// GetIdentityProviderListFunc mocks the GetIdentityProviderList method.
 	GetIdentityProviderListFunc func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
@@ -299,6 +305,9 @@ type ClientMock struct {
 			// ID is the id argument value.
 			ID string
 		}
+		// GetCurrentAccount holds details about calls to the GetCurrentAccount method.
+		GetCurrentAccount []struct {
+		}
 		// GetIdentityProviderList holds details about calls to the GetIdentityProviderList method.
 		GetIdentityProviderList []struct {
 			// ClusterID is the clusterID argument value.
@@ -388,6 +397,7 @@ type ClientMock struct {
 	lockGetClusterDNS                   sync.RWMutex
 	lockGetClusterIngresses             sync.RWMutex
 	lockGetClusterStatus                sync.RWMutex
+	lockGetCurrentAccount               sync.RWMutex
 	lockGetIdentityProviderList         sync.RWMutex
 	lockGetMachinePool                  sync.RWMutex
 	lockGetOrganisationIdFromExternalId sync.RWMutex
@@ -977,6 +987,32 @@ func (mock *ClientMock) GetClusterStatusCalls() []struct {
 	mock.lockGetClusterStatus.RLock()
 	calls = mock.calls.GetClusterStatus
 	mock.lockGetClusterStatus.RUnlock()
+	return calls
+}
+
+// GetCurrentAccount calls GetCurrentAccountFunc.
+func (mock *ClientMock) GetCurrentAccount() (*amsv1.Account, error) {
+	if mock.GetCurrentAccountFunc == nil {
+		panic("ClientMock.GetCurrentAccountFunc: method is nil but Client.GetCurrentAccount was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetCurrentAccount.Lock()
+	mock.calls.GetCurrentAccount = append(mock.calls.GetCurrentAccount, callInfo)
+	mock.lockGetCurrentAccount.Unlock()
+	return mock.GetCurrentAccountFunc()
+}
+
+// GetCurrentAccountCalls gets all the calls that were made to GetCurrentAccount.
+// Check the length with:
+//     len(mockedClient.GetCurrentAccountCalls())
+func (mock *ClientMock) GetCurrentAccountCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetCurrentAccount.RLock()
+	calls = mock.calls.GetCurrentAccount
+	mock.lockGetCurrentAccount.RUnlock()
 	return calls
 }
 

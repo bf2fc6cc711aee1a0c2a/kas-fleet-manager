@@ -49,6 +49,9 @@ var _ Provider = &ProviderMock{}
 // 			GetMachinePoolFunc: func(clusterID string, id string) (*types.MachinePoolInfo, error) {
 // 				panic("mock out the GetMachinePool method")
 // 			},
+// 			GetQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+// 				panic("mock out the GetQuotaCosts method")
+// 			},
 // 			InstallClusterLoggingFunc: func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
 // 				panic("mock out the InstallClusterLogging method")
 // 			},
@@ -94,6 +97,9 @@ type ProviderMock struct {
 
 	// GetMachinePoolFunc mocks the GetMachinePool method.
 	GetMachinePoolFunc func(clusterID string, id string) (*types.MachinePoolInfo, error)
+
+	// GetQuotaCostsFunc mocks the GetQuotaCosts method.
+	GetQuotaCostsFunc func() ([]types.QuotaCost, error)
 
 	// InstallClusterLoggingFunc mocks the InstallClusterLogging method.
 	InstallClusterLoggingFunc func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error)
@@ -160,6 +166,9 @@ type ProviderMock struct {
 			// ID is the id argument value.
 			ID string
 		}
+		// GetQuotaCosts holds details about calls to the GetQuotaCosts method.
+		GetQuotaCosts []struct {
+		}
 		// InstallClusterLogging holds details about calls to the InstallClusterLogging method.
 		InstallClusterLogging []struct {
 			// ClusterSpec is the clusterSpec argument value.
@@ -190,6 +199,7 @@ type ProviderMock struct {
 	lockGetCloudProviders       sync.RWMutex
 	lockGetClusterDNS           sync.RWMutex
 	lockGetMachinePool          sync.RWMutex
+	lockGetQuotaCosts           sync.RWMutex
 	lockInstallClusterLogging   sync.RWMutex
 	lockInstallKasFleetshard    sync.RWMutex
 	lockInstallStrimzi          sync.RWMutex
@@ -509,6 +519,32 @@ func (mock *ProviderMock) GetMachinePoolCalls() []struct {
 	mock.lockGetMachinePool.RLock()
 	calls = mock.calls.GetMachinePool
 	mock.lockGetMachinePool.RUnlock()
+	return calls
+}
+
+// GetQuotaCosts calls GetQuotaCostsFunc.
+func (mock *ProviderMock) GetQuotaCosts() ([]types.QuotaCost, error) {
+	if mock.GetQuotaCostsFunc == nil {
+		panic("ProviderMock.GetQuotaCostsFunc: method is nil but Provider.GetQuotaCosts was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetQuotaCosts.Lock()
+	mock.calls.GetQuotaCosts = append(mock.calls.GetQuotaCosts, callInfo)
+	mock.lockGetQuotaCosts.Unlock()
+	return mock.GetQuotaCostsFunc()
+}
+
+// GetQuotaCostsCalls gets all the calls that were made to GetQuotaCosts.
+// Check the length with:
+//     len(mockedProvider.GetQuotaCostsCalls())
+func (mock *ProviderMock) GetQuotaCostsCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetQuotaCosts.RLock()
+	calls = mock.calls.GetQuotaCosts
+	mock.lockGetQuotaCosts.RUnlock()
 	return calls
 }
 
