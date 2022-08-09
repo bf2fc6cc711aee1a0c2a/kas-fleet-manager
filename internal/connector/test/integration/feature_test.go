@@ -44,6 +44,11 @@ func TestMain(m *testing.M) {
 			c.ConnectorEnableUnassignedConnectors = true
 			// always set reconciler config to 1 second for connector tests
 			reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Second
+			// set sso provider if set in env
+			if os.Getenv("SSO_PROVIDER_TYPE") == "redhat_sso" && os.Getenv("SSO_BASE_URL") != "" {
+				kc.SelectSSOProvider = "redhat_sso"
+				kc.SsoBaseUrl = os.Getenv("SSO_BASE_URL")
+			}
 		},
 		connector.ConfigProviders(false),
 	)

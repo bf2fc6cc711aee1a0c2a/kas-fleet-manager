@@ -102,6 +102,11 @@ Feature: connector admin api
     Then the response code should be 202
     Given I store the ".id" selection from the response as ${stuart_cluster_id}
 
+    When I GET path "/v1/kafka_connector_clusters/${stuart_cluster_id}/addon_parameters"
+    Then the response code should be 200
+    And get and store access token using the addon parameter response as ${stuart_shard_token} and clientID as ${stuart_clientID}
+    And I remember keycloak client for cleanup with clientID: ${stuart_clientID}
+
     Given I am logged in as "Kevin Admin"
     When I POST path "/v1/kafka_connector_clusters" with json body:
       """
@@ -109,6 +114,11 @@ Feature: connector admin api
       """
     Then the response code should be 202
     Given I store the ".id" selection from the response as ${kevin_cluster_id}
+
+    When I GET path "/v1/kafka_connector_clusters/${kevin_cluster_id}/addon_parameters"
+    Then the response code should be 200
+    And get and store access token using the addon parameter response as ${kevin_shard_token} and clientID as ${kevin_clientID}
+    And I remember keycloak client for cleanup with clientID: ${kevin_clientID}
 
     Given I am logged in as "Ricky Bobby"
 

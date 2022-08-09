@@ -700,12 +700,20 @@ func (k *connectorClusterService) ReconcileEmptyDeletingClusters(_ context.Conte
 	var errs []*errors.ServiceError
 	if err := k.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
 
+		// get client_ids for service accounts
+		var clientIds []string
+		if err := dbConn.Where("id IN ?", clusterIds).
+			Model(&dbapi.ConnectorCluster{}).Select("client_id").
+			Find(&clientIds).Error; err != nil {
+			return services.HandleDeleteError("Connector cluster", "id", clusterIds, err)
+		}
+
 		// remove service account for clusters first, so agents are blocked from connecting
-		for _, id := range clusterIds {
+		for _, id := range clientIds {
 			glog.V(5).Infof("Removing agent service account for connector cluster %s", id)
-			if err := k.keycloakService.DeRegisterConnectorFleetshardOperatorServiceAccount(id); err != nil {
+			if err := k.keycloakService.DeleteServiceAccountInternal(id); err != nil {
 				errs = append(errs, errors.GeneralError(
-					"failed to remove connector service account for cluster %s: %s", id, err))
+					"failed to remove connector service account %s: %s", id, err))
 			}
 		}
 

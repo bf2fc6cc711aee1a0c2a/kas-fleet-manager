@@ -47,7 +47,6 @@ Feature: connector agent API
       | count |
       | 1     |
     And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
-    And I remember keycloak client for cleanup with clientID: ${clientID}
 
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
@@ -2022,6 +2021,7 @@ Feature: connector agent API
     Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "410"
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 410
+    And I can forget keycloak clientID: ${clientID}
 
     # agent should get 410 for deleted cluster
     Given I am logged in as "Shard"

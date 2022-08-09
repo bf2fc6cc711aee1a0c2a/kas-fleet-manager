@@ -293,7 +293,7 @@ func (r *redhatssoService) CreateServiceAccountInternal(accessToken string, requ
 func (r *redhatssoService) DeleteServiceAccountInternal(accessToken string, clientId string) *errors.ServiceError {
 	// This is code can be removed once the migrated canary & kas-fleetshard are removed. Performance impact would be less as the number of canary & kas-fleetshard are low.
 	// Once the existing canary or kas-fleetshard are deleted. This logic can be removed.
-	if strings.HasPrefix(clientId, "canary") || strings.HasPrefix(clientId, "kas-fleetshard-agent") {
+	if strings.HasPrefix(clientId, "canary") || strings.HasPrefix(clientId, "kas-fleetshard-agent") || strings.HasPrefix(clientId, "connector-fleetshard-agent") {
 		first := 0
 		max := 100
 		for {

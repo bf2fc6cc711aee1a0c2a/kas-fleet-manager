@@ -119,6 +119,12 @@ Feature: connector namespaces API
     Then the response code should be 204
     And the response should match ""
 
+    # wait for cluster cleanup
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "410"
+    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
+    Then the response code should be 410
+    And I can forget keycloak clientID: ${clientID}
+
     # unblock all other scenarios
     And UNLOCK---------------------------------------------------------------
 
@@ -357,6 +363,7 @@ Feature: connector namespaces API
     And I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "410"
     And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 410
+    And I can forget keycloak clientID: ${clientID}
 
     Examples:
       | user   | user_id        |
@@ -687,6 +694,12 @@ Feature: connector namespaces API
     Then the response code should be 204
     And the response should match ""
 
+    # wait for cluster cleanup
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "410"
+    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
+    Then the response code should be 410
+    And I can forget keycloak clientID: ${clientID}
+
   Scenario Outline: Use Admin API to create namespaces for end users
     Given I am logged in as "Dr. Nefario"
 
@@ -843,6 +856,12 @@ Feature: connector namespaces API
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204
     And the response should match ""
+
+   # wait for cluster cleanup
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "410"
+    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
+    Then the response code should be 410
+    And I can forget keycloak clientID: ${clientID}
 
     Examples:
       | user | user_id      |
@@ -1033,3 +1052,9 @@ Feature: connector namespaces API
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204
     And the response should match ""
+
+   # wait for cluster cleanup
+    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "410"
+    And I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
+    Then the response code should be 410
+    And I can forget keycloak clientID: ${clientID}
