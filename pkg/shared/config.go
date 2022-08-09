@@ -1,7 +1,9 @@
 package shared
 
 import (
+	"encoding/json"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -81,10 +83,40 @@ func BuildFullFilePath(filename string) string {
 	return absFilePath
 }
 
+func CreateTempFileFromStringData(namePrefix string, contents string) (*os.File, error) {
+	configFile, err := ioutil.TempFile("", namePrefix)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = configFile.Write([]byte(contents)); err != nil {
+		return configFile, err
+	}
+	err = configFile.Close()
+	return configFile, err
+}
+
 func ReadYamlFile(filename string, out interface{}) (err error) {
 	fileContents, err := ReadFile(filename)
 	if err != nil {
 		return err
 	}
 	return yaml.UnmarshalStrict([]byte(fileContents), out)
+}
+
+// ReadJSONFile reads a JSON file located in `filename` path and
+// leaves the result in the `out` argument. If the file
+// exists but it is empty or only contain blanks the method
+// succeeds leaving the `out` argument unmodified
+func ReadJSONFile(filename string, out interface{}) error {
+	fileContents, err := ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	trimmedString := strings.TrimSpace(fileContents)
+	if trimmedString == "" {
+		return nil
+	}
+
+	return json.Unmarshal([]byte(fileContents), out)
 }

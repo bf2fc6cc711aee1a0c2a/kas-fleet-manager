@@ -87,22 +87,10 @@ func createConfigFile(namePrefix, contents string) (*os.File, error) {
 	return configFile, err
 }
 
-func createYamlFilefromStringData(namePrefix string, contents string) (*os.File, error) {
-	configFile, err := ioutil.TempFile("", namePrefix)
-	if err != nil {
-		return nil, err
-	}
-	if _, err = configFile.Write([]byte(contents)); err != nil {
-		return configFile, err
-	}
-	err = configFile.Close()
-	return configFile, err
-}
-
 func Test_ReadYamlFile(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	yamlFile, err := createYamlFilefromStringData("skiplist.yaml", "---\n- 01234\n- 56789")
+	yamlFile, err := CreateTempFileFromStringData("skiplist.yaml", "---\n- 01234\n- 56789")
 	defer os.Remove(yamlFile.Name())
 	if err != nil {
 		log.Fatal(err)
@@ -114,4 +102,29 @@ func Test_ReadYamlFile(t *testing.T) {
 	err = ReadYamlFile(quotedFileName, &skiplist)
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	g.Expect(expectedSkipList).To(gomega.Equal(skiplist))
+}
+
+func Test_ReadJSONFile(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	testJSONContent := "{\"test_key\": \"test_value\"}"
+	jsonFile, err := CreateTempFileFromStringData("testjsonfile.json", testJSONContent)
+	defer os.Remove(jsonFile.Name())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	type testStruct struct {
+		TestKey string `json:"test_key"`
+	}
+
+	var res testStruct
+	expectedResult := testStruct{
+		TestKey: "test_value",
+	}
+
+	quotedFileName := "\"" + jsonFile.Name() + "\""
+	err = ReadJSONFile(quotedFileName, &res)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(res).To(gomega.Equal(expectedResult))
 }
