@@ -1,11 +1,6 @@
-extends: 'bin/rhoasapi-installation/node_modules/@rhoas/spectral-ruleset/ruleset.yaml'
+extends: '@rhoas/spectral-ruleset'
 rules:
   no-$ref-siblings: off
   rhoas-response-media-type: off
   oas3-valid-schema-example: off
-  rhoas-external-$ref: off
-  rhoas-list-schema: info
-  rhoas-error-schema: info
-  rhoas-object-schema: info
-
 
