@@ -46,6 +46,7 @@ type Client interface {
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 	GetMachinePool(clusterID string, machinePoolID string) (*clustersmgmtv1.MachinePool, error)
 	CreateMachinePool(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error)
+	GetQuotaCost(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error)
 }
 
 var _ Client = &client{}
@@ -508,4 +509,16 @@ func (c *client) CreateMachinePool(clusterID string, machinePool *clustersmgmtv1
 	createdMachinePool := response.Body()
 
 	return createdMachinePool, nil
+}
+
+func (c client) GetQuotaCost(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error) {
+	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
+	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
+
+	quotaCostResp, err := quotaCostClient.List().Parameter("fetchRelatedResources", fetchRelatedResources).Parameter("fetchCloudAccounts", fetchCloudAccounts).Send()
+	if err != nil {
+		return nil, err
+	}
+	quotaCostList := quotaCostResp.Items()
+	return quotaCostList, nil
 }
