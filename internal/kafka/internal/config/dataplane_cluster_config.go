@@ -24,9 +24,15 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
+const (
+	defaultAWSComputeMachineType = "m5.2xlarge"
+	defaultGCPComputeMachineType = "custom-8-32768"
+)
+
 type DataplaneClusterConfig struct {
 	OpenshiftVersion             string
 	ComputeMachineType           string
+	GCPComputeMachineType        string
 	ImagePullDockerConfigContent string
 	ImagePullDockerConfigFile    string
 	// Possible values are:
@@ -81,7 +87,8 @@ func getDefaultKubeconfig() string {
 func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	return &DataplaneClusterConfig{
 		OpenshiftVersion:                            "",
-		ComputeMachineType:                          "m5.2xlarge",
+		ComputeMachineType:                          defaultAWSComputeMachineType,
+		GCPComputeMachineType:                       defaultGCPComputeMachineType,
 		ImagePullDockerConfigContent:                "",
 		ImagePullDockerConfigFile:                   "secrets/image-pull.dockerconfigjson",
 		DataPlaneClusterConfigFile:                  "config/dataplane-cluster-configuration.yaml",
@@ -273,7 +280,8 @@ func (c *DataplaneClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool
 
 func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.OpenshiftVersion, "cluster-openshift-version", c.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")
-	fs.StringVar(&c.ComputeMachineType, "cluster-compute-machine-type", c.ComputeMachineType, "The compute machine type")
+	fs.StringVar(&c.ComputeMachineType, "cluster-compute-machine-type", c.ComputeMachineType, "The instance type of the AWS compute instances for Data Planes created in AWS")
+	fs.StringVar(&c.GCPComputeMachineType, "gcp-cluster-compute-machine-type", c.GCPComputeMachineType, "The instance type of the GCP compute instances for Data Planes created in GCP")
 	fs.StringVar(&c.ImagePullDockerConfigFile, "image-pull-docker-config-file", c.ImagePullDockerConfigFile, "The file that contains the docker config content for pulling MK operator images on clusters")
 	fs.StringVar(&c.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", c.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
 	fs.StringVar(&c.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", c.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")

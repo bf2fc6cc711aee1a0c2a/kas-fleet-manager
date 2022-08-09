@@ -13,14 +13,17 @@ import (
 	"github.com/onsi/gomega"
 )
 
-const openshiftVersion = "openshift-v4.6.1"
+const (
+	testOpenshiftVersion   = "openshift-v4.6.1"
+	testComputeMachineType = "m5.2xlarge"
+)
 
 func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 	awsConfig := &config.AWSConfig{}
 
 	dataplaneClusterConfig := &config.DataplaneClusterConfig{
-		OpenshiftVersion:   openshiftVersion,
-		ComputeMachineType: ComputeMachineType,
+		OpenshiftVersion:   testOpenshiftVersion,
+		ComputeMachineType: testComputeMachineType,
 	}
 
 	clusterAWS := clustersmgmtv1.
@@ -120,9 +123,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 					builder.Name("")
 					builder.AWS(clusterAWS)
 					builder.MultiAZ(true)
-					builder.Version(clustersmgmtv1.NewVersion().ID(openshiftVersion))
+					builder.Version(clustersmgmtv1.NewVersion().ID(testOpenshiftVersion))
 					builder.Nodes(clustersmgmtv1.NewClusterNodes().
-						ComputeMachineType(clustersmgmtv1.NewMachineType().ID(ComputeMachineType)).
+						ComputeMachineType(clustersmgmtv1.NewMachineType().ID(testComputeMachineType)).
 						AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(6).MaxReplicas(18)))
 				})
 				if err != nil {
@@ -159,9 +162,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 					builder.Name("")
 					builder.AWS(clusterAWS)
 					builder.MultiAZ(false)
-					builder.Version(clustersmgmtv1.NewVersion().ID(openshiftVersion))
+					builder.Version(clustersmgmtv1.NewVersion().ID(testOpenshiftVersion))
 					builder.Nodes(clustersmgmtv1.NewClusterNodes().
-						ComputeMachineType(clustersmgmtv1.NewMachineType().ID(ComputeMachineType)).
+						ComputeMachineType(clustersmgmtv1.NewMachineType().ID(testComputeMachineType)).
 						AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(6).MaxReplicas(18)))
 				})
 				if err != nil {
