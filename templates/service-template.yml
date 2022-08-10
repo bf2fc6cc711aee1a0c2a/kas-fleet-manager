@@ -417,9 +417,14 @@ parameters:
   value: ""
 
 - name: CLUSTER_COMPUTE_MACHINE_TYPE
-  displayName: Compute machine type
-  description: The compute machine type of each node on a new created cluster.
+  displayName: AWS Compute machine type
+  description: The instance type of the AWS compute instances of Data Planes created in AWS
   value: "m5.2xlarge"
+
+- name: GCP_CLUSTER_COMPUTE_MACHINE_TYPE
+  displayName: GCP Compute machine type
+  description: The instance type of the GCP compute instances for Data Planes created in GCP
+  value: "custom-8-32768"
 
 - name: ALLOW_DEVELOPER_INSTANCE
   displayName: Allow Developer Instance
@@ -1054,6 +1059,7 @@ objects:
             - --max-allowed-instances=${MAX_ALLOWED_INSTANCES}
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
             - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
+            - --gcp-cluster-compute-machine-type=${GCP_CLUSTER_COMPUTE_MACHINE_TYPE}
             - --dataplane-cluster-config-file=/config/dataplane-cluster-configuration.yaml
             - --kubeconfig=/secrets/service/kubeconfig
             - --kas-fleetshard-poll-interval=${KAS_FLEETSHARD_POLL_INTERVAL}
