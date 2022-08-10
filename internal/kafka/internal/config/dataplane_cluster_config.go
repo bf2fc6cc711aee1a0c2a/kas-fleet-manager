@@ -31,7 +31,7 @@ const (
 
 type DataplaneClusterConfig struct {
 	OpenshiftVersion             string
-	ComputeMachineType           string
+	AWSComputeMachineType        string
 	GCPComputeMachineType        string
 	ImagePullDockerConfigContent string
 	ImagePullDockerConfigFile    string
@@ -87,7 +87,7 @@ func getDefaultKubeconfig() string {
 func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	return &DataplaneClusterConfig{
 		OpenshiftVersion:                            "",
-		ComputeMachineType:                          defaultAWSComputeMachineType,
+		AWSComputeMachineType:                       defaultAWSComputeMachineType,
 		GCPComputeMachineType:                       defaultGCPComputeMachineType,
 		ImagePullDockerConfigContent:                "",
 		ImagePullDockerConfigFile:                   "secrets/image-pull.dockerconfigjson",
@@ -280,7 +280,7 @@ func (c *DataplaneClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool
 
 func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.OpenshiftVersion, "cluster-openshift-version", c.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")
-	fs.StringVar(&c.ComputeMachineType, "cluster-compute-machine-type", c.ComputeMachineType, "The instance type of the AWS compute instances for Data Planes created in AWS")
+	fs.StringVar(&c.AWSComputeMachineType, "aws-cluster-compute-machine-type", c.AWSComputeMachineType, "The instance type of the AWS compute instances for Data Planes created in AWS")
 	fs.StringVar(&c.GCPComputeMachineType, "gcp-cluster-compute-machine-type", c.GCPComputeMachineType, "The instance type of the GCP compute instances for Data Planes created in GCP")
 	fs.StringVar(&c.ImagePullDockerConfigFile, "image-pull-docker-config-file", c.ImagePullDockerConfigFile, "The file that contains the docker config content for pulling MK operator images on clusters")
 	fs.StringVar(&c.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", c.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
