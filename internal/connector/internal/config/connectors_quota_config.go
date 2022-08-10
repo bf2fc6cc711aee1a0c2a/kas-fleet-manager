@@ -11,31 +11,39 @@ import (
 )
 
 type ConnectorsQuotaConfig struct {
-	ConnectorsQuotaMap        ConnectorsQuotaProfileMap
-	ConnectorsQuotaConfigFile string
-	EvalNamespaceQuotaProfile string
+	connectorsQuotaMap           ConnectorsQuotaProfileMap
+	ConnectorsQuotaConfigFile    string
+	EvalNamespaceQuotaProfile    string
+	DefaultNamespaceQuotaProfile string
 }
 
 func NewConnectorsQuotaConfig() *ConnectorsQuotaConfig {
 	return &ConnectorsQuotaConfig{
-		ConnectorsQuotaMap:        make(ConnectorsQuotaProfileMap),
-		ConnectorsQuotaConfigFile: "config/connectors-quota-configuration.yaml",
-		EvalNamespaceQuotaProfile: profiles.EvaluationProfileName,
+		connectorsQuotaMap:           make(ConnectorsQuotaProfileMap),
+		ConnectorsQuotaConfigFile:    "config/connectors-quota-configuration.yaml",
+		EvalNamespaceQuotaProfile:    profiles.EvaluationProfileName,
+		DefaultNamespaceQuotaProfile: profiles.DefaultProfileName,
 	}
 }
 
 func (c *ConnectorsQuotaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ConnectorsQuotaConfigFile, "connectors-quota-config-file", c.ConnectorsQuotaConfigFile, "Connectors quota configuration file")
 	fs.StringVar(&c.EvalNamespaceQuotaProfile, "connectors-eval-namespace-quota-profile", c.EvalNamespaceQuotaProfile, "Connectors quota profile name for evaluation namespaces")
+	fs.StringVar(&c.DefaultNamespaceQuotaProfile, "default-eval-namespace-quota-profile", c.DefaultNamespaceQuotaProfile, "Connectors quota profile name for default namespace")
 }
 
 func (c *ConnectorsQuotaConfig) ReadFiles() (err error) {
-	err = readQuotaConfigFile(c.ConnectorsQuotaConfigFile, c.ConnectorsQuotaMap)
+	err = readQuotaConfigFile(c.ConnectorsQuotaConfigFile, c.connectorsQuotaMap)
 
 	if err == nil {
-		if _, ok := c.ConnectorsQuotaMap[c.EvalNamespaceQuotaProfile]; !ok {
+		if _, ok := c.connectorsQuotaMap[c.EvalNamespaceQuotaProfile]; !ok {
 			err = fmt.Errorf("configuration file '%s' is missing evaluation namespace quota profile '%s'",
 				c.ConnectorsQuotaConfigFile, c.EvalNamespaceQuotaProfile)
+		}
+
+		if _, ok := c.connectorsQuotaMap[c.DefaultNamespaceQuotaProfile]; !ok {
+			err = fmt.Errorf("configuration file '%s' is missing default namespace quota profile '%s'",
+				c.ConnectorsQuotaConfigFile, c.DefaultNamespaceQuotaProfile)
 		}
 	} else if os.IsNotExist(err) {
 		err = fmt.Errorf("configuration file for connectors-quota-config-file not found: '%s'", c.ConnectorsQuotaConfigFile)
@@ -65,11 +73,11 @@ func readQuotaConfigFile(file string, val ConnectorsQuotaProfileMap) error {
 }
 
 func (c *ConnectorsQuotaConfig) GetNamespaceQuota(profileName string) (NamespaceQuota, bool) {
-	profile, ok := c.ConnectorsQuotaMap[profileName]
+	profile, ok := c.connectorsQuotaMap[profileName]
 	return profile.NamespaceQuota, ok
 }
 
 func (c *ConnectorsQuotaConfig) GetEvalNamespaceQuota() (NamespaceQuota, bool) {
-	profile, ok := c.ConnectorsQuotaMap[c.EvalNamespaceQuotaProfile]
+	profile, ok := c.connectorsQuotaMap[c.EvalNamespaceQuotaProfile]
 	return profile.NamespaceQuota, ok
 }
