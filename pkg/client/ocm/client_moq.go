@@ -83,6 +83,9 @@ var _ Client = &ClientMock{}
 // 			GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 // 				panic("mock out the GetOrganisationIdFromExternalId method")
 // 			},
+// 			GetQuotaCostFunc: func(organizationID string, fetchRelatedResources bool, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error) {
+// 				panic("mock out the GetQuotaCost method")
+// 			},
 // 			GetQuotaCostsForProductFunc: func(organizationID string, resourceName string, product string) ([]*amsv1.QuotaCost, error) {
 // 				panic("mock out the GetQuotaCostsForProduct method")
 // 			},
@@ -170,6 +173,9 @@ type ClientMock struct {
 
 	// GetOrganisationIdFromExternalIdFunc mocks the GetOrganisationIdFromExternalId method.
 	GetOrganisationIdFromExternalIdFunc func(externalId string) (string, error)
+
+	// GetQuotaCostFunc mocks the GetQuotaCost method.
+	GetQuotaCostFunc func(organizationID string, fetchRelatedResources bool, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error)
 
 	// GetQuotaCostsForProductFunc mocks the GetQuotaCostsForProduct method.
 	GetQuotaCostsForProductFunc func(organizationID string, resourceName string, product string) ([]*amsv1.QuotaCost, error)
@@ -310,6 +316,15 @@ type ClientMock struct {
 			// ExternalId is the externalId argument value.
 			ExternalId string
 		}
+		// GetQuotaCost holds details about calls to the GetQuotaCost method.
+		GetQuotaCost []struct {
+			// OrganizationID is the organizationID argument value.
+			OrganizationID string
+			// FetchRelatedResources is the fetchRelatedResources argument value.
+			FetchRelatedResources bool
+			// FetchCloudAccounts is the fetchCloudAccounts argument value.
+			FetchCloudAccounts bool
+		}
 		// GetQuotaCostsForProduct holds details about calls to the GetQuotaCostsForProduct method.
 		GetQuotaCostsForProduct []struct {
 			// OrganizationID is the organizationID argument value.
@@ -376,6 +391,7 @@ type ClientMock struct {
 	lockGetIdentityProviderList         sync.RWMutex
 	lockGetMachinePool                  sync.RWMutex
 	lockGetOrganisationIdFromExternalId sync.RWMutex
+	lockGetQuotaCost                    sync.RWMutex
 	lockGetQuotaCostsForProduct         sync.RWMutex
 	lockGetRegions                      sync.RWMutex
 	lockGetRequiresTermsAcceptance      sync.RWMutex
@@ -1058,6 +1074,45 @@ func (mock *ClientMock) GetOrganisationIdFromExternalIdCalls() []struct {
 	mock.lockGetOrganisationIdFromExternalId.RLock()
 	calls = mock.calls.GetOrganisationIdFromExternalId
 	mock.lockGetOrganisationIdFromExternalId.RUnlock()
+	return calls
+}
+
+// GetQuotaCost calls GetQuotaCostFunc.
+func (mock *ClientMock) GetQuotaCost(organizationID string, fetchRelatedResources bool, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error) {
+	if mock.GetQuotaCostFunc == nil {
+		panic("ClientMock.GetQuotaCostFunc: method is nil but Client.GetQuotaCost was just called")
+	}
+	callInfo := struct {
+		OrganizationID        string
+		FetchRelatedResources bool
+		FetchCloudAccounts    bool
+	}{
+		OrganizationID:        organizationID,
+		FetchRelatedResources: fetchRelatedResources,
+		FetchCloudAccounts:    fetchCloudAccounts,
+	}
+	mock.lockGetQuotaCost.Lock()
+	mock.calls.GetQuotaCost = append(mock.calls.GetQuotaCost, callInfo)
+	mock.lockGetQuotaCost.Unlock()
+	return mock.GetQuotaCostFunc(organizationID, fetchRelatedResources, fetchCloudAccounts)
+}
+
+// GetQuotaCostCalls gets all the calls that were made to GetQuotaCost.
+// Check the length with:
+//     len(mockedClient.GetQuotaCostCalls())
+func (mock *ClientMock) GetQuotaCostCalls() []struct {
+	OrganizationID        string
+	FetchRelatedResources bool
+	FetchCloudAccounts    bool
+} {
+	var calls []struct {
+		OrganizationID        string
+		FetchRelatedResources bool
+		FetchCloudAccounts    bool
+	}
+	mock.lockGetQuotaCost.RLock()
+	calls = mock.calls.GetQuotaCost
+	mock.lockGetQuotaCost.RUnlock()
 	return calls
 }
 
