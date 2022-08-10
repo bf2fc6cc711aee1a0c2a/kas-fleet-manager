@@ -38,7 +38,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"mas-sso-realm":                     "rhoas",
 		"osd-idp-mas-sso-realm":             "rhoas-kafka-sre",
 		"enable-kafka-external-certificate": "false",
-		"cluster-compute-machine-type":      "m5.xlarge",
+		"aws-cluster-compute-machine-type":  "m5.xlarge",
 		"allow-developer-instance":          "true",
 		"quota-type":                        "quota-management-list",
 		"enable-deletion-of-expired-kafka":  "true",
