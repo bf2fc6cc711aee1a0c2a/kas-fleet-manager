@@ -75,7 +75,7 @@ func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRe
 
 	// Set compute node size
 	clusterBuilder.Nodes(clustersmgmtv1.NewClusterNodes().
-		ComputeMachineType(clustersmgmtv1.NewMachineType().ID(r.dataplaneClusterConfig.ComputeMachineType)).
+		ComputeMachineType(clustersmgmtv1.NewMachineType().ID(r.dataplaneClusterConfig.AWSComputeMachineType)).
 		AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(6).MaxReplicas(18)))
 
 	return clusterBuilder.Build()

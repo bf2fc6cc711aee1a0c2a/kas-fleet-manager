@@ -416,7 +416,7 @@ parameters:
   description: The version of openshift to be deployed on a new created OSD cluster
   value: ""
 
-- name: CLUSTER_COMPUTE_MACHINE_TYPE
+- name: AWS_CLUSTER_COMPUTE_MACHINE_TYPE
   displayName: AWS Compute machine type
   description: The instance type of the AWS compute instances of Data Planes created in AWS
   value: "m5.2xlarge"
@@ -1058,7 +1058,7 @@ objects:
             - --enable-instance-limit-control=${ENABLE_INSTANCE_LIMIT_CONTROL}
             - --max-allowed-instances=${MAX_ALLOWED_INSTANCES}
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
-            - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
+            - --aws-cluster-compute-machine-type=${AWS_CLUSTER_COMPUTE_MACHINE_TYPE}
             - --gcp-cluster-compute-machine-type=${GCP_CLUSTER_COMPUTE_MACHINE_TYPE}
             - --dataplane-cluster-config-file=/config/dataplane-cluster-configuration.yaml
             - --kubeconfig=/secrets/service/kubeconfig

@@ -1100,7 +1100,7 @@ func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supported
 	machinePoolTaints := []types.CluserNodeTaint{machinePoolTaint}
 	machinePool := &types.MachinePoolRequest{
 		ID:                 machinePoolID,
-		InstanceSize:       c.DataplaneClusterConfig.ComputeMachineType,
+		InstanceSize:       c.DataplaneClusterConfig.AWSComputeMachineType,
 		MultiAZ:            cluster.MultiAZ,
 		AutoScalingEnabled: true,
 		AutoScaling: types.MachinePoolAutoScaling{
