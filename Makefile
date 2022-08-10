@@ -157,7 +157,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/rhoasapi-installation/spectral 2> /dev/n
 	if [ -d ${LOCAL_BIN_PATH}/spectral-installation ]; then rm -r ${LOCAL_BIN_PATH}/spectral-installation; fi ;\
 	if [ -L ${LOCAL_BIN_PATH}/spectral ]; then rm ${LOCAL_BIN_PATH}/spectral; fi ;\
 	${NPM} i --prefix ${LOCAL_BIN_PATH}/rhoasapi-installation @stoplight/spectral-cli@6.5.0  ;\
-    ${NPM} i --prefix ${LOCAL_BIN_PATH}/rhoasapi-installation @rhoas/spectral-ruleset@0.3.0 ;\
+    ${NPM} i --prefix ${LOCAL_BIN_PATH}/rhoasapi-installation @rhoas/spectral-ruleset@0.3.1 ;\
     ln -Fs ${LOCAL_BIN_PATH}/rhoasapi-installation/node_modules/.bin/spectral ${LOCAL_BIN_PATH}/rhoasapi-installation/spectral ;\
 	cp .spectral.yaml ${LOCAL_BIN_PATH}/rhoasapi-installation/ ;\
 	}
