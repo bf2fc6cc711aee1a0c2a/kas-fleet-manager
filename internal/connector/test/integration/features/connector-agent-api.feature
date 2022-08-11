@@ -299,7 +299,50 @@ Feature: connector agent API
           "version": "1.0",
           "namespace": "openshift-mcs-camelk-1.0",
           "status": "ready"
-        }]
+        }],
+        "platform": {
+          "type": "OpenShift",
+          "id": "59653847-85ee-4237-9890-902230460ac3",
+          "version": "4.10.1"
+        }
+      }
+      """
+    Then the response code should be 204
+    And the response should match ""
+
+    When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
+      """
+      {
+        "phase":"ready",
+        "version": "0.0.1",
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }],
+        "namespaces": [{
+          "id": "${connector_namespace_id}",
+          "phase": "ready",
+          "version": "0.0.1",
+          "connectors_deployed": 0,
+          "conditions": [
+            {
+              "type": "Ready",
+              "status": "True",
+              "lastTransitionTime": "2018-01-01T00:00:00Z"
+            }
+          ]
+        }],
+        "operators": [{
+          "id":"camelk",
+          "version": "1.0",
+          "namespace": "openshift-mcs-camelk-1.0",
+          "status": "ready"
+        }],
+        "platform": {
+          "type": "OpenShift",
+          "id": "59653847-85ee-4237-9890-902230460ac3"
+        }
       }
       """
     Then the response code should be 204

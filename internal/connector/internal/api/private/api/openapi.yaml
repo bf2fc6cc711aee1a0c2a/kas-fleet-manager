@@ -642,6 +642,10 @@ components:
           message: message
           status: status
         version: version
+        platform:
+          id: id
+          type: type
+          version: version
         namespaces:
         - connectors_deployed: 0
           id: id
@@ -680,6 +684,8 @@ components:
           items:
             $ref: '#/components/schemas/MetaV1Condition'
           type: array
+        platform:
+          $ref: '#/components/schemas/ConnectorClusterStatus_platform'
         operators:
           description: the list of installed operators
           items:
@@ -989,6 +995,22 @@ components:
       properties:
         object:
           $ref: '#/components/schemas/ConnectorDeployment'
+    ConnectorClusterStatus_platform:
+      description: information about the kubernetes platform
+      example:
+        id: id
+        type: type
+        version: version
+      properties:
+        type:
+          description: the kubernetes cluster tye
+          type: string
+        id:
+          description: uniquely identifies the kubernetes cluster
+          type: string
+        version:
+          description: optional version of the kubernetes cluster
+          type: string
     ConnectorClusterStatus_operators:
       example:
         namespace: namespace

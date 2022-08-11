@@ -561,6 +561,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MetaV1Condition'
+        platform:
+          description: information about the kubernetes platform
+          type: object
+          properties:
+            type:
+              description: the kubernetes cluster tye
+              type: string
+            id:
+              description: uniquely identifies the kubernetes cluster
+              type: string
+            version:
+              description: optional version of the kubernetes cluster
+              type: string
         operators:
           description: the list of installed operators
           type: array
