@@ -60,12 +60,32 @@ func NewKafkaHelper(t *testing.T, server *httptest.Server) (*test.Helper, *publi
 
 func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
 	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, kafka.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
-		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, kasFleetshardConfig *config.KasFleetshardConfig) {
+		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, kasFleetshardConfig *config.KasFleetshardConfig, providerConfig *config.ProviderConfig) {
 			kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
 			observabilityConfiguration.EnableMock = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
 			dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
 			dataplaneClusterConfig.EnableDynamicScaleUpManagerScaleUpTrigger = false
+
+			// enable only aws for integration tests
+			providerConfig.ProvidersConfig = config.ProviderConfiguration{
+				SupportedProviders: config.ProviderList{
+					{
+						Name:    "aws",
+						Default: true,
+						Regions: []config.Region{
+							{
+								Name:    "us-east-1",
+								Default: true,
+								SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
+									"standard":  {},
+									"developer": {},
+								},
+							},
+						},
+					},
+				},
+			}
 		},
 	}))
 	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
