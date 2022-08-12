@@ -95,7 +95,7 @@ func (kc *masService) GetRealmConfig() *keycloak.KeycloakRealmConfig {
 	return kc.kcClient.GetRealmConfig()
 }
 
-func (kc masService) IsKafkaClientExist(accessToken string, clientId string) *errors.ServiceError {
+func (kc *masService) IsKafkaClientExist(accessToken string, clientId string) *errors.ServiceError {
 	_, err := kc.kcClient.IsClientExist(clientId, accessToken)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clientId)
@@ -103,7 +103,7 @@ func (kc masService) IsKafkaClientExist(accessToken string, clientId string) *er
 	return nil
 }
 
-func (kc masService) GetKafkaClientSecret(accessToken string, clientId string) (string, *errors.ServiceError) {
+func (kc *masService) GetKafkaClientSecret(accessToken string, clientId string) (string, *errors.ServiceError) {
 	internalClientID, err := kc.kcClient.IsClientExist(clientId, accessToken)
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clientId)
