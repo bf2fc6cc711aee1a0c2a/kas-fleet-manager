@@ -30,8 +30,8 @@ func (s *extender) iResetTheVaultCounters() error {
 	if err := s.Suite.Helper.Env.ServiceContainer.Resolve(&service); err != nil {
 		return err
 	}
-	if vault, ok := service.(*vault.TmpVaultService); ok {
-		vault.ResetCounters()
+	if v, ok := service.(*vault.TmpVaultService); ok {
+		v.ResetCounters()
 	}
 	return nil
 }
@@ -43,8 +43,8 @@ func (s *extender) theVaultDeleteCounterShouldBe(expected int64) error {
 		return err
 	}
 
-	if vault, ok := service.(*vault.TmpVaultService); ok {
-		actual := vault.Counters().Deletes
+	if v, ok := service.(*vault.TmpVaultService); ok {
+		actual := v.Counters().Deletes
 		if actual != expected {
 			return fmt.Errorf("vault delete counter does not match expected: %v, actual: %v", expected, actual)
 		}
@@ -55,7 +55,7 @@ func (s *extender) theVaultDeleteCounterShouldBe(expected int64) error {
 func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as string, clientID string) error {
 	session := s.Session()
 
-	params := []public.AddonParameter{}
+	params := make([]public.AddonParameter, 0)
 	err := json.Unmarshal(session.RespBytes, &params)
 	if err != nil {
 		return err
