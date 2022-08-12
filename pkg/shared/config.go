@@ -3,7 +3,6 @@ package shared
 import (
 	"encoding/json"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -83,16 +82,18 @@ func BuildFullFilePath(filename string) string {
 	return absFilePath
 }
 
-func CreateTempFileFromStringData(namePrefix string, contents string) (*os.File, error) {
+func CreateTempFileFromStringData(namePrefix string, contents string) (string, error) {
 	configFile, err := ioutil.TempFile("", namePrefix)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if _, err = configFile.Write([]byte(contents)); err != nil {
-		return configFile, err
+		// don't forget to close the file
+		_ = configFile.Close()
+		return configFile.Name(), err
 	}
 	err = configFile.Close()
-	return configFile, err
+	return configFile.Name(), err
 }
 
 func ReadYamlFile(filename string, out interface{}) (err error) {

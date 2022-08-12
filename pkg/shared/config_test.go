@@ -91,14 +91,14 @@ func Test_ReadYamlFile(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	yamlFile, err := CreateTempFileFromStringData("skiplist.yaml", "---\n- 01234\n- 56789")
-	defer os.Remove(yamlFile.Name())
+	defer os.Remove(yamlFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var skiplist []string
 	expectedSkipList := []string{"01234", "56789"}
-	quotedFileName := "\"" + yamlFile.Name() + "\""
+	quotedFileName := "\"" + yamlFile + "\""
 	err = ReadYamlFile(quotedFileName, &skiplist)
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	g.Expect(expectedSkipList).To(gomega.Equal(skiplist))
@@ -109,7 +109,7 @@ func Test_ReadJSONFile(t *testing.T) {
 
 	testJSONContent := "{\"test_key\": \"test_value\"}"
 	jsonFile, err := CreateTempFileFromStringData("testjsonfile.json", testJSONContent)
-	defer os.Remove(jsonFile.Name())
+	defer os.Remove(jsonFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -123,7 +123,7 @@ func Test_ReadJSONFile(t *testing.T) {
 		TestKey: "test_value",
 	}
 
-	quotedFileName := "\"" + jsonFile.Name() + "\""
+	quotedFileName := "\"" + jsonFile + "\""
 	err = ReadJSONFile(quotedFileName, &res)
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	g.Expect(res).To(gomega.Equal(expectedResult))
