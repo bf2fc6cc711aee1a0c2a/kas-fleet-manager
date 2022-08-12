@@ -313,7 +313,7 @@ func selectConnectorWithConditions(dbConn *gorm.DB, joinedStatus bool) *gorm.DB 
 			"and connector_deployment_statuses.deleted_at IS NULL")
 }
 
-func (k connectorsService) Update(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError {
+func (k *connectorsService) Update(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError {
 
 	if resource.Version == 0 {
 		return errors.BadRequest("resource version is required")
@@ -342,7 +342,7 @@ func (k connectorsService) Update(ctx context.Context, resource *dbapi.Connector
 	return nil
 }
 
-func (k connectorsService) SaveStatus(ctx context.Context, resource dbapi.ConnectorStatus) *errors.ServiceError {
+func (k *connectorsService) SaveStatus(ctx context.Context, resource dbapi.ConnectorStatus) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 	if err := dbConn.Model(resource).Save(resource).Error; err != nil {
 		return errors.GeneralError("failed to update: %s", err.Error())
@@ -350,7 +350,7 @@ func (k connectorsService) SaveStatus(ctx context.Context, resource dbapi.Connec
 	return nil
 }
 
-func (k connectorsService) ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) []error {
+func (k *connectorsService) ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) []error {
 	dbConn := k.connectionFactory.New()
 	rows, err := dbConn.
 		Model(&dbapi.Connector{}).

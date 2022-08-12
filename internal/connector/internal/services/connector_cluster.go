@@ -290,7 +290,7 @@ func isAdmin(ctx context.Context) (bool, *errors.ServiceError) {
 	return auth.GetIsAdminFromContext(ctx), nil
 }
 
-func (k connectorClusterService) Update(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError {
+func (k *connectorClusterService) Update(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 	if err := dbConn.Where("id = ?", resource.ID).Model(resource).Updates(resource).Error; err != nil {
 		return services.HandleUpdateError("Connector", err)
