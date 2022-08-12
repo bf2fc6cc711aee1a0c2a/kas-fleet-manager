@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -198,6 +199,9 @@ func init() {
 		ctx.Step(`I can forget keycloak clientID: \${([^"]*)}$`, e.forgetKeycloakClientForCleanup)
 		ctx.Step(`^I delete the unused and not in catalog connector types$`, e.iDeleteUnusedAndNotInCatalogConnectorTypes)
 
-		ctx.AfterScenario(e.deleteKeycloakClients)
+		ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+			e.deleteKeycloakClients(sc, err)
+			return ctx, err
+		})
 	})
 }
