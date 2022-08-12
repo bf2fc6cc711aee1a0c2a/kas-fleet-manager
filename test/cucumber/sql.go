@@ -8,6 +8,7 @@ package cucumber
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"reflect"
 	"strings"
 
@@ -71,7 +72,7 @@ func (s *TestScenario) iRunSQLGivesResults(sql string, expected *godog.Table) er
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer shared.CloseQuietly(rows)
 
 	var actualTable [][]string
 	cols, err := rows.Columns()

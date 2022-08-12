@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -123,7 +124,7 @@ func (c *rhSSOClient) GetToken() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer shared.CloseQuietly(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("error getting token [%d]", resp.StatusCode)

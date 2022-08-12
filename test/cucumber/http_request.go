@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	fmt "fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -129,7 +130,7 @@ func (s *TestScenario) SendHttpRequestWithJsonBodyAndStyle(method, path string, 
 	session.Resp = resp
 	session.EventStream = eventStream
 	if !eventStream {
-		defer resp.Body.Close()
+		defer shared.CloseQuietly(resp.Body)
 		session.RespBytes, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return err

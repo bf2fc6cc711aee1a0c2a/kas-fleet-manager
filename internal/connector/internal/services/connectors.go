@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"regexp"
 	"strings"
 
@@ -364,7 +365,7 @@ func (k *connectorsService) ForEach(f func(*dbapi.Connector) *errors.ServiceErro
 		}
 		return []error{errors.GeneralError("Unable to list connectors: %s", err)}
 	}
-	defer rows.Close()
+	defer shared.CloseQuietly(rows)
 
 	var errs []error
 	for rows.Next() {

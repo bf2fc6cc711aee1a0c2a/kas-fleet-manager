@@ -3,6 +3,7 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/golang/glog"
 	"net/url"
@@ -76,7 +77,7 @@ func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as str
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer shared.CloseQuietly(resp.Body)
 
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("http status code %d when getting the access token", resp.StatusCode)

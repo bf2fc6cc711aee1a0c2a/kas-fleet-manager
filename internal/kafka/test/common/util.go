@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -218,7 +219,7 @@ func getMetrics(t *testing.T) string {
 	if err != nil {
 		t.Fatalf("failed to get response from %s: %s", metricsURL, err.Error())
 	}
-	defer response.Body.Close()
+	defer shared.CloseQuietly(response.Body)
 
 	responseData, err := ioutil.ReadAll(response.Body)
 	if err != nil {
