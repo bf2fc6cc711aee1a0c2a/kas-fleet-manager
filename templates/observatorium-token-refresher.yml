@@ -72,6 +72,18 @@ objects:
             app.kubernetes.io/name: token-refresher
             app.kubernetes.io/version: master-2020-12-04-5504078
         spec:
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                      - token-refresher
+                  topologyKey: topology.kubernetes.io/zone
+                weight: 100
           containers:
           - name: token-refresher
             image: ${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE}:${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG}
