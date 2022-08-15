@@ -56,6 +56,11 @@ objects:
       name: token-refresher
     spec:
       replicas: ${{OBSERVATORIUM_TOKEN_REFRESHER_REPLICAS}}
+      strategy:
+        rollingUpdate:
+          maxSurge: 25%
+          maxUnavailable: 25%
+        type: RollingUpdate
       selector:
         matchLabels:
           app.kubernetes.io/component: authentication-proxy
