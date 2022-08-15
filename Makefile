@@ -146,8 +146,8 @@ SPECTRAL ?= ${LOCAL_BIN_PATH}/rhoasapi-installation/spectral
 NPM ?= "$(shell which npm)"
 specinstall:
 ifeq (, $(shell which ${NPM} 2> /dev/null))
-       @echo "npm is not available please install it to be able to install spectral"
-       exit 1
+	@echo "npm is not available please install it to be able to install spectral"
+	exit 1
 endif
 ifeq (, $(shell which ${LOCAL_BIN_PATH}/rhoasapi-installation/spectral 2> /dev/null))
 	@{ \
