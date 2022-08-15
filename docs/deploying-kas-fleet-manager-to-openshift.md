@@ -122,6 +122,7 @@ make deploy/token-refresher <OPTIONAL_PARAMETERS>
 - `ISSUER_URL`: The issuer URL of your authentication service. Defaults to `https://sso.redhat.com/auth/realms/redhat-external`
 - `OBSERVATORIUM_TOKEN_REFRESHER_IMAGE`: The image repository used for the Observatorium token refresher deployment. Defaults to `quay.io/rhoas/mk-token-refresher`.
 - `OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG`: The image tag used for the Observatorium token refresher deployment. Defaults to `latest`
+- `OBSERVATORIUM_TOKEN_REFRESHER_REPLICAS`: The number of replicas of the Observatorium token refresher deployment. Defaults to `1`.
 
 ## Deploy KAS Fleet Manager
 ```

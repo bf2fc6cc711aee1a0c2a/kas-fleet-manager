@@ -928,12 +928,14 @@ deploy/token-refresher: ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat
 deploy/token-refresher: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE ?= "quay.io/rhoas/mk-token-refresher"
 deploy/token-refresher: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG ?= "latest"
 deploy/token-refresher: OBSERVATORIUM_URL ?= "https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/managedkafka"
+deploy/token-refresher: OBSERVATORIUM_TOKEN_REFRESHER_REPLICAS ?= "1"
 deploy/token-refresher:
 	@-$(OC) process -f ./templates/observatorium-token-refresher.yml \
 		-p ISSUER_URL=${ISSUER_URL} \
 		-p OBSERVATORIUM_URL=${OBSERVATORIUM_URL} \
 		-p OBSERVATORIUM_TOKEN_REFRESHER_IMAGE=${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE} \
 		-p OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG=${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG} \
+		-p OBSERVATORIUM_TOKEN_REFRESHER_REPLICAS=${OBSERVATORIUM_TOKEN_REFRESHER_REPLICAS} \
 		 | $(OC) apply -f - -n $(NAMESPACE)
 .PHONY: deploy/token-refresher
 
