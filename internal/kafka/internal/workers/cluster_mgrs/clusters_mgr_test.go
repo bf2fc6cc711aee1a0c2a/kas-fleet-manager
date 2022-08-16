@@ -28,8 +28,6 @@ import (
 )
 
 var (
-	testRegion                    = "us-east-1"
-	testProvider                  = "aws"
 	strimziAddonID                = "managed-kafka-test"
 	clusterLoggingOperatorAddonID = "cluster-logging-operator-test"
 	supportedInstanceType         = "developer"
@@ -41,24 +39,6 @@ var (
 	}
 	clusterWaitingForKasFleetShardOperator = api.Cluster{
 		Status: api.ClusterWaitingForKasFleetShardOperator,
-	}
-	supportedProviders = config.ProviderConfig{
-		ProvidersConfig: config.ProviderConfiguration{
-			SupportedProviders: config.ProviderList{
-				config.Provider{
-					Name: testProvider,
-					Regions: config.RegionList{
-						config.Region{
-							Name: testRegion,
-							SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
-								"standard":  {Limit: nil},
-								"developer": {Limit: nil},
-							},
-						},
-					},
-				},
-			},
-		},
 	}
 	keycloakRealmConfig = keycloak.KeycloakRealmConfig{
 		ValidIssuerURI: "https://foo.bar",
@@ -221,62 +201,59 @@ func TestClusterManager_processMetrics(t *testing.T) {
 		clusterService         services.ClusterService
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 		supportedProviders     *config.ProviderConfig
-		OCMConfig              *ocm.OCMConfig
-		ProviderFactory        clusters.ProviderFactory
+		ocmConfig              *ocm.OCMConfig
+		providerFactory        clusters.ProviderFactory
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
+		name     string
+		fields   fields
+		wantErrs []error
 	}{
 		{
-			name: "should return an error if CountByStatus called by setClusterStatusCountMetrics fails in ClusterService",
+			name: "should return one error if setClusterStatusCountMetrics fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
 						return nil, apiErrors.GeneralError("failed to count by status")
 					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
+						return nil, nil
+					},
 				},
+				ocmConfig: &ocm.OCMConfig{},
 			},
-			wantErr: true,
+			wantErrs: []error{errors.New("failed to set cluster status count metrics: KAFKAS-MGMT-9: failed to count by status")},
 		},
 		{
-			name: "should return an error if FindKafkaInstanceCount called by setKafkaPerClusterCountMetrics fails in ClusterService",
+			name: "should return one error if setKafkaPerClusterCountMetrics fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
-						return []services.ClusterStatusCount{}, nil
+						return nil, nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
-						return nil, errors.New("failed to find kafka instances count")
+						return nil, errors.New("failed to find kafka instance count")
 					},
 				},
+				ocmConfig: &ocm.OCMConfig{},
 			},
-			wantErr: true,
+			wantErrs: []error{errors.New("failed to set kafka per cluster count metrics: failed to find kafka instance count")},
 		},
 		{
-			name: "should return an error if GetQuotaCosts called by setKasFleetManagerClusterProviderResourceQuotaConsumedMetric fails in ClusterService",
+			name: "should return one error if setClusterProviderResourceQuotaMetrics fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
-						return []services.ClusterStatusCount{}, nil
+						return nil, nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
-						return []services.ResKafkaInstanceCount{}, nil
+						return nil, nil
 					},
 				},
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: config.AutoScaling,
-					ClusterConfig: config.NewClusterConfig(
-						config.ClusterList{
-							dpMock.BuildManualCluster(supportedInstanceType),
-						}),
+				ocmConfig: &ocm.OCMConfig{
+					SelfToken: "test-token",
 				},
-				supportedProviders: &supportedProviders,
-				OCMConfig: &ocm.OCMConfig{
-					SelfToken: "selfToken",
-				},
-				ProviderFactory: &clusters.ProviderFactoryMock{
+				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
 							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
@@ -286,31 +263,53 @@ func TestClusterManager_processMetrics(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
+			wantErrs: []error{errors.New("failed to set cluster provider resource quota metrics: failed to get quota costs")},
 		},
 		{
-			name: "should succeed if no errors occur during the execution",
+			name: "should return multiple errors if all cluster metrics fails to process",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
-						return []services.ClusterStatusCount{}, nil
+						return nil, apiErrors.GeneralError("failed to count by status")
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
-						return []services.ResKafkaInstanceCount{}, nil
+						return nil, errors.New("failed to find kafka instance count")
 					},
 				},
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: config.AutoScaling,
-					ClusterConfig: config.NewClusterConfig(
-						config.ClusterList{
-							dpMock.BuildManualCluster(supportedInstanceType),
-						}),
+				ocmConfig: &ocm.OCMConfig{
+					SelfToken: "test-token",
 				},
-				supportedProviders: &supportedProviders,
-				OCMConfig: &ocm.OCMConfig{
-					SelfToken: "selfToken",
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+								return nil, errors.New("failed to get quota costs")
+							},
+						}, nil
+					},
 				},
-				ProviderFactory: &clusters.ProviderFactoryMock{
+			},
+			wantErrs: []error{
+				errors.New("failed to set cluster status count metrics: KAFKAS-MGMT-9: failed to count by status"),
+				errors.New("failed to set kafka per cluster count metrics: failed to find kafka instance count"),
+				errors.New("failed to set cluster provider resource quota metrics: failed to get quota costs"),
+			},
+		},
+		{
+			name: "should return no errors if all cluster metrics process successfully",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
+						return nil, nil
+					},
+				},
+				ocmConfig: &ocm.OCMConfig{
+					SelfToken: "test-token",
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
 							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
@@ -320,7 +319,7 @@ func TestClusterManager_processMetrics(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErrs: []error{},
 		},
 	}
 
@@ -333,13 +332,18 @@ func TestClusterManager_processMetrics(t *testing.T) {
 					ClusterService:         tt.fields.clusterService,
 					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
 					SupportedProviders:     tt.fields.supportedProviders,
-					OCMConfig:              tt.fields.OCMConfig,
-					ProviderFactory:        tt.fields.ProviderFactory,
+					OCMConfig:              tt.fields.ocmConfig,
+					ProviderFactory:        tt.fields.providerFactory,
 				},
 			}
 			// processMetrics accumulates all the errors encountered during metrics processing in an array.
-			// If that array is non empty then an error should be expected. Otherwise, no errors should be expected.
-			g.Expect(len(c.processMetrics()) > 0).To(gomega.Equal(tt.wantErr))
+			gotErrors := c.processMetrics()
+			g.Expect(len(gotErrors)).To(gomega.Equal(len(tt.wantErrs)), "Errors received: %v", gotErrors)
+			if len(gotErrors) > 0 {
+				for i, err := range gotErrors {
+					g.Expect(err.Error()).To(gomega.Equal(tt.wantErrs[i].Error()))
+				}
+			}
 		})
 	}
 }

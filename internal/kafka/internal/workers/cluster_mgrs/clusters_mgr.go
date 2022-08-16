@@ -192,19 +192,20 @@ func (c *ClusterManager) Reconcile() []error {
 }
 
 func (c *ClusterManager) processMetrics() []error {
+	var errs []error
 	if err := c.setClusterStatusCountMetrics(); err != nil {
-		return []error{errors.Wrapf(err, "failed to set cluster status count metrics")}
+		errs = append(errs, errors.Wrapf(err, "failed to set cluster status count metrics"))
 	}
 
 	if err := c.setKafkaPerClusterCountMetrics(); err != nil {
-		return []error{errors.Wrapf(err, "failed to set kafka per cluster count metrics")}
+		errs = append(errs, errors.Wrapf(err, "failed to set kafka per cluster count metrics"))
 	}
 
 	if err := c.setClusterProviderResourceQuotaMetrics(); err != nil {
-		return []error{errors.Wrapf(err, "failed to set cluster provider resource quota metrics")}
+		errs = append(errs, errors.Wrapf(err, "failed to set cluster provider resource quota metrics"))
 	}
 
-	return []error{}
+	return errs
 }
 
 func (c *ClusterManager) processAcceptedClusters() []error {
