@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/onsi/gomega"
@@ -127,8 +128,8 @@ func Test_GCPConfig_Validate(t *testing.T) {
 	testProvidersConfig := NewSupportedProvidersConfig()
 	testProvidersConfig.ProvidersConfig = ProviderConfiguration{
 		SupportedProviders: ProviderList{
-			Provider{Name: "aws"},
-			Provider{Name: cloudProviderNameGCP},
+			Provider{Name: cloudproviders.AWS.String()},
+			Provider{Name: cloudproviders.GCP.String()},
 		},
 	}
 	if err := env.ConfigContainer.ProvideValue(testProvidersConfig); err != nil {
@@ -176,7 +177,7 @@ func Test_GCPCredentials_validate(t *testing.T) {
 			args: args{
 				providerList: ProviderList{
 					Provider{
-						Name: "aws",
+						Name: cloudproviders.AWS.String(),
 					},
 				},
 			},
@@ -189,8 +190,8 @@ func Test_GCPCredentials_validate(t *testing.T) {
 			},
 			args: args{
 				providerList: ProviderList{
-					Provider{Name: cloudProviderNameGCP},
-					Provider{Name: "aws"},
+					Provider{Name: cloudproviders.GCP.String()},
+					Provider{Name: cloudproviders.AWS.String()},
 				},
 			},
 			wantErr: true,
@@ -213,8 +214,8 @@ func Test_GCPCredentials_validate(t *testing.T) {
 			},
 			args: args{
 				providerList: ProviderList{
-					Provider{Name: cloudProviderNameGCP},
-					Provider{Name: "aws"},
+					Provider{Name: cloudproviders.GCP.String()},
+					Provider{Name: cloudproviders.AWS.String()},
 				},
 			},
 			wantErr: false,
@@ -237,8 +238,8 @@ func Test_GCPCredentials_validate(t *testing.T) {
 			},
 			args: args{
 				providerList: ProviderList{
-					Provider{Name: cloudProviderNameGCP},
-					Provider{Name: "aws"},
+					Provider{Name: cloudproviders.GCP.String()},
+					Provider{Name: cloudproviders.AWS.String()},
 				},
 			},
 			wantErr: true,

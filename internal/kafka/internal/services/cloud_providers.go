@@ -2,7 +2,6 @@ package services
 
 import (
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
@@ -12,16 +11,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/patrickmn/go-cache"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 )
 
 const keyCloudProvidersWithRegions = "cloudProviderWithRegions"
 const keyCloudProviderRegions = "cloudProviderRegions"
-
-var cloudPoviderIdToDisplayNameMapping map[string]string = map[string]string{
-	"aws":   "Amazon Web Services",
-	"azure": "Microsoft Azure",
-	"gcp":   "Google Cloud Platform",
-}
 
 //go:generate moq -out cloud_providers_moq.go . CloudProvidersService
 type CloudProvidersService interface {
@@ -147,10 +142,11 @@ func (p cloudProvidersService) ListCloudProviders() ([]api.CloudProvider, *error
 			if cloudProviderAlreadyCollected {
 				continue
 			}
+			cloudProviderID := cloudproviders.ParseCloudProviderID(cp.ID)
 			cloudProviderList = append(cloudProviderList, api.CloudProvider{
 				Id:          cp.ID,
 				Name:        cp.Name,
-				DisplayName: setDisplayName(cp.ID, cp.DisplayName),
+				DisplayName: setDisplayName(cloudProviderID, cp.DisplayName),
 			})
 			alreadyVisitedCloudProviders[cp.ID] = true
 		}
@@ -218,8 +214,8 @@ func (p cloudProvidersService) getAvailableClusterProviderTypes() ([]Cluster, *e
 	return results, nil
 }
 
-func setDisplayName(providerId string, defaultDisplayName string) string {
-	displayName, ok := cloudPoviderIdToDisplayNameMapping[strings.ToLower(providerId)]
+func setDisplayName(providerID cloudproviders.CloudProviderID, defaultDisplayName string) string {
+	displayName, ok := cloudproviders.CloudPoviderIDToDisplayNameMapping[providerID]
 	if ok {
 		return displayName
 	}

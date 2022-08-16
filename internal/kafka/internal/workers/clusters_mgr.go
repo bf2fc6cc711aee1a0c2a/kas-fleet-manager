@@ -6,6 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	kafkaConstants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -1097,10 +1098,14 @@ func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supported
 		Key:    kafkaInstanceProfileType,
 		Value:  supportedInstanceType,
 	}
+	instanceSize := c.DataplaneClusterConfig.DefaultComputeMachineType(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
+	if instanceSize == "" {
+		return nil, fmt.Errorf("ClusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
+	}
 	machinePoolTaints := []types.CluserNodeTaint{machinePoolTaint}
 	machinePool := &types.MachinePoolRequest{
 		ID:                 machinePoolID,
-		InstanceSize:       c.DataplaneClusterConfig.AWSComputeMachineType,
+		InstanceSize:       instanceSize,
 		MultiAZ:            cluster.MultiAZ,
 		AutoScalingEnabled: true,
 		AutoScaling: types.MachinePoolAutoScaling{

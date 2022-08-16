@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -34,16 +35,18 @@ func TestOCMProvider_Create(t *testing.T) {
 		AccessKey:       "",
 		SecretAccessKey: "",
 	}
+	gcpConfig := &config.GCPConfig{}
 	osdCreateConfig := &config.DataplaneClusterConfig{
-		OpenshiftVersion: "4.7",
+		OpenshiftVersion:      "4.7",
+		AWSComputeMachineType: "testmachinetype",
 	}
-	cb := NewClusterBuilder(awsConfig, osdCreateConfig)
+	cb := NewClusterBuilder(awsConfig, gcpConfig, osdCreateConfig)
 
 	internalId := "test-internal-id"
 	externalId := "test-external-id"
 
 	cr := types.ClusterRequest{
-		CloudProvider:  "aws",
+		CloudProvider:  cloudproviders.AWS.String(),
 		Region:         "east-1",
 		MultiAZ:        true,
 		AdditionalSpec: nil,

@@ -3,6 +3,7 @@ package clusters
 import (
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
@@ -16,6 +17,7 @@ import (
 const (
 	testOpenshiftVersion      = "openshift-v4.6.1"
 	testAWSComputeMachineType = "m5.2xlarge"
+	testGCPComputeMachineType = "testgcpmachinetype"
 )
 
 func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
@@ -24,6 +26,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 	dataplaneClusterConfig := &config.DataplaneClusterConfig{
 		OpenshiftVersion:      testOpenshiftVersion,
 		AWSComputeMachineType: testAWSComputeMachineType,
+		GCPComputeMachineType: testGCPComputeMachineType,
 	}
 
 	clusterAWS := clustersmgmtv1.
@@ -32,9 +35,23 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		AccessKeyID(awsConfig.AccessKey).
 		SecretAccessKey(awsConfig.SecretAccessKey)
 
+	clusterGCP := clustersmgmtv1.
+		NewGCP().
+		AuthProviderX509CertURL("testvalue").
+		AuthURI("testvalue").
+		ClientEmail("testvalue").
+		ClientID("testvalue").
+		ClientX509CertURL("testvalue").
+		PrivateKey("testvalue").
+		PrivateKeyID("testvalue").
+		ProjectID("testvalue").
+		TokenURI("testvalue").
+		Type("testvalue")
+
 	type fields struct {
 		idGenerator            ocm.IDGenerator
 		awsConfig              *config.AWSConfig
+		gcpConfig              *config.GCPConfig
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 	}
 
@@ -49,14 +66,31 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "nil aws config results in error",
+			name: "nil aws config results in error when AWS is the cloud provider to be used",
 			fields: fields{
 				idGenerator:            ocm.NewIDGenerator(""),
 				awsConfig:              nil,
 				dataplaneClusterConfig: dataplaneClusterConfig,
 			},
 			args: args{
-				clusterRequest: &types.ClusterRequest{},
+				clusterRequest: &types.ClusterRequest{
+					CloudProvider: cloudproviders.AWS.String(),
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "nil gcp config results in error when GCP is the cloud provider to be used",
+			fields: fields{
+				idGenerator:            ocm.NewIDGenerator(""),
+				awsConfig:              &config.AWSConfig{},
+				gcpConfig:              nil,
+				dataplaneClusterConfig: dataplaneClusterConfig,
+			},
+			args: args{
+				clusterRequest: &types.ClusterRequest{
+					CloudProvider: cloudproviders.GCP.String(),
+				},
 			},
 			wantErr: true,
 		},
@@ -73,7 +107,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "nil cluster results in error",
+			name: "nil dataplane cluster config results in error",
 			fields: fields{
 				idGenerator:            ocm.NewIDGenerator(""),
 				awsConfig:              awsConfig,
@@ -97,7 +131,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "successful conversion of all supported provided values",
+			name: "successful conversion of all supported provided values (AWS provider)",
 			fields: fields{
 				idGenerator: &ocm.IDGeneratorMock{
 					GenerateFunc: func() string {
@@ -121,11 +155,67 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 					builder.CCS(clustersmgmtv1.NewCCS().Enabled(true))
 					builder.Managed(true)
 					builder.Name("")
+					builder.CloudProvider(clustersmgmtv1.NewCloudProvider().ID(cloudproviders.AWS.String()))
 					builder.AWS(clusterAWS)
+					builder.GCP(nil)
 					builder.MultiAZ(true)
 					builder.Version(clustersmgmtv1.NewVersion().ID(testOpenshiftVersion))
 					builder.Nodes(clustersmgmtv1.NewClusterNodes().
 						ComputeMachineType(clustersmgmtv1.NewMachineType().ID(testAWSComputeMachineType)).
+						AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(6).MaxReplicas(18)))
+				})
+				if err != nil {
+					panic(err)
+				}
+				return cluster
+			},
+			wantErr: false,
+		},
+		{
+			name: "successful conversion of all supported provided values (GCP provider)",
+			fields: fields{
+				idGenerator: &ocm.IDGeneratorMock{
+					GenerateFunc: func() string {
+						return ""
+					},
+				},
+				gcpConfig: &config.GCPConfig{
+					GCPCredentials: config.GCPCredentials{
+						AuthProviderX509CertURL: "testvalue",
+						AuthURI:                 "testvalue",
+						ClientEmail:             "testvalue",
+						ClientID:                "testvalue",
+						ClientX509CertURL:       "testvalue",
+						PrivateKey:              "testvalue",
+						PrivateKeyID:            "testvalue",
+						ProjectID:               "testvalue",
+						TokenURI:                "testvalue",
+						Type:                    "testvalue",
+					},
+				},
+				dataplaneClusterConfig: dataplaneClusterConfig,
+			},
+			args: args{
+				clusterRequest: &types.ClusterRequest{
+					CloudProvider: cloudproviders.GCP.String(),
+					Region:        clusterservicetest.MockClusterRegion,
+					MultiAZ:       clusterservicetest.MockClusterMultiAZ,
+				},
+			},
+			wantFn: func() *clustersmgmtv1.Cluster {
+				cluster, err := clusterservicetest.NewMockCluster(func(builder *clustersmgmtv1.ClusterBuilder) {
+					// these values will be ignored by the conversion as they're unsupported. so expect different
+					// values than we provide.
+					builder.CCS(clustersmgmtv1.NewCCS().Enabled(true))
+					builder.Managed(true)
+					builder.Name("")
+					builder.CloudProvider(clustersmgmtv1.NewCloudProvider().ID(cloudproviders.GCP.String()))
+					builder.AWS(nil)
+					builder.GCP(clusterGCP)
+					builder.MultiAZ(true)
+					builder.Version(clustersmgmtv1.NewVersion().ID(testOpenshiftVersion))
+					builder.Nodes(clustersmgmtv1.NewClusterNodes().
+						ComputeMachineType(clustersmgmtv1.NewMachineType().ID(testGCPComputeMachineType)).
 						AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(6).MaxReplicas(18)))
 				})
 				if err != nil {
@@ -188,6 +278,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 			r := clusterBuilder{
 				idGenerator:            tt.fields.idGenerator,
 				awsConfig:              tt.fields.awsConfig,
+				gcpConfig:              tt.fields.gcpConfig,
 				dataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
 			}
 			got, err := r.NewOCMClusterFromCluster(tt.args.clusterRequest)

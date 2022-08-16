@@ -16,6 +16,7 @@ func TestNewDefaultProviderFactory(t *testing.T) {
 		connectionFactory      *db.ConnectionFactory
 		ocmConfig              *ocm.OCMConfig
 		awsConfig              *config.AWSConfig
+		gcpConfig              *config.GCPConfig
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 	}
 	tests := []struct {
@@ -42,7 +43,7 @@ func TestNewDefaultProviderFactory(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			got := NewDefaultProviderFactory(tt.args.ocmClient, tt.args.connectionFactory, tt.args.ocmConfig, tt.args.awsConfig, tt.args.dataplaneClusterConfig)
+			got := NewDefaultProviderFactory(tt.args.ocmClient, tt.args.connectionFactory, tt.args.ocmConfig, tt.args.awsConfig, tt.args.gcpConfig, tt.args.dataplaneClusterConfig)
 			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}

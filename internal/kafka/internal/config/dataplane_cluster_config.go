@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -276,6 +277,20 @@ func (c *DataplaneClusterConfig) IsDataPlaneAutoScalingEnabled() bool {
 
 func (c *DataplaneClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool {
 	return c.EnableReadyDataPlaneClustersReconcile
+}
+
+// DefaultComputeMachineType returns the default Compute Machine Type for the
+// given `cloudProviderID`. If `cloudProviderID` is not a known cloud provider
+// the empty string is returned.
+func (c *DataplaneClusterConfig) DefaultComputeMachineType(cloudProviderID cloudproviders.CloudProviderID) string {
+	switch cloudProviderID {
+	case cloudproviders.AWS:
+		return c.AWSComputeMachineType
+	case cloudproviders.GCP:
+		return c.GCPComputeMachineType
+	default:
+		return ""
+	}
 }
 
 func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -3580,6 +3581,7 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 							},
 						},
 					},
+					AWSComputeMachineType: "testmachinetype",
 				},
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
@@ -3607,6 +3609,7 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
 				SupportedInstanceType: "developer,standard",
+				CloudProvider:         cloudproviders.AWS.String(),
 			},
 			want:    true,
 			wantErr: false,

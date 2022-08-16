@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -206,6 +207,12 @@ func (c *ProviderConfig) Validate(env *environments.Env) error {
 }
 
 func (provider Provider) Validate(dataplaneClusterConfig *DataplaneClusterConfig) error {
+	knownCloudProviders := cloudproviders.KnownCloudProviders()
+	cloudProviderID := cloudproviders.ParseCloudProviderID(provider.Name)
+	cloudProviderIsKnown := knownCloudProviders.Contains(cloudProviderID)
+	if !cloudProviderIsKnown {
+		return fmt.Errorf("Cloud Provider '%s' is not a recognized Cloud Provider", cloudProviderID)
+	}
 	// verify that there is only one default region
 	defaultCount := 0
 	for _, r := range provider.Regions {
