@@ -1398,11 +1398,7 @@ func sampleOperatorGroup() *v1alpha2.OperatorGroup {
 	}
 }
 
-func TestOCMProvider_GetQuotaCosts(t *testing.T) {
-	type fields struct {
-		ocmClient ocm.Client
-	}
-
+func TestOCMProvider_GetClusterResourceQuotaCosts(t *testing.T) {
 	orgBuilder := accountsmgmtv1.NewOrganization().ID("test-organisation").ExternalID("test-organisation")
 	testAccount, err := accountsmgmtv1.NewAccount().Username("test-user").Organization(orgBuilder).Build()
 	if err != nil {
@@ -1415,6 +1411,11 @@ func TestOCMProvider_GetQuotaCosts(t *testing.T) {
 			MaxAllowed: 5,
 			Consumed:   1,
 		},
+	}
+
+	type fields struct {
+		ocmClient ocm.Client
+		ocmConfig *ocm.OCMConfig
 	}
 
 	tests := []struct {
@@ -1454,9 +1455,13 @@ func TestOCMProvider_GetQuotaCosts(t *testing.T) {
 					GetCurrentAccountFunc: func() (*accountsmgmtv1.Account, error) {
 						return testAccount, nil
 					},
-					GetQuotaCostsFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*accountsmgmtv1.QuotaCostList, error) {
+					GetQuotaCostsFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool, filters ...ocm.QuotaCostRelatedResourceFilter) ([]*accountsmgmtv1.QuotaCost, error) {
 						return nil, errors.New("failed to retrieve quota cost from ams")
 					},
+				},
+				ocmConfig: &ocm.OCMConfig{
+					StrimziOperatorAddonID: "strimzi-operator-addon-id",
+					KasFleetshardAddonID:   "kas-fleetshard-operator-addon-id",
 				},
 			},
 			want:    nil,
@@ -1469,7 +1474,7 @@ func TestOCMProvider_GetQuotaCosts(t *testing.T) {
 					GetCurrentAccountFunc: func() (*accountsmgmtv1.Account, error) {
 						return testAccount, nil
 					},
-					GetQuotaCostsFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*accountsmgmtv1.QuotaCostList, error) {
+					GetQuotaCostsFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool, filters ...ocm.QuotaCostRelatedResourceFilter) ([]*accountsmgmtv1.QuotaCost, error) {
 						mockQuotaCost := quotaCostList[0]
 						mockQuotaCostBuilder := accountsmgmtv1.NewQuotaCost().QuotaID(mockQuotaCost.ID).Allowed(mockQuotaCost.MaxAllowed).Consumed(mockQuotaCost.Consumed)
 						quotaCostList, err := accountsmgmtv1.NewQuotaCostList().Items(mockQuotaCostBuilder).Build()
@@ -1477,11 +1482,34 @@ func TestOCMProvider_GetQuotaCosts(t *testing.T) {
 							t.Errorf("failed to generate mock quota cost list")
 						}
 
-						return quotaCostList, nil
+						return quotaCostList.Slice(), nil
 					},
+				},
+				ocmConfig: &ocm.OCMConfig{
+					StrimziOperatorAddonID: "strimzi-operator-addon-id",
+					KasFleetshardAddonID:   "kas-fleetshard-operator-addon-id",
 				},
 			},
 			want:    quotaCostList,
+			wantErr: nil,
+		},
+		{
+			name: "should return a nil slice when quota cost request from ams returns a nil slice",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetCurrentAccountFunc: func() (*accountsmgmtv1.Account, error) {
+						return testAccount, nil
+					},
+					GetQuotaCostsFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool, filters ...ocm.QuotaCostRelatedResourceFilter) ([]*accountsmgmtv1.QuotaCost, error) {
+						return nil, nil
+					},
+				},
+				ocmConfig: &ocm.OCMConfig{
+					StrimziOperatorAddonID: "strimzi-operator-addon-id",
+					KasFleetshardAddonID:   "kas-fleetshard-operator-addon-id",
+				},
+			},
+			want:    nil,
 			wantErr: nil,
 		},
 	}
@@ -1491,8 +1519,9 @@ func TestOCMProvider_GetQuotaCosts(t *testing.T) {
 			g := gomega.NewWithT(t)
 			o := &OCMProvider{
 				ocmClient: testcase.fields.ocmClient,
+				ocmConfig: testcase.fields.ocmConfig,
 			}
-			got, err := o.GetQuotaCosts()
+			got, err := o.GetClusterResourceQuotaCosts()
 			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr != nil))
 			if testcase.wantErr != nil {
 				g.Expect(err.Error()).To(gomega.Equal(testcase.wantErr.Error()))

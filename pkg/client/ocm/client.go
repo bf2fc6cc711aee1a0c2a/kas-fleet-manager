@@ -45,7 +45,11 @@ type Client interface {
 	Connection() *sdkClient.Connection
 	GetMachinePool(clusterID string, machinePoolID string) (*clustersmgmtv1.MachinePool, error)
 	CreateMachinePool(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error)
-	GetQuotaCosts(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error)
+	// GetQuotaCosts returns a list of quota cost for the given organizationID.
+	// Each quota cost contains information on the usage and max allowed ocm resources quota given to the specified oganization.
+	//
+	// relatedResourceFilters will only be applied when fetchRelatedResources is set to true.
+	GetQuotaCosts(organizationID string, fetchRelatedResources, fetchCloudAccounts bool, filters ...QuotaCostRelatedResourceFilter) ([]*amsv1.QuotaCost, error)
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 	// GetCurrentAccount returns the account information of the current authenticated user
 	GetCurrentAccount() (*amsv1.Account, error)
@@ -487,7 +491,30 @@ func (c *client) CreateMachinePool(clusterID string, machinePool *clustersmgmtv1
 	return createdMachinePool, nil
 }
 
-func (c client) GetQuotaCosts(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error) {
+// QuotaCostRelatedResourceFilter represents the properties of the related resource, associated
+// to each quota cost, that can be used to filter the result of the get quota costs request.
+// Any property set to nil will not be applied as a filter.
+type QuotaCostRelatedResourceFilter struct {
+	ResourceName *string
+	ResourceType *string
+	Product      *string
+}
+
+// IsMatch returns true if all the given properties of the filter matches that of the given related resource.
+// If a filter property was not specified, the check for that property will always return true
+func (qcf *QuotaCostRelatedResourceFilter) IsMatch(relatedResource *amsv1.RelatedResource) bool {
+	resourceNameMatches := (qcf.ResourceName == nil || relatedResource.ResourceName() == *qcf.ResourceName)
+	resourceTypeMatches := (qcf.ResourceType == nil || relatedResource.ResourceType() == *qcf.ResourceType)
+	productMatches := (qcf.Product == nil || relatedResource.Product() == *qcf.Product)
+
+	return resourceNameMatches && resourceTypeMatches && productMatches
+}
+
+// GetQuotaCosts returns a list of quota cost for the given organizationID.
+// Each quota cost contains information on the usage and max allowed ocm resources quota given to the specified oganization.
+//
+// relatedResourceFilters will only be applied when fetchRelatedResources is set to true.
+func (c client) GetQuotaCosts(organizationID string, fetchRelatedResources, fetchCloudAccounts bool, relatedResourceFilters ...QuotaCostRelatedResourceFilter) ([]*amsv1.QuotaCost, error) {
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
 	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
 
@@ -496,31 +523,43 @@ func (c client) GetQuotaCosts(organizationID string, fetchRelatedResources, fetc
 		return nil, err
 	}
 	quotaCostList := quotaCostResp.Items()
-	return quotaCostList, nil
+
+	if !fetchRelatedResources || len(relatedResourceFilters) == 0 {
+		return quotaCostList.Slice(), nil
+	}
+
+	var quotaCosts []*amsv1.QuotaCost
+
+	quotaCostList.Each(func(qc *amsv1.QuotaCost) bool {
+		relatedResources := qc.RelatedResources()
+		for _, relatedResource := range relatedResources {
+			for _, filter := range relatedResourceFilters {
+				if filter.IsMatch(relatedResource) {
+					quotaCosts = append(quotaCosts, qc)
+					return false
+				}
+			}
+		}
+		return true
+	})
+
+	return quotaCosts, nil
 }
 
 // GetQuotaCostsForProduct gets the AMS QuotaCosts in the given organizationID
 // whose relatedResources contains at least a relatedResource that has the
 // given resourceName and product
 func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error) {
-	var res []*amsv1.QuotaCost
+	quotaCostList, err := c.GetQuotaCosts(organizationID, true, true, QuotaCostRelatedResourceFilter{
+		ResourceName: &resourceName,
+		Product:      &product,
+	})
 
-	quotaCostList, err := c.GetQuotaCosts(organizationID, true, true)
 	if err != nil {
 		return nil, err
 	}
 
-	quotaCostList.Each(func(qc *amsv1.QuotaCost) bool {
-		relatedResourcesList := qc.RelatedResources()
-		for _, relatedResource := range relatedResourcesList {
-			if relatedResource.ResourceName() == resourceName && relatedResource.Product() == product {
-				res = append(res, qc)
-			}
-		}
-		return true
-	})
-
-	return res, nil
+	return quotaCostList, nil
 }
 
 // GetCurrentAccount returns the account information of the current authenticated user

@@ -46,11 +46,11 @@ var _ Provider = &ProviderMock{}
 //			GetClusterDNSFunc: func(clusterSpec *types.ClusterSpec) (string, error) {
 //				panic("mock out the GetClusterDNS method")
 //			},
+//			GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+//				panic("mock out the GetClusterResourceQuotaCosts method")
+//			},
 //			GetMachinePoolFunc: func(clusterID string, id string) (*types.MachinePoolInfo, error) {
 //				panic("mock out the GetMachinePool method")
-//			},
-//			GetQuotaCostsFunc: func() ([]types.QuotaCost, error) {
-//				panic("mock out the GetQuotaCosts method")
 //			},
 //			InstallClusterLoggingFunc: func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
 //				panic("mock out the InstallClusterLogging method")
@@ -95,11 +95,11 @@ type ProviderMock struct {
 	// GetClusterDNSFunc mocks the GetClusterDNS method.
 	GetClusterDNSFunc func(clusterSpec *types.ClusterSpec) (string, error)
 
+	// GetClusterResourceQuotaCostsFunc mocks the GetClusterResourceQuotaCosts method.
+	GetClusterResourceQuotaCostsFunc func() ([]types.QuotaCost, error)
+
 	// GetMachinePoolFunc mocks the GetMachinePool method.
 	GetMachinePoolFunc func(clusterID string, id string) (*types.MachinePoolInfo, error)
-
-	// GetQuotaCostsFunc mocks the GetQuotaCosts method.
-	GetQuotaCostsFunc func() ([]types.QuotaCost, error)
 
 	// InstallClusterLoggingFunc mocks the InstallClusterLogging method.
 	InstallClusterLoggingFunc func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error)
@@ -159,15 +159,15 @@ type ProviderMock struct {
 			// ClusterSpec is the clusterSpec argument value.
 			ClusterSpec *types.ClusterSpec
 		}
+		// GetClusterResourceQuotaCosts holds details about calls to the GetClusterResourceQuotaCosts method.
+		GetClusterResourceQuotaCosts []struct {
+		}
 		// GetMachinePool holds details about calls to the GetMachinePool method.
 		GetMachinePool []struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 			// ID is the id argument value.
 			ID string
-		}
-		// GetQuotaCosts holds details about calls to the GetQuotaCosts method.
-		GetQuotaCosts []struct {
 		}
 		// InstallClusterLogging holds details about calls to the InstallClusterLogging method.
 		InstallClusterLogging []struct {
@@ -189,20 +189,20 @@ type ProviderMock struct {
 			ClusterSpec *types.ClusterSpec
 		}
 	}
-	lockAddIdentityProvider     sync.RWMutex
-	lockApplyResources          sync.RWMutex
-	lockCheckClusterStatus      sync.RWMutex
-	lockCreate                  sync.RWMutex
-	lockCreateMachinePool       sync.RWMutex
-	lockDelete                  sync.RWMutex
-	lockGetCloudProviderRegions sync.RWMutex
-	lockGetCloudProviders       sync.RWMutex
-	lockGetClusterDNS           sync.RWMutex
-	lockGetMachinePool          sync.RWMutex
-	lockGetQuotaCosts           sync.RWMutex
-	lockInstallClusterLogging   sync.RWMutex
-	lockInstallKasFleetshard    sync.RWMutex
-	lockInstallStrimzi          sync.RWMutex
+	lockAddIdentityProvider          sync.RWMutex
+	lockApplyResources               sync.RWMutex
+	lockCheckClusterStatus           sync.RWMutex
+	lockCreate                       sync.RWMutex
+	lockCreateMachinePool            sync.RWMutex
+	lockDelete                       sync.RWMutex
+	lockGetCloudProviderRegions      sync.RWMutex
+	lockGetCloudProviders            sync.RWMutex
+	lockGetClusterDNS                sync.RWMutex
+	lockGetClusterResourceQuotaCosts sync.RWMutex
+	lockGetMachinePool               sync.RWMutex
+	lockInstallClusterLogging        sync.RWMutex
+	lockInstallKasFleetshard         sync.RWMutex
+	lockInstallStrimzi               sync.RWMutex
 }
 
 // AddIdentityProvider calls AddIdentityProviderFunc.
@@ -496,6 +496,33 @@ func (mock *ProviderMock) GetClusterDNSCalls() []struct {
 	return calls
 }
 
+// GetClusterResourceQuotaCosts calls GetClusterResourceQuotaCostsFunc.
+func (mock *ProviderMock) GetClusterResourceQuotaCosts() ([]types.QuotaCost, error) {
+	if mock.GetClusterResourceQuotaCostsFunc == nil {
+		panic("ProviderMock.GetClusterResourceQuotaCostsFunc: method is nil but Provider.GetClusterResourceQuotaCosts was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetClusterResourceQuotaCosts.Lock()
+	mock.calls.GetClusterResourceQuotaCosts = append(mock.calls.GetClusterResourceQuotaCosts, callInfo)
+	mock.lockGetClusterResourceQuotaCosts.Unlock()
+	return mock.GetClusterResourceQuotaCostsFunc()
+}
+
+// GetClusterResourceQuotaCostsCalls gets all the calls that were made to GetClusterResourceQuotaCosts.
+// Check the length with:
+//
+//	len(mockedProvider.GetClusterResourceQuotaCostsCalls())
+func (mock *ProviderMock) GetClusterResourceQuotaCostsCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetClusterResourceQuotaCosts.RLock()
+	calls = mock.calls.GetClusterResourceQuotaCosts
+	mock.lockGetClusterResourceQuotaCosts.RUnlock()
+	return calls
+}
+
 // GetMachinePool calls GetMachinePoolFunc.
 func (mock *ProviderMock) GetMachinePool(clusterID string, id string) (*types.MachinePoolInfo, error) {
 	if mock.GetMachinePoolFunc == nil {
@@ -529,33 +556,6 @@ func (mock *ProviderMock) GetMachinePoolCalls() []struct {
 	mock.lockGetMachinePool.RLock()
 	calls = mock.calls.GetMachinePool
 	mock.lockGetMachinePool.RUnlock()
-	return calls
-}
-
-// GetQuotaCosts calls GetQuotaCostsFunc.
-func (mock *ProviderMock) GetQuotaCosts() ([]types.QuotaCost, error) {
-	if mock.GetQuotaCostsFunc == nil {
-		panic("ProviderMock.GetQuotaCostsFunc: method is nil but Provider.GetQuotaCosts was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockGetQuotaCosts.Lock()
-	mock.calls.GetQuotaCosts = append(mock.calls.GetQuotaCosts, callInfo)
-	mock.lockGetQuotaCosts.Unlock()
-	return mock.GetQuotaCostsFunc()
-}
-
-// GetQuotaCostsCalls gets all the calls that were made to GetQuotaCosts.
-// Check the length with:
-//
-//	len(mockedProvider.GetQuotaCostsCalls())
-func (mock *ProviderMock) GetQuotaCostsCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockGetQuotaCosts.RLock()
-	calls = mock.calls.GetQuotaCosts
-	mock.lockGetQuotaCosts.RUnlock()
 	return calls
 }
 

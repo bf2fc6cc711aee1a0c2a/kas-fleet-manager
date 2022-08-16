@@ -201,8 +201,9 @@ func (c *ClusterManager) processMetrics() []error {
 	}
 
 	if err := c.setClusterProviderResourceQuotaMetrics(); err != nil {
-		return []error{errors.Wrapf(err, "failed to set Kas Fleet Manager Cluster Provider Resource Quota Consumed metric")}
+		return []error{errors.Wrapf(err, "failed to set cluster provider resource quota metrics")}
 	}
+
 	return []error{}
 }
 
@@ -1166,12 +1167,13 @@ func (c *ClusterManager) setClusterProviderResourceQuotaMetrics() error {
 	if err != nil {
 		return err
 	}
-	quota, err := provider.GetQuotaCosts()
+	quotas, err := provider.GetClusterResourceQuotaCosts()
 	if err != nil {
 		return err
 	}
-	for _, q := range quota {
-		metrics.UpdateKasFleetManagerClusterProviderResourceQuotaConsumed(q.ID, api.ClusterProviderOCM.String(), q.Consumed)
+	for _, q := range quotas {
+		metrics.UpdateClusterProviderResourceQuotaConsumed(q.ID, api.ClusterProviderOCM.String(), q.Consumed)
+		metrics.UpdateClusterProviderResourceQuotaMaxAllowedMetric(q.ID, api.ClusterProviderOCM.String(), q.MaxAllowed)
 	}
 	return nil
 }

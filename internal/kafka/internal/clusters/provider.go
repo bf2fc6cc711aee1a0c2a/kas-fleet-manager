@@ -38,8 +38,9 @@ type Provider interface {
 	InstallKasFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error)
 	GetMachinePool(clusterID string, id string) (*types.MachinePoolInfo, error)
 	CreateMachinePool(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error)
-	// GetQuotaCosts returns a list of resource quota cost information for the authenticated user
-	GetQuotaCosts() ([]types.QuotaCost, error)
+	// GetClusterResourceQuotaCosts returns a list of quota cost information related to resources used for the provisioning and
+	// terraforming of data plane clusters for the authenticated user.
+	GetClusterResourceQuotaCosts() ([]types.QuotaCost, error)
 }
 
 // ProviderFactory used to return an instance of Provider implementation

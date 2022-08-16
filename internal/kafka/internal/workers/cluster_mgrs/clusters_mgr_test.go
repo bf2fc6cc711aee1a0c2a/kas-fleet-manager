@@ -9,27 +9,22 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	dpMock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/onsi/gomega"
 	authv1 "github.com/openshift/api/authorization/v1"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
 	errors "github.com/pkg/errors"
-
 	k8sCoreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	dpMock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
 )
 
 var (
@@ -191,7 +186,7 @@ func TestClusterManager_reconcile(t *testing.T) {
 				},
 				ProviderFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-						return &clusters.ProviderMock{GetQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+						return &clusters.ProviderMock{GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
 							return []types.QuotaCost{}, nil
 						}}, nil
 					},
@@ -283,9 +278,11 @@ func TestClusterManager_processMetrics(t *testing.T) {
 				},
 				ProviderFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-						return &clusters.ProviderMock{GetQuotaCostsFunc: func() ([]types.QuotaCost, error) {
-							return nil, errors.New("failed to retrieve Quota Cost")
-						}}, nil
+						return &clusters.ProviderMock{
+							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+								return nil, errors.New("failed to get quota costs")
+							},
+						}, nil
 					},
 				},
 			},
@@ -315,9 +312,11 @@ func TestClusterManager_processMetrics(t *testing.T) {
 				},
 				ProviderFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-						return &clusters.ProviderMock{GetQuotaCostsFunc: func() ([]types.QuotaCost, error) {
-							return []types.QuotaCost{}, nil
-						}}, nil
+						return &clusters.ProviderMock{
+							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+								return nil, nil
+							},
+						}, nil
 					},
 				},
 			},
@@ -3584,6 +3583,124 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 			err := c.reconcileDynamicCapacityInfo(test.arg)
 			gotErr := err != nil
 			g.Expect(gotErr).To(gomega.Equal(test.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_setClusterProviderResourceQuotaMetrics(t *testing.T) {
+	tests := []struct {
+		name               string
+		clusterManagerOpts ClusterManagerOptions
+		wantErr            bool
+	}{
+		{
+			name: "should skip metric update if ocm credentials are not specified",
+			clusterManagerOpts: ClusterManagerOptions{
+				OCMConfig: &ocm.OCMConfig{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should skip metric update if ocm client id and secret are both not specified",
+			clusterManagerOpts: ClusterManagerOptions{
+				OCMConfig: &ocm.OCMConfig{
+					ClientID: "test-client-id",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error if GetProvider fails",
+			clusterManagerOpts: ClusterManagerOptions{
+				OCMConfig: &ocm.OCMConfig{
+					SelfToken: "test-token",
+				},
+				ProviderFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return nil, errors.New("failed to get provider")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if GetQuotaCosts fails",
+			clusterManagerOpts: ClusterManagerOptions{
+				OCMConfig: &ocm.OCMConfig{
+					SelfToken: "test-token",
+				},
+				ProviderFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+								return nil, errors.New("failed to get quota list")
+							},
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return no error if ocm client id and secret are specified and metric update is successful",
+			clusterManagerOpts: ClusterManagerOptions{
+				OCMConfig: &ocm.OCMConfig{
+					ClientID:     "test-client-id",
+					ClientSecret: "test-client-secret",
+				},
+				ProviderFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+								return []types.QuotaCost{
+									{
+										ID:         "test-quota-id",
+										MaxAllowed: 1,
+										Consumed:   0,
+									},
+								}, nil
+							},
+						}, nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return no error if ocm token is specified and metric update is successful",
+			clusterManagerOpts: ClusterManagerOptions{
+				OCMConfig: &ocm.OCMConfig{
+					SelfToken: "test-token",
+				},
+				ProviderFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+								return []types.QuotaCost{
+									{
+										ID:         "test-quota-id",
+										MaxAllowed: 1,
+										Consumed:   0,
+									},
+								}, nil
+							},
+						}, nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		tc := tt
+		t.Run(tc.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			c := &ClusterManager{
+				ClusterManagerOptions: tc.clusterManagerOpts,
+			}
+
+			err := c.setClusterProviderResourceQuotaMetrics()
+			g.Expect(err != nil).To(gomega.Equal(tc.wantErr))
 		})
 	}
 }
