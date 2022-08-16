@@ -8,12 +8,12 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/onsi/gomega"
+	accountsmgmtv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
 	"github.com/pkg/errors"
@@ -1392,5 +1392,109 @@ func sampleOperatorGroup() *v1alpha2.OperatorGroup {
 		Status: v1alpha2.OperatorGroupStatus{
 			LastUpdated: &t,
 		},
+	}
+}
+
+func TestOCMProvider_GetQuotaCost(t *testing.T) {
+	type fields struct {
+		ocmClient ocm.Client
+	}
+
+	orgBuilder := accountsmgmtv1.NewOrganization().ID("test-organisation").ExternalID("test-organisation")
+	testAccount, err := accountsmgmtv1.NewAccount().Username("test-user").Organization(orgBuilder).Build()
+	if err != nil {
+		t.Errorf("failed to create test account")
+	}
+
+	quotaCostList := []types.QuotaCost{
+		{
+			ID:         "test-quota-id",
+			MaxAllowed: 5,
+			Consumed:   1,
+		},
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		want    []types.QuotaCost
+		wantErr error
+	}{
+		{
+			name: "should return an error when getting current authenticated account fails",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetCurrentAccountFunc: func() (*accountsmgmtv1.Account, error) {
+						return nil, errors.New("failed to get current account")
+					},
+				},
+			},
+			want:    nil,
+			wantErr: errors.New("failed to get current account"),
+		},
+		{
+			name: "should return an error when org id of current authenticated account is empty",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetCurrentAccountFunc: func() (*accountsmgmtv1.Account, error) {
+						return &accountsmgmtv1.Account{}, nil
+					},
+				},
+			},
+			want:    nil,
+			wantErr: errors.New("failed to get quota cost: organisation id for the current authenticated user can't be found"),
+		},
+		{
+			name: "should return an error when retrieving quota cost list from ams fails",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetCurrentAccountFunc: func() (*accountsmgmtv1.Account, error) {
+						return testAccount, nil
+					},
+					GetQuotaCostFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*accountsmgmtv1.QuotaCostList, error) {
+						return nil, errors.New("failed to retrieve quota cost from ams")
+					},
+				},
+			},
+			want:    nil,
+			wantErr: errors.New("failed to retrieve quota cost from ams"),
+		},
+		{
+			name: "should return quota cost list when retrieving quota cost from ams succeeds",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetCurrentAccountFunc: func() (*accountsmgmtv1.Account, error) {
+						return testAccount, nil
+					},
+					GetQuotaCostFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*accountsmgmtv1.QuotaCostList, error) {
+						mockQuotaCost := quotaCostList[0]
+						mockQuotaCostBuilder := accountsmgmtv1.NewQuotaCost().QuotaID(mockQuotaCost.ID).Allowed(mockQuotaCost.MaxAllowed).Consumed(mockQuotaCost.Consumed)
+						quotaCostList, err := accountsmgmtv1.NewQuotaCostList().Items(mockQuotaCostBuilder).Build()
+						if err != nil {
+							t.Errorf("failed to generate mock quota cost list")
+						}
+
+						return quotaCostList, nil
+					},
+				},
+			},
+			want:    quotaCostList,
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			o := &OCMProvider{
+				ocmClient: testcase.fields.ocmClient,
+			}
+			got, err := o.GetQuotaCosts()
+			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr != nil))
+			if testcase.wantErr != nil {
+				g.Expect(err.Error()).To(gomega.Equal(testcase.wantErr.Error()))
+			}
+			g.Expect(got).To(gomega.Equal(testcase.want))
+		})
 	}
 }

@@ -558,3 +558,9 @@ func (s *StandaloneProvider) CreateMachinePool(request *types.MachinePoolRequest
 	// TODO implement
 	return nil, nil
 }
+
+// noop method, it will always return a nil slice as a standalone provider does not have any resource quotas
+func (s *StandaloneProvider) GetQuotaCosts() ([]types.QuotaCost, error) {
+	var quotaCostList []types.QuotaCost
+	return quotaCostList, nil
+}

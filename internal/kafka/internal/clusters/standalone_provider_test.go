@@ -1273,3 +1273,28 @@ func TestStandaloneProvider_CreateMachinePool(t *testing.T) {
 		})
 	}
 }
+
+func TestStandaloneProvider_GetQuotaCost(t *testing.T) {
+	tests := []struct {
+		name    string
+		want    []types.QuotaCost
+		wantErr bool
+	}{
+		{
+			name:    "should always return an empty list",
+			want:    nil,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+
+			s := &StandaloneProvider{}
+			got, err := s.GetQuotaCosts()
+			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr))
+			g.Expect(got).To(gomega.Equal(testcase.want))
+		})
+	}
+}

@@ -441,3 +441,32 @@ func (o *OCMProvider) CreateMachinePool(request *types.MachinePoolRequest) (*typ
 
 	return request, err
 }
+
+// GetQuotaCosts returns a list of ocm resource quota cost information for the authenticated user
+// Returns a nil slice when no resource quota is assigned to the user
+func (o *OCMProvider) GetQuotaCosts() ([]types.QuotaCost, error) {
+	var quotaCostList []types.QuotaCost
+
+	account, err := o.ocmClient.GetCurrentAccount()
+	if err != nil {
+		return quotaCostList, err
+	}
+	orgID, ok := account.Organization().GetID()
+	if !ok {
+		return quotaCostList, errors.New("failed to get quota cost: organisation id for the current authenticated user can't be found")
+	}
+
+	ocmQuotaCostList, err := o.ocmClient.GetQuotaCost(orgID, false, false)
+	if err != nil {
+		return quotaCostList, err
+	}
+
+	for _, qc := range ocmQuotaCostList.Slice() {
+		quotaCostList = append(quotaCostList, types.QuotaCost{
+			ID:         qc.QuotaID(),
+			MaxAllowed: qc.Allowed(),
+			Consumed:   qc.Consumed(),
+		})
+	}
+	return quotaCostList, nil
+}
