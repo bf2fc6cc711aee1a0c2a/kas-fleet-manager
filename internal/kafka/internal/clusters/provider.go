@@ -58,9 +58,12 @@ func NewDefaultProviderFactory(
 	connectionFactory *db.ConnectionFactory,
 	ocmConfig *ocm.OCMConfig,
 	awsConfig *config.AWSConfig,
+	gcpConfig *config.GCPConfig,
 	dataplaneClusterConfig *config.DataplaneClusterConfig,
 ) *DefaultProviderFactory {
-	ocmProvider := newOCMProvider(ocmClient, NewClusterBuilder(awsConfig, dataplaneClusterConfig), ocmConfig)
+
+	clusterBuilder := NewClusterBuilder(awsConfig, gcpConfig, dataplaneClusterConfig)
+	ocmProvider := newOCMProvider(ocmClient, clusterBuilder, ocmConfig)
 	standaloneProvider := newStandaloneProvider(connectionFactory, dataplaneClusterConfig)
 	return &DefaultProviderFactory{
 		providerContainer: map[api.ClusterProviderType]Provider{
@@ -68,6 +71,7 @@ func NewDefaultProviderFactory(
 			api.ClusterProviderOCM:        ocmProvider,
 		},
 	}
+
 }
 
 func (d *DefaultProviderFactory) GetProvider(providerType api.ClusterProviderType) (Provider, error) {

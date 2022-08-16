@@ -3,6 +3,7 @@ package config
 import (
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 
@@ -38,7 +39,7 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 					ProvidersConfig: ProviderConfiguration{
 						SupportedProviders: ProviderList{
 							Provider{
-								Name:    "test",
+								Name:    cloudproviders.AWS.String(),
 								Default: true,
 							},
 						},
@@ -46,7 +47,7 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 				},
 			},
 			want: Provider{
-				Name:    "test",
+				Name:    cloudproviders.AWS.String(),
 				Default: true,
 			},
 		},
@@ -57,11 +58,11 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 					ProvidersConfig: ProviderConfiguration{
 						SupportedProviders: ProviderList{
 							Provider{
-								Name:    "test1",
+								Name:    cloudproviders.AWS.String(),
 								Default: true,
 							},
 							Provider{
-								Name:    "test2",
+								Name:    cloudproviders.GCP.String(),
 								Default: true,
 							},
 						},
@@ -69,7 +70,7 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 				},
 			},
 			want: Provider{
-				Name:    "test1",
+				Name:    cloudproviders.AWS.String(),
 				Default: true,
 			},
 		},
@@ -512,7 +513,9 @@ func Test_configService_Validate(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to initialize environment")
 	}
-	if err := env.ConfigContainer.ProvideValue(NewDataplaneClusterConfig()); err != nil {
+	testDataPlaneClusterConfig := NewDataplaneClusterConfig()
+	testDataPlaneClusterConfig.AWSComputeMachineType = "testmachine"
+	if err := env.ConfigContainer.ProvideValue(testDataPlaneClusterConfig); err != nil {
 		t.Errorf("failed to set data plane cluster configuration")
 	}
 
@@ -531,7 +534,7 @@ func Test_configService_Validate(t *testing.T) {
 					ProvidersConfig: ProviderConfiguration{
 						SupportedProviders: ProviderList{
 							Provider{
-								Name:    "test",
+								Name:    cloudproviders.AWS.String(),
 								Default: false,
 							},
 						},
@@ -547,7 +550,7 @@ func Test_configService_Validate(t *testing.T) {
 					ProvidersConfig: ProviderConfiguration{
 						SupportedProviders: ProviderList{
 							Provider{
-								Name:    "test",
+								Name:    cloudproviders.AWS.String(),
 								Default: true,
 								Regions: RegionList{
 									Region{
@@ -557,7 +560,7 @@ func Test_configService_Validate(t *testing.T) {
 								},
 							},
 							Provider{
-								Name: "test",
+								Name: cloudproviders.AWS.String(),
 								Regions: RegionList{
 									Region{
 										Name:    "test",
@@ -578,11 +581,11 @@ func Test_configService_Validate(t *testing.T) {
 					ProvidersConfig: ProviderConfiguration{
 						SupportedProviders: ProviderList{
 							Provider{
-								Name:    "test1",
+								Name:    cloudproviders.AWS.String(),
 								Default: true,
 							},
 							Provider{
-								Name:    "test2",
+								Name:    cloudproviders.GCP.String(),
 								Default: true,
 							},
 						},
@@ -602,11 +605,11 @@ func Test_configService_Validate(t *testing.T) {
 								Default: true,
 								Regions: RegionList{
 									Region{
-										Name:    "test1",
+										Name:    cloudproviders.AWS.String(),
 										Default: true,
 									},
 									Region{
-										Name:    "test2",
+										Name:    cloudproviders.GCP.String(),
 										Default: true,
 									},
 								},
@@ -624,7 +627,7 @@ func Test_configService_Validate(t *testing.T) {
 					ProvidersConfig: ProviderConfiguration{
 						SupportedProviders: ProviderList{
 							Provider{
-								Name:    "test",
+								Name:    cloudproviders.AWS.String(),
 								Default: true,
 								Regions: RegionList{
 									Region{
@@ -669,7 +672,7 @@ func Test_configService_validateProvider(t *testing.T) {
 			name: "error when no default region in provider",
 			args: args{
 				provider: Provider{
-					Name:    "test",
+					Name:    cloudproviders.AWS.String(),
 					Default: false,
 				},
 				dataplaneClusterConfig: NewDataplaneClusterConfig(),
@@ -680,7 +683,7 @@ func Test_configService_validateProvider(t *testing.T) {
 			name: "error when more than one default region in provider",
 			args: args{
 				provider: Provider{
-					Name: "test",
+					Name: cloudproviders.AWS.String(),
 					Regions: RegionList{
 						Region{
 							Name:    "test1",
@@ -700,7 +703,7 @@ func Test_configService_validateProvider(t *testing.T) {
 			name: "success when default region provided",
 			args: args{
 				provider: Provider{
-					Name: "test",
+					Name: cloudproviders.AWS.String(),
 					Regions: RegionList{
 						Region{
 							Name:    "test",
@@ -838,7 +841,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		{
 			name: "valid: all instances in region have no limits set",
 			fields: fields{
-				providersConfig: buildProviderConfig("aws", RegionList{
+				providersConfig: buildProviderConfig(cloudproviders.AWS.String(), RegionList{
 					Region{
 						Name:    "us-east-1",
 						Default: true,
@@ -854,7 +857,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		{
 			name: "valid: instance type limits set to 0",
 			fields: fields{
-				providersConfig: buildProviderConfig("aws", RegionList{
+				providersConfig: buildProviderConfig(cloudproviders.AWS.String(), RegionList{
 					Region{
 						Name:    "us-east-1",
 						Default: true,
@@ -874,7 +877,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		{
 			name: "valid: standard limit set to 0 and developer has no limits",
 			fields: fields{
-				providersConfig: buildProviderConfig("aws", RegionList{
+				providersConfig: buildProviderConfig(cloudproviders.AWS.String(), RegionList{
 					Region{
 						Name:    "us-east-1",
 						Default: true,
@@ -892,7 +895,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		{
 			name: "valid: all instance types have correct limits set in region with clusters that support only one instance type",
 			fields: fields{
-				providersConfig: buildProviderConfig("aws", RegionList{
+				providersConfig: buildProviderConfig(cloudproviders.AWS.String(), RegionList{
 					Region{
 						Name:    "eu-west-1",
 						Default: true,
@@ -912,7 +915,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		{
 			name: "invalid: incorrect limits set in region with clusters that support only one instance type",
 			fields: fields{
-				providersConfig: buildProviderConfig("aws", RegionList{
+				providersConfig: buildProviderConfig(cloudproviders.AWS.String(), RegionList{
 					Region{
 						Name:    "eu-west-1",
 						Default: true,
@@ -932,7 +935,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		{
 			name: "valid: all instance type limit adds up to capacity of region with a cluster that supports multiple instance types",
 			fields: fields{
-				providersConfig: buildProviderConfig("aws", RegionList{
+				providersConfig: buildProviderConfig(cloudproviders.AWS.String(), RegionList{
 					Region{
 						Name:    "af-south-1",
 						Default: true,
@@ -952,7 +955,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		{
 			name: "valid: all instance type limits adds up to region capacity",
 			fields: fields{
-				providersConfig: buildProviderConfig("aws", RegionList{
+				providersConfig: buildProviderConfig(cloudproviders.AWS.String(), RegionList{
 					Region{
 						Name:    "us-east-1",
 						Default: true,
@@ -975,7 +978,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		{
 			name: "invalid: instance type limits does not add up to region capacity",
 			fields: fields{
-				providersConfig: buildProviderConfig("aws", RegionList{
+				providersConfig: buildProviderConfig(cloudproviders.AWS.String(), RegionList{
 					Region{
 						Name:    "us-east-1",
 						Default: true,
@@ -995,7 +998,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		{
 			name: "invalid: all limits set and standard limit is more than the region max capacity for that instance type",
 			fields: fields{
-				providersConfig: buildProviderConfig("aws", RegionList{
+				providersConfig: buildProviderConfig(cloudproviders.AWS.String(), RegionList{
 					Region{
 						Name:    "us-east-1",
 						Default: true,
@@ -1018,7 +1021,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		{
 			name: "valid: developer has no limit and standard limit is within the region min and max capacity for that instance type",
 			fields: fields{
-				providersConfig: buildProviderConfig("aws", RegionList{
+				providersConfig: buildProviderConfig(cloudproviders.AWS.String(), RegionList{
 					Region{
 						Name:    "us-east-1",
 						Default: true,
@@ -1036,7 +1039,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		{
 			name: "invalid: developer has no limit and standard limit is less than the region min capacity for that instance type",
 			fields: fields{
-				providersConfig: buildProviderConfig("aws", RegionList{
+				providersConfig: buildProviderConfig(cloudproviders.AWS.String(), RegionList{
 					Region{
 						Name:    "us-east-1",
 						Default: true,
@@ -1054,7 +1057,7 @@ func Test_configService_validateSupportedInstanceTypeLimits(t *testing.T) {
 		{
 			name: "invalid: developer has no limit and standard limit is more than the region max capacity for that instance type",
 			fields: fields{
-				providersConfig: buildProviderConfig("aws", RegionList{
+				providersConfig: buildProviderConfig(cloudproviders.AWS.String(), RegionList{
 					Region{
 						Name:    "us-east-1",
 						Default: true,

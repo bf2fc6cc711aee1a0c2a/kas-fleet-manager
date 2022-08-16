@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/go-playground/validator/v10"
@@ -12,8 +13,6 @@ import (
 
 const (
 	defaultGCPCredentialsFilePath = "secrets/gcp.api-credentials"
-
-	cloudProviderNameGCP = "gcp"
 )
 
 type GCPConfig struct {
@@ -65,7 +64,7 @@ func (c *GCPConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *GCPCredentials) validate(providerList ProviderList) error {
-	_, found := providerList.GetByName(cloudProviderNameGCP)
+	_, found := providerList.GetByName(cloudproviders.GCP.String())
 	if !found {
 		return nil
 	}

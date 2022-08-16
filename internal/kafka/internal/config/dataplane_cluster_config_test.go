@@ -6,6 +6,7 @@ import (
 	"gopkg.in/yaml.v2"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
@@ -834,6 +835,85 @@ func Test_IsReadyDataPlaneClustersReconcileEnabled(t *testing.T) {
 			g.Expect(conf.IsReadyDataPlaneClustersReconcileEnabled()).To(gomega.Equal(tt.want))
 		})
 	}
+}
+
+func Test_DataPlaneClusterConfig_DefaultComputeMachineType(t *testing.T) {
+	type fields struct {
+		config *DataplaneClusterConfig
+	}
+	type args struct {
+		id cloudproviders.CloudProviderID
+	}
+
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   string
+	}{
+		{
+			name: "When the provided cloud provider is aws the correspondig default machine type is returned",
+			fields: fields{
+				&DataplaneClusterConfig{
+					AWSComputeMachineType: "awstype",
+					GCPComputeMachineType: "gcptype",
+				},
+			},
+			args: args{
+				id: cloudproviders.AWS,
+			},
+			want: "awstype",
+		},
+		{
+			name: "When the provided cloud provider is gcp the correspondig default machine type is returned",
+			fields: fields{
+				&DataplaneClusterConfig{
+					AWSComputeMachineType: "awstype",
+					GCPComputeMachineType: "gcptype",
+				},
+			},
+			args: args{
+				id: cloudproviders.GCP,
+			},
+			want: "gcptype",
+		},
+		{
+			name: "When the provided cloud provider is Unknown the empty string is returned",
+			fields: fields{
+				&DataplaneClusterConfig{
+					AWSComputeMachineType: "awstype",
+					GCPComputeMachineType: "gcptype",
+				},
+			},
+			args: args{
+				id: cloudproviders.Unknown,
+			},
+			want: "",
+		},
+		{
+			name: "When the provided cloud provider is not known the empty string is returned",
+			fields: fields{
+				&DataplaneClusterConfig{
+					AWSComputeMachineType: "awstype",
+					GCPComputeMachineType: "gcptype",
+				},
+			},
+			args: args{
+				id: cloudproviders.CloudProviderID("nonexistingcloudprovider"),
+			},
+			want: "",
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			res := tt.fields.config.DefaultComputeMachineType(tt.args.id)
+			g.Expect(res).To(gomega.Equal(tt.want))
+		})
+	}
+
 }
 
 func Test_ReadFiles(t *testing.T) {
