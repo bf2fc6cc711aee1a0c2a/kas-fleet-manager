@@ -44,3 +44,11 @@ supported_providers:
         supported_instance_type:
           standard: {}
           developer: {}
+  - name: gcp
+    default: false
+    regions:
+      - name: us-east1
+        default: true
+        supported_instance_type:
+          standard: {}
+          developer: {}
