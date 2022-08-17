@@ -48,9 +48,9 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidKafkaClusterName(&kafkaRequestPayload.Name, "name"),
 			ValidateKafkaClusterNameIsUnique(&kafkaRequestPayload.Name, h.service, r.Context()),
 			ValidateKafkaClaims(ctx, ValidateUsername(), ValidateOrganisationId()),
-			ValidateCloudProvider(ctx, &h.service, &kafkaRequestPayload, h.providerConfig, "creating kafka requests"),
-			ValidateKafkaPlan(ctx, &h.service, h.kafkaConfig, &kafkaRequestPayload),
-			ValidateBillingCloudAccountIdAndMarketplace(ctx, &h.service, &kafkaRequestPayload),
+			ValidateCloudProvider(ctx, h.service, &kafkaRequestPayload, h.providerConfig, "creating kafka requests"),
+			ValidateKafkaPlan(ctx, h.service, h.kafkaConfig, &kafkaRequestPayload),
+			ValidateBillingCloudAccountIdAndMarketplace(ctx, h.service, &kafkaRequestPayload),
 			ValidateBillingModel(&kafkaRequestPayload),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -61,9 +61,9 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			convKafka.OrganisationId, _ = claims.GetOrgId()
 			convKafka.OwnerAccountId, _ = claims.GetAccountId()
 
-			convKafka.InstanceType, convKafka.SizeId, _ = getInstanceTypeAndSize(ctx, &h.service, h.kafkaConfig, &kafkaRequestPayload)
+			convKafka.InstanceType, convKafka.SizeId, _ = getInstanceTypeAndSize(ctx, h.service, h.kafkaConfig, &kafkaRequestPayload)
 
-			convKafka.CloudProvider, convKafka.Region, _ = getCloudProviderAndRegion(ctx, &h.service, &kafkaRequestPayload, h.providerConfig)
+			convKafka.CloudProvider, convKafka.Region, _ = getCloudProviderAndRegion(ctx, h.service, &kafkaRequestPayload, h.providerConfig)
 
 			svcErr := h.service.RegisterKafkaJob(convKafka)
 			if svcErr != nil {
