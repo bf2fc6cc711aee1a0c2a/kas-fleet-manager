@@ -97,13 +97,16 @@ func PresentConnectorAdminView(from *dbapi.ConnectorWithConditions) (admin.Conne
 	connector.Kind = reference.Kind
 	connector.Href = reference.Href
 
-	var conditions []private.MetaV1Condition
-	if from.Conditions != nil {
-		err := json.Unmarshal(from.Conditions, &conditions)
-		if err != nil {
-			return admin.ConnectorAdminView{}, errors.GeneralError("invalid conditions: %v", err)
+	if connector.Status.State == admin.CONNECTORSTATE_FAILED || connector.Status.State == admin.CONNECTORSTATE_STOPPED {
+		// extract possible error message when state is failed or stopped
+		var conditions []private.MetaV1Condition
+		if from.Conditions != nil {
+			err := json.Unmarshal(from.Conditions, &conditions)
+			if err != nil {
+				return admin.ConnectorAdminView{}, errors.GeneralError("invalid conditions: %v", err)
+			}
+			connector.Status.Error = getStatusError(conditions)
 		}
-		connector.Status.Error = getStatusError(conditions)
 	}
 
 	return connector, nil

@@ -669,6 +669,7 @@ Feature: connector agent API
     Given I am logged in as "Jimmy"
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
+    And the ".status.state" selection from the response should match "failed"
     And the ".status.error" selection from the response should match "BadDeploy: error authenticating against kafka"
 
     # Move on with a working connector
@@ -706,6 +707,7 @@ Feature: connector agent API
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
     And the ".status.state" selection from the response should match "ready"
+    And the ".status.error" selection from the response should match "null"
 
     #-----------------------------------------------------------------------------------------------------------------
     # In this part of the Scenario we test whether agent gets deployments even when missing secrets in the vault
