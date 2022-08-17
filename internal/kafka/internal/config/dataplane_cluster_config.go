@@ -77,6 +77,20 @@ const (
 	NoScaling string = "none"
 )
 
+// constants for operators installation through OpenShift Lifecycle Manager (OLM)
+// in `standalone` cluster provider type
+const (
+	defaultStrimziOperatorOLMPackageName             = "kas-strimzi-bundle"
+	defaultStrimziOperatorOLMSubscriptionChannelName = "alpha"
+	defaultStrimziOperatorIndexImage                 = "quay.io/osd-addons/rhosak-strimzi-operator-bundle-index:v4.9-v0.1.5-2"
+	defaultStrimziOperatorSubscriptionConfigFile     = "config/strimzi-operator-subscription-spec-config.yaml"
+
+	defaultFleetShardOperatorOLMPackageName             = "kas-fleetshard-operator"
+	defaultFleetShardOperatorOLMSubscriptionChannelName = "alpha"
+	defaultFleetShardOperatorIndexImage                 = "quay.io/osd-addons/rhosak-fleetshard-operator-bundle-index:v4.9-v1.0.7-1"
+	defaultFleetShardOperatorSubscriptionConfigFile     = "config/kas-fleetshard-operator-subscription-spec-config.yaml"
+)
+
 func getDefaultKubeconfig() string {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -102,19 +116,19 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 		EnableDynamicScaleUpManagerScaleUpTrigger:   true,
 		Kubeconfig:                                  getDefaultKubeconfig(),
 		StrimziOperatorOLMConfig: OperatorInstallationConfig{
-			IndexImage:             "quay.io/osd-addons/managed-kafka:production-82b42db",
+			IndexImage:             defaultStrimziOperatorIndexImage,
 			Namespace:              constants.StrimziOperatorNamespace,
-			SubscriptionChannel:    "alpha",
-			Package:                "managed-kafka",
+			SubscriptionChannel:    defaultStrimziOperatorOLMSubscriptionChannelName,
+			Package:                defaultStrimziOperatorOLMPackageName,
+			SubscriptionConfigFile: defaultStrimziOperatorSubscriptionConfigFile,
 			SubscriptionConfig:     operatorsv1alpha1.SubscriptionConfig{},
-			SubscriptionConfigFile: "config/strimzi-operator-subscription-spec-config.yaml",
 		},
 		KasFleetshardOperatorOLMConfig: OperatorInstallationConfig{
-			IndexImage:             "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db",
+			IndexImage:             defaultFleetShardOperatorIndexImage,
 			Namespace:              constants.KASFleetShardOperatorNamespace,
-			SubscriptionChannel:    "alpha",
-			Package:                "kas-fleetshard-operator",
-			SubscriptionConfigFile: "config/kas-fleetshard-operator-subscription-spec-config.yaml",
+			SubscriptionChannel:    defaultFleetShardOperatorOLMSubscriptionChannelName,
+			Package:                defaultFleetShardOperatorOLMPackageName,
+			SubscriptionConfigFile: defaultFleetShardOperatorSubscriptionConfigFile,
 			SubscriptionConfig:     operatorsv1alpha1.SubscriptionConfig{},
 		},
 		DynamicScalingConfig: NewDynamicScalingConfig(),
@@ -377,7 +391,7 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 		err = readOperatorsSubscriptionConfigFile(c.StrimziOperatorOLMConfig.SubscriptionConfigFile, &c.StrimziOperatorOLMConfig.SubscriptionConfig)
 		if err != nil {
 			if os.IsNotExist(err) {
-				logger.Logger.Warningf("Specified Strimzi operator subscription config file %s does not exist. Default confiration will be used", c.StrimziOperatorOLMConfig.SubscriptionConfigFile)
+				logger.Logger.Warningf("Specified Strimzi operator subscription config file %s does not exist. Default configuration will be used", c.StrimziOperatorOLMConfig.SubscriptionConfigFile)
 			} else {
 				return err
 			}
@@ -386,7 +400,7 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 		err = readOperatorsSubscriptionConfigFile(c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile, &c.KasFleetshardOperatorOLMConfig.SubscriptionConfig)
 		if err != nil {
 			if os.IsNotExist(err) {
-				logger.Logger.Warningf("Specified kas-fleet-shard operator subscription config file %s does not exist. Default confiration will be used", c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile)
+				logger.Logger.Warningf("Specified kas-fleet-shard operator subscription config file %s does not exist. Default configuration will be used", c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile)
 			} else {
 				return err
 			}
