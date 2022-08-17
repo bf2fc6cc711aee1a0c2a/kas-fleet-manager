@@ -63,6 +63,9 @@ kas-fleet-manager allows provisioning of kafkas in an already preexisting standa
 To configure auto scaling, use the `--dataplane-cluster-scaling-type=auto`. 
 Once auto scaling is enabled this will activate the scaling up/down of compute nodes for existing clusters, dynamic creation and deletion of OSD dataplane clusters as explained in the [dynamic scaling architecture documentation](./architecture/data-plane-osd-cluster-dynamic-scaling.md) 
 
+>NOTE: It's worth noting that turning on OSD autoscaling will result into the auto creation and deletion of data plane clusters. 
+Have a look at [dynamic scaling OSD creation and deletion architecture](./architecture/data-plane-osd-cluster-dynamic-scaling.md#osd-cluster-creation-and-deletion) to understand more.
+
 ## Registering an existing cluster in the Database
 
 >NOTE: This should only be done if auto scaling is enabled. If manual scaling is enabled, please follow the guide for [using an existing cluster with manual scaling](#using-an-existing-osd-cluster-with-manual-scaling-enabled) instead.
