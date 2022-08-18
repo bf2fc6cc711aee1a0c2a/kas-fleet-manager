@@ -774,6 +774,11 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, configHook)
 	defer teardown()
 
+	var clusterService services.ClusterService
+	h.Env.MustResolve(&clusterService)
+	_, err := common.WaitForClusterStatus(h.DBFactory(), &clusterService, "test01", api.ClusterReady)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
 	ocmConfig := test.TestServices.OCMConfig
 
 	if ocmConfig.MockMode != ocm.MockModeEmulateServer || h.Env.Name == environments.TestingEnv {

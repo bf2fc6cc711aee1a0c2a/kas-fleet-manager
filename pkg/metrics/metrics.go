@@ -73,6 +73,11 @@ const (
 	// ClusterStatusCapacityAvailable - metric name for the number of available instances
 	ClusterStatusCapacityAvailable = "cluster_status_capacity_available"
 
+	// KasFleetManagerClusterProviderResourceQuotaConsumed - metric name for how much quota an organisation is currently using
+	KasFleetManagerClusterProviderResourceQuotaConsumed = "kas_fleet_manager_cluster_provider_resource_quota_consumed"
+
+	LabelQuotaId    = "quota_id"
+	LabelProvider   = "provider"
 	LabelStatusCode = "code"
 	LabelMethod     = "method"
 	LabelPath       = "path"
@@ -158,6 +163,11 @@ var clusterStatusCapacityLabels = []string{
 	LabelCloudProvider,
 }
 
+var KasFleetManagerClusterProviderResourceQuotaConsumedLabels = []string{
+	LabelQuotaId,
+	LabelProvider,
+}
+
 // #### Metrics for Dataplane clusters - Start ####
 // create a new histogramVec for cluster creation duration
 var requestClusterCreationDurationMetric = prometheus.NewHistogramVec(
@@ -214,6 +224,15 @@ func UpdateClusterStatusCapacityMaxCount(provider string, region, instanceType, 
 	clusterStatusCapacityMaxMetric.With(labels).Set(count)
 }
 
+// UpdateKasFleetManagerClusterProviderResourceQuotaConsumed - sets quota an organisation is currently using
+func UpdateKasFleetManagerClusterProviderResourceQuotaConsumed(quotaId, provider string, count int) {
+	labels := prometheus.Labels{
+		LabelQuotaId:  quotaId,
+		LabelProvider: provider,
+	}
+	KasFleetManagerClusterProviderResourceQuotaConsumedMetric.With(labels).Set(float64(count))
+}
+
 // UpdateClusterStatusCapacityUsedCount - sets used capacity per region and instance type
 func UpdateClusterStatusCapacityUsedCount(provider string, region, instanceType, clusterId string, count float64) {
 	labels := prometheus.Labels{
@@ -254,6 +273,16 @@ var clusterStatusCapacityMaxMetric = prometheus.NewGaugeVec(
 		Help:      "number of allowed Streaming Units per region and kafka instance type",
 	},
 	clusterStatusCapacityLabels,
+)
+
+// create a new gaugeVec for the quota an organisation is currently using
+var KasFleetManagerClusterProviderResourceQuotaConsumedMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: KasFleetManager,
+		Name:      KasFleetManagerClusterProviderResourceQuotaConsumed,
+		Help:      "quota an organisation is currently using",
+	},
+	KasFleetManagerClusterProviderResourceQuotaConsumedLabels,
 )
 
 // create a new gauge vec fot the number of kafka instances grouped by region and instance type
@@ -686,6 +715,7 @@ func init() {
 	prometheus.MustRegister(clusterStatusCountMetric)
 	prometheus.MustRegister(kafkaPerClusterCountMetric)
 	prometheus.MustRegister(clusterStatusCapacityMaxMetric)
+	prometheus.MustRegister(KasFleetManagerClusterProviderResourceQuotaConsumedMetric)
 	prometheus.MustRegister(clusterStatusCapacityUsedMetric)
 	prometheus.MustRegister(clusterStatusCapacityAvailableMetric)
 
@@ -728,6 +758,7 @@ func ResetMetricsForClusterManagers() {
 	clusterStatusSinceCreatedMetric.Reset()
 	clusterStatusCountMetric.Reset()
 	kafkaPerClusterCountMetric.Reset()
+	KasFleetManagerClusterProviderResourceQuotaConsumedMetric.Reset()
 }
 
 // ResetMetricsForReconcilers will reset the metrics related to the reconcilers
@@ -755,6 +786,7 @@ func Reset() {
 	clusterStatusCountMetric.Reset()
 	kafkaPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
+	KasFleetManagerClusterProviderResourceQuotaConsumedMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
 	clusterStatusCapacityAvailableMetric.Reset()
 
