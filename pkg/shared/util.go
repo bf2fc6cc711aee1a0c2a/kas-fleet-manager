@@ -1,5 +1,7 @@
 package shared
 
+import "io"
+
 func SafeString(ptr *string) string {
 	if ptr == nil {
 		return ""
@@ -12,4 +14,10 @@ func SafeInt64(ptr *int64) int64 {
 		return 0
 	}
 	return *ptr
+}
+
+func CloseQuietly(c io.Closer) func() {
+	return func() {
+		_ = c.Close()
+	}
 }

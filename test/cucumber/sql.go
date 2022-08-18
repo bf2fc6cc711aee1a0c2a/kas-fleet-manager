@@ -8,6 +8,7 @@ package cucumber
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"reflect"
 	"strings"
 
@@ -71,7 +72,7 @@ func (s *TestScenario) iRunSQLGivesResults(sql string, expected *godog.Table) er
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer shared.CloseQuietly(rows)
 
 	var actualTable [][]string
 	cols, err := rows.Columns()
@@ -109,8 +110,8 @@ func (s *TestScenario) iRunSQLGivesResults(sql string, expected *godog.Table) er
 		actual := StringTableToCucumberTable(actualTable)
 
 		diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
-			A:        difflib.SplitLines(string(expected)),
-			B:        difflib.SplitLines(string(actual)),
+			A:        difflib.SplitLines(expected),
+			B:        difflib.SplitLines(actual),
 			FromFile: "Expected",
 			FromDate: "",
 			ToFile:   "Actual",
@@ -123,13 +124,12 @@ func (s *TestScenario) iRunSQLGivesResults(sql string, expected *godog.Table) er
 }
 
 func GodogTableToStringTable(table *godog.Table) [][]string {
-	data := [][]string{}
-	for _, row := range table.Rows {
-		dataR := []string{}
-		for _, c := range row.Cells {
-			dataR = append(dataR, c.Value)
+	data := make([][]string, len(table.Rows))
+	for r, row := range table.Rows {
+		data[r] = make([]string, len(row.Cells))
+		for c, cell := range row.Cells {
+			data[r][c] = cell.Value
 		}
-		data = append(data, dataR)
 	}
 	return data
 }

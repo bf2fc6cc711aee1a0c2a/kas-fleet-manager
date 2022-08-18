@@ -33,7 +33,7 @@ func (c *ConnectionFactory) TxContext() (ctx context.Context, err error) {
 func Resolve(ctx context.Context) error {
 	tx, ok := ctx.Value(constants.TransactionKey).(*txFactory)
 	if !ok {
-		return fmt.Errorf("Could not retrieve transaction from context")
+		return fmt.Errorf("could not retrieve transaction from context")
 	}
 	if tx.resolved {
 		return nil
@@ -43,14 +43,14 @@ func Resolve(ctx context.Context) error {
 	tx.postCommitActions = nil
 	if tx.markedForRollback() {
 		if err := tx.tx.Rollback(); err != nil {
-			return fmt.Errorf("Could not rollback transaction: %v", err)
+			return fmt.Errorf("could not rollback transaction: %v", err)
 		}
 		ulog := logger.NewUHCLogger(ctx)
 		ulog.Infof("Rolled back transaction")
 	} else {
 		if err := tx.tx.Commit(); err != nil {
 			// TODO:  what does the user see when this occurs? seems like they will get a false positive
-			return fmt.Errorf("Could not commit transaction: %v", err)
+			return fmt.Errorf("could not commit transaction: %v", err)
 		}
 		for _, f := range postCommitActions {
 			f()
@@ -62,12 +62,12 @@ func Resolve(ctx context.Context) error {
 func Begin(ctx context.Context) error {
 	tx, ok := ctx.Value(constants.TransactionKey).(*txFactory)
 	if !ok {
-		return fmt.Errorf("Could not retrieve transaction from context")
+		return fmt.Errorf("could not retrieve transaction from context")
 	}
 
 	err := tx.begin()
 	if err != nil {
-		return fmt.Errorf("Could not begin transaction: %v", err)
+		return fmt.Errorf("could not begin transaction: %v", err)
 	}
 	return nil
 }
@@ -75,7 +75,7 @@ func Begin(ctx context.Context) error {
 func AddPostCommitAction(ctx context.Context, f func()) error {
 	tx, ok := ctx.Value(constants.TransactionKey).(*txFactory)
 	if !ok {
-		return fmt.Errorf("Could not retrieve transaction from context")
+		return fmt.Errorf("could not retrieve transaction from context")
 	}
 
 	tx.postCommitActions = append(tx.postCommitActions, f)
@@ -86,7 +86,7 @@ func AddPostCommitAction(ctx context.Context, f func()) error {
 func FromContext(ctx context.Context) (*sql.Tx, error) {
 	transaction, ok := ctx.Value(constants.TransactionKey).(*txFactory)
 	if !ok {
-		return nil, errors.GeneralError("Could not retrieve transaction from context")
+		return nil, errors.GeneralError("could not retrieve transaction from context")
 	}
 	return transaction.tx, nil
 }

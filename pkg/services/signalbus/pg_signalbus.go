@@ -3,6 +3,7 @@ package signalbus
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 	"github.com/lib/pq"
 	"sync"
@@ -99,7 +100,7 @@ func (sbw *PgSignalBus) run() (exit bool) {
 			glog.V(1).Info("pq listener error", err.Error())
 		}
 	})
-	defer listener.Close() // clean up connections on return..
+	defer shared.CloseQuietly(listener) // clean up connections on return..
 
 	// Listen on the "signalbus" channel.
 	err := listener.Listen("signalbus")

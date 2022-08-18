@@ -32,7 +32,7 @@ func Test_GCPConfig_ReadFiles(t *testing.T) {
 						panic(fmt.Errorf("test error: %v", err))
 					}
 					return GCPConfig{
-						gcpCredentialsFilePath: gcpCredentialsFile.Name(),
+						gcpCredentialsFilePath: gcpCredentialsFile,
 					}
 				},
 			},
@@ -60,7 +60,7 @@ func Test_GCPConfig_ReadFiles(t *testing.T) {
 					}
 
 					return GCPConfig{
-						gcpCredentialsFilePath: gcpCredentialsFile.Name(),
+						gcpCredentialsFilePath: gcpCredentialsFile,
 					}
 				},
 			},
@@ -77,7 +77,7 @@ func Test_GCPConfig_ReadFiles(t *testing.T) {
 					}
 
 					return GCPConfig{
-						gcpCredentialsFilePath: gcpCredentialsFile.Name(),
+						gcpCredentialsFilePath: gcpCredentialsFile,
 					}
 				},
 			},
@@ -94,7 +94,7 @@ func Test_GCPConfig_ReadFiles(t *testing.T) {
 					}
 
 					return GCPConfig{
-						gcpCredentialsFilePath: gcpCredentialsFile.Name(),
+						gcpCredentialsFilePath: gcpCredentialsFile,
 					}
 				},
 			},
