@@ -156,6 +156,8 @@ func TestClusterManager_reconcile(t *testing.T) {
 		clusterService         services.ClusterService
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 		supportedProviders     *config.ProviderConfig
+		OCMConfig              *ocm.OCMConfig
+		ProviderFactory        clusters.ProviderFactory
 	}
 	tests := []struct {
 		name    string
@@ -186,6 +188,16 @@ func TestClusterManager_reconcile(t *testing.T) {
 					ClusterConfig:               &config.ClusterConfig{},
 				},
 				supportedProviders: &config.ProviderConfig{},
+				OCMConfig: &ocm.OCMConfig{
+					SelfToken: "selfToken",
+				},
+				ProviderFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{GetQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+							return []types.QuotaCost{}, nil
+						}}, nil
+					},
+				},
 			},
 			wantErr: false,
 		},
@@ -201,6 +213,8 @@ func TestClusterManager_reconcile(t *testing.T) {
 					ClusterService:         tt.fields.clusterService,
 					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
 					SupportedProviders:     tt.fields.supportedProviders,
+					OCMConfig:              tt.fields.OCMConfig,
+					ProviderFactory:        tt.fields.ProviderFactory,
 				},
 			}
 
@@ -214,6 +228,8 @@ func TestClusterManager_processMetrics(t *testing.T) {
 		clusterService         services.ClusterService
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 		supportedProviders     *config.ProviderConfig
+		OCMConfig              *ocm.OCMConfig
+		ProviderFactory        clusters.ProviderFactory
 	}
 	tests := []struct {
 		name    string
@@ -246,6 +262,38 @@ func TestClusterManager_processMetrics(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "should return an error if GetQuotaCosts called by setKasFleetManagerClusterProviderResourceQuotaConsumedMetric fails in ClusterService",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
+						return []services.ClusterStatusCount{}, nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
+						return []services.ResKafkaInstanceCount{}, nil
+					},
+				},
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					ClusterConfig: config.NewClusterConfig(
+						config.ClusterList{
+							dpMock.BuildManualCluster(supportedInstanceType),
+						}),
+				},
+				supportedProviders: &supportedProviders,
+				OCMConfig: &ocm.OCMConfig{
+					SelfToken: "selfToken",
+				},
+				ProviderFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{GetQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+							return nil, errors.New("failed to retrieve Quota Cost")
+						}}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
 			name: "should succeed if no errors occur during the execution",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
@@ -264,6 +312,16 @@ func TestClusterManager_processMetrics(t *testing.T) {
 						}),
 				},
 				supportedProviders: &supportedProviders,
+				OCMConfig: &ocm.OCMConfig{
+					SelfToken: "selfToken",
+				},
+				ProviderFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{GetQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+							return []types.QuotaCost{}, nil
+						}}, nil
+					},
+				},
 			},
 			wantErr: false,
 		},
@@ -278,6 +336,8 @@ func TestClusterManager_processMetrics(t *testing.T) {
 					ClusterService:         tt.fields.clusterService,
 					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
 					SupportedProviders:     tt.fields.supportedProviders,
+					OCMConfig:              tt.fields.OCMConfig,
+					ProviderFactory:        tt.fields.ProviderFactory,
 				},
 			}
 			// processMetrics accumulates all the errors encountered during metrics processing in an array.

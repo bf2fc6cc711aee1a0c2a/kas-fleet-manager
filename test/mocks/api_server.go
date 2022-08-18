@@ -568,7 +568,7 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 	case []*amsv1.QuotaCost:
 		return amsv1.MarshalQuotaCostList(v, w)
 	case *amsv1.QuotaCostList:
-		quotaCostList, err := NewQuotaCostList().WithItems(v.Slice())
+		quotaCostList, err := NewOCMList().WithItems(v.Slice())
 		if err != nil {
 			return err
 		}
@@ -653,40 +653,6 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 		return json.NewEncoder(w).Encode(v.AsOpenapiError("", ""))
 	}
 	return fmt.Errorf("could not recognise type %s in ocm type marshaller", reflect.TypeOf(t).String())
-}
-
-// basic wrapper to emulate the the quotaCost list types as they're private
-type quotaCostList struct {
-	HREF  *string         `json:"href"`
-	Link  bool            `json:"link"`
-	Items json.RawMessage `json:"items"`
-}
-
-func NewQuotaCostList() *quotaCostList {
-	return &quotaCostList{
-		HREF:  nil,
-		Link:  false,
-		Items: nil,
-	}
-}
-
-func (l *quotaCostList) WithHREF(href string) *quotaCostList {
-	l.HREF = &href
-	return l
-}
-
-func (l *quotaCostList) WithLink(link bool) *quotaCostList {
-	l.Link = link
-	return l
-}
-
-func (l *quotaCostList) WithItems(items interface{}) (*quotaCostList, error) {
-	var b bytes.Buffer
-	if err := marshalOCMType(items, &b); err != nil {
-		return l, err
-	}
-	l.Items = b.Bytes()
-	return l, nil
 }
 
 // basic wrapper to emulate the the ocm list types as they're private

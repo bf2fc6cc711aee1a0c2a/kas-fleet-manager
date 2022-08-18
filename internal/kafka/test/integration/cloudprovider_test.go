@@ -369,9 +369,9 @@ func TestListCloudProviderRegions(t *testing.T) {
 	defer teardown()
 	var clusterService services.ClusterService
 	h.Env.MustResolve(&clusterService)
-	cluster := dataPlaneClusterConfig.ClusterConfig.GetManualClusters()
+	clusters := dataPlaneClusterConfig.ClusterConfig.GetManualClusters()
 
-	for _, c := range cluster {
+	for _, c := range clusters {
 		_, err := common.WaitForClusterStatus(h.DBFactory(), &clusterService, c.ClusterId, api.ClusterReady)
 		g.Expect(err).NotTo(gomega.HaveOccurred())
 	}
