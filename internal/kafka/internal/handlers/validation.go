@@ -41,7 +41,7 @@ func ValidateBillingModel(kafkaRequestPayload *public.KafkaRequestPayload) handl
 	}
 }
 
-func ValidateBillingCloudAccountIdAndMarketplace(ctx context.Context, kafkaService *services.KafkaService, kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
+func ValidateBillingCloudAccountIdAndMarketplace(ctx context.Context, kafkaService services.KafkaService, kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {
 		// both fields are optional
 		if shared.SafeString(kafkaRequestPayload.BillingCloudAccountId) == "" && shared.SafeString(kafkaRequestPayload.Marketplace) == "" {
@@ -61,12 +61,12 @@ func ValidateBillingCloudAccountIdAndMarketplace(ctx context.Context, kafkaServi
 		owner, _ := claims.GetUsername()
 		organisationId, _ := claims.GetOrgId()
 
-		instanceType, err := (*kafkaService).AssignInstanceType(owner, organisationId)
+		instanceType, err := kafkaService.AssignInstanceType(owner, organisationId)
 		if err != nil {
 			return errors.NewWithCause(errors.ErrorGeneral, err, "error assigning instance type: %s", err.Error())
 		}
 
-		return (*kafkaService).ValidateBillingAccount(organisationId, instanceType, *kafkaRequestPayload.BillingCloudAccountId, kafkaRequestPayload.Marketplace)
+		return kafkaService.ValidateBillingAccount(organisationId, instanceType, *kafkaRequestPayload.BillingCloudAccountId, kafkaRequestPayload.Marketplace)
 	}
 }
 
@@ -150,7 +150,7 @@ func validateVersionsCompatibility(h *adminKafkaHandler, kafkaRequest *dbapi.Kaf
 
 func getCloudProviderAndRegion(
 	ctx context.Context,
-	kafkaService *services.KafkaService,
+	kafkaService services.KafkaService,
 	kafkaRequest *public.KafkaRequestPayload,
 	providerConfig *config.ProviderConfig) (string, string, *errors.ServiceError) {
 
@@ -182,7 +182,7 @@ func getCloudProviderAndRegion(
 	organisationId, _ := claims.GetOrgId()
 
 	// Validate Region/InstanceType
-	instanceType, err := (*kafkaService).AssignInstanceType(owner, organisationId)
+	instanceType, err := kafkaService.AssignInstanceType(owner, organisationId)
 	if err != nil {
 		return "", "", errors.NewWithCause(errors.ErrorGeneral, err, "error assigning instance type: %s", err.Error())
 	}
@@ -202,14 +202,14 @@ func getCloudProviderAndRegion(
 }
 
 // ValidateCloudProvider returns a validator that validates provided provider and region
-func ValidateCloudProvider(ctx context.Context, kafkaService *services.KafkaService, kafkaRequest *public.KafkaRequestPayload, providerConfig *config.ProviderConfig, action string) handlers.Validate {
+func ValidateCloudProvider(ctx context.Context, kafkaService services.KafkaService, kafkaRequest *public.KafkaRequestPayload, providerConfig *config.ProviderConfig, action string) handlers.Validate {
 	return func() *errors.ServiceError {
 		_, _, err := getCloudProviderAndRegion(ctx, kafkaService, kafkaRequest, providerConfig)
 		return err
 	}
 }
 
-func getInstanceTypeAndSize(ctx context.Context, kafkaService *services.KafkaService, kafkaConfig *config.KafkaConfig, kafkaRequestPayload *public.KafkaRequestPayload) (string, string, *errors.ServiceError) {
+func getInstanceTypeAndSize(ctx context.Context, kafkaService services.KafkaService, kafkaConfig *config.KafkaConfig, kafkaRequestPayload *public.KafkaRequestPayload) (string, string, *errors.ServiceError) {
 	claims, err := getClaims(ctx)
 	if err != nil {
 		return "", "", err
@@ -217,7 +217,7 @@ func getInstanceTypeAndSize(ctx context.Context, kafkaService *services.KafkaSer
 
 	owner, _ := claims.GetUsername()
 	organisationId, _ := claims.GetOrgId()
-	instanceType, err := (*kafkaService).AssignInstanceType(owner, organisationId)
+	instanceType, err := kafkaService.AssignInstanceType(owner, organisationId)
 	if err != nil {
 		return "", "", err
 	}
@@ -247,7 +247,7 @@ func getInstanceTypeAndSize(ctx context.Context, kafkaService *services.KafkaSer
 }
 
 // ValidateKafkaPlan - validate the requested Kafka Plan
-func ValidateKafkaPlan(ctx context.Context, kafkaService *services.KafkaService, kafkaConfig *config.KafkaConfig, kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate { // Validate plan
+func ValidateKafkaPlan(ctx context.Context, kafkaService services.KafkaService, kafkaConfig *config.KafkaConfig, kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate { // Validate plan
 	return func() *errors.ServiceError {
 		_, _, err := getInstanceTypeAndSize(ctx, kafkaService, kafkaConfig, kafkaRequestPayload)
 		return err

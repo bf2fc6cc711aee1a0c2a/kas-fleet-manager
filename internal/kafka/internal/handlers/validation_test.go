@@ -399,7 +399,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			validateFn := ValidateCloudProvider(context.Background(), &tt.arg.kafkaService, &tt.arg.kafkaRequest, tt.arg.ProviderConfig, "creating-kafka")
+			validateFn := ValidateCloudProvider(context.Background(), tt.arg.kafkaService, &tt.arg.kafkaRequest, tt.arg.ProviderConfig, "creating-kafka")
 			err := validateFn()
 			if !tt.want.wantErr && err != nil {
 				t.Errorf("validatedCloudProvider() expected not to throw error but threw %v", err)
@@ -711,7 +711,7 @@ func TestValidateBillingCloudAccountIdAndMarketplace(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			validateFn := ValidateBillingCloudAccountIdAndMarketplace(tt.args.ctx, &tt.args.kafkaService, tt.args.kafkaRequestPayload)
+			validateFn := ValidateBillingCloudAccountIdAndMarketplace(tt.args.ctx, tt.args.kafkaService, tt.args.kafkaRequestPayload)
 			err := validateFn()
 			g.Expect(err).To(gomega.Equal(tt.want))
 		})
@@ -931,7 +931,7 @@ func TestValidateKafkaPlan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			validateFn := ValidateKafkaPlan(tt.args.ctx, &tt.args.kafkaService, tt.args.kafkaConfig, tt.args.kafkaRequestPayload)
+			validateFn := ValidateKafkaPlan(tt.args.ctx, tt.args.kafkaService, tt.args.kafkaConfig, tt.args.kafkaRequestPayload)
 			err := validateFn()
 			g.Expect(err).To(gomega.Equal(tt.want))
 		})
