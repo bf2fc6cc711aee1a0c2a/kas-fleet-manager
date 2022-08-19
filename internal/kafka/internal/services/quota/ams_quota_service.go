@@ -195,9 +195,10 @@ func (q amsQuotaService) getAvailableBillingModelFromKafkaInstanceType(orgId str
 	for _, qc := range quotaCosts {
 		for _, rr := range qc.RelatedResources() {
 			if qc.Consumed()+sizeRequired <= qc.Allowed() || rr.Cost() == 0 {
-				if rr.BillingModel() == string(amsv1.BillingModelStandard) {
+				switch rr.BillingModel() {
+				case string(amsv1.BillingModelStandard):
 					return rr.BillingModel(), nil
-				} else if rr.BillingModel() == string(amsv1.BillingModelMarketplace) {
+				case string(amsv1.BillingModelMarketplace):
 					billingModel = rr.BillingModel()
 				}
 			}
