@@ -161,15 +161,13 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 	}
 
 	var foundUnsupportedBillingModel string
-
 	for _, qc := range quotaCosts {
 		if qc.Allowed() > 0 {
 			for _, rr := range qc.RelatedResources() {
 				if _, isCompatibleBillingModel := supportedAMSBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
 					return true, nil
-				} else {
-					foundUnsupportedBillingModel = rr.BillingModel()
 				}
+				foundUnsupportedBillingModel = rr.BillingModel()
 			}
 		}
 	}
