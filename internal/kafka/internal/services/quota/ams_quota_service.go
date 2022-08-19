@@ -320,12 +320,11 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		return "", errors.InsufficientQuotaError("Error getting billing model: No available billing model found")
 	}
 
-	if match, matchedBillingModel := q.billingModelMatches(bm, kafka.BillingModel); match {
-		// assign the billing model in case it was not provided by the user but we were able to infer it
-		kafka.BillingModel = matchedBillingModel
-	} else {
+	bmMatched, matchedBillingModel := q.billingModelMatches(bm, kafka.BillingModel)
+	if !bmMatched {
 		return "", errors.InvalidBillingAccount("requested billing model does not match assigned. requested: %s, assigned: %s", kafka.BillingModel, bm)
 	}
+	kafka.BillingModel = matchedBillingModel
 
 	rr.BillingModel(amsv1.BillingModel(bm))
 	rr.Count(kafkaInstanceSize.QuotaConsumed)
@@ -352,11 +351,11 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
 	}
 
-	if resp.Allowed() {
-		return resp.Subscription().ID(), nil
-	} else {
+	if !resp.Allowed() {
 		return "", errors.InsufficientQuotaError("Insufficient Quota")
 	}
+
+	return resp.Subscription().ID(), nil
 }
 
 func (q amsQuotaService) DeleteQuota(subscriptionId string) *errors.ServiceError {
