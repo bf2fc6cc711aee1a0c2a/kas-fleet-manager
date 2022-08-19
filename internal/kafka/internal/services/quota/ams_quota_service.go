@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
@@ -21,6 +22,14 @@ const (
 	CloudProviderAWS   = "aws"
 	CloudProviderRHM   = "rhm"
 	CloudProviderAzure = "azure"
+)
+
+const (
+	amsReservedResourceResourceTypeClusterAWS = "cluster.aws"
+	amsReservedResourceResourceTypeClusterGCP = "cluster.gcp"
+
+	amsClusterAuthorizationRequestAvailabilityZoneSingle = "single"
+	amsClusterAuthorizationRequestAvailabilityZoneMulti  = "multi"
 )
 
 var supportedCloudProviders = []string{CloudProviderAWS, CloudProviderRHM, CloudProviderAzure}
@@ -45,15 +54,36 @@ func getMarketplaceBillingModelForCloudProvider(cloudProvider string) (amsv1.Bil
 	return "", errors.InvalidBillingAccount("unsupported cloud provider")
 }
 
-func newBaseQuotaReservedResourceResourceBuilder() amsv1.ReservedResourceBuilder {
-	rr := amsv1.ReservedResourceBuilder{}
-	rr.ResourceType("cluster.aws") //cluster.aws
-	rr.BYOC(false)                 //false
-	rr.ResourceName("rhosak")      //"rhosak"
-	rr.BillingModel("marketplace") // "marketplace" or "standard"
-	rr.AvailabilityZoneType("single")
+func (q amsQuotaService) getAMSReservedResourceResourceType(cloudProviderID cloudproviders.CloudProviderID) string {
+	switch cloudProviderID {
+	case cloudproviders.AWS:
+		return amsReservedResourceResourceTypeClusterAWS
+	case cloudproviders.GCP:
+		return amsReservedResourceResourceTypeClusterGCP
+	default:
+		return ""
+	}
+}
+
+func (q amsQuotaService) getAMSClusterAuthorizationRequestAvailabilityZone(multiAZ bool) string {
+	if multiAZ {
+		return amsClusterAuthorizationRequestAvailabilityZoneMulti
+	}
+
+	return amsClusterAuthorizationRequestAvailabilityZoneSingle
+}
+
+func (q amsQuotaService) newBaseQuotaReservedResourceBuilder(kafka *dbapi.KafkaRequest) amsv1.ReservedResourceBuilder {
+	rr := amsv1.NewReservedResource()
+	kafkaCloudProviderID := cloudproviders.ParseCloudProviderID(kafka.CloudProvider)
+	resourceType := q.getAMSReservedResourceResourceType(kafkaCloudProviderID)
+	if resourceType != "" {
+		rr.ResourceType(resourceType)
+	}
+	rr.ResourceName(ocm.RHOSAKResourceName)
+	rr.BillingModel(amsv1.BillingModelMarketplace)
 	rr.Count(1)
-	return rr
+	return *rr
 }
 
 var supportedAMSBillingModels map[string]struct{} = map[string]struct{}{
@@ -306,7 +336,7 @@ func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType
 func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
 	kafkaId := kafka.ID
 
-	rr := newBaseQuotaReservedResourceResourceBuilder()
+	rr := q.newBaseQuotaReservedResourceBuilder(kafka)
 
 	kafkaInstanceSize, e := q.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
 	if e != nil {
@@ -343,7 +373,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		ExternalClusterID(kafkaId).
 		Disconnected(false).
 		BYOC(false).
-		AvailabilityZone("single").
+		AvailabilityZone(q.getAMSClusterAuthorizationRequestAvailabilityZone(kafka.MultiAZ)).
 		Reserve(true).
 		Resources(&rr).
 		Build()

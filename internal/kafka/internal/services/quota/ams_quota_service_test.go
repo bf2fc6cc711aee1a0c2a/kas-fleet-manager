@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
@@ -1448,6 +1449,81 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 			res, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(tt.args.kafkaRequest.Owner, tt.args.kafkaRequest.OrganisationId, tt.args.kafkaInstanceType)
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			g.Expect(res).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
+func Test_amsQuotaService_newBaseQuotaReservedResourceBuilder(t *testing.T) {
+	type args struct {
+		kafkaRequest *dbapi.KafkaRequest
+	}
+
+	tests := []struct {
+		name        string
+		args        args
+		wantFactory func() v1.ReservedResourceBuilder
+	}{
+		{
+			name: "When the kafka request is in AWS and MultiAZ the correct reserved resource builder is returned",
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					MultiAZ:       true,
+					CloudProvider: cloudproviders.AWS.String(),
+				},
+			},
+			wantFactory: func() v1.ReservedResourceBuilder {
+				rrbuilder := v1.NewReservedResource()
+				rrbuilder.Count(1)
+				rrbuilder.ResourceType(amsReservedResourceResourceTypeClusterAWS)
+				rrbuilder.ResourceName(ocm.RHOSAKResourceName)
+				rrbuilder.BillingModel(v1.BillingModelMarketplace)
+				return *rrbuilder
+			},
+		},
+		{
+			name: "When the kafka request is single AZ the correct reserved resource builder is returned",
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					MultiAZ:       false,
+					CloudProvider: cloudproviders.AWS.String(),
+				},
+			},
+			wantFactory: func() v1.ReservedResourceBuilder {
+				rrbuilder := v1.NewReservedResource()
+				rrbuilder.Count(1)
+				rrbuilder.ResourceType(amsReservedResourceResourceTypeClusterAWS)
+				rrbuilder.ResourceName(ocm.RHOSAKResourceName)
+				rrbuilder.BillingModel(v1.BillingModelMarketplace)
+				return *rrbuilder
+			},
+		},
+		{
+			name: "When the kafka request is in GCP the correct reserved resource builder is returned",
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					MultiAZ:       true,
+					CloudProvider: cloudproviders.GCP.String(),
+				},
+			},
+			wantFactory: func() v1.ReservedResourceBuilder {
+				rrbuilder := v1.NewReservedResource()
+				rrbuilder.Count(1)
+				rrbuilder.ResourceType(amsReservedResourceResourceTypeClusterGCP)
+				rrbuilder.ResourceName(ocm.RHOSAKResourceName)
+				rrbuilder.BillingModel("marketplace")
+				return *rrbuilder
+			},
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			amsQuotaService := amsQuotaService{}
+			want := tt.wantFactory()
+			res := amsQuotaService.newBaseQuotaReservedResourceBuilder(tt.args.kafkaRequest)
+			g.Expect(res).To(gomega.Equal(want))
 		})
 	}
 }
