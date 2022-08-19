@@ -2,6 +2,7 @@ package quota
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
@@ -31,7 +32,7 @@ var supportedMarketplaceBillingModels = []string{
 	string(amsv1.BillingModelMarketplaceAzure),
 }
 
-func getBillingModelForCloudProvider(cloudProvider string) (amsv1.BillingModel, error) {
+func getMarketplaceBillingModelForCloudProvider(cloudProvider string) (amsv1.BillingModel, error) {
 	switch cloudProvider {
 	case CloudProviderAWS:
 		return amsv1.BillingModelMarketplaceAWS, nil
@@ -262,7 +263,7 @@ func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType
 				kafka.BillingCloudAccountId = cloudAccount.CloudAccountID()
 				kafka.Marketplace = cloudAccount.CloudProviderID()
 
-				billingModel, err := getBillingModelForCloudProvider(cloudAccount.CloudProviderID())
+				billingModel, err := getMarketplaceBillingModelForCloudProvider(cloudAccount.CloudProviderID())
 				if err != nil {
 					return "", err
 				}
@@ -287,7 +288,7 @@ func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType
 
 			// assign marketplace in case it was not provided in the request
 			kafka.Marketplace = cloudAccount.CloudProviderID()
-			billingModel, err := getBillingModelForCloudProvider(cloudAccount.CloudProviderID())
+			billingModel, err := getMarketplaceBillingModelForCloudProvider(cloudAccount.CloudProviderID())
 			if err != nil {
 				return "", err
 			}
