@@ -68,7 +68,9 @@ func (q amsQuotaService) billingModelMatches(computedBillingModel string, reques
 	// billing model is an optional parameter, infer the value from AMS if not provided
 	if requestedBillingModel == "" && computedBillingModel == string(amsv1.BillingModelStandard) {
 		return true, string(amsv1.BillingModelStandard)
-	} else if requestedBillingModel == "" && arrays.Contains(supportedMarketplaceBillingModels, computedBillingModel) {
+	}
+
+	if requestedBillingModel == "" && arrays.Contains(supportedMarketplaceBillingModels, computedBillingModel) {
 		return true, string(amsv1.BillingModelMarketplace)
 	}
 
