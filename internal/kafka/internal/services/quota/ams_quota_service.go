@@ -2,6 +2,7 @@ package quota
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
@@ -31,7 +32,7 @@ var supportedMarketplaceBillingModels = []string{
 	string(amsv1.BillingModelMarketplaceAzure),
 }
 
-func getBillingModelForCloudProvider(cloudProvider string) (amsv1.BillingModel, error) {
+func getMarketplaceBillingModelForCloudProvider(cloudProvider string) (amsv1.BillingModel, error) {
 	switch cloudProvider {
 	case CloudProviderAWS:
 		return amsv1.BillingModelMarketplaceAWS, nil
@@ -67,7 +68,9 @@ func (q amsQuotaService) billingModelMatches(computedBillingModel string, reques
 	// billing model is an optional parameter, infer the value from AMS if not provided
 	if requestedBillingModel == "" && computedBillingModel == string(amsv1.BillingModelStandard) {
 		return true, string(amsv1.BillingModelStandard)
-	} else if requestedBillingModel == "" && arrays.Contains(supportedMarketplaceBillingModels, computedBillingModel) {
+	}
+
+	if requestedBillingModel == "" && arrays.Contains(supportedMarketplaceBillingModels, computedBillingModel) {
 		return true, string(amsv1.BillingModelMarketplace)
 	}
 
@@ -114,19 +117,21 @@ func (q amsQuotaService) ValidateBillingAccount(organisationId string, instanceT
 		}
 	}
 
-	// only one matching billing account is expected. If there are multiple then they are with different
-	// cloud providers
-	if matchingBillingAccounts == 1 {
-		return nil
-	} else if matchingBillingAccounts > 1 {
-		return errors.InvalidBillingAccount("Multiple matching billing accounts found, only one expected. Available billing accounts: %v", billingAccounts)
-	}
-
 	if len(billingAccounts) == 0 {
 		return errors.InvalidBillingAccount("No billing accounts available in quota")
 	}
 
-	return errors.InvalidBillingAccount("No matching billing account found. Provided: %s, Available: %v", billingCloudAccountId, billingAccounts)
+	// only one matching billing account is expected. If there are multiple then
+	// they are with different cloud providers
+	if matchingBillingAccounts > 1 {
+		return errors.InvalidBillingAccount("Multiple matching billing accounts found, only one expected. Available billing accounts: %v", billingAccounts)
+	}
+	if matchingBillingAccounts == 0 {
+		return errors.InvalidBillingAccount("No matching billing account found. Provided: %s, Available: %v", billingCloudAccountId, billingAccounts)
+	}
+
+	// we found one and only one matching billing account
+	return nil
 }
 
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
@@ -158,15 +163,13 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 	}
 
 	var foundUnsupportedBillingModel string
-
 	for _, qc := range quotaCosts {
 		if qc.Allowed() > 0 {
 			for _, rr := range qc.RelatedResources() {
 				if _, isCompatibleBillingModel := supportedAMSBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
 					return true, nil
-				} else {
-					foundUnsupportedBillingModel = rr.BillingModel()
 				}
+				foundUnsupportedBillingModel = rr.BillingModel()
 			}
 		}
 	}
@@ -194,9 +197,10 @@ func (q amsQuotaService) getAvailableBillingModelFromKafkaInstanceType(orgId str
 	for _, qc := range quotaCosts {
 		for _, rr := range qc.RelatedResources() {
 			if qc.Consumed()+sizeRequired <= qc.Allowed() || rr.Cost() == 0 {
-				if rr.BillingModel() == string(amsv1.BillingModelStandard) {
+				switch rr.BillingModel() {
+				case string(amsv1.BillingModelStandard):
 					return rr.BillingModel(), nil
-				} else if rr.BillingModel() == string(amsv1.BillingModelMarketplace) {
+				case string(amsv1.BillingModelMarketplace):
 					billingModel = rr.BillingModel()
 				}
 			}
@@ -262,7 +266,7 @@ func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType
 				kafka.BillingCloudAccountId = cloudAccount.CloudAccountID()
 				kafka.Marketplace = cloudAccount.CloudProviderID()
 
-				billingModel, err := getBillingModelForCloudProvider(cloudAccount.CloudProviderID())
+				billingModel, err := getMarketplaceBillingModelForCloudProvider(cloudAccount.CloudProviderID())
 				if err != nil {
 					return "", err
 				}
@@ -287,7 +291,7 @@ func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType
 
 			// assign marketplace in case it was not provided in the request
 			kafka.Marketplace = cloudAccount.CloudProviderID()
-			billingModel, err := getBillingModelForCloudProvider(cloudAccount.CloudProviderID())
+			billingModel, err := getMarketplaceBillingModelForCloudProvider(cloudAccount.CloudProviderID())
 			if err != nil {
 				return "", err
 			}
@@ -318,12 +322,11 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		return "", errors.InsufficientQuotaError("Error getting billing model: No available billing model found")
 	}
 
-	if match, matchedBillingModel := q.billingModelMatches(bm, kafka.BillingModel); match {
-		// assign the billing model in case it was not provided by the user but we were able to infer it
-		kafka.BillingModel = matchedBillingModel
-	} else {
+	bmMatched, matchedBillingModel := q.billingModelMatches(bm, kafka.BillingModel)
+	if !bmMatched {
 		return "", errors.InvalidBillingAccount("requested billing model does not match assigned. requested: %s, assigned: %s", kafka.BillingModel, bm)
 	}
+	kafka.BillingModel = matchedBillingModel
 
 	rr.BillingModel(amsv1.BillingModel(bm))
 	rr.Count(kafkaInstanceSize.QuotaConsumed)
@@ -350,11 +353,11 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
 	}
 
-	if resp.Allowed() {
-		return resp.Subscription().ID(), nil
-	} else {
+	if !resp.Allowed() {
 		return "", errors.InsufficientQuotaError("Insufficient Quota")
 	}
+
+	return resp.Subscription().ID(), nil
 }
 
 func (q amsQuotaService) DeleteQuota(subscriptionId string) *errors.ServiceError {
