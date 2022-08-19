@@ -115,19 +115,21 @@ func (q amsQuotaService) ValidateBillingAccount(organisationId string, instanceT
 		}
 	}
 
-	// only one matching billing account is expected. If there are multiple then they are with different
-	// cloud providers
-	if matchingBillingAccounts == 1 {
-		return nil
-	} else if matchingBillingAccounts > 1 {
-		return errors.InvalidBillingAccount("Multiple matching billing accounts found, only one expected. Available billing accounts: %v", billingAccounts)
-	}
-
 	if len(billingAccounts) == 0 {
 		return errors.InvalidBillingAccount("No billing accounts available in quota")
 	}
 
-	return errors.InvalidBillingAccount("No matching billing account found. Provided: %s, Available: %v", billingCloudAccountId, billingAccounts)
+	// only one matching billing account is expected. If there are multiple then
+	// they are with different cloud providers
+	if matchingBillingAccounts > 1 {
+		return errors.InvalidBillingAccount("Multiple matching billing accounts found, only one expected. Available billing accounts: %v", billingAccounts)
+	}
+	if matchingBillingAccounts == 0 {
+		return errors.InvalidBillingAccount("No matching billing account found. Provided: %s, Available: %v", billingCloudAccountId, billingAccounts)
+	}
+
+	// we found one and only one matching billing account
+	return nil
 }
 
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
