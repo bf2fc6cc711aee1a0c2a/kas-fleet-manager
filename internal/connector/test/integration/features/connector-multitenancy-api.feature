@@ -21,6 +21,7 @@ Feature: connector namespaces API
     # org admin user used in admin API
     Given an org admin user named "Dr. Nefario" in organization "13640211"
     Given I store userid for "Dr. Nefario" as ${drnefario_user_id}
+    Given an admin user named "Ricky Bobby" with roles "connector-fleet-manager-admin-full"
 
     # eval users used in admin API
     Given a user named "Dave" in organization "13640224"

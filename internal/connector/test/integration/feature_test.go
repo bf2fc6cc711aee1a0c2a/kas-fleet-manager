@@ -1,29 +1,56 @@
 package integration
 
 import (
+	"flag"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
+	"github.com/onsi/gomega"
+	"github.com/spf13/pflag"
 	"os"
+	"path"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers/connector"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/cucumber/godog"
 )
 
+var helper *test.Helper
+var teardown func()
+var opts = cucumber.DefaultOptions()
+
+func init() {
+	godog.BindCommandLineFlags("godog.", &opts)
+}
+
 func TestMain(m *testing.M) {
+	for _, arg := range os.Args[1:] {
+		if arg == "-test.v=true" || arg == "-test.v" || arg == "-v" { // go test transforms -v option
+			opts.Format = "pretty"
+		}
+	}
+
+	flag.Parse()
+	pflag.Parse()
+
+	if len(pflag.Args()) != 0 {
+		opts.Paths = pflag.Args()
+	}
 
 	// Startup all the services and mocks that are needed to test the
 	// connector features.
 	t := &testing.T{}
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, teardown := test.NewHelperWithHooksAndDBsetup(t, ocmServer,
+	helper, teardown = test.NewHelperWithHooksAndDBsetup(t, ocmServer,
 		[]string{"INSERT INTO connector_types (id, name, checksum) VALUES ('OldConnectorTypeId', 'Old Connector Type', 'fakeChecksum1')",
 			"INSERT INTO connector_types (id, name, checksum) VALUES ('OldConnectorTypeStillInUseId', 'Old Connector Type still in use', 'fakeChecksum2')",
 			"INSERT INTO connectors (id, name, connector_type_id) VALUES ('ConnectorUsingOldTypeId', 'Connector using old type', 'OldConnectorTypeStillInUseId')",
@@ -54,9 +81,58 @@ func TestMain(m *testing.M) {
 	)
 	defer teardown()
 
-	status := cucumber.TestMain(h)
-	if st := m.Run(); st > status {
-		status = st
+	os.Exit(m.Run())
+}
+
+func TestFeatures(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	for i := range opts.Paths {
+		root := opts.Paths[i]
+
+		err := filepath.Walk(root, func(p string, info os.FileInfo, err error) error {
+			g.Expect(err).To(gomega.BeNil())
+
+			if info.IsDir() {
+				return nil
+			}
+
+			name := filepath.Base(info.Name())
+			ext := filepath.Ext(info.Name())
+
+			if ext != ".feature" {
+				return nil
+			}
+
+			testName := strings.TrimSuffix(name, ext)
+			testName = strings.ReplaceAll(testName, "-", "_")
+
+			t.Run(testName, func(t *testing.T) {
+				// To preserve the current behavior, the test are market to be "safely" run in parallel, however
+				// we may think to introduce a new naming convention i.e. files that ends with _parallel would
+				// cause t.Parallel() to be invoked, other tests won't, so they won't be executed concurrently.
+				//
+				// This could help reducing/removing the need of explicit lock
+				t.Parallel()
+
+				o := opts
+				o.TestingT = t
+				o.Paths = []string{path.Join(root, info.Name())}
+
+				s := cucumber.NewTestSuite(helper)
+
+				status := godog.TestSuite{
+					Name:                "connectors",
+					Options:             &o,
+					ScenarioInitializer: s.InitializeScenario,
+				}.Run()
+
+				g.Expect(status).To(gomega.Equal(0))
+			})
+
+			return nil
+		})
+
+		g.Expect(err).To(gomega.BeNil())
 	}
-	os.Exit(status)
 }

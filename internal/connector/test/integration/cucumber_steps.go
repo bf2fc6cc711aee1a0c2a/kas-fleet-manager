@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -29,8 +30,8 @@ func (s *extender) iResetTheVaultCounters() error {
 	if err := s.Suite.Helper.Env.ServiceContainer.Resolve(&service); err != nil {
 		return err
 	}
-	if vault, ok := service.(*vault.TmpVaultService); ok {
-		vault.ResetCounters()
+	if v, ok := service.(*vault.TmpVaultService); ok {
+		v.ResetCounters()
 	}
 	return nil
 }
@@ -42,8 +43,8 @@ func (s *extender) theVaultDeleteCounterShouldBe(expected int64) error {
 		return err
 	}
 
-	if vault, ok := service.(*vault.TmpVaultService); ok {
-		actual := vault.Counters().Deletes
+	if v, ok := service.(*vault.TmpVaultService); ok {
+		actual := v.Counters().Deletes
 		if actual != expected {
 			return fmt.Errorf("vault delete counter does not match expected: %v, actual: %v", expected, actual)
 		}
@@ -54,7 +55,7 @@ func (s *extender) theVaultDeleteCounterShouldBe(expected int64) error {
 func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as string, clientID string) error {
 	session := s.Session()
 
-	params := []public.AddonParameter{}
+	params := make([]public.AddonParameter, 0)
 	err := json.Unmarshal(session.RespBytes, &params)
 	if err != nil {
 		return err
@@ -198,6 +199,9 @@ func init() {
 		ctx.Step(`I can forget keycloak clientID: \${([^"]*)}$`, e.forgetKeycloakClientForCleanup)
 		ctx.Step(`^I delete the unused and not in catalog connector types$`, e.iDeleteUnusedAndNotInCatalogConnectorTypes)
 
-		ctx.AfterScenario(e.deleteKeycloakClients)
+		ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+			e.deleteKeycloakClients(sc, err)
+			return ctx, err
+		})
 	})
 }

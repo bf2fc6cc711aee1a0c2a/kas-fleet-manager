@@ -9,6 +9,7 @@
 package cucumber
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -23,15 +24,19 @@ func init() {
 		ctx.Step(`^UNLOCK-*$`, s.unlock)
 		ctx.Step(`^I sleep for (\d+(.\d+)?) seconds?$`, s.iSleepForSecond)
 
-		ctx.BeforeScenario(func(sc *godog.Scenario) {
+		ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 			testCaseLock.RLock()
+			return ctx, nil
 		})
-		ctx.AfterScenario(func(sc *godog.Scenario, err error) {
+
+		ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 			if s.hasTestCaseLock {
 				testCaseLock.Unlock()
 			} else {
 				testCaseLock.RUnlock()
 			}
+
+			return ctx, nil
 		})
 	})
 }

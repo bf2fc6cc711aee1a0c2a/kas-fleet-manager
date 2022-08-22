@@ -28,7 +28,6 @@ package cucumber
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -44,7 +43,28 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 )
 
-// TestSuite holds the sate global to all the test scenarios.
+func NewTestSuite(helper *test.Helper) *TestSuite {
+	return &TestSuite{
+		Helper:    helper,
+		ApiURL:    "http://localhost:8000",
+		users:     map[string]*TestUser{},
+		nextOrgId: 20000000,
+	}
+}
+
+func DefaultOptions() godog.Options {
+	opts := godog.Options{
+		Output:      colors.Colored(os.Stdout),
+		Format:      "progress",
+		Paths:       []string{"features"},
+		Randomize:   time.Now().UTC().UnixNano(), // randomize TestScenario execution order
+		Concurrency: 10,
+	}
+
+	return opts
+}
+
+// TestSuite holds the state global to all the test scenarios.
 // It is accessed concurrently from all test scenarios.
 type TestSuite struct {
 	ApiURL    string
@@ -255,42 +275,4 @@ func (suite *TestSuite) InitializeScenario(ctx *godog.ScenarioContext) {
 	for _, module := range StepModules {
 		module(ctx, s)
 	}
-}
-
-var opts = godog.Options{
-	Output:      colors.Colored(os.Stdout),
-	Format:      "progress", // can define default values
-	Paths:       []string{"features"},
-	Randomize:   time.Now().UTC().UnixNano(), // randomize TestScenario execution order
-	Concurrency: 10,
-}
-
-func init() {
-	godog.BindCommandLineFlags("godog.", &opts)
-}
-
-// TestMain runs the scenarios found in the "features" directory.  If m is not nil, it
-// also runs it's tests.  Panics if helper is nil.
-func TestMain(helper *test.Helper) int {
-	s := &TestSuite{
-		Helper:    helper,
-		ApiURL:    "http://localhost:8000",
-		users:     map[string]*TestUser{},
-		nextOrgId: 20000000,
-	}
-
-	for _, arg := range os.Args[1:] {
-		if arg == "-test.v=true" { // go test transforms -v option
-			opts.Format = "pretty"
-		}
-	}
-
-	flag.Parse()
-	opts.Paths = flag.Args()
-
-	return godog.TestSuite{
-		Name:                "godogs",
-		ScenarioInitializer: s.InitializeScenario,
-		Options:             &opts,
-	}.Run()
 }
