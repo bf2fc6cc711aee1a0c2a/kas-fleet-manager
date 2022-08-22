@@ -56,14 +56,14 @@ func Test_GetResourceName(t *testing.T) {
 			fields: fields{
 				t: StandardQuota,
 			},
-			want: ResourceName,
+			want: RHOSAKResourceName,
 		},
 		{
 			name: "should return 'rhosak' for developer quota",
 			fields: fields{
 				t: DeveloperQuota,
 			},
-			want: ResourceName,
+			want: RHOSAKResourceName,
 		},
 	}
 

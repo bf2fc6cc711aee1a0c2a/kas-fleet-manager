@@ -17,7 +17,7 @@ type KafkaProduct string
 const (
 	RHOSAKProduct      KafkaProduct = "RHOSAK"
 	RHOSAKTrialProduct KafkaProduct = "RHOSAKTrial"
-	ResourceName       string       = "rhosak"
+	RHOSAKResourceName string       = "rhosak"
 )
 
 func (t KafkaQuotaType) GetProduct() string {
@@ -29,7 +29,7 @@ func (t KafkaQuotaType) GetProduct() string {
 }
 
 func (t KafkaQuotaType) GetResourceName() string {
-	return ResourceName
+	return RHOSAKResourceName
 }
 
 func (t KafkaQuotaType) Equals(t1 KafkaQuotaType) bool {
