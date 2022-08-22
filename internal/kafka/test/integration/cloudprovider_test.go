@@ -7,7 +7,9 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -300,6 +302,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 	}
 	defer ocmServer.Close()
 
+	var dataPlaneClusterConfig *config.DataplaneClusterConfig
 	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(pc *config.ProviderConfig, kc *config.KafkaConfig, dc *config.DataplaneClusterConfig) {
 		pc.ProvidersConfig.SupportedProviders = config.ProviderList{
 			{
@@ -360,9 +363,18 @@ func TestListCloudProviderRegions(t *testing.T) {
 				Schedulable:           true,
 			},
 		})
+		dataPlaneClusterConfig = dc
 
 	})
 	defer teardown()
+	var clusterService services.ClusterService
+	h.Env.MustResolve(&clusterService)
+	clusters := dataPlaneClusterConfig.ClusterConfig.GetManualClusters()
+
+	for _, c := range clusters {
+		_, err := common.WaitForClusterStatus(h.DBFactory(), &clusterService, c.ClusterId, api.ClusterReady)
+		g.Expect(err).NotTo(gomega.HaveOccurred())
+	}
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)

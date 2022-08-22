@@ -198,6 +198,9 @@ func (c *ClusterManager) processMetrics() []error {
 		return []error{errors.Wrapf(err, "failed to set kafka per cluster count metrics")}
 	}
 
+	if err := c.setClusterProviderResourceQuotaMetrics(); err != nil {
+		return []error{errors.Wrapf(err, "failed to set Kas Fleet Manager Cluster Provider Resource Quota Consumed metric")}
+	}
 	return []error{}
 }
 
@@ -1248,5 +1251,24 @@ func (c *ClusterManager) setKafkaPerClusterCountMetrics() error {
 		metrics.UpdateKafkaPerClusterCountMetric(counter.Clusterid, clusterExternalID, counter.Count)
 	}
 
+	return nil
+}
+
+func (c *ClusterManager) setClusterProviderResourceQuotaMetrics() error {
+	ocmCredentialsSpecified := c.OCMConfig.HasCredentials()
+	if !ocmCredentialsSpecified {
+		return nil
+	}
+	provider, err := c.ProviderFactory.GetProvider(api.ClusterProviderOCM)
+	if err != nil {
+		return err
+	}
+	quota, err := provider.GetQuotaCosts()
+	if err != nil {
+		return err
+	}
+	for _, q := range quota {
+		metrics.UpdateKasFleetManagerClusterProviderResourceQuotaConsumed(q.ID, api.ClusterProviderOCM.String(), q.Consumed)
+	}
 	return nil
 }

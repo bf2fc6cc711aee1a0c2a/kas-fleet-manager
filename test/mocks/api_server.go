@@ -68,9 +68,11 @@ const (
 	// EndpointPathClusterLoggingOperatorAddonInstallation ocm cluster cluster-logging-operator addon installation endpoint
 	EndpointPathClusterLoggingOperatorAddonInstallation = "/api/clusters_mgmt/v1/clusters/{id}/addons/cluster-logging-operator"
 
-	EndpointPathClusterAuthorization = "/api/accounts_mgmt/v1/cluster_authorizations"
-	EndpointPathSubscription         = "/api/accounts_mgmt/v1/subscriptions/{id}"
-	EndpointPathSubscriptionSearch   = "/api/accounts_mgmt/v1/subscriptions"
+	EndpointPathClusterAuthorization  = "/api/accounts_mgmt/v1/cluster_authorizations"
+	EndpointPathSubscription          = "/api/accounts_mgmt/v1/subscriptions/{id}"
+	EndpointPathSubscriptionSearch    = "/api/accounts_mgmt/v1/subscriptions"
+	EndpointPathServiceAccount        = "/api/accounts_mgmt/v1/current_account"
+	EndpointPathOrganisationQuotaCost = "/api/accounts_mgmt/v1/organizations/{orgId}/quota_cost"
 
 	EndpointPathTermsReview = "/api/authorizations/v1/terms_review"
 
@@ -149,6 +151,8 @@ var (
 	EndpointMachinePoolPost                              = Endpoint{EndpointPathMachinePools, http.MethodPost}
 	EndpointMachinePoolPatch                             = Endpoint{EndpointPathMachinePool, http.MethodPatch}
 	EndpointMachinePoolGet                               = Endpoint{EndpointPathMachinePool, http.MethodGet}
+	EndpointServiceAccountGet                            = Endpoint{EndpointPathServiceAccount, http.MethodGet}
+	EndpointOrganizationQuotaCostGet                     = Endpoint{EndpointPathOrganisationQuotaCost, http.MethodGet}
 	EndpointIdentityProviderPost                         = Endpoint{EndpointPathClusterIdentityProviders, http.MethodPost}
 	EndpointIdentityProviderPatch                        = Endpoint{EndpointPathClusterIdentityProvider, http.MethodPatch}
 	EndpointAddonInstallationsPost                       = Endpoint{EndpointPathAddonInstallations, http.MethodPost}
@@ -189,6 +193,8 @@ var (
 	MockCluster                                    *clustersmgmtv1.Cluster
 	MockClusterAuthorization                       *amsv1.ClusterAuthorizationResponse
 	MockSubscription                               *amsv1.Subscription
+	MockOrganizationQuotaCost                      *amsv1.QuotaCostList
+	MockServiceAccount                             *amsv1.Account
 	MockSubscriptionSearch                         []*amsv1.Subscription
 	MockTermsReview                                *authorizationsv1.TermsReviewResponse
 )
@@ -347,6 +353,14 @@ func (b *MockConfigurableServerBuilder) SetIdentityProviderPostResponse(idp *clu
 	b.handlerRegister[EndpointIdentityProviderPost] = buildMockRequestHandler(idp, err)
 }
 
+func (b *MockConfigurableServerBuilder) SetGetServiceAccountResponse(acc *amsv1.Account, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointServiceAccountGet] = buildMockRequestHandler(acc, err)
+}
+
+func (b *MockConfigurableServerBuilder) SetGetOrganizationQuotaCost(list *amsv1.QuotaCostList, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointOrganizationQuotaCostGet] = buildMockRequestHandler(list, err)
+}
+
 // SetIdentityProviderPatchResponse set a mock response for Patch /api/clusters_mgmt/v1/clusters/{id}/identity_providers/{idp_id}
 func (b *MockConfigurableServerBuilder) SetIdentityProviderPatchResponse(idp *clustersmgmtv1.IdentityProvider, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointIdentityProviderPatch] = buildMockRequestHandler(idp, err)
@@ -488,6 +502,8 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointMachinePoolGet:                               buildMockRequestHandler(MockMachinePool, nil),
 		EndpointMachinePoolPatch:                             buildMockRequestHandler(MockMachinePool, nil),
 		EndpointMachinePoolPost:                              buildMockRequestHandler(MockMachinePool, nil),
+		EndpointServiceAccountGet:                            buildMockRequestHandler(MockServiceAccount, nil),
+		EndpointOrganizationQuotaCostGet:                     buildMockRequestHandler(MockOrganizationQuotaCost, nil),
 		EndpointIdentityProviderPatch:                        buildMockRequestHandler(MockIdentityProvider, nil),
 		EndpointIdentityProviderPost:                         buildMockRequestHandler(MockIdentityProvider, nil),
 		EndpointAddonInstallationsPost:                       buildMockRequestHandler(MockClusterAddonInstallation, nil),
@@ -543,6 +559,20 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 	// handle identiy provider types
 	case *clustersmgmtv1.IdentityProvider:
 		return clustersmgmtv1.MarshalIdentityProvider(v, w)
+	// handle account types
+	case *amsv1.Account:
+		return amsv1.MarshalAccount(v, w)
+	//handle qoutaCostList types
+	case *amsv1.QuotaCost:
+		return amsv1.MarshalQuotaCost(v, w)
+	case []*amsv1.QuotaCost:
+		return amsv1.MarshalQuotaCostList(v, w)
+	case *amsv1.QuotaCostList:
+		quotaCostList, err := NewOCMList().WithItems(v.Slice())
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(w).Encode(quotaCostList)
 	// handle ingress types
 	case *clustersmgmtv1.Ingress:
 		return clustersmgmtv1.MarshalIngress(v, w)
@@ -752,6 +782,18 @@ func init() {
 		panic(err)
 	}
 	MockMachinePool, err = GetMockMachinePool(nil)
+	if err != nil {
+		panic(err)
+	}
+
+	// Service Account
+	MockServiceAccount, err = GetMockServiceAccount(nil)
+	if err != nil {
+		panic(err)
+	}
+
+	// Organization Quota Cost
+	MockOrganizationQuotaCost, err = GetMockOrganizationQuotaCost(nil)
 	if err != nil {
 		panic(err)
 	}
@@ -1075,4 +1117,41 @@ func GetMockIdentityProvider(modifyFn func(*clustersmgmtv1.IdentityProvider, err
 		modifyFn(identityProvider, err)
 	}
 	return identityProvider, err
+}
+
+func GetMockServiceAccountBuilder(modifyFn func(*amsv1.AccountBuilder)) *amsv1.AccountBuilder {
+	builder := amsv1.NewAccount().
+		ID("Id").
+		ServiceAccount(true).
+		Organization(amsv1.NewOrganization().ID("organisationID"))
+	if modifyFn != nil {
+		modifyFn(builder)
+	}
+	return builder
+}
+
+func GetMockServiceAccount(modifyFn func(*amsv1.Account, error)) (*amsv1.Account, error) {
+	serviceAccount, err := GetMockServiceAccountBuilder(nil).Build()
+	if modifyFn != nil {
+		modifyFn(serviceAccount, err)
+	}
+	return serviceAccount, err
+}
+
+func GetMockOrganizationQuotaCostBuilder(modifyFn func(*amsv1.QuotaCostListBuilder)) *amsv1.QuotaCostListBuilder {
+	builder := amsv1.NewQuotaCostList().Items(
+		amsv1.NewQuotaCost().QuotaID("quotaId").Allowed(10).Consumed(1),
+	)
+	if modifyFn != nil {
+		modifyFn(builder)
+	}
+	return builder
+}
+
+func GetMockOrganizationQuotaCost(modifyFn func(*amsv1.QuotaCostList, error)) (*amsv1.QuotaCostList, error) {
+	QuotaCostList, err := GetMockOrganizationQuotaCostBuilder(nil).Build()
+	if modifyFn != nil {
+		modifyFn(QuotaCostList, err)
+	}
+	return QuotaCostList, err
 }

@@ -44,3 +44,52 @@ func Test_ReadFiles(t *testing.T) {
 		})
 	}
 }
+
+func TestOCMConfig_HasCredentials(t *testing.T) {
+	type fields struct {
+		ClientID     string
+		ClientSecret string
+		SelfToken    string
+	}
+	ClientID := "ClientID"
+	ClientSecret := "ClientSecret"
+	SelfToken := "SelfToken"
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{
+			name: "should return true if ClientID and ClientSecret are set",
+			fields: fields{
+				ClientID:     ClientID,
+				ClientSecret: ClientSecret,
+			},
+			want: true,
+		},
+		{
+			name: "should return true if SelfToken is set",
+			fields: fields{
+				SelfToken: SelfToken,
+			},
+			want: true,
+		},
+		{
+			name:   "should return false if no credentials are set",
+			fields: fields{},
+			want:   false,
+		},
+	}
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			c := &OCMConfig{
+				ClientID:     tt.fields.ClientID,
+				ClientSecret: tt.fields.ClientSecret,
+				SelfToken:    tt.fields.SelfToken,
+			}
+			g.Expect(c.HasCredentials()).To(gomega.Equal(tt.want))
+		})
+	}
+}

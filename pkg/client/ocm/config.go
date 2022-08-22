@@ -63,6 +63,10 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ClusterLoggingOperatorAddonID, "cluster-logging-operator-addon-id", "", "The name of the cluster logging operator addon. An empty string indicates that the operator should not be installed")
 }
 
+func (c *OCMConfig) HasCredentials() bool {
+	return c.ClientID != "" && c.ClientSecret != "" || c.SelfToken != ""
+}
+
 func (c *OCMConfig) ReadFiles() error {
 	err := shared.ReadFileValueString(c.ClientIDFile, &c.ClientID)
 	if err != nil {
