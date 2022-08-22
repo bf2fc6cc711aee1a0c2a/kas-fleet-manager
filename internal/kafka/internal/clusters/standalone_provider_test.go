@@ -1274,7 +1274,7 @@ func TestStandaloneProvider_CreateMachinePool(t *testing.T) {
 	}
 }
 
-func TestStandaloneProvider_GetQuotaCost(t *testing.T) {
+func TestStandaloneProvider_GetQuotaCosts(t *testing.T) {
 	tests := []struct {
 		name    string
 		want    []types.QuotaCost

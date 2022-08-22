@@ -1398,7 +1398,7 @@ func sampleOperatorGroup() *v1alpha2.OperatorGroup {
 	}
 }
 
-func TestOCMProvider_GetQuotaCost(t *testing.T) {
+func TestOCMProvider_GetQuotaCosts(t *testing.T) {
 	type fields struct {
 		ocmClient ocm.Client
 	}
@@ -1454,7 +1454,7 @@ func TestOCMProvider_GetQuotaCost(t *testing.T) {
 					GetCurrentAccountFunc: func() (*accountsmgmtv1.Account, error) {
 						return testAccount, nil
 					},
-					GetQuotaCostFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*accountsmgmtv1.QuotaCostList, error) {
+					GetQuotaCostsFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*accountsmgmtv1.QuotaCostList, error) {
 						return nil, errors.New("failed to retrieve quota cost from ams")
 					},
 				},
@@ -1469,7 +1469,7 @@ func TestOCMProvider_GetQuotaCost(t *testing.T) {
 					GetCurrentAccountFunc: func() (*accountsmgmtv1.Account, error) {
 						return testAccount, nil
 					},
-					GetQuotaCostFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*accountsmgmtv1.QuotaCostList, error) {
+					GetQuotaCostsFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*accountsmgmtv1.QuotaCostList, error) {
 						mockQuotaCost := quotaCostList[0]
 						mockQuotaCostBuilder := accountsmgmtv1.NewQuotaCost().QuotaID(mockQuotaCost.ID).Allowed(mockQuotaCost.MaxAllowed).Consumed(mockQuotaCost.Consumed)
 						quotaCostList, err := accountsmgmtv1.NewQuotaCostList().Items(mockQuotaCostBuilder).Build()

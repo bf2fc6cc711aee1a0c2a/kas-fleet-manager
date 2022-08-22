@@ -456,7 +456,7 @@ func (o *OCMProvider) GetQuotaCosts() ([]types.QuotaCost, error) {
 		return quotaCostList, errors.New("failed to get quota cost: organisation id for the current authenticated user can't be found")
 	}
 
-	ocmQuotaCostList, err := o.ocmClient.GetQuotaCost(orgID, false, false)
+	ocmQuotaCostList, err := o.ocmClient.GetQuotaCosts(orgID, false, false)
 	if err != nil {
 		return quotaCostList, err
 	}

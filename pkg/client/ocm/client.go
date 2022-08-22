@@ -46,7 +46,7 @@ type Client interface {
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 	GetMachinePool(clusterID string, machinePoolID string) (*clustersmgmtv1.MachinePool, error)
 	CreateMachinePool(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error)
-	GetQuotaCost(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error)
+	GetQuotaCosts(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error)
 	// GetCurrentAccount returns the account information of the current authenticated user
 	GetCurrentAccount() (*amsv1.Account, error)
 }
@@ -513,7 +513,7 @@ func (c *client) CreateMachinePool(clusterID string, machinePool *clustersmgmtv1
 	return createdMachinePool, nil
 }
 
-func (c client) GetQuotaCost(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error) {
+func (c client) GetQuotaCosts(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error) {
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
 	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
 
