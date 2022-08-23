@@ -43,10 +43,10 @@ type Client interface {
 	GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error)
 	GetOrganisationIdFromExternalId(externalId string) (string, error)
 	Connection() *sdkClient.Connection
-	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 	GetMachinePool(clusterID string, machinePoolID string) (*clustersmgmtv1.MachinePool, error)
 	CreateMachinePool(clusterID string, machinePool *clustersmgmtv1.MachinePool) (*clustersmgmtv1.MachinePool, error)
-	GetQuotaCost(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error)
+	GetQuotaCosts(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error)
+	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 	// GetCurrentAccount returns the account information of the current authenticated user
 	GetCurrentAccount() (*amsv1.Account, error)
 }
@@ -457,32 +457,6 @@ func (c client) FindSubscriptions(query string) (*amsv1.SubscriptionsListRespons
 	return r, nil
 }
 
-// GetQuotaCostsForProduct gets the AMS QuotaCosts in the given organizationID
-// whose relatedResources contains at least a relatedResource that has the
-// given resourceName and product
-func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error) {
-	var res []*amsv1.QuotaCost
-	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
-	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
-
-	quotaCostList, err := quotaCostClient.List().Parameter("fetchRelatedResources", true).Parameter("fetchCloudAccounts", true).Send()
-	if err != nil {
-		return nil, err
-	}
-
-	quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {
-		relatedResourcesList := qc.RelatedResources()
-		for _, relatedResource := range relatedResourcesList {
-			if relatedResource.ResourceName() == resourceName && relatedResource.Product() == product {
-				res = append(res, qc)
-			}
-		}
-		return true
-	})
-
-	return res, nil
-}
-
 // GetMachinePool returns the machinePoolID associated to clusterID.
 // If the cluster does not exist the returned MachinePool is nil
 func (c *client) GetMachinePool(clusterID string, machinePoolID string) (*clustersmgmtv1.MachinePool, error) {
@@ -513,7 +487,7 @@ func (c *client) CreateMachinePool(clusterID string, machinePool *clustersmgmtv1
 	return createdMachinePool, nil
 }
 
-func (c client) GetQuotaCost(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error) {
+func (c client) GetQuotaCosts(organizationID string, fetchRelatedResources, fetchCloudAccounts bool) (*amsv1.QuotaCostList, error) {
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
 	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
 
@@ -523,6 +497,30 @@ func (c client) GetQuotaCost(organizationID string, fetchRelatedResources, fetch
 	}
 	quotaCostList := quotaCostResp.Items()
 	return quotaCostList, nil
+}
+
+// GetQuotaCostsForProduct gets the AMS QuotaCosts in the given organizationID
+// whose relatedResources contains at least a relatedResource that has the
+// given resourceName and product
+func (c client) GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error) {
+	var res []*amsv1.QuotaCost
+
+	quotaCostList, err := c.GetQuotaCosts(organizationID, true, true)
+	if err != nil {
+		return nil, err
+	}
+
+	quotaCostList.Each(func(qc *amsv1.QuotaCost) bool {
+		relatedResourcesList := qc.RelatedResources()
+		for _, relatedResource := range relatedResourcesList {
+			if relatedResource.ResourceName() == resourceName && relatedResource.Product() == product {
+				res = append(res, qc)
+			}
+		}
+		return true
+	})
+
+	return res, nil
 }
 
 // GetCurrentAccount returns the account information of the current authenticated user
