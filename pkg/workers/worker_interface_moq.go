@@ -29,6 +29,9 @@ var _ Worker = &WorkerMock{}
 //			GetWorkerTypeFunc: func() string {
 //				panic("mock out the GetWorkerType method")
 //			},
+//			HasTerminatedFunc: func() bool {
+//				panic("mock out the HasTerminated method")
+//			},
 //			IsRunningFunc: func() bool {
 //				panic("mock out the IsRunning method")
 //			},
@@ -63,6 +66,9 @@ type WorkerMock struct {
 	// GetWorkerTypeFunc mocks the GetWorkerType method.
 	GetWorkerTypeFunc func() string
 
+	// HasTerminatedFunc mocks the HasTerminated method.
+	HasTerminatedFunc func() bool
+
 	// IsRunningFunc mocks the IsRunning method.
 	IsRunningFunc func() bool
 
@@ -92,6 +98,9 @@ type WorkerMock struct {
 		// GetWorkerType holds details about calls to the GetWorkerType method.
 		GetWorkerType []struct {
 		}
+		// HasTerminated holds details about calls to the HasTerminated method.
+		HasTerminated []struct {
+		}
 		// IsRunning holds details about calls to the IsRunning method.
 		IsRunning []struct {
 		}
@@ -114,6 +123,7 @@ type WorkerMock struct {
 	lockGetStopChan   sync.RWMutex
 	lockGetSyncGroup  sync.RWMutex
 	lockGetWorkerType sync.RWMutex
+	lockHasTerminated sync.RWMutex
 	lockIsRunning     sync.RWMutex
 	lockReconcile     sync.RWMutex
 	lockSetIsRunning  sync.RWMutex
@@ -226,6 +236,33 @@ func (mock *WorkerMock) GetWorkerTypeCalls() []struct {
 	mock.lockGetWorkerType.RLock()
 	calls = mock.calls.GetWorkerType
 	mock.lockGetWorkerType.RUnlock()
+	return calls
+}
+
+// HasTerminated calls HasTerminatedFunc.
+func (mock *WorkerMock) HasTerminated() bool {
+	if mock.HasTerminatedFunc == nil {
+		panic("WorkerMock.HasTerminatedFunc: method is nil but Worker.HasTerminated was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockHasTerminated.Lock()
+	mock.calls.HasTerminated = append(mock.calls.HasTerminated, callInfo)
+	mock.lockHasTerminated.Unlock()
+	return mock.HasTerminatedFunc()
+}
+
+// HasTerminatedCalls gets all the calls that were made to HasTerminated.
+// Check the length with:
+//
+//	len(mockedWorker.HasTerminatedCalls())
+func (mock *WorkerMock) HasTerminatedCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockHasTerminated.RLock()
+	calls = mock.calls.HasTerminated
+	mock.lockHasTerminated.RUnlock()
 	return calls
 }
 

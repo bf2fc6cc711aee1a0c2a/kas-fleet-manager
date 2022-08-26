@@ -398,7 +398,7 @@ func (cts *connectorTypesService) CatalogEntriesReconciled() (bool, *errors.Serv
 	if len(catalogChecksums) == len(connectorTypes) {
 		for _, ct := range connectorTypes {
 			if ct.Checksum == nil || *ct.Checksum != catalogChecksums[ct.ID] {
-				return done, nil
+				return false, nil
 			}
 		}
 		done = true
