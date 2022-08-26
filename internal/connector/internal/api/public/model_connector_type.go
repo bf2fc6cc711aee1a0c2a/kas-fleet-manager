@@ -27,6 +27,8 @@ type ConnectorType struct {
 	IconHref string `json:"icon_href,omitempty"`
 	// Labels used to categorize the connector
 	Labels []string `json:"labels,omitempty"`
+	// Ranking for featured connectors
+	FeaturedRank int32 `json:"featured_rank,omitempty"`
 	// The capabilities supported by the conenctor
 	Capabilities []string `json:"capabilities,omitempty"`
 	// A json schema that can be used to validate a ConnectorRequest connector field.

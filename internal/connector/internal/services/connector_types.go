@@ -27,6 +27,7 @@ import (
 type ConnectorTypesService interface {
 	Get(id string) (*dbapi.ConnectorType, *errors.ServiceError)
 	List(listArgs *services.ListArguments) (dbapi.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError)
+	ListLabels(listArgs *services.ListArguments) (dbapi.ConnectorTypeLabelCountList, *errors.ServiceError)
 	ForEachConnectorCatalogEntry(f func(id string, channel string, ccc *config.ConnectorChannelConfig) *errors.ServiceError) *errors.ServiceError
 
 	PutConnectorShardMetadata(ctc *dbapi.ConnectorShardMetadata) (int64, *errors.ServiceError)
@@ -124,7 +125,7 @@ func (cts *connectorTypesService) Get(id string) (*dbapi.ConnectorType, *errors.
 }
 
 func GetValidConnectorTypeColumns() []string {
-	return []string{"id", "created_at", "updated_at", "version", "name", "description", "label", "channel"}
+	return []string{"id", "created_at", "updated_at", "version", "name", "description", "label", "channel", "featured_rank"}
 }
 
 // List returns all connector types
@@ -189,6 +190,64 @@ func (cts *connectorTypesService) List(listArgs *services.ListArguments) (dbapi.
 	}
 
 	return resourceList, pagingMeta, nil
+}
+
+// ListLabels returns a list of all label names and count of labels for matching search query
+func (cts *connectorTypesService) ListLabels(listArgs *services.ListArguments) (dbapi.ConnectorTypeLabelCountList, *errors.ServiceError) {
+	if err := listArgs.Validate(GetValidConnectorTypeColumns()); err != nil {
+		return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "unable to list connector type labels requests: %s", err.Error())
+	}
+
+	var resourceList dbapi.ConnectorTypeLabelCountList
+	// two connections for labels and featured connectors count queries
+	dbConn := cts.connectionFactory.New()
+	dbConn2 := cts.connectionFactory.New()
+
+	// Apply search query
+	if len(listArgs.Search) > 0 {
+		queryParser := queryparser.NewQueryParser(GetValidConnectorTypeColumns()...)
+		searchDbQuery, err := queryParser.Parse(listArgs.Search)
+		if err != nil {
+			return resourceList, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector type labels requests: %s", err.Error())
+		}
+		if strings.Contains(searchDbQuery.Query, "channel") {
+			dbConn = dbConn.Joins("LEFT JOIN connector_type_channels channels on channels.connector_type_id = connector_types.id")
+			dbConn2 = dbConn2.Joins("LEFT JOIN connector_type_channels channels on channels.connector_type_id = connector_types.id")
+			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "channel", "channels.connector_channel_channel")
+		}
+		if strings.Contains(searchDbQuery.Query, "label") {
+			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "label", "labels.label")
+		}
+		dbConn = dbConn.Where(searchDbQuery.Query, searchDbQuery.Values...)
+		dbConn2 = dbConn2.Where(searchDbQuery.Query, searchDbQuery.Values...)
+	}
+
+	// execute query
+	result := dbConn.Model(&dbapi.ConnectorType{}).
+		Select("labels.label as label, count(distinct id) as count").
+		Joins("RIGHT JOIN connector_type_labels labels on labels.connector_type_id = connector_types.id").
+		Group("labels.label").
+		Order("labels.label ASC"). // default order label name
+		Find(&resourceList)
+	if result.Error != nil {
+		return nil, errors.ToServiceError(result.Error)
+	}
+
+	// add "featured" label with count of types with non-zero featured_rank
+	var count int32
+	result = dbConn2.Model(&dbapi.ConnectorType{}).
+		Select("count(distinct id)").
+		Joins("JOIN connector_type_labels labels on labels.connector_type_id = connector_types.id").
+		Group("id").
+		Where("featured_rank <> 0").
+		Find(&count)
+	if result.Error != nil {
+		return nil, errors.ToServiceError(result.Error)
+	}
+
+	// append "featured" label to the front of the list
+	resourceList = append([]*dbapi.ConnectorTypeLabelCount{{Label: "featured", Count: count}}, resourceList...)
+	return resourceList, nil
 }
 
 func (cts *connectorTypesService) ForEachConnectorCatalogEntry(f func(id string, channel string, ccc *config.ConnectorChannelConfig) *errors.ServiceError) *errors.ServiceError {

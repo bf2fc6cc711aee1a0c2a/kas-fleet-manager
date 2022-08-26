@@ -193,6 +193,7 @@
     "name" : "aws-sqs-source",
     "description" : "AWS SQS Source",
     "version" : "v1alpha1",
+    "featured_rank": 10,
     "labels" : [ "source" ],
     "capabilities" : [ "processors" ],
     "channels": ["stable", "beta"]
