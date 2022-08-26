@@ -3,6 +3,7 @@ package clusters
 import (
 	"fmt"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -84,10 +85,9 @@ func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRe
 		return nil, fmt.Errorf("Cloud provider %q is not a recognized cloud provider", clusterRequest.CloudProvider)
 	}
 
-	// Set compute node size
 	clusterBuilder.Nodes(clustersmgmtv1.NewClusterNodes().
 		ComputeMachineType(clustersmgmtv1.NewMachineType().ID(computeMachineType)).
-		AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(6).MaxReplicas(18)))
+		AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(constants.MinNodesForDefaultMachinePool).MaxReplicas(constants.MaxNodesForDefaultMachinePool)))
 
 	return clusterBuilder.Build()
 }
