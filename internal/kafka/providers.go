@@ -74,6 +74,8 @@ func ServiceProviders() di.Option {
 		di.Provide(quota.NewDefaultQuotaServiceFactory),
 		di.Provide(kafka_internal_workers.NewClusterManager, di.As(new(workers.Worker))),
 		di.Provide(cluster_mgrs.NewDynamicScaleUpManager, di.As(new(workers.Worker))),
+		di.Provide(cluster_mgrs.NewCleanupClustersManager, di.As(new(workers.Worker))),
+		di.Provide(cluster_mgrs.NewDeprovisioningClustersManager, di.As(new(workers.Worker))),
 		di.Provide(kafka_mgrs.NewKafkaManager, di.As(new(workers.Worker))),
 		di.Provide(kafka_mgrs.NewAcceptedKafkaManager, di.As(new(workers.Worker))),
 		di.Provide(kafka_mgrs.NewPreparingKafkaManager, di.As(new(workers.Worker))),
