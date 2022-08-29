@@ -294,14 +294,7 @@ func (c *ClusterManager) processReadyClusters() []error {
 
 	for _, readyCluster := range readyClusters {
 		glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
-		emptyClusterReconciled := false
-		var recErr error
-		if c.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
-			emptyClusterReconciled, recErr = c.reconcileEmptyCluster(readyCluster)
-		}
-		if !emptyClusterReconciled && recErr == nil {
-			recErr = c.reconcileReadyCluster(readyCluster)
-		}
+		recErr := c.reconcileReadyCluster(readyCluster)
 
 		if recErr != nil {
 			errs = append(errs, errors.Wrapf(recErr, "failed to reconcile ready cluster %s", readyCluster.ClusterID))
@@ -439,37 +432,6 @@ func (c *ClusterManager) reconcileDynamicCapacityInfo(cluster api.Cluster) error
 	logger.Logger.Infof("reconciling cluster = %s dynamic config type", cluster.ClusterID)
 
 	return nil
-}
-
-// reconcileEmptyCluster checks wether a cluster is empty and mark it for deletion.
-func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error) {
-	glog.V(10).Infof("check if cluster is empty, ClusterID = %s", cluster.ClusterID)
-	clusterFromDb, err := c.ClusterService.FindNonEmptyClusterById(cluster.ClusterID)
-	if err != nil {
-		return false, err
-	}
-	if clusterFromDb != nil {
-		glog.V(10).Infof("cluster is not empty, ClusterID = %s", cluster.ClusterID)
-		return false, nil
-	}
-
-	clustersByRegionAndCloudProvider, findSiblingClusterErr := c.ClusterService.ListGroupByProviderAndRegion(
-		[]string{cluster.CloudProvider},
-		[]string{cluster.Region},
-		[]string{api.ClusterReady.String()})
-
-	if findSiblingClusterErr != nil || len(clustersByRegionAndCloudProvider) == 0 {
-		return false, findSiblingClusterErr
-	}
-
-	siblingClusterCount := clustersByRegionAndCloudProvider[0]
-	if siblingClusterCount.Count <= 1 { // sibling cluster not found.
-		glog.V(10).Infof("no valid sibling found for cluster ClusterID = %s", cluster.ClusterID)
-		return false, nil
-	}
-
-	updateStatusErr := c.ClusterService.UpdateStatus(cluster, api.ClusterDeprovisioning)
-	return updateStatusErr == nil, updateStatusErr
 }
 
 func (c *ClusterManager) reconcileWaitingForKasFleetshardOperatorCluster(cluster api.Cluster) error {

@@ -15,6 +15,7 @@ func TestCleanupClustersManager_processCleanupClusters(t *testing.T) {
 	deprovisionCluster := api.Cluster{
 		Status: api.ClusterDeprovisioning,
 	}
+
 	type fields struct {
 		clusterService             services.ClusterService
 		osdIDPKeycloakService      sso.OSDKeycloakService

@@ -14,12 +14,8 @@ import (
 )
 
 func TestDeprovisioningClustersManager_reconcileDeprovisioningCluster(t *testing.T) {
-	autoScalingDataPlaneConfig := &config.DataplaneClusterConfig{
-		DataPlaneClusterScalingType: config.AutoScaling,
-	}
 	type fields struct {
-		clusterService         services.ClusterService
-		DataplaneClusterConfig *config.DataplaneClusterConfig
+		clusterService services.ClusterService
 	}
 	tests := []struct {
 		name    string
@@ -31,27 +27,25 @@ func TestDeprovisioningClustersManager_reconcileDeprovisioningCluster(t *testing
 			name: "should receive error when FindCluster to retrieve sibling cluster returns error",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
-						return nil, errors.New("failed to find cluster")
+					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to remove cluster")
 					},
 					UpdateStatusFunc: nil, // set to nil as it should not be called
 				},
-				DataplaneClusterConfig: autoScalingDataPlaneConfig,
 			},
 			wantErr: true,
 		},
 		{
-			name: "should update the status back to ready when no sibling cluster found",
+			name: "should update the status back to ready when the cluster is not empty",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
-						return nil, nil
+					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{}, nil // cluster is not empty its status will be brought back to ready
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
 					},
 				},
-				DataplaneClusterConfig: autoScalingDataPlaneConfig,
 			},
 			wantErr: false,
 		},
@@ -59,15 +53,14 @@ func TestDeprovisioningClustersManager_reconcileDeprovisioningCluster(t *testing
 			name: "receives an error when delete OCM cluster fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
-						return &api.Cluster{ClusterID: "dummy cluster"}, nil
+					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
 					},
 					UpdateStatusFunc: nil,
 					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, apiErrors.GeneralError("failed to remove cluster")
 					},
 				},
-				DataplaneClusterConfig: autoScalingDataPlaneConfig,
 			},
 			wantErr: true,
 		},
@@ -75,8 +68,8 @@ func TestDeprovisioningClustersManager_reconcileDeprovisioningCluster(t *testing
 			name: "successful deletion of an OSD cluster when auto configuration is enabled",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
-						return &api.Cluster{ClusterID: "dummy cluster"}, nil
+					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
@@ -85,38 +78,23 @@ func TestDeprovisioningClustersManager_reconcileDeprovisioningCluster(t *testing
 						return true, nil
 					},
 				},
-				DataplaneClusterConfig: autoScalingDataPlaneConfig,
 			},
 			wantErr: false,
 		},
 		{
-			name: "successful deletion of an OSD cluster when manual configuration is enabled",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: nil, // should not be called
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return nil
-					},
-					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
-						return true, nil
-					},
-				},
-				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
-			},
-			wantErr: false,
-		},
-		{
-			name: "receives an error when the update status fails",
+			name: "receives an error when the update status back to ready fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return fmt.Errorf("Some errors")
 					},
+					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{}, nil // cluster is not empty its status will be brought back to ready
+					},
 					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return true, nil
 					},
 				},
-				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 			},
 			wantErr: true,
 		},
@@ -127,11 +105,13 @@ func TestDeprovisioningClustersManager_reconcileDeprovisioningCluster(t *testing
 					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
+					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return errors.Errorf("this should not be called")
 					},
 				},
-				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 			},
 			wantErr: false,
 		},
@@ -142,11 +122,11 @@ func TestDeprovisioningClustersManager_reconcileDeprovisioningCluster(t *testing
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			c := &DeprovisioningClustersManager{
-				clusterService:         tt.fields.clusterService,
-				dataplaneClusterConfig: tt.fields.DataplaneClusterConfig,
+				clusterService: tt.fields.clusterService,
 			}
 
-			g.Expect(c.reconcileDeprovisioningCluster(&tt.arg) != nil).To(gomega.Equal(tt.wantErr))
+			err := c.reconcileDeprovisioningCluster(&tt.arg)
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -187,8 +167,8 @@ func TestDeprovisioningClustersManager_processDeprovisioningClusters(t *testing.
 							deprovisionCluster,
 						}, nil
 					},
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
-						return &deprovisionCluster, nil
+					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
 					},
 					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, apiErrors.GeneralError("failed to delete cluster")
@@ -207,8 +187,8 @@ func TestDeprovisioningClustersManager_processDeprovisioningClusters(t *testing.
 							deprovisionCluster,
 						}, nil
 					},
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
-						return &deprovisionCluster, nil
+					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
 					},
 					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return true, nil
@@ -228,8 +208,7 @@ func TestDeprovisioningClustersManager_processDeprovisioningClusters(t *testing.
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			c := &DeprovisioningClustersManager{
-				clusterService:         tt.fields.clusterService,
-				dataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
+				clusterService: tt.fields.clusterService,
 			}
 
 			err := c.processDeprovisioningClusters()

@@ -7,11 +7,15 @@ import (
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	clusterMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
+	mockclusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
+	kafkaMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -178,7 +182,31 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, p *config.ProviderConfig) {
+		p.ProvidersConfig.SupportedProviders = config.ProviderList{
+			config.Provider{
+				Default: true,
+				Name:    mocks.MockCluster.CloudProvider().ID(),
+				Regions: config.RegionList{
+					config.Region{
+						Default: true,
+						Name:    mocks.MockCluster.Region().ID(),
+						SupportedInstanceTypes: config.InstanceTypeMap{
+							api.StandardTypeSupport.String(): config.InstanceTypeConfig{
+								Limit:                                   nil,
+								MinAvailableCapacitySlackStreamingUnits: 1,
+							},
+						},
+					},
+				},
+			},
+		}
+		// enable scale down trigger
+		d.EnableDynamicScaleDownManagerScaleDownTrigger = true
+		d.EnableDynamicScaleUpManagerScaleUpTrigger = false
+		d.DataPlaneClusterScalingType = config.AutoScaling
+	})
+
 	defer teardown()
 
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -186,28 +214,43 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	kasfFleetshardSync.Start()
 	defer kasfFleetshardSync.Stop()
 
-	// setup required services
 	// Get a 'ready' osd cluster
-	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
-	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
+	cluster := clusterMocks.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = types.STANDARD.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = "some-cluster-id"
+		cluster.CloudProvider = mocks.MockCluster.CloudProvider().ID()
+		cluster.Region = mocks.MockCluster.Region().ID()
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.Status = api.ClusterProvisioning
+	})
 
 	db := test.TestServices.DBFactory.New()
-	cluster, _ := test.TestServices.ClusterService.FindClusterByID(clusterID)
+	err := db.Create(cluster).Error
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	_, err = common.WaitForClusterStatus(h.DBFactory(), &test.TestServices.ClusterService, cluster.ClusterID, api.ClusterReady)
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "data plane cluster failed to reach status ready")
 
 	// create dummy kafkas and assign it to current cluster to make it not empty
-	kafka := dbapi.KafkaRequest{
-		ClusterID:     cluster.ClusterID,
-		MultiAZ:       false,
-		Region:        cluster.Region,
-		CloudProvider: cluster.CloudProvider,
-		Name:          "dummy-kafka",
-		Status:        constants2.KafkaRequestStatusReady.String(),
-	}
+	kafka := kafkaMocks.BuildKafkaRequest(kafkaMocks.WithPredefinedTestValues(), func(kr *dbapi.KafkaRequest) {
+		kr.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		kr.Region = cluster.Region
+		kr.CloudProvider = cluster.CloudProvider
+		kr.SizeId = "x1"
+		kr.InstanceType = types.STANDARD.String()
+		kr.ClusterID = cluster.ClusterID
+		kr.Name = "dummy-kafka"
+		kr.Status = constants2.KafkaRequestStatusReady.String()
+	})
 
 	if err := db.Save(&kafka).Error; err != nil {
 		t.Error("failed to create a dummy kafka request")
@@ -216,29 +259,32 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 
 	// Now create an OSD cluster with same characteristics and mark it as ready.
 	// This cluster is empty so it will be deleted after some time
-	dummyCluster := api.Cluster{
-		Meta: api.Meta{
+	dummyCluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		dynamicCapacityInfoString := fmt.Sprintf("{\"standard\":{\"max_nodes\":1,\"max_units\":%[1]d,\"remaining_units\": 0}}", kasfleetshardsync.StandardCapacityInfo.MaxUnits)
+		cluster.Meta = api.Meta{
 			ID: api.NewID(),
-		},
-		ClusterID:     api.NewID(),
-		MultiAZ:       cluster.MultiAZ,
-		Region:        cluster.Region,
-		CloudProvider: cluster.CloudProvider,
-		Status:        api.ClusterReady,
-	}
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone // ensures no errors will occur due to it not being available on ocm
+		cluster.SupportedInstanceType = api.StandardTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = "test-cluster-to-be-deleted"
+		cluster.CloudProvider = mocks.MockCloudProviderID
+		cluster.Region = mocks.MockCloudRegionID
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.AvailableStrimziVersions = api.JSON(mockclusters.AvailableStrimziVersions)
+		cluster.DynamicCapacityInfo = api.JSON([]byte(dynamicCapacityInfoString))
+	})
 
 	if err := db.Save(&dummyCluster).Error; err != nil {
 		t.Error("failed to create dummy cluster")
 		return
 	}
 
-	// We enable Dynamic Scaling at this point and not in the startHook due to
-	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
-	// before enabling the dynamic scaling logic
-	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
-
 	// checking that cluster has been deleted
-	err := common.WaitForClusterToBeDeleted(test.TestServices.DBFactory, &test.TestServices.ClusterService, dummyCluster.ClusterID)
+	err = common.WaitForClusterToBeDeleted(test.TestServices.DBFactory, &test.TestServices.ClusterService, dummyCluster.ClusterID)
 
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for cluster deletion: %v", err)
 }
