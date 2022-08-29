@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	DynamicScaleUpWorkerType = "dynamic_scale_up"
+	dynamicScaleUpWorkerType = "dynamic_scale_up"
 )
 
 type DynamicScaleUpManager struct {
@@ -39,7 +39,7 @@ func NewDynamicScaleUpManager(
 	return &DynamicScaleUpManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
-			WorkerType: DynamicScaleUpWorkerType,
+			WorkerType: dynamicScaleUpWorkerType,
 			Reconciler: reconciler,
 		},
 
@@ -119,7 +119,11 @@ func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
 		}
 	}
 
-	return nil
+	if errList.IsEmpty() {
+		return nil
+	}
+
+	return errList
 }
 
 func (m *DynamicScaleUpManager) logReconcileEventEnd() {

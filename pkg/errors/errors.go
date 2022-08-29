@@ -216,6 +216,10 @@ func (e ErrorList) Error() string {
 	return res
 }
 
+func (e ErrorList) IsEmpty() bool {
+	return len(e) == 0
+}
+
 // AddErrors adds the provided list of errors to the ErrorList.
 // If the provided list of errors contain error elements that are of type
 // ErrorList those are recursively "unrolled" so the result does not contain

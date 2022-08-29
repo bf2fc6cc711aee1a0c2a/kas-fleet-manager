@@ -172,8 +172,6 @@ func (c *ClusterManager) Reconcile() []error {
 	processors := []processor{
 		c.processMetrics,
 		c.reconcileClusterWithManualConfig,
-		c.processDeprovisioningClusters,
-		c.processCleanupClusters,
 		c.processAcceptedClusters,
 		c.processProvisioningClusters,
 		c.processProvisionedClusters,
@@ -202,47 +200,6 @@ func (c *ClusterManager) processMetrics() []error {
 		return []error{errors.Wrapf(err, "failed to set Kas Fleet Manager Cluster Provider Resource Quota Consumed metric")}
 	}
 	return []error{}
-}
-
-func (c *ClusterManager) processDeprovisioningClusters() []error {
-	var errs []error
-	deprovisioningClusters, serviceErr := c.ClusterService.ListByStatus(api.ClusterDeprovisioning)
-	if serviceErr != nil {
-		errs = append(errs, serviceErr)
-		return errs
-	} else {
-		glog.Infof("deprovisioning clusters count = %d", len(deprovisioningClusters))
-	}
-
-	for i := range deprovisioningClusters {
-		cluster := deprovisioningClusters[i]
-		glog.V(10).Infof("deprovision cluster ClusterID = %s", cluster.ClusterID)
-		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterDeprovisioning)
-		if err := c.reconcileDeprovisioningCluster(&cluster); err != nil {
-			errs = append(errs, errors.Wrapf(err, "failed to reconcile deprovisioning cluster %s", cluster.ID))
-		}
-	}
-	return errs
-}
-
-func (c *ClusterManager) processCleanupClusters() []error {
-	var errs []error
-	cleanupClusters, serviceErr := c.ClusterService.ListByStatus(api.ClusterCleanup)
-	if serviceErr != nil {
-		errs = append(errs, errors.Wrap(serviceErr, "failed to list of cleaup clusters"))
-		return errs
-	} else {
-		glog.Infof("cleanup clusters count = %d", len(cleanupClusters))
-	}
-
-	for _, cluster := range cleanupClusters {
-		glog.V(10).Infof("cleanup cluster ClusterID = %s", cluster.ClusterID)
-		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterCleanup)
-		if err := c.reconcileCleanupCluster(cluster); err != nil {
-			errs = append(errs, errors.Wrapf(err, "failed to reconcile cleanup cluster %s", cluster.ID))
-		}
-	}
-	return errs
 }
 
 func (c *ClusterManager) processAcceptedClusters() []error {
@@ -369,64 +326,6 @@ func (c *ClusterManager) processWaitingForKasFleetshardOperatorClusters() []erro
 	}
 
 	return errs
-}
-
-func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) error {
-	if c.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
-		siblingCluster, findClusterErr := c.ClusterService.FindCluster(services.FindClusterCriteria{
-			Region:   cluster.Region,
-			Provider: cluster.CloudProvider,
-			MultiAZ:  cluster.MultiAZ,
-			Status:   api.ClusterReady,
-		})
-
-		if findClusterErr != nil {
-			return findClusterErr
-		}
-
-		//if it is the only cluster left in that region, set it back to ready.
-		if siblingCluster == nil {
-			return c.ClusterService.UpdateStatus(*cluster, api.ClusterReady)
-		}
-	}
-
-	deleted, deleteClusterErr := c.ClusterService.Delete(cluster)
-	if deleteClusterErr != nil {
-		return deleteClusterErr
-	}
-
-	if !deleted {
-		return nil
-	}
-
-	// cluster has been removed from cluster service. Mark it for cleanup.
-	glog.Infof("Cluster %s  has been removed from cluster service.", cluster.ClusterID)
-	updateStatusErr := c.ClusterService.UpdateStatus(*cluster, api.ClusterCleanup)
-	if updateStatusErr != nil {
-		return errors.Wrapf(updateStatusErr, "Failed to update deprovisioning cluster %s status to 'cleanup'", cluster.ClusterID)
-	}
-
-	return nil
-}
-
-func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
-	glog.Infof("Removing Dataplane cluster %s IDP client", cluster.ClusterID)
-	keycloakDeregistrationErr := c.OsdIdpKeycloakService.DeRegisterClientInSSO(cluster.ID)
-	if keycloakDeregistrationErr != nil {
-		return errors.Wrapf(keycloakDeregistrationErr, "Failed to removed Dataplance cluster %s IDP client", cluster.ClusterID)
-	}
-	glog.Infof("Removing Dataplane cluster %s fleetshard service account", cluster.ClusterID)
-	serviceAcountRemovalErr := c.KasFleetshardOperatorAddon.RemoveServiceAccount(cluster)
-	if serviceAcountRemovalErr != nil {
-		return errors.Wrapf(serviceAcountRemovalErr, "Failed to removed Dataplance cluster %s fleetshard service account", cluster.ClusterID)
-	}
-
-	glog.Infof("Soft deleting the Dataplane cluster %s from the database", cluster.ClusterID)
-	deleteError := c.ClusterService.DeleteByClusterID(cluster.ClusterID)
-	if deleteError != nil {
-		return errors.Wrapf(deleteError, "Failed to soft delete Dataplance cluster %s from the database", cluster.ClusterID)
-	}
-	return nil
 }
 
 func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
