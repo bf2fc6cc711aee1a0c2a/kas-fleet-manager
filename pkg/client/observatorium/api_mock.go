@@ -17,6 +17,8 @@ func (c *Client) MockAPI() pV1.API {
 type httpAPIMock struct {
 }
 
+var _ pV1.API = &httpAPIMock{}
+
 func (t *httpAPIMock) WalReplay(ctx context.Context) (pV1.WalReplayStatus, error) {
 	return pV1.WalReplayStatus{}, fmt.Errorf("not implemented")
 }
@@ -26,13 +28,13 @@ func (t *httpAPIMock) QueryExemplars(ctx context.Context, query string, startTim
 }
 
 // performs a query for the kafka metrics.
-func (t *httpAPIMock) Query(ctx context.Context, query string, ts time.Time) (pModel.Value, pV1.Warnings, error) {
+func (t *httpAPIMock) Query(ctx context.Context, query string, ts time.Time, opts ...pV1.Option) (pModel.Value, pV1.Warnings, error) {
 	values := getMockQueryData(query)
 	return values, []string{}, nil
 }
 
 //QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) Performs a query range for the kafka metrics
-func (*httpAPIMock) QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) {
+func (*httpAPIMock) QueryRange(ctx context.Context, query string, r pV1.Range, opts ...pV1.Option) (pModel.Value, pV1.Warnings, error) {
 	values := getMockQueryRangeData(query)
 	return values, []string{}, nil
 }
