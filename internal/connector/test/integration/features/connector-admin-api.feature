@@ -174,3 +174,45 @@ Feature: connector admin api
 
     And UNLOCK--------------------------------------------------------------
 
+  Scenario: Stuart Admin can stop and start a connector
+    Given LOCK--------------------------------------------------------------
+
+    Given I am logged in as "Stuart Admin"
+    When I POST path "/v1/kafka_connectors?async=true" with json body:
+      """
+      {
+        "kind": "Connector",
+        "name": "example 1",
+        "connector_type_id": "aws-sqs-source-v1alpha1",
+        "kafka": {
+          "id":"mykafka",
+          "url": "kafka.hostname"
+        },
+        "schema_registry": {
+          "id":"myregistry",
+          "url": "registry.hostname"
+        },
+        "service_account": {
+          "client_secret": "test",
+          "client_id": "myclient"
+        },
+        "connector": {
+            "aws_queue_name_or_arn": "test",
+            "aws_access_key": "test",
+            "aws_secret_key": "test",
+            "aws_region": "east",
+            "kafka_topic": "test"
+        }
+      }
+      """
+    Then the response code should be 202
+    And the ".status.state" selection from the response should match "assigning"
+
+    Given I store the ".id" selection from the response as ${connector_id}
+    When I PATCH path "/v1/admin/kafka_connectors/${connector_id}" with json body:
+        """
+        {
+            "desired_state": "stopped"
+        }
+        """
+    Then the response code should be 202

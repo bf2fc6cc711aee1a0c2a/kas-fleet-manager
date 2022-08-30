@@ -2,6 +2,10 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/phase"
+	"io/ioutil"
+	"reflect"
 	"strconv"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
@@ -398,6 +402,121 @@ func (h *ConnectorAdminHandler) GetConnector(writer http.ResponseWriter, request
 	}
 
 	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorAdminHandler) GetOperation(resource public.Connector, patch private.ConnectorRequest) (phase.ConnectorOperation, *errors.ServiceError) {
+	operation, ok := stateToOperationsMap[public.ConnectorDesiredState(patch.DesiredState)]
+	if !ok {
+		return operation, errors.BadRequest("Unsupported patch desired state %s", patch.DesiredState)
+	}
+	if string(patch.DesiredState) == string(resource.DesiredState) {
+		// desired state not changing, it's an update
+		operation = phase.UpdateConnector
+	} else {
+		// assigning a stopped connector is a restart
+		if operation == phase.AssignConnector && resource.DesiredState == public.CONNECTORDESIREDSTATE_STOPPED {
+			operation = phase.RestartConnector
+		}
+	}
+	return operation, nil
+}
+
+func (h *ConnectorAdminHandler) PatchConnector(writer http.ResponseWriter, request *http.Request) {
+	connectorId := mux.Vars(request)["connector_id"]
+	contentType := request.Header.Get("Content-Type")
+
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_id", &connectorId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
+			handlers.Validation("Content-Type header", &contentType, handlers.IsOneOf("application/json", "application/json-patch+json", "application/merge-patch+json")),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			connector, serviceError := h.ConnectorsService.Get(request.Context(), connectorId, "")
+			if serviceError != nil {
+				return nil, serviceError
+			}
+
+			resource, serviceError := presenters.PresentConnector(&connector.Connector)
+			if serviceError != nil {
+				return nil, serviceError
+			}
+
+			// Apply the patch..
+			patchBytes, err := ioutil.ReadAll(request.Body)
+			if err != nil {
+				return nil, errors.BadRequest("failed to get patch bytes")
+			}
+
+			patch := private.ConnectorRequest{}
+			serviceError = PatchResource(resource, contentType, patchBytes, &patch)
+			if serviceError != nil {
+				return nil, serviceError
+			}
+
+			// get and validate patch operation type
+			var operation phase.ConnectorOperation
+			if operation, serviceError = h.GetOperation(resource, patch); err != nil {
+				return nil, serviceError
+			}
+			if operation == phase.UnassignConnector && !h.ConnectorsConfig.ConnectorEnableUnassignedConnectors {
+				return nil, errors.FieldValidationError("Unsupported connector state %s", patch.DesiredState)
+			}
+			if serviceError = ValidateConnectorOperation(request.Context(), h.NamespaceService, &connector.Connector, operation,
+				func(connector *dbapi.Connector) *errors.ServiceError {
+					resource.DesiredState = public.ConnectorDesiredState(connector.DesiredState)
+					return nil
+				}); serviceError != nil {
+				return nil, serviceError
+			}
+
+			// But we don't want to allow the user to update ALL fields. Copy
+			// over the fields that they are allowed to modify, in this case only DesiredState
+			resource.DesiredState = public.ConnectorDesiredState(patch.DesiredState)
+
+			// If we didn't change anything, then just skip the update...
+			originalResource, _ := presenters.PresentConnector(&connector.Connector)
+			if reflect.DeepEqual(originalResource, resource) {
+				return originalResource, nil
+			}
+
+			// revalidate
+			validates := []handlers.Validate{
+				handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
+			}
+
+			for _, v := range validates {
+				err := v()
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			p, svcErr := presenters.ConvertConnector(resource)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+
+			// update connector phase before desired state
+			if originalResource.Status.State != public.ConnectorState(dbapi.ConnectorStatusPhaseAssigning) {
+				connector.Status.Phase = phase.ConnectorStartingPhase[operation]
+				p.Status.Phase = connector.Status.Phase
+				serviceError = h.ConnectorsService.SaveStatus(request.Context(), connector.Status)
+				if serviceError != nil {
+					return nil, serviceError
+				}
+			}
+			// update modified connector including desired state
+			serviceError = h.ConnectorsService.Update(request.Context(), p)
+			if serviceError != nil {
+				return nil, serviceError
+			}
+
+			return presenters.PresentConnector(p)
+		},
+	}
+
+	// return 202 status accepted
+	handlers.Handle(writer, request, cfg, http.StatusAccepted)
 }
 
 func (h *ConnectorAdminHandler) DeleteConnector(writer http.ResponseWriter, request *http.Request) {
