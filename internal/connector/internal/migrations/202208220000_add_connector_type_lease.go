@@ -37,7 +37,7 @@ func addConnectorTypeLease(migrationId string) *gormigrate.Migration {
 			}).Error
 		}, func(tx *gorm.DB) error {
 			// The leader lease table may have already been dropped, by the kafka migration rollback, ignore error
-			_ = tx.Where("lease_type = ?", "connector_type").Delete(&api.LeaderLease{})
+			_ = tx.Where("lease_type = ?", "connector_type").Delete(&LeaderLease{})
 			return nil
 		}),
 	)
