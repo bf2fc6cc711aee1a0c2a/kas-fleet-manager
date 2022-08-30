@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/phase"
-	"io/ioutil"
+	"io"
 	"reflect"
 	"strconv"
 
@@ -442,7 +442,7 @@ func (h *ConnectorAdminHandler) PatchConnector(writer http.ResponseWriter, reque
 			}
 
 			// Apply the patch..
-			patchBytes, err := ioutil.ReadAll(request.Body)
+			patchBytes, err := io.ReadAll(request.Body)
 			if err != nil {
 				return nil, errors.BadRequest("failed to get patch bytes")
 			}
@@ -460,13 +460,6 @@ func (h *ConnectorAdminHandler) PatchConnector(writer http.ResponseWriter, reque
 			}
 			if operation == phase.UnassignConnector && !h.ConnectorsConfig.ConnectorEnableUnassignedConnectors {
 				return nil, errors.FieldValidationError("Unsupported connector state %s", patch.DesiredState)
-			}
-			if serviceError = ValidateConnectorOperation(request.Context(), h.NamespaceService, &connector.Connector, operation,
-				func(connector *dbapi.Connector) *errors.ServiceError {
-					resource.DesiredState = public.ConnectorDesiredState(connector.DesiredState)
-					return nil
-				}); serviceError != nil {
-				return nil, serviceError
 			}
 
 			// But we don't want to allow the user to update ALL fields. Copy

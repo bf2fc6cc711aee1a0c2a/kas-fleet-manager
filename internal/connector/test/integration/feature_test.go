@@ -104,10 +104,6 @@ func TestFeatures(t *testing.T) {
 				return nil
 			}
 
-			if name != "connector-admin-api.feature" {
-				return nil
-			}
-
 			testName := strings.TrimSuffix(name, ext)
 			testName = strings.ReplaceAll(testName, "-", "_")
 
