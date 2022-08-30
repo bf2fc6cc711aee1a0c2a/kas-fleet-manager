@@ -1,6 +1,6 @@
 module github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
 
-go 1.17
+go 1.19
 
 require (
 	github.com/Nerzal/gocloak/v11 v11.2.0

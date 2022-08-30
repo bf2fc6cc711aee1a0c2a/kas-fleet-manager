@@ -5,7 +5,7 @@ package services
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -15,34 +15,34 @@ var _ KasFleetshardOperatorAddon = &KasFleetshardOperatorAddonMock{}
 
 // KasFleetshardOperatorAddonMock is a mock implementation of KasFleetshardOperatorAddon.
 //
-// 	func TestSomethingThatUsesKasFleetshardOperatorAddon(t *testing.T) {
+//	func TestSomethingThatUsesKasFleetshardOperatorAddon(t *testing.T) {
 //
-// 		// make and configure a mocked KasFleetshardOperatorAddon
-// 		mockedKasFleetshardOperatorAddon := &KasFleetshardOperatorAddonMock{
-// 			ProvisionFunc: func(cluster api.Cluster) (bool, ParameterList, *serviceError.ServiceError) {
-// 				panic("mock out the Provision method")
-// 			},
-// 			ReconcileParametersFunc: func(cluster api.Cluster) (ParameterList, *serviceError.ServiceError) {
-// 				panic("mock out the ReconcileParameters method")
-// 			},
-// 			RemoveServiceAccountFunc: func(cluster api.Cluster) *serviceError.ServiceError {
-// 				panic("mock out the RemoveServiceAccount method")
-// 			},
-// 		}
+//		// make and configure a mocked KasFleetshardOperatorAddon
+//		mockedKasFleetshardOperatorAddon := &KasFleetshardOperatorAddonMock{
+//			ProvisionFunc: func(cluster api.Cluster) (bool, ParameterList, *apiErrors.ServiceError) {
+//				panic("mock out the Provision method")
+//			},
+//			ReconcileParametersFunc: func(cluster api.Cluster) (ParameterList, *apiErrors.ServiceError) {
+//				panic("mock out the ReconcileParameters method")
+//			},
+//			RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+//				panic("mock out the RemoveServiceAccount method")
+//			},
+//		}
 //
-// 		// use mockedKasFleetshardOperatorAddon in code that requires KasFleetshardOperatorAddon
-// 		// and then make assertions.
+//		// use mockedKasFleetshardOperatorAddon in code that requires KasFleetshardOperatorAddon
+//		// and then make assertions.
 //
-// 	}
+//	}
 type KasFleetshardOperatorAddonMock struct {
 	// ProvisionFunc mocks the Provision method.
-	ProvisionFunc func(cluster api.Cluster) (bool, ParameterList, *serviceError.ServiceError)
+	ProvisionFunc func(cluster api.Cluster) (bool, ParameterList, *apiErrors.ServiceError)
 
 	// ReconcileParametersFunc mocks the ReconcileParameters method.
-	ReconcileParametersFunc func(cluster api.Cluster) (ParameterList, *serviceError.ServiceError)
+	ReconcileParametersFunc func(cluster api.Cluster) (ParameterList, *apiErrors.ServiceError)
 
 	// RemoveServiceAccountFunc mocks the RemoveServiceAccount method.
-	RemoveServiceAccountFunc func(cluster api.Cluster) *serviceError.ServiceError
+	RemoveServiceAccountFunc func(cluster api.Cluster) *apiErrors.ServiceError
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -68,7 +68,7 @@ type KasFleetshardOperatorAddonMock struct {
 }
 
 // Provision calls ProvisionFunc.
-func (mock *KasFleetshardOperatorAddonMock) Provision(cluster api.Cluster) (bool, ParameterList, *serviceError.ServiceError) {
+func (mock *KasFleetshardOperatorAddonMock) Provision(cluster api.Cluster) (bool, ParameterList, *apiErrors.ServiceError) {
 	if mock.ProvisionFunc == nil {
 		panic("KasFleetshardOperatorAddonMock.ProvisionFunc: method is nil but KasFleetshardOperatorAddon.Provision was just called")
 	}
@@ -85,7 +85,8 @@ func (mock *KasFleetshardOperatorAddonMock) Provision(cluster api.Cluster) (bool
 
 // ProvisionCalls gets all the calls that were made to Provision.
 // Check the length with:
-//     len(mockedKasFleetshardOperatorAddon.ProvisionCalls())
+//
+//	len(mockedKasFleetshardOperatorAddon.ProvisionCalls())
 func (mock *KasFleetshardOperatorAddonMock) ProvisionCalls() []struct {
 	Cluster api.Cluster
 } {
@@ -99,7 +100,7 @@ func (mock *KasFleetshardOperatorAddonMock) ProvisionCalls() []struct {
 }
 
 // ReconcileParameters calls ReconcileParametersFunc.
-func (mock *KasFleetshardOperatorAddonMock) ReconcileParameters(cluster api.Cluster) (ParameterList, *serviceError.ServiceError) {
+func (mock *KasFleetshardOperatorAddonMock) ReconcileParameters(cluster api.Cluster) (ParameterList, *apiErrors.ServiceError) {
 	if mock.ReconcileParametersFunc == nil {
 		panic("KasFleetshardOperatorAddonMock.ReconcileParametersFunc: method is nil but KasFleetshardOperatorAddon.ReconcileParameters was just called")
 	}
@@ -116,7 +117,8 @@ func (mock *KasFleetshardOperatorAddonMock) ReconcileParameters(cluster api.Clus
 
 // ReconcileParametersCalls gets all the calls that were made to ReconcileParameters.
 // Check the length with:
-//     len(mockedKasFleetshardOperatorAddon.ReconcileParametersCalls())
+//
+//	len(mockedKasFleetshardOperatorAddon.ReconcileParametersCalls())
 func (mock *KasFleetshardOperatorAddonMock) ReconcileParametersCalls() []struct {
 	Cluster api.Cluster
 } {
@@ -130,7 +132,7 @@ func (mock *KasFleetshardOperatorAddonMock) ReconcileParametersCalls() []struct 
 }
 
 // RemoveServiceAccount calls RemoveServiceAccountFunc.
-func (mock *KasFleetshardOperatorAddonMock) RemoveServiceAccount(cluster api.Cluster) *serviceError.ServiceError {
+func (mock *KasFleetshardOperatorAddonMock) RemoveServiceAccount(cluster api.Cluster) *apiErrors.ServiceError {
 	if mock.RemoveServiceAccountFunc == nil {
 		panic("KasFleetshardOperatorAddonMock.RemoveServiceAccountFunc: method is nil but KasFleetshardOperatorAddon.RemoveServiceAccount was just called")
 	}
@@ -147,7 +149,8 @@ func (mock *KasFleetshardOperatorAddonMock) RemoveServiceAccount(cluster api.Clu
 
 // RemoveServiceAccountCalls gets all the calls that were made to RemoveServiceAccount.
 // Check the length with:
-//     len(mockedKasFleetshardOperatorAddon.RemoveServiceAccountCalls())
+//
+//	len(mockedKasFleetshardOperatorAddon.RemoveServiceAccountCalls())
 func (mock *KasFleetshardOperatorAddonMock) RemoveServiceAccountCalls() []struct {
 	Cluster api.Cluster
 } {

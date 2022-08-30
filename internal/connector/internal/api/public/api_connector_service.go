@@ -28,7 +28,8 @@ type ConnectorServiceApiService service
 /*
 GetVersionMetadata Returns the version metadata
 Returns the version metadata
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+
 @return VersionMetadata
 */
 func (a *ConnectorServiceApiService) GetVersionMetadata(ctx _context.Context) (VersionMetadata, *_nethttp.Response, error) {

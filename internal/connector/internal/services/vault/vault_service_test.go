@@ -1,7 +1,7 @@
 package vault_test
 
 import (
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 	"text/template"
@@ -21,7 +21,7 @@ func TestNewVaultService(t *testing.T) {
 	vc := vault.NewConfig()
 
 	// Enable testing against aws if the access keys are configured..
-	if content, err := ioutil.ReadFile(shared.BuildFullFilePath(vc.AccessKeyFile)); err == nil && len(content) > 0 {
+	if content, err := os.ReadFile(shared.BuildFullFilePath(vc.AccessKeyFile)); err == nil && len(content) > 0 {
 		vc.Kind = vault.KindAws
 	}
 	g.Expect(vc.ReadFiles()).To(gomega.BeNil())

@@ -1,9 +1,12 @@
 // Runes a SQL statement against the DB
-//    When I run SQL "UPDATE connectors SET connector_type_id='foo' WHERE id = '${connector_id}';" expect 1 row to be affected.
+//
+//	When I run SQL "UPDATE connectors SET connector_type_id='foo' WHERE id = '${connector_id}';" expect 1 row to be affected.
+//
 // Runes a SQL statement against the DB and check the results
-//    And I run SQL "SELECT count(*) from connector_deployments where connector_id='${connector_id}'" gives results:
-//      | count |
-//      | 0     |
+//
+//	And I run SQL "SELECT count(*) from connector_deployments where connector_id='${connector_id}'" gives results:
+//	  | count |
+//	  | 0     |
 package cucumber
 
 import (

@@ -33,7 +33,7 @@ func (t *httpAPIMock) Query(ctx context.Context, query string, ts time.Time, opt
 	return values, []string{}, nil
 }
 
-//QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) Performs a query range for the kafka metrics
+// QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) Performs a query range for the kafka metrics
 func (*httpAPIMock) QueryRange(ctx context.Context, query string, r pV1.Range, opts ...pV1.Option) (pModel.Value, pV1.Warnings, error) {
 	values := getMockQueryRangeData(query)
 	return values, []string{}, nil
@@ -97,7 +97,7 @@ func (*httpAPIMock) Buildinfo(ctx context.Context) (pV1.BuildinfoResult, error) 
 	return pV1.BuildinfoResult{}, fmt.Errorf("not implemented")
 }
 
-//getMockQueryData
+// getMockQueryData
 func getMockQueryData(query string) pModel.Vector {
 	for key, values := range queryData {
 		if strings.HasPrefix(query, key) {
@@ -108,7 +108,7 @@ func getMockQueryData(query string) pModel.Vector {
 
 }
 
-//getMockQueryRangeData
+// getMockQueryRangeData
 func getMockQueryRangeData(query string) pModel.Matrix {
 	for key, values := range rangeQuerydata {
 		if strings.HasPrefix(query, key) {

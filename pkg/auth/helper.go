@@ -3,7 +3,7 @@ package auth
 import (
 	"crypto/rsa"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -145,11 +145,11 @@ func (authHelper *AuthHelper) GetJWTFromSignedToken(signedToken string) (*jwt.To
 // Parses JWT Private and Public Keys from the given path
 func ParseJWTKeys(jwtKeyFilePath, jwtCAFilePath string) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	projectRootDir := shared.GetProjectRootDir()
-	privateBytes, err := ioutil.ReadFile(filepath.Join(projectRootDir, jwtKeyFilePath))
+	privateBytes, err := os.ReadFile(filepath.Join(projectRootDir, jwtKeyFilePath))
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read JWT key file %s: %s", jwtKeyFilePath, err.Error())
 	}
-	pubBytes, err := ioutil.ReadFile(filepath.Join(projectRootDir, jwtCAFilePath))
+	pubBytes, err := os.ReadFile(filepath.Join(projectRootDir, jwtCAFilePath))
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read JWT ca file %s: %s", jwtCAFilePath, err.Error())
 	}

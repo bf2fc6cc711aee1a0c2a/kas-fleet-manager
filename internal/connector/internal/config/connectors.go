@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
@@ -78,7 +77,7 @@ func (c *ConnectorsConfig) ReadFiles() error {
 			glog.Infof("loading connectors from file %s", path)
 
 			// Read the file
-			buf, err := ioutil.ReadFile(path)
+			buf, err := os.ReadFile(path)
 			if err != nil {
 				err = gherrors.Errorf("error reading catalog file %s: %s", path, err)
 				return err

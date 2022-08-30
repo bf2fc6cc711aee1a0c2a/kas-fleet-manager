@@ -15,58 +15,58 @@ var _ Provider = &ProviderMock{}
 
 // ProviderMock is a mock implementation of Provider.
 //
-// 	func TestSomethingThatUsesProvider(t *testing.T) {
+//	func TestSomethingThatUsesProvider(t *testing.T) {
 //
-// 		// make and configure a mocked Provider
-// 		mockedProvider := &ProviderMock{
-// 			AddIdentityProviderFunc: func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
-// 				panic("mock out the AddIdentityProvider method")
-// 			},
-// 			ApplyResourcesFunc: func(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
-// 				panic("mock out the ApplyResources method")
-// 			},
-// 			CheckClusterStatusFunc: func(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
-// 				panic("mock out the CheckClusterStatus method")
-// 			},
-// 			CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
-// 				panic("mock out the Create method")
-// 			},
-// 			CreateMachinePoolFunc: func(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error) {
-// 				panic("mock out the CreateMachinePool method")
-// 			},
-// 			DeleteFunc: func(spec *types.ClusterSpec) (bool, error) {
-// 				panic("mock out the Delete method")
-// 			},
-// 			GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
-// 				panic("mock out the GetCloudProviderRegions method")
-// 			},
-// 			GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
-// 				panic("mock out the GetCloudProviders method")
-// 			},
-// 			GetClusterDNSFunc: func(clusterSpec *types.ClusterSpec) (string, error) {
-// 				panic("mock out the GetClusterDNS method")
-// 			},
-// 			GetMachinePoolFunc: func(clusterID string, id string) (*types.MachinePoolInfo, error) {
-// 				panic("mock out the GetMachinePool method")
-// 			},
-// 			GetQuotaCostsFunc: func() ([]types.QuotaCost, error) {
-// 				panic("mock out the GetQuotaCosts method")
-// 			},
-// 			InstallClusterLoggingFunc: func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
-// 				panic("mock out the InstallClusterLogging method")
-// 			},
-// 			InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
-// 				panic("mock out the InstallKasFleetshard method")
-// 			},
-// 			InstallStrimziFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
-// 				panic("mock out the InstallStrimzi method")
-// 			},
-// 		}
+//		// make and configure a mocked Provider
+//		mockedProvider := &ProviderMock{
+//			AddIdentityProviderFunc: func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
+//				panic("mock out the AddIdentityProvider method")
+//			},
+//			ApplyResourcesFunc: func(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
+//				panic("mock out the ApplyResources method")
+//			},
+//			CheckClusterStatusFunc: func(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
+//				panic("mock out the CheckClusterStatus method")
+//			},
+//			CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
+//				panic("mock out the Create method")
+//			},
+//			CreateMachinePoolFunc: func(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error) {
+//				panic("mock out the CreateMachinePool method")
+//			},
+//			DeleteFunc: func(spec *types.ClusterSpec) (bool, error) {
+//				panic("mock out the Delete method")
+//			},
+//			GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
+//				panic("mock out the GetCloudProviderRegions method")
+//			},
+//			GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
+//				panic("mock out the GetCloudProviders method")
+//			},
+//			GetClusterDNSFunc: func(clusterSpec *types.ClusterSpec) (string, error) {
+//				panic("mock out the GetClusterDNS method")
+//			},
+//			GetMachinePoolFunc: func(clusterID string, id string) (*types.MachinePoolInfo, error) {
+//				panic("mock out the GetMachinePool method")
+//			},
+//			GetQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+//				panic("mock out the GetQuotaCosts method")
+//			},
+//			InstallClusterLoggingFunc: func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
+//				panic("mock out the InstallClusterLogging method")
+//			},
+//			InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
+//				panic("mock out the InstallKasFleetshard method")
+//			},
+//			InstallStrimziFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
+//				panic("mock out the InstallStrimzi method")
+//			},
+//		}
 //
-// 		// use mockedProvider in code that requires Provider
-// 		// and then make assertions.
+//		// use mockedProvider in code that requires Provider
+//		// and then make assertions.
 //
-// 	}
+//	}
 type ProviderMock struct {
 	// AddIdentityProviderFunc mocks the AddIdentityProvider method.
 	AddIdentityProviderFunc func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error)
@@ -225,7 +225,8 @@ func (mock *ProviderMock) AddIdentityProvider(clusterSpec *types.ClusterSpec, id
 
 // AddIdentityProviderCalls gets all the calls that were made to AddIdentityProvider.
 // Check the length with:
-//     len(mockedProvider.AddIdentityProviderCalls())
+//
+//	len(mockedProvider.AddIdentityProviderCalls())
 func (mock *ProviderMock) AddIdentityProviderCalls() []struct {
 	ClusterSpec      *types.ClusterSpec
 	IdentityProvider types.IdentityProviderInfo
@@ -260,7 +261,8 @@ func (mock *ProviderMock) ApplyResources(clusterSpec *types.ClusterSpec, resourc
 
 // ApplyResourcesCalls gets all the calls that were made to ApplyResources.
 // Check the length with:
-//     len(mockedProvider.ApplyResourcesCalls())
+//
+//	len(mockedProvider.ApplyResourcesCalls())
 func (mock *ProviderMock) ApplyResourcesCalls() []struct {
 	ClusterSpec *types.ClusterSpec
 	Resources   types.ResourceSet
@@ -293,7 +295,8 @@ func (mock *ProviderMock) CheckClusterStatus(spec *types.ClusterSpec) (*types.Cl
 
 // CheckClusterStatusCalls gets all the calls that were made to CheckClusterStatus.
 // Check the length with:
-//     len(mockedProvider.CheckClusterStatusCalls())
+//
+//	len(mockedProvider.CheckClusterStatusCalls())
 func (mock *ProviderMock) CheckClusterStatusCalls() []struct {
 	Spec *types.ClusterSpec
 } {
@@ -324,7 +327,8 @@ func (mock *ProviderMock) Create(request *types.ClusterRequest) (*types.ClusterS
 
 // CreateCalls gets all the calls that were made to Create.
 // Check the length with:
-//     len(mockedProvider.CreateCalls())
+//
+//	len(mockedProvider.CreateCalls())
 func (mock *ProviderMock) CreateCalls() []struct {
 	Request *types.ClusterRequest
 } {
@@ -355,7 +359,8 @@ func (mock *ProviderMock) CreateMachinePool(request *types.MachinePoolRequest) (
 
 // CreateMachinePoolCalls gets all the calls that were made to CreateMachinePool.
 // Check the length with:
-//     len(mockedProvider.CreateMachinePoolCalls())
+//
+//	len(mockedProvider.CreateMachinePoolCalls())
 func (mock *ProviderMock) CreateMachinePoolCalls() []struct {
 	Request *types.MachinePoolRequest
 } {
@@ -386,7 +391,8 @@ func (mock *ProviderMock) Delete(spec *types.ClusterSpec) (bool, error) {
 
 // DeleteCalls gets all the calls that were made to Delete.
 // Check the length with:
-//     len(mockedProvider.DeleteCalls())
+//
+//	len(mockedProvider.DeleteCalls())
 func (mock *ProviderMock) DeleteCalls() []struct {
 	Spec *types.ClusterSpec
 } {
@@ -417,7 +423,8 @@ func (mock *ProviderMock) GetCloudProviderRegions(providerInf types.CloudProvide
 
 // GetCloudProviderRegionsCalls gets all the calls that were made to GetCloudProviderRegions.
 // Check the length with:
-//     len(mockedProvider.GetCloudProviderRegionsCalls())
+//
+//	len(mockedProvider.GetCloudProviderRegionsCalls())
 func (mock *ProviderMock) GetCloudProviderRegionsCalls() []struct {
 	ProviderInf types.CloudProviderInfo
 } {
@@ -445,7 +452,8 @@ func (mock *ProviderMock) GetCloudProviders() (*types.CloudProviderInfoList, err
 
 // GetCloudProvidersCalls gets all the calls that were made to GetCloudProviders.
 // Check the length with:
-//     len(mockedProvider.GetCloudProvidersCalls())
+//
+//	len(mockedProvider.GetCloudProvidersCalls())
 func (mock *ProviderMock) GetCloudProvidersCalls() []struct {
 } {
 	var calls []struct {
@@ -474,7 +482,8 @@ func (mock *ProviderMock) GetClusterDNS(clusterSpec *types.ClusterSpec) (string,
 
 // GetClusterDNSCalls gets all the calls that were made to GetClusterDNS.
 // Check the length with:
-//     len(mockedProvider.GetClusterDNSCalls())
+//
+//	len(mockedProvider.GetClusterDNSCalls())
 func (mock *ProviderMock) GetClusterDNSCalls() []struct {
 	ClusterSpec *types.ClusterSpec
 } {
@@ -507,7 +516,8 @@ func (mock *ProviderMock) GetMachinePool(clusterID string, id string) (*types.Ma
 
 // GetMachinePoolCalls gets all the calls that were made to GetMachinePool.
 // Check the length with:
-//     len(mockedProvider.GetMachinePoolCalls())
+//
+//	len(mockedProvider.GetMachinePoolCalls())
 func (mock *ProviderMock) GetMachinePoolCalls() []struct {
 	ClusterID string
 	ID        string
@@ -537,7 +547,8 @@ func (mock *ProviderMock) GetQuotaCosts() ([]types.QuotaCost, error) {
 
 // GetQuotaCostsCalls gets all the calls that were made to GetQuotaCosts.
 // Check the length with:
-//     len(mockedProvider.GetQuotaCostsCalls())
+//
+//	len(mockedProvider.GetQuotaCostsCalls())
 func (mock *ProviderMock) GetQuotaCostsCalls() []struct {
 } {
 	var calls []struct {
@@ -568,7 +579,8 @@ func (mock *ProviderMock) InstallClusterLogging(clusterSpec *types.ClusterSpec, 
 
 // InstallClusterLoggingCalls gets all the calls that were made to InstallClusterLogging.
 // Check the length with:
-//     len(mockedProvider.InstallClusterLoggingCalls())
+//
+//	len(mockedProvider.InstallClusterLoggingCalls())
 func (mock *ProviderMock) InstallClusterLoggingCalls() []struct {
 	ClusterSpec *types.ClusterSpec
 	Params      []ocm.Parameter
@@ -603,7 +615,8 @@ func (mock *ProviderMock) InstallKasFleetshard(clusterSpec *types.ClusterSpec, p
 
 // InstallKasFleetshardCalls gets all the calls that were made to InstallKasFleetshard.
 // Check the length with:
-//     len(mockedProvider.InstallKasFleetshardCalls())
+//
+//	len(mockedProvider.InstallKasFleetshardCalls())
 func (mock *ProviderMock) InstallKasFleetshardCalls() []struct {
 	ClusterSpec *types.ClusterSpec
 	Params      []ocm.Parameter
@@ -636,7 +649,8 @@ func (mock *ProviderMock) InstallStrimzi(clusterSpec *types.ClusterSpec) (bool, 
 
 // InstallStrimziCalls gets all the calls that were made to InstallStrimzi.
 // Check the length with:
-//     len(mockedProvider.InstallStrimziCalls())
+//
+//	len(mockedProvider.InstallStrimziCalls())
 func (mock *ProviderMock) InstallStrimziCalls() []struct {
 	ClusterSpec *types.ClusterSpec
 } {

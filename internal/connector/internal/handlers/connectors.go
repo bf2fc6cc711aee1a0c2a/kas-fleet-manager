@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"reflect"
 
@@ -166,7 +166,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// Apply the patch..
-			patchBytes, err := ioutil.ReadAll(r.Body)
+			patchBytes, err := io.ReadAll(r.Body)
 			if err != nil {
 				return nil, errors.BadRequest("failed to get patch bytes")
 			}

@@ -475,8 +475,8 @@ func (cluster *Cluster) SetAvailableStrimziVersions(availableStrimziVersions []S
 	}
 }
 
-//SetDynamicCapacityInfo sets the dynamic scaling info per instance type into a json object that can be persisted in
-//the database
+// SetDynamicCapacityInfo sets the dynamic scaling info per instance type into a json object that can be persisted in
+// the database
 func (cluster *Cluster) SetDynamicCapacityInfo(dynamicCapacityInfo map[string]DynamicCapacityInfo) error {
 	marshelledDynamicCapacityInfo, err := json.Marshal(dynamicCapacityInfo)
 

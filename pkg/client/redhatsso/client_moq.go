@@ -15,43 +15,43 @@ var _ SSOClient = &SSOClientMock{}
 
 // SSOClientMock is a mock implementation of SSOClient.
 //
-// 	func TestSomethingThatUsesSSOClient(t *testing.T) {
+//	func TestSomethingThatUsesSSOClient(t *testing.T) {
 //
-// 		// make and configure a mocked SSOClient
-// 		mockedSSOClient := &SSOClientMock{
-// 			CreateServiceAccountFunc: func(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
-// 				panic("mock out the CreateServiceAccount method")
-// 			},
-// 			DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
-// 				panic("mock out the DeleteServiceAccount method")
-// 			},
-// 			GetConfigFunc: func() *keycloak.KeycloakConfig {
-// 				panic("mock out the GetConfig method")
-// 			},
-// 			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
-// 				panic("mock out the GetRealmConfig method")
-// 			},
-// 			GetServiceAccountFunc: func(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
-// 				panic("mock out the GetServiceAccount method")
-// 			},
-// 			GetServiceAccountsFunc: func(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error) {
-// 				panic("mock out the GetServiceAccounts method")
-// 			},
-// 			GetTokenFunc: func() (string, error) {
-// 				panic("mock out the GetToken method")
-// 			},
-// 			RegenerateClientSecretFunc: func(accessToken string, id string) (serviceaccountsclient.ServiceAccountData, error) {
-// 				panic("mock out the RegenerateClientSecret method")
-// 			},
-// 			UpdateServiceAccountFunc: func(accessToken string, clientId string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
-// 				panic("mock out the UpdateServiceAccount method")
-// 			},
-// 		}
+//		// make and configure a mocked SSOClient
+//		mockedSSOClient := &SSOClientMock{
+//			CreateServiceAccountFunc: func(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
+//				panic("mock out the CreateServiceAccount method")
+//			},
+//			DeleteServiceAccountFunc: func(accessToken string, clientId string) error {
+//				panic("mock out the DeleteServiceAccount method")
+//			},
+//			GetConfigFunc: func() *keycloak.KeycloakConfig {
+//				panic("mock out the GetConfig method")
+//			},
+//			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+//				panic("mock out the GetRealmConfig method")
+//			},
+//			GetServiceAccountFunc: func(accessToken string, clientId string) (*serviceaccountsclient.ServiceAccountData, bool, error) {
+//				panic("mock out the GetServiceAccount method")
+//			},
+//			GetServiceAccountsFunc: func(accessToken string, first int, max int) ([]serviceaccountsclient.ServiceAccountData, error) {
+//				panic("mock out the GetServiceAccounts method")
+//			},
+//			GetTokenFunc: func() (string, error) {
+//				panic("mock out the GetToken method")
+//			},
+//			RegenerateClientSecretFunc: func(accessToken string, id string) (serviceaccountsclient.ServiceAccountData, error) {
+//				panic("mock out the RegenerateClientSecret method")
+//			},
+//			UpdateServiceAccountFunc: func(accessToken string, clientId string, name string, description string) (serviceaccountsclient.ServiceAccountData, error) {
+//				panic("mock out the UpdateServiceAccount method")
+//			},
+//		}
 //
-// 		// use mockedSSOClient in code that requires SSOClient
-// 		// and then make assertions.
+//		// use mockedSSOClient in code that requires SSOClient
+//		// and then make assertions.
 //
-// 	}
+//	}
 type SSOClientMock struct {
 	// CreateServiceAccountFunc mocks the CreateServiceAccount method.
 	CreateServiceAccountFunc func(accessToken string, name string, description string) (serviceaccountsclient.ServiceAccountData, error)
@@ -175,7 +175,8 @@ func (mock *SSOClientMock) CreateServiceAccount(accessToken string, name string,
 
 // CreateServiceAccountCalls gets all the calls that were made to CreateServiceAccount.
 // Check the length with:
-//     len(mockedSSOClient.CreateServiceAccountCalls())
+//
+//	len(mockedSSOClient.CreateServiceAccountCalls())
 func (mock *SSOClientMock) CreateServiceAccountCalls() []struct {
 	AccessToken string
 	Name        string
@@ -212,7 +213,8 @@ func (mock *SSOClientMock) DeleteServiceAccount(accessToken string, clientId str
 
 // DeleteServiceAccountCalls gets all the calls that were made to DeleteServiceAccount.
 // Check the length with:
-//     len(mockedSSOClient.DeleteServiceAccountCalls())
+//
+//	len(mockedSSOClient.DeleteServiceAccountCalls())
 func (mock *SSOClientMock) DeleteServiceAccountCalls() []struct {
 	AccessToken string
 	ClientId    string
@@ -242,7 +244,8 @@ func (mock *SSOClientMock) GetConfig() *keycloak.KeycloakConfig {
 
 // GetConfigCalls gets all the calls that were made to GetConfig.
 // Check the length with:
-//     len(mockedSSOClient.GetConfigCalls())
+//
+//	len(mockedSSOClient.GetConfigCalls())
 func (mock *SSOClientMock) GetConfigCalls() []struct {
 } {
 	var calls []struct {
@@ -268,7 +271,8 @@ func (mock *SSOClientMock) GetRealmConfig() *keycloak.KeycloakRealmConfig {
 
 // GetRealmConfigCalls gets all the calls that were made to GetRealmConfig.
 // Check the length with:
-//     len(mockedSSOClient.GetRealmConfigCalls())
+//
+//	len(mockedSSOClient.GetRealmConfigCalls())
 func (mock *SSOClientMock) GetRealmConfigCalls() []struct {
 } {
 	var calls []struct {
@@ -299,7 +303,8 @@ func (mock *SSOClientMock) GetServiceAccount(accessToken string, clientId string
 
 // GetServiceAccountCalls gets all the calls that were made to GetServiceAccount.
 // Check the length with:
-//     len(mockedSSOClient.GetServiceAccountCalls())
+//
+//	len(mockedSSOClient.GetServiceAccountCalls())
 func (mock *SSOClientMock) GetServiceAccountCalls() []struct {
 	AccessToken string
 	ClientId    string
@@ -336,7 +341,8 @@ func (mock *SSOClientMock) GetServiceAccounts(accessToken string, first int, max
 
 // GetServiceAccountsCalls gets all the calls that were made to GetServiceAccounts.
 // Check the length with:
-//     len(mockedSSOClient.GetServiceAccountsCalls())
+//
+//	len(mockedSSOClient.GetServiceAccountsCalls())
 func (mock *SSOClientMock) GetServiceAccountsCalls() []struct {
 	AccessToken string
 	First       int
@@ -368,7 +374,8 @@ func (mock *SSOClientMock) GetToken() (string, error) {
 
 // GetTokenCalls gets all the calls that were made to GetToken.
 // Check the length with:
-//     len(mockedSSOClient.GetTokenCalls())
+//
+//	len(mockedSSOClient.GetTokenCalls())
 func (mock *SSOClientMock) GetTokenCalls() []struct {
 } {
 	var calls []struct {
@@ -399,7 +406,8 @@ func (mock *SSOClientMock) RegenerateClientSecret(accessToken string, id string)
 
 // RegenerateClientSecretCalls gets all the calls that were made to RegenerateClientSecret.
 // Check the length with:
-//     len(mockedSSOClient.RegenerateClientSecretCalls())
+//
+//	len(mockedSSOClient.RegenerateClientSecretCalls())
 func (mock *SSOClientMock) RegenerateClientSecretCalls() []struct {
 	AccessToken string
 	ID          string
@@ -438,7 +446,8 @@ func (mock *SSOClientMock) UpdateServiceAccount(accessToken string, clientId str
 
 // UpdateServiceAccountCalls gets all the calls that were made to UpdateServiceAccount.
 // Check the length with:
-//     len(mockedSSOClient.UpdateServiceAccountCalls())
+//
+//	len(mockedSSOClient.UpdateServiceAccountCalls())
 func (mock *SSOClientMock) UpdateServiceAccountCalls() []struct {
 	AccessToken string
 	ClientId    string

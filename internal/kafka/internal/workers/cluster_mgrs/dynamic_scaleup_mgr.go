@@ -205,30 +205,32 @@ var _ dynamicScaleUpProcessor = &standardDynamicScaleUpProcessor{}
 // cluster should be created for a given instance type in the given provider
 // and region.
 // It returns true if all the following conditions happen:
-// 1. If specified, the streaming units limit for the given instance type in
-//    the provider's region has not been reached
-// 2. There is no scale up action ongoing. A scale up action is ongoing
-//    if there is at least one cluster in the following states: 'provisioning',
-//    'provisioned', 'accepted', 'waiting_for_kas_fleetshard_operator'
-// 3. At least one of the two following conditions are true:
-//      * No cluster in the provider's region has enough capacity to allocate
-//        the biggest instance size of the given instance type
-//      * The free capacity (in streaming units) for the given instance type in
-//        the provider's region is smaller or equal than the defined slack
-//        capacity (also in streaming units) of the given instance type. Free
-//        capacity is defined as max(total) capacity - consumed capacity.
-//        For the calculation of the max capacity:
-//        * Clusters in deprovisioning and cleanup state are excluded, as
-//          clusters into those states don't accept kafka instances anymore.
-//        * Clusters that are still not ready to accept kafka instance but that
-//          should eventually accept them (like accepted state for example)
-//          are included
+//  1. If specified, the streaming units limit for the given instance type in
+//     the provider's region has not been reached
+//  2. There is no scale up action ongoing. A scale up action is ongoing
+//     if there is at least one cluster in the following states: 'provisioning',
+//     'provisioned', 'accepted', 'waiting_for_kas_fleetshard_operator'
+//  3. At least one of the two following conditions are true:
+//     * No cluster in the provider's region has enough capacity to allocate
+//     the biggest instance size of the given instance type
+//     * The free capacity (in streaming units) for the given instance type in
+//     the provider's region is smaller or equal than the defined slack
+//     capacity (also in streaming units) of the given instance type. Free
+//     capacity is defined as max(total) capacity - consumed capacity.
+//     For the calculation of the max capacity:
+//     * Clusters in deprovisioning and cleanup state are excluded, as
+//     clusters into those states don't accept kafka instances anymore.
+//     * Clusters that are still not ready to accept kafka instance but that
+//     should eventually accept them (like accepted state for example)
+//     are included
+//
 // Otherwise false is returned.
 // Note: This method assumes kafkaStreamingUnitCountPerClusterList does not
-//       contain elements with the Status attribute with the 'failed' value.
-//       Thus, if the type is constructed with the assumptions being true, it
-//       can be considered as the 'failed' state Clusters are not included in
-//       the calculations.
+//
+//	contain elements with the Status attribute with the 'failed' value.
+//	Thus, if the type is constructed with the assumptions being true, it
+//	can be considered as the 'failed' state Clusters are not included in
+//	the calculations.
 func (p *standardDynamicScaleUpProcessor) ShouldScaleUp() (bool, error) {
 	summaryCalculator := instanceTypeConsumptionSummaryCalculator{
 		locator:                               p.locator,
@@ -366,13 +368,14 @@ type instanceTypeConsumptionSummaryCalculator struct {
 // Calculate returns a instanceTypeConsumptionSummary containing a consumption
 // summary for the provided supportedInstanceTypeLocator
 // For the calculation of the max streaming units capacity:
-//   * Clusters in deprovisioning and cleanup state are excluded, as
+//   - Clusters in deprovisioning and cleanup state are excluded, as
 //     clusters into those states don't accept kafka instances anymore.
-//   * Clusters that are still not ready to accept kafka instance but that
+//   - Clusters that are still not ready to accept kafka instance but that
 //     should eventually accept them (like accepted state for example)
 //     are included
+//
 // For the calculation of whether a scale up actions is ongoing:
-//   * A scale up action is ongoing if there is at least one cluster in the
+//   - A scale up action is ongoing if there is at least one cluster in the
 //     following states: 'provisioning', 'provisioned', 'accepted',
 //     'waiting_for_kas_fleetshard_operator'
 func (i *instanceTypeConsumptionSummaryCalculator) Calculate() (instanceTypeConsumptionSummary, error) {

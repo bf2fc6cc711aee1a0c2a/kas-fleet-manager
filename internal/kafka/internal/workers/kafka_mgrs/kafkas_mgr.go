@@ -171,8 +171,8 @@ func (k *KafkaManager) setClusterStatusCapacityMetrics() error {
 	return nil
 }
 
-//calculateAvailableAndMaxCapacityForDynamicScaling takes in used capacity and compute available and max capacity by taking into consideration region limits and dynamic capacity info
-//i.e MaxUnits value. Once the computation is completed, MaxUnits will indicate the maximum capacity which takes in region limits. And Count will indicate available capacity
+// calculateAvailableAndMaxCapacityForDynamicScaling takes in used capacity and compute available and max capacity by taking into consideration region limits and dynamic capacity info
+// i.e MaxUnits value. Once the computation is completed, MaxUnits will indicate the maximum capacity which takes in region limits. And Count will indicate available capacity
 func (k *KafkaManager) calculateAvailableAndMaxCapacityForDynamicScaling(streamingUnitsByRegion services.KafkaStreamingUnitCountPerCluster) (services.KafkaStreamingUnitCountPerCluster, error) {
 	limit, err := k.getRegionInstanceTypeLimit(streamingUnitsByRegion.Region, streamingUnitsByRegion.CloudProvider, streamingUnitsByRegion.InstanceType)
 	if err != nil {
@@ -198,8 +198,8 @@ func (k *KafkaManager) calculateAvailableAndMaxCapacityForDynamicScaling(streami
 	}, nil
 }
 
-//calculateCapacityByRegionAndInstanceTypeForManualClusters compute the available capacity and maximum streaming unit capacity for each schedulable manual cluster,
-//in a given cloud provider, region and for an instance type. Once the computation is done, Count will indicate the available capacity and MaxUnits will indicate the maximum streaming units
+// calculateCapacityByRegionAndInstanceTypeForManualClusters compute the available capacity and maximum streaming unit capacity for each schedulable manual cluster,
+// in a given cloud provider, region and for an instance type. Once the computation is done, Count will indicate the available capacity and MaxUnits will indicate the maximum streaming units
 func (k *KafkaManager) calculateCapacityByRegionAndInstanceTypeForManualClusters(streamingUnitsByRegion []services.KafkaStreamingUnitCountPerCluster) ([]services.KafkaStreamingUnitCountPerCluster, error) {
 	var result []services.KafkaStreamingUnitCountPerCluster
 

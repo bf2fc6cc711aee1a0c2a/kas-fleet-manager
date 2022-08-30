@@ -14,82 +14,82 @@ var _ KcClient = &KcClientMock{}
 
 // KcClientMock is a mock implementation of KcClient.
 //
-// 	func TestSomethingThatUsesKcClient(t *testing.T) {
+//	func TestSomethingThatUsesKcClient(t *testing.T) {
 //
-// 		// make and configure a mocked KcClient
-// 		mockedKcClient := &KcClientMock{
-// 			AddRealmRoleToUserFunc: func(accessToken string, userId string, role gocloak.Role) error {
-// 				panic("mock out the AddRealmRoleToUser method")
-// 			},
-// 			ClientConfigFunc: func(client ClientRepresentation) gocloak.Client {
-// 				panic("mock out the ClientConfig method")
-// 			},
-// 			CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-// 				panic("mock out the CreateClient method")
-// 			},
-// 			CreateProtocolMapperConfigFunc: func(s string) []gocloak.ProtocolMapperRepresentation {
-// 				panic("mock out the CreateProtocolMapperConfig method")
-// 			},
-// 			CreateRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
-// 				panic("mock out the CreateRealmRole method")
-// 			},
-// 			DeleteClientFunc: func(internalClientID string, accessToken string) error {
-// 				panic("mock out the DeleteClient method")
-// 			},
-// 			GetCachedTokenFunc: func(tokenKey string) (string, error) {
-// 				panic("mock out the GetCachedToken method")
-// 			},
-// 			GetClientFunc: func(clientId string, accessToken string) (*gocloak.Client, error) {
-// 				panic("mock out the GetClient method")
-// 			},
-// 			GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-// 				panic("mock out the GetClientById method")
-// 			},
-// 			GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
-// 				panic("mock out the GetClientSecret method")
-// 			},
-// 			GetClientServiceAccountFunc: func(accessToken string, internalClient string) (*gocloak.User, error) {
-// 				panic("mock out the GetClientServiceAccount method")
-// 			},
-// 			GetClientsFunc: func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
-// 				panic("mock out the GetClients method")
-// 			},
-// 			GetConfigFunc: func() *KeycloakConfig {
-// 				panic("mock out the GetConfig method")
-// 			},
-// 			GetRealmConfigFunc: func() *KeycloakRealmConfig {
-// 				panic("mock out the GetRealmConfig method")
-// 			},
-// 			GetRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
-// 				panic("mock out the GetRealmRole method")
-// 			},
-// 			GetTokenFunc: func() (string, error) {
-// 				panic("mock out the GetToken method")
-// 			},
-// 			IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
-// 				panic("mock out the IsClientExist method")
-// 			},
-// 			IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
-// 				panic("mock out the IsOwner method")
-// 			},
-// 			IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
-// 				panic("mock out the IsSameOrg method")
-// 			},
-// 			RegenerateClientSecretFunc: func(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
-// 				panic("mock out the RegenerateClientSecret method")
-// 			},
-// 			UpdateServiceAccountUserFunc: func(accessToken string, serviceAccountUser gocloak.User) error {
-// 				panic("mock out the UpdateServiceAccountUser method")
-// 			},
-// 			UserHasRealmRoleFunc: func(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
-// 				panic("mock out the UserHasRealmRole method")
-// 			},
-// 		}
+//		// make and configure a mocked KcClient
+//		mockedKcClient := &KcClientMock{
+//			AddRealmRoleToUserFunc: func(accessToken string, userId string, role gocloak.Role) error {
+//				panic("mock out the AddRealmRoleToUser method")
+//			},
+//			ClientConfigFunc: func(client ClientRepresentation) gocloak.Client {
+//				panic("mock out the ClientConfig method")
+//			},
+//			CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
+//				panic("mock out the CreateClient method")
+//			},
+//			CreateProtocolMapperConfigFunc: func(s string) []gocloak.ProtocolMapperRepresentation {
+//				panic("mock out the CreateProtocolMapperConfig method")
+//			},
+//			CreateRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
+//				panic("mock out the CreateRealmRole method")
+//			},
+//			DeleteClientFunc: func(internalClientID string, accessToken string) error {
+//				panic("mock out the DeleteClient method")
+//			},
+//			GetCachedTokenFunc: func(tokenKey string) (string, error) {
+//				panic("mock out the GetCachedToken method")
+//			},
+//			GetClientFunc: func(clientId string, accessToken string) (*gocloak.Client, error) {
+//				panic("mock out the GetClient method")
+//			},
+//			GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
+//				panic("mock out the GetClientById method")
+//			},
+//			GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
+//				panic("mock out the GetClientSecret method")
+//			},
+//			GetClientServiceAccountFunc: func(accessToken string, internalClient string) (*gocloak.User, error) {
+//				panic("mock out the GetClientServiceAccount method")
+//			},
+//			GetClientsFunc: func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
+//				panic("mock out the GetClients method")
+//			},
+//			GetConfigFunc: func() *KeycloakConfig {
+//				panic("mock out the GetConfig method")
+//			},
+//			GetRealmConfigFunc: func() *KeycloakRealmConfig {
+//				panic("mock out the GetRealmConfig method")
+//			},
+//			GetRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
+//				panic("mock out the GetRealmRole method")
+//			},
+//			GetTokenFunc: func() (string, error) {
+//				panic("mock out the GetToken method")
+//			},
+//			IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+//				panic("mock out the IsClientExist method")
+//			},
+//			IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+//				panic("mock out the IsOwner method")
+//			},
+//			IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+//				panic("mock out the IsSameOrg method")
+//			},
+//			RegenerateClientSecretFunc: func(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
+//				panic("mock out the RegenerateClientSecret method")
+//			},
+//			UpdateServiceAccountUserFunc: func(accessToken string, serviceAccountUser gocloak.User) error {
+//				panic("mock out the UpdateServiceAccountUser method")
+//			},
+//			UserHasRealmRoleFunc: func(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
+//				panic("mock out the UserHasRealmRole method")
+//			},
+//		}
 //
-// 		// use mockedKcClient in code that requires KcClient
-// 		// and then make assertions.
+//		// use mockedKcClient in code that requires KcClient
+//		// and then make assertions.
 //
-// 	}
+//	}
 type KcClientMock struct {
 	// AddRealmRoleToUserFunc mocks the AddRealmRoleToUser method.
 	AddRealmRoleToUserFunc func(accessToken string, userId string, role gocloak.Role) error
@@ -350,7 +350,8 @@ func (mock *KcClientMock) AddRealmRoleToUser(accessToken string, userId string, 
 
 // AddRealmRoleToUserCalls gets all the calls that were made to AddRealmRoleToUser.
 // Check the length with:
-//     len(mockedKcClient.AddRealmRoleToUserCalls())
+//
+//	len(mockedKcClient.AddRealmRoleToUserCalls())
 func (mock *KcClientMock) AddRealmRoleToUserCalls() []struct {
 	AccessToken string
 	UserId      string
@@ -385,7 +386,8 @@ func (mock *KcClientMock) ClientConfig(client ClientRepresentation) gocloak.Clie
 
 // ClientConfigCalls gets all the calls that were made to ClientConfig.
 // Check the length with:
-//     len(mockedKcClient.ClientConfigCalls())
+//
+//	len(mockedKcClient.ClientConfigCalls())
 func (mock *KcClientMock) ClientConfigCalls() []struct {
 	Client ClientRepresentation
 } {
@@ -418,7 +420,8 @@ func (mock *KcClientMock) CreateClient(client gocloak.Client, accessToken string
 
 // CreateClientCalls gets all the calls that were made to CreateClient.
 // Check the length with:
-//     len(mockedKcClient.CreateClientCalls())
+//
+//	len(mockedKcClient.CreateClientCalls())
 func (mock *KcClientMock) CreateClientCalls() []struct {
 	Client      gocloak.Client
 	AccessToken string
@@ -451,7 +454,8 @@ func (mock *KcClientMock) CreateProtocolMapperConfig(s string) []gocloak.Protoco
 
 // CreateProtocolMapperConfigCalls gets all the calls that were made to CreateProtocolMapperConfig.
 // Check the length with:
-//     len(mockedKcClient.CreateProtocolMapperConfigCalls())
+//
+//	len(mockedKcClient.CreateProtocolMapperConfigCalls())
 func (mock *KcClientMock) CreateProtocolMapperConfigCalls() []struct {
 	S string
 } {
@@ -484,7 +488,8 @@ func (mock *KcClientMock) CreateRealmRole(accessToken string, roleName string) (
 
 // CreateRealmRoleCalls gets all the calls that were made to CreateRealmRole.
 // Check the length with:
-//     len(mockedKcClient.CreateRealmRoleCalls())
+//
+//	len(mockedKcClient.CreateRealmRoleCalls())
 func (mock *KcClientMock) CreateRealmRoleCalls() []struct {
 	AccessToken string
 	RoleName    string
@@ -519,7 +524,8 @@ func (mock *KcClientMock) DeleteClient(internalClientID string, accessToken stri
 
 // DeleteClientCalls gets all the calls that were made to DeleteClient.
 // Check the length with:
-//     len(mockedKcClient.DeleteClientCalls())
+//
+//	len(mockedKcClient.DeleteClientCalls())
 func (mock *KcClientMock) DeleteClientCalls() []struct {
 	InternalClientID string
 	AccessToken      string
@@ -552,7 +558,8 @@ func (mock *KcClientMock) GetCachedToken(tokenKey string) (string, error) {
 
 // GetCachedTokenCalls gets all the calls that were made to GetCachedToken.
 // Check the length with:
-//     len(mockedKcClient.GetCachedTokenCalls())
+//
+//	len(mockedKcClient.GetCachedTokenCalls())
 func (mock *KcClientMock) GetCachedTokenCalls() []struct {
 	TokenKey string
 } {
@@ -585,7 +592,8 @@ func (mock *KcClientMock) GetClient(clientId string, accessToken string) (*goclo
 
 // GetClientCalls gets all the calls that were made to GetClient.
 // Check the length with:
-//     len(mockedKcClient.GetClientCalls())
+//
+//	len(mockedKcClient.GetClientCalls())
 func (mock *KcClientMock) GetClientCalls() []struct {
 	ClientId    string
 	AccessToken string
@@ -620,7 +628,8 @@ func (mock *KcClientMock) GetClientById(id string, accessToken string) (*gocloak
 
 // GetClientByIdCalls gets all the calls that were made to GetClientById.
 // Check the length with:
-//     len(mockedKcClient.GetClientByIdCalls())
+//
+//	len(mockedKcClient.GetClientByIdCalls())
 func (mock *KcClientMock) GetClientByIdCalls() []struct {
 	ID          string
 	AccessToken string
@@ -655,7 +664,8 @@ func (mock *KcClientMock) GetClientSecret(internalClientId string, accessToken s
 
 // GetClientSecretCalls gets all the calls that were made to GetClientSecret.
 // Check the length with:
-//     len(mockedKcClient.GetClientSecretCalls())
+//
+//	len(mockedKcClient.GetClientSecretCalls())
 func (mock *KcClientMock) GetClientSecretCalls() []struct {
 	InternalClientId string
 	AccessToken      string
@@ -690,7 +700,8 @@ func (mock *KcClientMock) GetClientServiceAccount(accessToken string, internalCl
 
 // GetClientServiceAccountCalls gets all the calls that were made to GetClientServiceAccount.
 // Check the length with:
-//     len(mockedKcClient.GetClientServiceAccountCalls())
+//
+//	len(mockedKcClient.GetClientServiceAccountCalls())
 func (mock *KcClientMock) GetClientServiceAccountCalls() []struct {
 	AccessToken    string
 	InternalClient string
@@ -729,7 +740,8 @@ func (mock *KcClientMock) GetClients(accessToken string, first int, max int, att
 
 // GetClientsCalls gets all the calls that were made to GetClients.
 // Check the length with:
-//     len(mockedKcClient.GetClientsCalls())
+//
+//	len(mockedKcClient.GetClientsCalls())
 func (mock *KcClientMock) GetClientsCalls() []struct {
 	AccessToken string
 	First       int
@@ -763,7 +775,8 @@ func (mock *KcClientMock) GetConfig() *KeycloakConfig {
 
 // GetConfigCalls gets all the calls that were made to GetConfig.
 // Check the length with:
-//     len(mockedKcClient.GetConfigCalls())
+//
+//	len(mockedKcClient.GetConfigCalls())
 func (mock *KcClientMock) GetConfigCalls() []struct {
 } {
 	var calls []struct {
@@ -789,7 +802,8 @@ func (mock *KcClientMock) GetRealmConfig() *KeycloakRealmConfig {
 
 // GetRealmConfigCalls gets all the calls that were made to GetRealmConfig.
 // Check the length with:
-//     len(mockedKcClient.GetRealmConfigCalls())
+//
+//	len(mockedKcClient.GetRealmConfigCalls())
 func (mock *KcClientMock) GetRealmConfigCalls() []struct {
 } {
 	var calls []struct {
@@ -820,7 +834,8 @@ func (mock *KcClientMock) GetRealmRole(accessToken string, roleName string) (*go
 
 // GetRealmRoleCalls gets all the calls that were made to GetRealmRole.
 // Check the length with:
-//     len(mockedKcClient.GetRealmRoleCalls())
+//
+//	len(mockedKcClient.GetRealmRoleCalls())
 func (mock *KcClientMock) GetRealmRoleCalls() []struct {
 	AccessToken string
 	RoleName    string
@@ -850,7 +865,8 @@ func (mock *KcClientMock) GetToken() (string, error) {
 
 // GetTokenCalls gets all the calls that were made to GetToken.
 // Check the length with:
-//     len(mockedKcClient.GetTokenCalls())
+//
+//	len(mockedKcClient.GetTokenCalls())
 func (mock *KcClientMock) GetTokenCalls() []struct {
 } {
 	var calls []struct {
@@ -881,7 +897,8 @@ func (mock *KcClientMock) IsClientExist(clientId string, accessToken string) (st
 
 // IsClientExistCalls gets all the calls that were made to IsClientExist.
 // Check the length with:
-//     len(mockedKcClient.IsClientExistCalls())
+//
+//	len(mockedKcClient.IsClientExistCalls())
 func (mock *KcClientMock) IsClientExistCalls() []struct {
 	ClientId    string
 	AccessToken string
@@ -916,7 +933,8 @@ func (mock *KcClientMock) IsOwner(client *gocloak.Client, userId string) bool {
 
 // IsOwnerCalls gets all the calls that were made to IsOwner.
 // Check the length with:
-//     len(mockedKcClient.IsOwnerCalls())
+//
+//	len(mockedKcClient.IsOwnerCalls())
 func (mock *KcClientMock) IsOwnerCalls() []struct {
 	Client *gocloak.Client
 	UserId string
@@ -951,7 +969,8 @@ func (mock *KcClientMock) IsSameOrg(client *gocloak.Client, orgId string) bool {
 
 // IsSameOrgCalls gets all the calls that were made to IsSameOrg.
 // Check the length with:
-//     len(mockedKcClient.IsSameOrgCalls())
+//
+//	len(mockedKcClient.IsSameOrgCalls())
 func (mock *KcClientMock) IsSameOrgCalls() []struct {
 	Client *gocloak.Client
 	OrgId  string
@@ -986,7 +1005,8 @@ func (mock *KcClientMock) RegenerateClientSecret(accessToken string, id string) 
 
 // RegenerateClientSecretCalls gets all the calls that were made to RegenerateClientSecret.
 // Check the length with:
-//     len(mockedKcClient.RegenerateClientSecretCalls())
+//
+//	len(mockedKcClient.RegenerateClientSecretCalls())
 func (mock *KcClientMock) RegenerateClientSecretCalls() []struct {
 	AccessToken string
 	ID          string
@@ -1021,7 +1041,8 @@ func (mock *KcClientMock) UpdateServiceAccountUser(accessToken string, serviceAc
 
 // UpdateServiceAccountUserCalls gets all the calls that were made to UpdateServiceAccountUser.
 // Check the length with:
-//     len(mockedKcClient.UpdateServiceAccountUserCalls())
+//
+//	len(mockedKcClient.UpdateServiceAccountUserCalls())
 func (mock *KcClientMock) UpdateServiceAccountUserCalls() []struct {
 	AccessToken        string
 	ServiceAccountUser gocloak.User
@@ -1058,7 +1079,8 @@ func (mock *KcClientMock) UserHasRealmRole(accessToken string, userId string, ro
 
 // UserHasRealmRoleCalls gets all the calls that were made to UserHasRealmRole.
 // Check the length with:
-//     len(mockedKcClient.UserHasRealmRoleCalls())
+//
+//	len(mockedKcClient.UserHasRealmRoleCalls())
 func (mock *KcClientMock) UserHasRealmRoleCalls() []struct {
 	AccessToken string
 	UserId      string

@@ -424,7 +424,7 @@ var kafkaOperationsSuccessCountMetric = prometheus.NewCounterVec(
 	KafkaOperationsCountMetricsLabels,
 )
 
-//UpdateKafkaRequestsStatusSinceCreatedMetric
+// UpdateKafkaRequestsStatusSinceCreatedMetric
 func UpdateKafkaRequestsStatusSinceCreatedMetric(status constants2.KafkaStatus, kafkaId string, clusterId string, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		LabelStatus:    string(status),
@@ -434,7 +434,7 @@ func UpdateKafkaRequestsStatusSinceCreatedMetric(status constants2.KafkaStatus, 
 	kafkaStatusSinceCreatedMetric.With(labels).Set(elapsed.Seconds())
 }
 
-//UpdateKafkaRequestsStatusCountMetric
+// UpdateKafkaRequestsStatusCountMetric
 func UpdateKafkaRequestsStatusCountMetric(status constants2.KafkaStatus, count int) {
 	labels := prometheus.Labels{
 		LabelStatus: string(status),
@@ -575,7 +575,8 @@ func SetLeaderWorkerMetric(workerType string, leader bool) {
 // #### Metrics for Observatorium ####
 
 // register observatorium request count metric
-//	  observatorium_request_count - Number of Observatorium requests sent partitioned by http status code, method and url path
+//
+//	observatorium_request_count - Number of Observatorium requests sent partitioned by http status code, method and url path
 var observatoriumRequestCountMetric = prometheus.NewCounterVec(prometheus.CounterOpts{
 	Subsystem: KasFleetManager,
 	Name:      ObservatoriumRequestCount,
@@ -583,9 +584,9 @@ var observatoriumRequestCountMetric = prometheus.NewCounterVec(prometheus.Counte
 }, observatoriumRequestMetricsLabels)
 
 // Increase the observatorium request count metric with the following labels:
-// 	- code: HTTP Status code (i.e. 200 or 500)
-// 	- path: Request URL path (i.e. /api/v1/query)
-// 	- method: HTTP Method (i.e. GET or POST)
+//   - code: HTTP Status code (i.e. 200 or 500)
+//   - path: Request URL path (i.e. /api/v1/query)
+//   - method: HTTP Method (i.e. GET or POST)
 func IncreaseObservatoriumRequestCount(code int, path, method string) {
 	labels := prometheus.Labels{
 		LabelStatusCode: strconv.Itoa(code),
@@ -596,9 +597,10 @@ func IncreaseObservatoriumRequestCount(code int, path, method string) {
 }
 
 // register observatorium request duration metric. Each metric is partitioned by http status code, method and url path
-//	 observatorium_request_duration_sum - Total time to send requests to Observatorium in seconds.
-//	 observatorium_request_duration_count - Total number of Observatorium requests measured.
-//	 observatorium_request_duration_bucket - Number of Observatorium requests organized in buckets.
+//
+//	observatorium_request_duration_sum - Total time to send requests to Observatorium in seconds.
+//	observatorium_request_duration_count - Total number of Observatorium requests measured.
+//	observatorium_request_duration_bucket - Number of Observatorium requests organized in buckets.
 var observatoriumRequestDurationMetric = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Subsystem: KasFleetManager,
@@ -615,9 +617,9 @@ var observatoriumRequestDurationMetric = prometheus.NewHistogramVec(
 )
 
 // Update the observatorium request duration metric with the following labels:
-// 	- code: HTTP Status code (i.e. 200 or 500)
-// 	- path: Request url path (i.e. /api/v1/query)
-// 	- method: HTTP Method (i.e. GET or POST)
+//   - code: HTTP Status code (i.e. 200 or 500)
+//   - path: Request url path (i.e. /api/v1/query)
+//   - method: HTTP Method (i.e. GET or POST)
 func UpdateObservatoriumRequestDurationMetric(code int, path, method string, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		LabelStatusCode: strconv.Itoa(code),
@@ -632,7 +634,8 @@ func UpdateObservatoriumRequestDurationMetric(code int, path, method string, ela
 // #### Metrics for Database ####
 
 // register database query count metric
-//	  database_query_count - Number of Database query sent partitioned by status, and sql query type
+//
+//	database_query_count - Number of Database query sent partitioned by status, and sql query type
 var databaseRequestCountMetric = prometheus.NewCounterVec(prometheus.CounterOpts{
 	Subsystem: KasFleetManager,
 	Name:      DatabaseQueryCount,
@@ -640,8 +643,8 @@ var databaseRequestCountMetric = prometheus.NewCounterVec(prometheus.CounterOpts
 }, DatabaseMetricsLabels)
 
 // Increase the database query count metric with the following labels:
-// 	- status: (i.e. "success" or "failure")
-// 	- queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
+//   - status: (i.e. "success" or "failure")
+//   - queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
 func IncreaseDatabaseQueryCount(status string, queryType string) {
 	labels := prometheus.Labels{
 		LabelDatabaseQueryStatus: status,
@@ -651,9 +654,10 @@ func IncreaseDatabaseQueryCount(status string, queryType string) {
 }
 
 // register database query duration metric. Each metric is partitioned by status, query type
-//	 database_query_duration_sum - Total time to send requests to Database in milliseconds.
-//	 database_query_duration_count - Total number of database query measured.
-//	 database_query_duration_bucket - Number of Database queries organized in buckets.
+//
+//	database_query_duration_sum - Total time to send requests to Database in milliseconds.
+//	database_query_duration_count - Total number of database query measured.
+//	database_query_duration_bucket - Number of Database queries organized in buckets.
 var databaseQueryDurationMetric = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Subsystem: KasFleetManager,
@@ -693,8 +697,8 @@ var databaseQueryDurationMetric = prometheus.NewHistogramVec(
 )
 
 // Update the observatorium request duration metric with the following labels:
-// 	- status: (i.e. "success" or "failure")
-// 	- queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
+//   - status: (i.e. "success" or "failure")
+//   - queryType: (i.e. "SELECT", "UPDATE", "INSERT", "DELETE")
 func UpdateDatabaseQueryDurationMetric(status string, queryType string, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		LabelDatabaseQueryStatus: status,
