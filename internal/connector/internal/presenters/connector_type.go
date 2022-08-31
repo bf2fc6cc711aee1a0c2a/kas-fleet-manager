@@ -38,10 +38,11 @@ func ConvertConnectorType(from public.ConnectorType) (*dbapi.ConnectorType, erro
 		Model: db.Model{
 			ID: from.Id,
 		},
-		Name:        from.Name,
-		Version:     from.Version,
-		Description: from.Description,
-		IconHref:    from.IconHref,
+		Name:         from.Name,
+		Version:      from.Version,
+		Description:  from.Description,
+		FeaturedRank: from.FeaturedRank,
+		IconHref:     from.IconHref,
 	}
 
 	ct.SetLabels(from.Labels)
@@ -70,6 +71,7 @@ func PresentConnectorType(from *dbapi.ConnectorType) (*public.ConnectorType, err
 		Name:         from.Name,
 		Version:      from.Version,
 		Description:  from.Description,
+		FeaturedRank: from.FeaturedRank,
 		Schema:       schemaDom,
 		IconHref:     from.IconHref,
 		Labels:       from.LabelNames(),
@@ -78,15 +80,23 @@ func PresentConnectorType(from *dbapi.ConnectorType) (*public.ConnectorType, err
 	}, nil
 }
 
+func PresentConnectorTypeLabelCount(from *dbapi.ConnectorTypeLabelCount) (*public.ConnectorTypeLabelCount, error) {
+	return &public.ConnectorTypeLabelCount{
+		Label: from.Label,
+		Count: from.Count,
+	}, nil
+}
+
 func PresentConnectorTypeAdminView(from dbapi.ConnectorCatalogEntry) (*admin.ConnectorTypeAdminView, *errors.ServiceError) {
 	view := admin.ConnectorTypeAdminView{
-		Id:          from.ConnectorType.ID,
-		Name:        from.ConnectorType.Name,
-		Version:     from.ConnectorType.Version,
-		Description: from.ConnectorType.Description,
-		IconHref:    from.ConnectorType.IconHref,
-		Labels:      make([]string, len(from.ConnectorType.Labels)),
-		Channels:    make(map[string]admin.ConnectorTypeChannel),
+		Id:           from.ConnectorType.ID,
+		Name:         from.ConnectorType.Name,
+		Version:      from.ConnectorType.Version,
+		Description:  from.ConnectorType.Description,
+		FeaturedRank: from.ConnectorType.FeaturedRank,
+		IconHref:     from.ConnectorType.IconHref,
+		Labels:       make([]string, len(from.ConnectorType.Labels)),
+		Channels:     make(map[string]admin.ConnectorTypeChannel),
 	}
 
 	for i, l := range from.ConnectorType.Labels {

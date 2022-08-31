@@ -75,6 +75,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		Kind: "ConnectorTypeList",
 	})
 	apiV1ConnectorTypesRouter := apiV1Router.PathPrefix("/kafka_connector_types").Subrouter()
+	apiV1ConnectorTypesRouter.HandleFunc("/labels", s.ConnectorTypesHandler.ListLabels).Methods(http.MethodGet)
 	apiV1ConnectorTypesRouter.HandleFunc("/{connector_type_id}", s.ConnectorTypesHandler.Get).Methods(http.MethodGet)
 	apiV1ConnectorTypesRouter.HandleFunc("", s.ConnectorTypesHandler.List).Methods(http.MethodGet)
 	apiV1ConnectorTypesRouter.Use(authorizeMiddleware)

@@ -79,3 +79,28 @@ func (h ConnectorTypesHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	handlers.HandleList(w, r, cfg)
 }
+
+func (h ConnectorTypesHandler) ListLabels(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (interface{}, *errors.ServiceError) {
+			listArgs := coreServices.NewListArguments(r.URL.Query())
+			resources, err := h.service.ListLabels(listArgs)
+			if err != nil {
+				return nil, err
+			}
+
+			resourceList := public.ConnectorTypeLabelCountList{}
+			for _, resource := range resources {
+				converted, err1 := presenters.PresentConnectorTypeLabelCount(resource)
+				if err1 != nil {
+					return nil, errors.ToServiceError(err1)
+				}
+				resourceList.Items = append(resourceList.Items, *converted)
+			}
+
+			return resourceList, nil
+		},
+	}
+
+	handlers.HandleList(w, r, cfg)
+}
