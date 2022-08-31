@@ -13,7 +13,7 @@ require (
 	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
-	github.com/evanphx/json-patch v4.12.0+incompatible
+	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
