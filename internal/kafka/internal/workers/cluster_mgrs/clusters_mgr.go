@@ -165,6 +165,10 @@ func (c *ClusterManager) SetIsRunning(val bool) {
 	c.isRunning = val
 }
 
+func (c *ClusterManager) HasTerminated() bool {
+	return false
+}
+
 func (c *ClusterManager) Reconcile() []error {
 	glog.Infoln("reconciling clusters")
 	var encounteredErrors []error

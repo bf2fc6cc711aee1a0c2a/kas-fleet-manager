@@ -3,27 +3,20 @@ package workers
 import (
 	"context"
 	"encoding/json"
-	"reflect"
-	"sync"
-	"time"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
+	"reflect"
 
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
-
-const checkCatalogEntriesDuration = 5 * time.Second
 
 // ConnectorManager represents a connector manager that periodically reconciles connector requests
 type ConnectorManager struct {
@@ -33,16 +26,8 @@ type ConnectorManager struct {
 	connectorTypesService   services.ConnectorTypesService
 	vaultService            vault.VaultService
 	lastVersion             int64
-	startupReconcileDone    bool
-	startupReconcileWG      sync.WaitGroup
 	db                      *db.ConnectionFactory
 	ctx                     context.Context
-}
-
-// NewApiServerReadyCondition is used to inject a server.ApiServerReadyCondition into the server.ApiServer
-// so that it waits for the ConnectorManager to have completed a startup reconcile before accepting http requests.
-func NewApiServerReadyCondition(cm *ConnectorManager) server.ApiServerReadyCondition {
-	return &cm.startupReconcileWG
 }
 
 // NewConnectorManager creates a new connector manager
@@ -64,20 +49,9 @@ func NewConnectorManager(
 		connectorClusterService: connectorClusterService,
 		connectorTypesService:   connectorTypesService,
 		vaultService:            vaultService,
-		startupReconcileDone:    false,
 		db:                      db,
 	}
 
-	// The release of this waiting group signal the http service to start serving request
-	// this needs to be done across multiple instances of fleetmanager running,
-	// and yet just one instance of ConnectorManager of those multiple fleet manager will run the reconcile loop.
-	// The release of the waiting group must then be done outside the reconcile loop,
-	// the condition is checked in runStartupReconcileCheckWorker().
-	result.startupReconcileWG.Add(1)
-
-	// Mark startupReconcileWG as done in a separate goroutine instead of in worker reconcile
-	// this is required to allow multiple instances of fleetmanager to startup.
-	result.runStartupReconcileCheckWorker()
 	return result
 }
 
@@ -94,32 +68,6 @@ func (k *ConnectorManager) Stop() {
 func (k *ConnectorManager) Reconcile() []error {
 	glog.V(5).Infoln("Reconciling connectors...")
 	var errs []error
-
-	if !k.startupReconcileDone {
-		glog.V(5).Infoln("Reconciling startup connector catalog updates...")
-
-		// the assumption here is that this runs on one instance only of fleetmanager,
-		// runs only at startup and while requests are not being served
-		if err := k.connectorTypesService.DeleteUnusedAndNotInCatalog(); err != nil {
-			return []error{err}
-		}
-
-		// We only need to reconcile channel updates once per process startup since,
-		// configured channel settings are only loaded on startup.
-		// These operations, once completed successfully, make the condition at runStartupReconcileCheckWorker() to pass
-		// practically starting the serving of requests from the service.
-		// IMPORTANT: Everything that should run before the first request is served should happen before this
-		if err := k.connectorTypesService.ForEachConnectorCatalogEntry(k.ReconcileConnectorCatalogEntry); err != nil {
-			return []error{err}
-		}
-
-		if err := k.connectorClusterService.CleanupDeployments(); err != nil {
-			return []error{err}
-		}
-
-		k.startupReconcileDone = true
-		glog.V(5).Infoln("Catalog updates processed")
-	}
 
 	if k.ctx == nil {
 		ctx, err := k.db.NewContext(context.Background())
@@ -335,27 +283,6 @@ func (k *ConnectorManager) doReconcile(errs *[]error, reconcilePhase string, rec
 	} else {
 		glog.V(5).Infof("Reconciled %d %s connectors with %d errors", count, reconcilePhase, len(serviceErrs))
 	}
-}
-
-func (k *ConnectorManager) runStartupReconcileCheckWorker() {
-	go func() {
-		for !k.startupReconcileDone {
-			glog.V(5).Infoln("Waiting for startup connector catalog updates...")
-			// this check that ConnectorTypes in the current configured catalog have the same checksum of the one
-			// stored in the db (comparing them by id).
-			done, err := k.connectorTypesService.CatalogEntriesReconciled()
-			if err != nil {
-				glog.Errorf("Error checking catalog entry checksums: %s", err)
-			} else if done {
-				k.startupReconcileDone = true
-			} else {
-				// wait another 5 seconds to check
-				time.Sleep(checkCatalogEntriesDuration)
-			}
-		}
-		glog.V(5).Infoln("Wait for connector catalog updates done!")
-		k.startupReconcileWG.Done()
-	}()
 }
 
 func InDBTransaction(ctx context.Context, f func(ctx context.Context) error) (rerr *serviceError.ServiceError) {

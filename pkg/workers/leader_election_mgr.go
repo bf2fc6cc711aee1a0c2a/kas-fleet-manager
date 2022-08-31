@@ -87,7 +87,18 @@ func (s *LeaderElectionManager) Stop() {
 }
 
 func (s *LeaderElectionManager) startWorkers() {
+	newWorkers := make([]Worker, 0)
 	for _, worker := range s.workers {
+		if worker.HasTerminated() {
+			if worker.IsRunning() {
+				glog.V(1).Infoln(fmt.Sprintf("Terminating and stopping worker %T [%s]", worker, worker.GetID()))
+				worker.Stop()
+				s.workerGrp.Done()
+			}
+			continue // skip terminated worker
+		}
+		newWorkers = append(newWorkers, worker)
+
 		isLeader := s.isWorkerLeader(worker)
 		if isLeader && !worker.IsRunning() {
 			glog.V(1).Infoln(fmt.Sprintf("Running as the leader and starting worker %T [%s]", worker, worker.GetID()))
@@ -98,6 +109,11 @@ func (s *LeaderElectionManager) startWorkers() {
 			worker.Stop()
 			s.workerGrp.Done() //a worker is removed from the group
 		}
+	}
+
+	// were any workers terminated and removed?
+	if len(newWorkers) != len(s.workers) {
+		s.workers = newWorkers
 	}
 }
 

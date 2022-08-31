@@ -394,16 +394,15 @@ func (cts *connectorTypesService) CatalogEntriesReconciled() (bool, *errors.Serv
 		return false, services.HandleGetError("Connector type", "id", typeIds, err)
 	}
 
-	done := false
-	if len(catalogChecksums) == len(connectorTypes) {
-		for _, ct := range connectorTypes {
-			if ct.Checksum == nil || *ct.Checksum != catalogChecksums[ct.ID] {
-				return done, nil
-			}
-		}
-		done = true
+	if len(catalogChecksums) != len(connectorTypes) {
+		return false, nil
 	}
-	return done, nil
+	for _, ct := range connectorTypes {
+		if ct.Checksum == nil || *ct.Checksum != catalogChecksums[ct.ID] {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func (cts *connectorTypesService) DeleteUnusedAndNotInCatalog() *errors.ServiceError {
