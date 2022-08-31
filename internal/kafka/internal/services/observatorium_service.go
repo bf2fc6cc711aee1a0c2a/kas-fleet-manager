@@ -21,6 +21,7 @@ func NewObservatoriumService(observatorium *observatorium.Client, kafkaService K
 	}
 }
 
+//go:generate moq -out observatorium_service_moq.go . ObservatoriumService
 type ObservatoriumService interface {
 	GetKafkaState(name string, namespaceName string) (observatorium.KafkaState, error)
 	GetMetricsByKafkaId(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *errors.ServiceError)

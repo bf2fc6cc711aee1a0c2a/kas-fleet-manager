@@ -14,25 +14,25 @@ var _ AWSClient = &AWSClientMock{}
 
 // AWSClientMock is a mock implementation of AWSClient.
 //
-// 	func TestSomethingThatUsesAWSClient(t *testing.T) {
+//	func TestSomethingThatUsesAWSClient(t *testing.T) {
 //
-// 		// make and configure a mocked AWSClient
-// 		mockedAWSClient := &AWSClientMock{
-// 			ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
-// 				panic("mock out the ChangeResourceRecordSets method")
-// 			},
-// 			GetChangeFunc: func(changeId string) (*route53.GetChangeOutput, error) {
-// 				panic("mock out the GetChange method")
-// 			},
-// 			ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
-// 				panic("mock out the ListHostedZonesByNameInput method")
-// 			},
-// 		}
+//		// make and configure a mocked AWSClient
+//		mockedAWSClient := &AWSClientMock{
+//			ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
+//				panic("mock out the ChangeResourceRecordSets method")
+//			},
+//			GetChangeFunc: func(changeId string) (*route53.GetChangeOutput, error) {
+//				panic("mock out the GetChange method")
+//			},
+//			ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
+//				panic("mock out the ListHostedZonesByNameInput method")
+//			},
+//		}
 //
-// 		// use mockedAWSClient in code that requires AWSClient
-// 		// and then make assertions.
+//		// use mockedAWSClient in code that requires AWSClient
+//		// and then make assertions.
 //
-// 	}
+//	}
 type AWSClientMock struct {
 	// ChangeResourceRecordSetsFunc mocks the ChangeResourceRecordSets method.
 	ChangeResourceRecordSetsFunc func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)
@@ -88,7 +88,8 @@ func (mock *AWSClientMock) ChangeResourceRecordSets(dnsName string, recordChange
 
 // ChangeResourceRecordSetsCalls gets all the calls that were made to ChangeResourceRecordSets.
 // Check the length with:
-//     len(mockedAWSClient.ChangeResourceRecordSetsCalls())
+//
+//	len(mockedAWSClient.ChangeResourceRecordSetsCalls())
 func (mock *AWSClientMock) ChangeResourceRecordSetsCalls() []struct {
 	DnsName           string
 	RecordChangeBatch *route53.ChangeBatch
@@ -121,7 +122,8 @@ func (mock *AWSClientMock) GetChange(changeId string) (*route53.GetChangeOutput,
 
 // GetChangeCalls gets all the calls that were made to GetChange.
 // Check the length with:
-//     len(mockedAWSClient.GetChangeCalls())
+//
+//	len(mockedAWSClient.GetChangeCalls())
 func (mock *AWSClientMock) GetChangeCalls() []struct {
 	ChangeId string
 } {
@@ -152,7 +154,8 @@ func (mock *AWSClientMock) ListHostedZonesByNameInput(dnsName string) (*route53.
 
 // ListHostedZonesByNameInputCalls gets all the calls that were made to ListHostedZonesByNameInput.
 // Check the length with:
-//     len(mockedAWSClient.ListHostedZonesByNameInputCalls())
+//
+//	len(mockedAWSClient.ListHostedZonesByNameInputCalls())
 func (mock *AWSClientMock) ListHostedZonesByNameInputCalls() []struct {
 	DnsName string
 } {

@@ -33,10 +33,11 @@ type DeleteConnectorOpts struct {
 
 /*
 DeleteConnector Delete a connector
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorId The id of the connector to delete
- * @param optional nil or *DeleteConnectorOpts - Optional Parameters:
- * @param "Force" (optional.Bool) -  Flag to force deletion of connector in Fleet manager if true
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorId The id of the connector to delete
+  - @param optional nil or *DeleteConnectorOpts - Optional Parameters:
+  - @param "Force" (optional.Bool) -  Flag to force deletion of connector in Fleet manager if true
+
 @return Error
 */
 func (a *ConnectorClustersAdminApiService) DeleteConnector(ctx _context.Context, connectorId string, localVarOptionals *DeleteConnectorOpts) (Error, *_nethttp.Response, error) {
@@ -149,10 +150,11 @@ type DeleteConnectorNamespaceOpts struct {
 
 /*
 DeleteConnectorNamespace Delete a connector namespace
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param namespaceId The id of the namespace to delete
- * @param optional nil or *DeleteConnectorNamespaceOpts - Optional Parameters:
- * @param "Force" (optional.Bool) -  Flag to force deletion of namespace in Fleet manager if true
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param namespaceId The id of the namespace to delete
+  - @param optional nil or *DeleteConnectorNamespaceOpts - Optional Parameters:
+  - @param "Force" (optional.Bool) -  Flag to force deletion of namespace in Fleet manager if true
+
 @return Error
 */
 func (a *ConnectorClustersAdminApiService) DeleteConnectorNamespace(ctx _context.Context, namespaceId string, localVarOptionals *DeleteConnectorNamespaceOpts) (Error, *_nethttp.Response, error) {
@@ -268,13 +270,14 @@ type GetClusterConnectorsOpts struct {
 
 /*
 GetClusterConnectors Get a list of available connectors in a cluster
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
- * @param optional nil or *GetClusterConnectorsOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
- * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the underlying resource fields supported in the search parameter. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
- * @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of a SQL statement.  Allowed fields in the search depend on the resource type:  * Cluster: id, created_at, updated_at, owner, organisation_id, name, state, client_id * Namespace: id, created_at, updated_at, name, cluster_id, owner, expiration, tenant_user_id, tenant_organisation_id, state * Connector Types: id, created_at, updated_at, version, name, description, label, channel * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url  Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`. Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.  Examples:  To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:  ``` name = aws-sqs-source and channel = stable ```[p-]  To return a connector instance with a name that starts with `aws`, use the following syntax:  ``` name like aws%25 ```  To return a connector type with a name containing `aws` matching any character case combination, use the following syntax:  ``` name ilike %25aws%25 ```  If the parameter isn't provided, or if the value is empty, then all the resources that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+  - @param optional nil or *GetClusterConnectorsOpts - Optional Parameters:
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
+  - @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the underlying resource fields supported in the search parameter. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
+  - @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of a SQL statement.  Allowed fields in the search depend on the resource type:  * Cluster: id, created_at, updated_at, owner, organisation_id, name, state, client_id * Namespace: id, created_at, updated_at, name, cluster_id, owner, expiration, tenant_user_id, tenant_organisation_id, state * Connector Types: id, created_at, updated_at, version, name, description, label, channel * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url  Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`. Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.  Examples:  To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:  ``` name = aws-sqs-source and channel = stable ```[p-]  To return a connector instance with a name that starts with `aws`, use the following syntax:  ``` name like aws%25 ```  To return a connector type with a name containing `aws` matching any character case combination, use the following syntax:  ``` name ilike %25aws%25 ```  If the parameter isn't provided, or if the value is empty, then all the resources that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
+
 @return ConnectorAdminViewList
 */
 func (a *ConnectorClustersAdminApiService) GetClusterConnectors(ctx _context.Context, connectorClusterId string, localVarOptionals *GetClusterConnectorsOpts) (ConnectorAdminViewList, *_nethttp.Response, error) {
@@ -400,14 +403,15 @@ type GetClusterDeploymentsOpts struct {
 
 /*
 GetClusterDeployments Get a list of available deployments in a cluster
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the cluster
- * @param optional nil or *GetClusterDeploymentsOpts - Optional Parameters:
- * @param "ChannelUpdates" (optional.Bool) -  include only deployments that have channel updates
- * @param "DanglingDeployments" (optional.Bool) -  include only not deleted deployments belonging to a deleted connector
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
- * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the underlying resource fields supported in the search parameter. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the cluster
+  - @param optional nil or *GetClusterDeploymentsOpts - Optional Parameters:
+  - @param "ChannelUpdates" (optional.Bool) -  include only deployments that have channel updates
+  - @param "DanglingDeployments" (optional.Bool) -  include only not deleted deployments belonging to a deleted connector
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
+  - @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the underlying resource fields supported in the search parameter. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
+
 @return ConnectorDeploymentAdminViewList
 */
 func (a *ConnectorClustersAdminApiService) GetClusterDeployments(ctx _context.Context, connectorClusterId string, localVarOptionals *GetClusterDeploymentsOpts) (ConnectorDeploymentAdminViewList, *_nethttp.Response, error) {
@@ -535,13 +539,14 @@ type GetClusterNamespacesOpts struct {
 
 /*
 GetClusterNamespaces Get a list of available connector namespaces in cluster
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
- * @param optional nil or *GetClusterNamespacesOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
- * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the underlying resource fields supported in the search parameter. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
- * @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of a SQL statement.  Allowed fields in the search depend on the resource type:  * Cluster: id, created_at, updated_at, owner, organisation_id, name, state, client_id * Namespace: id, created_at, updated_at, name, cluster_id, owner, expiration, tenant_user_id, tenant_organisation_id, state * Connector Types: id, created_at, updated_at, version, name, description, label, channel * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url  Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`. Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.  Examples:  To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:  ``` name = aws-sqs-source and channel = stable ```[p-]  To return a connector instance with a name that starts with `aws`, use the following syntax:  ``` name like aws%25 ```  To return a connector type with a name containing `aws` matching any character case combination, use the following syntax:  ``` name ilike %25aws%25 ```  If the parameter isn't provided, or if the value is empty, then all the resources that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+  - @param optional nil or *GetClusterNamespacesOpts - Optional Parameters:
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
+  - @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the underlying resource fields supported in the search parameter. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
+  - @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of a SQL statement.  Allowed fields in the search depend on the resource type:  * Cluster: id, created_at, updated_at, owner, organisation_id, name, state, client_id * Namespace: id, created_at, updated_at, name, cluster_id, owner, expiration, tenant_user_id, tenant_organisation_id, state * Connector Types: id, created_at, updated_at, version, name, description, label, channel * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url  Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`. Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.  Examples:  To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:  ``` name = aws-sqs-source and channel = stable ```[p-]  To return a connector instance with a name that starts with `aws`, use the following syntax:  ``` name like aws%25 ```  To return a connector type with a name containing `aws` matching any character case combination, use the following syntax:  ``` name ilike %25aws%25 ```  If the parameter isn't provided, or if the value is empty, then all the resources that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
+
 @return ConnectorNamespaceList
 */
 func (a *ConnectorClustersAdminApiService) GetClusterNamespaces(ctx _context.Context, connectorClusterId string, localVarOptionals *GetClusterNamespacesOpts) (ConnectorNamespaceList, *_nethttp.Response, error) {
@@ -659,8 +664,9 @@ func (a *ConnectorClustersAdminApiService) GetClusterNamespaces(ctx _context.Con
 /*
 GetConnector Get a connector
 Get a connector
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorId The id of the connector to delete
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorId The id of the connector to delete
+
 @return ConnectorAdminView
 */
 func (a *ConnectorClustersAdminApiService) GetConnector(ctx _context.Context, connectorId string) (ConnectorAdminView, *_nethttp.Response, error) {
@@ -765,8 +771,9 @@ func (a *ConnectorClustersAdminApiService) GetConnector(ctx _context.Context, co
 
 /*
 GetConnectorCluster Get a connector cluster
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+
 @return ConnectorCluster
 */
 func (a *ConnectorClustersAdminApiService) GetConnectorCluster(ctx _context.Context, connectorClusterId string) (ConnectorCluster, *_nethttp.Response, error) {
@@ -862,9 +869,10 @@ func (a *ConnectorClustersAdminApiService) GetConnectorCluster(ctx _context.Cont
 /*
 GetConnectorDeployment Get a connector deployment
 Get a connector deployment
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
- * @param deploymentId The id of the connector deployment
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+  - @param deploymentId The id of the connector deployment
+
 @return ConnectorDeploymentAdminView
 */
 func (a *ConnectorClustersAdminApiService) GetConnectorDeployment(ctx _context.Context, connectorClusterId string, deploymentId string) (ConnectorDeploymentAdminView, *_nethttp.Response, error) {
@@ -972,8 +980,9 @@ func (a *ConnectorClustersAdminApiService) GetConnectorDeployment(ctx _context.C
 /*
 GetConnectorNamespace Get a connector namespace
 Get a connector namespace
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param namespaceId The id of the namespace
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param namespaceId The id of the namespace
+
 @return ConnectorNamespace
 */
 func (a *ConnectorClustersAdminApiService) GetConnectorNamespace(ctx _context.Context, namespaceId string) (ConnectorNamespace, *_nethttp.Response, error) {
@@ -1084,11 +1093,12 @@ type GetConnectorUpgradesByOperatorOpts struct {
 
 /*
 GetConnectorUpgradesByOperator Get a list of available connector operator upgrades
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
- * @param optional nil or *GetConnectorUpgradesByOperatorOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+  - @param optional nil or *GetConnectorUpgradesByOperatorOpts - Optional Parameters:
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
+
 @return ConnectorAvailableOperatorUpgradeList
 */
 func (a *ConnectorClustersAdminApiService) GetConnectorUpgradesByOperator(ctx _context.Context, connectorClusterId string, localVarOptionals *GetConnectorUpgradesByOperatorOpts) (ConnectorAvailableOperatorUpgradeList, *_nethttp.Response, error) {
@@ -1207,13 +1217,14 @@ type GetNamespaceConnectorsOpts struct {
 
 /*
 GetNamespaceConnectors Get a list of available connectors in a namespace
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param namespaceId The id of the namespace
- * @param optional nil or *GetNamespaceConnectorsOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
- * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the underlying resource fields supported in the search parameter. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
- * @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of a SQL statement.  Allowed fields in the search depend on the resource type:  * Cluster: id, created_at, updated_at, owner, organisation_id, name, state, client_id * Namespace: id, created_at, updated_at, name, cluster_id, owner, expiration, tenant_user_id, tenant_organisation_id, state * Connector Types: id, created_at, updated_at, version, name, description, label, channel * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url  Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`. Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.  Examples:  To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:  ``` name = aws-sqs-source and channel = stable ```[p-]  To return a connector instance with a name that starts with `aws`, use the following syntax:  ``` name like aws%25 ```  To return a connector type with a name containing `aws` matching any character case combination, use the following syntax:  ``` name ilike %25aws%25 ```  If the parameter isn't provided, or if the value is empty, then all the resources that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param namespaceId The id of the namespace
+  - @param optional nil or *GetNamespaceConnectorsOpts - Optional Parameters:
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
+  - @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the underlying resource fields supported in the search parameter. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
+  - @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of a SQL statement.  Allowed fields in the search depend on the resource type:  * Cluster: id, created_at, updated_at, owner, organisation_id, name, state, client_id * Namespace: id, created_at, updated_at, name, cluster_id, owner, expiration, tenant_user_id, tenant_organisation_id, state * Connector Types: id, created_at, updated_at, version, name, description, label, channel * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url  Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`. Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.  Examples:  To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:  ``` name = aws-sqs-source and channel = stable ```[p-]  To return a connector instance with a name that starts with `aws`, use the following syntax:  ``` name like aws%25 ```  To return a connector type with a name containing `aws` matching any character case combination, use the following syntax:  ``` name ilike %25aws%25 ```  If the parameter isn't provided, or if the value is empty, then all the resources that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
+
 @return ConnectorAdminViewList
 */
 func (a *ConnectorClustersAdminApiService) GetNamespaceConnectors(ctx _context.Context, namespaceId string, localVarOptionals *GetNamespaceConnectorsOpts) (ConnectorAdminViewList, *_nethttp.Response, error) {
@@ -1339,14 +1350,15 @@ type GetNamespaceDeploymentsOpts struct {
 
 /*
 GetNamespaceDeployments Get a list of available deployments in a namespace
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param namespaceId The id of the namespace
- * @param optional nil or *GetNamespaceDeploymentsOpts - Optional Parameters:
- * @param "ChannelUpdates" (optional.Bool) -  include only deployments that have channel updates
- * @param "DanglingDeployments" (optional.Bool) -  include only not deleted deployments belonging to a deleted connector
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
- * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the underlying resource fields supported in the search parameter. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param namespaceId The id of the namespace
+  - @param optional nil or *GetNamespaceDeploymentsOpts - Optional Parameters:
+  - @param "ChannelUpdates" (optional.Bool) -  include only deployments that have channel updates
+  - @param "DanglingDeployments" (optional.Bool) -  include only not deleted deployments belonging to a deleted connector
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
+  - @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the underlying resource fields supported in the search parameter. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
+
 @return ConnectorDeploymentAdminViewList
 */
 func (a *ConnectorClustersAdminApiService) GetNamespaceDeployments(ctx _context.Context, namespaceId string, localVarOptionals *GetNamespaceDeploymentsOpts) (ConnectorDeploymentAdminViewList, *_nethttp.Response, error) {
@@ -1474,12 +1486,13 @@ type ListConnectorClustersOpts struct {
 
 /*
 ListConnectorClusters Returns a list of connector clusters
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *ListConnectorClustersOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
- * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the underlying resource fields supported in the search parameter. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
- * @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of a SQL statement.  Allowed fields in the search depend on the resource type:  * Cluster: id, created_at, updated_at, owner, organisation_id, name, state, client_id * Namespace: id, created_at, updated_at, name, cluster_id, owner, expiration, tenant_user_id, tenant_organisation_id, state * Connector Types: id, created_at, updated_at, version, name, description, label, channel * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url  Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`. Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.  Examples:  To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:  ``` name = aws-sqs-source and channel = stable ```[p-]  To return a connector instance with a name that starts with `aws`, use the following syntax:  ``` name like aws%25 ```  To return a connector type with a name containing `aws` matching any character case combination, use the following syntax:  ``` name ilike %25aws%25 ```  If the parameter isn't provided, or if the value is empty, then all the resources that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param optional nil or *ListConnectorClustersOpts - Optional Parameters:
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
+  - @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the underlying resource fields supported in the search parameter. For example, to return all Connector types ordered by their name, use the following syntax:  ```sql name asc ```  To return all Connector types ordered by their name _and_ version, use the following syntax:  ```sql name asc, version asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
+  - @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of a SQL statement.  Allowed fields in the search depend on the resource type:  * Cluster: id, created_at, updated_at, owner, organisation_id, name, state, client_id * Namespace: id, created_at, updated_at, name, cluster_id, owner, expiration, tenant_user_id, tenant_organisation_id, state * Connector Types: id, created_at, updated_at, version, name, description, label, channel * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url  Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`. Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.  Examples:  To return a Connector Type with the name `aws-sqs-source` and the channel `stable`, use the following syntax:  ``` name = aws-sqs-source and channel = stable ```[p-]  To return a connector instance with a name that starts with `aws`, use the following syntax:  ``` name like aws%25 ```  To return a connector type with a name containing `aws` matching any character case combination, use the following syntax:  ``` name ilike %25aws%25 ```  If the parameter isn't provided, or if the value is empty, then all the resources that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
+
 @return ConnectorClusterList
 */
 func (a *ConnectorClustersAdminApiService) ListConnectorClusters(ctx _context.Context, localVarOptionals *ListConnectorClustersOpts) (ConnectorClusterList, *_nethttp.Response, error) {
@@ -1585,10 +1598,11 @@ func (a *ConnectorClustersAdminApiService) ListConnectorClusters(ctx _context.Co
 /*
 PatchConnectorClusterDeploymentAdmin Patch a deployment
 Patch a deployment
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
- * @param deploymentId The id of the connector deployment
- * @param body Data to patch the deployment with
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+  - @param deploymentId The id of the connector deployment
+  - @param body Data to patch the deployment with
+
 @return ConnectorDeploymentAdminView
 */
 func (a *ConnectorClustersAdminApiService) PatchConnectorClusterDeploymentAdmin(ctx _context.Context, connectorClusterId string, deploymentId string, body map[string]interface{}) (ConnectorDeploymentAdminView, *_nethttp.Response, error) {
@@ -1713,12 +1727,12 @@ type UpgradeConnectorsByOperatorOpts struct {
 
 /*
 UpgradeConnectorsByOperator upgrade a connector cluster
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
- * @param connectorAvailableOperatorUpgrade List of connectors to upgrade
- * @param optional nil or *UpgradeConnectorsByOperatorOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+  - @param connectorAvailableOperatorUpgrade List of connectors to upgrade
+  - @param optional nil or *UpgradeConnectorsByOperatorOpts - Optional Parameters:
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
 */
 func (a *ConnectorClustersAdminApiService) UpgradeConnectorsByOperator(ctx _context.Context, connectorClusterId string, connectorAvailableOperatorUpgrade []ConnectorAvailableOperatorUpgrade, localVarOptionals *UpgradeConnectorsByOperatorOpts) (*_nethttp.Response, error) {
 	var (

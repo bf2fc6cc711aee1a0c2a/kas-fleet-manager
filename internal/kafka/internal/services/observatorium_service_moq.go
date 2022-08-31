@@ -6,7 +6,7 @@ package services
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -16,28 +16,28 @@ var _ ObservatoriumService = &ObservatoriumServiceMock{}
 
 // ObservatoriumServiceMock is a mock implementation of ObservatoriumService.
 //
-//     func TestSomethingThatUsesObservatoriumService(t *testing.T) {
+//	func TestSomethingThatUsesObservatoriumService(t *testing.T) {
 //
-//         // make and configure a mocked ObservatoriumService
-//         mockedObservatoriumService := &ObservatoriumServiceMock{
-//             GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
-// 	               panic("mock out the GetKafkaState method")
-//             },
-//             GetMetricsByKafkaIdFunc: func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *svcerrs.ServiceError) {
-// 	               panic("mock out the GetMetricsByKafkaId method")
-//             },
-//         }
+//		// make and configure a mocked ObservatoriumService
+//		mockedObservatoriumService := &ObservatoriumServiceMock{
+//			GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
+//				panic("mock out the GetKafkaState method")
+//			},
+//			GetMetricsByKafkaIdFunc: func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *apiErrors.ServiceError) {
+//				panic("mock out the GetMetricsByKafkaId method")
+//			},
+//		}
 //
-//         // use mockedObservatoriumService in code that requires ObservatoriumService
-//         // and then make assertions.
+//		// use mockedObservatoriumService in code that requires ObservatoriumService
+//		// and then make assertions.
 //
-//     }
+//	}
 type ObservatoriumServiceMock struct {
 	// GetKafkaStateFunc mocks the GetKafkaState method.
 	GetKafkaStateFunc func(name string, namespaceName string) (observatorium.KafkaState, error)
 
 	// GetMetricsByKafkaIdFunc mocks the GetMetricsByKafkaId method.
-	GetMetricsByKafkaIdFunc func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *errors.ServiceError)
+	GetMetricsByKafkaIdFunc func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *apiErrors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -84,7 +84,8 @@ func (mock *ObservatoriumServiceMock) GetKafkaState(name string, namespaceName s
 
 // GetKafkaStateCalls gets all the calls that were made to GetKafkaState.
 // Check the length with:
-//     len(mockedObservatoriumService.GetKafkaStateCalls())
+//
+//	len(mockedObservatoriumService.GetKafkaStateCalls())
 func (mock *ObservatoriumServiceMock) GetKafkaStateCalls() []struct {
 	Name          string
 	NamespaceName string
@@ -100,7 +101,7 @@ func (mock *ObservatoriumServiceMock) GetKafkaStateCalls() []struct {
 }
 
 // GetMetricsByKafkaId calls GetMetricsByKafkaIdFunc.
-func (mock *ObservatoriumServiceMock) GetMetricsByKafkaId(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *errors.ServiceError) {
+func (mock *ObservatoriumServiceMock) GetMetricsByKafkaId(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *apiErrors.ServiceError) {
 	if mock.GetMetricsByKafkaIdFunc == nil {
 		panic("ObservatoriumServiceMock.GetMetricsByKafkaIdFunc: method is nil but ObservatoriumService.GetMetricsByKafkaId was just called")
 	}
@@ -123,7 +124,8 @@ func (mock *ObservatoriumServiceMock) GetMetricsByKafkaId(ctx context.Context, c
 
 // GetMetricsByKafkaIdCalls gets all the calls that were made to GetMetricsByKafkaId.
 // Check the length with:
-//     len(mockedObservatoriumService.GetMetricsByKafkaIdCalls())
+//
+//	len(mockedObservatoriumService.GetMetricsByKafkaIdCalls())
 func (mock *ObservatoriumServiceMock) GetMetricsByKafkaIdCalls() []struct {
 	Ctx       context.Context
 	CsMetrics *observatorium.KafkaMetrics

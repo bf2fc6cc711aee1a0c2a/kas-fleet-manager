@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -132,7 +132,7 @@ func (c *rhSSOClient) GetToken() (string, error) {
 		return "", fmt.Errorf("error getting token [%d]", resp.StatusCode)
 	}
 
-	token, err := ioutil.ReadAll(resp.Body)
+	token, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}

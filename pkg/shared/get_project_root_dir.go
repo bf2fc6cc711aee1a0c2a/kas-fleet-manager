@@ -4,7 +4,6 @@
 package shared
 
 import (
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -25,7 +24,7 @@ func GetProjectRootDir() string {
 	for _, d := range dirs {
 		rootPath = rootPath + "/" + d
 		goModPath = rootPath + "/go.mod"
-		goModFile, err := ioutil.ReadFile(goModPath)
+		goModFile, err := os.ReadFile(goModPath)
 		if err != nil { // if the file doesn't exist, continue searching
 			continue
 		}

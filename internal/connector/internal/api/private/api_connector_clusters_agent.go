@@ -29,9 +29,10 @@ type ConnectorClustersAgentApiService service
 /*
 GetClusterAsignedConnectorDeploymentById Returns a list of connector deployments assigned to the cluster.
 Returns a list of connector deployments assigned to the cluster.
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
- * @param deploymentId The id of the deployment
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+  - @param deploymentId The id of the deployment
+
 @return ConnectorDeployment
 */
 func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorDeploymentById(ctx _context.Context, connectorClusterId string, deploymentId string) (ConnectorDeployment, *_nethttp.Response, error) {
@@ -147,13 +148,14 @@ type GetClusterAsignedConnectorDeploymentsOpts struct {
 /*
 GetClusterAsignedConnectorDeployments Returns a list of connector deployments assigned to the cluster.
 Returns a list of connector deployments assigned to the cluster.
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
- * @param optional nil or *GetClusterAsignedConnectorDeploymentsOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
- * @param "GtVersion" (optional.Int64) -  filters the connectors to those with a version greater than the given value
- * @param "Watch" (optional.String) -  watch for changes to the resources and return them as a stream of watch events. Specify gt_version to specify the starting point.
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+  - @param optional nil or *GetClusterAsignedConnectorDeploymentsOpts - Optional Parameters:
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
+  - @param "GtVersion" (optional.Int64) -  filters the connectors to those with a version greater than the given value
+  - @param "Watch" (optional.String) -  watch for changes to the resources and return them as a stream of watch events. Specify gt_version to specify the starting point.
+
 @return ConnectorDeploymentList
 */
 func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorDeployments(ctx _context.Context, connectorClusterId string, localVarOptionals *GetClusterAsignedConnectorDeploymentsOpts) (ConnectorDeploymentList, *_nethttp.Response, error) {
@@ -261,9 +263,10 @@ func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorDeployments
 /*
 GetClusterAsignedConnectorNamespaceById Returns a connector namespace assigned to the cluster.
 Returns a connector namespace assigned to the cluster.
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
- * @param namespaceId The id of the namespace
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+  - @param namespaceId The id of the namespace
+
 @return ConnectorNamespaceDeployment
 */
 func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorNamespaceById(ctx _context.Context, connectorClusterId string, namespaceId string) (ConnectorNamespaceDeployment, *_nethttp.Response, error) {
@@ -378,12 +381,13 @@ type GetClusterAsignedConnectorNamespacesOpts struct {
 /*
 GetClusterAsignedConnectorNamespaces Returns all connector namespaces assigned to the cluster.
 Returns all connector namespaces assigned to the cluster.
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
- * @param optional nil or *GetClusterAsignedConnectorNamespacesOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
- * @param "GtVersion" (optional.Int64) -  filters the connectors to those with a version greater than the given value
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+  - @param optional nil or *GetClusterAsignedConnectorNamespacesOpts - Optional Parameters:
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
+  - @param "GtVersion" (optional.Int64) -  filters the connectors to those with a version greater than the given value
+
 @return ConnectorNamespaceDeploymentList
 */
 func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorNamespaces(ctx _context.Context, connectorClusterId string, localVarOptionals *GetClusterAsignedConnectorNamespacesOpts) (ConnectorNamespaceDeploymentList, *_nethttp.Response, error) {
@@ -498,10 +502,10 @@ func (a *ConnectorClustersAgentApiService) GetClusterAsignedConnectorNamespaces(
 /*
 UpdateConnectorDeploymentStatus update the connector deployment status
 update the connector deployment status
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
- * @param deploymentId The id of the deployment
- * @param connectorDeploymentStatus
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+  - @param deploymentId The id of the deployment
+  - @param connectorDeploymentStatus
 */
 func (a *ConnectorClustersAgentApiService) UpdateConnectorDeploymentStatus(ctx _context.Context, connectorClusterId string, deploymentId string, connectorDeploymentStatus ConnectorDeploymentStatus) (*_nethttp.Response, error) {
 	var (
@@ -600,10 +604,10 @@ func (a *ConnectorClustersAgentApiService) UpdateConnectorDeploymentStatus(ctx _
 /*
 UpdateConnectorNamespaceStatus update the connector namespace status
 update the connector namespace status
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
- * @param namespaceId The id of the namespace
- * @param connectorNamespaceDeploymentStatus
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+  - @param namespaceId The id of the namespace
+  - @param connectorNamespaceDeploymentStatus
 */
 func (a *ConnectorClustersAgentApiService) UpdateConnectorNamespaceStatus(ctx _context.Context, connectorClusterId string, namespaceId string, connectorNamespaceDeploymentStatus ConnectorNamespaceDeploymentStatus) (*_nethttp.Response, error) {
 	var (
@@ -702,9 +706,9 @@ func (a *ConnectorClustersAgentApiService) UpdateConnectorNamespaceStatus(ctx _c
 /*
 UpdateKafkaConnectorClusterStatus Update the status of a connector cluster
 Update the status of a connector cluster
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorClusterId The id of the connector cluster
- * @param connectorClusterStatus Cluster status update data
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param connectorClusterId The id of the connector cluster
+  - @param connectorClusterStatus Cluster status update data
 */
 func (a *ConnectorClustersAgentApiService) UpdateKafkaConnectorClusterStatus(ctx _context.Context, connectorClusterId string, connectorClusterStatus ConnectorClusterStatus) (*_nethttp.Response, error) {
 	var (

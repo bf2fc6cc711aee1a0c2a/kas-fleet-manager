@@ -17,694 +17,694 @@ var _ route53iface.Route53API = &Route53APIMock{}
 
 // Route53APIMock is a mock implementation of route53iface.Route53API.
 //
-// 	func TestSomethingThatUsesRoute53API(t *testing.T) {
+//	func TestSomethingThatUsesRoute53API(t *testing.T) {
 //
-// 		// make and configure a mocked route53iface.Route53API
-// 		mockedRoute53API := &Route53APIMock{
-// 			ActivateKeySigningKeyFunc: func(activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput) (*route53.ActivateKeySigningKeyOutput, error) {
-// 				panic("mock out the ActivateKeySigningKey method")
-// 			},
-// 			ActivateKeySigningKeyRequestFunc: func(activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput) (*request.Request, *route53.ActivateKeySigningKeyOutput) {
-// 				panic("mock out the ActivateKeySigningKeyRequest method")
-// 			},
-// 			ActivateKeySigningKeyWithContextFunc: func(contextMoqParam context.Context, activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput, options ...request.Option) (*route53.ActivateKeySigningKeyOutput, error) {
-// 				panic("mock out the ActivateKeySigningKeyWithContext method")
-// 			},
-// 			AssociateVPCWithHostedZoneFunc: func(associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput) (*route53.AssociateVPCWithHostedZoneOutput, error) {
-// 				panic("mock out the AssociateVPCWithHostedZone method")
-// 			},
-// 			AssociateVPCWithHostedZoneRequestFunc: func(associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput) (*request.Request, *route53.AssociateVPCWithHostedZoneOutput) {
-// 				panic("mock out the AssociateVPCWithHostedZoneRequest method")
-// 			},
-// 			AssociateVPCWithHostedZoneWithContextFunc: func(contextMoqParam context.Context, associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput, options ...request.Option) (*route53.AssociateVPCWithHostedZoneOutput, error) {
-// 				panic("mock out the AssociateVPCWithHostedZoneWithContext method")
-// 			},
-// 			ChangeCidrCollectionFunc: func(changeCidrCollectionInput *route53.ChangeCidrCollectionInput) (*route53.ChangeCidrCollectionOutput, error) {
-// 				panic("mock out the ChangeCidrCollection method")
-// 			},
-// 			ChangeCidrCollectionRequestFunc: func(changeCidrCollectionInput *route53.ChangeCidrCollectionInput) (*request.Request, *route53.ChangeCidrCollectionOutput) {
-// 				panic("mock out the ChangeCidrCollectionRequest method")
-// 			},
-// 			ChangeCidrCollectionWithContextFunc: func(contextMoqParam context.Context, changeCidrCollectionInput *route53.ChangeCidrCollectionInput, options ...request.Option) (*route53.ChangeCidrCollectionOutput, error) {
-// 				panic("mock out the ChangeCidrCollectionWithContext method")
-// 			},
-// 			ChangeResourceRecordSetsFunc: func(changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
-// 				panic("mock out the ChangeResourceRecordSets method")
-// 			},
-// 			ChangeResourceRecordSetsRequestFunc: func(changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput) (*request.Request, *route53.ChangeResourceRecordSetsOutput) {
-// 				panic("mock out the ChangeResourceRecordSetsRequest method")
-// 			},
-// 			ChangeResourceRecordSetsWithContextFunc: func(contextMoqParam context.Context, changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput, options ...request.Option) (*route53.ChangeResourceRecordSetsOutput, error) {
-// 				panic("mock out the ChangeResourceRecordSetsWithContext method")
-// 			},
-// 			ChangeTagsForResourceFunc: func(changeTagsForResourceInput *route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
-// 				panic("mock out the ChangeTagsForResource method")
-// 			},
-// 			ChangeTagsForResourceRequestFunc: func(changeTagsForResourceInput *route53.ChangeTagsForResourceInput) (*request.Request, *route53.ChangeTagsForResourceOutput) {
-// 				panic("mock out the ChangeTagsForResourceRequest method")
-// 			},
-// 			ChangeTagsForResourceWithContextFunc: func(contextMoqParam context.Context, changeTagsForResourceInput *route53.ChangeTagsForResourceInput, options ...request.Option) (*route53.ChangeTagsForResourceOutput, error) {
-// 				panic("mock out the ChangeTagsForResourceWithContext method")
-// 			},
-// 			CreateCidrCollectionFunc: func(createCidrCollectionInput *route53.CreateCidrCollectionInput) (*route53.CreateCidrCollectionOutput, error) {
-// 				panic("mock out the CreateCidrCollection method")
-// 			},
-// 			CreateCidrCollectionRequestFunc: func(createCidrCollectionInput *route53.CreateCidrCollectionInput) (*request.Request, *route53.CreateCidrCollectionOutput) {
-// 				panic("mock out the CreateCidrCollectionRequest method")
-// 			},
-// 			CreateCidrCollectionWithContextFunc: func(contextMoqParam context.Context, createCidrCollectionInput *route53.CreateCidrCollectionInput, options ...request.Option) (*route53.CreateCidrCollectionOutput, error) {
-// 				panic("mock out the CreateCidrCollectionWithContext method")
-// 			},
-// 			CreateHealthCheckFunc: func(createHealthCheckInput *route53.CreateHealthCheckInput) (*route53.CreateHealthCheckOutput, error) {
-// 				panic("mock out the CreateHealthCheck method")
-// 			},
-// 			CreateHealthCheckRequestFunc: func(createHealthCheckInput *route53.CreateHealthCheckInput) (*request.Request, *route53.CreateHealthCheckOutput) {
-// 				panic("mock out the CreateHealthCheckRequest method")
-// 			},
-// 			CreateHealthCheckWithContextFunc: func(contextMoqParam context.Context, createHealthCheckInput *route53.CreateHealthCheckInput, options ...request.Option) (*route53.CreateHealthCheckOutput, error) {
-// 				panic("mock out the CreateHealthCheckWithContext method")
-// 			},
-// 			CreateHostedZoneFunc: func(createHostedZoneInput *route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
-// 				panic("mock out the CreateHostedZone method")
-// 			},
-// 			CreateHostedZoneRequestFunc: func(createHostedZoneInput *route53.CreateHostedZoneInput) (*request.Request, *route53.CreateHostedZoneOutput) {
-// 				panic("mock out the CreateHostedZoneRequest method")
-// 			},
-// 			CreateHostedZoneWithContextFunc: func(contextMoqParam context.Context, createHostedZoneInput *route53.CreateHostedZoneInput, options ...request.Option) (*route53.CreateHostedZoneOutput, error) {
-// 				panic("mock out the CreateHostedZoneWithContext method")
-// 			},
-// 			CreateKeySigningKeyFunc: func(createKeySigningKeyInput *route53.CreateKeySigningKeyInput) (*route53.CreateKeySigningKeyOutput, error) {
-// 				panic("mock out the CreateKeySigningKey method")
-// 			},
-// 			CreateKeySigningKeyRequestFunc: func(createKeySigningKeyInput *route53.CreateKeySigningKeyInput) (*request.Request, *route53.CreateKeySigningKeyOutput) {
-// 				panic("mock out the CreateKeySigningKeyRequest method")
-// 			},
-// 			CreateKeySigningKeyWithContextFunc: func(contextMoqParam context.Context, createKeySigningKeyInput *route53.CreateKeySigningKeyInput, options ...request.Option) (*route53.CreateKeySigningKeyOutput, error) {
-// 				panic("mock out the CreateKeySigningKeyWithContext method")
-// 			},
-// 			CreateQueryLoggingConfigFunc: func(createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput) (*route53.CreateQueryLoggingConfigOutput, error) {
-// 				panic("mock out the CreateQueryLoggingConfig method")
-// 			},
-// 			CreateQueryLoggingConfigRequestFunc: func(createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput) (*request.Request, *route53.CreateQueryLoggingConfigOutput) {
-// 				panic("mock out the CreateQueryLoggingConfigRequest method")
-// 			},
-// 			CreateQueryLoggingConfigWithContextFunc: func(contextMoqParam context.Context, createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput, options ...request.Option) (*route53.CreateQueryLoggingConfigOutput, error) {
-// 				panic("mock out the CreateQueryLoggingConfigWithContext method")
-// 			},
-// 			CreateReusableDelegationSetFunc: func(createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput) (*route53.CreateReusableDelegationSetOutput, error) {
-// 				panic("mock out the CreateReusableDelegationSet method")
-// 			},
-// 			CreateReusableDelegationSetRequestFunc: func(createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput) (*request.Request, *route53.CreateReusableDelegationSetOutput) {
-// 				panic("mock out the CreateReusableDelegationSetRequest method")
-// 			},
-// 			CreateReusableDelegationSetWithContextFunc: func(contextMoqParam context.Context, createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput, options ...request.Option) (*route53.CreateReusableDelegationSetOutput, error) {
-// 				panic("mock out the CreateReusableDelegationSetWithContext method")
-// 			},
-// 			CreateTrafficPolicyFunc: func(createTrafficPolicyInput *route53.CreateTrafficPolicyInput) (*route53.CreateTrafficPolicyOutput, error) {
-// 				panic("mock out the CreateTrafficPolicy method")
-// 			},
-// 			CreateTrafficPolicyInstanceFunc: func(createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput) (*route53.CreateTrafficPolicyInstanceOutput, error) {
-// 				panic("mock out the CreateTrafficPolicyInstance method")
-// 			},
-// 			CreateTrafficPolicyInstanceRequestFunc: func(createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput) (*request.Request, *route53.CreateTrafficPolicyInstanceOutput) {
-// 				panic("mock out the CreateTrafficPolicyInstanceRequest method")
-// 			},
-// 			CreateTrafficPolicyInstanceWithContextFunc: func(contextMoqParam context.Context, createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput, options ...request.Option) (*route53.CreateTrafficPolicyInstanceOutput, error) {
-// 				panic("mock out the CreateTrafficPolicyInstanceWithContext method")
-// 			},
-// 			CreateTrafficPolicyRequestFunc: func(createTrafficPolicyInput *route53.CreateTrafficPolicyInput) (*request.Request, *route53.CreateTrafficPolicyOutput) {
-// 				panic("mock out the CreateTrafficPolicyRequest method")
-// 			},
-// 			CreateTrafficPolicyVersionFunc: func(createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput) (*route53.CreateTrafficPolicyVersionOutput, error) {
-// 				panic("mock out the CreateTrafficPolicyVersion method")
-// 			},
-// 			CreateTrafficPolicyVersionRequestFunc: func(createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput) (*request.Request, *route53.CreateTrafficPolicyVersionOutput) {
-// 				panic("mock out the CreateTrafficPolicyVersionRequest method")
-// 			},
-// 			CreateTrafficPolicyVersionWithContextFunc: func(contextMoqParam context.Context, createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput, options ...request.Option) (*route53.CreateTrafficPolicyVersionOutput, error) {
-// 				panic("mock out the CreateTrafficPolicyVersionWithContext method")
-// 			},
-// 			CreateTrafficPolicyWithContextFunc: func(contextMoqParam context.Context, createTrafficPolicyInput *route53.CreateTrafficPolicyInput, options ...request.Option) (*route53.CreateTrafficPolicyOutput, error) {
-// 				panic("mock out the CreateTrafficPolicyWithContext method")
-// 			},
-// 			CreateVPCAssociationAuthorizationFunc: func(createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput) (*route53.CreateVPCAssociationAuthorizationOutput, error) {
-// 				panic("mock out the CreateVPCAssociationAuthorization method")
-// 			},
-// 			CreateVPCAssociationAuthorizationRequestFunc: func(createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput) (*request.Request, *route53.CreateVPCAssociationAuthorizationOutput) {
-// 				panic("mock out the CreateVPCAssociationAuthorizationRequest method")
-// 			},
-// 			CreateVPCAssociationAuthorizationWithContextFunc: func(contextMoqParam context.Context, createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput, options ...request.Option) (*route53.CreateVPCAssociationAuthorizationOutput, error) {
-// 				panic("mock out the CreateVPCAssociationAuthorizationWithContext method")
-// 			},
-// 			DeactivateKeySigningKeyFunc: func(deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput) (*route53.DeactivateKeySigningKeyOutput, error) {
-// 				panic("mock out the DeactivateKeySigningKey method")
-// 			},
-// 			DeactivateKeySigningKeyRequestFunc: func(deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput) (*request.Request, *route53.DeactivateKeySigningKeyOutput) {
-// 				panic("mock out the DeactivateKeySigningKeyRequest method")
-// 			},
-// 			DeactivateKeySigningKeyWithContextFunc: func(contextMoqParam context.Context, deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput, options ...request.Option) (*route53.DeactivateKeySigningKeyOutput, error) {
-// 				panic("mock out the DeactivateKeySigningKeyWithContext method")
-// 			},
-// 			DeleteCidrCollectionFunc: func(deleteCidrCollectionInput *route53.DeleteCidrCollectionInput) (*route53.DeleteCidrCollectionOutput, error) {
-// 				panic("mock out the DeleteCidrCollection method")
-// 			},
-// 			DeleteCidrCollectionRequestFunc: func(deleteCidrCollectionInput *route53.DeleteCidrCollectionInput) (*request.Request, *route53.DeleteCidrCollectionOutput) {
-// 				panic("mock out the DeleteCidrCollectionRequest method")
-// 			},
-// 			DeleteCidrCollectionWithContextFunc: func(contextMoqParam context.Context, deleteCidrCollectionInput *route53.DeleteCidrCollectionInput, options ...request.Option) (*route53.DeleteCidrCollectionOutput, error) {
-// 				panic("mock out the DeleteCidrCollectionWithContext method")
-// 			},
-// 			DeleteHealthCheckFunc: func(deleteHealthCheckInput *route53.DeleteHealthCheckInput) (*route53.DeleteHealthCheckOutput, error) {
-// 				panic("mock out the DeleteHealthCheck method")
-// 			},
-// 			DeleteHealthCheckRequestFunc: func(deleteHealthCheckInput *route53.DeleteHealthCheckInput) (*request.Request, *route53.DeleteHealthCheckOutput) {
-// 				panic("mock out the DeleteHealthCheckRequest method")
-// 			},
-// 			DeleteHealthCheckWithContextFunc: func(contextMoqParam context.Context, deleteHealthCheckInput *route53.DeleteHealthCheckInput, options ...request.Option) (*route53.DeleteHealthCheckOutput, error) {
-// 				panic("mock out the DeleteHealthCheckWithContext method")
-// 			},
-// 			DeleteHostedZoneFunc: func(deleteHostedZoneInput *route53.DeleteHostedZoneInput) (*route53.DeleteHostedZoneOutput, error) {
-// 				panic("mock out the DeleteHostedZone method")
-// 			},
-// 			DeleteHostedZoneRequestFunc: func(deleteHostedZoneInput *route53.DeleteHostedZoneInput) (*request.Request, *route53.DeleteHostedZoneOutput) {
-// 				panic("mock out the DeleteHostedZoneRequest method")
-// 			},
-// 			DeleteHostedZoneWithContextFunc: func(contextMoqParam context.Context, deleteHostedZoneInput *route53.DeleteHostedZoneInput, options ...request.Option) (*route53.DeleteHostedZoneOutput, error) {
-// 				panic("mock out the DeleteHostedZoneWithContext method")
-// 			},
-// 			DeleteKeySigningKeyFunc: func(deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput) (*route53.DeleteKeySigningKeyOutput, error) {
-// 				panic("mock out the DeleteKeySigningKey method")
-// 			},
-// 			DeleteKeySigningKeyRequestFunc: func(deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput) (*request.Request, *route53.DeleteKeySigningKeyOutput) {
-// 				panic("mock out the DeleteKeySigningKeyRequest method")
-// 			},
-// 			DeleteKeySigningKeyWithContextFunc: func(contextMoqParam context.Context, deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput, options ...request.Option) (*route53.DeleteKeySigningKeyOutput, error) {
-// 				panic("mock out the DeleteKeySigningKeyWithContext method")
-// 			},
-// 			DeleteQueryLoggingConfigFunc: func(deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput) (*route53.DeleteQueryLoggingConfigOutput, error) {
-// 				panic("mock out the DeleteQueryLoggingConfig method")
-// 			},
-// 			DeleteQueryLoggingConfigRequestFunc: func(deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput) (*request.Request, *route53.DeleteQueryLoggingConfigOutput) {
-// 				panic("mock out the DeleteQueryLoggingConfigRequest method")
-// 			},
-// 			DeleteQueryLoggingConfigWithContextFunc: func(contextMoqParam context.Context, deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput, options ...request.Option) (*route53.DeleteQueryLoggingConfigOutput, error) {
-// 				panic("mock out the DeleteQueryLoggingConfigWithContext method")
-// 			},
-// 			DeleteReusableDelegationSetFunc: func(deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput) (*route53.DeleteReusableDelegationSetOutput, error) {
-// 				panic("mock out the DeleteReusableDelegationSet method")
-// 			},
-// 			DeleteReusableDelegationSetRequestFunc: func(deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput) (*request.Request, *route53.DeleteReusableDelegationSetOutput) {
-// 				panic("mock out the DeleteReusableDelegationSetRequest method")
-// 			},
-// 			DeleteReusableDelegationSetWithContextFunc: func(contextMoqParam context.Context, deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput, options ...request.Option) (*route53.DeleteReusableDelegationSetOutput, error) {
-// 				panic("mock out the DeleteReusableDelegationSetWithContext method")
-// 			},
-// 			DeleteTrafficPolicyFunc: func(deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput) (*route53.DeleteTrafficPolicyOutput, error) {
-// 				panic("mock out the DeleteTrafficPolicy method")
-// 			},
-// 			DeleteTrafficPolicyInstanceFunc: func(deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput) (*route53.DeleteTrafficPolicyInstanceOutput, error) {
-// 				panic("mock out the DeleteTrafficPolicyInstance method")
-// 			},
-// 			DeleteTrafficPolicyInstanceRequestFunc: func(deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput) (*request.Request, *route53.DeleteTrafficPolicyInstanceOutput) {
-// 				panic("mock out the DeleteTrafficPolicyInstanceRequest method")
-// 			},
-// 			DeleteTrafficPolicyInstanceWithContextFunc: func(contextMoqParam context.Context, deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput, options ...request.Option) (*route53.DeleteTrafficPolicyInstanceOutput, error) {
-// 				panic("mock out the DeleteTrafficPolicyInstanceWithContext method")
-// 			},
-// 			DeleteTrafficPolicyRequestFunc: func(deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput) (*request.Request, *route53.DeleteTrafficPolicyOutput) {
-// 				panic("mock out the DeleteTrafficPolicyRequest method")
-// 			},
-// 			DeleteTrafficPolicyWithContextFunc: func(contextMoqParam context.Context, deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput, options ...request.Option) (*route53.DeleteTrafficPolicyOutput, error) {
-// 				panic("mock out the DeleteTrafficPolicyWithContext method")
-// 			},
-// 			DeleteVPCAssociationAuthorizationFunc: func(deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput) (*route53.DeleteVPCAssociationAuthorizationOutput, error) {
-// 				panic("mock out the DeleteVPCAssociationAuthorization method")
-// 			},
-// 			DeleteVPCAssociationAuthorizationRequestFunc: func(deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput) (*request.Request, *route53.DeleteVPCAssociationAuthorizationOutput) {
-// 				panic("mock out the DeleteVPCAssociationAuthorizationRequest method")
-// 			},
-// 			DeleteVPCAssociationAuthorizationWithContextFunc: func(contextMoqParam context.Context, deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput, options ...request.Option) (*route53.DeleteVPCAssociationAuthorizationOutput, error) {
-// 				panic("mock out the DeleteVPCAssociationAuthorizationWithContext method")
-// 			},
-// 			DisableHostedZoneDNSSECFunc: func(disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput) (*route53.DisableHostedZoneDNSSECOutput, error) {
-// 				panic("mock out the DisableHostedZoneDNSSEC method")
-// 			},
-// 			DisableHostedZoneDNSSECRequestFunc: func(disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput) (*request.Request, *route53.DisableHostedZoneDNSSECOutput) {
-// 				panic("mock out the DisableHostedZoneDNSSECRequest method")
-// 			},
-// 			DisableHostedZoneDNSSECWithContextFunc: func(contextMoqParam context.Context, disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput, options ...request.Option) (*route53.DisableHostedZoneDNSSECOutput, error) {
-// 				panic("mock out the DisableHostedZoneDNSSECWithContext method")
-// 			},
-// 			DisassociateVPCFromHostedZoneFunc: func(disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput) (*route53.DisassociateVPCFromHostedZoneOutput, error) {
-// 				panic("mock out the DisassociateVPCFromHostedZone method")
-// 			},
-// 			DisassociateVPCFromHostedZoneRequestFunc: func(disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput) (*request.Request, *route53.DisassociateVPCFromHostedZoneOutput) {
-// 				panic("mock out the DisassociateVPCFromHostedZoneRequest method")
-// 			},
-// 			DisassociateVPCFromHostedZoneWithContextFunc: func(contextMoqParam context.Context, disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput, options ...request.Option) (*route53.DisassociateVPCFromHostedZoneOutput, error) {
-// 				panic("mock out the DisassociateVPCFromHostedZoneWithContext method")
-// 			},
-// 			EnableHostedZoneDNSSECFunc: func(enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput) (*route53.EnableHostedZoneDNSSECOutput, error) {
-// 				panic("mock out the EnableHostedZoneDNSSEC method")
-// 			},
-// 			EnableHostedZoneDNSSECRequestFunc: func(enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput) (*request.Request, *route53.EnableHostedZoneDNSSECOutput) {
-// 				panic("mock out the EnableHostedZoneDNSSECRequest method")
-// 			},
-// 			EnableHostedZoneDNSSECWithContextFunc: func(contextMoqParam context.Context, enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput, options ...request.Option) (*route53.EnableHostedZoneDNSSECOutput, error) {
-// 				panic("mock out the EnableHostedZoneDNSSECWithContext method")
-// 			},
-// 			GetAccountLimitFunc: func(getAccountLimitInput *route53.GetAccountLimitInput) (*route53.GetAccountLimitOutput, error) {
-// 				panic("mock out the GetAccountLimit method")
-// 			},
-// 			GetAccountLimitRequestFunc: func(getAccountLimitInput *route53.GetAccountLimitInput) (*request.Request, *route53.GetAccountLimitOutput) {
-// 				panic("mock out the GetAccountLimitRequest method")
-// 			},
-// 			GetAccountLimitWithContextFunc: func(contextMoqParam context.Context, getAccountLimitInput *route53.GetAccountLimitInput, options ...request.Option) (*route53.GetAccountLimitOutput, error) {
-// 				panic("mock out the GetAccountLimitWithContext method")
-// 			},
-// 			GetChangeFunc: func(getChangeInput *route53.GetChangeInput) (*route53.GetChangeOutput, error) {
-// 				panic("mock out the GetChange method")
-// 			},
-// 			GetChangeRequestFunc: func(getChangeInput *route53.GetChangeInput) (*request.Request, *route53.GetChangeOutput) {
-// 				panic("mock out the GetChangeRequest method")
-// 			},
-// 			GetChangeWithContextFunc: func(contextMoqParam context.Context, getChangeInput *route53.GetChangeInput, options ...request.Option) (*route53.GetChangeOutput, error) {
-// 				panic("mock out the GetChangeWithContext method")
-// 			},
-// 			GetCheckerIpRangesFunc: func(getCheckerIpRangesInput *route53.GetCheckerIpRangesInput) (*route53.GetCheckerIpRangesOutput, error) {
-// 				panic("mock out the GetCheckerIpRanges method")
-// 			},
-// 			GetCheckerIpRangesRequestFunc: func(getCheckerIpRangesInput *route53.GetCheckerIpRangesInput) (*request.Request, *route53.GetCheckerIpRangesOutput) {
-// 				panic("mock out the GetCheckerIpRangesRequest method")
-// 			},
-// 			GetCheckerIpRangesWithContextFunc: func(contextMoqParam context.Context, getCheckerIpRangesInput *route53.GetCheckerIpRangesInput, options ...request.Option) (*route53.GetCheckerIpRangesOutput, error) {
-// 				panic("mock out the GetCheckerIpRangesWithContext method")
-// 			},
-// 			GetDNSSECFunc: func(getDNSSECInput *route53.GetDNSSECInput) (*route53.GetDNSSECOutput, error) {
-// 				panic("mock out the GetDNSSEC method")
-// 			},
-// 			GetDNSSECRequestFunc: func(getDNSSECInput *route53.GetDNSSECInput) (*request.Request, *route53.GetDNSSECOutput) {
-// 				panic("mock out the GetDNSSECRequest method")
-// 			},
-// 			GetDNSSECWithContextFunc: func(contextMoqParam context.Context, getDNSSECInput *route53.GetDNSSECInput, options ...request.Option) (*route53.GetDNSSECOutput, error) {
-// 				panic("mock out the GetDNSSECWithContext method")
-// 			},
-// 			GetGeoLocationFunc: func(getGeoLocationInput *route53.GetGeoLocationInput) (*route53.GetGeoLocationOutput, error) {
-// 				panic("mock out the GetGeoLocation method")
-// 			},
-// 			GetGeoLocationRequestFunc: func(getGeoLocationInput *route53.GetGeoLocationInput) (*request.Request, *route53.GetGeoLocationOutput) {
-// 				panic("mock out the GetGeoLocationRequest method")
-// 			},
-// 			GetGeoLocationWithContextFunc: func(contextMoqParam context.Context, getGeoLocationInput *route53.GetGeoLocationInput, options ...request.Option) (*route53.GetGeoLocationOutput, error) {
-// 				panic("mock out the GetGeoLocationWithContext method")
-// 			},
-// 			GetHealthCheckFunc: func(getHealthCheckInput *route53.GetHealthCheckInput) (*route53.GetHealthCheckOutput, error) {
-// 				panic("mock out the GetHealthCheck method")
-// 			},
-// 			GetHealthCheckCountFunc: func(getHealthCheckCountInput *route53.GetHealthCheckCountInput) (*route53.GetHealthCheckCountOutput, error) {
-// 				panic("mock out the GetHealthCheckCount method")
-// 			},
-// 			GetHealthCheckCountRequestFunc: func(getHealthCheckCountInput *route53.GetHealthCheckCountInput) (*request.Request, *route53.GetHealthCheckCountOutput) {
-// 				panic("mock out the GetHealthCheckCountRequest method")
-// 			},
-// 			GetHealthCheckCountWithContextFunc: func(contextMoqParam context.Context, getHealthCheckCountInput *route53.GetHealthCheckCountInput, options ...request.Option) (*route53.GetHealthCheckCountOutput, error) {
-// 				panic("mock out the GetHealthCheckCountWithContext method")
-// 			},
-// 			GetHealthCheckLastFailureReasonFunc: func(getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput) (*route53.GetHealthCheckLastFailureReasonOutput, error) {
-// 				panic("mock out the GetHealthCheckLastFailureReason method")
-// 			},
-// 			GetHealthCheckLastFailureReasonRequestFunc: func(getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput) (*request.Request, *route53.GetHealthCheckLastFailureReasonOutput) {
-// 				panic("mock out the GetHealthCheckLastFailureReasonRequest method")
-// 			},
-// 			GetHealthCheckLastFailureReasonWithContextFunc: func(contextMoqParam context.Context, getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput, options ...request.Option) (*route53.GetHealthCheckLastFailureReasonOutput, error) {
-// 				panic("mock out the GetHealthCheckLastFailureReasonWithContext method")
-// 			},
-// 			GetHealthCheckRequestFunc: func(getHealthCheckInput *route53.GetHealthCheckInput) (*request.Request, *route53.GetHealthCheckOutput) {
-// 				panic("mock out the GetHealthCheckRequest method")
-// 			},
-// 			GetHealthCheckStatusFunc: func(getHealthCheckStatusInput *route53.GetHealthCheckStatusInput) (*route53.GetHealthCheckStatusOutput, error) {
-// 				panic("mock out the GetHealthCheckStatus method")
-// 			},
-// 			GetHealthCheckStatusRequestFunc: func(getHealthCheckStatusInput *route53.GetHealthCheckStatusInput) (*request.Request, *route53.GetHealthCheckStatusOutput) {
-// 				panic("mock out the GetHealthCheckStatusRequest method")
-// 			},
-// 			GetHealthCheckStatusWithContextFunc: func(contextMoqParam context.Context, getHealthCheckStatusInput *route53.GetHealthCheckStatusInput, options ...request.Option) (*route53.GetHealthCheckStatusOutput, error) {
-// 				panic("mock out the GetHealthCheckStatusWithContext method")
-// 			},
-// 			GetHealthCheckWithContextFunc: func(contextMoqParam context.Context, getHealthCheckInput *route53.GetHealthCheckInput, options ...request.Option) (*route53.GetHealthCheckOutput, error) {
-// 				panic("mock out the GetHealthCheckWithContext method")
-// 			},
-// 			GetHostedZoneFunc: func(getHostedZoneInput *route53.GetHostedZoneInput) (*route53.GetHostedZoneOutput, error) {
-// 				panic("mock out the GetHostedZone method")
-// 			},
-// 			GetHostedZoneCountFunc: func(getHostedZoneCountInput *route53.GetHostedZoneCountInput) (*route53.GetHostedZoneCountOutput, error) {
-// 				panic("mock out the GetHostedZoneCount method")
-// 			},
-// 			GetHostedZoneCountRequestFunc: func(getHostedZoneCountInput *route53.GetHostedZoneCountInput) (*request.Request, *route53.GetHostedZoneCountOutput) {
-// 				panic("mock out the GetHostedZoneCountRequest method")
-// 			},
-// 			GetHostedZoneCountWithContextFunc: func(contextMoqParam context.Context, getHostedZoneCountInput *route53.GetHostedZoneCountInput, options ...request.Option) (*route53.GetHostedZoneCountOutput, error) {
-// 				panic("mock out the GetHostedZoneCountWithContext method")
-// 			},
-// 			GetHostedZoneLimitFunc: func(getHostedZoneLimitInput *route53.GetHostedZoneLimitInput) (*route53.GetHostedZoneLimitOutput, error) {
-// 				panic("mock out the GetHostedZoneLimit method")
-// 			},
-// 			GetHostedZoneLimitRequestFunc: func(getHostedZoneLimitInput *route53.GetHostedZoneLimitInput) (*request.Request, *route53.GetHostedZoneLimitOutput) {
-// 				panic("mock out the GetHostedZoneLimitRequest method")
-// 			},
-// 			GetHostedZoneLimitWithContextFunc: func(contextMoqParam context.Context, getHostedZoneLimitInput *route53.GetHostedZoneLimitInput, options ...request.Option) (*route53.GetHostedZoneLimitOutput, error) {
-// 				panic("mock out the GetHostedZoneLimitWithContext method")
-// 			},
-// 			GetHostedZoneRequestFunc: func(getHostedZoneInput *route53.GetHostedZoneInput) (*request.Request, *route53.GetHostedZoneOutput) {
-// 				panic("mock out the GetHostedZoneRequest method")
-// 			},
-// 			GetHostedZoneWithContextFunc: func(contextMoqParam context.Context, getHostedZoneInput *route53.GetHostedZoneInput, options ...request.Option) (*route53.GetHostedZoneOutput, error) {
-// 				panic("mock out the GetHostedZoneWithContext method")
-// 			},
-// 			GetQueryLoggingConfigFunc: func(getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput) (*route53.GetQueryLoggingConfigOutput, error) {
-// 				panic("mock out the GetQueryLoggingConfig method")
-// 			},
-// 			GetQueryLoggingConfigRequestFunc: func(getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput) (*request.Request, *route53.GetQueryLoggingConfigOutput) {
-// 				panic("mock out the GetQueryLoggingConfigRequest method")
-// 			},
-// 			GetQueryLoggingConfigWithContextFunc: func(contextMoqParam context.Context, getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput, options ...request.Option) (*route53.GetQueryLoggingConfigOutput, error) {
-// 				panic("mock out the GetQueryLoggingConfigWithContext method")
-// 			},
-// 			GetReusableDelegationSetFunc: func(getReusableDelegationSetInput *route53.GetReusableDelegationSetInput) (*route53.GetReusableDelegationSetOutput, error) {
-// 				panic("mock out the GetReusableDelegationSet method")
-// 			},
-// 			GetReusableDelegationSetLimitFunc: func(getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput) (*route53.GetReusableDelegationSetLimitOutput, error) {
-// 				panic("mock out the GetReusableDelegationSetLimit method")
-// 			},
-// 			GetReusableDelegationSetLimitRequestFunc: func(getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput) (*request.Request, *route53.GetReusableDelegationSetLimitOutput) {
-// 				panic("mock out the GetReusableDelegationSetLimitRequest method")
-// 			},
-// 			GetReusableDelegationSetLimitWithContextFunc: func(contextMoqParam context.Context, getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput, options ...request.Option) (*route53.GetReusableDelegationSetLimitOutput, error) {
-// 				panic("mock out the GetReusableDelegationSetLimitWithContext method")
-// 			},
-// 			GetReusableDelegationSetRequestFunc: func(getReusableDelegationSetInput *route53.GetReusableDelegationSetInput) (*request.Request, *route53.GetReusableDelegationSetOutput) {
-// 				panic("mock out the GetReusableDelegationSetRequest method")
-// 			},
-// 			GetReusableDelegationSetWithContextFunc: func(contextMoqParam context.Context, getReusableDelegationSetInput *route53.GetReusableDelegationSetInput, options ...request.Option) (*route53.GetReusableDelegationSetOutput, error) {
-// 				panic("mock out the GetReusableDelegationSetWithContext method")
-// 			},
-// 			GetTrafficPolicyFunc: func(getTrafficPolicyInput *route53.GetTrafficPolicyInput) (*route53.GetTrafficPolicyOutput, error) {
-// 				panic("mock out the GetTrafficPolicy method")
-// 			},
-// 			GetTrafficPolicyInstanceFunc: func(getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput) (*route53.GetTrafficPolicyInstanceOutput, error) {
-// 				panic("mock out the GetTrafficPolicyInstance method")
-// 			},
-// 			GetTrafficPolicyInstanceCountFunc: func(getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput) (*route53.GetTrafficPolicyInstanceCountOutput, error) {
-// 				panic("mock out the GetTrafficPolicyInstanceCount method")
-// 			},
-// 			GetTrafficPolicyInstanceCountRequestFunc: func(getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput) (*request.Request, *route53.GetTrafficPolicyInstanceCountOutput) {
-// 				panic("mock out the GetTrafficPolicyInstanceCountRequest method")
-// 			},
-// 			GetTrafficPolicyInstanceCountWithContextFunc: func(contextMoqParam context.Context, getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput, options ...request.Option) (*route53.GetTrafficPolicyInstanceCountOutput, error) {
-// 				panic("mock out the GetTrafficPolicyInstanceCountWithContext method")
-// 			},
-// 			GetTrafficPolicyInstanceRequestFunc: func(getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput) (*request.Request, *route53.GetTrafficPolicyInstanceOutput) {
-// 				panic("mock out the GetTrafficPolicyInstanceRequest method")
-// 			},
-// 			GetTrafficPolicyInstanceWithContextFunc: func(contextMoqParam context.Context, getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput, options ...request.Option) (*route53.GetTrafficPolicyInstanceOutput, error) {
-// 				panic("mock out the GetTrafficPolicyInstanceWithContext method")
-// 			},
-// 			GetTrafficPolicyRequestFunc: func(getTrafficPolicyInput *route53.GetTrafficPolicyInput) (*request.Request, *route53.GetTrafficPolicyOutput) {
-// 				panic("mock out the GetTrafficPolicyRequest method")
-// 			},
-// 			GetTrafficPolicyWithContextFunc: func(contextMoqParam context.Context, getTrafficPolicyInput *route53.GetTrafficPolicyInput, options ...request.Option) (*route53.GetTrafficPolicyOutput, error) {
-// 				panic("mock out the GetTrafficPolicyWithContext method")
-// 			},
-// 			ListCidrBlocksFunc: func(listCidrBlocksInput *route53.ListCidrBlocksInput) (*route53.ListCidrBlocksOutput, error) {
-// 				panic("mock out the ListCidrBlocks method")
-// 			},
-// 			ListCidrBlocksPagesFunc: func(listCidrBlocksInput *route53.ListCidrBlocksInput, fn func(*route53.ListCidrBlocksOutput, bool) bool) error {
-// 				panic("mock out the ListCidrBlocksPages method")
-// 			},
-// 			ListCidrBlocksPagesWithContextFunc: func(contextMoqParam context.Context, listCidrBlocksInput *route53.ListCidrBlocksInput, fn func(*route53.ListCidrBlocksOutput, bool) bool, options ...request.Option) error {
-// 				panic("mock out the ListCidrBlocksPagesWithContext method")
-// 			},
-// 			ListCidrBlocksRequestFunc: func(listCidrBlocksInput *route53.ListCidrBlocksInput) (*request.Request, *route53.ListCidrBlocksOutput) {
-// 				panic("mock out the ListCidrBlocksRequest method")
-// 			},
-// 			ListCidrBlocksWithContextFunc: func(contextMoqParam context.Context, listCidrBlocksInput *route53.ListCidrBlocksInput, options ...request.Option) (*route53.ListCidrBlocksOutput, error) {
-// 				panic("mock out the ListCidrBlocksWithContext method")
-// 			},
-// 			ListCidrCollectionsFunc: func(listCidrCollectionsInput *route53.ListCidrCollectionsInput) (*route53.ListCidrCollectionsOutput, error) {
-// 				panic("mock out the ListCidrCollections method")
-// 			},
-// 			ListCidrCollectionsPagesFunc: func(listCidrCollectionsInput *route53.ListCidrCollectionsInput, fn func(*route53.ListCidrCollectionsOutput, bool) bool) error {
-// 				panic("mock out the ListCidrCollectionsPages method")
-// 			},
-// 			ListCidrCollectionsPagesWithContextFunc: func(contextMoqParam context.Context, listCidrCollectionsInput *route53.ListCidrCollectionsInput, fn func(*route53.ListCidrCollectionsOutput, bool) bool, options ...request.Option) error {
-// 				panic("mock out the ListCidrCollectionsPagesWithContext method")
-// 			},
-// 			ListCidrCollectionsRequestFunc: func(listCidrCollectionsInput *route53.ListCidrCollectionsInput) (*request.Request, *route53.ListCidrCollectionsOutput) {
-// 				panic("mock out the ListCidrCollectionsRequest method")
-// 			},
-// 			ListCidrCollectionsWithContextFunc: func(contextMoqParam context.Context, listCidrCollectionsInput *route53.ListCidrCollectionsInput, options ...request.Option) (*route53.ListCidrCollectionsOutput, error) {
-// 				panic("mock out the ListCidrCollectionsWithContext method")
-// 			},
-// 			ListCidrLocationsFunc: func(listCidrLocationsInput *route53.ListCidrLocationsInput) (*route53.ListCidrLocationsOutput, error) {
-// 				panic("mock out the ListCidrLocations method")
-// 			},
-// 			ListCidrLocationsPagesFunc: func(listCidrLocationsInput *route53.ListCidrLocationsInput, fn func(*route53.ListCidrLocationsOutput, bool) bool) error {
-// 				panic("mock out the ListCidrLocationsPages method")
-// 			},
-// 			ListCidrLocationsPagesWithContextFunc: func(contextMoqParam context.Context, listCidrLocationsInput *route53.ListCidrLocationsInput, fn func(*route53.ListCidrLocationsOutput, bool) bool, options ...request.Option) error {
-// 				panic("mock out the ListCidrLocationsPagesWithContext method")
-// 			},
-// 			ListCidrLocationsRequestFunc: func(listCidrLocationsInput *route53.ListCidrLocationsInput) (*request.Request, *route53.ListCidrLocationsOutput) {
-// 				panic("mock out the ListCidrLocationsRequest method")
-// 			},
-// 			ListCidrLocationsWithContextFunc: func(contextMoqParam context.Context, listCidrLocationsInput *route53.ListCidrLocationsInput, options ...request.Option) (*route53.ListCidrLocationsOutput, error) {
-// 				panic("mock out the ListCidrLocationsWithContext method")
-// 			},
-// 			ListGeoLocationsFunc: func(listGeoLocationsInput *route53.ListGeoLocationsInput) (*route53.ListGeoLocationsOutput, error) {
-// 				panic("mock out the ListGeoLocations method")
-// 			},
-// 			ListGeoLocationsRequestFunc: func(listGeoLocationsInput *route53.ListGeoLocationsInput) (*request.Request, *route53.ListGeoLocationsOutput) {
-// 				panic("mock out the ListGeoLocationsRequest method")
-// 			},
-// 			ListGeoLocationsWithContextFunc: func(contextMoqParam context.Context, listGeoLocationsInput *route53.ListGeoLocationsInput, options ...request.Option) (*route53.ListGeoLocationsOutput, error) {
-// 				panic("mock out the ListGeoLocationsWithContext method")
-// 			},
-// 			ListHealthChecksFunc: func(listHealthChecksInput *route53.ListHealthChecksInput) (*route53.ListHealthChecksOutput, error) {
-// 				panic("mock out the ListHealthChecks method")
-// 			},
-// 			ListHealthChecksPagesFunc: func(listHealthChecksInput *route53.ListHealthChecksInput, fn func(*route53.ListHealthChecksOutput, bool) bool) error {
-// 				panic("mock out the ListHealthChecksPages method")
-// 			},
-// 			ListHealthChecksPagesWithContextFunc: func(contextMoqParam context.Context, listHealthChecksInput *route53.ListHealthChecksInput, fn func(*route53.ListHealthChecksOutput, bool) bool, options ...request.Option) error {
-// 				panic("mock out the ListHealthChecksPagesWithContext method")
-// 			},
-// 			ListHealthChecksRequestFunc: func(listHealthChecksInput *route53.ListHealthChecksInput) (*request.Request, *route53.ListHealthChecksOutput) {
-// 				panic("mock out the ListHealthChecksRequest method")
-// 			},
-// 			ListHealthChecksWithContextFunc: func(contextMoqParam context.Context, listHealthChecksInput *route53.ListHealthChecksInput, options ...request.Option) (*route53.ListHealthChecksOutput, error) {
-// 				panic("mock out the ListHealthChecksWithContext method")
-// 			},
-// 			ListHostedZonesFunc: func(listHostedZonesInput *route53.ListHostedZonesInput) (*route53.ListHostedZonesOutput, error) {
-// 				panic("mock out the ListHostedZones method")
-// 			},
-// 			ListHostedZonesByNameFunc: func(listHostedZonesByNameInput *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error) {
-// 				panic("mock out the ListHostedZonesByName method")
-// 			},
-// 			ListHostedZonesByNameRequestFunc: func(listHostedZonesByNameInput *route53.ListHostedZonesByNameInput) (*request.Request, *route53.ListHostedZonesByNameOutput) {
-// 				panic("mock out the ListHostedZonesByNameRequest method")
-// 			},
-// 			ListHostedZonesByNameWithContextFunc: func(contextMoqParam context.Context, listHostedZonesByNameInput *route53.ListHostedZonesByNameInput, options ...request.Option) (*route53.ListHostedZonesByNameOutput, error) {
-// 				panic("mock out the ListHostedZonesByNameWithContext method")
-// 			},
-// 			ListHostedZonesByVPCFunc: func(listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput) (*route53.ListHostedZonesByVPCOutput, error) {
-// 				panic("mock out the ListHostedZonesByVPC method")
-// 			},
-// 			ListHostedZonesByVPCRequestFunc: func(listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput) (*request.Request, *route53.ListHostedZonesByVPCOutput) {
-// 				panic("mock out the ListHostedZonesByVPCRequest method")
-// 			},
-// 			ListHostedZonesByVPCWithContextFunc: func(contextMoqParam context.Context, listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput, options ...request.Option) (*route53.ListHostedZonesByVPCOutput, error) {
-// 				panic("mock out the ListHostedZonesByVPCWithContext method")
-// 			},
-// 			ListHostedZonesPagesFunc: func(listHostedZonesInput *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool) error {
-// 				panic("mock out the ListHostedZonesPages method")
-// 			},
-// 			ListHostedZonesPagesWithContextFunc: func(contextMoqParam context.Context, listHostedZonesInput *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool, options ...request.Option) error {
-// 				panic("mock out the ListHostedZonesPagesWithContext method")
-// 			},
-// 			ListHostedZonesRequestFunc: func(listHostedZonesInput *route53.ListHostedZonesInput) (*request.Request, *route53.ListHostedZonesOutput) {
-// 				panic("mock out the ListHostedZonesRequest method")
-// 			},
-// 			ListHostedZonesWithContextFunc: func(contextMoqParam context.Context, listHostedZonesInput *route53.ListHostedZonesInput, options ...request.Option) (*route53.ListHostedZonesOutput, error) {
-// 				panic("mock out the ListHostedZonesWithContext method")
-// 			},
-// 			ListQueryLoggingConfigsFunc: func(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput) (*route53.ListQueryLoggingConfigsOutput, error) {
-// 				panic("mock out the ListQueryLoggingConfigs method")
-// 			},
-// 			ListQueryLoggingConfigsPagesFunc: func(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, fn func(*route53.ListQueryLoggingConfigsOutput, bool) bool) error {
-// 				panic("mock out the ListQueryLoggingConfigsPages method")
-// 			},
-// 			ListQueryLoggingConfigsPagesWithContextFunc: func(contextMoqParam context.Context, listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, fn func(*route53.ListQueryLoggingConfigsOutput, bool) bool, options ...request.Option) error {
-// 				panic("mock out the ListQueryLoggingConfigsPagesWithContext method")
-// 			},
-// 			ListQueryLoggingConfigsRequestFunc: func(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput) (*request.Request, *route53.ListQueryLoggingConfigsOutput) {
-// 				panic("mock out the ListQueryLoggingConfigsRequest method")
-// 			},
-// 			ListQueryLoggingConfigsWithContextFunc: func(contextMoqParam context.Context, listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, options ...request.Option) (*route53.ListQueryLoggingConfigsOutput, error) {
-// 				panic("mock out the ListQueryLoggingConfigsWithContext method")
-// 			},
-// 			ListResourceRecordSetsFunc: func(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error) {
-// 				panic("mock out the ListResourceRecordSets method")
-// 			},
-// 			ListResourceRecordSetsPagesFunc: func(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, fn func(*route53.ListResourceRecordSetsOutput, bool) bool) error {
-// 				panic("mock out the ListResourceRecordSetsPages method")
-// 			},
-// 			ListResourceRecordSetsPagesWithContextFunc: func(contextMoqParam context.Context, listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, fn func(*route53.ListResourceRecordSetsOutput, bool) bool, options ...request.Option) error {
-// 				panic("mock out the ListResourceRecordSetsPagesWithContext method")
-// 			},
-// 			ListResourceRecordSetsRequestFunc: func(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput) (*request.Request, *route53.ListResourceRecordSetsOutput) {
-// 				panic("mock out the ListResourceRecordSetsRequest method")
-// 			},
-// 			ListResourceRecordSetsWithContextFunc: func(contextMoqParam context.Context, listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, options ...request.Option) (*route53.ListResourceRecordSetsOutput, error) {
-// 				panic("mock out the ListResourceRecordSetsWithContext method")
-// 			},
-// 			ListReusableDelegationSetsFunc: func(listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput) (*route53.ListReusableDelegationSetsOutput, error) {
-// 				panic("mock out the ListReusableDelegationSets method")
-// 			},
-// 			ListReusableDelegationSetsRequestFunc: func(listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput) (*request.Request, *route53.ListReusableDelegationSetsOutput) {
-// 				panic("mock out the ListReusableDelegationSetsRequest method")
-// 			},
-// 			ListReusableDelegationSetsWithContextFunc: func(contextMoqParam context.Context, listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput, options ...request.Option) (*route53.ListReusableDelegationSetsOutput, error) {
-// 				panic("mock out the ListReusableDelegationSetsWithContext method")
-// 			},
-// 			ListTagsForResourceFunc: func(listTagsForResourceInput *route53.ListTagsForResourceInput) (*route53.ListTagsForResourceOutput, error) {
-// 				panic("mock out the ListTagsForResource method")
-// 			},
-// 			ListTagsForResourceRequestFunc: func(listTagsForResourceInput *route53.ListTagsForResourceInput) (*request.Request, *route53.ListTagsForResourceOutput) {
-// 				panic("mock out the ListTagsForResourceRequest method")
-// 			},
-// 			ListTagsForResourceWithContextFunc: func(contextMoqParam context.Context, listTagsForResourceInput *route53.ListTagsForResourceInput, options ...request.Option) (*route53.ListTagsForResourceOutput, error) {
-// 				panic("mock out the ListTagsForResourceWithContext method")
-// 			},
-// 			ListTagsForResourcesFunc: func(listTagsForResourcesInput *route53.ListTagsForResourcesInput) (*route53.ListTagsForResourcesOutput, error) {
-// 				panic("mock out the ListTagsForResources method")
-// 			},
-// 			ListTagsForResourcesRequestFunc: func(listTagsForResourcesInput *route53.ListTagsForResourcesInput) (*request.Request, *route53.ListTagsForResourcesOutput) {
-// 				panic("mock out the ListTagsForResourcesRequest method")
-// 			},
-// 			ListTagsForResourcesWithContextFunc: func(contextMoqParam context.Context, listTagsForResourcesInput *route53.ListTagsForResourcesInput, options ...request.Option) (*route53.ListTagsForResourcesOutput, error) {
-// 				panic("mock out the ListTagsForResourcesWithContext method")
-// 			},
-// 			ListTrafficPoliciesFunc: func(listTrafficPoliciesInput *route53.ListTrafficPoliciesInput) (*route53.ListTrafficPoliciesOutput, error) {
-// 				panic("mock out the ListTrafficPolicies method")
-// 			},
-// 			ListTrafficPoliciesRequestFunc: func(listTrafficPoliciesInput *route53.ListTrafficPoliciesInput) (*request.Request, *route53.ListTrafficPoliciesOutput) {
-// 				panic("mock out the ListTrafficPoliciesRequest method")
-// 			},
-// 			ListTrafficPoliciesWithContextFunc: func(contextMoqParam context.Context, listTrafficPoliciesInput *route53.ListTrafficPoliciesInput, options ...request.Option) (*route53.ListTrafficPoliciesOutput, error) {
-// 				panic("mock out the ListTrafficPoliciesWithContext method")
-// 			},
-// 			ListTrafficPolicyInstancesFunc: func(listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput) (*route53.ListTrafficPolicyInstancesOutput, error) {
-// 				panic("mock out the ListTrafficPolicyInstances method")
-// 			},
-// 			ListTrafficPolicyInstancesByHostedZoneFunc: func(listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error) {
-// 				panic("mock out the ListTrafficPolicyInstancesByHostedZone method")
-// 			},
-// 			ListTrafficPolicyInstancesByHostedZoneRequestFunc: func(listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*request.Request, *route53.ListTrafficPolicyInstancesByHostedZoneOutput) {
-// 				panic("mock out the ListTrafficPolicyInstancesByHostedZoneRequest method")
-// 			},
-// 			ListTrafficPolicyInstancesByHostedZoneWithContextFunc: func(contextMoqParam context.Context, listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error) {
-// 				panic("mock out the ListTrafficPolicyInstancesByHostedZoneWithContext method")
-// 			},
-// 			ListTrafficPolicyInstancesByPolicyFunc: func(listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error) {
-// 				panic("mock out the ListTrafficPolicyInstancesByPolicy method")
-// 			},
-// 			ListTrafficPolicyInstancesByPolicyRequestFunc: func(listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput) (*request.Request, *route53.ListTrafficPolicyInstancesByPolicyOutput) {
-// 				panic("mock out the ListTrafficPolicyInstancesByPolicyRequest method")
-// 			},
-// 			ListTrafficPolicyInstancesByPolicyWithContextFunc: func(contextMoqParam context.Context, listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error) {
-// 				panic("mock out the ListTrafficPolicyInstancesByPolicyWithContext method")
-// 			},
-// 			ListTrafficPolicyInstancesRequestFunc: func(listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput) (*request.Request, *route53.ListTrafficPolicyInstancesOutput) {
-// 				panic("mock out the ListTrafficPolicyInstancesRequest method")
-// 			},
-// 			ListTrafficPolicyInstancesWithContextFunc: func(contextMoqParam context.Context, listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesOutput, error) {
-// 				panic("mock out the ListTrafficPolicyInstancesWithContext method")
-// 			},
-// 			ListTrafficPolicyVersionsFunc: func(listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput) (*route53.ListTrafficPolicyVersionsOutput, error) {
-// 				panic("mock out the ListTrafficPolicyVersions method")
-// 			},
-// 			ListTrafficPolicyVersionsRequestFunc: func(listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput) (*request.Request, *route53.ListTrafficPolicyVersionsOutput) {
-// 				panic("mock out the ListTrafficPolicyVersionsRequest method")
-// 			},
-// 			ListTrafficPolicyVersionsWithContextFunc: func(contextMoqParam context.Context, listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput, options ...request.Option) (*route53.ListTrafficPolicyVersionsOutput, error) {
-// 				panic("mock out the ListTrafficPolicyVersionsWithContext method")
-// 			},
-// 			ListVPCAssociationAuthorizationsFunc: func(listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput) (*route53.ListVPCAssociationAuthorizationsOutput, error) {
-// 				panic("mock out the ListVPCAssociationAuthorizations method")
-// 			},
-// 			ListVPCAssociationAuthorizationsRequestFunc: func(listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput) (*request.Request, *route53.ListVPCAssociationAuthorizationsOutput) {
-// 				panic("mock out the ListVPCAssociationAuthorizationsRequest method")
-// 			},
-// 			ListVPCAssociationAuthorizationsWithContextFunc: func(contextMoqParam context.Context, listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput, options ...request.Option) (*route53.ListVPCAssociationAuthorizationsOutput, error) {
-// 				panic("mock out the ListVPCAssociationAuthorizationsWithContext method")
-// 			},
-// 			TestDNSAnswerFunc: func(testDNSAnswerInput *route53.TestDNSAnswerInput) (*route53.TestDNSAnswerOutput, error) {
-// 				panic("mock out the TestDNSAnswer method")
-// 			},
-// 			TestDNSAnswerRequestFunc: func(testDNSAnswerInput *route53.TestDNSAnswerInput) (*request.Request, *route53.TestDNSAnswerOutput) {
-// 				panic("mock out the TestDNSAnswerRequest method")
-// 			},
-// 			TestDNSAnswerWithContextFunc: func(contextMoqParam context.Context, testDNSAnswerInput *route53.TestDNSAnswerInput, options ...request.Option) (*route53.TestDNSAnswerOutput, error) {
-// 				panic("mock out the TestDNSAnswerWithContext method")
-// 			},
-// 			UpdateHealthCheckFunc: func(updateHealthCheckInput *route53.UpdateHealthCheckInput) (*route53.UpdateHealthCheckOutput, error) {
-// 				panic("mock out the UpdateHealthCheck method")
-// 			},
-// 			UpdateHealthCheckRequestFunc: func(updateHealthCheckInput *route53.UpdateHealthCheckInput) (*request.Request, *route53.UpdateHealthCheckOutput) {
-// 				panic("mock out the UpdateHealthCheckRequest method")
-// 			},
-// 			UpdateHealthCheckWithContextFunc: func(contextMoqParam context.Context, updateHealthCheckInput *route53.UpdateHealthCheckInput, options ...request.Option) (*route53.UpdateHealthCheckOutput, error) {
-// 				panic("mock out the UpdateHealthCheckWithContext method")
-// 			},
-// 			UpdateHostedZoneCommentFunc: func(updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput) (*route53.UpdateHostedZoneCommentOutput, error) {
-// 				panic("mock out the UpdateHostedZoneComment method")
-// 			},
-// 			UpdateHostedZoneCommentRequestFunc: func(updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput) (*request.Request, *route53.UpdateHostedZoneCommentOutput) {
-// 				panic("mock out the UpdateHostedZoneCommentRequest method")
-// 			},
-// 			UpdateHostedZoneCommentWithContextFunc: func(contextMoqParam context.Context, updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput, options ...request.Option) (*route53.UpdateHostedZoneCommentOutput, error) {
-// 				panic("mock out the UpdateHostedZoneCommentWithContext method")
-// 			},
-// 			UpdateTrafficPolicyCommentFunc: func(updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput) (*route53.UpdateTrafficPolicyCommentOutput, error) {
-// 				panic("mock out the UpdateTrafficPolicyComment method")
-// 			},
-// 			UpdateTrafficPolicyCommentRequestFunc: func(updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput) (*request.Request, *route53.UpdateTrafficPolicyCommentOutput) {
-// 				panic("mock out the UpdateTrafficPolicyCommentRequest method")
-// 			},
-// 			UpdateTrafficPolicyCommentWithContextFunc: func(contextMoqParam context.Context, updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput, options ...request.Option) (*route53.UpdateTrafficPolicyCommentOutput, error) {
-// 				panic("mock out the UpdateTrafficPolicyCommentWithContext method")
-// 			},
-// 			UpdateTrafficPolicyInstanceFunc: func(updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput) (*route53.UpdateTrafficPolicyInstanceOutput, error) {
-// 				panic("mock out the UpdateTrafficPolicyInstance method")
-// 			},
-// 			UpdateTrafficPolicyInstanceRequestFunc: func(updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput) (*request.Request, *route53.UpdateTrafficPolicyInstanceOutput) {
-// 				panic("mock out the UpdateTrafficPolicyInstanceRequest method")
-// 			},
-// 			UpdateTrafficPolicyInstanceWithContextFunc: func(contextMoqParam context.Context, updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput, options ...request.Option) (*route53.UpdateTrafficPolicyInstanceOutput, error) {
-// 				panic("mock out the UpdateTrafficPolicyInstanceWithContext method")
-// 			},
-// 			WaitUntilResourceRecordSetsChangedFunc: func(getChangeInput *route53.GetChangeInput) error {
-// 				panic("mock out the WaitUntilResourceRecordSetsChanged method")
-// 			},
-// 			WaitUntilResourceRecordSetsChangedWithContextFunc: func(contextMoqParam context.Context, getChangeInput *route53.GetChangeInput, waiterOptions ...request.WaiterOption) error {
-// 				panic("mock out the WaitUntilResourceRecordSetsChangedWithContext method")
-// 			},
-// 		}
+//		// make and configure a mocked route53iface.Route53API
+//		mockedRoute53API := &Route53APIMock{
+//			ActivateKeySigningKeyFunc: func(activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput) (*route53.ActivateKeySigningKeyOutput, error) {
+//				panic("mock out the ActivateKeySigningKey method")
+//			},
+//			ActivateKeySigningKeyRequestFunc: func(activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput) (*request.Request, *route53.ActivateKeySigningKeyOutput) {
+//				panic("mock out the ActivateKeySigningKeyRequest method")
+//			},
+//			ActivateKeySigningKeyWithContextFunc: func(contextMoqParam context.Context, activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput, options ...request.Option) (*route53.ActivateKeySigningKeyOutput, error) {
+//				panic("mock out the ActivateKeySigningKeyWithContext method")
+//			},
+//			AssociateVPCWithHostedZoneFunc: func(associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput) (*route53.AssociateVPCWithHostedZoneOutput, error) {
+//				panic("mock out the AssociateVPCWithHostedZone method")
+//			},
+//			AssociateVPCWithHostedZoneRequestFunc: func(associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput) (*request.Request, *route53.AssociateVPCWithHostedZoneOutput) {
+//				panic("mock out the AssociateVPCWithHostedZoneRequest method")
+//			},
+//			AssociateVPCWithHostedZoneWithContextFunc: func(contextMoqParam context.Context, associateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput, options ...request.Option) (*route53.AssociateVPCWithHostedZoneOutput, error) {
+//				panic("mock out the AssociateVPCWithHostedZoneWithContext method")
+//			},
+//			ChangeCidrCollectionFunc: func(changeCidrCollectionInput *route53.ChangeCidrCollectionInput) (*route53.ChangeCidrCollectionOutput, error) {
+//				panic("mock out the ChangeCidrCollection method")
+//			},
+//			ChangeCidrCollectionRequestFunc: func(changeCidrCollectionInput *route53.ChangeCidrCollectionInput) (*request.Request, *route53.ChangeCidrCollectionOutput) {
+//				panic("mock out the ChangeCidrCollectionRequest method")
+//			},
+//			ChangeCidrCollectionWithContextFunc: func(contextMoqParam context.Context, changeCidrCollectionInput *route53.ChangeCidrCollectionInput, options ...request.Option) (*route53.ChangeCidrCollectionOutput, error) {
+//				panic("mock out the ChangeCidrCollectionWithContext method")
+//			},
+//			ChangeResourceRecordSetsFunc: func(changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
+//				panic("mock out the ChangeResourceRecordSets method")
+//			},
+//			ChangeResourceRecordSetsRequestFunc: func(changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput) (*request.Request, *route53.ChangeResourceRecordSetsOutput) {
+//				panic("mock out the ChangeResourceRecordSetsRequest method")
+//			},
+//			ChangeResourceRecordSetsWithContextFunc: func(contextMoqParam context.Context, changeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput, options ...request.Option) (*route53.ChangeResourceRecordSetsOutput, error) {
+//				panic("mock out the ChangeResourceRecordSetsWithContext method")
+//			},
+//			ChangeTagsForResourceFunc: func(changeTagsForResourceInput *route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
+//				panic("mock out the ChangeTagsForResource method")
+//			},
+//			ChangeTagsForResourceRequestFunc: func(changeTagsForResourceInput *route53.ChangeTagsForResourceInput) (*request.Request, *route53.ChangeTagsForResourceOutput) {
+//				panic("mock out the ChangeTagsForResourceRequest method")
+//			},
+//			ChangeTagsForResourceWithContextFunc: func(contextMoqParam context.Context, changeTagsForResourceInput *route53.ChangeTagsForResourceInput, options ...request.Option) (*route53.ChangeTagsForResourceOutput, error) {
+//				panic("mock out the ChangeTagsForResourceWithContext method")
+//			},
+//			CreateCidrCollectionFunc: func(createCidrCollectionInput *route53.CreateCidrCollectionInput) (*route53.CreateCidrCollectionOutput, error) {
+//				panic("mock out the CreateCidrCollection method")
+//			},
+//			CreateCidrCollectionRequestFunc: func(createCidrCollectionInput *route53.CreateCidrCollectionInput) (*request.Request, *route53.CreateCidrCollectionOutput) {
+//				panic("mock out the CreateCidrCollectionRequest method")
+//			},
+//			CreateCidrCollectionWithContextFunc: func(contextMoqParam context.Context, createCidrCollectionInput *route53.CreateCidrCollectionInput, options ...request.Option) (*route53.CreateCidrCollectionOutput, error) {
+//				panic("mock out the CreateCidrCollectionWithContext method")
+//			},
+//			CreateHealthCheckFunc: func(createHealthCheckInput *route53.CreateHealthCheckInput) (*route53.CreateHealthCheckOutput, error) {
+//				panic("mock out the CreateHealthCheck method")
+//			},
+//			CreateHealthCheckRequestFunc: func(createHealthCheckInput *route53.CreateHealthCheckInput) (*request.Request, *route53.CreateHealthCheckOutput) {
+//				panic("mock out the CreateHealthCheckRequest method")
+//			},
+//			CreateHealthCheckWithContextFunc: func(contextMoqParam context.Context, createHealthCheckInput *route53.CreateHealthCheckInput, options ...request.Option) (*route53.CreateHealthCheckOutput, error) {
+//				panic("mock out the CreateHealthCheckWithContext method")
+//			},
+//			CreateHostedZoneFunc: func(createHostedZoneInput *route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
+//				panic("mock out the CreateHostedZone method")
+//			},
+//			CreateHostedZoneRequestFunc: func(createHostedZoneInput *route53.CreateHostedZoneInput) (*request.Request, *route53.CreateHostedZoneOutput) {
+//				panic("mock out the CreateHostedZoneRequest method")
+//			},
+//			CreateHostedZoneWithContextFunc: func(contextMoqParam context.Context, createHostedZoneInput *route53.CreateHostedZoneInput, options ...request.Option) (*route53.CreateHostedZoneOutput, error) {
+//				panic("mock out the CreateHostedZoneWithContext method")
+//			},
+//			CreateKeySigningKeyFunc: func(createKeySigningKeyInput *route53.CreateKeySigningKeyInput) (*route53.CreateKeySigningKeyOutput, error) {
+//				panic("mock out the CreateKeySigningKey method")
+//			},
+//			CreateKeySigningKeyRequestFunc: func(createKeySigningKeyInput *route53.CreateKeySigningKeyInput) (*request.Request, *route53.CreateKeySigningKeyOutput) {
+//				panic("mock out the CreateKeySigningKeyRequest method")
+//			},
+//			CreateKeySigningKeyWithContextFunc: func(contextMoqParam context.Context, createKeySigningKeyInput *route53.CreateKeySigningKeyInput, options ...request.Option) (*route53.CreateKeySigningKeyOutput, error) {
+//				panic("mock out the CreateKeySigningKeyWithContext method")
+//			},
+//			CreateQueryLoggingConfigFunc: func(createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput) (*route53.CreateQueryLoggingConfigOutput, error) {
+//				panic("mock out the CreateQueryLoggingConfig method")
+//			},
+//			CreateQueryLoggingConfigRequestFunc: func(createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput) (*request.Request, *route53.CreateQueryLoggingConfigOutput) {
+//				panic("mock out the CreateQueryLoggingConfigRequest method")
+//			},
+//			CreateQueryLoggingConfigWithContextFunc: func(contextMoqParam context.Context, createQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput, options ...request.Option) (*route53.CreateQueryLoggingConfigOutput, error) {
+//				panic("mock out the CreateQueryLoggingConfigWithContext method")
+//			},
+//			CreateReusableDelegationSetFunc: func(createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput) (*route53.CreateReusableDelegationSetOutput, error) {
+//				panic("mock out the CreateReusableDelegationSet method")
+//			},
+//			CreateReusableDelegationSetRequestFunc: func(createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput) (*request.Request, *route53.CreateReusableDelegationSetOutput) {
+//				panic("mock out the CreateReusableDelegationSetRequest method")
+//			},
+//			CreateReusableDelegationSetWithContextFunc: func(contextMoqParam context.Context, createReusableDelegationSetInput *route53.CreateReusableDelegationSetInput, options ...request.Option) (*route53.CreateReusableDelegationSetOutput, error) {
+//				panic("mock out the CreateReusableDelegationSetWithContext method")
+//			},
+//			CreateTrafficPolicyFunc: func(createTrafficPolicyInput *route53.CreateTrafficPolicyInput) (*route53.CreateTrafficPolicyOutput, error) {
+//				panic("mock out the CreateTrafficPolicy method")
+//			},
+//			CreateTrafficPolicyInstanceFunc: func(createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput) (*route53.CreateTrafficPolicyInstanceOutput, error) {
+//				panic("mock out the CreateTrafficPolicyInstance method")
+//			},
+//			CreateTrafficPolicyInstanceRequestFunc: func(createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput) (*request.Request, *route53.CreateTrafficPolicyInstanceOutput) {
+//				panic("mock out the CreateTrafficPolicyInstanceRequest method")
+//			},
+//			CreateTrafficPolicyInstanceWithContextFunc: func(contextMoqParam context.Context, createTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput, options ...request.Option) (*route53.CreateTrafficPolicyInstanceOutput, error) {
+//				panic("mock out the CreateTrafficPolicyInstanceWithContext method")
+//			},
+//			CreateTrafficPolicyRequestFunc: func(createTrafficPolicyInput *route53.CreateTrafficPolicyInput) (*request.Request, *route53.CreateTrafficPolicyOutput) {
+//				panic("mock out the CreateTrafficPolicyRequest method")
+//			},
+//			CreateTrafficPolicyVersionFunc: func(createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput) (*route53.CreateTrafficPolicyVersionOutput, error) {
+//				panic("mock out the CreateTrafficPolicyVersion method")
+//			},
+//			CreateTrafficPolicyVersionRequestFunc: func(createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput) (*request.Request, *route53.CreateTrafficPolicyVersionOutput) {
+//				panic("mock out the CreateTrafficPolicyVersionRequest method")
+//			},
+//			CreateTrafficPolicyVersionWithContextFunc: func(contextMoqParam context.Context, createTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput, options ...request.Option) (*route53.CreateTrafficPolicyVersionOutput, error) {
+//				panic("mock out the CreateTrafficPolicyVersionWithContext method")
+//			},
+//			CreateTrafficPolicyWithContextFunc: func(contextMoqParam context.Context, createTrafficPolicyInput *route53.CreateTrafficPolicyInput, options ...request.Option) (*route53.CreateTrafficPolicyOutput, error) {
+//				panic("mock out the CreateTrafficPolicyWithContext method")
+//			},
+//			CreateVPCAssociationAuthorizationFunc: func(createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput) (*route53.CreateVPCAssociationAuthorizationOutput, error) {
+//				panic("mock out the CreateVPCAssociationAuthorization method")
+//			},
+//			CreateVPCAssociationAuthorizationRequestFunc: func(createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput) (*request.Request, *route53.CreateVPCAssociationAuthorizationOutput) {
+//				panic("mock out the CreateVPCAssociationAuthorizationRequest method")
+//			},
+//			CreateVPCAssociationAuthorizationWithContextFunc: func(contextMoqParam context.Context, createVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput, options ...request.Option) (*route53.CreateVPCAssociationAuthorizationOutput, error) {
+//				panic("mock out the CreateVPCAssociationAuthorizationWithContext method")
+//			},
+//			DeactivateKeySigningKeyFunc: func(deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput) (*route53.DeactivateKeySigningKeyOutput, error) {
+//				panic("mock out the DeactivateKeySigningKey method")
+//			},
+//			DeactivateKeySigningKeyRequestFunc: func(deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput) (*request.Request, *route53.DeactivateKeySigningKeyOutput) {
+//				panic("mock out the DeactivateKeySigningKeyRequest method")
+//			},
+//			DeactivateKeySigningKeyWithContextFunc: func(contextMoqParam context.Context, deactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput, options ...request.Option) (*route53.DeactivateKeySigningKeyOutput, error) {
+//				panic("mock out the DeactivateKeySigningKeyWithContext method")
+//			},
+//			DeleteCidrCollectionFunc: func(deleteCidrCollectionInput *route53.DeleteCidrCollectionInput) (*route53.DeleteCidrCollectionOutput, error) {
+//				panic("mock out the DeleteCidrCollection method")
+//			},
+//			DeleteCidrCollectionRequestFunc: func(deleteCidrCollectionInput *route53.DeleteCidrCollectionInput) (*request.Request, *route53.DeleteCidrCollectionOutput) {
+//				panic("mock out the DeleteCidrCollectionRequest method")
+//			},
+//			DeleteCidrCollectionWithContextFunc: func(contextMoqParam context.Context, deleteCidrCollectionInput *route53.DeleteCidrCollectionInput, options ...request.Option) (*route53.DeleteCidrCollectionOutput, error) {
+//				panic("mock out the DeleteCidrCollectionWithContext method")
+//			},
+//			DeleteHealthCheckFunc: func(deleteHealthCheckInput *route53.DeleteHealthCheckInput) (*route53.DeleteHealthCheckOutput, error) {
+//				panic("mock out the DeleteHealthCheck method")
+//			},
+//			DeleteHealthCheckRequestFunc: func(deleteHealthCheckInput *route53.DeleteHealthCheckInput) (*request.Request, *route53.DeleteHealthCheckOutput) {
+//				panic("mock out the DeleteHealthCheckRequest method")
+//			},
+//			DeleteHealthCheckWithContextFunc: func(contextMoqParam context.Context, deleteHealthCheckInput *route53.DeleteHealthCheckInput, options ...request.Option) (*route53.DeleteHealthCheckOutput, error) {
+//				panic("mock out the DeleteHealthCheckWithContext method")
+//			},
+//			DeleteHostedZoneFunc: func(deleteHostedZoneInput *route53.DeleteHostedZoneInput) (*route53.DeleteHostedZoneOutput, error) {
+//				panic("mock out the DeleteHostedZone method")
+//			},
+//			DeleteHostedZoneRequestFunc: func(deleteHostedZoneInput *route53.DeleteHostedZoneInput) (*request.Request, *route53.DeleteHostedZoneOutput) {
+//				panic("mock out the DeleteHostedZoneRequest method")
+//			},
+//			DeleteHostedZoneWithContextFunc: func(contextMoqParam context.Context, deleteHostedZoneInput *route53.DeleteHostedZoneInput, options ...request.Option) (*route53.DeleteHostedZoneOutput, error) {
+//				panic("mock out the DeleteHostedZoneWithContext method")
+//			},
+//			DeleteKeySigningKeyFunc: func(deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput) (*route53.DeleteKeySigningKeyOutput, error) {
+//				panic("mock out the DeleteKeySigningKey method")
+//			},
+//			DeleteKeySigningKeyRequestFunc: func(deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput) (*request.Request, *route53.DeleteKeySigningKeyOutput) {
+//				panic("mock out the DeleteKeySigningKeyRequest method")
+//			},
+//			DeleteKeySigningKeyWithContextFunc: func(contextMoqParam context.Context, deleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput, options ...request.Option) (*route53.DeleteKeySigningKeyOutput, error) {
+//				panic("mock out the DeleteKeySigningKeyWithContext method")
+//			},
+//			DeleteQueryLoggingConfigFunc: func(deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput) (*route53.DeleteQueryLoggingConfigOutput, error) {
+//				panic("mock out the DeleteQueryLoggingConfig method")
+//			},
+//			DeleteQueryLoggingConfigRequestFunc: func(deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput) (*request.Request, *route53.DeleteQueryLoggingConfigOutput) {
+//				panic("mock out the DeleteQueryLoggingConfigRequest method")
+//			},
+//			DeleteQueryLoggingConfigWithContextFunc: func(contextMoqParam context.Context, deleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput, options ...request.Option) (*route53.DeleteQueryLoggingConfigOutput, error) {
+//				panic("mock out the DeleteQueryLoggingConfigWithContext method")
+//			},
+//			DeleteReusableDelegationSetFunc: func(deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput) (*route53.DeleteReusableDelegationSetOutput, error) {
+//				panic("mock out the DeleteReusableDelegationSet method")
+//			},
+//			DeleteReusableDelegationSetRequestFunc: func(deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput) (*request.Request, *route53.DeleteReusableDelegationSetOutput) {
+//				panic("mock out the DeleteReusableDelegationSetRequest method")
+//			},
+//			DeleteReusableDelegationSetWithContextFunc: func(contextMoqParam context.Context, deleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput, options ...request.Option) (*route53.DeleteReusableDelegationSetOutput, error) {
+//				panic("mock out the DeleteReusableDelegationSetWithContext method")
+//			},
+//			DeleteTrafficPolicyFunc: func(deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput) (*route53.DeleteTrafficPolicyOutput, error) {
+//				panic("mock out the DeleteTrafficPolicy method")
+//			},
+//			DeleteTrafficPolicyInstanceFunc: func(deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput) (*route53.DeleteTrafficPolicyInstanceOutput, error) {
+//				panic("mock out the DeleteTrafficPolicyInstance method")
+//			},
+//			DeleteTrafficPolicyInstanceRequestFunc: func(deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput) (*request.Request, *route53.DeleteTrafficPolicyInstanceOutput) {
+//				panic("mock out the DeleteTrafficPolicyInstanceRequest method")
+//			},
+//			DeleteTrafficPolicyInstanceWithContextFunc: func(contextMoqParam context.Context, deleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput, options ...request.Option) (*route53.DeleteTrafficPolicyInstanceOutput, error) {
+//				panic("mock out the DeleteTrafficPolicyInstanceWithContext method")
+//			},
+//			DeleteTrafficPolicyRequestFunc: func(deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput) (*request.Request, *route53.DeleteTrafficPolicyOutput) {
+//				panic("mock out the DeleteTrafficPolicyRequest method")
+//			},
+//			DeleteTrafficPolicyWithContextFunc: func(contextMoqParam context.Context, deleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput, options ...request.Option) (*route53.DeleteTrafficPolicyOutput, error) {
+//				panic("mock out the DeleteTrafficPolicyWithContext method")
+//			},
+//			DeleteVPCAssociationAuthorizationFunc: func(deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput) (*route53.DeleteVPCAssociationAuthorizationOutput, error) {
+//				panic("mock out the DeleteVPCAssociationAuthorization method")
+//			},
+//			DeleteVPCAssociationAuthorizationRequestFunc: func(deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput) (*request.Request, *route53.DeleteVPCAssociationAuthorizationOutput) {
+//				panic("mock out the DeleteVPCAssociationAuthorizationRequest method")
+//			},
+//			DeleteVPCAssociationAuthorizationWithContextFunc: func(contextMoqParam context.Context, deleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput, options ...request.Option) (*route53.DeleteVPCAssociationAuthorizationOutput, error) {
+//				panic("mock out the DeleteVPCAssociationAuthorizationWithContext method")
+//			},
+//			DisableHostedZoneDNSSECFunc: func(disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput) (*route53.DisableHostedZoneDNSSECOutput, error) {
+//				panic("mock out the DisableHostedZoneDNSSEC method")
+//			},
+//			DisableHostedZoneDNSSECRequestFunc: func(disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput) (*request.Request, *route53.DisableHostedZoneDNSSECOutput) {
+//				panic("mock out the DisableHostedZoneDNSSECRequest method")
+//			},
+//			DisableHostedZoneDNSSECWithContextFunc: func(contextMoqParam context.Context, disableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput, options ...request.Option) (*route53.DisableHostedZoneDNSSECOutput, error) {
+//				panic("mock out the DisableHostedZoneDNSSECWithContext method")
+//			},
+//			DisassociateVPCFromHostedZoneFunc: func(disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput) (*route53.DisassociateVPCFromHostedZoneOutput, error) {
+//				panic("mock out the DisassociateVPCFromHostedZone method")
+//			},
+//			DisassociateVPCFromHostedZoneRequestFunc: func(disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput) (*request.Request, *route53.DisassociateVPCFromHostedZoneOutput) {
+//				panic("mock out the DisassociateVPCFromHostedZoneRequest method")
+//			},
+//			DisassociateVPCFromHostedZoneWithContextFunc: func(contextMoqParam context.Context, disassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput, options ...request.Option) (*route53.DisassociateVPCFromHostedZoneOutput, error) {
+//				panic("mock out the DisassociateVPCFromHostedZoneWithContext method")
+//			},
+//			EnableHostedZoneDNSSECFunc: func(enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput) (*route53.EnableHostedZoneDNSSECOutput, error) {
+//				panic("mock out the EnableHostedZoneDNSSEC method")
+//			},
+//			EnableHostedZoneDNSSECRequestFunc: func(enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput) (*request.Request, *route53.EnableHostedZoneDNSSECOutput) {
+//				panic("mock out the EnableHostedZoneDNSSECRequest method")
+//			},
+//			EnableHostedZoneDNSSECWithContextFunc: func(contextMoqParam context.Context, enableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput, options ...request.Option) (*route53.EnableHostedZoneDNSSECOutput, error) {
+//				panic("mock out the EnableHostedZoneDNSSECWithContext method")
+//			},
+//			GetAccountLimitFunc: func(getAccountLimitInput *route53.GetAccountLimitInput) (*route53.GetAccountLimitOutput, error) {
+//				panic("mock out the GetAccountLimit method")
+//			},
+//			GetAccountLimitRequestFunc: func(getAccountLimitInput *route53.GetAccountLimitInput) (*request.Request, *route53.GetAccountLimitOutput) {
+//				panic("mock out the GetAccountLimitRequest method")
+//			},
+//			GetAccountLimitWithContextFunc: func(contextMoqParam context.Context, getAccountLimitInput *route53.GetAccountLimitInput, options ...request.Option) (*route53.GetAccountLimitOutput, error) {
+//				panic("mock out the GetAccountLimitWithContext method")
+//			},
+//			GetChangeFunc: func(getChangeInput *route53.GetChangeInput) (*route53.GetChangeOutput, error) {
+//				panic("mock out the GetChange method")
+//			},
+//			GetChangeRequestFunc: func(getChangeInput *route53.GetChangeInput) (*request.Request, *route53.GetChangeOutput) {
+//				panic("mock out the GetChangeRequest method")
+//			},
+//			GetChangeWithContextFunc: func(contextMoqParam context.Context, getChangeInput *route53.GetChangeInput, options ...request.Option) (*route53.GetChangeOutput, error) {
+//				panic("mock out the GetChangeWithContext method")
+//			},
+//			GetCheckerIpRangesFunc: func(getCheckerIpRangesInput *route53.GetCheckerIpRangesInput) (*route53.GetCheckerIpRangesOutput, error) {
+//				panic("mock out the GetCheckerIpRanges method")
+//			},
+//			GetCheckerIpRangesRequestFunc: func(getCheckerIpRangesInput *route53.GetCheckerIpRangesInput) (*request.Request, *route53.GetCheckerIpRangesOutput) {
+//				panic("mock out the GetCheckerIpRangesRequest method")
+//			},
+//			GetCheckerIpRangesWithContextFunc: func(contextMoqParam context.Context, getCheckerIpRangesInput *route53.GetCheckerIpRangesInput, options ...request.Option) (*route53.GetCheckerIpRangesOutput, error) {
+//				panic("mock out the GetCheckerIpRangesWithContext method")
+//			},
+//			GetDNSSECFunc: func(getDNSSECInput *route53.GetDNSSECInput) (*route53.GetDNSSECOutput, error) {
+//				panic("mock out the GetDNSSEC method")
+//			},
+//			GetDNSSECRequestFunc: func(getDNSSECInput *route53.GetDNSSECInput) (*request.Request, *route53.GetDNSSECOutput) {
+//				panic("mock out the GetDNSSECRequest method")
+//			},
+//			GetDNSSECWithContextFunc: func(contextMoqParam context.Context, getDNSSECInput *route53.GetDNSSECInput, options ...request.Option) (*route53.GetDNSSECOutput, error) {
+//				panic("mock out the GetDNSSECWithContext method")
+//			},
+//			GetGeoLocationFunc: func(getGeoLocationInput *route53.GetGeoLocationInput) (*route53.GetGeoLocationOutput, error) {
+//				panic("mock out the GetGeoLocation method")
+//			},
+//			GetGeoLocationRequestFunc: func(getGeoLocationInput *route53.GetGeoLocationInput) (*request.Request, *route53.GetGeoLocationOutput) {
+//				panic("mock out the GetGeoLocationRequest method")
+//			},
+//			GetGeoLocationWithContextFunc: func(contextMoqParam context.Context, getGeoLocationInput *route53.GetGeoLocationInput, options ...request.Option) (*route53.GetGeoLocationOutput, error) {
+//				panic("mock out the GetGeoLocationWithContext method")
+//			},
+//			GetHealthCheckFunc: func(getHealthCheckInput *route53.GetHealthCheckInput) (*route53.GetHealthCheckOutput, error) {
+//				panic("mock out the GetHealthCheck method")
+//			},
+//			GetHealthCheckCountFunc: func(getHealthCheckCountInput *route53.GetHealthCheckCountInput) (*route53.GetHealthCheckCountOutput, error) {
+//				panic("mock out the GetHealthCheckCount method")
+//			},
+//			GetHealthCheckCountRequestFunc: func(getHealthCheckCountInput *route53.GetHealthCheckCountInput) (*request.Request, *route53.GetHealthCheckCountOutput) {
+//				panic("mock out the GetHealthCheckCountRequest method")
+//			},
+//			GetHealthCheckCountWithContextFunc: func(contextMoqParam context.Context, getHealthCheckCountInput *route53.GetHealthCheckCountInput, options ...request.Option) (*route53.GetHealthCheckCountOutput, error) {
+//				panic("mock out the GetHealthCheckCountWithContext method")
+//			},
+//			GetHealthCheckLastFailureReasonFunc: func(getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput) (*route53.GetHealthCheckLastFailureReasonOutput, error) {
+//				panic("mock out the GetHealthCheckLastFailureReason method")
+//			},
+//			GetHealthCheckLastFailureReasonRequestFunc: func(getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput) (*request.Request, *route53.GetHealthCheckLastFailureReasonOutput) {
+//				panic("mock out the GetHealthCheckLastFailureReasonRequest method")
+//			},
+//			GetHealthCheckLastFailureReasonWithContextFunc: func(contextMoqParam context.Context, getHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput, options ...request.Option) (*route53.GetHealthCheckLastFailureReasonOutput, error) {
+//				panic("mock out the GetHealthCheckLastFailureReasonWithContext method")
+//			},
+//			GetHealthCheckRequestFunc: func(getHealthCheckInput *route53.GetHealthCheckInput) (*request.Request, *route53.GetHealthCheckOutput) {
+//				panic("mock out the GetHealthCheckRequest method")
+//			},
+//			GetHealthCheckStatusFunc: func(getHealthCheckStatusInput *route53.GetHealthCheckStatusInput) (*route53.GetHealthCheckStatusOutput, error) {
+//				panic("mock out the GetHealthCheckStatus method")
+//			},
+//			GetHealthCheckStatusRequestFunc: func(getHealthCheckStatusInput *route53.GetHealthCheckStatusInput) (*request.Request, *route53.GetHealthCheckStatusOutput) {
+//				panic("mock out the GetHealthCheckStatusRequest method")
+//			},
+//			GetHealthCheckStatusWithContextFunc: func(contextMoqParam context.Context, getHealthCheckStatusInput *route53.GetHealthCheckStatusInput, options ...request.Option) (*route53.GetHealthCheckStatusOutput, error) {
+//				panic("mock out the GetHealthCheckStatusWithContext method")
+//			},
+//			GetHealthCheckWithContextFunc: func(contextMoqParam context.Context, getHealthCheckInput *route53.GetHealthCheckInput, options ...request.Option) (*route53.GetHealthCheckOutput, error) {
+//				panic("mock out the GetHealthCheckWithContext method")
+//			},
+//			GetHostedZoneFunc: func(getHostedZoneInput *route53.GetHostedZoneInput) (*route53.GetHostedZoneOutput, error) {
+//				panic("mock out the GetHostedZone method")
+//			},
+//			GetHostedZoneCountFunc: func(getHostedZoneCountInput *route53.GetHostedZoneCountInput) (*route53.GetHostedZoneCountOutput, error) {
+//				panic("mock out the GetHostedZoneCount method")
+//			},
+//			GetHostedZoneCountRequestFunc: func(getHostedZoneCountInput *route53.GetHostedZoneCountInput) (*request.Request, *route53.GetHostedZoneCountOutput) {
+//				panic("mock out the GetHostedZoneCountRequest method")
+//			},
+//			GetHostedZoneCountWithContextFunc: func(contextMoqParam context.Context, getHostedZoneCountInput *route53.GetHostedZoneCountInput, options ...request.Option) (*route53.GetHostedZoneCountOutput, error) {
+//				panic("mock out the GetHostedZoneCountWithContext method")
+//			},
+//			GetHostedZoneLimitFunc: func(getHostedZoneLimitInput *route53.GetHostedZoneLimitInput) (*route53.GetHostedZoneLimitOutput, error) {
+//				panic("mock out the GetHostedZoneLimit method")
+//			},
+//			GetHostedZoneLimitRequestFunc: func(getHostedZoneLimitInput *route53.GetHostedZoneLimitInput) (*request.Request, *route53.GetHostedZoneLimitOutput) {
+//				panic("mock out the GetHostedZoneLimitRequest method")
+//			},
+//			GetHostedZoneLimitWithContextFunc: func(contextMoqParam context.Context, getHostedZoneLimitInput *route53.GetHostedZoneLimitInput, options ...request.Option) (*route53.GetHostedZoneLimitOutput, error) {
+//				panic("mock out the GetHostedZoneLimitWithContext method")
+//			},
+//			GetHostedZoneRequestFunc: func(getHostedZoneInput *route53.GetHostedZoneInput) (*request.Request, *route53.GetHostedZoneOutput) {
+//				panic("mock out the GetHostedZoneRequest method")
+//			},
+//			GetHostedZoneWithContextFunc: func(contextMoqParam context.Context, getHostedZoneInput *route53.GetHostedZoneInput, options ...request.Option) (*route53.GetHostedZoneOutput, error) {
+//				panic("mock out the GetHostedZoneWithContext method")
+//			},
+//			GetQueryLoggingConfigFunc: func(getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput) (*route53.GetQueryLoggingConfigOutput, error) {
+//				panic("mock out the GetQueryLoggingConfig method")
+//			},
+//			GetQueryLoggingConfigRequestFunc: func(getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput) (*request.Request, *route53.GetQueryLoggingConfigOutput) {
+//				panic("mock out the GetQueryLoggingConfigRequest method")
+//			},
+//			GetQueryLoggingConfigWithContextFunc: func(contextMoqParam context.Context, getQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput, options ...request.Option) (*route53.GetQueryLoggingConfigOutput, error) {
+//				panic("mock out the GetQueryLoggingConfigWithContext method")
+//			},
+//			GetReusableDelegationSetFunc: func(getReusableDelegationSetInput *route53.GetReusableDelegationSetInput) (*route53.GetReusableDelegationSetOutput, error) {
+//				panic("mock out the GetReusableDelegationSet method")
+//			},
+//			GetReusableDelegationSetLimitFunc: func(getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput) (*route53.GetReusableDelegationSetLimitOutput, error) {
+//				panic("mock out the GetReusableDelegationSetLimit method")
+//			},
+//			GetReusableDelegationSetLimitRequestFunc: func(getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput) (*request.Request, *route53.GetReusableDelegationSetLimitOutput) {
+//				panic("mock out the GetReusableDelegationSetLimitRequest method")
+//			},
+//			GetReusableDelegationSetLimitWithContextFunc: func(contextMoqParam context.Context, getReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput, options ...request.Option) (*route53.GetReusableDelegationSetLimitOutput, error) {
+//				panic("mock out the GetReusableDelegationSetLimitWithContext method")
+//			},
+//			GetReusableDelegationSetRequestFunc: func(getReusableDelegationSetInput *route53.GetReusableDelegationSetInput) (*request.Request, *route53.GetReusableDelegationSetOutput) {
+//				panic("mock out the GetReusableDelegationSetRequest method")
+//			},
+//			GetReusableDelegationSetWithContextFunc: func(contextMoqParam context.Context, getReusableDelegationSetInput *route53.GetReusableDelegationSetInput, options ...request.Option) (*route53.GetReusableDelegationSetOutput, error) {
+//				panic("mock out the GetReusableDelegationSetWithContext method")
+//			},
+//			GetTrafficPolicyFunc: func(getTrafficPolicyInput *route53.GetTrafficPolicyInput) (*route53.GetTrafficPolicyOutput, error) {
+//				panic("mock out the GetTrafficPolicy method")
+//			},
+//			GetTrafficPolicyInstanceFunc: func(getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput) (*route53.GetTrafficPolicyInstanceOutput, error) {
+//				panic("mock out the GetTrafficPolicyInstance method")
+//			},
+//			GetTrafficPolicyInstanceCountFunc: func(getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput) (*route53.GetTrafficPolicyInstanceCountOutput, error) {
+//				panic("mock out the GetTrafficPolicyInstanceCount method")
+//			},
+//			GetTrafficPolicyInstanceCountRequestFunc: func(getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput) (*request.Request, *route53.GetTrafficPolicyInstanceCountOutput) {
+//				panic("mock out the GetTrafficPolicyInstanceCountRequest method")
+//			},
+//			GetTrafficPolicyInstanceCountWithContextFunc: func(contextMoqParam context.Context, getTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput, options ...request.Option) (*route53.GetTrafficPolicyInstanceCountOutput, error) {
+//				panic("mock out the GetTrafficPolicyInstanceCountWithContext method")
+//			},
+//			GetTrafficPolicyInstanceRequestFunc: func(getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput) (*request.Request, *route53.GetTrafficPolicyInstanceOutput) {
+//				panic("mock out the GetTrafficPolicyInstanceRequest method")
+//			},
+//			GetTrafficPolicyInstanceWithContextFunc: func(contextMoqParam context.Context, getTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput, options ...request.Option) (*route53.GetTrafficPolicyInstanceOutput, error) {
+//				panic("mock out the GetTrafficPolicyInstanceWithContext method")
+//			},
+//			GetTrafficPolicyRequestFunc: func(getTrafficPolicyInput *route53.GetTrafficPolicyInput) (*request.Request, *route53.GetTrafficPolicyOutput) {
+//				panic("mock out the GetTrafficPolicyRequest method")
+//			},
+//			GetTrafficPolicyWithContextFunc: func(contextMoqParam context.Context, getTrafficPolicyInput *route53.GetTrafficPolicyInput, options ...request.Option) (*route53.GetTrafficPolicyOutput, error) {
+//				panic("mock out the GetTrafficPolicyWithContext method")
+//			},
+//			ListCidrBlocksFunc: func(listCidrBlocksInput *route53.ListCidrBlocksInput) (*route53.ListCidrBlocksOutput, error) {
+//				panic("mock out the ListCidrBlocks method")
+//			},
+//			ListCidrBlocksPagesFunc: func(listCidrBlocksInput *route53.ListCidrBlocksInput, fn func(*route53.ListCidrBlocksOutput, bool) bool) error {
+//				panic("mock out the ListCidrBlocksPages method")
+//			},
+//			ListCidrBlocksPagesWithContextFunc: func(contextMoqParam context.Context, listCidrBlocksInput *route53.ListCidrBlocksInput, fn func(*route53.ListCidrBlocksOutput, bool) bool, options ...request.Option) error {
+//				panic("mock out the ListCidrBlocksPagesWithContext method")
+//			},
+//			ListCidrBlocksRequestFunc: func(listCidrBlocksInput *route53.ListCidrBlocksInput) (*request.Request, *route53.ListCidrBlocksOutput) {
+//				panic("mock out the ListCidrBlocksRequest method")
+//			},
+//			ListCidrBlocksWithContextFunc: func(contextMoqParam context.Context, listCidrBlocksInput *route53.ListCidrBlocksInput, options ...request.Option) (*route53.ListCidrBlocksOutput, error) {
+//				panic("mock out the ListCidrBlocksWithContext method")
+//			},
+//			ListCidrCollectionsFunc: func(listCidrCollectionsInput *route53.ListCidrCollectionsInput) (*route53.ListCidrCollectionsOutput, error) {
+//				panic("mock out the ListCidrCollections method")
+//			},
+//			ListCidrCollectionsPagesFunc: func(listCidrCollectionsInput *route53.ListCidrCollectionsInput, fn func(*route53.ListCidrCollectionsOutput, bool) bool) error {
+//				panic("mock out the ListCidrCollectionsPages method")
+//			},
+//			ListCidrCollectionsPagesWithContextFunc: func(contextMoqParam context.Context, listCidrCollectionsInput *route53.ListCidrCollectionsInput, fn func(*route53.ListCidrCollectionsOutput, bool) bool, options ...request.Option) error {
+//				panic("mock out the ListCidrCollectionsPagesWithContext method")
+//			},
+//			ListCidrCollectionsRequestFunc: func(listCidrCollectionsInput *route53.ListCidrCollectionsInput) (*request.Request, *route53.ListCidrCollectionsOutput) {
+//				panic("mock out the ListCidrCollectionsRequest method")
+//			},
+//			ListCidrCollectionsWithContextFunc: func(contextMoqParam context.Context, listCidrCollectionsInput *route53.ListCidrCollectionsInput, options ...request.Option) (*route53.ListCidrCollectionsOutput, error) {
+//				panic("mock out the ListCidrCollectionsWithContext method")
+//			},
+//			ListCidrLocationsFunc: func(listCidrLocationsInput *route53.ListCidrLocationsInput) (*route53.ListCidrLocationsOutput, error) {
+//				panic("mock out the ListCidrLocations method")
+//			},
+//			ListCidrLocationsPagesFunc: func(listCidrLocationsInput *route53.ListCidrLocationsInput, fn func(*route53.ListCidrLocationsOutput, bool) bool) error {
+//				panic("mock out the ListCidrLocationsPages method")
+//			},
+//			ListCidrLocationsPagesWithContextFunc: func(contextMoqParam context.Context, listCidrLocationsInput *route53.ListCidrLocationsInput, fn func(*route53.ListCidrLocationsOutput, bool) bool, options ...request.Option) error {
+//				panic("mock out the ListCidrLocationsPagesWithContext method")
+//			},
+//			ListCidrLocationsRequestFunc: func(listCidrLocationsInput *route53.ListCidrLocationsInput) (*request.Request, *route53.ListCidrLocationsOutput) {
+//				panic("mock out the ListCidrLocationsRequest method")
+//			},
+//			ListCidrLocationsWithContextFunc: func(contextMoqParam context.Context, listCidrLocationsInput *route53.ListCidrLocationsInput, options ...request.Option) (*route53.ListCidrLocationsOutput, error) {
+//				panic("mock out the ListCidrLocationsWithContext method")
+//			},
+//			ListGeoLocationsFunc: func(listGeoLocationsInput *route53.ListGeoLocationsInput) (*route53.ListGeoLocationsOutput, error) {
+//				panic("mock out the ListGeoLocations method")
+//			},
+//			ListGeoLocationsRequestFunc: func(listGeoLocationsInput *route53.ListGeoLocationsInput) (*request.Request, *route53.ListGeoLocationsOutput) {
+//				panic("mock out the ListGeoLocationsRequest method")
+//			},
+//			ListGeoLocationsWithContextFunc: func(contextMoqParam context.Context, listGeoLocationsInput *route53.ListGeoLocationsInput, options ...request.Option) (*route53.ListGeoLocationsOutput, error) {
+//				panic("mock out the ListGeoLocationsWithContext method")
+//			},
+//			ListHealthChecksFunc: func(listHealthChecksInput *route53.ListHealthChecksInput) (*route53.ListHealthChecksOutput, error) {
+//				panic("mock out the ListHealthChecks method")
+//			},
+//			ListHealthChecksPagesFunc: func(listHealthChecksInput *route53.ListHealthChecksInput, fn func(*route53.ListHealthChecksOutput, bool) bool) error {
+//				panic("mock out the ListHealthChecksPages method")
+//			},
+//			ListHealthChecksPagesWithContextFunc: func(contextMoqParam context.Context, listHealthChecksInput *route53.ListHealthChecksInput, fn func(*route53.ListHealthChecksOutput, bool) bool, options ...request.Option) error {
+//				panic("mock out the ListHealthChecksPagesWithContext method")
+//			},
+//			ListHealthChecksRequestFunc: func(listHealthChecksInput *route53.ListHealthChecksInput) (*request.Request, *route53.ListHealthChecksOutput) {
+//				panic("mock out the ListHealthChecksRequest method")
+//			},
+//			ListHealthChecksWithContextFunc: func(contextMoqParam context.Context, listHealthChecksInput *route53.ListHealthChecksInput, options ...request.Option) (*route53.ListHealthChecksOutput, error) {
+//				panic("mock out the ListHealthChecksWithContext method")
+//			},
+//			ListHostedZonesFunc: func(listHostedZonesInput *route53.ListHostedZonesInput) (*route53.ListHostedZonesOutput, error) {
+//				panic("mock out the ListHostedZones method")
+//			},
+//			ListHostedZonesByNameFunc: func(listHostedZonesByNameInput *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error) {
+//				panic("mock out the ListHostedZonesByName method")
+//			},
+//			ListHostedZonesByNameRequestFunc: func(listHostedZonesByNameInput *route53.ListHostedZonesByNameInput) (*request.Request, *route53.ListHostedZonesByNameOutput) {
+//				panic("mock out the ListHostedZonesByNameRequest method")
+//			},
+//			ListHostedZonesByNameWithContextFunc: func(contextMoqParam context.Context, listHostedZonesByNameInput *route53.ListHostedZonesByNameInput, options ...request.Option) (*route53.ListHostedZonesByNameOutput, error) {
+//				panic("mock out the ListHostedZonesByNameWithContext method")
+//			},
+//			ListHostedZonesByVPCFunc: func(listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput) (*route53.ListHostedZonesByVPCOutput, error) {
+//				panic("mock out the ListHostedZonesByVPC method")
+//			},
+//			ListHostedZonesByVPCRequestFunc: func(listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput) (*request.Request, *route53.ListHostedZonesByVPCOutput) {
+//				panic("mock out the ListHostedZonesByVPCRequest method")
+//			},
+//			ListHostedZonesByVPCWithContextFunc: func(contextMoqParam context.Context, listHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput, options ...request.Option) (*route53.ListHostedZonesByVPCOutput, error) {
+//				panic("mock out the ListHostedZonesByVPCWithContext method")
+//			},
+//			ListHostedZonesPagesFunc: func(listHostedZonesInput *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool) error {
+//				panic("mock out the ListHostedZonesPages method")
+//			},
+//			ListHostedZonesPagesWithContextFunc: func(contextMoqParam context.Context, listHostedZonesInput *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool, options ...request.Option) error {
+//				panic("mock out the ListHostedZonesPagesWithContext method")
+//			},
+//			ListHostedZonesRequestFunc: func(listHostedZonesInput *route53.ListHostedZonesInput) (*request.Request, *route53.ListHostedZonesOutput) {
+//				panic("mock out the ListHostedZonesRequest method")
+//			},
+//			ListHostedZonesWithContextFunc: func(contextMoqParam context.Context, listHostedZonesInput *route53.ListHostedZonesInput, options ...request.Option) (*route53.ListHostedZonesOutput, error) {
+//				panic("mock out the ListHostedZonesWithContext method")
+//			},
+//			ListQueryLoggingConfigsFunc: func(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput) (*route53.ListQueryLoggingConfigsOutput, error) {
+//				panic("mock out the ListQueryLoggingConfigs method")
+//			},
+//			ListQueryLoggingConfigsPagesFunc: func(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, fn func(*route53.ListQueryLoggingConfigsOutput, bool) bool) error {
+//				panic("mock out the ListQueryLoggingConfigsPages method")
+//			},
+//			ListQueryLoggingConfigsPagesWithContextFunc: func(contextMoqParam context.Context, listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, fn func(*route53.ListQueryLoggingConfigsOutput, bool) bool, options ...request.Option) error {
+//				panic("mock out the ListQueryLoggingConfigsPagesWithContext method")
+//			},
+//			ListQueryLoggingConfigsRequestFunc: func(listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput) (*request.Request, *route53.ListQueryLoggingConfigsOutput) {
+//				panic("mock out the ListQueryLoggingConfigsRequest method")
+//			},
+//			ListQueryLoggingConfigsWithContextFunc: func(contextMoqParam context.Context, listQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput, options ...request.Option) (*route53.ListQueryLoggingConfigsOutput, error) {
+//				panic("mock out the ListQueryLoggingConfigsWithContext method")
+//			},
+//			ListResourceRecordSetsFunc: func(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error) {
+//				panic("mock out the ListResourceRecordSets method")
+//			},
+//			ListResourceRecordSetsPagesFunc: func(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, fn func(*route53.ListResourceRecordSetsOutput, bool) bool) error {
+//				panic("mock out the ListResourceRecordSetsPages method")
+//			},
+//			ListResourceRecordSetsPagesWithContextFunc: func(contextMoqParam context.Context, listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, fn func(*route53.ListResourceRecordSetsOutput, bool) bool, options ...request.Option) error {
+//				panic("mock out the ListResourceRecordSetsPagesWithContext method")
+//			},
+//			ListResourceRecordSetsRequestFunc: func(listResourceRecordSetsInput *route53.ListResourceRecordSetsInput) (*request.Request, *route53.ListResourceRecordSetsOutput) {
+//				panic("mock out the ListResourceRecordSetsRequest method")
+//			},
+//			ListResourceRecordSetsWithContextFunc: func(contextMoqParam context.Context, listResourceRecordSetsInput *route53.ListResourceRecordSetsInput, options ...request.Option) (*route53.ListResourceRecordSetsOutput, error) {
+//				panic("mock out the ListResourceRecordSetsWithContext method")
+//			},
+//			ListReusableDelegationSetsFunc: func(listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput) (*route53.ListReusableDelegationSetsOutput, error) {
+//				panic("mock out the ListReusableDelegationSets method")
+//			},
+//			ListReusableDelegationSetsRequestFunc: func(listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput) (*request.Request, *route53.ListReusableDelegationSetsOutput) {
+//				panic("mock out the ListReusableDelegationSetsRequest method")
+//			},
+//			ListReusableDelegationSetsWithContextFunc: func(contextMoqParam context.Context, listReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput, options ...request.Option) (*route53.ListReusableDelegationSetsOutput, error) {
+//				panic("mock out the ListReusableDelegationSetsWithContext method")
+//			},
+//			ListTagsForResourceFunc: func(listTagsForResourceInput *route53.ListTagsForResourceInput) (*route53.ListTagsForResourceOutput, error) {
+//				panic("mock out the ListTagsForResource method")
+//			},
+//			ListTagsForResourceRequestFunc: func(listTagsForResourceInput *route53.ListTagsForResourceInput) (*request.Request, *route53.ListTagsForResourceOutput) {
+//				panic("mock out the ListTagsForResourceRequest method")
+//			},
+//			ListTagsForResourceWithContextFunc: func(contextMoqParam context.Context, listTagsForResourceInput *route53.ListTagsForResourceInput, options ...request.Option) (*route53.ListTagsForResourceOutput, error) {
+//				panic("mock out the ListTagsForResourceWithContext method")
+//			},
+//			ListTagsForResourcesFunc: func(listTagsForResourcesInput *route53.ListTagsForResourcesInput) (*route53.ListTagsForResourcesOutput, error) {
+//				panic("mock out the ListTagsForResources method")
+//			},
+//			ListTagsForResourcesRequestFunc: func(listTagsForResourcesInput *route53.ListTagsForResourcesInput) (*request.Request, *route53.ListTagsForResourcesOutput) {
+//				panic("mock out the ListTagsForResourcesRequest method")
+//			},
+//			ListTagsForResourcesWithContextFunc: func(contextMoqParam context.Context, listTagsForResourcesInput *route53.ListTagsForResourcesInput, options ...request.Option) (*route53.ListTagsForResourcesOutput, error) {
+//				panic("mock out the ListTagsForResourcesWithContext method")
+//			},
+//			ListTrafficPoliciesFunc: func(listTrafficPoliciesInput *route53.ListTrafficPoliciesInput) (*route53.ListTrafficPoliciesOutput, error) {
+//				panic("mock out the ListTrafficPolicies method")
+//			},
+//			ListTrafficPoliciesRequestFunc: func(listTrafficPoliciesInput *route53.ListTrafficPoliciesInput) (*request.Request, *route53.ListTrafficPoliciesOutput) {
+//				panic("mock out the ListTrafficPoliciesRequest method")
+//			},
+//			ListTrafficPoliciesWithContextFunc: func(contextMoqParam context.Context, listTrafficPoliciesInput *route53.ListTrafficPoliciesInput, options ...request.Option) (*route53.ListTrafficPoliciesOutput, error) {
+//				panic("mock out the ListTrafficPoliciesWithContext method")
+//			},
+//			ListTrafficPolicyInstancesFunc: func(listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput) (*route53.ListTrafficPolicyInstancesOutput, error) {
+//				panic("mock out the ListTrafficPolicyInstances method")
+//			},
+//			ListTrafficPolicyInstancesByHostedZoneFunc: func(listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error) {
+//				panic("mock out the ListTrafficPolicyInstancesByHostedZone method")
+//			},
+//			ListTrafficPolicyInstancesByHostedZoneRequestFunc: func(listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput) (*request.Request, *route53.ListTrafficPolicyInstancesByHostedZoneOutput) {
+//				panic("mock out the ListTrafficPolicyInstancesByHostedZoneRequest method")
+//			},
+//			ListTrafficPolicyInstancesByHostedZoneWithContextFunc: func(contextMoqParam context.Context, listTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesByHostedZoneOutput, error) {
+//				panic("mock out the ListTrafficPolicyInstancesByHostedZoneWithContext method")
+//			},
+//			ListTrafficPolicyInstancesByPolicyFunc: func(listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error) {
+//				panic("mock out the ListTrafficPolicyInstancesByPolicy method")
+//			},
+//			ListTrafficPolicyInstancesByPolicyRequestFunc: func(listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput) (*request.Request, *route53.ListTrafficPolicyInstancesByPolicyOutput) {
+//				panic("mock out the ListTrafficPolicyInstancesByPolicyRequest method")
+//			},
+//			ListTrafficPolicyInstancesByPolicyWithContextFunc: func(contextMoqParam context.Context, listTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesByPolicyOutput, error) {
+//				panic("mock out the ListTrafficPolicyInstancesByPolicyWithContext method")
+//			},
+//			ListTrafficPolicyInstancesRequestFunc: func(listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput) (*request.Request, *route53.ListTrafficPolicyInstancesOutput) {
+//				panic("mock out the ListTrafficPolicyInstancesRequest method")
+//			},
+//			ListTrafficPolicyInstancesWithContextFunc: func(contextMoqParam context.Context, listTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput, options ...request.Option) (*route53.ListTrafficPolicyInstancesOutput, error) {
+//				panic("mock out the ListTrafficPolicyInstancesWithContext method")
+//			},
+//			ListTrafficPolicyVersionsFunc: func(listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput) (*route53.ListTrafficPolicyVersionsOutput, error) {
+//				panic("mock out the ListTrafficPolicyVersions method")
+//			},
+//			ListTrafficPolicyVersionsRequestFunc: func(listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput) (*request.Request, *route53.ListTrafficPolicyVersionsOutput) {
+//				panic("mock out the ListTrafficPolicyVersionsRequest method")
+//			},
+//			ListTrafficPolicyVersionsWithContextFunc: func(contextMoqParam context.Context, listTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput, options ...request.Option) (*route53.ListTrafficPolicyVersionsOutput, error) {
+//				panic("mock out the ListTrafficPolicyVersionsWithContext method")
+//			},
+//			ListVPCAssociationAuthorizationsFunc: func(listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput) (*route53.ListVPCAssociationAuthorizationsOutput, error) {
+//				panic("mock out the ListVPCAssociationAuthorizations method")
+//			},
+//			ListVPCAssociationAuthorizationsRequestFunc: func(listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput) (*request.Request, *route53.ListVPCAssociationAuthorizationsOutput) {
+//				panic("mock out the ListVPCAssociationAuthorizationsRequest method")
+//			},
+//			ListVPCAssociationAuthorizationsWithContextFunc: func(contextMoqParam context.Context, listVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput, options ...request.Option) (*route53.ListVPCAssociationAuthorizationsOutput, error) {
+//				panic("mock out the ListVPCAssociationAuthorizationsWithContext method")
+//			},
+//			TestDNSAnswerFunc: func(testDNSAnswerInput *route53.TestDNSAnswerInput) (*route53.TestDNSAnswerOutput, error) {
+//				panic("mock out the TestDNSAnswer method")
+//			},
+//			TestDNSAnswerRequestFunc: func(testDNSAnswerInput *route53.TestDNSAnswerInput) (*request.Request, *route53.TestDNSAnswerOutput) {
+//				panic("mock out the TestDNSAnswerRequest method")
+//			},
+//			TestDNSAnswerWithContextFunc: func(contextMoqParam context.Context, testDNSAnswerInput *route53.TestDNSAnswerInput, options ...request.Option) (*route53.TestDNSAnswerOutput, error) {
+//				panic("mock out the TestDNSAnswerWithContext method")
+//			},
+//			UpdateHealthCheckFunc: func(updateHealthCheckInput *route53.UpdateHealthCheckInput) (*route53.UpdateHealthCheckOutput, error) {
+//				panic("mock out the UpdateHealthCheck method")
+//			},
+//			UpdateHealthCheckRequestFunc: func(updateHealthCheckInput *route53.UpdateHealthCheckInput) (*request.Request, *route53.UpdateHealthCheckOutput) {
+//				panic("mock out the UpdateHealthCheckRequest method")
+//			},
+//			UpdateHealthCheckWithContextFunc: func(contextMoqParam context.Context, updateHealthCheckInput *route53.UpdateHealthCheckInput, options ...request.Option) (*route53.UpdateHealthCheckOutput, error) {
+//				panic("mock out the UpdateHealthCheckWithContext method")
+//			},
+//			UpdateHostedZoneCommentFunc: func(updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput) (*route53.UpdateHostedZoneCommentOutput, error) {
+//				panic("mock out the UpdateHostedZoneComment method")
+//			},
+//			UpdateHostedZoneCommentRequestFunc: func(updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput) (*request.Request, *route53.UpdateHostedZoneCommentOutput) {
+//				panic("mock out the UpdateHostedZoneCommentRequest method")
+//			},
+//			UpdateHostedZoneCommentWithContextFunc: func(contextMoqParam context.Context, updateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput, options ...request.Option) (*route53.UpdateHostedZoneCommentOutput, error) {
+//				panic("mock out the UpdateHostedZoneCommentWithContext method")
+//			},
+//			UpdateTrafficPolicyCommentFunc: func(updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput) (*route53.UpdateTrafficPolicyCommentOutput, error) {
+//				panic("mock out the UpdateTrafficPolicyComment method")
+//			},
+//			UpdateTrafficPolicyCommentRequestFunc: func(updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput) (*request.Request, *route53.UpdateTrafficPolicyCommentOutput) {
+//				panic("mock out the UpdateTrafficPolicyCommentRequest method")
+//			},
+//			UpdateTrafficPolicyCommentWithContextFunc: func(contextMoqParam context.Context, updateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput, options ...request.Option) (*route53.UpdateTrafficPolicyCommentOutput, error) {
+//				panic("mock out the UpdateTrafficPolicyCommentWithContext method")
+//			},
+//			UpdateTrafficPolicyInstanceFunc: func(updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput) (*route53.UpdateTrafficPolicyInstanceOutput, error) {
+//				panic("mock out the UpdateTrafficPolicyInstance method")
+//			},
+//			UpdateTrafficPolicyInstanceRequestFunc: func(updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput) (*request.Request, *route53.UpdateTrafficPolicyInstanceOutput) {
+//				panic("mock out the UpdateTrafficPolicyInstanceRequest method")
+//			},
+//			UpdateTrafficPolicyInstanceWithContextFunc: func(contextMoqParam context.Context, updateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput, options ...request.Option) (*route53.UpdateTrafficPolicyInstanceOutput, error) {
+//				panic("mock out the UpdateTrafficPolicyInstanceWithContext method")
+//			},
+//			WaitUntilResourceRecordSetsChangedFunc: func(getChangeInput *route53.GetChangeInput) error {
+//				panic("mock out the WaitUntilResourceRecordSetsChanged method")
+//			},
+//			WaitUntilResourceRecordSetsChangedWithContextFunc: func(contextMoqParam context.Context, getChangeInput *route53.GetChangeInput, waiterOptions ...request.WaiterOption) error {
+//				panic("mock out the WaitUntilResourceRecordSetsChangedWithContext method")
+//			},
+//		}
 //
-// 		// use mockedRoute53API in code that requires route53iface.Route53API
-// 		// and then make assertions.
+//		// use mockedRoute53API in code that requires route53iface.Route53API
+//		// and then make assertions.
 //
-// 	}
+//	}
 type Route53APIMock struct {
 	// ActivateKeySigningKeyFunc mocks the ActivateKeySigningKey method.
 	ActivateKeySigningKeyFunc func(activateKeySigningKeyInput *route53.ActivateKeySigningKeyInput) (*route53.ActivateKeySigningKeyOutput, error)
@@ -3103,7 +3103,8 @@ func (mock *Route53APIMock) ActivateKeySigningKey(activateKeySigningKeyInput *ro
 
 // ActivateKeySigningKeyCalls gets all the calls that were made to ActivateKeySigningKey.
 // Check the length with:
-//     len(mockedRoute53API.ActivateKeySigningKeyCalls())
+//
+//	len(mockedRoute53API.ActivateKeySigningKeyCalls())
 func (mock *Route53APIMock) ActivateKeySigningKeyCalls() []struct {
 	ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
 } {
@@ -3134,7 +3135,8 @@ func (mock *Route53APIMock) ActivateKeySigningKeyRequest(activateKeySigningKeyIn
 
 // ActivateKeySigningKeyRequestCalls gets all the calls that were made to ActivateKeySigningKeyRequest.
 // Check the length with:
-//     len(mockedRoute53API.ActivateKeySigningKeyRequestCalls())
+//
+//	len(mockedRoute53API.ActivateKeySigningKeyRequestCalls())
 func (mock *Route53APIMock) ActivateKeySigningKeyRequestCalls() []struct {
 	ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
 } {
@@ -3169,7 +3171,8 @@ func (mock *Route53APIMock) ActivateKeySigningKeyWithContext(contextMoqParam con
 
 // ActivateKeySigningKeyWithContextCalls gets all the calls that were made to ActivateKeySigningKeyWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ActivateKeySigningKeyWithContextCalls())
+//
+//	len(mockedRoute53API.ActivateKeySigningKeyWithContextCalls())
 func (mock *Route53APIMock) ActivateKeySigningKeyWithContextCalls() []struct {
 	ContextMoqParam            context.Context
 	ActivateKeySigningKeyInput *route53.ActivateKeySigningKeyInput
@@ -3204,7 +3207,8 @@ func (mock *Route53APIMock) AssociateVPCWithHostedZone(associateVPCWithHostedZon
 
 // AssociateVPCWithHostedZoneCalls gets all the calls that were made to AssociateVPCWithHostedZone.
 // Check the length with:
-//     len(mockedRoute53API.AssociateVPCWithHostedZoneCalls())
+//
+//	len(mockedRoute53API.AssociateVPCWithHostedZoneCalls())
 func (mock *Route53APIMock) AssociateVPCWithHostedZoneCalls() []struct {
 	AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
 } {
@@ -3235,7 +3239,8 @@ func (mock *Route53APIMock) AssociateVPCWithHostedZoneRequest(associateVPCWithHo
 
 // AssociateVPCWithHostedZoneRequestCalls gets all the calls that were made to AssociateVPCWithHostedZoneRequest.
 // Check the length with:
-//     len(mockedRoute53API.AssociateVPCWithHostedZoneRequestCalls())
+//
+//	len(mockedRoute53API.AssociateVPCWithHostedZoneRequestCalls())
 func (mock *Route53APIMock) AssociateVPCWithHostedZoneRequestCalls() []struct {
 	AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
 } {
@@ -3270,7 +3275,8 @@ func (mock *Route53APIMock) AssociateVPCWithHostedZoneWithContext(contextMoqPara
 
 // AssociateVPCWithHostedZoneWithContextCalls gets all the calls that were made to AssociateVPCWithHostedZoneWithContext.
 // Check the length with:
-//     len(mockedRoute53API.AssociateVPCWithHostedZoneWithContextCalls())
+//
+//	len(mockedRoute53API.AssociateVPCWithHostedZoneWithContextCalls())
 func (mock *Route53APIMock) AssociateVPCWithHostedZoneWithContextCalls() []struct {
 	ContextMoqParam                 context.Context
 	AssociateVPCWithHostedZoneInput *route53.AssociateVPCWithHostedZoneInput
@@ -3305,7 +3311,8 @@ func (mock *Route53APIMock) ChangeCidrCollection(changeCidrCollectionInput *rout
 
 // ChangeCidrCollectionCalls gets all the calls that were made to ChangeCidrCollection.
 // Check the length with:
-//     len(mockedRoute53API.ChangeCidrCollectionCalls())
+//
+//	len(mockedRoute53API.ChangeCidrCollectionCalls())
 func (mock *Route53APIMock) ChangeCidrCollectionCalls() []struct {
 	ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
 } {
@@ -3336,7 +3343,8 @@ func (mock *Route53APIMock) ChangeCidrCollectionRequest(changeCidrCollectionInpu
 
 // ChangeCidrCollectionRequestCalls gets all the calls that were made to ChangeCidrCollectionRequest.
 // Check the length with:
-//     len(mockedRoute53API.ChangeCidrCollectionRequestCalls())
+//
+//	len(mockedRoute53API.ChangeCidrCollectionRequestCalls())
 func (mock *Route53APIMock) ChangeCidrCollectionRequestCalls() []struct {
 	ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
 } {
@@ -3371,7 +3379,8 @@ func (mock *Route53APIMock) ChangeCidrCollectionWithContext(contextMoqParam cont
 
 // ChangeCidrCollectionWithContextCalls gets all the calls that were made to ChangeCidrCollectionWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ChangeCidrCollectionWithContextCalls())
+//
+//	len(mockedRoute53API.ChangeCidrCollectionWithContextCalls())
 func (mock *Route53APIMock) ChangeCidrCollectionWithContextCalls() []struct {
 	ContextMoqParam           context.Context
 	ChangeCidrCollectionInput *route53.ChangeCidrCollectionInput
@@ -3406,7 +3415,8 @@ func (mock *Route53APIMock) ChangeResourceRecordSets(changeResourceRecordSetsInp
 
 // ChangeResourceRecordSetsCalls gets all the calls that were made to ChangeResourceRecordSets.
 // Check the length with:
-//     len(mockedRoute53API.ChangeResourceRecordSetsCalls())
+//
+//	len(mockedRoute53API.ChangeResourceRecordSetsCalls())
 func (mock *Route53APIMock) ChangeResourceRecordSetsCalls() []struct {
 	ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
 } {
@@ -3437,7 +3447,8 @@ func (mock *Route53APIMock) ChangeResourceRecordSetsRequest(changeResourceRecord
 
 // ChangeResourceRecordSetsRequestCalls gets all the calls that were made to ChangeResourceRecordSetsRequest.
 // Check the length with:
-//     len(mockedRoute53API.ChangeResourceRecordSetsRequestCalls())
+//
+//	len(mockedRoute53API.ChangeResourceRecordSetsRequestCalls())
 func (mock *Route53APIMock) ChangeResourceRecordSetsRequestCalls() []struct {
 	ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
 } {
@@ -3472,7 +3483,8 @@ func (mock *Route53APIMock) ChangeResourceRecordSetsWithContext(contextMoqParam 
 
 // ChangeResourceRecordSetsWithContextCalls gets all the calls that were made to ChangeResourceRecordSetsWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ChangeResourceRecordSetsWithContextCalls())
+//
+//	len(mockedRoute53API.ChangeResourceRecordSetsWithContextCalls())
 func (mock *Route53APIMock) ChangeResourceRecordSetsWithContextCalls() []struct {
 	ContextMoqParam               context.Context
 	ChangeResourceRecordSetsInput *route53.ChangeResourceRecordSetsInput
@@ -3507,7 +3519,8 @@ func (mock *Route53APIMock) ChangeTagsForResource(changeTagsForResourceInput *ro
 
 // ChangeTagsForResourceCalls gets all the calls that were made to ChangeTagsForResource.
 // Check the length with:
-//     len(mockedRoute53API.ChangeTagsForResourceCalls())
+//
+//	len(mockedRoute53API.ChangeTagsForResourceCalls())
 func (mock *Route53APIMock) ChangeTagsForResourceCalls() []struct {
 	ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
 } {
@@ -3538,7 +3551,8 @@ func (mock *Route53APIMock) ChangeTagsForResourceRequest(changeTagsForResourceIn
 
 // ChangeTagsForResourceRequestCalls gets all the calls that were made to ChangeTagsForResourceRequest.
 // Check the length with:
-//     len(mockedRoute53API.ChangeTagsForResourceRequestCalls())
+//
+//	len(mockedRoute53API.ChangeTagsForResourceRequestCalls())
 func (mock *Route53APIMock) ChangeTagsForResourceRequestCalls() []struct {
 	ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
 } {
@@ -3573,7 +3587,8 @@ func (mock *Route53APIMock) ChangeTagsForResourceWithContext(contextMoqParam con
 
 // ChangeTagsForResourceWithContextCalls gets all the calls that were made to ChangeTagsForResourceWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ChangeTagsForResourceWithContextCalls())
+//
+//	len(mockedRoute53API.ChangeTagsForResourceWithContextCalls())
 func (mock *Route53APIMock) ChangeTagsForResourceWithContextCalls() []struct {
 	ContextMoqParam            context.Context
 	ChangeTagsForResourceInput *route53.ChangeTagsForResourceInput
@@ -3608,7 +3623,8 @@ func (mock *Route53APIMock) CreateCidrCollection(createCidrCollectionInput *rout
 
 // CreateCidrCollectionCalls gets all the calls that were made to CreateCidrCollection.
 // Check the length with:
-//     len(mockedRoute53API.CreateCidrCollectionCalls())
+//
+//	len(mockedRoute53API.CreateCidrCollectionCalls())
 func (mock *Route53APIMock) CreateCidrCollectionCalls() []struct {
 	CreateCidrCollectionInput *route53.CreateCidrCollectionInput
 } {
@@ -3639,7 +3655,8 @@ func (mock *Route53APIMock) CreateCidrCollectionRequest(createCidrCollectionInpu
 
 // CreateCidrCollectionRequestCalls gets all the calls that were made to CreateCidrCollectionRequest.
 // Check the length with:
-//     len(mockedRoute53API.CreateCidrCollectionRequestCalls())
+//
+//	len(mockedRoute53API.CreateCidrCollectionRequestCalls())
 func (mock *Route53APIMock) CreateCidrCollectionRequestCalls() []struct {
 	CreateCidrCollectionInput *route53.CreateCidrCollectionInput
 } {
@@ -3674,7 +3691,8 @@ func (mock *Route53APIMock) CreateCidrCollectionWithContext(contextMoqParam cont
 
 // CreateCidrCollectionWithContextCalls gets all the calls that were made to CreateCidrCollectionWithContext.
 // Check the length with:
-//     len(mockedRoute53API.CreateCidrCollectionWithContextCalls())
+//
+//	len(mockedRoute53API.CreateCidrCollectionWithContextCalls())
 func (mock *Route53APIMock) CreateCidrCollectionWithContextCalls() []struct {
 	ContextMoqParam           context.Context
 	CreateCidrCollectionInput *route53.CreateCidrCollectionInput
@@ -3709,7 +3727,8 @@ func (mock *Route53APIMock) CreateHealthCheck(createHealthCheckInput *route53.Cr
 
 // CreateHealthCheckCalls gets all the calls that were made to CreateHealthCheck.
 // Check the length with:
-//     len(mockedRoute53API.CreateHealthCheckCalls())
+//
+//	len(mockedRoute53API.CreateHealthCheckCalls())
 func (mock *Route53APIMock) CreateHealthCheckCalls() []struct {
 	CreateHealthCheckInput *route53.CreateHealthCheckInput
 } {
@@ -3740,7 +3759,8 @@ func (mock *Route53APIMock) CreateHealthCheckRequest(createHealthCheckInput *rou
 
 // CreateHealthCheckRequestCalls gets all the calls that were made to CreateHealthCheckRequest.
 // Check the length with:
-//     len(mockedRoute53API.CreateHealthCheckRequestCalls())
+//
+//	len(mockedRoute53API.CreateHealthCheckRequestCalls())
 func (mock *Route53APIMock) CreateHealthCheckRequestCalls() []struct {
 	CreateHealthCheckInput *route53.CreateHealthCheckInput
 } {
@@ -3775,7 +3795,8 @@ func (mock *Route53APIMock) CreateHealthCheckWithContext(contextMoqParam context
 
 // CreateHealthCheckWithContextCalls gets all the calls that were made to CreateHealthCheckWithContext.
 // Check the length with:
-//     len(mockedRoute53API.CreateHealthCheckWithContextCalls())
+//
+//	len(mockedRoute53API.CreateHealthCheckWithContextCalls())
 func (mock *Route53APIMock) CreateHealthCheckWithContextCalls() []struct {
 	ContextMoqParam        context.Context
 	CreateHealthCheckInput *route53.CreateHealthCheckInput
@@ -3810,7 +3831,8 @@ func (mock *Route53APIMock) CreateHostedZone(createHostedZoneInput *route53.Crea
 
 // CreateHostedZoneCalls gets all the calls that were made to CreateHostedZone.
 // Check the length with:
-//     len(mockedRoute53API.CreateHostedZoneCalls())
+//
+//	len(mockedRoute53API.CreateHostedZoneCalls())
 func (mock *Route53APIMock) CreateHostedZoneCalls() []struct {
 	CreateHostedZoneInput *route53.CreateHostedZoneInput
 } {
@@ -3841,7 +3863,8 @@ func (mock *Route53APIMock) CreateHostedZoneRequest(createHostedZoneInput *route
 
 // CreateHostedZoneRequestCalls gets all the calls that were made to CreateHostedZoneRequest.
 // Check the length with:
-//     len(mockedRoute53API.CreateHostedZoneRequestCalls())
+//
+//	len(mockedRoute53API.CreateHostedZoneRequestCalls())
 func (mock *Route53APIMock) CreateHostedZoneRequestCalls() []struct {
 	CreateHostedZoneInput *route53.CreateHostedZoneInput
 } {
@@ -3876,7 +3899,8 @@ func (mock *Route53APIMock) CreateHostedZoneWithContext(contextMoqParam context.
 
 // CreateHostedZoneWithContextCalls gets all the calls that were made to CreateHostedZoneWithContext.
 // Check the length with:
-//     len(mockedRoute53API.CreateHostedZoneWithContextCalls())
+//
+//	len(mockedRoute53API.CreateHostedZoneWithContextCalls())
 func (mock *Route53APIMock) CreateHostedZoneWithContextCalls() []struct {
 	ContextMoqParam       context.Context
 	CreateHostedZoneInput *route53.CreateHostedZoneInput
@@ -3911,7 +3935,8 @@ func (mock *Route53APIMock) CreateKeySigningKey(createKeySigningKeyInput *route5
 
 // CreateKeySigningKeyCalls gets all the calls that were made to CreateKeySigningKey.
 // Check the length with:
-//     len(mockedRoute53API.CreateKeySigningKeyCalls())
+//
+//	len(mockedRoute53API.CreateKeySigningKeyCalls())
 func (mock *Route53APIMock) CreateKeySigningKeyCalls() []struct {
 	CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
 } {
@@ -3942,7 +3967,8 @@ func (mock *Route53APIMock) CreateKeySigningKeyRequest(createKeySigningKeyInput 
 
 // CreateKeySigningKeyRequestCalls gets all the calls that were made to CreateKeySigningKeyRequest.
 // Check the length with:
-//     len(mockedRoute53API.CreateKeySigningKeyRequestCalls())
+//
+//	len(mockedRoute53API.CreateKeySigningKeyRequestCalls())
 func (mock *Route53APIMock) CreateKeySigningKeyRequestCalls() []struct {
 	CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
 } {
@@ -3977,7 +4003,8 @@ func (mock *Route53APIMock) CreateKeySigningKeyWithContext(contextMoqParam conte
 
 // CreateKeySigningKeyWithContextCalls gets all the calls that were made to CreateKeySigningKeyWithContext.
 // Check the length with:
-//     len(mockedRoute53API.CreateKeySigningKeyWithContextCalls())
+//
+//	len(mockedRoute53API.CreateKeySigningKeyWithContextCalls())
 func (mock *Route53APIMock) CreateKeySigningKeyWithContextCalls() []struct {
 	ContextMoqParam          context.Context
 	CreateKeySigningKeyInput *route53.CreateKeySigningKeyInput
@@ -4012,7 +4039,8 @@ func (mock *Route53APIMock) CreateQueryLoggingConfig(createQueryLoggingConfigInp
 
 // CreateQueryLoggingConfigCalls gets all the calls that were made to CreateQueryLoggingConfig.
 // Check the length with:
-//     len(mockedRoute53API.CreateQueryLoggingConfigCalls())
+//
+//	len(mockedRoute53API.CreateQueryLoggingConfigCalls())
 func (mock *Route53APIMock) CreateQueryLoggingConfigCalls() []struct {
 	CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
 } {
@@ -4043,7 +4071,8 @@ func (mock *Route53APIMock) CreateQueryLoggingConfigRequest(createQueryLoggingCo
 
 // CreateQueryLoggingConfigRequestCalls gets all the calls that were made to CreateQueryLoggingConfigRequest.
 // Check the length with:
-//     len(mockedRoute53API.CreateQueryLoggingConfigRequestCalls())
+//
+//	len(mockedRoute53API.CreateQueryLoggingConfigRequestCalls())
 func (mock *Route53APIMock) CreateQueryLoggingConfigRequestCalls() []struct {
 	CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
 } {
@@ -4078,7 +4107,8 @@ func (mock *Route53APIMock) CreateQueryLoggingConfigWithContext(contextMoqParam 
 
 // CreateQueryLoggingConfigWithContextCalls gets all the calls that were made to CreateQueryLoggingConfigWithContext.
 // Check the length with:
-//     len(mockedRoute53API.CreateQueryLoggingConfigWithContextCalls())
+//
+//	len(mockedRoute53API.CreateQueryLoggingConfigWithContextCalls())
 func (mock *Route53APIMock) CreateQueryLoggingConfigWithContextCalls() []struct {
 	ContextMoqParam               context.Context
 	CreateQueryLoggingConfigInput *route53.CreateQueryLoggingConfigInput
@@ -4113,7 +4143,8 @@ func (mock *Route53APIMock) CreateReusableDelegationSet(createReusableDelegation
 
 // CreateReusableDelegationSetCalls gets all the calls that were made to CreateReusableDelegationSet.
 // Check the length with:
-//     len(mockedRoute53API.CreateReusableDelegationSetCalls())
+//
+//	len(mockedRoute53API.CreateReusableDelegationSetCalls())
 func (mock *Route53APIMock) CreateReusableDelegationSetCalls() []struct {
 	CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
 } {
@@ -4144,7 +4175,8 @@ func (mock *Route53APIMock) CreateReusableDelegationSetRequest(createReusableDel
 
 // CreateReusableDelegationSetRequestCalls gets all the calls that were made to CreateReusableDelegationSetRequest.
 // Check the length with:
-//     len(mockedRoute53API.CreateReusableDelegationSetRequestCalls())
+//
+//	len(mockedRoute53API.CreateReusableDelegationSetRequestCalls())
 func (mock *Route53APIMock) CreateReusableDelegationSetRequestCalls() []struct {
 	CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
 } {
@@ -4179,7 +4211,8 @@ func (mock *Route53APIMock) CreateReusableDelegationSetWithContext(contextMoqPar
 
 // CreateReusableDelegationSetWithContextCalls gets all the calls that were made to CreateReusableDelegationSetWithContext.
 // Check the length with:
-//     len(mockedRoute53API.CreateReusableDelegationSetWithContextCalls())
+//
+//	len(mockedRoute53API.CreateReusableDelegationSetWithContextCalls())
 func (mock *Route53APIMock) CreateReusableDelegationSetWithContextCalls() []struct {
 	ContextMoqParam                  context.Context
 	CreateReusableDelegationSetInput *route53.CreateReusableDelegationSetInput
@@ -4214,7 +4247,8 @@ func (mock *Route53APIMock) CreateTrafficPolicy(createTrafficPolicyInput *route5
 
 // CreateTrafficPolicyCalls gets all the calls that were made to CreateTrafficPolicy.
 // Check the length with:
-//     len(mockedRoute53API.CreateTrafficPolicyCalls())
+//
+//	len(mockedRoute53API.CreateTrafficPolicyCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyCalls() []struct {
 	CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
 } {
@@ -4245,7 +4279,8 @@ func (mock *Route53APIMock) CreateTrafficPolicyInstance(createTrafficPolicyInsta
 
 // CreateTrafficPolicyInstanceCalls gets all the calls that were made to CreateTrafficPolicyInstance.
 // Check the length with:
-//     len(mockedRoute53API.CreateTrafficPolicyInstanceCalls())
+//
+//	len(mockedRoute53API.CreateTrafficPolicyInstanceCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyInstanceCalls() []struct {
 	CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
 } {
@@ -4276,7 +4311,8 @@ func (mock *Route53APIMock) CreateTrafficPolicyInstanceRequest(createTrafficPoli
 
 // CreateTrafficPolicyInstanceRequestCalls gets all the calls that were made to CreateTrafficPolicyInstanceRequest.
 // Check the length with:
-//     len(mockedRoute53API.CreateTrafficPolicyInstanceRequestCalls())
+//
+//	len(mockedRoute53API.CreateTrafficPolicyInstanceRequestCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyInstanceRequestCalls() []struct {
 	CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
 } {
@@ -4311,7 +4347,8 @@ func (mock *Route53APIMock) CreateTrafficPolicyInstanceWithContext(contextMoqPar
 
 // CreateTrafficPolicyInstanceWithContextCalls gets all the calls that were made to CreateTrafficPolicyInstanceWithContext.
 // Check the length with:
-//     len(mockedRoute53API.CreateTrafficPolicyInstanceWithContextCalls())
+//
+//	len(mockedRoute53API.CreateTrafficPolicyInstanceWithContextCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyInstanceWithContextCalls() []struct {
 	ContextMoqParam                  context.Context
 	CreateTrafficPolicyInstanceInput *route53.CreateTrafficPolicyInstanceInput
@@ -4346,7 +4383,8 @@ func (mock *Route53APIMock) CreateTrafficPolicyRequest(createTrafficPolicyInput 
 
 // CreateTrafficPolicyRequestCalls gets all the calls that were made to CreateTrafficPolicyRequest.
 // Check the length with:
-//     len(mockedRoute53API.CreateTrafficPolicyRequestCalls())
+//
+//	len(mockedRoute53API.CreateTrafficPolicyRequestCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyRequestCalls() []struct {
 	CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
 } {
@@ -4377,7 +4415,8 @@ func (mock *Route53APIMock) CreateTrafficPolicyVersion(createTrafficPolicyVersio
 
 // CreateTrafficPolicyVersionCalls gets all the calls that were made to CreateTrafficPolicyVersion.
 // Check the length with:
-//     len(mockedRoute53API.CreateTrafficPolicyVersionCalls())
+//
+//	len(mockedRoute53API.CreateTrafficPolicyVersionCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyVersionCalls() []struct {
 	CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
 } {
@@ -4408,7 +4447,8 @@ func (mock *Route53APIMock) CreateTrafficPolicyVersionRequest(createTrafficPolic
 
 // CreateTrafficPolicyVersionRequestCalls gets all the calls that were made to CreateTrafficPolicyVersionRequest.
 // Check the length with:
-//     len(mockedRoute53API.CreateTrafficPolicyVersionRequestCalls())
+//
+//	len(mockedRoute53API.CreateTrafficPolicyVersionRequestCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyVersionRequestCalls() []struct {
 	CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
 } {
@@ -4443,7 +4483,8 @@ func (mock *Route53APIMock) CreateTrafficPolicyVersionWithContext(contextMoqPara
 
 // CreateTrafficPolicyVersionWithContextCalls gets all the calls that were made to CreateTrafficPolicyVersionWithContext.
 // Check the length with:
-//     len(mockedRoute53API.CreateTrafficPolicyVersionWithContextCalls())
+//
+//	len(mockedRoute53API.CreateTrafficPolicyVersionWithContextCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyVersionWithContextCalls() []struct {
 	ContextMoqParam                 context.Context
 	CreateTrafficPolicyVersionInput *route53.CreateTrafficPolicyVersionInput
@@ -4482,7 +4523,8 @@ func (mock *Route53APIMock) CreateTrafficPolicyWithContext(contextMoqParam conte
 
 // CreateTrafficPolicyWithContextCalls gets all the calls that were made to CreateTrafficPolicyWithContext.
 // Check the length with:
-//     len(mockedRoute53API.CreateTrafficPolicyWithContextCalls())
+//
+//	len(mockedRoute53API.CreateTrafficPolicyWithContextCalls())
 func (mock *Route53APIMock) CreateTrafficPolicyWithContextCalls() []struct {
 	ContextMoqParam          context.Context
 	CreateTrafficPolicyInput *route53.CreateTrafficPolicyInput
@@ -4517,7 +4559,8 @@ func (mock *Route53APIMock) CreateVPCAssociationAuthorization(createVPCAssociati
 
 // CreateVPCAssociationAuthorizationCalls gets all the calls that were made to CreateVPCAssociationAuthorization.
 // Check the length with:
-//     len(mockedRoute53API.CreateVPCAssociationAuthorizationCalls())
+//
+//	len(mockedRoute53API.CreateVPCAssociationAuthorizationCalls())
 func (mock *Route53APIMock) CreateVPCAssociationAuthorizationCalls() []struct {
 	CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
 } {
@@ -4548,7 +4591,8 @@ func (mock *Route53APIMock) CreateVPCAssociationAuthorizationRequest(createVPCAs
 
 // CreateVPCAssociationAuthorizationRequestCalls gets all the calls that were made to CreateVPCAssociationAuthorizationRequest.
 // Check the length with:
-//     len(mockedRoute53API.CreateVPCAssociationAuthorizationRequestCalls())
+//
+//	len(mockedRoute53API.CreateVPCAssociationAuthorizationRequestCalls())
 func (mock *Route53APIMock) CreateVPCAssociationAuthorizationRequestCalls() []struct {
 	CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
 } {
@@ -4583,7 +4627,8 @@ func (mock *Route53APIMock) CreateVPCAssociationAuthorizationWithContext(context
 
 // CreateVPCAssociationAuthorizationWithContextCalls gets all the calls that were made to CreateVPCAssociationAuthorizationWithContext.
 // Check the length with:
-//     len(mockedRoute53API.CreateVPCAssociationAuthorizationWithContextCalls())
+//
+//	len(mockedRoute53API.CreateVPCAssociationAuthorizationWithContextCalls())
 func (mock *Route53APIMock) CreateVPCAssociationAuthorizationWithContextCalls() []struct {
 	ContextMoqParam                        context.Context
 	CreateVPCAssociationAuthorizationInput *route53.CreateVPCAssociationAuthorizationInput
@@ -4618,7 +4663,8 @@ func (mock *Route53APIMock) DeactivateKeySigningKey(deactivateKeySigningKeyInput
 
 // DeactivateKeySigningKeyCalls gets all the calls that were made to DeactivateKeySigningKey.
 // Check the length with:
-//     len(mockedRoute53API.DeactivateKeySigningKeyCalls())
+//
+//	len(mockedRoute53API.DeactivateKeySigningKeyCalls())
 func (mock *Route53APIMock) DeactivateKeySigningKeyCalls() []struct {
 	DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
 } {
@@ -4649,7 +4695,8 @@ func (mock *Route53APIMock) DeactivateKeySigningKeyRequest(deactivateKeySigningK
 
 // DeactivateKeySigningKeyRequestCalls gets all the calls that were made to DeactivateKeySigningKeyRequest.
 // Check the length with:
-//     len(mockedRoute53API.DeactivateKeySigningKeyRequestCalls())
+//
+//	len(mockedRoute53API.DeactivateKeySigningKeyRequestCalls())
 func (mock *Route53APIMock) DeactivateKeySigningKeyRequestCalls() []struct {
 	DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
 } {
@@ -4684,7 +4731,8 @@ func (mock *Route53APIMock) DeactivateKeySigningKeyWithContext(contextMoqParam c
 
 // DeactivateKeySigningKeyWithContextCalls gets all the calls that were made to DeactivateKeySigningKeyWithContext.
 // Check the length with:
-//     len(mockedRoute53API.DeactivateKeySigningKeyWithContextCalls())
+//
+//	len(mockedRoute53API.DeactivateKeySigningKeyWithContextCalls())
 func (mock *Route53APIMock) DeactivateKeySigningKeyWithContextCalls() []struct {
 	ContextMoqParam              context.Context
 	DeactivateKeySigningKeyInput *route53.DeactivateKeySigningKeyInput
@@ -4719,7 +4767,8 @@ func (mock *Route53APIMock) DeleteCidrCollection(deleteCidrCollectionInput *rout
 
 // DeleteCidrCollectionCalls gets all the calls that were made to DeleteCidrCollection.
 // Check the length with:
-//     len(mockedRoute53API.DeleteCidrCollectionCalls())
+//
+//	len(mockedRoute53API.DeleteCidrCollectionCalls())
 func (mock *Route53APIMock) DeleteCidrCollectionCalls() []struct {
 	DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
 } {
@@ -4750,7 +4799,8 @@ func (mock *Route53APIMock) DeleteCidrCollectionRequest(deleteCidrCollectionInpu
 
 // DeleteCidrCollectionRequestCalls gets all the calls that were made to DeleteCidrCollectionRequest.
 // Check the length with:
-//     len(mockedRoute53API.DeleteCidrCollectionRequestCalls())
+//
+//	len(mockedRoute53API.DeleteCidrCollectionRequestCalls())
 func (mock *Route53APIMock) DeleteCidrCollectionRequestCalls() []struct {
 	DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
 } {
@@ -4785,7 +4835,8 @@ func (mock *Route53APIMock) DeleteCidrCollectionWithContext(contextMoqParam cont
 
 // DeleteCidrCollectionWithContextCalls gets all the calls that were made to DeleteCidrCollectionWithContext.
 // Check the length with:
-//     len(mockedRoute53API.DeleteCidrCollectionWithContextCalls())
+//
+//	len(mockedRoute53API.DeleteCidrCollectionWithContextCalls())
 func (mock *Route53APIMock) DeleteCidrCollectionWithContextCalls() []struct {
 	ContextMoqParam           context.Context
 	DeleteCidrCollectionInput *route53.DeleteCidrCollectionInput
@@ -4820,7 +4871,8 @@ func (mock *Route53APIMock) DeleteHealthCheck(deleteHealthCheckInput *route53.De
 
 // DeleteHealthCheckCalls gets all the calls that were made to DeleteHealthCheck.
 // Check the length with:
-//     len(mockedRoute53API.DeleteHealthCheckCalls())
+//
+//	len(mockedRoute53API.DeleteHealthCheckCalls())
 func (mock *Route53APIMock) DeleteHealthCheckCalls() []struct {
 	DeleteHealthCheckInput *route53.DeleteHealthCheckInput
 } {
@@ -4851,7 +4903,8 @@ func (mock *Route53APIMock) DeleteHealthCheckRequest(deleteHealthCheckInput *rou
 
 // DeleteHealthCheckRequestCalls gets all the calls that were made to DeleteHealthCheckRequest.
 // Check the length with:
-//     len(mockedRoute53API.DeleteHealthCheckRequestCalls())
+//
+//	len(mockedRoute53API.DeleteHealthCheckRequestCalls())
 func (mock *Route53APIMock) DeleteHealthCheckRequestCalls() []struct {
 	DeleteHealthCheckInput *route53.DeleteHealthCheckInput
 } {
@@ -4886,7 +4939,8 @@ func (mock *Route53APIMock) DeleteHealthCheckWithContext(contextMoqParam context
 
 // DeleteHealthCheckWithContextCalls gets all the calls that were made to DeleteHealthCheckWithContext.
 // Check the length with:
-//     len(mockedRoute53API.DeleteHealthCheckWithContextCalls())
+//
+//	len(mockedRoute53API.DeleteHealthCheckWithContextCalls())
 func (mock *Route53APIMock) DeleteHealthCheckWithContextCalls() []struct {
 	ContextMoqParam        context.Context
 	DeleteHealthCheckInput *route53.DeleteHealthCheckInput
@@ -4921,7 +4975,8 @@ func (mock *Route53APIMock) DeleteHostedZone(deleteHostedZoneInput *route53.Dele
 
 // DeleteHostedZoneCalls gets all the calls that were made to DeleteHostedZone.
 // Check the length with:
-//     len(mockedRoute53API.DeleteHostedZoneCalls())
+//
+//	len(mockedRoute53API.DeleteHostedZoneCalls())
 func (mock *Route53APIMock) DeleteHostedZoneCalls() []struct {
 	DeleteHostedZoneInput *route53.DeleteHostedZoneInput
 } {
@@ -4952,7 +5007,8 @@ func (mock *Route53APIMock) DeleteHostedZoneRequest(deleteHostedZoneInput *route
 
 // DeleteHostedZoneRequestCalls gets all the calls that were made to DeleteHostedZoneRequest.
 // Check the length with:
-//     len(mockedRoute53API.DeleteHostedZoneRequestCalls())
+//
+//	len(mockedRoute53API.DeleteHostedZoneRequestCalls())
 func (mock *Route53APIMock) DeleteHostedZoneRequestCalls() []struct {
 	DeleteHostedZoneInput *route53.DeleteHostedZoneInput
 } {
@@ -4987,7 +5043,8 @@ func (mock *Route53APIMock) DeleteHostedZoneWithContext(contextMoqParam context.
 
 // DeleteHostedZoneWithContextCalls gets all the calls that were made to DeleteHostedZoneWithContext.
 // Check the length with:
-//     len(mockedRoute53API.DeleteHostedZoneWithContextCalls())
+//
+//	len(mockedRoute53API.DeleteHostedZoneWithContextCalls())
 func (mock *Route53APIMock) DeleteHostedZoneWithContextCalls() []struct {
 	ContextMoqParam       context.Context
 	DeleteHostedZoneInput *route53.DeleteHostedZoneInput
@@ -5022,7 +5079,8 @@ func (mock *Route53APIMock) DeleteKeySigningKey(deleteKeySigningKeyInput *route5
 
 // DeleteKeySigningKeyCalls gets all the calls that were made to DeleteKeySigningKey.
 // Check the length with:
-//     len(mockedRoute53API.DeleteKeySigningKeyCalls())
+//
+//	len(mockedRoute53API.DeleteKeySigningKeyCalls())
 func (mock *Route53APIMock) DeleteKeySigningKeyCalls() []struct {
 	DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
 } {
@@ -5053,7 +5111,8 @@ func (mock *Route53APIMock) DeleteKeySigningKeyRequest(deleteKeySigningKeyInput 
 
 // DeleteKeySigningKeyRequestCalls gets all the calls that were made to DeleteKeySigningKeyRequest.
 // Check the length with:
-//     len(mockedRoute53API.DeleteKeySigningKeyRequestCalls())
+//
+//	len(mockedRoute53API.DeleteKeySigningKeyRequestCalls())
 func (mock *Route53APIMock) DeleteKeySigningKeyRequestCalls() []struct {
 	DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
 } {
@@ -5088,7 +5147,8 @@ func (mock *Route53APIMock) DeleteKeySigningKeyWithContext(contextMoqParam conte
 
 // DeleteKeySigningKeyWithContextCalls gets all the calls that were made to DeleteKeySigningKeyWithContext.
 // Check the length with:
-//     len(mockedRoute53API.DeleteKeySigningKeyWithContextCalls())
+//
+//	len(mockedRoute53API.DeleteKeySigningKeyWithContextCalls())
 func (mock *Route53APIMock) DeleteKeySigningKeyWithContextCalls() []struct {
 	ContextMoqParam          context.Context
 	DeleteKeySigningKeyInput *route53.DeleteKeySigningKeyInput
@@ -5123,7 +5183,8 @@ func (mock *Route53APIMock) DeleteQueryLoggingConfig(deleteQueryLoggingConfigInp
 
 // DeleteQueryLoggingConfigCalls gets all the calls that were made to DeleteQueryLoggingConfig.
 // Check the length with:
-//     len(mockedRoute53API.DeleteQueryLoggingConfigCalls())
+//
+//	len(mockedRoute53API.DeleteQueryLoggingConfigCalls())
 func (mock *Route53APIMock) DeleteQueryLoggingConfigCalls() []struct {
 	DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
 } {
@@ -5154,7 +5215,8 @@ func (mock *Route53APIMock) DeleteQueryLoggingConfigRequest(deleteQueryLoggingCo
 
 // DeleteQueryLoggingConfigRequestCalls gets all the calls that were made to DeleteQueryLoggingConfigRequest.
 // Check the length with:
-//     len(mockedRoute53API.DeleteQueryLoggingConfigRequestCalls())
+//
+//	len(mockedRoute53API.DeleteQueryLoggingConfigRequestCalls())
 func (mock *Route53APIMock) DeleteQueryLoggingConfigRequestCalls() []struct {
 	DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
 } {
@@ -5189,7 +5251,8 @@ func (mock *Route53APIMock) DeleteQueryLoggingConfigWithContext(contextMoqParam 
 
 // DeleteQueryLoggingConfigWithContextCalls gets all the calls that were made to DeleteQueryLoggingConfigWithContext.
 // Check the length with:
-//     len(mockedRoute53API.DeleteQueryLoggingConfigWithContextCalls())
+//
+//	len(mockedRoute53API.DeleteQueryLoggingConfigWithContextCalls())
 func (mock *Route53APIMock) DeleteQueryLoggingConfigWithContextCalls() []struct {
 	ContextMoqParam               context.Context
 	DeleteQueryLoggingConfigInput *route53.DeleteQueryLoggingConfigInput
@@ -5224,7 +5287,8 @@ func (mock *Route53APIMock) DeleteReusableDelegationSet(deleteReusableDelegation
 
 // DeleteReusableDelegationSetCalls gets all the calls that were made to DeleteReusableDelegationSet.
 // Check the length with:
-//     len(mockedRoute53API.DeleteReusableDelegationSetCalls())
+//
+//	len(mockedRoute53API.DeleteReusableDelegationSetCalls())
 func (mock *Route53APIMock) DeleteReusableDelegationSetCalls() []struct {
 	DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
 } {
@@ -5255,7 +5319,8 @@ func (mock *Route53APIMock) DeleteReusableDelegationSetRequest(deleteReusableDel
 
 // DeleteReusableDelegationSetRequestCalls gets all the calls that were made to DeleteReusableDelegationSetRequest.
 // Check the length with:
-//     len(mockedRoute53API.DeleteReusableDelegationSetRequestCalls())
+//
+//	len(mockedRoute53API.DeleteReusableDelegationSetRequestCalls())
 func (mock *Route53APIMock) DeleteReusableDelegationSetRequestCalls() []struct {
 	DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
 } {
@@ -5290,7 +5355,8 @@ func (mock *Route53APIMock) DeleteReusableDelegationSetWithContext(contextMoqPar
 
 // DeleteReusableDelegationSetWithContextCalls gets all the calls that were made to DeleteReusableDelegationSetWithContext.
 // Check the length with:
-//     len(mockedRoute53API.DeleteReusableDelegationSetWithContextCalls())
+//
+//	len(mockedRoute53API.DeleteReusableDelegationSetWithContextCalls())
 func (mock *Route53APIMock) DeleteReusableDelegationSetWithContextCalls() []struct {
 	ContextMoqParam                  context.Context
 	DeleteReusableDelegationSetInput *route53.DeleteReusableDelegationSetInput
@@ -5325,7 +5391,8 @@ func (mock *Route53APIMock) DeleteTrafficPolicy(deleteTrafficPolicyInput *route5
 
 // DeleteTrafficPolicyCalls gets all the calls that were made to DeleteTrafficPolicy.
 // Check the length with:
-//     len(mockedRoute53API.DeleteTrafficPolicyCalls())
+//
+//	len(mockedRoute53API.DeleteTrafficPolicyCalls())
 func (mock *Route53APIMock) DeleteTrafficPolicyCalls() []struct {
 	DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
 } {
@@ -5356,7 +5423,8 @@ func (mock *Route53APIMock) DeleteTrafficPolicyInstance(deleteTrafficPolicyInsta
 
 // DeleteTrafficPolicyInstanceCalls gets all the calls that were made to DeleteTrafficPolicyInstance.
 // Check the length with:
-//     len(mockedRoute53API.DeleteTrafficPolicyInstanceCalls())
+//
+//	len(mockedRoute53API.DeleteTrafficPolicyInstanceCalls())
 func (mock *Route53APIMock) DeleteTrafficPolicyInstanceCalls() []struct {
 	DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
 } {
@@ -5387,7 +5455,8 @@ func (mock *Route53APIMock) DeleteTrafficPolicyInstanceRequest(deleteTrafficPoli
 
 // DeleteTrafficPolicyInstanceRequestCalls gets all the calls that were made to DeleteTrafficPolicyInstanceRequest.
 // Check the length with:
-//     len(mockedRoute53API.DeleteTrafficPolicyInstanceRequestCalls())
+//
+//	len(mockedRoute53API.DeleteTrafficPolicyInstanceRequestCalls())
 func (mock *Route53APIMock) DeleteTrafficPolicyInstanceRequestCalls() []struct {
 	DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
 } {
@@ -5422,7 +5491,8 @@ func (mock *Route53APIMock) DeleteTrafficPolicyInstanceWithContext(contextMoqPar
 
 // DeleteTrafficPolicyInstanceWithContextCalls gets all the calls that were made to DeleteTrafficPolicyInstanceWithContext.
 // Check the length with:
-//     len(mockedRoute53API.DeleteTrafficPolicyInstanceWithContextCalls())
+//
+//	len(mockedRoute53API.DeleteTrafficPolicyInstanceWithContextCalls())
 func (mock *Route53APIMock) DeleteTrafficPolicyInstanceWithContextCalls() []struct {
 	ContextMoqParam                  context.Context
 	DeleteTrafficPolicyInstanceInput *route53.DeleteTrafficPolicyInstanceInput
@@ -5457,7 +5527,8 @@ func (mock *Route53APIMock) DeleteTrafficPolicyRequest(deleteTrafficPolicyInput 
 
 // DeleteTrafficPolicyRequestCalls gets all the calls that were made to DeleteTrafficPolicyRequest.
 // Check the length with:
-//     len(mockedRoute53API.DeleteTrafficPolicyRequestCalls())
+//
+//	len(mockedRoute53API.DeleteTrafficPolicyRequestCalls())
 func (mock *Route53APIMock) DeleteTrafficPolicyRequestCalls() []struct {
 	DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
 } {
@@ -5492,7 +5563,8 @@ func (mock *Route53APIMock) DeleteTrafficPolicyWithContext(contextMoqParam conte
 
 // DeleteTrafficPolicyWithContextCalls gets all the calls that were made to DeleteTrafficPolicyWithContext.
 // Check the length with:
-//     len(mockedRoute53API.DeleteTrafficPolicyWithContextCalls())
+//
+//	len(mockedRoute53API.DeleteTrafficPolicyWithContextCalls())
 func (mock *Route53APIMock) DeleteTrafficPolicyWithContextCalls() []struct {
 	ContextMoqParam          context.Context
 	DeleteTrafficPolicyInput *route53.DeleteTrafficPolicyInput
@@ -5527,7 +5599,8 @@ func (mock *Route53APIMock) DeleteVPCAssociationAuthorization(deleteVPCAssociati
 
 // DeleteVPCAssociationAuthorizationCalls gets all the calls that were made to DeleteVPCAssociationAuthorization.
 // Check the length with:
-//     len(mockedRoute53API.DeleteVPCAssociationAuthorizationCalls())
+//
+//	len(mockedRoute53API.DeleteVPCAssociationAuthorizationCalls())
 func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationCalls() []struct {
 	DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
 } {
@@ -5558,7 +5631,8 @@ func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationRequest(deleteVPCAs
 
 // DeleteVPCAssociationAuthorizationRequestCalls gets all the calls that were made to DeleteVPCAssociationAuthorizationRequest.
 // Check the length with:
-//     len(mockedRoute53API.DeleteVPCAssociationAuthorizationRequestCalls())
+//
+//	len(mockedRoute53API.DeleteVPCAssociationAuthorizationRequestCalls())
 func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationRequestCalls() []struct {
 	DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
 } {
@@ -5593,7 +5667,8 @@ func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationWithContext(context
 
 // DeleteVPCAssociationAuthorizationWithContextCalls gets all the calls that were made to DeleteVPCAssociationAuthorizationWithContext.
 // Check the length with:
-//     len(mockedRoute53API.DeleteVPCAssociationAuthorizationWithContextCalls())
+//
+//	len(mockedRoute53API.DeleteVPCAssociationAuthorizationWithContextCalls())
 func (mock *Route53APIMock) DeleteVPCAssociationAuthorizationWithContextCalls() []struct {
 	ContextMoqParam                        context.Context
 	DeleteVPCAssociationAuthorizationInput *route53.DeleteVPCAssociationAuthorizationInput
@@ -5628,7 +5703,8 @@ func (mock *Route53APIMock) DisableHostedZoneDNSSEC(disableHostedZoneDNSSECInput
 
 // DisableHostedZoneDNSSECCalls gets all the calls that were made to DisableHostedZoneDNSSEC.
 // Check the length with:
-//     len(mockedRoute53API.DisableHostedZoneDNSSECCalls())
+//
+//	len(mockedRoute53API.DisableHostedZoneDNSSECCalls())
 func (mock *Route53APIMock) DisableHostedZoneDNSSECCalls() []struct {
 	DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
 } {
@@ -5659,7 +5735,8 @@ func (mock *Route53APIMock) DisableHostedZoneDNSSECRequest(disableHostedZoneDNSS
 
 // DisableHostedZoneDNSSECRequestCalls gets all the calls that were made to DisableHostedZoneDNSSECRequest.
 // Check the length with:
-//     len(mockedRoute53API.DisableHostedZoneDNSSECRequestCalls())
+//
+//	len(mockedRoute53API.DisableHostedZoneDNSSECRequestCalls())
 func (mock *Route53APIMock) DisableHostedZoneDNSSECRequestCalls() []struct {
 	DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
 } {
@@ -5694,7 +5771,8 @@ func (mock *Route53APIMock) DisableHostedZoneDNSSECWithContext(contextMoqParam c
 
 // DisableHostedZoneDNSSECWithContextCalls gets all the calls that were made to DisableHostedZoneDNSSECWithContext.
 // Check the length with:
-//     len(mockedRoute53API.DisableHostedZoneDNSSECWithContextCalls())
+//
+//	len(mockedRoute53API.DisableHostedZoneDNSSECWithContextCalls())
 func (mock *Route53APIMock) DisableHostedZoneDNSSECWithContextCalls() []struct {
 	ContextMoqParam              context.Context
 	DisableHostedZoneDNSSECInput *route53.DisableHostedZoneDNSSECInput
@@ -5729,7 +5807,8 @@ func (mock *Route53APIMock) DisassociateVPCFromHostedZone(disassociateVPCFromHos
 
 // DisassociateVPCFromHostedZoneCalls gets all the calls that were made to DisassociateVPCFromHostedZone.
 // Check the length with:
-//     len(mockedRoute53API.DisassociateVPCFromHostedZoneCalls())
+//
+//	len(mockedRoute53API.DisassociateVPCFromHostedZoneCalls())
 func (mock *Route53APIMock) DisassociateVPCFromHostedZoneCalls() []struct {
 	DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
 } {
@@ -5760,7 +5839,8 @@ func (mock *Route53APIMock) DisassociateVPCFromHostedZoneRequest(disassociateVPC
 
 // DisassociateVPCFromHostedZoneRequestCalls gets all the calls that were made to DisassociateVPCFromHostedZoneRequest.
 // Check the length with:
-//     len(mockedRoute53API.DisassociateVPCFromHostedZoneRequestCalls())
+//
+//	len(mockedRoute53API.DisassociateVPCFromHostedZoneRequestCalls())
 func (mock *Route53APIMock) DisassociateVPCFromHostedZoneRequestCalls() []struct {
 	DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
 } {
@@ -5795,7 +5875,8 @@ func (mock *Route53APIMock) DisassociateVPCFromHostedZoneWithContext(contextMoqP
 
 // DisassociateVPCFromHostedZoneWithContextCalls gets all the calls that were made to DisassociateVPCFromHostedZoneWithContext.
 // Check the length with:
-//     len(mockedRoute53API.DisassociateVPCFromHostedZoneWithContextCalls())
+//
+//	len(mockedRoute53API.DisassociateVPCFromHostedZoneWithContextCalls())
 func (mock *Route53APIMock) DisassociateVPCFromHostedZoneWithContextCalls() []struct {
 	ContextMoqParam                    context.Context
 	DisassociateVPCFromHostedZoneInput *route53.DisassociateVPCFromHostedZoneInput
@@ -5830,7 +5911,8 @@ func (mock *Route53APIMock) EnableHostedZoneDNSSEC(enableHostedZoneDNSSECInput *
 
 // EnableHostedZoneDNSSECCalls gets all the calls that were made to EnableHostedZoneDNSSEC.
 // Check the length with:
-//     len(mockedRoute53API.EnableHostedZoneDNSSECCalls())
+//
+//	len(mockedRoute53API.EnableHostedZoneDNSSECCalls())
 func (mock *Route53APIMock) EnableHostedZoneDNSSECCalls() []struct {
 	EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
 } {
@@ -5861,7 +5943,8 @@ func (mock *Route53APIMock) EnableHostedZoneDNSSECRequest(enableHostedZoneDNSSEC
 
 // EnableHostedZoneDNSSECRequestCalls gets all the calls that were made to EnableHostedZoneDNSSECRequest.
 // Check the length with:
-//     len(mockedRoute53API.EnableHostedZoneDNSSECRequestCalls())
+//
+//	len(mockedRoute53API.EnableHostedZoneDNSSECRequestCalls())
 func (mock *Route53APIMock) EnableHostedZoneDNSSECRequestCalls() []struct {
 	EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
 } {
@@ -5896,7 +5979,8 @@ func (mock *Route53APIMock) EnableHostedZoneDNSSECWithContext(contextMoqParam co
 
 // EnableHostedZoneDNSSECWithContextCalls gets all the calls that were made to EnableHostedZoneDNSSECWithContext.
 // Check the length with:
-//     len(mockedRoute53API.EnableHostedZoneDNSSECWithContextCalls())
+//
+//	len(mockedRoute53API.EnableHostedZoneDNSSECWithContextCalls())
 func (mock *Route53APIMock) EnableHostedZoneDNSSECWithContextCalls() []struct {
 	ContextMoqParam             context.Context
 	EnableHostedZoneDNSSECInput *route53.EnableHostedZoneDNSSECInput
@@ -5931,7 +6015,8 @@ func (mock *Route53APIMock) GetAccountLimit(getAccountLimitInput *route53.GetAcc
 
 // GetAccountLimitCalls gets all the calls that were made to GetAccountLimit.
 // Check the length with:
-//     len(mockedRoute53API.GetAccountLimitCalls())
+//
+//	len(mockedRoute53API.GetAccountLimitCalls())
 func (mock *Route53APIMock) GetAccountLimitCalls() []struct {
 	GetAccountLimitInput *route53.GetAccountLimitInput
 } {
@@ -5962,7 +6047,8 @@ func (mock *Route53APIMock) GetAccountLimitRequest(getAccountLimitInput *route53
 
 // GetAccountLimitRequestCalls gets all the calls that were made to GetAccountLimitRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetAccountLimitRequestCalls())
+//
+//	len(mockedRoute53API.GetAccountLimitRequestCalls())
 func (mock *Route53APIMock) GetAccountLimitRequestCalls() []struct {
 	GetAccountLimitInput *route53.GetAccountLimitInput
 } {
@@ -5997,7 +6083,8 @@ func (mock *Route53APIMock) GetAccountLimitWithContext(contextMoqParam context.C
 
 // GetAccountLimitWithContextCalls gets all the calls that were made to GetAccountLimitWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetAccountLimitWithContextCalls())
+//
+//	len(mockedRoute53API.GetAccountLimitWithContextCalls())
 func (mock *Route53APIMock) GetAccountLimitWithContextCalls() []struct {
 	ContextMoqParam      context.Context
 	GetAccountLimitInput *route53.GetAccountLimitInput
@@ -6032,7 +6119,8 @@ func (mock *Route53APIMock) GetChange(getChangeInput *route53.GetChangeInput) (*
 
 // GetChangeCalls gets all the calls that were made to GetChange.
 // Check the length with:
-//     len(mockedRoute53API.GetChangeCalls())
+//
+//	len(mockedRoute53API.GetChangeCalls())
 func (mock *Route53APIMock) GetChangeCalls() []struct {
 	GetChangeInput *route53.GetChangeInput
 } {
@@ -6063,7 +6151,8 @@ func (mock *Route53APIMock) GetChangeRequest(getChangeInput *route53.GetChangeIn
 
 // GetChangeRequestCalls gets all the calls that were made to GetChangeRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetChangeRequestCalls())
+//
+//	len(mockedRoute53API.GetChangeRequestCalls())
 func (mock *Route53APIMock) GetChangeRequestCalls() []struct {
 	GetChangeInput *route53.GetChangeInput
 } {
@@ -6098,7 +6187,8 @@ func (mock *Route53APIMock) GetChangeWithContext(contextMoqParam context.Context
 
 // GetChangeWithContextCalls gets all the calls that were made to GetChangeWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetChangeWithContextCalls())
+//
+//	len(mockedRoute53API.GetChangeWithContextCalls())
 func (mock *Route53APIMock) GetChangeWithContextCalls() []struct {
 	ContextMoqParam context.Context
 	GetChangeInput  *route53.GetChangeInput
@@ -6133,7 +6223,8 @@ func (mock *Route53APIMock) GetCheckerIpRanges(getCheckerIpRangesInput *route53.
 
 // GetCheckerIpRangesCalls gets all the calls that were made to GetCheckerIpRanges.
 // Check the length with:
-//     len(mockedRoute53API.GetCheckerIpRangesCalls())
+//
+//	len(mockedRoute53API.GetCheckerIpRangesCalls())
 func (mock *Route53APIMock) GetCheckerIpRangesCalls() []struct {
 	GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
 } {
@@ -6164,7 +6255,8 @@ func (mock *Route53APIMock) GetCheckerIpRangesRequest(getCheckerIpRangesInput *r
 
 // GetCheckerIpRangesRequestCalls gets all the calls that were made to GetCheckerIpRangesRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetCheckerIpRangesRequestCalls())
+//
+//	len(mockedRoute53API.GetCheckerIpRangesRequestCalls())
 func (mock *Route53APIMock) GetCheckerIpRangesRequestCalls() []struct {
 	GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
 } {
@@ -6199,7 +6291,8 @@ func (mock *Route53APIMock) GetCheckerIpRangesWithContext(contextMoqParam contex
 
 // GetCheckerIpRangesWithContextCalls gets all the calls that were made to GetCheckerIpRangesWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetCheckerIpRangesWithContextCalls())
+//
+//	len(mockedRoute53API.GetCheckerIpRangesWithContextCalls())
 func (mock *Route53APIMock) GetCheckerIpRangesWithContextCalls() []struct {
 	ContextMoqParam         context.Context
 	GetCheckerIpRangesInput *route53.GetCheckerIpRangesInput
@@ -6234,7 +6327,8 @@ func (mock *Route53APIMock) GetDNSSEC(getDNSSECInput *route53.GetDNSSECInput) (*
 
 // GetDNSSECCalls gets all the calls that were made to GetDNSSEC.
 // Check the length with:
-//     len(mockedRoute53API.GetDNSSECCalls())
+//
+//	len(mockedRoute53API.GetDNSSECCalls())
 func (mock *Route53APIMock) GetDNSSECCalls() []struct {
 	GetDNSSECInput *route53.GetDNSSECInput
 } {
@@ -6265,7 +6359,8 @@ func (mock *Route53APIMock) GetDNSSECRequest(getDNSSECInput *route53.GetDNSSECIn
 
 // GetDNSSECRequestCalls gets all the calls that were made to GetDNSSECRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetDNSSECRequestCalls())
+//
+//	len(mockedRoute53API.GetDNSSECRequestCalls())
 func (mock *Route53APIMock) GetDNSSECRequestCalls() []struct {
 	GetDNSSECInput *route53.GetDNSSECInput
 } {
@@ -6300,7 +6395,8 @@ func (mock *Route53APIMock) GetDNSSECWithContext(contextMoqParam context.Context
 
 // GetDNSSECWithContextCalls gets all the calls that were made to GetDNSSECWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetDNSSECWithContextCalls())
+//
+//	len(mockedRoute53API.GetDNSSECWithContextCalls())
 func (mock *Route53APIMock) GetDNSSECWithContextCalls() []struct {
 	ContextMoqParam context.Context
 	GetDNSSECInput  *route53.GetDNSSECInput
@@ -6335,7 +6431,8 @@ func (mock *Route53APIMock) GetGeoLocation(getGeoLocationInput *route53.GetGeoLo
 
 // GetGeoLocationCalls gets all the calls that were made to GetGeoLocation.
 // Check the length with:
-//     len(mockedRoute53API.GetGeoLocationCalls())
+//
+//	len(mockedRoute53API.GetGeoLocationCalls())
 func (mock *Route53APIMock) GetGeoLocationCalls() []struct {
 	GetGeoLocationInput *route53.GetGeoLocationInput
 } {
@@ -6366,7 +6463,8 @@ func (mock *Route53APIMock) GetGeoLocationRequest(getGeoLocationInput *route53.G
 
 // GetGeoLocationRequestCalls gets all the calls that were made to GetGeoLocationRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetGeoLocationRequestCalls())
+//
+//	len(mockedRoute53API.GetGeoLocationRequestCalls())
 func (mock *Route53APIMock) GetGeoLocationRequestCalls() []struct {
 	GetGeoLocationInput *route53.GetGeoLocationInput
 } {
@@ -6401,7 +6499,8 @@ func (mock *Route53APIMock) GetGeoLocationWithContext(contextMoqParam context.Co
 
 // GetGeoLocationWithContextCalls gets all the calls that were made to GetGeoLocationWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetGeoLocationWithContextCalls())
+//
+//	len(mockedRoute53API.GetGeoLocationWithContextCalls())
 func (mock *Route53APIMock) GetGeoLocationWithContextCalls() []struct {
 	ContextMoqParam     context.Context
 	GetGeoLocationInput *route53.GetGeoLocationInput
@@ -6436,7 +6535,8 @@ func (mock *Route53APIMock) GetHealthCheck(getHealthCheckInput *route53.GetHealt
 
 // GetHealthCheckCalls gets all the calls that were made to GetHealthCheck.
 // Check the length with:
-//     len(mockedRoute53API.GetHealthCheckCalls())
+//
+//	len(mockedRoute53API.GetHealthCheckCalls())
 func (mock *Route53APIMock) GetHealthCheckCalls() []struct {
 	GetHealthCheckInput *route53.GetHealthCheckInput
 } {
@@ -6467,7 +6567,8 @@ func (mock *Route53APIMock) GetHealthCheckCount(getHealthCheckCountInput *route5
 
 // GetHealthCheckCountCalls gets all the calls that were made to GetHealthCheckCount.
 // Check the length with:
-//     len(mockedRoute53API.GetHealthCheckCountCalls())
+//
+//	len(mockedRoute53API.GetHealthCheckCountCalls())
 func (mock *Route53APIMock) GetHealthCheckCountCalls() []struct {
 	GetHealthCheckCountInput *route53.GetHealthCheckCountInput
 } {
@@ -6498,7 +6599,8 @@ func (mock *Route53APIMock) GetHealthCheckCountRequest(getHealthCheckCountInput 
 
 // GetHealthCheckCountRequestCalls gets all the calls that were made to GetHealthCheckCountRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetHealthCheckCountRequestCalls())
+//
+//	len(mockedRoute53API.GetHealthCheckCountRequestCalls())
 func (mock *Route53APIMock) GetHealthCheckCountRequestCalls() []struct {
 	GetHealthCheckCountInput *route53.GetHealthCheckCountInput
 } {
@@ -6533,7 +6635,8 @@ func (mock *Route53APIMock) GetHealthCheckCountWithContext(contextMoqParam conte
 
 // GetHealthCheckCountWithContextCalls gets all the calls that were made to GetHealthCheckCountWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetHealthCheckCountWithContextCalls())
+//
+//	len(mockedRoute53API.GetHealthCheckCountWithContextCalls())
 func (mock *Route53APIMock) GetHealthCheckCountWithContextCalls() []struct {
 	ContextMoqParam          context.Context
 	GetHealthCheckCountInput *route53.GetHealthCheckCountInput
@@ -6568,7 +6671,8 @@ func (mock *Route53APIMock) GetHealthCheckLastFailureReason(getHealthCheckLastFa
 
 // GetHealthCheckLastFailureReasonCalls gets all the calls that were made to GetHealthCheckLastFailureReason.
 // Check the length with:
-//     len(mockedRoute53API.GetHealthCheckLastFailureReasonCalls())
+//
+//	len(mockedRoute53API.GetHealthCheckLastFailureReasonCalls())
 func (mock *Route53APIMock) GetHealthCheckLastFailureReasonCalls() []struct {
 	GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
 } {
@@ -6599,7 +6703,8 @@ func (mock *Route53APIMock) GetHealthCheckLastFailureReasonRequest(getHealthChec
 
 // GetHealthCheckLastFailureReasonRequestCalls gets all the calls that were made to GetHealthCheckLastFailureReasonRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetHealthCheckLastFailureReasonRequestCalls())
+//
+//	len(mockedRoute53API.GetHealthCheckLastFailureReasonRequestCalls())
 func (mock *Route53APIMock) GetHealthCheckLastFailureReasonRequestCalls() []struct {
 	GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
 } {
@@ -6634,7 +6739,8 @@ func (mock *Route53APIMock) GetHealthCheckLastFailureReasonWithContext(contextMo
 
 // GetHealthCheckLastFailureReasonWithContextCalls gets all the calls that were made to GetHealthCheckLastFailureReasonWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetHealthCheckLastFailureReasonWithContextCalls())
+//
+//	len(mockedRoute53API.GetHealthCheckLastFailureReasonWithContextCalls())
 func (mock *Route53APIMock) GetHealthCheckLastFailureReasonWithContextCalls() []struct {
 	ContextMoqParam                      context.Context
 	GetHealthCheckLastFailureReasonInput *route53.GetHealthCheckLastFailureReasonInput
@@ -6669,7 +6775,8 @@ func (mock *Route53APIMock) GetHealthCheckRequest(getHealthCheckInput *route53.G
 
 // GetHealthCheckRequestCalls gets all the calls that were made to GetHealthCheckRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetHealthCheckRequestCalls())
+//
+//	len(mockedRoute53API.GetHealthCheckRequestCalls())
 func (mock *Route53APIMock) GetHealthCheckRequestCalls() []struct {
 	GetHealthCheckInput *route53.GetHealthCheckInput
 } {
@@ -6700,7 +6807,8 @@ func (mock *Route53APIMock) GetHealthCheckStatus(getHealthCheckStatusInput *rout
 
 // GetHealthCheckStatusCalls gets all the calls that were made to GetHealthCheckStatus.
 // Check the length with:
-//     len(mockedRoute53API.GetHealthCheckStatusCalls())
+//
+//	len(mockedRoute53API.GetHealthCheckStatusCalls())
 func (mock *Route53APIMock) GetHealthCheckStatusCalls() []struct {
 	GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
 } {
@@ -6731,7 +6839,8 @@ func (mock *Route53APIMock) GetHealthCheckStatusRequest(getHealthCheckStatusInpu
 
 // GetHealthCheckStatusRequestCalls gets all the calls that were made to GetHealthCheckStatusRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetHealthCheckStatusRequestCalls())
+//
+//	len(mockedRoute53API.GetHealthCheckStatusRequestCalls())
 func (mock *Route53APIMock) GetHealthCheckStatusRequestCalls() []struct {
 	GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
 } {
@@ -6766,7 +6875,8 @@ func (mock *Route53APIMock) GetHealthCheckStatusWithContext(contextMoqParam cont
 
 // GetHealthCheckStatusWithContextCalls gets all the calls that were made to GetHealthCheckStatusWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetHealthCheckStatusWithContextCalls())
+//
+//	len(mockedRoute53API.GetHealthCheckStatusWithContextCalls())
 func (mock *Route53APIMock) GetHealthCheckStatusWithContextCalls() []struct {
 	ContextMoqParam           context.Context
 	GetHealthCheckStatusInput *route53.GetHealthCheckStatusInput
@@ -6805,7 +6915,8 @@ func (mock *Route53APIMock) GetHealthCheckWithContext(contextMoqParam context.Co
 
 // GetHealthCheckWithContextCalls gets all the calls that were made to GetHealthCheckWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetHealthCheckWithContextCalls())
+//
+//	len(mockedRoute53API.GetHealthCheckWithContextCalls())
 func (mock *Route53APIMock) GetHealthCheckWithContextCalls() []struct {
 	ContextMoqParam     context.Context
 	GetHealthCheckInput *route53.GetHealthCheckInput
@@ -6840,7 +6951,8 @@ func (mock *Route53APIMock) GetHostedZone(getHostedZoneInput *route53.GetHostedZ
 
 // GetHostedZoneCalls gets all the calls that were made to GetHostedZone.
 // Check the length with:
-//     len(mockedRoute53API.GetHostedZoneCalls())
+//
+//	len(mockedRoute53API.GetHostedZoneCalls())
 func (mock *Route53APIMock) GetHostedZoneCalls() []struct {
 	GetHostedZoneInput *route53.GetHostedZoneInput
 } {
@@ -6871,7 +6983,8 @@ func (mock *Route53APIMock) GetHostedZoneCount(getHostedZoneCountInput *route53.
 
 // GetHostedZoneCountCalls gets all the calls that were made to GetHostedZoneCount.
 // Check the length with:
-//     len(mockedRoute53API.GetHostedZoneCountCalls())
+//
+//	len(mockedRoute53API.GetHostedZoneCountCalls())
 func (mock *Route53APIMock) GetHostedZoneCountCalls() []struct {
 	GetHostedZoneCountInput *route53.GetHostedZoneCountInput
 } {
@@ -6902,7 +7015,8 @@ func (mock *Route53APIMock) GetHostedZoneCountRequest(getHostedZoneCountInput *r
 
 // GetHostedZoneCountRequestCalls gets all the calls that were made to GetHostedZoneCountRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetHostedZoneCountRequestCalls())
+//
+//	len(mockedRoute53API.GetHostedZoneCountRequestCalls())
 func (mock *Route53APIMock) GetHostedZoneCountRequestCalls() []struct {
 	GetHostedZoneCountInput *route53.GetHostedZoneCountInput
 } {
@@ -6937,7 +7051,8 @@ func (mock *Route53APIMock) GetHostedZoneCountWithContext(contextMoqParam contex
 
 // GetHostedZoneCountWithContextCalls gets all the calls that were made to GetHostedZoneCountWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetHostedZoneCountWithContextCalls())
+//
+//	len(mockedRoute53API.GetHostedZoneCountWithContextCalls())
 func (mock *Route53APIMock) GetHostedZoneCountWithContextCalls() []struct {
 	ContextMoqParam         context.Context
 	GetHostedZoneCountInput *route53.GetHostedZoneCountInput
@@ -6972,7 +7087,8 @@ func (mock *Route53APIMock) GetHostedZoneLimit(getHostedZoneLimitInput *route53.
 
 // GetHostedZoneLimitCalls gets all the calls that were made to GetHostedZoneLimit.
 // Check the length with:
-//     len(mockedRoute53API.GetHostedZoneLimitCalls())
+//
+//	len(mockedRoute53API.GetHostedZoneLimitCalls())
 func (mock *Route53APIMock) GetHostedZoneLimitCalls() []struct {
 	GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
 } {
@@ -7003,7 +7119,8 @@ func (mock *Route53APIMock) GetHostedZoneLimitRequest(getHostedZoneLimitInput *r
 
 // GetHostedZoneLimitRequestCalls gets all the calls that were made to GetHostedZoneLimitRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetHostedZoneLimitRequestCalls())
+//
+//	len(mockedRoute53API.GetHostedZoneLimitRequestCalls())
 func (mock *Route53APIMock) GetHostedZoneLimitRequestCalls() []struct {
 	GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
 } {
@@ -7038,7 +7155,8 @@ func (mock *Route53APIMock) GetHostedZoneLimitWithContext(contextMoqParam contex
 
 // GetHostedZoneLimitWithContextCalls gets all the calls that were made to GetHostedZoneLimitWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetHostedZoneLimitWithContextCalls())
+//
+//	len(mockedRoute53API.GetHostedZoneLimitWithContextCalls())
 func (mock *Route53APIMock) GetHostedZoneLimitWithContextCalls() []struct {
 	ContextMoqParam         context.Context
 	GetHostedZoneLimitInput *route53.GetHostedZoneLimitInput
@@ -7073,7 +7191,8 @@ func (mock *Route53APIMock) GetHostedZoneRequest(getHostedZoneInput *route53.Get
 
 // GetHostedZoneRequestCalls gets all the calls that were made to GetHostedZoneRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetHostedZoneRequestCalls())
+//
+//	len(mockedRoute53API.GetHostedZoneRequestCalls())
 func (mock *Route53APIMock) GetHostedZoneRequestCalls() []struct {
 	GetHostedZoneInput *route53.GetHostedZoneInput
 } {
@@ -7108,7 +7227,8 @@ func (mock *Route53APIMock) GetHostedZoneWithContext(contextMoqParam context.Con
 
 // GetHostedZoneWithContextCalls gets all the calls that were made to GetHostedZoneWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetHostedZoneWithContextCalls())
+//
+//	len(mockedRoute53API.GetHostedZoneWithContextCalls())
 func (mock *Route53APIMock) GetHostedZoneWithContextCalls() []struct {
 	ContextMoqParam    context.Context
 	GetHostedZoneInput *route53.GetHostedZoneInput
@@ -7143,7 +7263,8 @@ func (mock *Route53APIMock) GetQueryLoggingConfig(getQueryLoggingConfigInput *ro
 
 // GetQueryLoggingConfigCalls gets all the calls that were made to GetQueryLoggingConfig.
 // Check the length with:
-//     len(mockedRoute53API.GetQueryLoggingConfigCalls())
+//
+//	len(mockedRoute53API.GetQueryLoggingConfigCalls())
 func (mock *Route53APIMock) GetQueryLoggingConfigCalls() []struct {
 	GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
 } {
@@ -7174,7 +7295,8 @@ func (mock *Route53APIMock) GetQueryLoggingConfigRequest(getQueryLoggingConfigIn
 
 // GetQueryLoggingConfigRequestCalls gets all the calls that were made to GetQueryLoggingConfigRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetQueryLoggingConfigRequestCalls())
+//
+//	len(mockedRoute53API.GetQueryLoggingConfigRequestCalls())
 func (mock *Route53APIMock) GetQueryLoggingConfigRequestCalls() []struct {
 	GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
 } {
@@ -7209,7 +7331,8 @@ func (mock *Route53APIMock) GetQueryLoggingConfigWithContext(contextMoqParam con
 
 // GetQueryLoggingConfigWithContextCalls gets all the calls that were made to GetQueryLoggingConfigWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetQueryLoggingConfigWithContextCalls())
+//
+//	len(mockedRoute53API.GetQueryLoggingConfigWithContextCalls())
 func (mock *Route53APIMock) GetQueryLoggingConfigWithContextCalls() []struct {
 	ContextMoqParam            context.Context
 	GetQueryLoggingConfigInput *route53.GetQueryLoggingConfigInput
@@ -7244,7 +7367,8 @@ func (mock *Route53APIMock) GetReusableDelegationSet(getReusableDelegationSetInp
 
 // GetReusableDelegationSetCalls gets all the calls that were made to GetReusableDelegationSet.
 // Check the length with:
-//     len(mockedRoute53API.GetReusableDelegationSetCalls())
+//
+//	len(mockedRoute53API.GetReusableDelegationSetCalls())
 func (mock *Route53APIMock) GetReusableDelegationSetCalls() []struct {
 	GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
 } {
@@ -7275,7 +7399,8 @@ func (mock *Route53APIMock) GetReusableDelegationSetLimit(getReusableDelegationS
 
 // GetReusableDelegationSetLimitCalls gets all the calls that were made to GetReusableDelegationSetLimit.
 // Check the length with:
-//     len(mockedRoute53API.GetReusableDelegationSetLimitCalls())
+//
+//	len(mockedRoute53API.GetReusableDelegationSetLimitCalls())
 func (mock *Route53APIMock) GetReusableDelegationSetLimitCalls() []struct {
 	GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
 } {
@@ -7306,7 +7431,8 @@ func (mock *Route53APIMock) GetReusableDelegationSetLimitRequest(getReusableDele
 
 // GetReusableDelegationSetLimitRequestCalls gets all the calls that were made to GetReusableDelegationSetLimitRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetReusableDelegationSetLimitRequestCalls())
+//
+//	len(mockedRoute53API.GetReusableDelegationSetLimitRequestCalls())
 func (mock *Route53APIMock) GetReusableDelegationSetLimitRequestCalls() []struct {
 	GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
 } {
@@ -7341,7 +7467,8 @@ func (mock *Route53APIMock) GetReusableDelegationSetLimitWithContext(contextMoqP
 
 // GetReusableDelegationSetLimitWithContextCalls gets all the calls that were made to GetReusableDelegationSetLimitWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetReusableDelegationSetLimitWithContextCalls())
+//
+//	len(mockedRoute53API.GetReusableDelegationSetLimitWithContextCalls())
 func (mock *Route53APIMock) GetReusableDelegationSetLimitWithContextCalls() []struct {
 	ContextMoqParam                    context.Context
 	GetReusableDelegationSetLimitInput *route53.GetReusableDelegationSetLimitInput
@@ -7376,7 +7503,8 @@ func (mock *Route53APIMock) GetReusableDelegationSetRequest(getReusableDelegatio
 
 // GetReusableDelegationSetRequestCalls gets all the calls that were made to GetReusableDelegationSetRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetReusableDelegationSetRequestCalls())
+//
+//	len(mockedRoute53API.GetReusableDelegationSetRequestCalls())
 func (mock *Route53APIMock) GetReusableDelegationSetRequestCalls() []struct {
 	GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
 } {
@@ -7411,7 +7539,8 @@ func (mock *Route53APIMock) GetReusableDelegationSetWithContext(contextMoqParam 
 
 // GetReusableDelegationSetWithContextCalls gets all the calls that were made to GetReusableDelegationSetWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetReusableDelegationSetWithContextCalls())
+//
+//	len(mockedRoute53API.GetReusableDelegationSetWithContextCalls())
 func (mock *Route53APIMock) GetReusableDelegationSetWithContextCalls() []struct {
 	ContextMoqParam               context.Context
 	GetReusableDelegationSetInput *route53.GetReusableDelegationSetInput
@@ -7446,7 +7575,8 @@ func (mock *Route53APIMock) GetTrafficPolicy(getTrafficPolicyInput *route53.GetT
 
 // GetTrafficPolicyCalls gets all the calls that were made to GetTrafficPolicy.
 // Check the length with:
-//     len(mockedRoute53API.GetTrafficPolicyCalls())
+//
+//	len(mockedRoute53API.GetTrafficPolicyCalls())
 func (mock *Route53APIMock) GetTrafficPolicyCalls() []struct {
 	GetTrafficPolicyInput *route53.GetTrafficPolicyInput
 } {
@@ -7477,7 +7607,8 @@ func (mock *Route53APIMock) GetTrafficPolicyInstance(getTrafficPolicyInstanceInp
 
 // GetTrafficPolicyInstanceCalls gets all the calls that were made to GetTrafficPolicyInstance.
 // Check the length with:
-//     len(mockedRoute53API.GetTrafficPolicyInstanceCalls())
+//
+//	len(mockedRoute53API.GetTrafficPolicyInstanceCalls())
 func (mock *Route53APIMock) GetTrafficPolicyInstanceCalls() []struct {
 	GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
 } {
@@ -7508,7 +7639,8 @@ func (mock *Route53APIMock) GetTrafficPolicyInstanceCount(getTrafficPolicyInstan
 
 // GetTrafficPolicyInstanceCountCalls gets all the calls that were made to GetTrafficPolicyInstanceCount.
 // Check the length with:
-//     len(mockedRoute53API.GetTrafficPolicyInstanceCountCalls())
+//
+//	len(mockedRoute53API.GetTrafficPolicyInstanceCountCalls())
 func (mock *Route53APIMock) GetTrafficPolicyInstanceCountCalls() []struct {
 	GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
 } {
@@ -7539,7 +7671,8 @@ func (mock *Route53APIMock) GetTrafficPolicyInstanceCountRequest(getTrafficPolic
 
 // GetTrafficPolicyInstanceCountRequestCalls gets all the calls that were made to GetTrafficPolicyInstanceCountRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetTrafficPolicyInstanceCountRequestCalls())
+//
+//	len(mockedRoute53API.GetTrafficPolicyInstanceCountRequestCalls())
 func (mock *Route53APIMock) GetTrafficPolicyInstanceCountRequestCalls() []struct {
 	GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
 } {
@@ -7574,7 +7707,8 @@ func (mock *Route53APIMock) GetTrafficPolicyInstanceCountWithContext(contextMoqP
 
 // GetTrafficPolicyInstanceCountWithContextCalls gets all the calls that were made to GetTrafficPolicyInstanceCountWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetTrafficPolicyInstanceCountWithContextCalls())
+//
+//	len(mockedRoute53API.GetTrafficPolicyInstanceCountWithContextCalls())
 func (mock *Route53APIMock) GetTrafficPolicyInstanceCountWithContextCalls() []struct {
 	ContextMoqParam                    context.Context
 	GetTrafficPolicyInstanceCountInput *route53.GetTrafficPolicyInstanceCountInput
@@ -7609,7 +7743,8 @@ func (mock *Route53APIMock) GetTrafficPolicyInstanceRequest(getTrafficPolicyInst
 
 // GetTrafficPolicyInstanceRequestCalls gets all the calls that were made to GetTrafficPolicyInstanceRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetTrafficPolicyInstanceRequestCalls())
+//
+//	len(mockedRoute53API.GetTrafficPolicyInstanceRequestCalls())
 func (mock *Route53APIMock) GetTrafficPolicyInstanceRequestCalls() []struct {
 	GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
 } {
@@ -7644,7 +7779,8 @@ func (mock *Route53APIMock) GetTrafficPolicyInstanceWithContext(contextMoqParam 
 
 // GetTrafficPolicyInstanceWithContextCalls gets all the calls that were made to GetTrafficPolicyInstanceWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetTrafficPolicyInstanceWithContextCalls())
+//
+//	len(mockedRoute53API.GetTrafficPolicyInstanceWithContextCalls())
 func (mock *Route53APIMock) GetTrafficPolicyInstanceWithContextCalls() []struct {
 	ContextMoqParam               context.Context
 	GetTrafficPolicyInstanceInput *route53.GetTrafficPolicyInstanceInput
@@ -7679,7 +7815,8 @@ func (mock *Route53APIMock) GetTrafficPolicyRequest(getTrafficPolicyInput *route
 
 // GetTrafficPolicyRequestCalls gets all the calls that were made to GetTrafficPolicyRequest.
 // Check the length with:
-//     len(mockedRoute53API.GetTrafficPolicyRequestCalls())
+//
+//	len(mockedRoute53API.GetTrafficPolicyRequestCalls())
 func (mock *Route53APIMock) GetTrafficPolicyRequestCalls() []struct {
 	GetTrafficPolicyInput *route53.GetTrafficPolicyInput
 } {
@@ -7714,7 +7851,8 @@ func (mock *Route53APIMock) GetTrafficPolicyWithContext(contextMoqParam context.
 
 // GetTrafficPolicyWithContextCalls gets all the calls that were made to GetTrafficPolicyWithContext.
 // Check the length with:
-//     len(mockedRoute53API.GetTrafficPolicyWithContextCalls())
+//
+//	len(mockedRoute53API.GetTrafficPolicyWithContextCalls())
 func (mock *Route53APIMock) GetTrafficPolicyWithContextCalls() []struct {
 	ContextMoqParam       context.Context
 	GetTrafficPolicyInput *route53.GetTrafficPolicyInput
@@ -7749,7 +7887,8 @@ func (mock *Route53APIMock) ListCidrBlocks(listCidrBlocksInput *route53.ListCidr
 
 // ListCidrBlocksCalls gets all the calls that were made to ListCidrBlocks.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrBlocksCalls())
+//
+//	len(mockedRoute53API.ListCidrBlocksCalls())
 func (mock *Route53APIMock) ListCidrBlocksCalls() []struct {
 	ListCidrBlocksInput *route53.ListCidrBlocksInput
 } {
@@ -7782,7 +7921,8 @@ func (mock *Route53APIMock) ListCidrBlocksPages(listCidrBlocksInput *route53.Lis
 
 // ListCidrBlocksPagesCalls gets all the calls that were made to ListCidrBlocksPages.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrBlocksPagesCalls())
+//
+//	len(mockedRoute53API.ListCidrBlocksPagesCalls())
 func (mock *Route53APIMock) ListCidrBlocksPagesCalls() []struct {
 	ListCidrBlocksInput *route53.ListCidrBlocksInput
 	Fn                  func(*route53.ListCidrBlocksOutput, bool) bool
@@ -7821,7 +7961,8 @@ func (mock *Route53APIMock) ListCidrBlocksPagesWithContext(contextMoqParam conte
 
 // ListCidrBlocksPagesWithContextCalls gets all the calls that were made to ListCidrBlocksPagesWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrBlocksPagesWithContextCalls())
+//
+//	len(mockedRoute53API.ListCidrBlocksPagesWithContextCalls())
 func (mock *Route53APIMock) ListCidrBlocksPagesWithContextCalls() []struct {
 	ContextMoqParam     context.Context
 	ListCidrBlocksInput *route53.ListCidrBlocksInput
@@ -7858,7 +7999,8 @@ func (mock *Route53APIMock) ListCidrBlocksRequest(listCidrBlocksInput *route53.L
 
 // ListCidrBlocksRequestCalls gets all the calls that were made to ListCidrBlocksRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrBlocksRequestCalls())
+//
+//	len(mockedRoute53API.ListCidrBlocksRequestCalls())
 func (mock *Route53APIMock) ListCidrBlocksRequestCalls() []struct {
 	ListCidrBlocksInput *route53.ListCidrBlocksInput
 } {
@@ -7893,7 +8035,8 @@ func (mock *Route53APIMock) ListCidrBlocksWithContext(contextMoqParam context.Co
 
 // ListCidrBlocksWithContextCalls gets all the calls that were made to ListCidrBlocksWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrBlocksWithContextCalls())
+//
+//	len(mockedRoute53API.ListCidrBlocksWithContextCalls())
 func (mock *Route53APIMock) ListCidrBlocksWithContextCalls() []struct {
 	ContextMoqParam     context.Context
 	ListCidrBlocksInput *route53.ListCidrBlocksInput
@@ -7928,7 +8071,8 @@ func (mock *Route53APIMock) ListCidrCollections(listCidrCollectionsInput *route5
 
 // ListCidrCollectionsCalls gets all the calls that were made to ListCidrCollections.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrCollectionsCalls())
+//
+//	len(mockedRoute53API.ListCidrCollectionsCalls())
 func (mock *Route53APIMock) ListCidrCollectionsCalls() []struct {
 	ListCidrCollectionsInput *route53.ListCidrCollectionsInput
 } {
@@ -7961,7 +8105,8 @@ func (mock *Route53APIMock) ListCidrCollectionsPages(listCidrCollectionsInput *r
 
 // ListCidrCollectionsPagesCalls gets all the calls that were made to ListCidrCollectionsPages.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrCollectionsPagesCalls())
+//
+//	len(mockedRoute53API.ListCidrCollectionsPagesCalls())
 func (mock *Route53APIMock) ListCidrCollectionsPagesCalls() []struct {
 	ListCidrCollectionsInput *route53.ListCidrCollectionsInput
 	Fn                       func(*route53.ListCidrCollectionsOutput, bool) bool
@@ -8000,7 +8145,8 @@ func (mock *Route53APIMock) ListCidrCollectionsPagesWithContext(contextMoqParam 
 
 // ListCidrCollectionsPagesWithContextCalls gets all the calls that were made to ListCidrCollectionsPagesWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrCollectionsPagesWithContextCalls())
+//
+//	len(mockedRoute53API.ListCidrCollectionsPagesWithContextCalls())
 func (mock *Route53APIMock) ListCidrCollectionsPagesWithContextCalls() []struct {
 	ContextMoqParam          context.Context
 	ListCidrCollectionsInput *route53.ListCidrCollectionsInput
@@ -8037,7 +8183,8 @@ func (mock *Route53APIMock) ListCidrCollectionsRequest(listCidrCollectionsInput 
 
 // ListCidrCollectionsRequestCalls gets all the calls that were made to ListCidrCollectionsRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrCollectionsRequestCalls())
+//
+//	len(mockedRoute53API.ListCidrCollectionsRequestCalls())
 func (mock *Route53APIMock) ListCidrCollectionsRequestCalls() []struct {
 	ListCidrCollectionsInput *route53.ListCidrCollectionsInput
 } {
@@ -8072,7 +8219,8 @@ func (mock *Route53APIMock) ListCidrCollectionsWithContext(contextMoqParam conte
 
 // ListCidrCollectionsWithContextCalls gets all the calls that were made to ListCidrCollectionsWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrCollectionsWithContextCalls())
+//
+//	len(mockedRoute53API.ListCidrCollectionsWithContextCalls())
 func (mock *Route53APIMock) ListCidrCollectionsWithContextCalls() []struct {
 	ContextMoqParam          context.Context
 	ListCidrCollectionsInput *route53.ListCidrCollectionsInput
@@ -8107,7 +8255,8 @@ func (mock *Route53APIMock) ListCidrLocations(listCidrLocationsInput *route53.Li
 
 // ListCidrLocationsCalls gets all the calls that were made to ListCidrLocations.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrLocationsCalls())
+//
+//	len(mockedRoute53API.ListCidrLocationsCalls())
 func (mock *Route53APIMock) ListCidrLocationsCalls() []struct {
 	ListCidrLocationsInput *route53.ListCidrLocationsInput
 } {
@@ -8140,7 +8289,8 @@ func (mock *Route53APIMock) ListCidrLocationsPages(listCidrLocationsInput *route
 
 // ListCidrLocationsPagesCalls gets all the calls that were made to ListCidrLocationsPages.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrLocationsPagesCalls())
+//
+//	len(mockedRoute53API.ListCidrLocationsPagesCalls())
 func (mock *Route53APIMock) ListCidrLocationsPagesCalls() []struct {
 	ListCidrLocationsInput *route53.ListCidrLocationsInput
 	Fn                     func(*route53.ListCidrLocationsOutput, bool) bool
@@ -8179,7 +8329,8 @@ func (mock *Route53APIMock) ListCidrLocationsPagesWithContext(contextMoqParam co
 
 // ListCidrLocationsPagesWithContextCalls gets all the calls that were made to ListCidrLocationsPagesWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrLocationsPagesWithContextCalls())
+//
+//	len(mockedRoute53API.ListCidrLocationsPagesWithContextCalls())
 func (mock *Route53APIMock) ListCidrLocationsPagesWithContextCalls() []struct {
 	ContextMoqParam        context.Context
 	ListCidrLocationsInput *route53.ListCidrLocationsInput
@@ -8216,7 +8367,8 @@ func (mock *Route53APIMock) ListCidrLocationsRequest(listCidrLocationsInput *rou
 
 // ListCidrLocationsRequestCalls gets all the calls that were made to ListCidrLocationsRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrLocationsRequestCalls())
+//
+//	len(mockedRoute53API.ListCidrLocationsRequestCalls())
 func (mock *Route53APIMock) ListCidrLocationsRequestCalls() []struct {
 	ListCidrLocationsInput *route53.ListCidrLocationsInput
 } {
@@ -8251,7 +8403,8 @@ func (mock *Route53APIMock) ListCidrLocationsWithContext(contextMoqParam context
 
 // ListCidrLocationsWithContextCalls gets all the calls that were made to ListCidrLocationsWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListCidrLocationsWithContextCalls())
+//
+//	len(mockedRoute53API.ListCidrLocationsWithContextCalls())
 func (mock *Route53APIMock) ListCidrLocationsWithContextCalls() []struct {
 	ContextMoqParam        context.Context
 	ListCidrLocationsInput *route53.ListCidrLocationsInput
@@ -8286,7 +8439,8 @@ func (mock *Route53APIMock) ListGeoLocations(listGeoLocationsInput *route53.List
 
 // ListGeoLocationsCalls gets all the calls that were made to ListGeoLocations.
 // Check the length with:
-//     len(mockedRoute53API.ListGeoLocationsCalls())
+//
+//	len(mockedRoute53API.ListGeoLocationsCalls())
 func (mock *Route53APIMock) ListGeoLocationsCalls() []struct {
 	ListGeoLocationsInput *route53.ListGeoLocationsInput
 } {
@@ -8317,7 +8471,8 @@ func (mock *Route53APIMock) ListGeoLocationsRequest(listGeoLocationsInput *route
 
 // ListGeoLocationsRequestCalls gets all the calls that were made to ListGeoLocationsRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListGeoLocationsRequestCalls())
+//
+//	len(mockedRoute53API.ListGeoLocationsRequestCalls())
 func (mock *Route53APIMock) ListGeoLocationsRequestCalls() []struct {
 	ListGeoLocationsInput *route53.ListGeoLocationsInput
 } {
@@ -8352,7 +8507,8 @@ func (mock *Route53APIMock) ListGeoLocationsWithContext(contextMoqParam context.
 
 // ListGeoLocationsWithContextCalls gets all the calls that were made to ListGeoLocationsWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListGeoLocationsWithContextCalls())
+//
+//	len(mockedRoute53API.ListGeoLocationsWithContextCalls())
 func (mock *Route53APIMock) ListGeoLocationsWithContextCalls() []struct {
 	ContextMoqParam       context.Context
 	ListGeoLocationsInput *route53.ListGeoLocationsInput
@@ -8387,7 +8543,8 @@ func (mock *Route53APIMock) ListHealthChecks(listHealthChecksInput *route53.List
 
 // ListHealthChecksCalls gets all the calls that were made to ListHealthChecks.
 // Check the length with:
-//     len(mockedRoute53API.ListHealthChecksCalls())
+//
+//	len(mockedRoute53API.ListHealthChecksCalls())
 func (mock *Route53APIMock) ListHealthChecksCalls() []struct {
 	ListHealthChecksInput *route53.ListHealthChecksInput
 } {
@@ -8420,7 +8577,8 @@ func (mock *Route53APIMock) ListHealthChecksPages(listHealthChecksInput *route53
 
 // ListHealthChecksPagesCalls gets all the calls that were made to ListHealthChecksPages.
 // Check the length with:
-//     len(mockedRoute53API.ListHealthChecksPagesCalls())
+//
+//	len(mockedRoute53API.ListHealthChecksPagesCalls())
 func (mock *Route53APIMock) ListHealthChecksPagesCalls() []struct {
 	ListHealthChecksInput *route53.ListHealthChecksInput
 	Fn                    func(*route53.ListHealthChecksOutput, bool) bool
@@ -8459,7 +8617,8 @@ func (mock *Route53APIMock) ListHealthChecksPagesWithContext(contextMoqParam con
 
 // ListHealthChecksPagesWithContextCalls gets all the calls that were made to ListHealthChecksPagesWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListHealthChecksPagesWithContextCalls())
+//
+//	len(mockedRoute53API.ListHealthChecksPagesWithContextCalls())
 func (mock *Route53APIMock) ListHealthChecksPagesWithContextCalls() []struct {
 	ContextMoqParam       context.Context
 	ListHealthChecksInput *route53.ListHealthChecksInput
@@ -8496,7 +8655,8 @@ func (mock *Route53APIMock) ListHealthChecksRequest(listHealthChecksInput *route
 
 // ListHealthChecksRequestCalls gets all the calls that were made to ListHealthChecksRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListHealthChecksRequestCalls())
+//
+//	len(mockedRoute53API.ListHealthChecksRequestCalls())
 func (mock *Route53APIMock) ListHealthChecksRequestCalls() []struct {
 	ListHealthChecksInput *route53.ListHealthChecksInput
 } {
@@ -8531,7 +8691,8 @@ func (mock *Route53APIMock) ListHealthChecksWithContext(contextMoqParam context.
 
 // ListHealthChecksWithContextCalls gets all the calls that were made to ListHealthChecksWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListHealthChecksWithContextCalls())
+//
+//	len(mockedRoute53API.ListHealthChecksWithContextCalls())
 func (mock *Route53APIMock) ListHealthChecksWithContextCalls() []struct {
 	ContextMoqParam       context.Context
 	ListHealthChecksInput *route53.ListHealthChecksInput
@@ -8566,7 +8727,8 @@ func (mock *Route53APIMock) ListHostedZones(listHostedZonesInput *route53.ListHo
 
 // ListHostedZonesCalls gets all the calls that were made to ListHostedZones.
 // Check the length with:
-//     len(mockedRoute53API.ListHostedZonesCalls())
+//
+//	len(mockedRoute53API.ListHostedZonesCalls())
 func (mock *Route53APIMock) ListHostedZonesCalls() []struct {
 	ListHostedZonesInput *route53.ListHostedZonesInput
 } {
@@ -8597,7 +8759,8 @@ func (mock *Route53APIMock) ListHostedZonesByName(listHostedZonesByNameInput *ro
 
 // ListHostedZonesByNameCalls gets all the calls that were made to ListHostedZonesByName.
 // Check the length with:
-//     len(mockedRoute53API.ListHostedZonesByNameCalls())
+//
+//	len(mockedRoute53API.ListHostedZonesByNameCalls())
 func (mock *Route53APIMock) ListHostedZonesByNameCalls() []struct {
 	ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
 } {
@@ -8628,7 +8791,8 @@ func (mock *Route53APIMock) ListHostedZonesByNameRequest(listHostedZonesByNameIn
 
 // ListHostedZonesByNameRequestCalls gets all the calls that were made to ListHostedZonesByNameRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListHostedZonesByNameRequestCalls())
+//
+//	len(mockedRoute53API.ListHostedZonesByNameRequestCalls())
 func (mock *Route53APIMock) ListHostedZonesByNameRequestCalls() []struct {
 	ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
 } {
@@ -8663,7 +8827,8 @@ func (mock *Route53APIMock) ListHostedZonesByNameWithContext(contextMoqParam con
 
 // ListHostedZonesByNameWithContextCalls gets all the calls that were made to ListHostedZonesByNameWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListHostedZonesByNameWithContextCalls())
+//
+//	len(mockedRoute53API.ListHostedZonesByNameWithContextCalls())
 func (mock *Route53APIMock) ListHostedZonesByNameWithContextCalls() []struct {
 	ContextMoqParam            context.Context
 	ListHostedZonesByNameInput *route53.ListHostedZonesByNameInput
@@ -8698,7 +8863,8 @@ func (mock *Route53APIMock) ListHostedZonesByVPC(listHostedZonesByVPCInput *rout
 
 // ListHostedZonesByVPCCalls gets all the calls that were made to ListHostedZonesByVPC.
 // Check the length with:
-//     len(mockedRoute53API.ListHostedZonesByVPCCalls())
+//
+//	len(mockedRoute53API.ListHostedZonesByVPCCalls())
 func (mock *Route53APIMock) ListHostedZonesByVPCCalls() []struct {
 	ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
 } {
@@ -8729,7 +8895,8 @@ func (mock *Route53APIMock) ListHostedZonesByVPCRequest(listHostedZonesByVPCInpu
 
 // ListHostedZonesByVPCRequestCalls gets all the calls that were made to ListHostedZonesByVPCRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListHostedZonesByVPCRequestCalls())
+//
+//	len(mockedRoute53API.ListHostedZonesByVPCRequestCalls())
 func (mock *Route53APIMock) ListHostedZonesByVPCRequestCalls() []struct {
 	ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
 } {
@@ -8764,7 +8931,8 @@ func (mock *Route53APIMock) ListHostedZonesByVPCWithContext(contextMoqParam cont
 
 // ListHostedZonesByVPCWithContextCalls gets all the calls that were made to ListHostedZonesByVPCWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListHostedZonesByVPCWithContextCalls())
+//
+//	len(mockedRoute53API.ListHostedZonesByVPCWithContextCalls())
 func (mock *Route53APIMock) ListHostedZonesByVPCWithContextCalls() []struct {
 	ContextMoqParam           context.Context
 	ListHostedZonesByVPCInput *route53.ListHostedZonesByVPCInput
@@ -8801,7 +8969,8 @@ func (mock *Route53APIMock) ListHostedZonesPages(listHostedZonesInput *route53.L
 
 // ListHostedZonesPagesCalls gets all the calls that were made to ListHostedZonesPages.
 // Check the length with:
-//     len(mockedRoute53API.ListHostedZonesPagesCalls())
+//
+//	len(mockedRoute53API.ListHostedZonesPagesCalls())
 func (mock *Route53APIMock) ListHostedZonesPagesCalls() []struct {
 	ListHostedZonesInput *route53.ListHostedZonesInput
 	Fn                   func(*route53.ListHostedZonesOutput, bool) bool
@@ -8840,7 +9009,8 @@ func (mock *Route53APIMock) ListHostedZonesPagesWithContext(contextMoqParam cont
 
 // ListHostedZonesPagesWithContextCalls gets all the calls that were made to ListHostedZonesPagesWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListHostedZonesPagesWithContextCalls())
+//
+//	len(mockedRoute53API.ListHostedZonesPagesWithContextCalls())
 func (mock *Route53APIMock) ListHostedZonesPagesWithContextCalls() []struct {
 	ContextMoqParam      context.Context
 	ListHostedZonesInput *route53.ListHostedZonesInput
@@ -8877,7 +9047,8 @@ func (mock *Route53APIMock) ListHostedZonesRequest(listHostedZonesInput *route53
 
 // ListHostedZonesRequestCalls gets all the calls that were made to ListHostedZonesRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListHostedZonesRequestCalls())
+//
+//	len(mockedRoute53API.ListHostedZonesRequestCalls())
 func (mock *Route53APIMock) ListHostedZonesRequestCalls() []struct {
 	ListHostedZonesInput *route53.ListHostedZonesInput
 } {
@@ -8912,7 +9083,8 @@ func (mock *Route53APIMock) ListHostedZonesWithContext(contextMoqParam context.C
 
 // ListHostedZonesWithContextCalls gets all the calls that were made to ListHostedZonesWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListHostedZonesWithContextCalls())
+//
+//	len(mockedRoute53API.ListHostedZonesWithContextCalls())
 func (mock *Route53APIMock) ListHostedZonesWithContextCalls() []struct {
 	ContextMoqParam      context.Context
 	ListHostedZonesInput *route53.ListHostedZonesInput
@@ -8947,7 +9119,8 @@ func (mock *Route53APIMock) ListQueryLoggingConfigs(listQueryLoggingConfigsInput
 
 // ListQueryLoggingConfigsCalls gets all the calls that were made to ListQueryLoggingConfigs.
 // Check the length with:
-//     len(mockedRoute53API.ListQueryLoggingConfigsCalls())
+//
+//	len(mockedRoute53API.ListQueryLoggingConfigsCalls())
 func (mock *Route53APIMock) ListQueryLoggingConfigsCalls() []struct {
 	ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
 } {
@@ -8980,7 +9153,8 @@ func (mock *Route53APIMock) ListQueryLoggingConfigsPages(listQueryLoggingConfigs
 
 // ListQueryLoggingConfigsPagesCalls gets all the calls that were made to ListQueryLoggingConfigsPages.
 // Check the length with:
-//     len(mockedRoute53API.ListQueryLoggingConfigsPagesCalls())
+//
+//	len(mockedRoute53API.ListQueryLoggingConfigsPagesCalls())
 func (mock *Route53APIMock) ListQueryLoggingConfigsPagesCalls() []struct {
 	ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
 	Fn                           func(*route53.ListQueryLoggingConfigsOutput, bool) bool
@@ -9019,7 +9193,8 @@ func (mock *Route53APIMock) ListQueryLoggingConfigsPagesWithContext(contextMoqPa
 
 // ListQueryLoggingConfigsPagesWithContextCalls gets all the calls that were made to ListQueryLoggingConfigsPagesWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListQueryLoggingConfigsPagesWithContextCalls())
+//
+//	len(mockedRoute53API.ListQueryLoggingConfigsPagesWithContextCalls())
 func (mock *Route53APIMock) ListQueryLoggingConfigsPagesWithContextCalls() []struct {
 	ContextMoqParam              context.Context
 	ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
@@ -9056,7 +9231,8 @@ func (mock *Route53APIMock) ListQueryLoggingConfigsRequest(listQueryLoggingConfi
 
 // ListQueryLoggingConfigsRequestCalls gets all the calls that were made to ListQueryLoggingConfigsRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListQueryLoggingConfigsRequestCalls())
+//
+//	len(mockedRoute53API.ListQueryLoggingConfigsRequestCalls())
 func (mock *Route53APIMock) ListQueryLoggingConfigsRequestCalls() []struct {
 	ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
 } {
@@ -9091,7 +9267,8 @@ func (mock *Route53APIMock) ListQueryLoggingConfigsWithContext(contextMoqParam c
 
 // ListQueryLoggingConfigsWithContextCalls gets all the calls that were made to ListQueryLoggingConfigsWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListQueryLoggingConfigsWithContextCalls())
+//
+//	len(mockedRoute53API.ListQueryLoggingConfigsWithContextCalls())
 func (mock *Route53APIMock) ListQueryLoggingConfigsWithContextCalls() []struct {
 	ContextMoqParam              context.Context
 	ListQueryLoggingConfigsInput *route53.ListQueryLoggingConfigsInput
@@ -9126,7 +9303,8 @@ func (mock *Route53APIMock) ListResourceRecordSets(listResourceRecordSetsInput *
 
 // ListResourceRecordSetsCalls gets all the calls that were made to ListResourceRecordSets.
 // Check the length with:
-//     len(mockedRoute53API.ListResourceRecordSetsCalls())
+//
+//	len(mockedRoute53API.ListResourceRecordSetsCalls())
 func (mock *Route53APIMock) ListResourceRecordSetsCalls() []struct {
 	ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
 } {
@@ -9159,7 +9337,8 @@ func (mock *Route53APIMock) ListResourceRecordSetsPages(listResourceRecordSetsIn
 
 // ListResourceRecordSetsPagesCalls gets all the calls that were made to ListResourceRecordSetsPages.
 // Check the length with:
-//     len(mockedRoute53API.ListResourceRecordSetsPagesCalls())
+//
+//	len(mockedRoute53API.ListResourceRecordSetsPagesCalls())
 func (mock *Route53APIMock) ListResourceRecordSetsPagesCalls() []struct {
 	ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
 	Fn                          func(*route53.ListResourceRecordSetsOutput, bool) bool
@@ -9198,7 +9377,8 @@ func (mock *Route53APIMock) ListResourceRecordSetsPagesWithContext(contextMoqPar
 
 // ListResourceRecordSetsPagesWithContextCalls gets all the calls that were made to ListResourceRecordSetsPagesWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListResourceRecordSetsPagesWithContextCalls())
+//
+//	len(mockedRoute53API.ListResourceRecordSetsPagesWithContextCalls())
 func (mock *Route53APIMock) ListResourceRecordSetsPagesWithContextCalls() []struct {
 	ContextMoqParam             context.Context
 	ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
@@ -9235,7 +9415,8 @@ func (mock *Route53APIMock) ListResourceRecordSetsRequest(listResourceRecordSets
 
 // ListResourceRecordSetsRequestCalls gets all the calls that were made to ListResourceRecordSetsRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListResourceRecordSetsRequestCalls())
+//
+//	len(mockedRoute53API.ListResourceRecordSetsRequestCalls())
 func (mock *Route53APIMock) ListResourceRecordSetsRequestCalls() []struct {
 	ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
 } {
@@ -9270,7 +9451,8 @@ func (mock *Route53APIMock) ListResourceRecordSetsWithContext(contextMoqParam co
 
 // ListResourceRecordSetsWithContextCalls gets all the calls that were made to ListResourceRecordSetsWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListResourceRecordSetsWithContextCalls())
+//
+//	len(mockedRoute53API.ListResourceRecordSetsWithContextCalls())
 func (mock *Route53APIMock) ListResourceRecordSetsWithContextCalls() []struct {
 	ContextMoqParam             context.Context
 	ListResourceRecordSetsInput *route53.ListResourceRecordSetsInput
@@ -9305,7 +9487,8 @@ func (mock *Route53APIMock) ListReusableDelegationSets(listReusableDelegationSet
 
 // ListReusableDelegationSetsCalls gets all the calls that were made to ListReusableDelegationSets.
 // Check the length with:
-//     len(mockedRoute53API.ListReusableDelegationSetsCalls())
+//
+//	len(mockedRoute53API.ListReusableDelegationSetsCalls())
 func (mock *Route53APIMock) ListReusableDelegationSetsCalls() []struct {
 	ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
 } {
@@ -9336,7 +9519,8 @@ func (mock *Route53APIMock) ListReusableDelegationSetsRequest(listReusableDelega
 
 // ListReusableDelegationSetsRequestCalls gets all the calls that were made to ListReusableDelegationSetsRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListReusableDelegationSetsRequestCalls())
+//
+//	len(mockedRoute53API.ListReusableDelegationSetsRequestCalls())
 func (mock *Route53APIMock) ListReusableDelegationSetsRequestCalls() []struct {
 	ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
 } {
@@ -9371,7 +9555,8 @@ func (mock *Route53APIMock) ListReusableDelegationSetsWithContext(contextMoqPara
 
 // ListReusableDelegationSetsWithContextCalls gets all the calls that were made to ListReusableDelegationSetsWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListReusableDelegationSetsWithContextCalls())
+//
+//	len(mockedRoute53API.ListReusableDelegationSetsWithContextCalls())
 func (mock *Route53APIMock) ListReusableDelegationSetsWithContextCalls() []struct {
 	ContextMoqParam                 context.Context
 	ListReusableDelegationSetsInput *route53.ListReusableDelegationSetsInput
@@ -9406,7 +9591,8 @@ func (mock *Route53APIMock) ListTagsForResource(listTagsForResourceInput *route5
 
 // ListTagsForResourceCalls gets all the calls that were made to ListTagsForResource.
 // Check the length with:
-//     len(mockedRoute53API.ListTagsForResourceCalls())
+//
+//	len(mockedRoute53API.ListTagsForResourceCalls())
 func (mock *Route53APIMock) ListTagsForResourceCalls() []struct {
 	ListTagsForResourceInput *route53.ListTagsForResourceInput
 } {
@@ -9437,7 +9623,8 @@ func (mock *Route53APIMock) ListTagsForResourceRequest(listTagsForResourceInput 
 
 // ListTagsForResourceRequestCalls gets all the calls that were made to ListTagsForResourceRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListTagsForResourceRequestCalls())
+//
+//	len(mockedRoute53API.ListTagsForResourceRequestCalls())
 func (mock *Route53APIMock) ListTagsForResourceRequestCalls() []struct {
 	ListTagsForResourceInput *route53.ListTagsForResourceInput
 } {
@@ -9472,7 +9659,8 @@ func (mock *Route53APIMock) ListTagsForResourceWithContext(contextMoqParam conte
 
 // ListTagsForResourceWithContextCalls gets all the calls that were made to ListTagsForResourceWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListTagsForResourceWithContextCalls())
+//
+//	len(mockedRoute53API.ListTagsForResourceWithContextCalls())
 func (mock *Route53APIMock) ListTagsForResourceWithContextCalls() []struct {
 	ContextMoqParam          context.Context
 	ListTagsForResourceInput *route53.ListTagsForResourceInput
@@ -9507,7 +9695,8 @@ func (mock *Route53APIMock) ListTagsForResources(listTagsForResourcesInput *rout
 
 // ListTagsForResourcesCalls gets all the calls that were made to ListTagsForResources.
 // Check the length with:
-//     len(mockedRoute53API.ListTagsForResourcesCalls())
+//
+//	len(mockedRoute53API.ListTagsForResourcesCalls())
 func (mock *Route53APIMock) ListTagsForResourcesCalls() []struct {
 	ListTagsForResourcesInput *route53.ListTagsForResourcesInput
 } {
@@ -9538,7 +9727,8 @@ func (mock *Route53APIMock) ListTagsForResourcesRequest(listTagsForResourcesInpu
 
 // ListTagsForResourcesRequestCalls gets all the calls that were made to ListTagsForResourcesRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListTagsForResourcesRequestCalls())
+//
+//	len(mockedRoute53API.ListTagsForResourcesRequestCalls())
 func (mock *Route53APIMock) ListTagsForResourcesRequestCalls() []struct {
 	ListTagsForResourcesInput *route53.ListTagsForResourcesInput
 } {
@@ -9573,7 +9763,8 @@ func (mock *Route53APIMock) ListTagsForResourcesWithContext(contextMoqParam cont
 
 // ListTagsForResourcesWithContextCalls gets all the calls that were made to ListTagsForResourcesWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListTagsForResourcesWithContextCalls())
+//
+//	len(mockedRoute53API.ListTagsForResourcesWithContextCalls())
 func (mock *Route53APIMock) ListTagsForResourcesWithContextCalls() []struct {
 	ContextMoqParam           context.Context
 	ListTagsForResourcesInput *route53.ListTagsForResourcesInput
@@ -9608,7 +9799,8 @@ func (mock *Route53APIMock) ListTrafficPolicies(listTrafficPoliciesInput *route5
 
 // ListTrafficPoliciesCalls gets all the calls that were made to ListTrafficPolicies.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPoliciesCalls())
+//
+//	len(mockedRoute53API.ListTrafficPoliciesCalls())
 func (mock *Route53APIMock) ListTrafficPoliciesCalls() []struct {
 	ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
 } {
@@ -9639,7 +9831,8 @@ func (mock *Route53APIMock) ListTrafficPoliciesRequest(listTrafficPoliciesInput 
 
 // ListTrafficPoliciesRequestCalls gets all the calls that were made to ListTrafficPoliciesRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPoliciesRequestCalls())
+//
+//	len(mockedRoute53API.ListTrafficPoliciesRequestCalls())
 func (mock *Route53APIMock) ListTrafficPoliciesRequestCalls() []struct {
 	ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
 } {
@@ -9674,7 +9867,8 @@ func (mock *Route53APIMock) ListTrafficPoliciesWithContext(contextMoqParam conte
 
 // ListTrafficPoliciesWithContextCalls gets all the calls that were made to ListTrafficPoliciesWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPoliciesWithContextCalls())
+//
+//	len(mockedRoute53API.ListTrafficPoliciesWithContextCalls())
 func (mock *Route53APIMock) ListTrafficPoliciesWithContextCalls() []struct {
 	ContextMoqParam          context.Context
 	ListTrafficPoliciesInput *route53.ListTrafficPoliciesInput
@@ -9709,7 +9903,8 @@ func (mock *Route53APIMock) ListTrafficPolicyInstances(listTrafficPolicyInstance
 
 // ListTrafficPolicyInstancesCalls gets all the calls that were made to ListTrafficPolicyInstances.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPolicyInstancesCalls())
+//
+//	len(mockedRoute53API.ListTrafficPolicyInstancesCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesCalls() []struct {
 	ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
 } {
@@ -9740,7 +9935,8 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZone(listTrafficPo
 
 // ListTrafficPolicyInstancesByHostedZoneCalls gets all the calls that were made to ListTrafficPolicyInstancesByHostedZone.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPolicyInstancesByHostedZoneCalls())
+//
+//	len(mockedRoute53API.ListTrafficPolicyInstancesByHostedZoneCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneCalls() []struct {
 	ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
 } {
@@ -9771,7 +9967,8 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneRequest(listTr
 
 // ListTrafficPolicyInstancesByHostedZoneRequestCalls gets all the calls that were made to ListTrafficPolicyInstancesByHostedZoneRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPolicyInstancesByHostedZoneRequestCalls())
+//
+//	len(mockedRoute53API.ListTrafficPolicyInstancesByHostedZoneRequestCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneRequestCalls() []struct {
 	ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
 } {
@@ -9806,7 +10003,8 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneWithContext(co
 
 // ListTrafficPolicyInstancesByHostedZoneWithContextCalls gets all the calls that were made to ListTrafficPolicyInstancesByHostedZoneWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPolicyInstancesByHostedZoneWithContextCalls())
+//
+//	len(mockedRoute53API.ListTrafficPolicyInstancesByHostedZoneWithContextCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesByHostedZoneWithContextCalls() []struct {
 	ContextMoqParam                             context.Context
 	ListTrafficPolicyInstancesByHostedZoneInput *route53.ListTrafficPolicyInstancesByHostedZoneInput
@@ -9841,7 +10039,8 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicy(listTrafficPolicy
 
 // ListTrafficPolicyInstancesByPolicyCalls gets all the calls that were made to ListTrafficPolicyInstancesByPolicy.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPolicyInstancesByPolicyCalls())
+//
+//	len(mockedRoute53API.ListTrafficPolicyInstancesByPolicyCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyCalls() []struct {
 	ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
 } {
@@ -9872,7 +10071,8 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyRequest(listTraffi
 
 // ListTrafficPolicyInstancesByPolicyRequestCalls gets all the calls that were made to ListTrafficPolicyInstancesByPolicyRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPolicyInstancesByPolicyRequestCalls())
+//
+//	len(mockedRoute53API.ListTrafficPolicyInstancesByPolicyRequestCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyRequestCalls() []struct {
 	ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
 } {
@@ -9907,7 +10107,8 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyWithContext(contex
 
 // ListTrafficPolicyInstancesByPolicyWithContextCalls gets all the calls that were made to ListTrafficPolicyInstancesByPolicyWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPolicyInstancesByPolicyWithContextCalls())
+//
+//	len(mockedRoute53API.ListTrafficPolicyInstancesByPolicyWithContextCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesByPolicyWithContextCalls() []struct {
 	ContextMoqParam                         context.Context
 	ListTrafficPolicyInstancesByPolicyInput *route53.ListTrafficPolicyInstancesByPolicyInput
@@ -9942,7 +10143,8 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesRequest(listTrafficPolicyI
 
 // ListTrafficPolicyInstancesRequestCalls gets all the calls that were made to ListTrafficPolicyInstancesRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPolicyInstancesRequestCalls())
+//
+//	len(mockedRoute53API.ListTrafficPolicyInstancesRequestCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesRequestCalls() []struct {
 	ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
 } {
@@ -9977,7 +10179,8 @@ func (mock *Route53APIMock) ListTrafficPolicyInstancesWithContext(contextMoqPara
 
 // ListTrafficPolicyInstancesWithContextCalls gets all the calls that were made to ListTrafficPolicyInstancesWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPolicyInstancesWithContextCalls())
+//
+//	len(mockedRoute53API.ListTrafficPolicyInstancesWithContextCalls())
 func (mock *Route53APIMock) ListTrafficPolicyInstancesWithContextCalls() []struct {
 	ContextMoqParam                 context.Context
 	ListTrafficPolicyInstancesInput *route53.ListTrafficPolicyInstancesInput
@@ -10012,7 +10215,8 @@ func (mock *Route53APIMock) ListTrafficPolicyVersions(listTrafficPolicyVersionsI
 
 // ListTrafficPolicyVersionsCalls gets all the calls that were made to ListTrafficPolicyVersions.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPolicyVersionsCalls())
+//
+//	len(mockedRoute53API.ListTrafficPolicyVersionsCalls())
 func (mock *Route53APIMock) ListTrafficPolicyVersionsCalls() []struct {
 	ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
 } {
@@ -10043,7 +10247,8 @@ func (mock *Route53APIMock) ListTrafficPolicyVersionsRequest(listTrafficPolicyVe
 
 // ListTrafficPolicyVersionsRequestCalls gets all the calls that were made to ListTrafficPolicyVersionsRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPolicyVersionsRequestCalls())
+//
+//	len(mockedRoute53API.ListTrafficPolicyVersionsRequestCalls())
 func (mock *Route53APIMock) ListTrafficPolicyVersionsRequestCalls() []struct {
 	ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
 } {
@@ -10078,7 +10283,8 @@ func (mock *Route53APIMock) ListTrafficPolicyVersionsWithContext(contextMoqParam
 
 // ListTrafficPolicyVersionsWithContextCalls gets all the calls that were made to ListTrafficPolicyVersionsWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListTrafficPolicyVersionsWithContextCalls())
+//
+//	len(mockedRoute53API.ListTrafficPolicyVersionsWithContextCalls())
 func (mock *Route53APIMock) ListTrafficPolicyVersionsWithContextCalls() []struct {
 	ContextMoqParam                context.Context
 	ListTrafficPolicyVersionsInput *route53.ListTrafficPolicyVersionsInput
@@ -10113,7 +10319,8 @@ func (mock *Route53APIMock) ListVPCAssociationAuthorizations(listVPCAssociationA
 
 // ListVPCAssociationAuthorizationsCalls gets all the calls that were made to ListVPCAssociationAuthorizations.
 // Check the length with:
-//     len(mockedRoute53API.ListVPCAssociationAuthorizationsCalls())
+//
+//	len(mockedRoute53API.ListVPCAssociationAuthorizationsCalls())
 func (mock *Route53APIMock) ListVPCAssociationAuthorizationsCalls() []struct {
 	ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
 } {
@@ -10144,7 +10351,8 @@ func (mock *Route53APIMock) ListVPCAssociationAuthorizationsRequest(listVPCAssoc
 
 // ListVPCAssociationAuthorizationsRequestCalls gets all the calls that were made to ListVPCAssociationAuthorizationsRequest.
 // Check the length with:
-//     len(mockedRoute53API.ListVPCAssociationAuthorizationsRequestCalls())
+//
+//	len(mockedRoute53API.ListVPCAssociationAuthorizationsRequestCalls())
 func (mock *Route53APIMock) ListVPCAssociationAuthorizationsRequestCalls() []struct {
 	ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
 } {
@@ -10179,7 +10387,8 @@ func (mock *Route53APIMock) ListVPCAssociationAuthorizationsWithContext(contextM
 
 // ListVPCAssociationAuthorizationsWithContextCalls gets all the calls that were made to ListVPCAssociationAuthorizationsWithContext.
 // Check the length with:
-//     len(mockedRoute53API.ListVPCAssociationAuthorizationsWithContextCalls())
+//
+//	len(mockedRoute53API.ListVPCAssociationAuthorizationsWithContextCalls())
 func (mock *Route53APIMock) ListVPCAssociationAuthorizationsWithContextCalls() []struct {
 	ContextMoqParam                       context.Context
 	ListVPCAssociationAuthorizationsInput *route53.ListVPCAssociationAuthorizationsInput
@@ -10214,7 +10423,8 @@ func (mock *Route53APIMock) TestDNSAnswer(testDNSAnswerInput *route53.TestDNSAns
 
 // TestDNSAnswerCalls gets all the calls that were made to TestDNSAnswer.
 // Check the length with:
-//     len(mockedRoute53API.TestDNSAnswerCalls())
+//
+//	len(mockedRoute53API.TestDNSAnswerCalls())
 func (mock *Route53APIMock) TestDNSAnswerCalls() []struct {
 	TestDNSAnswerInput *route53.TestDNSAnswerInput
 } {
@@ -10245,7 +10455,8 @@ func (mock *Route53APIMock) TestDNSAnswerRequest(testDNSAnswerInput *route53.Tes
 
 // TestDNSAnswerRequestCalls gets all the calls that were made to TestDNSAnswerRequest.
 // Check the length with:
-//     len(mockedRoute53API.TestDNSAnswerRequestCalls())
+//
+//	len(mockedRoute53API.TestDNSAnswerRequestCalls())
 func (mock *Route53APIMock) TestDNSAnswerRequestCalls() []struct {
 	TestDNSAnswerInput *route53.TestDNSAnswerInput
 } {
@@ -10280,7 +10491,8 @@ func (mock *Route53APIMock) TestDNSAnswerWithContext(contextMoqParam context.Con
 
 // TestDNSAnswerWithContextCalls gets all the calls that were made to TestDNSAnswerWithContext.
 // Check the length with:
-//     len(mockedRoute53API.TestDNSAnswerWithContextCalls())
+//
+//	len(mockedRoute53API.TestDNSAnswerWithContextCalls())
 func (mock *Route53APIMock) TestDNSAnswerWithContextCalls() []struct {
 	ContextMoqParam    context.Context
 	TestDNSAnswerInput *route53.TestDNSAnswerInput
@@ -10315,7 +10527,8 @@ func (mock *Route53APIMock) UpdateHealthCheck(updateHealthCheckInput *route53.Up
 
 // UpdateHealthCheckCalls gets all the calls that were made to UpdateHealthCheck.
 // Check the length with:
-//     len(mockedRoute53API.UpdateHealthCheckCalls())
+//
+//	len(mockedRoute53API.UpdateHealthCheckCalls())
 func (mock *Route53APIMock) UpdateHealthCheckCalls() []struct {
 	UpdateHealthCheckInput *route53.UpdateHealthCheckInput
 } {
@@ -10346,7 +10559,8 @@ func (mock *Route53APIMock) UpdateHealthCheckRequest(updateHealthCheckInput *rou
 
 // UpdateHealthCheckRequestCalls gets all the calls that were made to UpdateHealthCheckRequest.
 // Check the length with:
-//     len(mockedRoute53API.UpdateHealthCheckRequestCalls())
+//
+//	len(mockedRoute53API.UpdateHealthCheckRequestCalls())
 func (mock *Route53APIMock) UpdateHealthCheckRequestCalls() []struct {
 	UpdateHealthCheckInput *route53.UpdateHealthCheckInput
 } {
@@ -10381,7 +10595,8 @@ func (mock *Route53APIMock) UpdateHealthCheckWithContext(contextMoqParam context
 
 // UpdateHealthCheckWithContextCalls gets all the calls that were made to UpdateHealthCheckWithContext.
 // Check the length with:
-//     len(mockedRoute53API.UpdateHealthCheckWithContextCalls())
+//
+//	len(mockedRoute53API.UpdateHealthCheckWithContextCalls())
 func (mock *Route53APIMock) UpdateHealthCheckWithContextCalls() []struct {
 	ContextMoqParam        context.Context
 	UpdateHealthCheckInput *route53.UpdateHealthCheckInput
@@ -10416,7 +10631,8 @@ func (mock *Route53APIMock) UpdateHostedZoneComment(updateHostedZoneCommentInput
 
 // UpdateHostedZoneCommentCalls gets all the calls that were made to UpdateHostedZoneComment.
 // Check the length with:
-//     len(mockedRoute53API.UpdateHostedZoneCommentCalls())
+//
+//	len(mockedRoute53API.UpdateHostedZoneCommentCalls())
 func (mock *Route53APIMock) UpdateHostedZoneCommentCalls() []struct {
 	UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
 } {
@@ -10447,7 +10663,8 @@ func (mock *Route53APIMock) UpdateHostedZoneCommentRequest(updateHostedZoneComme
 
 // UpdateHostedZoneCommentRequestCalls gets all the calls that were made to UpdateHostedZoneCommentRequest.
 // Check the length with:
-//     len(mockedRoute53API.UpdateHostedZoneCommentRequestCalls())
+//
+//	len(mockedRoute53API.UpdateHostedZoneCommentRequestCalls())
 func (mock *Route53APIMock) UpdateHostedZoneCommentRequestCalls() []struct {
 	UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
 } {
@@ -10482,7 +10699,8 @@ func (mock *Route53APIMock) UpdateHostedZoneCommentWithContext(contextMoqParam c
 
 // UpdateHostedZoneCommentWithContextCalls gets all the calls that were made to UpdateHostedZoneCommentWithContext.
 // Check the length with:
-//     len(mockedRoute53API.UpdateHostedZoneCommentWithContextCalls())
+//
+//	len(mockedRoute53API.UpdateHostedZoneCommentWithContextCalls())
 func (mock *Route53APIMock) UpdateHostedZoneCommentWithContextCalls() []struct {
 	ContextMoqParam              context.Context
 	UpdateHostedZoneCommentInput *route53.UpdateHostedZoneCommentInput
@@ -10517,7 +10735,8 @@ func (mock *Route53APIMock) UpdateTrafficPolicyComment(updateTrafficPolicyCommen
 
 // UpdateTrafficPolicyCommentCalls gets all the calls that were made to UpdateTrafficPolicyComment.
 // Check the length with:
-//     len(mockedRoute53API.UpdateTrafficPolicyCommentCalls())
+//
+//	len(mockedRoute53API.UpdateTrafficPolicyCommentCalls())
 func (mock *Route53APIMock) UpdateTrafficPolicyCommentCalls() []struct {
 	UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
 } {
@@ -10548,7 +10767,8 @@ func (mock *Route53APIMock) UpdateTrafficPolicyCommentRequest(updateTrafficPolic
 
 // UpdateTrafficPolicyCommentRequestCalls gets all the calls that were made to UpdateTrafficPolicyCommentRequest.
 // Check the length with:
-//     len(mockedRoute53API.UpdateTrafficPolicyCommentRequestCalls())
+//
+//	len(mockedRoute53API.UpdateTrafficPolicyCommentRequestCalls())
 func (mock *Route53APIMock) UpdateTrafficPolicyCommentRequestCalls() []struct {
 	UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
 } {
@@ -10583,7 +10803,8 @@ func (mock *Route53APIMock) UpdateTrafficPolicyCommentWithContext(contextMoqPara
 
 // UpdateTrafficPolicyCommentWithContextCalls gets all the calls that were made to UpdateTrafficPolicyCommentWithContext.
 // Check the length with:
-//     len(mockedRoute53API.UpdateTrafficPolicyCommentWithContextCalls())
+//
+//	len(mockedRoute53API.UpdateTrafficPolicyCommentWithContextCalls())
 func (mock *Route53APIMock) UpdateTrafficPolicyCommentWithContextCalls() []struct {
 	ContextMoqParam                 context.Context
 	UpdateTrafficPolicyCommentInput *route53.UpdateTrafficPolicyCommentInput
@@ -10618,7 +10839,8 @@ func (mock *Route53APIMock) UpdateTrafficPolicyInstance(updateTrafficPolicyInsta
 
 // UpdateTrafficPolicyInstanceCalls gets all the calls that were made to UpdateTrafficPolicyInstance.
 // Check the length with:
-//     len(mockedRoute53API.UpdateTrafficPolicyInstanceCalls())
+//
+//	len(mockedRoute53API.UpdateTrafficPolicyInstanceCalls())
 func (mock *Route53APIMock) UpdateTrafficPolicyInstanceCalls() []struct {
 	UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
 } {
@@ -10649,7 +10871,8 @@ func (mock *Route53APIMock) UpdateTrafficPolicyInstanceRequest(updateTrafficPoli
 
 // UpdateTrafficPolicyInstanceRequestCalls gets all the calls that were made to UpdateTrafficPolicyInstanceRequest.
 // Check the length with:
-//     len(mockedRoute53API.UpdateTrafficPolicyInstanceRequestCalls())
+//
+//	len(mockedRoute53API.UpdateTrafficPolicyInstanceRequestCalls())
 func (mock *Route53APIMock) UpdateTrafficPolicyInstanceRequestCalls() []struct {
 	UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
 } {
@@ -10684,7 +10907,8 @@ func (mock *Route53APIMock) UpdateTrafficPolicyInstanceWithContext(contextMoqPar
 
 // UpdateTrafficPolicyInstanceWithContextCalls gets all the calls that were made to UpdateTrafficPolicyInstanceWithContext.
 // Check the length with:
-//     len(mockedRoute53API.UpdateTrafficPolicyInstanceWithContextCalls())
+//
+//	len(mockedRoute53API.UpdateTrafficPolicyInstanceWithContextCalls())
 func (mock *Route53APIMock) UpdateTrafficPolicyInstanceWithContextCalls() []struct {
 	ContextMoqParam                  context.Context
 	UpdateTrafficPolicyInstanceInput *route53.UpdateTrafficPolicyInstanceInput
@@ -10719,7 +10943,8 @@ func (mock *Route53APIMock) WaitUntilResourceRecordSetsChanged(getChangeInput *r
 
 // WaitUntilResourceRecordSetsChangedCalls gets all the calls that were made to WaitUntilResourceRecordSetsChanged.
 // Check the length with:
-//     len(mockedRoute53API.WaitUntilResourceRecordSetsChangedCalls())
+//
+//	len(mockedRoute53API.WaitUntilResourceRecordSetsChangedCalls())
 func (mock *Route53APIMock) WaitUntilResourceRecordSetsChangedCalls() []struct {
 	GetChangeInput *route53.GetChangeInput
 } {
@@ -10754,7 +10979,8 @@ func (mock *Route53APIMock) WaitUntilResourceRecordSetsChangedWithContext(contex
 
 // WaitUntilResourceRecordSetsChangedWithContextCalls gets all the calls that were made to WaitUntilResourceRecordSetsChangedWithContext.
 // Check the length with:
-//     len(mockedRoute53API.WaitUntilResourceRecordSetsChangedWithContextCalls())
+//
+//	len(mockedRoute53API.WaitUntilResourceRecordSetsChangedWithContextCalls())
 func (mock *Route53APIMock) WaitUntilResourceRecordSetsChangedWithContextCalls() []struct {
 	ContextMoqParam context.Context
 	GetChangeInput  *route53.GetChangeInput

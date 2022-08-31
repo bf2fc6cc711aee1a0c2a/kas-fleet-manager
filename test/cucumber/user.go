@@ -1,11 +1,18 @@
 // Creating a user in a random organization:
-//      Given a user named "Bob"
+//
+//	Given a user named "Bob"
+//
 // Creating a user in a given organization:
-//      Given a user named "Jimmy" in organization "13639843"
+//
+//	Given a user named "Jimmy" in organization "13639843"
+//
 // Logging into a user session:
-//      Given I am logged in as "Jimmy"
+//
+//	Given I am logged in as "Jimmy"
+//
 // Setting the Authorization header of the current user session:
-//      Given I set the Authorization header to "Bearer ${agent_token}"
+//
+//	Given I set the Authorization header to "Bearer ${agent_token}"
 package cucumber
 
 import (

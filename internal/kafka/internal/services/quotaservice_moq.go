@@ -6,7 +6,7 @@ package services
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
-	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -16,40 +16,40 @@ var _ QuotaService = &QuotaServiceMock{}
 
 // QuotaServiceMock is a mock implementation of QuotaService.
 //
-// 	func TestSomethingThatUsesQuotaService(t *testing.T) {
+//	func TestSomethingThatUsesQuotaService(t *testing.T) {
 //
-// 		// make and configure a mocked QuotaService
-// 		mockedQuotaService := &QuotaServiceMock{
-// 			CheckIfQuotaIsDefinedForInstanceTypeFunc: func(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *serviceError.ServiceError) {
-// 				panic("mock out the CheckIfQuotaIsDefinedForInstanceType method")
-// 			},
-// 			DeleteQuotaFunc: func(subscriptionId string) *serviceError.ServiceError {
-// 				panic("mock out the DeleteQuota method")
-// 			},
-// 			ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *serviceError.ServiceError) {
-// 				panic("mock out the ReserveQuota method")
-// 			},
-// 			ValidateBillingAccountFunc: func(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError {
-// 				panic("mock out the ValidateBillingAccount method")
-// 			},
-// 		}
+//		// make and configure a mocked QuotaService
+//		mockedQuotaService := &QuotaServiceMock{
+//			CheckIfQuotaIsDefinedForInstanceTypeFunc: func(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *apiErrors.ServiceError) {
+//				panic("mock out the CheckIfQuotaIsDefinedForInstanceType method")
+//			},
+//			DeleteQuotaFunc: func(subscriptionId string) *apiErrors.ServiceError {
+//				panic("mock out the DeleteQuota method")
+//			},
+//			ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *apiErrors.ServiceError) {
+//				panic("mock out the ReserveQuota method")
+//			},
+//			ValidateBillingAccountFunc: func(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
+//				panic("mock out the ValidateBillingAccount method")
+//			},
+//		}
 //
-// 		// use mockedQuotaService in code that requires QuotaService
-// 		// and then make assertions.
+//		// use mockedQuotaService in code that requires QuotaService
+//		// and then make assertions.
 //
-// 	}
+//	}
 type QuotaServiceMock struct {
 	// CheckIfQuotaIsDefinedForInstanceTypeFunc mocks the CheckIfQuotaIsDefinedForInstanceType method.
-	CheckIfQuotaIsDefinedForInstanceTypeFunc func(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *serviceError.ServiceError)
+	CheckIfQuotaIsDefinedForInstanceTypeFunc func(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *apiErrors.ServiceError)
 
 	// DeleteQuotaFunc mocks the DeleteQuota method.
-	DeleteQuotaFunc func(subscriptionId string) *serviceError.ServiceError
+	DeleteQuotaFunc func(subscriptionId string) *apiErrors.ServiceError
 
 	// ReserveQuotaFunc mocks the ReserveQuota method.
-	ReserveQuotaFunc func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *serviceError.ServiceError)
+	ReserveQuotaFunc func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *apiErrors.ServiceError)
 
 	// ValidateBillingAccountFunc mocks the ValidateBillingAccount method.
-	ValidateBillingAccountFunc func(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError
+	ValidateBillingAccountFunc func(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -93,7 +93,7 @@ type QuotaServiceMock struct {
 }
 
 // CheckIfQuotaIsDefinedForInstanceType calls CheckIfQuotaIsDefinedForInstanceTypeFunc.
-func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *serviceError.ServiceError) {
+func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *apiErrors.ServiceError) {
 	if mock.CheckIfQuotaIsDefinedForInstanceTypeFunc == nil {
 		panic("QuotaServiceMock.CheckIfQuotaIsDefinedForInstanceTypeFunc: method is nil but QuotaService.CheckIfQuotaIsDefinedForInstanceType was just called")
 	}
@@ -114,7 +114,8 @@ func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceType(username stri
 
 // CheckIfQuotaIsDefinedForInstanceTypeCalls gets all the calls that were made to CheckIfQuotaIsDefinedForInstanceType.
 // Check the length with:
-//     len(mockedQuotaService.CheckIfQuotaIsDefinedForInstanceTypeCalls())
+//
+//	len(mockedQuotaService.CheckIfQuotaIsDefinedForInstanceTypeCalls())
 func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceTypeCalls() []struct {
 	Username     string
 	ExternalId   string
@@ -132,7 +133,7 @@ func (mock *QuotaServiceMock) CheckIfQuotaIsDefinedForInstanceTypeCalls() []stru
 }
 
 // DeleteQuota calls DeleteQuotaFunc.
-func (mock *QuotaServiceMock) DeleteQuota(subscriptionId string) *serviceError.ServiceError {
+func (mock *QuotaServiceMock) DeleteQuota(subscriptionId string) *apiErrors.ServiceError {
 	if mock.DeleteQuotaFunc == nil {
 		panic("QuotaServiceMock.DeleteQuotaFunc: method is nil but QuotaService.DeleteQuota was just called")
 	}
@@ -149,7 +150,8 @@ func (mock *QuotaServiceMock) DeleteQuota(subscriptionId string) *serviceError.S
 
 // DeleteQuotaCalls gets all the calls that were made to DeleteQuota.
 // Check the length with:
-//     len(mockedQuotaService.DeleteQuotaCalls())
+//
+//	len(mockedQuotaService.DeleteQuotaCalls())
 func (mock *QuotaServiceMock) DeleteQuotaCalls() []struct {
 	SubscriptionId string
 } {
@@ -163,7 +165,7 @@ func (mock *QuotaServiceMock) DeleteQuotaCalls() []struct {
 }
 
 // ReserveQuota calls ReserveQuotaFunc.
-func (mock *QuotaServiceMock) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *serviceError.ServiceError) {
+func (mock *QuotaServiceMock) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *apiErrors.ServiceError) {
 	if mock.ReserveQuotaFunc == nil {
 		panic("QuotaServiceMock.ReserveQuotaFunc: method is nil but QuotaService.ReserveQuota was just called")
 	}
@@ -182,7 +184,8 @@ func (mock *QuotaServiceMock) ReserveQuota(kafka *dbapi.KafkaRequest, instanceTy
 
 // ReserveQuotaCalls gets all the calls that were made to ReserveQuota.
 // Check the length with:
-//     len(mockedQuotaService.ReserveQuotaCalls())
+//
+//	len(mockedQuotaService.ReserveQuotaCalls())
 func (mock *QuotaServiceMock) ReserveQuotaCalls() []struct {
 	Kafka        *dbapi.KafkaRequest
 	InstanceType types.KafkaInstanceType
@@ -198,7 +201,7 @@ func (mock *QuotaServiceMock) ReserveQuotaCalls() []struct {
 }
 
 // ValidateBillingAccount calls ValidateBillingAccountFunc.
-func (mock *QuotaServiceMock) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *serviceError.ServiceError {
+func (mock *QuotaServiceMock) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
 	if mock.ValidateBillingAccountFunc == nil {
 		panic("QuotaServiceMock.ValidateBillingAccountFunc: method is nil but QuotaService.ValidateBillingAccount was just called")
 	}
@@ -221,7 +224,8 @@ func (mock *QuotaServiceMock) ValidateBillingAccount(organisationId string, inst
 
 // ValidateBillingAccountCalls gets all the calls that were made to ValidateBillingAccount.
 // Check the length with:
-//     len(mockedQuotaService.ValidateBillingAccountCalls())
+//
+//	len(mockedQuotaService.ValidateBillingAccountCalls())
 func (mock *QuotaServiceMock) ValidateBillingAccountCalls() []struct {
 	OrganisationId        string
 	InstanceType          types.KafkaInstanceType

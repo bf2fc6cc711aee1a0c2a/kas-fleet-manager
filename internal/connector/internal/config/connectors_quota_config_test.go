@@ -1,10 +1,11 @@
 package config
 
 import (
+	"os"
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/profiles"
 	"github.com/onsi/gomega"
-	"io/ioutil"
-	"testing"
 )
 
 const quotaConfigFileOk = `
@@ -98,7 +99,7 @@ func TestConnectorsQuotaConfig_ReadFiles(t *testing.T) {
 }
 
 func createFile(t *testing.T, content []byte) string {
-	file, err := ioutil.TempFile(t.TempDir(), t.Name())
+	file, err := os.CreateTemp(t.TempDir(), t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -30,8 +30,9 @@ type SecurityApiService service
 /*
 CreateServiceAccount Method for CreateServiceAccount
 Creates a service account
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param serviceAccountRequest Service account request
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param serviceAccountRequest Service account request
+
 @return ServiceAccount
 */
 func (a *SecurityApiService) CreateServiceAccount(ctx _context.Context, serviceAccountRequest ServiceAccountRequest) (ServiceAccount, *_nethttp.Response, error) {
@@ -137,8 +138,9 @@ func (a *SecurityApiService) CreateServiceAccount(ctx _context.Context, serviceA
 /*
 DeleteServiceAccountById Method for DeleteServiceAccountById
 Deletes a service account by ID
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+
 @return Error
 */
 func (a *SecurityApiService) DeleteServiceAccountById(ctx _context.Context, id string) (Error, *_nethttp.Response, error) {
@@ -244,8 +246,9 @@ func (a *SecurityApiService) DeleteServiceAccountById(ctx _context.Context, id s
 /*
 GetServiceAccountById Method for GetServiceAccountById
 Returned service account by ID
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+
 @return ServiceAccount
 */
 func (a *SecurityApiService) GetServiceAccountById(ctx _context.Context, id string) (ServiceAccount, *_nethttp.Response, error) {
@@ -327,9 +330,10 @@ type GetServiceAccountsOpts struct {
 /*
 GetServiceAccounts Method for GetServiceAccounts
 Returns a list of service accounts
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *GetServiceAccountsOpts - Optional Parameters:
- * @param "ClientId" (optional.String) -  client_id of the service account to be retrieved
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param optional nil or *GetServiceAccountsOpts - Optional Parameters:
+  - @param "ClientId" (optional.String) -  client_id of the service account to be retrieved
+
 @return ServiceAccountList
 */
 func (a *SecurityApiService) GetServiceAccounts(ctx _context.Context, localVarOptionals *GetServiceAccountsOpts) (ServiceAccountList, *_nethttp.Response, error) {
@@ -436,7 +440,8 @@ func (a *SecurityApiService) GetServiceAccounts(ctx _context.Context, localVarOp
 /*
 GetSsoProviders Method for GetSsoProviders
 Return sso provider info
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+
 @return SsoProvider
 */
 func (a *SecurityApiService) GetSsoProviders(ctx _context.Context) (SsoProvider, *_nethttp.Response, error) {
@@ -530,8 +535,9 @@ func (a *SecurityApiService) GetSsoProviders(ctx _context.Context) (SsoProvider,
 /*
 ResetServiceAccountCreds Method for ResetServiceAccountCreds
 Resets the credentials for a service account by ID
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+
 @return ServiceAccount
 */
 func (a *SecurityApiService) ResetServiceAccountCreds(ctx _context.Context, id string) (ServiceAccount, *_nethttp.Response, error) {

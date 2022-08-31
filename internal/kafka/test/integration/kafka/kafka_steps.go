@@ -1,5 +1,6 @@
 // Ensures the user has at least one kafka cluster created and stores it's id in a scenario variable:
-//    Given I have created a kafka cluster as ${kid}
+//
+//	Given I have created a kafka cluster as ${kid}
 package kafka
 
 import (

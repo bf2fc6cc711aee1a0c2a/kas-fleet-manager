@@ -17,70 +17,70 @@ var _ keycloakServiceInternal = &keycloakServiceInternalMock{}
 
 // keycloakServiceInternalMock is a mock implementation of keycloakServiceInternal.
 //
-// 	func TestSomethingThatUseskeycloakServiceInternal(t *testing.T) {
+//	func TestSomethingThatUseskeycloakServiceInternal(t *testing.T) {
 //
-// 		// make and configure a mocked keycloakServiceInternal
-// 		mockedkeycloakServiceInternal := &keycloakServiceInternalMock{
-// 			CreateServiceAccountFunc: func(accessToken string, serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
-// 				panic("mock out the CreateServiceAccount method")
-// 			},
-// 			CreateServiceAccountInternalFunc: func(accessToken string, request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
-// 				panic("mock out the CreateServiceAccountInternal method")
-// 			},
-// 			DeRegisterClientInSSOFunc: func(accessToken string, kafkaNamespace string) *errors.ServiceError {
-// 				panic("mock out the DeRegisterClientInSSO method")
-// 			},
-// 			DeRegisterConnectorFleetshardOperatorServiceAccountFunc: func(accessToken string, agentClusterId string) *errors.ServiceError {
-// 				panic("mock out the DeRegisterConnectorFleetshardOperatorServiceAccount method")
-// 			},
-// 			DeRegisterKasFleetshardOperatorServiceAccountFunc: func(accessToken string, agentClusterId string) *errors.ServiceError {
-// 				panic("mock out the DeRegisterKasFleetshardOperatorServiceAccount method")
-// 			},
-// 			DeleteServiceAccountFunc: func(accessToken string, ctx context.Context, clientId string) *errors.ServiceError {
-// 				panic("mock out the DeleteServiceAccount method")
-// 			},
-// 			DeleteServiceAccountInternalFunc: func(accessToken string, clientId string) *errors.ServiceError {
-// 				panic("mock out the DeleteServiceAccountInternal method")
-// 			},
-// 			GetConfigFunc: func() *keycloak.KeycloakConfig {
-// 				panic("mock out the GetConfig method")
-// 			},
-// 			GetKafkaClientSecretFunc: func(accessToken string, clientId string) (string, *errors.ServiceError) {
-// 				panic("mock out the GetKafkaClientSecret method")
-// 			},
-// 			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
-// 				panic("mock out the GetRealmConfig method")
-// 			},
-// 			GetServiceAccountByClientIdFunc: func(accessToken string, ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
-// 				panic("mock out the GetServiceAccountByClientId method")
-// 			},
-// 			GetServiceAccountByIdFunc: func(accessToken string, ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
-// 				panic("mock out the GetServiceAccountById method")
-// 			},
-// 			IsKafkaClientExistFunc: func(accessToken string, clientId string) *errors.ServiceError {
-// 				panic("mock out the IsKafkaClientExist method")
-// 			},
-// 			ListServiceAccFunc: func(accessToken string, ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
-// 				panic("mock out the ListServiceAcc method")
-// 			},
-// 			RegisterClientInSSOFunc: func(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
-// 				panic("mock out the RegisterClientInSSO method")
-// 			},
-// 			RegisterConnectorFleetshardOperatorServiceAccountFunc: func(accessToken string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
-// 				panic("mock out the RegisterConnectorFleetshardOperatorServiceAccount method")
-// 			},
-// 			RegisterKasFleetshardOperatorServiceAccountFunc: func(accessToken string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
-// 				panic("mock out the RegisterKasFleetshardOperatorServiceAccount method")
-// 			},
-// 			ResetServiceAccountCredentialsFunc: func(accessToken string, ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
-// 				panic("mock out the ResetServiceAccountCredentials method")
-// 			},
-// 		}
+//		// make and configure a mocked keycloakServiceInternal
+//		mockedkeycloakServiceInternal := &keycloakServiceInternalMock{
+//			CreateServiceAccountFunc: func(accessToken string, serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
+//				panic("mock out the CreateServiceAccount method")
+//			},
+//			CreateServiceAccountInternalFunc: func(accessToken string, request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
+//				panic("mock out the CreateServiceAccountInternal method")
+//			},
+//			DeRegisterClientInSSOFunc: func(accessToken string, kafkaNamespace string) *errors.ServiceError {
+//				panic("mock out the DeRegisterClientInSSO method")
+//			},
+//			DeRegisterConnectorFleetshardOperatorServiceAccountFunc: func(accessToken string, agentClusterId string) *errors.ServiceError {
+//				panic("mock out the DeRegisterConnectorFleetshardOperatorServiceAccount method")
+//			},
+//			DeRegisterKasFleetshardOperatorServiceAccountFunc: func(accessToken string, agentClusterId string) *errors.ServiceError {
+//				panic("mock out the DeRegisterKasFleetshardOperatorServiceAccount method")
+//			},
+//			DeleteServiceAccountFunc: func(accessToken string, ctx context.Context, clientId string) *errors.ServiceError {
+//				panic("mock out the DeleteServiceAccount method")
+//			},
+//			DeleteServiceAccountInternalFunc: func(accessToken string, clientId string) *errors.ServiceError {
+//				panic("mock out the DeleteServiceAccountInternal method")
+//			},
+//			GetConfigFunc: func() *keycloak.KeycloakConfig {
+//				panic("mock out the GetConfig method")
+//			},
+//			GetKafkaClientSecretFunc: func(accessToken string, clientId string) (string, *errors.ServiceError) {
+//				panic("mock out the GetKafkaClientSecret method")
+//			},
+//			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+//				panic("mock out the GetRealmConfig method")
+//			},
+//			GetServiceAccountByClientIdFunc: func(accessToken string, ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
+//				panic("mock out the GetServiceAccountByClientId method")
+//			},
+//			GetServiceAccountByIdFunc: func(accessToken string, ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
+//				panic("mock out the GetServiceAccountById method")
+//			},
+//			IsKafkaClientExistFunc: func(accessToken string, clientId string) *errors.ServiceError {
+//				panic("mock out the IsKafkaClientExist method")
+//			},
+//			ListServiceAccFunc: func(accessToken string, ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
+//				panic("mock out the ListServiceAcc method")
+//			},
+//			RegisterClientInSSOFunc: func(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
+//				panic("mock out the RegisterClientInSSO method")
+//			},
+//			RegisterConnectorFleetshardOperatorServiceAccountFunc: func(accessToken string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
+//				panic("mock out the RegisterConnectorFleetshardOperatorServiceAccount method")
+//			},
+//			RegisterKasFleetshardOperatorServiceAccountFunc: func(accessToken string, agentClusterId string) (*api.ServiceAccount, *errors.ServiceError) {
+//				panic("mock out the RegisterKasFleetshardOperatorServiceAccount method")
+//			},
+//			ResetServiceAccountCredentialsFunc: func(accessToken string, ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
+//				panic("mock out the ResetServiceAccountCredentials method")
+//			},
+//		}
 //
-// 		// use mockedkeycloakServiceInternal in code that requires keycloakServiceInternal
-// 		// and then make assertions.
+//		// use mockedkeycloakServiceInternal in code that requires keycloakServiceInternal
+//		// and then make assertions.
 //
-// 	}
+//	}
 type keycloakServiceInternalMock struct {
 	// CreateServiceAccountFunc mocks the CreateServiceAccount method.
 	CreateServiceAccountFunc func(accessToken string, serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError)
@@ -315,7 +315,8 @@ func (mock *keycloakServiceInternalMock) CreateServiceAccount(accessToken string
 
 // CreateServiceAccountCalls gets all the calls that were made to CreateServiceAccount.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.CreateServiceAccountCalls())
+//
+//	len(mockedkeycloakServiceInternal.CreateServiceAccountCalls())
 func (mock *keycloakServiceInternalMock) CreateServiceAccountCalls() []struct {
 	AccessToken           string
 	ServiceAccountRequest *api.ServiceAccountRequest
@@ -352,7 +353,8 @@ func (mock *keycloakServiceInternalMock) CreateServiceAccountInternal(accessToke
 
 // CreateServiceAccountInternalCalls gets all the calls that were made to CreateServiceAccountInternal.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.CreateServiceAccountInternalCalls())
+//
+//	len(mockedkeycloakServiceInternal.CreateServiceAccountInternalCalls())
 func (mock *keycloakServiceInternalMock) CreateServiceAccountInternalCalls() []struct {
 	AccessToken string
 	Request     CompleteServiceAccountRequest
@@ -387,7 +389,8 @@ func (mock *keycloakServiceInternalMock) DeRegisterClientInSSO(accessToken strin
 
 // DeRegisterClientInSSOCalls gets all the calls that were made to DeRegisterClientInSSO.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.DeRegisterClientInSSOCalls())
+//
+//	len(mockedkeycloakServiceInternal.DeRegisterClientInSSOCalls())
 func (mock *keycloakServiceInternalMock) DeRegisterClientInSSOCalls() []struct {
 	AccessToken    string
 	KafkaNamespace string
@@ -422,7 +425,8 @@ func (mock *keycloakServiceInternalMock) DeRegisterConnectorFleetshardOperatorSe
 
 // DeRegisterConnectorFleetshardOperatorServiceAccountCalls gets all the calls that were made to DeRegisterConnectorFleetshardOperatorServiceAccount.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.DeRegisterConnectorFleetshardOperatorServiceAccountCalls())
+//
+//	len(mockedkeycloakServiceInternal.DeRegisterConnectorFleetshardOperatorServiceAccountCalls())
 func (mock *keycloakServiceInternalMock) DeRegisterConnectorFleetshardOperatorServiceAccountCalls() []struct {
 	AccessToken    string
 	AgentClusterId string
@@ -457,7 +461,8 @@ func (mock *keycloakServiceInternalMock) DeRegisterKasFleetshardOperatorServiceA
 
 // DeRegisterKasFleetshardOperatorServiceAccountCalls gets all the calls that were made to DeRegisterKasFleetshardOperatorServiceAccount.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.DeRegisterKasFleetshardOperatorServiceAccountCalls())
+//
+//	len(mockedkeycloakServiceInternal.DeRegisterKasFleetshardOperatorServiceAccountCalls())
 func (mock *keycloakServiceInternalMock) DeRegisterKasFleetshardOperatorServiceAccountCalls() []struct {
 	AccessToken    string
 	AgentClusterId string
@@ -494,7 +499,8 @@ func (mock *keycloakServiceInternalMock) DeleteServiceAccount(accessToken string
 
 // DeleteServiceAccountCalls gets all the calls that were made to DeleteServiceAccount.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.DeleteServiceAccountCalls())
+//
+//	len(mockedkeycloakServiceInternal.DeleteServiceAccountCalls())
 func (mock *keycloakServiceInternalMock) DeleteServiceAccountCalls() []struct {
 	AccessToken string
 	Ctx         context.Context
@@ -531,7 +537,8 @@ func (mock *keycloakServiceInternalMock) DeleteServiceAccountInternal(accessToke
 
 // DeleteServiceAccountInternalCalls gets all the calls that were made to DeleteServiceAccountInternal.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.DeleteServiceAccountInternalCalls())
+//
+//	len(mockedkeycloakServiceInternal.DeleteServiceAccountInternalCalls())
 func (mock *keycloakServiceInternalMock) DeleteServiceAccountInternalCalls() []struct {
 	AccessToken string
 	ClientId    string
@@ -561,7 +568,8 @@ func (mock *keycloakServiceInternalMock) GetConfig() *keycloak.KeycloakConfig {
 
 // GetConfigCalls gets all the calls that were made to GetConfig.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.GetConfigCalls())
+//
+//	len(mockedkeycloakServiceInternal.GetConfigCalls())
 func (mock *keycloakServiceInternalMock) GetConfigCalls() []struct {
 } {
 	var calls []struct {
@@ -592,7 +600,8 @@ func (mock *keycloakServiceInternalMock) GetKafkaClientSecret(accessToken string
 
 // GetKafkaClientSecretCalls gets all the calls that were made to GetKafkaClientSecret.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.GetKafkaClientSecretCalls())
+//
+//	len(mockedkeycloakServiceInternal.GetKafkaClientSecretCalls())
 func (mock *keycloakServiceInternalMock) GetKafkaClientSecretCalls() []struct {
 	AccessToken string
 	ClientId    string
@@ -622,7 +631,8 @@ func (mock *keycloakServiceInternalMock) GetRealmConfig() *keycloak.KeycloakReal
 
 // GetRealmConfigCalls gets all the calls that were made to GetRealmConfig.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.GetRealmConfigCalls())
+//
+//	len(mockedkeycloakServiceInternal.GetRealmConfigCalls())
 func (mock *keycloakServiceInternalMock) GetRealmConfigCalls() []struct {
 } {
 	var calls []struct {
@@ -655,7 +665,8 @@ func (mock *keycloakServiceInternalMock) GetServiceAccountByClientId(accessToken
 
 // GetServiceAccountByClientIdCalls gets all the calls that were made to GetServiceAccountByClientId.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.GetServiceAccountByClientIdCalls())
+//
+//	len(mockedkeycloakServiceInternal.GetServiceAccountByClientIdCalls())
 func (mock *keycloakServiceInternalMock) GetServiceAccountByClientIdCalls() []struct {
 	AccessToken string
 	Ctx         context.Context
@@ -694,7 +705,8 @@ func (mock *keycloakServiceInternalMock) GetServiceAccountById(accessToken strin
 
 // GetServiceAccountByIdCalls gets all the calls that were made to GetServiceAccountById.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.GetServiceAccountByIdCalls())
+//
+//	len(mockedkeycloakServiceInternal.GetServiceAccountByIdCalls())
 func (mock *keycloakServiceInternalMock) GetServiceAccountByIdCalls() []struct {
 	AccessToken string
 	Ctx         context.Context
@@ -731,7 +743,8 @@ func (mock *keycloakServiceInternalMock) IsKafkaClientExist(accessToken string, 
 
 // IsKafkaClientExistCalls gets all the calls that were made to IsKafkaClientExist.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.IsKafkaClientExistCalls())
+//
+//	len(mockedkeycloakServiceInternal.IsKafkaClientExistCalls())
 func (mock *keycloakServiceInternalMock) IsKafkaClientExistCalls() []struct {
 	AccessToken string
 	ClientId    string
@@ -770,7 +783,8 @@ func (mock *keycloakServiceInternalMock) ListServiceAcc(accessToken string, ctx 
 
 // ListServiceAccCalls gets all the calls that were made to ListServiceAcc.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.ListServiceAccCalls())
+//
+//	len(mockedkeycloakServiceInternal.ListServiceAccCalls())
 func (mock *keycloakServiceInternalMock) ListServiceAccCalls() []struct {
 	AccessToken string
 	Ctx         context.Context
@@ -811,7 +825,8 @@ func (mock *keycloakServiceInternalMock) RegisterClientInSSO(accessToken string,
 
 // RegisterClientInSSOCalls gets all the calls that were made to RegisterClientInSSO.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.RegisterClientInSSOCalls())
+//
+//	len(mockedkeycloakServiceInternal.RegisterClientInSSOCalls())
 func (mock *keycloakServiceInternalMock) RegisterClientInSSOCalls() []struct {
 	AccessToken            string
 	ClusterId              string
@@ -848,7 +863,8 @@ func (mock *keycloakServiceInternalMock) RegisterConnectorFleetshardOperatorServ
 
 // RegisterConnectorFleetshardOperatorServiceAccountCalls gets all the calls that were made to RegisterConnectorFleetshardOperatorServiceAccount.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.RegisterConnectorFleetshardOperatorServiceAccountCalls())
+//
+//	len(mockedkeycloakServiceInternal.RegisterConnectorFleetshardOperatorServiceAccountCalls())
 func (mock *keycloakServiceInternalMock) RegisterConnectorFleetshardOperatorServiceAccountCalls() []struct {
 	AccessToken    string
 	AgentClusterId string
@@ -883,7 +899,8 @@ func (mock *keycloakServiceInternalMock) RegisterKasFleetshardOperatorServiceAcc
 
 // RegisterKasFleetshardOperatorServiceAccountCalls gets all the calls that were made to RegisterKasFleetshardOperatorServiceAccount.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.RegisterKasFleetshardOperatorServiceAccountCalls())
+//
+//	len(mockedkeycloakServiceInternal.RegisterKasFleetshardOperatorServiceAccountCalls())
 func (mock *keycloakServiceInternalMock) RegisterKasFleetshardOperatorServiceAccountCalls() []struct {
 	AccessToken    string
 	AgentClusterId string
@@ -920,7 +937,8 @@ func (mock *keycloakServiceInternalMock) ResetServiceAccountCredentials(accessTo
 
 // ResetServiceAccountCredentialsCalls gets all the calls that were made to ResetServiceAccountCredentials.
 // Check the length with:
-//     len(mockedkeycloakServiceInternal.ResetServiceAccountCredentialsCalls())
+//
+//	len(mockedkeycloakServiceInternal.ResetServiceAccountCredentialsCalls())
 func (mock *keycloakServiceInternalMock) ResetServiceAccountCredentialsCalls() []struct {
 	AccessToken string
 	Ctx         context.Context

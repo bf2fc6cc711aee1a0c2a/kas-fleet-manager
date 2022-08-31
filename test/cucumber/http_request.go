@@ -1,20 +1,33 @@
 // Setting a path prefixed to subsequent http requests:
-//    Given the path prefix is "/api/kafkas_mgmt"
+//
+//	Given the path prefix is "/api/kafkas_mgmt"
+//
 // Send an http request. Supports (GET|POST|PUT|DELETE|PATCH|OPTION):
-//    When I GET path "/v1/some/${kid}
+//
+//	When I GET path "/v1/some/${kid}
+//
 // Send an http request with a body. Supports (GET|POST|PUT|DELETE|PATCH|OPTION):
-//    When I POST path "/v1/some/${kid}" with json body:
-//      """
-//      {"some":"${kid}"}
-//      """
+//
+//	When I POST path "/v1/some/${kid}" with json body:
+//	  """
+//	  {"some":"${kid}"}
+//	  """
+//
 // Wait until an http get responds with an expected result or a timeout occurs:
-//    Given I wait up to "35.5" seconds for a GET on path "/v1/some/path" response ".total" selection to match "1"
+//
+//	Given I wait up to "35.5" seconds for a GET on path "/v1/some/path" response ".total" selection to match "1"
+//
 // Wait until an http get responds with an expected response code or a timeout occurs:
-//    Given I wait up to "35.5" seconds for a GET on path "/v1/some/path" response code to match "200"
+//
+//	Given I wait up to "35.5" seconds for a GET on path "/v1/some/path" response code to match "200"
+//
 // Send an http request that receives a stream of events. Supports (GET|POST|PUT|DELETE|PATCH|OPTION). :
-//    When I GET path "/v1/some/${kid} as an event stream
+//
+//	When I GET path "/v1/some/${kid} as an event stream
+//
 // Wait until a json event arrives on the event stream or a timeout occurs:
-//    Given I wait up to "35" seconds for a response json event
+//
+//	Given I wait up to "35" seconds for a response json event
 package cucumber
 
 import (
@@ -22,7 +35,7 @@ import (
 	"context"
 	"encoding/json"
 	fmt "fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -133,7 +146,7 @@ func (s *TestScenario) SendHttpRequestWithJsonBodyAndStyle(method, path string, 
 			_ = resp.Body.Close()
 		}()
 
-		session.RespBytes, err = ioutil.ReadAll(resp.Body)
+		session.RespBytes, err = io.ReadAll(resp.Body)
 		if err != nil {
 			return err
 		}

@@ -2,7 +2,6 @@ package files_test
 
 import (
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -51,13 +50,13 @@ type source struct {
 // configmap where the actual files are double-symlinked from some random named
 // path:
 //
-//   drwxrwxrwx. 3 root root 88 Jul  7 13:18 .
-//   drwxr-xr-x. 3 root root 53 Jun  8 12:12 ..
-//   drwxr-xr-x. 2 root root 35 Jul  7 13:18 ..2020_07_07_13_18_32.149716995
-//   lrwxrwxrwx. 1 root root 31 Jul  7 13:18 ..data -> ..2020_07_07_13_18_32.149716995
-//   lrwxrwxrwx. 1 root root 28 Jul  7 13:18 aws-sqs-source-v1alpha1.json -> ..data/aws-sqs-source-v1alpha1.json
+//	drwxrwxrwx. 3 root root 88 Jul  7 13:18 .
+//	drwxr-xr-x. 3 root root 53 Jun  8 12:12 ..
+//	drwxr-xr-x. 2 root root 35 Jul  7 13:18 ..2020_07_07_13_18_32.149716995
+//	lrwxrwxrwx. 1 root root 31 Jul  7 13:18 ..data -> ..2020_07_07_13_18_32.149716995
+//	lrwxrwxrwx. 1 root root 28 Jul  7 13:18 aws-sqs-source-v1alpha1.json -> ..data/aws-sqs-source-v1alpha1.json
 func createSymLinkedDirectory(sources []source) (string, error) {
-	dir, err := ioutil.TempDir("", "fn-")
+	dir, err := os.MkdirTemp("", "fn-")
 	if err != nil {
 		return "", err
 	}
@@ -79,7 +78,7 @@ func createSymLinkedDirectory(sources []source) (string, error) {
 	for _, source := range sources {
 		dst := path.Join(contentDir, source.name)
 
-		err = ioutil.WriteFile(dst, []byte(source.content), 0644)
+		err = os.WriteFile(dst, []byte(source.content), 0644)
 		if err != nil {
 			return "", err
 		}

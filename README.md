@@ -11,7 +11,7 @@ works, see the [implementation documentation](docs/implementation.md).
 
 ## Prerequisites
 
-* [Golang 1.17+](https://golang.org/dl/)
+* [Golang 1.19+](https://golang.org/dl/)
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 * [Node.js v14.17+](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)

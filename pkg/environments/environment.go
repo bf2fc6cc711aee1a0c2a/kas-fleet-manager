@@ -30,7 +30,6 @@ const (
 //
 // An Env uses two dependency injection containers. The first one
 // it constructs is the ConfigContainer
-//
 type Env struct {
 	Name             string
 	ConfigContainer  *di.Container
@@ -102,7 +101,6 @@ func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 // 5) The Env.ServiceContainer is created
 // 6) All ServiceValidator.Validate functions - used to validate the configuration or service types (TODO: replace with a AfterCreateServicesHook??)
 // 7) All AfterCreateServicesHook.Func functions - a hook that is called after the service container is created.
-//
 func (env *Env) CreateServices() error {
 
 	glog.Infof("Initializing %s environment", env.Name)
