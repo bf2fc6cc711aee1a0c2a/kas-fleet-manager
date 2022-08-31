@@ -1647,7 +1647,7 @@ Feature: connector agent API
     When I DELETE path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}?force=true"
     Then the response code should be 204
     # deleted namespace should get reconciled
-    When I wait up to "10" seconds for a GET on path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}" response code to match "410"
+    When I wait up to "15" seconds for a GET on path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}" response code to match "410"
     When I GET path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}"
     Then the response code should be 410
 
