@@ -43,7 +43,7 @@ require (
 	github.com/prometheus/common v0.37.0
 	github.com/redhat-developer/app-services-sdk-go/serviceaccounts v0.4.0
 	github.com/rs/xid v1.4.0
-	github.com/santhosh-tekuri/jsonschema/v3 v3.0.1
+	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0
 	github.com/selvatico/go-mocket v1.0.7
 	github.com/senseyeio/duration v0.0.0-20180430131211-7c2a214ada46
 	github.com/spf13/cobra v1.5.0
