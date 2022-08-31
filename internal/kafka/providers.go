@@ -10,7 +10,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/quota"
-	kafka_internal_workers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers/cluster_mgrs"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers/kafka_mgrs"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -72,7 +71,7 @@ func ServiceProviders() di.Option {
 		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(quota.NewDefaultQuotaServiceFactory),
-		di.Provide(kafka_internal_workers.NewClusterManager, di.As(new(workers.Worker))),
+		di.Provide(cluster_mgrs.NewClusterManager, di.As(new(workers.Worker))),
 		di.Provide(cluster_mgrs.NewDynamicScaleUpManager, di.As(new(workers.Worker))),
 		di.Provide(cluster_mgrs.NewCleanupClustersManager, di.As(new(workers.Worker))),
 		di.Provide(cluster_mgrs.NewDeprovisioningClustersManager, di.As(new(workers.Worker))),

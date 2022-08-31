@@ -1,4 +1,4 @@
-package workers
+package cluster_mgrs
 
 import (
 	"fmt"
