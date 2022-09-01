@@ -195,8 +195,6 @@ ifndef TEST_SUMMARY_FORMAT
 	TEST_SUMMARY_FORMAT=short-verbose
 endif
 
-# Enable Go modules:
-export GO111MODULE=on
 export GOPROXY=https://proxy.golang.org
 export GOPRIVATE=gitlab.cee.redhat.com
 
