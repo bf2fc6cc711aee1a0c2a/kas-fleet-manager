@@ -144,7 +144,7 @@ func (p *queryParser) initStateMachine() (*state_machine.State, checkUnbalancedB
 			// we want column names to be lowercase
 			columnName := strings.ToLower(token.Value)
 			if !contains(p.dbqry.ValidColumns, columnName) {
-				return fmt.Errorf("invalid column name: '%s'", token.Value)
+				return fmt.Errorf("invalid column name: '%s', valid values are: %v", token.Value, p.dbqry.ValidColumns)
 			}
 			if p.dbqry.ColumnPrefix != "" && !strings.HasPrefix(columnName, p.dbqry.ColumnPrefix+".") {
 				columnName = p.dbqry.ColumnPrefix + "." + columnName
