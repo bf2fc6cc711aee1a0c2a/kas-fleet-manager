@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:11
+        image: postgres:13
         env:
           POSTGRES_PASSWORD: foobar-bizz-buzz
           POSTGRES_USER: kas_fleet_manager
