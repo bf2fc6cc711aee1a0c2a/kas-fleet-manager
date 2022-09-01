@@ -73,6 +73,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+          --name kas-fleet-manager-db
 
       keycloak:
         image: quay.io/keycloak/keycloak:17.0.1-legacy
@@ -103,6 +104,10 @@ jobs:
           filters: |
             openapi:
               - 'openapi/*.yaml'
+      - name: Increase Postgres max_connections limit
+        run: docker exec -i kas-fleet-manager-db /bin/bash docker-entrypoint.sh psql -U kas_fleet_manager -d serviceapitests -c 'alter system set max_connections=200;'
+      - name: Restart Postgres container
+        run: docker restart --time 0 kas-fleet-manager-db
       - name: Setup Keycloak realm config
         run: make sso/config
       - name: Cache go module
