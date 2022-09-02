@@ -87,7 +87,7 @@ ifeq (, $(shell which $(LOCAL_BIN_PATH)/gotestsum 2> /dev/null))
 	GOTESTSUM_TMP_DIR=$$(mktemp -d) ;\
 	cd $$GOTESTSUM_TMP_DIR ;\
 	$(GO) mod init tmp ;\
-	$(GO) get gotest.tools/gotestsum@v1.8.1 ;\
+	$(GO) get gotest.tools/gotestsum@v1.8.2 ;\
 	mkdir -p ${LOCAL_BIN_PATH} ;\
 	$(GO) build -o ${LOCAL_BIN_PATH}/gotestsum gotest.tools/gotestsum ;\
 	rm -rf $$GOTESTSUM_TMP_DIR ;\
