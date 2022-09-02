@@ -5,21 +5,10 @@ import (
 	"github.com/ghodss/yaml"
 )
 
-func LoadOpenAPISpec(assetFunc func(name string) ([]byte, error), asset string) (data []byte, err error) {
-	data, err = assetFunc(asset)
+func LoadOpenAPISpecFromYAML(openapiYAMLBytes []byte) (data []byte, err error) {
+	data, err = yaml.YAMLToJSON(openapiYAMLBytes)
 	if err != nil {
-		err = errors.GeneralError(
-			"can't load OpenAPI specification from asset '%s'",
-			asset,
-		)
-		return
-	}
-	data, err = yaml.YAMLToJSON(data)
-	if err != nil {
-		err = errors.GeneralError(
-			"can't convert OpenAPI specification loaded from asset '%s' from YAML to JSON",
-			asset,
-		)
+		err = errors.GeneralError("can't convert OpenAPI specification from from YAML to JSON")
 		return
 	}
 	return
