@@ -59,6 +59,8 @@ RUN apt install -y nodejs build-essential default-jre
 # copy over the kas-fleet-manager workdir
 RUN mkdir -p /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
 COPY . /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
+# remove the copied bin folder to ensure that we always download bin files that matches the platform architecture
+RUN rm -rf /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/bin
 
 # create credential files
 WORKDIR /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
