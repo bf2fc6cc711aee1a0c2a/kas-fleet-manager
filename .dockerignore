@@ -1,0 +1,47 @@
+# See https://docs.docker.com/engine/reference/builder/#dockerignore-file for more about ignoring files.
+
+
+# Ignore bundler config.
+/.bundle
+
+# Ignore all logfiles and tempfiles.
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+
+/coverage
+
+# Ignore built binaries
+/kas-fleet-manager
+
+# Ignore generated templates
+/templates/*-template.json
+
+# Ignore editor config
+.vscode
+
+# Ignore IntelliJ config
+.idea/
+
+# cluster details (used for testing)
+/internal/kafka/test/integration/test_cluster.json
+
+# integration test's results
+/data/results/*
+!/data/results/.keep
+
+# unit test result files
+cover*.out
+
+# local bin directory
+bin
+
+# Mac DS_Store files
+**/.DS_Store
+
+# Ignore vendor
+vendor
+
+#reports dir
+reports/
