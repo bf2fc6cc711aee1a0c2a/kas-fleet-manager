@@ -6,7 +6,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/generated"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -21,6 +20,8 @@ import (
 	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+
+	openapicontents "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/openapi"
 )
 
 type options struct {
@@ -48,7 +49,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	authorizeMiddleware := s.AuthorizeMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(kerrors.ErrorUnauthenticated)
 
-	openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, "connector_mgmt.yaml")
+	openAPIDefinitions, err := shared.LoadOpenAPISpecFromYAML(openapicontents.ConnectorMgmtOpenAPIYAMLBytes())
 	if err != nil {
 		return errors.Wrap(err, "Can't load OpenAPI specification")
 	}

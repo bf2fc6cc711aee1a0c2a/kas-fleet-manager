@@ -109,21 +109,6 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/moq 2> /dev/null))
 	}
 endif
 
-GOBINDATA ?= ${LOCAL_BIN_PATH}/go-bindata
-go-bindata:
-ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
-	@{ \
-	set -e ;\
-	GOBINDATA_TMP_DIR=$$(mktemp -d) ;\
-	cd $$GOBINDATA_TMP_DIR ;\
-	$(GO) mod init tmp ;\
-	$(GO) get github.com/go-bindata/go-bindata/v3/...@v3.1.3 ;\
-	mkdir -p ${LOCAL_BIN_PATH} ;\
-	$(GO) build -o ${LOCAL_BIN_PATH}/go-bindata github.com/go-bindata/go-bindata/v3/go-bindata ;\
-	rm -rf $$GOBINDATA_TMP_DIR ;\
-	}
-endif
-
 OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
 NPM ?= "$(shell which npm)"
 openapi-generator:
@@ -456,54 +441,42 @@ openapi/validate: openapi-generator
 openapi/generate: openapi/generate/kas-public openapi/generate/kas-private openapi/generate/kas-admin openapi/generate/connector-public openapi/generate/connector-private openapi/generate/connector-private-admin
 .PHONY: openapi/generate
 
-openapi/generate/kas-public: go-bindata openapi-generator
+openapi/generate/kas-public: openapi-generator
 	rm -rf internal/kafka/internal/api/public
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o internal/kafka/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/kafka/internal/api/public
-
-	mkdir -p .generate/openapi
-	cp ./openapi/kas-fleet-manager.yaml .generate/openapi
-	$(GOBINDATA) -o ./internal/kafka/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
-	$(GOFMT) -w internal/kafka/internal/generated
-	rm -rf .generate/openapi
 .PHONY: openapi/generate/kas-public
 
-openapi/generate/kas-private: go-bindata openapi-generator
+openapi/generate/kas-private: openapi-generator
 	rm -rf internal/kafka/internal/api/private
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o internal/kafka/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/kafka/internal/api/private
 .PHONY: openapi/generate/kas-private
 
-openapi/generate/kas-admin: go-bindata openapi-generator
+openapi/generate/kas-admin: openapi-generator
 	rm -rf internal/kafka/internal/api/admin/private
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private-admin.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private-admin.yaml -g go -o internal/kafka/internal/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/kafka/internal/api/admin/private
 .PHONY: openapi/generate/kas-admin
 
-openapi/generate/connector-public: go-bindata openapi-generator
+openapi/generate/connector-public: openapi-generator
 	rm -rf internal/connector/internal/api/public
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o internal/connector/internal/api/public --package-name public --additional-properties=enumClassPrefix=true -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/connector/internal/api/public
-
-	mkdir -p .generate/openapi
-	cp ./openapi/connector_mgmt.yaml .generate/openapi
-	$(GOBINDATA) -o ./internal/connector/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
-	$(GOFMT) -w internal/connector/internal/generated
-	rm -rf .generate/openapi
 .PHONY: openapi/generate/connector-public
 
-openapi/generate/connector-private: go-bindata openapi-generator
+openapi/generate/connector-private: openapi-generator
 	rm -rf internal/connector/internal/api/private
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private.yaml -g go -o internal/connector/internal/api/private --package-name private --additional-properties=enumClassPrefix=true -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/connector/internal/api/private
 .PHONY: openapi/generate/connector-private
 
-openapi/generate/connector-private-admin: go-bindata openapi-generator
+openapi/generate/connector-private-admin: openapi-generator
 	rm -rf internal/connector/internal/api/admin/private
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private-admin.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private-admin.yaml -g go -o internal/connector/internal/api/admin/private --package-name private  --additional-properties=enumClassPrefix=true -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
