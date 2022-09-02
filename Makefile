@@ -226,7 +226,6 @@ help:
 	@echo "make test/html/coverage/report           generate test coverage html report and see it in browser"
 	@echo "make test/integration                    run integration tests"
 	@echo "make test/cluster/cleanup                remove OSD cluster after running tests against real OCM"
-	@echo "make test/prepare                        Precompile everything required for development/test"
 	@echo "make test/run                            Run the test container"
 	@echo "make code/fix                            format files"
 	@echo "make generate                            generate go and openapi modules"
@@ -382,11 +381,6 @@ test/html/coverage/report:
 	@if [ -f coverage.out ]; then $(GO) tool cover -html=coverage.out; else echo "coverage.out file not found"; fi;
 .PHONY: test/html/coverage/report
 
-# Precompile everything required for development/test.
-test/prepare:
-	$(GO) test -i ./internal/kafka/test/integration/... -i ./internal/connector/test/integration/...
-.PHONY: test/prepare
-
 # Runs the integration tests.
 #
 # Args:
@@ -397,13 +391,13 @@ test/prepare:
 #   make test/integration TESTFLAGS="-run TestAccounts"     acts as TestAccounts* and run TestAccountsGet, TestAccountsPost, etc.
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
-test/integration/kafka: test/prepare gotestsum
+test/integration/kafka: gotestsum
 	$(GOTESTSUM) --junitfile data/results/kas-fleet-manager-integration-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 \
 				./internal/kafka/test/integration/... \
 				$(TESTFLAGS)
 .PHONY: test/integration/kafka
 
-test/integration/connector: test/prepare gotestsum
+test/integration/connector: gotestsum
 	$(GOTESTSUM) --junitfile data/results/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 \
 				./internal/connector/test/integration/... \
 				$(TESTFLAGS)
