@@ -84,52 +84,22 @@ func (m *DynamicScaleDownManager) processDynamicScaleDownReconcileEvent() error 
 		return errList
 	}
 
-	type processed struct {
-		indexesOfStreamingUnitForSameClusterID []int
-		processed                              bool
-	}
-
-	var alreadyProcessedClusters map[string]processed = map[string]processed{}
-
-	for i, kafkaStreamingUnitCountPerCluster := range kafkaStreamingUnitCountPerClusterList {
-		clusterID := kafkaStreamingUnitCountPerCluster.ClusterId
-		existing, ok := alreadyProcessedClusters[clusterID]
-
-		if !ok {
-			alreadyProcessedClusters[clusterID] = processed{
-				// consider non ready cluster as already processed for scale down evaluation and thus they'll be skipped from scale down consideration
-				processed:                              kafkaStreamingUnitCountPerCluster.Status != api.ClusterReady.String(),
-				indexesOfStreamingUnitForSameClusterID: []int{i},
-			}
-		} else {
-			alreadyProcessedClusters[clusterID] = processed{
-				indexesOfStreamingUnitForSameClusterID: append(existing.indexesOfStreamingUnitForSameClusterID, i),
-				processed:                              existing.processed,
-			}
-		}
-	}
+	processedClusters := m.createAMapOfProcessedClusters(kafkaStreamingUnitCountPerClusterList)
 
 	for _, suCount := range kafkaStreamingUnitCountPerClusterList {
 		clusterID := suCount.ClusterId
-		existing, alreadyProcessed := alreadyProcessedClusters[clusterID]
-		if alreadyProcessed && existing.processed { // skip already processed
+		existing := processedClusters[clusterID]
+		if existing.processed { // skip already processed
 			glog.V(10).Infof("cluster with cluster_id %s is already processed", suCount.ClusterId)
 			continue
 		}
 
-		alreadyProcessedClusters[clusterID] = processed{
+		processedClusters[clusterID] = processed{
 			indexesOfStreamingUnitForSameClusterID: existing.indexesOfStreamingUnitForSameClusterID,
 			processed:                              true,
 		}
 
-		var regionsSupportedInstanceType config.InstanceTypeMap
-		provider, ok := m.clusterProvidersConfig.ProvidersConfig.SupportedProviders.GetByName(suCount.CloudProvider)
-		if ok {
-			region, regionFound := provider.Regions.GetByName(suCount.Region)
-			if regionFound {
-				regionsSupportedInstanceType = region.SupportedInstanceTypes
-			}
-		}
+		regionsSupportedInstanceType := m.findRegionInstanceTypeConfiguration(suCount)
 
 		var dynamicScaleDownProcessor dynamicScaleDownProcessor = &standardDynamicScaleDownProcessor{
 			kafkaStreamingUnitCountPerClusterList:  kafkaStreamingUnitCountPerClusterList,
@@ -162,6 +132,68 @@ func (m *DynamicScaleDownManager) processDynamicScaleDownReconcileEvent() error 
 	}
 
 	return errList
+}
+
+// processed is a struct that holds indexes with same cluster is and whether the cluster
+// representing the streaming unit index has been processed or not
+type processed struct {
+	indexesOfStreamingUnitForSameClusterID []int
+	processed                              bool
+}
+
+// createAMapOfProcessedClusters creates a map struct that indicates if a cluster_id has been processed for all occurrences of cluster_id.
+// The struct returned is a mmap[string]processed.
+// For example:
+//
+//		{
+//		 "some-cluster-id": {
+//		   processed: false,
+//	       indexesOfStreamingUnitForSameClusterID: [0, 2],
+//		},
+//	     "some-other-cluster-id": {
+//			processed: true,
+//		    indexesOfStreamingUnitForSameClusterID: [1],
+//		},
+//
+// }
+// Once the struct is built, a cluster is considered processed if it is not in a "ready" state.
+// NOTE: For all the clusters in "ready" state, the processed marker is updated once scale down evaluation has been perfomed for at least one occurrence of a cluster.
+// This is done in the caller of this method.
+func (m *DynamicScaleDownManager) createAMapOfProcessedClusters(kafkaStreamingUnitCountPerClusterList services.KafkaStreamingUnitCountPerClusterList) map[string]processed {
+	var processedClusters map[string]processed = map[string]processed{}
+
+	for i, kafkaStreamingUnitCountPerCluster := range kafkaStreamingUnitCountPerClusterList {
+		clusterID := kafkaStreamingUnitCountPerCluster.ClusterId
+		existing, ok := processedClusters[clusterID]
+
+		if !ok {
+			processedClusters[clusterID] = processed{
+				// consider non ready cluster as already processed for scale down evaluation and thus they'll be skipped from scale down consideration
+				processed:                              kafkaStreamingUnitCountPerCluster.Status != api.ClusterReady.String(),
+				indexesOfStreamingUnitForSameClusterID: []int{i},
+			}
+		} else {
+			processedClusters[clusterID] = processed{
+				indexesOfStreamingUnitForSameClusterID: append(existing.indexesOfStreamingUnitForSameClusterID, i),
+				processed:                              existing.processed,
+			}
+		}
+	}
+
+	return processedClusters
+}
+
+// findRegionInstanceTypeConfiguration finds the instance type configuration for a region represented in the given streaming unit
+func (m *DynamicScaleDownManager) findRegionInstanceTypeConfiguration(suCount services.KafkaStreamingUnitCountPerCluster) config.InstanceTypeMap {
+	var regionsSupportedInstanceType config.InstanceTypeMap
+	provider, ok := m.clusterProvidersConfig.ProvidersConfig.SupportedProviders.GetByName(suCount.CloudProvider)
+	if ok {
+		region, regionFound := provider.Regions.GetByName(suCount.Region)
+		if regionFound {
+			regionsSupportedInstanceType = region.SupportedInstanceTypes
+		}
+	}
+	return regionsSupportedInstanceType
 }
 
 // dynamicScaleDownExecutor is able to perform dynamic ScaleDown execution actions
@@ -220,12 +252,8 @@ var _ dynamicScaleDownProcessor = &standardDynamicScaleDownProcessor{}
 // 3. Clusters that are still not ready to accept kafka instance are also excluded from the capacity calculation
 func (p *standardDynamicScaleDownProcessor) ShouldScaleDown() (bool, error) {
 	// First let's check if the cluster is empty
-	for _, i := range p.indexesOfStreamingUnitForSameClusterID {
-		clusterIsNotEmpty := p.kafkaStreamingUnitCountPerClusterList[i].Count > 0
-		if clusterIsNotEmpty {
-			glog.Infof("cluster with cluster_id %s is not empty. It is not going to be removed", p.clusterID)
-			return false, nil
-		}
+	if p.isClusterNotEmpty() {
+		return false, nil
 	}
 
 	// let's check if the cluster can be safely removed without causing a scale up event
@@ -234,6 +262,34 @@ func (p *standardDynamicScaleDownProcessor) ShouldScaleDown() (bool, error) {
 		return true, nil
 	}
 
+	newkafkaStreamingUnitCountPerClusterList := p.createNewStreamingUnitPerClusterListAfterRemovalOfCandidateCluster()
+	scaleUpNeededAfterRemoval, err := p.isScaleUpNeededAfterCandidateClusterRemoval(newkafkaStreamingUnitCountPerClusterList)
+	if err != nil {
+		return false, err
+	}
+
+	// to safely perform scale down, there shouldn't a need of scale up immediately afterwards
+	return !scaleUpNeededAfterRemoval, nil
+}
+
+// isClusterNotEmpty checks whether the cluster is not empty.
+// The method iterates through all occurrences of cluster_id
+func (p *standardDynamicScaleDownProcessor) isClusterNotEmpty() bool {
+	for _, i := range p.indexesOfStreamingUnitForSameClusterID {
+		clusterIsNotEmpty := p.kafkaStreamingUnitCountPerClusterList[i].Count > 0
+		if clusterIsNotEmpty {
+			glog.Infof("cluster with cluster_id %s is not empty. It is not going to be removed", p.clusterID)
+			return true
+		}
+	}
+
+	return false
+}
+
+// createNewStreamingUnitPerClusterListAfterRemovalOfCandidateCluster creates a new kafka streaming unit list with the following charcteristics:
+// 1. The candidate deletion cluster is removed from the original list
+// 2. Ignore clusters in terraforming states for scale up evaluation as they are not ready yet. We only want to delete the cluster if we've a sibling ready cluster
+func (p *standardDynamicScaleDownProcessor) createNewStreamingUnitPerClusterListAfterRemovalOfCandidateCluster() services.KafkaStreamingUnitCountPerClusterList {
 	newkafkaStreamingUnitCountPerClusterList := services.KafkaStreamingUnitCountPerClusterList{}
 
 	clusterStatesTowardReadyState := []string{
@@ -242,6 +298,7 @@ func (p *standardDynamicScaleDownProcessor) ShouldScaleDown() (bool, error) {
 	}
 
 	for _, suCount := range p.kafkaStreamingUnitCountPerClusterList {
+
 		// Ignore clusters in terraforming states for scale up evaluation as they are not ready yet.
 		// We only want to delete the cluster if we've a sibling ready cluster
 		if arrays.Contains(clusterStatesTowardReadyState, suCount.Status) {
@@ -258,7 +315,12 @@ func (p *standardDynamicScaleDownProcessor) ShouldScaleDown() (bool, error) {
 
 		newkafkaStreamingUnitCountPerClusterList = append(newkafkaStreamingUnitCountPerClusterList, suCount)
 	}
+	return newkafkaStreamingUnitCountPerClusterList
+}
 
+// isScaleUpNeededAfterCandidateClusterRemoval evaluates wheteher scale up is needed given the newkafkaStreamingUnitCountPerClusterList which does not contain the
+// candidate cluster to delete occurrences and clusters in terraforming states.
+func (p *standardDynamicScaleDownProcessor) isScaleUpNeededAfterCandidateClusterRemoval(newkafkaStreamingUnitCountPerClusterList services.KafkaStreamingUnitCountPerClusterList) (bool, error) {
 	for _, i := range p.indexesOfStreamingUnitForSameClusterID {
 		suCount := p.kafkaStreamingUnitCountPerClusterList[i]
 
@@ -286,16 +348,16 @@ func (p *standardDynamicScaleDownProcessor) ShouldScaleDown() (bool, error) {
 		shouldScaleUp, err := dynamicScaleUpProcessor.ShouldScaleUp()
 		if err != nil {
 			glog.Infof("scale up evaluation results returned an error. Not removing cluster with cluster_id %s:", suCount.ClusterId)
-			return false, err
+			return shouldScaleUp, err
 		}
 
 		if shouldScaleUp {
 			glog.Infof("scale up will be needed if the cluster with cluster_id %s is removed. The decision is not to remove it", suCount.ClusterId)
-			return false, nil
+			return shouldScaleUp, nil
 		}
 	}
 
-	return true, nil
+	return false, nil
 }
 
 // ScaleDown marks the cluster as deprovisioning.
