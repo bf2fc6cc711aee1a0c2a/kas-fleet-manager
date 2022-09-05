@@ -126,6 +126,12 @@ const (
 	MockIdentityProviderID = "identity-provider-id"
 	//
 	MockSubID = "pphCb6sIQPqtjMtL0GQaX6i4bP"
+	// MockQuotaConsumed default quota consumed value returned by the get quota costs by organisation endpoint
+	MockQuotaConsumed = 1
+	// MockQuotaMaxAllowed default quota max allowed value returned by the get quota costs by organisation endpoint
+	MockQuotaMaxAllowed = 10
+	// MockQuotaId default quota id value returned by the get quota costs by organisation endpoint
+	MockQuotaId = "quota-id"
 )
 
 // variables for endpoints
@@ -1140,7 +1146,7 @@ func GetMockServiceAccount(modifyFn func(*amsv1.Account, error)) (*amsv1.Account
 
 func GetMockOrganizationQuotaCostBuilder(modifyFn func(*amsv1.QuotaCostListBuilder)) *amsv1.QuotaCostListBuilder {
 	builder := amsv1.NewQuotaCostList().Items(
-		amsv1.NewQuotaCost().QuotaID("quotaId").Allowed(10).Consumed(1),
+		amsv1.NewQuotaCost().QuotaID(MockQuotaId).Allowed(MockQuotaMaxAllowed).Consumed(MockQuotaConsumed),
 	)
 	if modifyFn != nil {
 		modifyFn(builder)

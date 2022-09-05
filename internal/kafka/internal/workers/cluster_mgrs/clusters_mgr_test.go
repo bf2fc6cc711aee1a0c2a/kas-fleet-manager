@@ -9,32 +9,25 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	dpMock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/onsi/gomega"
 	authv1 "github.com/openshift/api/authorization/v1"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
 	errors "github.com/pkg/errors"
-
 	k8sCoreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	dpMock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
 )
 
 var (
-	testRegion                    = "us-east-1"
-	testProvider                  = "aws"
 	strimziAddonID                = "managed-kafka-test"
 	clusterLoggingOperatorAddonID = "cluster-logging-operator-test"
 	supportedInstanceType         = "developer"
@@ -46,24 +39,6 @@ var (
 	}
 	clusterWaitingForKasFleetShardOperator = api.Cluster{
 		Status: api.ClusterWaitingForKasFleetShardOperator,
-	}
-	supportedProviders = config.ProviderConfig{
-		ProvidersConfig: config.ProviderConfiguration{
-			SupportedProviders: config.ProviderList{
-				config.Provider{
-					Name: testProvider,
-					Regions: config.RegionList{
-						config.Region{
-							Name: testRegion,
-							SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
-								"standard":  {Limit: nil},
-								"developer": {Limit: nil},
-							},
-						},
-					},
-				},
-			},
-		},
 	}
 	keycloakRealmConfig = keycloak.KeycloakRealmConfig{
 		ValidIssuerURI: "https://foo.bar",
@@ -191,7 +166,7 @@ func TestClusterManager_reconcile(t *testing.T) {
 				},
 				ProviderFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-						return &clusters.ProviderMock{GetQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+						return &clusters.ProviderMock{GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
 							return []types.QuotaCost{}, nil
 						}}, nil
 					},
@@ -226,102 +201,125 @@ func TestClusterManager_processMetrics(t *testing.T) {
 		clusterService         services.ClusterService
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 		supportedProviders     *config.ProviderConfig
-		OCMConfig              *ocm.OCMConfig
-		ProviderFactory        clusters.ProviderFactory
+		ocmConfig              *ocm.OCMConfig
+		providerFactory        clusters.ProviderFactory
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
+		name     string
+		fields   fields
+		wantErrs []error
 	}{
 		{
-			name: "should return an error if CountByStatus called by setClusterStatusCountMetrics fails in ClusterService",
+			name: "should return one error if setClusterStatusCountMetrics fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
 						return nil, apiErrors.GeneralError("failed to count by status")
 					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
+						return nil, nil
+					},
 				},
+				ocmConfig: &ocm.OCMConfig{},
 			},
-			wantErr: true,
+			wantErrs: []error{errors.New("failed to set cluster status count metrics: KAFKAS-MGMT-9: failed to count by status")},
 		},
 		{
-			name: "should return an error if FindKafkaInstanceCount called by setKafkaPerClusterCountMetrics fails in ClusterService",
+			name: "should return one error if setKafkaPerClusterCountMetrics fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
-						return []services.ClusterStatusCount{}, nil
+						return nil, nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
-						return nil, errors.New("failed to find kafka instances count")
+						return nil, errors.New("failed to find kafka instance count")
 					},
 				},
+				ocmConfig: &ocm.OCMConfig{},
 			},
-			wantErr: true,
+			wantErrs: []error{errors.New("failed to set kafka per cluster count metrics: failed to find kafka instance count")},
 		},
 		{
-			name: "should return an error if GetQuotaCosts called by setKasFleetManagerClusterProviderResourceQuotaConsumedMetric fails in ClusterService",
+			name: "should return one error if setClusterProviderResourceQuotaMetrics fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
-						return []services.ClusterStatusCount{}, nil
+						return nil, nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
-						return []services.ResKafkaInstanceCount{}, nil
+						return nil, nil
 					},
 				},
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: config.AutoScaling,
-					ClusterConfig: config.NewClusterConfig(
-						config.ClusterList{
-							dpMock.BuildManualCluster(supportedInstanceType),
-						}),
+				ocmConfig: &ocm.OCMConfig{
+					SelfToken: "test-token",
 				},
-				supportedProviders: &supportedProviders,
-				OCMConfig: &ocm.OCMConfig{
-					SelfToken: "selfToken",
-				},
-				ProviderFactory: &clusters.ProviderFactoryMock{
+				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-						return &clusters.ProviderMock{GetQuotaCostsFunc: func() ([]types.QuotaCost, error) {
-							return nil, errors.New("failed to retrieve Quota Cost")
-						}}, nil
+						return &clusters.ProviderMock{
+							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+								return nil, errors.New("failed to get quota costs")
+							},
+						}, nil
 					},
 				},
 			},
-			wantErr: true,
+			wantErrs: []error{errors.New("failed to set cluster provider resource quota metrics: failed to get quota costs")},
 		},
 		{
-			name: "should succeed if no errors occur during the execution",
+			name: "should return multiple errors if all cluster metrics fails to process",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
-						return []services.ClusterStatusCount{}, nil
+						return nil, apiErrors.GeneralError("failed to count by status")
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
-						return []services.ResKafkaInstanceCount{}, nil
+						return nil, errors.New("failed to find kafka instance count")
 					},
 				},
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType: config.AutoScaling,
-					ClusterConfig: config.NewClusterConfig(
-						config.ClusterList{
-							dpMock.BuildManualCluster(supportedInstanceType),
-						}),
+				ocmConfig: &ocm.OCMConfig{
+					SelfToken: "test-token",
 				},
-				supportedProviders: &supportedProviders,
-				OCMConfig: &ocm.OCMConfig{
-					SelfToken: "selfToken",
-				},
-				ProviderFactory: &clusters.ProviderFactoryMock{
+				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-						return &clusters.ProviderMock{GetQuotaCostsFunc: func() ([]types.QuotaCost, error) {
-							return []types.QuotaCost{}, nil
-						}}, nil
+						return &clusters.ProviderMock{
+							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+								return nil, errors.New("failed to get quota costs")
+							},
+						}, nil
 					},
 				},
 			},
-			wantErr: false,
+			wantErrs: []error{
+				errors.New("failed to set cluster status count metrics: KAFKAS-MGMT-9: failed to count by status"),
+				errors.New("failed to set kafka per cluster count metrics: failed to find kafka instance count"),
+				errors.New("failed to set cluster provider resource quota metrics: failed to get quota costs"),
+			},
+		},
+		{
+			name: "should return no errors if all cluster metrics process successfully",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					CountByStatusFunc: func([]api.ClusterStatus) ([]services.ClusterStatusCount, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
+						return nil, nil
+					},
+				},
+				ocmConfig: &ocm.OCMConfig{
+					SelfToken: "test-token",
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+								return nil, nil
+							},
+						}, nil
+					},
+				},
+			},
+			wantErrs: []error{},
 		},
 	}
 
@@ -334,13 +332,18 @@ func TestClusterManager_processMetrics(t *testing.T) {
 					ClusterService:         tt.fields.clusterService,
 					DataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
 					SupportedProviders:     tt.fields.supportedProviders,
-					OCMConfig:              tt.fields.OCMConfig,
-					ProviderFactory:        tt.fields.ProviderFactory,
+					OCMConfig:              tt.fields.ocmConfig,
+					ProviderFactory:        tt.fields.providerFactory,
 				},
 			}
 			// processMetrics accumulates all the errors encountered during metrics processing in an array.
-			// If that array is non empty then an error should be expected. Otherwise, no errors should be expected.
-			g.Expect(len(c.processMetrics()) > 0).To(gomega.Equal(tt.wantErr))
+			gotErrors := c.processMetrics()
+			g.Expect(len(gotErrors)).To(gomega.Equal(len(tt.wantErrs)), "Errors received: %v", gotErrors)
+			if len(gotErrors) > 0 {
+				for i, err := range gotErrors {
+					g.Expect(err.Error()).To(gomega.Equal(tt.wantErrs[i].Error()))
+				}
+			}
 		})
 	}
 }
@@ -3584,6 +3587,124 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 			err := c.reconcileDynamicCapacityInfo(test.arg)
 			gotErr := err != nil
 			g.Expect(gotErr).To(gomega.Equal(test.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_setClusterProviderResourceQuotaMetrics(t *testing.T) {
+	tests := []struct {
+		name               string
+		clusterManagerOpts ClusterManagerOptions
+		wantErr            bool
+	}{
+		{
+			name: "should skip metric update if ocm credentials are not specified",
+			clusterManagerOpts: ClusterManagerOptions{
+				OCMConfig: &ocm.OCMConfig{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should skip metric update if ocm client id and secret are both not specified",
+			clusterManagerOpts: ClusterManagerOptions{
+				OCMConfig: &ocm.OCMConfig{
+					ClientID: "test-client-id",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error if GetProvider fails",
+			clusterManagerOpts: ClusterManagerOptions{
+				OCMConfig: &ocm.OCMConfig{
+					SelfToken: "test-token",
+				},
+				ProviderFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return nil, errors.New("failed to get provider")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if GetQuotaCosts fails",
+			clusterManagerOpts: ClusterManagerOptions{
+				OCMConfig: &ocm.OCMConfig{
+					SelfToken: "test-token",
+				},
+				ProviderFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+								return nil, errors.New("failed to get quota list")
+							},
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return no error if ocm client id and secret are specified and metric update is successful",
+			clusterManagerOpts: ClusterManagerOptions{
+				OCMConfig: &ocm.OCMConfig{
+					ClientID:     "test-client-id",
+					ClientSecret: "test-client-secret",
+				},
+				ProviderFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+								return []types.QuotaCost{
+									{
+										ID:         "test-quota-id",
+										MaxAllowed: 1,
+										Consumed:   0,
+									},
+								}, nil
+							},
+						}, nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return no error if ocm token is specified and metric update is successful",
+			clusterManagerOpts: ClusterManagerOptions{
+				OCMConfig: &ocm.OCMConfig{
+					SelfToken: "test-token",
+				},
+				ProviderFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
+								return []types.QuotaCost{
+									{
+										ID:         "test-quota-id",
+										MaxAllowed: 1,
+										Consumed:   0,
+									},
+								}, nil
+							},
+						}, nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		tc := tt
+		t.Run(tc.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			c := &ClusterManager{
+				ClusterManagerOptions: tc.clusterManagerOpts,
+			}
+
+			err := c.setClusterProviderResourceQuotaMetrics()
+			g.Expect(err != nil).To(gomega.Equal(tc.wantErr))
 		})
 	}
 }

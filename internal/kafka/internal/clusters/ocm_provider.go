@@ -26,6 +26,14 @@ const (
 	ocmMultiAZClusterNodeScalingMultiple = 3
 )
 
+var (
+	// AMS quota filters
+	AMSQuotaAddonResourceNamePrefix        = "addon"
+	AMSQuotaOSDProductName          string = "OSD"
+	AMSQuotaComputeNodeResourceType string = "compute.node"
+	AMSQuotaClusterResourceType     string = "cluster"
+)
+
 type OCMProvider struct {
 	ocmClient      ocm.Client
 	clusterBuilder ClusterBuilder
@@ -442,9 +450,11 @@ func (o *OCMProvider) CreateMachinePool(request *types.MachinePoolRequest) (*typ
 	return request, err
 }
 
-// GetQuotaCosts returns a list of ocm resource quota cost information for the authenticated user
-// Returns a nil slice when no resource quota is assigned to the user
-func (o *OCMProvider) GetQuotaCosts() ([]types.QuotaCost, error) {
+// GetClusterResourceQuotaCosts returns a list of quota cost information related to ocm resources used for the provisioning and
+// terraforming of data plane clusters for the authenticated user.
+//
+// Returns a nil slice when no ocm resource quota is assigned to the user
+func (o *OCMProvider) GetClusterResourceQuotaCosts() ([]types.QuotaCost, error) {
 	var quotaCostList []types.QuotaCost
 
 	account, err := o.ocmClient.GetCurrentAccount()
@@ -456,12 +466,36 @@ func (o *OCMProvider) GetQuotaCosts() ([]types.QuotaCost, error) {
 		return quotaCostList, errors.New("failed to get quota cost: organisation id for the current authenticated user can't be found")
 	}
 
-	ocmQuotaCostList, err := o.ocmClient.GetQuotaCosts(orgID, false, false)
+	strimziOperatorAddonName := fmt.Sprintf("%s-%s", AMSQuotaAddonResourceNamePrefix, o.ocmConfig.StrimziOperatorAddonID)
+	fleetshardOperatorAddonName := fmt.Sprintf("%s-%s", AMSQuotaAddonResourceNamePrefix, o.ocmConfig.KasFleetshardAddonID)
+
+	filters := []ocm.QuotaCostRelatedResourceFilter{
+		// Filter for Strimzi operator add-on
+		{
+			ResourceName: &strimziOperatorAddonName,
+		},
+		// Filter for Fleetshard operator add-on
+		{
+			ResourceName: &fleetshardOperatorAddonName,
+		},
+		// Filter for osd compute nodes
+		{
+			ResourceType: &AMSQuotaComputeNodeResourceType,
+			Product:      &AMSQuotaOSDProductName,
+		},
+		// Filter for osd cluster
+		{
+			ResourceType: &AMSQuotaClusterResourceType,
+			Product:      &AMSQuotaOSDProductName,
+		},
+	}
+
+	ocmQuotaCostList, err := o.ocmClient.GetQuotaCosts(orgID, true, false, filters...)
 	if err != nil {
 		return quotaCostList, err
 	}
 
-	for _, qc := range ocmQuotaCostList.Slice() {
+	for _, qc := range ocmQuotaCostList {
 		quotaCostList = append(quotaCostList, types.QuotaCost{
 			ID:         qc.QuotaID(),
 			MaxAllowed: qc.Allowed(),
