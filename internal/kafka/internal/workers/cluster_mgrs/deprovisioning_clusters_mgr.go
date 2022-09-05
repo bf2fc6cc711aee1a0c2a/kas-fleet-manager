@@ -1,8 +1,6 @@
 package cluster_mgrs
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	fleeterrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -22,20 +20,18 @@ const (
 // DeprovisioningClustersManager represents a cluster manager that periodically reconciles data plane clusters in deprovisioning state.
 type DeprovisioningClustersManager struct {
 	workers.BaseWorker
-	clusterService         services.ClusterService
-	dataplaneClusterConfig *config.DataplaneClusterConfig
+	clusterService services.ClusterService
 }
 
 // NewDeprovisioningClustersManager creates a new cluster manager to reconcile data plane clusters in deprovisioning state.
-func NewDeprovisioningClustersManager(reconciler workers.Reconciler, clusterService services.ClusterService, dataplaneClusterConfig *config.DataplaneClusterConfig) *DeprovisioningClustersManager {
+func NewDeprovisioningClustersManager(reconciler workers.Reconciler, clusterService services.ClusterService) *DeprovisioningClustersManager {
 	return &DeprovisioningClustersManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: deprovisioningClustersWorkerType,
 			Reconciler: reconciler,
 		},
-		clusterService:         clusterService,
-		dataplaneClusterConfig: dataplaneClusterConfig,
+		clusterService: clusterService,
 	}
 }
 
@@ -90,22 +86,15 @@ func (m *DeprovisioningClustersManager) processDeprovisioningClusters() error {
 }
 
 func (m *DeprovisioningClustersManager) reconcileDeprovisioningCluster(cluster *api.Cluster) error {
-	if m.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
-		siblingCluster, findClusterErr := m.clusterService.FindCluster(services.FindClusterCriteria{
-			Region:   cluster.Region,
-			Provider: cluster.CloudProvider,
-			MultiAZ:  cluster.MultiAZ,
-			Status:   api.ClusterReady,
-		})
+	nonEmptyCluster, findClusterErr := m.clusterService.FindNonEmptyClusterById(cluster.ClusterID)
 
-		if findClusterErr != nil {
-			return findClusterErr
-		}
+	if findClusterErr != nil {
+		return findClusterErr
+	}
 
-		//if it is the only cluster left in that region, set it back to ready.
-		if siblingCluster == nil {
-			return m.clusterService.UpdateStatus(*cluster, api.ClusterReady)
-		}
+	//if the cluster is not empty bring it back to ready state.
+	if nonEmptyCluster != nil {
+		return m.clusterService.UpdateStatus(*cluster, api.ClusterReady)
 	}
 
 	deleted, deleteClusterErr := m.clusterService.Delete(cluster)

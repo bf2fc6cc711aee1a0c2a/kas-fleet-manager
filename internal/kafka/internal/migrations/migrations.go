@@ -84,6 +84,7 @@ var migrations = []*gormigrate.Migration{
 	addDynamicScaleUpWorkerToLeaderLeases(),
 	addCleanupClusterExternalResourcesWorkerToLeaderLeases(),
 	addDeprovisioningClusterWorkerToLeaderLeases(),
+	addDynamicScaleDownWorkerToLeaderLeases(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

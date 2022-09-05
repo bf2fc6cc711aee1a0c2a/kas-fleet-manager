@@ -43,9 +43,6 @@ var (
 	keycloakRealmConfig = keycloak.KeycloakRealmConfig{
 		ValidIssuerURI: "https://foo.bar",
 	}
-	autoScalingDataPlaneConfig = &config.DataplaneClusterConfig{
-		DataPlaneClusterScalingType: config.AutoScaling,
-	}
 )
 
 func TestClusterManager_GetID(t *testing.T) {
@@ -648,23 +645,6 @@ func TestClusterManager_processReadyClusters(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should return an error if reconcileEmptyCluster fails during processing ready clusters",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
-						return []api.Cluster{
-							readyCluster,
-						}, nil
-					},
-					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, apiErrors.GeneralError("failed to find non empty cluster by id")
-					},
-				},
-				dataplaneClusterConfig: autoScalingDataPlaneConfig,
-			},
-			wantErr: true,
-		},
-		{
 			name: "should not return an error if reconcileReadyCluster doesn't throw an error",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
@@ -672,9 +652,6 @@ func TestClusterManager_processReadyClusters(t *testing.T) {
 						return []api.Cluster{
 							readyCluster,
 						}, nil
-					},
-					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
-						return &readyCluster, apiErrors.GeneralError("failed to find non empty cluster by id")
 					},
 				},
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
@@ -1405,7 +1382,7 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 			wantErr: true,
 		},
 		{
-			name: "should return an error if reconcileEmptyCluster fails during processing ready clusters",
+			name: "should return an error if it occurs during processing ready clusters",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
@@ -2572,135 +2549,6 @@ func TestClusterManager_reconcileClusterDNS(t *testing.T) {
 			}
 
 			g.Expect(c.reconcileClusterDNS(tt.arg) != nil).To(gomega.Equal(tt.wantErr))
-		})
-	}
-}
-
-func TestClusterManager_reconcileEmptyCluster(t *testing.T) {
-	type fields struct {
-		clusterService services.ClusterService
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-		want    bool
-	}{
-		{
-			name: "should receive error when FindNonEmptyClusterById returns error",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, &apiErrors.ServiceError{}
-					},
-					UpdateStatusFunc:                 nil, // set to nil as it should not be called
-					ListGroupByProviderAndRegionFunc: nil, // set to nil as it should not be called
-				},
-			},
-			wantErr: true,
-			want:    false,
-		},
-		{
-			name: "should return false when cluster is not empty",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
-						return &api.Cluster{ClusterID: clusterId}, nil
-					},
-					UpdateStatusFunc:                 nil, // set to nil as it should not be called
-					ListGroupByProviderAndRegionFunc: nil, // set to nil as it should not be called
-				},
-			},
-			wantErr: false,
-			want:    false,
-		},
-		{
-			name: "receives an error when ListGroupByProviderAndRegion returns an error",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, nil
-					},
-					UpdateStatusFunc: nil, // set to nil as it should not be called
-					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
-						return nil, &apiErrors.ServiceError{}
-					},
-				},
-			},
-			wantErr: true,
-			want:    false,
-		},
-		{
-			name: "should not update the cluster status to deprovisioning when no sibling found",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, nil
-					},
-					UpdateStatusFunc: nil, // set to nil as it not be called
-					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
-						return []*services.ResGroupCPRegion{{Count: 1}}, nil
-					},
-				},
-			},
-			wantErr: false,
-			want:    false,
-		},
-		{
-			name: "should return false when updating cluster status fails",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, nil
-					},
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return &apiErrors.ServiceError{}
-					},
-					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
-						return []*services.ResGroupCPRegion{{Count: 2}}, nil
-					},
-				},
-			},
-			wantErr: true,
-			want:    false,
-		},
-		{
-			name: "should return true and update the cluster status",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, nil
-					},
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return nil
-					},
-					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
-						return []*services.ResGroupCPRegion{{Count: 2}}, nil
-					},
-				},
-			},
-			wantErr: false,
-			want:    true,
-		},
-	}
-
-	for _, testcase := range tests {
-		tt := testcase
-		t.Run(tt.name, func(t *testing.T) {
-			g := gomega.NewWithT(t)
-			c := &ClusterManager{
-				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService: tt.fields.clusterService,
-				},
-			}
-
-			emptyClusterReconciled, err := c.reconcileEmptyCluster(api.Cluster{
-				Meta: api.Meta{
-					ID: "cluster-id",
-				},
-			})
-			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
-			g.Expect(emptyClusterReconciled).To(gomega.Equal(tt.want))
 		})
 	}
 }

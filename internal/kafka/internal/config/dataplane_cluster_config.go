@@ -40,22 +40,23 @@ type DataplaneClusterConfig struct {
 	// 'manual' to use OSD Cluster configuration file,
 	// 'auto' to use dynamic scaling
 	// 'none' to disabled scaling all together, useful in testing
-	DataPlaneClusterScalingType                 string
-	DataPlaneClusterConfigFile                  string
-	ReadOnlyUserList                            userv1.OptionalNames
-	ReadOnlyUserListFile                        string
-	KafkaSREUsers                               userv1.OptionalNames
-	KafkaSREUsersFile                           string
-	ClusterConfig                               *ClusterConfig
-	EnableReadyDataPlaneClustersReconcile       bool
-	EnableKafkaSreIdentityProviderConfiguration bool
-	EnableDynamicScaleUpManagerScaleUpTrigger   bool
-	Kubeconfig                                  string
-	RawKubernetesConfig                         *clientcmdapi.Config
-	StrimziOperatorOLMConfig                    OperatorInstallationConfig
-	KasFleetshardOperatorOLMConfig              OperatorInstallationConfig
-	DynamicScalingConfig                        DynamicScalingConfig
-	NodePrewarmingConfig                        NodePrewarmingConfig
+	DataPlaneClusterScalingType                   string
+	DataPlaneClusterConfigFile                    string
+	ReadOnlyUserList                              userv1.OptionalNames
+	ReadOnlyUserListFile                          string
+	KafkaSREUsers                                 userv1.OptionalNames
+	KafkaSREUsersFile                             string
+	ClusterConfig                                 *ClusterConfig
+	EnableReadyDataPlaneClustersReconcile         bool
+	EnableKafkaSreIdentityProviderConfiguration   bool
+	EnableDynamicScaleUpManagerScaleUpTrigger     bool
+	EnableDynamicScaleDownManagerScaleDownTrigger bool
+	Kubeconfig                                    string
+	RawKubernetesConfig                           *clientcmdapi.Config
+	StrimziOperatorOLMConfig                      OperatorInstallationConfig
+	KasFleetshardOperatorOLMConfig                OperatorInstallationConfig
+	DynamicScalingConfig                          DynamicScalingConfig
+	NodePrewarmingConfig                          NodePrewarmingConfig
 }
 
 type OperatorInstallationConfig struct {
@@ -101,20 +102,21 @@ func getDefaultKubeconfig() string {
 
 func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	return &DataplaneClusterConfig{
-		OpenshiftVersion:                            "",
-		AWSComputeMachineType:                       defaultAWSComputeMachineType,
-		GCPComputeMachineType:                       defaultGCPComputeMachineType,
-		ImagePullDockerConfigContent:                "",
-		ImagePullDockerConfigFile:                   "secrets/image-pull.dockerconfigjson",
-		DataPlaneClusterConfigFile:                  "config/dataplane-cluster-configuration.yaml",
-		ReadOnlyUserListFile:                        "config/read-only-user-list.yaml",
-		KafkaSREUsersFile:                           "config/kafka-sre-user-list.yaml",
-		DataPlaneClusterScalingType:                 ManualScaling,
-		ClusterConfig:                               &ClusterConfig{},
-		EnableReadyDataPlaneClustersReconcile:       true,
-		EnableKafkaSreIdentityProviderConfiguration: true,
-		EnableDynamicScaleUpManagerScaleUpTrigger:   true,
-		Kubeconfig:                                  getDefaultKubeconfig(),
+		OpenshiftVersion:                              "",
+		AWSComputeMachineType:                         defaultAWSComputeMachineType,
+		GCPComputeMachineType:                         defaultGCPComputeMachineType,
+		ImagePullDockerConfigContent:                  "",
+		ImagePullDockerConfigFile:                     "secrets/image-pull.dockerconfigjson",
+		DataPlaneClusterConfigFile:                    "config/dataplane-cluster-configuration.yaml",
+		ReadOnlyUserListFile:                          "config/read-only-user-list.yaml",
+		KafkaSREUsersFile:                             "config/kafka-sre-user-list.yaml",
+		DataPlaneClusterScalingType:                   ManualScaling,
+		ClusterConfig:                                 &ClusterConfig{},
+		EnableReadyDataPlaneClustersReconcile:         true,
+		EnableKafkaSreIdentityProviderConfiguration:   true,
+		EnableDynamicScaleUpManagerScaleUpTrigger:     true,
+		EnableDynamicScaleDownManagerScaleDownTrigger: true,
+		Kubeconfig: getDefaultKubeconfig(),
 		StrimziOperatorOLMConfig: OperatorInstallationConfig{
 			IndexImage:             defaultStrimziOperatorIndexImage,
 			Namespace:              constants.StrimziOperatorNamespace,
