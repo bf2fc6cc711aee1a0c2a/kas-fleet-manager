@@ -15,19 +15,19 @@ var _ ClusterPlacementStrategy = &ClusterPlacementStrategyMock{}
 
 // ClusterPlacementStrategyMock is a mock implementation of ClusterPlacementStrategy.
 //
-// 	func TestSomethingThatUsesClusterPlacementStrategy(t *testing.T) {
+//	func TestSomethingThatUsesClusterPlacementStrategy(t *testing.T) {
 //
-// 		// make and configure a mocked ClusterPlacementStrategy
-// 		mockedClusterPlacementStrategy := &ClusterPlacementStrategyMock{
-// 			FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
-// 				panic("mock out the FindCluster method")
-// 			},
-// 		}
+//		// make and configure a mocked ClusterPlacementStrategy
+//		mockedClusterPlacementStrategy := &ClusterPlacementStrategyMock{
+//			FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+//				panic("mock out the FindCluster method")
+//			},
+//		}
 //
-// 		// use mockedClusterPlacementStrategy in code that requires ClusterPlacementStrategy
-// 		// and then make assertions.
+//		// use mockedClusterPlacementStrategy in code that requires ClusterPlacementStrategy
+//		// and then make assertions.
 //
-// 	}
+//	}
 type ClusterPlacementStrategyMock struct {
 	// FindClusterFunc mocks the FindCluster method.
 	FindClusterFunc func(kafka *dbapi.KafkaRequest) (*api.Cluster, error)
@@ -61,7 +61,8 @@ func (mock *ClusterPlacementStrategyMock) FindCluster(kafka *dbapi.KafkaRequest)
 
 // FindClusterCalls gets all the calls that were made to FindCluster.
 // Check the length with:
-//     len(mockedClusterPlacementStrategy.FindClusterCalls())
+//
+//	len(mockedClusterPlacementStrategy.FindClusterCalls())
 func (mock *ClusterPlacementStrategyMock) FindClusterCalls() []struct {
 	Kafka *dbapi.KafkaRequest
 } {

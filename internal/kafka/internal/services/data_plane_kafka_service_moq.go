@@ -6,7 +6,7 @@ package services
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -16,22 +16,22 @@ var _ DataPlaneKafkaService = &DataPlaneKafkaServiceMock{}
 
 // DataPlaneKafkaServiceMock is a mock implementation of DataPlaneKafkaService.
 //
-// 	func TestSomethingThatUsesDataPlaneKafkaService(t *testing.T) {
+//	func TestSomethingThatUsesDataPlaneKafkaService(t *testing.T) {
 //
-// 		// make and configure a mocked DataPlaneKafkaService
-// 		mockedDataPlaneKafkaService := &DataPlaneKafkaServiceMock{
-// 			UpdateDataPlaneKafkaServiceFunc: func(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError {
-// 				panic("mock out the UpdateDataPlaneKafkaService method")
-// 			},
-// 		}
+//		// make and configure a mocked DataPlaneKafkaService
+//		mockedDataPlaneKafkaService := &DataPlaneKafkaServiceMock{
+//			UpdateDataPlaneKafkaServiceFunc: func(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *apiErrors.ServiceError {
+//				panic("mock out the UpdateDataPlaneKafkaService method")
+//			},
+//		}
 //
-// 		// use mockedDataPlaneKafkaService in code that requires DataPlaneKafkaService
-// 		// and then make assertions.
+//		// use mockedDataPlaneKafkaService in code that requires DataPlaneKafkaService
+//		// and then make assertions.
 //
-// 	}
+//	}
 type DataPlaneKafkaServiceMock struct {
 	// UpdateDataPlaneKafkaServiceFunc mocks the UpdateDataPlaneKafkaService method.
-	UpdateDataPlaneKafkaServiceFunc func(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError
+	UpdateDataPlaneKafkaServiceFunc func(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *apiErrors.ServiceError
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -49,7 +49,7 @@ type DataPlaneKafkaServiceMock struct {
 }
 
 // UpdateDataPlaneKafkaService calls UpdateDataPlaneKafkaServiceFunc.
-func (mock *DataPlaneKafkaServiceMock) UpdateDataPlaneKafkaService(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError {
+func (mock *DataPlaneKafkaServiceMock) UpdateDataPlaneKafkaService(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *apiErrors.ServiceError {
 	if mock.UpdateDataPlaneKafkaServiceFunc == nil {
 		panic("DataPlaneKafkaServiceMock.UpdateDataPlaneKafkaServiceFunc: method is nil but DataPlaneKafkaService.UpdateDataPlaneKafkaService was just called")
 	}
@@ -70,7 +70,8 @@ func (mock *DataPlaneKafkaServiceMock) UpdateDataPlaneKafkaService(ctx context.C
 
 // UpdateDataPlaneKafkaServiceCalls gets all the calls that were made to UpdateDataPlaneKafkaService.
 // Check the length with:
-//     len(mockedDataPlaneKafkaService.UpdateDataPlaneKafkaServiceCalls())
+//
+//	len(mockedDataPlaneKafkaService.UpdateDataPlaneKafkaServiceCalls())
 func (mock *DataPlaneKafkaServiceMock) UpdateDataPlaneKafkaServiceCalls() []struct {
 	Ctx       context.Context
 	ClusterId string

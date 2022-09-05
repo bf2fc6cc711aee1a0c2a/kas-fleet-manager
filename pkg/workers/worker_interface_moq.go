@@ -13,43 +13,46 @@ var _ Worker = &WorkerMock{}
 
 // WorkerMock is a mock implementation of Worker.
 //
-// 	func TestSomethingThatUsesWorker(t *testing.T) {
+//	func TestSomethingThatUsesWorker(t *testing.T) {
 //
-// 		// make and configure a mocked Worker
-// 		mockedWorker := &WorkerMock{
-// 			GetIDFunc: func() string {
-// 				panic("mock out the GetID method")
-// 			},
-// 			GetStopChanFunc: func() *chan struct{} {
-// 				panic("mock out the GetStopChan method")
-// 			},
-// 			GetSyncGroupFunc: func() *sync.WaitGroup {
-// 				panic("mock out the GetSyncGroup method")
-// 			},
-// 			GetWorkerTypeFunc: func() string {
-// 				panic("mock out the GetWorkerType method")
-// 			},
-// 			IsRunningFunc: func() bool {
-// 				panic("mock out the IsRunning method")
-// 			},
-// 			ReconcileFunc: func() []error {
-// 				panic("mock out the Reconcile method")
-// 			},
-// 			SetIsRunningFunc: func(val bool)  {
-// 				panic("mock out the SetIsRunning method")
-// 			},
-// 			StartFunc: func()  {
-// 				panic("mock out the Start method")
-// 			},
-// 			StopFunc: func()  {
-// 				panic("mock out the Stop method")
-// 			},
-// 		}
+//		// make and configure a mocked Worker
+//		mockedWorker := &WorkerMock{
+//			GetIDFunc: func() string {
+//				panic("mock out the GetID method")
+//			},
+//			GetStopChanFunc: func() *chan struct{} {
+//				panic("mock out the GetStopChan method")
+//			},
+//			GetSyncGroupFunc: func() *sync.WaitGroup {
+//				panic("mock out the GetSyncGroup method")
+//			},
+//			GetWorkerTypeFunc: func() string {
+//				panic("mock out the GetWorkerType method")
+//			},
+//			HasTerminatedFunc: func() bool {
+//				panic("mock out the HasTerminated method")
+//			},
+//			IsRunningFunc: func() bool {
+//				panic("mock out the IsRunning method")
+//			},
+//			ReconcileFunc: func() []error {
+//				panic("mock out the Reconcile method")
+//			},
+//			SetIsRunningFunc: func(val bool)  {
+//				panic("mock out the SetIsRunning method")
+//			},
+//			StartFunc: func()  {
+//				panic("mock out the Start method")
+//			},
+//			StopFunc: func()  {
+//				panic("mock out the Stop method")
+//			},
+//		}
 //
-// 		// use mockedWorker in code that requires Worker
-// 		// and then make assertions.
+//		// use mockedWorker in code that requires Worker
+//		// and then make assertions.
 //
-// 	}
+//	}
 type WorkerMock struct {
 	// GetIDFunc mocks the GetID method.
 	GetIDFunc func() string
@@ -62,6 +65,9 @@ type WorkerMock struct {
 
 	// GetWorkerTypeFunc mocks the GetWorkerType method.
 	GetWorkerTypeFunc func() string
+
+	// HasTerminatedFunc mocks the HasTerminated method.
+	HasTerminatedFunc func() bool
 
 	// IsRunningFunc mocks the IsRunning method.
 	IsRunningFunc func() bool
@@ -92,6 +98,9 @@ type WorkerMock struct {
 		// GetWorkerType holds details about calls to the GetWorkerType method.
 		GetWorkerType []struct {
 		}
+		// HasTerminated holds details about calls to the HasTerminated method.
+		HasTerminated []struct {
+		}
 		// IsRunning holds details about calls to the IsRunning method.
 		IsRunning []struct {
 		}
@@ -114,6 +123,7 @@ type WorkerMock struct {
 	lockGetStopChan   sync.RWMutex
 	lockGetSyncGroup  sync.RWMutex
 	lockGetWorkerType sync.RWMutex
+	lockHasTerminated sync.RWMutex
 	lockIsRunning     sync.RWMutex
 	lockReconcile     sync.RWMutex
 	lockSetIsRunning  sync.RWMutex
@@ -136,7 +146,8 @@ func (mock *WorkerMock) GetID() string {
 
 // GetIDCalls gets all the calls that were made to GetID.
 // Check the length with:
-//     len(mockedWorker.GetIDCalls())
+//
+//	len(mockedWorker.GetIDCalls())
 func (mock *WorkerMock) GetIDCalls() []struct {
 } {
 	var calls []struct {
@@ -162,7 +173,8 @@ func (mock *WorkerMock) GetStopChan() *chan struct{} {
 
 // GetStopChanCalls gets all the calls that were made to GetStopChan.
 // Check the length with:
-//     len(mockedWorker.GetStopChanCalls())
+//
+//	len(mockedWorker.GetStopChanCalls())
 func (mock *WorkerMock) GetStopChanCalls() []struct {
 } {
 	var calls []struct {
@@ -188,7 +200,8 @@ func (mock *WorkerMock) GetSyncGroup() *sync.WaitGroup {
 
 // GetSyncGroupCalls gets all the calls that were made to GetSyncGroup.
 // Check the length with:
-//     len(mockedWorker.GetSyncGroupCalls())
+//
+//	len(mockedWorker.GetSyncGroupCalls())
 func (mock *WorkerMock) GetSyncGroupCalls() []struct {
 } {
 	var calls []struct {
@@ -214,7 +227,8 @@ func (mock *WorkerMock) GetWorkerType() string {
 
 // GetWorkerTypeCalls gets all the calls that were made to GetWorkerType.
 // Check the length with:
-//     len(mockedWorker.GetWorkerTypeCalls())
+//
+//	len(mockedWorker.GetWorkerTypeCalls())
 func (mock *WorkerMock) GetWorkerTypeCalls() []struct {
 } {
 	var calls []struct {
@@ -222,6 +236,33 @@ func (mock *WorkerMock) GetWorkerTypeCalls() []struct {
 	mock.lockGetWorkerType.RLock()
 	calls = mock.calls.GetWorkerType
 	mock.lockGetWorkerType.RUnlock()
+	return calls
+}
+
+// HasTerminated calls HasTerminatedFunc.
+func (mock *WorkerMock) HasTerminated() bool {
+	if mock.HasTerminatedFunc == nil {
+		panic("WorkerMock.HasTerminatedFunc: method is nil but Worker.HasTerminated was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockHasTerminated.Lock()
+	mock.calls.HasTerminated = append(mock.calls.HasTerminated, callInfo)
+	mock.lockHasTerminated.Unlock()
+	return mock.HasTerminatedFunc()
+}
+
+// HasTerminatedCalls gets all the calls that were made to HasTerminated.
+// Check the length with:
+//
+//	len(mockedWorker.HasTerminatedCalls())
+func (mock *WorkerMock) HasTerminatedCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockHasTerminated.RLock()
+	calls = mock.calls.HasTerminated
+	mock.lockHasTerminated.RUnlock()
 	return calls
 }
 
@@ -240,7 +281,8 @@ func (mock *WorkerMock) IsRunning() bool {
 
 // IsRunningCalls gets all the calls that were made to IsRunning.
 // Check the length with:
-//     len(mockedWorker.IsRunningCalls())
+//
+//	len(mockedWorker.IsRunningCalls())
 func (mock *WorkerMock) IsRunningCalls() []struct {
 } {
 	var calls []struct {
@@ -266,7 +308,8 @@ func (mock *WorkerMock) Reconcile() []error {
 
 // ReconcileCalls gets all the calls that were made to Reconcile.
 // Check the length with:
-//     len(mockedWorker.ReconcileCalls())
+//
+//	len(mockedWorker.ReconcileCalls())
 func (mock *WorkerMock) ReconcileCalls() []struct {
 } {
 	var calls []struct {
@@ -295,7 +338,8 @@ func (mock *WorkerMock) SetIsRunning(val bool) {
 
 // SetIsRunningCalls gets all the calls that were made to SetIsRunning.
 // Check the length with:
-//     len(mockedWorker.SetIsRunningCalls())
+//
+//	len(mockedWorker.SetIsRunningCalls())
 func (mock *WorkerMock) SetIsRunningCalls() []struct {
 	Val bool
 } {
@@ -323,7 +367,8 @@ func (mock *WorkerMock) Start() {
 
 // StartCalls gets all the calls that were made to Start.
 // Check the length with:
-//     len(mockedWorker.StartCalls())
+//
+//	len(mockedWorker.StartCalls())
 func (mock *WorkerMock) StartCalls() []struct {
 } {
 	var calls []struct {
@@ -349,7 +394,8 @@ func (mock *WorkerMock) Stop() {
 
 // StopCalls gets all the calls that were made to Stop.
 // Check the length with:
-//     len(mockedWorker.StopCalls())
+//
+//	len(mockedWorker.StopCalls())
 func (mock *WorkerMock) StopCalls() []struct {
 } {
 	var calls []struct {

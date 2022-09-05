@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -121,13 +120,13 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 // configmap where the actual files are double-symlinked from some random named
 // path:
 //
-//   drwxrwxrwx. 3 root root 88 Jul  7 13:18 .
-//   drwxr-xr-x. 3 root root 53 Jun  8 12:12 ..
-//   drwxr-xr-x. 2 root root 35 Jul  7 13:18 ..2020_07_07_13_18_32.149716995
-//   lrwxrwxrwx. 1 root root 31 Jul  7 13:18 ..data -> ..2020_07_07_13_18_32.149716995
-//   lrwxrwxrwx. 1 root root 28 Jul  7 13:18 aws-sqs-source-v1alpha1.json -> ..data/aws-sqs-source-v1alpha1.json
+//	drwxrwxrwx. 3 root root 88 Jul  7 13:18 .
+//	drwxr-xr-x. 3 root root 53 Jun  8 12:12 ..
+//	drwxr-xr-x. 2 root root 35 Jul  7 13:18 ..2020_07_07_13_18_32.149716995
+//	lrwxrwxrwx. 1 root root 31 Jul  7 13:18 ..data -> ..2020_07_07_13_18_32.149716995
+//	lrwxrwxrwx. 1 root root 28 Jul  7 13:18 aws-sqs-source-v1alpha1.json -> ..data/aws-sqs-source-v1alpha1.json
 func createSymLinkedCatalogDir() (string, error) {
-	dir, err := ioutil.TempDir("", "connector-catalog-")
+	dir, err := os.MkdirTemp("", "connector-catalog-")
 	if err != nil {
 		return "", err
 	}
@@ -149,29 +148,29 @@ func createSymLinkedCatalogDir() (string, error) {
 	source := "./internal/connector/test/integration/connector-catalog"
 	source = shared.BuildFullFilePath(source)
 
-	files, err := ioutil.ReadDir(source)
+	dirEntries, err := os.ReadDir(source)
 	if err != nil {
 		return "", err
 	}
 
-	for _, file := range files {
-		if file.IsDir() {
+	for _, dirEntry := range dirEntries {
+		if dirEntry.IsDir() {
 			continue
 		}
 
-		src := path.Join(source, file.Name())
-		dst := path.Join(contentDir, file.Name())
+		src := path.Join(source, dirEntry.Name())
+		dst := path.Join(contentDir, dirEntry.Name())
 
-		data, err := ioutil.ReadFile(src)
+		data, err := os.ReadFile(src)
 		if err != nil {
 			return "", err
 		}
-		err = ioutil.WriteFile(dst, data, 0644)
+		err = os.WriteFile(dst, data, 0644)
 		if err != nil {
 			return "", err
 		}
 
-		err = os.Symlink(path.Join(dataDir, file.Name()), path.Join(catalogDir, file.Name()))
+		err = os.Symlink(path.Join(dataDir, dirEntry.Name()), path.Join(catalogDir, dirEntry.Name()))
 		if err != nil {
 			return "", err
 		}

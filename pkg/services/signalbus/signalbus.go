@@ -87,17 +87,17 @@ type Subscription struct {
 //
 // Signal is provided for use in select statements:
 //
-//   func WatchTheKey(sb *signalBus) error {
-//       sub := sb.Subscribe("the-key")
-//       defer sub.Close()
-//    	for {
-//    		select {
-//    		case <-sub.Signal():
-//   			// this waits for the signal to occur..
-//    			fmt.Print("the-key was signaled.")
-//    		}
-//    	}
-//   }
+//	func WatchTheKey(sb *signalBus) error {
+//	    sub := sb.Subscribe("the-key")
+//	    defer sub.Close()
+//	 	for {
+//	 		select {
+//	 		case <-sub.Signal():
+//				// this waits for the signal to occur..
+//	 			fmt.Print("the-key was signaled.")
+//	 		}
+//	 	}
+//	}
 func (sub *Subscription) Signal() <-chan bool {
 	return sub.c
 }

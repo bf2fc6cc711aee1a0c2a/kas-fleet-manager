@@ -136,7 +136,7 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	}
 }
 
-//manual cluster configuration
+// manual cluster configuration
 type ManualCluster struct {
 	Name                  string                  `yaml:"name"`
 	ClusterId             string                  `yaml:"cluster_id"`

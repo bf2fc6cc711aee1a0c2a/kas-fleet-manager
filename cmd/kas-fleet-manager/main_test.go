@@ -41,6 +41,6 @@ func TestInjections(t *testing.T) {
 
 	var workerList []workers.Worker
 	env.MustResolve(&workerList)
-	g.Expect(workerList).To(gomega.HaveLen(9))
+	g.Expect(workerList).To(gomega.HaveLen(11))
 
 }

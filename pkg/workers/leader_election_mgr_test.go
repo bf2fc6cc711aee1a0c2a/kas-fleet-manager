@@ -263,6 +263,9 @@ func TestLeaderElectionManager_start(t *testing.T) {
 						},
 						StartFunc: func() {},
 						StopFunc:  nil, // should never be called
+						HasTerminatedFunc: func() bool {
+							return false
+						},
 					},
 				},
 				connectionFactory:                      db.NewMockConnectionFactory(nil),
@@ -301,6 +304,9 @@ func TestLeaderElectionManager_start(t *testing.T) {
 						},
 						StartFunc: nil, // should never be called
 						StopFunc:  func() {},
+						HasTerminatedFunc: func() bool {
+							return false
+						},
 					},
 				},
 				connectionFactory:                      db.NewMockConnectionFactory(nil),
@@ -339,6 +345,9 @@ func TestLeaderElectionManager_start(t *testing.T) {
 						},
 						StartFunc: nil, // should never be called
 						StopFunc:  nil, // should never be called
+						HasTerminatedFunc: func() bool {
+							return false
+						},
 					},
 				},
 				connectionFactory:                      db.NewMockConnectionFactory(nil),
@@ -436,6 +445,9 @@ func TestLeaderElectionManager_Stop(t *testing.T) {
 						},
 						StopFunc: func() {
 						},
+						HasTerminatedFunc: func() bool {
+							return false
+						},
 					},
 				},
 				connectionFactory:                      nil,
@@ -465,6 +477,9 @@ func TestLeaderElectionManager_Stop(t *testing.T) {
 						},
 						StopFunc: func() {
 							wg.Done()
+						},
+						HasTerminatedFunc: func() bool {
+							return false
 						},
 					},
 				},
@@ -541,6 +556,9 @@ func TestLeaderElectionManager_isWorkerLeader(t *testing.T) {
 						GetWorkerTypeFunc: func() string {
 							return "cluster"
 						},
+						HasTerminatedFunc: func() bool {
+							return false
+						},
 					},
 				},
 				connectionFactory: db.NewMockConnectionFactory(nil),
@@ -552,6 +570,9 @@ func TestLeaderElectionManager_isWorkerLeader(t *testing.T) {
 					},
 					GetWorkerTypeFunc: func() string {
 						return "leader"
+					},
+					HasTerminatedFunc: func() bool {
+						return false
 					},
 				},
 			},
@@ -651,6 +672,108 @@ func TestLeaderElectionManager_isWorkerLeader(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			g.Expect(s.isWorkerLeader(tt.args.worker)).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
+func Test_HasTerminated(t *testing.T) {
+	type fields struct {
+		workers     []Worker
+		workerCount int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		{
+			name: "should not stop normal worker",
+			fields: fields{
+				workers: []Worker{
+					&WorkerMock{
+						GetIDFunc: func() string {
+							return "02"
+						},
+						GetWorkerTypeFunc: func() string {
+							return "leader"
+						},
+						IsRunningFunc: func() bool {
+							return true
+						},
+						GetSyncGroupFunc: func() *sync.WaitGroup {
+							return &sync.WaitGroup{}
+						},
+						StopFunc: func() {
+						},
+						HasTerminatedFunc: func() bool {
+							return false
+						},
+					},
+				},
+				workerCount: 1,
+			},
+		},
+		{
+			name: "should stop terminated worker",
+			fields: fields{
+				workers: []Worker{
+					&WorkerMock{
+						GetIDFunc: func() string {
+							return "02"
+						},
+						GetWorkerTypeFunc: func() string {
+							return "leader"
+						},
+						IsRunningFunc: func() bool {
+							return true
+						},
+						GetSyncGroupFunc: func() *sync.WaitGroup {
+							return &sync.WaitGroup{}
+						},
+						StopFunc: func() {
+						},
+						HasTerminatedFunc: func() bool {
+							return true
+						},
+					},
+				},
+				workerCount: 0,
+			},
+		},
+	}
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			t.Parallel()
+
+			mockEntry := map[string]interface{}{
+				"leader":  "02",
+				"expires": time.Now().Add(time.Hour),
+			}
+			mocket.Catcher.Reset().
+				NewMock().
+				WithQuery("SELECT * FROM leader_leases").
+				WithReply([]map[string]interface{}{mockEntry})
+			mocket.Catcher.NewMock().WithExecException().WithQueryException()
+
+			s := &LeaderElectionManager{
+				workers:                                tt.fields.workers,
+				connectionFactory:                      db.NewMockConnectionFactory(nil),
+				tearDown:                               make(chan struct{}),
+				leaderElectionReconcilerRepeatInterval: 15 * time.Second,
+				workerGrp:                              sync.WaitGroup{},
+			}
+			s.workerGrp.Add(1)
+
+			// start mock worker
+			s.Start()
+
+			// has worker been stopped or not as expected
+			workerMock := tt.fields.workers[0].(*WorkerMock)
+			g.Expect(workerMock.calls.Stop).To(gomega.HaveLen(1 - tt.fields.workerCount))
+
+			// has worker been removed or not as expected
+			g.Expect(len(s.workers)).To(gomega.Equal(tt.fields.workerCount))
 		})
 	}
 }

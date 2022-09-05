@@ -17,6 +17,7 @@ type Worker interface {
 	GetSyncGroup() *sync.WaitGroup
 	IsRunning() bool
 	SetIsRunning(val bool)
+	HasTerminated() bool
 }
 
 type BaseWorker struct {
@@ -61,4 +62,8 @@ func (b *BaseWorker) StopWorker(w Worker) {
 	b.Reconciler.Stop(w)
 	metrics.ResetMetricsForKafkaManagers()
 	metrics.SetLeaderWorkerMetric(b.WorkerType, false)
+}
+
+func (b *BaseWorker) HasTerminated() bool {
+	return false
 }

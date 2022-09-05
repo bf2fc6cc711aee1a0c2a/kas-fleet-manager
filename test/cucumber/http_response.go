@@ -1,39 +1,54 @@
 // Assert response code is correct:
-//    Then the response code should be 202
+//
+//	Then the response code should be 202
+//
 // Assert that a json field of the response body is correct.  This uses a http://github.com/itchyny/gojq expression to select the json field of the
 // response:
-//    Then the ".status" selection from the response should match "assigning"
+//
+//	Then the ".status" selection from the response should match "assigning"
+//
 // Assert that the response body matches the provided text:
-//    Then the response should match "Hello"
-//    Then the response should match:
-//    """
-//    Hello
-//    """
+//
+//	Then the response should match "Hello"
+//	Then the response should match:
+//	"""
+//	Hello
+//	"""
+//
 // Assert that response json matches the provided json.  Differences in json formatting and field order are ignored.:
-//    Then the response should match json:
-//      """
-//      {
-//          "id": "${cid}",
-//      }
-//      """
+//
+//	Then the response should match json:
+//	  """
+//	  {
+//	      "id": "${cid}",
+//	  }
+//	  """
+//
 // Stores a json field of the response body in a scenario variable:
-//    Given I store the ".id" selection from the response as ${cid}
+//
+//	Given I store the ".id" selection from the response as ${cid}
+//
 // Stores a json value in a scenario variable:
-//    Given I store json as ${$input}:
-//      """
-//      {
-//          "id": "${cid}",
-//      }
-//      """
+//
+//	Given I store json as ${$input}:
+//	  """
+//	  {
+//	      "id": "${cid}",
+//	  }
+//	  """
+//
 // Assert that a response header matches the provided text:
-//    Then the response header "Content-Type" should match "application/json;stream=watch"
+//
+//	Then the response header "Content-Type" should match "application/json;stream=watch"
+//
 // Assert that a json field of the response body is correct matches the provided json:
-//    Then the ".deployment_location" selection from the response should match json:
-//      """
-//      {
-//          "namespace_id": "default"
-//      }
-//      """
+//
+//	Then the ".deployment_location" selection from the response should match json:
+//	  """
+//	  {
+//	      "namespace_id": "default"
+//	  }
+//	  """
 package cucumber
 
 import (

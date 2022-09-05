@@ -50,6 +50,68 @@ Feature: create a connector
       }
       """
 
+  Scenario: Gary lists connector type labels
+    Given I am logged in as "Gary"
+    When I GET path "/v1/kafka_connector_types/labels"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "count": 1,
+            "label": "featured"
+          },
+          {
+            "count": 1,
+            "label": "sink"
+          },
+          {
+            "count": 1,
+            "label": "source"
+          }
+        ]
+      }
+      """
+
+    # check search param
+    When I GET path "/v1/kafka_connector_types/labels?search=name+ilike+%25log%25"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "count": 0,
+            "label": "featured"
+          },
+          {
+            "count": 1,
+            "label": "sink"
+          }
+        ]
+      }
+      """
+
+    # check search param
+    When I GET path "/v1/kafka_connector_types/labels?search=channel+like+beta"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "count": 1,
+            "label": "featured"
+          },
+          {
+            "count": 1,
+            "label": "source"
+          }
+        ]
+      }
+      """
+
   Scenario: Gary lists all connector types
     Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types"
@@ -64,6 +126,7 @@ Feature: create a connector
               "beta"
             ],
             "description": "AWS SQS Source",
+            "featured_rank": 10,
             "href": "/api/connector_mgmt/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
             "icon_href": "TODO",
             "id": "aws-sqs-source-v1alpha1",
@@ -710,6 +773,7 @@ Feature: create a connector
                "beta"
              ],
              "description": "AWS SQS Source",
+             "featured_rank": 10,
              "href": "/api/connector_mgmt/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
              "icon_href": "TODO",
              "id": "aws-sqs-source-v1alpha1",

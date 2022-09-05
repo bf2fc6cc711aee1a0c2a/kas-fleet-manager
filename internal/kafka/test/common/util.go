@@ -3,7 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -160,7 +160,7 @@ func PersistClusterStruct(cluster api.Cluster, status api.ClusterStatus) error {
 	if err != nil {
 		return ocmErrors.GeneralError(fmt.Sprintf("Failed to marshal cluster struct details to a file: %v", err))
 	}
-	err = ioutil.WriteFile(testClusterPath, file, 0644)
+	err = os.WriteFile(testClusterPath, file, 0644)
 	if err != nil {
 		return ocmErrors.GeneralError(fmt.Sprintf("Failed to persist cluster struct details to a file: %v", err))
 	}
@@ -171,7 +171,7 @@ func PersistClusterStruct(cluster api.Cluster, status api.ClusterStatus) error {
 // an empty string with an error. If no file found - return empty string and nil as an error
 func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 	if fileExists(testClusterPath, t) {
-		file, err := ioutil.ReadFile(testClusterPath)
+		file, err := os.ReadFile(testClusterPath)
 		if err != nil {
 			return "", ocmErrors.GeneralError(fmt.Sprintf("Failed to ReadFile with cluster details: %v", err))
 		}
@@ -222,7 +222,7 @@ func getMetrics(t *testing.T) string {
 		_ = response.Body.Close()
 	}()
 
-	responseData, err := ioutil.ReadAll(response.Body)
+	responseData, err := io.ReadAll(response.Body)
 	if err != nil {
 		t.Fatalf("failed to read response data: %s", err.Error())
 	}

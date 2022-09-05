@@ -38,12 +38,14 @@ type KeycloakService interface {
 	DeleteServiceAccountInternal(clientId string) *errors.ServiceError
 }
 
+//go:generate moq -out osd_keycloak_service_moq.go . OSDKeycloakService
 type OSDKeycloakService interface {
 	KeycloakService
 	DeRegisterClientInSSO(kafkaNamespace string) *errors.ServiceError
 	RegisterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
 }
 
+//go:generate moq -out internal_keycloak_service_moq.go . keycloakServiceInternal
 type keycloakServiceInternal interface {
 	DeRegisterClientInSSO(accessToken string, kafkaNamespace string) *errors.ServiceError
 	RegisterClientInSSO(accessToken string, clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)

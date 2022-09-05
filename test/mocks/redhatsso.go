@@ -3,13 +3,14 @@ package mocks
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
 )
 
 const (
@@ -169,7 +170,7 @@ func (mockServer *redhatSSOMock) deleteServiceAccountHandler(w http.ResponseWrit
 
 func (mockServer *redhatSSOMock) updateServiceAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	data, err := ioutil.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	defer shared.CloseQuietly(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -235,7 +236,7 @@ func (mockServer *redhatSSOMock) getServiceAccountsHandler(w http.ResponseWriter
 }
 
 func (mockServer *redhatSSOMock) createServiceAccountHandler(w http.ResponseWriter, r *http.Request) {
-	requestData, err := ioutil.ReadAll(r.Body)
+	requestData, err := io.ReadAll(r.Body)
 	defer shared.CloseQuietly(r.Body)
 
 	if mockServer.serviceAccountsLimit != Unlimited {

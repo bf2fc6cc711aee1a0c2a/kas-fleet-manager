@@ -1,7 +1,6 @@
 package shared
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -76,7 +75,7 @@ func Test_Config_ReadQuotedFile(t *testing.T) {
 }
 
 func createConfigFile(namePrefix, contents string) (*os.File, error) {
-	configFile, err := ioutil.TempFile("", namePrefix)
+	configFile, err := os.CreateTemp("", namePrefix)
 	if err != nil {
 		return nil, err
 	}

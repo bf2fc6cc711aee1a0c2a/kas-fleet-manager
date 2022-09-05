@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-//TODO: convert this as deployment service and move here relevant methods from services/connector_cluster.go
+// TODO: convert this as deployment service and move here relevant methods from services/connector_cluster.go
 func deleteConnectorDeployment(dbConn *gorm.DB, id string) *errors.ServiceError {
 	// no err, deployment existed..
 	if err := dbConn.Where("id = ?", id).Delete(&dbapi.ConnectorDeployment{}).Error; err != nil {

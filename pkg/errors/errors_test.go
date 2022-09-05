@@ -2415,6 +2415,42 @@ func Test_ErrorList_ToErrorSlice(t *testing.T) {
 	g.Expect([]error(inputErrList)).To(gomega.Equal(res))
 }
 
+func Test_ErrorList_IsEmpty(t *testing.T) {
+
+	tests := []struct {
+		name string
+		arg  ErrorList
+		want bool
+	}{
+		{
+			name: "should return true when error list is empty slice",
+			arg:  ErrorList{},
+			want: true,
+		},
+		{
+			name: "should return true when error list is nil slice",
+			arg:  nil,
+			want: true,
+		},
+		{
+			name: "should return false when error list contains some elements",
+			arg: ErrorList{
+				errors.New("some error"),
+			},
+			want: false,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			g.Expect(tt.arg.IsEmpty()).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
 func Test_ServiceError_Unwrap(t *testing.T) {
 	type fields struct {
 		err *ServiceError

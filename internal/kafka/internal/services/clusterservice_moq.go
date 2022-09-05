@@ -7,7 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -17,121 +17,121 @@ var _ ClusterService = &ClusterServiceMock{}
 
 // ClusterServiceMock is a mock implementation of ClusterService.
 //
-// 	func TestSomethingThatUsesClusterService(t *testing.T) {
+//	func TestSomethingThatUsesClusterService(t *testing.T) {
 //
-// 		// make and configure a mocked ClusterService
-// 		mockedClusterService := &ClusterServiceMock{
-// 			ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *serviceError.ServiceError {
-// 				panic("mock out the ApplyResources method")
-// 			},
-// 			CheckClusterStatusFunc: func(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the CheckClusterStatus method")
-// 			},
-// 			CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
-// 				panic("mock out the CheckStrimziVersionReady method")
-// 			},
-// 			ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the ConfigureAndSaveIdentityProvider method")
-// 			},
-// 			CountByStatusFunc: func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, *serviceError.ServiceError) {
-// 				panic("mock out the CountByStatus method")
-// 			},
-// 			CreateFunc: func(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the Create method")
-// 			},
-// 			DeleteFunc: func(cluster *api.Cluster) (bool, *serviceError.ServiceError) {
-// 				panic("mock out the Delete method")
-// 			},
-// 			DeleteByClusterIDFunc: func(clusterID string) *serviceError.ServiceError {
-// 				panic("mock out the DeleteByClusterID method")
-// 			},
-// 			FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
-// 				panic("mock out the FindAllClusters method")
-// 			},
-// 			FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, error) {
-// 				panic("mock out the FindCluster method")
-// 			},
-// 			FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the FindClusterByID method")
-// 			},
-// 			FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]ResKafkaInstanceCount, error) {
-// 				panic("mock out the FindKafkaInstanceCount method")
-// 			},
-// 			FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the FindNonEmptyClusterById method")
-// 			},
-// 			FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (KafkaStreamingUnitCountPerClusterList, error) {
-// 				panic("mock out the FindStreamingUnitCountByClusterAndInstanceType method")
-// 			},
-// 			GetClientIdFunc: func(clusterId string) (string, error) {
-// 				panic("mock out the GetClientId method")
-// 			},
-// 			GetClusterDNSFunc: func(clusterID string) (string, *serviceError.ServiceError) {
-// 				panic("mock out the GetClusterDNS method")
-// 			},
-// 			GetExternalIDFunc: func(clusterID string) (string, *serviceError.ServiceError) {
-// 				panic("mock out the GetExternalID method")
-// 			},
-// 			InstallClusterLoggingFunc: func(cluster *api.Cluster, params []ocm.Parameter) (bool, *serviceError.ServiceError) {
-// 				panic("mock out the InstallClusterLogging method")
-// 			},
-// 			InstallStrimziFunc: func(cluster *api.Cluster) (bool, *serviceError.ServiceError) {
-// 				panic("mock out the InstallStrimzi method")
-// 			},
-// 			IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error) {
-// 				panic("mock out the IsStrimziKafkaVersionAvailableInCluster method")
-// 			},
-// 			ListAllClusterIdsFunc: func() ([]api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the ListAllClusterIds method")
-// 			},
-// 			ListByStatusFunc: func(state api.ClusterStatus) ([]api.Cluster, *serviceError.ServiceError) {
-// 				panic("mock out the ListByStatus method")
-// 			},
-// 			ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *serviceError.ServiceError) {
-// 				panic("mock out the ListGroupByProviderAndRegion method")
-// 			},
-// 			RegisterClusterJobFunc: func(clusterRequest *api.Cluster) *serviceError.ServiceError {
-// 				panic("mock out the RegisterClusterJob method")
-// 			},
-// 			UpdateFunc: func(cluster api.Cluster) *serviceError.ServiceError {
-// 				panic("mock out the Update method")
-// 			},
-// 			UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *serviceError.ServiceError {
-// 				panic("mock out the UpdateMultiClusterStatus method")
-// 			},
-// 			UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-// 				panic("mock out the UpdateStatus method")
-// 			},
-// 		}
+//		// make and configure a mocked ClusterService
+//		mockedClusterService := &ClusterServiceMock{
+//			ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+//				panic("mock out the ApplyResources method")
+//			},
+//			CheckClusterStatusFunc: func(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
+//				panic("mock out the CheckClusterStatus method")
+//			},
+//			CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+//				panic("mock out the CheckStrimziVersionReady method")
+//			},
+//			ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+//				panic("mock out the ConfigureAndSaveIdentityProvider method")
+//			},
+//			CountByStatusFunc: func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, *apiErrors.ServiceError) {
+//				panic("mock out the CountByStatus method")
+//			},
+//			CreateFunc: func(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
+//				panic("mock out the Create method")
+//			},
+//			DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+//				panic("mock out the Delete method")
+//			},
+//			DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+//				panic("mock out the DeleteByClusterID method")
+//			},
+//			FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
+//				panic("mock out the FindAllClusters method")
+//			},
+//			FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, error) {
+//				panic("mock out the FindCluster method")
+//			},
+//			FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+//				panic("mock out the FindClusterByID method")
+//			},
+//			FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]ResKafkaInstanceCount, error) {
+//				panic("mock out the FindKafkaInstanceCount method")
+//			},
+//			FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+//				panic("mock out the FindNonEmptyClusterById method")
+//			},
+//			FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (KafkaStreamingUnitCountPerClusterList, error) {
+//				panic("mock out the FindStreamingUnitCountByClusterAndInstanceType method")
+//			},
+//			GetClientIdFunc: func(clusterId string) (string, error) {
+//				panic("mock out the GetClientId method")
+//			},
+//			GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+//				panic("mock out the GetClusterDNS method")
+//			},
+//			GetExternalIDFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+//				panic("mock out the GetExternalID method")
+//			},
+//			InstallClusterLoggingFunc: func(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError) {
+//				panic("mock out the InstallClusterLogging method")
+//			},
+//			InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+//				panic("mock out the InstallStrimzi method")
+//			},
+//			IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error) {
+//				panic("mock out the IsStrimziKafkaVersionAvailableInCluster method")
+//			},
+//			ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+//				panic("mock out the ListAllClusterIds method")
+//			},
+//			ListByStatusFunc: func(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+//				panic("mock out the ListByStatus method")
+//			},
+//			ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError) {
+//				panic("mock out the ListGroupByProviderAndRegion method")
+//			},
+//			RegisterClusterJobFunc: func(clusterRequest *api.Cluster) *apiErrors.ServiceError {
+//				panic("mock out the RegisterClusterJob method")
+//			},
+//			UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+//				panic("mock out the Update method")
+//			},
+//			UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
+//				panic("mock out the UpdateMultiClusterStatus method")
+//			},
+//			UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+//				panic("mock out the UpdateStatus method")
+//			},
+//		}
 //
-// 		// use mockedClusterService in code that requires ClusterService
-// 		// and then make assertions.
+//		// use mockedClusterService in code that requires ClusterService
+//		// and then make assertions.
 //
-// 	}
+//	}
 type ClusterServiceMock struct {
 	// ApplyResourcesFunc mocks the ApplyResources method.
-	ApplyResourcesFunc func(cluster *api.Cluster, resources types.ResourceSet) *serviceError.ServiceError
+	ApplyResourcesFunc func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError
 
 	// CheckClusterStatusFunc mocks the CheckClusterStatus method.
-	CheckClusterStatusFunc func(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError)
+	CheckClusterStatusFunc func(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
 
 	// CheckStrimziVersionReadyFunc mocks the CheckStrimziVersionReady method.
 	CheckStrimziVersionReadyFunc func(cluster *api.Cluster, strimziVersion string) (bool, error)
 
 	// ConfigureAndSaveIdentityProviderFunc mocks the ConfigureAndSaveIdentityProvider method.
-	ConfigureAndSaveIdentityProviderFunc func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *serviceError.ServiceError)
+	ConfigureAndSaveIdentityProviderFunc func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
 
 	// CountByStatusFunc mocks the CountByStatus method.
-	CountByStatusFunc func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, *serviceError.ServiceError)
+	CountByStatusFunc func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, *apiErrors.ServiceError)
 
 	// CreateFunc mocks the Create method.
-	CreateFunc func(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError)
+	CreateFunc func(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
 
 	// DeleteFunc mocks the Delete method.
-	DeleteFunc func(cluster *api.Cluster) (bool, *serviceError.ServiceError)
+	DeleteFunc func(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 
 	// DeleteByClusterIDFunc mocks the DeleteByClusterID method.
-	DeleteByClusterIDFunc func(clusterID string) *serviceError.ServiceError
+	DeleteByClusterIDFunc func(clusterID string) *apiErrors.ServiceError
 
 	// FindAllClustersFunc mocks the FindAllClusters method.
 	FindAllClustersFunc func(criteria FindClusterCriteria) ([]*api.Cluster, error)
@@ -140,13 +140,13 @@ type ClusterServiceMock struct {
 	FindClusterFunc func(criteria FindClusterCriteria) (*api.Cluster, error)
 
 	// FindClusterByIDFunc mocks the FindClusterByID method.
-	FindClusterByIDFunc func(clusterID string) (*api.Cluster, *serviceError.ServiceError)
+	FindClusterByIDFunc func(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
 
 	// FindKafkaInstanceCountFunc mocks the FindKafkaInstanceCount method.
 	FindKafkaInstanceCountFunc func(clusterIDs []string) ([]ResKafkaInstanceCount, error)
 
 	// FindNonEmptyClusterByIdFunc mocks the FindNonEmptyClusterById method.
-	FindNonEmptyClusterByIdFunc func(clusterID string) (*api.Cluster, *serviceError.ServiceError)
+	FindNonEmptyClusterByIdFunc func(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
 
 	// FindStreamingUnitCountByClusterAndInstanceTypeFunc mocks the FindStreamingUnitCountByClusterAndInstanceType method.
 	FindStreamingUnitCountByClusterAndInstanceTypeFunc func() (KafkaStreamingUnitCountPerClusterList, error)
@@ -155,37 +155,37 @@ type ClusterServiceMock struct {
 	GetClientIdFunc func(clusterId string) (string, error)
 
 	// GetClusterDNSFunc mocks the GetClusterDNS method.
-	GetClusterDNSFunc func(clusterID string) (string, *serviceError.ServiceError)
+	GetClusterDNSFunc func(clusterID string) (string, *apiErrors.ServiceError)
 
 	// GetExternalIDFunc mocks the GetExternalID method.
-	GetExternalIDFunc func(clusterID string) (string, *serviceError.ServiceError)
+	GetExternalIDFunc func(clusterID string) (string, *apiErrors.ServiceError)
 
 	// InstallClusterLoggingFunc mocks the InstallClusterLogging method.
-	InstallClusterLoggingFunc func(cluster *api.Cluster, params []ocm.Parameter) (bool, *serviceError.ServiceError)
+	InstallClusterLoggingFunc func(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError)
 
 	// InstallStrimziFunc mocks the InstallStrimzi method.
-	InstallStrimziFunc func(cluster *api.Cluster) (bool, *serviceError.ServiceError)
+	InstallStrimziFunc func(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 
 	// IsStrimziKafkaVersionAvailableInClusterFunc mocks the IsStrimziKafkaVersionAvailableInCluster method.
 	IsStrimziKafkaVersionAvailableInClusterFunc func(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error)
 
 	// ListAllClusterIdsFunc mocks the ListAllClusterIds method.
-	ListAllClusterIdsFunc func() ([]api.Cluster, *serviceError.ServiceError)
+	ListAllClusterIdsFunc func() ([]api.Cluster, *apiErrors.ServiceError)
 
 	// ListByStatusFunc mocks the ListByStatus method.
-	ListByStatusFunc func(state api.ClusterStatus) ([]api.Cluster, *serviceError.ServiceError)
+	ListByStatusFunc func(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
 
 	// ListGroupByProviderAndRegionFunc mocks the ListGroupByProviderAndRegion method.
-	ListGroupByProviderAndRegionFunc func(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *serviceError.ServiceError)
+	ListGroupByProviderAndRegionFunc func(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError)
 
 	// RegisterClusterJobFunc mocks the RegisterClusterJob method.
-	RegisterClusterJobFunc func(clusterRequest *api.Cluster) *serviceError.ServiceError
+	RegisterClusterJobFunc func(clusterRequest *api.Cluster) *apiErrors.ServiceError
 
 	// UpdateFunc mocks the Update method.
-	UpdateFunc func(cluster api.Cluster) *serviceError.ServiceError
+	UpdateFunc func(cluster api.Cluster) *apiErrors.ServiceError
 
 	// UpdateMultiClusterStatusFunc mocks the UpdateMultiClusterStatus method.
-	UpdateMultiClusterStatusFunc func(clusterIds []string, status api.ClusterStatus) *serviceError.ServiceError
+	UpdateMultiClusterStatusFunc func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(cluster api.Cluster, status api.ClusterStatus) error
@@ -376,7 +376,7 @@ type ClusterServiceMock struct {
 }
 
 // ApplyResources calls ApplyResourcesFunc.
-func (mock *ClusterServiceMock) ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *serviceError.ServiceError {
+func (mock *ClusterServiceMock) ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
 	if mock.ApplyResourcesFunc == nil {
 		panic("ClusterServiceMock.ApplyResourcesFunc: method is nil but ClusterService.ApplyResources was just called")
 	}
@@ -395,7 +395,8 @@ func (mock *ClusterServiceMock) ApplyResources(cluster *api.Cluster, resources t
 
 // ApplyResourcesCalls gets all the calls that were made to ApplyResources.
 // Check the length with:
-//     len(mockedClusterService.ApplyResourcesCalls())
+//
+//	len(mockedClusterService.ApplyResourcesCalls())
 func (mock *ClusterServiceMock) ApplyResourcesCalls() []struct {
 	Cluster   *api.Cluster
 	Resources types.ResourceSet
@@ -411,7 +412,7 @@ func (mock *ClusterServiceMock) ApplyResourcesCalls() []struct {
 }
 
 // CheckClusterStatus calls CheckClusterStatusFunc.
-func (mock *ClusterServiceMock) CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
 	if mock.CheckClusterStatusFunc == nil {
 		panic("ClusterServiceMock.CheckClusterStatusFunc: method is nil but ClusterService.CheckClusterStatus was just called")
 	}
@@ -428,7 +429,8 @@ func (mock *ClusterServiceMock) CheckClusterStatus(cluster *api.Cluster) (*api.C
 
 // CheckClusterStatusCalls gets all the calls that were made to CheckClusterStatus.
 // Check the length with:
-//     len(mockedClusterService.CheckClusterStatusCalls())
+//
+//	len(mockedClusterService.CheckClusterStatusCalls())
 func (mock *ClusterServiceMock) CheckClusterStatusCalls() []struct {
 	Cluster *api.Cluster
 } {
@@ -461,7 +463,8 @@ func (mock *ClusterServiceMock) CheckStrimziVersionReady(cluster *api.Cluster, s
 
 // CheckStrimziVersionReadyCalls gets all the calls that were made to CheckStrimziVersionReady.
 // Check the length with:
-//     len(mockedClusterService.CheckStrimziVersionReadyCalls())
+//
+//	len(mockedClusterService.CheckStrimziVersionReadyCalls())
 func (mock *ClusterServiceMock) CheckStrimziVersionReadyCalls() []struct {
 	Cluster        *api.Cluster
 	StrimziVersion string
@@ -477,7 +480,7 @@ func (mock *ClusterServiceMock) CheckStrimziVersionReadyCalls() []struct {
 }
 
 // ConfigureAndSaveIdentityProvider calls ConfigureAndSaveIdentityProviderFunc.
-func (mock *ClusterServiceMock) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
 	if mock.ConfigureAndSaveIdentityProviderFunc == nil {
 		panic("ClusterServiceMock.ConfigureAndSaveIdentityProviderFunc: method is nil but ClusterService.ConfigureAndSaveIdentityProvider was just called")
 	}
@@ -496,7 +499,8 @@ func (mock *ClusterServiceMock) ConfigureAndSaveIdentityProvider(cluster *api.Cl
 
 // ConfigureAndSaveIdentityProviderCalls gets all the calls that were made to ConfigureAndSaveIdentityProvider.
 // Check the length with:
-//     len(mockedClusterService.ConfigureAndSaveIdentityProviderCalls())
+//
+//	len(mockedClusterService.ConfigureAndSaveIdentityProviderCalls())
 func (mock *ClusterServiceMock) ConfigureAndSaveIdentityProviderCalls() []struct {
 	Cluster              *api.Cluster
 	IdentityProviderInfo types.IdentityProviderInfo
@@ -512,7 +516,7 @@ func (mock *ClusterServiceMock) ConfigureAndSaveIdentityProviderCalls() []struct
 }
 
 // CountByStatus calls CountByStatusFunc.
-func (mock *ClusterServiceMock) CountByStatus(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) CountByStatus(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, *apiErrors.ServiceError) {
 	if mock.CountByStatusFunc == nil {
 		panic("ClusterServiceMock.CountByStatusFunc: method is nil but ClusterService.CountByStatus was just called")
 	}
@@ -529,7 +533,8 @@ func (mock *ClusterServiceMock) CountByStatus(clusterStatuss []api.ClusterStatus
 
 // CountByStatusCalls gets all the calls that were made to CountByStatus.
 // Check the length with:
-//     len(mockedClusterService.CountByStatusCalls())
+//
+//	len(mockedClusterService.CountByStatusCalls())
 func (mock *ClusterServiceMock) CountByStatusCalls() []struct {
 	ClusterStatuss []api.ClusterStatus
 } {
@@ -543,7 +548,7 @@ func (mock *ClusterServiceMock) CountByStatusCalls() []struct {
 }
 
 // Create calls CreateFunc.
-func (mock *ClusterServiceMock) Create(cluster *api.Cluster) (*api.Cluster, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
 	if mock.CreateFunc == nil {
 		panic("ClusterServiceMock.CreateFunc: method is nil but ClusterService.Create was just called")
 	}
@@ -560,7 +565,8 @@ func (mock *ClusterServiceMock) Create(cluster *api.Cluster) (*api.Cluster, *ser
 
 // CreateCalls gets all the calls that were made to Create.
 // Check the length with:
-//     len(mockedClusterService.CreateCalls())
+//
+//	len(mockedClusterService.CreateCalls())
 func (mock *ClusterServiceMock) CreateCalls() []struct {
 	Cluster *api.Cluster
 } {
@@ -574,7 +580,7 @@ func (mock *ClusterServiceMock) CreateCalls() []struct {
 }
 
 // Delete calls DeleteFunc.
-func (mock *ClusterServiceMock) Delete(cluster *api.Cluster) (bool, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 	if mock.DeleteFunc == nil {
 		panic("ClusterServiceMock.DeleteFunc: method is nil but ClusterService.Delete was just called")
 	}
@@ -591,7 +597,8 @@ func (mock *ClusterServiceMock) Delete(cluster *api.Cluster) (bool, *serviceErro
 
 // DeleteCalls gets all the calls that were made to Delete.
 // Check the length with:
-//     len(mockedClusterService.DeleteCalls())
+//
+//	len(mockedClusterService.DeleteCalls())
 func (mock *ClusterServiceMock) DeleteCalls() []struct {
 	Cluster *api.Cluster
 } {
@@ -605,7 +612,7 @@ func (mock *ClusterServiceMock) DeleteCalls() []struct {
 }
 
 // DeleteByClusterID calls DeleteByClusterIDFunc.
-func (mock *ClusterServiceMock) DeleteByClusterID(clusterID string) *serviceError.ServiceError {
+func (mock *ClusterServiceMock) DeleteByClusterID(clusterID string) *apiErrors.ServiceError {
 	if mock.DeleteByClusterIDFunc == nil {
 		panic("ClusterServiceMock.DeleteByClusterIDFunc: method is nil but ClusterService.DeleteByClusterID was just called")
 	}
@@ -622,7 +629,8 @@ func (mock *ClusterServiceMock) DeleteByClusterID(clusterID string) *serviceErro
 
 // DeleteByClusterIDCalls gets all the calls that were made to DeleteByClusterID.
 // Check the length with:
-//     len(mockedClusterService.DeleteByClusterIDCalls())
+//
+//	len(mockedClusterService.DeleteByClusterIDCalls())
 func (mock *ClusterServiceMock) DeleteByClusterIDCalls() []struct {
 	ClusterID string
 } {
@@ -653,7 +661,8 @@ func (mock *ClusterServiceMock) FindAllClusters(criteria FindClusterCriteria) ([
 
 // FindAllClustersCalls gets all the calls that were made to FindAllClusters.
 // Check the length with:
-//     len(mockedClusterService.FindAllClustersCalls())
+//
+//	len(mockedClusterService.FindAllClustersCalls())
 func (mock *ClusterServiceMock) FindAllClustersCalls() []struct {
 	Criteria FindClusterCriteria
 } {
@@ -684,7 +693,8 @@ func (mock *ClusterServiceMock) FindCluster(criteria FindClusterCriteria) (*api.
 
 // FindClusterCalls gets all the calls that were made to FindCluster.
 // Check the length with:
-//     len(mockedClusterService.FindClusterCalls())
+//
+//	len(mockedClusterService.FindClusterCalls())
 func (mock *ClusterServiceMock) FindClusterCalls() []struct {
 	Criteria FindClusterCriteria
 } {
@@ -698,7 +708,7 @@ func (mock *ClusterServiceMock) FindClusterCalls() []struct {
 }
 
 // FindClusterByID calls FindClusterByIDFunc.
-func (mock *ClusterServiceMock) FindClusterByID(clusterID string) (*api.Cluster, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) FindClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 	if mock.FindClusterByIDFunc == nil {
 		panic("ClusterServiceMock.FindClusterByIDFunc: method is nil but ClusterService.FindClusterByID was just called")
 	}
@@ -715,7 +725,8 @@ func (mock *ClusterServiceMock) FindClusterByID(clusterID string) (*api.Cluster,
 
 // FindClusterByIDCalls gets all the calls that were made to FindClusterByID.
 // Check the length with:
-//     len(mockedClusterService.FindClusterByIDCalls())
+//
+//	len(mockedClusterService.FindClusterByIDCalls())
 func (mock *ClusterServiceMock) FindClusterByIDCalls() []struct {
 	ClusterID string
 } {
@@ -746,7 +757,8 @@ func (mock *ClusterServiceMock) FindKafkaInstanceCount(clusterIDs []string) ([]R
 
 // FindKafkaInstanceCountCalls gets all the calls that were made to FindKafkaInstanceCount.
 // Check the length with:
-//     len(mockedClusterService.FindKafkaInstanceCountCalls())
+//
+//	len(mockedClusterService.FindKafkaInstanceCountCalls())
 func (mock *ClusterServiceMock) FindKafkaInstanceCountCalls() []struct {
 	ClusterIDs []string
 } {
@@ -760,7 +772,7 @@ func (mock *ClusterServiceMock) FindKafkaInstanceCountCalls() []struct {
 }
 
 // FindNonEmptyClusterById calls FindNonEmptyClusterByIdFunc.
-func (mock *ClusterServiceMock) FindNonEmptyClusterById(clusterID string) (*api.Cluster, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) FindNonEmptyClusterById(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 	if mock.FindNonEmptyClusterByIdFunc == nil {
 		panic("ClusterServiceMock.FindNonEmptyClusterByIdFunc: method is nil but ClusterService.FindNonEmptyClusterById was just called")
 	}
@@ -777,7 +789,8 @@ func (mock *ClusterServiceMock) FindNonEmptyClusterById(clusterID string) (*api.
 
 // FindNonEmptyClusterByIdCalls gets all the calls that were made to FindNonEmptyClusterById.
 // Check the length with:
-//     len(mockedClusterService.FindNonEmptyClusterByIdCalls())
+//
+//	len(mockedClusterService.FindNonEmptyClusterByIdCalls())
 func (mock *ClusterServiceMock) FindNonEmptyClusterByIdCalls() []struct {
 	ClusterID string
 } {
@@ -805,7 +818,8 @@ func (mock *ClusterServiceMock) FindStreamingUnitCountByClusterAndInstanceType()
 
 // FindStreamingUnitCountByClusterAndInstanceTypeCalls gets all the calls that were made to FindStreamingUnitCountByClusterAndInstanceType.
 // Check the length with:
-//     len(mockedClusterService.FindStreamingUnitCountByClusterAndInstanceTypeCalls())
+//
+//	len(mockedClusterService.FindStreamingUnitCountByClusterAndInstanceTypeCalls())
 func (mock *ClusterServiceMock) FindStreamingUnitCountByClusterAndInstanceTypeCalls() []struct {
 } {
 	var calls []struct {
@@ -834,7 +848,8 @@ func (mock *ClusterServiceMock) GetClientId(clusterId string) (string, error) {
 
 // GetClientIdCalls gets all the calls that were made to GetClientId.
 // Check the length with:
-//     len(mockedClusterService.GetClientIdCalls())
+//
+//	len(mockedClusterService.GetClientIdCalls())
 func (mock *ClusterServiceMock) GetClientIdCalls() []struct {
 	ClusterId string
 } {
@@ -848,7 +863,7 @@ func (mock *ClusterServiceMock) GetClientIdCalls() []struct {
 }
 
 // GetClusterDNS calls GetClusterDNSFunc.
-func (mock *ClusterServiceMock) GetClusterDNS(clusterID string) (string, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) GetClusterDNS(clusterID string) (string, *apiErrors.ServiceError) {
 	if mock.GetClusterDNSFunc == nil {
 		panic("ClusterServiceMock.GetClusterDNSFunc: method is nil but ClusterService.GetClusterDNS was just called")
 	}
@@ -865,7 +880,8 @@ func (mock *ClusterServiceMock) GetClusterDNS(clusterID string) (string, *servic
 
 // GetClusterDNSCalls gets all the calls that were made to GetClusterDNS.
 // Check the length with:
-//     len(mockedClusterService.GetClusterDNSCalls())
+//
+//	len(mockedClusterService.GetClusterDNSCalls())
 func (mock *ClusterServiceMock) GetClusterDNSCalls() []struct {
 	ClusterID string
 } {
@@ -879,7 +895,7 @@ func (mock *ClusterServiceMock) GetClusterDNSCalls() []struct {
 }
 
 // GetExternalID calls GetExternalIDFunc.
-func (mock *ClusterServiceMock) GetExternalID(clusterID string) (string, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) GetExternalID(clusterID string) (string, *apiErrors.ServiceError) {
 	if mock.GetExternalIDFunc == nil {
 		panic("ClusterServiceMock.GetExternalIDFunc: method is nil but ClusterService.GetExternalID was just called")
 	}
@@ -896,7 +912,8 @@ func (mock *ClusterServiceMock) GetExternalID(clusterID string) (string, *servic
 
 // GetExternalIDCalls gets all the calls that were made to GetExternalID.
 // Check the length with:
-//     len(mockedClusterService.GetExternalIDCalls())
+//
+//	len(mockedClusterService.GetExternalIDCalls())
 func (mock *ClusterServiceMock) GetExternalIDCalls() []struct {
 	ClusterID string
 } {
@@ -910,7 +927,7 @@ func (mock *ClusterServiceMock) GetExternalIDCalls() []struct {
 }
 
 // InstallClusterLogging calls InstallClusterLoggingFunc.
-func (mock *ClusterServiceMock) InstallClusterLogging(cluster *api.Cluster, params []ocm.Parameter) (bool, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) InstallClusterLogging(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError) {
 	if mock.InstallClusterLoggingFunc == nil {
 		panic("ClusterServiceMock.InstallClusterLoggingFunc: method is nil but ClusterService.InstallClusterLogging was just called")
 	}
@@ -929,7 +946,8 @@ func (mock *ClusterServiceMock) InstallClusterLogging(cluster *api.Cluster, para
 
 // InstallClusterLoggingCalls gets all the calls that were made to InstallClusterLogging.
 // Check the length with:
-//     len(mockedClusterService.InstallClusterLoggingCalls())
+//
+//	len(mockedClusterService.InstallClusterLoggingCalls())
 func (mock *ClusterServiceMock) InstallClusterLoggingCalls() []struct {
 	Cluster *api.Cluster
 	Params  []ocm.Parameter
@@ -945,7 +963,7 @@ func (mock *ClusterServiceMock) InstallClusterLoggingCalls() []struct {
 }
 
 // InstallStrimzi calls InstallStrimziFunc.
-func (mock *ClusterServiceMock) InstallStrimzi(cluster *api.Cluster) (bool, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) InstallStrimzi(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 	if mock.InstallStrimziFunc == nil {
 		panic("ClusterServiceMock.InstallStrimziFunc: method is nil but ClusterService.InstallStrimzi was just called")
 	}
@@ -962,7 +980,8 @@ func (mock *ClusterServiceMock) InstallStrimzi(cluster *api.Cluster) (bool, *ser
 
 // InstallStrimziCalls gets all the calls that were made to InstallStrimzi.
 // Check the length with:
-//     len(mockedClusterService.InstallStrimziCalls())
+//
+//	len(mockedClusterService.InstallStrimziCalls())
 func (mock *ClusterServiceMock) InstallStrimziCalls() []struct {
 	Cluster *api.Cluster
 } {
@@ -999,7 +1018,8 @@ func (mock *ClusterServiceMock) IsStrimziKafkaVersionAvailableInCluster(cluster 
 
 // IsStrimziKafkaVersionAvailableInClusterCalls gets all the calls that were made to IsStrimziKafkaVersionAvailableInCluster.
 // Check the length with:
-//     len(mockedClusterService.IsStrimziKafkaVersionAvailableInClusterCalls())
+//
+//	len(mockedClusterService.IsStrimziKafkaVersionAvailableInClusterCalls())
 func (mock *ClusterServiceMock) IsStrimziKafkaVersionAvailableInClusterCalls() []struct {
 	Cluster        *api.Cluster
 	StrimziVersion string
@@ -1019,7 +1039,7 @@ func (mock *ClusterServiceMock) IsStrimziKafkaVersionAvailableInClusterCalls() [
 }
 
 // ListAllClusterIds calls ListAllClusterIdsFunc.
-func (mock *ClusterServiceMock) ListAllClusterIds() ([]api.Cluster, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError) {
 	if mock.ListAllClusterIdsFunc == nil {
 		panic("ClusterServiceMock.ListAllClusterIdsFunc: method is nil but ClusterService.ListAllClusterIds was just called")
 	}
@@ -1033,7 +1053,8 @@ func (mock *ClusterServiceMock) ListAllClusterIds() ([]api.Cluster, *serviceErro
 
 // ListAllClusterIdsCalls gets all the calls that were made to ListAllClusterIds.
 // Check the length with:
-//     len(mockedClusterService.ListAllClusterIdsCalls())
+//
+//	len(mockedClusterService.ListAllClusterIdsCalls())
 func (mock *ClusterServiceMock) ListAllClusterIdsCalls() []struct {
 } {
 	var calls []struct {
@@ -1045,7 +1066,7 @@ func (mock *ClusterServiceMock) ListAllClusterIdsCalls() []struct {
 }
 
 // ListByStatus calls ListByStatusFunc.
-func (mock *ClusterServiceMock) ListByStatus(state api.ClusterStatus) ([]api.Cluster, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) ListByStatus(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 	if mock.ListByStatusFunc == nil {
 		panic("ClusterServiceMock.ListByStatusFunc: method is nil but ClusterService.ListByStatus was just called")
 	}
@@ -1062,7 +1083,8 @@ func (mock *ClusterServiceMock) ListByStatus(state api.ClusterStatus) ([]api.Clu
 
 // ListByStatusCalls gets all the calls that were made to ListByStatus.
 // Check the length with:
-//     len(mockedClusterService.ListByStatusCalls())
+//
+//	len(mockedClusterService.ListByStatusCalls())
 func (mock *ClusterServiceMock) ListByStatusCalls() []struct {
 	State api.ClusterStatus
 } {
@@ -1076,7 +1098,7 @@ func (mock *ClusterServiceMock) ListByStatusCalls() []struct {
 }
 
 // ListGroupByProviderAndRegion calls ListGroupByProviderAndRegionFunc.
-func (mock *ClusterServiceMock) ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *serviceError.ServiceError) {
+func (mock *ClusterServiceMock) ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError) {
 	if mock.ListGroupByProviderAndRegionFunc == nil {
 		panic("ClusterServiceMock.ListGroupByProviderAndRegionFunc: method is nil but ClusterService.ListGroupByProviderAndRegion was just called")
 	}
@@ -1097,7 +1119,8 @@ func (mock *ClusterServiceMock) ListGroupByProviderAndRegion(providers []string,
 
 // ListGroupByProviderAndRegionCalls gets all the calls that were made to ListGroupByProviderAndRegion.
 // Check the length with:
-//     len(mockedClusterService.ListGroupByProviderAndRegionCalls())
+//
+//	len(mockedClusterService.ListGroupByProviderAndRegionCalls())
 func (mock *ClusterServiceMock) ListGroupByProviderAndRegionCalls() []struct {
 	Providers []string
 	Regions   []string
@@ -1115,7 +1138,7 @@ func (mock *ClusterServiceMock) ListGroupByProviderAndRegionCalls() []struct {
 }
 
 // RegisterClusterJob calls RegisterClusterJobFunc.
-func (mock *ClusterServiceMock) RegisterClusterJob(clusterRequest *api.Cluster) *serviceError.ServiceError {
+func (mock *ClusterServiceMock) RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError {
 	if mock.RegisterClusterJobFunc == nil {
 		panic("ClusterServiceMock.RegisterClusterJobFunc: method is nil but ClusterService.RegisterClusterJob was just called")
 	}
@@ -1132,7 +1155,8 @@ func (mock *ClusterServiceMock) RegisterClusterJob(clusterRequest *api.Cluster) 
 
 // RegisterClusterJobCalls gets all the calls that were made to RegisterClusterJob.
 // Check the length with:
-//     len(mockedClusterService.RegisterClusterJobCalls())
+//
+//	len(mockedClusterService.RegisterClusterJobCalls())
 func (mock *ClusterServiceMock) RegisterClusterJobCalls() []struct {
 	ClusterRequest *api.Cluster
 } {
@@ -1146,7 +1170,7 @@ func (mock *ClusterServiceMock) RegisterClusterJobCalls() []struct {
 }
 
 // Update calls UpdateFunc.
-func (mock *ClusterServiceMock) Update(cluster api.Cluster) *serviceError.ServiceError {
+func (mock *ClusterServiceMock) Update(cluster api.Cluster) *apiErrors.ServiceError {
 	if mock.UpdateFunc == nil {
 		panic("ClusterServiceMock.UpdateFunc: method is nil but ClusterService.Update was just called")
 	}
@@ -1163,7 +1187,8 @@ func (mock *ClusterServiceMock) Update(cluster api.Cluster) *serviceError.Servic
 
 // UpdateCalls gets all the calls that were made to Update.
 // Check the length with:
-//     len(mockedClusterService.UpdateCalls())
+//
+//	len(mockedClusterService.UpdateCalls())
 func (mock *ClusterServiceMock) UpdateCalls() []struct {
 	Cluster api.Cluster
 } {
@@ -1177,7 +1202,7 @@ func (mock *ClusterServiceMock) UpdateCalls() []struct {
 }
 
 // UpdateMultiClusterStatus calls UpdateMultiClusterStatusFunc.
-func (mock *ClusterServiceMock) UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *serviceError.ServiceError {
+func (mock *ClusterServiceMock) UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
 	if mock.UpdateMultiClusterStatusFunc == nil {
 		panic("ClusterServiceMock.UpdateMultiClusterStatusFunc: method is nil but ClusterService.UpdateMultiClusterStatus was just called")
 	}
@@ -1196,7 +1221,8 @@ func (mock *ClusterServiceMock) UpdateMultiClusterStatus(clusterIds []string, st
 
 // UpdateMultiClusterStatusCalls gets all the calls that were made to UpdateMultiClusterStatus.
 // Check the length with:
-//     len(mockedClusterService.UpdateMultiClusterStatusCalls())
+//
+//	len(mockedClusterService.UpdateMultiClusterStatusCalls())
 func (mock *ClusterServiceMock) UpdateMultiClusterStatusCalls() []struct {
 	ClusterIds []string
 	Status     api.ClusterStatus
@@ -1231,7 +1257,8 @@ func (mock *ClusterServiceMock) UpdateStatus(cluster api.Cluster, status api.Clu
 
 // UpdateStatusCalls gets all the calls that were made to UpdateStatus.
 // Check the length with:
-//     len(mockedClusterService.UpdateStatusCalls())
+//
+//	len(mockedClusterService.UpdateStatusCalls())
 func (mock *ClusterServiceMock) UpdateStatusCalls() []struct {
 	Cluster api.Cluster
 	Status  api.ClusterStatus

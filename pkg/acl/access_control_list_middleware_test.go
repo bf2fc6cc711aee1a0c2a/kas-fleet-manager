@@ -3,7 +3,6 @@ package acl_test
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -150,7 +149,7 @@ func TestAccessControlListMiddleware_Authorize(t *testing.T) {
 		req = req.WithContext(ctx)
 		handler.ServeHTTP(rr, req)
 
-		body, err := ioutil.ReadAll(rr.Body)
+		body, err := io.ReadAll(rr.Body)
 		g.Expect(err).NotTo(gomega.HaveOccurred())
 		g.Expect(rr.Code).To(gomega.Equal(tt.wantHttpStatus))
 

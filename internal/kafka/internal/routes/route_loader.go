@@ -12,10 +12,10 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/generated"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/routes"
+	openapicontents "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -26,6 +26,7 @@ import (
 	coreHandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+
 	"github.com/goava/di"
 	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -63,7 +64,7 @@ func NewRouteLoader(s options) environments.RouteLoader {
 
 func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	basePath := fmt.Sprintf("%s/%s", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix)
-	err := s.buildApiBaseRouter(mainRouter, basePath, "kas-fleet-manager.yaml")
+	err := s.buildApiBaseRouter(mainRouter, basePath)
 	if err != nil {
 		return err
 	}
@@ -71,8 +72,8 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	return nil
 }
 
-func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, openApiFilePath string) error {
-	openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, openApiFilePath)
+func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) error {
+	openAPIDefinitions, err := shared.LoadOpenAPISpecFromYAML(openapicontents.KASFleetManagerOpenAPIYAMLBytes())
 	if err != nil {
 		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}

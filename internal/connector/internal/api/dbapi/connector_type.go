@@ -28,6 +28,7 @@ type ConnectorType struct {
 	// connector capabilities used to understand what features a connector support
 	Capabilities []ConnectorTypeCapability `gorm:"foreignKey:ConnectorTypeID"`
 	Checksum     *string
+	FeaturedRank int32 `gorm:"not null;default:0"`
 }
 
 type ConnectorTypeList []*ConnectorType
@@ -44,6 +45,13 @@ type ConnectorTypeLabel struct {
 	ConnectorTypeID string `gorm:"primaryKey"`
 	Label           string `gorm:"primaryKey"`
 }
+
+type ConnectorTypeLabelCount struct {
+	Label string
+	Count int32
+}
+
+type ConnectorTypeLabelCountList []*ConnectorTypeLabelCount
 
 type ConnectorTypeCapability struct {
 	ConnectorTypeID string `gorm:"primaryKey"`

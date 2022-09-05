@@ -18,4 +18,5 @@ docker run \
   -e POSTGRES_USER=$(cat secrets/db.user) \
   -e POSTGRES_DB=$(cat secrets/db.name) \
   -p $(cat secrets/db.port):5432 \
-  -d postgres:13
+  -d postgres:13 \
+  postgres -N 200

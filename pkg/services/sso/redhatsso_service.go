@@ -315,7 +315,7 @@ func (r *redhatssoService) DeleteServiceAccountInternal(accessToken string, clie
 	return r.DeleteServiceAccount(accessToken, context.Background(), clientId)
 }
 
-//// utility functions
+// // utility functions
 func convertServiceAccountDataToAPIServiceAccount(data *serviceaccountsclient.ServiceAccountData) *api.ServiceAccount {
 	return &api.ServiceAccount{
 		ID:           shared.SafeString(data.Id),

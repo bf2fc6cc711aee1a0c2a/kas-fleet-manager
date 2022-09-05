@@ -2,7 +2,7 @@ package shared
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -54,7 +54,7 @@ func ReadFile(file string) (string, error) {
 	}
 
 	// Read the file
-	buf, err := ioutil.ReadFile(absFilePath)
+	buf, err := os.ReadFile(absFilePath)
 	if err != nil {
 		return "", err
 	}
@@ -83,7 +83,7 @@ func BuildFullFilePath(filename string) string {
 }
 
 func CreateTempFileFromStringData(namePrefix string, contents string) (string, error) {
-	configFile, err := ioutil.TempFile("", namePrefix)
+	configFile, err := os.CreateTemp("", namePrefix)
 	if err != nil {
 		return "", err
 	}

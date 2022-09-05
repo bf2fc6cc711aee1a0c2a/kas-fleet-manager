@@ -1,11 +1,16 @@
 // Aquires and exclusive lock against the test suite so that it is the only scenario executing until the secnario
 // finishes executing.
-//    Given LOCK
+//
+//	Given LOCK
+//
 // Releases the exclusive lock previously acquired.  Not required, any aquired lock is automatically released at the
 // end of scenario.
-//    Given UNLOCK
+//
+//	Given UNLOCK
+//
 // Sleeps for the given number of seconds.
-//    And I sleep for 0.5 second
+//
+//	And I sleep for 0.5 second
 package cucumber
 
 import (

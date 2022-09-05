@@ -74,7 +74,7 @@ golangci-lint:
 ifeq (, $(shell which $(LOCAL_BIN_PATH)/golangci-lint 2> /dev/null))
 	@{ \
 	set -e ;\
-	VERSION="v1.48.0" ;\
+	VERSION="v1.49.0" ;\
 	$(CURL) -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/$${VERSION}/install.sh | sh -s -- -b ${LOCAL_BIN_PATH} $${VERSION} ;\
 	}
 endif
@@ -87,7 +87,7 @@ ifeq (, $(shell which $(LOCAL_BIN_PATH)/gotestsum 2> /dev/null))
 	GOTESTSUM_TMP_DIR=$$(mktemp -d) ;\
 	cd $$GOTESTSUM_TMP_DIR ;\
 	$(GO) mod init tmp ;\
-	$(GO) get -d gotest.tools/gotestsum@v1.8.1 ;\
+	$(GO) get gotest.tools/gotestsum@v1.8.2 ;\
 	mkdir -p ${LOCAL_BIN_PATH} ;\
 	$(GO) build -o ${LOCAL_BIN_PATH}/gotestsum gotest.tools/gotestsum ;\
 	rm -rf $$GOTESTSUM_TMP_DIR ;\
@@ -102,25 +102,10 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/moq 2> /dev/null))
 	MOQ_TMP_DIR=$$(mktemp -d) ;\
 	cd $$MOQ_TMP_DIR ;\
 	$(GO) mod init tmp ;\
-	$(GO) get -d github.com/matryer/moq@v0.2.1 ;\
+	$(GO) get github.com/matryer/moq@v0.2.7 ;\
 	mkdir -p ${LOCAL_BIN_PATH} ;\
 	$(GO) build -o ${LOCAL_BIN_PATH}/moq github.com/matryer/moq ;\
 	rm -rf $$MOQ_TMP_DIR ;\
-	}
-endif
-
-GOBINDATA ?= ${LOCAL_BIN_PATH}/go-bindata
-go-bindata:
-ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
-	@{ \
-	set -e ;\
-	GOBINDATA_TMP_DIR=$$(mktemp -d) ;\
-	cd $$GOBINDATA_TMP_DIR ;\
-	$(GO) mod init tmp ;\
-	$(GO) get -d github.com/go-bindata/go-bindata/v3/...@v3.1.3 ;\
-	mkdir -p ${LOCAL_BIN_PATH} ;\
-	$(GO) build -o ${LOCAL_BIN_PATH}/go-bindata github.com/go-bindata/go-bindata/v3/go-bindata ;\
-	rm -rf $$GOBINDATA_TMP_DIR ;\
 	}
 endif
 
@@ -195,8 +180,6 @@ ifndef TEST_SUMMARY_FORMAT
 	TEST_SUMMARY_FORMAT=short-verbose
 endif
 
-# Enable Go modules:
-export GO111MODULE=on
 export GOPROXY=https://proxy.golang.org
 export GOPRIVATE=gitlab.cee.redhat.com
 
@@ -228,7 +211,6 @@ help:
 	@echo "make test/html/coverage/report           generate test coverage html report and see it in browser"
 	@echo "make test/integration                    run integration tests"
 	@echo "make test/cluster/cleanup                remove OSD cluster after running tests against real OCM"
-	@echo "make test/prepare                        Precompile everything required for development/test"
 	@echo "make test/run                            Run the test container"
 	@echo "make code/fix                            format files"
 	@echo "make generate                            generate go and openapi modules"
@@ -384,11 +366,6 @@ test/html/coverage/report:
 	@if [ -f coverage.out ]; then $(GO) tool cover -html=coverage.out; else echo "coverage.out file not found"; fi;
 .PHONY: test/html/coverage/report
 
-# Precompile everything required for development/test.
-test/prepare:
-	$(GO) test -i ./internal/kafka/test/integration/... -i ./internal/connector/test/integration/...
-.PHONY: test/prepare
-
 # Runs the integration tests.
 #
 # Args:
@@ -399,13 +376,13 @@ test/prepare:
 #   make test/integration TESTFLAGS="-run TestAccounts"     acts as TestAccounts* and run TestAccountsGet, TestAccountsPost, etc.
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
-test/integration/kafka: test/prepare gotestsum
+test/integration/kafka: gotestsum
 	$(GOTESTSUM) --junitfile data/results/kas-fleet-manager-integration-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 \
 				./internal/kafka/test/integration/... \
 				$(TESTFLAGS)
 .PHONY: test/integration/kafka
 
-test/integration/connector: test/prepare gotestsum
+test/integration/connector: gotestsum
 	$(GOTESTSUM) --junitfile data/results/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 \
 				./internal/connector/test/integration/... \
 				$(TESTFLAGS)
@@ -464,54 +441,42 @@ openapi/validate: openapi-generator
 openapi/generate: openapi/generate/kas-public openapi/generate/kas-private openapi/generate/kas-admin openapi/generate/connector-public openapi/generate/connector-private openapi/generate/connector-private-admin
 .PHONY: openapi/generate
 
-openapi/generate/kas-public: go-bindata openapi-generator
+openapi/generate/kas-public: openapi-generator
 	rm -rf internal/kafka/internal/api/public
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o internal/kafka/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/kafka/internal/api/public
-
-	mkdir -p .generate/openapi
-	cp ./openapi/kas-fleet-manager.yaml .generate/openapi
-	$(GOBINDATA) -o ./internal/kafka/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
-	$(GOFMT) -w internal/kafka/internal/generated
-	rm -rf .generate/openapi
 .PHONY: openapi/generate/kas-public
 
-openapi/generate/kas-private: go-bindata openapi-generator
+openapi/generate/kas-private: openapi-generator
 	rm -rf internal/kafka/internal/api/private
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o internal/kafka/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/kafka/internal/api/private
 .PHONY: openapi/generate/kas-private
 
-openapi/generate/kas-admin: go-bindata openapi-generator
+openapi/generate/kas-admin: openapi-generator
 	rm -rf internal/kafka/internal/api/admin/private
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private-admin.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private-admin.yaml -g go -o internal/kafka/internal/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/kafka/internal/api/admin/private
 .PHONY: openapi/generate/kas-admin
 
-openapi/generate/connector-public: go-bindata openapi-generator
+openapi/generate/connector-public: openapi-generator
 	rm -rf internal/connector/internal/api/public
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o internal/connector/internal/api/public --package-name public --additional-properties=enumClassPrefix=true -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/connector/internal/api/public
-
-	mkdir -p .generate/openapi
-	cp ./openapi/connector_mgmt.yaml .generate/openapi
-	$(GOBINDATA) -o ./internal/connector/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
-	$(GOFMT) -w internal/connector/internal/generated
-	rm -rf .generate/openapi
 .PHONY: openapi/generate/connector-public
 
-openapi/generate/connector-private: go-bindata openapi-generator
+openapi/generate/connector-private: openapi-generator
 	rm -rf internal/connector/internal/api/private
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private.yaml -g go -o internal/connector/internal/api/private --package-name private --additional-properties=enumClassPrefix=true -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/connector/internal/api/private
 .PHONY: openapi/generate/connector-private
 
-openapi/generate/connector-private-admin: go-bindata openapi-generator
+openapi/generate/connector-private-admin: openapi-generator
 	rm -rf internal/connector/internal/api/admin/private
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private-admin.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private-admin.yaml -g go -o internal/connector/internal/api/admin/private --package-name private  --additional-properties=enumClassPrefix=true -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
