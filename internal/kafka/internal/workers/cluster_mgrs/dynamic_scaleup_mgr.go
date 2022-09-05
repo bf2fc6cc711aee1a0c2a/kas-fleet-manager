@@ -65,14 +65,15 @@ func (m *DynamicScaleUpManager) Reconcile() []error {
 		glog.Infoln("dynamic scaling is disabled. Dynamic scale up reconcile event skipped")
 		return nil
 	}
+
 	glog.Infoln("running dynamic scale up reconcile event")
-	defer m.logReconcileEventEnd()
 
 	err := m.processDynamicScaleUpReconcileEvent()
 	if err != nil {
 		errList.AddErrors(err)
 	}
 
+	glog.Infoln("dynamic scale up reconcile event finished")
 	return errList.ToErrorSlice()
 }
 
@@ -124,10 +125,6 @@ func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
 	}
 
 	return errList
-}
-
-func (m *DynamicScaleUpManager) logReconcileEventEnd() {
-	glog.Infoln("dynamic scale up reconcile event finished")
 }
 
 // supportedInstanceTypeLocator is a data structure
