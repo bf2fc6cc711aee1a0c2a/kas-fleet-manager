@@ -64,7 +64,7 @@ type OperatorInstallationConfig struct {
 	IndexImage              string
 	Package                 string
 	SubscriptionChannel     string
-	SubscriptionConfig      operatorsv1alpha1.SubscriptionConfig
+	SubscriptionConfig      *operatorsv1alpha1.SubscriptionConfig
 	SubscriptionConfigFile  string
 	SubscriptionStartingCSV string
 }
@@ -123,7 +123,7 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 			SubscriptionChannel:    defaultStrimziOperatorOLMSubscriptionChannelName,
 			Package:                defaultStrimziOperatorOLMPackageName,
 			SubscriptionConfigFile: defaultStrimziOperatorSubscriptionConfigFile,
-			SubscriptionConfig:     operatorsv1alpha1.SubscriptionConfig{},
+			SubscriptionConfig:     nil,
 		},
 		KasFleetshardOperatorOLMConfig: OperatorInstallationConfig{
 			IndexImage:             defaultFleetShardOperatorIndexImage,
@@ -131,7 +131,7 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 			SubscriptionChannel:    defaultFleetShardOperatorOLMSubscriptionChannelName,
 			Package:                defaultFleetShardOperatorOLMPackageName,
 			SubscriptionConfigFile: defaultFleetShardOperatorSubscriptionConfigFile,
-			SubscriptionConfig:     operatorsv1alpha1.SubscriptionConfig{},
+			SubscriptionConfig:     nil,
 		},
 		DynamicScalingConfig: NewDynamicScalingConfig(),
 		NodePrewarmingConfig: NewNodePrewarmingConfig(),
@@ -477,13 +477,13 @@ func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 	}
 }
 
-func readOperatorsSubscriptionConfigFile(file string, subscriptionConfig *operatorsv1alpha1.SubscriptionConfig) error {
+func readOperatorsSubscriptionConfigFile(file string, subscriptionConfig **operatorsv1alpha1.SubscriptionConfig) error {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
 		return err
 	}
 
-	return k8sYaml.UnmarshalStrict([]byte(fileContents), &subscriptionConfig)
+	return k8sYaml.UnmarshalStrict([]byte(fileContents), subscriptionConfig)
 }
 
 func (c *DataplaneClusterConfig) FindClusterNameByClusterId(clusterId string) string {
