@@ -3,7 +3,9 @@ package ocm
 import (
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/patrickmn/go-cache"
 	pkgerrors "github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -59,6 +61,7 @@ var _ Client = &client{}
 
 type client struct {
 	connection *sdkClient.Connection
+	cache      *cache.Cache
 }
 
 type AMSClient Client
@@ -103,7 +106,10 @@ func NewOCMConnection(ocmConfig *OCMConfig, BaseUrl string) (*sdkClient.Connecti
 }
 
 func NewClient(connection *sdkClient.Connection) Client {
-	return &client{connection: connection}
+	return &client{
+		connection: connection,
+		cache:      cache.New(168*time.Hour, 1*time.Hour),
+	}
 }
 
 func (c *client) Connection() *sdkClient.Connection {
@@ -129,6 +135,14 @@ func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1
 }
 
 func (c *client) GetOrganisationIdFromExternalId(externalId string) (string, error) {
+	orgId, cached := c.cache.Get(externalId)
+	if cached {
+		orgId, ok := orgId.(string)
+		if ok && orgId != "" {
+			return orgId, nil
+		}
+	}
+
 	res, err := c.connection.AccountsMgmt().V1().Organizations().List().Search(fmt.Sprintf("external_id='%s'", externalId)).Send()
 	if err != nil {
 		return "", err
@@ -140,7 +154,9 @@ func (c *client) GetOrganisationIdFromExternalId(externalId string) (string, err
 		return "", errors.New(errors.ErrorGeneral, "organisation with external_id '%s' can't be found", externalId)
 	}
 
-	return items.Get(0).ID(), nil
+	organisationId := items.Get(0).ID()
+	c.cache.Set(externalId, organisationId, cache.DefaultExpiration)
+	return organisationId, nil
 }
 
 func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error) {

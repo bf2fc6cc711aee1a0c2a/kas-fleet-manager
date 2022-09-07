@@ -5,6 +5,7 @@ import (
 
 	"github.com/onsi/gomega"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	"github.com/patrickmn/go-cache"
 )
 
 func TestQuotaCostRelatedResourceFilter_IsMatch(t *testing.T) {
@@ -111,6 +112,52 @@ func TestQuotaCostRelatedResourceFilter_IsMatch(t *testing.T) {
 
 			got := qcf.IsMatch(mockRelatedResource)
 			g.Expect(got).To(gomega.Equal(tc.want))
+		})
+	}
+}
+
+func Test_client_GetOrganisationIdFromExternalId(t *testing.T) {
+	dummyExternalOrgID := "external-org-id"
+	dummyOrgID := "org-id"
+
+	orgIdCache := cache.New(-1, -1)
+	orgIdCache.Set(dummyExternalOrgID, dummyOrgID, cache.DefaultExpiration)
+
+	type fields struct {
+		cache *cache.Cache
+	}
+	type args struct {
+		externalId string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "should retrieve org id from cache if its cached",
+			fields: fields{
+				cache: orgIdCache,
+			},
+			args: args{
+				externalId: dummyExternalOrgID,
+			},
+			want:    dummyOrgID,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		g := gomega.NewWithT(t)
+
+		t.Run(tt.name, func(t *testing.T) {
+			c := &client{
+				cache: tt.fields.cache,
+			}
+			got, err := c.GetOrganisationIdFromExternalId(tt.args.externalId)
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
