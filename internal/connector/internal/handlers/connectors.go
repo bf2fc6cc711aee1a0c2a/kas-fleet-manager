@@ -69,7 +69,6 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	user := h.authZService.GetValidationUser(r.Context())
 
 	var resource public.ConnectorRequest
-	tid := mux.Vars(r)["tid"]
 	cfg := &handlers.HandlerConfig{
 
 		MarshalInto: &resource,
@@ -83,7 +82,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.Validation("service_account.client_secret", &resource.ServiceAccount.ClientSecret, handlers.MinLen(1)),
 			handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
 			handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.WithDefault("ready"), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
-			validateConnectorRequest(h.connectorTypesService, &resource, tid),
+			validateConnectorRequest(h.connectorTypesService, &resource),
 			handlers.Validation("namespace_id", &resource.NamespaceId,
 				handlers.MaxLen(maxConnectorNamespaceIdLength), user.AuthorizedNamespaceUser(errors.ErrorBadRequest), user.ValidateNamespaceConnectorQuota()),
 		},
@@ -135,17 +134,15 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 
 	connectorId := mux.Vars(r)["connector_id"]
-	connectorTypeId := mux.Vars(r)["connector_type_id"]
 	contentType := r.Header.Get("Content-Type")
 
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
 			handlers.Validation("connector_id", &connectorId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
-			handlers.Validation("connector_type_id", &connectorTypeId, handlers.MaxLen(maxConnectorTypeIdLength)),
 			handlers.Validation("Content-Type header", &contentType, handlers.IsOneOf("application/json", "application/json-patch+json", "application/merge-patch+json")),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			dbresource, serr := h.connectorsService.Get(r.Context(), connectorId, connectorTypeId)
+			dbresource, serr := h.connectorsService.Get(r.Context(), connectorId)
 			if serr != nil {
 				return nil, serr
 			}
@@ -230,7 +227,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
 				handlers.Validation("service_account.client_id", &resource.ServiceAccount.ClientId, handlers.MinLen(1)),
 				handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
-				validateConnector(h.connectorTypesService, &resource, connectorTypeId),
+				validateConnector(h.connectorTypesService, &resource),
 				handlers.Validation("namespace_id", &resource.NamespaceId, handlers.MaxLen(maxConnectorNamespaceIdLength), user.AuthorizedNamespaceUser(errors.ErrorBadRequest)),
 			}
 
@@ -411,14 +408,12 @@ func PatchResource(resource interface{}, patchType string, patchBytes []byte, pa
 
 func (h ConnectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	connectorId := mux.Vars(r)["connector_id"]
-	connectorTypeId := mux.Vars(r)["connector_type_id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
 			handlers.Validation("connector_id", &connectorId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
-			handlers.Validation("connector_type_id", &connectorTypeId, handlers.MaxLen(maxConnectorTypeIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			resource, err := h.connectorsService.Get(r.Context(), connectorId, connectorTypeId)
+			resource, err := h.connectorsService.Get(r.Context(), connectorId)
 			if err != nil {
 				return nil, err
 			}
@@ -460,7 +455,7 @@ func (h ConnectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 func HandleConnectorDelete(ctx context.Context, connectorsService services.ConnectorsService,
 	namespaceService services.ConnectorNamespaceService, connectorId string) *errors.ServiceError {
 
-	c, err := connectorsService.Get(ctx, connectorId, "")
+	c, err := connectorsService.Get(ctx, connectorId)
 	if err != nil {
 		return err
 	}

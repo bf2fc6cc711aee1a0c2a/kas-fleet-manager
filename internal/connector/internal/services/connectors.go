@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"regexp"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
@@ -28,7 +29,7 @@ import (
 
 type ConnectorsService interface {
 	Create(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError
-	Get(ctx context.Context, id string, tid string) (*dbapi.ConnectorWithConditions, *errors.ServiceError)
+	Get(ctx context.Context, id string) (*dbapi.ConnectorWithConditions, *errors.ServiceError)
 	List(ctx context.Context, listArgs *services.ListArguments, clusterId string) (dbapi.ConnectorWithConditionsList, *api.PagingMeta, *errors.ServiceError)
 	Update(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError
 	SaveStatus(ctx context.Context, resource dbapi.ConnectorStatus) *errors.ServiceError
@@ -90,7 +91,7 @@ func (k *connectorsService) Create(ctx context.Context, resource *dbapi.Connecto
 }
 
 // Get gets a connector by id from the database
-func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*dbapi.ConnectorWithConditions, *errors.ServiceError) {
+func (k *connectorsService) Get(ctx context.Context, id string) (*dbapi.ConnectorWithConditions, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("connector id is undefined")
 	}
@@ -110,10 +111,6 @@ func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*db
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	if tid != "" {
-		dbConn = dbConn.Where("connectors.connector_type_id = ?", tid)
 	}
 
 	dbConn = dbConn.Limit(1)
