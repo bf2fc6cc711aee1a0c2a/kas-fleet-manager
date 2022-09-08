@@ -1115,6 +1115,33 @@ Feature: connector agent API
     """
 
     #-----------------------------------------------------------------------------------------------------------------
+    # Here we test the PATCH admin API. Only desired_state is available through admin PATCH
+    #-----------------------------------------------------------------------------------------------------------------
+    When I PATCH path "/v1/admin/kafka_connectors/${connector_id}" with json body:
+        """
+        {
+            "desired_state": "stopped"
+        }
+        """
+    Then the response code should be 202
+
+    When I GET path "/v1/admin/kafka_connectors/${connector_id}"
+    Then the response code should be 200
+    And the ".desired_state" selection from the response should match "stopped"
+
+    When I PATCH path "/v1/admin/kafka_connectors/${connector_id}" with json body:
+        """
+        {
+            "desired_state": "ready"
+        }
+        """
+    Then the response code should be 202
+
+    When I GET path "/v1/admin/kafka_connectors/${connector_id}"
+    Then the response code should be 200
+    And the ".desired_state" selection from the response should match "ready"
+
+    #-----------------------------------------------------------------------------------------------------------------
     # In this part of the Scenario we test out getting connector updates using the admin API
     #-----------------------------------------------------------------------------------------------------------------
 

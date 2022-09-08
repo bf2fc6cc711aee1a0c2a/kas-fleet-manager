@@ -404,23 +404,6 @@ func (h *ConnectorAdminHandler) GetConnector(writer http.ResponseWriter, request
 	handlers.HandleGet(writer, request, &cfg)
 }
 
-func (h *ConnectorAdminHandler) GetOperation(resource public.Connector, patch private.ConnectorRequest) (phase.ConnectorOperation, *errors.ServiceError) {
-	operation, ok := stateToOperationsMap[public.ConnectorDesiredState(patch.DesiredState)]
-	if !ok {
-		return operation, errors.BadRequest("Unsupported patch desired state %s", patch.DesiredState)
-	}
-	if string(patch.DesiredState) == string(resource.DesiredState) {
-		// desired state not changing, it's an update
-		operation = phase.UpdateConnector
-	} else {
-		// assigning a stopped connector is a restart
-		if operation == phase.AssignConnector && resource.DesiredState == public.CONNECTORDESIREDSTATE_STOPPED {
-			operation = phase.RestartConnector
-		}
-	}
-	return operation, nil
-}
-
 func (h *ConnectorAdminHandler) PatchConnector(writer http.ResponseWriter, request *http.Request) {
 	connectorId := mux.Vars(request)["connector_id"]
 	contentType := request.Header.Get("Content-Type")
@@ -447,7 +430,7 @@ func (h *ConnectorAdminHandler) PatchConnector(writer http.ResponseWriter, reque
 				return nil, errors.BadRequest("failed to get patch bytes")
 			}
 
-			patch := private.ConnectorRequest{}
+			patch := public.ConnectorRequest{}
 			serviceError = PatchResource(resource, contentType, patchBytes, &patch)
 			if serviceError != nil {
 				return nil, serviceError
@@ -455,7 +438,7 @@ func (h *ConnectorAdminHandler) PatchConnector(writer http.ResponseWriter, reque
 
 			// get and validate patch operation type
 			var operation phase.ConnectorOperation
-			if operation, serviceError = h.GetOperation(resource, patch); err != nil {
+			if operation, serviceError = getOperation(resource, patch); err != nil {
 				return nil, serviceError
 			}
 			if operation == phase.UnassignConnector && !h.ConnectorsConfig.ConnectorEnableUnassignedConnectors {
