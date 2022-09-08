@@ -169,36 +169,8 @@ func (c *Client) sendRange(query string, bounds pV1.Range) (pModel.Value, pV1.Wa
 
 }
 
-// Query sends a metrics request to server and returns unmashalled Vector response.
-// The VectorResult(s) inside will contain either .Value for queries resulting in instant vector,
-// or .Values for queries resulting in a range vector.
-//
-// queryTemplate must contain one %s for labels, e.g. `some_metric{%s}` or `count(some_metric{state="up",%s})`.
-// (Undocumented PromQL: empty labels some_metric{} are OK - https://github.com/prometheus/prometheus/issues/3697)
-// labels 0 or more constraints separated by comma e.g. “ or `foo="bar",quux="baz"`.
-func (c *Client) Query(queryTemplate string, label string) Metric {
-
-	queryString := fmt.Sprintf(queryTemplate, label)
-	values, warnings, err := c.send(queryString)
-
-	if len(warnings) > 0 {
-		logger.Logger.Warningf("Prometheus client got warnings %s", all(warnings, "and"))
-	}
-	if err != nil {
-		return Metric{Err: err}
-	}
-
-	v, ok := values.(pModel.Vector)
-	if !ok {
-		logger.Logger.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)
-		return Metric{Err: errors.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)}
-	}
-	return Metric{Vector: v}
-}
-func (c *Client) QueryRange(queryTemplate string, label string, bounds pV1.Range) Metric {
-
-	queryString := fmt.Sprintf(queryTemplate, label)
-	values, warnings, err := c.sendRange(queryString, bounds)
+func (c *Client) QueryRawRange(query string, bounds pV1.Range) Metric {
+	values, warnings, err := c.sendRange(query, bounds)
 	if len(warnings) > 0 {
 		logger.Logger.Warningf("Prometheus client got warnings %s", all(warnings, "and"))
 	}
@@ -213,6 +185,42 @@ func (c *Client) QueryRange(queryTemplate string, label string, bounds pV1.Range
 
 	}
 	return Metric{Matrix: m}
+}
+
+func (c *Client) QueryRaw(query string) Metric {
+	values, warnings, err := c.send(query)
+
+	if len(warnings) > 0 {
+		logger.Logger.Warningf("Prometheus client got warnings %s", all(warnings, "and"))
+	}
+	if err != nil {
+		return Metric{Err: err}
+	}
+
+	v, ok := values.(pModel.Vector)
+	if !ok {
+		logger.Logger.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)
+		return Metric{Err: errors.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)}
+	}
+	return Metric{Vector: v}
+
+}
+
+// Query sends a metrics request to server and returns unmashalled Vector response.
+// The VectorResult(s) inside will contain either .Value for queries resulting in instant vector,
+// or .Values for queries resulting in a range vector.
+//
+// queryTemplate must contain one %s for labels, e.g. `some_metric{%s}` or `count(some_metric{state="up",%s})`.
+// (Undocumented PromQL: empty labels some_metric{} are OK - https://github.com/prometheus/prometheus/issues/3697)
+// labels 0 or more constraints separated by comma e.g. “ or `foo="bar",quux="baz"`.
+func (c *Client) Query(queryTemplate string, label string) Metric {
+	queryString := fmt.Sprintf(queryTemplate, label)
+	return c.QueryRaw(queryString)
+}
+
+func (c *Client) QueryRange(queryTemplate string, label string, bounds pV1.Range) Metric {
+	queryString := fmt.Sprintf(queryTemplate, label)
+	return c.QueryRawRange(queryString, bounds)
 }
 
 func all(items []string, conjunction string) string {
