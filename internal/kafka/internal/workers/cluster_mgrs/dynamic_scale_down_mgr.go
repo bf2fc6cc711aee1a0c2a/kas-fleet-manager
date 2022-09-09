@@ -90,7 +90,7 @@ func (m *DynamicScaleDownManager) processDynamicScaleDownReconcileEvent() error 
 		clusterID := suCount.ClusterId
 		existing := processedClusters[clusterID]
 		if existing.processed { // skip already processed
-			glog.V(10).Infof("cluster with cluster_id %s is already processed", suCount.ClusterId)
+			glog.V(10).Infof("cluster with cluster id %q and status %q is already processed. Skipping it from scale down evaluation", suCount.ClusterId, suCount.Status)
 			continue
 		}
 
@@ -111,14 +111,14 @@ func (m *DynamicScaleDownManager) processDynamicScaleDownReconcileEvent() error 
 			indexesOfStreamingUnitForSameClusterID: existing.indexesOfStreamingUnitForSameClusterID,
 		}
 
-		glog.Infof("evaluating dynamic scale down for cluster '%s'", clusterID)
+		glog.Infof("evaluating dynamic scale down for cluster %q", clusterID)
 		shouldScaleDown, err := dynamicScaleDownProcessor.ShouldScaleDown()
 		if err != nil {
 			errList.AddErrors(err)
 			continue
 		}
 		if shouldScaleDown {
-			glog.Infof("data plane scale down need detected for cluster '%s'", clusterID)
+			glog.Infof("data plane scale down need detected for cluster %q", clusterID)
 			err := dynamicScaleDownProcessor.ScaleDown()
 			if err != nil {
 				errList.AddErrors(err)
@@ -258,7 +258,7 @@ func (p *standardDynamicScaleDownProcessor) ShouldScaleDown() (bool, error) {
 
 	// let's check if the cluster can be safely removed without causing a scale up event
 	if len(p.regionsSupportedInstanceType) == 0 { // if no region limits are available it means that this cluster is in a region that's not supported anymore, we can safely delete it if it is empty
-		glog.Infof("no region limits are available. cluster with cluster_id %s is going to be removed as it is empty", p.clusterID)
+		glog.Infof("no region limits are available. cluster with cluster id %q is going to be removed as it is empty", p.clusterID)
 		return true, nil
 	}
 
@@ -278,7 +278,7 @@ func (p *standardDynamicScaleDownProcessor) isClusterNotEmpty() bool {
 	for _, i := range p.indexesOfStreamingUnitForSameClusterID {
 		clusterIsNotEmpty := p.kafkaStreamingUnitCountPerClusterList[i].Count > 0
 		if clusterIsNotEmpty {
-			glog.Infof("cluster with cluster_id %s is not empty. It is not going to be removed", p.clusterID)
+			glog.Infof("cluster with cluster id %q is not empty. It is not going to be removed", p.clusterID)
 			return true
 		}
 	}
@@ -302,14 +302,14 @@ func (p *standardDynamicScaleDownProcessor) createNewStreamingUnitPerClusterList
 		// Ignore clusters in terraforming states for scale up evaluation as they are not ready yet.
 		// We only want to delete the cluster if we've a sibling ready cluster
 		if arrays.Contains(clusterStatesTowardReadyState, suCount.Status) {
-			glog.V(10).Infof("ignoring cluster with cluster_id %s in terraforming state %s:", suCount.ClusterId, suCount.Status)
+			glog.V(10).Infof("ignoring cluster with cluster id %q in terraforming state %q:", suCount.ClusterId, suCount.Status)
 			continue
 		}
 
 		// Keep only clusters streaming unit count for cluster that are not going to be deleted.
 		// i.e Assume that the candidate cluster is removed from the new list which will be used to perform scale up evaluation
 		if suCount.ClusterId == p.clusterID {
-			glog.V(10).Infof("skipping candidate cluster with cluster_id %s:", suCount.ClusterId)
+			glog.V(10).Infof("skipping candidate cluster with cluster id %q", suCount.ClusterId)
 			continue
 		}
 
@@ -344,15 +344,15 @@ func (p *standardDynamicScaleDownProcessor) isScaleUpNeededAfterCandidateCluster
 			dryRun:                                true,
 		}
 
-		glog.Infof("evaluating whether deleting the cluster with cluster_id %s would trigger scale up for locator '%+v'", p.clusterID, currLocator)
+		glog.Infof("evaluating whether deleting the cluster with cluster id %q would trigger scale up for locator '%+v'", p.clusterID, currLocator)
 		shouldScaleUp, err := dynamicScaleUpProcessor.ShouldScaleUp()
 		if err != nil {
-			glog.Infof("scale up evaluation results returned an error. Not removing cluster with cluster_id %s:", suCount.ClusterId)
+			glog.Infof("scale up evaluation results returned an error. Not removing cluster with cluster id %q", suCount.ClusterId)
 			return shouldScaleUp, err
 		}
 
 		if shouldScaleUp {
-			glog.Infof("scale up will be needed if the cluster with cluster_id %s is removed. The decision is not to remove it", suCount.ClusterId)
+			glog.Infof("scale up will be needed if the cluster with cluster id %q is removed. The decision is not to remove it", suCount.ClusterId)
 			return shouldScaleUp, nil
 		}
 	}
@@ -363,14 +363,14 @@ func (p *standardDynamicScaleDownProcessor) isScaleUpNeededAfterCandidateCluster
 // ScaleDown marks the cluster as deprovisioning.
 func (p *standardDynamicScaleDownProcessor) ScaleDown() error {
 	if p.dryRun {
-		glog.Infof("scale down running in dryRun mode. No action is taken for cluster with cluster_id %s.", p.clusterID)
+		glog.Infof("scale down running in dryRun mode. No action is taken for cluster with cluster id %q.", p.clusterID)
 		return nil
 	}
 
-	glog.Infof("marking the cluster with cluster_id %s as deprovisioning", p.clusterID)
+	glog.Infof("marking the cluster with cluster id %q as deprovisioning", p.clusterID)
 	err := p.clusterService.UpdateStatus(api.Cluster{ClusterID: p.clusterID}, api.ClusterDeprovisioning)
 	if err != nil {
-		glog.Infof("marking the cluster with cluster_id %s as deprovisioning returned without errors", p.clusterID)
+		glog.Infof("marking the cluster with cluster id %q as deprovisioning returned without errors", p.clusterID)
 		return err
 	}
 
@@ -379,6 +379,6 @@ func (p *standardDynamicScaleDownProcessor) ScaleDown() error {
 		p.kafkaStreamingUnitCountPerClusterList[i].Status = api.ClusterDeprovisioning.String()
 	}
 
-	glog.Infof("cluster with cluster_id %s marked as 'deprovisioning' successfully", p.clusterID)
+	glog.Infof("cluster with cluster id %q marked as 'deprovisioning' successfully", p.clusterID)
 	return nil
 }
