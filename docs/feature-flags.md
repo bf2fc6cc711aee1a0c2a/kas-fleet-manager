@@ -145,6 +145,9 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 - **kas-fleetshard-operator-package**: kas-fleetshard operator package name
 - **kas-fleetshard-operator-sub-channel**: kas-fleetshard operator subscription channel
 - **kas-fleetshard-operator-subscription-config-file**: kas-fleetshard operator subscription config. This is applied for standalone clusters only. The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig
+- **observability-operator-index-image**: Observability operator index image
+- **observability-operator-starting-csv**: Observability operator subscription starting CSV
+
   
 ## Sentry
 - **enable-sentry**: Enables Sentry error reporting.

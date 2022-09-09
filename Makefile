@@ -772,6 +772,8 @@ deploy/service: ALLOW_DEVELOPER_INSTANCE ?= "true"
 deploy/service: QUOTA_TYPE ?= "quota-management-list"
 deploy/service: STRIMZI_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-kafka:production-82b42db"
 deploy/service: KAS_FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
+deploy/service: OBSERVABILITY_OPERATOR_INDEX_IMAGE ?= "quay.io/rhoas/observability-operator-index:v3.0.14"
+deploy/service: OBSERVABILITY_OPERATOR_STARTING_CSV ?= "observability-operator.v3.0.14"
 deploy/service: DEX_USERNAME ?= "admin@example.com"
 deploy/service: DEX_URL ?= "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io"
 deploy/service: OBSERVATORIUM_GATEWAY ?= "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io"
@@ -853,6 +855,8 @@ deploy/service: deploy/envoy deploy/route
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
 		-p KAS_FLEETSHARD_OLM_INDEX_IMAGE="${KAS_FLEETSHARD_OLM_INDEX_IMAGE}" \
 		-p STRIMZI_OLM_INDEX_IMAGE="${STRIMZI_OLM_INDEX_IMAGE}" \
+		-p OBSERVABILITY_OPERATOR_INDEX_IMAGE="${OBSERVABILITY_OPERATOR_INDEX_IMAGE}" \
+		-p OBSERVABILITY_OPERATOR_STARTING_CSV="${OBSERVABILITY_OPERATOR_STARTING_CSV}" \
 		-p STRIMZI_OPERATOR_ADDON_ID="${STRIMZI_OPERATOR_ADDON_ID}" \
 		-p KAS_FLEETSHARD_ADDON_ID="${KAS_FLEETSHARD_ADDON_ID}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
