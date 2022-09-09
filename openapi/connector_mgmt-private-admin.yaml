@@ -786,7 +786,7 @@ paths:
               type: object
           application/json:
             schema:
-              $ref: "#/components/schemas/ConnectorRequest"
+              $ref: "connector_mgmt.yaml#/components/schemas/ConnectorRequest"
         required: true
 
       responses:
@@ -1113,21 +1113,6 @@ components:
               description: Namespace expiration timestamp in RFC 3339 format
               type: string
               #format: date-time
-
-    ConnectorRequest:
-      required:
-        - desired_state
-      properties:
-        desired_state:
-          $ref: "#/components/schemas/ConnectorDesiredState"
-
-    ConnectorDesiredState:
-      type: string
-      enum:
-        - unassigned
-        - ready
-        - stopped
-        - deleted
 
     ConnectorAdminView:
       allOf:

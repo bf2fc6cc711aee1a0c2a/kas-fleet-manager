@@ -1853,19 +1853,6 @@ components:
       - cluster_id
       - name
       - tenant
-    ConnectorRequest:
-      properties:
-        desired_state:
-          $ref: '#/components/schemas/ConnectorDesiredState'
-      required:
-      - desired_state
-    ConnectorDesiredState:
-      enum:
-      - unassigned
-      - ready
-      - stopped
-      - deleted
-      type: string
     ConnectorAdminView:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -2148,15 +2135,10 @@ components:
       - deleting
       - deleted
       type: string
-    ConnectorNamespaceEvalRequest:
+    ConnectorRequest:
       allOf:
-      - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
-      description: An evaluation connector namespace create request
-    ConnectorMeta:
-      allOf:
-      - $ref: '#/components/schemas/ObjectMeta'
       - $ref: '#/components/schemas/ConnectorRequestMeta'
-      - $ref: '#/components/schemas/ConnectorMeta_allOf'
+      - $ref: '#/components/schemas/ConnectorConfiguration'
     ConnectorRequestMeta:
       properties:
         name:
@@ -2179,6 +2161,62 @@ components:
       enum:
       - stable
       type: string
+    ConnectorDesiredState:
+      enum:
+      - unassigned
+      - ready
+      - stopped
+      - deleted
+      type: string
+    ConnectorConfiguration:
+      properties:
+        kafka:
+          $ref: '#/components/schemas/KafkaConnectionSettings'
+        service_account:
+          $ref: '#/components/schemas/ServiceAccount'
+        schema_registry:
+          $ref: '#/components/schemas/SchemaRegistryConnectionSettings'
+        connector:
+          type: object
+      required:
+      - connector
+      - kafka
+      - service_account
+    KafkaConnectionSettings:
+      allOf:
+      - $ref: '#/components/schemas/ServiceConnectionSettings'
+      description: Holds the configuration to connect to a Kafka Instance.
+    ServiceConnectionSettings:
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+      required:
+      - id
+      - url
+    ServiceAccount:
+      properties:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+      required:
+      - client_id
+      - client_secret
+    SchemaRegistryConnectionSettings:
+      allOf:
+      - $ref: '#/components/schemas/ServiceConnectionSettings'
+      description: Holds the configuration to connect to a Schem Registry Instance.
+    ConnectorNamespaceEvalRequest:
+      allOf:
+      - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
+      description: An evaluation connector namespace create request
+    ConnectorMeta:
+      allOf:
+      - $ref: '#/components/schemas/ObjectMeta'
+      - $ref: '#/components/schemas/ConnectorRequestMeta'
+      - $ref: '#/components/schemas/ConnectorMeta_allOf'
     ConnectorStatus:
       properties:
         status:
