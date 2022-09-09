@@ -389,7 +389,7 @@ func (h *ConnectorAdminHandler) GetConnector(writer http.ResponseWriter, request
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
-			connector, serviceError := h.ConnectorsService.Get(request.Context(), connectorId, "")
+			connector, serviceError := h.ConnectorsService.Get(request.Context(), connectorId)
 			if serviceError != nil {
 				return nil, serviceError
 			}
