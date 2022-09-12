@@ -43,7 +43,8 @@ func Test_StringFindFirst(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			g.Expect(FindFirstString(tt.args.ary, tt.args.predicate)).To(gomega.Equal(tt.want))
+			idx, _ := FindFirstString(tt.args.ary, tt.args.predicate)
+			g.Expect(idx).To(gomega.Equal(tt.want))
 		})
 	}
 }
@@ -137,59 +138,6 @@ func Test_StringFirstNonEmptyOrDefault(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			g.Expect(FirstNonEmptyOrDefault(tt.args.defaultValue, tt.args.ary...)).To(gomega.Equal(tt.want))
-		})
-	}
-}
-
-func Test_Contains(t *testing.T) {
-	type args struct {
-		ary   []string
-		value string
-	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "Value found",
-			args: args{
-				ary:   []string{"yellow", "green", "blue"},
-				value: "green",
-			},
-			want: true,
-		},
-		{
-			name: "Value not found",
-			args: args{
-				ary:   []string{"yellow", "green", "blue"},
-				value: "red",
-			},
-			want: false,
-		},
-		{
-			name: "Value not found - Empty Array",
-			args: args{
-				ary:   []string{},
-				value: "red",
-			},
-			want: false,
-		},
-		{
-			name: "Value not found - Nil Array",
-			args: args{
-				ary:   nil,
-				value: "red",
-			},
-			want: false,
-		},
-	}
-	for _, testcase := range tests {
-		tt := testcase
-
-		t.Run(tt.name, func(t *testing.T) {
-			g := gomega.NewWithT(t)
-			g.Expect(Contains(tt.args.ary, tt.args.value)).To(gomega.Equal(tt.want))
 		})
 	}
 }

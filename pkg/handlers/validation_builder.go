@@ -52,7 +52,7 @@ func MaxLen(max int) ValidateOption {
 func IsOneOf(options ...string) ValidateOption {
 	return func(field string, value *string) *errors.ServiceError {
 		if value != nil &&
-			arrays.FindFirstString(options, func(option string) bool { return *value == option }) != -1 {
+			arrays.Contains(options, *value) {
 			return nil
 		}
 		return errors.BadRequest("%s is not valid. Must be one of: %s", field, strings.Join(options, ", "))
