@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/onsi/gomega"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 )
@@ -19,7 +19,7 @@ func Test_awsVaultService(t *testing.T) {
 	vc := NewConfig()
 
 	// Enable testing against aws if the access keys are configured..
-	if content, err := ioutil.ReadFile(shared.BuildFullFilePath(vc.AccessKeyFile)); err == nil && len(content) > 0 {
+	if content, err := os.ReadFile(shared.BuildFullFilePath(vc.AccessKeyFile)); err == nil && len(content) > 0 {
 		vc.Kind = "aws"
 	}
 	g.Expect(vc.ReadFiles()).To(gomega.BeNil())
