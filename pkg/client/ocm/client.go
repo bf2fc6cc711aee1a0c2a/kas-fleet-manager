@@ -530,6 +530,8 @@ func (qcf *QuotaCostRelatedResourceFilter) IsMatch(relatedResource *amsv1.Relate
 // Each quota cost contains information on the usage and max allowed ocm resources quota given to the specified oganization.
 //
 // relatedResourceFilters will only be applied when fetchRelatedResources is set to true.
+// When relatedResourceFilters is not specified, all the quotas are returned.
+// When relatedResourceFilters is specified, a quota is returned if one of the filters matches the related resources.
 func (c client) GetQuotaCosts(organizationID string, fetchRelatedResources, fetchCloudAccounts bool, relatedResourceFilters ...QuotaCostRelatedResourceFilter) ([]*amsv1.QuotaCost, error) {
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
 	quotaCostClient := organizationClient.Organization(organizationID).QuotaCost()
@@ -546,14 +548,20 @@ func (c client) GetQuotaCosts(organizationID string, fetchRelatedResources, fetc
 
 	var quotaCosts []*amsv1.QuotaCost
 
+	// iterates through all Quota and only return the quota whose resources matches the given filters
 	quotaCostList.Each(func(qc *amsv1.QuotaCost) bool {
 		relatedResources := qc.RelatedResources()
+		quotaMatchesFilters := false
 		for _, relatedResource := range relatedResources {
 			for _, filter := range relatedResourceFilters {
 				if filter.IsMatch(relatedResource) {
-					quotaCosts = append(quotaCosts, qc)
-					return false
+					quotaMatchesFilters = true
+					break
 				}
+			}
+			if quotaMatchesFilters {
+				quotaCosts = append(quotaCosts, qc)
+				break
 			}
 		}
 		return true
