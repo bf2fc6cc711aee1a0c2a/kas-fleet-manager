@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/Nerzal/gocloak/v11 v11.2.0
 	github.com/antihax/optional v1.0.0
-	github.com/aws/aws-sdk-go v1.44.91
+	github.com/aws/aws-sdk-go v1.44.95
 	github.com/aws/aws-secretsmanager-caching-go v1.1.0
 	github.com/blang/semver/v4 v4.0.0
 	github.com/bxcodec/faker/v3 v3.8.0
@@ -55,9 +55,9 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.0.8
 	gorm.io/gorm v1.21.7
-	k8s.io/api v0.24.3
-	k8s.io/apimachinery v0.24.3
-	k8s.io/client-go v0.24.3
+	k8s.io/api v0.24.4
+	k8s.io/apimachinery v0.24.4
+	k8s.io/client-go v0.24.4
 	sigs.k8s.io/yaml v1.3.0
 )
 
