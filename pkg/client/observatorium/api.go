@@ -44,8 +44,8 @@ func (obs *ServiceObservatorium) GetKafkaState(name string, resourceNamespace st
 	return KafkaState, nil
 }
 
-// buildQueries takes a list of exposed metrics and a list of filters and computes the minimum number of queries
-// to run. We need to one query per label selector, but multiple metrics can share the same label selector.
+// buildQueries takes a list of requested metrics and a list of filters and computes the minimum number of queries
+// to run. We need to run one query per label selector, but multiple metrics can share the same label selector.
 func (obs *ServiceObservatorium) buildQueries(fetchers []fetcher, rq *MetricsReqParams) []string {
 	groupedQueries := map[string][]string{}
 	var queries []string

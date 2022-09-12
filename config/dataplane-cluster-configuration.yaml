@@ -17,14 +17,4 @@
 #    provider_type: "ocm" #Valid values are `ocm` and `standalone`. `ocm` will be used if not specified.
 #    cluster_dns: apps.example.com #Valid cluster DNS. This will be used to build kafka bootstrap url and to communicate with standalone clusters. Required when "provider_type" is "standalone" 
 #    supported_instance_type: "developer" # could be "developer", "standard" or both i.e "standard,developer" or "developer,standard". Defaults to "standard,developer" if not set 
-clusters:
-  - name: pbraun # This field is required for a standalone cluster i.e when the provider_type is "standalone". The value has to match the cluster / context name in the given kubeconfig file via the `--kubeconfig` flag.
-    cluster_id: 1ujq3k98r8c7u0v7ghe9l4816tceu4fb  #This field is required
-    cloud_provider: aws
-    region: us-east-1
-    multi_az: true
-    schedulable: true
-    kafka_instance_limit: 2
-    status: "cluster_provisioning" #Valid values are `cluster_provisioning`, `cluster_provisioned` and `ready`. `cluster_provisioning` will be used if not specified.
-    provider_type: "ocm" #Valid values are `ocm` and `standalone`. `ocm` will be used if not specified.
-    supported_instance_type: "standard,developer" # could be "developer", "standard" or both i.e "standard,developer" or "developer,standard". Defaults to "standard,developer" if not set
+clusters: []

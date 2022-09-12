@@ -34,7 +34,7 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"observability-red-hat-sso-token-refresher-url":   "http://localhost:8085",
 		"observability-red-hat-sso-observatorium-gateway": "https://observatorium-mst.api.stage.openshift.com",
 		"observability-red-hat-sso-tenant":                "managedkafka",
-		"observatorium-auth-type":                         "redhat",
+		"observatorium-auth-type":                         "dex",
 		"max-allowed-developer-instances":                 "1",
 	}
 }

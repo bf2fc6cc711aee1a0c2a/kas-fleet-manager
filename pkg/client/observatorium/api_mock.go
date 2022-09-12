@@ -123,6 +123,7 @@ var rangeQuerydata = map[string]pModel.Matrix{
 	"kafka_server_brokertopicmetrics_messages_in_total": {
 		fakeMetricData("kafka_server_brokertopicmetrics_messages_in_total", 3040),
 	},
+
 	"kafka_server_brokertopicmetrics_bytes_in_total": {
 		fakeMetricData("kafka_server_brokertopicmetrics_bytes_in_total", 293617),
 	},
@@ -171,6 +172,34 @@ var rangeQuerydata = map[string]pModel.Matrix{
 	"kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m": {
 		fakeMetricData("kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m", 9194889),
 	},
+
+	"{__name__=~'kafka_topic:kafka_topic_partitions:sum|kafka_topic:kafka_topic_partitions:count|consumergroup:kafka_consumergroup_members:count|kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum|kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum|kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m|kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m|kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m|kafka_instance_spec_brokers_desired_count|kafka_instance_max_message_size_limit|kafka_instance_partition_limit|kafka_instance_connection_limit|kafka_instance_connection_creation_rate_limit'": {
+		fakeMetricData("kafka_topic:kafka_topic_partitions:sum", 20),
+	},
+
+	"{__name__=~'kubelet_volume_stats_available_bytes|kubelet_volume_stats_used_bytes', persistentvolumeclaim=~\"data-.*-kafka-[0-9]*$\"": {
+		fakeMetricData("kubelet_volume_stats_available_bytes", 20),
+	},
+
+	"{__name__=~'kafka_broker_quota_softlimitbytes|kafka_broker_quota_hardlimitbytes|kafka_broker_quota_totalstorageusedbytes|kafka_broker_client_quota_limit', strimzi_io_kind=~'Kafka'": {
+		fakeMetricData("kafka_broker_quota_softlimitbytes", 20),
+	},
+
+	"{__name__=~'kafka_server_brokertopicmetrics_messages_in_total|kafka_server_brokertopicmetrics_bytes_in_total|kafka_server_brokertopicmetrics_bytes_out_total'": {
+		fakeMetricData("kafka_server_brokertopicmetrics_messages_in_total", 20),
+	},
+
+	"{__name__=~'kafka_controller_kafkacontroller_offline_partitions_count|kafka_controller_kafkacontroller_global_partition_count'": {
+		fakeMetricData("kafka_controller_kafkacontroller_offline_partitions_count", 20),
+	},
+
+	"{__name__=~'kafka_topic:kafka_log_log_size:sum', topic!~'__redhat_.*|__consumer_offsets|__transaction_state'": {
+		fakeMetricData("kafka_topic:kafka_log_log_size:sum", 20),
+	},
+
+	"{__name__=~'kafka_namespace:haproxy_server_bytes_in_total:rate5m|kafka_namespace:haproxy_server_bytes_out_total:rate5m'": {
+		fakeMetricData("kafka_namespace:haproxy_server_bytes_in_total:rate5m", 20),
+	},
 }
 
 func fakeMetricData(name string, value int) *pModel.SampleStream {
@@ -186,6 +215,7 @@ func fakeMetricData(name string, value int) *pModel.SampleStream {
 }
 
 var queryData = map[string]pModel.Vector{
+
 	"strimzi_resource_state": pModel.Vector{
 		&pModel.Sample{
 			Metric: pModel.Metric{
@@ -195,6 +225,97 @@ var queryData = map[string]pModel.Vector{
 			},
 			Timestamp: pModel.Time(1607506882175),
 			Value:     1,
+		},
+	},
+
+	"{__name__=~'kafka_topic:kafka_topic_partitions:sum|kafka_topic:kafka_topic_partitions:count|consumergroup:kafka_consumergroup_members:count|kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum|kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum|kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m|kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m|kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m|kafka_instance_spec_brokers_desired_count|kafka_instance_max_message_size_limit|kafka_instance_partition_limit|kafka_instance_connection_limit|kafka_instance_connection_creation_rate_limit'": pModel.Vector{
+		&pModel.Sample{
+			Metric: pModel.Metric{
+				"__name__":           "kafka_topic:kafka_topic_partitions:sum",
+				"pod":                "whatever",
+				"strimzi_io_cluster": "whatever",
+				"topic":              "whatever",
+			},
+			Timestamp: pModel.Time(1607506882175),
+			Value:     293617,
+		},
+	},
+
+	"{__name__=~'kubelet_volume_stats_available_bytes|kubelet_volume_stats_used_bytes', persistentvolumeclaim=~\"data-.*-kafka-[0-9]*$\"": pModel.Vector{
+		&pModel.Sample{
+			Metric: pModel.Metric{
+				"__name__":           "kubelet_volume_stats_available_bytes",
+				"pod":                "whatever",
+				"strimzi_io_cluster": "whatever",
+				"topic":              "whatever",
+			},
+			Timestamp: pModel.Time(1607506882175),
+			Value:     293617,
+		},
+	},
+
+	"{__name__=~'kafka_broker_quota_softlimitbytes|kafka_broker_quota_hardlimitbytes|kafka_broker_quota_totalstorageusedbytes|kafka_broker_client_quota_limit', strimzi_io_kind=~'Kafka'": pModel.Vector{
+		&pModel.Sample{
+			Metric: pModel.Metric{
+				"__name__":           "kafka_broker_quota_softlimitbytes",
+				"pod":                "whatever",
+				"strimzi_io_cluster": "whatever",
+				"topic":              "whatever",
+			},
+			Timestamp: pModel.Time(1607506882175),
+			Value:     293617,
+		},
+	},
+
+	"{__name__=~'kafka_server_brokertopicmetrics_messages_in_total|kafka_server_brokertopicmetrics_bytes_in_total|kafka_server_brokertopicmetrics_bytes_out_total'": pModel.Vector{
+		&pModel.Sample{
+			Metric: pModel.Metric{
+				"__name__":           "kafka_server_brokertopicmetrics_messages_in_total",
+				"pod":                "whatever",
+				"strimzi_io_cluster": "whatever",
+				"topic":              "whatever",
+			},
+			Timestamp: pModel.Time(1607506882175),
+			Value:     293617,
+		},
+	},
+
+	"{__name__=~'kafka_controller_kafkacontroller_offline_partitions_count|kafka_controller_kafkacontroller_global_partition_count'": pModel.Vector{
+		&pModel.Sample{
+			Metric: pModel.Metric{
+				"__name__":           "kafka_controller_kafkacontroller_offline_partitions_count",
+				"pod":                "whatever",
+				"strimzi_io_cluster": "whatever",
+				"topic":              "whatever",
+			},
+			Timestamp: pModel.Time(1607506882175),
+			Value:     293617,
+		},
+	},
+
+	"{__name__=~'kafka_topic:kafka_log_log_size:sum', topic!~'__redhat_.*|__consumer_offsets|__transaction_state'": pModel.Vector{
+		&pModel.Sample{
+			Metric: pModel.Metric{
+				"__name__":           "kafka_topic:kafka_log_log_size:sum",
+				"pod":                "whatever",
+				"strimzi_io_cluster": "whatever",
+				"topic":              "whatever",
+			},
+			Timestamp: pModel.Time(1607506882175),
+			Value:     293617,
+		},
+	},
+
+	"{__name__=~'kafka_namespace:haproxy_server_bytes_in_total:rate5m|kafka_namespace:haproxy_server_bytes_out_total:rate5m'": pModel.Vector{
+		&pModel.Sample{
+			Metric: pModel.Metric{
+				"__name__":           "kafka_namespace:haproxy_server_bytes_in_total:rate5m",
+				"pod":                "whatever",
+				"strimzi_io_cluster": "whatever",
+				"topic":              "whatever",
+			},
+			Timestamp: pModel.Time(1607506882175),
+			Value:     293617,
 		},
 	},
 
