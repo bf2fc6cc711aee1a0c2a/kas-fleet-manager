@@ -55,6 +55,7 @@ type DataplaneClusterConfig struct {
 	RawKubernetesConfig                           *clientcmdapi.Config
 	StrimziOperatorOLMConfig                      OperatorInstallationConfig
 	KasFleetshardOperatorOLMConfig                OperatorInstallationConfig
+	ObservabilityOperatorOLMConfig                OperatorInstallationConfig
 	DynamicScalingConfig                          DynamicScalingConfig
 	NodePrewarmingConfig                          NodePrewarmingConfig
 }
@@ -90,6 +91,12 @@ const (
 	defaultFleetShardOperatorOLMSubscriptionChannelName = "alpha"
 	defaultFleetShardOperatorIndexImage                 = "quay.io/osd-addons/rhosak-fleetshard-operator-bundle-index:v4.9-v1.0.7-1"
 	defaultFleetShardOperatorSubscriptionConfigFile     = "config/kas-fleetshard-operator-subscription-spec-config.yaml"
+)
+
+// constants for Observability Operator installation via OpenShift Lifecycle Manager
+const (
+	defaultObservabilityOperatorIndexImage  = "quay.io/rhoas/observability-operator-index:v3.0.14"
+	defaultObservabilityOperatorStartingCSV = "observability-operator.v3.0.14"
 )
 
 func getDefaultKubeconfig() string {
@@ -132,6 +139,10 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 			Package:                defaultFleetShardOperatorOLMPackageName,
 			SubscriptionConfigFile: defaultFleetShardOperatorSubscriptionConfigFile,
 			SubscriptionConfig:     nil,
+		},
+		ObservabilityOperatorOLMConfig: OperatorInstallationConfig{
+			IndexImage:              defaultObservabilityOperatorIndexImage,
+			SubscriptionStartingCSV: defaultObservabilityOperatorStartingCSV,
 		},
 		DynamicScalingConfig: NewDynamicScalingConfig(),
 		NodePrewarmingConfig: NewNodePrewarmingConfig(),
@@ -333,6 +344,8 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionStartingCSV, "kas-fleetshard-operator-starting-csv", c.KasFleetshardOperatorOLMConfig.SubscriptionStartingCSV, "kas-fleetshard operator subscription starting CSV")
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionChannel, "kas-fleetshard-operator-sub-channel", c.KasFleetshardOperatorOLMConfig.SubscriptionChannel, "kas-fleetshard operator subscription channel")
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile, "kas-fleetshard-operator-subscription-config-file", c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile, "kas-fleetshard operator subscription config. This is applied for standalone clusters only. The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig")
+	fs.StringVar(&c.ObservabilityOperatorOLMConfig.IndexImage, "observability-operator-index-image", c.ObservabilityOperatorOLMConfig.IndexImage, "Observability operator index image")
+	fs.StringVar(&c.ObservabilityOperatorOLMConfig.SubscriptionStartingCSV, "observability-operator-starting-csv", c.ObservabilityOperatorOLMConfig.SubscriptionStartingCSV, "Observability operator subscription starting CSV")
 	fs.StringVar(&c.DynamicScalingConfig.filePath, "dynamic-scaling-config-file", c.DynamicScalingConfig.filePath, "File path to a file containing the dynamic scaling configuration")
 	fs.StringVar(&c.NodePrewarmingConfig.filePath, "node-prewarming-config-file", c.NodePrewarmingConfig.filePath, "File path to a file containing the node prewarming configuration")
 }

@@ -540,6 +540,16 @@ parameters:
   description: kas-fleetshard operator OLM package name
   value: "kas-fleetshard-operator"
 
+- name: OBSERVABILITY_OPERATOR_INDEX_IMAGE
+  displayName: Observability operator index image
+  description: Observability operator index image
+  value: "quay.io/rhoas/observability-operator-index:v3.0.14"
+
+- name: OBSERVABILITY_OPERATOR_STARTING_CSV
+  displayName: Observability operator subscription starting csv
+  description: Observability operator subscription starting csv
+  value: "observability-operator.v3.0.14"
+
 - name: IMAGE_PULL_POLICY
   displayName: image pull policy
   description: image pull polilcy
@@ -1074,6 +1084,8 @@ objects:
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
             - --strimzi-operator-index-image=${STRIMZI_OLM_INDEX_IMAGE}
             - --kas-fleetshard-operator-index-image=${KAS_FLEETSHARD_OLM_INDEX_IMAGE}
+            - --observability-operator-index-image=${OBSERVABILITY_OPERATOR_INDEX_IMAGE}
+            - --observability-operator-starting-csv=${OBSERVABILITY_OPERATOR_STARTING_CSV}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --kafka-domain-name=${KAFKA_DOMAIN_NAME}
             - --browser-url=${BROWSER_URL}

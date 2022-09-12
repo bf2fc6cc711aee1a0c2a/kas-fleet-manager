@@ -2143,7 +2143,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 			},
 			Spec: v1alpha1.CatalogSourceSpec{
 				SourceType: v1alpha1.SourceTypeGrpc,
-				Image:      observabilityCatalogSourceImage,
+				Image:      clusterConfig.ObservabilityOperatorOLMConfig.IndexImage,
 			},
 		},
 		&v1alpha2.OperatorGroup{
@@ -2172,7 +2172,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				CatalogSource:          observabilityCatalogSourceName,
 				Channel:                "alpha",
 				CatalogSourceNamespace: observabilityNamespace,
-				StartingCSV:            "observability-operator.v3.0.10",
+				StartingCSV:            clusterConfig.ObservabilityOperatorOLMConfig.SubscriptionStartingCSV,
 				InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 				Package:                observabilitySubscriptionName,
 			},
@@ -2249,6 +2249,10 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 		},
 		KasFleetshardOperatorOLMConfig: config.OperatorInstallationConfig{
 			Namespace: "kas-fleet-shard-namespace",
+		},
+		ObservabilityOperatorOLMConfig: config.OperatorInstallationConfig{
+			IndexImage:              "quay.io/rhoas/observability-operator-index:v3.0.14",
+			SubscriptionStartingCSV: "observability-operator.v3.0.14",
 		},
 	}
 	type fields struct {
