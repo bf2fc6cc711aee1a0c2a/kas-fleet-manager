@@ -3,7 +3,7 @@ package vault
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"io/ioutil"
 	"math/rand"
 	"testing"
@@ -15,35 +15,77 @@ func init() {
 }
 
 func Test_awsVaultService(t *testing.T) {
-	RegisterTestingT(t)
+	g := gomega.NewWithT(t)
 	vc := NewConfig()
 
 	// Enable testing against aws if the access keys are configured..
 	if content, err := ioutil.ReadFile(shared.BuildFullFilePath(vc.AccessKeyFile)); err == nil && len(content) > 0 {
 		vc.Kind = "aws"
 	}
-	Expect(vc.ReadFiles()).To(BeNil())
+	g.Expect(vc.ReadFiles()).To(gomega.BeNil())
 
 	// only run the tests below when aws vault service is configured
 	if vc.Kind == "aws" {
-		svc, err := NewVaultService(vc)
-		Expect(err).To(BeNil())
 
-		name := fmt.Sprintf("testkey%d", rand.Uint64())
-		value := "testvalue"
-		err = svc.SetSecretString(name, value, "/v1/connector/test")
-		Expect(err).To(BeNil())
+		tests := []struct {
+			config *Config
+			name   string
+		}{
+			{
+				config: &Config{
+					Kind:               KindAws,
+					AccessKey:          vc.AccessKey,
+					SecretAccessKey:    vc.SecretAccessKey,
+					Region:             vc.Region,
+					SecretPrefixEnable: false,
+					SecretPrefix:       "managed-connectors",
+				},
+				name: "aws-secrets-no-prefix",
+			},
+			{
+				config: &Config{
+					Kind:               KindAws,
+					AccessKey:          vc.AccessKey,
+					SecretAccessKey:    vc.SecretAccessKey,
+					Region:             vc.Region,
+					SecretPrefixEnable: true,
+					SecretPrefix:       "managed-connectors",
+				},
+				name: "aws-secrets-with-prefix",
+			},
+		}
 
-		// validate that aws secret has config prefix
-		result, err := svc.(*awsVaultService).secretCache.GetSecretString(vc.SecretPrefix + "/" + name)
-		Expect(err).To(BeNil())
-		Expect(result).To(Equal(value))
+		for _, testcase := range tests {
+			tt := testcase
+			t.Run(tt.name, func(t *testing.T) {
+				g = gomega.NewWithT(t)
 
-		result, err = svc.GetSecretString(name)
-		Expect(err).To(BeNil())
-		Expect(result).To(Equal(value))
+				svc, err := NewVaultService(tt.config)
+				g.Expect(err).To(gomega.BeNil())
 
-		err = svc.DeleteSecretString(name)
-		Expect(err).To(BeNil())
+				name := fmt.Sprintf("testkey%d", rand.Uint64())
+				value := "testvalue"
+				err = svc.SetSecretString(name, value, "/v1/connector/test")
+				g.Expect(err).To(gomega.BeNil())
+
+				// validate that aws secret has appropriate name
+				var secretName string
+				if tt.config.SecretPrefixEnable {
+					secretName = tt.config.SecretPrefix + "/" + name
+				} else {
+					secretName = name
+				}
+				result, err := svc.(*awsVaultService).secretCache.GetSecretString(secretName)
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(result).To(gomega.Equal(value))
+
+				result, err = svc.GetSecretString(name)
+				g.Expect(err).To(gomega.BeNil())
+				g.Expect(result).To(gomega.Equal(value))
+
+				err = svc.DeleteSecretString(name)
+				g.Expect(err).To(gomega.BeNil())
+			})
+		}
 	}
 }

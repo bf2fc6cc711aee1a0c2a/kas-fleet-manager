@@ -28,34 +28,49 @@ func TestNewVaultService(t *testing.T) {
 	g.Expect(vc.ReadFiles()).To(gomega.BeNil())
 
 	tests := []struct {
-		numSecrets   int // allow testing using aws vault with existing secrets
 		config       *vault.Config
 		wantErrOnNew bool
 		skip         bool
+		name         string
 	}{
 		{
 			config: &vault.Config{Kind: vault.KindTmp},
+			name:   vault.KindTmp,
 		},
 		{
-			numSecrets: 92, // NOTE: change this to number of secrets actually in test AWS account after first failure
 			config: &vault.Config{
-				Kind:            vault.KindAws,
-				AccessKey:       vc.AccessKey,
-				SecretAccessKey: vc.SecretAccessKey,
-				Region:          vc.Region,
-				SecretPrefix:    "managed-connectors",
+				Kind:               vault.KindAws,
+				AccessKey:          vc.AccessKey,
+				SecretAccessKey:    vc.SecretAccessKey,
+				Region:             vc.Region,
+				SecretPrefixEnable: false,
+				SecretPrefix:       "managed-connectors",
 			},
 			skip: vc.Kind != vault.KindAws,
+			name: vault.KindAws + "-no-prefix",
+		},
+		{
+			config: &vault.Config{
+				Kind:               vault.KindAws,
+				AccessKey:          vc.AccessKey,
+				SecretAccessKey:    vc.SecretAccessKey,
+				Region:             vc.Region,
+				SecretPrefixEnable: true,
+				SecretPrefix:       "managed-connectors",
+			},
+			skip: vc.Kind != vault.KindAws,
+			name: vault.KindAws + "-with-prefix",
 		},
 		{
 			config:       &vault.Config{Kind: "wrong"},
 			wantErrOnNew: true,
+			name:         "wrong",
 		},
 	}
 
 	for _, testcase := range tests {
 		tt := testcase
-		t.Run(tt.config.Kind, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 
 			svc, err := vault.NewVaultService(tt.config)
@@ -64,38 +79,37 @@ func TestNewVaultService(t *testing.T) {
 				if tt.skip {
 					t.SkipNow()
 				}
-				happyPath(svc, tt.numSecrets, t)
+				happyPath(svc, t)
 			}
 		})
 	}
 }
 
-func happyPath(vault vault.VaultService, numSecrets int, t *testing.T) {
+func happyPath(service vault.VaultService, t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	counter := 0
-	err := vault.ForEachSecret(func(name string, owningResource string) bool {
-		counter += 1
+	numSecrets := 0
+	err := service.ForEachSecret(func(name string, owningResource string) bool {
+		numSecrets += 1
 		return true
 	})
 	g.Expect(err).Should(gomega.BeNil())
-	g.Expect(counter).Should(gomega.Equal(numSecrets))
 
 	keyName := api.NewID()
-	err = vault.SetSecretString(keyName, "hello", handlers.OwningResourcePrefix+"thistest")
+	err = service.SetSecretString(keyName, "hello", handlers.OwningResourcePrefix+"thistest")
 	g.Expect(err).Should(gomega.BeNil())
 
-	value, err := vault.GetSecretString(keyName)
+	value, err := service.GetSecretString(keyName)
 	g.Expect(err).Should(gomega.BeNil())
 	g.Expect(value).Should(gomega.Equal("hello"))
 
-	err = vault.DeleteSecretString(keyName)
+	err = service.DeleteSecretString(keyName)
 	g.Expect(err).Should(gomega.BeNil())
 
-	_, err = vault.GetSecretString("missing")
+	_, err = service.GetSecretString("missing")
 	g.Expect(err).ShouldNot(gomega.BeNil())
 
-	err = vault.DeleteSecretString("missing")
+	err = service.DeleteSecretString("missing")
 	g.Expect(err).ShouldNot(gomega.BeNil())
 
 	var builder strings.Builder

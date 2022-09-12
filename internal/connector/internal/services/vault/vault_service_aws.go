@@ -15,9 +15,10 @@ var OwnerResourceTagKey = "owner-resource"
 var _ VaultService = &awsVaultService{}
 
 type awsVaultService struct {
-	secretCache  *secretcache.Cache
-	secretClient *secretsmanager.SecretsManager
-	secretPrefix string
+	secretCache        *secretcache.Cache
+	secretClient       *secretsmanager.SecretsManager
+	secretPrefixEnable bool
+	secretPrefix       string
 }
 
 func NewAwsVaultService(vaultConfig *Config) (*awsVaultService, error) {
@@ -42,9 +43,10 @@ func NewAwsVaultService(vaultConfig *Config) (*awsVaultService, error) {
 		return nil, err
 	}
 	return &awsVaultService{
-		secretClient: secretClient,
-		secretCache:  secretCache,
-		secretPrefix: vaultConfig.SecretPrefix + "/",
+		secretClient:       secretClient,
+		secretCache:        secretCache,
+		secretPrefixEnable: vaultConfig.SecretPrefixEnable,
+		secretPrefix:       vaultConfig.SecretPrefix + "/",
 	}, nil
 }
 
@@ -54,7 +56,7 @@ func (k *awsVaultService) Kind() string {
 
 func (k *awsVaultService) GetSecretString(name string) (string, error) {
 
-	name = k.getPrefixedName(name)
+	name = k.getVaultSecretName(name)
 	metrics.IncreaseVaultServiceTotalCount("get")
 	result, err := k.secretCache.GetSecretString(name)
 	if err != nil {
@@ -72,7 +74,7 @@ func (k *awsVaultService) GetSecretString(name string) (string, error) {
 
 func (k *awsVaultService) SetSecretString(name string, value string, owningResource string) error {
 
-	name = k.getPrefixedName(name)
+	name = k.getVaultSecretName(name)
 	var tags []*secretsmanager.Tag
 	if owningResource != "" {
 		tags = append(tags,
@@ -99,10 +101,15 @@ func (k *awsVaultService) SetSecretString(name string, value string, owningResou
 
 func (k *awsVaultService) ForEachSecret(f func(name string, owningResource string) bool) error {
 	filterKey := `name`
-	paging := &secretsmanager.ListSecretsInput{
-		Filters: []*secretsmanager.Filter{
-			{Key: &filterKey, Values: []*string{&k.secretPrefix}}, // filter secret keys with prefix
-		},
+	var paging *secretsmanager.ListSecretsInput
+	if k.secretPrefixEnable {
+		paging = &secretsmanager.ListSecretsInput{
+			Filters: []*secretsmanager.Filter{
+				{Key: &filterKey, Values: []*string{&k.secretPrefix}}, // filter secret keys with prefix
+			},
+		}
+	} else {
+		paging = &secretsmanager.ListSecretsInput{}
 	}
 	err := k.secretClient.ListSecretsPages(paging, func(output *secretsmanager.ListSecretsOutput, lastPage bool) bool {
 		for _, entry := range output.SecretList {
@@ -136,7 +143,7 @@ func getTag(tags []*secretsmanager.Tag, key string) string {
 }
 
 func (k *awsVaultService) DeleteSecretString(name string) error {
-	name = k.getPrefixedName(name)
+	name = k.getVaultSecretName(name)
 	metrics.IncreaseVaultServiceTotalCount("delete")
 	_, err := k.secretClient.DeleteSecret(&secretsmanager.DeleteSecretInput{
 		SecretId: &name,
@@ -154,6 +161,9 @@ func (k *awsVaultService) DeleteSecretString(name string) error {
 	return err
 }
 
-func (k *awsVaultService) getPrefixedName(name string) string {
-	return k.secretPrefix + name
+func (k *awsVaultService) getVaultSecretName(name string) string {
+	if k.secretPrefixEnable {
+		return k.secretPrefix + name
+	}
+	return name
 }
