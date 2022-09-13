@@ -85,7 +85,11 @@ func (q amsQuotaService) newBaseQuotaReservedResourceBuilder(kafka *dbapi.KafkaR
 	return *rr
 }
 
-var supportedAMSBillingModels map[string]struct{} = map[string]struct{}{
+// supportedAMSRelatedResourceBillingModels returns the supported AMS billing
+// models for AMS RelatedResources. An AMS RelatedResource is not to be confused
+// with an AMS ReservedResource. The set of Billing models shown/accepted is
+// different between them
+var supportedAMSRelatedResourceBillingModels = map[string]struct{}{
 	string(amsv1.BillingModelMarketplace): {},
 	string(amsv1.BillingModelStandard):    {},
 }
@@ -181,7 +185,8 @@ func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, e
 // one AMS QuotaCost that complies with the following conditions:
 //   - Matches the given input quotaType
 //   - Contains at least one AMS RelatedResources whose billing model is one
-//     of the supported Billing Models specified in supportedAMSBillingModels
+//     of the supported Billing Models specified in
+//     supportedAMSRelatedResourceBillingModels
 //   - Has an "Allowed" value greater than 0
 //
 // An error is returned if the given organizationID has a QuotaCost
@@ -196,7 +201,7 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 	for _, qc := range quotaCosts {
 		if qc.Allowed() > 0 {
 			for _, rr := range qc.RelatedResources() {
-				if _, isCompatibleBillingModel := supportedAMSBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
+				if _, isCompatibleBillingModel := supportedAMSRelatedResourceBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
 					return true, nil
 				}
 				foundUnsupportedBillingModel = rr.BillingModel()
