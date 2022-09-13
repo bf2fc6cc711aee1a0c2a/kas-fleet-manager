@@ -81,7 +81,6 @@ func (q amsQuotaService) newBaseQuotaReservedResourceBuilder(kafka *dbapi.KafkaR
 		rr.ResourceType(resourceType)
 	}
 	rr.ResourceName(ocm.RHOSAKResourceName)
-	rr.BillingModel(amsv1.BillingModelMarketplace)
 	rr.Count(1)
 	return *rr
 }

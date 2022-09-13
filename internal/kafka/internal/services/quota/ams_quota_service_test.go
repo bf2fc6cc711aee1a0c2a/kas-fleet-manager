@@ -1648,7 +1648,6 @@ func Test_amsQuotaService_newBaseQuotaReservedResourceBuilder(t *testing.T) {
 				rrbuilder.Count(1)
 				rrbuilder.ResourceType(amsReservedResourceResourceTypeClusterAWS)
 				rrbuilder.ResourceName(ocm.RHOSAKResourceName)
-				rrbuilder.BillingModel(v1.BillingModelMarketplace)
 				return *rrbuilder
 			},
 		},
@@ -1665,7 +1664,6 @@ func Test_amsQuotaService_newBaseQuotaReservedResourceBuilder(t *testing.T) {
 				rrbuilder.Count(1)
 				rrbuilder.ResourceType(amsReservedResourceResourceTypeClusterAWS)
 				rrbuilder.ResourceName(ocm.RHOSAKResourceName)
-				rrbuilder.BillingModel(v1.BillingModelMarketplace)
 				return *rrbuilder
 			},
 		},
@@ -1682,7 +1680,6 @@ func Test_amsQuotaService_newBaseQuotaReservedResourceBuilder(t *testing.T) {
 				rrbuilder.Count(1)
 				rrbuilder.ResourceType(amsReservedResourceResourceTypeClusterGCP)
 				rrbuilder.ResourceName(ocm.RHOSAKResourceName)
-				rrbuilder.BillingModel("marketplace")
 				return *rrbuilder
 			},
 		},
