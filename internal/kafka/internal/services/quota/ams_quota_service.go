@@ -359,6 +359,17 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 	}
 	kafka.BillingModel = matchedBillingModel
 
+	// For Kafka requests to be provisioned on GCP currently the only supported
+	// AMS billing models are standard or Red Hat Marketplace ("marketplace").
+	// If the AMS billing model to be requested is none of those we return an error.
+	// TODO change the logic to send "marketplace-rhm" instead of the deprecated
+	// "marketplace" once the billing dependencies are updated to deal with it.
+	if kafka.CloudProvider == cloudproviders.GCP.String() &&
+		bm != string(amsv1.BillingModelStandard) &&
+		bm != string(amsv1.BillingModelMarketplace) {
+		return "", errors.GeneralError("failed to reserve quota: unsupported billing model %q for Kafka %q in cloud provider %q", bm, kafka.ID, kafka.CloudProvider)
+	}
+
 	rr.BillingModel(amsv1.BillingModel(bm))
 	rr.Count(kafkaInstanceSize.QuotaConsumed)
 

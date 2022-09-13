@@ -893,9 +893,13 @@ func Test_AMSReserveQuota(t *testing.T) {
 		kafkaConfig *config.KafkaConfig
 	}
 	type args struct {
-		kafkaID           string
-		owner             string
-		kafkaInstanceType types.KafkaInstanceType
+		kafkaID                           string
+		owner                             string
+		kafkaInstanceType                 types.KafkaInstanceType
+		kafkaRequestMarketplace           string
+		kafkaRequestBillingModel          string
+		kafkaRequestBillingCloudAccountID string
+		kafkaRequestCloudProvider         string
 	}
 	tests := []struct {
 		name             string
@@ -908,9 +912,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "reserve a quota & get subscription id",
 			args: args{
-				"12231",
-				"testUser",
-				types.STANDARD,
+				kafkaID:           "12231",
+				owner:             "testUser",
+				kafkaInstanceType: types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -942,9 +946,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "when both standard and marketplace billing models are available standard is assigned as billing model",
 			args: args{
-				"12231",
-				"testUser",
-				types.STANDARD,
+				kafkaID:           "12231",
+				owner:             "testUser",
+				kafkaInstanceType: types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -981,9 +985,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "when only marketplace billing model has available resources marketplace billing model is assigned",
 			args: args{
-				"12231",
-				"testUser",
-				types.STANDARD,
+				kafkaID:           "12231",
+				owner:             "testUser",
+				kafkaInstanceType: types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -1020,9 +1024,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "when a related resource has a supported billing model with cost of 0 that billing model is allowed",
 			args: args{
-				"12231",
-				"testUser",
-				types.STANDARD,
+				kafkaID:           "12231",
+				owner:             "testUser",
+				kafkaInstanceType: types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -1054,9 +1058,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "when all matching quota_costs consumed resources are higher or equal than the allowed resources an error is returned",
 			args: args{
-				"12231",
-				"testUser",
-				types.STANDARD,
+				kafkaID:           "12231",
+				owner:             "testUser",
+				kafkaInstanceType: types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -1091,9 +1095,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "when no quota_costs are available for the given product an error is returned",
 			args: args{
-				"12231",
-				"testUser",
-				types.STANDARD,
+				kafkaID:           "12231",
+				owner:             "testUser",
+				kafkaInstanceType: types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -1118,9 +1122,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "when the quota_costs returned do not contain a supported billing model an error is returned",
 			args: args{
-				"12231",
-				"testUser",
-				types.STANDARD,
+				kafkaID:           "12231",
+				owner:             "testUser",
+				kafkaInstanceType: types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -1155,9 +1159,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 		{
 			name: "failed to reserve a quota",
 			args: args{
-				"12231",
-				"testUser",
-				types.STANDARD,
+				kafkaID:           "12231",
+				owner:             "testUser",
+				kafkaInstanceType: types.STANDARD,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -1181,6 +1185,171 @@ func Test_AMSReserveQuota(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "reserving a Kafka located in GCP with Red Hat marketplace AMS billing model is accepted",
+			args: args{
+				kafkaID:                           "12231",
+				owner:                             "testUser",
+				kafkaInstanceType:                 types.STANDARD,
+				kafkaRequestMarketplace:           "rhm",
+				kafkaRequestBillingCloudAccountID: "12345",
+				kafkaRequestBillingModel:          "marketplace",
+				kafkaRequestCloudProvider:         cloudproviders.GCP.String(),
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID("1234")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).
+							OrganizationID(organizationID).RelatedResources(rrbq1).
+							CloudAccounts(v1.NewCloudAccount().CloudProviderID("rhm").CloudAccountID("12345")).
+							Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+						return []*v1.QuotaCost{qcb}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			want:             "1234",
+			wantBillingModel: string(v1.BillingModelMarketplace),
+			wantErr:          false,
+		},
+		{
+			name: "reserving a Kafka located in GCP with no explicit marketplace reserves 'marketplace' quota when the related resource has marketplace quota only",
+			args: args{
+				kafkaID:                           "12231",
+				owner:                             "testUser",
+				kafkaInstanceType:                 types.STANDARD,
+				kafkaRequestBillingCloudAccountID: "12345",
+				kafkaRequestBillingModel:          "marketplace",
+				kafkaRequestCloudProvider:         cloudproviders.GCP.String(),
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID("1234")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).
+							OrganizationID(organizationID).RelatedResources(rrbq1).
+							CloudAccounts(v1.NewCloudAccount().CloudProviderID("rhm").CloudAccountID("12345")).
+							Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+						return []*v1.QuotaCost{qcb}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			want:             "1234",
+			wantBillingModel: string(v1.BillingModelMarketplace),
+			wantErr:          false,
+		},
+		{
+			name: "reserving a Kafka located in GCP with no explicit marketplace nor billing model reserves standard if there is standard related resource quota",
+			args: args{
+				kafkaID:                   "12231",
+				owner:                     "testUser",
+				kafkaInstanceType:         types.STANDARD,
+				kafkaRequestCloudProvider: cloudproviders.GCP.String(),
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID("1234")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						qcb1, err := v1.NewQuotaCost().Allowed(1).Consumed(0).
+							OrganizationID(organizationID).RelatedResources(rrbq1).
+							CloudAccounts(v1.NewCloudAccount().CloudProviderID("rhm").CloudAccountID("12345")).
+							Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+						rrbq2 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelStandard)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(0).
+							OrganizationID(organizationID).RelatedResources(rrbq2).
+							Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+						return []*v1.QuotaCost{qcb1, qcb2}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			want:             "1234",
+			wantBillingModel: string(v1.BillingModelStandard),
+			wantErr:          false,
+		},
+		{
+			name: "when reserving a Kafka located in GCP with a non Red Hat marketplace AMS billing model specified an error is returned",
+			args: args{
+				kafkaID:                           "12231",
+				owner:                             "testUser",
+				kafkaInstanceType:                 types.STANDARD,
+				kafkaRequestMarketplace:           "aws",
+				kafkaRequestBillingCloudAccountID: "12345",
+				kafkaRequestBillingModel:          "marketplace",
+				kafkaRequestCloudProvider:         cloudproviders.GCP.String(),
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID("1234")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).
+							OrganizationID(organizationID).RelatedResources(rrbq1).
+							CloudAccounts(v1.NewCloudAccount().CloudProviderID("aws").CloudAccountID("12345")).
+							Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+						return []*v1.QuotaCost{qcb}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, testcase := range tests {
@@ -1193,14 +1362,17 @@ func Test_AMSReserveQuota(t *testing.T) {
 				Meta: api.Meta{
 					ID: tt.args.kafkaID,
 				},
-				Owner:        tt.args.owner,
-				SizeId:       "x1",
-				InstanceType: string(tt.args.kafkaInstanceType),
+				CloudProvider:         tt.args.kafkaRequestCloudProvider,
+				Owner:                 tt.args.owner,
+				SizeId:                "x1",
+				InstanceType:          string(tt.args.kafkaInstanceType),
+				Marketplace:           tt.args.kafkaRequestMarketplace,
+				BillingCloudAccountId: tt.args.kafkaRequestBillingCloudAccountID,
+				BillingModel:          tt.args.kafkaRequestBillingModel,
 			}
 			subId, err := quotaService.ReserveQuota(kafka, types.STANDARD)
-			g.Expect(subId).To(gomega.Equal(tt.want))
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
-
+			g.Expect(subId).To(gomega.Equal(tt.want))
 			if tt.wantBillingModel != "" {
 				ocmClientMock := tt.fields.ocmClient.(*ocm.ClientMock)
 				clusterAuthorizationCalls := ocmClientMock.ClusterAuthorizationCalls()
