@@ -2,9 +2,9 @@ package observatorium
 
 import (
 	"fmt"
+	"github.com/golang/glog"
 	"strings"
 
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 )
 
@@ -15,11 +15,9 @@ type APIObservatoriumService interface {
 	GetMetrics(csMetrics *KafkaMetrics, resourceNamespace string, rq *MetricsReqParams) error
 }
 type fetcher struct {
-	metric   string
-	labels   string
-	callback callback
+	metric string
+	labels string
 }
-type callback func(m Metric)
 
 type ServiceObservatorium struct {
 	client *Client
@@ -46,253 +44,192 @@ func (obs *ServiceObservatorium) GetKafkaState(name string, resourceNamespace st
 	return KafkaState, nil
 }
 
+// buildQueries takes a list of requested metrics and a list of filters and computes the minimum number of queries
+// to run. We need to run one query per label selector, but multiple metrics can share the same label selector.
+func (obs *ServiceObservatorium) buildQueries(fetchers []fetcher, rq *MetricsReqParams) []string {
+	groupedQueries := map[string][]string{}
+	var queries []string
+
+	isMetricRequested := func(metric string) bool {
+		// if no filters are provided assume that all metrics were requested
+		if rq.Filters == nil {
+			return true
+		}
+		for _, filter := range rq.Filters {
+			if filter == metric {
+				return true
+			}
+		}
+		return false
+	}
+
+	// figure out unique label selectors
+	for _, f := range fetchers {
+		if isMetricRequested(f.metric) {
+			groupedQueries[f.labels] = append(groupedQueries[f.labels], f.metric)
+		}
+	}
+
+	// build one query per unique label selector
+	for labels, metrics := range groupedQueries {
+		queries = append(queries, fmt.Sprintf("{__name__=~'%v', %v}", strings.Join(metrics, "|"), labels))
+	}
+
+	return queries
+}
+
 func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace string, rq *MetricsReqParams) error {
-	failedMetrics := []string{}
-	fetchers := map[string]fetcher{
+	fetchers := []fetcher{
 		//Check metrics for available disk space per broker
-		"kubelet_volume_stats_available_bytes": {
-			`kubelet_volume_stats_available_bytes{%s}`,
+		{
+			`kubelet_volume_stats_available_bytes`,
 			fmt.Sprintf(`persistentvolumeclaim=~"data-.*-kafka-[0-9]*$", namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
 		//Check metrics for used disk space per broker
-		"kubelet_volume_stats_used_bytes": {
-			`kubelet_volume_stats_used_bytes{%s}`,
+		{
+			`kubelet_volume_stats_used_bytes`,
 			fmt.Sprintf(`persistentvolumeclaim=~"data-.*-kafka-[0-9]*$", namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
 		//Check metrics for soft limit quota for cluster
-		"kafka_broker_quota_softlimitbytes": {
-			`kafka_broker_quota_softlimitbytes{%s}`,
+		{
+			`kafka_broker_quota_softlimitbytes`,
 			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
 		//Check metrics for hard limit quota for cluster
-		"kafka_broker_quota_hardlimitbytes": {
-			`kafka_broker_quota_hardlimitbytes{%s}`,
+		{
+			`kafka_broker_quota_hardlimitbytes`,
 			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
 		//Check metrics for used space across the cluster
-		"kafka_broker_quota_totalstorageusedbytes": {
-			`kafka_broker_quota_totalstorageusedbytes{%s}`,
+		{
+			`kafka_broker_quota_totalstorageusedbytes`,
 			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
 		//Check metrics for broker client quota limit
-		"kafka_broker_client_quota_limit": {
-			`kafka_broker_client_quota_limit{%s}`,
+		{
+			`kafka_broker_client_quota_limit`,
 			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
 		//Check metrics for messages in per topic
-		"kafka_server_brokertopicmetrics_messages_in_total": {
-			`kafka_server_brokertopicmetrics_messages_in_total{%s}`,
+		{
+			`kafka_server_brokertopicmetrics_messages_in_total`,
 			fmt.Sprintf(`strimzi_io_kind=~'Kafka', %s, namespace=~'%s'`, privateTopicFilter, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
 		//Check metrics for bytes in per topic
-		"kafka_server_brokertopicmetrics_bytes_in_total": {
-			`kafka_server_brokertopicmetrics_bytes_in_total{%s}`,
+		{
+			`kafka_server_brokertopicmetrics_bytes_in_total`,
 			fmt.Sprintf(`strimzi_io_kind=~'Kafka', %s, namespace=~'%s'`, privateTopicFilter, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
 		//Check metrics for bytes out per topic
-		"kafka_server_brokertopicmetrics_bytes_out_total": {
-			`kafka_server_brokertopicmetrics_bytes_out_total{%s}`,
+		{
+			`kafka_server_brokertopicmetrics_bytes_out_total`,
 			fmt.Sprintf(`strimzi_io_kind=~'Kafka', %s, namespace=~'%s'`, privateTopicFilter, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
 		//Check metrics for partition states
-		"kafka_controller_kafkacontroller_offline_partitions_count": {
-			`kafka_controller_kafkacontroller_offline_partitions_count{%s}`,
+		{
+			`kafka_controller_kafkacontroller_offline_partitions_count`,
 			fmt.Sprintf(`strimzi_io_kind=~'Kafka',namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"kafka_controller_kafkacontroller_global_partition_count": {
-			`kafka_controller_kafkacontroller_global_partition_count{%s}`,
+		{
+			`kafka_controller_kafkacontroller_global_partition_count`,
 			fmt.Sprintf(`strimzi_io_kind=~'Kafka',namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
 		//Check metrics for log size
-		"kafka_topic:kafka_log_log_size:sum": {
-			`kafka_topic:kafka_log_log_size:sum{%s}`,
+		{
+			`kafka_topic:kafka_log_log_size:sum`,
 			fmt.Sprintf(`%s, namespace=~'%s'`, privateTopicFilter, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
 		//Check metrics for all traffic in/out
-		"kafka_namespace:haproxy_server_bytes_in_total:rate5m": {
-			`kafka_namespace:haproxy_server_bytes_in_total:rate5m{%s}`,
+		{
+			`kafka_namespace:haproxy_server_bytes_in_total:rate5m`,
 			fmt.Sprintf(`exported_namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"kafka_namespace:haproxy_server_bytes_out_total:rate5m": {
-			`kafka_namespace:haproxy_server_bytes_out_total:rate5m{%s}`,
+		{
+			`kafka_namespace:haproxy_server_bytes_out_total:rate5m`,
 			fmt.Sprintf(`exported_namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"kafka_topic:kafka_topic_partitions:sum": {
-			`kafka_topic:kafka_topic_partitions:sum{%s}`,
+		{
+			`kafka_topic:kafka_topic_partitions:sum`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"kafka_topic:kafka_topic_partitions:count": {
-			`kafka_topic:kafka_topic_partitions:count{%s}`,
+		{
+			`kafka_topic:kafka_topic_partitions:count`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"consumergroup:kafka_consumergroup_members:count": {
-			`consumergroup:kafka_consumergroup_members:count{%s}`,
+		{
+			`consumergroup:kafka_consumergroup_members:count`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum": {
-			`kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum{%s}`,
+		{
+			`kafka_namespace:kafka_server_socket_server_metrics_connection_count:sum`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum": {
-			`kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum{%s}`,
+		{
+			`kafka_namespace:kafka_server_socket_server_metrics_connection_creation_rate:sum`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m": {
-			`kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m{%s}`,
+		{
+			`kafka_topic:kafka_server_brokertopicmetrics_messages_in_total:rate5m`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m": {
-			`kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m{%s}`,
+		{
+			`kafka_topic:kafka_server_brokertopicmetrics_bytes_in_total:rate5m`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m": {
-			`kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m{%s}`,
+		{
+			`kafka_topic:kafka_server_brokertopicmetrics_bytes_out_total:rate5m`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-
-		"kafka_instance_spec_brokers_desired_count": {
-			`kafka_instance_spec_brokers_desired_count{%s}`,
+		{
+			`kafka_instance_spec_brokers_desired_count`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"kafka_instance_max_message_size_limit": {
-			`kafka_instance_max_message_size_limit{%s}`,
+		{
+			`kafka_instance_max_message_size_limit`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"kafka_instance_partition_limit": {
-			`kafka_instance_partition_limit{%s}`,
+		{
+			`kafka_instance_partition_limit`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"kafka_instance_connection_limit": {
-			`kafka_instance_connection_limit{%s}`,
+		{
+			`kafka_instance_connection_limit`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
-		"kafka_instance_connection_creation_rate_limit": {
-			`kafka_instance_connection_creation_rate_limit{%s}`,
+		{
+			`kafka_instance_connection_creation_rate_limit`,
 			fmt.Sprintf(`namespace=~'%s'`, namespace),
-			func(m Metric) {
-				*metrics = append(*metrics, m)
-			},
 		},
 	}
 
-	for msg := range fetchers {
-		f := fetchers[msg]
-		fetchAll := len(rq.Filters) == 0
-		if fetchAll {
-			result := obs.fetchMetricsResult(rq, &f)
-			if result.Err != nil {
-				glog.Error("error from metric ", result.Err)
-				failedMetrics = append(failedMetrics, fmt.Sprintf("%s: %s", msg, result.Err))
-			}
-			f.callback(result)
-		}
-		if !fetchAll {
-			for _, filter := range rq.Filters {
-				if filter == msg {
-					result := obs.fetchMetricsResult(rq, &f)
-					if result.Err != nil {
-						glog.Error("error from metric ", result.Err)
-						failedMetrics = append(failedMetrics, fmt.Sprintf("%s: %s", msg, result.Err))
-					}
-					f.callback(result)
-				}
-			}
-
+	var failedMetrics []string
+	queries := obs.buildQueries(fetchers, rq)
+	for _, query := range queries {
+		result := obs.fetchMetricsResult(query, rq)
+		if result.Err != nil {
+			failedMetrics = append(failedMetrics, query)
+			glog.Errorf("error running query %v", query)
+			continue
 		}
 
+		*metrics = append(*metrics, result)
 	}
+
 	if len(failedMetrics) > 0 {
 		return errors.New(fmt.Sprintf("Failed to fetch metrics data [%s]", strings.Join(failedMetrics, ",")))
 	}
+
 	return nil
 }
 
-func (obs *ServiceObservatorium) fetchMetricsResult(rq *MetricsReqParams, f *fetcher) Metric {
+func (obs *ServiceObservatorium) fetchMetricsResult(query string, rq *MetricsReqParams) Metric {
 	c := obs.client
 	var result Metric
 	switch rq.ResultType {
 	case RangeQuery:
-		result = c.QueryRange(f.metric, f.labels, rq.Range)
+		result = c.QueryRawRange(query, rq.Range)
 	case Query:
-		result = c.Query(f.metric, f.labels)
+		result = c.QueryRaw(query)
 	default:
 		result = Metric{Err: errors.Errorf("Unsupported Result Type %q", rq.ResultType)}
 	}

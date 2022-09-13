@@ -157,7 +157,9 @@ func TestServiceObservatorium_GetMetrics(t *testing.T) {
 			obs := &ServiceObservatorium{
 				client: tt.fields.client,
 			}
-			g.Expect(obs.GetMetrics(tt.args.metrics, tt.args.namespace, tt.args.rq) != nil).To(gomega.Equal(tt.wantErr))
+
+			err = obs.GetMetrics(tt.args.metrics, tt.args.namespace, tt.args.rq)
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
