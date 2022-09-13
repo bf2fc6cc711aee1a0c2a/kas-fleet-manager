@@ -28,8 +28,9 @@ func Test_awsVaultService(t *testing.T) {
 	if vc.Kind == "aws" {
 
 		tests := []struct {
-			config *Config
-			name   string
+			config        *Config
+			name          string
+			validationErr bool
 		}{
 			{
 				config: &Config{
@@ -41,6 +42,18 @@ func Test_awsVaultService(t *testing.T) {
 					SecretPrefix:       "managed-connectors",
 				},
 				name: "aws-secrets-no-prefix",
+			},
+			{
+				config: &Config{
+					Kind:               KindAws,
+					AccessKey:          vc.AccessKey,
+					SecretAccessKey:    vc.SecretAccessKey,
+					Region:             vc.Region,
+					SecretPrefixEnable: true,
+					SecretPrefix:       "",
+				},
+				name:          "aws-secrets-invalid-prefix",
+				validationErr: true,
 			},
 			{
 				config: &Config{
@@ -62,6 +75,12 @@ func Test_awsVaultService(t *testing.T) {
 
 				svc, err := NewVaultService(tt.config)
 				g.Expect(err).To(gomega.BeNil())
+
+				err = tt.config.Validate(nil)
+				g.Expect(err != nil).To(gomega.Equal(tt.validationErr))
+				if tt.validationErr {
+					return
+				}
 
 				name := fmt.Sprintf("testkey%d", rand.Uint64())
 				value := "testvalue"
