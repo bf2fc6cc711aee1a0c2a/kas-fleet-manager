@@ -1,7 +1,7 @@
 # Slice Utilities
 This document describes how to use array utilities in `pkg/shared/utils` folder.
 
-## Simple API
+## API
 
 ### FindFirst
 ```go
@@ -44,7 +44,7 @@ This function checks whether `predicate(x)` is `true` for all the element `x` of
 ```go
 func Map[T any, U any](values []T, mapper MapperFunc[T, U]) []U
 ```
-This function transforms all the elements of a slice of `T`s to a slice of `U`s by applying the `mapper` function to each element.
+This function transforms all the elements of a slice of `T`s into a slice of `U`s by applying the `mapper` function to each element.
 
 ### Reduce
 ```go
@@ -63,3 +63,28 @@ This function checks whether the given slice contains the given value.
 func ForEach[T any](values []T, consumer ConsumerFunc[T])
 ```
 This function applies the consumer function to each of the elements of the slice.
+
+## Common predicates
+
+### IsNotNilPredicate
+Checks whether the value is not nil
+
+### IsNilPredicate
+Checks whether the value is nil
+
+### StringNotEmptyPredicate
+This predicate works for both `string` and `*string` and returns `true` when the `string` is not empty.
+A `string` is `empty` when it is equal to `""`.
+A `*string` is `empty` when it is equal to `""` or is `nil`.
+
+### StringEmptyPredicate
+This predicate works for both `string` and `*string` and returns `true` when the `string` is empty.
+A `string` is `empty` when it is equal to `""`.
+A `*string` is `empty` when it is equal to `""` or is `nil`.
+
+### CompositePredicateAll
+This predicate is composed of a list of predicates and returns `true` only if all of its sub-predicates return `true`.
+
+### CompositePredicateAny
+This predicate is composed of a list of predicates and returns `true` only if at least one sub-predicate returns `true`.
+
