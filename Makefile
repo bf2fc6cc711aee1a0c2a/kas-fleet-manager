@@ -692,6 +692,30 @@ deploy/db:
 	@time timeout --foreground 3m bash -c "until $(OC) get pods -n $(NAMESPACE) | grep kas-fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
 .PHONY: deploy/db
 
+# Touch all the necessary files for fleet manager to start
+.PHONY: setup/secrets/empty
+setup/secrets/empty:
+	touch secrets/ocm-service.clientId
+	touch secrets/ocm-service.clientSecret
+	touch secrets/aws.accountid
+	touch secrets/aws.accesskey
+	touch secrets/aws.secretaccesskey
+	touch secrets/aws.route53accesskey
+	touch secrets/aws.route53secretaccesskey
+	touch secrets/keycloak-service.clientId
+	touch secrets/keycloak-service.clientSecret
+	touch secrets/osd-idp-keycloak-service.clientId
+	touch secrets/osd-idp-keycloak-service.clientSecret
+	touch secrets/sentry.key
+	touch secrets/rhsso-logs.clientId
+	touch secrets/rhsso-logs.clientSecret
+	touch secrets/rhsso-metrics.clientId
+	touch secrets/rhsso-metrics.clientSecret
+	touch secrets/observability-config-access.token
+	touch secrets/kafka-tls.crt
+	touch secrets/kafka-tls.key
+	touch secrets/image-pull.dockerconfigjson
+
 # deploys the secrets required by the service to an OpenShift cluster
 deploy/secrets:
 	@$(OC) get service/kas-fleet-manager-db -n $(NAMESPACE) || (echo "Database is not deployed, please run 'make deploy/db'"; exit 1)
