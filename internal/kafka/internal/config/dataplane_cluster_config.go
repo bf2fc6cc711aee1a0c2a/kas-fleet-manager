@@ -95,8 +95,8 @@ const (
 
 // constants for Observability Operator installation via OpenShift Lifecycle Manager
 const (
-	defaultObservabilityOperatorIndexImage  = "quay.io/rhoas/observability-operator-index:v3.0.14"
-	defaultObservabilityOperatorStartingCSV = "observability-operator.v3.0.14"
+	defaultObservabilityOperatorIndexImage  = "quay.io/rhoas/observability-operator-index:v3.0.15"
+	defaultObservabilityOperatorStartingCSV = "observability-operator.v3.0.15"
 )
 
 func getDefaultKubeconfig() string {

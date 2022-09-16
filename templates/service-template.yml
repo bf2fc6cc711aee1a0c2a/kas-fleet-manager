@@ -543,12 +543,12 @@ parameters:
 - name: OBSERVABILITY_OPERATOR_INDEX_IMAGE
   displayName: Observability operator index image
   description: Observability operator index image
-  value: "quay.io/rhoas/observability-operator-index:v3.0.14"
+  value: "quay.io/rhoas/observability-operator-index:v3.0.15"
 
 - name: OBSERVABILITY_OPERATOR_STARTING_CSV
   displayName: Observability operator subscription starting csv
   description: Observability operator subscription starting csv
-  value: "observability-operator.v3.0.14"
+  value: "observability-operator.v3.0.15"
 
 - name: IMAGE_PULL_POLICY
   displayName: image pull policy
