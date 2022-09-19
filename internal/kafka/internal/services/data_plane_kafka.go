@@ -18,24 +18,39 @@ import (
 	"github.com/pkg/errors"
 )
 
-type kafkaStatus string
+type managedKafkaStatus string
+
+func (ks managedKafkaStatus) String() string {
+	return string(ks)
+}
+
+type managedKafkaDeploymentType string
+
+func (dt managedKafkaDeploymentType) String() string {
+	return string(dt)
+}
+
+type totalCountPerReservedManagedKafkaDeploymentStatus map[managedKafkaStatus]int
+type reservedManagedKafkaStatusCountPerInstanceType map[api.ClusterInstanceTypeSupport]totalCountPerReservedManagedKafkaDeploymentStatus
 
 const (
-	statusInstalling          kafkaStatus = "installing"
-	statusReady               kafkaStatus = "ready"
-	statusError               kafkaStatus = "error"
-	statusRejected            kafkaStatus = "rejected"
-	statusRejectedClusterFull kafkaStatus = "rejectedClusterFull"
-	statusDeleted             kafkaStatus = "deleted"
-	statusUnknown             kafkaStatus = "unknown"
-	strimziUpdating           string      = "StrimziUpdating"
-	kafkaUpdating             string      = "KafkaUpdating"
-	kafkaIBPUpdating          string      = "KafkaIbpUpdating"
+	statusInstalling          managedKafkaStatus         = "installing"
+	statusReady               managedKafkaStatus         = "ready"
+	statusError               managedKafkaStatus         = "error"
+	statusRejected            managedKafkaStatus         = "rejected"
+	statusRejectedClusterFull managedKafkaStatus         = "rejectedClusterFull"
+	statusDeleted             managedKafkaStatus         = "deleted"
+	statusUnknown             managedKafkaStatus         = "unknown"
+	strimziUpdating           string                     = "StrimziUpdating"
+	kafkaUpdating             string                     = "KafkaUpdating"
+	kafkaIBPUpdating          string                     = "KafkaIbpUpdating"
+	reservedDeploymentType    managedKafkaDeploymentType = "reserved"
+	realDeploymentType        managedKafkaDeploymentType = "real"
 )
 
 //go:generate moq -out data_plane_kafka_service_moq.go . DataPlaneKafkaService
 type DataPlaneKafkaService interface {
-	UpdateDataPlaneKafkaService(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError
+	UpdateDataPlaneKafkaService(ctx context.Context, clusterID string, status []*dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError
 }
 
 type dataPlaneKafkaService struct {
@@ -52,65 +67,126 @@ func NewDataPlaneKafkaService(kafkaSrv KafkaService, clusterSrv ClusterService, 
 	}
 }
 
-func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError {
-	cluster, err := d.clusterService.FindClusterByID(clusterId)
+func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context, clusterID string, status []*dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError {
+	cluster, err := d.clusterService.FindClusterByID(clusterID)
 	log := logger.NewUHCLogger(ctx)
 	if err != nil {
 		return err
 	}
 	if cluster == nil {
 		// 404 is used for authenticated requests. So to distinguish the errors, we use 400 here
-		return serviceError.BadRequest("Cluster id %s not found", clusterId)
+		return serviceError.BadRequest("Cluster id %s not found", clusterID)
 	}
-	for _, ks := range status {
-		kafka, getErr := d.kafkaService.GetById(ks.KafkaClusterId)
-		if getErr != nil {
-			glog.Error(errors.Wrapf(getErr, "failed to get kafka cluster by id %s", ks.KafkaClusterId))
-			continue
-		}
-		if kafka.ClusterID != clusterId {
-			log.Warningf("clusterId for kafka cluster %s does not match clusterId. kafka clusterId = %s :: clusterId = %s", kafka.ID, kafka.ClusterID, clusterId)
-			continue
-		}
-		var e *serviceError.ServiceError
-		switch s := getStatus(ks); s {
-		case statusReady:
-			// Store the routes (and create them) when Kafka is ready. By the time it is ready, the routes should definitely be there.
-			e = d.persistKafkaRoutes(kafka, ks, cluster)
-			if e == nil {
-				kafka.AdminApiServerURL = ks.AdminServerURI
-				e = d.setKafkaClusterReady(kafka)
-			}
-		case statusInstalling:
-			// Store the routes (and create them) if they are available at this stage to lessen the length of time taken to provision the Kafka.
-			// The routes list will either be empty or complete.
-			e = d.persistKafkaRoutes(kafka, ks, cluster)
-		case statusError:
-			// when getStatus returns statusError we know that the ready
-			// condition will be there so there's no need to check for it
-			readyCondition, _ := ks.GetReadyCondition()
-			e = d.setKafkaClusterFailed(kafka, readyCondition.Message)
-		case statusDeleted:
-			e = d.setKafkaClusterDeleting(kafka)
-		case statusRejected:
-			e = d.reassignKafkaCluster(kafka)
-		case statusRejectedClusterFull:
-			e = d.unassignKafkaFromDataplaneCluster(kafka)
-		case statusUnknown:
-			log.Infof("kafka cluster %s status is unknown", ks.KafkaClusterId)
-		default:
-			log.V(5).Infof("kafka cluster %s is still installing", ks.KafkaClusterId)
-		}
-		if e != nil {
-			log.Error(errors.Wrapf(e, "Error updating kafka %s status", ks.KafkaClusterId))
-		}
 
-		e = d.setKafkaRequestVersionFields(kafka, ks)
-		if e != nil {
-			log.Error(errors.Wrapf(e, "Error updating kafka '%s' version fields", ks.KafkaClusterId))
+	prewarmingStatusInfo := reservedManagedKafkaStatusCountPerInstanceType{}
+	supportedInstanceTypes := cluster.GetSupportedInstanceTypes()
+
+	// prefill prewarming status info with empty count
+	for _, supportedInstanceType := range supportedInstanceTypes {
+		// sets all the statuses to 0 to allow for the count to drop
+		prewarmingStatusInfo[api.ClusterInstanceTypeSupport(supportedInstanceType)] = totalCountPerReservedManagedKafkaDeploymentStatus{
+			statusReady:               0,
+			statusError:               0,
+			statusUnknown:             0,
+			statusDeleted:             0,
+			statusRejected:            0,
+			statusInstalling:          0,
+			statusRejectedClusterFull: 0,
 		}
 	}
+
+	for _, ks := range status {
+		managedKafkaDeploymentType := getManagedKafkaDeploymentType(ks)
+		switch managedKafkaDeploymentType {
+		case realDeploymentType:
+			d.processRealKafkaDeployment(ks, cluster, log)
+		case reservedDeploymentType:
+			d.processReservedKafkaDeployment(ks, prewarmingStatusInfo, log, clusterID)
+		}
+	}
+
+	// emits the kas_fleet_manager_prewarmed_kafka_instances metrics
+	for instanceType, instanceTypePrewarmingStatusInfo := range prewarmingStatusInfo {
+		for status, count := range instanceTypePrewarmingStatusInfo {
+			metrics.UpdateClusterPrewarmingStatusInfoCountMetric(metrics.PrewarmingStatusInfo{
+				ClusterID:    cluster.ClusterID,
+				InstanceType: instanceType.String(),
+				Status:       status.String(),
+				Count:        count,
+			})
+		}
+	}
+
 	return nil
+}
+
+// processRealKafkaDeployment process reserved kafka instances and updates their status in cluster
+func (d *dataPlaneKafkaService) processReservedKafkaDeployment(ks *dbapi.DataPlaneKafkaStatus, prewarmingStatusInfo reservedManagedKafkaStatusCountPerInstanceType, log logger.UHCLogger, clusterID string) {
+	parsedID := strings.Split(ks.KafkaClusterId, "-")
+	if len(parsedID) < 4 {
+		log.Error(fmt.Errorf("The reserved %q ID does not follow the format 'reserved-kafka-<instance-type>-<number>'", ks.KafkaClusterId))
+		return
+	}
+
+	instanceType := parsedID[2]
+	_, ok := prewarmingStatusInfo[api.ClusterInstanceTypeSupport(instanceType)]
+	if !ok {
+		log.Error(fmt.Errorf("The reserved %q ID is not supported in the cluster with cluster_id %q", ks.KafkaClusterId, clusterID))
+		return
+	}
+
+	reservedManagedKafkaStatus := getStatus(ks)
+	prewarmingStatusInfo[api.ClusterInstanceTypeSupport(instanceType)][reservedManagedKafkaStatus] += 1
+}
+
+// processRealKafkaDeployment process real kafka instances and updates their status and stores other info coming data plane
+func (d *dataPlaneKafkaService) processRealKafkaDeployment(ks *dbapi.DataPlaneKafkaStatus, cluster *api.Cluster, log logger.UHCLogger) {
+	kafka, getErr := d.kafkaService.GetById(ks.KafkaClusterId)
+	if getErr != nil {
+		glog.Error(errors.Wrapf(getErr, "failed to get kafka cluster by id %s", ks.KafkaClusterId))
+		return
+	}
+	if kafka.ClusterID != cluster.ClusterID {
+		log.Warningf("clusterId for kafka cluster %s does not match clusterId. kafka clusterId = %s :: clusterId = %s", kafka.ID, kafka.ClusterID, cluster.ClusterID)
+		return
+	}
+	var e *serviceError.ServiceError
+	switch s := getStatus(ks); s {
+	case statusReady:
+		// Store the routes (and create them) when Kafka is ready. By the time it is ready, the routes should definitely be there.
+		e = d.persistKafkaRoutes(kafka, ks, cluster)
+		if e == nil {
+			kafka.AdminApiServerURL = ks.AdminServerURI
+			e = d.setKafkaClusterReady(kafka)
+		}
+	case statusInstalling:
+		// Store the routes (and create them) if they are available at this stage to lessen the length of time taken to provision the Kafka.
+		// The routes list will either be empty or complete.
+		e = d.persistKafkaRoutes(kafka, ks, cluster)
+	case statusError:
+		// when getStatus returns statusError we know that the ready
+		// condition will be there so there's no need to check for it
+		readyCondition, _ := ks.GetReadyCondition()
+		e = d.setKafkaClusterFailed(kafka, readyCondition.Message)
+	case statusDeleted:
+		e = d.setKafkaClusterDeleting(kafka)
+	case statusRejected:
+		e = d.reassignKafkaCluster(kafka)
+	case statusRejectedClusterFull:
+		e = d.unassignKafkaFromDataplaneCluster(kafka)
+	case statusUnknown:
+		log.Infof("kafka cluster %s status is unknown", ks.KafkaClusterId)
+	default:
+		log.V(5).Infof("kafka cluster %s is still installing", ks.KafkaClusterId)
+	}
+	if e != nil {
+		log.Error(errors.Wrapf(e, "Error updating kafka %s status", ks.KafkaClusterId))
+	}
+
+	e = d.setKafkaRequestVersionFields(kafka, ks)
+	if e != nil {
+		log.Error(errors.Wrapf(e, "Error updating kafka '%s' version fields", ks.KafkaClusterId))
+	}
 }
 
 func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *dbapi.KafkaRequest) *serviceError.ServiceError {
@@ -304,34 +380,6 @@ func (d *dataPlaneKafkaService) unassignKafkaFromDataplaneCluster(kafka *dbapi.K
 	return nil
 }
 
-func getStatus(status *dbapi.DataPlaneKafkaStatus) kafkaStatus {
-	for _, c := range status.Conditions {
-		if strings.EqualFold(c.Type, "Ready") {
-			if strings.EqualFold(c.Status, "True") {
-				return statusReady
-			}
-			if strings.EqualFold(c.Status, "Unknown") {
-				return statusUnknown
-			}
-			if strings.EqualFold(c.Reason, "Installing") {
-				return statusInstalling
-			}
-			if strings.EqualFold(c.Reason, "Deleted") {
-				return statusDeleted
-			}
-			if strings.EqualFold(c.Reason, "Error") {
-				return statusError
-			}
-			if strings.EqualFold(c.Reason, "Rejected") {
-				if strings.EqualFold(c.Message, "Cluster has insufficient resources") {
-					return statusRejectedClusterFull
-				}
-				return statusRejected
-			}
-		}
-	}
-	return statusInstalling
-}
 func (d *dataPlaneKafkaService) checkKafkaRequestCurrentStatus(kafka *dbapi.KafkaRequest, status constants2.KafkaStatus) (bool, *serviceError.ServiceError) {
 	matchStatus := false
 	if currentInstance, err := d.kafkaService.GetById(kafka.ID); err != nil {
@@ -379,6 +427,35 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 	return nil
 }
 
+func getStatus(status *dbapi.DataPlaneKafkaStatus) managedKafkaStatus {
+	for _, c := range status.Conditions {
+		if strings.EqualFold(c.Type, "Ready") {
+			if strings.EqualFold(c.Status, "True") {
+				return statusReady
+			}
+			if strings.EqualFold(c.Status, "Unknown") {
+				return statusUnknown
+			}
+			if strings.EqualFold(c.Reason, "Installing") {
+				return statusInstalling
+			}
+			if strings.EqualFold(c.Reason, "Deleted") {
+				return statusDeleted
+			}
+			if strings.EqualFold(c.Reason, "Error") {
+				return statusError
+			}
+			if strings.EqualFold(c.Reason, "Rejected") {
+				if strings.EqualFold(c.Message, "Cluster has insufficient resources") {
+					return statusRejectedClusterFull
+				}
+				return statusRejected
+			}
+		}
+	}
+	return statusInstalling
+}
+
 func buildRoutes(routesInRequest []dbapi.DataPlaneKafkaRouteRequest, kafka *dbapi.KafkaRequest, clusterDNS string) ([]dbapi.DataPlaneKafkaRoute, error) {
 	routes := []dbapi.DataPlaneKafkaRoute{}
 	bootstrapServer := kafka.BootstrapServerHost
@@ -398,4 +475,15 @@ func buildRoutes(routesInRequest []dbapi.DataPlaneKafkaRouteRequest, kafka *dbap
 		}
 	}
 	return routes, nil
+}
+
+// getManagedKafkaDeploymentType gets the deployment type from the data plane kafka status
+// If the id of the status begins with "reserved-" then the deployment type is reserved.
+// Otherwise, it is a "real" deployment
+func getManagedKafkaDeploymentType(ks *dbapi.DataPlaneKafkaStatus) managedKafkaDeploymentType {
+	if strings.HasPrefix(ks.KafkaClusterId, fmt.Sprintf("%s-", reservedDeploymentType.String())) {
+		return reservedDeploymentType
+	}
+
+	return realDeploymentType
 }
