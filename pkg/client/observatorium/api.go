@@ -2,8 +2,9 @@ package observatorium
 
 import (
 	"fmt"
-	"github.com/golang/glog"
 	"strings"
+
+	"github.com/golang/glog"
 
 	"github.com/pkg/errors"
 )
@@ -207,8 +208,8 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 	for _, query := range queries {
 		result := obs.fetchMetricsResult(query, rq)
 		if result.Err != nil {
-			failedMetrics = append(failedMetrics, query)
-			glog.Errorf("error running query %v", query)
+			failedMetrics = append(failedMetrics, fmt.Sprintf("%q:%v", query, result.Err))
+			glog.Errorf("error running query %q: %v", query, result.Err)
 			continue
 		}
 
