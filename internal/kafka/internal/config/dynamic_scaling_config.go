@@ -60,12 +60,7 @@ func (c *InstanceTypeDynamicScalingConfig) validate() error {
 		return fmt.Errorf("compute_nodes_config is mandatory")
 	}
 
-	err := c.ComputeNodesConfig.validate()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return c.ComputeNodesConfig.validate()
 }
 
 type DynamicScalingComputeNodesConfig struct {
