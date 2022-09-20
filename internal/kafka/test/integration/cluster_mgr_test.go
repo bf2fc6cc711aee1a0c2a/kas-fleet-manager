@@ -143,6 +143,16 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	g.Expect(cluster.ExternalID).NotTo(gomega.Equal(""))
 	g.Expect(cluster.ExternalID).To(gomega.Equal(ocmCluster.ExternalID()))
 
+	// check that the default machine pool is created with correct min/max node and machine type.
+	// Only do the check for when running against real OCM environment
+	ocmConfig := test.TestServices.OCMConfig
+	if ocmConfig.MockMode != ocm.MockModeEmulateServer {
+		nodes := ocmCluster.Nodes()
+		g.Expect(nodes.ComputeMachineType().ID()).To(gomega.Equal(dataplaneConfig.AWSComputeMachineType))
+		g.Expect(nodes.AutoscaleCompute().MinReplicas()).To(gomega.Equal(3))
+		g.Expect(nodes.AutoscaleCompute().MaxReplicas()).To(gomega.Equal(18))
+	}
+
 	// check the state of the managed kafka addon on ocm to ensure it was installed successfully
 	strimziOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, test.TestServices.OCMConfig.StrimziOperatorAddonID)
 	if err != nil {
@@ -152,7 +162,6 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	// check that the kafka-standard machine pool is created in OCM
 	standardKafkaMachinePoolID := "kafka-standard"
-	ocmConfig := test.TestServices.OCMConfig
 	if ocmConfig.MockMode != ocm.MockModeEmulateServer {
 		standardKafkaMachinePool, machinePoolErr := ocmClient.GetMachinePool(cluster.ClusterID, standardKafkaMachinePoolID)
 		// check that the machinepool is present
