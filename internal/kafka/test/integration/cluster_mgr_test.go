@@ -75,8 +75,8 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	kasfFleetshardSync.Start()
 
 	defer func() {
-		teardown()
 		kasfFleetshardSync.Stop()
+		teardown()
 
 		list, _ := test.TestServices.ClusterService.FindAllClusters(services.FindClusterCriteria{
 			Region:   mocks.MockCluster.Region().ID(),
