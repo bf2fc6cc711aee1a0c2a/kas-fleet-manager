@@ -12,8 +12,9 @@ package public
 
 // VersionMetadata struct for VersionMetadata
 type VersionMetadata struct {
-	Id          string            `json:"id"`
-	Kind        string            `json:"kind"`
-	Href        string            `json:"href"`
-	Collections []ObjectReference `json:"collections,omitempty"`
+	Id            string            `json:"id"`
+	Kind          string            `json:"kind"`
+	Href          string            `json:"href"`
+	ServerVersion string            `json:"server_version,omitempty"`
+	Collections   []ObjectReference `json:"collections,omitempty"`
 }
