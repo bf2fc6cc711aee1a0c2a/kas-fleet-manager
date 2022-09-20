@@ -18,6 +18,7 @@ import (
 	kafkaMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -37,6 +38,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	// start servers
 	zeroDeveloperLimit := 0
+	var dataplaneConfig *config.DataplaneClusterConfig
 	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, p *config.ProviderConfig) {
 		p.ProvidersConfig.SupportedProviders = config.ProviderList{
 			config.Provider{
@@ -62,6 +64,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		// turn auto scaling on to enable cluster auto creation
 		d.DataPlaneClusterScalingType = config.AutoScaling
 		d.EnableDynamicScaleUpManagerScaleUpTrigger = true
+		dataplaneConfig = d
 	})
 
 	// setup required services
@@ -72,8 +75,8 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	kasfFleetshardSync.Start()
 
 	defer func() {
-		teardown()
 		kasfFleetshardSync.Stop()
+		teardown()
 
 		list, _ := test.TestServices.ClusterService.FindAllClusters(services.FindClusterCriteria{
 			Region:   mocks.MockCluster.Region().ID(),
@@ -140,12 +143,59 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	g.Expect(cluster.ExternalID).NotTo(gomega.Equal(""))
 	g.Expect(cluster.ExternalID).To(gomega.Equal(ocmCluster.ExternalID()))
 
+	// check that the default machine pool is created with correct min/max node and machine type.
+	// Only do the check for when running against real OCM environment
+	ocmConfig := test.TestServices.OCMConfig
+	if ocmConfig.MockMode != ocm.MockModeEmulateServer {
+		nodes := ocmCluster.Nodes()
+		g.Expect(nodes.ComputeMachineType().ID()).To(gomega.Equal(dataplaneConfig.AWSComputeMachineType))
+		g.Expect(nodes.AutoscaleCompute().MinReplicas()).To(gomega.Equal(3))
+		g.Expect(nodes.AutoscaleCompute().MaxReplicas()).To(gomega.Equal(18))
+	}
+
 	// check the state of the managed kafka addon on ocm to ensure it was installed successfully
 	strimziOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, test.TestServices.OCMConfig.StrimziOperatorAddonID)
 	if err != nil {
 		t.Fatalf("failed to get the strimzi operator addon for cluster %s", cluster.ClusterID)
 	}
 	g.Expect(strimziOperatorAddonInstallation.State()).To(gomega.Equal(clustersmgmtv1.AddOnInstallationStateReady))
+
+	// check that the kafka-standard machine pool is created in OCM
+	standardKafkaMachinePoolID := "kafka-standard"
+	if ocmConfig.MockMode != ocm.MockModeEmulateServer {
+		standardKafkaMachinePool, machinePoolErr := ocmClient.GetMachinePool(cluster.ClusterID, standardKafkaMachinePoolID)
+		// check that the machinepool is present
+		g.Expect(machinePoolErr).NotTo(gomega.HaveOccurred())
+		g.Expect(standardKafkaMachinePool).NotTo(gomega.BeNil())
+		g.Expect(standardKafkaMachinePool.InstanceType()).To(gomega.Equal(dataplaneConfig.AWSComputeMachineType))
+
+		// check min and max nodes configuration
+		autoscaling := standardKafkaMachinePool.Autoscaling()
+		config, _ := dataplaneConfig.DynamicScalingConfig.ForInstanceType(api.StandardTypeSupport.String())
+		g.Expect(autoscaling.MinReplicas()).To(gomega.Equal(3))
+		g.Expect(autoscaling.MaxReplicas()).To(gomega.Equal(config.ComputeNodesConfig.MaxComputeNodes))
+
+		// check that the machinepool labels match what's expected
+		bf2InstanceProfileTypeKey := "bf2.org/kafkaInstanceProfileType"
+		labels := standardKafkaMachinePool.Labels()
+		labelValue, ok := labels[bf2InstanceProfileTypeKey]
+		g.Expect(ok).To(gomega.BeTrue())
+		g.Expect(labelValue).To(gomega.Equal(api.StandardTypeSupport.String()))
+
+		// check that the machinepool taints match what's expected
+		taints := standardKafkaMachinePool.Taints()
+		taintFound := false
+		for _, taint := range taints {
+			if taint.Key() == bf2InstanceProfileTypeKey {
+				taintFound = true
+				g.Expect(taint.Effect()).To(gomega.Equal("NoExecute"))
+				g.Expect(taint.Value()).To(gomega.Equal(api.StandardTypeSupport.String()))
+				break
+			}
+		}
+
+		g.Expect(taintFound).To(gomega.BeTrue())
+	}
 
 	// The cluster DNS should have been persisted
 	ocmClusterDNS, err := ocmClient.GetClusterDNS(cluster.ClusterID)
