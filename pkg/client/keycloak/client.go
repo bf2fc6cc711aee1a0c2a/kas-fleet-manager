@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 	"time"
 
@@ -151,12 +152,10 @@ func (kc *kcClient) GetClient(clientId string, accessToken string) (*gocloak.Cli
 	if err != nil {
 		return nil, err
 	}
-	for _, client := range clients {
-		if *client.ClientID == clientId {
-			return client, nil
-		}
-	}
-	return nil, nil
+
+	_, client := arrays.FindFirst(clients, func(c *gocloak.Client) bool { return *c.ClientID == clientId })
+
+	return client, nil
 }
 
 func (kc *kcClient) GetToken() (string, error) {

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -33,13 +34,7 @@ func (m *requireIssuerMiddleware) RequireIssuer(issuers []string, code errors.Se
 				return
 			}
 
-			issuerAccepted := false
-			for _, issuer := range issuers {
-				if claims.VerifyIssuer(issuer, true) {
-					issuerAccepted = true
-					break
-				}
-			}
+			issuerAccepted := arrays.AnyMatch(issuers, func(issuer string) bool { return claims.VerifyIssuer(issuer, true) })
 
 			if !issuerAccepted {
 				shared.HandleError(request, writer, serviceErr)

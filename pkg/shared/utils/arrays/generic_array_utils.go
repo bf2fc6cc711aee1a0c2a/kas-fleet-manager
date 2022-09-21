@@ -32,7 +32,7 @@ func FindFirst[T any](values []T, predicate PredicateFunc[T]) (int, T) {
 
 // Filter return a slice containing only the values of `values` matching the given predicate
 func Filter[T any](values []T, predicate PredicateFunc[T]) []T {
-	var res []T
+	res := []T{}
 	for _, val := range values {
 		if predicate(val) {
 			val := val

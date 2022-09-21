@@ -1,10 +1,8 @@
 package auth
 
 import (
-	"net/http"
-	"strings"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
+	"net/http"
 
 	"github.com/golang/glog"
 
@@ -92,11 +90,7 @@ func getRealmRolesClaim(claims KFMClaims) []string {
 	if realmRoles, ok := claims["realm_access"]; ok {
 		if roles, ok := realmRoles.(map[string]interface{}); ok {
 			if arr, ok := roles["roles"].([]interface{}); ok {
-				var r []string
-				for _, i := range arr {
-					r = append(r, i.(string))
-				}
-				return r
+				return arrays.Map(arr, func(v any) string { return v.(string) })
 			}
 		}
 	}
@@ -104,7 +98,5 @@ func getRealmRolesClaim(claims KFMClaims) []string {
 }
 
 func hasRole(roles []string, roleName string) bool {
-	return arrays.AnyMatch(roles, func(role string) bool {
-		return strings.EqualFold(role, roleName)
-	})
+	return arrays.AnyMatch(roles, arrays.StringEqualsIgnoreCasePredicate(roleName))
 }

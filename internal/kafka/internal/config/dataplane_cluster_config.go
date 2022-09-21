@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"os"
 	"path/filepath"
 	"strings"
@@ -197,14 +198,13 @@ type ClusterConfig struct {
 }
 
 func NewClusterConfig(clusters ClusterList) *ClusterConfig {
-	clusterMap := make(map[string]ManualCluster)
-	for _, c := range clusters {
-		clusterMap[c.ClusterId] = c
-	}
-	return &ClusterConfig{
+	return arrays.Reduce(clusters, func(clusterConfig *ClusterConfig, c ManualCluster) *ClusterConfig {
+		clusterConfig.clusterConfigMap[c.ClusterId] = c
+		return clusterConfig
+	}, &ClusterConfig{
 		clusterList:      clusters,
-		clusterConfigMap: clusterMap,
-	}
+		clusterConfigMap: make(map[string]ManualCluster),
+	})
 }
 
 func (conf *ClusterConfig) GetCapacityForRegion(region string) int {
