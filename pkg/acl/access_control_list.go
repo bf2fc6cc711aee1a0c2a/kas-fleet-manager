@@ -11,15 +11,11 @@ type DeniedUsers []string
 type AcceptedOrganisations []string
 
 func (deniedAccounts DeniedUsers) IsUserDenied(username string) bool {
-	return arrays.FindFirstString(deniedAccounts, func(user string) bool {
-		return username == user
-	}) != -1
+	return arrays.Contains(deniedAccounts, username)
 }
 
 func (acceptedOrganisations AcceptedOrganisations) IsOrganisationAccepted(orgId string) bool {
-	return arrays.FindFirstString(acceptedOrganisations, func(organisation string) bool {
-		return orgId == organisation
-	}) != -1
+	return arrays.Contains(acceptedOrganisations, orgId)
 }
 
 type AccessControlListConfig struct {

@@ -109,7 +109,7 @@ func getRealmRolesClaim(claims KFMClaims) []string {
 }
 
 func hasRole(roles []string, roleName string) bool {
-	return arrays.FindFirstString(roles, func(role string) bool {
+	return arrays.AnyMatch(roles, func(role string) bool {
 		return strings.EqualFold(role, roleName)
-	}) != -1
+	})
 }

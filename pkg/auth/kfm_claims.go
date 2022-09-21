@@ -13,7 +13,7 @@ func (c *KFMClaims) VerifyIssuer(cmp string, req bool) bool {
 }
 
 func (c *KFMClaims) GetUsername() (string, error) {
-	if idx, val := arrays.FindFirst(func(x interface{}) bool { return x != nil }, (*c)[tenantUsernameClaim], (*c)[alternateTenantUsernameClaim]); idx != -1 {
+	if idx, val := arrays.FindFirst([]any{(*c)[tenantUsernameClaim], (*c)[alternateTenantUsernameClaim]}, func(x any) bool { return x != nil }); idx != -1 {
 		return val.(string), nil
 	}
 	return "", fmt.Errorf("can't find neither '%s' or '%s' attribute in claims", tenantUsernameClaim, alternateTenantUsernameClaim)
