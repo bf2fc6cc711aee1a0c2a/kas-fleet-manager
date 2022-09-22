@@ -20,6 +20,12 @@ type fetcher struct {
 	labels string
 }
 
+// metricQueryResult holds a metric result for each metric query
+type metricQueryResult struct {
+	metricResult Metric
+	metricQuery  string
+}
+
 type ServiceObservatorium struct {
 	client *Client
 }
@@ -203,17 +209,33 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 		},
 	}
 
-	var failedMetrics []string
+	// build query per label to reduce query count
 	queries := obs.buildQueries(fetchers, rq)
+
+	// distribute metrics queries to observatorium
+	resultChan := make(chan metricQueryResult)
 	for _, query := range queries {
-		result := obs.fetchMetricsResult(query, rq)
-		if result.Err != nil {
-			failedMetrics = append(failedMetrics, fmt.Sprintf("%q:%v", query, result.Err))
-			glog.Errorf("error running query %q: %v", query, result.Err)
+		go func(query string) {
+			metricResult := obs.fetchMetricsResult(query, rq)
+			resultChan <- metricQueryResult{
+				metricResult: metricResult,
+				metricQuery:  query,
+			}
+		}(query)
+	}
+
+	// process the metrics result
+	var failedMetrics []string
+	for i := 1; i <= len(queries); i++ {
+		metricQueryResult := <-resultChan
+		if metricQueryResult.metricResult.Err != nil {
+			message := fmt.Sprintf("%q:%v", metricQueryResult.metricQuery, metricQueryResult.metricResult.Err)
+			failedMetrics = append(failedMetrics, message)
+			glog.Errorf("error running query %q: %v", metricQueryResult.metricQuery, metricQueryResult.metricResult.Err)
 			continue
 		}
 
-		*metrics = append(*metrics, result)
+		*metrics = append(*metrics, metricQueryResult.metricResult)
 	}
 
 	if len(failedMetrics) > 0 {
