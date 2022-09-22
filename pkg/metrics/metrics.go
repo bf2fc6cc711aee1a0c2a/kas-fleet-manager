@@ -79,6 +79,9 @@ const (
 	// ClusterProviderResourceQuotaMaxAllowed - metric name for the maximum allowed resource quota given to a user by a cluster provider (i.e. ocm)
 	ClusterProviderResourceQuotaMaxAllowed = "cluster_provider_resource_quota_max_allowed"
 
+	// PrewarmingStatusInfoCount - metric name for the total number of prewarmed instances per cluster_id, status and instance type.
+	PrewarmingStatusInfoCount = "prewarmed_kafka_instances"
+
 	LabelStatusCode = "code"
 	LabelMethod     = "method"
 	LabelPath       = "path"
@@ -91,6 +94,11 @@ const (
 
 	LabelQuotaId         = "quota_id"
 	LabelClusterProvider = "cluster_provider"
+
+	// prewarming metric labels
+	prewarmingStatusLabel       = "status"
+	prewarmingInstanceTypeLabel = "instance_type"
+	prewarmingClusterIDLabel    = "cluster_id"
 )
 
 // JobType metric to capture
@@ -170,6 +178,12 @@ var clusterStatusCapacityLabels = []string{
 var ClusterProviderResourceQuotaLabels = []string{
 	LabelQuotaId,
 	LabelClusterProvider,
+}
+
+var prewarmingMetricLabels = []string{
+	prewarmingClusterIDLabel,
+	prewarmingInstanceTypeLabel,
+	prewarmingStatusLabel,
 }
 
 // #### Metrics for Dataplane clusters - Start ####
@@ -735,6 +749,38 @@ func UpdateDatabaseQueryDurationMetric(status string, queryType string, elapsed 
 
 // #### Metrics for Database - End ####
 
+// create a new gaugeVec for the prewarming status info count per cluster_id, instance_type and status.
+var prewarmingStatusInfoCountMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: KasFleetManager,
+		Name:      PrewarmingStatusInfoCount,
+		Help:      "count of reserved kafka instances in a given status deployed on the given cluster_id.",
+	},
+	prewarmingMetricLabels,
+)
+
+// PrewarmingStatusInfo is a container of prewarming count information.
+// ClusterID: the cluster_id of the cluster.
+// InstanceType: the instance type of the prewarmed instance.
+// Status: the status of the reserved instance reported by the data plane.
+// Count: the total count of reserved instances in the given status.
+type PrewarmingStatusInfo struct {
+	ClusterID    string
+	InstanceType string
+	Status       string
+	Count        int
+}
+
+// UpdateClusterPrewarmingStatusInfoCountMetric - Updates the kas_fleet_manager_prewarmed_kafka_instances metric.
+func UpdateClusterPrewarmingStatusInfoCountMetric(prewarmingStatusInfo PrewarmingStatusInfo) {
+	labels := prometheus.Labels{
+		prewarmingClusterIDLabel:    prewarmingStatusInfo.ClusterID,
+		prewarmingInstanceTypeLabel: prewarmingStatusInfo.InstanceType,
+		prewarmingStatusLabel:       prewarmingStatusInfo.Status,
+	}
+	prewarmingStatusInfoCountMetric.With(labels).Set(float64(prewarmingStatusInfo.Count))
+}
+
 // register the metric(s)
 func init() {
 	// metrics for data plane clusters
@@ -748,6 +794,7 @@ func init() {
 	prometheus.MustRegister(clusterStatusCapacityUsedMetric)
 	prometheus.MustRegister(clusterStatusCapacityAvailableMetric)
 	prometheus.MustRegister(clusterProviderResourceQuotaConsumedMetric)
+	prometheus.MustRegister(prewarmingStatusInfoCountMetric)
 	prometheus.MustRegister(clusterProviderResourceQuotaMaxAllowedMetric)
 
 	// metrics for Kafkas
@@ -818,6 +865,7 @@ func Reset() {
 	clusterStatusCountMetric.Reset()
 	kafkaPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
+	prewarmingStatusInfoCountMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
 	clusterStatusCapacityAvailableMetric.Reset()
 	clusterProviderResourceQuotaConsumedMetric.Reset()

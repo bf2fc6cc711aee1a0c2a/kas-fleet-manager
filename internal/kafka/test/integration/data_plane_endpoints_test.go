@@ -24,6 +24,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
@@ -52,7 +53,6 @@ var clusterId = api.NewID()
 var clusterDNS = "some-cluster.dns.org"
 
 func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer {
-
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, startupHook)
 	db := test.TestServices.DBFactory.New()
@@ -1227,6 +1227,107 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 	}
 	g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusReady.String()))
 	g.Expect(c.FailedReason).To(gomega.BeEmpty())
+}
+
+func TestDataPlaneEndpoints_UpdateManagedKafka_PrewarmingStatusInfoMetrics(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
+		username, _ := account.GetUsername()
+		return jwt.MapClaims{
+			"username": username,
+			"iss":      test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
+			"realm_access": map[string][]string{
+				"roles": {"kas_fleetshard_operator"},
+			},
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
+		}
+	}, nil)
+
+	defer testServer.TearDown()
+
+	updateReq := map[string]private.DataPlaneKafkaStatus{
+		"reserved-kafka-standard-1": {
+			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+				{
+					Type:   "Ready",
+					Reason: "Error",
+					Status: "False",
+				},
+			},
+		},
+		"reserved-kafka-developer-1": {
+			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+				{
+					Type:   "Ready",
+					Reason: "",
+					Status: "False",
+				},
+			},
+		},
+		"reserved-kafka-developer-2": {
+			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+				{
+					Type:   "Ready",
+					Reason: "Error",
+					Status: "False",
+				},
+			},
+		},
+		"reserved-kafka-standard-2": {
+			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+				{
+					Type:   "Ready",
+					Status: "True",
+				},
+			},
+		},
+		"reserved-kafka-developer-3": {
+			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+				{
+					Type:   "Ready",
+					Reason: "",
+					Status: "Unknown",
+				},
+			},
+		},
+	}
+	resp, err := testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	prewarmedCountForStandard := map[string]int{
+		"error":               1,
+		"ready":               1,
+		"unknown":             0,
+		"deleted":             0,
+		"rejected":            0,
+		"installing":          0,
+		"rejectedClusterFull": 0,
+	}
+	prewarmedCountForDeveloper := map[string]int{
+		"error":               1,
+		"ready":               0,
+		"deleted":             0,
+		"unknown":             1,
+		"rejected":            0,
+		"installing":          1,
+		"rejectedClusterFull": 0,
+	}
+
+	// now verify that the metric value have been published
+	for status, count := range prewarmedCountForStandard {
+		metricValue := fmt.Sprintf("%d", count)
+		checkMetricsError := common.WaitForMetricToBePresent(testServer.Helper, t, metrics.PrewarmingStatusInfoCount, metricValue, api.StandardTypeSupport.String(), testServer.ClusterID, status)
+		g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
+	}
+	for status, count := range prewarmedCountForDeveloper {
+		metricValue := fmt.Sprintf("%d", count)
+		checkMetricsError := common.WaitForMetricToBePresent(testServer.Helper, t, metrics.PrewarmingStatusInfoCount, metricValue, api.DeveloperTypeSupport.String(), testServer.ClusterID, status)
+		g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
+	}
 }
 
 func findManagedKafkaByID(slice []private.ManagedKafka, kafkaId string) *private.ManagedKafka {
