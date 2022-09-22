@@ -96,7 +96,7 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 	}
 
 	for _, ks := range status {
-		managedKafkaDeploymentType := getManagedKafkaDeploymentType(ks)
+		managedKafkaDeploymentType := d.getManagedKafkaDeploymentType(ks)
 		switch managedKafkaDeploymentType {
 		case realDeploymentType:
 			d.processRealKafkaDeployment(ks, cluster, log)
@@ -135,7 +135,7 @@ func (d *dataPlaneKafkaService) processReservedKafkaDeployment(ks *dbapi.DataPla
 		return
 	}
 
-	reservedManagedKafkaStatus := getStatus(ks)
+	reservedManagedKafkaStatus := d.getManagedKafkaStatus(ks)
 	prewarmingStatusInfo[api.ClusterInstanceTypeSupport(instanceType)][reservedManagedKafkaStatus] += 1
 }
 
@@ -151,7 +151,7 @@ func (d *dataPlaneKafkaService) processRealKafkaDeployment(ks *dbapi.DataPlaneKa
 		return
 	}
 	var e *serviceError.ServiceError
-	switch s := getStatus(ks); s {
+	switch s := d.getManagedKafkaStatus(ks); s {
 	case statusReady:
 		// Store the routes (and create them) when Kafka is ready. By the time it is ready, the routes should definitely be there.
 		e = d.persistKafkaRoutes(kafka, ks, cluster)
@@ -412,7 +412,7 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 
 	var routesErr error
 	baseClusterDomain := strings.TrimPrefix(clusterDNS, fmt.Sprintf("%s.", constants2.DefaultIngressDnsNamePrefix))
-	if routes, routesErr = buildRoutes(routesInRequest, kafka, baseClusterDomain); routesErr != nil {
+	if routes, routesErr = d.buildKafkaRoutes(routesInRequest, kafka, baseClusterDomain); routesErr != nil {
 		return serviceError.NewWithCause(serviceError.ErrorBadRequest, routesErr, "routes are not valid")
 	}
 
@@ -427,7 +427,7 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 	return nil
 }
 
-func getStatus(status *dbapi.DataPlaneKafkaStatus) managedKafkaStatus {
+func (d *dataPlaneKafkaService) getManagedKafkaStatus(status *dbapi.DataPlaneKafkaStatus) managedKafkaStatus {
 	for _, c := range status.Conditions {
 		if strings.EqualFold(c.Type, "Ready") {
 			if strings.EqualFold(c.Status, "True") {
@@ -456,7 +456,7 @@ func getStatus(status *dbapi.DataPlaneKafkaStatus) managedKafkaStatus {
 	return statusInstalling
 }
 
-func buildRoutes(routesInRequest []dbapi.DataPlaneKafkaRouteRequest, kafka *dbapi.KafkaRequest, clusterDNS string) ([]dbapi.DataPlaneKafkaRoute, error) {
+func (d *dataPlaneKafkaService) buildKafkaRoutes(routesInRequest []dbapi.DataPlaneKafkaRouteRequest, kafka *dbapi.KafkaRequest, clusterDNS string) ([]dbapi.DataPlaneKafkaRoute, error) {
 	routes := []dbapi.DataPlaneKafkaRoute{}
 	bootstrapServer := kafka.BootstrapServerHost
 	for _, r := range routesInRequest {
@@ -480,7 +480,7 @@ func buildRoutes(routesInRequest []dbapi.DataPlaneKafkaRouteRequest, kafka *dbap
 // getManagedKafkaDeploymentType gets the deployment type from the data plane kafka status
 // If the id of the status begins with "reserved-" then the deployment type is reserved.
 // Otherwise, it is a "real" deployment
-func getManagedKafkaDeploymentType(ks *dbapi.DataPlaneKafkaStatus) managedKafkaDeploymentType {
+func (d *dataPlaneKafkaService) getManagedKafkaDeploymentType(ks *dbapi.DataPlaneKafkaStatus) managedKafkaDeploymentType {
 	if strings.HasPrefix(ks.KafkaClusterId, fmt.Sprintf("%s-", reservedDeploymentType.String())) {
 		return reservedDeploymentType
 	}

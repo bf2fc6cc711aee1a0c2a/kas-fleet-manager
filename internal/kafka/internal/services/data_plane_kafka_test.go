@@ -709,7 +709,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 	}
 }
 
-func Test_DataPlaneKafkaStatus_getStatus(t *testing.T) {
+func Test_DataPlaneKafkaStatus_getManagedKafkaStatus(t *testing.T) {
 	type args struct {
 		status *dbapi.DataPlaneKafkaStatus
 	}
@@ -842,7 +842,8 @@ func Test_DataPlaneKafkaStatus_getStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			got := getStatus(tt.args.status)
+			d := &dataPlaneKafkaService{}
+			got := d.getManagedKafkaStatus(tt.args.status)
 			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
@@ -921,7 +922,7 @@ func Test_dataPlaneKafkaService_unassignKafkaFromDataplaneCluster(t *testing.T) 
 	}
 }
 
-func Test_getManagedKafkaDeploymentType(t *testing.T) {
+func Test_dataPlaneKafkaService_getManagedKafkaDeploymentType(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		ks *dbapi.DataPlaneKafkaStatus
@@ -955,7 +956,8 @@ func Test_getManagedKafkaDeploymentType(t *testing.T) {
 		t.Run(testcase.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			deploymentType := getManagedKafkaDeploymentType(testcase.args.ks)
+			d := &dataPlaneKafkaService{}
+			deploymentType := d.getManagedKafkaDeploymentType(testcase.args.ks)
 			g.Expect(deploymentType).To(gomega.Equal(testcase.want))
 		})
 	}
