@@ -184,17 +184,24 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 		// check that the machinepool taints match what's expected
 		taints := standardKafkaMachinePool.Taints()
-		taintFound := false
+		g.Expect(taints).To(gomega.HaveLen(2)) // 2 taints should be present
+
+		taintWithNoExecuteEffectFound := false
+		taintWithNoScheduleEffectFound := false
+
 		for _, taint := range taints {
-			if taint.Key() == bf2InstanceProfileTypeKey {
-				taintFound = true
-				g.Expect(taint.Effect()).To(gomega.Equal("NoExecute"))
-				g.Expect(taint.Value()).To(gomega.Equal(api.StandardTypeSupport.String()))
-				break
+			if taint.Key() == bf2InstanceProfileTypeKey && taint.Effect() == "NoExecute" {
+				taintWithNoExecuteEffectFound = true
+			} else if taint.Key() == bf2InstanceProfileTypeKey && taint.Effect() == "NoSchedule" {
+				taintWithNoScheduleEffectFound = true
 			}
+			// the taint value is always the instance type. Let's check for this
+			g.Expect(taint.Value()).To(gomega.Equal(api.StandardTypeSupport.String()))
 		}
 
-		g.Expect(taintFound).To(gomega.BeTrue())
+		// assert that the two expected taint's effects have been found
+		g.Expect(taintWithNoExecuteEffectFound).To(gomega.BeTrue())
+		g.Expect(taintWithNoScheduleEffectFound).To(gomega.BeTrue())
 	}
 
 	// The cluster DNS should have been persisted

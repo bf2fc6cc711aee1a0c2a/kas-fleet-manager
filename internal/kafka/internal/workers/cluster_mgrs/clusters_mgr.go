@@ -962,16 +962,24 @@ func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supported
 	machinePoolLabels := map[string]string{
 		kafkaInstanceProfileType: supportedInstanceType,
 	}
-	machinePoolTaint := types.CluserNodeTaint{
+
+	machinePoolTaintWithNoExecuteEffect := types.CluserNodeTaint{
 		Effect: "NoExecute",
 		Key:    kafkaInstanceProfileType,
 		Value:  supportedInstanceType,
 	}
+
+	machinePoolTaintWithNoScheduleEffect := types.CluserNodeTaint{
+		Effect: "NoSchedule",
+		Key:    kafkaInstanceProfileType,
+		Value:  supportedInstanceType,
+	}
+
 	instanceSize := c.DataplaneClusterConfig.DefaultComputeMachineType(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
 	if instanceSize == "" {
 		return nil, fmt.Errorf("ClusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
 	}
-	machinePoolTaints := []types.CluserNodeTaint{machinePoolTaint}
+	machinePoolTaints := []types.CluserNodeTaint{machinePoolTaintWithNoExecuteEffect, machinePoolTaintWithNoScheduleEffect}
 	machinePool := &types.MachinePoolRequest{
 		ID:                 machinePoolID,
 		InstanceSize:       instanceSize,
