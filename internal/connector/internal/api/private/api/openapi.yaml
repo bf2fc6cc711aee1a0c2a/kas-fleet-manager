@@ -622,7 +622,7 @@ components:
         version: version
       properties:
         type:
-          description: the kubernetes cluster tye
+          description: the kubernetes cluster type
           type: string
         id:
           description: uniquely identifies the kubernetes cluster

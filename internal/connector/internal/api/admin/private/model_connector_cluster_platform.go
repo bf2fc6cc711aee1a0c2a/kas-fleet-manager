@@ -11,7 +11,7 @@ package private
 
 // ConnectorClusterPlatform information about the kubernetes platform
 type ConnectorClusterPlatform struct {
-	// the kubernetes cluster tye
+	// the kubernetes cluster type
 	Type string `json:"type,omitempty"`
 	// uniquely identifies the kubernetes cluster
 	Id string `json:"id,omitempty"`
