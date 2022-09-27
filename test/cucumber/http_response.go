@@ -66,11 +66,14 @@ func init() {
 		ctx.Step(`^the response should match json:$`, s.TheResponseShouldMatchJsonDoc)
 		ctx.Step(`^the response should match:$`, s.theResponseShouldMatchText)
 		ctx.Step(`^the response should match "([^"]*)"$`, s.theResponseShouldMatchText)
+		ctx.Step(`^the response should match expression "([^"]*)"$`, s.theResponseShouldMatchExpression)
+		ctx.Step(`^the response should match expression:"$`, s.theResponseShouldMatchExpression)
 		ctx.Step(`^I store the "([^"]*)" selection from the response as \${([^"]*)}$`, s.iStoreTheSelectionFromTheResponseAs)
 		ctx.Step(`^I store json as \${([^"]*)}:$`, s.iStoreJsonAsInput)
 		ctx.Step(`^the "(.*)" selection from the response should match "([^"]*)"$`, s.theSelectionFromTheResponseShouldMatch)
 		ctx.Step(`^the response header "([^"]*)" should match "([^"]*)"$`, s.theResponseHeaderShouldMatch)
 		ctx.Step(`^the "([^"]*)" selection from the response should match json:$`, s.theSelectionFromTheResponseShouldMatchJson)
+		ctx.Step(`^log the response$`, s.logTheResponse)
 	})
 }
 
@@ -80,6 +83,13 @@ func (s *TestScenario) theResponseCodeShouldBe(expected int) error {
 	if expected != actual {
 		return fmt.Errorf("expected response code to be: %d, but actual is: %d, body: %s", expected, actual, string(session.RespBytes))
 	}
+	return nil
+}
+
+func (s *TestScenario) logTheResponse() error {
+	session := s.Session()
+
+	fmt.Println(string(session.RespBytes))
 	return nil
 }
 
@@ -210,6 +220,31 @@ func (s *TestScenario) theSelectionFromTheResponseShouldMatch(selector string, e
 		return nil
 	}
 	return fmt.Errorf("expected JSON does not have node that matches selector: %s", selector)
+}
+
+func (s *TestScenario) theResponseShouldMatchExpression(expression string) error {
+	session := s.Session()
+	doc, err := session.RespJson()
+	if err != nil {
+		return err
+	}
+
+	in, err := s.Expand(expression, []string{"defs", "ref"})
+	if err != nil {
+		return err
+	}
+
+	query, err := gojq.Parse(in)
+	if err != nil {
+		return err
+	}
+
+	iter := query.Run(doc)
+	if _, found := iter.Next(); !found {
+		return fmt.Errorf("response does not match expression: %v", expression)
+	}
+
+	return nil
 }
 
 func (s *TestScenario) theSelectionFromTheResponseShouldMatchJson(selector string, expected *godog.DocString) error {

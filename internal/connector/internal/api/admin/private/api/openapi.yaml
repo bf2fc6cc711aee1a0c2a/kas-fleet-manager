@@ -122,7 +122,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorClusterList'
+                $ref: '#/components/schemas/ConnectorClusterAdminList'
           description: A list of connector clusters
         "401":
           content:
@@ -164,7 +164,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorCluster'
+                $ref: '#/components/schemas/ConnectorClusterAdminView'
           description: The connector cluster matching the request
         "401":
           content:
@@ -1878,74 +1878,33 @@ components:
         shard_metadata:
           type: object
       type: object
-    ConnectorClusterList:
+    ConnectorClusterAdminList:
       allOf:
       - $ref: '#/components/schemas/List'
-      - $ref: '#/components/schemas/ConnectorClusterList_allOf'
-    List:
+      - $ref: '#/components/schemas/ConnectorClusterAdminList_allOf'
+    ConnectorClusterAdminStatus:
       properties:
-        kind:
+        state:
+          $ref: '#/components/schemas/ConnectorClusterState'
+        version:
           type: string
-        page:
-          type: integer
-        size:
-          type: integer
-        total:
-          type: integer
-        items:
+        conditions:
           items:
-            $ref: '#/components/schemas/ObjectReference'
+            $ref: '#/components/schemas/MetaV1Condition'
           type: array
-      required:
-      - items
-      - kind
-      - page
-      - size
-      - total
+        platform:
+          $ref: '#/components/schemas/ConnectorClusterPlatform'
+        operators:
+          description: the list of installed operators
+          items:
+            $ref: '#/components/schemas/ConnectorClusterAdminStatus_operators'
+          type: array
       type: object
-    ObjectReference:
-      properties:
-        id:
-          type: string
-        kind:
-          type: string
-        href:
-          type: string
-      type: object
-    ConnectorCluster:
+    ConnectorClusterAdminView:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/ConnectorClusterMeta'
-      - $ref: '#/components/schemas/ConnectorClusterStatus'
-    ConnectorClusterMeta:
-      allOf:
-      - $ref: '#/components/schemas/ObjectMeta'
-      - $ref: '#/components/schemas/ConnectorClusterRequestMeta'
-    ObjectMeta:
-      properties:
-        owner:
-          type: string
-        created_at:
-          format: date-time
-          type: string
-        modified_at:
-          format: date-time
-          type: string
-      type: object
-    ConnectorClusterRequestMeta:
-      properties:
-        name:
-          type: string
-    ConnectorClusterStatus:
-      properties:
-        status:
-          $ref: '#/components/schemas/ConnectorClusterStatus_status'
-    ConnectorClusterState:
-      enum:
-      - disconnected
-      - ready
-      - deleting
-      type: string
+      - $ref: '#/components/schemas/ConnectorClusterAdminView_allOf'
     Error:
       example:
         reason: reason
@@ -1979,6 +1938,36 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorNamespaceList_allOf'
+    List:
+      properties:
+        kind:
+          type: string
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+        items:
+          items:
+            $ref: '#/components/schemas/ObjectReference'
+          type: array
+      required:
+      - items
+      - kind
+      - page
+      - size
+      - total
+      type: object
+    ObjectReference:
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+      type: object
     ConnectorNamespace:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -1990,6 +1979,17 @@ components:
       - $ref: '#/components/schemas/ObjectMeta'
       - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
       - $ref: '#/components/schemas/ConnectorNamespaceMeta_allOf'
+    ObjectMeta:
+      properties:
+        owner:
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        modified_at:
+          format: date-time
+          type: string
+      type: object
     ConnectorNamespaceRequestMeta:
       properties:
         name:
@@ -2160,6 +2160,33 @@ components:
       - name
       - schema
       - version
+    ConnectorClusterState:
+      enum:
+      - disconnected
+      - ready
+      - deleting
+      type: string
+    ConnectorClusterPlatform:
+      description: information about the kubernetes platform
+      properties:
+        type:
+          description: the kubernetes cluster tye
+          type: string
+        id:
+          description: uniquely identifies the kubernetes cluster
+          type: string
+        version:
+          description: optional version of the kubernetes cluster
+          type: string
+      type: object
+    ConnectorClusterMeta:
+      allOf:
+      - $ref: '#/components/schemas/ObjectMeta'
+      - $ref: '#/components/schemas/ConnectorClusterRequestMeta'
+    ConnectorClusterRequestMeta:
+      properties:
+        name:
+          type: string
     ConnectorAvailableOperatorUpgradeList_allOf:
       properties:
         items:
@@ -2239,18 +2266,26 @@ components:
           additionalProperties:
             $ref: '#/components/schemas/ConnectorTypeChannel'
           type: object
-    ConnectorClusterList_allOf:
+    ConnectorClusterAdminList_allOf:
       properties:
         items:
           items:
-            $ref: '#/components/schemas/ConnectorCluster'
+            $ref: '#/components/schemas/ConnectorClusterAdminView'
           type: array
-    ConnectorClusterStatus_status:
+    ConnectorClusterAdminStatus_operators:
       properties:
-        state:
-          $ref: '#/components/schemas/ConnectorClusterState'
-        error:
+        operator:
+          $ref: '#/components/schemas/ConnectorOperator'
+        namespace:
+          description: the namespace to which the operator has been installed
           type: string
+        status:
+          description: the status of the operator
+          type: string
+    ConnectorClusterAdminView_allOf:
+      properties:
+        status:
+          $ref: '#/components/schemas/ConnectorClusterAdminStatus'
     ConnectorNamespaceList_allOf:
       properties:
         items:

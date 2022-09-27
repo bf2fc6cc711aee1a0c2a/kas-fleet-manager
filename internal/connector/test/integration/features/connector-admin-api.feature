@@ -141,7 +141,8 @@ Feature: connector admin api
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
         "status": {
-          "state": "disconnected"
+          "state": "disconnected",
+          "platform": {}
         }
       }
       """
@@ -159,7 +160,8 @@ Feature: connector admin api
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
         "status": {
-          "state": "disconnected"
+          "state": "disconnected",
+          "platform": {}
         }
       }
       """

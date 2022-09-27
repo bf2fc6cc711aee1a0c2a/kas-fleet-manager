@@ -9,8 +9,8 @@
 
 package private
 
-// ConnectorClusterStatusPlatform information about the kubernetes platform
-type ConnectorClusterStatusPlatform struct {
+// ConnectorClusterPlatform information about the kubernetes platform
+type ConnectorClusterPlatform struct {
 	// the kubernetes cluster tye
 	Type string `json:"type,omitempty"`
 	// uniquely identifies the kubernetes cluster

@@ -1,6 +1,7 @@
 package presenters
 
 import (
+	admin "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 )
@@ -10,14 +11,24 @@ func ConvertConnectorClusterStatus(from private.ConnectorClusterStatus) dbapi.Co
 		Conditions: ConvertConditions(from.Conditions),
 		Phase:      dbapi.ConnectorClusterPhaseEnum(from.Phase),
 		Operators:  ConvertOperatorStatus(from.Operators),
+		Platform: dbapi.ConnectorClusterPlatform{
+			ID:      from.Platform.Id,
+			Type:    from.Platform.Type,
+			Version: from.Platform.Version,
+		},
 	}
 }
 
-func PresentConnectorClusterStatus(from dbapi.ConnectorClusterStatus) private.ConnectorClusterStatus {
-	return private.ConnectorClusterStatus{
-		Conditions: PresentConditions(from.Conditions),
-		Phase:      private.ConnectorClusterState(from.Phase),
-		Operators:  PresentOperators(from.Operators),
+func PresentConnectorClusterAdminStatus(from dbapi.ConnectorClusterStatus) admin.ConnectorClusterAdminStatus {
+	return admin.ConnectorClusterAdminStatus{
+		Conditions: PresentAdminConditions(from.Conditions),
+		State:      admin.ConnectorClusterState(from.Phase),
+		Operators:  PresentAdminOperators(from.Operators),
+		Platform: admin.ConnectorClusterPlatform{
+			Id:      from.Platform.ID,
+			Type:    from.Platform.Type,
+			Version: from.Platform.Version,
+		},
 	}
 }
 
@@ -37,10 +48,11 @@ func ConvertConditions(in []private.MetaV1Condition) []dbapi.Condition {
 	}
 	return out
 }
-func PresentConditions(in []dbapi.Condition) []private.MetaV1Condition {
-	out := make([]private.MetaV1Condition, len(in))
+
+func PresentAdminConditions(in []dbapi.Condition) []admin.MetaV1Condition {
+	out := make([]admin.MetaV1Condition, len(in))
 	for i, v := range in {
-		out[i] = private.MetaV1Condition{
+		out[i] = admin.MetaV1Condition{
 			Type:               v.Type,
 			Reason:             v.Reason,
 			Message:            v.Message,
@@ -68,11 +80,11 @@ func ConvertOperatorStatus(in []private.ConnectorClusterStatusOperators) []dbapi
 	return out
 }
 
-func PresentOperators(in []dbapi.OperatorStatus) []private.ConnectorClusterStatusOperators {
-	out := make([]private.ConnectorClusterStatusOperators, len(in))
+func PresentAdminOperators(in []dbapi.OperatorStatus) []admin.ConnectorClusterAdminStatusOperators {
+	out := make([]admin.ConnectorClusterAdminStatusOperators, len(in))
 	for i, v := range in {
-		out[i] = private.ConnectorClusterStatusOperators{
-			Operator: private.ConnectorOperator{
+		out[i] = admin.ConnectorClusterAdminStatusOperators{
+			Operator: admin.ConnectorOperator{
 				Id:      v.Id,
 				Type:    v.Type,
 				Version: v.Version,

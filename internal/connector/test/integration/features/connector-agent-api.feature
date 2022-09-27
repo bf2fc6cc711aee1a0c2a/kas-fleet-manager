@@ -18,6 +18,8 @@ Feature: connector agent API
 
   Scenario: connector cluster is created and agent processes assigned a deployment.
     Given I am logged in as "Jimmy"
+    Given I store an UID as ${openshift.id.1}
+    Given I store an UID as ${openshift.id.2}
 
     #-----------------------------------------------------------------------------------
     # Create a target cluster, and get the shard access token.
@@ -302,7 +304,7 @@ Feature: connector agent API
         }],
         "platform": {
           "type": "OpenShift",
-          "id": "59653847-85ee-4237-9890-902230460ac3",
+          "id": "${openshift.id.1}",
           "version": "4.10.1"
         }
       }
@@ -310,6 +312,20 @@ Feature: connector agent API
     Then the response code should be 204
     And the response should match ""
 
+    Given I am logged in as "Ricky Bobby"
+    When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}"
+    Then the response code should be 200
+    And the ".status.platform" selection from the response should match json:
+      """
+      {
+        "type": "OpenShift",
+        "id": "${openshift.id.1}",
+        "version": "4.10.1"
+      }
+      """
+
+    Given I am logged in as "Shard2"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
       """
       {
@@ -341,12 +357,29 @@ Feature: connector agent API
         }],
         "platform": {
           "type": "OpenShift",
-          "id": "59653847-85ee-4237-9890-902230460ac3"
+          "id": "${openshift.id.2}"
         }
       }
       """
     Then the response code should be 204
     And the response should match ""
+
+
+    Given I am logged in as "Ricky Bobby"
+    When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}"
+    Then the response code should be 200
+    And the ".status.platform" selection from the response should match json:
+      """
+      {
+        "type": "OpenShift",
+        "id": "${openshift.id.2}",
+        "version": "4.10.1"
+      }
+      """
+
+
+    Given I am logged in as "Shard2"
+    Given I set the "Authorization" header to "Bearer ${shard_token}"
 
     # remember the current namespace version
     When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}"
@@ -950,20 +983,23 @@ Feature: connector agent API
     #-----------------------------------------------------------------------------------------------------------------
     # get cluster
     Given I am logged in as "Ricky Bobby"
-    When I GET path "/v1/admin/kafka_connector_clusters"
+    When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 200
-    And the ".items[0]" selection from the response should match json:
+    And the response should match json:
       """
       {
-        "created_at": "${response.items[0].created_at}",
-        "href": "${response.items[0].href}",
-        "id": "${response.items[0].id}",
+        "created_at": "${response.created_at}",
+        "href": "${response.href}",
+        "id": "${response.id}",
         "kind": "ConnectorCluster",
-        "modified_at": "${response.items[0].modified_at}",
-        "name": "${response.items[0].name}",
-        "owner": "${response.items[0].owner}",
+        "modified_at": "${response.modified_at}",
+        "name": "${response.name}",
+        "owner": "${response.owner}",
         "status": {
-          "state": "${response.items[0].status.state}"
+          "state": "${response.status.state}",
+          "conditions": [{ "status": "True", "type": "Ready" }],
+          "operators": [{ "namespace": "openshift-mcs-camelk-1.0", "operator": {}, "status": "ready" }],
+          "platform": { "type": "OpenShift", "id": "${openshift.id.2}", "version": "4.10.1" }
         }
       }
       """
