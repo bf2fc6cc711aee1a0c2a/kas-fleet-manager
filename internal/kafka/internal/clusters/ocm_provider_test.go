@@ -37,9 +37,16 @@ func TestOCMProvider_Create(t *testing.T) {
 	}
 	gcpConfig := &config.GCPConfig{}
 	osdCreateConfig := &config.DataplaneClusterConfig{
-		OpenshiftVersion:      "4.7",
-		AWSComputeMachineType: "testmachinetype",
+		DynamicScalingConfig: config.DynamicScalingConfig{
+			NewDataPlaneOpenShiftVersion: "4.7",
+			MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]config.MachineTypeConfig{
+				cloudproviders.AWS: {
+					ClusterWideWorkloadMachineType: "testmachinetype",
+				},
+			},
+		},
 	}
+
 	cb := NewClusterBuilder(awsConfig, gcpConfig, osdCreateConfig)
 
 	internalId := "test-internal-id"

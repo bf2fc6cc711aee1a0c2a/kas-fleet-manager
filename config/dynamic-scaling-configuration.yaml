@@ -3,10 +3,31 @@
 #The following properties must be defined for each instance types compute node configuration:
 #   - max_compute_nodes: the maximum number of nodes needed to create an appropriate machine pool with the configuration needed by the autoscaler
 
+# For each supported cloud provider, the following properties must be provided for the machine type
+#   - cluster_wide_workload_machine_type: the instance type size to handle cluster wide workloads e.g ingress controllers, observability operators, etc 
+#   - kafka_workload_machine_type: the instance type size to handle the Kafka instance workload e.g brokers, kafka-admin API, etc
+
 ---
-developer:
-  compute_nodes_config:
-    max_compute_nodes: 3
-standard:
-  compute_nodes_config:
-    max_compute_nodes: 9
+# The version of OpenShift on newly auto created data plane clusters.
+# If the value is empty (default), then the latest version is going to be used. 
+new_data_plane_openshift_version: ""
+# Whether to auto create a data plane  cluster 
+enable_dynamic_data_plane_scale_up: false
+# Whether to auto delete a data plane cluster cluster
+enable_dynamic_data_plane_scale_down: false
+# machine type configuration per cloud provider 
+machine_type_per_cloud_provider:
+  aws:
+    cluster_wide_workload_machine_type: m5.2xlarge
+    kafka_workload_machine_type: r5.xlarge
+  gcp:
+    cluster_wide_workload_machine_type: custom-8-32768
+    kafka_workload_machine_type: custom-8-32768
+# compute nodes configuration per instance type
+compute_nodes_per_instance_type:
+  developer:
+    compute_nodes_config:
+      max_compute_nodes: 3
+  standard:
+    compute_nodes_config:
+      max_compute_nodes: 21

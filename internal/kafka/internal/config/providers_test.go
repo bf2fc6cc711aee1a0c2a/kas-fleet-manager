@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/onsi/gomega"
@@ -448,6 +449,7 @@ func Test_IsRegionSupported(t *testing.T) {
 }
 
 func Test_Region_Validate(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		dataplaneClusterConfig *DataplaneClusterConfig
 	}
@@ -592,8 +594,174 @@ func Test_Region_Validate(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
+			t.Parallel()
 			err := tt.fields.region.Validate(tt.args.dataplaneClusterConfig)
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestProvider_Validate(t *testing.T) {
+	t.Parallel()
+	type fields struct {
+		Name    string
+		Regions RegionList
+	}
+	type args struct {
+		dataplaneClusterConfig *DataplaneClusterConfig
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "should not return an error if provider is valid when scaling type is manual",
+			fields: fields{
+				Name: "aws",
+				Regions: RegionList{
+					{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"instance-type": InstanceTypeConfig{
+								Limit: nil,
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				dataplaneClusterConfig: &DataplaneClusterConfig{
+					DataPlaneClusterScalingType: ManualScaling,
+					ClusterConfig: NewClusterConfig(ClusterList{
+						ManualCluster{
+							Name:                  "cluster-1",
+							SupportedInstanceType: "standard",
+							Region:                "us-east-1",
+							CloudProvider:         "aws",
+							Schedulable:           true,
+							MultiAZ:               true,
+							Status:                "ready",
+							ClusterId:             "cluster-id-1",
+							KafkaInstanceLimit:    10,
+							ProviderType:          api.ClusterProviderOCM,
+						},
+					}),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error if no default region",
+			fields: fields{
+				Name: "aws",
+				Regions: RegionList{
+					{
+						Name:    "us-east-1",
+						Default: false,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"instance-type": InstanceTypeConfig{
+								Limit: nil,
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				dataplaneClusterConfig: &DataplaneClusterConfig{
+					DataPlaneClusterScalingType: ManualScaling,
+					ClusterConfig: NewClusterConfig(ClusterList{
+						ManualCluster{
+							Name:                  "cluster-1",
+							SupportedInstanceType: "standard",
+							Region:                "us-east-1",
+							CloudProvider:         "aws",
+							Schedulable:           true,
+							MultiAZ:               true,
+							Status:                "ready",
+							ClusterId:             "cluster-id-1",
+							KafkaInstanceLimit:    10,
+							ProviderType:          api.ClusterProviderOCM,
+						},
+					}),
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should not return an error if provider is valid when scaling type is auto",
+			fields: fields{
+				Name: "aws",
+				Regions: RegionList{
+					{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"instance-type": InstanceTypeConfig{
+								Limit: nil,
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				dataplaneClusterConfig: &DataplaneClusterConfig{
+					DataPlaneClusterScalingType: AutoScaling,
+					ClusterConfig:               &ClusterConfig{},
+					DynamicScalingConfig: DynamicScalingConfig{
+						MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]MachineTypeConfig{
+							cloudproviders.AWS: {
+								ClusterWideWorkloadMachineType: "some-machine-type",
+								KafkaWorkloadMachineType:       "some-machine-type",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error if provider machine type configuration are missing when scaling type is auto",
+			fields: fields{
+				Name: "aws",
+				Regions: RegionList{
+					{
+						Name:    "us-east-1",
+						Default: true,
+						SupportedInstanceTypes: InstanceTypeMap{
+							"instance-type": InstanceTypeConfig{
+								Limit: nil,
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				dataplaneClusterConfig: &DataplaneClusterConfig{
+					DataPlaneClusterScalingType: AutoScaling,
+					ClusterConfig:               &ClusterConfig{},
+					DynamicScalingConfig: DynamicScalingConfig{
+						MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]MachineTypeConfig{},
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(testcase.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			t.Parallel()
+			provider := Provider{
+				Name:    testcase.fields.Name,
+				Regions: testcase.fields.Regions,
+			}
+
+			err := provider.Validate(testcase.args.dataplaneClusterConfig)
+			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr))
 		})
 	}
 }

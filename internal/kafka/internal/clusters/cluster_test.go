@@ -25,9 +25,17 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 	awsConfig := &config.AWSConfig{}
 
 	dataplaneClusterConfig := &config.DataplaneClusterConfig{
-		OpenshiftVersion:      testOpenshiftVersion,
-		AWSComputeMachineType: testAWSComputeMachineType,
-		GCPComputeMachineType: testGCPComputeMachineType,
+		DynamicScalingConfig: config.DynamicScalingConfig{
+			NewDataPlaneOpenShiftVersion: testOpenshiftVersion,
+			MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]config.MachineTypeConfig{
+				cloudproviders.AWS: {
+					ClusterWideWorkloadMachineType: testAWSComputeMachineType,
+				},
+				cloudproviders.GCP: {
+					ClusterWideWorkloadMachineType: testGCPComputeMachineType,
+				},
+			},
+		},
 	}
 
 	clusterAWS := clustersmgmtv1.

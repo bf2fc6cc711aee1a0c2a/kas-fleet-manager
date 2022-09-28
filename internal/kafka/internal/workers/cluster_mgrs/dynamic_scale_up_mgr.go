@@ -100,7 +100,7 @@ func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
 					kafkaStreamingUnitCountPerClusterList: kafkaStreamingUnitCountPerClusterList,
 					supportedKafkaInstanceTypesConfig:     &m.KafkaConfig.SupportedInstanceTypes.Configuration,
 					clusterService:                        m.ClusterService,
-					dryRun:                                !m.DataplaneClusterConfig.EnableDynamicScaleUpManagerScaleUpTrigger,
+					dryRun:                                !m.DataplaneClusterConfig.DynamicScalingConfig.IsDataplaneScaleUpEnabled(),
 				}
 				glog.Infof("evaluating dynamic scale up for locator '%+v'", currLocator)
 				shouldScaleUp, err := dynamicScaleUpProcessor.ShouldScaleUp()

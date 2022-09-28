@@ -846,62 +846,77 @@ func Test_DataPlaneClusterConfig_DefaultComputeMachineType(t *testing.T) {
 	}
 
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   string
+		name    string
+		fields  fields
+		args    args
+		want    MachineTypeConfig
+		wantErr bool
 	}{
 		{
 			name: "When the provided cloud provider is aws the correspondig default machine type is returned",
 			fields: fields{
 				&DataplaneClusterConfig{
-					AWSComputeMachineType: "awstype",
-					GCPComputeMachineType: "gcptype",
+					DynamicScalingConfig: DynamicScalingConfig{
+						MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]MachineTypeConfig{
+							cloudproviders.AWS: {
+								ClusterWideWorkloadMachineType: defaultAWSComputeMachineType,
+								KafkaWorkloadMachineType:       defaultAWSComputeMachineType,
+							},
+						},
+					},
 				},
 			},
 			args: args{
 				id: cloudproviders.AWS,
 			},
-			want: "awstype",
+			want: MachineTypeConfig{
+				ClusterWideWorkloadMachineType: defaultAWSComputeMachineType,
+				KafkaWorkloadMachineType:       defaultAWSComputeMachineType,
+			},
+			wantErr: false,
 		},
 		{
 			name: "When the provided cloud provider is gcp the correspondig default machine type is returned",
 			fields: fields{
 				&DataplaneClusterConfig{
-					AWSComputeMachineType: "awstype",
-					GCPComputeMachineType: "gcptype",
+					DynamicScalingConfig: DynamicScalingConfig{
+						MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]MachineTypeConfig{
+							cloudproviders.GCP: {
+								ClusterWideWorkloadMachineType: defaultGCPComputeMachineType,
+								KafkaWorkloadMachineType:       defaultGCPComputeMachineType,
+							},
+						},
+					},
 				},
 			},
 			args: args{
 				id: cloudproviders.GCP,
 			},
-			want: "gcptype",
+			want: MachineTypeConfig{
+				ClusterWideWorkloadMachineType: defaultGCPComputeMachineType,
+				KafkaWorkloadMachineType:       defaultGCPComputeMachineType,
+			},
+			wantErr: false,
 		},
 		{
-			name: "When the provided cloud provider is Unknown the empty string is returned",
+			name: "When the provided cloud provider is not known, an error is returned",
 			fields: fields{
 				&DataplaneClusterConfig{
-					AWSComputeMachineType: "awstype",
-					GCPComputeMachineType: "gcptype",
+					DynamicScalingConfig: DynamicScalingConfig{
+						MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]MachineTypeConfig{
+							cloudproviders.GCP: {
+								ClusterWideWorkloadMachineType: defaultGCPComputeMachineType,
+								KafkaWorkloadMachineType:       defaultGCPComputeMachineType,
+							},
+						},
+					},
 				},
 			},
 			args: args{
 				id: cloudproviders.Unknown,
 			},
-			want: "",
-		},
-		{
-			name: "When the provided cloud provider is not known the empty string is returned",
-			fields: fields{
-				&DataplaneClusterConfig{
-					AWSComputeMachineType: "awstype",
-					GCPComputeMachineType: "gcptype",
-				},
-			},
-			args: args{
-				id: cloudproviders.CloudProviderID("nonexistingcloudprovider"),
-			},
-			want: "",
+			want:    MachineTypeConfig{},
+			wantErr: true,
 		},
 	}
 
@@ -909,7 +924,8 @@ func Test_DataPlaneClusterConfig_DefaultComputeMachineType(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			res := tt.fields.config.DefaultComputeMachineType(tt.args.id)
+			res, err := tt.fields.config.DefaultComputeMachineType(tt.args.id)
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}

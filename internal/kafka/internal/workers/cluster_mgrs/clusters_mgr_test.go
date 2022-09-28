@@ -3082,15 +3082,19 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					DataPlaneClusterScalingType: config.AutoScaling,
 					DynamicScalingConfig: config.DynamicScalingConfig{
-						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
+						ComputeNodesPerInstanceType: map[string]config.InstanceTypeDynamicScalingConfig{
 							"developer": {
 								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
 									MaxComputeNodes: 3,
 								},
 							},
 						},
+						MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]config.MachineTypeConfig{
+							cloudproviders.AWS: {
+								KafkaWorkloadMachineType: "testmachinetype",
+							},
+						},
 					},
-					AWSComputeMachineType: "testmachinetype",
 				},
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
@@ -3318,7 +3322,7 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					DataPlaneClusterScalingType: config.AutoScaling,
 					DynamicScalingConfig: config.DynamicScalingConfig{
-						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
+						ComputeNodesPerInstanceType: map[string]config.InstanceTypeDynamicScalingConfig{
 							api.StandardTypeSupport.String(): {
 								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
 									MaxComputeNodes: 2,
@@ -3376,7 +3380,7 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					DataPlaneClusterScalingType: config.AutoScaling,
 					DynamicScalingConfig: config.DynamicScalingConfig{
-						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
+						ComputeNodesPerInstanceType: map[string]config.InstanceTypeDynamicScalingConfig{
 							api.StandardTypeSupport.String(): {
 								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
 									MaxComputeNodes: 20,

@@ -130,9 +130,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
         - `dataplane-cluster-config-file` [Required]: The path to the file that contains a list of data plane clusters and their details for the service to manage (default: `'config/dataplane-cluster-configuration.yaml'`, example: [dataplane-cluster-configuration.yaml](../config/dataplane-cluster-configuration.yaml)).
     - If this is set to `auto`, the following configurations can be specified:
         - `providers-config-file` [Required]: The path to the file containing a list of supported cloud providers that the service can provision dataplane clusters to (default: `'config/provider-configuration.yaml'`, example: [provider-configuration.yaml](../config/provider-configuration.yaml)).
-        - `aws-cluster-compute-machine-type` [Optional]: The instance type of the AWS compute instances for Data Planes created in AWS (default: `m5.2xlarge`).
-        - `gcp-cluster-compute-machine-type` [Optional]: The instance type of the GCP compute instances for Data Planes created in GCP (default: `custom-8-32768`).
-        - `cluster-openshift-version` [Optional]: The OpenShift version to be installed on the dataplane cluster (default: `""`, empty string indicates that the latest stable version will be used). 
         - `dynamic-scaling-config-file` [Required]: The path to the file containing information about each Kafka instance types, dynamic scaling configuration (default: `'config/dynamic-scaling-configuration.yaml'`, example: [dynamic-scaling-configuration.yaml](../config/dynamic-scaling-configuration.yaml)).
 - **cluster-logging-operator-addon-id**: Enables the Cluster Logging Operator addon with Cloud Watch and application level logs enabled. (default: `""`, An empty string indicates that the operator should not be installed).
 - **strimzi-operator-index-image**: Strimzi operator index image name

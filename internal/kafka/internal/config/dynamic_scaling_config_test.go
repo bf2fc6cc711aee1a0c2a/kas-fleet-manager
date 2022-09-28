@@ -3,6 +3,7 @@ package config
 import (
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/onsi/gomega"
 )
 
@@ -40,7 +41,7 @@ func TestDynamicScalingComputeNodesConfig_validate(t *testing.T) {
 				MaxComputeNodes: testcase.fields.MaxComputeNodes,
 			}
 
-			err := c.validate()
+			err := c.validate("instance-type")
 			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr))
 		})
 	}
@@ -90,7 +91,7 @@ func TestInstanceTypeDynamicScalingConfig_validate(t *testing.T) {
 			c := &InstanceTypeDynamicScalingConfig{
 				ComputeNodesConfig: testcase.fields.ComputeNodesConfig,
 			}
-			err := c.validate()
+			err := c.validate("instance-type")
 			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr))
 		})
 	}
@@ -99,8 +100,9 @@ func TestInstanceTypeDynamicScalingConfig_validate(t *testing.T) {
 func TestDynamicScalingConfig_validate(t *testing.T) {
 	t.Parallel()
 	type fields struct {
-		filePath      string
-		Configuration map[string]InstanceTypeDynamicScalingConfig
+		filePath                    string
+		ComputeNodesPerInstanceType map[string]InstanceTypeDynamicScalingConfig
+		MachineTypeConfig           map[cloudproviders.CloudProviderID]MachineTypeConfig
 	}
 	tests := []struct {
 		name    string
@@ -110,24 +112,24 @@ func TestDynamicScalingConfig_validate(t *testing.T) {
 		{
 			name: "should return an error when filepath is missing",
 			fields: fields{
-				filePath:      "", // an empty file path
-				Configuration: map[string]InstanceTypeDynamicScalingConfig{},
+				filePath:                    "", // an empty file path
+				ComputeNodesPerInstanceType: map[string]InstanceTypeDynamicScalingConfig{},
 			},
 			wantErr: true,
 		},
 		{
-			name: "should return an error when Configuration is missing",
+			name: "should return an error when ComputeNodesPerInstanceType is missing",
 			fields: fields{
-				filePath:      "some-file-path",
-				Configuration: nil, // missing configuration
+				filePath:                    "some-file-path",
+				ComputeNodesPerInstanceType: nil, // missing configuration
 			},
 			wantErr: true,
 		},
 		{
-			name: "should return an error when Configuration contains an invalid instance type configuration",
+			name: "should return an error when ComputeNodesPerInstanceType contains an invalid instance type configuration",
 			fields: fields{
 				filePath: "some-file-path",
-				Configuration: map[string]InstanceTypeDynamicScalingConfig{
+				ComputeNodesPerInstanceType: map[string]InstanceTypeDynamicScalingConfig{
 					"instance-type": {
 						ComputeNodesConfig: nil, // a nil configuration is an invalid configuration
 					},
@@ -136,14 +138,33 @@ func TestDynamicScalingConfig_validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "shouldn't return an error when Configuration is valid",
+			name: "should return an error when MachineTypeConfig contains an invalid instance type configuration",
 			fields: fields{
 				filePath: "some-file-path",
-				Configuration: map[string]InstanceTypeDynamicScalingConfig{
+				MachineTypeConfig: map[cloudproviders.CloudProviderID]MachineTypeConfig{
+					"cp": {
+						ClusterWideWorkloadMachineType: "",
+						KafkaWorkloadMachineType:       "",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "shouldn't return an error when dynamic configuration is valid",
+			fields: fields{
+				filePath: "some-file-path",
+				ComputeNodesPerInstanceType: map[string]InstanceTypeDynamicScalingConfig{
 					"instance-type": {
 						ComputeNodesConfig: &DynamicScalingComputeNodesConfig{
 							MaxComputeNodes: 10,
 						},
+					},
+				},
+				MachineTypeConfig: map[cloudproviders.CloudProviderID]MachineTypeConfig{
+					"cp": {
+						ClusterWideWorkloadMachineType: "some-config",
+						KafkaWorkloadMachineType:       "some-config",
 					},
 				},
 			},
@@ -156,8 +177,9 @@ func TestDynamicScalingConfig_validate(t *testing.T) {
 			g := gomega.NewWithT(t)
 			t.Parallel()
 			c := &DynamicScalingConfig{
-				filePath:      testcase.fields.filePath,
-				Configuration: testcase.fields.Configuration,
+				filePath:                    testcase.fields.filePath,
+				ComputeNodesPerInstanceType: testcase.fields.ComputeNodesPerInstanceType,
+				MachineTypePerCloudProvider: testcase.fields.MachineTypeConfig,
 			}
 			err := c.validate()
 			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr))
@@ -165,68 +187,7 @@ func TestDynamicScalingConfig_validate(t *testing.T) {
 	}
 }
 
-func TestDynamicScalingConfig_InstanceTypeConfigs(t *testing.T) {
-	t.Parallel()
-	type fields struct {
-		Configuration map[string]InstanceTypeDynamicScalingConfig
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   map[string]InstanceTypeDynamicScalingConfig
-	}{
-		{
-			name: "should return an empty configuration if the original configuration is empty",
-			fields: fields{
-				Configuration: map[string]InstanceTypeDynamicScalingConfig{},
-			},
-			want: map[string]InstanceTypeDynamicScalingConfig{},
-		},
-		{
-			name: "should return a copy of the original configuration map",
-			fields: fields{
-				Configuration: map[string]InstanceTypeDynamicScalingConfig{
-					"instance-type": {
-						ComputeNodesConfig: &DynamicScalingComputeNodesConfig{
-							MaxComputeNodes: 10,
-						},
-					},
-					"instance-type-2": {
-						ComputeNodesConfig: &DynamicScalingComputeNodesConfig{
-							MaxComputeNodes: 1,
-						},
-					},
-				},
-			},
-			want: map[string]InstanceTypeDynamicScalingConfig{
-				"instance-type": {
-					ComputeNodesConfig: &DynamicScalingComputeNodesConfig{
-						MaxComputeNodes: 10,
-					},
-				},
-				"instance-type-2": {
-					ComputeNodesConfig: &DynamicScalingComputeNodesConfig{
-						MaxComputeNodes: 1,
-					},
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		testcase := tt
-		t.Run(testcase.name, func(t *testing.T) {
-			g := gomega.NewWithT(t)
-			t.Parallel()
-			c := &DynamicScalingConfig{
-				Configuration: testcase.fields.Configuration,
-			}
-			instanceTypeConfigs := c.InstanceTypeConfigs()
-			g.Expect(instanceTypeConfigs).To(gomega.Equal(testcase.want))
-		})
-	}
-}
-
-func TestDynamicScalingConfig_ForInstanceType(t *testing.T) {
+func TestDynamicScalingConfig_GetConfigForInstanceType(t *testing.T) {
 	t.Parallel()
 	type fields struct {
 		Configuration map[string]InstanceTypeDynamicScalingConfig
@@ -291,9 +252,9 @@ func TestDynamicScalingConfig_ForInstanceType(t *testing.T) {
 			g := gomega.NewWithT(t)
 			t.Parallel()
 			c := &DynamicScalingConfig{
-				Configuration: testcase.fields.Configuration,
+				ComputeNodesPerInstanceType: testcase.fields.Configuration,
 			}
-			instanceTypeDynamicScalingConfig, found := c.ForInstanceType(testcase.args.instanceTypeID)
+			instanceTypeDynamicScalingConfig, found := c.GetConfigForInstanceType(testcase.args.instanceTypeID)
 			g.Expect(instanceTypeDynamicScalingConfig).To(gomega.Equal(testcase.want))
 			g.Expect(found).To(gomega.Equal(testcase.found))
 		})
@@ -309,8 +270,11 @@ func TestNewDynamicScalingConfig(t *testing.T) {
 		{
 			name: "should construct the dynamic scaling config",
 			want: DynamicScalingConfig{
-				filePath:      "config/dynamic-scaling-configuration.yaml",
-				Configuration: map[string]InstanceTypeDynamicScalingConfig{},
+				filePath:                                      "config/dynamic-scaling-configuration.yaml",
+				ComputeNodesPerInstanceType:                   map[string]InstanceTypeDynamicScalingConfig{},
+				MachineTypePerCloudProvider:                   map[cloudproviders.CloudProviderID]MachineTypeConfig{},
+				EnableDynamicScaleUpManagerScaleUpTrigger:     true,
+				EnableDynamicScaleDownManagerScaleDownTrigger: true,
 			},
 		},
 	}
@@ -321,6 +285,134 @@ func TestNewDynamicScalingConfig(t *testing.T) {
 			t.Parallel()
 			newDynamicScalingConfig := NewDynamicScalingConfig()
 			g.Expect(newDynamicScalingConfig).To(gomega.Equal(testcase.want))
+		})
+	}
+}
+
+func TestDynamicScalingConfig_IsDataplaneScaleDownEnabled(t *testing.T) {
+	t.Parallel()
+	type fields struct {
+		EnableDynamicScaleDownManagerScaleDownTrigger bool
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{
+			name: "return false when scale down is disabled",
+			fields: fields{
+				EnableDynamicScaleDownManagerScaleDownTrigger: false,
+			},
+			want: false,
+		},
+		{
+			name: "return true when scale down is enabled",
+			fields: fields{
+				EnableDynamicScaleDownManagerScaleDownTrigger: true,
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(testcase.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			t.Parallel()
+			c := &DynamicScalingConfig{
+				EnableDynamicScaleDownManagerScaleDownTrigger: testcase.fields.EnableDynamicScaleDownManagerScaleDownTrigger,
+			}
+			scaleDownIsEnabled := c.IsDataplaneScaleDownEnabled()
+			g.Expect(scaleDownIsEnabled).To(gomega.Equal(testcase.want))
+		})
+	}
+}
+
+func TestDynamicScalingConfig_IsDataplaneScaleUpEnabled(t *testing.T) {
+	t.Parallel()
+	type fields struct {
+		EnableDynamicScaleUpManagerScaleUpTrigger bool
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{
+			name: "return false when scale up is disabled",
+			fields: fields{
+				EnableDynamicScaleUpManagerScaleUpTrigger: false,
+			},
+			want: false,
+		},
+		{
+			name: "return true when scale up is enabled",
+			fields: fields{
+				EnableDynamicScaleUpManagerScaleUpTrigger: true,
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(testcase.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			t.Parallel()
+			c := &DynamicScalingConfig{
+				EnableDynamicScaleUpManagerScaleUpTrigger: testcase.fields.EnableDynamicScaleUpManagerScaleUpTrigger,
+			}
+			scaleUpIsEnabled := c.IsDataplaneScaleUpEnabled()
+			g.Expect(scaleUpIsEnabled).To(gomega.Equal(testcase.want))
+		})
+	}
+}
+
+func TestMachineTypeConfig_validate(t *testing.T) {
+	type fields struct {
+		ClusterWideWorkloadMachineType string
+		KafkaWorkloadMachineType       string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "should return an error if cluster wide workload machine type is missing",
+			fields: fields{
+				ClusterWideWorkloadMachineType: "",
+				KafkaWorkloadMachineType:       "machine-type",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if kafka workload machine type is missing",
+			fields: fields{
+				ClusterWideWorkloadMachineType: "machine-type",
+				KafkaWorkloadMachineType:       "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should not return an error if both machine types are present",
+			fields: fields{
+				ClusterWideWorkloadMachineType: "machine-type",
+				KafkaWorkloadMachineType:       "machine-type",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(testcase.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			t.Parallel()
+			c := &MachineTypeConfig{
+				ClusterWideWorkloadMachineType: testcase.fields.ClusterWideWorkloadMachineType,
+				KafkaWorkloadMachineType:       testcase.fields.KafkaWorkloadMachineType,
+			}
+			err := c.validate("cp")
+			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr))
 		})
 	}
 }

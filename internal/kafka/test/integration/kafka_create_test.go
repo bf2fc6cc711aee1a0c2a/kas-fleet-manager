@@ -11,6 +11,7 @@ import (
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
@@ -227,6 +228,10 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 	h, client, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, providerConfig *config.ProviderConfig) {
 		if enableAutoscale {
 			d.DataPlaneClusterScalingType = config.AutoScaling
+			d.DynamicScalingConfig.MachineTypePerCloudProvider[cloudproviders.AWS] = config.MachineTypeConfig{
+				ClusterWideWorkloadMachineType: "m5.2xlarge",
+				KafkaWorkloadMachineType:       "r5.xlarge",
+			}
 		}
 
 		providerConfig.ProvidersConfig.SupportedProviders = config.ProviderList{

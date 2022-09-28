@@ -213,6 +213,16 @@ func (provider Provider) Validate(dataplaneClusterConfig *DataplaneClusterConfig
 	if !cloudProviderIsKnown {
 		return fmt.Errorf("Cloud Provider '%s' is not a recognized Cloud Provider", cloudProviderID)
 	}
+
+	// verify that machine type configuration are there during dynamic scaling mode
+
+	if dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
+		_, err := dataplaneClusterConfig.DefaultComputeMachineType(cloudProviderID)
+		if err != nil {
+			return err
+		}
+	}
+
 	// verify that there is only one default region
 	defaultCount := 0
 	for _, r := range provider.Regions {

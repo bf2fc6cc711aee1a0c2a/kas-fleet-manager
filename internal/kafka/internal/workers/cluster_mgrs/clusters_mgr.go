@@ -412,7 +412,7 @@ func (c *ClusterManager) reconcileDynamicCapacityInfo(cluster api.Cluster) error
 
 		supportedInstanceTypes := cluster.GetSupportedInstanceTypes()
 		for _, supportedInstanceType := range supportedInstanceTypes {
-			config, ok := c.DataplaneClusterConfig.DynamicScalingConfig.ForInstanceType(supportedInstanceType)
+			config, ok := c.DataplaneClusterConfig.DynamicScalingConfig.GetConfigForInstanceType(supportedInstanceType)
 			if !ok {
 				continue
 			}
@@ -955,7 +955,7 @@ func (c *ClusterManager) buildKafkaSreClusterRoleBindingResource() *authv1.Clust
 }
 
 func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supportedInstanceType string, cluster api.Cluster) (*types.MachinePoolRequest, error) {
-	dynamicScalingConfig, found := c.DataplaneClusterConfig.DynamicScalingConfig.ForInstanceType(supportedInstanceType)
+	dynamicScalingConfig, found := c.DataplaneClusterConfig.DynamicScalingConfig.GetConfigForInstanceType(supportedInstanceType)
 	if !found {
 		return nil, fmt.Errorf("No dynamic scaling configuration found for instance type '%s'", supportedInstanceType)
 	}
@@ -967,14 +967,14 @@ func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supported
 		Key:    kafkaInstanceProfileType,
 		Value:  supportedInstanceType,
 	}
-	instanceSize := c.DataplaneClusterConfig.DefaultComputeMachineType(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
-	if instanceSize == "" {
-		return nil, fmt.Errorf("ClusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
+	machineTypeConfig, err := c.DataplaneClusterConfig.DefaultComputeMachineType(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
+	if err != nil {
+		return nil, errors.Wrapf(err, "ClusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
 	}
 	machinePoolTaints := []types.CluserNodeTaint{machinePoolTaint}
 	machinePool := &types.MachinePoolRequest{
 		ID:                 machinePoolID,
-		InstanceSize:       instanceSize,
+		InstanceSize:       machineTypeConfig.KafkaWorkloadMachineType,
 		MultiAZ:            cluster.MultiAZ,
 		AutoScalingEnabled: true,
 		AutoScaling: types.MachinePoolAutoScaling{

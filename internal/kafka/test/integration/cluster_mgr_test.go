@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 
@@ -63,7 +64,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 		// turn auto scaling on to enable cluster auto creation
 		d.DataPlaneClusterScalingType = config.AutoScaling
-		d.EnableDynamicScaleUpManagerScaleUpTrigger = true
+		d.DynamicScalingConfig.EnableDynamicScaleUpManagerScaleUpTrigger = true
 		dataplaneConfig = d
 	})
 
@@ -146,9 +147,12 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	// check that the default machine pool is created with correct min/max node and machine type.
 	// Only do the check for when running against real OCM environment
 	ocmConfig := test.TestServices.OCMConfig
+	machineTypeConfig, err := dataplaneConfig.DefaultComputeMachineType(cloudproviders.AWS)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
 	if ocmConfig.MockMode != ocm.MockModeEmulateServer {
 		nodes := ocmCluster.Nodes()
-		g.Expect(nodes.ComputeMachineType().ID()).To(gomega.Equal(dataplaneConfig.AWSComputeMachineType))
+		g.Expect(nodes.ComputeMachineType().ID()).To(gomega.Equal(machineTypeConfig.ClusterWideWorkloadMachineType))
 		g.Expect(nodes.AutoscaleCompute().MinReplicas()).To(gomega.Equal(3))
 		g.Expect(nodes.AutoscaleCompute().MaxReplicas()).To(gomega.Equal(18))
 	}
@@ -167,11 +171,11 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		// check that the machinepool is present
 		g.Expect(machinePoolErr).NotTo(gomega.HaveOccurred())
 		g.Expect(standardKafkaMachinePool).NotTo(gomega.BeNil())
-		g.Expect(standardKafkaMachinePool.InstanceType()).To(gomega.Equal(dataplaneConfig.AWSComputeMachineType))
+		g.Expect(standardKafkaMachinePool.InstanceType()).To(gomega.Equal(machineTypeConfig.KafkaWorkloadMachineType))
 
 		// check min and max nodes configuration
 		autoscaling := standardKafkaMachinePool.Autoscaling()
-		config, _ := dataplaneConfig.DynamicScalingConfig.ForInstanceType(api.StandardTypeSupport.String())
+		config, _ := dataplaneConfig.DynamicScalingConfig.GetConfigForInstanceType(api.StandardTypeSupport.String())
 		g.Expect(autoscaling.MinReplicas()).To(gomega.Equal(3))
 		g.Expect(autoscaling.MaxReplicas()).To(gomega.Equal(config.ComputeNodesConfig.MaxComputeNodes))
 
@@ -252,8 +256,8 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 			},
 		}
 		// enable scale down trigger
-		d.EnableDynamicScaleDownManagerScaleDownTrigger = true
-		d.EnableDynamicScaleUpManagerScaleUpTrigger = false
+		d.DynamicScalingConfig.EnableDynamicScaleDownManagerScaleDownTrigger = true
+		d.DynamicScalingConfig.EnableDynamicScaleUpManagerScaleUpTrigger = false
 		d.DataPlaneClusterScalingType = config.AutoScaling
 	})
 
