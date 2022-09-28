@@ -8,12 +8,18 @@
 #   - kafka_workload_machine_type: the instance type size to handle the Kafka instance workload e.g brokers, kafka-admin API, etc
 
 ---
-# The version of OpenShift on newly auto created data plane clusters.
-# If the value is empty (default), then the latest version is going to be used. 
+# The version of OpenShift used during installation of newly auto created data plane clusters.
+# If the value is empty (default), then OpenShift Cluster Manager (OCM) will provision the data plane cluster using the latest version. 
 new_data_plane_openshift_version: ""
-# Whether to auto create a data plane  cluster 
+# Whether to auto create a data plane cluster.
+# The value is used to control whether kas-fleet-manager (KFM) should trigger the creation of new data plane clusters.
+# If it is set to false, then KFM will only perform scale up evaluation without triggering scale up i.e a dry run of cluster's creation.
+# If set to true, then KFM will perform scale up evaluation and trigger scaling up if it is needed based on the evaluation results.
 enable_dynamic_data_plane_scale_up: false
 # Whether to auto delete a data plane cluster cluster
+# The value is used to control whether KFM should trigger the deletion of data plane clusters.
+# If it is set to false, then KFM will only perform scale down evaluation without triggering scale down i.e a dry run for clusters' deletion.
+# If set to true, then KFM will perform scale down evaluation and trigger scaling down if it is needed based on the evaluation results.
 enable_dynamic_data_plane_scale_down: false
 # machine type configuration per cloud provider 
 machine_type_per_cloud_provider:

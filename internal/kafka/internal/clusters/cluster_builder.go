@@ -79,13 +79,13 @@ func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRe
 	cloudProviderID := cloudproviders.ParseCloudProviderID(clusterRequest.CloudProvider)
 	r.setCloudProviderBuilder(cloudProviderID, clusterBuilder)
 
-	computeMachineType, err := r.dataplaneClusterConfig.DefaultComputeMachineType(cloudProviderID)
+	machineTypeConfig, err := r.dataplaneClusterConfig.DefaultComputeMachineTypeConfig(cloudProviderID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Cloud provider %q is not a recognized cloud provider", clusterRequest.CloudProvider)
 	}
 
 	clusterBuilder.Nodes(clustersmgmtv1.NewClusterNodes().
-		ComputeMachineType(clustersmgmtv1.NewMachineType().ID(computeMachineType.ClusterWideWorkloadMachineType)).
+		ComputeMachineType(clustersmgmtv1.NewMachineType().ID(machineTypeConfig.ClusterWideWorkloadMachineType)).
 		AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(constants.MinNodesForDefaultMachinePool).MaxReplicas(constants.MaxNodesForDefaultMachinePool)))
 
 	return clusterBuilder.Build()

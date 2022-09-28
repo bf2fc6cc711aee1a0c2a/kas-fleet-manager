@@ -1,15 +1,18 @@
 package config
 
 import (
-	"fmt"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
+	"github.com/go-playground/validator/v10"
+	"github.com/pkg/errors"
 )
 
+// use a single instance of Validate, it caches struct info
+var validate *validator.Validate = validator.New()
+
 type DynamicScalingConfig struct {
-	filePath                                      string
-	ComputeNodesPerInstanceType                   map[string]InstanceTypeDynamicScalingConfig          `yaml:"compute_nodes_per_instance_type"`
-	MachineTypePerCloudProvider                   map[cloudproviders.CloudProviderID]MachineTypeConfig `yaml:"machine_type_per_cloud_provider"`
+	filePath                                      string                                               `validate:"required"`
+	ComputeNodesPerInstanceType                   map[string]InstanceTypeDynamicScalingConfig          `yaml:"compute_nodes_per_instance_type" validate:"required"`
+	MachineTypePerCloudProvider                   map[cloudproviders.CloudProviderID]MachineTypeConfig `yaml:"machine_type_per_cloud_provider" validate:"required"`
 	EnableDynamicScaleUpManagerScaleUpTrigger     bool                                                 `yaml:"enable_dynamic_data_plane_scale_up"`
 	EnableDynamicScaleDownManagerScaleDownTrigger bool                                                 `yaml:"enable_dynamic_data_plane_scale_down"`
 	NewDataPlaneOpenShiftVersion                  string                                               `yaml:"new_data_plane_openshift_version"`
@@ -26,11 +29,11 @@ func NewDynamicScalingConfig() DynamicScalingConfig {
 	}
 }
 
-func (c *DynamicScalingConfig) IsDataplaneScaleUpEnabled() bool {
+func (c *DynamicScalingConfig) IsDataplaneScaleUpTriggerEnabled() bool {
 	return c.EnableDynamicScaleUpManagerScaleUpTrigger
 }
 
-func (c *DynamicScalingConfig) IsDataplaneScaleDownEnabled() bool {
+func (c *DynamicScalingConfig) IsDataplaneScaleDownTriggerEnabled() bool {
 	return c.EnableDynamicScaleDownManagerScaleDownTrigger
 }
 
@@ -42,12 +45,9 @@ func (c *DynamicScalingConfig) GetConfigForInstanceType(instanceTypeID string) (
 }
 
 func (c *DynamicScalingConfig) validate() error {
-	if c.filePath == "" {
-		return fmt.Errorf("dynamic scaling config file path is not specified")
-	}
-
-	if c.ComputeNodesPerInstanceType == nil {
-		return fmt.Errorf("dynamic scaling configuration file %s has not been read or is empty", c.filePath)
+	err := validate.Struct(c)
+	if err != nil {
+		return errors.Wrap(err, "error validating dynamic scaling configuration")
 	}
 
 	for k, v := range c.ComputeNodesPerInstanceType {
@@ -68,41 +68,31 @@ func (c *DynamicScalingConfig) validate() error {
 }
 
 type InstanceTypeDynamicScalingConfig struct {
-	ComputeNodesConfig *DynamicScalingComputeNodesConfig `yaml:"compute_nodes_config"`
+	ComputeNodesConfig *DynamicScalingComputeNodesConfig `yaml:"compute_nodes_config" validate:"required"`
 }
 
 func (c *InstanceTypeDynamicScalingConfig) validate(instanceType string) error {
-	if c.ComputeNodesConfig == nil {
-		return fmt.Errorf("compute_nodes_config is mandatory. It is missing from %q instance type", instanceType)
-	}
-
-	return c.ComputeNodesConfig.validate(instanceType)
-}
-
-type DynamicScalingComputeNodesConfig struct {
-	MaxComputeNodes int `yaml:"max_compute_nodes"`
-}
-
-func (c *DynamicScalingComputeNodesConfig) validate(instanceType string) error {
-	if c.MaxComputeNodes <= 0 {
-		return fmt.Errorf("max_compute_nodes for %q instance type has to be greater than 0", instanceType)
+	err := validate.Struct(c)
+	if err != nil {
+		return errors.Wrapf(err, "error validating dynamic node configuration for instance type %q", instanceType)
 	}
 
 	return nil
 }
 
+type DynamicScalingComputeNodesConfig struct {
+	MaxComputeNodes int `yaml:"max_compute_nodes" validate:"gt=0"`
+}
+
 type MachineTypeConfig struct {
-	ClusterWideWorkloadMachineType string `yaml:"cluster_wide_workload_machine_type"`
-	KafkaWorkloadMachineType       string `yaml:"kafka_workload_machine_type"`
+	ClusterWideWorkloadMachineType string `yaml:"cluster_wide_workload_machine_type" validate:"required"`
+	KafkaWorkloadMachineType       string `yaml:"kafka_workload_machine_type" validate:"required"`
 }
 
 func (c MachineTypeConfig) validate(cloudProvider cloudproviders.CloudProviderID) error {
-	if c.ClusterWideWorkloadMachineType == "" {
-		return fmt.Errorf("cluster_wide_workload_machine_type is mandatory. It is missing for %q cloud provider.", cloudProvider)
-	}
-
-	if c.KafkaWorkloadMachineType == "" {
-		return fmt.Errorf("kafka_workload_machine_type is mandatory. It is missing for %q cloud provider.", cloudProvider)
+	err := validate.Struct(c)
+	if err != nil {
+		return errors.Wrapf(err, "error validating machine type configuration for cloud provider %q", cloudProvider)
 	}
 
 	return nil

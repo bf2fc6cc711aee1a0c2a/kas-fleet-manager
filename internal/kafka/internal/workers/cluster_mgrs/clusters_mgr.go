@@ -967,7 +967,7 @@ func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supported
 		Key:    kafkaInstanceProfileType,
 		Value:  supportedInstanceType,
 	}
-	machineTypeConfig, err := c.DataplaneClusterConfig.DefaultComputeMachineType(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
+	machineTypeConfig, err := c.DataplaneClusterConfig.DefaultComputeMachineTypeConfig(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
 	if err != nil {
 		return nil, errors.Wrapf(err, "ClusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
 	}

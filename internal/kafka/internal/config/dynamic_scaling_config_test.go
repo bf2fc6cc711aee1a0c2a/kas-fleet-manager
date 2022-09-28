@@ -7,46 +7,6 @@ import (
 	"github.com/onsi/gomega"
 )
 
-func TestDynamicScalingComputeNodesConfig_validate(t *testing.T) {
-	t.Parallel()
-	type fields struct {
-		MaxComputeNodes int
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-	}{
-		{
-			name: "should return an error when MaxComputesNodes is less than 1",
-			fields: fields{
-				MaxComputeNodes: 0,
-			},
-			wantErr: true,
-		},
-		{
-			name: "shouldn't return an error when MaxComputesNodes is greater than 0",
-			fields: fields{
-				MaxComputeNodes: 3,
-			},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		testcase := tt
-		t.Run(testcase.name, func(t *testing.T) {
-			g := gomega.NewWithT(t)
-			t.Parallel()
-			c := &DynamicScalingComputeNodesConfig{
-				MaxComputeNodes: testcase.fields.MaxComputeNodes,
-			}
-
-			err := c.validate("instance-type")
-			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr))
-		})
-	}
-}
-
 func TestInstanceTypeDynamicScalingConfig_validate(t *testing.T) {
 	t.Parallel()
 	type fields struct {
@@ -289,7 +249,7 @@ func TestNewDynamicScalingConfig(t *testing.T) {
 	}
 }
 
-func TestDynamicScalingConfig_IsDataplaneScaleDownEnabled(t *testing.T) {
+func TestDynamicScalingConfig_IsDataplaneScaleDownTriggerEnabled(t *testing.T) {
 	t.Parallel()
 	type fields struct {
 		EnableDynamicScaleDownManagerScaleDownTrigger bool
@@ -322,13 +282,13 @@ func TestDynamicScalingConfig_IsDataplaneScaleDownEnabled(t *testing.T) {
 			c := &DynamicScalingConfig{
 				EnableDynamicScaleDownManagerScaleDownTrigger: testcase.fields.EnableDynamicScaleDownManagerScaleDownTrigger,
 			}
-			scaleDownIsEnabled := c.IsDataplaneScaleDownEnabled()
+			scaleDownIsEnabled := c.IsDataplaneScaleDownTriggerEnabled()
 			g.Expect(scaleDownIsEnabled).To(gomega.Equal(testcase.want))
 		})
 	}
 }
 
-func TestDynamicScalingConfig_IsDataplaneScaleUpEnabled(t *testing.T) {
+func TestDynamicScalingConfig_IsDataplaneScaleUpTriggerEnabled(t *testing.T) {
 	t.Parallel()
 	type fields struct {
 		EnableDynamicScaleUpManagerScaleUpTrigger bool
@@ -361,7 +321,7 @@ func TestDynamicScalingConfig_IsDataplaneScaleUpEnabled(t *testing.T) {
 			c := &DynamicScalingConfig{
 				EnableDynamicScaleUpManagerScaleUpTrigger: testcase.fields.EnableDynamicScaleUpManagerScaleUpTrigger,
 			}
-			scaleUpIsEnabled := c.IsDataplaneScaleUpEnabled()
+			scaleUpIsEnabled := c.IsDataplaneScaleUpTriggerEnabled()
 			g.Expect(scaleUpIsEnabled).To(gomega.Equal(testcase.want))
 		})
 	}

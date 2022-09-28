@@ -106,7 +106,7 @@ func (m *DynamicScaleDownManager) processDynamicScaleDownReconcileEvent() error 
 			regionsSupportedInstanceType:           regionsSupportedInstanceType,
 			supportedKafkaInstanceTypesConfig:      &m.kafkaConfig.SupportedInstanceTypes.Configuration,
 			clusterService:                         m.clusterService,
-			dryRun:                                 !m.dataplaneClusterConfig.DynamicScalingConfig.IsDataplaneScaleDownEnabled(),
+			dryRun:                                 !m.dataplaneClusterConfig.DynamicScalingConfig.IsDataplaneScaleDownTriggerEnabled(),
 			clusterID:                              clusterID,
 			indexesOfStreamingUnitForSameClusterID: existing.indexesOfStreamingUnitForSameClusterID,
 		}

@@ -147,7 +147,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	// check that the default machine pool is created with correct min/max node and machine type.
 	// Only do the check for when running against real OCM environment
 	ocmConfig := test.TestServices.OCMConfig
-	machineTypeConfig, err := dataplaneConfig.DefaultComputeMachineType(cloudproviders.AWS)
+	machineTypeConfig, err := dataplaneConfig.DefaultComputeMachineTypeConfig(cloudproviders.AWS)
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	if ocmConfig.MockMode != ocm.MockModeEmulateServer {

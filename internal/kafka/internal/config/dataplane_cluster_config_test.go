@@ -837,7 +837,7 @@ func Test_IsReadyDataPlaneClustersReconcileEnabled(t *testing.T) {
 	}
 }
 
-func Test_DataPlaneClusterConfig_DefaultComputeMachineType(t *testing.T) {
+func Test_DataPlaneClusterConfig_DefaultComputeMachineTypeConfig(t *testing.T) {
 	type fields struct {
 		config *DataplaneClusterConfig
 	}
@@ -924,7 +924,7 @@ func Test_DataPlaneClusterConfig_DefaultComputeMachineType(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			res, err := tt.fields.config.DefaultComputeMachineType(tt.args.id)
+			res, err := tt.fields.config.DefaultComputeMachineTypeConfig(tt.args.id)
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			g.Expect(res).To(gomega.Equal(tt.want))
 		})

@@ -296,9 +296,9 @@ func (c *DataplaneClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool
 	return c.EnableReadyDataPlaneClustersReconcile
 }
 
-// DefaultComputeMachineType returns the Compute Machine Type config for the
+// DefaultComputeMachineTypeConfig returns the Compute Machine Type config for the
 // given `cloudProviderID`. If `cloudProviderID` is not a known cloud provider return an error.
-func (c *DataplaneClusterConfig) DefaultComputeMachineType(cloudProviderID cloudproviders.CloudProviderID) (MachineTypeConfig, error) {
+func (c *DataplaneClusterConfig) DefaultComputeMachineTypeConfig(cloudProviderID cloudproviders.CloudProviderID) (MachineTypeConfig, error) {
 	machineTypeConfig, ok := c.DynamicScalingConfig.MachineTypePerCloudProvider[cloudProviderID]
 	if !ok {
 		return MachineTypeConfig{}, errors.Errorf("cloud provider %q is missing from the 'machine_type_per_cloud_provider' field in the %q dynamic scaling file", cloudProviderID.String(), c.DynamicScalingConfig.filePath)
