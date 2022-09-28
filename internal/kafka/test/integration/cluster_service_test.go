@@ -71,7 +71,6 @@ func TestClusterService_FindKafkaInstanceCount(t *testing.T) {
 	// setup ocm server
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	ocmServer := ocmServerBuilder.Build()
-	defer ocmServer.Close()
 
 	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(r *workers.ReconcilerConfig, d *config.DataplaneClusterConfig) {
 		d.DataPlaneClusterScalingType = config.NoScaling
@@ -86,8 +85,9 @@ func TestClusterService_FindKafkaInstanceCount(t *testing.T) {
 	kasfFleetshardSync.Start()
 
 	t.Cleanup(func() {
-		teardown()
 		kasfFleetshardSync.Stop()
+		teardown()
+		ocmServer.Close()
 	})
 
 	db := h.DBFactory().New()
@@ -119,7 +119,6 @@ func TestClusterService_FindStreamingUnitCountByClusterAndInstanceType(t *testin
 	// setup ocm server
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	ocmServer := ocmServerBuilder.Build()
-	defer ocmServer.Close()
 
 	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(r *workers.ReconcilerConfig, d *config.DataplaneClusterConfig) {
 		d.DataPlaneClusterScalingType = config.NoScaling
@@ -132,8 +131,9 @@ func TestClusterService_FindStreamingUnitCountByClusterAndInstanceType(t *testin
 	kasfFleetshardSync.Start()
 
 	t.Cleanup(func() {
-		teardown()
 		kasfFleetshardSync.Stop()
+		teardown()
+		ocmServer.Close()
 	})
 
 	db := h.DBFactory().New()
