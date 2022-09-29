@@ -1010,8 +1010,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						CloudProvider: locator.provider,
 						Region:        locator.region,
 						InstanceType:  locator.instanceTypeName,
-						Count:         1,
-						MaxUnits:      1,
+						Count:         0,
+						MaxUnits:      0,
 						Status:        api.ClusterAccepted.String(),
 					}
 					res = append(res, clusterBeingScaledInfo)
@@ -1022,9 +1022,9 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 				},
 			},
 			want: instanceTypeConsumptionSummary{
-				maxStreamingUnits:                    9,
+				maxStreamingUnits:                    8,
 				freeStreamingUnits:                   3,
-				consumedStreamingUnits:               6,
+				consumedStreamingUnits:               5,
 				ongoingScaleUpAction:                 true,
 				biggestInstanceSizeCapacityAvailable: true,
 			},
@@ -1041,8 +1041,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						CloudProvider: locator.provider,
 						Region:        locator.region,
 						InstanceType:  locator.instanceTypeName,
-						Count:         1,
-						MaxUnits:      1,
+						Count:         0,
+						MaxUnits:      0,
 						Status:        api.ClusterWaitingForKasFleetShardOperator.String(),
 					}
 					res = append(res, clusterBeingScaledInfo)
@@ -1053,9 +1053,9 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 				},
 			},
 			want: instanceTypeConsumptionSummary{
-				maxStreamingUnits:                    9,
+				maxStreamingUnits:                    8,
 				freeStreamingUnits:                   3,
-				consumedStreamingUnits:               6,
+				consumedStreamingUnits:               5,
 				ongoingScaleUpAction:                 true,
 				biggestInstanceSizeCapacityAvailable: true,
 			},
@@ -1072,8 +1072,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						CloudProvider: locator.provider,
 						Region:        locator.region,
 						InstanceType:  locator.instanceTypeName,
-						Count:         1,
-						MaxUnits:      1,
+						Count:         0,
+						MaxUnits:      0,
 						Status:        api.ClusterProvisioning.String(),
 					}
 					res = append(res, clusterBeingScaledInfo)
@@ -1084,9 +1084,9 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 				},
 			},
 			want: instanceTypeConsumptionSummary{
-				maxStreamingUnits:                    9,
+				maxStreamingUnits:                    8,
 				freeStreamingUnits:                   3,
-				consumedStreamingUnits:               6,
+				consumedStreamingUnits:               5,
 				ongoingScaleUpAction:                 true,
 				biggestInstanceSizeCapacityAvailable: true,
 			},
@@ -1103,8 +1103,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						CloudProvider: locator.provider,
 						Region:        locator.region,
 						InstanceType:  locator.instanceTypeName,
-						Count:         1,
-						MaxUnits:      1,
+						Count:         0,
+						MaxUnits:      0,
 						Status:        api.ClusterProvisioned.String(),
 					}
 					res = append(res, clusterBeingScaledInfo)
@@ -1115,9 +1115,9 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 				},
 			},
 			want: instanceTypeConsumptionSummary{
-				maxStreamingUnits:                    9,
+				maxStreamingUnits:                    8,
 				freeStreamingUnits:                   3,
-				consumedStreamingUnits:               6,
+				consumedStreamingUnits:               5,
 				ongoingScaleUpAction:                 true,
 				biggestInstanceSizeCapacityAvailable: true,
 			},
@@ -1175,7 +1175,7 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						CloudProvider: locator.provider,
 						Region:        locator.region,
 						InstanceType:  locator.instanceTypeName,
-						Count:         1,
+						Count:         0,
 						MaxUnits:      30,
 						Status:        api.ClusterDeprovisioning.String(),
 					}
@@ -1188,8 +1188,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 			},
 			want: instanceTypeConsumptionSummary{
 				maxStreamingUnits:                    8,
-				freeStreamingUnits:                   2,
-				consumedStreamingUnits:               6,
+				freeStreamingUnits:                   3,
+				consumedStreamingUnits:               5,
 				ongoingScaleUpAction:                 false,
 				biggestInstanceSizeCapacityAvailable: true,
 			},
@@ -1206,7 +1206,7 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						CloudProvider: locator.provider,
 						Region:        locator.region,
 						InstanceType:  locator.instanceTypeName,
-						Count:         1,
+						Count:         0,
 						MaxUnits:      30,
 						Status:        api.ClusterCleanup.String(),
 					}
@@ -1219,8 +1219,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 			},
 			want: instanceTypeConsumptionSummary{
 				maxStreamingUnits:                    8,
-				freeStreamingUnits:                   2,
-				consumedStreamingUnits:               6,
+				freeStreamingUnits:                   3,
+				consumedStreamingUnits:               5,
 				ongoingScaleUpAction:                 false,
 				biggestInstanceSizeCapacityAvailable: true,
 			},
@@ -1241,7 +1241,7 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						CloudProvider: locator.provider,
 						Region:        locator.region,
 						InstanceType:  locator.instanceTypeName,
-						Count:         1,
+						Count:         0,
 						MaxUnits:      30,
 						Status:        api.ClusterCleanup.String(),
 					}
@@ -1253,6 +1253,44 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 				},
 			},
 			wantErr: true,
+		},
+		{
+			name: "When the clusters are in deprovision or cleanup state, we do not consider them when evaluating for the availability of biggest instance size capacity",
+			fields: fields{
+				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
+					locator := newTestHelperBaseSupportedInstanceTypeLocator()
+					return services.KafkaStreamingUnitCountPerClusterList{
+						services.KafkaStreamingUnitCountPerCluster{
+							CloudProvider: locator.provider,
+							Region:        locator.region,
+							InstanceType:  locator.instanceTypeName,
+							Count:         0,
+							MaxUnits:      30,
+							Status:        api.ClusterCleanup.String(),
+						},
+						services.KafkaStreamingUnitCountPerCluster{
+							CloudProvider: locator.provider,
+							Region:        locator.region,
+							InstanceType:  locator.instanceTypeName,
+							Count:         0,
+							MaxUnits:      30,
+							Status:        api.ClusterDeprovisioning.String(),
+						},
+					}
+				},
+				supportedKafkaInstanceTypesConfigFactory: func() *config.SupportedKafkaInstanceTypesConfig {
+					return newTestHelperBaseSupportedKafkaInstanceTypesConfig()
+				},
+			},
+			want: instanceTypeConsumptionSummary{
+				maxStreamingUnits:                    0,
+				freeStreamingUnits:                   0,
+				consumedStreamingUnits:               0,
+				ongoingScaleUpAction:                 false,
+				biggestInstanceSizeCapacityAvailable: false,
+			},
+			wantErr: false,
 		},
 	}
 
