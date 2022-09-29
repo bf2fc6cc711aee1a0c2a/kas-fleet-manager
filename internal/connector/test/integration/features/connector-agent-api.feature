@@ -12,9 +12,9 @@ Feature: connector agent API
     Given a user named "Shard"
     Given a user named "Shard2"
     Given a user named "Shard3"
-    Given an admin user named "Ricky Bobby" with roles "connector-fleet-manager-admin-full"
-    Given an admin user named "Cal Naughton Jr." with roles "connector-fleet-manager-admin-write"
-    Given an admin user named "Carley Bobby" with roles "connector-fleet-manager-admin-read"
+    Given an admin user named "Ricky Bobby" with roles "cos-fleet-manager-admin-full"
+    Given an admin user named "Cal Naughton Jr." with roles "cos-fleet-manager-admin-write"
+    Given an admin user named "Carley Bobby" with roles "cos-fleet-manager-admin-read"
 
   Scenario: connector cluster is created and agent processes assigned a deployment.
     Given I am logged in as "Jimmy"
@@ -1690,6 +1690,15 @@ Feature: connector agent API
     And the ".namespace_id" selection from the response should match ""
 
     # delete connector using admin API
+    # test that read/write admin users can't delete
+    Given I am logged in as "Carley Bobby"
+    When I DELETE path "/v1/admin/kafka_connectors/${connector_id}"
+    Then the response code should be 404
+
+    Given I am logged in as "Cal Naughton Jr."
+    When I DELETE path "/v1/admin/kafka_connectors/${connector_id}"
+    Then the response code should be 404
+
     Given I am logged in as "Ricky Bobby"
     When I DELETE path "/v1/admin/kafka_connectors/${connector_id}"
     Then the response code should be 204

@@ -45,6 +45,9 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"dataplane-cluster-scaling-type":    "manual",
 		"strimzi-operator-addon-id":         "managed-kafka-qe",
 		"kas-fleetshard-addon-id":           "kas-fleetshard-operator-qe",
+		"admin-api-sso-base-url":            "http://127.0.0.1:8180",
+		"admin-api-sso-endpoint-uri":        "/auth/realms/rhoas-kafka-sre",
+		"admin-api-sso-realm":               "rhoas-kafka-sre",
 	}
 }
 

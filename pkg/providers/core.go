@@ -39,6 +39,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(server.NewMetricsConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(workers.NewReconcilerConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(auth.NewContextConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(auth.NewAdminAuthZConfig, di.As(new(environments.ConfigModule)), di.As(new(environments.ServiceValidator))),
 
 		// Add common CLI sub commands
 		di.Provide(serve.NewServeCommand),

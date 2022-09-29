@@ -21,7 +21,11 @@ Feature: connector namespaces API
     # org admin user used in admin API
     Given an org admin user named "Dr. Nefario" in organization "13640211"
     Given I store userid for "Dr. Nefario" as ${drnefario_user_id}
-    Given an admin user named "Ricky Bobby" with roles "connector-fleet-manager-admin-full"
+
+    # admin API users
+    Given an admin user named "Ricky Bobby" with roles "cos-fleet-manager-admin-full"
+    Given an admin user named "Cal Naughton Jr." with roles "cos-fleet-manager-admin-write"
+    Given an admin user named "Carley Bobby" with roles "cos-fleet-manager-admin-read"
 
     # eval users used in admin API
     Given a user named "Dave" in organization "13640224"
@@ -934,7 +938,49 @@ Feature: connector namespaces API
      }
      """
 
-   # Create a namespace
+    # Create a namespace
+    # test that read/write admins can't use POST
+    Given I am logged in as "Cal Naughton Jr."
+    When I POST path "/v1/admin/kafka_connector_namespaces/" with json body:
+    """
+    {
+      "name": "amigos_namespace",
+      "cluster_id": "${connector_cluster_id}",
+      "tenant": {
+        "kind": "organisation",
+        "id": "13640231"
+      },
+      "annotations": {
+        "connector_mgmt.bf2.org/profile": "default-profile"
+      },
+      "status": {
+        "state": "disconnected",
+        "connectors_deployed": 0
+      }
+    }
+    """
+    Then the response code should be 404
+    Given I am logged in as "Carley Bobby"
+    When I POST path "/v1/admin/kafka_connector_namespaces/" with json body:
+    """
+    {
+      "name": "amigos_namespace",
+      "cluster_id": "${connector_cluster_id}",
+      "tenant": {
+        "kind": "organisation",
+        "id": "13640231"
+      },
+      "annotations": {
+        "connector_mgmt.bf2.org/profile": "default-profile"
+      },
+      "status": {
+        "state": "disconnected",
+        "connectors_deployed": 0
+      }
+    }
+    """
+    Then the response code should be 404
+    # full admin can use POST
     Given I am logged in as "Ricky Bobby"
     When I POST path "/v1/admin/kafka_connector_namespaces/" with json body:
     """

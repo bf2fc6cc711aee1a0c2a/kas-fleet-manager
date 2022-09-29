@@ -156,7 +156,7 @@ func (s *TestSuite) createAdminUserNamed(name, roles string) error {
 	// setup pre-requisites to performing requests
 	account := s.Helper.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
-		"iss": keycloakConfig.OSDClusterIDPRealm.ValidIssuerURI,
+		"iss": keycloakConfig.AdminAPISSORealm.ValidIssuerURI,
 		"realm_access": map[string][]string{
 			"roles": strings.Split(strings.TrimSpace(roles), ","),
 		},

@@ -31,6 +31,7 @@ func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig 
 			KeysFile(ServerConfig.JwksFile).                            //ocm JWK backup JSON web token signing certificates
 			KeysURL(KeycloakConfig.SSOProviderRealm().JwksEndpointURI). // mas-sso JWK Cert URL
 			KeysURL(KeycloakConfig.OSDClusterIDPRealm.JwksEndpointURI). // mas-sso SRE realm cert URL
+			KeysURL(KeycloakConfig.AdminAPISSORealm.JwksEndpointURI).
 			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
 			Service(errors.ERROR_CODE_PREFIX).
 			Public(fmt.Sprintf("^%s/%s/%s/sso_providers/?$", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix, routes.Version)).
