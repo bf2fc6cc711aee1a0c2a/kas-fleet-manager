@@ -423,7 +423,6 @@ func TestComputeMachinesConfig_GetKafkaWorkloadConfigForInstanceType(t *testing.
 func TestDynamicScalingConfig_validate(t *testing.T) {
 	t.Parallel()
 	type fields struct {
-		FilePath                       string
 		ComputeMachinePerCloudProvider map[cloudproviders.CloudProviderID]ComputeMachinesConfig
 	}
 	tests := []struct {
@@ -432,36 +431,8 @@ func TestDynamicScalingConfig_validate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "return an error when FilePath is empty",
-			fields: fields{
-				FilePath: "",
-				ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]ComputeMachinesConfig{
-					cloudproviders.AWS: {
-						ClusterWideWorkload: &ComputeMachineConfig{
-							ComputeMachineType: "some-type",
-							ComputeNodesAutoscaling: &ComputeNodesAutoscalingConfig{
-								MinComputeNodes: 3,
-								MaxComputeNodes: 3,
-							},
-						},
-						KafkaWorkloadPerInstanceType: map[string]ComputeMachineConfig{
-							"type": {
-								ComputeMachineType: "some-type",
-								ComputeNodesAutoscaling: &ComputeNodesAutoscalingConfig{
-									MinComputeNodes: 3,
-									MaxComputeNodes: 3,
-								},
-							},
-						},
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
 			name: "return an error when ComputeMachinePerCloudProvider is nil",
 			fields: fields{
-				FilePath:                       "some-file-path",
 				ComputeMachinePerCloudProvider: nil,
 			},
 			wantErr: true,
@@ -469,7 +440,6 @@ func TestDynamicScalingConfig_validate(t *testing.T) {
 		{
 			name: "return an error when ComputeMachinePerCloudProvider has invalid configuration",
 			fields: fields{
-				FilePath: "some-file-path",
 				ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]ComputeMachinesConfig{
 					cloudproviders.AWS: {
 						ClusterWideWorkload: &ComputeMachineConfig{
@@ -496,7 +466,6 @@ func TestDynamicScalingConfig_validate(t *testing.T) {
 		{
 			name: "should not return an error when the configuration is valid",
 			fields: fields{
-				FilePath: "some-file-path",
 				ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]ComputeMachinesConfig{
 					cloudproviders.AWS: {
 						ClusterWideWorkload: &ComputeMachineConfig{
@@ -527,7 +496,6 @@ func TestDynamicScalingConfig_validate(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
 			c := &DynamicScalingConfig{
-				FilePath:                       testcase.fields.FilePath,
 				ComputeMachinePerCloudProvider: testcase.fields.ComputeMachinePerCloudProvider,
 			}
 			err := c.validate()

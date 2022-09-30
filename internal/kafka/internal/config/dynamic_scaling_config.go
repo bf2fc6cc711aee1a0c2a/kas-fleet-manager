@@ -14,7 +14,7 @@ const minNumberOfComputeNodesForClusterWideWorkload = 3
 var validate *validator.Validate = validator.New()
 
 type DynamicScalingConfig struct {
-	FilePath                                      string                                                   `validate:"required"`
+	filePath                                      string
 	ComputeMachinePerCloudProvider                map[cloudproviders.CloudProviderID]ComputeMachinesConfig `yaml:"compute_machine_per_cloud_provider" validate:"required"`
 	EnableDynamicScaleUpManagerScaleUpTrigger     bool                                                     `yaml:"enable_dynamic_data_plane_scale_up"`
 	EnableDynamicScaleDownManagerScaleDownTrigger bool                                                     `yaml:"enable_dynamic_data_plane_scale_down"`
@@ -23,7 +23,7 @@ type DynamicScalingConfig struct {
 
 func NewDynamicScalingConfig() DynamicScalingConfig {
 	return DynamicScalingConfig{
-		FilePath:                       "config/dynamic-scaling-configuration.yaml",
+		filePath:                       "config/dynamic-scaling-configuration.yaml",
 		ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]ComputeMachinesConfig{},
 		EnableDynamicScaleUpManagerScaleUpTrigger:     true,
 		EnableDynamicScaleDownManagerScaleDownTrigger: true,
