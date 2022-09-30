@@ -1,6 +1,6 @@
 FROM registry.access.redhat.com/ubi9-minimal:9.0.0 AS builder
-
-RUN microdnf install -y tar gzip make which
+ 
+RUN microdnf install -y tar gzip make which git
 
 # install go 1.19.1
 RUN curl -O -J https://dl.google.com/go/go1.19.1.linux-amd64.tar.gz
