@@ -19,7 +19,8 @@ Feature: expose a public api to manage kafka clusters
             "collections": null,
             "href": "/api/kafkas_mgmt/v1",
             "id": "v1",
-            "kind": "APIVersion"
+            "kind": "APIVersion",
+            "server_version": ""
           }
         ]
       }
@@ -38,7 +39,8 @@ Feature: expose a public api to manage kafka clusters
             "collections": null,
             "href": "/api/kafkas_mgmt/v1",
             "id": "v1",
-            "kind": "APIVersion"
+            "kind": "APIVersion",
+            "server_version": ""
           }
         ]
       }
@@ -68,7 +70,8 @@ Feature: expose a public api to manage kafka clusters
         ],
         "href": "/api/kafkas_mgmt/v1",
         "id": "v1",
-        "kind": "APIVersion"
+        "kind": "APIVersion",
+        "server_version": ""
       }
       """
 
@@ -96,6 +99,7 @@ Feature: expose a public api to manage kafka clusters
         ],
         "href": "/api/kafkas_mgmt/v1",
         "id": "v1",
-        "kind": "APIVersion"
+        "kind": "APIVersion",
+        "server_version": ""
       }
       """

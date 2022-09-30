@@ -33,10 +33,11 @@ type CollectionMetadata struct {
 
 // VersionMetadata represents a version.
 type VersionMetadata struct {
-	ID          string               `json:"id"`
-	HREF        string               `json:"href"`
-	Kind        string               `json:"kind"`
-	Collections []CollectionMetadata `json:"collections"`
+	ID            string               `json:"id"`
+	HREF          string               `json:"href"`
+	Kind          string               `json:"kind"`
+	ServerVersion string               `json:"server_version"`
+	Collections   []CollectionMetadata `json:"collections"`
 }
 
 // Metadata api metadata.
