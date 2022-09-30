@@ -314,7 +314,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND (organisation_id = $2) AND "kafka_requests"."deleted_at" IS NULL`).
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND organisation_id = $2 AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs(types.STANDARD.String(), "org-id").
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -416,7 +416,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND (organisation_id = $2) AND "kafka_requests"."deleted_at" IS NULL`).
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND organisation_id = $2 AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs(types.STANDARD.String(), "org-id").
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()

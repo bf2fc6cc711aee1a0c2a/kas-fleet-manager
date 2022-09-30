@@ -1220,7 +1220,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				totalCountResponse := []map[string]interface{}{{"count": 0}}
 
 				mocket.Catcher.Reset()
-				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND (organisation_id = $3) AND "kafka_requests"."deleted_at" IS NULL`).
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(*) FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND organisation_id = $3 AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs(types.DEVELOPER.String(), testUser, "org-id").
 					WithReply(totalCountResponse)
 				mocket.Catcher.NewMock().
@@ -1294,7 +1294,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 
 				totalCountResponse := []map[string]interface{}{{"count": 2}}
 
-				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND (organisation_id = $3) AND "kafka_requests"."deleted_at" IS NULL`).
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(*) FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND organisation_id = $3 AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs(types.DEVELOPER.String(), testUser, "org-id").
 					WithReply(totalCountResponse)
 				mocket.Catcher.NewMock().WithQueryException().WithExecException()
@@ -1739,7 +1739,7 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// total count query
 				totalCountResponse := []map[string]interface{}{{"count": len(kafkaList)}}
-				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply(totalCountResponse)
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(*) FROM "kafka_requests"`).WithReply(totalCountResponse)
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
@@ -1803,7 +1803,7 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// total count query
 				totalCountResponse := []map[string]interface{}{{"count": len(kafkaList)}}
-				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply(totalCountResponse)
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(*) FROM "kafka_requests"`).WithReply(totalCountResponse)
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
@@ -1853,7 +1853,7 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// total count query
 				totalCountResponse := []map[string]interface{}{{"count": "5"}}
-				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply(totalCountResponse)
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(*) FROM "kafka_requests"`).WithReply(totalCountResponse)
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
@@ -1889,7 +1889,7 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// total count query
 				totalCountResponse := []map[string]interface{}{{"count": len(kafkaList)}}
-				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply(totalCountResponse)
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(*) FROM "kafka_requests"`).WithReply(totalCountResponse)
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
