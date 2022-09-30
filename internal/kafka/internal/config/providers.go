@@ -217,7 +217,7 @@ func (provider Provider) Validate(dataplaneClusterConfig *DataplaneClusterConfig
 	// verify that machine type configuration are there during dynamic scaling mode
 
 	if dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
-		_, err := dataplaneClusterConfig.DefaultComputeMachineTypeConfig(cloudProviderID)
+		_, err := dataplaneClusterConfig.DefaultComputeMachinesConfig(cloudProviderID)
 		if err != nil {
 			return err
 		}

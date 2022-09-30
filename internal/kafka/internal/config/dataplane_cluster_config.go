@@ -296,15 +296,15 @@ func (c *DataplaneClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool
 	return c.EnableReadyDataPlaneClustersReconcile
 }
 
-// DefaultComputeMachineTypeConfig returns the Compute Machine Type config for the
+// DefaultComputeMachinesConfig returns the Compute Machine config for the
 // given `cloudProviderID`. If `cloudProviderID` is not a known cloud provider return an error.
-func (c *DataplaneClusterConfig) DefaultComputeMachineTypeConfig(cloudProviderID cloudproviders.CloudProviderID) (MachineTypeConfig, error) {
-	machineTypeConfig, ok := c.DynamicScalingConfig.MachineTypePerCloudProvider[cloudProviderID]
+func (c *DataplaneClusterConfig) DefaultComputeMachinesConfig(cloudProviderID cloudproviders.CloudProviderID) (ComputeMachinesConfig, error) {
+	config, ok := c.DynamicScalingConfig.ComputeMachinePerCloudProvider[cloudProviderID]
 	if !ok {
-		return MachineTypeConfig{}, errors.Errorf("cloud provider %q is missing from the 'machine_type_per_cloud_provider' field in the %q dynamic scaling file", cloudProviderID.String(), c.DynamicScalingConfig.filePath)
+		return ComputeMachinesConfig{}, errors.Errorf("cloud provider %q is missing from the 'compute_machine_per_cloud_provider' field in the %q dynamic scaling file", cloudProviderID.String(), c.DynamicScalingConfig.FilePath)
 	}
 
-	return machineTypeConfig, nil
+	return config, nil
 }
 
 func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
@@ -330,7 +330,7 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile, "kas-fleetshard-operator-subscription-config-file", c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile, "kas-fleetshard operator subscription config. This is applied for standalone clusters only. The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig")
 	fs.StringVar(&c.ObservabilityOperatorOLMConfig.IndexImage, "observability-operator-index-image", c.ObservabilityOperatorOLMConfig.IndexImage, "Observability operator index image")
 	fs.StringVar(&c.ObservabilityOperatorOLMConfig.SubscriptionStartingCSV, "observability-operator-starting-csv", c.ObservabilityOperatorOLMConfig.SubscriptionStartingCSV, "Observability operator subscription starting CSV")
-	fs.StringVar(&c.DynamicScalingConfig.filePath, "dynamic-scaling-config-file", c.DynamicScalingConfig.filePath, "File path to a file containing the dynamic scaling configuration")
+	fs.StringVar(&c.DynamicScalingConfig.FilePath, "dynamic-scaling-config-file", c.DynamicScalingConfig.FilePath, "File path to a file containing the dynamic scaling configuration")
 	fs.StringVar(&c.NodePrewarmingConfig.filePath, "node-prewarming-config-file", c.NodePrewarmingConfig.filePath, "File path to a file containing the node prewarming configuration")
 }
 
@@ -407,7 +407,7 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 	}
 
 	if c.IsDataPlaneAutoScalingEnabled() {
-		err := shared.ReadYamlFile(c.DynamicScalingConfig.filePath, &c.DynamicScalingConfig)
+		err := shared.ReadYamlFile(c.DynamicScalingConfig.FilePath, &c.DynamicScalingConfig)
 		if err != nil {
 			return err
 		}

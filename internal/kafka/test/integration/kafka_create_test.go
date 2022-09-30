@@ -228,9 +228,30 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 	h, client, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, providerConfig *config.ProviderConfig) {
 		if enableAutoscale {
 			d.DataPlaneClusterScalingType = config.AutoScaling
-			d.DynamicScalingConfig.MachineTypePerCloudProvider[cloudproviders.AWS] = config.MachineTypeConfig{
-				ClusterWideWorkloadMachineType: "m5.2xlarge",
-				KafkaWorkloadMachineType:       "r5.xlarge",
+			d.DynamicScalingConfig.ComputeMachinePerCloudProvider[cloudproviders.AWS] = config.ComputeMachinesConfig{
+				ClusterWideWorkload: &config.ComputeMachineConfig{
+					ComputeMachineType: "m5.2xlarge",
+					ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+						MaxComputeNodes: 3,
+						MinComputeNodes: 3,
+					},
+				},
+				KafkaWorkloadPerInstanceType: map[string]config.ComputeMachineConfig{
+					api.StandardTypeSupport.String(): {
+						ComputeMachineType: "r5.xlarge",
+						ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+							MaxComputeNodes: 1,
+							MinComputeNodes: 1,
+						},
+					},
+					api.DeveloperTypeSupport.String(): {
+						ComputeMachineType: "m5.2xlarge",
+						ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+							MaxComputeNodes: 1,
+							MinComputeNodes: 1,
+						},
+					},
+				},
 			}
 		}
 

@@ -711,10 +711,11 @@ func TestProvider_Validate(t *testing.T) {
 					DataPlaneClusterScalingType: AutoScaling,
 					ClusterConfig:               &ClusterConfig{},
 					DynamicScalingConfig: DynamicScalingConfig{
-						MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]MachineTypeConfig{
+						ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]ComputeMachinesConfig{
 							cloudproviders.AWS: {
-								ClusterWideWorkloadMachineType: "some-machine-type",
-								KafkaWorkloadMachineType:       "some-machine-type",
+								ClusterWideWorkload: &ComputeMachineConfig{
+									ComputeMachineType: "some-machine-type",
+								},
 							},
 						},
 					},
@@ -743,7 +744,7 @@ func TestProvider_Validate(t *testing.T) {
 					DataPlaneClusterScalingType: AutoScaling,
 					ClusterConfig:               &ClusterConfig{},
 					DynamicScalingConfig: DynamicScalingConfig{
-						MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]MachineTypeConfig{},
+						ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]ComputeMachinesConfig{},
 					},
 				},
 			},

@@ -837,7 +837,8 @@ func Test_IsReadyDataPlaneClustersReconcileEnabled(t *testing.T) {
 	}
 }
 
-func Test_DataPlaneClusterConfig_DefaultComputeMachineTypeConfig(t *testing.T) {
+func Test_DataPlaneClusterConfig_DefaultComputeMachinesConfig(t *testing.T) {
+	t.Parallel()
 	type fields struct {
 		config *DataplaneClusterConfig
 	}
@@ -849,18 +850,19 @@ func Test_DataPlaneClusterConfig_DefaultComputeMachineTypeConfig(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    MachineTypeConfig
+		want    ComputeMachinesConfig
 		wantErr bool
 	}{
 		{
-			name: "When the provided cloud provider is aws the correspondig default machine type is returned",
+			name: "should return the provider's compute machine configuration when the provided cloud provider is defined as part of the cloud providers compute machine configuration",
 			fields: fields{
 				&DataplaneClusterConfig{
 					DynamicScalingConfig: DynamicScalingConfig{
-						MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]MachineTypeConfig{
+						ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]ComputeMachinesConfig{
 							cloudproviders.AWS: {
-								ClusterWideWorkloadMachineType: defaultAWSComputeMachineType,
-								KafkaWorkloadMachineType:       defaultAWSComputeMachineType,
+								ClusterWideWorkload: &ComputeMachineConfig{
+									ComputeMachineType: defaultAWSComputeMachineType,
+								},
 							},
 						},
 					},
@@ -869,53 +871,32 @@ func Test_DataPlaneClusterConfig_DefaultComputeMachineTypeConfig(t *testing.T) {
 			args: args{
 				id: cloudproviders.AWS,
 			},
-			want: MachineTypeConfig{
-				ClusterWideWorkloadMachineType: defaultAWSComputeMachineType,
-				KafkaWorkloadMachineType:       defaultAWSComputeMachineType,
+			want: ComputeMachinesConfig{
+				ClusterWideWorkload: &ComputeMachineConfig{
+					ComputeMachineType: defaultAWSComputeMachineType,
+				},
 			},
 			wantErr: false,
 		},
 		{
-			name: "When the provided cloud provider is gcp the correspondig default machine type is returned",
+			name: "should return an error when the provided cloud provider is not defined as part of the cloud providers compute machine configuration",
 			fields: fields{
 				&DataplaneClusterConfig{
 					DynamicScalingConfig: DynamicScalingConfig{
-						MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]MachineTypeConfig{
+						ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]ComputeMachinesConfig{
 							cloudproviders.GCP: {
-								ClusterWideWorkloadMachineType: defaultGCPComputeMachineType,
-								KafkaWorkloadMachineType:       defaultGCPComputeMachineType,
+								ClusterWideWorkload: &ComputeMachineConfig{
+									ComputeMachineType: defaultGCPComputeMachineType,
+								},
 							},
 						},
 					},
 				},
 			},
 			args: args{
-				id: cloudproviders.GCP,
+				id: cloudproviders.AWS,
 			},
-			want: MachineTypeConfig{
-				ClusterWideWorkloadMachineType: defaultGCPComputeMachineType,
-				KafkaWorkloadMachineType:       defaultGCPComputeMachineType,
-			},
-			wantErr: false,
-		},
-		{
-			name: "When the provided cloud provider is not known, an error is returned",
-			fields: fields{
-				&DataplaneClusterConfig{
-					DynamicScalingConfig: DynamicScalingConfig{
-						MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]MachineTypeConfig{
-							cloudproviders.GCP: {
-								ClusterWideWorkloadMachineType: defaultGCPComputeMachineType,
-								KafkaWorkloadMachineType:       defaultGCPComputeMachineType,
-							},
-						},
-					},
-				},
-			},
-			args: args{
-				id: cloudproviders.Unknown,
-			},
-			want:    MachineTypeConfig{},
+			want:    ComputeMachinesConfig{},
 			wantErr: true,
 		},
 	}
@@ -924,7 +905,8 @@ func Test_DataPlaneClusterConfig_DefaultComputeMachineTypeConfig(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			res, err := tt.fields.config.DefaultComputeMachineTypeConfig(tt.args.id)
+			t.Parallel()
+			res, err := tt.fields.config.DefaultComputeMachinesConfig(tt.args.id)
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			g.Expect(res).To(gomega.Equal(tt.want))
 		})

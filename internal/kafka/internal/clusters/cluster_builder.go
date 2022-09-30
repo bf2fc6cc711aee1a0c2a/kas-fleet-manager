@@ -1,7 +1,6 @@
 package clusters
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -79,14 +78,17 @@ func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRe
 	cloudProviderID := cloudproviders.ParseCloudProviderID(clusterRequest.CloudProvider)
 	r.setCloudProviderBuilder(cloudProviderID, clusterBuilder)
 
-	machineTypeConfig, err := r.dataplaneClusterConfig.DefaultComputeMachineTypeConfig(cloudProviderID)
+	computeMachineConfig, err := r.dataplaneClusterConfig.DefaultComputeMachinesConfig(cloudProviderID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Cloud provider %q is not a recognized cloud provider", clusterRequest.CloudProvider)
 	}
 
+	clusterWideWorkloadConfig := computeMachineConfig.ClusterWideWorkload
 	clusterBuilder.Nodes(clustersmgmtv1.NewClusterNodes().
-		ComputeMachineType(clustersmgmtv1.NewMachineType().ID(machineTypeConfig.ClusterWideWorkloadMachineType)).
-		AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(constants.MinNodesForDefaultMachinePool).MaxReplicas(constants.MaxNodesForDefaultMachinePool)))
+		ComputeMachineType(clustersmgmtv1.NewMachineType().ID(clusterWideWorkloadConfig.ComputeMachineType)).
+		AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().
+			MinReplicas(clusterWideWorkloadConfig.ComputeNodesAutoscaling.MinComputeNodes).
+			MaxReplicas(clusterWideWorkloadConfig.ComputeNodesAutoscaling.MaxComputeNodes)))
 
 	return clusterBuilder.Build()
 }

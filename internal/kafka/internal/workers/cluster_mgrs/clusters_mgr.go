@@ -410,15 +410,20 @@ func (c *ClusterManager) reconcileDynamicCapacityInfo(cluster api.Cluster) error
 			return nil
 		}
 
+		computeMachinesConfig, err := c.DataplaneClusterConfig.DefaultComputeMachinesConfig(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
+		if err != nil {
+			return errors.Wrapf(err, "ClusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
+		}
+
 		supportedInstanceTypes := cluster.GetSupportedInstanceTypes()
 		for _, supportedInstanceType := range supportedInstanceTypes {
-			config, ok := c.DataplaneClusterConfig.DynamicScalingConfig.GetConfigForInstanceType(supportedInstanceType)
+			config, ok := computeMachinesConfig.GetKafkaWorkloadConfigForInstanceType(supportedInstanceType)
 			if !ok {
 				continue
 			}
 
 			updatedDynamicCapacityInfo[supportedInstanceType] = api.DynamicCapacityInfo{
-				MaxNodes: int32(config.ComputeNodesConfig.MaxComputeNodes),
+				MaxNodes: int32(config.ComputeNodesAutoscaling.MaxComputeNodes),
 			}
 		}
 	}
@@ -955,7 +960,12 @@ func (c *ClusterManager) buildKafkaSreClusterRoleBindingResource() *authv1.Clust
 }
 
 func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supportedInstanceType string, cluster api.Cluster) (*types.MachinePoolRequest, error) {
-	dynamicScalingConfig, found := c.DataplaneClusterConfig.DynamicScalingConfig.GetConfigForInstanceType(supportedInstanceType)
+	computeMachinesConfig, err := c.DataplaneClusterConfig.DefaultComputeMachinesConfig(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
+	if err != nil {
+		return nil, errors.Wrapf(err, "ClusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
+	}
+
+	dynamicScalingConfig, found := computeMachinesConfig.GetKafkaWorkloadConfigForInstanceType(supportedInstanceType)
 	if !found {
 		return nil, fmt.Errorf("No dynamic scaling configuration found for instance type '%s'", supportedInstanceType)
 	}
@@ -967,21 +977,16 @@ func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supported
 		Key:    kafkaInstanceProfileType,
 		Value:  supportedInstanceType,
 	}
-	machineTypeConfig, err := c.DataplaneClusterConfig.DefaultComputeMachineTypeConfig(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
-	if err != nil {
-		return nil, errors.Wrapf(err, "ClusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
-	}
+
 	machinePoolTaints := []types.CluserNodeTaint{machinePoolTaint}
 	machinePool := &types.MachinePoolRequest{
 		ID:                 machinePoolID,
-		InstanceSize:       machineTypeConfig.KafkaWorkloadMachineType,
+		InstanceSize:       dynamicScalingConfig.ComputeMachineType,
 		MultiAZ:            cluster.MultiAZ,
 		AutoScalingEnabled: true,
 		AutoScaling: types.MachinePoolAutoScaling{
-			// explicitely set min nodes to 1 to allow the autoscaler to consider this machine pool for scaling.
-			// The value will be rounded up to 3 on the ocm cluster provider dependending on whether the cluster is single az or multi az
-			MinNodes: 1,
-			MaxNodes: dynamicScalingConfig.ComputeNodesConfig.MaxComputeNodes,
+			MinNodes: dynamicScalingConfig.ComputeNodesAutoscaling.MinComputeNodes,
+			MaxNodes: dynamicScalingConfig.ComputeNodesAutoscaling.MaxComputeNodes,
 		},
 		ClusterID:  cluster.ClusterID,
 		NodeLabels: machinePoolLabels,

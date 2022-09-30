@@ -3,7 +3,6 @@ package clusters
 import (
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -24,16 +23,30 @@ const (
 func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 	awsConfig := &config.AWSConfig{}
 
+	awsComputeMachineConfig := config.ComputeMachinesConfig{
+		ClusterWideWorkload: &config.ComputeMachineConfig{
+			ComputeMachineType: testAWSComputeMachineType,
+			ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+				MaxComputeNodes: 18,
+				MinComputeNodes: 3,
+			},
+		},
+	}
+	gcpComputeMachineConfig := config.ComputeMachinesConfig{
+		ClusterWideWorkload: &config.ComputeMachineConfig{
+			ComputeMachineType: testGCPComputeMachineType,
+			ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+				MaxComputeNodes: 8,
+				MinComputeNodes: 6,
+			},
+		},
+	}
 	dataplaneClusterConfig := &config.DataplaneClusterConfig{
 		DynamicScalingConfig: config.DynamicScalingConfig{
 			NewDataPlaneOpenShiftVersion: testOpenshiftVersion,
-			MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]config.MachineTypeConfig{
-				cloudproviders.AWS: {
-					ClusterWideWorkloadMachineType: testAWSComputeMachineType,
-				},
-				cloudproviders.GCP: {
-					ClusterWideWorkloadMachineType: testGCPComputeMachineType,
-				},
+			ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]config.ComputeMachinesConfig{
+				cloudproviders.AWS: awsComputeMachineConfig,
+				cloudproviders.GCP: gcpComputeMachineConfig,
 			},
 		},
 	}
@@ -171,7 +184,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 					builder.Version(clustersmgmtv1.NewVersion().ID(testOpenshiftVersion))
 					builder.Nodes(clustersmgmtv1.NewClusterNodes().
 						ComputeMachineType(clustersmgmtv1.NewMachineType().ID(testAWSComputeMachineType)).
-						AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(constants.MinNodesForDefaultMachinePool).MaxReplicas(constants.MaxNodesForDefaultMachinePool)))
+						AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(awsComputeMachineConfig.ClusterWideWorkload.ComputeNodesAutoscaling.MinComputeNodes).MaxReplicas(awsComputeMachineConfig.ClusterWideWorkload.ComputeNodesAutoscaling.MaxComputeNodes)))
 				})
 				if err != nil {
 					panic(err)
@@ -225,7 +238,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 					builder.Version(clustersmgmtv1.NewVersion().ID(testOpenshiftVersion))
 					builder.Nodes(clustersmgmtv1.NewClusterNodes().
 						ComputeMachineType(clustersmgmtv1.NewMachineType().ID(testGCPComputeMachineType)).
-						AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(constants.MinNodesForDefaultMachinePool).MaxReplicas(constants.MaxNodesForDefaultMachinePool)))
+						AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(gcpComputeMachineConfig.ClusterWideWorkload.ComputeNodesAutoscaling.MinComputeNodes).MaxReplicas(gcpComputeMachineConfig.ClusterWideWorkload.ComputeNodesAutoscaling.MaxComputeNodes)))
 				})
 				if err != nil {
 					panic(err)
@@ -264,7 +277,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 					builder.Version(clustersmgmtv1.NewVersion().ID(testOpenshiftVersion))
 					builder.Nodes(clustersmgmtv1.NewClusterNodes().
 						ComputeMachineType(clustersmgmtv1.NewMachineType().ID(testAWSComputeMachineType)).
-						AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(constants.MinNodesForDefaultMachinePool).MaxReplicas(constants.MaxNodesForDefaultMachinePool)))
+						AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(awsComputeMachineConfig.ClusterWideWorkload.ComputeNodesAutoscaling.MinComputeNodes).MaxReplicas(awsComputeMachineConfig.ClusterWideWorkload.ComputeNodesAutoscaling.MaxComputeNodes)))
 				})
 				if err != nil {
 					panic(err)

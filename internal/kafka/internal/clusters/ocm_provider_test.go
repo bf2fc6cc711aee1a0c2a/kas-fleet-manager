@@ -39,9 +39,15 @@ func TestOCMProvider_Create(t *testing.T) {
 	osdCreateConfig := &config.DataplaneClusterConfig{
 		DynamicScalingConfig: config.DynamicScalingConfig{
 			NewDataPlaneOpenShiftVersion: "4.7",
-			MachineTypePerCloudProvider: map[cloudproviders.CloudProviderID]config.MachineTypeConfig{
+			ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]config.ComputeMachinesConfig{
 				cloudproviders.AWS: {
-					ClusterWideWorkloadMachineType: "testmachinetype",
+					ClusterWideWorkload: &config.ComputeMachineConfig{
+						ComputeMachineType: "testmachinetype",
+						ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+							MaxComputeNodes: 18,
+							MinComputeNodes: 3,
+						},
+					},
 				},
 			},
 		},
