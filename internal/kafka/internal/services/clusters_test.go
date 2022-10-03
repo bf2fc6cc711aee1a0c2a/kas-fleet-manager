@@ -136,7 +136,7 @@ func Test_Cluster_Create(t *testing.T) {
 				cluster: mocks.BuildCluster(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithExecException()
+				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithQueryException()
 			},
 			wantErr: true,
 		},
@@ -662,7 +662,7 @@ func Test_clusterService_Update(t *testing.T) {
 			wantErr: false,
 			want:    nil,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "clusters" SET "id"=$1,"updated_at"=$2 WHERE "id" = $3`)
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "clusters" SET "id"=$1,"updated_at"=$2 WHERE "clusters"."deleted_at" IS NULL AND "id" = $3`)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
