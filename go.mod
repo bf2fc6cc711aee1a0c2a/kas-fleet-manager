@@ -29,7 +29,6 @@ require (
 	github.com/lib/pq v1.10.7
 	github.com/libdns/route53 v1.3.1
 	github.com/looplab/fsm v1.0.1
-	github.com/mattn/go-sqlite3 v1.14.3 // indirect
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/gomega v1.27.3
