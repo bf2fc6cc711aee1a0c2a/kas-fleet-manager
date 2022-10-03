@@ -60,7 +60,7 @@ func TestRolesAuthMiddleware_RequireRealmRole(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			rolesHandler := NewRolesAuhzMiddleware()
+			rolesHandler := NewRolesAuthzMiddleware(&AdminRoleAuthZConfig{})
 			toTest := setContextToken(rolesHandler.RequireRealmRole(tt.wantRole, errors.ErrorUnauthenticated)(tt.next), tt.token)
 			req := httptest.NewRequest("GET", "http://example.com", nil)
 			recorder := httptest.NewRecorder()
@@ -76,12 +76,12 @@ func TestRolesAuthMiddleware_RequireRealmRole(t *testing.T) {
 
 func TestRolesAuthMiddleware_RequireRolesForMethods(t *testing.T) {
 	tests := []struct {
-		name     string
-		token    *jwt.Token
-		next     http.Handler
-		rolesMap map[string][]string
-		request  *http.Request
-		want     int
+		name        string
+		token       *jwt.Token
+		next        http.Handler
+		rolesConfig []RolesConfiguration
+		request     *http.Request
+		want        int
 	}{
 		{
 			name: "should allow access when required role is presented",
@@ -95,8 +95,11 @@ func TestRolesAuthMiddleware_RequireRolesForMethods(t *testing.T) {
 			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 				shared.WriteJSONResponse(writer, http.StatusOK, "")
 			}),
-			rolesMap: map[string][]string{
-				http.MethodGet: {"test"},
+			rolesConfig: []RolesConfiguration{
+				{
+					HTTPMethod: http.MethodGet,
+					RoleNames:  []string{"test"},
+				},
 			},
 			request: httptest.NewRequest(http.MethodGet, "http://example.com", nil),
 			want:    http.StatusOK,
@@ -113,8 +116,11 @@ func TestRolesAuthMiddleware_RequireRolesForMethods(t *testing.T) {
 			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 				shared.WriteJSONResponse(writer, http.StatusOK, "")
 			}),
-			rolesMap: map[string][]string{
-				http.MethodGet: {"test", "test1"},
+			rolesConfig: []RolesConfiguration{
+				{
+					HTTPMethod: http.MethodGet,
+					RoleNames:  []string{"test", "test1"},
+				},
 			},
 			request: httptest.NewRequest(http.MethodGet, "http://example.com", nil),
 			want:    http.StatusOK,
@@ -131,8 +137,11 @@ func TestRolesAuthMiddleware_RequireRolesForMethods(t *testing.T) {
 			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 				shared.WriteJSONResponse(writer, http.StatusOK, "")
 			}),
-			rolesMap: map[string][]string{
-				http.MethodPost: {"test"},
+			rolesConfig: []RolesConfiguration{
+				{
+					HTTPMethod: http.MethodPost,
+					RoleNames:  []string{"test"},
+				},
 			},
 			request: httptest.NewRequest(http.MethodGet, "http://example.com", nil),
 			want:    http.StatusUnauthorized,
@@ -145,8 +154,11 @@ func TestRolesAuthMiddleware_RequireRolesForMethods(t *testing.T) {
 			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 				shared.WriteJSONResponse(writer, http.StatusOK, "")
 			}),
-			rolesMap: map[string][]string{
-				http.MethodGet: {"test"},
+			rolesConfig: []RolesConfiguration{
+				{
+					HTTPMethod: http.MethodGet,
+					RoleNames:  []string{"test"},
+				},
 			},
 			request: httptest.NewRequest(http.MethodGet, "http://example.com", nil),
 			want:    http.StatusUnauthorized,
@@ -157,8 +169,8 @@ func TestRolesAuthMiddleware_RequireRolesForMethods(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
-			rolesHandler := NewRolesAuhzMiddleware()
-			toTest := setContextToken(rolesHandler.RequireRolesForMethods(tt.rolesMap, errors.ErrorUnauthenticated)(tt.next), tt.token)
+			rolesHandler := NewRolesAuthzMiddleware(&AdminRoleAuthZConfig{RolesConfig: tt.rolesConfig})
+			toTest := setContextToken(rolesHandler.RequireRolesForMethods(errors.ErrorUnauthenticated)(tt.next), tt.token)
 			recorder := httptest.NewRecorder()
 			toTest.ServeHTTP(recorder, tt.request)
 			resp := recorder.Result()

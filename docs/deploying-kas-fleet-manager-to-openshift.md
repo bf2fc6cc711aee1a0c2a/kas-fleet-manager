@@ -192,6 +192,12 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `REGISTERED_USERS_PER_ORGANISATION`: The list of allowed organisations that are able to create _STANDARD_ kafka instances. This will only be applicable if `QUOTA_TYPE` is set to **quota-management-list**. Defaults to `"[{id: 13640203, max_allowed_instances: 5, any_user: true, registered_users: []}, {id: 12147054, max_allowed_instances: 1, any_user: true, registered_users: []}, {id: 13639843, max_allowed_instances: 1, any_user: true, registered_users: []}]"`
 - `DYNAMIC_SCALING_CONFIG`: The configuration file that contains information about each Kafka instance types, dynamic scaling configuration. Defaults to `"{developer: {compute_nodes_config: {max_compute_nodes: 3}}, standard: {compute_nodes_config: {max_compute_nodes: 9}}}"`
 - `NODE_PREWARMING_CONFIG`: The configuration file that contains information about each Kafka instance types, node prewarming configuration. Defaults to `"{}"`
+- `ADMIN_AUTHZ_CONFIG`: Configuration file containing endpoints and roles mappings used to grant access to admin API endpoints, Defaults to`"[{method: GET, roles: [kas-fleet-manager-admin-full, kas-fleet-manager-admin-read, kas-fleet-manager-admin-write]}, {method: PATCH, roles: [kas-fleet-manager-admin-full, kas-fleet-manager-admin-write]}, {method: DELETE, roles: [kas-fleet-manager-admin-full]}]
+"`
+- `ADMIN_API_SSO_BASE_URL`: Base URL of admin API endpints SSO. Defaults to `"https://auth.redhat.com"`
+- `ADMIN_API_SSO_ENDPOINT_URI`: admin API SSO endpoint URI. defaults to `"/auth/realms/EmployeeIDP"`
+- `ADMIN_API_SSO_REALM`: admin API SSO realm. Defaults to `"EmployeeIDP"`
+
 
 ### Using an Image from a Private External Registry
 If you are using a private external registry, a docker pull secret must be created in the namespace where KAS Fleet Manager is deployed and linked to the service account that KAS Fleet Manager uses.

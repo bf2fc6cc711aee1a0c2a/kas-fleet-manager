@@ -38,6 +38,7 @@ type options struct {
 	ConnectorClusterHandler   *handlers.ConnectorClusterHandler
 	ConnectorNamespaceHandler *handlers.ConnectorNamespaceHandler
 	DB                        *db.ConnectionFactory
+	AdminRoleAuthZConfig      *auth.AdminRoleAuthZConfig
 }
 
 func NewRouteLoader(s options) environments.RouteLoader {
@@ -152,15 +153,8 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 
 	// This section adds APIs accessed by connector admins
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
-	rolesMapping := map[string][]string{
-		http.MethodDelete: {auth.ConnectorFleetManagerAdminWriteRole, auth.ConnectorFleetManagerAdminFullRole},
-		http.MethodGet:    {auth.ConnectorFleetManagerAdminReadRole, auth.ConnectorFleetManagerAdminWriteRole, auth.ConnectorFleetManagerAdminFullRole},
-		http.MethodPost:   {auth.ConnectorFleetManagerAdminWriteRole, auth.ConnectorFleetManagerAdminFullRole},
-		http.MethodPatch:  {auth.ConnectorFleetManagerAdminWriteRole, auth.ConnectorFleetManagerAdminFullRole},
-		http.MethodPut:    {auth.ConnectorFleetManagerAdminWriteRole, auth.ConnectorFleetManagerAdminFullRole},
-	}
-	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.KeycloakService.GetConfig().OSDClusterIDPRealm.ValidIssuerURI}, kerrors.ErrorNotFound))
-	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, kerrors.ErrorNotFound))
+	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.KeycloakService.GetConfig().AdminAPISSORealm.ValidIssuerURI}, kerrors.ErrorNotFound))
+	adminRouter.Use(auth.NewRolesAuthzMiddleware(s.AdminRoleAuthZConfig).RequireRolesForMethods(kerrors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(kerrors.ErrorNotFound))
 	adminRouter.HandleFunc("/kafka_connector_clusters", s.ConnectorAdminHandler.ListConnectorClusters).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafka_connector_clusters/{connector_cluster_id}", s.ConnectorAdminHandler.GetConnectorCluster).Methods(http.MethodGet)

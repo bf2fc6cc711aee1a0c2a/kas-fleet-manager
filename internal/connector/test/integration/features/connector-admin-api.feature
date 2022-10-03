@@ -7,7 +7,7 @@ Feature: connector admin api
     Given the path prefix is "/api/connector_mgmt"
 
     # users with fleet role
-    Given an admin user named "Ricky Bobby" with roles "connector-fleet-manager-admin-full"
+    Given an admin user named "Ricky Bobby" with roles "cos-fleet-manager-admin-full"
 
     # org admins
     Given an org admin user named "Stuart Admin" in organization "13640240"

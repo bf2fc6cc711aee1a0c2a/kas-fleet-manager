@@ -22,7 +22,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -427,7 +426,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 	}
 
 	// updating KafkaStorageSize, so that later it can be validated against "PrivateClient.AgentClustersApi.GetKafkas()"
-	adminCtx := NewAuthenticatedContextForAdminEndpoints(testServer.Helper, []string{auth.KasFleetManagerAdminWriteRole})
+	adminCtx := NewAuthenticatedContextForAdminEndpoints(testServer.Helper, []string{testFullRole})
 	client := test.NewAdminPrivateAPIClient(testServer.Helper)
 	for _, kafka := range testKafkas {
 		result, resp, err := client.DefaultApi.UpdateKafkaById(adminCtx, kafka.ID, biggerStorageUpdateRequest)

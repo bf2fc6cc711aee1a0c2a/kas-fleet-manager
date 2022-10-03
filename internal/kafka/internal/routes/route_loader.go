@@ -56,6 +56,7 @@ type options struct {
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
 	AccessControlListConfig     *acl.AccessControlListConfig
+	AdminRoleAuthZConfig        *auth.AdminRoleAuthZConfig
 }
 
 func NewRouteLoader(s options) environments.RouteLoader {
@@ -248,13 +249,8 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 
 	adminKafkaHandler := handlers.NewAdminKafkaHandler(s.Kafka, s.AccountService, s.ProviderConfig, s.ClusterService)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
-	rolesMapping := map[string][]string{
-		http.MethodGet:    {auth.KasFleetManagerAdminReadRole, auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},
-		http.MethodPatch:  {auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},
-		http.MethodDelete: {auth.KasFleetManagerAdminFullRole},
-	}
-	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.Keycloak.GetConfig().OSDClusterIDPRealm.ValidIssuerURI}, errors.ErrorNotFound))
-	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, errors.ErrorNotFound))
+	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.Keycloak.GetConfig().AdminAPISSORealm.ValidIssuerURI}, errors.ErrorNotFound))
+	adminRouter.Use(auth.NewRolesAuthzMiddleware(s.AdminRoleAuthZConfig).RequireRolesForMethods(errors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
 	adminRouter.HandleFunc("/kafkas", adminKafkaHandler.List).
 		Name(logger.NewLogEvent("admin-list-kafkas", "[admin] list all kafkas").ToString()).

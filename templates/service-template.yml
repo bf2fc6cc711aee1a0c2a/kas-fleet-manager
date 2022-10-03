@@ -172,6 +172,11 @@ parameters:
   description: "YAML content containing a map of the node prewarming configuration for each instance type"
   value: "{}"
 
+- name: ADMIN_AUTHZ_CONFIG
+  displayName: Admin API AUTHZ configuration
+  description: "YAML configuration for admin API endpoints authorization"
+  value: "[{method: GET, roles: [kas-fleet-manager-admin-full, kas-fleet-manager-admin-read, kas-fleet-manager-admin-write]}, {method: PATCH, roles: [kas-fleet-manager-admin-full, kas-fleet-manager-admin-write]}, {method: DELETE, roles: [kas-fleet-manager-admin-full]}]"
+
 - name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
   displayName: Enable Kafka TLS
   description: Enable the Kafka TLS certificate
@@ -411,6 +416,18 @@ parameters:
   description: redhat_sso base url
   value:  "https://sso.redhat.com"
 
+- name: ADMIN_API_SSO_BASE_URL
+  description: Admin API SSO Base URL
+  value: "https://auth.redhat.com"
+
+- name: ADMIN_API_SSO_ENDPOINT_URI
+  description: Admin API SSO Endpoint URI
+  value: "/auth/realms/EmployeeIDP"
+
+- name: ADMIN_API_SSO_REALM
+  description: Admin API SSO Realm
+  value: "EmployeeIDP"
+
 - name: CLUSTER_OPENSHIFT_VERSION
   displayName: The version of openshift
   description: The version of openshift to be deployed on a new created OSD cluster
@@ -628,6 +645,15 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
+      name: kas-fleet-manager-admin-authz-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      admin-authz-configuration.yaml: |-
+        ${ADMIN_AUTHZ_CONFIG}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
       name: kas-fleet-manager-allowed-users-config
       annotations:
         qontract.recycle: "true"
@@ -826,7 +852,10 @@ objects:
               name: kas-fleet-manager-dynamic-scaling-config
           - name: kas-fleet-manager-node-prewarming-config
             configMap:
-              name: kas-fleet-manager-node-prewarming-config    
+              name: kas-fleet-manager-node-prewarming-config   
+          - name: kas-fleet-manager-admin-authz-config
+            configMap:
+              name: kas-fleet-manager-admin-authz-config 
           - name: kas-fleet-manager-allowed-users-config
             configMap:
               name: kas-fleet-manager-allowed-users-config
@@ -921,7 +950,10 @@ objects:
               subPath: dynamic-scaling-configuration.yaml
             - name: kas-fleet-manager-node-prewarming-config
               mountPath: /config/node-prewarming-configuration.yaml
-              subPath: node-prewarming-configuration.yaml  
+              subPath: node-prewarming-configuration.yaml
+            - name: kas-fleet-manager-admin-authz-config
+              mountPath: /config/admin-authz-configuration.yaml
+              subPath: admin-authz-configuration.yaml
             - name: kas-fleet-manager-allowed-users-config
               mountPath: /config/quota-management-list-configuration.yaml
               subPath: quota-management-list-configuration.yaml
@@ -1106,7 +1138,11 @@ objects:
             - --redhat-sso-client-id-file=/secrets/service/redhatsso-service.clientId
             - --redhat-sso-client-secret-file=/secrets/service/redhatsso-service.clientSecret
             - --redhat-sso-base-url=${REDHAT_SSO_BASE_URL}
-            - --max-allowed-developer-instances=${MAX_ALLOWED_DEVELOPER_INSTANCES}
+            - --max-allowed-developer-instances=${MAX_ALLOWED_DEVELOPER_INSTANCES}    
+            - --admin-api-sso-base-url=${ADMIN_API_SSO_BASE_URL}
+            - --admin-api-sso-endpoint-uri=${ADMIN_API_SSO_ENDPOINT_URI}
+            - --admin-api-sso-realm=${ADMIN_API_SSO_REALM}
+            - --admin-authz-config-file=/config/admin-authz-configuration.yaml
             - -v=${GLOG_V}
             resources:
               requests:

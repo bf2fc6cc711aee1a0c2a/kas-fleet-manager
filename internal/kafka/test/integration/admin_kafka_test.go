@@ -13,12 +13,18 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	mockkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/onsi/gomega"
+)
+
+const (
+	testFullRole  = "kas-fleet-manager-admin-full"
+	testReadRole  = "kas-fleet-manager-admin-read"
+	testWriteRole = "kas-fleet-manager-admin-write"
+	invalidRole   = "invalid"
 )
 
 func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []string) context.Context {
@@ -27,7 +33,7 @@ func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []s
 
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
-		"iss": keycloakConfig.OSDClusterIDPRealm.ValidIssuerURI,
+		"iss": keycloakConfig.AdminAPISSORealm.ValidIssuerURI,
 		"realm_access": map[string][]string{
 			"roles": realmRoles,
 		},
@@ -69,7 +75,7 @@ func TestAdminKafka_Get(t *testing.T) {
 			name: "should fail when the role defined in the request is not any of read, write or full",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{"notallowedrole"})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{invalidRole})
 				},
 				kafkaID: sampleKafkaID,
 			},
@@ -79,10 +85,10 @@ func TestAdminKafka_Get(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminReadRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testReadRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testReadRole})
 				},
 				kafkaID: sampleKafkaID,
 			},
@@ -96,10 +102,10 @@ func TestAdminKafka_Get(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminWriteRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testWriteRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testWriteRole})
 				},
 				kafkaID: sampleKafkaID,
 			},
@@ -113,10 +119,10 @@ func TestAdminKafka_Get(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testFullRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID,
 			},
@@ -133,7 +139,7 @@ func TestAdminKafka_Get(t *testing.T) {
 			name: "should fail when the requested kafka does not exist",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testReadRole})
 				},
 				kafkaID: "unexistingkafkaID",
 			},
@@ -150,7 +156,7 @@ func TestAdminKafka_Get(t *testing.T) {
 					claims := jwt.MapClaims{
 						"iss": "invalidiss",
 						"realm_access": map[string][]string{
-							"roles": {auth.KasFleetManagerAdminReadRole},
+							"roles": {testReadRole},
 						},
 					}
 					token := h.CreateJWTStringWithClaim(account, claims)
@@ -226,10 +232,10 @@ func TestAdminKafka_Delete(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should fail when the role defined in the request is not %s", auth.KasFleetManagerAdminFullRole),
+			name: fmt.Sprintf("should fail when the role defined in the request is not %s", testFullRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testWriteRole})
 				},
 			},
 			verifyResponse: func(resp *http.Response, err error) {
@@ -238,10 +244,10 @@ func TestAdminKafka_Delete(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testFullRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 			},
 			verifyResponse: func(resp *http.Response, err error) {
@@ -321,10 +327,10 @@ func TestAdminKafka_List(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testFullRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaListSize: 2,
 			},
@@ -335,10 +341,10 @@ func TestAdminKafka_List(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminWriteRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testWriteRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testWriteRole})
 				},
 				kafkaListSize: 2,
 			},
@@ -349,10 +355,10 @@ func TestAdminKafka_List(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminReadRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testReadRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testReadRole})
 				},
 				kafkaListSize: 2,
 			},
@@ -445,7 +451,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when kafkaUpdateRequest is empty",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID:            sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{},
@@ -458,7 +464,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when kafkaUpdateRequest request params contain only strings with whitespaces",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -477,7 +483,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when the requested kafka does not exist",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testReadRole})
 				},
 				kafkaID:            "nonexistentkafkaID",
 				kafkaUpdateRequest: allFieldsUpdateRequest,
@@ -491,7 +497,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when upgrading all possible values",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID:            sampleKafkaID1,
 				kafkaUpdateRequest: allFieldsUpdateRequest,
@@ -529,7 +535,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when the role defined in the request is not any of read, write or full",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{"notallowedrole"})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{invalidRole})
 				},
 				kafkaID: sampleKafkaID1,
 			},
@@ -539,10 +545,10 @@ func TestAdminKafka_Update(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should fail when the role defined in the request is %s", auth.KasFleetManagerAdminReadRole),
+			name: fmt.Sprintf("should fail when the role defined in the request is %s", testReadRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testReadRole})
 				},
 				kafkaID: sampleKafkaID1,
 			},
@@ -552,10 +558,10 @@ func TestAdminKafka_Update(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should succeed when the role defined in the request is %s", auth.KasFleetManagerAdminWriteRole),
+			name: fmt.Sprintf("should succeed when the role defined in the request is %s", testWriteRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testWriteRole})
 				},
 				kafkaID:            sampleKafkaID1,
 				kafkaUpdateRequest: allFieldsUpdateRequest,
@@ -567,10 +573,10 @@ func TestAdminKafka_Update(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should succeed when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
+			name: fmt.Sprintf("should succeed when the role defined in the request is %s", testFullRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID:            sampleKafkaID1,
 				kafkaUpdateRequest: allFieldsUpdateRequest,
@@ -589,7 +595,7 @@ func TestAdminKafka_Update(t *testing.T) {
 					claims := jwt.MapClaims{
 						"iss": "invalidiss",
 						"realm_access": map[string][]string{
-							"roles": {auth.KasFleetManagerAdminReadRole},
+							"roles": {testReadRole},
 						},
 					}
 					token := h.CreateJWTStringWithClaim(account, claims)
@@ -609,7 +615,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when downgrading ibp version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -625,7 +631,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading ibp version to version higher than kafka version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -641,7 +647,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading ibp version when already upgrade in progress",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -656,7 +662,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when upgrading ibp version to lower than kafka version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -676,7 +682,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when downgrading to lower minor kafka version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -692,7 +698,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading to higher minor kafka version when not in status",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -707,7 +713,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when downgrading to lower patch kafka version smaller than ibp version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID3,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -722,7 +728,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when downgrading to lower major kafka version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID4,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -737,7 +743,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading kafka version when already upgrade in progress",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -752,7 +758,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when downgrading to lower patch kafka version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -771,7 +777,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when upgrading to higher minor kafka version when in status",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -791,7 +797,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading strimzi version when already upgrade in progress",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -806,7 +812,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading strimzi version to a version not in the status",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -821,7 +827,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading simultaneously kafka, ibp and strimzi version when any of those not in status",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -838,7 +844,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading strimzi version to a version that is not ready",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -854,7 +860,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when upgrading simultaneously kafka, ibp and strimzi version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -877,7 +883,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when attempting to update to the same storage size using kafka_storage_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -901,7 +907,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update to smaller storage size using kafka_storage_size_field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -916,7 +922,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update to smaller storage size in different format using kafka_storage_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -931,7 +937,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update to smaller storage size in the wrong format using kafka_storage_size_field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -946,7 +952,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when updating to bigger storage size using kafka_storage_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -969,7 +975,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update storage size to a random string using kafka_storage_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -985,7 +991,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when attempting to update to the same storage size using max_data_retention_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1007,7 +1013,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to upgrade to smaller storage size using max_data_retention_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1022,7 +1028,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update to smaller storage size in different format using kafka_storage_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1037,7 +1043,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update storage using an invalid format using max_data_retention_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1052,7 +1058,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when upgrading to bigger storage size using max_data_retention_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1075,7 +1081,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update storage size to a random string using max_data_retention_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1090,7 +1096,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update storage when current storage size not set",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID4,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1105,7 +1111,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update storage when current storage size is set to some incorrect value",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID3,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1120,7 +1126,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should use max_data_retention_size over kafka_storage_size if both are specified",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
