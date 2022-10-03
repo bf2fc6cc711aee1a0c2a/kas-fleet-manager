@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/golang/glog"
 	_ "github.com/lib/pq"
 	mocket "github.com/selvatico/go-mocket"
@@ -15,13 +16,6 @@ type ConnectionFactory struct {
 	DB     *gorm.DB
 }
 
-var gormConfig *gorm.Config = &gorm.Config{
-	PrepareStmt:       true,
-	AllowGlobalUpdate: false, // change it to true to allow updates without the WHERE clause
-	QueryFields:       true,
-	Logger:            customLoggerWithMetricsCollector{},
-}
-
 // NewConnectionFactory will initialize a singleton ConnectionFactory as needed and return the same instance.
 // Go includes database connection pooling in the platform. Gorm uses the same and provides a method to
 // clone a connection via New(), which is safe for use by concurrent Goroutines.
@@ -30,12 +24,18 @@ func NewConnectionFactory(config *DatabaseConfig) (*ConnectionFactory, func()) {
 	var err error
 	// refer to https://gorm.io/docs/gorm_config.html
 
-	if config.Dialect == "postgres" {
-		db, err = gorm.Open(postgres.Open(config.ConnectionString()), gormConfig)
-	} else {
+	if config.Dialect != "postgres" {
 		// TODO what other dialects do we support?
 		panic(fmt.Sprintf("Unsupported DB dialect: %s", config.Dialect))
 	}
+
+	gormConfig := &gorm.Config{
+		PrepareStmt:       config.EnablePreparedStatements,
+		AllowGlobalUpdate: false, // change it to true to allow updates without the WHERE clause
+		QueryFields:       true,
+		Logger:            customLoggerWithMetricsCollector{},
+	}
+	db, err = gorm.Open(postgres.Open(config.ConnectionString()), gormConfig)
 	if err != nil {
 		panic(fmt.Sprintf(
 			"failed to connect to %s database %s with connection string: %s\nError: %s",
@@ -45,6 +45,7 @@ func NewConnectionFactory(config *DatabaseConfig) (*ConnectionFactory, func()) {
 			err.Error(),
 		))
 	}
+
 	sqlDB, sqlDBErr := db.DB()
 	if sqlDBErr != nil {
 		panic(fmt.Errorf("Unexpected connection error: %s", sqlDBErr))
