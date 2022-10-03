@@ -175,7 +175,7 @@ parameters:
 - name: ADMIN_AUTHZ_CONFIG
   displayName: Admin API AUTHZ configuration
   description: "YAML configuration for admin API endpoints authorization"
-  value: "[{method: GET, roles: ['kas-fleet-manager-admin-full', 'kas-fleet-manager-admin-read', 'kas-fleet-manager-admin-write']}, {method:PATCH, roles: ['kas-fleet-manager-admin-full', 'kas-fleet-manager-admin-write']}, {method:DELETE, roles: ['kas-fleet-manager-admin-full']}]"
+  value: "[{method: GET, roles: [kas-fleet-manager-admin-full, kas-fleet-manager-admin-read, kas-fleet-manager-admin-write]}, {method: PATCH, roles: [kas-fleet-manager-admin-full, kas-fleet-manager-admin-write]}, {method: DELETE, roles: [kas-fleet-manager-admin-full]}]"
 
 - name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
   displayName: Enable Kafka TLS
