@@ -538,8 +538,10 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 			name: "Should expect an error when clusterService.FindStreamingUnitCountByClusterAndInstanceType returns an error",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType:                   config.AutoScaling,
-					EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -556,8 +558,10 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 			name: "Should not expect an error when clusterService.FindStreamingUnitCountByClusterAndInstanceType returns empty",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType:                   config.AutoScaling,
-					EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -574,8 +578,10 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 			name: "Should never call clusterService.UpdateStatus when there is no need to scale down",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType:                   config.AutoScaling,
-					EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -597,8 +603,10 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 			name: "Should not check for scale up evaluation after cluster removal when cloud provider is not provided",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType:                   config.AutoScaling,
-					EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -634,8 +642,10 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 			name: "Should not check for scale up evaluation after cluster removal when region limits are not provided",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType:                   config.AutoScaling,
-					EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -676,8 +686,10 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 			name: "Should never call clusterService.UpdateStatus when there is no need to scale down",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType:                   config.AutoScaling,
-					EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -699,8 +711,10 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 			name: "Should call clusterService.UpdateStatus only once for each occurrence of the same cluster that needs scale down",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType:                   config.AutoScaling,
-					EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -834,8 +848,10 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 			name: "Should call clusterService.UpdateStatus as many times as there are clusters to deprovision",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType:                   config.AutoScaling,
-					EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -960,8 +976,10 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 			name: "Should return an error when evaluating scale down returns an error",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType:                   config.AutoScaling,
-					EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -1034,8 +1052,10 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 			name: "Should expect an error when clusterService.UpdateStatus returns an error",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType:                   config.AutoScaling,
-					EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -1076,8 +1096,10 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 			name: "Should never call clusterService.UpdateStatus when dry run",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					DataPlaneClusterScalingType:                   config.AutoScaling,
-					EnableDynamicScaleDownManagerScaleDownTrigger: false,
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						EnableDynamicScaleDownManagerScaleDownTrigger: false,
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {

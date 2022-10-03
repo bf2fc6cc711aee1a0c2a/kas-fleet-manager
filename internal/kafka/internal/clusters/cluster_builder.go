@@ -1,9 +1,6 @@
 package clusters
 
 import (
-	"fmt"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -70,8 +67,8 @@ func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRe
 	clusterBuilder.CloudProvider(clustersmgmtv1.NewCloudProvider().ID(clusterRequest.CloudProvider))
 	clusterBuilder.Region(clustersmgmtv1.NewCloudRegion().ID(clusterRequest.Region))
 	clusterBuilder.MultiAZ(clusterRequest.MultiAZ)
-	if r.dataplaneClusterConfig.OpenshiftVersion != "" {
-		clusterBuilder.Version(clustersmgmtv1.NewVersion().ID(r.dataplaneClusterConfig.OpenshiftVersion))
+	if r.dataplaneClusterConfig.DynamicScalingConfig.NewDataPlaneOpenShiftVersion != "" {
+		clusterBuilder.Version(clustersmgmtv1.NewVersion().ID(r.dataplaneClusterConfig.DynamicScalingConfig.NewDataPlaneOpenShiftVersion))
 	}
 	// setting CCS to always be true for now as this is the only available cluster type within our quota.
 	clusterBuilder.CCS(clustersmgmtv1.NewCCS().Enabled(true))
@@ -81,14 +78,17 @@ func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRe
 	cloudProviderID := cloudproviders.ParseCloudProviderID(clusterRequest.CloudProvider)
 	r.setCloudProviderBuilder(cloudProviderID, clusterBuilder)
 
-	computeMachineType := r.dataplaneClusterConfig.DefaultComputeMachineType(cloudProviderID)
-	if computeMachineType == "" {
-		return nil, fmt.Errorf("Cloud provider %q is not a recognized cloud provider", clusterRequest.CloudProvider)
+	computeMachineConfig, err := r.dataplaneClusterConfig.DefaultComputeMachinesConfig(cloudProviderID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Cloud provider %q is not a recognized cloud provider", clusterRequest.CloudProvider)
 	}
 
+	clusterWideWorkloadConfig := computeMachineConfig.ClusterWideWorkload
 	clusterBuilder.Nodes(clustersmgmtv1.NewClusterNodes().
-		ComputeMachineType(clustersmgmtv1.NewMachineType().ID(computeMachineType)).
-		AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().MinReplicas(constants.MinNodesForDefaultMachinePool).MaxReplicas(constants.MaxNodesForDefaultMachinePool)))
+		ComputeMachineType(clustersmgmtv1.NewMachineType().ID(clusterWideWorkloadConfig.ComputeMachineType)).
+		AutoscaleCompute(clustersmgmtv1.NewMachinePoolAutoscaling().
+			MinReplicas(clusterWideWorkloadConfig.ComputeNodesAutoscaling.MinComputeNodes).
+			MaxReplicas(clusterWideWorkloadConfig.ComputeNodesAutoscaling.MaxComputeNodes)))
 
 	return clusterBuilder.Build()
 }

@@ -16,12 +16,6 @@ const (
 
 	//ImagePullSecretName is the name of the secret used to pull images
 	ImagePullSecretName = "rhoas-image-pull-secret"
-
-	//MinNodesForDefaultMachinePool is the minimum number of worker nodes for the default machine pool
-	MinNodesForDefaultMachinePool = 3
-
-	//MaxNodesForDefaultMachinePool is the maximum number of worker nodes for the default machine pool
-	MaxNodesForDefaultMachinePool = 18
 )
 
 func (c ClusterOperation) String() string {

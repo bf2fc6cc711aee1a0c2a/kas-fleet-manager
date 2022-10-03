@@ -11,6 +11,7 @@ import (
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
@@ -227,6 +228,31 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 	h, client, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, providerConfig *config.ProviderConfig) {
 		if enableAutoscale {
 			d.DataPlaneClusterScalingType = config.AutoScaling
+			d.DynamicScalingConfig.ComputeMachinePerCloudProvider[cloudproviders.AWS] = config.ComputeMachinesConfig{
+				ClusterWideWorkload: &config.ComputeMachineConfig{
+					ComputeMachineType: "m5.2xlarge",
+					ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+						MaxComputeNodes: 3,
+						MinComputeNodes: 3,
+					},
+				},
+				KafkaWorkloadPerInstanceType: map[string]config.ComputeMachineConfig{
+					api.StandardTypeSupport.String(): {
+						ComputeMachineType: "r5.xlarge",
+						ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+							MaxComputeNodes: 1,
+							MinComputeNodes: 1,
+						},
+					},
+					api.DeveloperTypeSupport.String(): {
+						ComputeMachineType: "m5.2xlarge",
+						ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+							MaxComputeNodes: 1,
+							MinComputeNodes: 1,
+						},
+					},
+				},
+			}
 		}
 
 		providerConfig.ProvidersConfig.SupportedProviders = config.ProviderList{
