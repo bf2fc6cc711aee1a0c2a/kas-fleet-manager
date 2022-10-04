@@ -26,6 +26,29 @@ type DatabaseConfig struct {
 	NameFile           string `json:"name_file"`
 	UsernameFile       string `json:"username_file"`
 	PasswordFile       string `json:"password_file"`
+
+	EnablePreparedStatements bool
+}
+
+func (d *DatabaseConfig) DeepCopy() *DatabaseConfig {
+	return &DatabaseConfig{
+		DatabaseCaCertFile:       d.DatabaseCaCertFile,
+		Debug:                    d.Debug,
+		Dialect:                  d.Dialect,
+		EnablePreparedStatements: d.EnablePreparedStatements,
+		Host:                     d.Host,
+		HostFile:                 d.HostFile,
+		MaxOpenConnections:       d.MaxOpenConnections,
+		Name:                     d.Name,
+		NameFile:                 d.NameFile,
+		Password:                 d.Password,
+		PasswordFile:             d.PasswordFile,
+		Port:                     d.Port,
+		PortFile:                 d.PortFile,
+		SSLMode:                  d.SSLMode,
+		Username:                 d.Username,
+		UsernameFile:             d.UsernameFile,
+	}
 }
 
 func NewDatabaseConfig() *DatabaseConfig {
@@ -35,12 +58,13 @@ func NewDatabaseConfig() *DatabaseConfig {
 		Debug:              false,
 		MaxOpenConnections: 50,
 
-		HostFile:           "secrets/db.host",
-		PortFile:           "secrets/db.port",
-		UsernameFile:       "secrets/db.user",
-		PasswordFile:       "secrets/db.password",
-		NameFile:           "secrets/db.name",
-		DatabaseCaCertFile: "secrets/db.ca_cert",
+		HostFile:                 "secrets/db.host",
+		PortFile:                 "secrets/db.port",
+		UsernameFile:             "secrets/db.user",
+		PasswordFile:             "secrets/db.password",
+		NameFile:                 "secrets/db.name",
+		DatabaseCaCertFile:       "secrets/db.ca_cert",
+		EnablePreparedStatements: true,
 	}
 }
 
