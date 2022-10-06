@@ -11,9 +11,10 @@ package private
 
 // ConnectorClusterStatus Schema for the request to update a data plane cluster's status
 type ConnectorClusterStatus struct {
-	Phase      ConnectorClusterState `json:"phase,omitempty"`
-	Version    string                `json:"version,omitempty"`
-	Conditions []MetaV1Condition     `json:"conditions,omitempty"`
+	Phase      ConnectorClusterState    `json:"phase,omitempty"`
+	Version    string                   `json:"version,omitempty"`
+	Conditions []MetaV1Condition        `json:"conditions,omitempty"`
+	Platform   ConnectorClusterPlatform `json:"platform,omitempty"`
 	// the list of installed operators
 	Operators  []ConnectorClusterStatusOperators    `json:"operators,omitempty"`
 	Namespaces []ConnectorNamespaceDeploymentStatus `json:"namespaces,omitempty"`

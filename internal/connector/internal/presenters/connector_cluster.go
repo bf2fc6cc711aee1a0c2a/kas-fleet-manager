@@ -38,9 +38,9 @@ func PresentConnectorCluster(from dbapi.ConnectorCluster) public.ConnectorCluste
 	}
 }
 
-func PresentPrivateConnectorCluster(from dbapi.ConnectorCluster) private.ConnectorCluster {
+func PresentPrivateConnectorCluster(from dbapi.ConnectorCluster) private.ConnectorClusterAdminView {
 	reference := PresentReference(from.ID, from)
-	return private.ConnectorCluster{
+	return private.ConnectorClusterAdminView{
 		Id:         reference.Id,
 		Kind:       reference.Kind,
 		Href:       reference.Href,
@@ -48,8 +48,6 @@ func PresentPrivateConnectorCluster(from dbapi.ConnectorCluster) private.Connect
 		Name:       from.Name,
 		CreatedAt:  from.CreatedAt,
 		ModifiedAt: from.UpdatedAt,
-		Status: private.ConnectorClusterStatusStatus{
-			State: private.ConnectorClusterState(from.Status.Phase),
-		},
+		Status:     PresentConnectorClusterAdminStatus(from.Status),
 	}
 }

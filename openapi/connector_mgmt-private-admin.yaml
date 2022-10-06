@@ -36,7 +36,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/ConnectorClusterList"
+                $ref: "#/components/schemas/ConnectorClusterAdminList"
           description: A list of connector clusters
         "401":
           content:
@@ -77,7 +77,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "connector_mgmt.yaml#/components/schemas/ConnectorCluster"
+                $ref: "#/components/schemas/ConnectorClusterAdminView"
           description: The connector cluster matching the request
         "401":
           content:
@@ -1210,6 +1210,54 @@ components:
       properties:
         shard_metadata:
           type: object
+
+    ConnectorClusterAdminList:
+      allOf:
+        - $ref: "#/components/schemas/List"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ConnectorClusterAdminView"
+
+    ConnectorClusterAdminStatus:
+      type: object
+      properties:
+        state:
+          $ref: 'connector_mgmt.yaml#/components/schemas/ConnectorClusterState'
+        version:
+          type: string
+        conditions:
+          type: array
+          items:
+            $ref: 'connector_mgmt-private.yaml#/components/schemas/MetaV1Condition'
+        platform:
+          $ref: 'connector_mgmt-private.yaml#/components/schemas/ConnectorClusterPlatform'
+        operators:
+          description: the list of installed operators
+          type: array
+          items:
+            type: object
+            properties:
+              operator:
+                $ref: 'connector_mgmt-private.yaml#/components/schemas/ConnectorOperator'
+              namespace:
+                description: the namespace to which the operator has been installed
+                type: string
+              status:
+                description: the status of the operator
+                type: string
+
+    ConnectorClusterAdminView:
+      allOf:
+        - $ref: "connector_mgmt.yaml#/components/schemas/ObjectReference"
+        - $ref: "connector_mgmt.yaml#/components/schemas/ConnectorClusterMeta"
+        - type: object
+          properties:
+            status:
+              $ref: "#/components/schemas/ConnectorClusterAdminStatus"
+
 
   securitySchemes:
     Bearer:
