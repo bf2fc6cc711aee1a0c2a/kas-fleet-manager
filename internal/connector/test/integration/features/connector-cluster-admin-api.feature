@@ -4,7 +4,7 @@ Feature: connector cluster admin API
     Given the path prefix is "/api/connector_mgmt"
     Given an org admin user named "Jimmy"
     Given a user named "Shard"
-    Given an admin user named "Ricky Bobby" with roles "connector-fleet-manager-admin-full"
+    Given an admin user named "Ricky Bobby" with roles "cos-fleet-manager-admin-full"
 
   Scenario: connector cluster is created and agent update status.
     Given I am logged in as "Jimmy"
