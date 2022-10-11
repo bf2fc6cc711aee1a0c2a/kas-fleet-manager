@@ -62,12 +62,6 @@ var ordinals = map[string]int{
 	KafkaRequestStatusFailed.String():       500,
 }
 
-// NamespaceLabels contains labels that indicates if a namespace is a managed application services namespace.
-// A namespace with these labels will be scrapped by the Observability operator to retrieve metrics
-var NamespaceLabels = map[string]string{
-	"mas-managed": "true",
-}
-
 func (k KafkaOperation) String() string {
 	return string(k)
 }
