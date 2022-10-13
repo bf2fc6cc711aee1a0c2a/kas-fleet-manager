@@ -41,6 +41,7 @@ const (
 	statusRejectedClusterFull managedKafkaStatus         = "rejectedClusterFull"
 	statusDeleted             managedKafkaStatus         = "deleted"
 	statusUnknown             managedKafkaStatus         = "unknown"
+	statusSuspended           managedKafkaStatus         = "suspended"
 	strimziUpdating           string                     = "StrimziUpdating"
 	kafkaUpdating             string                     = "KafkaUpdating"
 	kafkaIBPUpdating          string                     = "KafkaIbpUpdating"
@@ -150,14 +151,32 @@ func (d *dataPlaneKafkaService) processRealKafkaDeployment(ks *dbapi.DataPlaneKa
 		log.Warningf("clusterId for kafka cluster %s does not match clusterId. kafka clusterId = %s :: clusterId = %s", kafka.ID, kafka.ClusterID, cluster.ClusterID)
 		return
 	}
+
+	// Notes on state transitions
+	//  - 'suspending' state can only be set by an admin user from a 'ready' state via the /admin/kafkas/ endpoint.
+	//     This must only transition to 'resuming', 'suspended' or 'deprovision'.
+	//     - FSO will only send the status 'suspended' if the Kafka instance was already in a 'suspending' or 'suspended' state.
+	//     - FSO will not change the status of the ManagedKafka CR prior to transitioning to 'suspended' unless an error occurs.
+	//       e.g. If the Kafka instance was in a 'ready' state previously, FSO will keep reporting its status as 'ready' until it
+	//            finally reports 'suspended'. If an error occurs, the 'Ready' condition of the CR will have the values 'Status=False,Reason=Error'.
+	//  - 'resuming' state can only be set by an admin user from a 'suspending' or 'suspended' state via the /admin/kafkas/ endpoint.
+	//     This must only transition to 'ready', 'failed' or 'deprovision'.
+	//  - 'suspended' state must only transition to 'resuming' or 'deprovision'.
+	//  - 'deprovision' state is set by the user. This must only transition to 'deleting' or 'failed'.
+	//     - FSO will only send the status 'deleted' if the Kafka instance was already in a 'deprovisioning' state.
+	//  - 'failed' (or 'error') state may occur at any time.
+	//     - KFM must never transition a Kafka instance to 'failed' from 'suspending' and 'suspended' states.
+	//  - Routes should only be created once. They will remain uncahnged and will continue to be published in the status even if the Kafka instance was suspended.
 	var e *serviceError.ServiceError
 	switch s := d.getManagedKafkaStatus(ks); s {
 	case statusReady:
-		// Store the routes (and create them) when Kafka is ready. By the time it is ready, the routes should definitely be there.
-		e = d.persistKafkaRoutes(kafka, ks, cluster)
-		if e == nil {
-			kafka.AdminApiServerURL = ks.AdminServerURI
-			e = d.setKafkaClusterReady(kafka)
+		if kafka.Status != constants2.KafkaRequestStatusSuspending.String() && kafka.Status != constants2.KafkaRequestStatusSuspended.String() {
+			// Store the routes (and create them) when Kafka is ready. By the time it is ready, the routes should definitely be there.
+			e = d.persistKafkaRoutes(kafka, ks, cluster)
+			if e == nil {
+				kafka.AdminApiServerURL = ks.AdminServerURI
+				e = d.setKafkaClusterReady(kafka)
+			}
 		}
 	case statusInstalling:
 		// Store the routes (and create them) if they are available at this stage to lessen the length of time taken to provision the Kafka.
@@ -167,13 +186,24 @@ func (d *dataPlaneKafkaService) processRealKafkaDeployment(ks *dbapi.DataPlaneKa
 		// when getStatus returns statusError we know that the ready
 		// condition will be there so there's no need to check for it
 		readyCondition, _ := ks.GetReadyCondition()
-		e = d.setKafkaClusterFailed(kafka, readyCondition.Message)
+		// Do not store the error in the KafkaRequest object as this will be seen by the end user when the Kafka instance is in a 'suspended'
+		// or 'suspending' state. This is not actionable by the user. This error will be logged and captured in Sentry instead.
+		if kafka.Status != constants2.KafkaRequestStatusSuspending.String() && kafka.Status != constants2.KafkaRequestStatusSuspended.String() {
+			e = d.setKafkaClusterFailed(kafka, readyCondition.Message)
+		} else {
+			log.Errorf("kafka %q with status %q received errors from data plane: %q", kafka.ID, kafka.Status, readyCondition.Message)
+		}
 	case statusDeleted:
 		e = d.setKafkaClusterDeleting(kafka)
 	case statusRejected:
 		e = d.reassignKafkaCluster(kafka)
 	case statusRejectedClusterFull:
 		e = d.unassignKafkaFromDataplaneCluster(kafka)
+	case statusSuspended:
+		if kafka.Status == constants2.KafkaRequestStatusSuspending.String() {
+			logger.Logger.Infof("updating status of kafka %q from %q to %q", kafka.ID, kafka.Status, constants2.KafkaRequestStatusSuspended)
+			_, e = d.kafkaService.UpdateStatus(kafka.ID, constants2.KafkaRequestStatusSuspended)
+		}
 	case statusUnknown:
 		log.Infof("kafka cluster %s status is unknown", ks.KafkaClusterId)
 	default:
@@ -430,6 +460,12 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 func (d *dataPlaneKafkaService) getManagedKafkaStatus(status *dbapi.DataPlaneKafkaStatus) managedKafkaStatus {
 	for _, c := range status.Conditions {
 		if strings.EqualFold(c.Type, "Ready") {
+			// Kafka can be upgraded when suspended. During upgrade, the Kafka instance will be resumed
+			// and status will be changed with appropriate values for 'Status'. However, 'Reason' will still be set to 'Suspended'
+			// The check for 'Suspended' state must always be first to accommodate this.
+			if strings.EqualFold(c.Reason, "Suspended") {
+				return statusSuspended
+			}
 			if strings.EqualFold(c.Status, "True") {
 				return statusReady
 			}
