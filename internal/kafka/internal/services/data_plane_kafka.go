@@ -372,6 +372,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterDeleting(kafka *dbapi.KafkaReques
 	return nil
 }
 
+// reassigns a Kafka instance to another data plane cluster. It only reassigns Kafka instances in a 'provisioning' state.
 func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *dbapi.KafkaRequest) *serviceError.ServiceError {
 	if kafka.Status == constants2.KafkaRequestStatusProvisioning.String() {
 		// If a Kafka cluster is rejected by the kas-fleetshard-operator, it should be assigned to another OSD cluster (via some scheduler service in the future).
@@ -389,6 +390,7 @@ func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *dbapi.KafkaRequest) 
 	return nil
 }
 
+// unassigns a Kafka instance from a data plane cluster. This is only done for Kafka instances in a 'provisioning' state.
 func (d *dataPlaneKafkaService) unassignKafkaFromDataplaneCluster(kafka *dbapi.KafkaRequest) *serviceError.ServiceError {
 	if kafka.Status == constants2.KafkaRequestStatusProvisioning.String() {
 		logger.Logger.Infof("kafka %s is being unassigned from cluster %s", kafka.ID, kafka.ClusterID)
@@ -420,6 +422,7 @@ func (d *dataPlaneKafkaService) checkKafkaRequestCurrentStatus(kafka *dbapi.Kafk
 	return matchStatus, nil
 }
 
+// stores routes reported by data plane to the database if not already persisted
 func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, kafkaStatus *dbapi.DataPlaneKafkaStatus, cluster *api.Cluster) *serviceError.ServiceError {
 	if kafka.Routes != nil {
 		logger.Logger.V(10).Infof("skip persisting routes for Kafka %s as they are already stored", kafka.ID)
