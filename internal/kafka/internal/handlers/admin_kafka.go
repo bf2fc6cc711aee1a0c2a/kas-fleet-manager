@@ -9,12 +9,14 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	shared "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/gorilla/mux"
 )
 
@@ -169,12 +171,32 @@ func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				return false
 			}
 
+			getStatusBasedOnSuspendedParam := func(susp *bool, kafka *dbapi.KafkaRequest) string {
+				if shared.IsNilPredicate(susp) {
+					return kafka.Status
+				} else {
+					if *susp {
+						if kafka.Status == constants.KafkaRequestStatusReady.String() {
+							return constants.KafkaRequestStatusSuspending.String()
+						}
+					} else {
+						if kafka.Status == constants.KafkaRequestStatusSuspended.String() || kafka.Status == constants.KafkaRequestStatusSuspending.String() {
+							return constants.KafkaRequestStatusResuming.String()
+						}
+					}
+				}
+				return kafka.Status
+			}
+
 			requestedStorageSize, _ := arrays.FirstNonEmpty(kafkaUpdateReq.MaxDataRetentionSize, kafkaUpdateReq.DeprecatedKafkaStorageSize)
 
 			updateRequired := update(&kafkaRequest.DesiredKafkaVersion, kafkaUpdateReq.KafkaVersion)
 			updateRequired = update(&kafkaRequest.DesiredStrimziVersion, kafkaUpdateReq.StrimziVersion) || updateRequired
 			updateRequired = update(&kafkaRequest.DesiredKafkaIBPVersion, kafkaUpdateReq.KafkaIbpVersion) || updateRequired
 			updateRequired = update(&kafkaRequest.KafkaStorageSize, requestedStorageSize) || updateRequired
+
+			newStatus := getStatusBasedOnSuspendedParam(kafkaUpdateReq.Suspended, kafkaRequest)
+			updateRequired = update(&kafkaRequest.Status, newStatus) || updateRequired
 
 			if updateRequired {
 				err := h.kafkaService.VerifyAndUpdateKafkaAdmin(ctx, kafkaRequest)

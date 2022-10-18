@@ -24,6 +24,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
@@ -267,6 +268,26 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-4"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusDeprovision.String()),
 		),
+
+		// suspending related kafkas
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-5"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusSuspended.String()),
+		),
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-6"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusSuspending.String()),
+		),
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-7"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusResuming.String()),
+		),
 	}
 
 	// the following kafkas should not be returned by the endpoint
@@ -311,7 +332,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(list.Items).To(gomega.HaveLen(4)) // only count valid Managed Kafka CR
+	g.Expect(list.Items).To(gomega.HaveLen(7)) // only count valid Managed Kafka CR
 
 	var kafkaConfig *config.KafkaConfig
 	testServer.Helper.Env.MustResolve(&kafkaConfig)
@@ -328,6 +349,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 			g.Expect(mk.Metadata.Annotations.Bf2OrgId).To(gomega.Equal(k.ID))
 			g.Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileType).To(gomega.Equal(k.InstanceType))
 			g.Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileQuotaConsumed).To(gomega.Equal(strconv.Itoa(instanceSize.QuotaConsumed)))
+			g.Expect(mk.Metadata.Labels.Bf2OrgSuspended).To(gomega.Equal(fmt.Sprintf("%t", arrays.Contains(constants2.GetSuspendedStatuses(), k.Status))))
 			g.Expect(mk.Metadata.Namespace).NotTo(gomega.BeEmpty())
 			g.Expect(mk.Spec.Deleted).To(gomega.Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
 			g.Expect(mk.Spec.Versions.Kafka).To(gomega.Equal(k.DesiredKafkaVersion))

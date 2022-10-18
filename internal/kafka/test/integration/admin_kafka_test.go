@@ -93,7 +93,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				kafkaID: sampleKafkaID,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID))
 				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal(desiredStrimziVersion))
@@ -110,7 +110,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				kafkaID: sampleKafkaID,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID))
 				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal(desiredStrimziVersion))
@@ -127,7 +127,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				kafkaID: sampleKafkaID,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID))
 				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal(desiredStrimziVersion))
@@ -251,7 +251,7 @@ func TestAdminKafka_Delete(t *testing.T) {
 				},
 			},
 			verifyResponse: func(resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
 			},
 		},
@@ -335,7 +335,7 @@ func TestAdminKafka_List(t *testing.T) {
 				kafkaListSize: 2,
 			},
 			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, ExpectedSize int) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(len(kafkaList.Items)).To(gomega.Equal(ExpectedSize))
 			},
@@ -349,7 +349,7 @@ func TestAdminKafka_List(t *testing.T) {
 				kafkaListSize: 2,
 			},
 			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, ExpectedSize int) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(len(kafkaList.Items)).To(gomega.Equal(ExpectedSize))
 			},
@@ -363,7 +363,7 @@ func TestAdminKafka_List(t *testing.T) {
 				kafkaListSize: 2,
 			},
 			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, ExpectedSize int) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(len(kafkaList.Items)).To(gomega.Equal(ExpectedSize))
 			},
@@ -421,16 +421,25 @@ func TestAdminKafka_Update(t *testing.T) {
 	sampleKafkaID2 := api.NewID()
 	sampleKafkaID3 := api.NewID()
 	sampleKafkaID4 := api.NewID()
+	suspendedKafkaID := api.NewID()
+	suspendingKafkaID := api.NewID()
+	deprovisionKafkaID := api.NewID()
+	deletingKafkaID := api.NewID()
+
+	falseB := false
+	trueB := true
 
 	allFieldsUpdateRequest := adminprivate.KafkaUpdateRequest{
 		StrimziVersion:       "strimzi-cluster-operator.v0.25.0-0",
 		KafkaVersion:         "2.8.3",
 		KafkaIbpVersion:      "2.8.1",
 		MaxDataRetentionSize: "70Gi",
+		Suspended:            &falseB,
 	}
 
 	initialStorageSize := "60Gi"
 	biggerStorageSizeDifferentFormat := "75000Mi"
+	muchBiggerStorageSizeDifferentFormat := "85000Mi"
 	smallerStorageSize := "50Gi"
 	smallerStorageSizeDifferentFormat := "50000Mi"
 	wrongFormatStorageSize := "80Gb"
@@ -503,7 +512,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal(allFieldsUpdateRequest.KafkaVersion))
@@ -567,7 +576,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 			},
@@ -582,7 +591,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 			},
@@ -671,7 +680,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DesiredKafkaIbpVersion).To(gomega.Equal("2.8.2"))
@@ -767,7 +776,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal("2.8.2"))
@@ -786,7 +795,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal("2.9.0"))
@@ -870,7 +879,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal("2.9.1"))
@@ -960,7 +969,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(biggerStorageSizeDifferentFormat))
@@ -1066,7 +1075,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID2))
 				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(biggerStorageSizeDifferentFormat))
@@ -1135,7 +1144,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal("100Gi"))
@@ -1144,6 +1153,148 @@ func TestAdminKafka_Update(t *testing.T) {
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
 				g.Expect(convErr).ToNot(gomega.HaveOccurred())
 				g.Expect(result.MaxDataRetentionSize.Bytes).To(gomega.Equal(dataRetentionSizeBytes))
+			},
+		},
+		{
+			name: "should have no effect on kafka status when setting suspended to false on unsuspended kafka",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &falseB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusReady.String()))
+			},
+		},
+		{
+			name: "should turn ready kafka into suspending state",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &trueB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusSuspending.String()))
+			},
+		},
+		{
+			name: "should keep suspended kafka status unchanged when passing suspended=true",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: suspendedKafkaID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &trueB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(suspendedKafkaID))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusSuspended.String()))
+			},
+		},
+		{
+			name: "should keep deprovision kafka status unchanged when passing suspended=true",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: deprovisionKafkaID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &trueB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(deprovisionKafkaID))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusDeprovision.String()))
+			},
+		},
+		{
+			name: "should fail when attempting to update deleting kafka when passing suspended=true",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: deletingKafkaID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &trueB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.BeNil())
+			},
+		},
+		{
+			name: "should change suspended kafka status to resuming when passing suspended=false",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: suspendedKafkaID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &falseB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(suspendedKafkaID))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
+			},
+		},
+		{
+			name: "should change suspending kafka status to resuming when passing suspended=false",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: suspendingKafkaID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &falseB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(suspendingKafkaID))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
+			},
+		},
+		{
+			name: "should not change kafka status if suspended parameter is omitted",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: suspendingKafkaID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					MaxDataRetentionSize: muchBiggerStorageSizeDifferentFormat,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(suspendingKafkaID))
+				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(muchBiggerStorageSizeDifferentFormat))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
 			},
 		},
 	}
@@ -1279,6 +1430,90 @@ func TestAdminKafka_Update(t *testing.T) {
 		StrimziUpgrading:       true,
 	}
 
+	suspendedKafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: suspendedKafkaID,
+		},
+		MultiAZ:                false,
+		Owner:                  "test-user",
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-kafka1",
+		OrganisationId:         "13640203",
+		Status:                 constants.KafkaRequestStatusSuspended.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualKafkaVersion:     "2.8.1",
+		DesiredKafkaVersion:    "2.8.1",
+		ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:  "2.7.0",
+		DesiredKafkaIBPVersion: "2.7.0",
+		KafkaStorageSize:       initialStorageSize,
+	}
+
+	suspendingKafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: suspendingKafkaID,
+		},
+		MultiAZ:                false,
+		Owner:                  "test-user",
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-kafka1",
+		OrganisationId:         "13640203",
+		Status:                 constants.KafkaRequestStatusSuspending.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualKafkaVersion:     "2.8.1",
+		DesiredKafkaVersion:    "2.8.1",
+		ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:  "2.7.0",
+		DesiredKafkaIBPVersion: "2.7.0",
+		KafkaStorageSize:       initialStorageSize,
+	}
+
+	deprovisionKafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: deprovisionKafkaID,
+		},
+		MultiAZ:                false,
+		Owner:                  "test-user",
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-kafka1",
+		OrganisationId:         "13640203",
+		Status:                 constants.KafkaOperationDeprovision.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualKafkaVersion:     "2.8.1",
+		DesiredKafkaVersion:    "2.8.1",
+		ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:  "2.7.0",
+		DesiredKafkaIBPVersion: "2.7.0",
+		KafkaStorageSize:       initialStorageSize,
+	}
+
+	deletingKafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: deletingKafkaID,
+		},
+		MultiAZ:                false,
+		Owner:                  "test-user",
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-kafka1",
+		OrganisationId:         "13640203",
+		Status:                 constants.KafkaRequestStatusDeleting.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualKafkaVersion:     "2.8.1",
+		DesiredKafkaVersion:    "2.8.1",
+		ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:  "2.7.0",
+		DesiredKafkaIBPVersion: "2.7.0",
+		KafkaStorageSize:       initialStorageSize,
+	}
+
 	if err := db.Create(kafka1).Error; err != nil {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
 	}
@@ -1292,6 +1527,22 @@ func TestAdminKafka_Update(t *testing.T) {
 	}
 
 	if err := db.Create(kafka4).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	if err := db.Create(suspendedKafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	if err := db.Create(suspendingKafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	if err := db.Create(deprovisionKafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	if err := db.Create(deletingKafka).Error; err != nil {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
 	}
 

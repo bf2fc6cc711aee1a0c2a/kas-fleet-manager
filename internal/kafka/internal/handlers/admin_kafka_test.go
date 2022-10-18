@@ -3,12 +3,14 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -18,6 +20,10 @@ import (
 	s "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 	"github.com/onsi/gomega"
+)
+
+const (
+	kafkaByIdUrl = "/kafkas/{id}"
 )
 
 func GetHandlerParams(method string, url string, body io.Reader, t *testing.T) (*http.Request, *httptest.ResponseRecorder) {
@@ -207,7 +213,7 @@ func Test_Delete(t *testing.T) {
 		{
 			name: "should return an error if async flag is not set to true when deleting kafka",
 			args: args{
-				url: "/kafkas/{id}",
+				url: kafkaByIdUrl,
 			},
 			wantStatusCode: http.StatusBadRequest,
 		},
@@ -239,10 +245,11 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 		body []byte
 	}
 	tests := []struct {
-		name           string
-		fields         fields
-		args           args
-		wantStatusCode int
+		name            string
+		fields          fields
+		args            args
+		wantStatusCode  int
+		wantKafkaStatus constants.KafkaStatus
 	}{
 		{
 			name: "should return an error if retrieving kafka to update fails",
@@ -269,7 +276,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 				accountService: account.NewMockAccountService(),
 			},
 			args: args{
-				url:  "/kafkas/{id}",
+				url:  kafkaByIdUrl,
 				body: []byte(`{}`),
 			},
 			wantStatusCode: http.StatusInternalServerError,
@@ -284,7 +291,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 				},
 			},
 			args: args{
-				url:  "/kafkas/{id}",
+				url:  kafkaByIdUrl,
 				body: []byte(`{}`),
 			},
 			wantStatusCode: http.StatusNotFound,
@@ -302,7 +309,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 				},
 			},
 			args: args{
-				url:  "/kafkas/{id}",
+				url:  kafkaByIdUrl,
 				body: []byte(`{"kafka_version": "2.8.0"}`),
 			},
 			wantStatusCode: http.StatusBadRequest,
@@ -320,7 +327,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 				},
 			},
 			args: args{
-				url:  "/kafkas/{id}",
+				url:  kafkaByIdUrl,
 				body: []byte(`{"strimzi_version": "2.8.0"}`),
 			},
 			wantStatusCode: http.StatusBadRequest,
@@ -338,7 +345,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 				},
 			},
 			args: args{
-				url:  "/kafkas/{id}",
+				url:  kafkaByIdUrl,
 				body: []byte(`{"kafka_ibp_version": "2.8.0"}`),
 			},
 			wantStatusCode: http.StatusBadRequest,
@@ -383,7 +390,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 				accountService: account.NewMockAccountService(),
 			},
 			args: args{
-				url:  "/kafkas/{id}",
+				url:  kafkaByIdUrl,
 				body: []byte(`{"kafka_ibp_version": "2.7"}`),
 			},
 			wantStatusCode: http.StatusBadRequest,
@@ -430,7 +437,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 				accountService: account.NewMockAccountService(),
 			},
 			args: args{
-				url:  "/kafkas/{id}",
+				url:  kafkaByIdUrl,
 				body: []byte(`{"kafka_ibp_version": "2.7"}`),
 			},
 			wantStatusCode: http.StatusInternalServerError,
@@ -477,10 +484,298 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 				accountService: account.NewMockAccountService(),
 			},
 			args: args{
-				url:  "/kafkas/{id}",
+				url:  kafkaByIdUrl,
 				body: []byte(`{"kafka_ibp_version": "2.7"}`),
 			},
-			wantStatusCode: http.StatusOK,
+			wantStatusCode:  http.StatusOK,
+			wantKafkaStatus: constants.KafkaRequestStatusPreparing,
+		},
+		{
+			name: "should not set kafka in deprovision state into suspending state",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID: clusterID,
+						}, nil
+					},
+					IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+						return true, nil
+					},
+					CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+						return true, nil
+					},
+				},
+				kafkaService: &services.KafkaServiceMock{
+					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{
+							Status: constants.KafkaRequestStatusDeprovision.String(),
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID:              "cluster-id",
+							ActualKafkaIBPVersion:  "2.8",
+							DesiredKafkaIBPVersion: "2.8",
+							ActualKafkaVersion:     "2.8",
+							DesiredKafkaVersion:    "2.8",
+							DesiredStrimziVersion:  "2.8",
+							KafkaStorageSize:       "100",
+						}, nil
+					},
+					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				},
+				accountService: account.NewMockAccountService(),
+			},
+			args: args{
+				url:  kafkaByIdUrl,
+				body: []byte(`{"suspended": true}`),
+			},
+			wantStatusCode:  http.StatusOK,
+			wantKafkaStatus: constants.KafkaRequestStatusDeprovision,
+		},
+		{
+			name: "should fail when setting kafka in deleting state into suspending state",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID: clusterID,
+						}, nil
+					},
+					IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+						return true, nil
+					},
+					CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+						return true, nil
+					},
+				},
+				kafkaService: &services.KafkaServiceMock{
+					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{
+							Status: constants.KafkaRequestStatusDeleting.String(),
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID:              "cluster-id",
+							ActualKafkaIBPVersion:  "2.8",
+							DesiredKafkaIBPVersion: "2.8",
+							ActualKafkaVersion:     "2.8",
+							DesiredKafkaVersion:    "2.8",
+							DesiredStrimziVersion:  "2.8",
+							KafkaStorageSize:       "100",
+						}, nil
+					},
+					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				},
+				accountService: account.NewMockAccountService(),
+			},
+			args: args{
+				url:  kafkaByIdUrl,
+				body: []byte(`{"suspended": true}`),
+			},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name: "should set not already suspending/suspended kafka into suspending state",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID: clusterID,
+						}, nil
+					},
+					IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+						return true, nil
+					},
+					CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+						return true, nil
+					},
+				},
+				kafkaService: &services.KafkaServiceMock{
+					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{
+							Status: constants.KafkaRequestStatusReady.String(),
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID:              "cluster-id",
+							ActualKafkaIBPVersion:  "2.8",
+							DesiredKafkaIBPVersion: "2.8",
+							ActualKafkaVersion:     "2.8",
+							DesiredKafkaVersion:    "2.8",
+							DesiredStrimziVersion:  "2.8",
+							KafkaStorageSize:       "100",
+						}, nil
+					},
+					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				},
+				accountService: account.NewMockAccountService(),
+			},
+			args: args{
+				url:  kafkaByIdUrl,
+				body: []byte(`{"suspended": true}`),
+			},
+			wantStatusCode:  http.StatusOK,
+			wantKafkaStatus: constants.KafkaRequestStatusSuspending,
+		},
+		{
+			name: "should set suspending/suspended kafka into resuming state",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID: clusterID,
+						}, nil
+					},
+					IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+						return true, nil
+					},
+					CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+						return true, nil
+					},
+				},
+				kafkaService: &services.KafkaServiceMock{
+					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{
+							Status: constants.KafkaRequestStatusSuspending.String(),
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID:              "cluster-id",
+							ActualKafkaIBPVersion:  "2.8",
+							DesiredKafkaIBPVersion: "2.8",
+							ActualKafkaVersion:     "2.8",
+							DesiredKafkaVersion:    "2.8",
+							DesiredStrimziVersion:  "2.8",
+							KafkaStorageSize:       "100",
+						}, nil
+					},
+					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				},
+				accountService: account.NewMockAccountService(),
+			},
+			args: args{
+				url:  kafkaByIdUrl,
+				body: []byte(`{"suspended": false}`),
+			},
+			wantStatusCode:  http.StatusOK,
+			wantKafkaStatus: constants.KafkaRequestStatusResuming,
+		},
+		{
+			name: "should have no effect on not suspending/suspended kafka Status if suspended param is set to false",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID: clusterID,
+						}, nil
+					},
+					IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+						return true, nil
+					},
+					CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+						return true, nil
+					},
+				},
+				kafkaService: &services.KafkaServiceMock{
+					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{
+							Status: constants.KafkaRequestStatusReady.String(),
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID:              "cluster-id",
+							ActualKafkaIBPVersion:  "2.8",
+							DesiredKafkaIBPVersion: "2.8",
+							ActualKafkaVersion:     "2.8",
+							DesiredKafkaVersion:    "2.8",
+							DesiredStrimziVersion:  "2.8",
+							KafkaStorageSize:       "100",
+						}, nil
+					},
+					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				},
+				accountService: account.NewMockAccountService(),
+			},
+			args: args{
+				url:  kafkaByIdUrl,
+				body: []byte(`{"suspended": false}`),
+			},
+			wantStatusCode:  http.StatusOK,
+			wantKafkaStatus: constants.KafkaRequestStatusReady,
+		},
+		{
+			name: "should have no effect on not suspending/suspended kafka Status if suspended param is not provided",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID: clusterID,
+						}, nil
+					},
+					IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion, kafkaVersion, ibpVersion string) (bool, error) {
+						return true, nil
+					},
+					CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+						return true, nil
+					},
+				},
+				kafkaService: &services.KafkaServiceMock{
+					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{
+							Status: constants.KafkaRequestStatusReady.String(),
+							Meta: api.Meta{
+								ID: "id",
+							},
+							ClusterID:              "cluster-id",
+							ActualKafkaIBPVersion:  "2.7",
+							DesiredKafkaIBPVersion: "2.7",
+							ActualKafkaVersion:     "2.7",
+							DesiredKafkaVersion:    "2.7",
+							DesiredStrimziVersion:  "2.7",
+							KafkaStorageSize:       "100",
+						}, nil
+					},
+					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				},
+				accountService: account.NewMockAccountService(),
+			},
+			args: args{
+				url:  kafkaByIdUrl,
+				body: []byte(`{"kafka_ibp_version": "2.7"}`),
+			},
+			wantStatusCode:  http.StatusOK,
+			wantKafkaStatus: constants.KafkaRequestStatusReady,
 		},
 	}
 
@@ -493,6 +788,12 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 			h.Update(rw, req)
 			resp := rw.Result()
 			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
+			if tt.wantStatusCode == http.StatusOK {
+				kafka := &private.Kafka{}
+				err := json.NewDecoder(resp.Body).Decode(&kafka)
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(kafka.Status).To(gomega.Equal(tt.wantKafkaStatus.String()))
+			}
 			resp.Body.Close()
 		})
 	}
