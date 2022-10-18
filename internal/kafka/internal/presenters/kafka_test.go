@@ -1,19 +1,27 @@
 package presenters
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/onsi/gomega"
 
-	"fmt"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
+)
+
+var (
+	nonEmptyBootstrapServerHost = "http://test.com"
+	sampleReadyRequest          = dbapi.KafkaRequest{
+		BootstrapServerHost: nonEmptyBootstrapServerHost,
+		Status:              constants.KafkaRequestStatusReady.String(),
+	}
 )
 
 func TestConvertKafkaRequest(t *testing.T) {
@@ -124,7 +132,8 @@ func TestPresentKafkaRequest(t *testing.T) {
 			},
 			want: *mock.BuildPublicKafkaRequest(func(kafkaRequest *public.KafkaRequest) {
 				kafkaRequest.ReauthenticationEnabled = reauthEnabled
-				kafkaRequest.BootstrapServerHost = setBootstrapServerHost(bootstrapServer)
+				kafkaRequest.Status = constants.KafkaRequestStatusReady.String()
+				kafkaRequest.BootstrapServerHost = setBootstrapServerHost(&sampleReadyRequest)
 				kafkaRequest.FailedReason = failedReason
 				kafkaRequest.InstanceType = mock.DefaultInstanceType
 				kafkaRequest.DeprecatedKafkaStorageSize = kafkaStorageSize
@@ -177,26 +186,72 @@ func TestPresentKafkaRequest(t *testing.T) {
 
 func TestSetBootstrapServerHost(t *testing.T) {
 	type args struct {
-		bootstrapServerHost string
+		request *dbapi.KafkaRequest
 	}
-	nonEmptyBootstrapServerHost := "http://some-url.com"
+	type fields struct {
+		bootstrapServerHost string
+		requestStatus       string
+	}
+
+	sampleRequest := dbapi.KafkaRequest{}
 
 	tests := []struct {
-		name string
-		args args
-		want string
+		name   string
+		args   args
+		fields fields
+		want   string
 	}{
 		{
 			name: "non empty bootstrap server host conversion should return its value with colon and port number as a suffix",
 			args: args{
+				request: &sampleReadyRequest,
+			},
+			fields: fields{
 				bootstrapServerHost: nonEmptyBootstrapServerHost,
+				requestStatus:       constants.KafkaRequestStatusReady.String(),
 			},
 			want: fmt.Sprintf("%s:443", nonEmptyBootstrapServerHost),
 		},
 		{
 			name: "empty bootstrap server host conversion should return empty value",
 			args: args{
+				request: &sampleRequest,
+			},
+			fields: fields{
 				bootstrapServerHost: "",
+			},
+			want: "",
+		},
+		{
+			name: "should return empty value if KafkaRequest is in suspended status",
+			args: args{
+				request: &sampleRequest,
+			},
+			fields: fields{
+				bootstrapServerHost: nonEmptyBootstrapServerHost,
+				requestStatus:       constants.KafkaRequestStatusSuspended.String(),
+			},
+			want: "",
+		},
+		{
+			name: "should return empty value if KafkaRequest is in suspending status",
+			args: args{
+				request: &sampleRequest,
+			},
+			fields: fields{
+				bootstrapServerHost: nonEmptyBootstrapServerHost,
+				requestStatus:       constants.KafkaRequestStatusSuspending.String(),
+			},
+			want: "",
+		},
+		{
+			name: "should return empty value if KafkaRequest is in resuming status",
+			args: args{
+				request: &sampleRequest,
+			},
+			fields: fields{
+				bootstrapServerHost: nonEmptyBootstrapServerHost,
+				requestStatus:       constants.KafkaRequestStatusResuming.String(),
 			},
 			want: "",
 		},
@@ -207,7 +262,7 @@ func TestSetBootstrapServerHost(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			g.Expect(setBootstrapServerHost(tt.args.bootstrapServerHost)).To(gomega.Equal(tt.want))
+			g.Expect(setBootstrapServerHost(tt.args.request)).To(gomega.Equal(tt.want))
 		})
 	}
 }

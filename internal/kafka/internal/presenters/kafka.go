@@ -7,6 +7,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -85,7 +86,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		CloudProvider:              kafkaRequest.CloudProvider,
 		MultiAz:                    kafkaRequest.MultiAZ,
 		Owner:                      kafkaRequest.Owner,
-		BootstrapServerHost:        setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
+		BootstrapServerHost:        setBootstrapServerHost(kafkaRequest),
 		AdminApiServerUrl:          kafkaRequest.AdminApiServerURL,
 		Status:                     kafkaRequest.Status,
 		CreatedAt:                  kafkaRequest.CreatedAt,
@@ -114,11 +115,16 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 	}, nil
 }
 
-func setBootstrapServerHost(bootstrapServerHost string) string {
-	if bootstrapServerHost != "" {
-		return fmt.Sprintf("%s:443", bootstrapServerHost)
+func setBootstrapServerHost(request *dbapi.KafkaRequest) string {
+	if request.BootstrapServerHost != "" {
+		switch request.Status {
+		case constants.KafkaRequestStatusSuspended.String(), constants.KafkaRequestStatusSuspending.String(), constants.KafkaRequestStatusResuming.String():
+			return ""
+		default:
+			return fmt.Sprintf("%s:443", request.BootstrapServerHost)
+		}
 	}
-	return bootstrapServerHost
+	return request.BootstrapServerHost
 }
 
 func getDisplayName(instanceType string, config *config.KafkaConfig) (string, *errors.ServiceError) {

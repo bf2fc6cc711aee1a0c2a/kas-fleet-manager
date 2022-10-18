@@ -40,7 +40,7 @@ func PresentKafkaRequestAdminEndpoint(kafkaRequest *dbapi.KafkaRequest, accountS
 		Region:                     kafkaRequest.Region,
 		Owner:                      kafkaRequest.Owner,
 		Name:                       kafkaRequest.Name,
-		BootstrapServerHost:        setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
+		BootstrapServerHost:        setBootstrapServerHost(kafkaRequest),
 		CreatedAt:                  kafkaRequest.CreatedAt,
 		UpdatedAt:                  kafkaRequest.UpdatedAt,
 		FailedReason:               kafkaRequest.FailedReason,

@@ -1171,6 +1171,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusReady.String()))
+				g.Expect(result.BootstrapServerHost).To(gomega.BeEmpty())
 			},
 		},
 		{
@@ -1189,6 +1190,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusSuspending.String()))
+				g.Expect(result.BootstrapServerHost).To(gomega.BeEmpty())
 			},
 		},
 		{
@@ -1207,6 +1209,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(suspendedKafkaID))
 				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusSuspended.String()))
+				g.Expect(result.BootstrapServerHost).To(gomega.BeEmpty())
 			},
 		},
 		{
@@ -1225,6 +1228,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(deprovisionKafkaID))
 				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusDeprovision.String()))
+				g.Expect(result.BootstrapServerHost).To(gomega.BeEmpty())
 			},
 		},
 		{
@@ -1240,6 +1244,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				g.Expect(err).NotTo(gomega.BeNil())
+				g.Expect(result.BootstrapServerHost).To(gomega.BeEmpty())
 			},
 		},
 		{
@@ -1258,6 +1263,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(suspendedKafkaID))
 				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
+				g.Expect(result.BootstrapServerHost).To(gomega.BeEmpty())
 			},
 		},
 		{
@@ -1276,6 +1282,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(suspendingKafkaID))
 				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
+				g.Expect(result.BootstrapServerHost).To(gomega.BeEmpty())
 			},
 		},
 		{
@@ -1295,6 +1302,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(result.Id).To(gomega.Equal(suspendingKafkaID))
 				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(muchBiggerStorageSizeDifferentFormat))
 				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
+				g.Expect(result.BootstrapServerHost).To(gomega.BeEmpty())
 			},
 		},
 	}
