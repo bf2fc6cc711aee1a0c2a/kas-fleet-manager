@@ -120,6 +120,9 @@ var defaultUpdateKafkaStatusFunc mockKasFleetshardSyncupdateKafkaClusterStatusFu
 			id := kafka.Metadata.Annotations.Bf2OrgId
 			if kafka.Spec.Deleted {
 				kafkaStatusList[id] = GetDeletedKafkaStatusResponse()
+			} else if kafka.Metadata.Labels.Bf2OrgSuspended == "true" {
+				// Update any 'suspending' kafkas to 'suspended'
+				kafkaStatusList[id] = GetSuspendedKafkaStatusResponse()
 			} else {
 				// Update any other clusters not in a 'deprovisioning' state to 'ready'
 				kafkaStatusList[id] = GetReadyKafkaStatusResponse(dataplaneCluster.ClusterDNS)
@@ -365,4 +368,17 @@ func GetErrorWithCustomMessageKafkaStatusResponse(message string) private.DataPl
 	res := GetErrorKafkaStatusResponse()
 	res.Conditions[0].Message = message
 	return res
+}
+
+// Return a Kafka status for a suspended instance
+func GetSuspendedKafkaStatusResponse() private.DataPlaneKafkaStatus {
+	return private.DataPlaneKafkaStatus{
+		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+			{
+				Type:   "Ready",
+				Reason: "Suspended",
+				Status: "False",
+			},
+		},
+	}
 }

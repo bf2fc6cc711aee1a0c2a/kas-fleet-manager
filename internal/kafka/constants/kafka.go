@@ -62,9 +62,12 @@ var ordinals = map[string]int{
 	KafkaRequestStatusAccepted.String():     0,
 	KafkaRequestStatusPreparing.String():    10,
 	KafkaRequestStatusProvisioning.String(): 20,
+	KafkaRequestStatusResuming.String():     20,
 	KafkaRequestStatusReady.String():        30,
 	KafkaRequestStatusDeprovision.String():  40,
 	KafkaRequestStatusDeleting.String():     50,
+	KafkaRequestStatusSuspending.String():   60,
+	KafkaRequestStatusSuspended.String():    70,
 	KafkaRequestStatusFailed.String():       500,
 }
 
