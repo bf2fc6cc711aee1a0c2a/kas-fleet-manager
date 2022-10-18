@@ -458,6 +458,8 @@ components:
           type: string
         bf2.org/deployment:
           type: string
+        bf2.org/suspended:
+          type: string
       required:
       - bf2.org/kafkaInstanceProfileQuotaConsumed
     ManagedKafka_allOf_metadata:

@@ -25,6 +25,12 @@ const (
 	KafkaRequestStatusDeprovision KafkaStatus = "deprovision"
 	// KafkaRequestStatusDeleting - external resources are being deleted for the kafka request
 	KafkaRequestStatusDeleting KafkaStatus = "deleting"
+	// KafkaStatusSuspending - status of a kafka request to be put in suspended state
+	KafkaRequestStatusSuspending KafkaStatus = "suspending"
+	// KafkaStatusSuspended - suspended kafka request
+	KafkaRequestStatusSuspended KafkaStatus = "suspended"
+	// KafkaStatusResuming - kafka request being resumed from the suspended state
+	KafkaRequestStatusResuming KafkaStatus = "resuming"
 	// KafkaOperationCreate - Kafka cluster create operations
 	KafkaOperationCreate KafkaOperation = "create"
 	// KafkaOperationDelete = Kafka cluster delete operations
@@ -93,5 +99,12 @@ func GetUpdateableStatuses() []string {
 		KafkaRequestStatusFailed.String(),
 		KafkaRequestStatusReady.String(),
 		KafkaRequestStatusDeprovision.String(),
+		KafkaRequestStatusSuspending.String(),
+		KafkaRequestStatusSuspended.String(),
+		KafkaRequestStatusResuming.String(),
 	}
+}
+
+func GetSuspendedStatuses() []string {
+	return []string{KafkaRequestStatusSuspending.String(), KafkaRequestStatusSuspended.String()}
 }

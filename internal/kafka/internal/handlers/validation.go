@@ -260,8 +260,9 @@ func ValidateKafkaUpdateFields(kafkaUpdateRequest *private.KafkaUpdateRequest) h
 			stringSet(&kafkaUpdateRequest.KafkaVersion) ||
 			stringSet(&kafkaUpdateRequest.KafkaIbpVersion) ||
 			stringSet(&kafkaUpdateRequest.DeprecatedKafkaStorageSize) ||
-			stringSet(&kafkaUpdateRequest.MaxDataRetentionSize)) {
-			return errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version, kafka_storage_size or max_data_retention_size to be provided")
+			stringSet(&kafkaUpdateRequest.MaxDataRetentionSize) ||
+			arrays.IsNotNilPredicate(kafkaUpdateRequest.Suspended)) {
+			return errors.FieldValidationError("failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version, kafka_storage_size, max_data_retention_size or suspended to be provided")
 		}
 		return nil
 	}

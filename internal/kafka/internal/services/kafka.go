@@ -8,8 +8,10 @@ import (
 
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"gorm.io/gorm"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -26,6 +28,7 @@ import (
 	"github.com/golang/glog"
 
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
+	v1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/aws-sdk-go/service/route53"
@@ -38,7 +41,15 @@ import (
 )
 
 var kafkaDeletionStatuses = []string{constants2.KafkaRequestStatusDeleting.String(), constants2.KafkaRequestStatusDeprovision.String()}
-var kafkaManagedCRStatuses = []string{constants2.KafkaRequestStatusProvisioning.String(), constants2.KafkaRequestStatusDeprovision.String(), constants2.KafkaRequestStatusReady.String(), constants2.KafkaRequestStatusFailed.String()}
+var kafkaManagedCRStatuses = []string{
+	constants2.KafkaRequestStatusProvisioning.String(),
+	constants2.KafkaRequestStatusDeprovision.String(),
+	constants2.KafkaRequestStatusReady.String(),
+	constants2.KafkaRequestStatusFailed.String(),
+	constants2.KafkaRequestStatusSuspended.String(),
+	constants2.KafkaRequestStatusSuspending.String(),
+	constants2.KafkaRequestStatusResuming.String(),
+}
 
 type KafkaRoutesAction string
 
@@ -883,6 +894,7 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 		"desired_strimzi_version":   kafkaRequest.DesiredStrimziVersion,
 		"desired_kafka_version":     kafkaRequest.DesiredKafkaVersion,
 		"desired_kafka_ibp_version": kafkaRequest.DesiredKafkaIBPVersion,
+		"status":                    kafkaRequest.Status,
 	}
 
 	dbConn := k.connectionFactory.New().
@@ -1032,10 +1044,13 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka request")
 	}
+
 	labels := map[string]string{
 		"bf2.org/kafkaInstanceProfileQuotaConsumed": strconv.Itoa(k.QuotaConsumed),
 		"bf2.org/kafkaInstanceProfileType":          kafkaRequest.InstanceType,
+		v1.ManagedKafkaBf2SuspendedLabelKey:         fmt.Sprintf("%t", arrays.Contains(constants.GetSuspendedStatuses(), kafkaRequest.Status)),
 	}
+
 	managedKafkaCR := &managedkafka.ManagedKafka{
 		Id: kafkaRequest.ID,
 		TypeMeta: metav1.TypeMeta{
