@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	v1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
@@ -65,11 +67,10 @@ func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 				Items: []private.ManagedKafka{},
 			}
 
-			for i := range managedKafkas {
-				mk := managedKafkas[i]
-				converted := presenters.PresentManagedKafka(&mk)
-				managedKafkaList.Items = append(managedKafkaList.Items, converted)
-			}
+			managedKafkaList.Items = append(
+				managedKafkaList.Items,
+				arrays.Map(managedKafkas, func(mk v1.ManagedKafka) private.ManagedKafka { return presenters.PresentManagedKafka(&mk) })...,
+			)
 
 			return managedKafkaList, nil
 		},

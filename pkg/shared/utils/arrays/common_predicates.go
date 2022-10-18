@@ -1,10 +1,13 @@
 package arrays
 
-import "reflect"
+import (
+	"reflect"
+	"strings"
+)
 
 // IsNotNilPredicate - returns `true` if the value is not nil
 func IsNotNilPredicate[T any](x T) bool {
-	return !reflect.ValueOf(x).IsNil()
+	return !IsNilPredicate(x)
 }
 
 // IsNilPredicate - returns `true` if the value is nil
@@ -30,6 +33,18 @@ func StringEmptyPredicate(x any) bool {
 		return stringPointer == nil || *stringPointer == ""
 	}
 	panic("passed value is not a string nor a string pointer")
+}
+
+func EqualsPredicate[T comparable](value T) PredicateFunc[T] {
+	return func(x T) bool {
+		return x == value
+	}
+}
+
+func StringEqualsIgnoreCasePredicate(value string) PredicateFunc[string] {
+	return func(x string) bool {
+		return strings.EqualFold(x, value)
+	}
 }
 
 // CompositePredicateAll - returns a composed predicate that will return `true` when all the passed predicates returns `true`

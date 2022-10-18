@@ -241,6 +241,132 @@ func Test_StringNotEmptyPredicate(t *testing.T) {
 	}
 }
 
+func Test_EqualsPredicate(t *testing.T) {
+	type args struct {
+		val1 string
+		val2 string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Check different empty string",
+			args: args{
+				val1: "",
+				val2: "  ",
+			},
+			want: false,
+		},
+		{
+			name: "Check different case",
+			args: args{
+				val1: "red hat",
+				val2: "Red Hat",
+			},
+			want: false,
+		},
+		{
+			name: "Check identical strings",
+			args: args{
+				val1: "Red Hat",
+				val2: "Red Hat",
+			},
+			want: true,
+		},
+		{
+			name: "Check same string, different trailing spaces",
+			args: args{
+				val1: "red hat ",
+				val2: "Red Hat   ",
+			},
+			want: false,
+		},
+		{
+			name: "Check same string, different beginning spaces",
+			args: args{
+				val1: "  red hat",
+				val2: "     Red Hat  ",
+			},
+			want: false,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			predicate := EqualsPredicate(tt.args.val1)
+			g.Expect(predicate(tt.args.val2)).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
+func Test_StringEqualsIgnoreCasePredicate(t *testing.T) {
+	type args struct {
+		val1 string
+		val2 string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Check different empty string",
+			args: args{
+				val1: "",
+				val2: "  ",
+			},
+			want: false,
+		},
+		{
+			name: "Check different case",
+			args: args{
+				val1: "red hat",
+				val2: "Red Hat",
+			},
+			want: true,
+		},
+		{
+			name: "Check identical strings",
+			args: args{
+				val1: "Red Hat",
+				val2: "Red Hat",
+			},
+			want: true,
+		},
+		{
+			name: "Check same string, different trailing spaces",
+			args: args{
+				val1: "red hat ",
+				val2: "Red Hat   ",
+			},
+			want: false,
+		},
+		{
+			name: "Check same string, different beginning spaces",
+			args: args{
+				val1: "  red hat",
+				val2: "     Red Hat  ",
+			},
+			want: false,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			predicate := StringEqualsIgnoreCasePredicate(tt.args.val1)
+			g.Expect(predicate(tt.args.val2)).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
 func Test_ComposedPredicate(t *testing.T) {
 	buildStringPointer := func(s string) *string {
 		return &s

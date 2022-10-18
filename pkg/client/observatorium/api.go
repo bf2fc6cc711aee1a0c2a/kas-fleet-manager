@@ -2,6 +2,7 @@ package observatorium
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"strings"
 
 	"github.com/golang/glog"
@@ -62,12 +63,7 @@ func (obs *ServiceObservatorium) buildQueries(fetchers []fetcher, rq *MetricsReq
 		if rq.Filters == nil {
 			return true
 		}
-		for _, filter := range rq.Filters {
-			if filter == metric {
-				return true
-			}
-		}
-		return false
+		return arrays.Contains(rq.Filters, metric)
 	}
 
 	// figure out unique label selectors

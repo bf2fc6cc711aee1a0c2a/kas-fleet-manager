@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"regexp"
 	"sort"
 	"strings"
@@ -316,12 +317,8 @@ func (cluster *Cluster) GetAvailableAndReadyStrimziVersions() ([]StrimziVersion,
 		return nil, err
 	}
 
-	res := []StrimziVersion{}
-	for _, val := range strimziVersions {
-		if val.Ready {
-			res = append(res, val)
-		}
-	}
+	res := arrays.Filter(strimziVersions, func(v StrimziVersion) bool { return v.Ready })
+
 	return res, nil
 }
 

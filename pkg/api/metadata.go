@@ -21,6 +21,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/buildinformation"
@@ -43,10 +44,7 @@ func (m *Metadata) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		HREF: r.URL.Path,
 	}
 	for _, v := range m.Versions {
-		href := v.HREF
-		if href == "" {
-			href = v.ID
-		}
+		href, _ := arrays.FirstNonEmpty(v.HREF, v.ID)
 		body.Versions = append(body.Versions, VersionMetadata{
 			ID:   v.ID,
 			Kind: "APIVersion",
