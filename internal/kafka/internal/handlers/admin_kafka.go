@@ -156,6 +156,20 @@ func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				return nil
 			},
 			validateVersionsCompatibility(h, kafkaRequest, &kafkaUpdateReq),
+			func() *errors.ServiceError { // Validate Suspended parameter
+				// Kafka can only be suspended when its in a 'ready' state
+				// If Kafka is already in a 'suspending' or 'suspended' state, the request is still valid. However,
+				// no changes will be applied to the status of the Kafka instance.
+				if kafkaUpdateReq.Suspended != nil && *kafkaUpdateReq.Suspended {
+					if kafkaRequest.Status == constants.KafkaRequestStatusReady.String() ||
+						kafkaRequest.Status == constants.KafkaRequestStatusSuspended.String() ||
+						kafkaRequest.Status == constants.KafkaRequestStatusSuspending.String() {
+						return nil
+					}
+					return errors.New(errors.ErrorValidation, "kafka instance with a status of %q cannot be suspended. Kafka instances can only be suspended in the following states: [%q]", kafkaRequest.Status, constants.KafkaRequestStatusReady)
+				}
+				return nil
+			},
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 

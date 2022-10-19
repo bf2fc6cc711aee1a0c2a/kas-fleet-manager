@@ -13,6 +13,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
@@ -48,7 +49,7 @@ func TestAdminKafka_KafkaSuspension(t *testing.T) {
 	})
 	defer teardown()
 
-	// run test only on mock mode - fleetshard sync will always be mocked so there's no point running with real env.
+	// run test only on mock mode - fleetshard sync will always be mocked so there's no point running against real env.
 	ocmConfig := test.TestServices.OCMConfig
 	if ocmConfig.MockMode != ocm.MockModeEmulateServer || h.Env.Name == environments.TestingEnv {
 		t.SkipNow()
@@ -94,7 +95,8 @@ func TestAdminKafka_KafkaSuspension(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to suspend Kafka instance")
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(errors.Validation("").HttpCode))
 	g.Expect(privateKafkaReq.Status).ToNot(gomega.Equal(kafkaconstants.KafkaRequestStatusSuspending.String()))
 
 	// set 'suspending: true' on a ready Kafka instance: should set status to suspending
@@ -117,6 +119,14 @@ func TestAdminKafka_KafkaSuspension(t *testing.T) {
 		resp.Body.Close()
 	}
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to get Kafka instance from admin get endpoint")
+	g.Expect(privateKafkaReq.Status).To(gomega.Equal(kafkaconstants.KafkaRequestStatusSuspended.String()))
+
+	// updating an already suspended Kafka instance with 'suspended: true' should not change its status
+	privateKafkaReq, resp, err = adminClient.DefaultApi.UpdateKafkaById(adminClientCtx, publicKafkaReq.Id, suspendKafkaRequestPayload)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 	g.Expect(privateKafkaReq.Status).To(gomega.Equal(kafkaconstants.KafkaRequestStatusSuspended.String()))
 
 	// resume Kafka instance
