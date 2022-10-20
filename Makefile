@@ -321,6 +321,8 @@ test: gotestsum
 	grep -v -e "_moq.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/main.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/migrations/" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/"  \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters/"  \
