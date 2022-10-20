@@ -87,7 +87,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		MultiAz:                    kafkaRequest.MultiAZ,
 		Owner:                      kafkaRequest.Owner,
 		BootstrapServerHost:        setBootstrapServerHost(kafkaRequest),
-		AdminApiServerUrl:          kafkaRequest.AdminApiServerURL,
+		AdminApiServerUrl:          setAdminApiServerUrl(kafkaRequest),
 		Status:                     kafkaRequest.Status,
 		CreatedAt:                  kafkaRequest.CreatedAt,
 		UpdatedAt:                  kafkaRequest.UpdatedAt,
@@ -125,6 +125,18 @@ func setBootstrapServerHost(request *dbapi.KafkaRequest) string {
 		}
 	}
 	return request.BootstrapServerHost
+}
+
+func setAdminApiServerUrl(request *dbapi.KafkaRequest) string {
+	if request.AdminApiServerURL != "" {
+		switch request.Status {
+		case constants.KafkaRequestStatusSuspended.String(), constants.KafkaRequestStatusSuspending.String(), constants.KafkaRequestStatusResuming.String():
+			return ""
+		default:
+			return fmt.Sprint(request.AdminApiServerURL)
+		}
+	}
+	return request.AdminApiServerURL
 }
 
 func getDisplayName(instanceType string, config *config.KafkaConfig) (string, *errors.ServiceError) {

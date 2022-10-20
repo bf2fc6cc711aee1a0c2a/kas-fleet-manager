@@ -1171,7 +1171,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusReady.String()))
-				g.Expect(result.BootstrapServerHost).To(gomega.BeEmpty())
+				g.Expect(result.BootstrapServerHost).NotTo(gomega.BeEmpty())
 			},
 		},
 		{
@@ -1228,7 +1228,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(deprovisionKafkaID))
 				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusDeprovision.String()))
-				g.Expect(result.BootstrapServerHost).To(gomega.BeEmpty())
+				g.Expect(result.BootstrapServerHost).NotTo(gomega.BeEmpty())
 			},
 		},
 		{
@@ -1359,6 +1359,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		Name:                   "test-kafka1",
 		OrganisationId:         "13640203",
 		Status:                 constants.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:    "http://test.com",
 		ClusterID:              cluster.ClusterID,
 		ActualKafkaVersion:     "2.8.1",
 		DesiredKafkaVersion:    "2.8.1",
@@ -1380,6 +1381,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		Name:                   "test-kafka2",
 		OrganisationId:         "13640203",
 		Status:                 constants.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:    "http://test.com",
 		ClusterID:              cluster.ClusterID,
 		ActualKafkaVersion:     "2.8.0",
 		DesiredKafkaVersion:    "2.8.0",
@@ -1404,6 +1406,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		Name:                   "test-kafka3",
 		OrganisationId:         "13640203",
 		Status:                 constants.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:    "http://test.com",
 		ClusterID:              cluster.ClusterID,
 		ActualKafkaVersion:     "2.8.2",
 		DesiredKafkaVersion:    "2.8.2",
@@ -1426,6 +1429,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		Name:                   "test-kafk4",
 		OrganisationId:         "13640203",
 		Status:                 constants.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:    "http://test.com",
 		ClusterID:              cluster.ClusterID,
 		ActualKafkaVersion:     "2.6.0",
 		DesiredKafkaVersion:    "2.6.0",
@@ -1449,6 +1453,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		Name:                   "test-kafka1",
 		OrganisationId:         "13640203",
 		Status:                 constants.KafkaRequestStatusSuspended.String(),
+		BootstrapServerHost:    "",
 		ClusterID:              cluster.ClusterID,
 		ActualKafkaVersion:     "2.8.1",
 		DesiredKafkaVersion:    "2.8.1",
@@ -1470,6 +1475,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		Name:                   "test-kafka1",
 		OrganisationId:         "13640203",
 		Status:                 constants.KafkaRequestStatusSuspending.String(),
+		BootstrapServerHost:    "",
 		ClusterID:              cluster.ClusterID,
 		ActualKafkaVersion:     "2.8.1",
 		DesiredKafkaVersion:    "2.8.1",
@@ -1491,6 +1497,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		Name:                   "test-kafka1",
 		OrganisationId:         "13640203",
 		Status:                 constants.KafkaOperationDeprovision.String(),
+		BootstrapServerHost:    "http://test.com",
 		ClusterID:              cluster.ClusterID,
 		ActualKafkaVersion:     "2.8.1",
 		DesiredKafkaVersion:    "2.8.1",
@@ -1512,6 +1519,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		Name:                   "test-kafka1",
 		OrganisationId:         "13640203",
 		Status:                 constants.KafkaRequestStatusDeleting.String(),
+		BootstrapServerHost:    "http://test.com",
 		ClusterID:              cluster.ClusterID,
 		ActualKafkaVersion:     "2.8.1",
 		DesiredKafkaVersion:    "2.8.1",

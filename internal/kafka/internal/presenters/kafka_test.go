@@ -18,9 +18,27 @@ import (
 
 var (
 	nonEmptyBootstrapServerHost = "http://test.com"
+	nonEmptyAdminApiServerURL   = "http://test.com"
+	sampleRequest               = dbapi.KafkaRequest{}
 	sampleReadyRequest          = dbapi.KafkaRequest{
+		AdminApiServerURL:   nonEmptyAdminApiServerURL,
 		BootstrapServerHost: nonEmptyBootstrapServerHost,
 		Status:              constants.KafkaRequestStatusReady.String(),
+	}
+	sampleSuspendedRequest = dbapi.KafkaRequest{
+		AdminApiServerURL:   nonEmptyAdminApiServerURL,
+		BootstrapServerHost: nonEmptyBootstrapServerHost,
+		Status:              constants.KafkaRequestStatusSuspended.String(),
+	}
+	sampleSuspendingRequest = dbapi.KafkaRequest{
+		AdminApiServerURL:   nonEmptyAdminApiServerURL,
+		BootstrapServerHost: nonEmptyBootstrapServerHost,
+		Status:              constants.KafkaRequestStatusSuspending.String(),
+	}
+	sampleResumingRequest = dbapi.KafkaRequest{
+		AdminApiServerURL:   nonEmptyAdminApiServerURL,
+		BootstrapServerHost: nonEmptyBootstrapServerHost,
+		Status:              constants.KafkaRequestStatusResuming.String(),
 	}
 )
 
@@ -193,8 +211,6 @@ func TestSetBootstrapServerHost(t *testing.T) {
 		requestStatus       string
 	}
 
-	sampleRequest := dbapi.KafkaRequest{}
-
 	tests := []struct {
 		name   string
 		args   args
@@ -225,7 +241,7 @@ func TestSetBootstrapServerHost(t *testing.T) {
 		{
 			name: "should return empty value if KafkaRequest is in suspended status",
 			args: args{
-				request: &sampleRequest,
+				request: &sampleSuspendedRequest,
 			},
 			fields: fields{
 				bootstrapServerHost: nonEmptyBootstrapServerHost,
@@ -236,7 +252,7 @@ func TestSetBootstrapServerHost(t *testing.T) {
 		{
 			name: "should return empty value if KafkaRequest is in suspending status",
 			args: args{
-				request: &sampleRequest,
+				request: &sampleSuspendingRequest,
 			},
 			fields: fields{
 				bootstrapServerHost: nonEmptyBootstrapServerHost,
@@ -247,7 +263,7 @@ func TestSetBootstrapServerHost(t *testing.T) {
 		{
 			name: "should return empty value if KafkaRequest is in resuming status",
 			args: args{
-				request: &sampleRequest,
+				request: &sampleResumingRequest,
 			},
 			fields: fields{
 				bootstrapServerHost: nonEmptyBootstrapServerHost,
@@ -267,6 +283,86 @@ func TestSetBootstrapServerHost(t *testing.T) {
 	}
 }
 
+func TestSetAdminApiServerUrl(t *testing.T) {
+	type args struct {
+		request *dbapi.KafkaRequest
+	}
+	type fields struct {
+		AdminApiServerURL string
+		requestStatus     string
+	}
+
+	tests := []struct {
+		name   string
+		args   args
+		fields fields
+		want   string
+	}{
+		{
+			name: "should return non empty admin api server url",
+			args: args{
+				request: &sampleReadyRequest,
+			},
+			fields: fields{
+				AdminApiServerURL: nonEmptyAdminApiServerURL,
+				requestStatus:     constants.KafkaRequestStatusReady.String(),
+			},
+			want: fmt.Sprint(nonEmptyAdminApiServerURL),
+		},
+		{
+			name: "should return empty admin api server url value",
+			args: args{
+				request: &sampleRequest,
+			},
+			fields: fields{
+				AdminApiServerURL: "",
+			},
+			want: "",
+		},
+		{
+			name: "should return empty value if KafkaRequest is in suspended status",
+			args: args{
+				request: &sampleSuspendedRequest,
+			},
+			fields: fields{
+				AdminApiServerURL: nonEmptyAdminApiServerURL,
+				requestStatus:     constants.KafkaRequestStatusSuspended.String(),
+			},
+			want: "",
+		},
+		{
+			name: "should return empty value if KafkaRequest is in suspending status",
+			args: args{
+				request: &sampleSuspendingRequest,
+			},
+			fields: fields{
+				AdminApiServerURL: nonEmptyAdminApiServerURL,
+				requestStatus:     constants.KafkaRequestStatusSuspending.String(),
+			},
+			want: "",
+		},
+		{
+			name: "should return empty value if KafkaRequest is in resuming status",
+			args: args{
+				request: &sampleResumingRequest,
+			},
+			fields: fields{
+				AdminApiServerURL: nonEmptyAdminApiServerURL,
+				requestStatus:     constants.KafkaRequestStatusResuming.String(),
+			},
+			want: "",
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			g.Expect(setAdminApiServerUrl(tt.args.request)).To(gomega.Equal(tt.want))
+		})
+	}
+}
 func TestCapacityLimitReports(t *testing.T) {
 	tests := []struct {
 		name        string
