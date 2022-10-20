@@ -104,12 +104,22 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
 
-	// waiting for cluster state to become `cluster_provisioning`, so that its struct can be persisted
+	// waiting for cluster state to become `provisioning`, so that its struct can be persisted
 	cluster, checkProvisioningErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterProvisioning)
 	g.Expect(checkProvisioningErr).NotTo(gomega.HaveOccurred(), "Error waiting for cluster to start provisioning: %s %v", cluster.ClusterID, checkProvisioningErr)
 
 	// save cluster struct to be reused in by the cleanup script if the cluster won't become ready before the timeout
 	err = common.PersistClusterStruct(*cluster, api.ClusterProvisioning)
+	if err != nil {
+		t.Fatalf("failed to persist cluster struct %v", err)
+	}
+
+	// waiting for cluster state to become `waiting_for_kas_fleetshard_operator`, so that its persisted struct can be updated after terraforming phase
+	cluster, checkWaitingForKasFleetshardOperatorErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterWaitingForKasFleetShardOperator)
+	g.Expect(checkWaitingForKasFleetshardOperatorErr).NotTo(gomega.HaveOccurred(), "Error waiting for cluster to start provisioning: %s %v", cluster.ClusterID, checkWaitingForKasFleetshardOperatorErr)
+
+	// save the updated cluster struct
+	err = common.PersistClusterStruct(*cluster, api.ClusterWaitingForKasFleetShardOperator)
 	if err != nil {
 		t.Fatalf("failed to persist cluster struct %v", err)
 	}

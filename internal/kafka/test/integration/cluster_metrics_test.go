@@ -51,6 +51,7 @@ func TestClusterCapacityUsedMetric(t *testing.T) {
 		cluster.ClusterID = "some-cluster-id"
 		cluster.ProviderSpec = api.JSON{}
 		cluster.ClusterSpec = api.JSON{}
+		cluster.IdentityProviderID = "some-identity-provider"
 	})
 
 	kafka := kafkaMocks.BuildKafkaRequest(kafkaMocks.WithPredefinedTestValues(), func(kr *dbapi.KafkaRequest) {

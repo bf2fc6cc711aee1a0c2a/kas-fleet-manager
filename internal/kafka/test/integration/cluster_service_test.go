@@ -32,6 +32,7 @@ var cluster = mockclusters.BuildCluster(func(cluster *api.Cluster) {
 	cluster.ClientID = "some-client-id"
 	cluster.ClientSecret = "some-client-secret"
 	cluster.ClusterID = "test-cluster"
+	cluster.IdentityProviderID = "some-identity-provider"
 	cluster.CloudProvider = mocks.MockCloudProviderID
 	cluster.Region = mocks.MockCloudRegionID
 	cluster.Status = api.ClusterReady

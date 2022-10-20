@@ -16,6 +16,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	kafkamocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
@@ -23,6 +24,7 @@ import (
 	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -1043,16 +1045,6 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 		g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusReady.String()))
 		g.Expect(c.AdminApiServerURL).To(gomega.Equal(adminApiServerUrl))
 	}
-
-	db = test.TestServices.DBFactory.New()
-	clusterDetails := &api.Cluster{
-		ClusterID: testServer.ClusterID,
-	}
-	err = db.Unscoped().Where(clusterDetails).First(clusterDetails).Error
-	g.Expect(err).NotTo(gomega.HaveOccurred(), "failed to find kafka request")
-	if err := getAndDeleteServiceAccounts(clusterDetails.ClientID, testServer.Helper.Env); err != nil {
-		t.Fatalf("Failed to delete service account with client id: %v", clusterDetails.ClientID)
-	}
 }
 
 func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
@@ -1375,9 +1367,10 @@ func TestDataPlaneEndpoints_ReassignRejectedKafkaDueToInsufficientResources(t *t
 	configHook := func(clusterConfig *config.DataplaneClusterConfig, reconcilerConfig *workers.ReconcilerConfig) {
 		reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Second
 		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+		clusterConfig.EnableReadyDataPlaneClustersReconcile = false
 		clusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
-			config.ManualCluster{ClusterId: standardClusterID, ClusterDNS: standardClusterDNS, Status: api.ClusterWaitingForKasFleetShardOperator, KafkaInstanceLimit: 1, Region: region, MultiAZ: true, CloudProvider: cloudProvider, Schedulable: true, SupportedInstanceType: "standard", ProviderType: api.ClusterProviderStandalone},
-			config.ManualCluster{ClusterId: developerClusterID, ClusterDNS: developerClusterDNS, Status: api.ClusterWaitingForKasFleetShardOperator, KafkaInstanceLimit: 1, Region: region, MultiAZ: false, CloudProvider: cloudProvider, Schedulable: true, SupportedInstanceType: "developer", ProviderType: api.ClusterProviderStandalone},
+			config.ManualCluster{ClusterId: standardClusterID, ClusterDNS: standardClusterDNS, Status: api.ClusterReady, KafkaInstanceLimit: 1, Region: region, MultiAZ: true, CloudProvider: cloudProvider, Schedulable: true, SupportedInstanceType: "standard", ProviderType: api.ClusterProviderStandalone},
+			config.ManualCluster{ClusterId: developerClusterID, ClusterDNS: developerClusterDNS, Status: api.ClusterReady, KafkaInstanceLimit: 1, Region: region, MultiAZ: false, CloudProvider: cloudProvider, Schedulable: true, SupportedInstanceType: "developer", ProviderType: api.ClusterProviderStandalone},
 		})
 	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
@@ -1397,6 +1390,32 @@ func TestDataPlaneEndpoints_ReassignRejectedKafkaDueToInsufficientResources(t *t
 		// We don't need to update the status of the kafka as it will be updated by the test itself
 		return nil
 	})
+
+	kasFleetshardSyncBuilder.SetUpdateDataplaneClusterStatusFunc(func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error {
+		clusters, err := test.TestServices.ClusterService.FindAllClusters(services.FindClusterCriteria{
+			Status: api.ClusterReady,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		for _, cluster := range clusters {
+			ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(helper, cluster.ClusterID)
+			if err != nil {
+				return err
+			}
+			clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+			resp, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, cluster.ClusterID, *clusterStatusUpdateRequest)
+			resp.Body.Close()
+			if err != nil {
+				return fmt.Errorf("failed to update cluster status via agent endpoint: %v", err)
+			}
+		}
+
+		return nil
+	})
+
 	kasFleetshardSync := kasFleetshardSyncBuilder.Build()
 	kasFleetshardSync.Start()
 
