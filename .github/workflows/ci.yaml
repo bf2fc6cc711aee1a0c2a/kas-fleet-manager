@@ -87,6 +87,7 @@ jobs:
 
     steps:
       - name: Cancel Previous Runs
+        if: "github.event_name == 'pull_request'"
         uses: n1hility/cancel-previous-runs@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
