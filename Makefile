@@ -317,7 +317,7 @@ test: gotestsum
 		$(shell $(GO) list ./... | grep -v /test) \
 		$(TESTFLAGS)
 
-# filter out mocked, generated, and other files which do not need to be tested from the coverage results
+# filter out mocked, generated, and other files which do not need to be tested from the unit test coverage results
 	grep -v -e "_moq.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/main.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/" \
