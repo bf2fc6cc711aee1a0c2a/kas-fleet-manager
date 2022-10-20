@@ -147,7 +147,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 	g.Expect(kafka.Kind).To(gomega.Equal(presenters.KindKafka))
 	g.Expect(kafka.Href).To(gomega.Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 	g.Expect(kafka.Region).To(gomega.Equal(mocks.MockCluster.Region().ID()))
@@ -233,7 +233,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 	g.Expect(kafka.Kind).To(gomega.Equal(presenters.KindKafka))
 	g.Expect(kafka.Href).To(gomega.Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 	g.Expect(kafka.Region).To(gomega.Equal(mocks.MockCluster.Region().ID()))

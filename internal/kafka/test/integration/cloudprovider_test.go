@@ -280,7 +280,7 @@ func TestListCloudProviders(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers: %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(cloudProviderList.Items).NotTo(gomega.BeEmpty(), "g.Expected cloud providers list")
+	g.Expect(cloudProviderList.Items).NotTo(gomega.BeEmpty(), "Expected cloud providers list")
 
 	// verify that the cloud providers list should contain atleast "gcp" which comes from standalone provider type
 	hasGcp := false
@@ -386,7 +386,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
 	g.Expect(resp1.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(cloudProviderRegionsList.Items).NotTo(gomega.BeEmpty(), "g.Expected aws cloud provider regions to return a non-empty list")
+	g.Expect(cloudProviderRegionsList.Items).NotTo(gomega.BeEmpty(), "Expected aws cloud provider regions to return a non-empty list")
 
 	// enabled should only be set to true for regions that support at least one instance type in the providers config
 	for _, cpr := range cloudProviderRegionsList.Items {
@@ -425,7 +425,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
 	g.Expect(resp1.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(cloudProviderRegionsList.Items).NotTo(gomega.BeEmpty(), "g.Expected aws cloud provider regions to return a non-empty list")
+	g.Expect(cloudProviderRegionsList.Items).NotTo(gomega.BeEmpty(), "Expected aws cloud provider regions to return a non-empty list")
 
 	for _, cpr := range cloudProviderRegionsList.Items {
 		if cpr.Id == "us-east-1" {
@@ -450,7 +450,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 
 	g.Expect(gcpErr).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list gcp cloud providers regions:  %v", gcpErr)
 	g.Expect(gcpResp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(gcpCloudProviderRegions.Items).NotTo(gomega.BeEmpty(), "g.Expected gcp cloud provider regions to return a non-empty list")
+	g.Expect(gcpCloudProviderRegions.Items).NotTo(gomega.BeEmpty(), "Expected gcp cloud provider regions to return a non-empty list")
 
 	// all gcp regions returned should have enabled set to false as they do not support any instance types as specified in the providers config
 	for _, cpr := range gcpCloudProviderRegions.Items {
@@ -464,5 +464,5 @@ func TestListCloudProviderRegions(t *testing.T) {
 	}
 	g.Expect(errFromWrongId).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", errFromWrongId)
 	g.Expect(respFromWrongID.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(wrongCloudProviderList.Items).To(gomega.BeEmpty(), "g.Expected cloud providers regions list empty")
+	g.Expect(wrongCloudProviderList.Items).To(gomega.BeEmpty(), "Expected cloud providers regions list empty")
 }

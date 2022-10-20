@@ -130,9 +130,9 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to persist cluster struct %v", err)
 	}
-	g.Expect(cluster.DeletedAt.Valid).To(gomega.Equal(false), fmt.Sprintf("g.Expected deleted_at property to be non valid meaning cluster not soft deleted, instead got %v", cluster.DeletedAt))
-	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterReady), fmt.Sprintf("g.Expected status property to be %s, instead got %s ", api.ClusterReady, cluster.Status))
-	g.Expect(cluster.IdentityProviderID).ToNot(gomega.BeEmpty(), "g.Expected identity_provider_id property to be defined")
+	g.Expect(cluster.DeletedAt.Valid).To(gomega.Equal(false), fmt.Sprintf("Expected deleted_at property to be non valid meaning cluster not soft deleted, instead got %v", cluster.DeletedAt))
+	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterReady), fmt.Sprintf("Expected status property to be %s, instead got %s ", api.ClusterReady, cluster.Status))
+	g.Expect(cluster.IdentityProviderID).ToNot(gomega.BeEmpty(), "Expected identity_provider_id property to be defined")
 
 	// check the state of cluster on ocm to ensure cluster was provisioned successfully
 	ocmCluster, err := ocmClient.GetCluster(cluster.ClusterID)

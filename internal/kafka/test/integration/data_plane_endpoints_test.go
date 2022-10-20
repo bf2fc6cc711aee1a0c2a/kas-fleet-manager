@@ -240,7 +240,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	})
 	defer testServer.TearDown()
 
-	// the following kafkas are g.Expected to be returned by the endpoint
+	// the following kafkas are Expected to be returned by the endpoint
 	validKafkas := []*dbapi.KafkaRequest{
 		kafkamocks.BuildKafkaRequest(
 			kafkamocks.WithPredefinedTestValues(),
@@ -1011,7 +1011,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 				return false, err
 			}
 			if len(routes) != 2 {
-				return false, errors.Errorf("g.Expected length of routes array to be 1")
+				return false, errors.Errorf("Expected length of routes array to be 1")
 			}
 			wantDomain1 := "admin-api-prefix.some-bootstrap⁻host"
 			if routes[0].Domain != wantDomain1 {
