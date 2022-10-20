@@ -520,7 +520,7 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 	// successful creation of kafka with a valid "standard" plan format
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error posting object:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
-	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 	g.Expect(kafka.InstanceType).To(gomega.Equal(types.STANDARD.String()))
 	g.Expect(kafka.MultiAz).To(gomega.BeTrue())
 	g.Expect(kafka.ExpiresAt).To(gomega.BeNil())
@@ -540,7 +540,7 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error posting object:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
-	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 	g.Expect(kafka.InstanceType).To(gomega.Equal(types.DEVELOPER.String()))
 	g.Expect(kafka.MultiAz).To(gomega.BeFalse())
 	// Verify that developer instances should have an expiration time set
