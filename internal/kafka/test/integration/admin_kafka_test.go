@@ -1221,10 +1221,8 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).NotTo(gomega.HaveOccurred())
-				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-				g.Expect(result.Id).To(gomega.Equal(deprovisionKafkaID))
-				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusDeprovision.String()))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
 			},
 		},
 		{
@@ -1239,7 +1237,8 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).NotTo(gomega.BeNil())
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
 			},
 		},
 		{

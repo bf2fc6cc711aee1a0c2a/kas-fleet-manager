@@ -13,6 +13,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/onsi/gomega"
 )
 
@@ -55,10 +56,11 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 			want: errors.BadRequest("Cluster id test-cluster-id not found"),
 			expectCounters: map[string]int{
-				"ready":    0,
-				"failed":   0,
-				"deleting": 0,
-				"rejected": 0,
+				"ready":     0,
+				"failed":    0,
+				"deleting":  0,
+				"rejected":  0,
+				"suspended": 0,
 			},
 		},
 		{
@@ -170,10 +172,11 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 			want: nil,
 			expectCounters: map[string]int{
-				"ready":    1,
-				"failed":   1,
-				"deleting": 1,
-				"rejected": 1,
+				"ready":     1,
+				"failed":    1,
+				"deleting":  1,
+				"rejected":  1,
+				"suspended": 0,
 			},
 		},
 		{
@@ -322,10 +325,11 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 			want: nil,
 			expectCounters: map[string]int{
-				"ready":    1,
-				"failed":   0,
-				"deleting": 0,
-				"rejected": 0,
+				"ready":     1,
+				"failed":    0,
+				"deleting":  0,
+				"rejected":  0,
+				"suspended": 0,
 			},
 		},
 		{
@@ -401,10 +405,308 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 			want: nil,
 			expectCounters: map[string]int{
-				"ready":    1,
-				"failed":   0,
-				"deleting": 0,
-				"rejected": 0,
+				"ready":     1,
+				"failed":    0,
+				"deleting":  0,
+				"rejected":  0,
+				"suspended": 0,
+			},
+		},
+		// Kafka suspension test cases
+		{
+			name: "should only update a suspending Kafka instance to suspended",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{ClusterID: "test-cluster-id"}, nil
+					},
+				},
+				kafkaService: func(c map[string]int) KafkaService {
+					return &KafkaServiceMock{
+						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+							return &dbapi.KafkaRequest{
+								ClusterID:     "test-cluster-id",
+								Status:        constants2.KafkaRequestStatusSuspending.String(),
+								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+								RoutesCreated: true,
+							}, nil
+						},
+						UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
+							if status == constants2.KafkaRequestStatusSuspended {
+								c["suspended"]++
+							}
+							return true, nil
+						},
+					}
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+				status: []*dbapi.DataPlaneKafkaStatus{
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Status: "True",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Reason: "Installing",
+								Status: "False",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Error",
+								Status:  "False",
+								Message: "kafka reported as failed by data plane",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Rejected",
+								Status:  "False",
+								Message: "kafka reported as rejected by data plane",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Rejected",
+								Status:  "False",
+								Message: "Cluster has insufficient resources",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Reason: "Suspended",
+								Status: "False",
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+			expectCounters: map[string]int{
+				"ready":     0,
+				"deleting":  0,
+				"failed":    0,
+				"rejected":  0,
+				"suspended": 1,
+			},
+		},
+		{
+			name: "should only update a resuming Kafka instance to ready or failed",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{ClusterID: "test-cluster-id"}, nil
+					},
+				},
+				kafkaService: func(c map[string]int) KafkaService {
+					return &KafkaServiceMock{
+						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+							return &dbapi.KafkaRequest{
+								ClusterID:     "test-cluster-id",
+								Status:        constants2.KafkaRequestStatusResuming.String(),
+								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+								RoutesCreated: true,
+							}, nil
+						},
+						UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+							v, ok := values["status"]
+							if ok {
+								statusValue := v.(string)
+								c[statusValue]++
+							}
+							return nil
+						},
+						UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+							if kafkaRequest.Status == string(constants2.KafkaRequestStatusFailed) {
+								if arrays.StringEmptyPredicate(kafkaRequest.FailedReason) {
+									return errors.GeneralError("Test failure error. FailedReason should not be empty")
+								}
+								c["failed"]++
+							}
+							return nil
+						},
+					}
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+				status: []*dbapi.DataPlaneKafkaStatus{
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Status: "True",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Reason: "Installing",
+								Status: "False",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Error",
+								Status:  "False",
+								Message: "kafka reported as failed by data plane",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Rejected",
+								Status:  "False",
+								Message: "kafka reported as rejected by data plane",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Rejected",
+								Status:  "False",
+								Message: "Cluster has insufficient resources",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Reason: "Suspended",
+								Status: "False",
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+			expectCounters: map[string]int{
+				"ready":     1,
+				"deleting":  0,
+				"failed":    1,
+				"rejected":  0,
+				"suspended": 0,
+			},
+		},
+		{
+			name: "should never update a suspended Kafka instance",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{ClusterID: "test-cluster-id"}, nil
+					},
+				},
+				kafkaService: func(c map[string]int) KafkaService {
+					return &KafkaServiceMock{
+						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+							return &dbapi.KafkaRequest{
+								ClusterID:     "test-cluster-id",
+								Status:        constants2.KafkaRequestStatusSuspended.String(),
+								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+								RoutesCreated: true,
+							}, nil
+						},
+					}
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+				status: []*dbapi.DataPlaneKafkaStatus{
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Status: "True",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Reason: "Installing",
+								Status: "False",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Error",
+								Status:  "False",
+								Message: "kafka reported as failed by data plane",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Rejected",
+								Status:  "False",
+								Message: "kafka reported as rejected by data plane",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Rejected",
+								Status:  "False",
+								Message: "Cluster has insufficient resources",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Reason: "Suspended",
+								Status: "False",
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+			expectCounters: map[string]int{
+				"ready":     0,
+				"deleting":  0,
+				"failed":    0,
+				"rejected":  0,
+				"suspended": 0,
 			},
 		},
 	}
@@ -415,10 +717,11 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			counter := map[string]int{
-				"ready":    0,
-				"failed":   0,
-				"deleting": 0,
-				"rejected": 0,
+				"ready":     0,
+				"failed":    0,
+				"deleting":  0,
+				"rejected":  0,
+				"suspended": 0,
 			}
 			s := NewDataPlaneKafkaService(tt.fields.kafkaService(counter), tt.fields.clusterService, &config.KafkaConfig{})
 			err := s.UpdateDataPlaneKafkaService(context.TODO(), tt.args.clusterId, tt.args.status)
