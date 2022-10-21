@@ -16,6 +16,11 @@ import (
 
 type Route53API route53iface.Route53API
 
+const (
+	DefaultAWSRoute53Region = "us-east-1"
+	DefaultGCPRoute53Region = "us-east-1"
+)
+
 //go:generate moq -out client_moq.go . AWSClient
 type AWSClient interface {
 	// route53

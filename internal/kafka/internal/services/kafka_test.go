@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
@@ -2550,9 +2551,10 @@ func Test_KafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 					Meta: api.Meta{
 						ID: "test-kafka-id",
 					},
-					Name:   "test-kafka-cname",
-					Routes: []byte("[{\"domain\": \"test-kafka-id.example.com\", \"router\": \"test-kafka-id.rhcloud.com\"}]"),
-					Region: testKafkaRequestRegion,
+					Name:          "test-kafka-cname",
+					Routes:        []byte("[{\"domain\": \"test-kafka-id.example.com\", \"router\": \"test-kafka-id.rhcloud.com\"}]"),
+					Region:        testKafkaRequestRegion,
+					CloudProvider: cloudproviders.AWS.String(),
 				},
 				action: KafkaRoutesActionCreate,
 			},
@@ -2580,9 +2582,10 @@ func Test_KafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 					Meta: api.Meta{
 						ID: "test-kafka-id",
 					},
-					Name:   "test-kafka-cname",
-					Routes: []byte("[{\"domain\": \"test-kafka-id.example.com\", \"router\": \"test-kafka-id.rhcloud.com\"}]"),
-					Region: testKafkaRequestRegion,
+					Name:          "test-kafka-cname",
+					Routes:        []byte("[{\"domain\": \"test-kafka-id.example.com\", \"router\": \"test-kafka-id.rhcloud.com\"}]"),
+					Region:        testKafkaRequestRegion,
+					CloudProvider: cloudproviders.AWS.String(),
 				},
 				action: KafkaRoutesActionDelete,
 			},
@@ -3769,7 +3772,8 @@ func Test_kafkaService_GetCNAMERecordStatus(t *testing.T) {
 			},
 			args: args{
 				kafkaRequest: &dbapi.KafkaRequest{
-					Region: "us-east-1",
+					Region:        "us-east-1",
+					CloudProvider: cloudproviders.AWS.String(),
 				},
 			},
 			want: &CNameRecordStatus{
@@ -3979,6 +3983,64 @@ func Test_kafkaService_AssignBootstrapServerHost(t *testing.T) {
 			}
 			err := k.AssignBootstrapServerHost(test.args.kafkaRequest)
 			g.Expect(err != nil).To(gomega.Equal(test.wantErr))
+		})
+	}
+}
+
+func Test_kafkaService_getRoute53RegionFromKafkaRequest(t *testing.T) {
+
+	type args struct {
+		kafkaRequest *dbapi.KafkaRequest
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "Route53 region is correctly returned for Kafka instances in AWS",
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					Region:        "anotherregion",
+					CloudProvider: cloudproviders.AWS.String(),
+				},
+			},
+			want:    aws.DefaultAWSRoute53Region,
+			wantErr: false,
+		},
+		{
+			name: "Route53 region is correctly returned for Kafka instances in GCP",
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					Region:        "anotherregiontwo",
+					CloudProvider: cloudproviders.GCP.String(),
+				},
+			},
+			want:    aws.DefaultGCPRoute53Region,
+			wantErr: false,
+		},
+		{
+			name: "An error is returned if the Kafka instance has an unknown cloud provider",
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					Region:        "us-east-1",
+					CloudProvider: "anunknowncloudprovider",
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			k := &kafkaService{}
+			res, err := k.getRoute53RegionFromKafkaRequest(tt.args.kafkaRequest)
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(res).To(gomega.Equal(tt.want))
 		})
 	}
 }
