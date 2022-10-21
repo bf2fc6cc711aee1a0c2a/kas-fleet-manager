@@ -22,6 +22,9 @@ on:
       - 'docs/**'
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request'}}
 
 env:
   # set ocm env to integration
@@ -86,10 +89,6 @@ jobs:
         options: --health-cmd "curl -f http://localhost:8080/auth/realms/master" --health-interval 40s --health-retries 8 --health-timeout 60s
 
     steps:
-      - name: Cancel Previous Runs
-        uses: n1hility/cancel-previous-runs@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Go 1.19.2
         uses: actions/setup-go@v3
         with:
