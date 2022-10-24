@@ -69,8 +69,6 @@ echo "$svcUserId"
 FINAL=$(curl -sk --data-raw '[{"id": '"$manageUser"',"name": "manage-users"},{"id": '"$manageRealm"',"name": "manage-realm"},{"id": '"$manageClients"',"name": "manage-clients"}]' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL"/auth/admin/realms/rhoas/users/"$svcUserId"/role-mappings/clients/"$realmMgmtClientId")
 echo "$FINAL"
 
-
-
 CREATE=$(curl -sk --data-raw '{
    "authorizationServicesEnabled": false,
    "clientId": "kas-fleet-manager",
@@ -108,3 +106,57 @@ echo "$svcUserId"
 
 FINAL=$(curl -sk --data-raw '[{"id": '"$manageUser"',"name": "manage-users"},{"id": '"$manageRealm"',"name": "manage-realm"},{"id": '"$manageClients"',"name": "manage-clients"}]' --header "Content-Type: application/json" --header "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL"/auth/admin/realms/rhoas-kafka-sre/users/"$svcUserId"/role-mappings/clients/"$realmMgmtClientId")
 echo "$FINAL"
+
+REALM=rhoas-kafka-sre
+REALM_URL="${KEYCLOAK_URL}/auth/admin/realms/${REALM}"
+
+FLEETMANAGER_ADMIN_CLIENT=kas-fleet-manager
+FLEETMANAGER_ADMIN_ROLE=kas-fleet-manager-admin-full
+
+# Obtain admin user access token
+RESULT=$(curl -sk --data "grant_type=password&client_id=$CLIENT_ID&username=$KEYCLOAK_USER&password=$KEYCLOAK_PASSWORD" "$KEYCLOAK_URL"$TOKEN_PATH)
+ACCESS_TOKEN=$(jq -r '.access_token' <<< "$RESULT")
+AUTHN_HEADER="Authorization: Bearer ${ACCESS_TOKEN}"
+JSON_CONTENT="Content-Type: application/json"
+
+ADMIN_CLIENT_ID=$(curl --fail --show-error -sk -H"${AUTHN_HEADER}" ${REALM_URL}/clients?clientId=${FLEETMANAGER_ADMIN_CLIENT} | jq -r '.[].id')
+
+# attempt to fetch the role id if role already created
+ADMIN_FULL_ROLE_ID=$(curl --fail --show-error -sk -H"${AUTHN_HEADER}" ${REALM_URL}/roles |\
+    jq -r -c '.[] | select( .name | contains("'${FLEETMANAGER_ADMIN_ROLE}'")).id')
+
+if [ -z $ADMIN_FULL_ROLE_ID ] ; then 
+    # Only create "kas-fleet-manager-admin-full" role if not already created
+    ROLE_CREATE_RESPONSE=$(curl --fail --show-error -sk -H"${JSON_CONTENT}" -H"${AUTHN_HEADER}" ${REALM_URL}/roles --data-raw '{
+    "name": "'${FLEETMANAGER_ADMIN_ROLE}'"
+    }')
+
+    if [ $? -ne 0 ] ; then
+        exit 1
+    fi
+
+    echo "Created role: ${FLEETMANAGER_ADMIN_ROLE}"
+
+    # fetch the created role id
+    ADMIN_FULL_ROLE_ID=$(curl --fail --show-error -sk -H"${AUTHN_HEADER}" ${REALM_URL}/roles |\
+    jq -r -c '.[] | select( .name | contains("'${FLEETMANAGER_ADMIN_ROLE}'")).id')
+fi
+
+echo $ADMIN_FULL_ROLE_ID
+
+if [ $? -ne 0 ] ; then
+    exit 1
+fi
+
+ADMIN_SERVICE_ACCOUNT_ID=$(curl --fail --show-error -sk -H"${AUTHN_HEADER}" ${REALM_URL}/clients/${ADMIN_CLIENT_ID}/service-account-user | jq -r .id)
+
+FINAL=$(curl --fail --show-error -sk -H"${JSON_CONTENT}" -H"${AUTHN_HEADER}" ${REALM_URL}/users/${ADMIN_SERVICE_ACCOUNT_ID}/role-mappings/realm --data-raw '[
+  {
+    "id": "'${ADMIN_FULL_ROLE_ID}'",
+    "name": "'${FLEETMANAGER_ADMIN_ROLE}'"
+  }]')
+if [ $? -ne 0 ] ; then
+    exit 1
+fi
+
+echo "Associated role ${FLEETMANAGER_ADMIN_ROLE}(${ADMIN_FULL_ROLE_ID}) with client ${FLEETMANAGER_ADMIN_CLIENT}(${ADMIN_CLIENT_ID}) service account"
