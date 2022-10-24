@@ -47,6 +47,13 @@ func TestServiceAccounts_GetByClientID(t *testing.T) {
 	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
+	var keycloakConfig *keycloak.KeycloakConfig
+	h.Env.MustResolve(&keycloakConfig)
+
+	if keycloakConfig.SelectSSOProvider != keycloak.MAS_SSO {
+		t.Skip("The test requires the sso provider type to be mas_sso")
+	}
+
 	ctx := getAuthenticatedContext(h, nil)
 
 	opts := public.GetServiceAccountsOpts{
@@ -103,6 +110,13 @@ func TestServiceAccounts_Success(t *testing.T) {
 	// ocm
 	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
+
+	var keycloakConfig *keycloak.KeycloakConfig
+	h.Env.MustResolve(&keycloakConfig)
+
+	if keycloakConfig.SelectSSOProvider != keycloak.MAS_SSO {
+		t.Skip("The test requires the sso provider type to be mas_sso")
+	}
 
 	// get username from the access token to verify service account owner
 	ctx := getAuthenticatedContext(h, nil)
@@ -210,6 +224,12 @@ func TestServiceAccounts_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 	// ocm
 	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
+	var keycloakConfig *keycloak.KeycloakConfig
+	h.Env.MustResolve(&keycloakConfig)
+
+	if keycloakConfig.SelectSSOProvider != keycloak.MAS_SSO {
+		t.Skip("The test requires the sso provider type to be mas_sso")
+	}
 
 	account := h.NewRandAccount()
 	claims := jwt.MapClaims{
@@ -238,6 +258,12 @@ func TestServiceAccounts_CorrectTokenIssuer_AuthzSuccess(t *testing.T) {
 	// ocm
 	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
+	var keycloakConfig *keycloak.KeycloakConfig
+	h.Env.MustResolve(&keycloakConfig)
+
+	if keycloakConfig.SelectSSOProvider != keycloak.MAS_SSO {
+		t.Skip("The test requires the sso provider type to be mas_sso")
+	}
 
 	ctx := getAuthenticatedContext(h, nil)
 
@@ -259,6 +285,13 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	// ocm
 	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
+
+	var keycloakConfig *keycloak.KeycloakConfig
+	h.Env.MustResolve(&keycloakConfig)
+
+	if keycloakConfig.SelectSSOProvider != keycloak.MAS_SSO {
+		t.Skip("The test requires the sso provider type to be mas_sso")
+	}
 
 	ctx := getAuthenticatedContext(h, nil)
 
@@ -310,40 +343,35 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	g.Expect(err).Should(gomega.HaveOccurred())
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
 
-	var keycloakConfig *keycloak.KeycloakConfig
-	h.Env.MustResolve(&keycloakConfig)
-
-	if keycloakConfig.SelectSSOProvider == keycloak.MAS_SSO {
-		// min length required is not required for desc
-		// only test this for mas sso. redhat sso requires the description to not be empty
-		r = public.ServiceAccountRequest{
-			Name:        "test",
-			Description: "",
-		}
-		sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
-		if resp != nil {
-			resp.Body.Close()
-		}
-		g.Expect(err).ShouldNot(gomega.HaveOccurred())
-		g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
-		g.Expect(sa.ClientId).NotTo(gomega.BeEmpty())
-		g.Expect(sa.ClientSecret).NotTo(gomega.BeEmpty())
-		g.Expect(sa.Id).NotTo(gomega.BeEmpty())
-
-		// verify delete
-		_, resp, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
-		if resp != nil {
-			resp.Body.Close()
-		}
-		g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	// min length required is not required for desc
+	// only test this for mas sso. redhat sso requires the description to not be empty
+	r = public.ServiceAccountRequest{
+		Name:        "test",
+		Description: "",
 	}
+	sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
+	g.Expect(sa.ClientId).NotTo(gomega.BeEmpty())
+	g.Expect(sa.ClientSecret).NotTo(gomega.BeEmpty())
+	g.Expect(sa.Id).NotTo(gomega.BeEmpty())
+
+	// verify delete
+	_, resp, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
 
 	// certain characters are allowed in the description
 	r = public.ServiceAccountRequest{
 		Name:        "test",
 		Description: "Created by the managed-services integration tests.,",
 	}
-	sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
+	sa, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
 	if resp != nil {
 		resp.Body.Close()
 	}

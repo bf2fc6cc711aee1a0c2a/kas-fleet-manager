@@ -142,7 +142,10 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	}
 	g.Expect(cluster.DeletedAt.Valid).To(gomega.Equal(false), fmt.Sprintf("Expected deleted_at property to be non valid meaning cluster not soft deleted, instead got %v", cluster.DeletedAt))
 	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterReady), fmt.Sprintf("Expected status property to be %s, instead got %s ", api.ClusterReady, cluster.Status))
-	g.Expect(cluster.IdentityProviderID).ToNot(gomega.BeEmpty(), "Expected identity_provider_id property to be defined")
+
+	if dataplaneConfig.EnableKafkaSreIdentityProviderConfiguration {
+		g.Expect(cluster.IdentityProviderID).ToNot(gomega.BeEmpty(), "Expected identity_provider_id property to be defined")
+	}
 
 	// check the state of cluster on ocm to ensure cluster was provisioned successfully
 	ocmCluster, err := ocmClient.GetCluster(cluster.ClusterID)

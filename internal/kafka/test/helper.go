@@ -60,13 +60,16 @@ func NewKafkaHelper(t *testing.T, server *httptest.Server) (*test.Helper, *publi
 
 func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
 	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, kafka.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
-		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration, kasFleetshardConfig *config.KasFleetshardConfig, providerConfig *config.ProviderConfig) {
+		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration,
+			kasFleetshardConfig *config.KasFleetshardConfig, providerConfig *config.ProviderConfig,
+			keycloakConfig *keycloak.KeycloakConfig) {
 			kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
 			observabilityConfiguration.EnableMock = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
 			dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
 			dataplaneClusterConfig.DynamicScalingConfig.EnableDynamicScaleUpManagerScaleUpTrigger = false
 			dataplaneClusterConfig.DynamicScalingConfig.EnableDynamicScaleDownManagerScaleDownTrigger = false
+			dataplaneClusterConfig.EnableKafkaSreIdentityProviderConfiguration = keycloakConfig.SelectSSOProvider == keycloak.MAS_SSO // only enable IDP configuration if provider type is mas_sso
 
 			// enable only aws for integration tests
 			providerConfig.ProvidersConfig = config.ProviderConfiguration{
@@ -89,6 +92,7 @@ func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 			}
 		},
 	}))
+
 	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
 		glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
 	}
