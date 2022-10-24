@@ -181,7 +181,9 @@ func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			return errors.Errorf("Standalone cluster with id %s does not have the name field provided", c.ClusterId)
 		}
 
-		c.Status = api.ClusterProvisioning // force to cluster provisioning status as we do not want to call StandaloneProvider to create the cluster.
+		if c.Status == api.ClusterAccepted {
+			c.Status = api.ClusterProvisioning // force to cluster provisioning status as we do not want to call StandaloneProvider to create the cluster.
+		}
 	}
 
 	if c.SupportedInstanceType == "" {

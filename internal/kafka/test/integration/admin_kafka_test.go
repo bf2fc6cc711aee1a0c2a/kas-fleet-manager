@@ -11,6 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
+	mockclusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	mockkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -1312,19 +1313,24 @@ func TestAdminKafka_Update(t *testing.T) {
 	defer tearDown()
 	db := test.TestServices.DBFactory.New()
 	// create a dummy cluster and assign a kafka to it
-	cluster := &api.Cluster{
-		Meta: api.Meta{
+	cluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
 			ID: api.NewID(),
-		},
-		ClusterID:          api.NewID(),
-		MultiAZ:            true,
-		Region:             "baremetal",
-		CloudProvider:      "baremetal",
-		Status:             api.ClusterReady,
-		IdentityProviderID: "some-id",
-		ClusterDNS:         "some-cluster-dns",
-		ProviderType:       api.ClusterProviderStandalone,
-	}
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = api.NewID()
+		cluster.Region = "baremetal"
+		cluster.CloudProvider = "baremetal"
+		cluster.MultiAZ = true
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterDNS = "some-cluster-dns"
+		cluster.IdentityProviderID = "some-identity-provider-id"
+	})
 
 	err2 := cluster.SetAvailableStrimziVersions(getTestStrimziVersionsMatrix())
 

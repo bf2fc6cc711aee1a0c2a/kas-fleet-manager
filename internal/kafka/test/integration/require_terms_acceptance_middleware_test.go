@@ -7,7 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	mockclusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
@@ -44,12 +44,28 @@ func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
 	mockKasfFleetshardSync.Start()
 	defer mockKasfFleetshardSync.Stop()
 
-	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
-	}
-	if clusterID == "" {
-		panic("No cluster found")
+	cluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = api.NewID()
+		cluster.Region = mocks.MockCluster.Region().ID()
+		cluster.CloudProvider = mocks.MockCluster.CloudProvider().ID()
+		cluster.MultiAZ = true
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.IdentityProviderID = "some-identity-provider-id"
+	})
+
+	db := h.DBFactory().New()
+	err = db.Create(cluster).Error
+	if err != nil {
+		t.Fatalf(err.Error(), "failed to create data plane cluster")
 	}
 
 	return TestEnv{
@@ -136,20 +152,4 @@ func TestTermsRequired_ListKafkaTermsRequired(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-
-	clusterID, getClusterErr := common.GetRunningOsdClusterID(env.helper, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
-	}
-	g.Expect(clusterID).ToNot(gomega.Equal(""))
-
-	db := test.TestServices.DBFactory.New()
-	clusterDetails := &api.Cluster{
-		ClusterID: clusterID,
-	}
-	err = db.Unscoped().Where(clusterDetails).First(clusterDetails).Error
-	g.Expect(err).NotTo(gomega.HaveOccurred(), "failed to find kafka request")
-	if err := getAndDeleteServiceAccounts(clusterDetails.ClientID, env.helper.Env); err != nil {
-		t.Fatalf("Failed to delete service account with client id: %v", clusterDetails.ClientID)
-	}
 }

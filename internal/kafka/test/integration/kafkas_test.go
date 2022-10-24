@@ -25,6 +25,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	clusterMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
+	mockclusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
@@ -79,6 +80,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		// so that metrics checks does not timeout after 10s
 		reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Second
 		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+		clusterConfig.EnableReadyDataPlaneClustersReconcile = false
 		clusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 			config.ManualCluster{ClusterId: "first", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard,developer"},
 			config.ManualCluster{ClusterId: "second", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard"},
@@ -107,6 +109,11 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
 	kasfFleetshardSync.Start()
+
+	defer func() {
+		kasfFleetshardSync.Stop()
+		h.Env.Stop()
+	}()
 
 	unsupportedRegion := "eu-west-1"
 
@@ -486,21 +493,6 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		},
 	}
 
-	defer func() {
-		kasfFleetshardSync.Stop()
-		h.Env.Stop()
-
-		list, _ := test.TestServices.ClusterService.FindAllClusters(clusterCriteria)
-		for _, clusters := range list {
-			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil {
-				t.Fatalf("Failed to delete service account with client id: %v", clusters.ClientID)
-			}
-			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil {
-				t.Fatalf("Failed to delete service account with cluster id: %v", clusters.ID)
-			}
-		}
-	}()
-
 	testValidations(h, t, kafkaValidations)
 }
 
@@ -698,19 +690,24 @@ func TestKafka_Update(t *testing.T) {
 
 	db := test.TestServices.DBFactory.New()
 	// create a dummy cluster and assign a kafka to it
-	cluster := &api.Cluster{
-		Meta: api.Meta{
+	cluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
 			ID: api.NewID(),
-		},
-		ClusterID:          api.NewID(),
-		MultiAZ:            true,
-		Region:             "baremetal",
-		CloudProvider:      "baremetal",
-		Status:             api.ClusterReady,
-		IdentityProviderID: "some-id",
-		ClusterDNS:         "some-cluster-dns",
-		ProviderType:       api.ClusterProviderStandalone,
-	}
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = api.NewID()
+		cluster.Region = "baremetal"
+		cluster.CloudProvider = "baremetal"
+		cluster.MultiAZ = true
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterDNS = "some-cluster-dns"
+		cluster.IdentityProviderID = "some-identity-provider-id"
+	})
 
 	if err := db.Create(cluster).Error; err != nil {
 		t.Error("failed to create dummy cluster")
@@ -749,6 +746,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	// Start with no cluster config and manual scaling.
 	configHook := func(clusterConfig *config.DataplaneClusterConfig) {
 		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+		clusterConfig.EnableReadyDataPlaneClustersReconcile = false
 		clusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 			config.ManualCluster{ClusterId: "test01", ClusterDNS: "app.example.com", Status: api.ClusterReady, KafkaInstanceLimit: 1, Region: mocks.MockCluster.Region().ID(), MultiAZ: testMultiAZ, CloudProvider: mocks.MockCluster.CloudProvider().ID(), Schedulable: true, SupportedInstanceType: "standard,developer"},
 		})
@@ -777,7 +775,10 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
 	kasfFleetshardSync.Start()
-	defer kasfFleetshardSync.Stop()
+	defer func() {
+		kasfFleetshardSync.Stop()
+		h.Env.Stop()
+	}()
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
@@ -803,27 +804,6 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	}
 	g.Expect(err).To(gomega.HaveOccurred(), "Expecting error to be thrown when creating more kafkas than allowed by the cluster limit:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusForbidden))
-
-	clusterCriteria := services.FindClusterCriteria{
-		Provider: "aws",
-		Region:   "us-east-1",
-		MultiAZ:  true,
-	}
-
-	defer func() {
-		kasfFleetshardSync.Stop()
-		h.Env.Stop()
-
-		list, _ := test.TestServices.ClusterService.FindAllClusters(clusterCriteria)
-		for _, clusters := range list {
-			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil {
-				t.Fatalf("Failed to delete service account with client id: %v", clusters.ClientID)
-			}
-			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil {
-				t.Fatalf("Failed to delete service account with cluster id: %v", clusters.ID)
-			}
-		}
-	}()
 }
 
 // TestKafkaPost_Validations tests the API validations performed by the kafka creation endpoint
@@ -1546,19 +1526,24 @@ func TestKafka_Delete(t *testing.T) {
 
 	db := test.TestServices.DBFactory.New()
 	// create a dummy cluster and assign a kafka to it
-	cluster := &api.Cluster{
-		Meta: api.Meta{
+	cluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
 			ID: api.NewID(),
-		},
-		ClusterID:          api.NewID(),
-		MultiAZ:            true,
-		Region:             "baremetal",
-		CloudProvider:      "baremetal",
-		Status:             api.ClusterReady,
-		IdentityProviderID: "some-id",
-		ClusterDNS:         "some-cluster-dns",
-		ProviderType:       api.ClusterProviderStandalone,
-	}
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = api.NewID()
+		cluster.Region = "baremetal"
+		cluster.CloudProvider = "baremetal"
+		cluster.MultiAZ = true
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterDNS = "some-cluster-dns"
+		cluster.IdentityProviderID = "some-identity-provider-id"
+	})
 
 	if err := db.Create(cluster).Error; err != nil {
 		t.Error("failed to create dummy cluster")
@@ -1869,19 +1854,24 @@ func TestKafka_DeleteAdminNonOwner(t *testing.T) {
 
 	db := test.TestServices.DBFactory.New()
 	// create a dummy cluster and assign a kafka to it
-	cluster := &api.Cluster{
-		Meta: api.Meta{
+	cluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
 			ID: api.NewID(),
-		},
-		ClusterID:          api.NewID(),
-		MultiAZ:            true,
-		Region:             "baremetal",
-		CloudProvider:      "baremetal",
-		Status:             api.ClusterReady,
-		IdentityProviderID: "some-id",
-		ClusterDNS:         "some-cluster-dns",
-		ProviderType:       api.ClusterProviderStandalone,
-	}
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = api.NewID()
+		cluster.Region = "baremetal"
+		cluster.CloudProvider = "baremetal"
+		cluster.MultiAZ = true
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterDNS = "some-cluster-dns"
+		cluster.IdentityProviderID = "some-identity-provider-id"
+	})
 
 	if err := db.Create(cluster).Error; err != nil {
 		t.Error("failed to create dummy cluster")

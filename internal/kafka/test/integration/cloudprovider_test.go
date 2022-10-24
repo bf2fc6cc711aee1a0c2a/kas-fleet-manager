@@ -10,6 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	mockclusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -28,24 +29,41 @@ const usEast1Region = "us-east-1"
 var limit = int(1)
 
 var dummyClusters = []*api.Cluster{
-	{
-		ClusterID:          api.NewID(),
-		MultiAZ:            true,
-		Region:             afEast1Region,
-		CloudProvider:      gcp,
-		Status:             api.ClusterReady,
-		ProviderType:       api.ClusterProviderStandalone,
-		IdentityProviderID: "some-identity-provider-id",
-	},
-	{
-		ClusterID:          api.NewID(),
-		MultiAZ:            true,
-		Region:             usEast1Region,
-		CloudProvider:      aws,
-		Status:             api.ClusterReady,
-		ProviderType:       api.ClusterProviderOCM,
-		IdentityProviderID: "some-identity-provider-id",
-	},
+	mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = api.NewID()
+		cluster.Region = afEast1Region
+		cluster.CloudProvider = gcp
+		cluster.MultiAZ = true
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.IdentityProviderID = "some-identity-provider-id"
+	}),
+	mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = api.NewID()
+		cluster.MultiAZ = true
+		cluster.Region = usEast1Region
+		cluster.CloudProvider = aws
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ProviderType = api.ClusterProviderOCM
+		cluster.IdentityProviderID = "some-identity-provider-id"
+	}),
 }
 
 var mockSupportedInstanceTypes = &config.KafkaSupportedInstanceTypesConfig{
@@ -337,6 +355,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 
 		kc.SupportedInstanceTypes = mockSupportedInstanceTypes
 		dc.DataPlaneClusterScalingType = config.ManualScaling
+		dc.EnableReadyDataPlaneClustersReconcile = false
 		dc.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 			{
 				Name:                  "dummyCluster1",
