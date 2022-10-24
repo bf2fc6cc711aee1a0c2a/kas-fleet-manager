@@ -333,8 +333,15 @@ OCM_ENV=integration make test/integration
 ```
 
 To run integration tests with a real OCM environment, run:
+
 ```
 make test/integration
+``` 
+
+>NOTE: Make sure that the keycloak service that's running locally is exposed via the internet using a reverse proxy service like [ngrok](https://ngrok.com/). 
+```
+ngrok http 8180
+....wait for ngrok to run, then copy the generated URL and use them as mas-sso base url in "internal/kafka/internal/environments/development.go" file.
 ```
 
 To stop and remove the database container when finished, run:
