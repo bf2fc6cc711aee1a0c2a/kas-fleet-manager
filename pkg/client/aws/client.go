@@ -122,7 +122,7 @@ func (client *awsCl) ChangeResourceRecordSets(dnsName string, recordChangeBatch 
 		return nil, err
 	}
 	if len(zones.HostedZones) == 0 {
-		return nil, fmt.Errorf("No Hosted Zones found")
+		return nil, fmt.Errorf("no Hosted Zones found")
 	}
 
 	hostedZoneId := zones.HostedZones[0].Id

@@ -21,8 +21,9 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/buildinformation"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -106,7 +107,7 @@ func (v *VersionMetadata) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Send the response:
 	_, err = w.Write(data)
 	if err != nil {
-		glog.Errorf("can't send response body for request '%s'", r.URL.Path)
+		glog.Errorf("Can't send response body for request '%s'", r.URL.Path)
 		return
 	}
 }

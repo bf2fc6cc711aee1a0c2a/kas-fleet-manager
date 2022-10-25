@@ -330,7 +330,7 @@ func TestAdminKafka_List(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", testFullRole),
+			name: fmt.Sprintf("should succeed when the role defined in the request is %s", testFullRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
@@ -344,7 +344,7 @@ func TestAdminKafka_List(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", testWriteRole),
+			name: fmt.Sprintf("should succeed when the role defined in the request is %s", testWriteRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{testWriteRole})
@@ -358,7 +358,7 @@ func TestAdminKafka_List(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", testReadRole),
+			name: fmt.Sprintf("should succeed when the role defined in the request is %s", testReadRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{testReadRole})

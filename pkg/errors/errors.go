@@ -194,7 +194,7 @@ const (
 
 	// Too Many requests error. Used by rate limiting
 	ErrorTooManyRequests       ServiceErrorCode = 429
-	ErrorTooManyRequestsReason string           = "Too Many requests"
+	ErrorTooManyRequestsReason string           = "Too many requests"
 )
 
 type ErrorList []error
@@ -363,7 +363,7 @@ func NewWithCause(code ServiceErrorCode, cause error, reason string, values ...i
 	exists, err := Find(code)
 	if !exists {
 		glog.Errorf("Undefined error code used: %d", code)
-		err = &ServiceError{ErrorGeneral, "Unspecified error", http.StatusInternalServerError, nil}
+		err = &ServiceError{ErrorGeneral, "unspecified error", http.StatusInternalServerError, nil}
 	}
 
 	// TODO - if cause is nil, should we use the reason as the cause?

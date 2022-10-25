@@ -1,11 +1,12 @@
 package auth
 
 import (
+	"net/http"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 func UseOperatorAuthorisationMiddleware(router *mux.Router, jwkValidIssuerURI string, clusterIdVar string, clusterService AuthAgentService) {
@@ -29,7 +30,7 @@ func checkClusterId(clusterIdVar string, authAgentService AuthAgentService) mux.
 
 			savedClientId, err := authAgentService.GetClientId(clusterId)
 			if err != nil {
-				glog.Errorf("unable to get clientID for cluster with ID '%s': %v", clusterId, err)
+				glog.Errorf("Unable to get clientID for cluster with ID '%s': %v", clusterId, err)
 				shared.HandleError(request, writer, errors.GeneralError("unable to get clientID for cluster with ID '%s'", clusterId))
 			}
 

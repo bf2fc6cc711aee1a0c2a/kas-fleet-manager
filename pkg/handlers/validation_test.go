@@ -291,7 +291,7 @@ func TestValidateMaxLength(t *testing.T) {
 				maxLen: func() *int { x := 5; return &x },
 			},
 			wantErr:     true,
-			expectedErr: errors.MaximumFieldLengthExceeded("%s is not valid. Maximum length %d is required", "test-field", 5).Error(),
+			expectedErr: errors.MaximumFieldLengthExceeded("%s is not valid, maximum length %d is required", "test-field", 5).Error(),
 		},
 		{
 			name: "Value nil maxLength",
@@ -348,7 +348,7 @@ func TestValidateMinLength(t *testing.T) {
 				minLen: 5,
 			},
 			wantErr:     true,
-			expectedErr: errors.MinimumFieldLengthNotReached("%s is not valid. Minimum length %d is required.", "test-field", 5).Error(),
+			expectedErr: errors.MinimumFieldLengthNotReached("%s is not valid, minimum length %d is required", "test-field", 5).Error(),
 		},
 	}
 
@@ -396,7 +396,7 @@ func TestValidateLength(t *testing.T) {
 				maxLen: func() *int { x := 5; return &x },
 			},
 			wantErr:     true,
-			expectedErr: errors.MaximumFieldLengthExceeded("%s is not valid. Maximum length %d is required", "test-field", 5).Error(),
+			expectedErr: errors.MaximumFieldLengthExceeded("%s is not valid, maximum length %d is required", "test-field", 5).Error(),
 		},
 		{
 			name: "Value too short",
@@ -407,7 +407,7 @@ func TestValidateLength(t *testing.T) {
 				minLen: 40,
 			},
 			wantErr:     true,
-			expectedErr: errors.MinimumFieldLengthNotReached("%s is not valid. Minimum length %d is required.", "test-field", 40).Error(),
+			expectedErr: errors.MinimumFieldLengthNotReached("%s is not valid, minimum length %d is required", "test-field", 40).Error(),
 		},
 		{
 			name: "Value nil maxLength",

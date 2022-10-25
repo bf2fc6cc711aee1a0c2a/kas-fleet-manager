@@ -2,8 +2,9 @@ package observatorium
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/golang/glog"
 
@@ -227,7 +228,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 		if metricQueryResult.metricResult.Err != nil {
 			message := fmt.Sprintf("%q:%v", metricQueryResult.metricQuery, metricQueryResult.metricResult.Err)
 			failedMetrics = append(failedMetrics, message)
-			glog.Errorf("error running query %q: %v", metricQueryResult.metricQuery, metricQueryResult.metricResult.Err)
+			glog.Errorf("Error running query %q: %v", metricQueryResult.metricQuery, metricQueryResult.metricResult.Err)
 			continue
 		}
 
@@ -235,7 +236,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 	}
 
 	if len(failedMetrics) > 0 {
-		return errors.New(fmt.Sprintf("Failed to fetch metrics data [%s]", strings.Join(failedMetrics, ",")))
+		return errors.New(fmt.Sprintf("failed to fetch metrics data [%s]", strings.Join(failedMetrics, ",")))
 	}
 
 	return nil
@@ -250,7 +251,7 @@ func (obs *ServiceObservatorium) fetchMetricsResult(query string, rq *MetricsReq
 	case Query:
 		result = c.QueryRaw(query)
 	default:
-		result = Metric{Err: errors.Errorf("Unsupported Result Type %q", rq.ResultType)}
+		result = Metric{Err: errors.Errorf("unsupported Result Type %q", rq.ResultType)}
 	}
 	return result
 }

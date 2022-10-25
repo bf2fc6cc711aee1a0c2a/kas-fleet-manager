@@ -98,10 +98,10 @@ func (k *KafkaManager) Reconcile() []error {
 	// delete kafkas of denied owners
 	accessControlListConfig := k.accessControlListConfig
 	if accessControlListConfig.EnableDenyList {
-		glog.Infoln("reconciling denied kafka owners")
+		glog.Infoln("Reconciling denied kafka owners")
 		kafkaDeprovisioningForDeniedOwnersErr := k.reconcileDeniedKafkaOwners(accessControlListConfig.DenyList)
 		if kafkaDeprovisioningForDeniedOwnersErr != nil {
-			wrappedError := errors.Wrapf(kafkaDeprovisioningForDeniedOwnersErr, "Failed to deprovision kafka for denied owners %s", accessControlListConfig.DenyList)
+			wrappedError := errors.Wrapf(kafkaDeprovisioningForDeniedOwnersErr, "failed to deprovision kafka for denied owners %s", accessControlListConfig.DenyList)
 			encounteredErrors = append(encounteredErrors, wrappedError)
 		}
 	}
@@ -109,7 +109,7 @@ func (k *KafkaManager) Reconcile() []error {
 	// cleaning up expired qkafkas
 	kafkaConfig := k.kafkaConfig
 	if kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka {
-		glog.Infoln("deprovisioning expired kafkas")
+		glog.Infoln("Deprovisioning expired kafkas")
 		expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas()
 		if expiredKafkasError != nil {
 			wrappedError := errors.Wrap(expiredKafkasError, "failed to deprovision expired Kafka instances")

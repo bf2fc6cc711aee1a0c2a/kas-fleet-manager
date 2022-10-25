@@ -412,7 +412,7 @@ func (c *ClusterManager) reconcileDynamicCapacityInfo(cluster api.Cluster) error
 
 		computeMachinesConfig, err := c.DataplaneClusterConfig.DefaultComputeMachinesConfig(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
 		if err != nil {
-			return errors.Wrapf(err, "ClusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
+			return errors.Wrapf(err, "clusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
 		}
 
 		supportedInstanceTypes := cluster.GetSupportedInstanceTypes()
@@ -641,7 +641,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 			SupportedInstanceType: p.SupportedInstanceType,
 		}
 		if err := c.ClusterService.RegisterClusterJob(&clusterRequest); err != nil {
-			return []error{errors.Wrapf(err, "Failed to register new cluster %s with config file", p.ClusterId)}
+			return []error{errors.Wrapf(err, "failed to register new cluster %s with config file", p.ClusterId)}
 		} else {
 			glog.Infof("Registered a new cluster with config file: %s ", p.ClusterId)
 		}
@@ -655,7 +655,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 
 	kafkaInstanceCount, findKafkaInstanceCountErr := c.ClusterService.FindKafkaInstanceCount(excessClusterIds)
 	if findKafkaInstanceCountErr != nil {
-		return []error{errors.Wrapf(findKafkaInstanceCountErr, "Failed to find kafka count for cluster: %s", excessClusterIds)}
+		return []error{errors.Wrapf(findKafkaInstanceCountErr, "failed to find kafka count for cluster: %s", excessClusterIds)}
 	}
 
 	var idsOfClustersToDeprovision []string
@@ -674,7 +674,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 
 	err = c.ClusterService.UpdateMultiClusterStatus(idsOfClustersToDeprovision, api.ClusterDeprovisioning)
 	if err != nil {
-		return []error{errors.Wrapf(err, "Failed to deprovisioning a cluster: %s", idsOfClustersToDeprovision)}
+		return []error{errors.Wrapf(err, "failed to deprovisioning a cluster: %s", idsOfClustersToDeprovision)}
 	} else {
 		glog.Infof("Deprovisioning clusters: not found in config file: %s ", idsOfClustersToDeprovision)
 	}
@@ -963,12 +963,12 @@ func (c *ClusterManager) buildKafkaSreClusterRoleBindingResource() *authv1.Clust
 func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supportedInstanceType string, cluster api.Cluster) (*types.MachinePoolRequest, error) {
 	computeMachinesConfig, err := c.DataplaneClusterConfig.DefaultComputeMachinesConfig(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
 	if err != nil {
-		return nil, errors.Wrapf(err, "ClusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
+		return nil, errors.Wrapf(err, "clusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
 	}
 
 	dynamicScalingConfig, found := computeMachinesConfig.GetKafkaWorkloadConfigForInstanceType(supportedInstanceType)
 	if !found {
-		return nil, fmt.Errorf("No dynamic scaling configuration found for instance type '%s'", supportedInstanceType)
+		return nil, fmt.Errorf("no dynamic scaling configuration found for instance type '%s'", supportedInstanceType)
 	}
 	machinePoolLabels := map[string]string{
 		kafkaInstanceProfileType: supportedInstanceType,

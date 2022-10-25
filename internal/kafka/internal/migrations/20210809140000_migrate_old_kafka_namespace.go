@@ -78,7 +78,7 @@ func replaceNamespaceSpecialChar(name string) (string, error) {
 	// This should never fail based on above replacement of invalid characters.
 	validationErrors := validation.IsDNS1123Label(replacedName)
 	if len(validationErrors) > 0 {
-		return replacedName, fmt.Errorf("Namespace name is invalid: %s. A DNS-1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name', or '123-abc', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?')", strings.Join(validationErrors[:], ","))
+		return replacedName, fmt.Errorf("namespace name is invalid: %s. A DNS-1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name', or '123-abc', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?')", strings.Join(validationErrors[:], ","))
 	}
 
 	return replacedName, nil

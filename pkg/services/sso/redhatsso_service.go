@@ -132,20 +132,20 @@ func (r *redhatssoService) DeleteServiceAccount(accessToken string, ctx context.
 		if rhErr, err1 := parseRedhatssoError(err); err1 == nil {
 			switch rhErr.Error {
 			case ServiceAccountNotFound:
-				glog.V(5).Infof("service account not found %s", clientId)
+				glog.V(5).Infof("Service account not found %s", clientId)
 				return errors.NewWithCause(errors.ErrorServiceAccountNotFound, err, "service account not found %s", clientId)
 			case ServiceAccountAccessInvalid:
-				glog.V(5).Infof("service account not found %s", err.Error())
+				glog.V(5).Infof("Service account not found %s", err.Error())
 				return errors.NewWithCause(errors.ErrorForbidden, err, "service account not found %s", clientId)
 			default:
-				glog.V(5).Infof("failed to delete service account: %s", err.Error())
+				glog.V(5).Infof("Failed to delete service account: %s", err.Error())
 				return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "failed to delete service account")
 			}
 		}
-		glog.V(5).Infof("failed to delete service account: %s", err.Error())
+		glog.V(5).Infof("Failed to delete service account: %s", err.Error())
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "failed to delete service account")
 	}
-	glog.V(5).Infof("service account with id: %s deleted", clientId)
+	glog.V(5).Infof("Service account with id: %s deleted", clientId)
 	return nil
 }
 
@@ -156,16 +156,16 @@ func (r *redhatssoService) ResetServiceAccountCredentials(accessToken string, ct
 		if rhErr, err1 := parseRedhatssoError(err); err1 == nil {
 			switch rhErr.Error {
 			case ServiceAccountNotFound:
-				glog.V(5).Infof("service account not found %s", clientId)
+				glog.V(5).Infof("Service account not found %s", clientId)
 				return nil, errors.NewWithCause(errors.ErrorServiceAccountNotFound, err, "service account not found %s", clientId)
 			case ServiceAccountAccessInvalid:
-				glog.V(5).Infof("service account access invalid %s", err.Error())
+				glog.V(5).Infof("Service account access invalid %s", err.Error())
 				return nil, errors.NewWithCause(errors.ErrorForbidden, err, "failed to reset service account credentials")
 			}
 		}
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to reset service account credentials")
 	}
-	glog.V(5).Infof("service account credentials regenerated for client with id: %s", clientId)
+	glog.V(5).Infof("Service account credentials regenerated for client with id: %s", clientId)
 	return convertServiceAccountDataToAPIServiceAccount(&serviceAccount), nil
 }
 
@@ -209,7 +209,7 @@ func (r *redhatssoService) DeRegisterKasFleetshardOperatorServiceAccount(accessT
 	} else {
 		if !found {
 			// if the account to be deleted does not exists, we simply exit with no errors
-			glog.V(5).Infof("kas Fleetshard agent service account not found")
+			glog.V(5).Infof("Kas Fleetshard agent service account not found")
 			return nil
 		}
 	}
@@ -236,7 +236,7 @@ func (r *redhatssoService) GetServiceAccountByClientId(accessToken string, ctx c
 	if !found {
 		return nil, errors.NewWithCause(errors.ErrorServiceAccountNotFound, err, "service account not found clientId %s", clientId)
 	}
-	glog.V(5).Infof("service account with client id: %s returned", clientId)
+	glog.V(5).Infof("Service account with client id: %s returned", clientId)
 	return convertServiceAccountDataToAPIServiceAccount(serviceAccount), nil
 }
 
@@ -251,14 +251,14 @@ func (r *redhatssoService) DeRegisterConnectorFleetshardOperatorServiceAccount(a
 	} else {
 		if !found {
 			// If the account does not exists, simply exit without errors
-			glog.V(5).Infof("Connector Fleetshard agent service account not found")
+			glog.V(5).Infof("Connector fleetshard agent service account not found")
 			return nil
 		}
 	}
 
 	err := r.client.DeleteServiceAccount(accessToken, agentClusterId)
 	if err != nil {
-		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", agentClusterId)
+		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "failed to delete service account: %s", agentClusterId)
 	}
 	glog.V(5).Infof("Connector Fleetshard Operator Service Account DeRegistered with cluster: %s", agentClusterId)
 	return nil

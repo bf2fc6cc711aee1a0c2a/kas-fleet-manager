@@ -110,7 +110,7 @@ func (m *DeprovisioningClustersManager) reconcileDeprovisioningCluster(cluster *
 	glog.Infof("Cluster %s  has been removed from cluster service.", cluster.ClusterID)
 	updateStatusErr := m.clusterService.UpdateStatus(*cluster, api.ClusterCleanup)
 	if updateStatusErr != nil {
-		return errors.Wrapf(updateStatusErr, "Failed to update deprovisioning cluster %s status to 'cleanup'", cluster.ClusterID)
+		return errors.Wrapf(updateStatusErr, "failed to update deprovisioning cluster %s status to 'cleanup'", cluster.ClusterID)
 	}
 
 	return nil

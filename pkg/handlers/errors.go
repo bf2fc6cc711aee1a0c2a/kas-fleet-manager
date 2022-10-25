@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"net/http"
 	"sort"
 	"strconv"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -61,12 +62,12 @@ func (h ErrorHandler) Get(w http.ResponseWriter, r *http.Request) {
 			id := mux.Vars(r)["id"]
 			value, err := strconv.Atoi(id)
 			if err != nil {
-				return nil, errors.NotFound("No error with id %s exists", id)
+				return nil, errors.NotFound("no error with id %s exists", id)
 			}
 			code := errors.ServiceErrorCode(value)
 			exists, sErr := errors.Find(code)
 			if !exists {
-				return nil, errors.NotFound("No error with id %s exists", id)
+				return nil, errors.NotFound("no error with id %s exists", id)
 			}
 			return PresentError(sErr, r.RequestURI), nil
 		},

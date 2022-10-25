@@ -19,7 +19,7 @@ func main() {
 		connector.ConfigProviders(false),
 	)
 	if err != nil {
-		glog.Fatalf("error initializing: %v", err)
+		glog.Fatalf("Error initializing: %v", err)
 	}
 
 	err = env.AddFlags(pflag.CommandLine)

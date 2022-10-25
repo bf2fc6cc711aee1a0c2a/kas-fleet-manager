@@ -76,7 +76,7 @@ func (c *InstanceTypeNodePrewarmingConfig) validate(instanceType string, kafkaCo
 	_, err := kafkaConfig.GetKafkaInstanceSize(instanceType, baseStreamingUnit)
 
 	if err != nil {
-		return errors.Wrapf(err, "Error validating node prewarming configuration for instance type %s", instanceType)
+		return errors.Wrapf(err, "error validating node prewarming configuration for instance type %s", instanceType)
 	}
 
 	switch {

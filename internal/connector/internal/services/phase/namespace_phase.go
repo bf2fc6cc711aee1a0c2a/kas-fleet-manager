@@ -61,7 +61,7 @@ func (c *NamespaceFSM) Perform(operation NamespaceOperation) (bool, *errors.Serv
 		case fsm.NoTransitionError:
 			return false, nil
 		default:
-			return false, errors.BadRequest("Cannot perform Namespace operation [%s] in Cluster phase [%s] because %s",
+			return false, errors.BadRequest("cannot perform Namespace operation [%s] in Cluster phase [%s] because %s",
 				operation, c.clusterPhase, err)
 		}
 	}

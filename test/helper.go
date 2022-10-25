@@ -93,7 +93,7 @@ func NewHelperWithHooksAndDBsetup(t *testing.T, httpServer *httptest.Server, set
 	var err error
 	env, err := environments.New(envName, envProviders...)
 	if err != nil {
-		glog.Fatalf("error initializing: %v", err)
+		glog.Fatalf("Error initializing: %v", err)
 	}
 	h.Env = env
 
@@ -247,7 +247,7 @@ func (helper *Helper) NewAllowedServiceAccount() *amv1.Account {
 func (helper *Helper) NewAccount(username, name, email string, orgId string) *amv1.Account {
 	account, err := helper.AuthHelper.NewAccount(username, name, email, orgId)
 	if err != nil {
-		helper.T.Errorf(fmt.Sprintf("Unable to create a new account: %s", err.Error()))
+		helper.T.Errorf(fmt.Sprintf("unable to create a new account: %s", err.Error()))
 	}
 	return account
 }
@@ -256,7 +256,7 @@ func (helper *Helper) NewAccount(username, name, email string, orgId string) *am
 func (helper *Helper) NewAuthenticatedContext(account *amv1.Account, claims jwt.MapClaims) context.Context {
 	token, err := helper.AuthHelper.CreateSignedJWT(account, claims)
 	if err != nil {
-		helper.T.Errorf(fmt.Sprintf("Unable to create a signed token: %s", err.Error()))
+		helper.T.Errorf(fmt.Sprintf("unable to create a signed token: %s", err.Error()))
 	}
 
 	return context.WithValue(context.Background(), compat.ContextAccessToken, token)
@@ -267,7 +267,7 @@ func (helper *Helper) NewAuthenticatedContextForSSO(keycloakConfig *keycloak.Key
 	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.SSOProviderRealm())
 	accessToken, err := kcClient.GetToken()
 	if err != nil {
-		helper.T.Errorf(fmt.Sprintf("Unable to retrieve an access token from %s: %s", keycloakConfig.SSOProviderRealm().TokenEndpointURI, err.Error()))
+		helper.T.Errorf(fmt.Sprintf("unable to retrieve an access token from %s: %s", keycloakConfig.SSOProviderRealm().TokenEndpointURI, err.Error()))
 	}
 	return context.WithValue(context.Background(), compat.ContextAccessToken, accessToken)
 }
@@ -338,7 +338,7 @@ func (helper *Helper) ResetDB() {
 func (helper *Helper) CreateJWTString(account *amv1.Account) string {
 	token, err := helper.AuthHelper.CreateSignedJWT(account, nil)
 	if err != nil {
-		helper.T.Errorf(fmt.Sprintf("Unable to create a signed token: %s", err.Error()))
+		helper.T.Errorf(fmt.Sprintf("unable to create a signed token: %s", err.Error()))
 	}
 	return token
 }
@@ -346,7 +346,7 @@ func (helper *Helper) CreateJWTString(account *amv1.Account) string {
 func (helper *Helper) CreateJWTStringWithClaim(account *amv1.Account, jwtClaims jwt.MapClaims) string {
 	token, err := helper.AuthHelper.CreateSignedJWT(account, jwtClaims)
 	if err != nil {
-		helper.T.Errorf(fmt.Sprintf("Unable to create a signed token with the given claims: %s", err.Error()))
+		helper.T.Errorf(fmt.Sprintf("unable to create a signed token with the given claims: %s", err.Error()))
 	}
 	return token
 }
@@ -354,7 +354,7 @@ func (helper *Helper) CreateJWTStringWithClaim(account *amv1.Account, jwtClaims 
 func (helper *Helper) CreateJWTToken(account *amv1.Account, jwtClaims jwt.MapClaims) *jwt.Token {
 	token, err := helper.AuthHelper.CreateJWTWithClaims(account, jwtClaims)
 	if err != nil {
-		helper.T.Errorf("Failed to create jwt token: %s", err.Error())
+		helper.T.Errorf("failed to create jwt token: %s", err.Error())
 	}
 	return token
 }
@@ -365,7 +365,7 @@ func (helper *Helper) OpenapiError(err error) compat.Error {
 	var exErr compat.Error
 	jsonErr := json.Unmarshal(generic.Body(), &exErr)
 	if jsonErr != nil {
-		helper.T.Errorf("Unable to convert error response to openapi error: %s", jsonErr)
+		helper.T.Errorf("unable to convert error response to openapi error: %s", jsonErr)
 	}
 	return exErr
 }

@@ -467,7 +467,7 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 			},
 			want: result{
 				wantErr: true,
-				reason:  "User not authorized to perform this action",
+				reason:  "user not authorized to perform this action",
 			},
 		},
 		{
@@ -485,7 +485,7 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 			},
 			want: result{
 				wantErr: true,
-				reason:  "owner is not valid. Minimum length 1 is required.",
+				reason:  "owner is not valid, minimum length 1 is required",
 			},
 		},
 		{
@@ -510,7 +510,7 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 			},
 			want: result{
 				wantErr: true,
-				reason:  "User not authorized to perform this action",
+				reason:  "user not authorized to perform this action",
 			},
 		},
 		{
@@ -538,7 +538,7 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 			},
 			want: result{
 				wantErr: true,
-				reason:  "User some-owner does not belong in your organization",
+				reason:  "user some-owner does not belong in your organization",
 			},
 		},
 		{
@@ -589,13 +589,13 @@ func Test_Validation_ValidateKafkaUserFacingUpdateFields(t *testing.T) {
 				},
 				authService: &authorization.AuthorizationMock{
 					CheckUserValidFunc: func(username, orgId string) (bool, error) {
-						return false, errors.New(errors.ErrorGeneral, "Unable to update kafka request owner")
+						return false, errors.New(errors.ErrorGeneral, "unable to update kafka request owner")
 					},
 				},
 			},
 			want: result{
 				wantErr: true,
-				reason:  "Unable to update kafka request owner",
+				reason:  "unable to update kafka request owner",
 			},
 		},
 	}
@@ -825,7 +825,7 @@ func TestValidateKafkaPlan(t *testing.T) {
 					},
 				},
 			},
-			want: errors.BadRequest("Unable to detect instance type in plan provided: 'invalid_plan.x1'"),
+			want: errors.BadRequest("unable to detect instance type in plan provided: 'invalid_plan.x1'"),
 		},
 		{
 			name: "should return an error if the plan provided is not supported",
@@ -858,7 +858,7 @@ func TestValidateKafkaPlan(t *testing.T) {
 					},
 				},
 			},
-			want: errors.InstancePlanNotSupported("Unsupported plan provided: 'developer.x2'"),
+			want: errors.InstancePlanNotSupported("unsupported plan provided: 'developer.x2'"),
 		},
 		{
 			name: "should return an error if KafkaRequestPayload.plan in not set and the kafka plan is not supported",
@@ -889,7 +889,7 @@ func TestValidateKafkaPlan(t *testing.T) {
 					},
 				},
 			},
-			want: errors.InstanceTypeNotSupported("Unsupported kafka instance type: 'standard' provided"),
+			want: errors.InstanceTypeNotSupported("unsupported kafka instance type: 'standard' provided"),
 		},
 		{
 			name: "should return an error if it is unable to detect instance size in plan provided",
@@ -922,7 +922,7 @@ func TestValidateKafkaPlan(t *testing.T) {
 					},
 				},
 			},
-			want: errors.InstancePlanNotSupported("Unsupported plan provided: 'developer.invalidPlan'"),
+			want: errors.InstancePlanNotSupported("unsupported plan provided: 'developer.invalidPlan'"),
 		},
 	}
 
@@ -1032,7 +1032,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					DeprecatedKafkaStorageSize: invalidStorageSize,
 				},
 			},
-			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current requested size: '%s'", invalidStorageSize),
+			want: errors.FieldValidationError("failed to update Kafka Request. Unable to parse current requested size: '%s'", invalidStorageSize),
 		},
 		{
 			name: "should return an error if the the kafka request storage size parameter is greater than the the kafka update request storage size parameter",
@@ -1044,7 +1044,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					DeprecatedKafkaStorageSize: decreaseStorageSizeReq,
 				},
 			},
-			want: errors.FieldValidationError("Failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", decreaseStorageSizeReq, currentStorageSize),
+			want: errors.FieldValidationError("failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", decreaseStorageSizeReq, currentStorageSize),
 		},
 		{
 			name: "should return nil if specified max data retention size is valid",
@@ -1068,7 +1068,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					MaxDataRetentionSize: invalidStorageSize,
 				},
 			},
-			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current requested size: '%s'", invalidStorageSize),
+			want: errors.FieldValidationError("failed to update Kafka Request. Unable to parse current requested size: '%s'", invalidStorageSize),
 		},
 		{
 			name: "should return an error if specified max data retention size is lower than current size",
@@ -1080,7 +1080,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					MaxDataRetentionSize: decreaseStorageSizeReq,
 				},
 			},
-			want: errors.FieldValidationError("Failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", decreaseStorageSizeReq, currentStorageSize),
+			want: errors.FieldValidationError("failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", decreaseStorageSizeReq, currentStorageSize),
 		},
 		{
 			name: "should return an error if the current kafka request storage size is an empty string",
@@ -1090,7 +1090,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					DeprecatedKafkaStorageSize: increaseStorageSizeReq,
 				},
 			},
-			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: ''"),
+			want: errors.FieldValidationError("failed to update Kafka Request. Unable to parse current storage size: ''"),
 		},
 		{
 			name: "should return an error if the current kafka request storage size is an invalid Quantity value",
@@ -1102,7 +1102,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					DeprecatedKafkaStorageSize: increaseStorageSizeReq,
 				},
 			},
-			want: errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: '%s'", invalidStorageSize),
+			want: errors.FieldValidationError("failed to update Kafka Request. Unable to parse current storage size: '%s'", invalidStorageSize),
 		},
 	}
 	for _, testcase := range tests {

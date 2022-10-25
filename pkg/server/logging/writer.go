@@ -39,7 +39,7 @@ func (writer *loggingWriter) Log(log string, err error) {
 	case nil:
 		ulog.V(Threshold).Infof(log)
 	default:
-		ulog.Error(errors.Wrap(err, "Unable to format request/response for log."))
+		ulog.Error(errors.Wrap(err, "unable to format request/response for log."))
 	}
 }
 

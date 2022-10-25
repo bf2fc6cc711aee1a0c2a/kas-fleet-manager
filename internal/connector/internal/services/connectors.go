@@ -294,7 +294,7 @@ func (k *connectorsService) List(ctx context.Context, listArgs *services.ListArg
 	dbConn = selectConnectorWithConditions(dbConn, joinedStatus)
 
 	if err := dbConn.Find(&resourcesWithConditions).Error; err != nil {
-		return resourcesWithConditions, pagingMeta, errors.GeneralError("Unable to list connectors: %s", err)
+		return resourcesWithConditions, pagingMeta, errors.GeneralError("unable to list connectors: %s", err)
 	}
 
 	return resourcesWithConditions, pagingMeta, nil
@@ -360,7 +360,7 @@ func (k *connectorsService) ForEach(f func(*dbapi.Connector) *errors.ServiceErro
 		if goerrors.Is(err, gorm.ErrRecordNotFound) {
 			return nil
 		}
-		return []error{errors.GeneralError("Unable to list connectors: %s", err)}
+		return []error{errors.GeneralError("unable to list connectors: %s", err)}
 	}
 	defer shared.CloseQuietly(rows)
 
@@ -371,13 +371,13 @@ func (k *connectorsService) ForEach(f func(*dbapi.Connector) *errors.ServiceErro
 		// ScanRows is a method of `gorm.DB`, it can be used to scan a row into a struct
 		err := dbConn.ScanRows(rows, &resource)
 		if err != nil {
-			errs = append(errs, errors.GeneralError("Unable to scan connector: %s", err))
+			errs = append(errs, errors.GeneralError("unable to scan connector: %s", err))
 		}
 
 		resource.Status.ID = resource.ID
 		err = dbConn.Model(&dbapi.ConnectorStatus{}).First(&resource.Status).Error
 		if err != nil {
-			errs = append(errs, errors.GeneralError("Unable to load connector status: %s", err))
+			errs = append(errs, errors.GeneralError("unable to load connector status: %s", err))
 		}
 
 		if serr := f(&resource); serr != nil {

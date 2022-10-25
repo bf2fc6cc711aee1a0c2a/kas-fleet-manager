@@ -158,11 +158,11 @@ func PersistClusterStruct(cluster api.Cluster, status api.ClusterStatus) error {
 	cluster.Status = status
 	file, err := json.MarshalIndent(cluster, "", " ")
 	if err != nil {
-		return ocmErrors.GeneralError(fmt.Sprintf("Failed to marshal cluster struct details to a file: %v", err))
+		return ocmErrors.GeneralError(fmt.Sprintf("failed to marshal cluster struct details to a file: %v", err))
 	}
 	err = os.WriteFile(testClusterPath, file, 0644)
 	if err != nil {
-		return ocmErrors.GeneralError(fmt.Sprintf("Failed to persist cluster struct details to a file: %v", err))
+		return ocmErrors.GeneralError(fmt.Sprintf("failed to persist cluster struct details to a file: %v", err))
 	}
 	return nil
 }
@@ -173,14 +173,14 @@ func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 	if fileExists(testClusterPath, t) {
 		file, err := os.ReadFile(testClusterPath)
 		if err != nil {
-			return "", ocmErrors.GeneralError(fmt.Sprintf("Failed to ReadFile with cluster details: %v", err))
+			return "", ocmErrors.GeneralError(fmt.Sprintf("failed to ReadFile with cluster details: %v", err))
 		}
 
 		cluster := &api.Cluster{}
 
 		marshalErr := json.Unmarshal([]byte(file), cluster)
 		if marshalErr != nil {
-			return "", ocmErrors.GeneralError(fmt.Sprintf("Failed to Unmarshal cluster details from file: %v", marshalErr))
+			return "", ocmErrors.GeneralError(fmt.Sprintf("failed to Unmarshal cluster details from file: %v", marshalErr))
 		}
 
 		// ignore certain fields, these should be set by each test if needed
@@ -188,7 +188,7 @@ func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 
 		dbConn := h.DBFactory().New()
 		if err := dbConn.FirstOrCreate(cluster, &api.Cluster{ClusterID: cluster.ClusterID}).Error; err != nil {
-			return "", ocmErrors.GeneralError(fmt.Sprintf("Failed to save cluster details to database: %v", err))
+			return "", ocmErrors.GeneralError(fmt.Sprintf("failed to save cluster details to database: %v", err))
 		}
 		return cluster.ClusterID, nil
 	}
@@ -201,7 +201,7 @@ func RemoveClusterFile(t *testing.T) {
 			t.Errorf("failed to delete file %v due to error %v", testClusterPath, err)
 		}
 	} else {
-		t.Logf("cluster file %s does not exist", testClusterPath)
+		t.Logf("Cluster file %s does not exist", testClusterPath)
 	}
 }
 

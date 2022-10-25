@@ -93,7 +93,7 @@ func (c *KafkaConfig) GetFirstAvailableSize(instanceType string) (*KafkaInstance
 		return nil, err
 	}
 	if len(kafkaInstanceType.Sizes) < 1 || kafkaInstanceType.Sizes[0].Id == "" {
-		return nil, errors.New(errors.ErrorGeneral, fmt.Sprintf("Unable to get size for instance type: '%s'", instanceType))
+		return nil, errors.New(errors.ErrorGeneral, fmt.Sprintf("unable to get size for instance type: '%s'", instanceType))
 	}
 	return &kafkaInstanceType.Sizes[0], nil
 }

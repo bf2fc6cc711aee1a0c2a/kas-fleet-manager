@@ -30,11 +30,11 @@ func PresentConnectorDeployment(from dbapi.ConnectorDeployment, resolvedSecrets 
 
 	// prepare shard metadata
 	if len(from.ConnectorShardMetadata.ShardMetadata) == 0 {
-		return private.ConnectorDeployment{}, errors.GeneralError("Unable to load connector type shard metadata: %+v with id %d, for connector deployment: %s", from.ConnectorShardMetadata, from.ConnectorShardMetadataID, from.ID)
+		return private.ConnectorDeployment{}, errors.GeneralError("unable to load connector type shard metadata: %+v with id %d, for connector deployment: %s", from.ConnectorShardMetadata, from.ConnectorShardMetadataID, from.ID)
 	}
 	shardMetadataJson, errShardMetadataConversion := from.ConnectorShardMetadata.ShardMetadata.Object()
 	if errShardMetadataConversion != nil {
-		return private.ConnectorDeployment{}, errors.GeneralError("Failed to convert shard metadata to json for: %+v, for connector deployment: %s", from.ConnectorShardMetadata, from.ID)
+		return private.ConnectorDeployment{}, errors.GeneralError("failed to convert shard metadata to json for: %+v, for connector deployment: %s", from.ConnectorShardMetadata, from.ID)
 	}
 
 	// present connector

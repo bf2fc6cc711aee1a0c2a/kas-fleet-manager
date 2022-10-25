@@ -85,7 +85,7 @@ func (o *OCMProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.Cluste
 		if spec.ExternalID == "" {
 			externalId, ok := ocmCluster.GetExternalID()
 			if !ok {
-				return nil, errors.Errorf("External ID for cluster %s cannot be found", ocmCluster.ID())
+				return nil, errors.Errorf("external ID for cluster %s cannot be found", ocmCluster.ID())
 			}
 			spec.ExternalID = externalId
 		}

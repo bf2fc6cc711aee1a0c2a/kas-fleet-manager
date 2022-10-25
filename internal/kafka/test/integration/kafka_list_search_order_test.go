@@ -256,13 +256,13 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 				resp.Body.Close()
 			}
 			if tc.wantErr {
-				g.Expect(err).To(gomega.HaveOccurred(), "Error wantErr: %v : %v", tc.wantErr, err)
+				g.Expect(err).To(gomega.HaveOccurred(), "error wantErr: %v : %v", tc.wantErr, err)
 
 				if tc.expectedErr != "" {
 					g.Expect(err.Error()).To(gomega.Equal(tc.expectedErr))
 				}
 			} else {
-				g.Expect(err).NotTo(gomega.HaveOccurred(), "Error wantErr: %v : %v", tc.wantErr, err)
+				g.Expect(err).NotTo(gomega.HaveOccurred(), "error wantErr: %v : %v", tc.wantErr, err)
 			}
 
 			if err == nil {
@@ -271,7 +271,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 
 				if tc.validateResult != nil {
 					err := tc.validateResult(&list)
-					g.Expect(err).ToNot(gomega.HaveOccurred(), "Returned list didn't pass validation: %v", err)
+					g.Expect(err).ToNot(gomega.HaveOccurred(), "returned list didn't pass validation: %v", err)
 				}
 
 				for i := 0; i < len(tc.expectedOrder); i++ {

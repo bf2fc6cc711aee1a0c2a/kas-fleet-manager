@@ -3,12 +3,13 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
@@ -137,7 +138,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 					converted, serviceError := h.resolveConnectorRefsAndPresentDeployment(resource)
 					if serviceError != nil {
 						sentry.CaptureException(serviceError)
-						glog.Errorf("failed to present connector deployment %s: %v", resource.ID, serviceError)
+						glog.Errorf("Failed to present connector deployment %s: %v", resource.ID, serviceError)
 						// also reduce size and total count
 						list.Size--
 						list.Total--

@@ -52,22 +52,22 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, inst
 	username := kafka.Owner
 	orgId := kafka.OrganisationId
 	var quotaManagementListItem quota_management.QuotaManagementListItem
-	message := fmt.Sprintf("User '%s' has reached a maximum number of %d allowed streaming units.", username, quota_management.GetDefaultMaxAllowedInstances())
+	message := fmt.Sprintf("user '%s' has reached a maximum number of %d allowed streaming units", username, quota_management.GetDefaultMaxAllowedInstances())
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetById(orgId)
 	filterByOrd := false
 	if orgFound && org.IsUserRegistered(username) {
 		quotaManagementListItem = org
-		message = fmt.Sprintf("Organization '%s' has reached a maximum number of %d allowed streaming units.", orgId, org.GetMaxAllowedInstances())
+		message = fmt.Sprintf("organization '%s' has reached a maximum number of %d allowed streaming units", orgId, org.GetMaxAllowedInstances())
 		filterByOrd = true
 	} else {
 		user, userFound := q.quotaManagementList.QuotaList.ServiceAccounts.GetByUsername(username)
 		if userFound {
 			quotaManagementListItem = user
-			message = fmt.Sprintf("User '%s' has reached a maximum number of %d allowed streaming units.", username, user.GetMaxAllowedInstances())
+			message = fmt.Sprintf("user '%s' has reached a maximum number of %d allowed streaming units", username, user.GetMaxAllowedInstances())
 		}
 	}
 
-	errMessage := fmt.Sprintf("Failed to check kafka capacity for instance type '%s'", kafka.InstanceType)
+	errMessage := fmt.Sprintf("failed to check kafka capacity for instance type '%s'", kafka.InstanceType)
 	var totalInstanceCount int
 
 	var kafkas []*dbapi.KafkaRequest
@@ -98,7 +98,7 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, inst
 	if quotaManagementListItem != nil && instanceType == types.STANDARD {
 		kafkaInstanceSize, e := q.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
 		if e != nil {
-			return "", errors.NewWithCause(errors.ErrorGeneral, e, "Error reserving quota")
+			return "", errors.NewWithCause(errors.ErrorGeneral, e, "error reserving quota")
 		}
 		if quotaManagementListItem.IsInstanceCountWithinLimit(totalInstanceCount + kafkaInstanceSize.CapacityConsumed) {
 			return "", nil
@@ -114,7 +114,7 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, inst
 		return "", nil
 	}
 
-	return "", errors.InsufficientQuotaError("Insufficient Quota")
+	return "", errors.InsufficientQuotaError("Insufficient quota")
 }
 
 func (q QuotaManagementListService) DeleteQuota(SubscriptionId string) *errors.ServiceError {

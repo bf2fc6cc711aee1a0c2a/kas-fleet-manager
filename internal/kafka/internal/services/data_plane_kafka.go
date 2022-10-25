@@ -76,7 +76,7 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 	}
 	if cluster == nil {
 		// 404 is used for authenticated requests. So to distinguish the errors, we use 400 here
-		return serviceError.BadRequest("Cluster id %s not found", clusterID)
+		return serviceError.BadRequest("cluster id %s not found", clusterID)
 	}
 
 	prewarmingStatusInfo := reservedManagedKafkaStatusCountPerInstanceType{}

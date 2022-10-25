@@ -18,7 +18,7 @@ func SendNotFound(w http.ResponseWriter, r *http.Request) {
 
 	// Prepare the body:
 	reason := fmt.Sprintf(
-		"The requested resource '%s' doesn't exist",
+		"the requested resource '%s' doesn't exist",
 		r.URL.Path,
 	)
 	apiError := errors.NotFound(reason).AsOpenapiError("", r.RequestURI)
@@ -32,7 +32,7 @@ func SendNotFound(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	_, err = w.Write(data)
 	if err != nil {
-		err = fmt.Errorf("Can't send response body for request '%s'", r.URL.Path)
+		err = fmt.Errorf("can't send response body for request '%s'", r.URL.Path)
 		glog.Error(err)
 		sentry.CaptureException(err)
 		return
@@ -41,7 +41,7 @@ func SendNotFound(w http.ResponseWriter, r *http.Request) {
 
 // SendMethodNotAllowed response
 func SendMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
-	reason := fmt.Sprintf("Method: %s is not allowed or not yet implemented for %s", r.Method, r.URL.Path)
+	reason := fmt.Sprintf("method: %s is not allowed or not yet implemented for %s", r.Method, r.URL.Path)
 	apiError := errors.NotImplemented(reason).AsOpenapiError("", r.RequestURI)
 	jsonPayload, err := json.Marshal(apiError)
 	if err != nil {
@@ -54,7 +54,7 @@ func SendMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusMethodNotAllowed)
 	_, err = w.Write(jsonPayload)
 	if err != nil {
-		err = fmt.Errorf("Can't send response body for request '%s'", r.URL.Path)
+		err = fmt.Errorf("can't send response body for request '%s'", r.URL.Path)
 		glog.Error(err)
 		sentry.CaptureException(err)
 		return
@@ -77,7 +77,7 @@ func SendUnauthorized(w http.ResponseWriter, r *http.Request, message string) {
 	w.WriteHeader(http.StatusUnauthorized)
 	_, err = w.Write(data)
 	if err != nil {
-		err = fmt.Errorf("Can't send response body for request '%s'", r.URL.Path)
+		err = fmt.Errorf("can't send response body for request '%s'", r.URL.Path)
 		glog.Error(err)
 		sentry.CaptureException(err)
 		return
@@ -91,7 +91,7 @@ func SendPanic(w http.ResponseWriter, r *http.Request) {
 	_, err := w.Write(panicBody)
 	if err != nil {
 		err = fmt.Errorf(
-			"Can't send panic response for request '%s': %s",
+			"can't send panic response for request '%s': %s",
 			r.URL.Path,
 			err.Error(),
 		)
@@ -113,7 +113,7 @@ func init() {
 	panicBody, err = json.Marshal(apiError)
 	if err != nil {
 		err = fmt.Errorf(
-			"Can't create the panic error body: %s",
+			"can't create the panic error body: %s",
 			err.Error(),
 		)
 		glog.Error(err)

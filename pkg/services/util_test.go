@@ -28,7 +28,7 @@ func TestHandleGetError(t *testing.T) {
 				value:        "value",
 				err:          nil,
 			},
-			want: errors.New(errors.ErrorGeneral, "Unable to find resourceType with field='value'"),
+			want: errors.New(errors.ErrorGeneral, "unable to find resourceType with field='value'"),
 		},
 		{
 			name: "should return a not found error if the err is record not found",
@@ -48,7 +48,7 @@ func TestHandleGetError(t *testing.T) {
 				value:        "value",
 				err:          nil,
 			},
-			want: errors.New(errors.ErrorGeneral, "Unable to find resourceType with username='<redacted>'"),
+			want: errors.New(errors.ErrorGeneral, "unable to find resourceType with username='<redacted>'"),
 		},
 	}
 
@@ -122,7 +122,7 @@ func TestHandleDeleteError(t *testing.T) {
 				field:        "field",
 				value:        "value",
 			},
-			want: errors.New(errors.ErrorGeneral, "Unable to delete resourceType with field='value'"),
+			want: errors.New(errors.ErrorGeneral, "unable to delete resourceType with field='value'"),
 		},
 		{
 			name: "should return delete error but with redacted information due to the field being personally identifiable",
@@ -131,7 +131,7 @@ func TestHandleDeleteError(t *testing.T) {
 				field:        "username",
 				value:        "value",
 			},
-			want: errors.New(errors.ErrorGeneral, "Unable to delete resourceType with username='<redacted>'"),
+			want: errors.New(errors.ErrorGeneral, "unable to delete resourceType with username='<redacted>'"),
 		},
 	}
 
@@ -161,7 +161,7 @@ func TestHandleCreateError(t *testing.T) {
 				resourceType: "resourceType",
 				err:          errors.GeneralError("violates unique constraint"),
 			},
-			want: errors.Conflict("This resourceType already exists"),
+			want: errors.Conflict("this resourceType already exists"),
 		},
 		{
 			name: "should return general error",
@@ -169,7 +169,7 @@ func TestHandleCreateError(t *testing.T) {
 				resourceType: "resourceType",
 				err:          errors.GeneralError("error"),
 			},
-			want: errors.GeneralError("Unable to create resourceType: KAFKAS-MGMT-9: error"),
+			want: errors.GeneralError("unable to create resourceType: KAFKAS-MGMT-9: error"),
 		},
 	}
 
@@ -199,7 +199,7 @@ func TestHandleUpdateError(t *testing.T) {
 				resourceType: "resourceType",
 				err:          errors.GeneralError("violates unique constraint"),
 			},
-			want: errors.Conflict("Changes to resourceType conflict with existing records"),
+			want: errors.Conflict("changes to resourceType conflict with existing records"),
 		},
 		{
 			name: "should return general error",
@@ -207,7 +207,7 @@ func TestHandleUpdateError(t *testing.T) {
 				resourceType: "resourceType",
 				err:          errors.GeneralError("error"),
 			},
-			want: errors.GeneralError("Unable to update resourceType: KAFKAS-MGMT-9: error"),
+			want: errors.GeneralError("unable to update resourceType: KAFKAS-MGMT-9: error"),
 		},
 	}
 

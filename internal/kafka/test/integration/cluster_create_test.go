@@ -16,7 +16,7 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
-	ocmServerBuilder.SetClustersPostResponse(nil, errors.Validation("The provided AWS credentials are not valid"))
+	ocmServerBuilder.SetClustersPostResponse(nil, errors.Validation("the provided AWS credentials are not valid"))
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 

@@ -3,6 +3,8 @@ package workers
 import (
 	"context"
 	"encoding/json"
+	"reflect"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
@@ -11,7 +13,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
-	"reflect"
 
 	"github.com/golang/glog"
 	"github.com/google/uuid"
@@ -250,7 +251,7 @@ func (k *ConnectorManager) reconcileConnectorUpdate(ctx context.Context, connect
 	if cerr := db.AddPostCommitAction(ctx, func() {
 		k.lastVersion = connector.Version
 	}); cerr != nil {
-		glog.Errorf("failed to AddPostCommitAction to save lastVersion %d: %v", connector.Version, cerr.Error())
+		glog.Errorf("Failed to AddPostCommitAction to save lastVersion %d: %v", connector.Version, cerr.Error())
 		if err == nil {
 			err = cerr
 		} else {
@@ -268,7 +269,7 @@ func (k *ConnectorManager) doReconcile(errs *[]error, reconcilePhase string, rec
 	if serviceErrs = k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
 		return InDBTransaction(k.ctx, func(ctx context.Context) error {
 			if err := reconcileFunc(ctx, connector); err != nil {
-				glog.Errorf("failed to reconcile %s connector %s in phase %s: %v", reconcilePhase,
+				glog.Errorf("Failed to reconcile %s connector %s in phase %s: %v", reconcilePhase,
 					connector.ID, connector.Status.Phase, err)
 				return err
 			}

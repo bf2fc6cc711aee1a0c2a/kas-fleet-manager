@@ -3,10 +3,11 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/profiles"
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/profiles"
 
 	"reflect"
 
@@ -690,7 +691,7 @@ func (k *connectorNamespaceService) CheckConnectorQuota(namespaceId string) *err
 	if err := dbConn.Model(&dbapi.ConnectorNamespaceAnnotation{}).
 		Where("namespace_id = ? AND key = ?", namespaceId, profiles.AnnotationProfileKey).
 		Select("value").First(&profileName).Error; err != nil {
-		return errors.FailedToCheckQuota("Error reading Connector namespace annotation with namespace id %s: %s", namespaceId, err)
+		return errors.FailedToCheckQuota("error reading Connector namespace annotation with namespace id %s: %s", namespaceId, err)
 	}
 	quota, _ = k.quotaConfig.GetNamespaceQuota(profileName)
 	if quota.Connectors > 0 {
@@ -701,7 +702,7 @@ func (k *connectorNamespaceService) CheckConnectorQuota(namespaceId string) *err
 			return services.HandleGetError("Connector", "namespace_id", namespaceId, err)
 		}
 		if count >= int64(quota.Connectors) {
-			return errors.InsufficientQuotaError("The maximum number of allowed connectors has been reached")
+			return errors.InsufficientQuotaError("the maximum number of allowed connectors has been reached")
 		}
 	}
 	return nil
@@ -716,7 +717,7 @@ func (k *connectorNamespaceService) CanCreateEvalNamespace(userId string) *error
 		Joins("JOIN connector_clusters ON connector_clusters.id = connector_namespaces.cluster_id AND connector_clusters.organisation_id IN ?",
 			k.connectorsConfig.ConnectorEvalOrganizations).
 		Count(&count).Error; err != nil {
-		return errors.FailedToCheckQuota("Error reading connector namespace with tenant user id %s: %s", userId, err)
+		return errors.FailedToCheckQuota("error reading connector namespace with tenant user id %s: %s", userId, err)
 	}
 
 	if count > 0 {

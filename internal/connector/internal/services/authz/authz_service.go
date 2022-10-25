@@ -2,6 +2,7 @@ package authz
 
 import (
 	"context"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -96,7 +97,7 @@ func (u *ValidationUser) AuthorizedClusterAdmin() handlers.ValidateOption {
 				err = serr
 			} else {
 				if u.OrgId() != orgID {
-					err = errors.NotFound("Connector cluster with id='%s' not found", *value)
+					err = errors.NotFound("connector cluster with id='%s' not found", *value)
 				} else if !u.IsOrgAdmin() {
 					err = unauthorizedError
 				}
@@ -115,7 +116,7 @@ func (u *ValidationUser) AuthorizedClusterUser() handlers.ValidateOption {
 				err = serr
 			} else {
 				if u.OrgId() != orgID {
-					err = errors.NotFound("Connector cluster with id='%s' not found", *value)
+					err = errors.NotFound("connector cluster with id='%s' not found", *value)
 				}
 			}
 		}

@@ -80,7 +80,7 @@ func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRe
 
 	computeMachineConfig, err := r.dataplaneClusterConfig.DefaultComputeMachinesConfig(cloudProviderID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Cloud provider %q is not a recognized cloud provider", clusterRequest.CloudProvider)
+		return nil, errors.Wrapf(err, "cloud provider %q is not a recognized cloud provider", clusterRequest.CloudProvider)
 	}
 
 	clusterWideWorkloadConfig := computeMachineConfig.ClusterWideWorkload

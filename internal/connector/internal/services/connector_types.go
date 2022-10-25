@@ -57,7 +57,7 @@ func NewConnectorTypesService(connectorsConfig *config.ConnectorsConfig, connect
 func (cts *connectorTypesService) Create(resource *dbapi.ConnectorType) *errors.ServiceError {
 	tid := resource.ID
 	if tid == "" {
-		return errors.Validation("Connector type id is undefined")
+		return errors.Validation("connector type id is undefined")
 	}
 
 	dbConn := cts.connectionFactory.New()
@@ -71,7 +71,7 @@ func (cts *connectorTypesService) Create(resource *dbapi.ConnectorType) *errors.
 				return errors.GeneralError("failed to create connector type %q: %v", tid, err)
 			}
 		} else {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find connector type")
+			return errors.NewWithCause(errors.ErrorGeneral, err, "unable to find connector type")
 		}
 
 	} else {
@@ -104,7 +104,7 @@ func (cts *connectorTypesService) Create(resource *dbapi.ConnectorType) *errors.
 
 func (cts *connectorTypesService) Get(id string) (*dbapi.ConnectorType, *errors.ServiceError) {
 	if id == "" {
-		return nil, errors.Validation("TypeId is empty.")
+		return nil, errors.Validation("typeId is empty")
 	}
 
 	var resource dbapi.ConnectorType
@@ -208,7 +208,7 @@ func (cts *connectorTypesService) ListLabels(listArgs *services.ListArguments) (
 		queryParser := queryparser.NewQueryParser(GetValidConnectorTypeColumns()...)
 		searchDbQuery, err := queryParser.Parse(listArgs.Search)
 		if err != nil {
-			return resourceList, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector type labels requests: %s", err.Error())
+			return resourceList, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "unable to list connector type labels requests: %s", err.Error())
 		}
 		if strings.Contains(searchDbQuery.Query, "channel") {
 			dbConn = dbConn.Joins("LEFT JOIN connector_type_channels channels on channels.connector_type_id = connector_types.id")
@@ -337,7 +337,7 @@ func (cts *connectorTypesService) PutConnectorShardMetadata(connectorShardMetada
 
 			return resource.ID, nil
 		} else {
-			return 0, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to save connector shard metadata")
+			return 0, errors.NewWithCause(errors.ErrorGeneral, err, "unable to save connector shard metadata")
 		}
 	} else {
 		// resource existed... update the connectorShardMetadata with the version it's been assigned in the DB...
@@ -355,9 +355,9 @@ func (cts *connectorTypesService) GetConnectorShardMetadata(typeId, channel stri
 
 	if err != nil {
 		if services.IsRecordNotFoundError(err) {
-			return nil, errors.NotFound("Connector type shard metadata (ConnectorTypeId: %s, Channel: %s, Revision: %v) not found.", typeId, channel, revision)
+			return nil, errors.NotFound("connector type shard metadata (ConnectorTypeId: %s, Channel: %s, Revision: %v) not found.", typeId, channel, revision)
 		}
-		return nil, errors.GeneralError("Unable to get connector type shard metadata (ConnectorTypeId: %s, Channel: %s, Revision: %v): %s", typeId, channel, revision, err)
+		return nil, errors.GeneralError("unable to get connector type shard metadata (ConnectorTypeId: %s, Channel: %s, Revision: %v): %s", typeId, channel, revision, err)
 	}
 	return resource, nil
 }
@@ -375,7 +375,7 @@ func (cts *connectorTypesService) GetLatestConnectorShardMetadata(typeId, channe
 		if services.IsRecordNotFoundError(err) {
 			return nil, errors.NotFound("connector type shard metadata not found")
 		}
-		return nil, errors.GeneralError("Unable to get connector type shard metadata: %s", err)
+		return nil, errors.GeneralError("unable to get connector type shard metadata: %s", err)
 	}
 	return resource, nil
 }

@@ -149,7 +149,7 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 
 func (kc *KeycloakConfig) Validate(env *environments.Env) error {
 	if kc.SelectSSOProvider != REDHAT_SSO && kc.SelectSSOProvider != MAS_SSO {
-		return fmt.Errorf("Invalid sso provider selected must be `mas_sso` or `redhat_sso`")
+		return fmt.Errorf("invalid sso provider selected must be `mas_sso` or `redhat_sso`")
 	}
 	return nil
 }

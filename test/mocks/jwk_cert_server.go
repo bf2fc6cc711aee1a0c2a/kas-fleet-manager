@@ -21,14 +21,14 @@ func NewJWKCertServerMock(t *testing.T, pubKey crypto.PublicKey, jwkKID string) 
 		func(w http.ResponseWriter, r *http.Request) {
 			pubjwk, err := gojwk.PublicKey(pubKey)
 			if err != nil {
-				t.Errorf("Unable to generate public jwk: %s", err)
+				t.Errorf("unable to generate public jwk: %s", err)
 				return
 			}
 			pubjwk.Kid = jwkKID
 			pubjwk.Alg = rhs256
 			jwkBytes, err := gojwk.Marshal(pubjwk)
 			if err != nil {
-				t.Errorf("Unable to marshal public jwk: %s", err)
+				t.Errorf("unable to marshal public jwk: %s", err)
 				return
 			}
 			fmt.Fprintf(w, `{"keys":[%s]}`, string(jwkBytes))

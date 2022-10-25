@@ -120,7 +120,7 @@ func TestKafkaCreate_ManualScaling(t *testing.T) {
 					resp.Body.Close()
 				}
 				// kafka successfully registered with database
-				g.Expect(err).NotTo(gomega.HaveOccurred(), "Error posting object:  %v", err)
+				g.Expect(err).NotTo(gomega.HaveOccurred(), "error posting object:  %v", err)
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
 				g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 				g.Expect(kafka.Owner).To(gomega.Equal(account.Username()))
@@ -137,7 +137,7 @@ func TestKafkaCreate_ManualScaling(t *testing.T) {
 				// wait until the kafka goes into a ready state
 				// the timeout here assumes a backing cluster has already been provisioned
 				readyKafka, err := common.WaitForKafkaToReachStatus(ctx, kafkatest.TestServices.DBFactory, client, kafka.Id, constants.KafkaRequestStatusReady)
-				g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
+				g.Expect(err).NotTo(gomega.HaveOccurred(), "error waiting for kafka request to become ready: %v", err)
 				g.Expect(readyKafka.BootstrapServerHost).ToNot(gomega.BeEmpty())
 				g.Expect(strings.HasSuffix(readyKafka.BootstrapServerHost, ":443")).To(gomega.Equal(true))
 				g.Expect(readyKafka.Version).To(gomega.Equal(kasfleetshardsync.GetDefaultReportedKafkaVersion()))
@@ -212,7 +212,7 @@ func TestKafkaCreate_ManualScaling(t *testing.T) {
 				if resp != nil {
 					resp.Body.Close()
 				}
-				g.Expect(err).NotTo(gomega.HaveOccurred(), "Error posting object:  %v", err)
+				g.Expect(err).NotTo(gomega.HaveOccurred(), "error posting object:  %v", err)
 				// get a 403 status code as there is no capacity left
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusForbidden), "kafka should have been rejected as no capacity is left")
 			},
@@ -381,7 +381,7 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 					resp.Body.Close()
 				}
 				// kafka successfully registered with database
-				g.Expect(err).NotTo(gomega.HaveOccurred(), "Error posting object:  %v", err)
+				g.Expect(err).NotTo(gomega.HaveOccurred(), "error posting object:  %v", err)
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
 				g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 				g.Expect(kafka.Owner).To(gomega.Equal(account.Username()))
@@ -397,7 +397,7 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 				// wait until the kafka goes into a ready state
 				// the timeout here assumes a backing cluster has already been provisioned
 				readyKafka, err := common.WaitForKafkaToReachStatus(ctx, kafkatest.TestServices.DBFactory, client, kafka.Id, constants.KafkaRequestStatusReady)
-				g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
+				g.Expect(err).NotTo(gomega.HaveOccurred(), "error waiting for kafka request to become ready: %v", err)
 				g.Expect(readyKafka.BootstrapServerHost).ToNot(gomega.BeEmpty())
 				g.Expect(strings.HasSuffix(readyKafka.BootstrapServerHost, ":443")).To(gomega.Equal(true))
 				g.Expect(readyKafka.Version).To(gomega.Equal(mockclusters.DefaultKafkaVersion))
@@ -470,7 +470,7 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 				if resp != nil {
 					resp.Body.Close()
 				}
-				g.Expect(err).NotTo(gomega.HaveOccurred(), "Error posting object:  %v", err)
+				g.Expect(err).NotTo(gomega.HaveOccurred(), "error posting object:  %v", err)
 				// get a 403 status code as there is no capacity left
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusForbidden), "kafka should have been rejected as no capacity is left")
 			},
@@ -556,7 +556,7 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 		resp.Body.Close()
 	}
 	// successful creation of kafka with a valid "standard" plan format
-	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error posting object:  %v", err)
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "error posting object:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
 	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 	g.Expect(kafka.InstanceType).To(gomega.Equal(types.STANDARD.String()))
@@ -576,7 +576,7 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error posting object:  %v", err)
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "error posting object:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
 	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 	g.Expect(kafka.InstanceType).To(gomega.Equal(types.DEVELOPER.String()))
@@ -595,7 +595,7 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	g.Expect(err).To(gomega.HaveOccurred(), "Error should have occurred when attempting to create kafka with invalid instance type provided in the plan")
+	g.Expect(err).To(gomega.HaveOccurred(), "error should have occurred when attempting to create kafka with invalid instance type provided in the plan")
 
 	// unsuccessful creation of kafka with invalid size_id provided in the "plan" parameter
 	k.Plan = fmt.Sprintf("%s.x9999", types.STANDARD.String())
@@ -603,5 +603,5 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	g.Expect(err).To(gomega.HaveOccurred(), "Error should have occurred when attempting to create kafka unsupported size_id")
+	g.Expect(err).To(gomega.HaveOccurred(), "error should have occurred when attempting to create kafka unsupported size_id")
 }

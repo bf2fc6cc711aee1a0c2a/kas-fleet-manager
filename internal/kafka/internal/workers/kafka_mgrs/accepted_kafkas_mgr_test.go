@@ -323,7 +323,7 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 				},
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
 					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
-						return nil, fmt.Errorf("Some errors")
+						return nil, fmt.Errorf("some errors")
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{

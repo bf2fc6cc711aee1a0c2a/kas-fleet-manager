@@ -128,7 +128,7 @@ func (kc *masService) CreateServiceAccount(accessToken string, serviceAccountReq
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to create service account")
 	}
 	if !isAllowed { //4xx over requesters' limit
-		return nil, errors.MaxLimitForServiceAccountReached("Max allowed number:%d of service accounts for user in org:%s has reached", kc.GetConfig().MaxAllowedServiceAccounts, orgId)
+		return nil, errors.MaxLimitForServiceAccountReached("max allowed number:%d of service accounts for user in org:%s has reached", kc.GetConfig().MaxAllowedServiceAccounts, orgId)
 	}
 	return kc.CreateServiceAccountInternal(accessToken, CompleteServiceAccountRequest{
 		Owner:          owner,
@@ -439,9 +439,9 @@ func (kc *masService) deregisterAgentServiceAccount(accessToken string, prefix s
 	}
 	err = kc.kcClient.DeleteClient(internalServiceAccountId, accessToken)
 	if err != nil {
-		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", internalServiceAccountId)
+		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "failed to delete service account: %s", internalServiceAccountId)
 	}
-	glog.V(5).Infof("deleted service account clientId = %s and internal id = %s", serviceAccountId, internalServiceAccountId)
+	glog.V(5).Infof("Deleted service account clientId = %s and internal id = %s", serviceAccountId, internalServiceAccountId)
 	return nil
 }
 

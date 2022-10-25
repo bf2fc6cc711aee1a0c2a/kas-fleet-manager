@@ -11,9 +11,10 @@ package cucumber
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"reflect"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/cucumber/godog"
@@ -121,7 +122,7 @@ func (s *TestScenario) iRunSQLGivesResults(sql string, expected *godog.Table) er
 			ToDate:   "",
 			Context:  1,
 		})
-		return fmt.Errorf("actual does not match expected, diff:\n%s\n", diff)
+		return fmt.Errorf("actual does not match expected, diff:\n%s", diff)
 	}
 	return nil
 }

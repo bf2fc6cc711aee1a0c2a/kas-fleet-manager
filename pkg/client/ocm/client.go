@@ -92,7 +92,7 @@ func NewOCMConnection(ocmConfig *OCMConfig, BaseUrl string) (*sdkClient.Connecti
 	} else if ocmConfig.SelfToken != "" {
 		builder = builder.Tokens(ocmConfig.SelfToken)
 	} else {
-		return nil, nil, fmt.Errorf("Can't build OCM client connection. No Client/Secret or Token has been provided.")
+		return nil, nil, fmt.Errorf("can't build OCM client connection,no Client/Secret or Token has been provided")
 	}
 
 	connection, err := builder.Build()
@@ -313,7 +313,7 @@ func (c *client) GetClusterDNS(clusterID string) (string, error) {
 	})
 
 	if clusterDNS == "" {
-		return "", errors.NotFound("Cluster %s: DNS is empty", clusterID)
+		return "", errors.NotFound("cluster %s: DNS is empty", clusterID)
 	}
 
 	return clusterDNS, nil

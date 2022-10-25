@@ -125,7 +125,7 @@ func getDisplayName(instanceType string, config *config.KafkaConfig) (string, *e
 	if config != nil && strings.Trim(instanceType, " ") != "" {
 		kafkaInstanceType, err := config.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
 		if err != nil {
-			return "", errors.NewWithCause(errors.ErrorGeneral, err, "Unable to get kafka display name for '%s' instance type", instanceType)
+			return "", errors.NewWithCause(errors.ErrorGeneral, err, "unable to get kafka display name for '%s' instance type", instanceType)
 		}
 		return kafkaInstanceType.DisplayName, nil
 	}
