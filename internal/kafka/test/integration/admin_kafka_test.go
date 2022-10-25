@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	adminprivate "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
@@ -15,6 +16,7 @@ import (
 	mockkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/golang-jwt/jwt/v4"
@@ -1309,7 +1311,13 @@ func TestAdminKafka_Update(t *testing.T) {
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
+	h, _, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(reconcilerConfig *workers.ReconcilerConfig) {
+		// set the reconciliation interval to 1m to delay the kafka deletion process so that we can test kafka in 'deprovision'
+		// and 'deleting' state without them being deleted before our test is run.
+		// This avoid some randomly failures where the Kafka under test will be reported as not found.
+		reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Minute
+	})
+
 	defer tearDown()
 	db := test.TestServices.DBFactory.New()
 	// create a dummy cluster and assign a kafka to it
