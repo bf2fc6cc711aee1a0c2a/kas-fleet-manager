@@ -374,7 +374,7 @@ func Test_ComposedPredicate(t *testing.T) {
 
 	type args1 struct {
 		val        *string
-		predicates PredicateFunc[any]
+		predicates PredicateFunc[*string]
 	}
 	tests1 := []struct {
 		name string
@@ -385,9 +385,9 @@ func Test_ComposedPredicate(t *testing.T) {
 			name: "Check string is empty but not nil - success",
 			args: args1{
 				val: buildStringPointer(""),
-				predicates: CompositePredicateAll[any](
-					IsNotNilPredicate[any],
-					StringEmptyPredicate,
+				predicates: CompositePredicateAll[*string](
+					IsNotNilPredicate[*string],
+					StringEmptyPredicate[*string],
 				),
 			},
 			want: true,
@@ -396,9 +396,9 @@ func Test_ComposedPredicate(t *testing.T) {
 			name: "Check string is empty but not nil - fail",
 			args: args1{
 				val: nil,
-				predicates: CompositePredicateAll[any](
-					IsNotNilPredicate[any],
-					StringEmptyPredicate,
+				predicates: CompositePredicateAll[*string](
+					IsNotNilPredicate[*string],
+					StringEmptyPredicate[*string],
 				),
 			},
 			want: false,
@@ -407,9 +407,9 @@ func Test_ComposedPredicate(t *testing.T) {
 			name: "Check string is not empty or nil - success",
 			args: args1{
 				val: nil,
-				predicates: CompositePredicateAny[any](
-					IsNilPredicate[any],
-					StringNotEmptyPredicate,
+				predicates: CompositePredicateAny[*string](
+					IsNilPredicate[*string],
+					StringNotEmptyPredicate[*string],
 				),
 			},
 			want: true,
@@ -418,9 +418,9 @@ func Test_ComposedPredicate(t *testing.T) {
 			name: "Check string is not empty or nil - fail",
 			args: args1{
 				val: buildStringPointer(""),
-				predicates: CompositePredicateAny[any](
-					IsNilPredicate[any],
-					StringNotEmptyPredicate,
+				predicates: CompositePredicateAny[*string](
+					IsNilPredicate[*string],
+					StringNotEmptyPredicate[*string],
 				),
 			},
 			want: false,

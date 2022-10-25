@@ -1,38 +1,27 @@
 package arrays
 
 import (
-	"reflect"
-	"strings"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 )
 
 // IsNotNilPredicate - returns `true` if the value is not nil
 func IsNotNilPredicate[T any](x T) bool {
-	return !IsNilPredicate(x)
+	return !shared.IsNil(x)
 }
 
 // IsNilPredicate - returns `true` if the value is nil
 func IsNilPredicate[T any](x T) bool {
-	return reflect.ValueOf(x).IsNil()
+	return shared.IsNil(x)
 }
 
 // StringNotEmptyPredicate - returns `true` if the value is not nil and is not empty string
-// Panic if passed value is not a string
-func StringNotEmptyPredicate(x any) bool {
-	return !StringEmptyPredicate(x)
+func StringNotEmptyPredicate[T string | *string](x T) bool {
+	return !shared.StringEmpty(x)
 }
 
 // StringEmptyPredicate - returns `true` if the value is nil or is the empty string
-// Panic if passed value is not a string
-func StringEmptyPredicate(x any) bool {
-	val, ok := x.(string)
-	if ok {
-		return val == ""
-	}
-	stringPointer, ok := x.(*string)
-	if ok {
-		return stringPointer == nil || *stringPointer == ""
-	}
-	panic("passed value is not a string nor a string pointer")
+func StringEmptyPredicate[T string | *string](x T) bool {
+	return shared.StringEmpty(x)
 }
 
 func EqualsPredicate[T comparable](value T) PredicateFunc[T] {
@@ -41,9 +30,9 @@ func EqualsPredicate[T comparable](value T) PredicateFunc[T] {
 	}
 }
 
-func StringEqualsIgnoreCasePredicate(value string) PredicateFunc[string] {
-	return func(x string) bool {
-		return strings.EqualFold(x, value)
+func StringEqualsIgnoreCasePredicate[T string | *string](value T) PredicateFunc[T] {
+	return func(x T) bool {
+		return shared.StringEqualsIgnoreCase(x, value)
 	}
 }
 
