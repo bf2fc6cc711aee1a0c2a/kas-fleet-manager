@@ -22,7 +22,7 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"mas-sso-realm":              "rhoas",
 		"osd-idp-mas-sso-realm":      "rhoas-kafka-sre",
 		"connector-eval-duration":    "48h",
-		"admin-api-sso-base-url":     "https://identity.api.stage.openshift.com",
+		"admin-api-sso-base-url":     "http://127.0.0.1:8180",
 		"admin-api-sso-endpoint-uri": "/auth/realms/rhoas-kafka-sre",
 		"admin-api-sso-realm":        "rhoas-kafka-sre",
 	}
