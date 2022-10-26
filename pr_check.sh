@@ -72,8 +72,11 @@ else
   sed -i -e "s/<sso_client_id>/${REDHAT_SSO_CLIENT_ID}/g" -e "s/<sso_client_secret>/${REDHAT_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
 fi
 
+# Use redhat_sso as the SSO Provider for the kas-fleet-manager and connector-fleet-manager
 sed -i -e 's/mas_sso/redhat_sso/g' internal/kafka/internal/environments/development.go
 sed -i -e 's/mas_sso/redhat_sso/g' internal/kafka/internal/environments/integration.go
+sed -i -e 's/mas_sso/redhat_sso/g' internal/connector/internal/environments/development.go
+sed -i -e 's/mas_sso/redhat_sso/g' internal/connector/internal/environments/integration.go
 
 docker login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
 docker build -t "$IMAGE_NAME" -f Dockerfile_integration_tests .
